@@ -68,11 +68,11 @@ public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {
 
   protected AttributesStorageOverBlobStorage createStorage(final Path storagePath) throws Exception {
     final SpaceAllocationStrategy spaceAllocationStrategy = new DataLengthPlusFixedPercentStrategy(64, 256,
-                                                                                                   StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY,
+                                                                                                   StreamlinedBlobStorageHelper.MAX_CAPACITY,
                                                                                                    30
     );
     final StreamlinedBlobStorage storage = useLockFreeStorage ?
-                                           new StreamlinedBlobStorageOverLockFreePagesStorage(
+                                           new StreamlinedBlobStorageOverLockFreePagedStorage(
                                              new PagedFileStorageWithRWLockedPageContent(
                                                storagePath, LOCK_CONTEXT, PAGE_SIZE, PageContentLockingStrategy.LOCK_PER_PAGE
                                              ),

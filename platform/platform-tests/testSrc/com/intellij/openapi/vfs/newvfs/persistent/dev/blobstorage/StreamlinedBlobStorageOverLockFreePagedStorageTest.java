@@ -16,14 +16,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
 public class StreamlinedBlobStorageOverLockFreePagedStorageTest
-  extends StreamlinedBlobStorageTestBase<StreamlinedBlobStorageOverLockFreePagesStorage> {
+  extends StreamlinedBlobStorageTestBase<StreamlinedBlobStorageOverLockFreePagedStorage> {
 
   @Test
   public void newStorage_HasVersion_OfCurrentStorageFormat() throws Exception {
     assertEquals(
       "New storage version == STORAGE_VERSION_CURRENT",
       storage.getStorageVersion(),
-      StreamlinedBlobStorageOverLockFreePagesStorage.STORAGE_VERSION_CURRENT
+      StreamlinedBlobStorageOverLockFreePagedStorage.STORAGE_VERSION_CURRENT
     );
   }
 
@@ -41,14 +41,14 @@ public class StreamlinedBlobStorageOverLockFreePagedStorageTest
   }
 
   @Override
-  protected StreamlinedBlobStorageOverLockFreePagesStorage openStorage(final Path pathToStorage) throws IOException {
+  protected StreamlinedBlobStorageOverLockFreePagedStorage openStorage(final Path pathToStorage) throws IOException {
     PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(
         pathToStorage,
         LOCK_CONTEXT,
         pageSize,
         PageContentLockingStrategy.LOCK_PER_PAGE
       );
-    return new StreamlinedBlobStorageOverLockFreePagesStorage(
+    return new StreamlinedBlobStorageOverLockFreePagedStorage(
       pagedStorage,
       allocationStrategy
     );

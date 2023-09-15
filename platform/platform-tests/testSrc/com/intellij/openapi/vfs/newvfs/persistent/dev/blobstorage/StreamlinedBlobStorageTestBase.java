@@ -36,14 +36,14 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   @DataPoints
   public static List<SpaceAllocationStrategy> allocationStrategiesToTry() {
     return Arrays.asList(
-      new WriterDecidesStrategy(StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY, 1024),
-      new WriterDecidesStrategy(StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY, 256),
-      new DataLengthPlusFixedPercentStrategy(256, 1024, StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY, 30),
-      new DataLengthPlusFixedPercentStrategy(64, 256, StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY, 30),
+      new WriterDecidesStrategy(StreamlinedBlobStorageHelper.MAX_CAPACITY, 1024),
+      new WriterDecidesStrategy(StreamlinedBlobStorageHelper.MAX_CAPACITY, 256),
+      new DataLengthPlusFixedPercentStrategy(256, 1024, StreamlinedBlobStorageHelper.MAX_CAPACITY, 30),
+      new DataLengthPlusFixedPercentStrategy(64, 256, StreamlinedBlobStorageHelper.MAX_CAPACITY, 30),
 
       //put stress on allocation/reallocation code paths
-      new DataLengthPlusFixedPercentStrategy(64, 128, StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY, 0),
-      new DataLengthPlusFixedPercentStrategy(2, 2, StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY, 0)
+      new DataLengthPlusFixedPercentStrategy(64, 128, StreamlinedBlobStorageHelper.MAX_CAPACITY, 0),
+      new DataLengthPlusFixedPercentStrategy(2, 2, StreamlinedBlobStorageHelper.MAX_CAPACITY, 0)
     );
   }
 

@@ -8,14 +8,11 @@ import java.nio.ByteOrder;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeBlobStorageRecordLayout.*;
+import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.*;
 import static com.intellij.util.io.blobstorage.StreamlinedBlobStorage.NULL_ID;
 import static org.junit.Assert.assertEquals;
 
-/**
- *
- */
-public class LargeBlobStorageRecordLayoutTest {
+public class RecordLayoutTest {
   @Test
   public void smallRecordHeaderFields_RestoredFromBufferAsIs() throws Exception {
     final ByteBuffer buffer = ByteBuffer.allocate(ActualRecords.SmallRecord.MAX_CAPACITY + OFFSET_BUCKET).order(ByteOrder.nativeOrder());
@@ -31,7 +28,7 @@ public class LargeBlobStorageRecordLayoutTest {
 
         recordLayout.putRecord(buffer, 0, capacity, length, NULL_ID, payload);
 
-        final LargeBlobStorageRecordLayout readLayout = recordLayout(buffer, 0);
+        final RecordLayout readLayout = recordLayout(buffer, 0);
 
         assertEquals(
           "[" + capacity + ", " + length + "]: Record type must be set to ACTUAL",
@@ -75,7 +72,7 @@ public class LargeBlobStorageRecordLayoutTest {
 
         recordLayout.putRecord(buffer, 0, capacity, length, NULL_ID, payload);
 
-        final LargeBlobStorageRecordLayout readLayout = recordLayout(buffer, 0);
+        final RecordLayout readLayout = recordLayout(buffer, 0);
 
         assertEquals(
           "[" + capacity + ", " + length + "]: Record type must be set to ACTUAL",
@@ -111,7 +108,7 @@ public class LargeBlobStorageRecordLayoutTest {
         payload.position(0).limit(capacity);
 
         recordLayout.putRecord(buffer, 0, capacity, 0, redirectToId, payload);
-        final LargeBlobStorageRecordLayout readLayout = recordLayout(buffer, 0);
+        final RecordLayout readLayout = recordLayout(buffer, 0);
 
         assertEquals(
           "[" + capacity + ", " + redirectToId + "]: Record type must be set to MOVED",
@@ -149,7 +146,7 @@ public class LargeBlobStorageRecordLayoutTest {
       payload.position(0).limit(capacity);
 
       recordLayout.putRecord(buffer, 0, capacity, 0, NULL_ID, payload);
-      final LargeBlobStorageRecordLayout readLayout = recordLayout(buffer, 0);
+      final RecordLayout readLayout = recordLayout(buffer, 0);
 
       assertEquals(
         "[" + capacity + "]: Record type must be set to PADDING",

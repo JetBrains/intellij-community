@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -154,7 +155,7 @@ public final class MMappedFileStorage implements Closeable {
 
     //map already existing file content right away:
     for (int i = 0; i < pagesToMapExistingFileContent; i++) {
-      Page page = new Page(i, channel, pageSize);
+      Page page = new Page(i, channel, pageSize, byteOrder());
       pages.set(i, page);
 
       totalPagesMapped.incrementAndGet();
@@ -182,7 +183,7 @@ public final class MMappedFileStorage implements Closeable {
         }
         page = pages.get(pageIndex);
         if (page == null) {
-          page = new Page(pageIndex, channel, pageSize);
+          page = new Page(pageIndex, channel, pageSize, byteOrder());
           pages.set(pageIndex, page);
 
           totalPagesMapped.incrementAndGet();
@@ -305,6 +306,10 @@ public final class MMappedFileStorage implements Closeable {
     }
   }
 
+  public ByteOrder byteOrder() {
+    return nativeOrder();
+  }
+
   @Override
   public String toString() {
     return "MMappedFileStorage[" + storagePath + "]" +
@@ -321,13 +326,14 @@ public final class MMappedFileStorage implements Closeable {
     private final ByteBuffer pageBuffer;
 
     private Page(int pageIndex,
-                 FileChannel channel,
-                 int pageSize) throws IOException {
+                 @NotNull FileChannel channel,
+                 int pageSize,
+                 @NotNull ByteOrder byteOrder) throws IOException {
       this.pageIndex = pageIndex;
       this.pageSize = pageSize;
       this.offsetInFile = pageIndex * (long)pageSize;
       this.pageBuffer = map(channel, pageSize);
-      pageBuffer.order(nativeOrder());
+      pageBuffer.order(byteOrder);
     }
 
     private MappedByteBuffer map(FileChannel channel,

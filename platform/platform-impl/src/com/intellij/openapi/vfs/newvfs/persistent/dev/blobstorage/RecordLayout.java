@@ -2,11 +2,10 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.nio.ByteBuffer;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeBlobStorageRecordLayout.ActualRecords.recordLayoutForType;
+import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.ActualRecords.recordLayoutForType;
 
 /**
  * RECORD format:
@@ -47,7 +46,7 @@ import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeBl
  *            nextPartId = header[24..55]                        [32 bits]
  * </pre>
  */
-abstract class LargeBlobStorageRecordLayout {
+abstract class RecordLayout {
   public static final byte RECORD_TYPE_MASK = (byte)0b1100_0000;
 
   public static final byte RECORD_TYPE_ACTUAL = (byte)0b0000_0000;
@@ -75,8 +74,8 @@ abstract class LargeBlobStorageRecordLayout {
     return (byte)(headerByte0 & RECORD_TYPE_MASK);
   }
 
-  public static LargeBlobStorageRecordLayout recordLayout(final ByteBuffer source,
-                                                          final int offset) {
+  public static RecordLayout recordLayout(final ByteBuffer source,
+                                          final int offset) {
     final byte headerByte0 = source.get(offset);
     final byte recordType = recordType(headerByte0);
     return switch (recordType) {
@@ -121,7 +120,6 @@ abstract class LargeBlobStorageRecordLayout {
     return headerSize() + capacity;
   }
 
-  @VisibleForTesting
   static final class ActualRecords {
     //ACTUAL: has .length and .capacity fields in header (redirectTo is absent)
     //        header bit[2]: recordSizeType =(SMALL | LARGE)
@@ -146,7 +144,7 @@ abstract class LargeBlobStorageRecordLayout {
       throw new IllegalArgumentException("capacity(=" + capacity + ") is too large for a storage");
     }
 
-    public static LargeBlobStorageRecordLayout recordLayoutForType(final byte recordSizeType) {
+    public static RecordLayout recordLayoutForType(final byte recordSizeType) {
       return switch (recordSizeType) {
         case RECORD_SIZE_TYPE_SMALL -> ActualRecords.SmallRecord.INSTANCE;
         case RECORD_SIZE_TYPE_LARGE -> ActualRecords.LargeRecord.INSTANCE;
@@ -154,7 +152,7 @@ abstract class LargeBlobStorageRecordLayout {
       };
     }
 
-    static final class SmallRecord extends LargeBlobStorageRecordLayout {
+    static final class SmallRecord extends RecordLayout {
       //recordSizeType: SMALL => header: 2 bytes
       //    capacity = headerByte0[3..7]*8 + 6          =[6..254]
       //    length   = headerByte1                      =[0..256] (truncated to capacity)
@@ -249,7 +247,7 @@ abstract class LargeBlobStorageRecordLayout {
       }
     }
 
-    static final class LargeRecord extends LargeBlobStorageRecordLayout {
+    static final class LargeRecord extends RecordLayout {
       //recordSizeType: LARGE => header: 5 bytes
       //    capacity = header bits[3..7]+[8..19] * 8 + 3   [3..1048_579]
       //    length   = header bits[20..40]                 [0..1048_576]
@@ -353,7 +351,7 @@ abstract class LargeBlobStorageRecordLayout {
     }
   }
 
-  static final class MovedRecord extends LargeBlobStorageRecordLayout {
+  static final class MovedRecord extends RecordLayout {
     // MOVED: header: 7bytes (no .payload, no .length)
     //        capacity = header[2..7][8..23] * 8 + 1             [1.. 2^24+1]
     //        redirectToId = header[24..55]                      [32 bits]
@@ -447,7 +445,7 @@ abstract class LargeBlobStorageRecordLayout {
     }
   }
 
-  static final class PaddingRecord extends LargeBlobStorageRecordLayout {
+  static final class PaddingRecord extends RecordLayout {
     // PADDING: header: 3 bytes (no .payload, no .length, no .redirectTo)
     //        capacity = header[2..7][8..15][16..23] * 8 + 5             [5..33_554_429]
 

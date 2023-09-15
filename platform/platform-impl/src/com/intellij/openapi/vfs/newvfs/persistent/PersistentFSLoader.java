@@ -5,13 +5,14 @@ import com.intellij.ide.actions.cache.RecoverVfsFromLogService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageHelper;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverMMappedFile;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverPagedStorage;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagedStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableStringEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
@@ -580,13 +581,13 @@ public final class PersistentFSLoader {
       //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2*minCapacity
       final SpaceAllocationStrategy allocationStrategy = new DataLengthPlusFixedPercentStrategy(
         /*min: */64, /*default: */ 128,
-        /*max: */StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY,
+        /*max: */StreamlinedBlobStorageHelper.MAX_CAPACITY,
         /*percentOnTop: */30
       );
       final StreamlinedBlobStorage blobStorage;
       if (FSRecordsImpl.USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE && PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
         LOG.info("VFS uses streamlined attributes storage (over new FilePageCache)");
-        blobStorage = new StreamlinedBlobStorageOverLockFreePagesStorage(
+        blobStorage = new StreamlinedBlobStorageOverLockFreePagedStorage(
           new PagedFileStorageWithRWLockedPageContent(
             attributesFile,
             PERSISTENT_FS_STORAGE_CONTEXT,
