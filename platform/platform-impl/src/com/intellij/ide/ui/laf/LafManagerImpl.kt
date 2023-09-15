@@ -587,14 +587,12 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   private fun updateUI(isFirstSetup: Boolean) {
     val uiDefaults = UIManager.getLookAndFeelDefaults()
-    uiDefaults.put("*cache", ConcurrentHashMap<String, Color>()) // for JBColor
+    // for JBColor
+    uiDefaults.put("*cache", ConcurrentHashMap<String, Color>())
     uiDefaults.put("LinkButtonUI", DefaultLinkButtonUI::class.java.name)
     fixPopupWeight()
     fixMenuIssues(uiDefaults)
     initInputMapDefaults(uiDefaults)
-    uiDefaults.put("Button.defaultButtonFollowsFocus", false)
-    uiDefaults.put("Balloon.error.textInsets", JBInsets(3, 8, 3, 8).asUIResource())
-    patchFileChooserStrings(uiDefaults)
     patchLafFonts(uiDefaults)
 
     patchTreeUI(uiDefaults, currentTheme)
@@ -603,7 +601,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       applyDensityOnUpdateUi(uiDefaults)
     }
 
-    //should be called last because this method modifies uiDefault values
+    // should be called last because this method modifies uiDefault values
     patchHiDPI(uiDefaults)
     // required for MigLayout logical pixels to work
     // super-huge DPI causes issues like IDEA-170295 if `laf.scaleFactor` property is missing
@@ -936,11 +934,6 @@ private class LafCellRenderer : SimpleListCellRenderer<LafManager.LafReference>(
 
 private val SEPARATOR = LafManager.LafReference("", null)
 
-private val fileChooserTextKeys = arrayOf(
-  "FileChooser.viewMenuLabelText", "FileChooser.newFolderActionLabelText",
-  "FileChooser.listViewActionLabelText", "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"
-)
-
 private object DefaultMenuArrowIcon : MenuArrowIcon(
   icon = { AllIcons.Icons.Ide.MenuArrow },
   selectedIcon = { if (DefaultMenuArrowIcon.dark.asBoolean) AllIcons.Icons.Ide.MenuArrowSelected else AllIcons.Icons.Ide.MenuArrow },
@@ -1195,15 +1188,6 @@ private fun fixPopupWeight() {
     PopupFactory.setSharedInstance(factory)
   }
   PopupUtil.setPopupType(factory, popupWeight)
-}
-
-private fun patchFileChooserStrings(defaults: UIDefaults) {
-  if (!defaults.containsKey(fileChooserTextKeys[0])) {
-    // Alloy L&F does not define strings for names of context menu actions, so we have to patch them in here
-    for (key in fileChooserTextKeys) {
-      defaults.put(key, IdeBundle.message(key))
-    }
-  }
 }
 
 private fun useInterFont(): Boolean {

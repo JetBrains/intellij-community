@@ -4,10 +4,12 @@
 package com.intellij.ide.ui.laf
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.JBColor
 import com.intellij.ui.TableActions
 import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
 import java.awt.Font
@@ -47,6 +49,15 @@ internal class LookAndFeelThemeAdapter(
 
     theme.installTheme(defaults, !installEditorScheme)
 
+    if (SystemInfoRt.isLinux && listOf("CN", "JP", "KR", "TW").contains(Locale.getDefault().country)) {
+      for (key in defaults.keys) {
+        if (key.toString().endsWith(".font")) {
+          val font = toFont(defaults, key)
+          defaults.put(key, FontUIResource("Dialog", font.style, font.size))
+        }
+      }
+    }
+
     for (entry in defaults.entries) {
       val value = entry.value
       if (value is Color && !(value is JBColor && value.name != null)) {
@@ -77,15 +88,6 @@ internal class LookAndFeelThemeAdapter(
 }
 
 internal fun initBaseLaF(defaults: UIDefaults) {
-  if (SystemInfoRt.isLinux && listOf("CN", "JP", "KR", "TW").contains(Locale.getDefault().country)) {
-    for (key in defaults.keys) {
-      if (key.toString().endsWith(".font")) {
-        val font = toFont(defaults, key)
-        defaults.put(key, FontUIResource("Dialog", font.style, font.size))
-      }
-    }
-  }
-
   initInputMapDefaults(defaults)
 
   patchComboBox(defaults)
@@ -167,7 +169,27 @@ internal fun initBaseLaF(defaults: UIDefaults) {
     ))
   }
   defaults.put("EditorPane.font", toFont(defaults, "TextField.font"))
+
+  patchFileChooserStrings(defaults)
+
+  defaults.put("Button.defaultButtonFollowsFocus", false)
+  defaults.put("Balloon.error.textInsets", JBInsets(3, 8, 3, 8).asUIResource())
 }
+
+private fun patchFileChooserStrings(defaults: UIDefaults) {
+  val fileChooserTextKeys = arrayOf(
+    "FileChooser.viewMenuLabelText", "FileChooser.newFolderActionLabelText",
+    "FileChooser.listViewActionLabelText", "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"
+  )
+
+  if (!defaults.containsKey(fileChooserTextKeys[0])) {
+    // Alloy L&F does not define strings for names of context menu actions, so we have to patch them in here
+    for (key in fileChooserTextKeys) {
+      defaults.put(key, UIDefaults.LazyValue { IdeBundle.message(key) })
+    }
+  }
+}
+
 
 private fun patchComboBox(defaults: UIDefaults) {
   val metalDefaults = MetalLookAndFeel().getDefaults()
@@ -185,25 +207,25 @@ internal fun initInputMapDefaults(defaults: UIDefaults) {
   val textAreaInputMap = defaults.get("TextArea.focusInputMap") as InputMap?
   if (textAreaInputMap != null) {
     // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
-    installCutCopyPasteShortcuts(textAreaInputMap, false)
+    installCutCopyPasteShortcuts(inputMap = textAreaInputMap, useSimpleActionKeys = false)
   }
   // Cut/Copy/Paste in JTextFields
   val textFieldInputMap = defaults.get("TextField.focusInputMap") as InputMap?
   if (textFieldInputMap != null) {
     // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
-    installCutCopyPasteShortcuts(textFieldInputMap, false)
+    installCutCopyPasteShortcuts(inputMap = textFieldInputMap, useSimpleActionKeys = false)
   }
   // Cut/Copy/Paste in JPasswordField
   val passwordFieldInputMap = defaults.get("PasswordField.focusInputMap") as InputMap?
   if (passwordFieldInputMap != null) {
     // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
-    installCutCopyPasteShortcuts(passwordFieldInputMap, false)
+    installCutCopyPasteShortcuts(inputMap = passwordFieldInputMap, useSimpleActionKeys = false)
   }
   // Cut/Copy/Paste in JTables
   val tableInputMap = defaults.get("Table.ancestorInputMap") as InputMap?
   if (tableInputMap != null) {
     // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
-    installCutCopyPasteShortcuts(tableInputMap, true)
+    installCutCopyPasteShortcuts(inputMap = tableInputMap, useSimpleActionKeys = true)
   }
 }
 
