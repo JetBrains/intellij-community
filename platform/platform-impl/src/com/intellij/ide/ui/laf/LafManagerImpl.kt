@@ -43,7 +43,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.PopupUtil
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
@@ -51,22 +50,18 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.*
-import com.intellij.ui.components.DefaultLinkButtonUI
 import com.intellij.ui.popup.HeavyWeightPopup
 import com.intellij.ui.scale.JBUIScale.getFontScale
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.scaleFontSize
 import com.intellij.ui.scale.JBUIScale.setUserScaleFactor
 import com.intellij.ui.svg.setSelectionColorPatcherProvider
-import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.util.EventDispatcher
 import com.intellij.util.FontUtil
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.SVGLoader.colorPatcherProvider
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.*
-import com.intellij.util.ui.LafIconLookup.getIcon
-import com.intellij.util.ui.LafIconLookup.getSelectedIcon
 import kotlinx.coroutines.*
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -77,7 +72,6 @@ import java.awt.*
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.BooleanSupplier
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.plaf.FontUIResource
@@ -589,9 +583,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     val uiDefaults = UIManager.getLookAndFeelDefaults()
     // for JBColor
     uiDefaults.put("*cache", ConcurrentHashMap<String, Color>())
-    uiDefaults.put("LinkButtonUI", DefaultLinkButtonUI::class.java.name)
     fixPopupWeight()
-    fixMenuIssues(uiDefaults)
     initInputMapDefaults(uiDefaults)
     patchLafFonts(uiDefaults)
 
@@ -931,19 +923,6 @@ private class LafCellRenderer : SimpleListCellRenderer<LafManager.LafReference>(
 }
 
 private val SEPARATOR = LafManager.LafReference("", null)
-
-private object DefaultMenuArrowIcon : MenuArrowIcon(
-  icon = { AllIcons.Icons.Ide.MenuArrow },
-  selectedIcon = { if (DefaultMenuArrowIcon.dark.asBoolean) AllIcons.Icons.Ide.MenuArrowSelected else AllIcons.Icons.Ide.MenuArrow },
-  disabledIcon = { IconLoader.getDisabledIcon(AllIcons.Icons.Ide.MenuArrow) },
-) {
-  private val dark = BooleanSupplier { ColorUtil.isDark(UIManager.getColor("MenuItem.selectionBackground")) }
-}
-
-private fun fixMenuIssues(uiDefaults: UIDefaults) {
-  uiDefaults.put("Menu.arrowIcon", DefaultMenuArrowIcon)
-  uiDefaults.put("MenuItem.background", UIManager.getColor("Menu.background"))
-}
 
 private class OurPopupFactory(private val delegate: PopupFactory) : PopupFactory() {
   companion object {

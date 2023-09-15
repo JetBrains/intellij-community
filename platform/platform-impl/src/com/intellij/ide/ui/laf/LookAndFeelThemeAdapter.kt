@@ -5,7 +5,9 @@ package com.intellij.ide.ui.laf
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.TableActions
 import com.intellij.util.ui.JBDimension
@@ -18,10 +20,7 @@ import java.awt.event.KeyEvent
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
-import javax.swing.InputMap
-import javax.swing.KeyStroke
-import javax.swing.LookAndFeel
-import javax.swing.UIDefaults
+import javax.swing.*
 import javax.swing.UIDefaults.LazyValue
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.UIResource
@@ -47,6 +46,9 @@ internal class LookAndFeelThemeAdapter(
   override fun getDefaults(): UIDefaults {
     val defaults = base.defaults
     initBaseLaF(defaults)
+
+    defaults.put("Menu.arrowIcon", DefaultMenuArrowIcon)
+    defaults.put("MenuItem.background", UIManager.getColor("Menu.background"))
 
     theme.installTheme(defaults, !installEditorScheme)
 
@@ -86,6 +88,15 @@ internal class LookAndFeelThemeAdapter(
   override fun isNativeLookAndFeel() = true
 
   override fun isSupportedLookAndFeel() = true
+}
+
+private object DefaultMenuArrowIcon : MenuArrowIcon(
+  icon = { AllIcons.Icons.Ide.MenuArrow },
+  selectedIcon = { if (DefaultMenuArrowIcon.dark) AllIcons.Icons.Ide.MenuArrowSelected else AllIcons.Icons.Ide.MenuArrow },
+  disabledIcon = { IconLoader.getDisabledIcon(AllIcons.Icons.Ide.MenuArrow) },
+) {
+  private val dark: Boolean
+    get() = ColorUtil.isDark(UIManager.getColor("MenuItem.selectionBackground"))
 }
 
 internal fun initBaseLaF(defaults: UIDefaults) {

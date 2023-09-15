@@ -66,6 +66,10 @@
 
     "Borders.ContrastBorderColor": "#323232",
 
+    "LinkButton": {
+      "UI": "com.intellij.ui.components.DefaultLinkButtonUI"
+    },
+
     "Button": {
       "arc": 6,
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter",
