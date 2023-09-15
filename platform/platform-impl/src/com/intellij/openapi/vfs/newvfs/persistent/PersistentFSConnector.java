@@ -203,7 +203,8 @@ final class PersistentFSConnector {
               boolean cachesWereRecoveredFromLog = false;
               try {
                 cachesWereRecoveredFromLog = vfsLoader.recoverCachesFromVfsLog();
-              } catch (Throwable recoveryEx) {
+              }
+              catch (Throwable recoveryEx) {
                 LOG.error("Cache recovery attempt via VfsLog has failed", recoveryEx);
               }
               if (cachesWereRecoveredFromLog) {
@@ -232,7 +233,8 @@ final class PersistentFSConnector {
         if (e instanceof CachesWereRecoveredFromLogException) {
           // don't delete the caches, they will be substituted on the next attempt
           throw new VFSInitException(RECOVERED_FROM_LOG, e.getMessage(), e);
-        } else {
+        }
+        else {
           vfsLoader.deleteEverything();
         }
       }
@@ -260,7 +262,7 @@ final class PersistentFSConnector {
         throw new VFSInitException(IMPL_VERSION_MISMATCH, "Some of storages versions were changed", e);
       }
 
-      throw new VFSInitException(UNRECOGNIZED, "Can't find specific cause of VFS init failure", e);
+      throw new VFSInitException(UNRECOGNIZED, "VFS init failure of unrecognized category: " + e.getMessage(), e);
     }
   }
 }
