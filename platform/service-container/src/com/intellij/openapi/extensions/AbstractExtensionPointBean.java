@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.diagnostic.PluginException;
@@ -57,6 +57,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
   }
 
   public final @NotNull <T> T instantiate(@NotNull String className, @NotNull PicoContainer container) throws ClassNotFoundException {
+    //noinspection CastToIncompatibleInterface
     return ((ComponentManager)container).instantiateClass(className, myPluginDescriptor);
   }
 }
