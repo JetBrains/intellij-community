@@ -115,12 +115,7 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
     myFlattenDirectories.clear();
 
     for (PackageAnnotator.DirCoverageInfo dir : directories.values()) {
-      if (isTestSource) {
-        myAnnotator.annotateTestDirectory(dir.sourceRoot, dir, module);
-      }
-      else {
-        myAnnotator.annotateSourceDirectory(dir.sourceRoot, dir, module);
-      }
+      myAnnotator.annotateSourceDirectory(dir.sourceRoot, dir);
     }
   }
 

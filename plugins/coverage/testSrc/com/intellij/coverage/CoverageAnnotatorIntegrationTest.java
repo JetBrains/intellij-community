@@ -7,7 +7,6 @@ import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -117,8 +116,7 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
     new JavaCoverageClassesAnnotator(suite, myProject, new Annotator() {
       @Override
       public void annotateSourceDirectory(VirtualFile virtualFile,
-                                          PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
-                                          Module module) {
+                                          PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
         dirs.put(virtualFile, packageCoverageInfo);
       }
     }).visitRootPackage(psiPackage, (JavaCoverageSuite)suite.getSuites()[0]);

@@ -64,7 +64,7 @@ class XMLReportAnnotator(project: Project?) : JavaCoverageAnnotator(project) {
       annotator.annotatePackage(packageName, coverage, true)
     }
     for ((file, coverage) in directoryCoverage) {
-      annotator.annotateSourceDirectory(file, coverage, null)
+      annotator.annotateSourceDirectory(file, coverage)
     }
     dataManager.triggerPresentationUpdate()
   }

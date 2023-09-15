@@ -7,7 +7,6 @@ import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator;
 import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;
@@ -90,12 +89,7 @@ public class CoverageIntegrationTest extends JavaModuleTestCase {
     private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfo = new HashMap<>();
 
     @Override
-    public void annotateSourceDirectory(VirtualFile virtualFile, PackageAnnotator.PackageCoverageInfo packageCoverageInfo, Module module) {
-      myDirectoryCoverage.put(virtualFile, packageCoverageInfo);
-    }
-
-    @Override
-    public void annotateTestDirectory(VirtualFile virtualFile, PackageAnnotator.PackageCoverageInfo packageCoverageInfo, Module module) {
+    public void annotateSourceDirectory(VirtualFile virtualFile, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
       myDirectoryCoverage.put(virtualFile, packageCoverageInfo);
     }
 

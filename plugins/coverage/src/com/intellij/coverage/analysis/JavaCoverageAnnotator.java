@@ -30,8 +30,6 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
   private final Map<String, PackageAnnotator.PackageCoverageInfo> myFlattenPackageCoverageInfos = new HashMap<>();
   private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myDirCoverageInfos =
     new HashMap<>();
-  private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myTestDirCoverageInfos =
-    new HashMap<>();
   private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new ConcurrentHashMap<>();
   private final Map<PsiElement, PackageAnnotator.SummaryCoverageInfo> myExtensionCoverageInfos = new WeakHashMap<>();
   private CoverageClassStructure myStructure;
@@ -62,7 +60,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     if (!currentSuite.isTrackTestFolders() && isInTestContent) {
       return null;
     }
-    return getCoverageInformationString(isInTestContent ? myTestDirCoverageInfos.get(virtualFile) : myDirCoverageInfos.get(virtualFile), coverageDataManager.isSubCoverageActive());
+    return getCoverageInformationString(myDirCoverageInfos.get(virtualFile), coverageDataManager.isSubCoverageActive());
 
   }
 
@@ -85,7 +83,6 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     myPackageCoverageInfos.clear();
     myFlattenPackageCoverageInfos.clear();
     myDirCoverageInfos.clear();
-    myTestDirCoverageInfos.clear();
     myClassCoverageInfos.clear();
     myExtensionCoverageInfos.clear();
     if (myStructure != null) {
@@ -114,16 +111,8 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
 
     @Override
     public void annotateSourceDirectory(VirtualFile dir,
-                                        PackageAnnotator.PackageCoverageInfo dirCoverageInfo,
-                                        Module module) {
+                                        PackageAnnotator.PackageCoverageInfo dirCoverageInfo) {
       myDirCoverageInfos.put(dir, dirCoverageInfo);
-    }
-
-    @Override
-    public void annotateTestDirectory(VirtualFile virtualFile,
-                                      PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
-                                      Module module) {
-      myTestDirCoverageInfos.put(virtualFile, packageCoverageInfo);
     }
 
     @Override
@@ -198,7 +187,6 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
       for (PsiDirectory directory : directories) {
         final VirtualFile virtualFile = directory.getVirtualFile();
         result = merge(result, myDirCoverageInfos.get(virtualFile));
-        result = merge(result, myTestDirCoverageInfos.get(virtualFile));
       }
       return getCoverageInformationString(result, subCoverageActive);
     }
