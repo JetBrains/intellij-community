@@ -3,12 +3,8 @@ package com.intellij.openapi.vcs.ex
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
-import com.intellij.diff.DiffApplicationSettings
-import com.intellij.diff.comparison.ByWord
-import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.diff.DefaultFlagsProvider
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 import com.intellij.openapi.editor.Document
@@ -16,12 +12,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.EditorTextField
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel.showPopupAt
 import java.awt.Graphics
 import java.awt.Point
 import java.awt.Rectangle
@@ -30,23 +23,15 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.math.min
 
-open class LineStatusMarkerRendererWithPopup(
+abstract class LineStatusMarkerRendererWithPopup(
   project: Project?,
-  protected val vcsDocument: Document,
   document: Document,
-  protected val virtualFile: VirtualFile?,
   protected val rangesSource: LineStatusMarkerRangesSource<*>,
   disposable: Disposable
 ) : LineStatusMarkerRenderer(project, document, disposable),
     LineStatusMarkerRendererWithPopupController {
 
-  // Convenience constructor
-  // Better convert this to an extension or a method
-  @ApiStatus.Internal
-  constructor(tracker: LineStatusTrackerI<*>)
-    : this(tracker.project, tracker.vcsDocument, tracker.document, tracker.virtualFile, tracker, tracker.disposable)
-
-  override fun getRanges(): List<Range>? = rangesSource.getRanges()
+  final override fun getRanges(): List<Range>? = rangesSource.getRanges()
 
   override fun scrollAndShow(editor: Editor, range: Range) {
     if (!rangesSource.isValid()) return
@@ -54,7 +39,7 @@ open class LineStatusMarkerRendererWithPopup(
     showAfterScroll(editor, range)
   }
 
-  override fun showAfterScroll(editor: Editor, range: Range) {
+  final override fun showAfterScroll(editor: Editor, range: Range) {
     editor.getScrollingModel().runActionOnScrollingFinished(Runnable { reopenRange(editor, range, null) })
   }
 
@@ -69,49 +54,14 @@ open class LineStatusMarkerRendererWithPopup(
   override fun showHintAt(editor: Editor, range: Range, mousePosition: Point?) {
     if (!rangesSource.isValid()) return
     val disposable = Disposer.newDisposable()
-    var editorComponent: JComponent? = null
-    if (range.hasVcsLines()) {
-      editorComponent = createVcsContentComponent(range, editor, disposable)
-    }
-    val actions = createToolbarActions(editor, range, mousePosition)
-    val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable)
-    val additionalInfoPanel = createAdditionalInfoPanel(editor, range, mousePosition, disposable)
-    LineStatusMarkerPopupPanel.showPopupAt(editor, toolbar, editorComponent, additionalInfoPanel, mousePosition, disposable, null)
+    val popup = createPopupPanel(editor, range, mousePosition, disposable)
+    showPopupAt(editor, popup, mousePosition, disposable)
   }
 
-  private fun createVcsContentComponent(range: Range, editor: Editor, disposable: Disposable): JComponent {
-    val vcsRange = DiffUtil.getLinesRange(vcsDocument, range.vcsLine1, range.vcsLine2)
-    val vcsContent = DiffUtil.getLinesContent(vcsDocument, range.vcsLine1, range.vcsLine2).toString()
-    val textField = LineStatusMarkerPopupPanel.createTextField(editor, vcsContent)
-    LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(project, textField, vcsDocument, vcsRange, virtualFile?.fileType)
-    installWordDiff(editor, textField, range, disposable)
-    return LineStatusMarkerPopupPanel.createEditorComponent(editor, textField)
-  }
+  protected abstract fun createPopupPanel(editor: Editor, range: Range, mousePosition: Point?, disposable: Disposable)
+    : LineStatusMarkerPopupPanel
 
-  protected open fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> = emptyList()
-
-  protected open fun createAdditionalInfoPanel(editor: Editor,
-                                               range: Range,
-                                               mousePosition: Point?,
-                                               disposable: Disposable): JComponent? = null
-
-  private fun installWordDiff(editor: Editor,
-                              textField: EditorTextField,
-                              range: Range,
-                              disposable: Disposable) {
-    if (!DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES) return
-    if (!range.hasLines() || !range.hasVcsLines()) return
-
-    val vcsContent = DiffUtil.getLinesContent(vcsDocument, range.vcsLine1, range.vcsLine2)
-    val currentContent = DiffUtil.getLinesContent(document, range.line1, range.line2)
-    val wordDiff = BackgroundTaskUtil.tryComputeFast(
-      { indicator -> ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator) }, 200)
-                   ?: return
-    LineStatusMarkerPopupPanel.installMasterEditorWordHighlighters(editor, range.line1, range.line2, wordDiff, disposable)
-    LineStatusMarkerPopupPanel.installPopupEditorWordHighlighters(textField, wordDiff)
-  }
-
-  override fun reopenRange(editor: Editor, range: Range, mousePosition: Point?) {
+  final override fun reopenRange(editor: Editor, range: Range, mousePosition: Point?) {
     val newRange = rangesSource.findRange(range)
     if (newRange != null) {
       showHintAt(editor, newRange, mousePosition)

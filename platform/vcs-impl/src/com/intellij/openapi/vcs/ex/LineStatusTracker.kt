@@ -125,7 +125,7 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 
   protected open class LocalLineStatusMarkerRenderer(
     protected open val tracker: LocalLineStatusTrackerImpl<*>
-  ): LineStatusMarkerRendererWithPopup(tracker) {
+  ): LineStatusTrackerMarkerRenderer(tracker) {
 
     override val editorFilter: MarkupEditorFilter = MarkupEditorFilterFactory.createIsNotDiffFilter()
 

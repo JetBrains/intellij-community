@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.*
+import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel.showPopupAt
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorTextField
@@ -342,7 +343,7 @@ class GitStageLineStatusTracker(
 
   private class MyLineStatusMarkerPopupRenderer(
     private val tracker: GitStageLineStatusTracker
-  ) : LineStatusMarkerRendererWithPopup(tracker) {
+  ) : LineStatusTrackerMarkerRenderer(tracker) {
     override val editorFilter: MarkupEditorFilter = MarkupEditorFilterFactory.createIsNotDiffFilter()
 
     override fun shouldPaintGutter(): Boolean {
@@ -533,7 +534,9 @@ class GitStageLineStatusTracker(
 
       val additionalPanel = createStageLinksPanel(editor, range, mousePosition, disposable)
 
-      LineStatusMarkerPopupPanel.showPopupAt(editor, toolbar, editorsPanel, additionalPanel, mousePosition, disposable, null)
+      val popupPanel = LineStatusMarkerPopupPanel.create(editor, toolbar, editorsPanel, additionalPanel)
+      toolbar.setTargetComponent(popupPanel)
+      showPopupAt(editor, popupPanel, mousePosition, disposable)
     }
 
     fun createEditorComponent(editor: Editor, stagedTextField: EditorTextField, vcsTextField: EditorTextField): JComponent {
@@ -568,7 +571,7 @@ class GitStageLineStatusTracker(
       val textRange = DiffUtil.getLinesRange(document, line1, line2)
       val content = textRange.subSequence(document.immutableCharSequence).toString()
       val textField = LineStatusMarkerPopupPanel.createTextField(editor, content)
-      LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(tracker.project, textField, document, textRange, virtualFile?.fileType)
+      LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(tracker.project, textField, document, textRange, fileType)
       return textField
     }
 

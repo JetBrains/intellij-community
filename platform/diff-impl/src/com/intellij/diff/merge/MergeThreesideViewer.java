@@ -1278,7 +1278,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
   }
 
-  private class MyLineStatusMarkerRenderer extends LineStatusMarkerRendererWithPopup {
+  private class MyLineStatusMarkerRenderer extends LineStatusTrackerMarkerRenderer {
     private final @NotNull LineStatusTrackerBase<?> myTracker;
 
     MyLineStatusMarkerRenderer(@NotNull LineStatusTrackerBase<?> tracker) {

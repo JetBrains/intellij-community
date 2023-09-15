@@ -9,12 +9,7 @@ import java.awt.Point
             ReplaceWith("LineStatusMarkerRendererWithPopup",
                         "com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopup"))
 open class LineStatusMarkerPopupRenderer(protected val tracker: LineStatusTrackerI<*>)
-  : LineStatusMarkerRendererWithPopup(tracker.project,
-                                      tracker.vcsDocument,
-                                      tracker.document,
-                                      tracker.virtualFile,
-                                      tracker,
-                                      tracker.disposable) {
+  : LineStatusTrackerMarkerRenderer(tracker) {
 
   @Deprecated("Use non-inner variant in com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions",
               ReplaceWith("LineStatusMarkerPopupActions.RangeMarkerAction",
