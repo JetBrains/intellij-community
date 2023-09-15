@@ -20,7 +20,7 @@ class TestBaseService : SettingsService {
     return TestSyncService()
   }
 
-  override fun getImportService(): ImportService {
+  override fun getJbService(): ImportService {
     return TestImportService()
   }
 
@@ -75,10 +75,9 @@ class TestImportService : ImportService {
     if(LOG.isTraceEnabled) {
       LOG.trace("${TestBaseService.IMPORT_SERVICE} importSettings")
     }
-
   }
 
-  override fun getFreshProducts(): List<Product> {
+  override fun products(): List<Product> {
     return productList3 //fresh
   }
 
@@ -102,7 +101,7 @@ class TestImportExternalService : ImportExternalService {
     private val LOG = logger<TestImportExternalService>()
   }
 
-  override fun getProducts(): List<Product> {
+  override fun products(): List<Product> {
     return listOf(TestImportService.main2)
   }
 
@@ -127,8 +126,9 @@ class TestSyncService : SyncService {
     private val LOG = logger<TestSyncService>()
   }
 
-  override val syncState: SYNC_STATE
-    get() = SYNC_STATE.GENERAL
+  override val syncState: SyncService.SYNC_STATE
+    get() = SyncService.SYNC_STATE.LOGGED
+
 
   override fun tryToLogin(): String? {
     if(LOG.isTraceEnabled) {
@@ -156,10 +156,10 @@ class TestSyncService : SyncService {
   }
 
   override fun getMainProduct(): Product? {
-    return null
+    return TestImportService.main2
   }
 
-  override fun getFreshProducts(): List<Product> {
+  override fun products(): List<Product> {
     return TestImportService.fresh
   }
 
@@ -172,7 +172,7 @@ class TestSyncService : SyncService {
   }
 
   override fun getProductIcon(productId: String, size: IconProductSize): Icon {
-    return TestImportService.getProductIcon(size)
+    return AllIcons.Actions.Refresh
   }
 
 }

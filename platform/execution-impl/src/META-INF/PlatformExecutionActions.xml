@@ -69,6 +69,13 @@
 
   </actions>
   <extensions defaultExtensionNs="com.intellij">
+      <toolWindow id="OpenTelemetry"
+                  anchor="bottom"
+                  icon="AllIcons.Toolwindows.ToolWindowInternal"
+                  canCloseContents="true"
+                  doNotActivateOnStart="true"
+                  factoryClass="com.intellij.importSettings.chooser.bla.OpenTelemetryToolWindowFactory"/>
+
     <!-- Import Settings -->
     <applicationService serviceInterface="com.intellij.importSettings.data.SettingsService"
                     serviceImplementation="com.intellij.importSettings.data.TestBaseService"/>

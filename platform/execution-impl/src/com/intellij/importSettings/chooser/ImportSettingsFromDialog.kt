@@ -2,18 +2,21 @@
 package com.intellij.importSettings.chooser
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ui.laf.darcula.ui.OnboardingDialogButtons
-import com.intellij.importSettings.data.ImportExternalButtonDataProvider
-import com.intellij.importSettings.data.ImportJbButtonDataProvider
+import com.intellij.importSettings.chooser.actions.*
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook
+import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import java.awt.BorderLayout
-import java.awt.Font
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
+import java.awt.*
+import java.util.function.Supplier
 import javax.swing.*
 
 class ImportSettingsFromDialog : DialogWrapper(null) {
@@ -28,34 +31,111 @@ class ImportSettingsFromDialog : DialogWrapper(null) {
   }
 
   init {
-    val importJbButtonDataProvider = ImportJbButtonDataProvider()
-    val importExtButtonProvider = ImportExternalButtonDataProvider()
-
-    val jbButtonState = importJbButtonDataProvider.getButtonState()
-    val extButtonState = importExtButtonProvider.getButtonState()
-
-    val jbButton = jbButtonState?.let {
-      OnboardingDialogButtons.createButton(it.name, it.icon, {})
-    }
-    val extButton = extButtonState?.let {
-      OnboardingDialogButtons.createButton(it.name, it.icon, {})
+    val group = DefaultActionGroup()
+    group.isPopup = false
+    val callback: (Int)-> Unit = {
+      close(OK_EXIT_CODE)
     }
 
-    val skipImport = OnboardingDialogButtons.createHoveredLinkButton("Skip Import", null, {})
+    group.add(SyncStateAction())
+    group.add(SyncChooserAction(callback))
+    group.add(JbChooserAction(callback))
+    group.add(ExpChooserAction(callback))
+    group.add(SkipImportAction())
 
-    pane.add(JPanel(VerticalLayout(JBUI.scale(12), SwingConstants.CENTER)).apply {
-      jbButton?.let {
-        add(it)
+    val actionButtonLook = object : IdeaActionButtonLook() {
+      override fun paintBorder(g: Graphics, component: JComponent, state: Int) {
+        if (component is ActionButtonWithText && component.action is LinkAction) {
+          return
+        }
+
+        val rect = Rectangle(component.size)
+        JBInsets.removeFrom(rect, component.getInsets())
+        /*
+        val color = when(state) {
+          ActionButtonComponent.PUSHED -> JBColor.namedColor("Button.startBorderColor", JBColor(0xa8adbd, 0x6f737a))
+          ActionButtonComponent.POPPED -> JBColor.namedColor("Button.default.borderColor", JBColor(0xa8adbd, 0x6f737a))
+          else -> JBColor.namedColor("Button.default.borderColor", JBColor(0xa8adbd, 0x6f737a))
+        }
+        */
+        val color = when (state) {
+          ActionButtonComponent.PUSHED -> Color.RED
+          ActionButtonComponent.POPPED -> Color.BLUE
+          else -> Color.GRAY
+        }
+        paintLookBorder(g, rect, color)
       }
-      extButton?.let {
-       add(it)
+
+      override fun paintBackground(g: Graphics?, component: JComponent?, state: Int) {
+        if (component is ActionButtonWithText && component.action is SkipImportAction) {
+          super.paintBackground(g, component, state)
+          return
+        }
       }
+    }
 
-      add(skipImport)
-    })
+    val act = createActionToolbar(group, false).apply {
+      if (this is ActionToolbarImpl) {
 
+        setMinimumButtonSize {
+          JBUI.size(280, 40)
+        }
+        setMiniMode(false)
+        setActionButtonBorder(4, JBUI.CurrentTheme.RunWidget.toolbarBorderHeight())
+
+        setCustomButtonLook(actionButtonLook)
+      }
+    }
+    act.targetComponent = pane
+
+  //  val skipImport = OnboardingDialogButtons.createHoveredLinkButton("Skip Import", null, {})
+
+    pane.add(act.component)
+    /*    pane.add(JPanel(VerticalLayout(JBUI.scale(12), SwingConstants.CENTER)).apply {
+      add(act.component)
+    })*/
     init()
   }
+
+  private fun createActionToolbar(group: ActionGroup, horizontal: Boolean): ActionToolbar {
+    return object : ActionToolbarImpl(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, horizontal){
+      override fun createToolbarButton(action: AnAction,
+                                       look: ActionButtonLook?,
+                                       place: String,
+                                       presentation: Presentation,
+                                       minimumSize: Supplier<out Dimension>?): ActionButton {
+        val actionButton = super.createToolbarButton(action, look, place, presentation, minimumSize)
+        if(actionButton.action is LinkAction) {
+          actionButton.foreground = JBUI.CurrentTheme.Link.Foreground.ENABLED
+        }
+
+        return actionButton
+      }
+
+      init {
+        isOpaque = false
+        setNoGapMode()
+      }
+
+      override fun getPreferredSize(): Dimension {
+        val dm = super.getPreferredSize()
+        if(horizontal) {
+          dm.width -= 10
+        } else dm.height -=10
+          return dm
+      }
+    }
+
+
+
+  }
+
+
+
+  /*  override fun createDefaultActions() {
+      super.createDefaultActions()
+      init()
+    }*/
 
   private fun showListPopup() {
 
@@ -78,26 +158,55 @@ class ImportSettingsFromDialog : DialogWrapper(null) {
     return emptyArray()
   }
 
+  /*
   override fun createSouthAdditionalPanel(): JPanel? {
-    return JPanel().apply {
-      add(accountLabel)
+    return JPanel(BorderLayout()).apply {
+      add(accountLabel, BorderLayout.CENTER)
     }
   }
+  */
 
 
   override fun createSouthPanel(leftSideButtons: MutableList<out JButton>,
                                 rightSideButtons: MutableList<out JButton>,
                                 addHelpToLeftSide: Boolean): JPanel {
-    val panel = super.createSouthPanel(leftSideButtons, rightSideButtons, addHelpToLeftSide)
+    val group = DefaultActionGroup()
+    group.add(OtherOptions({}))
 
-    panel.add(JPanel(GridBagLayout()).apply {
+    val at = createActionToolbar(group, true)
+    at.targetComponent = pane
+
+    return JPanel(BorderLayout()).apply {
+      add(accountLabel, BorderLayout.WEST)
+      add(at.component, BorderLayout.EAST)
+
+    }
+
+
+/*    val panel = super.createSouthPanel(leftSideButtons, rightSideButtons, addHelpToLeftSide)
+
+    val group = DefaultActionGroup()
+    group.add(OtherOptions())
+
+    val at = createActionToolbar(group, true)
+    at.targetComponent = pane
+
+    panel.add(at.component, BorderLayout.EAST)*/
+
+/*    panel.add(JPanel(GridBagLayout()).apply {
       val c = GridBagConstraints()
       c.fill = GridBagConstraints.NONE
-      c.anchor = GridBagConstraints.CENTER
-      add(OnboardingDialogButtons.createLinkButton("Other Options", AllIcons.General.ChevronDown, {}), c)
+      c.anchor = GridBagConstraints.BASELINE
 
-    }, BorderLayout.EAST)
+      val group = DefaultActionGroup()
+      group.add(OtherOptions())
 
-    return panel
+      val at = createActionToolbar(group, true)
+      at.targetComponent = pane
+      add(at.component, c)
+
+    }, BorderLayout.EAST)*/
+
+    //return panel
   }
 }

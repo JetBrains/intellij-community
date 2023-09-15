@@ -205,6 +205,8 @@ public abstract class ActionPlaces {
   public static final String RIDER_UNIT_TESTS_PROGRESSBAR_POPUP = "UnitTests.ProgressBarPopup";
   public static final String RIDER_UNIT_TESTS_QUICKLIST = "UnitTests.QuickList";
 
+  public static final String IMPORT_SETTINGS_DIALOG = "Import.Settings.Dialog";
+
   public static boolean isMainMenuOrActionSearch(String place) {
     return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) || isShortcutPlace(place) ||
            place != null && place.startsWith(POPUP_PREFIX) && isMainMenuOrActionSearch(place.substring(POPUP_PREFIX.length()));
