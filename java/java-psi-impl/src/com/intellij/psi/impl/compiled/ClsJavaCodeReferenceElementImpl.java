@@ -272,7 +272,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
 
   @Override
   public String getQualifiedName() {
-    return getCanonicalText();
+    return myQualifiedName;
   }
 
   @Override
