@@ -13,47 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes.patch.tool;
+package com.intellij.openapi.vcs.changes.patch.tool
 
-import com.intellij.diff.requests.DiffRequest;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diff.requests.DiffRequest
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch
 
-public class PatchDiffRequest extends DiffRequest {
-  @NotNull private final AppliedTextPatch myAppliedPatch;
+class PatchDiffRequest(
+  val patch: AppliedTextPatch,
+  private val windowTitle: @NlsContexts.DialogTitle String?,
+  val panelTitle: @NlsContexts.Label String?
+) : DiffRequest() {
 
-  @Nullable private final @NlsContexts.DialogTitle String myWindowTitle;
-  @Nullable private final @NlsContexts.Label String myPanelTitle;
+  constructor(appliedPatch: AppliedTextPatch) : this(appliedPatch, null, null)
 
-
-  public PatchDiffRequest(@NotNull AppliedTextPatch appliedPatch) {
-    this(appliedPatch, null, null);
-  }
-
-  public PatchDiffRequest(@NotNull AppliedTextPatch patch,
-                          @Nullable @NlsContexts.DialogTitle String windowTitle,
-                          @Nullable @NlsContexts.Label String panelTitle) {
-    myAppliedPatch = patch;
-    myWindowTitle = windowTitle;
-    myPanelTitle = panelTitle;
-  }
-
-  @Nullable
-  @Override
-  public String getTitle() {
-    return myWindowTitle;
-  }
-
-  @NlsContexts.Label
-  @Nullable
-  public String getPanelTitle() {
-    return myPanelTitle;
-  }
-
-  @NotNull
-  public AppliedTextPatch getPatch() {
-    return myAppliedPatch;
+  override fun getTitle(): String? {
+    return windowTitle
   }
 }
