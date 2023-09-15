@@ -277,7 +277,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     }
 
 
-    PatchChangeBuilder.PatchState state = new PatchChangeBuilder().buildFromApplied(myPatchRequest.getPatch().getHunks());
+    PatchChangeBuilder.AppliedPatchState state = new PatchChangeBuilder().buildFromApplied(myPatchRequest.getPatch().getHunks());
 
 
     Document patchDocument = myPatchEditor.getDocument();
@@ -293,7 +293,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
       DiffDrawUtil.createLineSeparatorHighlighter(myPatchEditor, offset, offset);
     });
 
-    List<PatchChangeBuilder.Hunk> hunks = state.getHunks();
+    List<PatchChangeBuilder.AppliedHunk> hunks = state.getHunks();
 
     int[] modelToPatchIndexes = DiffUtil.getSortedIndexes(hunks, (h1, h2) -> {
       LineRange lines1 = h1.getAppliedToLines();
@@ -308,7 +308,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     List<LineRange> modelRanges = new ArrayList<>();
     for (int modelIndex = 0; modelIndex < hunks.size(); modelIndex++) {
       int patchIndex = modelToPatchIndexes[modelIndex];
-      PatchChangeBuilder.Hunk hunk = hunks.get(patchIndex);
+      PatchChangeBuilder.AppliedHunk hunk = hunks.get(patchIndex);
       LineRange resultRange = hunk.getAppliedToLines();
 
       ApplyPatchChange change = new ApplyPatchChange(hunk, modelIndex, this);

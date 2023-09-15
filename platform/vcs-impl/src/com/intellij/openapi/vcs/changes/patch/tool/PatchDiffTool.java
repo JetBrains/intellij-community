@@ -101,7 +101,7 @@ final class PatchDiffTool implements FrameDiffTool {
     }
 
     private void onInit() {
-      PatchChangeBuilder.PatchState state = new PatchChangeBuilder().buildFromApplied(myRequest.getPatch().getHunks());
+      PatchChangeBuilder.PatchState state = new PatchChangeBuilder().build(myRequest.getPatch().getHunks());
       myHunks.addAll(state.getHunks());
 
       Document patchDocument = myEditor.getDocument();

@@ -10,6 +10,8 @@ import com.intellij.diff.tools.util.text.LineOffsets
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.DiffRangeUtil
 import com.intellij.diff.util.LineRange
+import com.intellij.openapi.diff.impl.patch.PatchHunk
+import com.intellij.openapi.diff.impl.patch.PatchLine
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.AppliedSplitPatchHunk
@@ -25,8 +27,8 @@ class PatchChangeBuilder {
 
   private var totalLines = 0
 
-  fun buildFromApplied(splitHunks: List<AppliedSplitPatchHunk>): PatchState {
-    val hunks = mutableListOf<Hunk>()
+  fun buildFromApplied(splitHunks: List<AppliedSplitPatchHunk>): AppliedPatchState {
+    val hunks = mutableListOf<AppliedHunk>()
 
     var lastBeforeLine = -1
     for (hunk in splitHunks) {
@@ -62,10 +64,75 @@ class PatchChangeBuilder {
       val deletionRange = LineRange(deletion, insertion)
       val insertionRange = LineRange(insertion, hunkEnd)
 
-      hunks.add(Hunk(deletionRange, insertionRange, hunk.getAppliedTo(), hunk.status))
+      hunks.add(AppliedHunk(deletionRange, insertionRange, hunk.getAppliedTo(), hunk.status))
+    }
+
+    return AppliedPatchState(textBuilder, hunks, convertor1.build(), convertor2.build(), separatorLines)
+  }
+
+  fun build(patchHunks: List<PatchHunk>): PatchState {
+    val hunks = mutableListOf<Hunk>()
+
+    for (hunk in patchHunks) {
+      if (totalLines > 0) {
+        appendSeparator()
+      }
+
+      val beforeRange = LineRange(hunk.startLineBefore, hunk.endLineBefore)
+      val afterRange = LineRange(hunk.startLineAfter, hunk.endLineAfter)
+
+      var beforeBlockLines = 0
+      var afterBlockLines = 0
+      cutIntoBlocks(hunk.lines) { preContextLines, deletedLines, insertedLines ->
+        addContext(preContextLines.map { line -> line.text }, beforeRange.start + beforeBlockLines, afterRange.start + afterBlockLines)
+        beforeBlockLines += preContextLines.size
+        afterBlockLines += preContextLines.size
+
+        val deletion = totalLines
+        addChangedLines(deletedLines.map { line -> line.text }, beforeRange.start + beforeBlockLines, false)
+        beforeBlockLines += deletedLines.size
+
+        val insertion = totalLines
+        addChangedLines(insertedLines.map { line -> line.text }, afterRange.start + afterBlockLines, true)
+        afterBlockLines += insertedLines.size
+        val hunkEnd = totalLines
+
+        val deletionRange = LineRange(deletion, insertion)
+        val insertionRange = LineRange(insertion, hunkEnd)
+
+        hunks.add(Hunk(deletionRange, insertionRange))
+      }
     }
 
     return PatchState(textBuilder, hunks, convertor1.build(), convertor2.build(), separatorLines)
+  }
+
+  private fun cutIntoBlocks(lines: List<PatchLine>,
+                            consumer: (preContext: List<PatchLine>, deletions: List<PatchLine>, additions: List<PatchLine>) -> Unit) {
+    var lastType = PatchLine.Type.CONTEXT
+
+    val preContext = mutableListOf<PatchLine>()
+    val deletions = mutableListOf<PatchLine>()
+    val additions = mutableListOf<PatchLine>()
+
+    for (line in lines) {
+      val type = line.type
+      if (lastType != type && lastType != PatchLine.Type.CONTEXT &&
+          !(lastType == PatchLine.Type.REMOVE && type == PatchLine.Type.ADD)) {
+        consumer(preContext, deletions, additions)
+        preContext.clear()
+        deletions.clear()
+        additions.clear()
+      }
+      lastType = type
+
+      when (type) {
+        PatchLine.Type.CONTEXT -> preContext.add(line)
+        PatchLine.Type.REMOVE -> deletions.add(line)
+        PatchLine.Type.ADD -> additions.add(line)
+      }
+    }
+    consumer(preContext, deletions, additions)
   }
 
   private fun addChangedLines(lines: List<String>, lineNumber: Int, isAddition: Boolean) {
@@ -103,10 +170,19 @@ class PatchChangeBuilder {
                    val lineConvertor2: LineNumberConvertor,
                    val separatorLines: IntList)
 
-  class Hunk(val patchDeletionRange: LineRange,
-             val patchInsertionRange: LineRange,
-             val appliedToLines: LineRange?,
-             val status: HunkStatus)
+  class AppliedPatchState(val patchContent: CharSequence,
+                          val hunks: List<AppliedHunk>,
+                          val lineConvertor1: LineNumberConvertor,
+                          val lineConvertor2: LineNumberConvertor,
+                          val separatorLines: IntList)
+
+  open class Hunk(val patchDeletionRange: LineRange,
+                  val patchInsertionRange: LineRange)
+
+  class AppliedHunk(patchDeletionRange: LineRange,
+                    patchInsertionRange: LineRange,
+                    val appliedToLines: LineRange?,
+                    val status: HunkStatus) : Hunk(patchDeletionRange, patchInsertionRange)
 
   companion object {
     @JvmStatic

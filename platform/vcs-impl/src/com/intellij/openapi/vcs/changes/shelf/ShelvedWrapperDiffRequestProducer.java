@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Objects;
 
-import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.createAppliedTextPatch;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static java.util.Objects.requireNonNull;
 
@@ -133,7 +132,7 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer, C
       }
     }
 
-    return new PatchDiffRequest(createAppliedTextPatch(patch), title, null);
+    return new PatchDiffRequest(patch, title, null);
   }
 
   @Override

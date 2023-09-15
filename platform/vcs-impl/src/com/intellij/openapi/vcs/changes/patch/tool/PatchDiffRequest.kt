@@ -16,16 +16,16 @@
 package com.intellij.openapi.vcs.changes.patch.tool
 
 import com.intellij.diff.requests.DiffRequest
+import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch
 
 class PatchDiffRequest(
-  val patch: AppliedTextPatch,
+  val patch: TextFilePatch,
   private val windowTitle: @NlsContexts.DialogTitle String?,
   val panelTitle: @NlsContexts.Label String?
 ) : DiffRequest() {
 
-  constructor(appliedPatch: AppliedTextPatch) : this(appliedPatch, null, null)
+  constructor(appliedPatch: TextFilePatch) : this(appliedPatch, null, null)
 
   override fun getTitle(): String? {
     return windowTitle
