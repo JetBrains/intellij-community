@@ -41,18 +41,10 @@
       <override-text place="EditorPopup" use-text-of-place="EditorTabPopup"/>
       <override-text place="FavoritesPopup" use-text-of-place="EditorTabPopup"/>
     </group>
-
-    <!--
-    Disabled in Android Studio:
-    This creates an in-place toolbar which fades in and paints on top of the source editor whenever
-    you edit an XML file. For web developers working on XHTML files this may be useful, but in Android,
-    where most XML files are resource files, this is distracting and not useful.
-
     <group id="OpenInBrowserEditorContextBarGroupAction"
            class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserEditorContextBarGroupAction">
       <add-to-group group-id="EditorContextBarMenu" anchor="last"/>
     </group>
-    -->
 
     <group id="Emmet">
       <action id="SurroundWithEmmet" class="com.intellij.codeInsight.template.emmet.SurroundWithEmmetAction"/>
