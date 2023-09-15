@@ -104,9 +104,9 @@ interface ScanningTimes {
   var creatingIteratorsDuration: Duration
   val concurrentHandlingWallTimeWithoutPauses: Duration
   val concurrentHandlingWallTimeWithPauses: Duration
-  val concurrentHandlingCPUTimeWithPauses: Duration
-  val concurrentIterationAndScannersApplicationCPUTimeWithPauses: Duration
-  val concurrentFileCheckCPUTimeWithPauses: Duration
+  val concurrentHandlingSumOfThreadTimesWithPauses: Duration
+  val concurrentIterationAndScannersApplicationSumOfThreadTimesWithPauses: Duration
+  val concurrentFileCheckSumOfThreadTimesWithPauses: Duration
   val pausedDuration: Duration
   val wasInterrupted: Boolean
 }

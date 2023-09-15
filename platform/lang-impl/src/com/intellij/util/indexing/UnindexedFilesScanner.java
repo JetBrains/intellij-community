@@ -469,7 +469,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
         finally {
           scanningStatistics.tryFinishVfsIterationAndScanningApplication();
           scanningStatistics.tryFinishFilesChecking();
-          scanningStatistics.setTotalCPUTimeWithPauses(System.nanoTime() - providerScanningStartTime);
+          scanningStatistics.setTotalOneThreadTimeWithPauses(System.nanoTime() - providerScanningStartTime);
           scanningStatistics.setNumberOfSkippedFiles(thisProviderDeduplicateFilter.getNumberOfSkippedFiles());
           synchronized (allTasksFinished) {
             if (!allTasksFinished.get()) {

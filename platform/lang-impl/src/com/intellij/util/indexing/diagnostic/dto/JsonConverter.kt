@@ -24,7 +24,7 @@ fun ScanningStatistics.toJsonStatistics(): JsonScanningStatistics {
     numberOfFilesFullyIndexedByInfrastructureExtensions = numberOfFilesFullyIndexedByInfrastructureExtension,
     filesFullyIndexedByInfrastructureExtensions = listOfFilesFullyIndexedByInfrastructureExtension,
     statusTime = JsonDuration(statusTime),
-    totalCPUTimeWithPauses = JsonDuration(totalCPUTimeWithPauses),
+    totalOneThreadTimeWithPauses = JsonDuration(totalOneThreadTimeWithPauses),
     iterationAndScannersApplicationTime = JsonDuration(timeConcurrentVfsIterationAndScanningApplication),
     filesCheckTime = JsonDuration(timeConcurrentFilesChecking),
     timeProcessingUpToDateFiles = JsonDuration(timeProcessingUpToDateFiles),
@@ -93,10 +93,10 @@ fun ScanningTimes.toJson(): JsonProjectScanningHistoryTimes =
     creatingIteratorsTime = JsonDuration(creatingIteratorsDuration.toNanos()),
     concurrentHandlingWallTimeWithoutPauses = JsonDuration(concurrentHandlingWallTimeWithoutPauses.toNanos()),
     concurrentHandlingWallTimeWithPauses = JsonDuration(concurrentHandlingWallTimeWithPauses.toNanos()),
-    concurrentHandlingCPUTimeWithPauses = JsonDuration(concurrentHandlingCPUTimeWithPauses.toNanos()),
-    concurrentIterationAndScannersApplicationCPUTimeWithPauses =
-    JsonDuration(concurrentIterationAndScannersApplicationCPUTimeWithPauses.toNanos()),
-    concurrentFileCheckCPUTimeWithPauses = JsonDuration(concurrentFileCheckCPUTimeWithPauses.toNanos()),
+    concurrentHandlingSumOfThreadTimesWithPauses = JsonDuration(concurrentHandlingSumOfThreadTimesWithPauses.toNanos()),
+    concurrentIterationAndScannersApplicationSumOfThreadTimesWithPauses =
+    JsonDuration(concurrentIterationAndScannersApplicationSumOfThreadTimesWithPauses.toNanos()),
+    concurrentFileCheckSumOfThreadTimesWithPauses = JsonDuration(concurrentFileCheckSumOfThreadTimesWithPauses.toNanos()),
     delayedPushPropertiesStageTime = JsonDuration(delayedPushPropertiesStageDuration.toNanos()),
     indexExtensionsTime = JsonDuration(indexExtensionsDuration.toNanos()),
     updatingStart = JsonDateTime(updatingStart),
@@ -134,7 +134,7 @@ private fun ProjectScanningHistoryImpl.changeToJson(): JsonProjectScanningHistor
   projectName = project.name,
   times = times.toJson(),
   fileCount = getFileCount(),
-  scanningStatistics = scanningStatistics.sortedByDescending { it.totalCPUTimeWithPauses.nano }
+  scanningStatistics = scanningStatistics.sortedByDescending { it.totalOneThreadTimeWithPauses.nano }
 )
 
 private fun ProjectDumbIndexingHistoryImpl.changeToJson(): JsonProjectDumbIndexingHistory {

@@ -112,9 +112,9 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     }
 
     writeStagesToDurations()
-    timesImpl.concurrentHandlingCPUTimeWithPauses = Duration.ofNanos(scanningStatistics.sumOf { stat -> stat.totalCPUTimeWithPauses.nano })
-    timesImpl.concurrentIterationAndScannersApplicationCPUTimeWithPauses = Duration.ofNanos(scanningStatistics.sumOf { stat -> stat.iterationAndScannersApplicationTime.nano })
-    timesImpl.concurrentFileCheckCPUTimeWithPauses = Duration.ofNanos(scanningStatistics.sumOf { stat -> stat.filesCheckTime.nano })
+    timesImpl.concurrentHandlingSumOfThreadTimesWithPauses = Duration.ofNanos(scanningStatistics.sumOf { stat -> stat.totalOneThreadTimeWithPauses.nano })
+    timesImpl.concurrentIterationAndScannersApplicationSumOfThreadTimesWithPauses = Duration.ofNanos(scanningStatistics.sumOf { stat -> stat.iterationAndScannersApplicationTime.nano })
+    timesImpl.concurrentFileCheckSumOfThreadTimesWithPauses = Duration.ofNanos(scanningStatistics.sumOf { stat -> stat.filesCheckTime.nano })
     timesImpl.indexExtensionsDuration = Duration.ofNanos(
       scanningStatistics.sumOf { stat -> stat.timeIndexingWithoutContentViaInfrastructureExtension.nano })
   }
@@ -272,9 +272,9 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     override var creatingIteratorsDuration: Duration = Duration.ZERO,
     override var concurrentHandlingWallTimeWithoutPauses: Duration = Duration.ZERO,
     override var concurrentHandlingWallTimeWithPauses: Duration = Duration.ZERO,
-    override var concurrentHandlingCPUTimeWithPauses: Duration = Duration.ZERO,
-    override var concurrentIterationAndScannersApplicationCPUTimeWithPauses: Duration = Duration.ZERO,
-    override var concurrentFileCheckCPUTimeWithPauses: Duration = Duration.ZERO,
+    override var concurrentHandlingSumOfThreadTimesWithPauses: Duration = Duration.ZERO,
+    override var concurrentIterationAndScannersApplicationSumOfThreadTimesWithPauses: Duration = Duration.ZERO,
+    override var concurrentFileCheckSumOfThreadTimesWithPauses: Duration = Duration.ZERO,
     override var indexExtensionsDuration: Duration = Duration.ZERO,
     override var pausedDuration: Duration = Duration.ZERO,
     override var wasInterrupted: Boolean = false

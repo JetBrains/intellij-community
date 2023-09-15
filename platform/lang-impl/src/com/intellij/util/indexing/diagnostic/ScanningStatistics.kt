@@ -22,7 +22,7 @@ class ScanningStatistics(val fileSetName: String) {
   var numberOfFilesFullyIndexedByInfrastructureExtension: Int = 0
   var listOfFilesFullyIndexedByInfrastructureExtension: ArrayList<String> = arrayListOf()
 
-  var totalCPUTimeWithPauses: TimeNano = 0
+  var totalOneThreadTimeWithPauses: TimeNano = 0
   var statusTime: TimeNano = 0
 
   var timeProcessingUpToDateFiles: TimeNano = 0
