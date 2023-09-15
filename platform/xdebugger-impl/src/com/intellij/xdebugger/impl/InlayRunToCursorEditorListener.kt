@@ -113,18 +113,12 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
     }
     val lineY = editor.logicalPositionToXY(LogicalPosition(lineNumber, 0)).y
 
-    val position = SwingUtilities.convertPoint(
-      editor.getContentComponent(),
-      Point(JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT), lineY + (editor.lineHeight - JBUI.scale(ACTION_BUTTON_SIZE))/2),
-      editor.getComponent().rootPane.layeredPane
-    )
-
     val group = DefaultActionGroup()
     val pausePosition = session.currentPosition
     if (pausePosition != null && pausePosition.getFile() == editor.virtualFile && pausePosition.getLine() == lineNumber) {
       group.add(ActionManager.getInstance().getAction(XDebuggerActions.RESUME))
       ApplicationManager.getApplication().invokeLater {
-        showHint(editor, lineNumber, firstNonSpacePos, group, position)
+        showHint(editor, lineNumber, firstNonSpacePos, group, lineY)
       }
     }
     else {
@@ -142,14 +136,14 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
         val extraActions = ActionManager.getInstance().getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup
         group.addAll(extraActions)
 
-        showHint(editor, lineNumber, firstNonSpacePos, group, position)
+        showHint(editor, lineNumber, firstNonSpacePos, group, lineY)
       }
     }
     return true
   }
 
   @RequiresEdt
-  private fun showHint(editor: Editor, lineNumber: Int, firstNonSpacePos: Point, group: DefaultActionGroup, position: Point) {
+  private fun showHint(editor: Editor, lineNumber: Int, firstNonSpacePos: Point, group: DefaultActionGroup, lineY: Int) {
     currentEditor = WeakReference(editor)
     currentLineNumber = lineNumber
     val caretLine = editor.getCaretModel().logicalPosition.line
@@ -158,6 +152,13 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
       group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS))
     }
     if (group.childrenCount == 0) return
+
+    val position = SwingUtilities.convertPoint(
+      editor.getContentComponent(),
+      Point(JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT) - (group.childrenCount - 1) * JBUI.scale(ACTION_BUTTON_SIZE), lineY + (editor.lineHeight - JBUI.scale(ACTION_BUTTON_SIZE))/2),
+      editor.getComponent().rootPane.layeredPane
+    )
+
     val toolbarImpl = createImmediatelyUpdatedToolbar(group, ActionPlaces.EDITOR_HINT, editor.getComponent(), true) {} as ActionToolbarImpl
     toolbarImpl.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY)
     toolbarImpl.setActionButtonBorder(JBUI.Borders.empty(0, ACTION_BUTTON_GAP))
