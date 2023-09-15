@@ -500,8 +500,15 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showBreakpointsOverLineNumbers = value
     }
 
-  val currentIdeScale: Float
+  var currentIdeScale: Float
     get() = if (presentationMode) presentationModeIdeScale else ideScale
+    set(scale) {
+      when {
+        scale.percentValue == currentIdeScale.percentValue -> return
+        presentationMode -> presentationModeIdeScale = scale
+        else -> ideScale = scale
+      }
+    }
 
   companion object {
     init {

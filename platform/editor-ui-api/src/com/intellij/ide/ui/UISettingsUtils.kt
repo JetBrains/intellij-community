@@ -9,11 +9,7 @@ class UISettingsUtils(private val settings: UISettings) {
     get() = settings.currentIdeScale
 
   fun setCurrentIdeScale(scale: Float) {
-    when {
-      scale.percentValue == currentIdeScale.percentValue -> return
-      settings.presentationMode -> settings.presentationModeIdeScale = scale
-      else -> settings.ideScale = scale
-    }
+    settings.currentIdeScale = scale
   }
 
   var presentationModeFontSize: Float

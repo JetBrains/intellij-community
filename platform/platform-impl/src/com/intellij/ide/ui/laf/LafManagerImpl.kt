@@ -527,16 +527,15 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun applyDensity() {
-    val settingsUtils = UISettingsUtils.getInstance()
-    val ideScale = settingsUtils.currentIdeScale
+    val uiSettings = UISettings.getInstance()
+    val ideScale = uiSettings.currentIdeScale
 
     // need to temporarily reset this to correctly apply new size values
-    settingsUtils.setCurrentIdeScale(1f)
-    val uiSettings = UISettings.getInstance()
+    uiSettings.currentIdeScale = 1f
     uiSettings.fireUISettingsChanged()
-    setCurrentLookAndFeel(currentUIThemeLookAndFeel!!, true)
+    setCurrentLookAndFeel(currentTheme!!, true)
     updateUI()
-    settingsUtils.setCurrentIdeScale(ideScale)
+    uiSettings.currentIdeScale = ideScale
     uiSettings.fireUISettingsChanged()
   }
 
@@ -601,7 +600,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     patchTreeUI(uiDefaults, currentTheme)
 
     if (ExperimentalUI.isNewUI()) {
-      applyDensity(uiDefaults)
+      applyDensityOnUpdateUi(uiDefaults)
     }
 
     //should be called last because this method modifies uiDefault values
@@ -1228,7 +1227,7 @@ private fun repaintUI(window: Window) {
   }
 }
 
-private fun applyDensity(defaults: UIDefaults) {
+private fun applyDensityOnUpdateUi(defaults: UIDefaults) {
   val densityKey = "ui.density"
   val oldDensityName = defaults.get(densityKey) as? String
   val newDensity = UISettings.getInstance().uiDensity
