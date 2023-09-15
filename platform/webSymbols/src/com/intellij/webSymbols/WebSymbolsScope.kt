@@ -33,7 +33,8 @@ interface WebSymbolsScope : ModificationTracker {
 
   /**
    * Returns symbols within the scope. If provided name is `null`, no pattern evaluation should happen
-   * and all symbols of a particular kind and from particular namespace should be returned.
+   * and all symbols of a particular kind and from particular namespace should be returned,
+   * including symbols with patterns.
    *
    * Use [WebSymbol.match] to match Web Symbols in the scope against provided name.
    *

@@ -88,12 +88,12 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
         }
     }
 
-  override fun getCompletionResults(owner: WebSymbol?,
-                                    scopeStack: Stack<WebSymbolsScope>,
-                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
-                                    params: CompletionParameters,
-                                    start: Int,
-                                    end: Int): CompletionResults =
+  override fun complete(owner: WebSymbol?,
+                        scopeStack: Stack<WebSymbolsScope>,
+                        symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                        params: CompletionParameters,
+                        start: Int,
+                        end: Int): CompletionResults =
     process(scopeStack, params) { patterns, newSymbolsResolver, apiStatus,
                                   isRequired, priority, proximity, repeats, unique ->
       var staticPrefixes: Set<String> = emptySet()
@@ -115,7 +115,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
         val defaultSource = symbolsResolver?.delegate ?: scopeStack.peek() as? WebSymbol
         withPrevMatchScope(scopeStack, prevMatchScope) {
           patterns.flatMap { pattern ->
-            pattern.getCompletionResults(null, scopeStack, newSymbolsResolver, params, localStart, localEnd)
+            pattern.complete(null, scopeStack, newSymbolsResolver, params, localStart, localEnd)
               .items
               .asSequence()
               .let { items ->

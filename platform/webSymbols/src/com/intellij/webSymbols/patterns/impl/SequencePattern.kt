@@ -56,12 +56,12 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
       }
     }
 
-  override fun getCompletionResults(owner: WebSymbol?,
-                                    scopeStack: Stack<WebSymbolsScope>,
-                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
-                                    params: CompletionParameters,
-                                    start: Int,
-                                    end: Int): CompletionResults {
+  override fun complete(owner: WebSymbol?,
+                        scopeStack: Stack<WebSymbolsScope>,
+                        symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                        params: CompletionParameters,
+                        start: Int,
+                        end: Int): CompletionResults {
     val results: MutableList<WebSymbolCodeCompletionItem> = mutableListOf()
     var stop = false
     process(
@@ -275,9 +275,9 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
                                             params: CompletionParameters,
                                             matchStart: Int,
                                             prevResult: MatchResult?) =
-    pattern.getCompletionResults(null, scopeStack, symbolsResolver,
-                                 if (matchResult != null) params else params.withPosition(matchStart),
-                                 matchStart, matchResult?.end ?: matchStart)
+    pattern.complete(null, scopeStack, symbolsResolver,
+                     if (matchResult != null) params else params.withPosition(matchStart),
+                     matchStart, matchResult?.end ?: matchStart)
       .let { completionResults ->
         val lastMatchedSegment = matchResult?.segments?.last()
         val matchedName = lastMatchedSegment?.let { CharSequenceSubSequence(params.name, it.start, it.end) }

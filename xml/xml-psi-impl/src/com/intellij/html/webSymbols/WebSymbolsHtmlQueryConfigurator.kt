@@ -104,13 +104,6 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
     private fun String.adjustCase(tag: XmlTag) =
       if (tag.isCaseSensitive) this else StringUtil.toLowerCase(this)
 
-    fun Sequence<WebSymbolCodeCompletionItem>.filterOutStandardHtmlSymbols(): Sequence<WebSymbolCodeCompletionItem> =
-      filter {
-        it.symbol !is StandardHtmlSymbol
-        || it.offset > 0
-        || it.symbol?.name != it.name
-      }
-
     fun List<WebSymbol>.hasOnlyStandardHtmlSymbols(): Boolean =
       flatMap { it.unwrapMatchedSymbols() }
         .all { it is StandardHtmlSymbol }

@@ -22,12 +22,12 @@ internal class CompletionAutoPopupPattern(val isSticky: Boolean) : WebSymbolsPat
                      end: Int): List<MatchResult> =
     listOf(MatchResult(WebSymbolNameSegment(start, start)))
 
-  override fun getCompletionResults(owner: WebSymbol?,
-                                    scopeStack: Stack<WebSymbolsScope>,
-                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
-                                    params: CompletionParameters,
-                                    start: Int,
-                                    end: Int): CompletionResults =
+  override fun complete(owner: WebSymbol?,
+                        scopeStack: Stack<WebSymbolsScope>,
+                        symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                        params: CompletionParameters,
+                        start: Int,
+                        end: Int): CompletionResults =
     if (symbolsResolver == null || symbolsResolver.delegate?.hideFromCompletion == true) {
       CompletionResults(emptyList(), true)
     }

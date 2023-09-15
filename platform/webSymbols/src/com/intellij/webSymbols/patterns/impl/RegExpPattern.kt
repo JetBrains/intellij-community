@@ -37,12 +37,12 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
     else emptyList()
   }
 
-  override fun getCompletionResults(owner: WebSymbol?,
-                                    scopeStack: Stack<WebSymbolsScope>,
-                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
-                                    params: CompletionParameters,
-                                    start: Int,
-                                    end: Int): CompletionResults =
+  override fun complete(owner: WebSymbol?,
+                        scopeStack: Stack<WebSymbolsScope>,
+                        symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                        params: CompletionParameters,
+                        start: Int,
+                        end: Int): CompletionResults =
     getPatternCompletablePrefix(regex)
       .takeIf { it.isNotBlank() }
       ?.let {

@@ -22,12 +22,12 @@ internal class StaticPattern(val content: String) : WebSymbolsPattern() {
       listOf(MatchResult(WebSymbolNameSegment(start, start + content.length)))
     else emptyList()
 
-  override fun getCompletionResults(owner: WebSymbol?,
-                                    scopeStack: Stack<WebSymbolsScope>,
-                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
-                                    params: CompletionParameters,
-                                    start: Int,
-                                    end: Int): CompletionResults =
+  override fun complete(owner: WebSymbol?,
+                        scopeStack: Stack<WebSymbolsScope>,
+                        symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                        params: CompletionParameters,
+                        start: Int,
+                        end: Int): CompletionResults =
     CompletionResults(WebSymbolCodeCompletionItem.create(content, start))
 
   override fun toString(): String =

@@ -132,7 +132,7 @@ fun WebSymbol.toCodeCompletionItems(name: String,
   pattern?.let { pattern ->
     context.push(this)
     try {
-      pattern.getCompletionResults(this, context, name, params)
+      pattern.complete(this, context, name, params)
         .applyIcons(this)
     }
     finally {

@@ -48,6 +48,22 @@ interface WebSymbolsQueryExecutor : ModificationTracker {
                         strictScope: Boolean = false,
                         scope: List<WebSymbolsScope> = emptyList()): List<WebSymbol>
 
+  fun runListSymbolsQuery(namespace: SymbolNamespace,
+                          kind: SymbolKind,
+                          virtualSymbols: Boolean = true,
+                          abstractSymbols: Boolean = false,
+                          strictScope: Boolean = false,
+                          scope: List<WebSymbolsScope> = emptyList()): List<WebSymbol> =
+    runListSymbolsQuery(emptyList(), namespace, kind, virtualSymbols, abstractSymbols, strictScope, scope)
+
+  fun runListSymbolsQuery(path: List<WebSymbolQualifiedName>,
+                          namespace: SymbolNamespace,
+                          kind: SymbolKind,
+                          virtualSymbols: Boolean = true,
+                          abstractSymbols: Boolean = false,
+                          strictScope: Boolean = false,
+                          scope: List<WebSymbolsScope> = emptyList()): List<WebSymbol>
+
   fun runCodeCompletionQuery(namespace: SymbolNamespace,
                              kind: SymbolKind,
                              name: String,

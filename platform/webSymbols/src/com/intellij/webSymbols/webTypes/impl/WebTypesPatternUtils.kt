@@ -115,8 +115,8 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
                                 scopeStack: Stack<WebSymbolsScope>,
                                 queryExecutor: WebSymbolsQueryExecutor): List<WebSymbolCodeCompletionItem> =
       delegate.pattern
-        ?.getCompletionResults(delegate, scopeStack,
-                               this, CompletionParameters(name, queryExecutor, position), 0, name.length)
+        ?.complete(delegate, scopeStack,
+                   this, CompletionParameters(name, queryExecutor, position), 0, name.length)
         ?.items
         ?.applyIcons(delegate)
       ?: emptyList()
