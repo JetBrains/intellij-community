@@ -37,7 +37,8 @@ data class TextMateGrammar(val fileNameMatchers: Collection<TextMateFileNameMatc
 data class TextMatePreferences(val scopeName: TextMateScopeName,
                                val variables: Collection<TextMateShellVariable>,
                                val highlightingPairs: Set<TextMateBracePair>?,
-                               val smartTypingPairs: Set<TextMateBracePair>?,
+                               val smartTypingPairs: Set<TextMateAutoClosingPair>?,
+                               val surroundingPairs:  Set<TextMateBracePair>?,
                                val indentationRules: IndentationRules,
                                val customHighlightingAttributes: TextMateTextAttributes?)
 
@@ -118,6 +119,8 @@ private fun readPreferencesFromPlist(plist: Plist): TextMatePreferences? {
     plist.getPlistValue(Constants.SETTINGS_KEY)?.plist?.let { settings ->
       val highlightingPairs = PreferencesReadUtil.readPairs(settings.getPlistValue(Constants.HIGHLIGHTING_PAIRS_KEY))
       val smartTypingPairs = PreferencesReadUtil.readPairs(settings.getPlistValue(Constants.SMART_TYPING_PAIRS_KEY))
+        ?.map { TextMateAutoClosingPair(it.left, it.right, null) }
+        ?.toSet()
       val indentationRules = PreferencesReadUtil.loadIndentationRules(settings)
       val variables = settings.getPlistValue(Constants.SHELL_VARIABLES_KEY)?.let { variables ->
         variables.array.map { variable ->
@@ -132,6 +135,7 @@ private fun readPreferencesFromPlist(plist: Plist): TextMatePreferences? {
                           variables = variables,
                           highlightingPairs = highlightingPairs ?: Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS,
                           smartTypingPairs = smartTypingPairs ?: Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS,
+                          surroundingPairs = null,
                           indentationRules = indentationRules,
                           customHighlightingAttributes = customHighlightingAttributes)
     }

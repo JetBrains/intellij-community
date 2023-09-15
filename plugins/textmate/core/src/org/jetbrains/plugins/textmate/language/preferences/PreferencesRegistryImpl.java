@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class PreferencesRegistryImpl implements PreferencesRegistry {
   @NotNull private final Set<Preferences> myPreferences = new HashSet<>();
@@ -40,7 +41,10 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
   @Deprecated(forRemoval = true)
   public void fillFromPList(@NotNull CharSequence scopeName, @NotNull Plist plist) {
     final Set<TextMateBracePair> highlightingPairs = PreferencesReadUtil.readPairs(plist.getPlistValue(Constants.HIGHLIGHTING_PAIRS_KEY));
-    final Set<TextMateBracePair> smartTypingPairs = PreferencesReadUtil.readPairs(plist.getPlistValue(Constants.SMART_TYPING_PAIRS_KEY));
+    Set<TextMateBracePair> rawSmartTypingPairs = PreferencesReadUtil.readPairs(plist.getPlistValue(Constants.SMART_TYPING_PAIRS_KEY));
+    final Set<TextMateAutoClosingPair> smartTypingPairs = rawSmartTypingPairs != null ? rawSmartTypingPairs.stream().map(p -> {
+      return new TextMateAutoClosingPair(p.getLeft(), p.getRight(), null);
+    }).collect(Collectors.toSet()) : null;
     final IndentationRules indentationRules = PreferencesReadUtil.loadIndentationRules(plist);
     fillHighlightingBraces(highlightingPairs);
     fillSmartTypingBraces(smartTypingPairs);
@@ -62,9 +66,9 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
     }
   }
 
-  private void fillSmartTypingBraces(Collection<TextMateBracePair> smartTypingPairs) {
+  private void fillSmartTypingBraces(Collection<TextMateAutoClosingPair> smartTypingPairs) {
     if (smartTypingPairs != null) {
-      for (TextMateBracePair pair : smartTypingPairs) {
+      for (TextMateAutoClosingPair pair : smartTypingPairs) {
         if (!pair.getLeft().isEmpty()) {
           myLeftSmartTypingBraces.add(pair.getLeft().charAt(pair.getLeft().length() - 1));
         }

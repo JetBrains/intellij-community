@@ -14,6 +14,7 @@ import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.TextMateService;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.preferences.Preferences;
+import org.jetbrains.plugins.textmate.language.preferences.TextMateAutoClosingPair;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateElementType;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
@@ -104,23 +105,17 @@ public final class TextMateEditorUtils {
         result.addAll(highlightingPairs);
       }
     }
-    for (Preferences preferences : preferencesForSelector) {
-      final Set<TextMateBracePair> smartTypingPairs = preferences.getSmartTypingPairs();
-      if (smartTypingPairs != null) {
-        result.addAll(preferences.getSmartTypingPairs());
-      }
-    }
     return result;
   }
 
-  public static Set<TextMateBracePair> getSmartTypingPairs(@Nullable TextMateScope currentScope) {
+  public static Set<TextMateAutoClosingPair> getSmartTypingPairs(@Nullable TextMateScope currentScope) {
     if (currentScope == null) {
       return Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS;
     }
     List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferenceRegistry().getPreferences(currentScope);
-    final HashSet<TextMateBracePair> result = new HashSet<>();
+    final HashSet<TextMateAutoClosingPair> result = new HashSet<>();
     for (Preferences preferences : preferencesForSelector) {
-      final Set<TextMateBracePair> smartTypingPairs = preferences.getSmartTypingPairs();
+      final @Nullable Set<TextMateAutoClosingPair> smartTypingPairs = preferences.getSmartTypingPairs();
       if (smartTypingPairs != null) {
         if (smartTypingPairs.isEmpty()) {
           // smart typing pairs defined in preferences and can be empty (in order to disable smart typing completely)

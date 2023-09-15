@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TextMateFileType;
 import org.jetbrains.plugins.textmate.TextMateService;
-import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
+import org.jetbrains.plugins.textmate.language.preferences.TextMateAutoClosingPair;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
 import java.util.Set;
@@ -43,7 +43,7 @@ public class TextMateTypedHandler extends TypedHandlerDelegate {
       @Nullable TextMateScope scopeSelector = TextMateEditorUtils.getCurrentScopeSelector((EditorEx)editor);
 
       final Document document = editor.getDocument();
-      final TextMateBracePair pairForRightChar = findSingleCharSmartTypingPair(c, scopeSelector);
+      final TextMateAutoClosingPair pairForRightChar = findSingleCharSmartTypingPair(c, scopeSelector);
       if (pairForRightChar != null) {
         if (offset < document.getTextLength() && document.getCharsSequence().charAt(offset) == c) {
           EditorModificationUtil.moveCaretRelatively(editor, 1);
@@ -69,7 +69,7 @@ public class TextMateTypedHandler extends TypedHandlerDelegate {
       final int offset = editor.getCaretModel().getOffset();
       @Nullable TextMateScope scopeSelector = TextMateEditorUtils.getCurrentScopeSelector((EditorEx)editor);
       CharSequence sequence = editor.getDocument().getCharsSequence();
-      final TextMateBracePair autoInsertingPair = findAutoInsertingPair(offset, sequence, scopeSelector);
+      final TextMateAutoClosingPair autoInsertingPair = findAutoInsertingPair(offset, sequence, scopeSelector);
       if (autoInsertingPair != null) {
         int rightBraceEndOffset = offset + autoInsertingPair.getRight().length();
         // has a right brace already
@@ -95,13 +95,12 @@ public class TextMateTypedHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  @Nullable
-  private static TextMateBracePair findSingleCharSmartTypingPair(char closingChar, @Nullable TextMateScope currentSelector) {
+  private static TextMateAutoClosingPair findSingleCharSmartTypingPair(char closingChar, @Nullable TextMateScope currentSelector) {
     if (!TextMateService.getInstance().getPreferenceRegistry().isPossibleRightSmartTypingBrace(closingChar)) {
       return null;
     }
-    Set<TextMateBracePair> pairs = getSmartTypingPairs(currentSelector);
-    for (TextMateBracePair pair : pairs) {
+    Set<TextMateAutoClosingPair> pairs = getSmartTypingPairs(currentSelector);
+    for (TextMateAutoClosingPair pair : pairs) {
       if (pair.getRight().length() == 1 && pair.getRight().charAt(0) == closingChar) {
         return pair;
       }
@@ -109,15 +108,14 @@ public class TextMateTypedHandler extends TypedHandlerDelegate {
     return null;
   }
 
-  @Nullable
-  public static TextMateBracePair findAutoInsertingPair(int offset,
-                                                        @NotNull CharSequence fileText,
-                                                        @Nullable TextMateScope currentScope) {
+  public static TextMateAutoClosingPair findAutoInsertingPair(int offset,
+                                                              @NotNull CharSequence fileText,
+                                                              @Nullable TextMateScope currentScope) {
     if (offset == 0 || !TextMateService.getInstance().getPreferenceRegistry().isPossibleLeftSmartTypingBrace(fileText.charAt(offset - 1))) {
       return null;
     }
-    Set<TextMateBracePair> pairs = getSmartTypingPairs(currentScope);
-    for (TextMateBracePair pair : pairs) {
+    Set<TextMateAutoClosingPair> pairs = getSmartTypingPairs(currentScope);
+    for (TextMateAutoClosingPair pair : pairs) {
       int startOffset = offset - pair.getLeft().length();
       if (startOffset >= 0 && pair.getLeft().contentEquals(fileText.subSequence(startOffset, offset))) {
         return pair;

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TextMateFileType;
 import org.jetbrains.plugins.textmate.TextMateService;
-import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
+import org.jetbrains.plugins.textmate.language.preferences.TextMateAutoClosingPair;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateElementType;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
@@ -36,7 +36,7 @@ public class TextMateBackspaceHandler extends BackspaceHandlerDelegate {
       final IElementType tokenType = iterator.getTokenType();
       if (tokenType instanceof TextMateElementType) {
         TextMateScope scopeSelector = ((TextMateElementType)tokenType).getScope();
-        final TextMateBracePair pairForChar = findSingleCharSmartTypingPair(c, scopeSelector);
+        final TextMateAutoClosingPair pairForChar = findSingleCharSmartTypingPair(c, scopeSelector);
         if (pairForChar != null) {
           final Document document = editor.getDocument();
           int endOffset = offset + pairForChar.getRight().length();
@@ -52,13 +52,12 @@ public class TextMateBackspaceHandler extends BackspaceHandlerDelegate {
     return false;
   }
 
-  @Nullable
-  private static TextMateBracePair findSingleCharSmartTypingPair(char openingChar, @Nullable TextMateScope currentSelector) {
+  private static TextMateAutoClosingPair findSingleCharSmartTypingPair(char openingChar, @Nullable TextMateScope currentSelector) {
     if (!TextMateService.getInstance().getPreferenceRegistry().isPossibleLeftSmartTypingBrace(openingChar)) {
       return null;
     }
-    Set<TextMateBracePair> pairs = getSmartTypingPairs(currentSelector);
-    for (TextMateBracePair pair : pairs) {
+    Set<TextMateAutoClosingPair> pairs = getSmartTypingPairs(currentSelector);
+    for (TextMateAutoClosingPair pair : pairs) {
       if (pair.getLeft().length() == 1 && pair.getLeft().charAt(0) == openingChar) {
         return pair;
       }

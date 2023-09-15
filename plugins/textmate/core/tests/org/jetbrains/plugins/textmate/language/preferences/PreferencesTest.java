@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.textmate.language.preferences;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TestUtil;
 import org.jetbrains.plugins.textmate.bundles.TextMatePreferences;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
@@ -16,7 +17,7 @@ public class PreferencesTest {
     final PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE);
     final List<Preferences> preferences = preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html.basic"));
     assertEquals(1, preferences.size());
-    assertEquals(newHashSet(new TextMateBracePair("\"", "\"")), preferences.get(0).getSmartTypingPairs());
+    assertEquals(newHashSet(new TextMateAutoClosingPair("\"", "\"", null)), preferences.get(0).getSmartTypingPairs());
     assertEquals(newHashSet(new TextMateBracePair("`", "`")), preferences.get(0).getHighlightingPairs());
   }
 
@@ -25,7 +26,7 @@ public class PreferencesTest {
     final PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE);
     final List<Preferences> preferences = preferencesRegistry.getPreferences(TestUtil.scopeFromString("source.php string"));
     assertEquals(1, preferences.size());
-    assertEquals(newHashSet(new TextMateBracePair("(", ")")), preferences.get(0).getSmartTypingPairs());
+    assertEquals(newHashSet(new TextMateAutoClosingPair("(", ")", null)), preferences.get(0).getSmartTypingPairs());
     assertEquals(newHashSet(new TextMateBracePair("[", "]")), preferences.get(0).getHighlightingPairs());
   }
 
@@ -35,10 +36,10 @@ public class PreferencesTest {
     List<Preferences> preferences =
       preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html source.php string.quoted.double.php"));
     assertEquals(2, preferences.size());
-    assertEquals(newHashSet(new TextMateBracePair("(", ")")), preferences.get(0).getSmartTypingPairs());
+    assertEquals(newHashSet(new TextMateAutoClosingPair("(", ")", null)), preferences.get(0).getSmartTypingPairs());
     assertEquals(newHashSet(new TextMateBracePair("[", "]")), preferences.get(0).getHighlightingPairs());
 
-    assertEquals(newHashSet(new TextMateBracePair("\"", "\"")), preferences.get(1).getSmartTypingPairs());
+    assertEquals(newHashSet(new TextMateAutoClosingPair("\"", "\"", null)), preferences.get(1).getSmartTypingPairs());
     assertEquals(newHashSet(new TextMateBracePair("`", "`")), preferences.get(1).getHighlightingPairs());
   }
 
@@ -46,7 +47,8 @@ public class PreferencesTest {
   public void loadingWithTheSameScope() {
     final PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE);
     final Preferences preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("same.scope")));
-    assertEquals(newHashSet(new TextMateBracePair("[", "]"), new TextMateBracePair("(", ")")), preferences.getSmartTypingPairs());
+    assertEquals(newHashSet(new TextMateAutoClosingPair("[", "]", null),
+                            new TextMateAutoClosingPair("(", ")", null)), preferences.getSmartTypingPairs());
   }
 
   @Test
@@ -61,9 +63,9 @@ public class PreferencesTest {
     PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.MARKDOWN_TEXTMATE);
     Preferences preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html.markdown markup.raw")));
     assertEquals(newHashSet(
-      new TextMateBracePair("{", "}"),
-      new TextMateBracePair("(", ")"),
-      new TextMateBracePair("\"", "\"")
+      new TextMateAutoClosingPair("{", "}", null),
+      new TextMateAutoClosingPair("(", ")", null),
+      new TextMateAutoClosingPair("\"", "\"", null)
     ), preferences.getSmartTypingPairs());
   }
 
@@ -72,7 +74,7 @@ public class PreferencesTest {
     PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.LATEX);
     TextMateScope scope = TestUtil.scopeFromString("text.tex constant.character.escape.tex");
     Preferences preferences = preferencesRegistry.getPreferences(scope).iterator().next();
-    Set<TextMateBracePair> smartTypingPairs = preferences.getSmartTypingPairs();
+    @Nullable Set<TextMateAutoClosingPair> smartTypingPairs = preferences.getSmartTypingPairs();
     assertNotNull(smartTypingPairs);
     assertEquals(0, smartTypingPairs.size());
   }
@@ -103,12 +105,12 @@ public class PreferencesTest {
   @NotNull
   private static Preferences mergeAll(@NotNull List<Preferences> preferences) {
     Set<TextMateBracePair> highlightingPairs = new HashSet<>();
-    Set<TextMateBracePair> smartTypingParis = new HashSet<>();
+    Set<TextMateAutoClosingPair> smartTypingParis = new HashSet<>();
     IndentationRules indentationRules = IndentationRules.empty();
 
     for (Preferences preference : preferences) {
       final Set<TextMateBracePair> localHighlightingPairs = preference.getHighlightingPairs();
-      final Set<TextMateBracePair> localSmartTypingPairs = preference.getSmartTypingPairs();
+      final @Nullable Set<TextMateAutoClosingPair> localSmartTypingPairs = preference.getSmartTypingPairs();
       indentationRules = indentationRules.updateWith(preference.getIndentationRules());
       if (localHighlightingPairs != null) {
         highlightingPairs.addAll(localHighlightingPairs);
@@ -120,7 +122,7 @@ public class PreferencesTest {
     return new Preferences("", highlightingPairs, smartTypingParis, indentationRules);
   }
 
-  private static Set<TextMateBracePair> newHashSet(TextMateBracePair... pairs) {
+  private static <T> Set<T> newHashSet(T... pairs) {
     //noinspection SSBasedInspection
     return new HashSet<>(Arrays.asList(pairs));
   }

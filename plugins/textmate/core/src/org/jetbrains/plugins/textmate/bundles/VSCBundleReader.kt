@@ -10,15 +10,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.jetbrains.plugins.textmate.Constants
-import org.jetbrains.plugins.textmate.language.preferences.IndentationRules
-import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair
-import org.jetbrains.plugins.textmate.language.preferences.TextMateShellVariable
-import org.jetbrains.plugins.textmate.language.preferences.TextMateSnippet
+import org.jetbrains.plugins.textmate.language.TextMateStandardTokenType
+import org.jetbrains.plugins.textmate.language.preferences.*
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader
 import org.jetbrains.plugins.textmate.plist.JsonPlistReader
 import org.jetbrains.plugins.textmate.plist.Plist
 import org.jetbrains.plugins.textmate.plist.PlistValueType
 import java.io.InputStream
+import java.util.EnumSet
 
 typealias VSCodeExtensionLanguageId = String
 
@@ -82,6 +81,9 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
                                                    VSCodeExtensionLanguageConfiguration::class.java)
           val highlightingPairs = readBrackets(configuration.brackets).takeIf { it.isNotEmpty() }
           val smartTypingPairs = configuration.autoClosingPairs.map {
+            TextMateAutoClosingPair(it.open, it.close, it.notIn)
+          }.toSet().takeIf { it.isNotEmpty() }
+          val surroundingPairs = configuration.surroundingPairs.map {
             TextMateBracePair(it.open, it.close)
           }.toSet().takeIf { it.isNotEmpty() }
           val indentationRules = IndentationRules(configuration.indentationRules?.increaseIndentPattern,
@@ -94,6 +96,7 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
                                 variables = variables,
                                 highlightingPairs = highlightingPairs,
                                 smartTypingPairs = smartTypingPairs,
+                                surroundingPairs = surroundingPairs,
                                 indentationRules = indentationRules,
                                 null)
           }
@@ -206,7 +209,7 @@ class VSCodeExtensionSurroundingPairsDeserializer(vc: Class<*>?) : StdDeserializ
 }
 
 @JsonDeserialize(using = VSCodeExtensionAutoClosingPairsDeserializer::class)
-data class VSCodeExtensionAutoClosingPairs(val open: String, val close: String, val notIn: String?)
+data class VSCodeExtensionAutoClosingPairs(val open: String, val close: String, val notIn: EnumSet<TextMateStandardTokenType>?)
 
 class VSCodeExtensionAutoClosingPairsDeserializer(vc: Class<*>?) : StdDeserializer<VSCodeExtensionAutoClosingPairs>(vc) {
   @Suppress("unused")
@@ -215,7 +218,15 @@ class VSCodeExtensionAutoClosingPairsDeserializer(vc: Class<*>?) : StdDeserializ
   override fun deserialize(p: JsonParser, ctxt: DeserializationContext): VSCodeExtensionAutoClosingPairs {
     return when (val node: JsonNode = p.codec.readTree(p)) {
       is ArrayNode -> VSCodeExtensionAutoClosingPairs(node.get(0).asText(), node.get(1).asText(), null)
-      is ObjectNode -> VSCodeExtensionAutoClosingPairs(node["open"].asText(), node["close"].asText(), node["notIn"]?.asText(null))
+      is ObjectNode -> VSCodeExtensionAutoClosingPairs(node["open"].asText(),
+                                                       node["close"].asText(),
+                                                       (node["notIn"] as? ArrayNode)?.mapNotNull {
+                                                         when (it.asText()) {
+                                                           "string" -> TextMateStandardTokenType.STRING
+                                                           "comment" -> TextMateStandardTokenType.COMMENT
+                                                           else -> null
+                                                         }
+                                                       }?.let { EnumSet.copyOf(it) })
       else -> error("unexpected autoClosingPairs node")
     }
   }

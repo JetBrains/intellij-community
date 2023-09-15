@@ -3,6 +3,7 @@ package org.jetbrains.plugins.textmate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.textmate.language.preferences.TextMateAutoClosingPair;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
 
 import java.util.Arrays;
@@ -115,10 +116,10 @@ public interface Constants {
 
   // we should depend on intellij util classes as little as possible
   @SuppressWarnings("SSBasedInspection")
-  Set<TextMateBracePair> DEFAULT_SMART_TYPING_BRACE_PAIRS =
-    new HashSet<>(Arrays.asList(new TextMateBracePair("\"", "\""),
-                                new TextMateBracePair("'", "'"),
-                                new TextMateBracePair("[", "]"),
-                                new TextMateBracePair("{", "}"),
-                                new TextMateBracePair("(", ")")));
+  Set<TextMateAutoClosingPair> DEFAULT_SMART_TYPING_BRACE_PAIRS =
+    new HashSet<>(Arrays.asList(new TextMateAutoClosingPair("\"", "\"", null),
+                                new TextMateAutoClosingPair("'", "'", null),
+                                new TextMateAutoClosingPair("[", "]", null),
+                                new TextMateAutoClosingPair("{", "}", null),
+                                new TextMateAutoClosingPair("(", ")", null)));
 }

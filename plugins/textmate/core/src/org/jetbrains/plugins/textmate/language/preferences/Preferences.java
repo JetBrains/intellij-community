@@ -9,12 +9,12 @@ import java.util.Set;
 public final class Preferences implements TextMateScopeSelectorOwner {
   @NotNull private final CharSequence myScopeRule;
   @Nullable private final Set<TextMateBracePair> myHighlightingPairs;
-  @Nullable private final Set<TextMateBracePair> mySmartTypingPairs;
+  @Nullable private final Set<TextMateAutoClosingPair> mySmartTypingPairs;
   @NotNull private final IndentationRules myIndentationRules;
 
   public Preferences(@NotNull CharSequence scopeRule,
                      @Nullable Set<TextMateBracePair> highlightingPairs,
-                     @Nullable Set<TextMateBracePair> smartTypingPairs,
+                     @Nullable Set<TextMateAutoClosingPair> smartTypingPairs,
                      @NotNull IndentationRules indentationRules) {
     myScopeRule = scopeRule;
     myHighlightingPairs = highlightingPairs;
@@ -28,7 +28,7 @@ public final class Preferences implements TextMateScopeSelectorOwner {
   }
 
   @Nullable
-  public Set<TextMateBracePair> getSmartTypingPairs() {
+  public Set<TextMateAutoClosingPair> getSmartTypingPairs() {
     return mySmartTypingPairs;
   }
 
