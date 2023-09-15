@@ -401,14 +401,16 @@ public final class PatchReader {
 
     @Nullable
     private static PatchLine parsePatchLine(final String line, final int prefixLength, boolean expectMeaningfulLines) {
+      if (!expectMeaningfulLines) return null;
+
       PatchLine.Type type;
-      if (line.startsWith("+") && expectMeaningfulLines) {
+      if (line.startsWith("+")) {
         type = PatchLine.Type.ADD;
       }
-      else if (line.startsWith("-") && expectMeaningfulLines) {
+      else if (line.startsWith("-")) {
         type = PatchLine.Type.REMOVE;
       }
-      else if (line.startsWith(" ") && expectMeaningfulLines) {
+      else if (line.isEmpty() || line.startsWith(" ")) {
         type = PatchLine.Type.CONTEXT;
       }
       else {
