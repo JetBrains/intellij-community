@@ -44,7 +44,7 @@ abstract class StaticWebSymbolsScopeBase<Root : Any, Contribution : Any, Origin 
 
   final override fun getCodeCompletions(namespace: SymbolNamespace,
                                         kind: String,
-                                        name: String?,
+                                        name: String,
                                         params: WebSymbolsCodeCompletionQueryParams,
                                         scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     getMaps(params).flatMap {
@@ -68,7 +68,7 @@ abstract class StaticWebSymbolsScopeBase<Root : Any, Contribution : Any, Origin 
                                   origin: Origin,
                                   namespace: SymbolNamespace?,
                                   kind: String,
-                                  name: String?,
+                                  name: String,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scopeStack: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     getMap(params.queryExecutor, contribution, origin)

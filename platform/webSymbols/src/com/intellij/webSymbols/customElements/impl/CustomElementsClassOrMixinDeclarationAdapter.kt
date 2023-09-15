@@ -120,7 +120,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
 
     override fun getCodeCompletions(namespace: SymbolNamespace,
                                     kind: String,
-                                    name: String?,
+                                    name: String,
                                     params: WebSymbolsCodeCompletionQueryParams,
                                     scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
       base.rootScope

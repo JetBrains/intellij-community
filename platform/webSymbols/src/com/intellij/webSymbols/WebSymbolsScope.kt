@@ -58,7 +58,7 @@ interface WebSymbolsScope : ModificationTracker {
    */
   fun getCodeCompletions(namespace: SymbolNamespace,
                          kind: SymbolKind,
-                         name: String?,
+                         name: String,
                          params: WebSymbolsCodeCompletionQueryParams,
                          scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     getDefaultCodeCompletions(namespace, kind, name, params, scope)

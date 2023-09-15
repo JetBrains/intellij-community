@@ -126,13 +126,13 @@ fun WebSymbol.match(nameToMatch: String,
   }
 }
 
-fun WebSymbol.toCodeCompletionItems(name: String?,
+fun WebSymbol.toCodeCompletionItems(name: String,
                                     params: WebSymbolsCodeCompletionQueryParams,
                                     context: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
   pattern?.let { pattern ->
     context.push(this)
     try {
-      pattern.getCompletionResults(this, context, name ?: "", params)
+      pattern.getCompletionResults(this, context, name, params)
         .applyIcons(this)
     }
     finally {
@@ -334,7 +334,7 @@ fun NavigationTarget.createPsiRangeNavigationItem(element: PsiElement, offsetWit
 
 fun WebSymbolsScope.getDefaultCodeCompletions(namespace: SymbolNamespace,
                                               kind: SymbolKind,
-                                              name: String?,
+                                              name: String,
                                               params: WebSymbolsCodeCompletionQueryParams,
                                               scope: Stack<WebSymbolsScope>) =
   getSymbols(namespace, kind, null, WebSymbolsNameMatchQueryParams(params.queryExecutor), scope)

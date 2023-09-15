@@ -75,7 +75,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   internal fun getCodeCompletions(namespace: SymbolNamespace,
                                   kind: String,
-                                  name: String?,
+                                  name: String,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<WebSymbolsScope>): Sequence<WebSymbolCodeCompletionItem> =
     collectStaticCompletionResults(namespace, kind, name, params, scope)
@@ -85,7 +85,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   private fun collectStaticCompletionResults(namespace: SymbolNamespace,
                                              kind: String,
-                                             name: String?,
+                                             name: String,
                                              params: WebSymbolsCodeCompletionQueryParams,
                                              scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     statics.subMap(SearchMapEntry(namespace, kind), SearchMapEntry(namespace, kind, kindExclusive = true))
@@ -98,7 +98,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   private fun collectPatternCompletionResults(namespace: SymbolNamespace,
                                               kind: String,
-                                              name: String?,
+                                              name: String,
                                               params: WebSymbolsCodeCompletionQueryParams,
                                               scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     patterns.subMap(SearchMapEntry(namespace, kind), SearchMapEntry(namespace, kind, kindExclusive = true))
@@ -112,15 +112,15 @@ internal abstract class SearchMap<T> internal constructor(
 
   private fun collectPatternContributions(namespace: SymbolNamespace,
                                           kind: String,
-                                          name: String?,
+                                          name: String,
                                           params: WebSymbolsNameMatchQueryParams,
                                           scope: Stack<WebSymbolsScope>): List<WebSymbol> =
-    collectPatternsToProcess(namespace, kind, name ?: "")
+    collectPatternsToProcess(namespace, kind, name)
       .asSequence()
       .distinct()
       .innerMapAndFilter(params)
       .flatMap { rootContribution ->
-        rootContribution.match(name ?: "", scope, params)
+        rootContribution.match(name, scope, params)
       }
       .toList()
 

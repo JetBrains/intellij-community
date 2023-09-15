@@ -121,7 +121,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
 
   override fun getCodeCompletions(namespace: SymbolNamespace,
                                   kind: SymbolKind,
-                                  name: String?,
+                                  name: String,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)

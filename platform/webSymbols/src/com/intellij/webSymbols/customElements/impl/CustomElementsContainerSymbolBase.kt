@@ -32,7 +32,7 @@ abstract class CustomElementsContainerSymbolBase<Container : CustomElementsContr
 
   override fun getCodeCompletions(namespace: SymbolNamespace,
                                   kind: String,
-                                  name: String?,
+                                  name: String,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     rootScope
