@@ -19,14 +19,15 @@ import it.unimi.dsi.fastutil.ints.IntList
 
 class PatchChangeBuilder {
   private val textBuilder = StringBuilder()
-  private val myHunks: MutableList<Hunk> = ArrayList()
   private val convertor1 = LineNumberConvertor.Builder()
   private val convertor2 = LineNumberConvertor.Builder()
-  val separatorLines: IntList = IntArrayList()
+  private val separatorLines: IntList = IntArrayList()
 
   private var totalLines = 0
 
-  fun exec(splitHunks: List<AppliedSplitPatchHunk>) {
+  fun buildFromApplied(splitHunks: List<AppliedSplitPatchHunk>): PatchState {
+    val hunks = mutableListOf<Hunk>()
+
     var lastBeforeLine = -1
     for (hunk in splitHunks) {
       val contextBefore = hunk.contextBefore
@@ -66,8 +67,10 @@ class PatchChangeBuilder {
       val deletionRange = LineRange(deletion, insertion)
       val insertionRange = LineRange(insertion, hunkEnd)
 
-      myHunks.add(Hunk(deletionRange, insertionRange, hunk.getAppliedTo(), hunk.status))
+      hunks.add(Hunk(deletionRange, insertionRange, hunk.getAppliedTo(), hunk.status))
     }
+
+    return PatchState(textBuilder, hunks, convertor1.build(), convertor2.build(), separatorLines)
   }
 
   private fun addContext(context: List<String>, beforeLineNumber: Int, afterLineNumber: Int) {
@@ -89,17 +92,11 @@ class PatchChangeBuilder {
     totalLines++
   }
 
-  val patchContent: CharSequence
-    get() = textBuilder
-
-  val hunks: List<Hunk>
-    get() = myHunks
-
-  val lineConvertor1: LineNumberConvertor
-    get() = convertor1.build()
-
-  val lineConvertor2: LineNumberConvertor
-    get() = convertor2.build()
+  class PatchState(val patchContent: CharSequence,
+                   val hunks: List<Hunk>,
+                   val lineConvertor1: LineNumberConvertor,
+                   val lineConvertor2: LineNumberConvertor,
+                   val separatorLines: IntList)
 
   class Hunk(val patchDeletionRange: LineRange,
              val patchInsertionRange: LineRange,

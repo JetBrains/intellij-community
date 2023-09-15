@@ -277,24 +277,23 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     }
 
 
-    PatchChangeBuilder builder = new PatchChangeBuilder();
-    builder.exec(myPatchRequest.getPatch().getHunks());
+    PatchChangeBuilder.PatchState state = new PatchChangeBuilder().buildFromApplied(myPatchRequest.getPatch().getHunks());
 
 
     Document patchDocument = myPatchEditor.getDocument();
-    WriteAction.run(() -> patchDocument.setText(builder.getPatchContent()));
+    WriteAction.run(() -> patchDocument.setText(state.getPatchContent()));
 
-    LineNumberConvertor convertor1 = builder.getLineConvertor1();
-    LineNumberConvertor convertor2 = builder.getLineConvertor2();
+    LineNumberConvertor convertor1 = state.getLineConvertor1();
+    LineNumberConvertor convertor2 = state.getLineConvertor2();
     myPatchEditor.getGutter().setLineNumberConverter(new LineNumberConverterAdapter(convertor1.createConvertor()),
                                                      new LineNumberConverterAdapter(convertor2.createConvertor()));
 
-    builder.getSeparatorLines().forEach(line -> {
+    state.getSeparatorLines().forEach(line -> {
       int offset = patchDocument.getLineStartOffset(line);
       DiffDrawUtil.createLineSeparatorHighlighter(myPatchEditor, offset, offset);
     });
 
-    List<PatchChangeBuilder.Hunk> hunks = builder.getHunks();
+    List<PatchChangeBuilder.Hunk> hunks = state.getHunks();
 
     int[] modelToPatchIndexes = DiffUtil.getSortedIndexes(hunks, (h1, h2) -> {
       LineRange lines1 = h1.getAppliedToLines();

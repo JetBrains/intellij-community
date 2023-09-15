@@ -101,19 +101,18 @@ final class PatchDiffTool implements FrameDiffTool {
     }
 
     private void onInit() {
-      PatchChangeBuilder builder = new PatchChangeBuilder();
-      builder.exec(myRequest.getPatch().getHunks());
-      myHunks.addAll(builder.getHunks());
+      PatchChangeBuilder.PatchState state = new PatchChangeBuilder().buildFromApplied(myRequest.getPatch().getHunks());
+      myHunks.addAll(state.getHunks());
 
       Document patchDocument = myEditor.getDocument();
-      WriteAction.run(() -> patchDocument.setText(builder.getPatchContent().toString()));
+      WriteAction.run(() -> patchDocument.setText(state.getPatchContent().toString()));
 
       myEditor.getGutter().setLineNumberConverter(
-        new LineNumberConverterAdapter(builder.getLineConvertor1().createConvertor()),
-        new LineNumberConverterAdapter(builder.getLineConvertor2().createConvertor())
+        new LineNumberConverterAdapter(state.getLineConvertor1().createConvertor()),
+        new LineNumberConverterAdapter(state.getLineConvertor2().createConvertor())
       );
 
-      builder.getSeparatorLines().forEach(line -> {
+      state.getSeparatorLines().forEach(line -> {
         int offset = patchDocument.getLineStartOffset(line);
         DiffDrawUtil.createLineSeparatorHighlighter(myEditor, offset, offset);
       });

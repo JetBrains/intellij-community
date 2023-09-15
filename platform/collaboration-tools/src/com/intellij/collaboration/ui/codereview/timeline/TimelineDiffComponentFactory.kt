@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview.timeline
 
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.util.bindChildIn
@@ -81,18 +80,17 @@ object TimelineDiffComponentFactory {
         AppliedTextPatch.AppliedSplitPatchHunk(it, -1, -1, AppliedTextPatch.HunkStatus.NOT_APPLIED)
       }
 
-      val builder = PatchChangeBuilder()
-      builder.exec(appliedSplitHunks)
+      val state = PatchChangeBuilder().buildFromApplied(appliedSplitHunks)
 
-      val patchContent = builder.patchContent.removeSuffix("\n")
+      val patchContent = state.patchContent.removeSuffix("\n")
 
       return createDiffComponent(project, editorFactory, patchContent) { editor ->
         editor.gutter.apply {
-          setLineNumberConverter(LineNumberConverterAdapter(builder.lineConvertor1.createConvertor()),
-                                 LineNumberConverterAdapter(builder.lineConvertor2.createConvertor()))
+          setLineNumberConverter(LineNumberConverterAdapter(state.lineConvertor1.createConvertor()),
+                                 LineNumberConverterAdapter(state.lineConvertor2.createConvertor()))
         }
 
-        builder.hunks.forEach { hunk ->
+        state.hunks.forEach { hunk ->
           DiffDrawUtil.createUnifiedChunkHighlighters(editor,
                                                       hunk.patchDeletionRange,
                                                       hunk.patchInsertionRange,
