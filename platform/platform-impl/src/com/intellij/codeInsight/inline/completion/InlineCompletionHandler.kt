@@ -23,19 +23,14 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 @ApiStatus.Experimental
 class InlineCompletionHandler(private val scope: CoroutineScope) {
-  /**
-   * Mutex is fair => we will get an implicit queue of jobs for execution.
-   */
-  private val mutex = Mutex()
-  private var runningJob: Job? = null
+  private val job = AtomicReference<Job?>(null)
   private var lastInvocationTime = 0L
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
 
@@ -90,28 +85,27 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
       return
     }
 
-    // TODO
-    scope.launch {
-      updateRunningJob {
-        scope.launch {
-          invokeRequest(request, provider)
-        }
-      }
+    switchJobSafety {
+      invokeRequest(request, provider)
     }
   }
 
-  private suspend fun updateRunningJob(newJob: () -> Job) {
-    do {
-      var isFinished = false
-      mutex.withLock { runningJob }?.cancelAndJoin()
-      mutex.withLock {
-        if (runningJob?.isActive != true) {
-          LOG.trace("Schedule new job")
-          runningJob = newJob()
-          isFinished = true
+  private fun switchJobSafety(block: suspend CoroutineScope.() -> Unit) {
+    // create a new lazy job
+    val nextJob = scope.launch(start = CoroutineStart.LAZY, block = block)
+    scope.launch {
+      while (true) {
+        val currentJob = job.get()
+        currentJob?.cancelAndJoin()
+        // if still have this canceled job, let's switch it to a new one
+        if (job.compareAndSet(currentJob, nextJob)) {
+          LOG.trace("Change job")
+          break
         }
       }
-    } while (!isFinished)
+      // start a new actual job if not yet, it may be nextJob OR some even newer job
+      job.get()?.start()
+    }
   }
 
   private suspend fun invokeRequest(request: InlineCompletionRequest, provider: InlineCompletionProvider) {
@@ -198,13 +192,10 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
   }
 
   fun cancel(editor: Editor) {
-    scope.launch {
-      mutex.withLock {
-        runningJob?.cancelAndJoin()
-        withContext(Dispatchers.EDT) {
-          InlineCompletionContext.getOrNull(editor)?.let { context ->
-            hide(editor, false, context)
-          }
+    switchJobSafety {
+      withContext(Dispatchers.EDT) {
+        InlineCompletionContext.getOrNull(editor)?.let { context ->
+          hide(editor, false, context)
         }
       }
     }
