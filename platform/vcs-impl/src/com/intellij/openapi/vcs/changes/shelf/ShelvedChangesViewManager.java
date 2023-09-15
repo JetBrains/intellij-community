@@ -656,7 +656,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
-      return !myTree.isEditing() && !getShelvedLists(dataContext).isEmpty();
+      return !getShelvedLists(dataContext).isEmpty();
     }
   }
 
