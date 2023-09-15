@@ -21,7 +21,6 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListScopeContainer.Entry
 import org.jetbrains.jewel.foundation.tree.DefaultSelectableLazyColumnEventAction
 import org.jetbrains.jewel.foundation.tree.DefaultSelectableLazyColumnKeyActions
@@ -73,13 +72,6 @@ fun SelectableLazyColumn(
             .onPreviewKeyEvent { event ->
                 state.lastActiveItemIndex?.let { _ ->
                     keyActions.handleOnKeyEvent(event, keys, state, selectionMode).invoke(event)
-                    scope.launch { state.lastActiveItemIndex?.let { state.scrollToItem(it) } }
-                } ?: run {
-                    val index = keys.indexOfFirst { it is SelectableLazyListKey.Selectable }
-                    if (index >= 0) {
-                        state.lastActiveItemIndex = index
-                        state.selectedKeys = state.selectedKeys.toMutableList().also { it.add(keys[index].key) }
-                    }
                 }
                 true
             },
@@ -172,7 +164,7 @@ private fun Modifier.selectable(
     selectableState: SelectableLazyListState,
     allKeys: List<SelectableLazyListKey>,
     itemKey: Any,
-) = this.pointerInput(Unit) {
+) = this.pointerInput(allKeys, itemKey) {
     awaitPointerEventScope {
         while (true) {
             val event = awaitPointerEvent()
