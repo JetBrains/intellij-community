@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.platform.ide.menu.GlobalMenuLinux;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public final class ViewMainMenuAction extends ToggleAction implements DumbAware {
+public final class ViewMainMenuAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return UISettings.getInstance().getShowMainMenu();
