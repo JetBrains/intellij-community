@@ -635,7 +635,7 @@ class DataInterpreter extends Interpreter<DataValue> {
 }
 
 final class PuritySolver {
-  private final HashMap<EKey, Effects> solved = new HashMap<>();
+  final HashMap<EKey, Effects> solved = new HashMap<>();
   private final HashMap<EKey, Set<EKey>> dependencies = new HashMap<>();
   private final ArrayDeque<EKey> moving = new ArrayDeque<>();
   final HashMap<EKey, Effects> pending = new HashMap<>();

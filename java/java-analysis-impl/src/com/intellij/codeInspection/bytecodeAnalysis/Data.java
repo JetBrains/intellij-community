@@ -118,28 +118,6 @@ class Equations {
     return 31 * results.hashCode() + (stable ? 1 : 0);
   }
 
-  @NotNull
-  Equations update(@SuppressWarnings("SameParameterValue") Direction direction, Effects newResult) {
-    for (int i = 0; i < this.results.size(); i++) {
-      DirectionResultPair drp = this.results.get(i);
-      if (drp.directionKey == direction.asInt()) {
-        List<DirectionResultPair> newPairs;
-        if (newResult == null) {
-          newPairs = new ArrayList<>();
-          newPairs.addAll(this.results.subList(0, i));
-          newPairs.addAll(this.results.subList(i + 1, this.results.size()));
-        } else if (newResult == drp.result) {
-          return this;
-        } else {
-          newPairs = new ArrayList<>(this.results);
-          newPairs.set(i, new DirectionResultPair(direction.asInt(), newResult));
-        }
-        return new Equations(newPairs, this.stable);
-      }
-    }
-    return this;
-  }
-
   Optional<Result> find(Direction direction) {
     int key = direction.asInt();
     for (DirectionResultPair result : results) {

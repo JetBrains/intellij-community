@@ -29,7 +29,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 
@@ -124,16 +123,36 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
       }
     }
     solver.addPlainFieldEquations(md -> md instanceof Member member && member.internalClassName.equals(className));
-    Map<EKey, Effects> solved = solver.solve();
-    map.replaceAll((key, eqs) -> {
-      EKey newKey = new EKey(key.member, eqs.find(Volatile).isPresent() ? Volatile : Pure, eqs.stable, false);
-      Effects effects = solver.pending.get(newKey);
-      if (effects == null || effects.isTop()) {
-        effects = solved.get(newKey);
+    solver.solve();
+    map.replaceAll((key, eqs) -> updatePurity(key, eqs, solver));
+  }
+
+  @NotNull
+  private static Equations updatePurity(EKey key, Equations eqs, PuritySolver solver) {
+    for (int i = 0; i < eqs.results.size(); i++) {
+      DirectionResultPair drp = eqs.results.get(i);
+      if (drp.directionKey == Pure.asInt() || drp.directionKey == Volatile.asInt()) {
+        EKey newKey = new EKey(key.member, fromInt(drp.directionKey), eqs.stable, false);
+        Effects effects = solver.pending.get(newKey);
+        if (effects == null || effects.isTop()) {
+          effects = solver.solved.get(newKey);
+        }
+        if (effects == drp.result) {
+          return eqs;
+        }
+        List<DirectionResultPair> newPairs;
+        if (effects == null || effects.isTop()) {
+          newPairs = new ArrayList<>(eqs.results.size() - 1);
+          newPairs.addAll(eqs.results.subList(0, i));
+          newPairs.addAll(eqs.results.subList(i + 1, eqs.results.size()));
+        } else {
+          newPairs = new ArrayList<>(eqs.results);
+          newPairs.set(i, new DirectionResultPair(Pure.asInt(), effects));
+        }
+        return new Equations(newPairs, eqs.stable);
       }
-      Effects result = effects == null || effects.isTop() ? null : effects;
-      return eqs.update(Pure, result);
-    });
+    }
+    return eqs;
   }
 
   private static Equations hash(Equations equations) {
