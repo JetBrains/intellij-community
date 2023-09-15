@@ -595,8 +595,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     initInputMapDefaults(uiDefaults)
     patchLafFonts(uiDefaults)
 
-    patchTreeUI(uiDefaults, currentTheme)
-
     if (ExperimentalUI.isNewUI()) {
       applyDensityOnUpdateUi(uiDefaults)
     }
@@ -1064,39 +1062,6 @@ private fun getFont(yosemite: String, size: Int, style: Int): FontUIResource {
 
 private fun installLinuxFonts(defaults: UIDefaults) {
   defaults.put("MenuItem.acceleratorFont", defaults.get("MenuItem.font"))
-}
-
-private fun patchTreeUI(defaults: UIDefaults, currentLaf: UIThemeLookAndFeelInfo?) {
-  defaults.put("TreeUI", DefaultTreeUI::class.java.name)
-  defaults.put("Tree.repaintWholeRow", true)
-
-  if (currentLaf is UIThemeLookAndFeelInfo &&
-      defaults.containsKey("Tree.collapsedIcon") &&
-      defaults.containsKey("Tree.collapsedSelectedIcon") &&
-      defaults.containsKey("Tree.expandedIcon") &&
-      defaults.containsKey("Tree.expandedSelectedIcon")) {
-    // do not resolve lazy icons for Darcula and other modern UI themes
-    return
-  }
-
-  if (isUnsupported(defaults.getIcon("Tree.collapsedIcon"))) {
-    defaults.put("Tree.collapsedIcon", getIcon("treeCollapsed"))
-    defaults.put("Tree.collapsedSelectedIcon", getSelectedIcon("treeCollapsed"))
-  }
-  if (isUnsupported(defaults.getIcon("Tree.expandedIcon"))) {
-    defaults.put("Tree.expandedIcon", getIcon("treeExpanded"))
-    defaults.put("Tree.expandedSelectedIcon", getSelectedIcon("treeExpanded"))
-  }
-}
-
-/**
- * @return `true` if an icon is not specified or if it is declared in some Swing L&F
- * (such icons do not have a variant to paint in the selected row)
- */
-private fun isUnsupported(icon: Icon?): Boolean {
-  val name = icon?.javaClass?.name
-  @Suppress("SpellCheckingInspection")
-  return name == null || name.startsWith("javax.swing.plaf.") || name.startsWith("com.sun.java.swing.plaf.")
 }
 
 private fun patchHiDPI(defaults: UIDefaults) {
