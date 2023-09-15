@@ -1,17 +1,18 @@
 package com.intellij.driver.sdk
 
-import java.time.Duration
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 fun waitFor(
-  duration: Duration = Duration.ofSeconds(5),
-  interval: Duration = Duration.ofSeconds(2),
+  duration: Duration = 5.seconds,
+  interval: Duration = 2.seconds,
   errorMessage: String = "",
   condition: () -> Boolean
 ) {
-  val endTime = System.currentTimeMillis() + duration.toMillis()
+  val endTime = System.currentTimeMillis() + duration.inWholeMilliseconds
   var now = System.currentTimeMillis()
   while (now < endTime && condition().not()) {
-    Thread.sleep(interval.toMillis())
+    Thread.sleep(interval.inWholeMilliseconds)
     now = System.currentTimeMillis()
   }
   if (condition().not()) {

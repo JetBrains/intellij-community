@@ -12,7 +12,7 @@ import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.RobotService
 import com.intellij.driver.sdk.waitFor
 import java.awt.Point
-import java.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 
 data class ComponentData(val xpath: String,
@@ -27,7 +27,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   private fun findThisComponent(): Component {
-    waitFor(Duration.ofSeconds(DEFAULT_FIND_TIMEOUT_SECONDS.toLong()),
+    waitFor(DEFAULT_FIND_TIMEOUT_SECONDS.seconds,
             errorMessage = "Can't find component with '${data.xpath}' in ${searchContext.context}") {
       data.parentSearchContext.findAll(data.xpath).size == 1
     }

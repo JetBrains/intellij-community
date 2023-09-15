@@ -5,7 +5,8 @@ import com.intellij.driver.sdk.Project
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.waitForSmartMode
-import java.time.Duration
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 fun Finder.idea(action: IdeaFrameUI.() -> Unit) {
   x("//div[@class='IdeFrameImpl']", IdeaFrameUI::class.java).action()
@@ -17,13 +18,13 @@ class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
   val project: Project?
     get() = driver.utility(ProjectFrameHelper::class).getFrameHelper(component).getProject()
 
-  fun dumbAware(timeout: Duration = Duration.ofMinutes(1), action: IdeaFrameUI.() -> Unit) {
+  fun dumbAware(timeout: Duration = 1.minutes, action: IdeaFrameUI.() -> Unit) {
     waitForSmartMode(timeout)
     action()
     waitForSmartMode(timeout)
   }
 
-  private fun waitForSmartMode(timeout: Duration = Duration.ofMinutes(1)) {
+  private fun waitForSmartMode(timeout: Duration = 1.minutes) {
     driver.waitForSmartMode(project!!, timeout)
   }
 }

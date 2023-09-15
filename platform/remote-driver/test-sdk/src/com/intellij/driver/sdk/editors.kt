@@ -25,8 +25,8 @@ interface FileEditorManager {
   fun openFile(file: VirtualFile, focusEditor: Boolean, searchForOpen: Boolean): Array<FileEditor>
 }
 
-fun Driver.openEditor(project: Project, file: VirtualFile): Array<FileEditor> {
+fun Driver.openEditor(project: Project? = null, file: VirtualFile): Array<FileEditor> {
   return withContext(OnDispatcher.EDT) {
-    service<FileEditorManager>(project).openFile(file, true, false)
+    service<FileEditorManager>(project ?: singleProject()).openFile(file, true, false)
   }
 }
