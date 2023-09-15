@@ -737,6 +737,32 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
   
+  public void testCommentInType() {
+    doTest("""
+             class A {
+               void foo(List<String /*hello > */> list){
+                 
+               }
+             }""",
+
+           """
+            PsiJavaFileStub []
+              IMPORT_LIST:PsiImportListStub
+              CLASS:PsiClassStub[name=A fqn=A]
+                MODIFIER_LIST:PsiModifierListStub[mask=0]
+                TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                METHOD:PsiMethodStub[foo:void]
+                  MODIFIER_LIST:PsiModifierListStub[mask=0]
+                  TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                  PARAMETER_LIST:PsiParameterListStub
+                    PARAMETER:PsiParameterStub[list:List<String >]
+                      MODIFIER_LIST:PsiModifierListStub[mask=0]
+                  THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+            """);
+  }
+  
   public void testInterfaceKeywordInBody() {
     String source = """
       class X {

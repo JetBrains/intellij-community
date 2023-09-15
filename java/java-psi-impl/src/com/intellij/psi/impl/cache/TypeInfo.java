@@ -6,13 +6,16 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import one.util.streamex.StreamEx;
@@ -424,9 +427,9 @@ public /*sealed*/ abstract class TypeInfo {
             hasAnnotation = true;
           }
         }
-        text = LightTreeUtil.toFilteredString(tree, nested, null);
+        text = LightTreeUtil.toFilteredString(tree, nested, ElementType.JAVA_COMMENT_BIT_SET);
       } else {
-        text = LightTreeUtil.toFilteredString(tree, typeElement, null);
+        text = LightTreeUtil.toFilteredString(tree, typeElement, ElementType.JAVA_COMMENT_BIT_SET);
       }
     }
 
