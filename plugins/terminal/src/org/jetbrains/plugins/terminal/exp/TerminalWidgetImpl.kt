@@ -60,6 +60,7 @@ class TerminalWidgetImpl(private val project: Project,
 
     val component = view.component
     wrapper.setContent(component)
+    requestFocus()
 
     return TerminalUiUtils.awaitComponentLayout(component, view).thenApply {
       view.getTerminalSize()
