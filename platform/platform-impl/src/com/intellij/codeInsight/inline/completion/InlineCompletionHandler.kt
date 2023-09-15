@@ -173,13 +173,11 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   }
 
   fun cancel(editor: Editor) {
-    executor.switchJobSafely {
-      withContext(Dispatchers.EDT) {
-        InlineCompletionContext.getOrNull(editor)?.let { context ->
-          hide(editor, false, context)
-        }
+    executor.cancel()
+    application.invokeAndWait {
+      InlineCompletionContext.getOrNull(editor)?.let { context ->
+        hide(editor, false, context)
       }
-      executor.switchJobSafely(null)
     }
   }
 
