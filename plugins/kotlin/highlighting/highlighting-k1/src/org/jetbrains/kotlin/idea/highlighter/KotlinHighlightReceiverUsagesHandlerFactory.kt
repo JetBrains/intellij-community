@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parents
 import com.intellij.util.Consumer
+import com.intellij.util.containers.sequenceOfNotNull
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
@@ -41,18 +42,25 @@ object ReceiverInfoSearcher {
     fun findReceiverInfoForUsageHighlighting(target: PsiElement): ReceiverInfo? =
         checkIfInThisReference(target) ?: checkIfInReceiverTypeReference(target)
 
-    private fun checkIfInReceiverTypeReference(target: PsiElement): ReceiverInfo.Function? {
+    private fun checkIfInReceiverTypeReference(target: PsiElement): ReceiverInfo? {
         return target.parents(true)
             .takeWhile { e -> e !is KtFunction }
             .filterIsInstance<KtTypeReference>()
             .firstOrNull { e -> isReceiverReference(e) }
-            ?.let { receiverRef -> receiverRef.parent as? KtNamedFunction }
-            ?.takeIf { func -> func.hasBody() }
-            ?.let { func -> ReceiverInfo.Function(func) }
+            ?.let { receiverRef -> receiverRef.parent as? KtCallableDeclaration }
+            ?.let { callable ->
+                when (callable) {
+                    is KtNamedFunction -> ReceiverInfo.Function(callable).takeIf { callable.hasBody() }
+                    is KtProperty -> ReceiverInfo.Property(callable).takeIf { callable.accessors.isNotEmpty() }
+                    else -> null
+                }
+            }
     }
 
-    private fun isReceiverReference(element: KtTypeReference): Boolean =
-        (element.parent as? KtNamedFunction)?.receiverTypeReference == element
+    private fun isReceiverReference(element: KtTypeReference): Boolean {
+        val callable: KtCallableDeclaration = element.parent as? KtNamedFunction ?: element.parent as? KtProperty ?: return false
+        return callable.receiverTypeReference == element
+    }
 
     private fun checkIfInThisReference(target: PsiElement): ReceiverInfo? {
         if (target.elementType != KtTokens.THIS_KEYWORD) return null
@@ -110,13 +118,16 @@ object ReceiverInfoSearcher {
     private fun DeclarationDescriptor.toInfo(): ReceiverInfo? = when (val psi = findPsi()) {
         is KtFunctionLiteral -> ReceiverInfo.Lambda(psi)
         is KtNamedFunction -> ReceiverInfo.Function(psi)
+        is KtProperty -> ReceiverInfo.Property(psi)
         else -> null
     }
 }
 
+@Suppress("StatefulEp")
 sealed class ReceiverInfo {
-    abstract val psi: KtFunction
+    abstract val psi: KtCallableDeclaration
     protected abstract fun getDescriptor(bindingContext: BindingContext): CallableDescriptor?
+    protected abstract fun elementsToProcess(): Sequence<KtElement>
 
     open fun collectReceiverUsages(consumer: (TextRange) -> Unit) {
         val bindingContext = psi.safeAnalyze(BodyResolveMode.FULL)
@@ -132,23 +143,38 @@ sealed class ReceiverInfo {
             psi.receiverTypeReference?.textRange?.let(consumer)
             super.collectReceiverUsages(consumer)
         }
+
+        override fun elementsToProcess(): Sequence<KtElement> =
+            sequenceOfNotNull(psi.bodyExpression) + psi.valueParameters.asSequence().mapNotNull { it.defaultValue }
+    }
+
+    class Property(override val psi: KtProperty) : ReceiverInfo() {
+        override fun getDescriptor(bindingContext: BindingContext): CallableDescriptor? =
+            bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, psi) as? CallableDescriptor
+
+        override fun collectReceiverUsages(consumer: (TextRange) -> Unit) {
+            psi.receiverTypeReference?.textRange?.let(consumer)
+            super.collectReceiverUsages(consumer)
+        }
+
+        override fun elementsToProcess(): Sequence<KtElement> =
+            psi.accessors.asSequence()
     }
 
     class Lambda(override val psi: KtFunctionLiteral) : ReceiverInfo() {
         override fun getDescriptor(bindingContext: BindingContext): CallableDescriptor? =
             bindingContext[BindingContext.FUNCTION, psi]
+
+        override fun elementsToProcess(): Sequence<KtElement> =
+            sequenceOfNotNull(psi.bodyExpression) + psi.valueParameters.asSequence().mapNotNull { it.defaultValue }
     }
 
     private fun processInternalReferences(
         bindingContext: BindingContext,
         visitor: KtTreeVisitor<BindingContext>
     ) {
-        val body = psi.bodyExpression
-        body?.accept(visitor, bindingContext)
-
-        for (parameter in psi.valueParameters) {
-            val defaultValue = parameter.defaultValue
-            defaultValue?.accept(visitor, bindingContext)
+        for (element in elementsToProcess()) {
+            element.accept(visitor, bindingContext)
         }
     }
 }
