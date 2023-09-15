@@ -85,14 +85,14 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
       return
     }
 
-    switchJobSafety {
+    switchJobSafely {
       invokeRequest(request, provider)
     }
   }
 
-  private fun switchJobSafety(block: suspend CoroutineScope.() -> Unit) {
+  private fun switchJobSafely(block: (suspend CoroutineScope.() -> Unit)?) {
     // create a new lazy job
-    val nextJob = scope.launch(start = CoroutineStart.LAZY, block = block)
+    val nextJob = block?.let { scope.launch(start = CoroutineStart.LAZY, block = block) }
     scope.launch {
       while (true) {
         val currentJob = job.get()
@@ -192,12 +192,13 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
   }
 
   fun cancel(editor: Editor) {
-    switchJobSafety {
+    switchJobSafely {
       withContext(Dispatchers.EDT) {
         InlineCompletionContext.getOrNull(editor)?.let { context ->
           hide(editor, false, context)
         }
       }
+      switchJobSafely(null)
     }
   }
 
