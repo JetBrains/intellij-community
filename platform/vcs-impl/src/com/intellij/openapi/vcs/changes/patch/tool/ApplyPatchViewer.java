@@ -38,7 +38,6 @@ import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.ints.IntListIterator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -290,10 +289,10 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     myPatchEditor.getGutter().setLineNumberConverter(new LineNumberConverterAdapter(convertor1.createConvertor()),
                                                      new LineNumberConverterAdapter(convertor2.createConvertor()));
 
-    for (IntListIterator iterator = builder.getSeparatorLines().iterator(); iterator.hasNext(); ) {
-      int offset = patchDocument.getLineStartOffset(iterator.nextInt());
+    builder.getSeparatorLines().forEach(line -> {
+      int offset = patchDocument.getLineStartOffset(line);
       DiffDrawUtil.createLineSeparatorHighlighter(myPatchEditor, offset, offset);
-    }
+    });
 
     List<PatchChangeBuilder.Hunk> hunks = builder.getHunks();
 
@@ -531,7 +530,9 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
     private boolean isSomeChangeSelected(@NotNull Side side) {
       EditorEx editor = side.select(myResultEditor, myPatchEditor);
-      return DiffUtil.isSomeRangeSelected(editor, lines -> ContainerUtil.exists(myModelChanges, change -> isChangeSelected(change, lines, side)));
+      return DiffUtil.isSomeRangeSelected(editor, lines -> {
+        return ContainerUtil.exists(myModelChanges, change -> isChangeSelected(change, lines, side));
+      });
     }
 
     @NotNull
@@ -587,7 +588,8 @@ class ApplyPatchViewer implements DataProvider, Disposable {
           switch (change.getStatus()) {
             case ALREADY_APPLIED -> markChangeResolved(change);
             case EXACTLY_APPLIED -> replaceChange(change);
-            case NOT_APPLIED -> {}
+            case NOT_APPLIED -> {
+            }
           }
         }
       });
@@ -732,7 +734,8 @@ class ApplyPatchViewer implements DataProvider, Disposable {
         switch (change.getStatus()) {
           case ALREADY_APPLIED -> alreadyApplied++;
           case NOT_APPLIED -> notApplied++;
-          case EXACTLY_APPLIED -> {}
+          case EXACTLY_APPLIED -> {
+          }
         }
       }
 

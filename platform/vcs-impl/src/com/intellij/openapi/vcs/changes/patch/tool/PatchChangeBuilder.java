@@ -71,7 +71,7 @@ public final class PatchChangeBuilder {
       LineRange deletionRange = new LineRange(deletion, insertion);
       LineRange insertionRange = new LineRange(insertion, hunkEnd);
 
-      myHunks.add(new Hunk(hunk.getInsertedLines(), deletionRange, insertionRange, hunk.getAppliedTo(), hunk.getStatus()));
+      myHunks.add(new Hunk(deletionRange, insertionRange, hunk.getAppliedTo(), hunk.getStatus()));
     }
   }
 
@@ -151,19 +151,16 @@ public final class PatchChangeBuilder {
 
 
   public static class Hunk {
-    @NotNull private final List<String> myInsertedLines;
     @NotNull private final LineRange myPatchDeletionRange;
     @NotNull private final LineRange myPatchInsertionRange;
 
     @Nullable private final LineRange myAppliedToLines;
     @NotNull private final HunkStatus myStatus;
 
-    public Hunk(@NotNull List<String> insertedLines,
-                @NotNull LineRange patchDeletionRange,
+    public Hunk(@NotNull LineRange patchDeletionRange,
                 @NotNull LineRange patchInsertionRange,
                 @Nullable LineRange appliedToLines,
                 @NotNull HunkStatus status) {
-      myInsertedLines = insertedLines;
       myPatchDeletionRange = patchDeletionRange;
       myPatchInsertionRange = patchInsertionRange;
       myAppliedToLines = appliedToLines;
@@ -188,11 +185,6 @@ public final class PatchChangeBuilder {
     @Nullable
     public LineRange getAppliedToLines() {
       return myAppliedToLines;
-    }
-
-    @NotNull
-    private List<String> getInsertedLines() {
-      return myInsertedLines;
     }
   }
 }
