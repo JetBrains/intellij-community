@@ -13,6 +13,7 @@ val DEFAULT_TEST_TIMEOUT: Duration = 10.seconds
 
 @TestOnly
 fun timeoutRunBlocking(timeout: Duration = DEFAULT_TEST_TIMEOUT, action: suspend CoroutineScope.() -> Unit) {
+  var error: Throwable? = null
   @Suppress("RAW_RUN_BLOCKING")
   runBlocking {
     val job = launch(block = action)
@@ -26,8 +27,9 @@ fun timeoutRunBlocking(timeout: Duration = DEFAULT_TEST_TIMEOUT, action: suspend
       catch (e: TimeoutCancellationException) {
         job.cancel(e)
         println(dumpCoroutines())
-        throw AssertionError(e)
+        error = e
       }
     }
   }
+  error?.let { throw AssertionError(it) }
 }
