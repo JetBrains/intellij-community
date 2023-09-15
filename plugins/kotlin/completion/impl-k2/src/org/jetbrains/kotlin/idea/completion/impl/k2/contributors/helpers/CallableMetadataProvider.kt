@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
+import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
@@ -62,6 +63,13 @@ internal object CallableMetadataProvider {
         ;
     }
 
+    private val CallableKind.correspondingBaseForThisOrSelf: CallableKind
+        get() = when (this) {
+            CallableKind.THIS_CLASS_MEMBER -> CallableKind.BASE_CLASS_MEMBER
+            CallableKind.THIS_TYPE_EXTENSION -> CallableKind.BASE_TYPE_EXTENSION
+            else -> this
+        }
+
     context(KtAnalysisSession)
     fun getCallableMetadata(
         context: WeighingContext,
@@ -71,15 +79,6 @@ internal object CallableMetadataProvider {
         val symbol = signature.symbol
         if (symbol is KtSyntheticJavaPropertySymbol) {
             return getCallableMetadata(context, symbol.javaGetterSymbol.asSignature(), symbolOrigin)
-        }
-        val overriddenSymbols = symbol.getDirectlyOverriddenSymbols()
-        if (overriddenSymbols.isNotEmpty()) {
-            val weights = overriddenSymbols
-                .mapNotNull { callableWeightByReceiver(it.asSignature(), context, returnCastRequiredOnReceiverMismatch = false) }
-                .takeUnless { it.isEmpty() }
-                ?: symbol.getAllOverriddenSymbols().map { callableWeightBasic(context, it.asSignature(), symbolOrigin) }
-
-            return weights.minByOrNull { it.kind }
         }
         return callableWeightBasic(context, signature, symbolOrigin)
     }
@@ -94,7 +93,7 @@ internal object CallableMetadataProvider {
 
         return when (signature.symbol.symbolKind) {
             KtSymbolKind.TOP_LEVEL,
-            KtSymbolKind.CLASS_MEMBER -> callableWeightByReceiver(signature, context, returnCastRequiredOnReceiverMismatch = true)
+            KtSymbolKind.CLASS_MEMBER -> callableWeightByReceiver(signature, context)
 
             KtSymbolKind.LOCAL -> CallableMetadata(CallableKind.LOCAL, scopeIndex)
             else -> null
@@ -105,7 +104,6 @@ internal object CallableMetadataProvider {
     private fun callableWeightByReceiver(
         signature: KtCallableSignature<*>,
         context: WeighingContext,
-        returnCastRequiredOnReceiverMismatch: Boolean
     ): CallableMetadata? {
         val symbol = signature.symbol
 
@@ -122,12 +120,17 @@ internal object CallableMetadataProvider {
                 actualReceiverTypes.mapNotNull { it.replaceTypeArgumentsWithStarProjections() }
             } else actualReceiverTypes
 
+            val hasOverriddenSymbols = symbol.isOverride ||
+                    symbol.getDirectlyOverriddenSymbols().isNotEmpty() ||
+                    symbol.getAllOverriddenSymbols().isNotEmpty()
+
             return callableWeightByReceiver(
                 symbol,
                 correctedActualReceiverTypes,
                 expectedReceiverType,
-                returnCastRequiredOnReceiverMismatch
             )
+                // currently override members are considered as non-immediate in completion
+                ?.applyIf(hasOverriddenSymbols) { CallableMetadata(kind.correspondingBaseForThisOrSelf, scopeIndex) }
         }
 
         // If a symbol expects an extension receiver, then either
@@ -138,7 +141,6 @@ internal object CallableMetadataProvider {
             symbol,
             actualReceiverTypes,
             expectedExtensionReceiverType,
-            returnCastRequiredOnReceiverMismatch
         )
         return weightBasedOnExtensionReceiver
     }
@@ -157,6 +159,14 @@ internal object CallableMetadataProvider {
             context.implicitReceiver.map { it.type }
         }
     }
+
+    context(KtAnalysisSession)
+    private val KtCallableSymbol.isOverride: Boolean
+        get() = when (this) {
+            is KtFunctionSymbol -> isOverride
+            is KtPropertySymbol -> isOverride
+            else -> false
+        }
 
     /**
      * Return the type from the referenced class if this explicit receiver is a receiver in a callable reference expression. For example,
@@ -202,7 +212,6 @@ internal object CallableMetadataProvider {
         symbol: KtCallableSymbol,
         actualReceiverTypes: List<KtType>,
         expectedReceiverType: KtType,
-        returnCastRequiredOnReceiverTypeMismatch: Boolean
     ): CallableMetadata? {
         if (expectedReceiverType is KtFunctionType) return null
 
@@ -223,9 +232,7 @@ internal object CallableMetadataProvider {
         }
 
         if (bestMatchWeightKind == null) {
-            return if (returnCastRequiredOnReceiverTypeMismatch)
-                CallableMetadata(CallableKind.RECEIVER_CAST_REQUIRED, null)
-            else null
+            return CallableMetadata(CallableKind.RECEIVER_CAST_REQUIRED, scopeIndex = null)
         }
 
         // use `null` for the receiver index if the symbol matches every actual receiver in order to prevent members of common super
