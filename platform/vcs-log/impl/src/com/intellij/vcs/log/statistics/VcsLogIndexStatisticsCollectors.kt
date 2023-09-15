@@ -86,8 +86,8 @@ internal class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() 
 
 }
 
-class VcsLogIndexCollectorState {
-  var indexTime: Long = 0
+class VcsLogIndexCollectorState : BaseState() {
+  var indexTime by property(0L)
 
   fun copy(): VcsLogIndexCollectorState {
     val copy = VcsLogIndexCollectorState()
