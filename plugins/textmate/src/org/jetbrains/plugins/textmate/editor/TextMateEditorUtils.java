@@ -26,15 +26,7 @@ import java.util.Set;
 public final class TextMateEditorUtils {
   @Nullable
   public static TextMateScope getCurrentScopeSelector(@NotNull EditorEx editor) {
-    final EditorHighlighter highlighter = editor.getHighlighter();
-    SelectionModel selection = editor.getSelectionModel();
-    final int offset = selection.hasSelection() ? selection.getSelectionStart() : editor.getCaretModel().getOffset();
-    final HighlighterIterator iterator = highlighter.createIterator(offset);
-    TextMateScope result = null;
-    if (offset != 0 || !iterator.atEnd()) {
-      IElementType tokenType = iterator.getTokenType();
-      result = tokenType instanceof TextMateElementType ? ((TextMateElementType)tokenType).getScope() : null;
-    }
+    TextMateScope result = getCurrentScopeFromEditor(editor);
     //retrieve root scope of file
     if (result == null) {
       final VirtualFile file = editor.getVirtualFile();
@@ -44,6 +36,20 @@ public final class TextMateEditorUtils {
           return new TextMateScope(languageDescriptor.getScopeName(), null);
         }
       }
+    }
+    return result;
+  }
+
+  @Nullable
+  private static TextMateScope getCurrentScopeFromEditor(@NotNull EditorEx editor) {
+    final EditorHighlighter highlighter = editor.getHighlighter();
+    SelectionModel selection = editor.getSelectionModel();
+    final int offset = selection.hasSelection() ? selection.getSelectionStart() : editor.getCaretModel().getOffset();
+    final HighlighterIterator iterator = highlighter.createIterator(offset);
+    TextMateScope result = null;
+    if (offset != 0 || !iterator.atEnd()) {
+      IElementType tokenType = iterator.getTokenType();
+      result = tokenType instanceof TextMateElementType ? ((TextMateElementType)tokenType).getScope() : null;
     }
     return result;
   }
@@ -105,51 +111,52 @@ public final class TextMateEditorUtils {
   }
 
   private static Set<TextMateBracePair> getAllPairsForMatcher(@Nullable TextMateScope selector) {
+    if (selector == null) {
+      return Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS;
+    }
     Set<TextMateBracePair> result = new HashSet<>();
-    if (selector != null) {
-      List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferenceRegistry().getPreferences(selector);
-      for (Preferences preferences : preferencesForSelector) {
-        final Set<TextMateBracePair> highlightingPairs = preferences.getHighlightingPairs();
-        if (highlightingPairs != null) {
-          if (highlightingPairs.isEmpty()) {
-            // smart typing pairs can be defined in preferences but can be empty (in order to disable smart typing at all)
-            return Collections.emptySet();
-          }
-          else {
-            result.addAll(highlightingPairs);
-          }
+    List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferenceRegistry().getPreferences(selector);
+    for (Preferences preferences : preferencesForSelector) {
+      final Set<TextMateBracePair> highlightingPairs = preferences.getHighlightingPairs();
+      if (highlightingPairs != null) {
+        if (highlightingPairs.isEmpty()) {
+          // smart typing pairs can be defined in preferences but can be empty (in order to disable smart typing completely)
+          return Collections.emptySet();
         }
-      }
-      for (Preferences preferences : preferencesForSelector) {
-        final Set<TextMateBracePair> smartTypingPairs = preferences.getSmartTypingPairs();
-        if (smartTypingPairs != null) {
-          result.addAll(preferences.getSmartTypingPairs());
+        else {
+          result.addAll(highlightingPairs);
         }
       }
     }
-    result.addAll(Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS);
+    for (Preferences preferences : preferencesForSelector) {
+      final Set<TextMateBracePair> smartTypingPairs = preferences.getSmartTypingPairs();
+      if (smartTypingPairs != null) {
+        result.addAll(preferences.getSmartTypingPairs());
+      }
+    }
     return result;
   }
 
   private static Set<TextMateBracePair> getSmartTypingPairs(@Nullable TextMateScope currentScope) {
-    if (currentScope != null) {
-      List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferenceRegistry().getPreferences(currentScope);
-      for (Preferences preferences : preferencesForSelector) {
-        final Set<TextMateBracePair> smartTypingPairs = preferences.getSmartTypingPairs();
-        if (smartTypingPairs != null) {
-          // smart typing pairs defined in preferences and can be empty (in order to disable smart typing at all)
-          if (smartTypingPairs.isEmpty()) {
-            return Collections.emptySet();
-          }
-          else {
-            final HashSet<TextMateBracePair> result = new HashSet<>(smartTypingPairs);
-            result.addAll(Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS);
-            return result;
-          }
+    if (currentScope == null) {
+      return Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS;
+    }
+    List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferenceRegistry().getPreferences(currentScope);
+    for (Preferences preferences : preferencesForSelector) {
+      final Set<TextMateBracePair> smartTypingPairs = preferences.getSmartTypingPairs();
+      if (smartTypingPairs != null) {
+        // smart typing pairs defined in preferences and can be empty (in order to disable smart typing completely)
+        if (smartTypingPairs.isEmpty()) {
+          return Collections.emptySet();
+        }
+        else {
+          final HashSet<TextMateBracePair> result = new HashSet<>(smartTypingPairs);
+          result.addAll(Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS);
+          return result;
         }
       }
     }
-    return new HashSet<>(Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS);
+    return Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS;
   }
 
   private TextMateEditorUtils() {
@@ -166,7 +173,7 @@ public final class TextMateEditorUtils {
     int index = StringUtil.indexOf(fileName, '.');
     while (index >= 0) {
       CharSequence extension = fileName.subSequence(index + 1, fileName.length());
-      if (extension.length() == 0) break;
+      if (extension.isEmpty()) break;
       if (!processor.process(extension)) {
         return;
       }

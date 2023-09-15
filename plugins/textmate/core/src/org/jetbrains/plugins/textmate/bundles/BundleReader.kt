@@ -130,8 +130,8 @@ private fun readPreferencesFromPlist(plist: Plist): TextMatePreferences? {
       val customHighlightingAttributes = TextMateTextAttributes.fromPlist(settings)
       TextMatePreferences(scopeName = scopeName,
                           variables = variables,
-                          highlightingPairs = highlightingPairs,
-                          smartTypingPairs = smartTypingPairs,
+                          highlightingPairs = highlightingPairs ?: Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS,
+                          smartTypingPairs = smartTypingPairs ?: Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS,
                           indentationRules = indentationRules,
                           customHighlightingAttributes = customHighlightingAttributes)
     }

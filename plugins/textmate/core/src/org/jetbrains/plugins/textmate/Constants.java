@@ -6,7 +6,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public interface Constants {
   // KEYS
@@ -37,6 +38,7 @@ public interface Constants {
     BEGIN("begin");
 
     public final String value;
+
     StringKey(String name) {
       value = name;
     }
@@ -106,17 +108,17 @@ public interface Constants {
 
   // we should depend on intellij util classes as little as possible
   @SuppressWarnings("SSBasedInspection")
-  Collection<TextMateBracePair> DEFAULT_HIGHLIGHTING_BRACE_PAIRS =
-    Arrays.asList(new TextMateBracePair('[', ']'),
-                  new TextMateBracePair('{', '}'),
-                  new TextMateBracePair('(', ')'));
+  Set<TextMateBracePair> DEFAULT_HIGHLIGHTING_BRACE_PAIRS =
+    new HashSet<>(Arrays.asList(new TextMateBracePair('[', ']'),
+                                new TextMateBracePair('{', '}'),
+                                new TextMateBracePair('(', ')')));
 
   // we should depend on intellij util classes as little as possible
   @SuppressWarnings("SSBasedInspection")
-  Collection<TextMateBracePair> DEFAULT_SMART_TYPING_BRACE_PAIRS =
-    Arrays.asList(new TextMateBracePair('"', '"'),
-                  new TextMateBracePair('\'', '\''),
-                  new TextMateBracePair('[', ']'),
-                  new TextMateBracePair('{', '}'),
-                  new TextMateBracePair('(', ')'));
+  Set<TextMateBracePair> DEFAULT_SMART_TYPING_BRACE_PAIRS =
+    new HashSet<>(Arrays.asList(new TextMateBracePair('"', '"'),
+                                new TextMateBracePair('\'', '\''),
+                                new TextMateBracePair('[', ']'),
+                                new TextMateBracePair('{', '}'),
+                                new TextMateBracePair('(', ')')));
 }
