@@ -1,6 +1,7 @@
 {
   "name": "IntelliJ",
   "dark": false,
+  "parentTheme": "Darcula",
   "author": "JetBrains",
 
   "colors": {

@@ -2,6 +2,7 @@
   "name": "Light",
   "dark": false,
   "author": "JetBrains",
+  "parentTheme": "IntelliJ",
   "editorScheme": "/themes/expUI/expUI_lightScheme.xml",
   "nameKey": "light.theme.name",
 

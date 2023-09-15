@@ -3,6 +3,7 @@
   "dark": false,
   "author": "JetBrains",
   "editorScheme": "/themes/Light.xml",
+  "parentTheme": "IntelliJ",
   "nameKey": "intellij.light.theme.name",
 
   "ui": {

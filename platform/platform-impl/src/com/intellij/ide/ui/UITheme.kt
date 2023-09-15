@@ -23,7 +23,6 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.Color
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.UIDefaults
 import javax.swing.plaf.ColorUIResource
@@ -92,11 +91,9 @@ class UITheme internal constructor(
     const val FILE_EXT_ENDING: String = ".theme.json"
 
     @ApiStatus.Internal
-    fun loadFromJson(stream: InputStream, themeId: @NonNls String, nameToParent: Function<String, UITheme?>): UITheme {
+    fun loadFromJson(stream: InputStream, themeId: @NonNls String): UITheme {
       val theme = readTheme(JsonFactory().createParser(stream))
-      return createTheme(themeId = themeId,
-                         theme = theme,
-                         parentTheme = findParentTheme(theme = theme, nameToParent = nameToParent)?.bean)
+      return createTheme(themeId = themeId, theme = theme, parentTheme = resolveParentTheme(theme, themeId))
     }
 
     fun loadFromJson(data: ByteArray?,
@@ -104,33 +101,51 @@ class UITheme internal constructor(
                      provider: ClassLoader? = null,
                      iconMapper: ((String) -> String?)? = null): UITheme {
       val theme = readTheme(JsonFactory().createParser(data))
-      val parentTheme = findParentTheme(theme) {
-        (UiThemeProviderListManager.getInstance().findThemeByName(it) as? UIThemeLookAndFeelInfoImpl)?.theme
-      }?.bean
+      val parentTheme = resolveParentTheme(theme, themeId)
       return createTheme(theme = theme, parentTheme = parentTheme, provider = provider, iconMapper = iconMapper, themeId = themeId)
     }
 
-    fun loadFromJson(parentTheme: UITheme?,
-                     data: ByteArray,
-                     themeId: @NonNls String,
-                     provider: ClassLoader?,
-                     iconMapper: ((String) -> String?)? = null,
-                     defaultDarkParent: Supplier<UITheme?>?,
-                     defaultLightParent: Supplier<UITheme?>?): UITheme {
-      val theme = readTheme(JsonFactory().createParser(data))
-      theme.parentTheme = parentTheme?.id
-      val parent = parentTheme?.bean ?: (if (theme.dark) defaultDarkParent?.get()?.bean else defaultLightParent?.get()?.bean)
-      return createTheme(theme = theme, parentTheme = parent, provider = provider, iconMapper = iconMapper, themeId = themeId)
+    private fun resolveParentTheme(theme: UIThemeBean, themeId: @NonNls String): UIThemeBean? {
+      val parentThemeId = theme.parentTheme
+      if (parentThemeId == null) {
+        return UiThemeProviderListManager.getInstance().findDefaultParent(isDark = theme.dark, themeId = themeId)?.bean
+      }
+      else {
+        return parentThemeId.let {
+          (UiThemeProviderListManager.getInstance().findThemeById(it) as? UIThemeLookAndFeelInfoImpl)?.theme
+        }?.bean
+      }
+    }
+
+    internal fun loadFromJson(parentTheme: UITheme?,
+                              data: ByteArray,
+                              themeId: @NonNls String,
+                              provider: ClassLoader?,
+                              iconMapper: ((String) -> String?)? = null,
+                              defaultDarkParent: Supplier<UITheme?>?,
+                              defaultLightParent: Supplier<UITheme?>?): UITheme {
+      val bean = readTheme(JsonFactory().createParser(data))
+      val parent: UIThemeBean?
+      if (parentTheme == null) {
+        val parentThemeId = bean.parentTheme
+        if (parentThemeId == null) {
+          parent = (if (bean.dark) defaultDarkParent?.get()?.bean else defaultLightParent?.get()?.bean)
+        }
+        else {
+          parent = (UiThemeProviderListManager.getInstance().findThemeById(parentThemeId) as? UIThemeLookAndFeelInfoImpl)?.theme?.bean
+        }
+      }
+      else {
+        parent = parentTheme.bean
+        bean.parentTheme = parentTheme.id
+      }
+      return createTheme(theme = bean, parentTheme = parent, provider = provider, iconMapper = iconMapper, themeId = themeId)
     }
 
     @TestOnly
     @JvmStatic
     fun getColorPalette(): Map<String, String?> = colorPalette
   }
-}
-
-private fun findParentTheme(theme: UIThemeBean, nameToParent: Function<String, UITheme?>): UITheme? {
-  return nameToParent.apply(theme.parentTheme ?: return null)
 }
 
 private fun createTheme(theme: UIThemeBean,

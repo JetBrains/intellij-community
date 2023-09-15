@@ -34,7 +34,7 @@ class UiThemeProviderListManager {
           val theme = when (provider.id) {
             DEFAULT_DARK_PARENT_THEME -> provider.createTheme(parentTheme = null, defaultDarkParent = null, defaultLightParent = null)
             DEFAULT_LIGHT_PARENT_THEME -> provider.createTheme(
-              parentTheme = themeDescriptors.firstOrNull { it.id == DEFAULT_DARK_PARENT_THEME }?.theme?.get()?.theme,
+              parentTheme = findThemeBeanHolderById(DEFAULT_DARK_PARENT_THEME),
               defaultDarkParent = null,
               defaultLightParent = null,
             )
@@ -42,8 +42,8 @@ class UiThemeProviderListManager {
               val parentTheme = findParentTheme(themes = themeDescriptors, parentId = provider.parentTheme)
               provider.createTheme(
                 parentTheme = parentTheme,
-                defaultDarkParent = { themeDescriptors.firstOrNull { it.id == DEFAULT_DARK_PARENT_THEME }?.theme?.get()?.theme },
-                defaultLightParent = { themeDescriptors.firstOrNull { it.id == DEFAULT_LIGHT_PARENT_THEME }?.theme?.get()?.theme },
+                defaultDarkParent = { findThemeBeanHolderById(DEFAULT_DARK_PARENT_THEME) },
+                defaultLightParent = { findThemeBeanHolderById(DEFAULT_LIGHT_PARENT_THEME) },
               )
             }
           }
@@ -69,6 +69,24 @@ class UiThemeProviderListManager {
 
   fun findThemeById(id: String): UIThemeLookAndFeelInfo? {
     return themeDescriptors.firstOrNull { it.id == id }?.theme?.get()
+  }
+
+  private fun findThemeBeanHolderById(id: String): UITheme? {
+    return themeDescriptors.firstOrNull { it.id == id }?.theme?.get()?.theme
+  }
+
+  internal fun findDefaultParent(isDark: Boolean, themeId: String): UITheme? {
+    if (isDark) {
+      if (themeId != DEFAULT_DARK_PARENT_THEME) {
+        return findThemeBeanHolderById(DEFAULT_DARK_PARENT_THEME)
+      }
+    }
+    else {
+      if (themeId != DEFAULT_LIGHT_PARENT_THEME) {
+        return findThemeBeanHolderById(DEFAULT_LIGHT_PARENT_THEME)
+      }
+    }
+    return null
   }
 
   fun findThemeSupplierById(id: String): Supplier<out UIThemeLookAndFeelInfo?>? {

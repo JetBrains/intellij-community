@@ -184,7 +184,7 @@ internal suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
   }
   catch (e: ProcessCanceledException) {
     if (isFirstUpdate) {
-      logger<IdeMenuBarHelper>().warn("Cannot expand action group", e)
+      logger<IdeMenuBarHelper>().warn("Cannot expand action group")
     }
 
     // don't repeat - will do on next timer event

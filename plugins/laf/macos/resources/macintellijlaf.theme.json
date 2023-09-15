@@ -2,6 +2,7 @@
   "name": "macOS Light",
   "dark": false,
   "author": "JetBrains",
+  "parentTheme": "IntelliJ",
   "nameKey": "macOS.light.theme.name",
 
   "ui": {
