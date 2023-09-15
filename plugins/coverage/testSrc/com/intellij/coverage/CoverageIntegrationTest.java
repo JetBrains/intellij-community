@@ -8,8 +8,6 @@ import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiPackage;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.testFramework.JavaModuleTestCase;
@@ -33,11 +31,15 @@ public class CoverageIntegrationTest extends JavaModuleTestCase {
     myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(getTestDataPath()), getTestRootDisposable());
   }
 
+  public void testIntegrationSimple() {
+    CoverageSuitesBundle bundle = loadCoverageSuite(IDEACoverageRunner.class, "simple$foo_in_simple.coverage", null);
+    CoverageDataManager.getInstance(myProject).chooseSuitesBundle(bundle);
+  }
+
   public void testSimple() {
-    CoverageSuitesBundle bundle = loadCoverageSuite(IDEACoverageRunner.class, "simple$foo_in_simple.coverage");
-    PsiPackage psiPackage = JavaPsiFacade.getInstance(myProject).findPackage("foo");
+    CoverageSuitesBundle bundle = loadCoverageSuite(IDEACoverageRunner.class, "simple$foo_in_simple.coverage", null);
     PackageAnnotationConsumer consumer = new PackageAnnotationConsumer();
-    new JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitRootPackage(psiPackage, (JavaCoverageSuite)bundle.getSuites()[0]);
+    new JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitSuite();
     PackageAnnotator.ClassCoverageInfo barClassCoverage = consumer.myClassCoverageInfo.get("foo.bar.BarClass");
     assertEquals(3, barClassCoverage.totalMethodCount);
     assertEquals(1, barClassCoverage.coveredMethodCount);
@@ -51,35 +53,48 @@ public class CoverageIntegrationTest extends JavaModuleTestCase {
     assertEquals(0, uncoveredClassInfo.coveredMethodCount);
   }
 
+  public void testSingleClassFilter() {
+    String[] filters = new String[]{"foo.bar.BarClass"};
+    CoverageSuitesBundle bundle = loadCoverageSuite(IDEACoverageRunner.class, "simple$foo_in_simple.coverage", filters);
+    PackageAnnotationConsumer consumer = new PackageAnnotationConsumer();
+    new JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitSuite();
+
+    assertEquals(1, consumer.myClassCoverageInfo.size());
+    PackageAnnotator.ClassCoverageInfo barClassCoverage = consumer.myClassCoverageInfo.get("foo.bar.BarClass");
+    assertEquals(3, barClassCoverage.totalMethodCount);
+    assertEquals(1, barClassCoverage.coveredMethodCount);
+  }
+
   public void testJaCoCo() {
-    CoverageSuitesBundle bundle = loadCoverageSuite(JaCoCoCoverageRunner.class, "simple$foo_in_simple.jacoco.coverage");
+    CoverageSuitesBundle bundle = loadCoverageSuite(JaCoCoCoverageRunner.class, "simple$foo_in_simple.jacoco.coverage", null);
     ClassData classData = bundle.getCoverageData().getClassData("foo.FooClass");
     // getStatus() never returns full coverage; it can only distinguish between none and partial
     assertEquals(LineCoverage.PARTIAL, classData.getStatus("method1()I").intValue());
   }
 
   public void testHTMLReport() throws IOException {
-    CoverageSuitesBundle bundle = loadCoverageSuite(IDEACoverageRunner.class, "simple$foo_in_simple.coverage");
+    CoverageSuitesBundle bundle = loadCoverageSuite(IDEACoverageRunner.class, "simple$foo_in_simple.coverage", null);
     File htmlDir = Files.createTempDirectory("html").toFile();
     try {
       ExportToHTMLSettings.getInstance(myProject).OUTPUT_DIRECTORY = htmlDir.getAbsolutePath();
       new IDEACoverageRunner().generateReport(bundle, myProject);
       assertTrue(htmlDir.exists());
       assertTrue(new File(htmlDir, "index.html").exists());
-    } finally {
+    }
+    finally {
       htmlDir.delete();
     }
   }
 
-  private CoverageSuitesBundle loadCoverageSuite(Class<? extends CoverageRunner> coverageRunnerClass, String coverageDataPath) {
+  private CoverageSuitesBundle loadCoverageSuite(Class<? extends CoverageRunner> coverageRunnerClass, String coverageDataPath,
+                                                 String[] includeFilters) {
     File coverageFile = new File(getTestDataPath(), coverageDataPath);
     CoverageRunner runner = CoverageRunner.getInstance(coverageRunnerClass);
     CoverageFileProvider fileProvider = new DefaultCoverageFileProvider(coverageFile);
-    CoverageSuite suite =
-      JavaCoverageEngine.getInstance().createCoverageSuite(runner, "Simple", fileProvider, null, -1, null, false, false, false, myProject);
-    CoverageSuitesBundle bundle = new CoverageSuitesBundle(suite);
-    CoverageDataManager.getInstance(myProject).chooseSuitesBundle(bundle);
-    return bundle;
+    CoverageSuite suite = JavaCoverageEngine.getInstance().createSuite(
+      runner, "Simple", fileProvider, includeFilters, null,
+      -1, false, false, false, myProject);
+    return new CoverageSuitesBundle(suite);
   }
 
   private static class PackageAnnotationConsumer implements Annotator {

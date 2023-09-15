@@ -129,8 +129,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
       Annotator annotator = new JavaPackageAnnotator();
 
       long timeMs = TimeoutUtil.measureExecutionTime(() -> {
-        final int totalRoots = new JavaCoverageClassesEnumerator.RootsCounter(suite, project).getRoots();
-        new JavaCoverageClassesAnnotator(suite, project, annotator, totalRoots).visitSuite();
+        new JavaCoverageClassesAnnotator(suite, project, annotator).visitSuite();
         myStructure = new CoverageClassStructure(project);
         Disposer.register(this, myStructure);
         dataManager.triggerPresentationUpdate();

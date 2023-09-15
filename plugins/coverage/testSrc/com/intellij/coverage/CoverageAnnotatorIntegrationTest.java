@@ -12,9 +12,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPackage;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
@@ -64,7 +62,6 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
   }
 
   public void testExcludeEverythingFromCoverage() {
-    PsiPackage psiPackage = JavaPsiFacade.getInstance(getProject()).findPackage("p");
     JavaCoverageEngine engine = new JavaCoverageEngine() {
       @Override
       public boolean acceptedByFilters(@NotNull PsiFile psiFile, @NotNull CoverageSuitesBundle suite) {
@@ -88,7 +85,7 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
       public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
         Assert.fail("No classes are accepted by filter");
       }
-    }).visitRootPackage(psiPackage, (JavaCoverageSuite)suite.getSuites()[0]);
+    }).visitSuite();
   }
 
   public void testMultipleSourceRoots() {
@@ -111,7 +108,8 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
         };
       }
     };
-    PsiPackage psiPackage = JavaPsiFacade.getInstance(getProject()).findPackage("p");
+    JavaCoverageSuite javaCoverageSuite = (JavaCoverageSuite)suite.getSuites()[0];
+    javaCoverageSuite.setIncludeFilters(new String[]{"p.*"});
     Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> dirs = new HashMap<>();
     new JavaCoverageClassesAnnotator(suite, myProject, new Annotator() {
       @Override
@@ -119,7 +117,7 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
                                           PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
         dirs.put(virtualFile, packageCoverageInfo);
       }
-    }).visitRootPackage(psiPackage, (JavaCoverageSuite)suite.getSuites()[0]);
+    }).visitSuite();
 
     assertEquals(2, dirs.size());
     for (PackageAnnotator.PackageCoverageInfo coverageInfo : dirs.values()) {
