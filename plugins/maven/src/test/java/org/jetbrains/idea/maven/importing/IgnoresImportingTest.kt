@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class IgnoresImportingTest : MavenMultiVersionImportingTestCase() {
@@ -46,7 +47,7 @@ class IgnoresImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testAddingAndRemovingModulesWhenIgnoresChange() {
+  fun testAddingAndRemovingModulesWhenIgnoresChange() = runBlocking {
     val p1 = createModulePom("project1",
                              """
                                        <groupId>test</groupId>
@@ -79,8 +80,8 @@ class IgnoresImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoNotAskTwiceToRemoveIgnoredModule() {
-    if (!supportsKeepingModulesFromPreviousImport()) return
+  fun testDoNotAskTwiceToRemoveIgnoredModule() = runBlocking {
+    if (!supportsKeepingModulesFromPreviousImport()) return@runBlocking
 
     val p1 = createModulePom("project1",
                              """
@@ -110,12 +111,12 @@ class IgnoresImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project1", "project2")
   }
 
-  private fun doReadAndImport() {
+  private suspend fun doReadAndImport() {
     if (isNewImportingProcess) {
       doImportProjects(projectsManager.getProjectsTree().getExistingManagedFiles(), true)
     }
     else {
-      updateAllProjectsSync()
+      updateAllProjects()
     }
   }
 }
