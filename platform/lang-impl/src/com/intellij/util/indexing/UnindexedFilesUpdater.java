@@ -11,7 +11,6 @@ import com.intellij.util.indexing.dependencies.FileIndexingStampService.FileInde
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,9 +26,7 @@ public final class UnindexedFilesUpdater {
   private static final int DEFAULT_MAX_INDEXER_THREADS = 4;
   // Allows to specify number of indexing threads. -1 means the default value (currently, 4).
   private static final int INDEXER_THREAD_COUNT = SystemProperties.getIntProperty("caches.indexerThreadsCount", -1);
-  private static final boolean IS_HT_SMT_ENABLED = SystemProperties.getBooleanProperty(
-    "intellij.system.ht.smt.enabled", CpuArch.isIntel64() && !CpuArch.isEmulated());
-
+  private static final boolean IS_HT_SMT_ENABLED = SystemProperties.getBooleanProperty("intellij.system.ht.smt.enabled", false);
 
   private final @NotNull Project myProject;
   private final boolean myStartSuspended;
