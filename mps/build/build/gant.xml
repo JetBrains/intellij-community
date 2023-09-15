@@ -179,6 +179,19 @@
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
 
+        <property name="patchHideNewUIVideo"
+                  value="${basedir}/patches/HideNewUIVideo.patch"/>
+        <echo message="Applying ${patchHideNewUIVideo}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-check"/>
+            <arg value="${patchHideNewUIVideo}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${patchHideNewUIVideo}"/>
+        </exec>
+
         <property name="patchInitComponentsBeforeEditorOpens"
                   value="${basedir}/patches/MPS-36060.patch"/>
         <echo message="Applying ${patchInitComponentsBeforeEditorOpens}"/>
@@ -218,17 +231,17 @@
             <arg value="${patchIDEA-328155}"/>
         </exec>
 
-        <property name="patchDisableInteractiveCourses"
-                  value="${basedir}/patches/DisableInteractiveCourses.patch"/>
-        <echo message="Applying ${patchDisableInteractiveCourses}"/>
+        <property name="patchDisableCoursesAndTextSearch"
+                  value="${basedir}/patches/DisableCoursesAndTextSearch.patch"/>
+        <echo message="Applying ${patchDisableCoursesAndTextSearch}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="&#45;-check"/>
-            <arg value="${patchDisableInteractiveCourses}"/>
+            <arg value="${patchDisableCoursesAndTextSearch}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
-            <arg value="${patchDisableInteractiveCourses}"/>
+            <arg value="${patchDisableCoursesAndTextSearch}"/>
         </exec>
 
         <property name="patchFileApplicationNamesInfo"
