@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.configuration
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -13,7 +12,6 @@ import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
@@ -54,12 +52,10 @@ class KotlinProjectConfigurationService(private val project: Project, private va
 
     /**
      * Checks if the [module] can be auto-configured and runs auto-configuration if it is possible.
-     * If the configuration succeeded, the [onCompleted] callback is run with argument true,
-     * otherwise (configuration, failed, not enabled, etc.) the callback is run with argument false.
-     *
-     * The [onCompleted] callback is invoked on EDT.
+     * If the auto-configuration could not be run, a notification suggesting manual configuration
+     * is displayed, if configuration is necessary.
      */
-    fun runAutoConfigurationIfPossible(module: Module, onCompleted: (Boolean) -> Unit) {
+    fun runAutoConfigurationIfPossible(module: Module) {
         checkingAutoConfig = true
         // Removes the notification showing for a split second
         refreshEditorNotifications()
@@ -86,12 +82,12 @@ class KotlinProjectConfigurationService(private val project: Project, private va
                 notificationCooldownEnd = System.currentTimeMillis() + 2000
             } finally {
                 checkingAutoConfig = false
-                withContext(Dispatchers.EDT) {
-                    onCompleted(configured)
-                }
                 if (!configured) {
                     // Immediately refresh editor notifications to show Kotlin not-configured notification, if necessary
                     refreshEditorNotifications()
+                    readAction {
+                        showConfigureKotlinNotificationIfNeeded(module)
+                    }
                 }
             }
         }
