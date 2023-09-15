@@ -173,6 +173,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/OnActualDeclarationWithInheritedDoc.kt");
     }
 
+    @TestMetadata("OnActualValueParameterDeclaration.kt")
+    public void testOnActualValueParameterDeclaration() throws Exception {
+        runTest("testData/editor/quickDoc/OnActualValueParameterDeclaration.kt");
+    }
+
     @TestMetadata("OnClassDeclarationWithComplexKDoc.kt")
     public void testOnClassDeclarationWithComplexKDoc() throws Exception {
         runTest("testData/editor/quickDoc/OnClassDeclarationWithComplexKDoc.kt");

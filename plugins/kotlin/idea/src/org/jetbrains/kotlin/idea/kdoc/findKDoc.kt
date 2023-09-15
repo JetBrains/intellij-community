@@ -4,13 +4,9 @@ package org.jetbrains.kotlin.idea.kdoc
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
-import org.jetbrains.kotlin.descriptors.MemberDescriptor
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.util.expectedDescriptor
+import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.kdoc.parser.KDocKnownTag
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
@@ -130,12 +126,10 @@ private fun KtElement.lookupInheritedKDoc(descriptorToPsi: DescriptorToPsi): KDo
             }
         }
 
-        if (descriptor is MemberDescriptor && descriptor.isActual) {
-            val expectedKDoc = descriptor.expectedDescriptor()?.findKDoc(descriptorToPsi)
+        val expectedKDoc = descriptor?.liftToExpected().takeIf { it != descriptor }?.findKDoc(descriptorToPsi)
 
-            if (expectedKDoc != null) {
-                return expectedKDoc
-            }
+        if (expectedKDoc != null) {
+            return expectedKDoc
         }
     }
 
