@@ -969,7 +969,7 @@ object Utils {
     return result
   }
 
-  fun rearrangeByPromoters(actions: MutableList<AnAction>, dataContext: DataContext) {
+  fun rearrangeByPromoters(actions: MutableList<AnAction>, dataContext: DataContext, catchExceptions: Boolean = true) {
     val frozenContext = freezeDataContext(dataContext = dataContext, missedKeys = null)
     val readOnlyActions = Collections.unmodifiableList(actions)
     val promoters = ActionPromoter.EP_NAME.extensionList + actions.filterIsInstance<ActionPromoter>()
@@ -987,10 +987,12 @@ object Utils {
           }
         }
       }
-      catch (ignore: ProcessCanceledException) {
-      }
       catch (e: Throwable) {
-        LOG.error(e)
+        if (!catchExceptions)
+          throw e
+        if (e !is ProcessCanceledException) {
+          LOG.error(e)
+        }
       }
     }
   }
