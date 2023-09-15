@@ -54,8 +54,7 @@ public class MissingLoopBodyFixer implements Fixer {
     if (BasicJavaAstTreeUtil.is(body, BASIC_BLOCK_STATEMENT)) return;
     if (body != null && startLine(doc, body) == startLine(doc, loopStatement)) return;
 
-    ASTNode eltToInsertAfter = BasicJavaAstTreeUtil.getRParenth(loopStatement);
-    fixLoopBody(editor, processor, loopStatement, doc, body, eltToInsertAfter);
+    fixLoopBody(editor, processor, loopStatement, doc, body);
   }
 
   private static ASTNode getLoopParent(@NotNull ASTNode element) {
@@ -115,8 +114,8 @@ public class MissingLoopBodyFixer implements Fixer {
                                   @NotNull AbstractBasicJavaSmartEnterProcessor processor,
                                   @NotNull ASTNode loop,
                                   @NotNull Document doc,
-                                  @Nullable ASTNode body,
-                                  @Nullable ASTNode eltToInsertAfter) {
+                                  @Nullable ASTNode body) {
+    ASTNode eltToInsertAfter = BasicJavaAstTreeUtil.getRParenth(loop);
     PsiElement loopElement = BasicJavaAstTreeUtil.toPsi(loop);
     if (body != null && eltToInsertAfter != null) {
       PsiElement bodyElement = BasicJavaAstTreeUtil.toPsi(body);
@@ -139,8 +138,13 @@ public class MissingLoopBodyFixer implements Fixer {
     }
     int offset = eltToInsertAfter.getTextRange().getEndOffset();
     if (needToClose) {
-      doc.insertString(offset, ")");
-      offset++;
+      if (BasicJavaAstTreeUtil.getLParenth(loop) == null) {
+        doc.insertString(offset, "()");
+        offset += 2;
+      } else {
+        doc.insertString(offset, ")");
+        offset++;
+      }
     }
     processor.insertBraces(editor, offset);
     editor.getCaretModel().moveToOffset(offset);

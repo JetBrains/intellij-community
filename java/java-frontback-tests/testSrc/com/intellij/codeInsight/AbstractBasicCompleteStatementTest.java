@@ -205,6 +205,8 @@ public abstract class AbstractBasicCompleteStatementTest extends LightPlatformCo
   public void testParenthesized() { doTest(); }
 
   public void testCompleteBreak() { doTest(); }
+  
+  public void testNakedWhile() { doTest(); }
 
   public void testCompleteIfNextLineBraceStyle() {
     myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
