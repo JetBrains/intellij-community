@@ -3,8 +3,10 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.client.Driver
 import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.driver.model.TextData
-import com.intellij.driver.sdk.ui.*
 import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT_SECONDS
+import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.SearchContext
+import com.intellij.driver.sdk.ui.UiText
 import com.intellij.driver.sdk.ui.keyboard.WithKeyboard
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.RobotService
@@ -66,7 +68,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   fun isVisible(): Boolean = component.isVisible()
 
-  private fun findAllText(predicate: (TextData) -> Boolean): List<UiText> {
+  fun findAllText(predicate: (TextData) -> Boolean): List<UiText> {
     return robotService.findAllText(component).filter(predicate).map { UiText(this, it) }
   }
 
