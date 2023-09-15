@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,6 +124,13 @@ public final class PluginUtilImpl implements PluginUtil {
     Throwable cause = t.getCause();
     PluginId causeId = cause == null ? null : doFindPluginId(cause);
     return causeId != null ? causeId : bundledId;
+  }
+
+  @Nls
+  @Override
+  public @Nullable String findPluginName(@NotNull PluginId pluginId) {
+    IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
+    return plugin != null ? plugin.getName() : null;
   }
 
   private static void logPluginDetection(String className, PluginId id) {
