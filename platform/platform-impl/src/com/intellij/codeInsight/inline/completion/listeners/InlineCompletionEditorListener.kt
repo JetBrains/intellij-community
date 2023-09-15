@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.application
+import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
@@ -18,10 +19,8 @@ import org.jetbrains.annotations.ApiStatus
  * Inline completion will be shown only if at least one [InlineCompletionProvider] is enabled and returns at least one proposal
  */
 @ApiStatus.Experimental
-class InlineCompletionEditorListener(scope: CoroutineScope) : EditorFactoryListener {
+class InlineCompletionEditorListener(private val scope: CoroutineScope) : EditorFactoryListener {
   private val editorMouseListener = InlineEditorMouseListener()
-
-  private val handler = InlineCompletionHandler(scope)
 
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor
@@ -31,6 +30,7 @@ class InlineCompletionEditorListener(scope: CoroutineScope) : EditorFactoryListe
       EditorUtil.disposeWithEditor(editor, it)
     }
 
+    val handler = InlineCompletionHandler(scope.childScope())
     editor.putUserData(InlineCompletionHandler.KEY, handler)
     val docListener = InlineCompletionDocumentListener(editor)
     val caretListener = InlineCaretListener()
@@ -46,7 +46,7 @@ class InlineCompletionEditorListener(scope: CoroutineScope) : EditorFactoryListe
   }
 
   override fun editorReleased(event: EditorFactoryEvent) {
-    handler.cancel(event.editor)
+    event.editor.getUserData(InlineCompletionHandler.KEY)?.cancel(event.editor)
     event.editor.putUserData(InlineCompletionHandler.KEY, null)
   }
 }
