@@ -2,6 +2,9 @@
 package com.intellij.importSettings.importer
 
 import com.intellij.icons.AllIcons
+import com.intellij.importSettings.data.ActionsDataProvider
+import com.intellij.importSettings.data.BaseService
+import com.intellij.importSettings.data.Product
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -13,7 +16,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import javax.swing.*
 
-class SettingSyncDialog : DialogWrapper(null) {
+class SettingSyncDialog(val service: ActionsDataProvider, val product: Product) : DialogWrapper(null) {
 
   private val pane = JPanel(BorderLayout()).apply {
     preferredSize = JBDimension(640, 410)

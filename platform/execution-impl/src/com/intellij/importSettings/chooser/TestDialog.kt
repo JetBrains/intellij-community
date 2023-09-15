@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -31,6 +32,7 @@ class TestDialog(val group: ActionGroup, val act: AnAction) : DialogWrapper(null
     val act = ActionManager.getInstance().createActionToolbar("BlaBlaBLa", DefaultActionGroup().apply { add(act) }, false).apply {
       if (this is ActionToolbarImpl) {
         isOpaque = false
+        setActionButtonBorder(2, JBUI.CurrentTheme.RunWidget.toolbarBorderHeight())
       }
 
     }

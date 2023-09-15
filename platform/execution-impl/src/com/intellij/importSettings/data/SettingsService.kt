@@ -10,7 +10,7 @@ interface SettingsService {
     fun getInstance(): SettingsService = service()
   }
   fun getSyncService(): SyncService
-  fun getImportService(): ImportService
+  fun getJbService(): ImportService
   fun getExternalService(): ImportExternalService
 
   fun skipImport()
@@ -18,18 +18,27 @@ interface SettingsService {
 
 
 interface SyncService : BaseJbService {
+  enum class SYNC_STATE {
+    UNLOGGED,
+    WAINING_FOR_LOGIN,
+    LOGIN_FAILED,
+    LOGGED,
+    TURNED_OFF,
+    NO_SYNC,
+    GENERAL
+  }
+
+
   val syncState: SYNC_STATE
   fun tryToLogin(): String?
-
-  fun getMainProduct(): Product?
   fun syncSettings(productId: String)
   fun importSettings(productId: String)
+  fun getMainProduct(): Product?
 
   fun generalSync()
 }
 
 interface ImportExternalService : BaseService {
-  fun getProducts(): List<Product>
   fun importSettings(productId: String)
 }
 
@@ -38,15 +47,14 @@ interface ImportService: BaseJbService {
 }
 
 interface BaseJbService : BaseService {
-
-  fun getFreshProducts(): List<Product>
   fun getOldProducts(): List<Product>
 }
 
 interface BaseService {
+  fun products(): List<Product>
   fun getSettings(productId: String): List<BaseSetting>
 
-  fun getProductIcon(productId: String, size: IconProductSize = IconProductSize.SMALL): Icon
+  fun getProductIcon(productId: String, size: IconProductSize = IconProductSize.SMALL): Icon?
 }
 
 enum class IconProductSize(val int: Int) {
@@ -66,6 +74,7 @@ interface Product {
                       Есть у нас где-то такое? */
 
 }
+
 
 interface BaseSetting {
   val id: String
@@ -94,16 +103,6 @@ interface ChildSetting {
   val name: String
   val marker: String /* built-in скетч: https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=961%3A169853&mode=dev */
   val value: String /* hotkey скетч https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=961%3A169735&mode=dev*/
-}
-
-enum class SYNC_STATE {
-  UNLOGGED,
-  WAINING_FOR_LOGIN,
-  LOGIN_FAILED,
-  LOGGED,
-  TURNED_OFF,
-  NO_SYNC,
-  GENERAL
 }
 
 data class DataForSave(val id: String, val childIds: List<String>?)
