@@ -616,11 +616,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     projectsManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
   }
 
-  protected fun updateAllProjectsSync() {
-    projectsManager.updateAllMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT)
-    projectsManager.waitForImportCompletion()
-  }
-
   protected fun waitForReadingCompletion() {
     if (isNewImportingProcess) {
       return
