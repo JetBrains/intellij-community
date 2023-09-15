@@ -80,20 +80,18 @@ internal object CallableMetadataProvider {
         if (symbol is KtSyntheticJavaPropertySymbol) {
             return getCallableMetadata(context, symbol.javaGetterSymbol.asSignature(), symbolOrigin)
         }
-        return callableWeightBasic(context, signature, symbolOrigin)
-    }
 
-    context(KtAnalysisSession)
-    private fun callableWeightBasic(
-        context: WeighingContext,
-        signature: KtCallableSignature<*>,
-        symbolOrigin: CompletionSymbolOrigin,
-    ): CallableMetadata {
         val scopeIndex = (symbolOrigin as? CompletionSymbolOrigin.Scope)?.kind?.indexInTower
 
         return when (signature.symbol.symbolKind) {
             KtSymbolKind.TOP_LEVEL,
-            KtSymbolKind.CLASS_MEMBER -> callableWeightByReceiver(signature, context)
+            KtSymbolKind.CLASS_MEMBER -> {
+                if (signature.symbol.isExtension) {
+                    extensionWeight(signature, context)
+                } else {
+                    nonExtensionWeight(signature, context)
+                }
+            }
 
             KtSymbolKind.LOCAL -> CallableMetadata(CallableKind.LOCAL, scopeIndex)
             else -> null
@@ -101,44 +99,49 @@ internal object CallableMetadataProvider {
     }
 
     context(KtAnalysisSession)
-    private fun callableWeightByReceiver(
+    private fun nonExtensionWeight(
         signature: KtCallableSignature<*>,
         context: WeighingContext,
     ): CallableMetadata? {
         val symbol = signature.symbol
 
+        val expectedReceiver = signature.symbol.originalContainingClassForOverride ?: return null
+        val expectedReceiverType = buildClassType(expectedReceiver)
         val actualReceiverTypes = getActualReceiverTypes(context)
-        val expectedExtensionReceiverType = signature.receiverType
 
-        if (expectedExtensionReceiverType == null) {
-            val expectedReceiver = symbol.originalContainingClassForOverride ?: return null
-            val expectedReceiverType = buildClassType(expectedReceiver)
-
-            val replaceTypeArguments = expectedReceiverType is KtNonErrorClassType && expectedReceiverType.ownTypeArguments.isNotEmpty()
-            val correctedActualReceiverTypes = if (replaceTypeArguments) {
-                // replace type arguments to correctly compare actual types with built expected type
-                actualReceiverTypes.mapNotNull { it.replaceTypeArgumentsWithStarProjections() }
-            } else actualReceiverTypes
-
-            val hasOverriddenSymbols = symbol.isOverride ||
-                    symbol.getDirectlyOverriddenSymbols().isNotEmpty() ||
-                    symbol.getAllOverriddenSymbols().isNotEmpty()
-
-            return callableWeightByReceiver(
-                symbol,
-                correctedActualReceiverTypes,
-                expectedReceiverType,
-            )
-                // currently override members are considered as non-immediate in completion
-                ?.applyIf(hasOverriddenSymbols) { CallableMetadata(kind.correspondingBaseForThisOrSelf, scopeIndex) }
+        val replaceTypeArguments = expectedReceiverType is KtNonErrorClassType && expectedReceiverType.ownTypeArguments.isNotEmpty()
+        // replace type arguments to correctly compare actual types with built expected type
+        val correctedActualReceiverTypes = actualReceiverTypes.applyIf(replaceTypeArguments) {
+            mapNotNull { it.replaceTypeArgumentsWithStarProjections() }
         }
+
+        val hasOverriddenSymbols = symbol.isOverride ||
+                symbol.getDirectlyOverriddenSymbols().isNotEmpty() ||
+                symbol.getAllOverriddenSymbols().isNotEmpty()
+
+        return callableWeightByReceiver(
+            symbol,
+            correctedActualReceiverTypes,
+            expectedReceiverType,
+        )
+            // currently override members are considered as non-immediate in completion
+            ?.applyIf(hasOverriddenSymbols) { CallableMetadata(kind.correspondingBaseForThisOrSelf, scopeIndex) }
+    }
+
+    context(KtAnalysisSession)
+    private fun extensionWeight(
+        signature: KtCallableSignature<*>,
+        context: WeighingContext,
+    ): CallableMetadata? {
+        val actualReceiverTypes = getActualReceiverTypes(context)
+        val expectedExtensionReceiverType = signature.receiverType ?: return null
 
         // If a symbol expects an extension receiver, then either
         //   * the call site explicitly specifies the extension receiver , or
         //   * the call site specifies no receiver.
         // In other words, in this case, an explicit receiver can never be a dispatch receiver.
         val weightBasedOnExtensionReceiver = callableWeightByReceiver(
-            symbol,
+            signature.symbol,
             actualReceiverTypes,
             expectedExtensionReceiverType,
         )
