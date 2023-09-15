@@ -33,8 +33,14 @@ interface Sdk {
 @Remote(value = "com.jetbrains.performancePlugin.commands.SetupProjectSdkUtil", plugin = "com.jetbrains.performancePlugin")
 interface SetupProjectSdkUtil {
   fun setupOrDetectSdk(project: Project, name: String, type: String, home: String)
+
+  fun setupOrDetectSdk(name: String, type: String, home: String): Sdk
 }
 
 fun Driver.setupOrDetectSdk(project: Project, name: String, type: String, home: String) {
   utility<SetupProjectSdkUtil>().setupOrDetectSdk(project, name, type, home)
+}
+
+fun Driver.setupOrDetectSdk(name: String, type: String, home: String) {
+  utility<SetupProjectSdkUtil>().setupOrDetectSdk(name, type, home)
 }

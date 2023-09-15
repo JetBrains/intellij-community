@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -22,6 +23,20 @@ import java.util.Objects;
 @VisibleForTesting
 public final class SetupProjectSdkUtil {
   private static final Logger LOG = Logger.getInstance(SetupProjectSdkUtil.class);
+
+  @VisibleForTesting
+  public static Sdk setupOrDetectSdk(@NotNull String name,
+                                     @NotNull String type,
+                                     @NotNull String home) {
+    Ref<Sdk> sdkRef = new Ref<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      WriteAction.run(() -> {
+        Sdk sdk = setup(name, type, home);
+        sdkRef.set(sdk);
+      });
+    });
+    return sdkRef.get();
+  }
 
   @VisibleForTesting
   public static void setupOrDetectSdk(@NotNull Project project,
