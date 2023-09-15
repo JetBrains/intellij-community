@@ -8,10 +8,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.JBColor
 import com.intellij.ui.TableActions
-import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.LafIconLookup
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
 import java.awt.Font
@@ -20,7 +18,10 @@ import java.awt.event.KeyEvent
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
-import javax.swing.*
+import javax.swing.InputMap
+import javax.swing.KeyStroke
+import javax.swing.LookAndFeel
+import javax.swing.UIDefaults
 import javax.swing.UIDefaults.LazyValue
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.UIResource
@@ -171,42 +172,8 @@ internal fun initBaseLaF(defaults: UIDefaults) {
   defaults.put("EditorPane.font", toFont(defaults, "TextField.font"))
 
   patchFileChooserStrings(defaults)
-  patchTreeUI(defaults)
 
-  defaults.put("Button.defaultButtonFollowsFocus", false)
   defaults.put("Balloon.error.textInsets", JBInsets(3, 8, 3, 8).asUIResource())
-}
-
-private fun patchTreeUI(defaults: UIDefaults) {
-  defaults.put("TreeUI", DefaultTreeUI::class.java.name)
-  defaults.put("Tree.repaintWholeRow", true)
-
-  if (defaults.containsKey("Tree.collapsedIcon") &&
-      defaults.containsKey("Tree.collapsedSelectedIcon") &&
-      defaults.containsKey("Tree.expandedIcon") &&
-      defaults.containsKey("Tree.expandedSelectedIcon")) {
-    // do not resolve lazy icons for Darcula and other modern UI themes
-    return
-  }
-
-  if (isUnsupported(defaults.getIcon("Tree.collapsedIcon"))) {
-    defaults.put("Tree.collapsedIcon", LazyValue { LafIconLookup.getIcon("treeCollapsed") })
-    defaults.put("Tree.collapsedSelectedIcon", LafIconLookup.getSelectedIcon("treeCollapsed"))
-  }
-  if (isUnsupported(defaults.getIcon("Tree.expandedIcon"))) {
-    defaults.put("Tree.expandedIcon", LazyValue { LafIconLookup.getIcon("treeExpanded") })
-    defaults.put("Tree.expandedSelectedIcon", LazyValue { LafIconLookup.getSelectedIcon("treeExpanded") })
-  }
-}
-
-/**
- * @return `true` if an icon is not specified or if it is declared in some Swing L&F
- * (such icons do not have a variant to paint in the selected row)
- */
-private fun isUnsupported(icon: Icon?): Boolean {
-  val name = icon?.javaClass?.name
-  @Suppress("SpellCheckingInspection")
-  return name == null || name.startsWith("javax.swing.plaf.") || name.startsWith("com.sun.java.swing.plaf.")
 }
 
 private fun patchFileChooserStrings(defaults: UIDefaults) {
@@ -222,7 +189,6 @@ private fun patchFileChooserStrings(defaults: UIDefaults) {
     }
   }
 }
-
 
 private fun patchComboBox(defaults: UIDefaults) {
   val metalDefaults = MetalLookAndFeel().getDefaults()

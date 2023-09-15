@@ -69,6 +69,7 @@
     "Button": {
       "arc": 6,
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter",
+      "defaultButtonFollowsFocus": false,
       "default.endBackground": "#365880",
       "default.endBorderColor": "#4c708c",
       "default.focusColor": "#43688c",
@@ -625,6 +626,7 @@
       "forceFocusedSelectionForeground": true,
       "rightChildIndent": 11,
       "rowHeight": 20,
+      "repaintWholeRow": true,
       "UI": "com.intellij.ui.tree.ui.DefaultTreeUI"
     },
 
