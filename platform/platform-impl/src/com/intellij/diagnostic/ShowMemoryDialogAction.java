@@ -4,10 +4,11 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public final class ShowMemoryDialogAction extends AnAction implements DumbAware {
+public final class ShowMemoryDialogAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   private final boolean myAvailable = VMOptions.canWriteOptions();
 
   @Override
