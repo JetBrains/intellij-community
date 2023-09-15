@@ -11,6 +11,8 @@
   <property name="retry.attempts" value="7"/>
   <property name="retry.delay" value="1000"/>
 
+  <taskdef name="executeOnChanged" classname="org.jetbrains.ExecuteOnChanged" classpath="execute-on-changed-ant-task/target/execute-on-changed-ant-task-1.0-SNAPSHOT.jar"/>
+
   <property name="ij.packages.auth.java.path" value="${ultimate.home}/build/private-packages-auth/src/com/intellij/idea/ultimate/build/packages/auth/IJPrivatePackagesAuthorizer.java"/>
 
   <mkdir dir="${build.dir}" />
@@ -100,28 +102,44 @@
       </resolver:resolve>
     </retry>
 
-    <delete dir="${classes.dir}" />
-    <java
-      classname="org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
-      classpathref="classpath.kotlin.compiler"
-      fork="true"
-      failonerror="true">
-      <arg value="-no-reflect" />
-      <arg value="-no-stdlib" />
-      <arg value="-jvm-target" />
-      <arg value="11" />
-      <arg value="-classpath" />
-      <arg pathref="classpath.buildscripts" />
-      <arg path="${jps.bootstrap.dir}/src/main/java" />
-      <arg path="${community.home}/platform/build-scripts/downloader/src" />
-      <arg value="-d" />
-      <arg value="${classes.dir}" />
-    </java>
+    <executeOnChanged statefile="${build.dir}/jps-bootstrap.classes.jar.state.txt">
+      <inputs>
+        <pathelement location="${ant.file}"/>
+        <pathelement location="${jps.bootstrap.dir}/src/main/java"/>
+        <pathelement location="${community.home}/platform/build-scripts/downloader/src"/>
+        <pathelement location="${jps.bootstrap.dir}/pom.xml"/>
+        <pathelement location="${community.home}/.idea/kotlinc.xml"/>
+      </inputs>
 
-    <delete file="${classes.dir}.jar" />
-    <zip destfile="${classes.dir}.jar">
-      <fileset dir="${classes.dir}" />
-    </zip>
+      <outputs>
+        <pathelement location="${classes.dir}.jar"/>
+      </outputs>
+
+      <sequential>
+        <delete dir="${classes.dir}"/>
+        <java
+          classname="org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
+          classpathref="classpath.kotlin.compiler"
+          fork="true"
+          failonerror="true">
+          <arg value="-no-reflect"/>
+          <arg value="-no-stdlib"/>
+          <arg value="-jvm-target"/>
+          <arg value="11"/>
+          <arg value="-classpath"/>
+          <arg pathref="classpath.buildscripts"/>
+          <arg path="${jps.bootstrap.dir}/src/main/java"/>
+          <arg path="${community.home}/platform/build-scripts/downloader/src"/>
+          <arg value="-d"/>
+          <arg value="${classes.dir}"/>
+        </java>
+
+        <delete file="${classes.dir}.jar"/>
+        <zip destfile="${classes.dir}.jar">
+          <fileset dir="${classes.dir}"/>
+        </zip>
+      </sequential>
+    </executeOnChanged>
 
     <mkdir dir="${uber.dir}" />
     <sync todir="${uber.dir}">
