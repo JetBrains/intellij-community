@@ -16,9 +16,15 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.GotItComponentBuilder
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.yield
+import org.jetbrains.annotations.Nls
 import java.awt.Point
 
-class ProjectWidgetStep : NewUiOnboardingStep {
+open class ProjectWidgetStep : NewUiOnboardingStep {
+  protected val headerText: @Nls String
+    get() = NewUiOnboardingBundle.message("project.widget.step.header")
+  protected val text: @Nls String
+    get() = NewUiOnboardingBundle.message("project.widget.step.text")
+
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val button = findUiComponent(project) { button: ToolbarComboButton ->
       ClientProperty.get(button, CustomComponentAction.ACTION_KEY) is ProjectToolbarWidgetAction
@@ -29,8 +35,8 @@ class ProjectWidgetStep : NewUiOnboardingStep {
 
     yield()  // wait for popup to be shown
 
-    val builder = GotItComponentBuilder(NewUiOnboardingBundle.message("project.widget.step.text"))
-    builder.withHeader(NewUiOnboardingBundle.message("project.widget.step.header"))
+    val builder = GotItComponentBuilder(text)
+    builder.withHeader(headerText)
 
     val popupPoint = Point(popup.content.width + JBUI.scale(4), JBUI.scale(32))
     val point = NewUiOnboardingUtil.convertPointToFrame(project, popup.content, popupPoint) ?: return null
