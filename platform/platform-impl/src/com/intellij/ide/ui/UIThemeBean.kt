@@ -9,8 +9,6 @@ import com.intellij.ide.ui.laf.IJColorUIResource
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.ExperimentalUI
-import it.unimi.dsi.fastutil.Hash
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
 import java.awt.Color
 import java.util.*
 import java.util.function.BiFunction
@@ -42,11 +40,10 @@ internal class UIThemeBean {
               "iconColorsOnSelection" -> bean.iconColorsOnSelection = readMapFromJson(parser)
               "ui" -> {
                 // ordered map is required (not clear why)
-                val map = Object2ObjectLinkedOpenHashMap<String, Any?>(700, Hash.FAST_LOAD_FACTOR)
+                val map = LinkedHashMap<String, Any?>(700)
                 readFlatMapFromJson(parser, map)
                 putDefaultsIfAbsent(map)
                 bean.ui = map
-                map.trim()
               }
               "UIDesigner" -> {
                 parser.skipChildren()
@@ -267,9 +264,8 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
 }
 
 private fun readMapFromJson(parser: JsonParser): MutableMap<String, Any?> {
-  val m = Object2ObjectLinkedOpenHashMap<String, Any?>(Hash.DEFAULT_INITIAL_SIZE, Hash.FAST_LOAD_FACTOR)
+  val m = LinkedHashMap<String, Any?>(700)
   readMapFromJson(parser, m)
-  m.trim()
   return m
 }
 
@@ -282,10 +278,9 @@ private fun readMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>
     when (parser.nextToken()) {
       JsonToken.START_OBJECT -> {
         level++
-        val m = Object2ObjectLinkedOpenHashMap<String, Any?>(Hash.DEFAULT_INITIAL_SIZE, Hash.FAST_LOAD_FACTOR)
+        val m = LinkedHashMap<String, Any?>()
         result.put(parser.currentName(), m)
         readMapFromJson(parser, m)
-        m.trim()
       }
       JsonToken.END_OBJECT -> {
         level--
@@ -425,7 +420,7 @@ private fun putDefaultsIfAbsent(theme: UIThemeBean) {
 
   var ui = theme.ui
   if (ui == null) {
-    ui = Object2ObjectLinkedOpenHashMap()
+    ui = LinkedHashMap()
     theme.ui = ui
     putDefaultsIfAbsent(ui)
   }
@@ -455,15 +450,15 @@ private fun importMapFromParentTheme(map: Map<String, Any?>?, parentMap: Map<Str
     return map
   }
   if (map == null) {
-    return Object2ObjectLinkedOpenHashMap(parentMap, Hash.FAST_LOAD_FACTOR)
+    return LinkedHashMap(parentMap)
   }
 
-  val result = Object2ObjectLinkedOpenHashMap<String, Any?>(parentMap.size + map.size, Hash.FAST_LOAD_FACTOR)
-  result.putAll(parentMap)
-  for ((key, value) in map) {
-    result.putAndMoveToLast(key, value)
+  val result = LinkedHashMap<String, Any?>(parentMap.size + map.size)
+  for (entry in parentMap.entries) {
+    if (entry.key !in map) {
+      result.put(entry.key, entry.value)
+    }
   }
-
-  result.trim()
+  result.putAll(map)
   return result
 }
