@@ -168,6 +168,16 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/HiddenDeclarationsInWhenCondition/");
     }
 
+    @TestMetadata("InImportClassifiers")
+    public void testInImportClassifiers() throws Exception {
+        runTest("../testData/basic/multifile/InImportClassifiers/");
+    }
+
+    @TestMetadata("InImportCompanionObjectMembers")
+    public void testInImportCompanionObjectMembers() throws Exception {
+        runTest("../testData/basic/multifile/InImportCompanionObjectMembers/");
+    }
+
     @TestMetadata("InImportExtension")
     public void testInImportExtension() throws Exception {
         runTest("../testData/basic/multifile/InImportExtension/");
@@ -186,6 +196,31 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
     @TestMetadata("InImportHighOrderTopLevelFunNoTailText")
     public void testInImportHighOrderTopLevelFunNoTailText() throws Exception {
         runTest("../testData/basic/multifile/InImportHighOrderTopLevelFunNoTailText/");
+    }
+
+    @TestMetadata("InImportJavaClass")
+    public void testInImportJavaClass() throws Exception {
+        runTest("../testData/basic/multifile/InImportJavaClass/");
+    }
+
+    @TestMetadata("InImportJavaStatic")
+    public void testInImportJavaStatic() throws Exception {
+        runTest("../testData/basic/multifile/InImportJavaStatic/");
+    }
+
+    @TestMetadata("InImportNestedClassifiers")
+    public void testInImportNestedClassifiers() throws Exception {
+        runTest("../testData/basic/multifile/InImportNestedClassifiers/");
+    }
+
+    @TestMetadata("InImportNoClassMembers")
+    public void testInImportNoClassMembers() throws Exception {
+        runTest("../testData/basic/multifile/InImportNoClassMembers/");
+    }
+
+    @TestMetadata("InImportObjectMembers")
+    public void testInImportObjectMembers() throws Exception {
+        runTest("../testData/basic/multifile/InImportObjectMembers/");
     }
 
     @TestMetadata("InImportTopLevelVal")

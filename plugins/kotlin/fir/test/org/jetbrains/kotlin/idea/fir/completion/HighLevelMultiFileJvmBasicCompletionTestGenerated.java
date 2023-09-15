@@ -168,6 +168,16 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../completion/testData/basic/multifile/HiddenDeclarationsInWhenCondition/");
     }
 
+    @TestMetadata("InImportClassifiers")
+    public void testInImportClassifiers() throws Exception {
+        runTest("../completion/testData/basic/multifile/InImportClassifiers/");
+    }
+
+    @TestMetadata("InImportCompanionObjectMembers")
+    public void testInImportCompanionObjectMembers() throws Exception {
+        runTest("../completion/testData/basic/multifile/InImportCompanionObjectMembers/");
+    }
+
     @TestMetadata("InImportExtension")
     public void testInImportExtension() throws Exception {
         runTest("../completion/testData/basic/multifile/InImportExtension/");
@@ -186,6 +196,31 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
     @TestMetadata("InImportHighOrderTopLevelFunNoTailText")
     public void testInImportHighOrderTopLevelFunNoTailText() throws Exception {
         runTest("../completion/testData/basic/multifile/InImportHighOrderTopLevelFunNoTailText/");
+    }
+
+    @TestMetadata("InImportJavaClass")
+    public void testInImportJavaClass() throws Exception {
+        runTest("../completion/testData/basic/multifile/InImportJavaClass/");
+    }
+
+    @TestMetadata("InImportJavaStatic")
+    public void testInImportJavaStatic() throws Exception {
+        runTest("../completion/testData/basic/multifile/InImportJavaStatic/");
+    }
+
+    @TestMetadata("InImportNestedClassifiers")
+    public void testInImportNestedClassifiers() throws Exception {
+        runTest("../completion/testData/basic/multifile/InImportNestedClassifiers/");
+    }
+
+    @TestMetadata("InImportNoClassMembers")
+    public void testInImportNoClassMembers() throws Exception {
+        runTest("../completion/testData/basic/multifile/InImportNoClassMembers/");
+    }
+
+    @TestMetadata("InImportObjectMembers")
+    public void testInImportObjectMembers() throws Exception {
+        runTest("../completion/testData/basic/multifile/InImportObjectMembers/");
     }
 
     @TestMetadata("InImportTopLevelVal")
