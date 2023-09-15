@@ -22,6 +22,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ExperimentalUI;
@@ -52,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -640,12 +640,16 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
     private AnAction createRemoveAction() {
       return DumbAwareAction.create(e -> {
-        for (var b : breakpoints) {
-          // FIXME[inline-bp]: check it. Maybe we should have single confirmation for all breakpoints.
-          //                   Also it would help to restore them. See XBreakpointManagerImpl.restoreLastRemovedBreakpoint.
-          XDebuggerUtilImpl.removeBreakpointWithConfirmation(b);
-        }
+        removeBreakpoints();
       });
+    }
+
+    private void removeBreakpoints() {
+      for (var b : breakpoints) {
+        // FIXME[inline-bp]: check it. Maybe we should have single confirmation for all breakpoints.
+        //                   Also it would help to restore them. See XBreakpointManagerImpl.restoreLastRemovedBreakpoint.
+        XDebuggerUtilImpl.removeBreakpointWithConfirmation(b);
+      }
     }
 
     @Override
@@ -695,8 +699,17 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
     @Override
     public GutterDraggableObject getDraggableObject() {
-      // FIXME[inline-bp]: implement me
-      return super.getDraggableObject();
+      return new GutterDraggableObject() {
+        @Override
+        public boolean copy(int line, VirtualFile file, int actionId) {
+          return false; // It's too hard, no copying, please.
+        }
+
+        @Override
+        public void remove() {
+          removeBreakpoints();
+        }
+      };
     }
 
     @Override
