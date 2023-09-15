@@ -10,7 +10,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
@@ -29,8 +29,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import static com.intellij.openapi.util.Pair.pair;
 
 public final class VMOptions {
   private static final Logger LOG = Logger.getInstance(VMOptions.class);
@@ -60,7 +58,7 @@ public final class VMOptions {
 
   /**
    * Returns a value of the given {@link MemoryKind memory setting} (in MiBs), or {@code -1} when unable to find out
-   * (e.g. a user doesn't have custom memory settings).
+   * (e.g., a user doesn't have custom memory settings).
    *
    * @see #readOption(String, boolean)
    */
@@ -158,7 +156,7 @@ public final class VMOptions {
    */
   public static long parseMemoryOption(@NotNull String strValue) throws IllegalArgumentException {
     int p = 0;
-    while (p < strValue.length() && StringUtil.isDecimalDigit(strValue.charAt(p))) p++;
+    while (p < strValue.length() && Strings.isDecimalDigit(strValue.charAt(p))) p++;
     long numValue = Long.parseLong(strValue.substring(0, p));
     if (p < strValue.length()) {
       String unit = strValue.substring(p);
@@ -192,7 +190,7 @@ public final class VMOptions {
    * the option is added to the file.</p>
    */
   public static void setOption(@NotNull String prefix, @Nullable String newValue) throws IOException {
-    setOptions(List.of(pair(prefix, newValue)));
+    setOptions(List.of(new Pair<>(prefix, newValue)));
   }
 
   /**
@@ -251,7 +249,7 @@ public final class VMOptions {
 
   /**
    * Returns {@code true} when user's VM options may be created (or already exists) -
-   * i.e. when the IDE knows a place where a launcher will look for that file.
+   * i.e., when the IDE knows a place where a launcher will look for that file.
    */
   public static boolean canWriteOptions() {
     return getUserOptionsFile() != null;
