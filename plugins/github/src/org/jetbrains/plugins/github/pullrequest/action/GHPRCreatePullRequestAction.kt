@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 
 internal class GHPRCreatePullRequestAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {

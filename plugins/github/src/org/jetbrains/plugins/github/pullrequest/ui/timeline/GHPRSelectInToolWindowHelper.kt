@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 
 class GHPRSelectInToolWindowHelper(private val project: Project, private val pullRequest: GHPRIdentifier) {
 

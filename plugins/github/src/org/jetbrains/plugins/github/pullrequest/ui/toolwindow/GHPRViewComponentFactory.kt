@@ -32,6 +32,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsComponentF
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRChangesViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetailsViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRInfoViewModel
 import javax.swing.Action
 import javax.swing.JComponent
 
