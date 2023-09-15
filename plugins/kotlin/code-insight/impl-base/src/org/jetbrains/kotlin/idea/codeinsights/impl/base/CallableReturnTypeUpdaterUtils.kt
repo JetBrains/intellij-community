@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
@@ -13,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.suggested.endOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
@@ -30,22 +32,31 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.bfs
 
 object CallableReturnTypeUpdaterUtils {
-    fun updateType(declaration: KtCallableDeclaration, typeInfo: TypeInfo, project: Project, editor: Editor?) {
+    fun updateType(
+        declaration: KtCallableDeclaration,
+        typeInfo: TypeInfo,
+        project: Project,
+        editor: Editor? = null,
+        updater: ModPsiUpdater? = null
+    ) {
         if (editor == null || !typeInfo.useTemplate || !ApplicationManager.getApplication().isWriteAccessAllowed) {
-            declaration.setType(typeInfo.defaultType, project)
+            declaration.setType(typeInfo.defaultType, project, updater)
         } else {
             setTypeWithTemplate(listOf(declaration to typeInfo).iterator(), project, editor)
         }
     }
 
-    private fun KtCallableDeclaration.setType(type: TypeInfo.Type, project: Project) {
+    private fun KtCallableDeclaration.setType(type: TypeInfo.Type, project: Project, updater: ModPsiUpdater? = null) {
         val newTypeRef = if (isProcedure(type)) {
             null
         } else {
             KtPsiFactory(project).createType(type.longTypeRepresentation)
         }
         typeReference = newTypeRef
-        typeReference?.let { shortenReferences(it) }
+        typeReference?.let {
+            shortenReferences(it)
+            updater?.moveTo(it.endOffset)
+        }
     }
 
     private fun KtCallableDeclaration.isProcedure(type: TypeInfo.Type) =

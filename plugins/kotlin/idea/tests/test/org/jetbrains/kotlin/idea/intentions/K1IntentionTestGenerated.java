@@ -17630,6 +17630,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/specifyTypeExplicitly/overrideNotNullProperty.kt");
         }
 
+        @TestMetadata("overrideNotNullProperty2.kt")
+        public void testOverrideNotNullProperty2() throws Exception {
+            runTest("testData/intentions/specifyTypeExplicitly/overrideNotNullProperty2.kt");
+        }
+
         @TestMetadata("overrideNullableFunction.kt")
         public void testOverrideNullableFunction() throws Exception {
             runTest("testData/intentions/specifyTypeExplicitly/overrideNullableFunction.kt");

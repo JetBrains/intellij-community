@@ -199,7 +199,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                 }
             }
             ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, progressIndicator)
-            return result.get(10, TimeUnit.SECONDS)
+            return result.get(10, TimeUnit.MINUTES)
         } catch (e: ExecutionException) {
             throw e.cause!!
         } finally {

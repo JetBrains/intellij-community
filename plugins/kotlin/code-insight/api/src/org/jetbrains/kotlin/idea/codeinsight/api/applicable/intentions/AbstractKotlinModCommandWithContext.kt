@@ -12,7 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyzeInDependedAnalysisSession
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.isApplicableToElement
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.prepareContextWithAnalyze
@@ -85,15 +86,26 @@ abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>
     protected open fun visitTargetTypeOnlyOnce(): Boolean = false
 
     override fun getPresentation(context: ActionContext, element: ELEMENT): Presentation? {
-        if (!isApplicableTo(element, context.offset)) return null
-        val analysisContext = prepareContextWithAnalyze(element) ?: return null
-        return Presentation.of(getActionName(element, analysisContext))
+        // TODO: element should be used instead of target as soon as IDEA-332566 fixed
+        val target = getTarget(context.offset, context.file) ?: return null
+        if (!isApplicableTo(target, context.offset)) return null
+        val analysisContext = prepareContextWithAnalyze(target) ?: return null
+        return Presentation.of(getActionName(target, analysisContext))
     }
 
     final override fun invoke(context: ActionContext, element: ELEMENT, updater: ModPsiUpdater) {
-        val analyzeContext = analyze(element) { prepareContext(element) } ?: return
-        apply(element, AnalysisActionContext(analyzeContext, context), updater)
+        val containingFile = element.containingFile
+        // TODO: element should be used instead of target as soon as IDEA-332566 fixed
+        val fakeTargetElement = getTarget(context.offset, containingFile) ?: return
+        val physicalKtFile = containingFile.originalFile as KtFile
+        val analyzeContext = analyzeInDependedAnalysisSession(physicalKtFile, fakeTargetElement) {
+            invokeContext(fakeTargetElement)
+        } ?: return
+        apply(fakeTargetElement, AnalysisActionContext(analyzeContext, context), updater)
     }
+
+    context(KtAnalysisSession)
+    open fun invokeContext(element: ELEMENT): CONTEXT? = prepareContext(element)
 
     /**
      * Applies a fix to [element] using information from [context]. [apply] should not use the Analysis API due to performance concerns, as
