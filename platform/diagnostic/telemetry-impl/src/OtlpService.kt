@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.exporters.normalizeOtlpEndPoint
 import com.intellij.platform.util.http.ContentType
 import com.intellij.platform.util.http.httpPost
 import kotlinx.coroutines.*
@@ -24,12 +25,6 @@ private const val chunkSize = 512
 
 fun getOtlpEndPoint(): String? {
   return normalizeOtlpEndPoint(System.getProperty("idea.diagnostic.opentelemetry.otlp"))
-}
-
-fun normalizeOtlpEndPoint(value: String?): String? {
-  var endpoint = value?.takeIf(String::isNotEmpty) ?: return null
-  endpoint = if (endpoint == "true") "http://127.0.0.1:4318" else endpoint.removeSuffix("/")
-  return "$endpoint/v1/traces"
 }
 
 @Service

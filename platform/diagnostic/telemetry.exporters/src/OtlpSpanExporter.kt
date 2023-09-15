@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("PrivatePropertyName")
 
-package com.intellij.platform.diagnostic.telemetry.impl
+package com.intellij.platform.diagnostic.telemetry.exporters
 
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger

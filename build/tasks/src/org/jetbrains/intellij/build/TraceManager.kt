@@ -5,9 +5,9 @@ package org.jetbrains.intellij.build
 
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.BatchSpanProcessor
-import com.intellij.platform.diagnostic.telemetry.impl.JaegerJsonSpanExporter
-import com.intellij.platform.diagnostic.telemetry.impl.OtlpSpanExporter
-import com.intellij.platform.diagnostic.telemetry.impl.normalizeOtlpEndPoint
+import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
+import com.intellij.platform.diagnostic.telemetry.exporters.OtlpSpanExporter
+import com.intellij.platform.diagnostic.telemetry.exporters.normalizeOtlpEndPoint
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanBuilder

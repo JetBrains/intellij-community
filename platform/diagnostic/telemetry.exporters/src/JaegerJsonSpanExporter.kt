@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.diagnostic.telemetry.impl
+package com.intellij.platform.diagnostic.telemetry.exporters
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
@@ -108,7 +108,6 @@ class JaegerJsonSpanExporter(
     writer.close()
   }
 }
-
 
 private fun beginWriter(w: JsonGenerator,
                         serviceName: String,
