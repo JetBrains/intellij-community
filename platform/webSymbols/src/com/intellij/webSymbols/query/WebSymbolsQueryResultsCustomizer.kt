@@ -14,12 +14,12 @@ interface WebSymbolsQueryResultsCustomizer : ModificationTracker {
 
   fun apply(matches: List<WebSymbol>,
             strict: Boolean,
-            namespace: SymbolNamespace?,
+            namespace: SymbolNamespace,
             kind: SymbolKind,
-            name: String?): List<WebSymbol>
+            name: String): List<WebSymbol>
 
   fun apply(item: WebSymbolCodeCompletionItem,
-            namespace: SymbolNamespace?,
+            namespace: SymbolNamespace,
             kind: SymbolKind): WebSymbolCodeCompletionItem?
 
 }
