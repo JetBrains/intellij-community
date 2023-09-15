@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.VirtualFileGist;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.io.UnsyncByteArrayOutputStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -265,7 +266,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     @Override
     public void consume(Map<HMember, Equations> map) {
       try {
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        UnsyncByteArrayOutputStream stream = new UnsyncByteArrayOutputStream();
         new BytecodeAnalysisIndex.EquationsExternalizer().save(new DataOutputStream(stream), map);
         ourTotalSize.addAndGet(stream.size());
         ourTotalCount.incrementAndGet();
