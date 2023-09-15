@@ -12,7 +12,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.concurrency.ThreadingAssertions
 import git4idea.i18n.GitBundle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.debounce
@@ -91,7 +90,7 @@ internal class GitNewVersionChecker(project: Project, cs: CoroutineScope) {
           withContext(Dispatchers.IO) {
             if (newAvailableVersion.isNotNull) return@withContext
 
-            val currentVersion = getCurrentVersionOrIdentifyIt(project)
+            val currentVersion = GitExecutableManager.getInstance().getVersionOrIdentifyIfNeeded(project)
             val latestVersion = getLatestAvailableVersion()
 
             if (latestVersion > currentVersion) {
@@ -104,17 +103,6 @@ internal class GitNewVersionChecker(project: Project, cs: CoroutineScope) {
           }
         }
     }
-  }
-
-  private fun getCurrentVersionOrIdentifyIt(project: Project): GitVersion {
-    val executableManager = GitExecutableManager.getInstance()
-    var version = executableManager.getVersion(project)
-    if (version.isNull) {
-      ThreadingAssertions.assertBackgroundThread()
-      version = executableManager.tryGetVersion(project) ?: GitVersion.NULL
-    }
-
-    return version
   }
 }
 

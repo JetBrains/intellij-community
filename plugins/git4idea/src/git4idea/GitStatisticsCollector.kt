@@ -17,7 +17,6 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.util.concurrency.ThreadingAssertions.assertBackgroundThread
 import com.intellij.util.io.URLUtil
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
@@ -99,11 +98,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
 
   private fun reportVersion(project: Project, set: MutableSet<MetricEvent>) {
     val executableManager = GitExecutableManager.getInstance()
-    var version = executableManager.getVersion(project)
-    if (version == GitVersion.NULL) {
-      assertBackgroundThread()
-      version = executableManager.tryGetVersion(project) ?: GitVersion.NULL
-    }
+    val version = executableManager.getVersionOrIdentifyIfNeeded(project)
 
     set.add(EXECUTABLE.metric(
       EventFields.Version with version.presentation,
