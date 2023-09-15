@@ -478,15 +478,18 @@ fun TaskContext.proceedLink(additionalAbove: Int = 0) {
 fun TaskContext.gotItStep(position: Balloon.Position,
                           width: Int,
                           @Nls text: String,
+                          @Nls buttonText: String = IdeBundle.message("got.it.button.name"),
                           cornerToPointerDistance: Int = -1,
                           duplicateMessage: Boolean = true) {
   val gotIt = CompletableFuture<Boolean>()
-  text(text, LearningBalloonConfig(position, width, duplicateMessage, cornerToPointerDistance = cornerToPointerDistance) {
+  text(text, LearningBalloonConfig(position, width, duplicateMessage,
+                                   cornerToPointerDistance = cornerToPointerDistance,
+                                   buttonText = buttonText) {
     gotIt.complete(true)
   })
   addStep(gotIt)
   test(waitEditorToBeReady = false) {
-    ideFrame { button(IdeBundle.message("got.it.button.name")).click() }
+    ideFrame { button(buttonText).click() }
   }
 }
 

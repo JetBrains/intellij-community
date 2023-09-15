@@ -95,6 +95,7 @@ internal object LessonExecutorUtil {
     val balloon: Balloon = balloonBuilder
       .withStepNumber(lessonExecutor.visualIndexNumber)
       .showButton(balloonConfig.gotItCallBack != null)
+      .withButtonLabel(balloonConfig.buttonText)
       .onButtonClick { balloonConfig.gotItCallBack?.invoke() }
       .requestFocus(balloonConfig.gotItCallBack != null)
       .withContrastColors(true)
