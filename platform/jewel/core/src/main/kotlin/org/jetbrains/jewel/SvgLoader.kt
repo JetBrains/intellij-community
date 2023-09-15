@@ -8,7 +8,7 @@ interface SvgLoader {
 
     @Composable
     fun loadSvgResource(
-        originalPath: String,
+        svgPath: String,
         resourceLoader: ResourceLoader,
         pathPatcher: @Composable (String) -> String,
     ): Painter

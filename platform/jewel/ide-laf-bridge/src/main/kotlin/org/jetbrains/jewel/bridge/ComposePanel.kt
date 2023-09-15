@@ -11,4 +11,3 @@ fun ToolWindow.addComposeTab(
 ) = ComposePanel()
     .apply { setContent(content) }
     .also { contentManager.addContent(contentManager.factory.createContent(it, tabDisplayName, isLockable)) }
-

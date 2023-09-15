@@ -124,7 +124,7 @@ fun TextArea(
         style = style,
         textStyle = textStyle,
         interactionSource = interactionSource,
-    ) { innerTextField, state ->
+    ) { innerTextField, _ ->
         TextAreaDecorationBox(
             innerTextField = innerTextField,
             contentPadding = style.metrics.contentPadding,

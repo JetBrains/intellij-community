@@ -55,9 +55,9 @@ fun main() {
         var swingCompat by remember { mutableStateOf(false) }
         val theme = if (isDark) IntUiTheme.darkThemeDefinition() else IntUiTheme.lightThemeDefinition()
 
-        val resourceLoader = LocalResourceLoader.current
-
         IntUiTheme(theme, swingCompat) {
+            val resourceLoader = LocalResourceLoader.current
+
             val windowBackground = if (isDark) {
                 IntUiTheme.colorPalette.grey(1)
             } else {

@@ -155,16 +155,24 @@ internal operator fun TextUnit.plus(delta: Float) =
         else -> this
     }
 
-internal fun <T : InteractiveComponentState> retrieveIcon(
-    baseIconPath: String,
-    iconData: IntelliJThemeIconData,
+internal fun <T : InteractiveComponentState> retrieveStatefulIcon(
+    iconPath: String,
     svgLoader: SvgLoader,
+    iconData: IntelliJThemeIconData,
     prefixTokensProvider: (state: T) -> String = { "" },
     suffixTokensProvider: (state: T) -> String = { "" },
 ): PainterProvider<T> =
-    IntelliJResourcePainterProvider.stateful(
-        basePath = iconData.iconOverrides[baseIconPath] ?: baseIconPath,
+    BridgeResourcePainterProvider.stateful(
+        iconPath = iconPath,
         svgLoader,
+        iconData,
         prefixTokensProvider,
         suffixTokensProvider,
     )
+
+internal fun retrieveStatelessIcon(
+    iconPath: String,
+    svgLoader: SvgLoader,
+    iconData: IntelliJThemeIconData,
+): PainterProvider<Unit> =
+    BridgeResourcePainterProvider.stateless(iconPath, svgLoader, iconData)

@@ -25,35 +25,40 @@ class IntelliJSvgPatcher(private val mapper: PaletteMapper) : SvgPatcher {
     private val documentBuilderFactory = DocumentBuilderFactory.newDefaultInstance()
         .apply { setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true) }
 
-    override fun patchSvg(rawSvg: InputStream): String {
+    override fun patchSvg(rawSvg: InputStream, path: String?): String {
         val builder = documentBuilderFactory.newDocumentBuilder()
         val document = builder.parse(rawSvg)
-        document.documentElement.patchColors(mapper)
+
+        val scope = mapper.getScopeForPath(path)
+        if (scope != null) {
+            document.documentElement.patchColors(scope)
+        }
+
         return document.writeToString()
     }
 
-    private fun Element.patchColors(mapper: PaletteMapper) {
-        patchColorAttribute("fill", mapper)
-        patchColorAttribute("stroke", mapper)
+    private fun Element.patchColors(mapperScope: PaletteMapper.Scope) {
+        patchColorAttribute("fill", mapperScope)
+        patchColorAttribute("stroke", mapperScope)
 
         val nodes = childNodes
         val length = nodes.length
         for (i in 0 until length) {
             val item = nodes.item(i)
             if (item is Element) {
-                item.patchColors(mapper)
+                item.patchColors(mapperScope)
             }
         }
     }
 
-    private fun Element.patchColorAttribute(attrName: String, mapper: PaletteMapper) {
+    private fun Element.patchColorAttribute(attrName: String, mapperScope: PaletteMapper.Scope) {
         val color = getAttribute(attrName)
         val opacity = getAttribute("$attrName-opacity")
 
         if (color.isNotEmpty()) {
             val alpha = opacity.toFloatOrNull() ?: 1.0f
             val originalColor = tryParseColor(color, alpha) ?: return
-            val newColor = mapper.mapColorOrNull(originalColor) ?: return
+            val newColor = mapperScope.mapColorOrNull(originalColor) ?: return
             setAttribute(attrName, newColor.copy(alpha = alpha).toHexString())
         }
     }

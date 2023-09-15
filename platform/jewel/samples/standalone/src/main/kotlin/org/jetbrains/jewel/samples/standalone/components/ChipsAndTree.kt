@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.samples.standalone.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,22 +30,23 @@ import org.jetbrains.jewel.RadioButtonChip
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.ToggleableChip
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
-import org.jetbrains.jewel.foundation.tree.InitialNodeStatus
 import org.jetbrains.jewel.foundation.tree.buildTree
+import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
 
 @Composable
 fun ChipsAndTree() {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Column {
-            GroupHeader(text = "Chips", modifier = Modifier.width(300.dp))
-            ChipsRow(Modifier.padding(8.dp))
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            GroupHeader(text = "Chips", modifier = Modifier.fillMaxWidth())
+            ChipsSample(Modifier.padding(8.dp))
         }
-        Column {
-            GroupHeader("Tree", modifier = Modifier.width(300.dp))
+
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            GroupHeader("Tree", modifier = Modifier.fillMaxWidth())
             TreeSample()
         }
 
-        Column {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             GroupHeader("SelectableLazyColumn", modifier = Modifier.width(300.dp))
             SelectableLazyColumnSample()
         }
@@ -53,9 +56,7 @@ fun ChipsAndTree() {
 @Composable
 fun SelectableLazyColumnSample() {
     val listOfItems = remember {
-        (5000..10000).random().let { size ->
-            List(size) { "Item $it" }
-        }
+        List((5000..10000).random()) { "Item $it" }
     }
     val interactionSource = remember { MutableInteractionSource() }
     SelectableLazyColumn(
@@ -87,58 +88,63 @@ fun SelectableLazyColumnSample() {
 }
 
 @Composable
-fun ChipsRow(modifier: Modifier = Modifier) {
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        var selectedIndex by remember { mutableStateOf(-1) }
-        RadioButtonChip(
-            selected = selectedIndex == 0,
-            onClick = { selectedIndex = 0 },
-            enabled = true,
-        ) {
-            Text("First")
+fun ChipsSample(modifier: Modifier = Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            var selectedIndex by remember { mutableStateOf(-1) }
+            RadioButtonChip(
+                selected = selectedIndex == 0,
+                onClick = { selectedIndex = 0 },
+                enabled = true,
+            ) {
+                Text("First")
+            }
+
+            RadioButtonChip(
+                selected = selectedIndex == 1,
+                onClick = { selectedIndex = 1 },
+                enabled = true,
+            ) {
+                Text("Second")
+            }
+
+            RadioButtonChip(
+                selected = selectedIndex == 2,
+                onClick = { selectedIndex = 2 },
+                enabled = true,
+            ) {
+                Text("Third")
+            }
         }
 
-        RadioButtonChip(
-            selected = selectedIndex == 1,
-            onClick = { selectedIndex = 1 },
-            enabled = true,
-        ) {
-            Text("Second")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            var isChecked by remember { mutableStateOf(false) }
+            ToggleableChip(
+                checked = isChecked,
+                onClick = {
+                    isChecked = it
+                },
+                enabled = true,
+            ) {
+                Text("Toggleable")
+            }
+
+            var count by remember { mutableStateOf(1) }
+            Chip(
+                enabled = true,
+                onClick = { count++ },
+            ) {
+                Text("Clicks: $count")
+            }
         }
 
-        RadioButtonChip(
-            selected = selectedIndex == 2,
-            onClick = { selectedIndex = 2 },
-            enabled = true,
-        ) {
-            Text("Third")
-        }
-    }
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        var isChecked by remember { mutableStateOf(false) }
-        ToggleableChip(
-            checked = isChecked,
-            onClick = {
-                isChecked = it
-            },
-            enabled = true,
-        ) {
-            Text("Toggleable")
-        }
-
-        var count by remember { mutableStateOf(1) }
-        Chip(
-            enabled = true,
-            onClick = { count++ },
-        ) {
-            Text("Clicks: $count")
-        }
-
-        Chip(
-            enabled = false,
-            onClick = {},
-        ) {
-            Text("Disabled")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Chip(
+                enabled = false,
+                onClick = {},
+            ) {
+                Text("Disabled")
+            }
         }
     }
 }
@@ -152,29 +158,38 @@ fun TreeSample(modifier: Modifier = Modifier) {
                 addLeaf("leaf 2")
             }
             addNode("root 2") {
-                addLeaf("leaf 1")
+                addLeaf("leaf 2.1")
                 addNode("node 1") {
-                    addLeaf("leaf 1")
-                    addLeaf("leaf 2")
+                    addLeaf("subleaf 1")
+                    addLeaf("subleaf 2")
                 }
             }
             addNode("root 3") {
-                addLeaf("leaf 1")
-                addLeaf("leaf 2")
+                addLeaf("leaf 3.1")
+                addLeaf("leaf 3.2")
             }
         }
     }
+
     val resourceLoader = LocalResourceLoader.current
-    LazyTree(
-        tree = tree,
-        initialNodeStatus = InitialNodeStatus.Open,
-        resourceLoader = resourceLoader,
-        modifier = Modifier.size(200.dp, 200.dp).then(modifier),
-        onElementClick = {},
-        onElementDoubleClick = {},
-    ) { element ->
-        Box(Modifier.fillMaxWidth()) {
-            Text(element.data, modifier.padding(2.dp))
+    val borderColor =
+        if (IntUiTheme.isDark) {
+            IntUiTheme.colorPalette.grey(3)
+        } else {
+            IntUiTheme.colorPalette.grey(12)
+        }
+
+    Box(modifier.border(1.dp, borderColor, RoundedCornerShape(2.dp))) {
+        LazyTree(
+            tree = tree,
+            resourceLoader = resourceLoader,
+            modifier = Modifier.size(200.dp, 200.dp),
+            onElementClick = {},
+            onElementDoubleClick = {},
+        ) { element ->
+            Box(Modifier.fillMaxWidth()) {
+                Text(element.data, Modifier.padding(2.dp))
+            }
         }
     }
 }

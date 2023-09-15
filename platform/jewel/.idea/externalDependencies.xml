@@ -3,5 +3,6 @@
   <component name="ExternalDependencies">
     <plugin id="com.nbadal.ktlint" />
     <plugin id="detekt" />
+    <plugin id="org.jetbrains.compose.desktop.ide" />
   </component>
 </project>

@@ -92,7 +92,7 @@ internal object EmptyIntUiThemeColorPalette : IntUiThemeColorPalette {
 
     override fun teal(index: Int): Color = Color.Unspecified
 
-    override fun lookup(colorKey: String): Color? = null
+    override val rawMap: Map<String, Color> = emptyMap()
 }
 
 private val colorKeyRegex: Regex

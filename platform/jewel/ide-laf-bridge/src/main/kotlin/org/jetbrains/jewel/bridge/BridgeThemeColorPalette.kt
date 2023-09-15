@@ -2,13 +2,16 @@ package org.jetbrains.jewel.bridge
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.jewel.themes.intui.core.IntUiThemeColorPalette
+import java.util.TreeMap
 
 private val logger = Logger.getInstance("BridgeThemeColorPalette")
 
 @Immutable
-class BridgeThemeColorPalette(
+class BridgeThemeColorPalette private constructor(
+    override val rawMap: Map<String, Color>,
     private val grey: List<Color>,
     private val blue: List<Color>,
     private val green: List<Color>,
@@ -17,6 +20,7 @@ class BridgeThemeColorPalette(
     private val orange: List<Color>,
     private val purple: List<Color>,
     private val teal: List<Color>,
+    private val windowsPopupBorder: Color,
 ) : IntUiThemeColorPalette {
 
     override fun grey(): List<Color> = grey
@@ -53,18 +57,44 @@ class BridgeThemeColorPalette(
 
     companion object {
 
-        fun readFromLaF() = BridgeThemeColorPalette(
-            grey = readPaletteColors("Grey"),
-            blue = readPaletteColors("Blue"),
-            green = readPaletteColors("Green"),
-            red = readPaletteColors("Red"),
-            yellow = readPaletteColors("Yellow"),
-            orange = readPaletteColors("Orange"),
-            purple = readPaletteColors("Purple"),
-            teal = readPaletteColors("Teal"),
-        )
+        fun readFromLaF(): BridgeThemeColorPalette {
+            val grey = readPaletteColors("Grey")
+            val blue = readPaletteColors("Blue")
+            val green = readPaletteColors("Green")
+            val red = readPaletteColors("Red")
+            val yellow = readPaletteColors("Yellow")
+            val orange = readPaletteColors("Orange")
+            val purple = readPaletteColors("Purple")
+            val teal = readPaletteColors("Teal")
+            val windowsPopupBorder = readPaletteColor("windowsPopupBorder")
 
-        private fun readPaletteColors(colorName: String): List<Color> {
+            val rawMap = buildMap<String, Color> {
+                putAll(grey)
+                putAll(blue)
+                putAll(green)
+                putAll(red)
+                putAll(yellow)
+                putAll(orange)
+                putAll(purple)
+                putAll(teal)
+                if (windowsPopupBorder.isSpecified) put("windowsPopupBorder", windowsPopupBorder)
+            }
+
+            return BridgeThemeColorPalette(
+                grey = grey.values.toList(),
+                blue = blue.values.toList(),
+                green = green.values.toList(),
+                red = red.values.toList(),
+                yellow = yellow.values.toList(),
+                orange = orange.values.toList(),
+                purple = purple.values.toList(),
+                teal = teal.values.toList(),
+                windowsPopupBorder = windowsPopupBorder,
+                rawMap = rawMap,
+            )
+        }
+
+        private fun readPaletteColors(colorName: String): Map<String, Color> {
             val defaults = uiDefaults
             val allKeys = defaults.keys
             val colorNameKeyPrefix = "ColorPalette.$colorName"
@@ -77,19 +107,27 @@ class BridgeThemeColorPalette(
                     val afterName = it.substring(colorNameKeyPrefixLength)
                     afterName.toIntOrNull()
                 }
-                .maxOrNull() ?: return emptyList()
+                .maxOrNull() ?: return TreeMap()
 
-            return buildList {
+            return buildMap {
                 for (i in 1..lastColorIndex) {
-                    val value = defaults["$colorNameKeyPrefix$i"] as? java.awt.Color
+                    val key = "$colorNameKeyPrefix$i"
+                    val value = defaults[key] as? java.awt.Color
                     if (value == null) {
                         logger.error("Unable to find color value for palette key '$colorNameKeyPrefix$i'")
                         continue
                     }
 
-                    add(value.toComposeColor())
+                    put(key, value.toComposeColor())
                 }
             }
+        }
+
+        private fun readPaletteColor(colorName: String): Color {
+            val defaults = uiDefaults
+            val colorNameKey = "ColorPalette.$colorName"
+            return (defaults[colorNameKey] as? java.awt.Color)
+                ?.toComposeColor() ?: Color.Unspecified
         }
     }
 }

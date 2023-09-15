@@ -106,7 +106,7 @@ fun <T> BasicLazyTree(
                 .asSequence()
                 .filter { it.id in treeState.delegate.selectedKeys }
                 .map { element -> element as Tree.Element<T> }
-                .toList()
+                .toList(),
         )
     }
 

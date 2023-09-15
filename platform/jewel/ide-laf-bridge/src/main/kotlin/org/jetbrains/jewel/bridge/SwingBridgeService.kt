@@ -10,16 +10,17 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.jewel.IntelliJComponentStyling
-import org.jetbrains.jewel.IntelliJSvgLoader
+import org.jetbrains.jewel.JewelSvgLoader
 import org.jetbrains.jewel.SvgLoader
-import org.jetbrains.jewel.themes.PaletteMapperFactory
 import org.jetbrains.jewel.themes.intui.core.IntUiThemeDefinition
 import org.jetbrains.jewel.themes.intui.core.IntelliJSvgPatcher
+import kotlin.time.Duration.Companion.milliseconds
 
 @Service(Level.APP)
 class SwingBridgeService : Disposable {
@@ -33,8 +34,19 @@ class SwingBridgeService : Disposable {
     // TODO we shouldn't assume it's Int UI, but we only have that for now
     internal val currentBridgeThemeData: StateFlow<BridgeThemeData> =
         IntelliJApplication.lookAndFeelChangedFlow(coroutineScope)
-            .map { readThemeData() }
+            .mapLatest { getThemeData() }
             .stateIn(coroutineScope, SharingStarted.Eagerly, BridgeThemeData.DEFAULT)
+
+    private suspend fun getThemeData(): BridgeThemeData {
+        var counter = 0
+        while (counter < 20) {
+            delay(20.milliseconds)
+            counter++
+            runCatching { readThemeData() }
+                .onSuccess { return it }
+        }
+        return readThemeData()
+    }
 
     private suspend fun readThemeData(): BridgeThemeData {
         val isIntUi = NewUI.isEnabled()
@@ -86,7 +98,7 @@ class SwingBridgeService : Disposable {
 }
 
 private fun createSvgLoader(theme: IntUiThemeDefinition): SvgLoader {
-    val paletteMapper = PaletteMapperFactory.create(theme.isDark, theme.iconData, theme.colorPalette)
+    val paletteMapper = BridgePaletteMapperFactory.create(theme.isDark)
     val svgPatcher = IntelliJSvgPatcher(paletteMapper)
-    return IntelliJSvgLoader(svgPatcher)
+    return JewelSvgLoader(svgPatcher)
 }

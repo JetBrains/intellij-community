@@ -56,12 +56,19 @@ interface LazyTreeMetrics {
 @Immutable
 interface LazyTreeIcons {
 
-    val nodeChevronCollapsed: PainterProvider<TreeElementState>
-    val nodeChevronExpanded: PainterProvider<TreeElementState>
+    val chevronCollapsed: PainterProvider<Unit>
+    val chevronExpanded: PainterProvider<Unit>
+    val chevronSelectedCollapsed: PainterProvider<Unit>
+    val chevronSelectedExpanded: PainterProvider<Unit>
 
     @Composable
-    fun nodeChevron(isExpanded: Boolean) =
-        if (isExpanded) nodeChevronExpanded else nodeChevronCollapsed
+    fun chevron(isExpanded: Boolean, isSelected: Boolean) =
+        when {
+            isSelected && isExpanded -> chevronSelectedExpanded
+            isSelected && !isExpanded -> chevronSelectedCollapsed
+            !isSelected && isExpanded -> chevronExpanded
+            else -> chevronCollapsed
+        }
 }
 
 val LocalLazyTreeStyle = staticCompositionLocalOf<LazyTreeStyle> {

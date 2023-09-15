@@ -4,5 +4,5 @@ import java.io.InputStream
 
 interface SvgPatcher {
 
-    fun patchSvg(rawSvg: InputStream): String
+    fun patchSvg(rawSvg: InputStream, path: String?): String
 }

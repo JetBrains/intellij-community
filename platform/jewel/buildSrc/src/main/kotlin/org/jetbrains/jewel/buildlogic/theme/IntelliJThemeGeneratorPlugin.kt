@@ -11,6 +11,7 @@ import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
@@ -27,30 +28,32 @@ import java.net.URL
 
 abstract class IntelliJThemeGeneratorPlugin : Plugin<Project> {
 
-    final override fun apply(target: Project): Unit = with(target) {
-        val extension = ThemeGeneratorContainer(container<ThemeGeneration> { ThemeGeneration(it, project) })
-        extensions.add("intelliJThemeGenerator", extension)
+    final override fun apply(target: Project) {
+        with(target) {
+            val extension = ThemeGeneratorContainer(container<ThemeGeneration> { ThemeGeneration(it, project) })
+            extensions.add("intelliJThemeGenerator", extension)
 
-        extension.all {
-            val task = tasks.register<IntelliJThemeGeneratorTask>("generate${GUtil.toCamelCase(name)}Theme") {
-                outputFile.set(targetDir.file(this@all.themeClassName.map {
-                    val className = ClassName.bestGuess(it)
-                    className.packageName.replace(".", "/")
-                        .plus("/${className.simpleName}.kt")
-                }))
-                themeClassName.set(this@all.themeClassName)
-                ideaVersion.set(this@all.ideaVersion)
-                themeFile.set(this@all.themeFile)
-            }
-            tasks.withType<BaseKotlinCompile> {
-                dependsOn(task)
-            }
-            tasks.withType<Detekt> {
-                dependsOn(task)
-            }
-            pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
-                extensions.getByType<KotlinJvmProjectExtension>().apply {
-                    sourceSets["main"].kotlin.srcDir(targetDir)
+            extension.all {
+                val task = tasks.register<IntelliJThemeGeneratorTask>("generate${GUtil.toCamelCase(name)}Theme") {
+                    outputFile.set(targetDir.file(this@all.themeClassName.map {
+                        val className = ClassName.bestGuess(it)
+                        className.packageName.replace(".", "/")
+                            .plus("/${className.simpleName}.kt")
+                    }))
+                    themeClassName.set(this@all.themeClassName)
+                    ideaVersion.set(this@all.ideaVersion)
+                    themeFile.set(this@all.themeFile)
+                }
+                tasks.withType<BaseKotlinCompile> {
+                    dependsOn(task)
+                }
+                tasks.withType<Detekt> {
+                    dependsOn(task)
+                }
+                pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
+                    extensions.getByType<KotlinJvmProjectExtension>().apply {
+                        sourceSets["main"].kotlin.srcDir(targetDir)
+                    }
                 }
             }
         }
@@ -60,6 +63,7 @@ abstract class IntelliJThemeGeneratorPlugin : Plugin<Project> {
 class ThemeGeneratorContainer(container: NamedDomainObjectContainer<ThemeGeneration>) : NamedDomainObjectContainer<ThemeGeneration> by container
 
 class ThemeGeneration(val name: String, project: Project) {
+
     val targetDir: DirectoryProperty = project.objects.directoryProperty()
         .convention(project.layout.buildDirectory.dir("generated/theme"))
     val ideaVersion = project.objects.property<String>()
@@ -71,7 +75,7 @@ class ThemeGeneration(val name: String, project: Project) {
 open class IntelliJThemeGeneratorTask : DefaultTask() {
 
     @get:OutputFile
-    val outputFile = project.objects.fileProperty()
+    val outputFile: RegularFileProperty = project.objects.fileProperty()
 
     @get:Input
     val ideaVersion = project.objects.property<String>()
@@ -120,4 +124,5 @@ data class IntellijThemeDescriptor(
     val colors: Map<String, String> = emptyMap(),
     val ui: Map<String, JsonElement> = emptyMap(),
     val icons: Map<String, JsonElement> = emptyMap(),
+    val iconColorsOnSelection: Map<String, String> = emptyMap(),
 )

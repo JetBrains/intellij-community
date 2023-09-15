@@ -6,9 +6,7 @@ import androidx.compose.runtime.Composable
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey.NotSelectable
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey.Selectable
 
-/**
- * Interface defining the scope for building a selectable lazy list.
- */
+/** Interface defining the scope for building a selectable lazy list. */
 interface SelectableLazyListScope {
 
     /**
@@ -16,7 +14,8 @@ interface SelectableLazyListScope {
      *
      * @param key The unique identifier for the item.
      * @param contentType The type of content displayed in the item.
-     * @param selectable Determines if the item is selectable. Default is `true`.
+     * @param selectable Determines if the item is selectable. Default is
+     *     `true`.
      * @param content The content of the item as a composable function.
      */
     fun item(
@@ -30,10 +29,14 @@ interface SelectableLazyListScope {
      * Represents a list of items based on the provided parameters.
      *
      * @param count The number of items in the list.
-     * @param key A function that generates a unique key for each item based on its index.
-     * @param contentType A function that returns the content type of an item based on its index. Defaults to `null`.
-     * @param selectable A function that determines if an item is selectable based on its index. Defaults to `true`.
-     * @param itemContent The content of each individual item, specified as a composable function that takes the item's index as a parameter.
+     * @param key A function that generates a unique key for each item based on
+     *     its index.
+     * @param contentType A function that returns the content type of an item
+     *     based on its index. Defaults to `null`.
+     * @param selectable A function that determines if an item is selectable
+     *     based on its index. Defaults to `true`.
+     * @param itemContent The content of each individual item, specified as a
+     *     composable function that takes the item's index as a parameter.
      */
     fun items(
         count: Int,
@@ -49,7 +52,8 @@ interface SelectableLazyListScope {
      * @param key The unique identifier for the sticky header.
      * @param contentType The type of content in the sticky header.
      * @param selectable Specifies whether the sticky header is selectable.
-     * @param content The content to be displayed in the sticky header, provided as a composable function
+     * @param content The content to be displayed in the sticky header,
+     *     provided as a composable function
      */
     fun stickyHeader(
         key: Any,
@@ -142,13 +146,15 @@ fun <T : Any> SelectableLazyListScope.items(
     contentType: (item: T) -> Any? = { it },
     selectable: (item: T) -> Boolean = { true },
     itemContent: @Composable SelectableLazyItemScope.(item: T) -> Unit,
-) = items(
-    count = items.size,
-    key = { key(items[it]) },
-    contentType = { contentType(items[it]) },
-    selectable = { selectable(items[it]) },
-    itemContent = { itemContent(items[it]) }
-)
+) {
+    items(
+        count = items.size,
+        key = { key(items[it]) },
+        contentType = { contentType(items[it]) },
+        selectable = { selectable(items[it]) },
+        itemContent = { itemContent(items[it]) },
+    )
+}
 
 fun <T : Any> SelectableLazyListScope.itemsIndexed(
     items: List<T>,
@@ -156,13 +162,15 @@ fun <T : Any> SelectableLazyListScope.itemsIndexed(
     contentType: (index: Int, item: T) -> Any? = { _, item -> item },
     selectable: (index: Int, item: T) -> Boolean = { _, _ -> true },
     itemContent: @Composable SelectableLazyItemScope.(index: Int, item: T) -> Unit,
-) = items(
-    count = items.size,
-    key = { key(it, items[it]) },
-    contentType = { contentType(it, items[it]) },
-    selectable = { selectable(it, items[it]) },
-    itemContent = { itemContent(it, items[it]) }
-)
+) {
+    items(
+        count = items.size,
+        key = { key(it, items[it]) },
+        contentType = { contentType(it, items[it]) },
+        selectable = { selectable(it, items[it]) },
+        itemContent = { itemContent(it, items[it]) },
+    )
+}
 
 @Composable
 fun LazyItemScope.SelectableLazyItemScope(

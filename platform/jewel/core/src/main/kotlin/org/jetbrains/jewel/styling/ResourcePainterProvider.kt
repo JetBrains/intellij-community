@@ -62,7 +62,8 @@ open class ResourcePainterProvider<T> @InternalJewelApi constructor(
     override fun toString(): String =
         "ResourcePainterProvider(basePath='$basePath', svgLoader=$svgLoader, pathPatcher=$pathPatcher)"
 
-    companion object {
+    @OptIn(InternalJewelApi::class) // These are the public constructors
+    companion object Factory {
 
         fun stateless(basePath: String, svgLoader: SvgLoader) =
             ResourcePainterProvider<Unit>(basePath, svgLoader, SimpleResourcePathPatcher())

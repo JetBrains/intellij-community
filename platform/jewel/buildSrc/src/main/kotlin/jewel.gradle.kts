@@ -1,6 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
 import io.gitlab.arturbosch.detekt.Detekt
+import org.gradle.api.attributes.Usage
 import org.jmailen.gradle.kotlinter.tasks.LintTask
 
 plugins {

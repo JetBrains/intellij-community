@@ -100,7 +100,6 @@ open class DefaultSelectableColumnKeybindings : SelectableColumnKeybindings {
     override val PointerKeyboardModifiers.isKeyboardMultiSelectionKeyPressed: Boolean
         get() = isShiftPressed
 
-
     override fun KeyEvent.selectFirstItem() =
         key == Key.Home && !isKeyboardMultiSelectionKeyPressed
 
@@ -141,5 +140,4 @@ open class DefaultSelectableColumnKeybindings : SelectableColumnKeybindings {
 
     override fun KeyEvent.selectAll(): Boolean? =
         key == Key.A && isKeyboardCtrlMetaKeyPressed
-
 }
