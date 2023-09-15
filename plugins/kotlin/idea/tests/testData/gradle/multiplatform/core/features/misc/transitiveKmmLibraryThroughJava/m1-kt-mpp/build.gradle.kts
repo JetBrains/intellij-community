@@ -3,6 +3,10 @@ plugins {
 }
 
 kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
     jvm()
     ios()
 }
