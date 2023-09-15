@@ -1,159 +1,125 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.project;
+package org.jetbrains.idea.maven.project
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.model.MavenId;
-import org.junit.Assert;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.jetbrains.idea.maven.model.MavenId
+import org.junit.Assert
+import org.junit.Test
+import java.io.IOException
 
-import java.io.IOException;
-import java.util.*;
+class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
+  private var myProjectsManager: MavenProjectsManager? = null
+  private var myProjectsTreeTracker: MavenProjectTreeTracker? = null
 
-
-public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingTestCase {
-
-  private MavenProjectsManager myProjectsManager;
-  private MavenProjectTreeTracker myProjectsTreeTracker;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myProjectsManager = MavenProjectsManager.getInstance(myProject);
-    myProjectsTreeTracker = new MavenProjectTreeTracker();
-
-    myProjectsManager.addProjectsTreeListener(myProjectsTreeTracker, getTestRootDisposable());
-
-    initProjectsManager(true);
-
-    createProjectPom(createPomContent("test", "project"));
-    importProject();
+  override fun setUp() {
+    super.setUp()
+    myProjectsManager = MavenProjectsManager.getInstance(myProject)
+    myProjectsTreeTracker = MavenProjectTreeTracker()
+    myProjectsManager!!.addProjectsTreeListener(myProjectsTreeTracker!!, getTestRootDisposable())
+    initProjectsManager(true)
+    createProjectPom(createPomContent("test", "project"))
+    importProject()
     //addManagedFiles(myProjectPom);
   }
 
   @Test
-  public void testChangeConfigInAnotherProjectShouldNotUpdateOur() throws IOException {
-    assertNoPendingProjectForReload();
-
-    createPomFile(createProjectSubDir("../another"), createPomContent("another", "another"));
-    assertNoPendingProjectForReload();
-
-    VirtualFile mavenConfig = createProjectSubFile("../another/.mvn/maven.config");
-    assertNoPendingProjectForReload();
-
-    replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true");
-    assertNoPendingProjectForReload();
+  fun testChangeConfigInAnotherProjectShouldNotUpdateOur() {
+    assertNoPendingProjectForReload()
+    createPomFile(createProjectSubDir("../another"), createPomContent("another", "another"))
+    assertNoPendingProjectForReload()
+    val mavenConfig = createProjectSubFile("../another/.mvn/maven.config")
+    assertNoPendingProjectForReload()
+    replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true")
+    assertNoPendingProjectForReload()
   }
 
   @Test
-  public void testChangeConfigInOurProjectShouldCallUpdatePomFile() throws Exception {
-    assertNoPendingProjectForReload();
-
-    VirtualFile mavenConfig = createProjectSubFile(".mvn/maven.config");
-    importProject();
-    assertNoPendingProjectForReload();
-
-    replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true");
-    assertHasPendingProjectForReload();
-
-    scheduleProjectImportAndWait();
+  fun testChangeConfigInOurProjectShouldCallUpdatePomFile() {
+    assertNoPendingProjectForReload()
+    val mavenConfig = createProjectSubFile(".mvn/maven.config")
+    importProject()
+    assertNoPendingProjectForReload()
+    replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true")
+    assertHasPendingProjectForReload()
+    scheduleProjectImportAndWait()
   }
 
   @Test
-  public void testChangeConfigInAnotherProjectShouldCallItIfItWasAdded() throws IOException {
-    assertNoPendingProjectForReload();
-
-    VirtualFile anotherPom = createPomFile(createProjectSubDir("../another"), createPomContent("another", "another"));
-    VirtualFile mavenConfig = createProjectSubFile("../another/.mvn/maven.config");
-    assertNoPendingProjectForReload();
-
-    addManagedFiles(anotherPom);
-    assertNoPendingProjectForReload();
-
-    replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true");
-    assertHasPendingProjectForReload();
-
-    scheduleProjectImportAndWait();
+  fun testChangeConfigInAnotherProjectShouldCallItIfItWasAdded() {
+    assertNoPendingProjectForReload()
+    val anotherPom = createPomFile(createProjectSubDir("../another"), createPomContent("another", "another"))
+    val mavenConfig = createProjectSubFile("../another/.mvn/maven.config")
+    assertNoPendingProjectForReload()
+    addManagedFiles(anotherPom)
+    assertNoPendingProjectForReload()
+    replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true")
+    assertHasPendingProjectForReload()
+    scheduleProjectImportAndWait()
   }
 
   @Test
-  public void testSaveDocumentChangesBeforeAutoImport() throws IOException {
-    assertNoPendingProjectForReload();
-
-    assertModules("project");
-
+  fun testSaveDocumentChangesBeforeAutoImport() {
+    assertNoPendingProjectForReload()
+    assertModules("project")
     replaceContent(myProjectPom, createPomXml(
-      createPomContent("test", "project") + "<packaging>pom</packaging>\n<modules><module>module</module></modules>"));
-    createModulePom("module", createPomContent("test", "module"));
-    scheduleProjectImportAndWait();
-
-    assertModules("project", "module");
-
-    replaceDocumentString(myProjectPom, "<modules><module>module</module></modules>", "");
+      """
+            ${createPomContent("test", "project")}<packaging>pom</packaging>
+            <modules><module>module</module></modules>
+            """.trimIndent()))
+    createModulePom("module", createPomContent("test", "module"))
+    scheduleProjectImportAndWait()
+    assertModules("project", "module")
+    replaceDocumentString(myProjectPom, "<modules><module>module</module></modules>", "")
 
     //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
-
-    scheduleProjectImportAndWait();
-
-    assertModules("project");
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
+    scheduleProjectImportAndWait()
+    assertModules("project")
   }
 
   @Test
-  public void testIncrementalAutoReload() {
-    assertRootProjects("project");
-    assertNoPendingProjectForReload();
-
-    VirtualFile module1 = createModulePom("module1", createPomContent("test", "module1"));
-    VirtualFile module2 = createModulePom("module2", createPomContent("test", "module2"));
-
-    assertRootProjects("project");
-    assertNoPendingProjectForReload();
-
-    addManagedFiles(module1);
-    addManagedFiles(module2);
-
-    assertRootProjects("project", "module1", "module2");
-    assertNoPendingProjectForReload();
-
-    replaceDocumentString(module1, "test", "group.id");
-
-    myProjectsTreeTracker.reset();
-    scheduleProjectImportAndWait();
-    assertEquals(0, myProjectsTreeTracker.getProjectStatus("project").updateCounter);
-    assertEquals(1, myProjectsTreeTracker.getProjectStatus("module1").updateCounter);
-    assertEquals(0, myProjectsTreeTracker.getProjectStatus("module2").updateCounter);
-
-    replaceDocumentString(module2, "test", "group.id");
-
-    myProjectsTreeTracker.reset();
-    scheduleProjectImportAndWait();
-    assertEquals(0, myProjectsTreeTracker.getProjectStatus("project").updateCounter);
-    assertEquals(0, myProjectsTreeTracker.getProjectStatus("module1").updateCounter);
-    assertEquals(1, myProjectsTreeTracker.getProjectStatus("module2").updateCounter);
-
-    replaceDocumentString(module1, "group.id", "test");
-    replaceDocumentString(module2, "group.id", "test");
-
-    myProjectsTreeTracker.reset();
-    scheduleProjectImportAndWait();
-    assertEquals(0, myProjectsTreeTracker.getProjectStatus("project").updateCounter);
-    assertEquals(1, myProjectsTreeTracker.getProjectStatus("module1").updateCounter);
-    assertEquals(1, myProjectsTreeTracker.getProjectStatus("module2").updateCounter);
+  fun testIncrementalAutoReload() {
+    assertRootProjects("project")
+    assertNoPendingProjectForReload()
+    val module1 = createModulePom("module1", createPomContent("test", "module1"))
+    val module2 = createModulePom("module2", createPomContent("test", "module2"))
+    assertRootProjects("project")
+    assertNoPendingProjectForReload()
+    addManagedFiles(module1)
+    addManagedFiles(module2)
+    assertRootProjects("project", "module1", "module2")
+    assertNoPendingProjectForReload()
+    replaceDocumentString(module1, "test", "group.id")
+    myProjectsTreeTracker!!.reset()
+    scheduleProjectImportAndWait()
+    assertEquals(0, myProjectsTreeTracker!!.getProjectStatus("project").updateCounter)
+    assertEquals(1, myProjectsTreeTracker!!.getProjectStatus("module1").updateCounter)
+    assertEquals(0, myProjectsTreeTracker!!.getProjectStatus("module2").updateCounter)
+    replaceDocumentString(module2, "test", "group.id")
+    myProjectsTreeTracker!!.reset()
+    scheduleProjectImportAndWait()
+    assertEquals(0, myProjectsTreeTracker!!.getProjectStatus("project").updateCounter)
+    assertEquals(0, myProjectsTreeTracker!!.getProjectStatus("module1").updateCounter)
+    assertEquals(1, myProjectsTreeTracker!!.getProjectStatus("module2").updateCounter)
+    replaceDocumentString(module1, "group.id", "test")
+    replaceDocumentString(module2, "group.id", "test")
+    myProjectsTreeTracker!!.reset()
+    scheduleProjectImportAndWait()
+    assertEquals(0, myProjectsTreeTracker!!.getProjectStatus("project").updateCounter)
+    assertEquals(1, myProjectsTreeTracker!!.getProjectStatus("module1").updateCounter)
+    assertEquals(1, myProjectsTreeTracker!!.getProjectStatus("module2").updateCounter)
   }
 
   @Test
-  public void testProfilesAutoReload() {
+  fun testProfilesAutoReload() {
     createProjectPom("""
                          <groupId>test</groupId>
                          <artifactId>project</artifactId>
@@ -183,90 +149,88 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
                                  </dependencies>
                              </profile>
                          </profiles>
-                       """);
-    scheduleProjectImportAndWait();
-    assertRootProjects("project");
-    assertModules("project");
-
-    myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(List.of("junit4"), List.of("junit5")));
-    assertHasPendingProjectForReload();
-
-    scheduleProjectImportAndWait();
-    assertMavenProjectDependencies("test:project:1", "junit:junit:4.12");
-
-    myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(List.of("junit5"), List.of("junit4")));
-    assertHasPendingProjectForReload();
-
-    scheduleProjectImportAndWait();
-    assertMavenProjectDependencies("test:project:1", "org.junit.jupiter:junit-jupiter-engine:5.9.1");
+                       
+                       """.trimIndent())
+    scheduleProjectImportAndWait()
+    assertRootProjects("project")
+    assertModules("project")
+    myProjectsManager!!.explicitProfiles = MavenExplicitProfiles(listOf("junit4"),
+                                                                 listOf("junit5"))
+    assertHasPendingProjectForReload()
+    scheduleProjectImportAndWait()
+    assertMavenProjectDependencies("test:project:1", "junit:junit:4.12")
+    myProjectsManager!!.explicitProfiles = MavenExplicitProfiles(listOf("junit5"),
+                                                                 listOf("junit4"))
+    assertHasPendingProjectForReload()
+    scheduleProjectImportAndWait()
+    assertMavenProjectDependencies("test:project:1", "org.junit.jupiter:junit-jupiter-engine:5.9.1")
   }
 
-  private void assertMavenProjectDependencies(@NotNull String projectMavenCoordinates, String... expectedDependencies) {
-    var mavenId = new MavenId(projectMavenCoordinates);
-    var mavenProject = myProjectsManager.getProjectsTree().findProject(mavenId);
-    var actualDependencies = ContainerUtil.map(mavenProject.getDependencyTree(), it -> it.getArtifact().getMavenId().getKey());
-    Assert.assertEquals(List.of(expectedDependencies), actualDependencies);
+  private fun assertMavenProjectDependencies(projectMavenCoordinates: String, vararg expectedDependencies: String) {
+    val mavenId = MavenId(projectMavenCoordinates)
+    val mavenProject = myProjectsManager!!.getProjectsTree().findProject(mavenId)
+    val actualDependencies = mavenProject!!.dependencyTree.map { it.artifact.mavenId.getKey() }
+    Assert.assertEquals(java.util.List.of(*expectedDependencies), actualDependencies)
   }
 
-  private static String createPomContent(@NotNull String groupId, @NotNull String artifactId) {
-    return String.format("<groupId>%s</groupId>\n<artifactId>%s</artifactId>\n<version>1.0-SNAPSHOT</version>", groupId, artifactId);
-  }
-
-  private void addManagedFiles(@NotNull VirtualFile pom) {
-    myProjectsManager.addManagedFiles(Collections.singletonList(pom));
-    waitForImportCompletion();
+  private fun addManagedFiles(pom: VirtualFile) {
+    myProjectsManager!!.addManagedFiles(listOf(pom))
+    waitForImportCompletion()
     if (!isNewImportingProcess) {
       //myProjectsManager.performScheduledImportInTests();
     }
   }
 
-  private void replaceContent(@NotNull VirtualFile file, @NotNull String content) throws IOException {
-    WriteCommandAction.runWriteCommandAction(myProject, (ThrowableComputable<?, IOException>)() -> {
-      VfsUtil.saveText(file, content);
-      return null;
-    });
+  private fun replaceContent(file: VirtualFile, content: String) {
+    WriteCommandAction.runWriteCommandAction(myProject, ThrowableComputable<Any?, IOException?> {
+      VfsUtil.saveText(file, content)
+      null
+    } as ThrowableComputable<*, IOException?>)
   }
 
-  protected void replaceDocumentString(VirtualFile file, String oldString, String newString) {
-    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-    Document document = fileDocumentManager.getDocument(file);
-    WriteCommandAction.runWriteCommandAction(myProject, () -> {
-      String text = document.getText();
-      int startOffset = text.indexOf(oldString);
-      int endOffset = startOffset + oldString.length();
-      document.replaceString(startOffset, endOffset, newString);
-    });
-  }
-
-static class MavenProjectTreeTracker implements MavenProjectsTree.Listener {
-  private final Map<String, MavenProjectStatus> projects = new HashMap<>();
-
-  public MavenProjectStatus getProjectStatus(String artifactId) {
-    return projects.computeIfAbsent(artifactId, __ -> new MavenProjectStatus());
-  }
-
-  public void reset() {
-    projects.clear();
-  }
-
-  @Override
-  public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
-    for (Pair<MavenProject, MavenProjectChanges> it : updated) {
-      String artifactId = it.first.getMavenId().getArtifactId();
-      MavenProjectStatus projectStatus = getProjectStatus(artifactId);
-      projectStatus.updateCounter++;
-    }
-    for (MavenProject mavenProject : deleted) {
-      String artifactId = mavenProject.getMavenId().getArtifactId();
-      MavenProjectStatus projectStatus = getProjectStatus(artifactId);
-      projectStatus.deleteCounter++;
+  protected fun replaceDocumentString(file: VirtualFile?, oldString: String, newString: String?) {
+    val fileDocumentManager = FileDocumentManager.getInstance()
+    val document = fileDocumentManager.getDocument(file!!)
+    WriteCommandAction.runWriteCommandAction(myProject) {
+      val text = document!!.text
+      val startOffset = text.indexOf(oldString)
+      val endOffset = startOffset + oldString.length
+      document.replaceString(startOffset, endOffset, newString!!)
     }
   }
-}
 
-static class MavenProjectStatus {
-  int updateCounter = 0;
-  int deleteCounter = 0;
-}
-}
+  internal class MavenProjectTreeTracker : MavenProjectsTree.Listener {
+    private val projects: MutableMap<String?, MavenProjectStatus> = HashMap()
+    fun getProjectStatus(artifactId: String?): MavenProjectStatus {
+      return projects.computeIfAbsent(artifactId) { MavenProjectStatus() }
+    }
 
+    fun reset() {
+      projects.clear()
+    }
+
+    override fun projectsUpdated(updated: List<Pair<MavenProject, MavenProjectChanges>>, deleted: List<MavenProject>) {
+      for (it in updated) {
+        val artifactId = it.first.mavenId.artifactId
+        val projectStatus = getProjectStatus(artifactId)
+        projectStatus.updateCounter++
+      }
+      for (mavenProject in deleted) {
+        val artifactId = mavenProject.mavenId.artifactId
+        val projectStatus = getProjectStatus(artifactId)
+        projectStatus.deleteCounter++
+      }
+    }
+  }
+
+  internal class MavenProjectStatus {
+    var updateCounter = 0
+    var deleteCounter = 0
+  }
+
+  companion object {
+    private fun createPomContent(groupId: String, artifactId: String): String {
+      return String.format("<groupId>%s</groupId>\n<artifactId>%s</artifactId>\n<version>1.0-SNAPSHOT</version>", groupId, artifactId)
+    }
+  }
+}
