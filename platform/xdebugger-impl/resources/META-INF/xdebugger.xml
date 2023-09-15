@@ -187,5 +187,8 @@
             class="com.intellij.xdebugger.impl.ui.attach.dialog.AttachShowOnlyMyProcessesToggleAction">
       <add-to-group group-id="XDebugger.Attach.Dialog.Settings"/>
     </action>
+
+    <group id="XDebugger.RunToCursorInlayExtraActions">
+    </group>
   </actions>
 </idea-plugin>

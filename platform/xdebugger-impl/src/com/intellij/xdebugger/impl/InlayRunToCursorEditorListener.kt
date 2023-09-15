@@ -138,6 +138,10 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
         if (hasGeneralBreakpoint) {
           group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR))
         }
+
+        val extraActions = ActionManager.getInstance().getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup
+        group.addAll(extraActions)
+
         showHint(editor, lineNumber, firstNonSpacePos, group, position)
       }
     }
