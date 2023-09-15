@@ -245,8 +245,15 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
     private fun isParsedAsFile(text: String, fileType: LanguageFileType, project: Project): Boolean {
         val psiFile = parseAsFile(text, fileType, project)
         val hasErrors = psiFile.anyDescendantOfType<PsiErrorElement>()
-        if (hasErrors || fileType != JavaFileType.INSTANCE) return !hasErrors
-        return (psiFile as? PsiJavaFile)?.classes?.any { it is PsiUnnamedClass } != true
+        // OK, there are some errors
+        if (hasErrors) return false
+
+        val isJavaFileWithUnnamedClass = psiFile is PsiJavaFile && psiFile.classes.any { it is PsiUnnamedClass }
+
+        // Java 21 allows to use unnamed classes
+        // before that java file like `class { void foo(){} }` is considered as error
+        // after java 21 it is a valid java file
+        return !isJavaFileWithUnnamedClass
     }
 
     private fun parseAsFile(text: String, fileType: LanguageFileType, project: Project): PsiFile {
