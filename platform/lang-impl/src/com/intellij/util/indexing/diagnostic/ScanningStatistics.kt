@@ -13,7 +13,7 @@ class ScanningStatistics(val fileSetName: String) {
 
   /**
    * Number of files that have been scanned (iterated) by a different iterator than the one used to iterate this [fileSetName].
-   * If multiple "file iterators" would iterate the same file, only one of the iterators actually "scans" the file
+   * If multiple "file iterators" iterate the same file, only one of the iterators actually "scans" the file
    * (and increments [numberOfScannedFiles] in his statistics).
    */
   var numberOfSkippedFiles: Int = 0
@@ -91,10 +91,6 @@ class ScanningStatistics(val fileSetName: String) {
   }
   catch (e: Exception) {
     PortableFilePath.AbsolutePath(file.url)
-  }
-
-  fun setNoRootsForRefresh() {
-    providerRoots = listOf("Not collected for refresh")
   }
 
   fun setProviderRoots(provider: IndexableFilesIterator, project: Project) {

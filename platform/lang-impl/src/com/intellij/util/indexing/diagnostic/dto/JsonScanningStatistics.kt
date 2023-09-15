@@ -37,7 +37,7 @@ data class JsonScanningStatistics(
   data class JsonScannedFile(
     val path: PortableFilePath,
     val isUpToDate: Boolean,
-    @JsonProperty("wfibe")
+    @Suppress("SpellCheckingInspection") @JsonProperty("wfibe")
     val wasFullyIndexedByInfrastructureExtension: Boolean
   )
 }

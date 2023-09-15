@@ -59,7 +59,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
   @VisibleForTesting
   public static final Key<Boolean> INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY = new Key<>("INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY");
 
-  static final Logger LOG = Logger.getInstance(UnindexedFilesScanner.class);  // only for test debugging purpose
+  static final Logger LOG = Logger.getInstance(UnindexedFilesScanner.class);
 
   public enum TestMode {
     PUSHING, PUSHING_AND_SCANNING
@@ -241,7 +241,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     }
     finally {
       // Scanning may throw exception (or error).
-      // In this case, we should either clear or flush indexing queue; otherwise, dumb mode will not end in the project.
+      // In this case, we should either clear or flush the indexing queue; otherwise, dumb mode will not end in the project.
       if (flushQueueAfterScanning) {
         flushPerProjectIndexingQueue(scanningHistory.getScanningReason(), indicator);
       }
@@ -286,7 +286,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     boolean skipInitialRefresh = skipInitialRefresh();
     boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     if (myOnProjectOpen && !isUnitTestMode && !skipInitialRefresh) {
-      // the full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
+      // the full VFS refresh makes sense only after it's loaded, i.e., after scanning files to index is finished
       InitialRefreshKt.scheduleInitialVfsRefresh(myProject, LOG);
     }
   }
@@ -404,7 +404,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     progressReporter.setSubTasksCount(providers.size());
 
     // Workaround for concurrent modification of the [scanningHistory].
-    // PushedFilePropertiesUpdaterImpl.invokeConcurrentlyIfPossible may finish earlier than all its spawned tasks have completed.
+    // PushedFilePropertiesUpdaterImpl.invokeConcurrentlyIfPossible may finish earlier than some of its spawned tasks.
     // And some scanning statistics may be tried to be added to the [scanningHistory],
     // leading to ConcurrentModificationException in the statistics' processor.
     Ref<Boolean> allTasksFinished = Ref.create(false);
@@ -462,7 +462,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
         }
         catch (Exception e) {
           // CollectingIterator should skip failing files by itself. But if provider.iterateFiles cannot iterate files and throws exception,
-          // we want to ignore whole origin and let other origins to complete normally.
+          // we want to ignore the whole origin and let other origins complete normally.
           LOG.error("Error while scanning files of " + provider.getDebugName() + "\n" +
                     "To reindex files under this origin IDEA has to be restarted", e);
         }
