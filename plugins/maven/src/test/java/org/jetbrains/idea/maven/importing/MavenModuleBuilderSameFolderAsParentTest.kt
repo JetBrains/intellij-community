@@ -55,7 +55,7 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
       myBuilder!!.createModule(model)
       model.commit()
     }
-    updateAllProjects()
+    updateAllProjectsSync()
   }
 
   @Test

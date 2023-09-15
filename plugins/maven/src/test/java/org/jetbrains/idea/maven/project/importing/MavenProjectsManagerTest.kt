@@ -347,7 +347,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     moduleStructureExtension.moduleRemoved(module)
     moduleStructureExtension.apply()
     moduleStructureExtension.disposeUIResources()
-    updateAllProjects()
+    updateAllProjectsSync()
     assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"))
     assertTrue(projectsManager.isIgnored(projectsManager.findProject(m)!!))
   }
@@ -422,7 +422,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     withContext(Dispatchers.EDT) {
       action.actionPerformed(TestActionEvent.createTestEvent(action, createTestModuleDataContext(module1)))
     }
-    updateAllProjects()
+    updateAllProjectsSync()
     assertModuleModuleDeps("m2")
     assertModuleLibDep("m2", "Maven: test:m1:1")
   }
@@ -472,7 +472,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     moduleStructureExtension.moduleRemoved(module1)
     moduleStructureExtension.apply()
     moduleStructureExtension.disposeUIResources()
-    updateAllProjects()
+    updateAllProjectsSync()
     assertModuleModuleDeps("m2")
     assertModuleLibDep("m2", "Maven: test:m1:1")
   }

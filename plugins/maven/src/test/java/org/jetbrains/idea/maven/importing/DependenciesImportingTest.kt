@@ -1729,7 +1729,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     repositoryPath = File(myDir, "__repo").path
     projectsManager.embeddersManager.reset() // to recognize repository change
 
-    updateAllProjects()
+    updateAllProjectsSync()
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
@@ -1762,7 +1762,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     repositoryPath = File(myDir, "__repo").path
     projectsManager.embeddersManager.reset() // to recognize repository change
 
-    updateAllProjects()
+    updateAllProjectsSync()
 
     assertModuleLibDep("project", "Maven: org.testng:testng:jdk15:5.8",
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15.jar!/",
@@ -1791,8 +1791,8 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/"))
 
     // update twice
-    updateAllProjects()
-    updateAllProjects()
+    updateAllProjectsSync()
+    updateAllProjectsSync()
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/"),
@@ -1825,8 +1825,8 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                        emptyList())
 
     // update twice
-    updateAllProjects()
-    updateAllProjects()
+    updateAllProjectsSync()
+    updateAllProjectsSync()
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://" + getRoot() + "/foo/bar.jar!/"),

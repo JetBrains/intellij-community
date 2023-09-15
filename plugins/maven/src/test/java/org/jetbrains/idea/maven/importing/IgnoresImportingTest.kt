@@ -115,7 +115,7 @@ class IgnoresImportingTest : MavenMultiVersionImportingTestCase() {
       doImportProjects(projectsManager.getProjectsTree().getExistingManagedFiles(), true)
     }
     else {
-      updateAllProjects()
+      updateAllProjectsSync()
     }
   }
 }

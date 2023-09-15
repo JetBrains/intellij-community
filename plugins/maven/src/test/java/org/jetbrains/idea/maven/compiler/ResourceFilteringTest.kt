@@ -766,7 +766,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
     }
     else {
       projectsManager.explicitProfiles = MavenExplicitProfiles(mutableListOf("two"))
-      updateAllProjects()
+      updateAllProjectsSync()
     }
 
     compileModules("project")

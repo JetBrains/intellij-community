@@ -612,7 +612,11 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertNoPendingProjectForReload()
   }
 
-  protected fun updateAllProjects() {
+  protected suspend fun updateAllProjects() {
+    projectsManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
+  }
+
+  protected fun updateAllProjectsSync() {
     projectsManager.updateAllMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT)
     projectsManager.waitForImportCompletion()
   }

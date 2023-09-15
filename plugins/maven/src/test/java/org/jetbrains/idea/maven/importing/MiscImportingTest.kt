@@ -333,7 +333,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                     </dependencies>
                     """.trimIndent())
     removeFromLocalRepository("junit")
-    updateAllProjects()
+    updateAllProjectsSync()
     val jarFile = File(repositoryFile, "junit/junit/4.0/junit-4.0.jar")
     assertTrue(jarFile.exists())
     projectsManager.listenForExternalChanges()
@@ -351,7 +351,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
     removeFromLocalRepository("junit")
     assertFalse(jarFile.exists())
     try {
-      updateAllProjects()
+      updateAllProjectsSync()
     }
     finally {
       // LightweightHttpWagon does not clear settings if they were not set before a proxy was configured.
@@ -360,7 +360,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
     }
     assertFalse(jarFile.exists())
     restoreSettingsFile()
-    updateAllProjects()
+    updateAllProjectsSync()
     assertTrue(jarFile.exists())
   }
 
