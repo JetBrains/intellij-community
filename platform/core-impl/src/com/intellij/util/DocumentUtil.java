@@ -185,6 +185,14 @@ public final class DocumentUtil {
     return document.getCharsSequence().subSequence(lineOffset, lineOffset + getIndentLengthAtLineStart(document, lineOffset));
   }
 
+  /**
+   * Calculates offset of the first non-whitespace character of the {@code line}
+   */
+  public static int getLineStartIndentedOffset(@NotNull Document document, int line) {
+    int lineStartOffset = document.getLineStartOffset(line);
+    return lineStartOffset + getIndentLengthAtLineStart(document, lineStartOffset);
+  }
+
   public static int calculateOffset(@NotNull Document document, int line, int column, int tabSize) {
     int offset;
     if (0 <= line && line < document.getLineCount()) {

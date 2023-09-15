@@ -431,9 +431,9 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       var breakpoints = entry.getValue();
 
       if (line < 0) continue;
-      var lineStartOffset = document.getLineStartOffset(line);
-      var linePosition = XSourcePositionImpl.create(file, line);
+      var codeStartOffset = DocumentUtil.getLineStartIndentedOffset(document, line);
 
+      var linePosition = XSourcePositionImpl.create(file, line);
       var breakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, linePosition, null);
       XDebuggerUtilImpl.getLineBreakpointVariants(project, breakpointTypes, linePosition).onSuccess(variants -> {
 
@@ -448,17 +448,12 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
           for (var variant : variants) {
             // FIXME[inline-bp]: what about multiple variants at start? in the middle? we should review all of them to move them to distinct places
             var varRange = variant.getHighlightRange();
+            var varStartOffset = getLineRangeStartNormalized(varRange, codeStartOffset);
             var breakpointHere = ContainerUtil.find(breakpoints, b -> {
-              var range = b.myType.getHighlightRange(b);
-              return (range == null && varRange == null) ||
-                     (range != null && varRange != null && range.getStartOffset() == varRange.getStartOffset());
+              var bRange = b.myType.getHighlightRange(b);
+              var bStartOffset = getLineRangeStartNormalized(bRange, codeStartOffset);
+              return bStartOffset == varStartOffset;
             });
-
-            var varStartOffset = varRange != null ? varRange.getStartOffset() : lineStartOffset;
-
-            if (varStartOffset == lineStartOffset) {
-              varStartOffset = lineStartOffset + DocumentUtil.getIndentLength(document, lineStartOffset);
-            }
 
             var renderer = new InlineBreakpointInlayRenderer(breakpointHere);
             var inlay = inlayModel.addInlineElement(varStartOffset, renderer);
@@ -467,6 +462,13 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
         }
       });
     }
+  }
+
+  private static int getLineRangeStartNormalized(TextRange range, int codeStartOffset) {
+    // Null range represents the whole line.
+    // Any start offset from the line start until first non-whitespace character (code start) is normalized
+    // to the offset of that non-whitespace character for ease of comparison of various ranges coming from variants and breakpoints.
+    return range != null ? Math.max(range.getStartOffset(), codeStartOffset) : codeStartOffset;
   }
 
   // FIXME[inline-bp]: extract me somewhere
