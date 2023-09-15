@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.importing;
+package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import org.junit.Test
+import java.io.File
 
-import java.io.File;
-
-public class DependenciesManagementTest extends MavenMultiVersionImportingTestCase {
-
+class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
   @Test
-  public void testImportingDependencies() throws Exception {
-    if (!hasMavenInstallation()) return;
+  fun testImportingDependencies() {
+    if (!hasMavenInstallation()) return
 
-    setRepositoryPath(new File(myDir, "/repo").getPath());
-    updateSettingsXml("<localRepository>\n" + getRepositoryPath() + "</localRepository>");
+    repositoryPath = File(myDir, "/repo").path
+    updateSettingsXml("""
+                      <localRepository>
+                      ${getRepositoryPath()}</localRepository>
+                      """.trimIndent())
 
     createModulePom("__temp",
                     """
@@ -45,9 +45,9 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
                           </dependency>
                         </dependencies>
                       </dependencyManagement>
-                      """);
+                      """.trimIndent())
 
-    executeGoal("__temp", "install");
+    executeGoal("__temp", "install")
 
     importProject("""
                     <groupId>test</groupId>
@@ -70,20 +70,23 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
                         <artifactId>junit</artifactId>
                       </dependency>
                     </dependencies>
-                    """);
+                    """.trimIndent())
 
-    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
+    assertModuleLibDeps("project", "Maven: junit:junit:4.0")
   }
 
   @Test
-  public void testImportingNotInstalledDependencies() throws Exception {
-    if (ignore()) return;
+  fun testImportingNotInstalledDependencies() {
+    if (ignore()) return
 
-    setRepositoryPath(new File(myDir, "/repo").getPath());
-    updateSettingsXml("<localRepository>\n" + getRepositoryPath() + "</localRepository>");
+    repositoryPath = File(myDir, "/repo").path
+    updateSettingsXml("""
+  <localRepository>
+  ${getRepositoryPath()}</localRepository>
+  """.trimIndent())
 
-    VirtualFile bom = createModulePom("bom",
-                                      """
+    val bom = createModulePom("bom",
+                              """
                                         <groupId>test</groupId>
                                         <artifactId>bom</artifactId>
                                         <packaging>pom</packaging>
@@ -97,10 +100,10 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
                                             </dependency>
                                           </dependencies>
                                         </dependencyManagement>
-                                        """);
+                                        """.trimIndent())
 
-    VirtualFile project = createModulePom("project",
-                                          """
+    val project = createModulePom("project",
+                                  """
                                             <groupId>test</groupId>
                                             <artifactId>project</artifactId>
                                             <version>1</version>
@@ -121,15 +124,15 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
                                                 <artifactId>junit</artifactId>
                                               </dependency>
                                             </dependencies>
-                                            """);
-    importProjectsWithErrors(bom, project);
-    assertModules("bom", "project");
+                                            """.trimIndent())
+    importProjectsWithErrors(bom, project)
+    assertModules("bom", "project")
 
     // reset embedders and try to update projects from scratch
-    getProjectsManager().getEmbeddersManager().releaseForcefullyInTests();
+    projectsManager.embeddersManager.releaseForcefullyInTests()
 
-    updateAllProjects();
+    updateAllProjects()
 
-    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
+    assertModuleLibDeps("project", "Maven: junit:junit:4.0")
   }
 }

@@ -13,113 +13,109 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.importing;
+package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import org.junit.Test
 
-import java.util.Collections;
-
-public class IgnoresImportingTest extends MavenMultiVersionImportingTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    initProjectsManager(false);
+class IgnoresImportingTest : MavenMultiVersionImportingTestCase() {
+  override fun setUp() {
+    super.setUp()
+    initProjectsManager(false)
   }
 
   @Test
-  public void testDoNotImportIgnoredProjects() {
-    VirtualFile p1 = createModulePom("project1",
-                                     """
+  fun testDoNotImportIgnoredProjects() {
+    val p1 = createModulePom("project1",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>project1</artifactId>
                                        <version>1</version>
-                                       """);
+                                       """.trimIndent())
 
-    VirtualFile p2 = createModulePom("project2",
-                                     """
+    val p2 = createModulePom("project2",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>project2</artifactId>
                                        <version>1</version>
-                                       """);
+                                       """.trimIndent())
 
-    setIgnoredFilesPathForNextImport(Collections.singletonList(p1.getPath()));
-    importProjects(p1, p2);
-    assertModules("project2");
+    setIgnoredFilesPathForNextImport(listOf(p1.getPath()))
+    importProjects(p1, p2)
+    assertModules("project2")
   }
 
   @Test
-  public void testAddingAndRemovingModulesWhenIgnoresChange() {
-    VirtualFile p1 = createModulePom("project1",
-                                     """
+  fun testAddingAndRemovingModulesWhenIgnoresChange() {
+    val p1 = createModulePom("project1",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>project1</artifactId>
                                        <version>1</version>
-                                       """);
+                                       """.trimIndent())
 
-    VirtualFile p2 = createModulePom("project2",
-                                     """
+    val p2 = createModulePom("project2",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>project2</artifactId>
                                        <version>1</version>
-                                       """);
-    importProjects(p1, p2);
-    assertModules("project1", "project2");
+                                       """.trimIndent())
+    importProjects(p1, p2)
+    assertModules("project1", "project2")
 
-    setIgnoredFilesPathForNextImport(Collections.singletonList(p1.getPath()));
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
-    doReadAndImport();
-    assertModules("project2");
+    setIgnoredFilesPathForNextImport(listOf(p1.getPath()))
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
+    doReadAndImport()
+    assertModules("project2")
 
-    setIgnoredFilesPathForNextImport(Collections.singletonList(p2.getPath()));
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
-    doReadAndImport();
-    assertModules("project1");
+    setIgnoredFilesPathForNextImport(listOf(p2.getPath()))
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
+    doReadAndImport()
+    assertModules("project1")
 
-    setIgnoredFilesPathForNextImport(Collections.emptyList());
-    doReadAndImport();
-    assertModules("project1", "project2");
+    setIgnoredFilesPathForNextImport(emptyList<String>())
+    doReadAndImport()
+    assertModules("project1", "project2")
   }
 
   @Test
-  public void testDoNotAskTwiceToRemoveIgnoredModule() {
-    if (!supportsKeepingModulesFromPreviousImport()) return;
+  fun testDoNotAskTwiceToRemoveIgnoredModule() {
+    if (!supportsKeepingModulesFromPreviousImport()) return
 
-    VirtualFile p1 = createModulePom("project1",
-                                     """
+    val p1 = createModulePom("project1",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>project1</artifactId>
                                        <version>1</version>
-                                       """);
+                                       """.trimIndent())
 
-    VirtualFile p2 = createModulePom("project2",
-                                     """
+    val p2 = createModulePom("project2",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>project2</artifactId>
                                        <version>1</version>
-                                       """);
-    importProjects(p1, p2);
-    assertModules("project1", "project2");
+                                       """.trimIndent())
+    importProjects(p1, p2)
+    assertModules("project1", "project2")
 
-    setIgnoredFilesPathForNextImport(Collections.singletonList(p1.getPath()));
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false);
-    doReadAndImport();
+    setIgnoredFilesPathForNextImport(listOf(p1.getPath()))
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false)
+    doReadAndImport()
 
-    assertModules("project1", "project2");
+    assertModules("project1", "project2")
 
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false);
-    doReadAndImport();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false)
+    doReadAndImport()
 
-    assertModules("project1", "project2");
+    assertModules("project1", "project2")
   }
 
-  private void doReadAndImport() {
+  private fun doReadAndImport() {
     if (isNewImportingProcess) {
-      doImportProjects(getProjectsManager().getProjectsTree().getExistingManagedFiles(), true);
+      doImportProjects(projectsManager.getProjectsTree().getExistingManagedFiles(), true)
     }
     else {
-      updateAllProjects();
+      updateAllProjects()
     }
   }
 }
