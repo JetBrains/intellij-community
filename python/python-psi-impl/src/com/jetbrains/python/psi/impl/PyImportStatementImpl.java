@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiListLikeElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.QualifiedName;
@@ -18,13 +19,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
-public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementStub> implements PyImportStatement {
+public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementStub> implements PyImportStatement, PsiListLikeElement {
   public PyImportStatementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -126,5 +128,10 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
       }
     }
     return null;
+  }
+
+  @Override
+  public @NotNull List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getImportElements());
   }
 }

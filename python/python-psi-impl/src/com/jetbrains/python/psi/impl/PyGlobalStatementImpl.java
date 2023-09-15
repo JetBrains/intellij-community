@@ -2,6 +2,8 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiListLikeElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
@@ -14,7 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 
 
-public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStatement {
+public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStatement, PsiListLikeElement {
   private static final TokenSet TARGET_EXPRESSION_SET = TokenSet.create(PyElementTypes.TARGET_EXPRESSION);
 
   public PyGlobalStatementImpl(ASTNode astNode) {
@@ -55,5 +57,10 @@ public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStat
       PyPsiUtils.deleteAdjacentCommaWithWhitespaces(this, child.getPsi());
     }
     super.deleteChildInternal(child);
+  }
+
+  @Override
+  public @NotNull List<? extends PsiElement> getComponents() {
+    return getNamedElements();
   }
 }
