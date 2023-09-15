@@ -98,6 +98,7 @@ class VcsLogIndexCollectorState {
 
 @State(name = "VcsLogIndexCollector",
        storages = [Storage(value = StoragePathMacros.CACHE_FILE)])
+@Service(Service.Level.PROJECT)
 class VcsLogIndexCollector : PersistentStateComponent<VcsLogIndexCollectorState> {
   private val lock = Any()
   private var state: VcsLogIndexCollectorState
