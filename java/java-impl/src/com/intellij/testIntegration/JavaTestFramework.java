@@ -58,7 +58,7 @@ public abstract class JavaTestFramework implements JvmTestFramework {
   /**
    * Return {@code true} iff {@link #getMarkerClassFQName()} can be found in the resolve scope of {@code clazz}
    */
-  protected boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
+  public boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
     String markerClassFQName = getMarkerClassFQName();
     return isFrameworkApplicable(clazz, markerClassFQName);
   }

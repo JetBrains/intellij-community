@@ -46,10 +46,13 @@ private class TestCaseWithoutTestsVisitor(
     if (clazz.hasAnnotation(JUnitCommonClassNames.ORG_JUNIT_RUNNER_RUN_WITH)) return true
 
     val applicableFrameworks = TestFrameworks.detectApplicableFrameworks(clazz)
+      .filterIsInstance<JavaTestFramework>()
+      .filter { framework -> framework.isFrameworkAvailable(clazz) }
+      .toSet()
     if (applicableFrameworks.isEmpty()) return true
 
     val applicableToNestedClasses = applicableFrameworks
-      .filter { framework -> framework is JavaTestFramework && framework.acceptNestedClasses() }
+      .filter { framework -> framework.acceptNestedClasses() }
       .toSet()
 
     if (hasTestMethods(clazz, applicableFrameworks, applicableToNestedClasses, true)) return true
