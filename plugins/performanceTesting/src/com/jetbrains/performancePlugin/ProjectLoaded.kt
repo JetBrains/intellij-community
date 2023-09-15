@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter.Companion.logStats
@@ -53,25 +52,10 @@ import java.sql.Timestamp
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
-import kotlin.math.min
 import kotlin.time.Duration.Companion.minutes
 
-private const val MAX_DESCRIPTION_LENGTH = 7500
 private val LOG: Logger
   get() = Logger.getInstance("PerformancePlugin")
-
-/**
- * If an IDE error occurs and this flag is true, a failure of a TeamCity test will be printed
- * to stdout using TeamCity Service Messages (see [.reportTeamCityFailedTestAndBuildProblem]).
- * The name of the failed test will be inferred from the name of the script file
- * (its name without an extension, see [.getTeamCityFailedTestName]).
- */
-@Suppress("SpellCheckingInspection")
-private val MUST_REPORT_TEAMCITY_TEST_FAILURE_ON_IDE_ERROR =
-  System.getProperty("testscript.must.report.teamcity.test.failure.on.error", "true").toBoolean()
-
-private val teamCityFailedTestName: String
-  get() = FileUtilRt.getNameWithoutExtension(getTestFile().name)
 
 private fun getTestFile(): File {
   val file = File(ProjectLoaded.TEST_SCRIPT_FILE_PATH!!)
@@ -383,44 +367,15 @@ private fun runScriptFromFile(project: Project) {
   registerOnFinishRunnables(future = scriptCallback, mustExitOnFailure = true)
 }
 
-private fun encodeStringForTC(line: String): String {
-  return line.substring(0, min(MAX_DESCRIPTION_LENGTH.toDouble(), line.length.toDouble()).toInt())
-    .replace("\\|", "||")
-    .replace("\\[", "|[")
-    .replace("]", "|]")
-    .replace("\n", "|n")
-    .replace("'", "|'")
-    .replace("\r", "|r")
-}
-
-private fun reportTeamCityFailedTestAndBuildProblem(testName: String,
-                                                    failureMessage: String,
-                                                    @Suppress("SameParameterValue") failureDetails: String) {
-  val generifiedTestName = generifyErrorMessage(testName)
-  System.out.printf("##teamcity[testFailed name='%s' message='%s' details='%s']\n",
-                    encodeStringForTC(generifiedTestName),
-                    encodeStringForTC(failureMessage),
-                    encodeStringForTC(failureDetails))
-  System.out.printf("##teamcity[buildProblem description='%s' identity='%s'] ",
-                    encodeStringForTC(failureMessage),
-                    encodeStringForTC(generifiedTestName))
-}
-
 @Suppress("RAW_RUN_BLOCKING")
 private fun registerOnFinishRunnables(future: CompletableFuture<*>, mustExitOnFailure: Boolean) {
   future
     .thenRun { LOG.info("Execution of the script has been finished successfully") }
     .exceptionally(Function { e ->
       ApplicationManager.getApplication().executeOnPooledThread {
-        val message = "IDE will be terminated because some errors are detected while running the startup script: $e"
-        if (MUST_REPORT_TEAMCITY_TEST_FAILURE_ON_IDE_ERROR) {
-          val testName = teamCityFailedTestName
-          reportTeamCityFailedTestAndBuildProblem(testName, message, "")
-        }
         if (SystemProperties.getBooleanProperty("startup.performance.framework", false)) {
           storeFailureToFile(e.message)
         }
-        LOG.error(message)
         runBlocking {
           takeScreenshotOfAllWindows("onFailure")
         }
