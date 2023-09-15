@@ -1,190 +1,136 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.patch.tool;
+package com.intellij.openapi.vcs.changes.patch.tool
 
-import com.intellij.diff.comparison.ByWord;
-import com.intellij.diff.comparison.ComparisonPolicy;
-import com.intellij.diff.comparison.DiffTooBigException;
-import com.intellij.diff.fragments.DiffFragment;
-import com.intellij.diff.tools.fragmented.LineNumberConvertor;
-import com.intellij.diff.tools.util.text.LineOffsets;
-import com.intellij.diff.tools.util.text.LineOffsetsUtil;
-import com.intellij.diff.util.DiffRangeUtil;
-import com.intellij.diff.util.LineRange;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.progress.DumbProgressIndicator;
-import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.AppliedSplitPatchHunk;
-import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diff.comparison.ByWord
+import com.intellij.diff.comparison.ComparisonPolicy
+import com.intellij.diff.comparison.DiffTooBigException
+import com.intellij.diff.fragments.DiffFragment
+import com.intellij.diff.tools.fragmented.LineNumberConvertor
+import com.intellij.diff.tools.util.text.LineOffsets
+import com.intellij.diff.tools.util.text.LineOffsetsUtil
+import com.intellij.diff.util.DiffRangeUtil
+import com.intellij.diff.util.LineRange
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.progress.DumbProgressIndicator
+import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.AppliedSplitPatchHunk
+import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus
+import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.ints.IntList
 
-import java.util.ArrayList;
-import java.util.List;
+class PatchChangeBuilder {
+  private val textBuilder = StringBuilder()
+  private val myHunks: MutableList<Hunk> = ArrayList()
+  private val convertor1 = LineNumberConvertor.Builder()
+  private val convertor2 = LineNumberConvertor.Builder()
+  val separatorLines: IntList = IntArrayList()
 
-public final class PatchChangeBuilder {
-  @NotNull private final StringBuilder myBuilder = new StringBuilder();
-  @NotNull private final List<Hunk> myHunks = new ArrayList<>();
-  @NotNull private final LineNumberConvertor.Builder myConvertor1 = new LineNumberConvertor.Builder();
-  @NotNull private final LineNumberConvertor.Builder myConvertor2 = new LineNumberConvertor.Builder();
-  @NotNull private final IntList myChangedLines = new IntArrayList();
+  private var totalLines = 0
 
-  private int totalLines = 0;
+  fun exec(splitHunks: List<AppliedSplitPatchHunk>) {
+    var lastBeforeLine = -1
+    for (hunk in splitHunks) {
+      val contextBefore = hunk.contextBefore
+      val contextAfter = hunk.contextAfter
 
-  public void exec(@NotNull List<? extends AppliedSplitPatchHunk> splitHunks) {
-    int lastBeforeLine = -1;
-    for (AppliedSplitPatchHunk hunk : splitHunks) {
-      List<String> contextBefore = hunk.getContextBefore();
-      List<String> contextAfter = hunk.getContextAfter();
+      val beforeRange = hunk.getLineRangeBefore()
+      val afterRange = hunk.getLineRangeAfter()
 
-      LineRange beforeRange = hunk.getLineRangeBefore();
-      LineRange afterRange = hunk.getLineRangeAfter();
-
-      int overlappedContext = 0;
+      var overlappedContext = 0
       if (lastBeforeLine != -1) {
         if (lastBeforeLine >= beforeRange.start) {
-          overlappedContext = lastBeforeLine - beforeRange.start + 1;
+          overlappedContext = lastBeforeLine - beforeRange.start + 1
         }
         else if (lastBeforeLine < beforeRange.start - 1) {
-          appendSeparator();
+          appendSeparator()
         }
       }
 
-      List<String> trimContext = contextBefore.subList(overlappedContext, contextBefore.size());
-      addContext(trimContext, beforeRange.start + overlappedContext, afterRange.start + overlappedContext);
+      val trimContext: List<String> = contextBefore.subList(overlappedContext, contextBefore.size)
+      addContext(trimContext, beforeRange.start + overlappedContext, afterRange.start + overlappedContext)
 
 
-      int deletion = totalLines;
-      appendLines(hunk.getDeletedLines());
-      int insertion = totalLines;
-      appendLines(hunk.getInsertedLines());
-      int hunkEnd = totalLines;
+      val deletion = totalLines
+      appendLines(hunk.deletedLines)
+      val insertion = totalLines
+      appendLines(hunk.insertedLines)
+      val hunkEnd = totalLines
 
-      myConvertor1.put(deletion, beforeRange.start + contextBefore.size(), insertion - deletion);
-      myConvertor2.put(insertion, afterRange.start + contextBefore.size(), hunkEnd - insertion);
-
-
-      addContext(contextAfter, beforeRange.end - contextAfter.size(), afterRange.end - contextAfter.size());
-      lastBeforeLine = beforeRange.end - 1;
+      convertor1.put(deletion, beforeRange.start + contextBefore.size, insertion - deletion)
+      convertor2.put(insertion, afterRange.start + contextBefore.size, hunkEnd - insertion)
 
 
-      LineRange deletionRange = new LineRange(deletion, insertion);
-      LineRange insertionRange = new LineRange(insertion, hunkEnd);
+      addContext(contextAfter, beforeRange.end - contextAfter.size, afterRange.end - contextAfter.size)
+      lastBeforeLine = beforeRange.end - 1
 
-      myHunks.add(new Hunk(deletionRange, insertionRange, hunk.getAppliedTo(), hunk.getStatus()));
+
+      val deletionRange = LineRange(deletion, insertion)
+      val insertionRange = LineRange(insertion, hunkEnd)
+
+      myHunks.add(Hunk(deletionRange, insertionRange, hunk.getAppliedTo(), hunk.status))
     }
   }
 
-  private void addContext(@NotNull List<String> context, int beforeLineNumber, int afterLineNumber) {
-    myConvertor1.put(totalLines, beforeLineNumber, context.size());
-    myConvertor2.put(totalLines, afterLineNumber, context.size());
-    appendLines(context);
+  private fun addContext(context: List<String>, beforeLineNumber: Int, afterLineNumber: Int) {
+    convertor1.put(totalLines, beforeLineNumber, context.size)
+    convertor2.put(totalLines, afterLineNumber, context.size)
+    appendLines(context)
   }
 
-  private void appendLines(@NotNull List<String> lines) {
-    for (String line : lines) {
-      myBuilder.append(line).append("\n");
+  private fun appendLines(lines: List<String>) {
+    for (line in lines) {
+      textBuilder.append(line).append("\n")
     }
-    totalLines += lines.size();
+    totalLines += lines.size
   }
 
-  private void appendSeparator() {
-    myChangedLines.add(totalLines);
-    myBuilder.append("\n");
-    totalLines++;
+  private fun appendSeparator() {
+    separatorLines.add(totalLines)
+    textBuilder.append("\n")
+    totalLines++
   }
 
-  //
-  // Result
-  //
+  val patchContent: CharSequence
+    get() = textBuilder
 
-  @NotNull
-  public CharSequence getPatchContent() {
-    return myBuilder;
-  }
+  val hunks: List<Hunk>
+    get() = myHunks
 
-  @NotNull
-  public List<Hunk> getHunks() {
-    return myHunks;
-  }
+  val lineConvertor1: LineNumberConvertor
+    get() = convertor1.build()
 
-  @NotNull
-  public LineNumberConvertor getLineConvertor1() {
-    return myConvertor1.build();
-  }
+  val lineConvertor2: LineNumberConvertor
+    get() = convertor2.build()
 
-  @NotNull
-  public LineNumberConvertor getLineConvertor2() {
-    return myConvertor2.build();
-  }
+  class Hunk(val patchDeletionRange: LineRange,
+             val patchInsertionRange: LineRange,
+             val appliedToLines: LineRange?,
+             val status: HunkStatus)
 
-  @NotNull
-  public IntList getSeparatorLines() {
-    return myChangedLines;
-  }
-
-  @Nullable
-  public static List<DiffFragment> computeInnerDifferences(@NotNull Document patchContent,
-                                                           @NotNull PatchChangeBuilder.Hunk hunk) {
-    return computeInnerDifferences(patchContent.getImmutableCharSequence(), LineOffsetsUtil.create(patchContent), hunk);
-  }
-
-  @Nullable
-  public static List<DiffFragment> computeInnerDifferences(@NotNull CharSequence patchContent,
-                                                           @NotNull LineOffsets lineOffsets,
-                                                           @NotNull PatchChangeBuilder.Hunk hunk) {
-    LineRange deletionRange = hunk.getPatchDeletionRange();
-    LineRange insertionRange = hunk.getPatchInsertionRange();
-
-    if (deletionRange.isEmpty() || insertionRange.isEmpty()) return null;
-
-    try {
-      CharSequence deleted = DiffRangeUtil.getLinesContent(patchContent, lineOffsets, deletionRange.start, deletionRange.end);
-      CharSequence inserted = DiffRangeUtil.getLinesContent(patchContent, lineOffsets, insertionRange.start, insertionRange.end);
-
-      return ByWord.compare(deleted, inserted, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
-    }
-    catch (DiffTooBigException ignore) {
-      return null;
-    }
-  }
-
-
-  public static class Hunk {
-    @NotNull private final LineRange myPatchDeletionRange;
-    @NotNull private final LineRange myPatchInsertionRange;
-
-    @Nullable private final LineRange myAppliedToLines;
-    @NotNull private final HunkStatus myStatus;
-
-    public Hunk(@NotNull LineRange patchDeletionRange,
-                @NotNull LineRange patchInsertionRange,
-                @Nullable LineRange appliedToLines,
-                @NotNull HunkStatus status) {
-      myPatchDeletionRange = patchDeletionRange;
-      myPatchInsertionRange = patchInsertionRange;
-      myAppliedToLines = appliedToLines;
-      myStatus = status;
+  companion object {
+    @JvmStatic
+    fun computeInnerDifferences(patchContent: Document,
+                                hunk: Hunk): List<DiffFragment>? {
+      return computeInnerDifferences(patchContent.getImmutableCharSequence(), LineOffsetsUtil.create(patchContent), hunk)
     }
 
-    @NotNull
-    public LineRange getPatchDeletionRange() {
-      return myPatchDeletionRange;
-    }
+    @JvmStatic
+    fun computeInnerDifferences(patchContent: CharSequence,
+                                lineOffsets: LineOffsets,
+                                hunk: Hunk): List<DiffFragment>? {
+      val deletionRange = hunk.patchDeletionRange
+      val insertionRange = hunk.patchInsertionRange
 
-    @NotNull
-    public LineRange getPatchInsertionRange() {
-      return myPatchInsertionRange;
-    }
+      if (deletionRange.isEmpty || insertionRange.isEmpty) return null
 
-    @NotNull
-    public HunkStatus getStatus() {
-      return myStatus;
-    }
+      try {
+        val deleted = DiffRangeUtil.getLinesContent(patchContent, lineOffsets, deletionRange.start, deletionRange.end)
+        val inserted = DiffRangeUtil.getLinesContent(patchContent, lineOffsets, insertionRange.start, insertionRange.end)
 
-    @Nullable
-    public LineRange getAppliedToLines() {
-      return myAppliedToLines;
+        return ByWord.compare(deleted, inserted, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE)
+      }
+      catch (e: DiffTooBigException) {
+        return null
+      }
     }
   }
 }
