@@ -282,9 +282,13 @@ public final class TextMateServiceImpl extends TextMateService {
   }
 
   private void registerSnippets(@NotNull TextMateBundleReader reader) {
-    Iterator<TextMateSnippet> snippetsIterator = reader.readSnippets().iterator();
-    while (snippetsIterator.hasNext()) {
-      mySnippetRegistry.register(snippetsIterator.next());
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // it's used in internal mode only (see org.jetbrains.plugins.textmate.editor.TextMateCustomLiveTemplate.isApplicable),
+      // do not register to save some memory and loading time
+      Iterator<TextMateSnippet> snippetsIterator = reader.readSnippets().iterator();
+      while (snippetsIterator.hasNext()) {
+        mySnippetRegistry.register(snippetsIterator.next());
+      }
     }
   }
 
@@ -299,10 +303,13 @@ public final class TextMateServiceImpl extends TextMateService {
       Set<TextMateAutoClosingPair> internedSmartTypingPairs = ObjectUtils.doIfNotNull(preferences.getSmartTypingPairs(), pairs ->
         ContainerUtil.map2Set(pairs, p -> new TextMateAutoClosingPair(myInterner.intern(p.getLeft()), myInterner.intern(p.getRight()), p.getNotIn()))
       );
+      Set<TextMateBracePair> internedSurroundingPairs = ObjectUtils.doIfNotNull(preferences.getSurroundingPairs(), pairs ->
+        ContainerUtil.map2Set(pairs, p -> new TextMateBracePair(myInterner.intern(p.getLeft()), myInterner.intern(p.getRight())))
+      );
       myPreferenceRegistry.addPreferences(new Preferences(scopeName,
                                                           internedHighlightingPairs,
                                                           internedSmartTypingPairs,
-                                                          preferences.getSurroundingPairs(),
+                                                          internedSurroundingPairs,
                                                           preferences.getAutoCloseBefore(),
                                                           preferences.getIndentationRules()));
       for (TextMateShellVariable variable : preferences.getVariables()) {
