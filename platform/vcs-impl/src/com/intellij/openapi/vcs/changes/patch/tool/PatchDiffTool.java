@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.EditorDiffViewer;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.requests.DiffRequest;
@@ -15,6 +16,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
@@ -28,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 final class PatchDiffTool implements FrameDiffTool {
@@ -48,7 +51,7 @@ final class PatchDiffTool implements FrameDiffTool {
     return new MyPatchViewer(context, (PatchDiffRequest)request);
   }
 
-  private static class MyPatchViewer implements DiffViewer, DataProvider {
+  private static class MyPatchViewer implements DiffViewer, DataProvider, EditorDiffViewer {
 
 
     private final Project myProject;
@@ -85,6 +88,11 @@ final class PatchDiffTool implements FrameDiffTool {
     @Override
     public JComponent getPreferredFocusedComponent() {
       return myEditor.getContentComponent();
+    }
+
+    @Override
+    public @NotNull List<? extends Editor> getEditors() {
+      return Collections.singletonList(myEditor);
     }
 
     @NotNull

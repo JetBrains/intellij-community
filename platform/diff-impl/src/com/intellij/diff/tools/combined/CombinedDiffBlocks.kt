@@ -5,6 +5,7 @@ import com.intellij.diff.FrameDiffTool
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -162,7 +163,7 @@ internal class CombinedSimpleDiffBlock(project: Project,
 
   override val body: Wrapper = Wrapper(initialContent)
 
-  private var editors: List<EditorEx> = emptyList()
+  private var editors: List<Editor> = emptyList()
 
   override fun getPreferredSize(): Dimension {
     val preferredSize = super.getPreferredSize()
@@ -171,7 +172,7 @@ internal class CombinedSimpleDiffBlock(project: Project,
     // TODO: investigate why sometimes the size of the editor's viewport is calculated incorrectly
     var someError = 0
     editors.forEach { e ->
-      someError = maxOf(e.gutterComponentEx.preferredSize.height - body.targetComponent.preferredSize.height, someError)
+      someError = maxOf((e as EditorEx).gutterComponentEx.preferredSize.height - body.targetComponent.preferredSize.height, someError)
     }
     if (someError > 0) {
       preferredSize.height += someError
