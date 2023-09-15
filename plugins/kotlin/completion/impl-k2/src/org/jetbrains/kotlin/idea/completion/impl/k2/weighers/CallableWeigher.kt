@@ -44,7 +44,7 @@ internal object CallableWeigher {
                 CallableMetadataProvider.CallableKind.THIS_TYPE_EXTENSION,
                 CallableMetadataProvider.CallableKind.BASE_TYPE_EXTENSION -> Weight1.MEMBER_OR_EXTENSION
 
-                CallableMetadataProvider.CallableKind.GLOBAL_OR_STATIC -> Weight1.GLOBAL_OR_STATIC
+                CallableMetadataProvider.CallableKind.GLOBAL -> Weight1.GLOBAL_OR_STATIC
 
                 CallableMetadataProvider.CallableKind.TYPE_PARAMETER_EXTENSION -> Weight1.TYPE_PARAMETER_EXTENSION
 

@@ -5,10 +5,10 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
+import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -57,7 +57,7 @@ internal object CallableMetadataProvider {
         BASE_CLASS_MEMBER,
         THIS_TYPE_EXTENSION,
         BASE_TYPE_EXTENSION,
-        GLOBAL_OR_STATIC, // global non_extension
+        GLOBAL, // global non_extension
         TYPE_PARAMETER_EXTENSION,
         RECEIVER_CAST_REQUIRED,
         ;
@@ -81,21 +81,21 @@ internal object CallableMetadataProvider {
             return getCallableMetadata(context, symbol.javaGetterSymbol.asSignature(), symbolOrigin)
         }
 
-        val scopeIndex = (symbolOrigin as? CompletionSymbolOrigin.Scope)?.kind?.indexInTower
+        if (symbol.isExtension) return extensionWeight(signature, context)
 
-        return when (signature.symbol.symbolKind) {
-            KtSymbolKind.TOP_LEVEL,
-            KtSymbolKind.CLASS_MEMBER -> {
-                if (signature.symbol.isExtension) {
-                    extensionWeight(signature, context)
-                } else {
-                    nonExtensionWeight(signature, context)
-                }
-            }
+        return when (val scopeKind = (symbolOrigin as? CompletionSymbolOrigin.Scope)?.kind) {
+            is KtScopeKind.LocalScope -> CallableMetadata(CallableKind.LOCAL, scopeKind.indexInTower)
 
-            KtSymbolKind.LOCAL -> CallableMetadata(CallableKind.LOCAL, scopeIndex)
-            else -> null
-        } ?: CallableMetadata(CallableKind.GLOBAL_OR_STATIC, scopeIndex)
+            is KtScopeKind.TypeScope,
+            is KtScopeKind.StaticMemberScope -> nonExtensionWeight(signature, context)
+
+            is KtScopeKind.TypeParameterScope -> null
+
+            is KtScopeKind.ImportingScope,
+            is KtScopeKind.PackageMemberScope,
+            is KtScopeKind.ScriptMemberScope,
+            null -> CallableMetadata(CallableKind.GLOBAL, scopeKind?.indexInTower)
+        }
     }
 
     context(KtAnalysisSession)

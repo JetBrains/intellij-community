@@ -2318,6 +2318,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("CompanionObjectMembers.kt")
+            public void testCompanionObjectMembers() throws Exception {
+                runTest("../testData/basic/common/staticMembers/CompanionObjectMembers.kt");
+            }
+
             @TestMetadata("EnumWithoutCompanionObject.kt")
             public void testEnumWithoutCompanionObject() throws Exception {
                 runTest("../testData/basic/common/staticMembers/EnumWithoutCompanionObject.kt");
@@ -2788,6 +2793,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/ImportedEnumMembers.kt");
             }
 
+            @TestMetadata("ImportedExtensionFromObject.kt")
+            public void testImportedExtensionFromObject() throws Exception {
+                runTest("../testData/basic/common/ImportedExtensionFromObject.kt");
+            }
+
             @TestMetadata("ImportedMemberFromObject.kt")
             public void testImportedMemberFromObject() throws Exception {
                 runTest("../testData/basic/common/ImportedMemberFromObject.kt");
@@ -3051,6 +3061,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             @TestMetadata("KeywordsAreLowInParameterTypeCompletion4.kt")
             public void testKeywordsAreLowInParameterTypeCompletion4() throws Exception {
                 runTest("../testData/basic/common/KeywordsAreLowInParameterTypeCompletion4.kt");
+            }
+
+            @TestMetadata("LocalFunctions.kt")
+            public void testLocalFunctions() throws Exception {
+                runTest("../testData/basic/common/LocalFunctions.kt");
             }
 
             @TestMetadata("localInnerClass.kt")
