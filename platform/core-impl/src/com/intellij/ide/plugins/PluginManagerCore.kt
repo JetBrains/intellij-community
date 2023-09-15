@@ -426,45 +426,29 @@ object PluginManagerCore {
                                          idMap: Map<PluginId, IdeaPluginDescriptorImpl>,
                                          errors: MutableMap<PluginId, PluginLoadingError>) {
     val selectedIds = System.getProperty("idea.load.plugins.id")
-    val selectedCategory = System.getProperty("idea.load.plugins.category")
-    var explicitlyEnabled: MutableSet<IdeaPluginDescriptorImpl>? = null
-    if (selectedIds != null) {
+    val shouldLoadPlugins = System.getProperty("idea.load.plugins", "true").toBoolean()
+
+    val explicitlyEnabled = if (selectedIds == null) null else {
       val set = HashSet<PluginId>()
-      for (it in selectedIds.split(',').dropLastWhile { it.isEmpty() }) {
-        set.add(PluginId.getId(it))
+      for (it in selectedIds.split(',')) {
+        if (it.isNotEmpty()) {
+          set.add(PluginId.getId(it))
+        }
       }
       set.addAll(ApplicationInfoImpl.getShadowInstance().getEssentialPluginsIds())
-      explicitlyEnabled = LinkedHashSet(set.size)
+      val selectedPlugins = LinkedHashSet<IdeaPluginDescriptorImpl>(set.size)
       for (id in set) {
-        val descriptor = idMap[id]
-        if (descriptor != null) {
-          explicitlyEnabled.add(descriptor)
-        }
-      }
-    }
-    else if (selectedCategory != null) {
-      explicitlyEnabled = LinkedHashSet()
-      for (descriptor in descriptors) {
-        if (selectedCategory == descriptor.getCategory()) {
-          explicitlyEnabled.add(descriptor)
-        }
-      }
-    }
-
-    if (explicitlyEnabled != null) {
-      // add all required dependencies
-      val nonOptionalDependencies: MutableList<IdeaPluginDescriptorImpl> = ArrayList()
-      for (descriptor in explicitlyEnabled) {
+        val descriptor = idMap[id] ?: continue
+        selectedPlugins.add(descriptor)
         processAllNonOptionalDependencies(rootDescriptor = descriptor, pluginIdMap = idMap, consumer = { dependency ->
-          nonOptionalDependencies.add(dependency!!)
+          selectedPlugins.add(dependency!!)
           FileVisitResult.CONTINUE
         })
       }
-      explicitlyEnabled.addAll(nonOptionalDependencies)
+      selectedPlugins
     }
 
     val coreDescriptor = idMap.get(CORE_ID)
-    val shouldLoadPlugins = System.getProperty("idea.load.plugins", "true").toBoolean()
     for (descriptor in descriptors) {
       if (descriptor === coreDescriptor) {
         continue
@@ -473,8 +457,7 @@ object PluginManagerCore {
       if (explicitlyEnabled != null) {
         if (!explicitlyEnabled.contains(descriptor)) {
           descriptor.isEnabled = false
-          logger.info("Plugin '" + descriptor.getName() + "' " +
-                      if (selectedIds == null) "category doesn't match 'idea.load.plugins.category' system property" else "is not in 'idea.load.plugins.id' system property")
+          logger.info("Plugin '" + descriptor.getName() + "' is not in 'idea.load.plugins.id' system property")
         }
       }
       else if (!shouldLoadPlugins) {
@@ -486,7 +469,7 @@ object PluginManagerCore {
       }
     }
 
-    if (explicitlyEnabled == null) {
+    if (explicitlyEnabled == null && shouldLoadPlugins) {
       for (essentialId in ApplicationInfoImpl.getShadowInstance().getEssentialPluginsIds()) {
         val essentialPlugin = idMap[essentialId] ?: continue
         for (incompatibleId in essentialPlugin.incompatibilities) {
