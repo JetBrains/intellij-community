@@ -19,6 +19,8 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
   private var myProjectsManager: MavenProjectsManager? = null
   private var myProjectsTreeTracker: MavenProjectTreeTracker? = null
 
+  override fun runInDispatchThread() = false
+
   override fun setUp() {
     super.setUp()
     myProjectsManager = MavenProjectsManager.getInstance(myProject)
@@ -188,10 +190,10 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
     } as ThrowableComputable<*, IOException?>)
   }
 
-  protected fun replaceDocumentString(file: VirtualFile?, oldString: String, newString: String?) {
+  private fun replaceDocumentString(file: VirtualFile?, oldString: String, newString: String?) {
     val fileDocumentManager = FileDocumentManager.getInstance()
-    val document = fileDocumentManager.getDocument(file!!)
     WriteCommandAction.runWriteCommandAction(myProject) {
+      val document = fileDocumentManager.getDocument(file!!)
       val text = document!!.text
       val startOffset = text.indexOf(oldString)
       val endOffset = startOffset + oldString.length

@@ -7,6 +7,11 @@ import org.junit.Test;
 
 public class CustomPomFileNameTest extends MavenDomTestCase {
 
+  @Override
+  protected boolean runInDispatchThread() {
+    return false;
+  }
+
   @Test
   public void testCustomPomFileName() throws Exception {
     createProjectSubFile("m1/customName.xml", createPomXml(

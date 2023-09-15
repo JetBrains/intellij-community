@@ -11,17 +11,19 @@ import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenImportListener
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import java.util.concurrent.ExecutorService
 
 @ApiStatus.Internal
 class MavenProjectAware(
-  project: Project,
+  private val project: Project,
   override val projectId: ExternalSystemProjectId,
   private val manager: MavenProjectsManager,
   private val backgroundExecutor: ExecutorService
@@ -40,18 +42,28 @@ class MavenProjectAware(
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
     FileDocumentManager.getInstance().saveAllDocuments()
     val settingsFilesContext = context.settingsFilesContext
+    val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
     if (context.hasUndefinedModifications) {
-      manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec(true, true, context.isExplicitReload))
+      cs.launch {
+        manager.findAllAvailablePomFilesIfNotMavenized()
+        manager.updateAllMavenProjects(MavenImportSpec(true, true, context.isExplicitReload))
+      }
     }
     else {
       submitSettingsFilesPartition(settingsFilesContext) { (filesToUpdate, filesToDelete) ->
         val updated = settingsFilesContext.created + settingsFilesContext.updated
         val deleted = settingsFilesContext.deleted
+        val spec = MavenImportSpec(false, true, context.isExplicitReload)
         if (updated.size == filesToUpdate.size && deleted.size == filesToDelete.size) {
-          manager.scheduleUpdate(filesToUpdate, filesToDelete, MavenImportSpec(false, true, context.isExplicitReload))
+          cs.launch {
+            manager.updateMavenProjects(spec, filesToUpdate, filesToDelete)
+          }
         }
         else {
-          manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec(false, true, context.isExplicitReload))
+          cs.launch {
+            manager.findAllAvailablePomFilesIfNotMavenized()
+            manager.updateAllMavenProjects(spec)
+          }
         }
       }
     }

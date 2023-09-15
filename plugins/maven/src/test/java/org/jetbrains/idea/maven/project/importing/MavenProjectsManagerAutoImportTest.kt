@@ -9,6 +9,8 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrack
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -19,7 +21,6 @@ import org.junit.Assume
 import org.junit.Test
 import java.io.File
 import java.io.IOException
-import java.util.*
 
 class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() {
   override fun runInDispatchThread() = false
@@ -31,7 +32,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   }
 
   @Test
-  @Throws(Exception::class)
   fun testResolvingEnvVariableInRepositoryPath() {
     val temp = System.getenv(getEnvVar())
     updateSettingsXml("<localRepository>\${env." + getEnvVar() + "}/tmpRepo</localRepository>")
@@ -54,7 +54,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   }
 
   @Test
-  @Throws(IOException::class)
   fun testUpdatingProjectsOnProfilesXmlChange() {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -140,7 +139,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   }
 
   @Test
-  @Throws(Exception::class)
   fun testUpdatingProjectsWhenSettingsXmlLocationIsChanged() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -200,7 +198,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   }
 
   @Test
-  @Throws(Exception::class)
   fun testUpdatingMavenPathsWhenSettingsChanges() {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -224,7 +221,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   }
 
   @Test
-  @Throws(IOException::class)
   fun testSchedulingReimportWhenPomFileIsDeleted() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -253,7 +249,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   }
 
   @Test
-  @Throws(IOException::class)
   fun testHandlingDirectoryWithPomFileDeletion() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
@@ -481,7 +476,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   }
 
   @Test
-  @Throws(IOException::class)
   fun testSchedulingResolveOfDependentProjectWhenDependencyIsDeleted() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -533,7 +527,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   }
 
   @Test
-  @Throws(IOException::class)
   fun testUpdatingProjectsWhenAbsentManagedProjectFileAppears() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
@@ -566,7 +559,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   }
 
   @Test
-  @Throws(IOException::class)
   fun testUpdatingProjectsWhenRenaming() = runBlocking {
     val p1 = createModulePom("project1",
                              """
@@ -594,7 +586,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   }
 
   @Test
-  @Throws(IOException::class, InterruptedException::class)
   fun testUpdatingProjectsWhenMoving() = runBlocking {
     val p1 = createModulePom("project1",
                              """
@@ -625,7 +616,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   }
 
   @Test
-  @Throws(IOException::class)
   fun testUpdatingProjectsWhenMovingModuleFile() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -672,12 +662,16 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
    * Because there is no information who deleted the import file or the other user action
    * problem in MavenProjectsAware#collectSettingsFiles() / yieldAll(projectsTree.projectsFiles.map { it.path })
    */
+  @RequiresBackgroundThread
   private suspend fun scheduleProjectImportAndWaitWithoutCheckFloatingBar() {
-    withContext(Dispatchers.EDT) {
-      scheduleProjectImportAndWaitWithoutCheckFloatingBarEdt()
+    waitForImportWithinTimeout {
+      withContext(Dispatchers.EDT) {
+        scheduleProjectImportAndWaitWithoutCheckFloatingBarEdt()
+      }
     }
   }
 
+  @RequiresEdt
   private fun scheduleProjectImportAndWaitWithoutCheckFloatingBarEdt() {
     ExternalSystemProjectTracker.getInstance(myProject).scheduleProjectRefresh()
   }

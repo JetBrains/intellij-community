@@ -38,6 +38,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.concurrency.AsyncPromise
@@ -570,13 +571,20 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertEmpty(myNotificationAware!!.getProjectsWithNotification())
   }
 
+  @RequiresBackgroundThread
+  // TODO: suspend
   protected fun scheduleProjectImportAndWait() {
     assertAutoReloadIsInitialized()
 
     // otherwise all imports will be skipped
     assertHasPendingProjectForReload()
-    myProjectTracker!!.scheduleProjectRefresh()
-    waitForImportCompletion()
+    runBlocking {
+      waitForImportWithinTimeout {
+        withContext(Dispatchers.EDT) {
+          myProjectTracker!!.scheduleProjectRefresh()
+        }
+      }
+    }
     if (!isNewImportingProcess) {
       MavenUtil.invokeAndWait(myProject) {}
     }
@@ -590,8 +598,10 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
     // otherwise all imports will be skipped
     assertHasPendingProjectForReload()
-    withContext(Dispatchers.EDT) {
-      myProjectTracker!!.scheduleProjectRefresh()
+    waitForImportWithinTimeout {
+      withContext(Dispatchers.EDT) {
+        myProjectTracker!!.scheduleProjectRefresh()
+      }
     }
     waitForImportCompletion()
     if (!isNewImportingProcess) {

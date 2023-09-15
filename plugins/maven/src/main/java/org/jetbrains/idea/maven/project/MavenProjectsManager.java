@@ -909,7 +909,14 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec.EXPLICIT_IMPORT);
   }
 
-  public void forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec spec) {
+  @ApiStatus.Internal
+  public void findAllAvailablePomFilesIfNotMavenized() {
+    if (!isMavenizedProject()) {
+      doAddManagedFilesWithProfiles(collectAllAvailablePomFiles(), MavenExplicitProfiles.NONE, null);
+    }
+  }
+
+  private void forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec spec) {
 
     if (!isMavenizedProject()) {
       addManagedFiles(collectAllAvailablePomFiles());

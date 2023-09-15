@@ -102,7 +102,7 @@ public class MavenWrapperTestFixture {
 
   public void setUp() throws Exception {
     MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings()
-      .setMavenHomeType(new MavenInSpecificPath(getMavenHome().getAbsolutePath()));
+      .setMavenHomeNoFire(new MavenInSpecificPath(getMavenHome().getAbsolutePath()));
   }
 
   public void tearDown() throws Exception {

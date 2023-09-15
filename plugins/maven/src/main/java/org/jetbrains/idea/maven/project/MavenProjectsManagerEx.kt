@@ -46,11 +46,11 @@ interface MavenAsyncProjectsManager {
   fun updateAllMavenProjectsSync(spec: MavenImportSpec): List<Module>
   suspend fun updateAllMavenProjects(spec: MavenImportSpec): List<Module>
   fun updateMavenProjectsSync(spec: MavenImportSpec,
-                              filesToUpdate: MutableList<VirtualFile>,
-                              filesToDelete: MutableList<VirtualFile>): List<Module>
+                              filesToUpdate: List<VirtualFile>,
+                              filesToDelete: List<VirtualFile>): List<Module>
   suspend fun updateMavenProjects(spec: MavenImportSpec,
-                                  filesToUpdate: MutableList<VirtualFile>,
-                                  filesToDelete: MutableList<VirtualFile>): List<Module>
+                                  filesToUpdate: List<VirtualFile>,
+                                  filesToDelete: List<VirtualFile>): List<Module>
 
   @ApiStatus.Internal
   suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
@@ -194,8 +194,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   override fun updateMavenProjectsSync(spec: MavenImportSpec,
-                                       filesToUpdate: MutableList<VirtualFile>,
-                                       filesToDelete: MutableList<VirtualFile>): List<Module> {
+                                       filesToUpdate: List<VirtualFile>,
+                                       filesToDelete: List<VirtualFile>): List<Module> {
     MavenLog.LOG.warn("updateMavenProjectsSync started, edt=" + ApplicationManager.getApplication().isDispatchThread)
     try {
       return doUpdateMavenProjectsSync(spec, filesToUpdate, filesToDelete)
@@ -206,8 +206,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   private fun doUpdateMavenProjectsSync(spec: MavenImportSpec,
-                                        filesToUpdate: MutableList<VirtualFile>,
-                                        filesToDelete: MutableList<VirtualFile>): List<Module> {
+                                        filesToUpdate: List<VirtualFile>,
+                                        filesToDelete: List<VirtualFile>): List<Module> {
     // unit tests
     if (ApplicationManager.getApplication().isDispatchThread) {
       return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
@@ -222,8 +222,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   override suspend fun updateMavenProjects(spec: MavenImportSpec,
-                                           filesToUpdate: MutableList<VirtualFile>,
-                                           filesToDelete: MutableList<VirtualFile>): List<Module> {
+                                           filesToUpdate: List<VirtualFile>,
+                                           filesToDelete: List<VirtualFile>): List<Module> {
     MavenLog.LOG.warn("updateMavenProjects started: ${spec.isForceReading}  ${spec.isForceResolve}  ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
     val result = importMutex.withLock { doUpdateMavenProjects(spec, filesToUpdate, filesToDelete) }
     MavenLog.LOG.warn("updateMavenProjects finished: ${spec.isForceReading}  ${spec.isForceResolve}  ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
@@ -231,14 +231,14 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   private suspend fun doUpdateMavenProjects(spec: MavenImportSpec,
-                                            filesToUpdate: MutableList<VirtualFile>,
-                                            filesToDelete: MutableList<VirtualFile>): List<Module> {
+                                            filesToUpdate: List<VirtualFile>,
+                                            filesToDelete: List<VirtualFile>): List<Module> {
     return doUpdateMavenProjects(spec, null) { readMavenProjects(spec, filesToUpdate, filesToDelete) }
   }
 
   private fun readMavenProjects(spec: MavenImportSpec,
-                                filesToUpdate: MutableList<VirtualFile>,
-                                filesToDelete: MutableList<VirtualFile>): MavenProjectsTreeUpdateResult {
+                                filesToUpdate: List<VirtualFile>,
+                                filesToDelete: List<VirtualFile>): MavenProjectsTreeUpdateResult {
     val indicator = ProgressManager.getGlobalProgressIndicator()
     val deleted = projectsTree.delete(filesToDelete, generalSettings, indicator)
     val updated = projectsTree.update(filesToUpdate, spec.isForceReading, generalSettings, indicator)
