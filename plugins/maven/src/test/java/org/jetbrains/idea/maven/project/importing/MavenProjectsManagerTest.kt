@@ -14,7 +14,6 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
-import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
@@ -318,8 +317,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @Throws(ConfigurationException::class)
-  fun testIgnoringProjectsForRemovedInUiModules() {
+  fun testIgnoringProjectsForRemovedInUiModules() = runBlocking {
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     createProjectPom("""
                        <groupId>test</groupId>
@@ -347,7 +345,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     moduleStructureExtension.moduleRemoved(module)
     moduleStructureExtension.apply()
     moduleStructureExtension.disposeUIResources()
-    updateAllProjectsSync()
+    updateAllProjects()
     assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"))
     assertTrue(projectsManager.isIgnored(projectsManager.findProject(m)!!))
   }
@@ -422,14 +420,13 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     withContext(Dispatchers.EDT) {
       action.actionPerformed(TestActionEvent.createTestEvent(action, createTestModuleDataContext(module1)))
     }
-    updateAllProjectsSync()
+    updateAllProjects()
     assertModuleModuleDeps("m2")
     assertModuleLibDep("m2", "Maven: test:m1:1")
   }
 
   @Test
-  @Throws(ConfigurationException::class)
-  fun testWhenDeleteModuleInProjectStructureThenChangeModuleDependencyToLibraryDependency() {
+  fun testWhenDeleteModuleInProjectStructureThenChangeModuleDependencyToLibraryDependency() = runBlocking {
     Assume.assumeTrue(isWorkspaceImport)
     createProjectPom("""
                        <groupId>test</groupId>
@@ -472,7 +469,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     moduleStructureExtension.moduleRemoved(module1)
     moduleStructureExtension.apply()
     moduleStructureExtension.disposeUIResources()
-    updateAllProjectsSync()
+    updateAllProjects()
     assertModuleModuleDeps("m2")
     assertModuleLibDep("m2", "Maven: test:m1:1")
   }
@@ -575,7 +572,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testShouldRemoveMavenProjectsAndNotAddThemToIgnore() = runBlocking {
     val mavenParentPom = createProjectSubFile("maven-parent/pom.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
