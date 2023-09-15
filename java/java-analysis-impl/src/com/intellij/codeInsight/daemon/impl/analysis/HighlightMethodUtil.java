@@ -1688,7 +1688,13 @@ public final class HighlightMethodUtil {
         description = error;
       }
 
-      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+      if (method.hasModifierProperty(PsiModifier.STATIC) &&
+          //jsl 8, chapter 9.4.1
+          //chapter 8.4.8.2 speaks about a class that "declares or inherits a static method",
+          // at the same time the rule from chapter 9.4.1 speaks only about an interface that "declares a static method"
+          //There is no point to add java version check, because static methods in interfaces are allowed from java 8 too.
+          (!aClass.isInterface() ||
+           aClass.getManager().areElementsEquivalent(aClass, method.getContainingClass()))) {
         for (HierarchicalMethodSignature superSignature : superSignatures) {
           PsiMethod superMethod = superSignature.getMethod();
           if (!superMethod.hasModifierProperty(PsiModifier.STATIC)) {
