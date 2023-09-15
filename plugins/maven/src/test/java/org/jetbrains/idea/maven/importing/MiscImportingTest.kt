@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.testFramework.PlatformTestUtil
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.importing.workspaceModel.WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -317,7 +318,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testTakingProxySettingsIntoAccount() {
+  fun testTakingProxySettingsIntoAccount() = runBlocking {
     val helper = MavenCustomRepositoryHelper(myDir, "local1")
     repositoryPath = helper.getTestDataPath("local1")
     importProject("""
@@ -333,7 +334,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                     </dependencies>
                     """.trimIndent())
     removeFromLocalRepository("junit")
-    updateAllProjectsSync()
+    updateAllProjects()
     val jarFile = File(repositoryFile, "junit/junit/4.0/junit-4.0.jar")
     assertTrue(jarFile.exists())
     projectsManager.listenForExternalChanges()
@@ -351,7 +352,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
     removeFromLocalRepository("junit")
     assertFalse(jarFile.exists())
     try {
-      updateAllProjectsSync()
+      updateAllProjects()
     }
     finally {
       // LightweightHttpWagon does not clear settings if they were not set before a proxy was configured.
@@ -360,7 +361,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
     }
     assertFalse(jarFile.exists())
     restoreSettingsFile()
-    updateAllProjectsSync()
+    updateAllProjects()
     assertTrue(jarFile.exists())
   }
 
