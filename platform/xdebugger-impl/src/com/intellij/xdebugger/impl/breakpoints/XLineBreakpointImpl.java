@@ -537,6 +537,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       Icon scaledIcon = IconUtil.scale(baseIcon, component, scale());
 
       // FIXME[inline-bp]: remove this temporary green border
+      //noinspection ConstantValue
       if (false) {
         g.setColor(JBColor.GREEN);
         g.drawRect(targetRegion.x, targetRegion.y, targetRegion.width, targetRegion.height);

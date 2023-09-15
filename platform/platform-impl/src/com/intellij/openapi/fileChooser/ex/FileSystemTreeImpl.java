@@ -107,27 +107,6 @@ public class FileSystemTreeImpl implements FileSystemTree {
     );
     registerTreeActions();
 
-    if (renderer == null) {
-      renderer = new NodeRenderer() {
-        @Override
-        public void customizeCellRenderer(@NotNull JTree tree,
-                                          Object value,
-                                          boolean selected,
-                                          boolean expanded,
-                                          boolean leaf,
-                                          int row,
-                                          boolean hasFocus) {
-          super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
-          final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-          if (userObject instanceof FileNodeDescriptor) {
-            String comment = ((FileNodeDescriptor)userObject).getComment();
-            if (comment != null) {
-              append(comment, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-            }
-          }
-        }
-      };
-    }
     myTree.setCellRenderer(renderer);
   }
 

@@ -21,7 +21,7 @@ import java.util.List;
  */
 public abstract class AbstractBasicJavadocFixer {
 
-  private final AbstractBasicJavadocHelper myHelper;;
+  private final AbstractBasicJavadocHelper myHelper;
 
   public AbstractBasicJavadocFixer(@NotNull AbstractBasicJavadocHelper helper) { myHelper = helper; }
 

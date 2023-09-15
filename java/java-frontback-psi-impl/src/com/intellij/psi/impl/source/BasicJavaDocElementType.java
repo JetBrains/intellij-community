@@ -119,8 +119,6 @@ public interface BasicJavaDocElementType {
     }
   }
 
-  ;
-
   final class DocTypeHolderElementType extends JavaDocLazyElementType {
 
     private final @NotNull Supplier<? extends BasicJavaParser> myJavaThinParser;
