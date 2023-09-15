@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -60,26 +61,28 @@ class CaretBasedCellSelectionModel(private val editor: Editor) : NotebookCellSel
 }
 
 private fun Document.getSelectionLines(caret: Caret): IntRange {
-  val selectionStart = caret.selectionStart
-  val selectionEnd = caret.selectionEnd
-  val lastLine = getLineNumber(selectionEnd)
+  return ReadAction.compute<IntRange, Throwable> {
+    val selectionStart = caret.selectionStart
+    val selectionEnd = caret.selectionEnd
+    val lastLine = getLineNumber(selectionEnd)
 
-  // See: DS-3659 Context menu action "Delete cell" deletes wrong cell
-  if (caret.offset < selectionStart || caret.offset > selectionEnd) {
-    val caretLine = getLineNumber(caret.offset)
-    return IntRange(caretLine, caretLine)
+    // See: DS-3659 Context menu action "Delete cell" deletes wrong cell
+    if (caret.offset < selectionStart || caret.offset > selectionEnd) {
+      val caretLine = getLineNumber(caret.offset)
+      return@compute IntRange(caretLine, caretLine)
+    }
+
+    if (caret.offset < selectionEnd && getLineStartOffset(lastLine) == selectionEnd) {
+      // for example, after triple click on line1
+      // #%%
+      // <selection><caret>line1
+      // </selection>#%%
+      // line2
+      return@compute IntRange(getLineNumber(caret.selectionStart), lastLine - 1)
+    }
+
+    return@compute IntRange(getLineNumber(caret.selectionStart), lastLine)
   }
-
-  if (caret.offset < selectionEnd && getLineStartOffset(lastLine) == selectionEnd) {
-    // for example, after triple click on line1
-    // #%%
-    // <selection><caret>line1
-    // </selection>#%%
-    // line2
-    return IntRange(getLineNumber(caret.selectionStart), lastLine - 1)
-  }
-
-  return IntRange(getLineNumber(caret.selectionStart), lastLine)
 }
 
 private val NotebookCellLines.Interval.startLogicalPosition: LogicalPosition
