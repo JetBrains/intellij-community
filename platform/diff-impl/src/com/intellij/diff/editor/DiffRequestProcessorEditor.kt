@@ -1,9 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.editor
 
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.impl.DiffRequestProcessorListener
+import com.intellij.diff.tools.combined.editors
 import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileEditorWithTextEditors
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,7 +19,7 @@ open class DiffRequestProcessorEditor(
 ) : DiffEditorBase(file,
                    processor.component,
                    processor,
-                   processor.context) {
+                   processor.context), FileEditorWithTextEditors {
 
   init {
     processor.addListener(MyProcessorListener(), this)
@@ -47,5 +50,9 @@ open class DiffRequestProcessorEditor(
       val project = processor.project ?: return
       FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(file)
     }
+  }
+
+  override fun getEmbeddedEditors(): List<Editor> {
+    return processor.activeViewer?.editors.orEmpty()
   }
 }
