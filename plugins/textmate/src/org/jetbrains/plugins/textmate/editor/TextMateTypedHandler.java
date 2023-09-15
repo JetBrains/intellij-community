@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,10 +75,10 @@ public class TextMateTypedHandler extends TypedHandlerDelegate {
         int rightBraceEndOffset = offset + autoInsertingPair.getRight().length();
         // has a right brace already
         if (rightBraceEndOffset < sequence.length() &&
-            autoInsertingPair.getRight().contentEquals(sequence.subSequence(offset, rightBraceEndOffset))) {
+            StringUtil.equals(autoInsertingPair.getRight(), sequence.subSequence(offset, rightBraceEndOffset))) {
           return Result.CONTINUE;
         }
-        if (autoInsertingPair.getLeft().equals(autoInsertingPair.getRight())) {
+        if (StringUtil.equals(autoInsertingPair.getLeft(), autoInsertingPair.getRight())) {
           // letter on the right
           if (offset < sequence.length() && Character.isLetterOrDigit(sequence.charAt(offset))) {
             return Result.CONTINUE;
@@ -88,7 +89,7 @@ public class TextMateTypedHandler extends TypedHandlerDelegate {
             return Result.CONTINUE;
           }
         }
-        EditorModificationUtilEx.insertStringAtCaret(editor, autoInsertingPair.getRight(), true, false);
+        EditorModificationUtilEx.insertStringAtCaret(editor, autoInsertingPair.getRight().toString(), true, false);
         return Result.STOP;
       }
     }
@@ -117,7 +118,7 @@ public class TextMateTypedHandler extends TypedHandlerDelegate {
     Set<TextMateAutoClosingPair> pairs = getSmartTypingPairs(currentScope);
     for (TextMateAutoClosingPair pair : pairs) {
       int startOffset = offset - pair.getLeft().length();
-      if (startOffset >= 0 && pair.getLeft().contentEquals(fileText.subSequence(startOffset, offset))) {
+      if (startOffset >= 0 && StringUtil.equals(pair.getLeft(), fileText.subSequence(startOffset, offset))) {
         return pair;
       }
     }

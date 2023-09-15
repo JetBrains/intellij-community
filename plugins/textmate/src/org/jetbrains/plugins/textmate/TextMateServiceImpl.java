@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import kotlinx.coroutines.CoroutineScope;
@@ -292,9 +293,15 @@ public final class TextMateServiceImpl extends TextMateService {
     while (preferencesIterator.hasNext()) {
       TextMatePreferences preferences = preferencesIterator.next();
       CharSequence scopeName = myInterner.intern(preferences.getScopeName());
+      Set<TextMateBracePair> internedHighlightingPairs = ObjectUtils.doIfNotNull(preferences.getHighlightingPairs(), pairs ->
+        ContainerUtil.map2Set(pairs, p -> new TextMateBracePair(myInterner.intern(p.getLeft()), myInterner.intern(p.getRight())))
+      );
+      Set<TextMateAutoClosingPair> internedSmartTypingPairs = ObjectUtils.doIfNotNull(preferences.getSmartTypingPairs(), pairs ->
+        ContainerUtil.map2Set(pairs, p -> new TextMateAutoClosingPair(myInterner.intern(p.getLeft()), myInterner.intern(p.getRight()), p.getNotIn()))
+      );
       myPreferenceRegistry.addPreferences(new Preferences(scopeName,
-                                                          preferences.getHighlightingPairs(),
-                                                          preferences.getSmartTypingPairs(),
+                                                          internedHighlightingPairs,
+                                                          internedSmartTypingPairs,
                                                           preferences.getIndentationRules()));
       for (TextMateShellVariable variable : preferences.getVariables()) {
         myShellVariablesRegistry.addVariable(variable);

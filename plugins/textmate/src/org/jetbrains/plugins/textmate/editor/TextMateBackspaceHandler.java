@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public class TextMateBackspaceHandler extends BackspaceHandlerDelegate {
           final Document document = editor.getDocument();
           int endOffset = offset + pairForChar.getRight().length();
           if (endOffset < document.getTextLength()) {
-            if (pairForChar.getRight().contentEquals(document.getCharsSequence().subSequence(offset, endOffset))) {
+            if (StringUtil.equals(pairForChar.getRight(), document.getCharsSequence().subSequence(offset, endOffset))) {
               document.deleteString(offset, endOffset);
               return true;
             }

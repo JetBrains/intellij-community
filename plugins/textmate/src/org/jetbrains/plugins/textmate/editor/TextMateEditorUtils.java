@@ -65,7 +65,7 @@ public final class TextMateEditorUtils {
     Set<TextMateBracePair> pairs = getAllPairsForMatcher(currentScope);
     for (TextMateBracePair pair : pairs) {
       int endOffset = leftBraceStartOffset + pair.getLeft().length();
-      if (endOffset < fileText.length() && pair.getLeft().contentEquals(fileText.subSequence(leftBraceStartOffset, endOffset))) {
+      if (endOffset < fileText.length() && StringUtil.equals(pair.getLeft(), fileText.subSequence(leftBraceStartOffset, endOffset))) {
         return pair;
       }
     }
@@ -82,7 +82,7 @@ public final class TextMateEditorUtils {
     Set<TextMateBracePair> pairs = getAllPairsForMatcher(currentSelector);
     for (TextMateBracePair pair : pairs) {
       int startOffset = rightBraceEndOffset - pair.getRight().length();
-      if (startOffset >= 0 && pair.getRight().contentEquals(fileText.subSequence(startOffset, rightBraceEndOffset))) {
+      if (startOffset >= 0 && StringUtil.equals(pair.getRight(), fileText.subSequence(startOffset, rightBraceEndOffset))) {
         return pair;
       }
     }
