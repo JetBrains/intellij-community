@@ -125,18 +125,15 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     }
     solver.addPlainFieldEquations(md -> md instanceof Member member && member.internalClassName.equals(className));
     Map<EKey, Effects> solved = solver.solve();
-    Map<EKey, Effects> partiallySolvedPurity = new HashMap<>();
-    solved.forEach((key, value) -> {
-      if (!value.isTop()) {
-        partiallySolvedPurity.put(key, value);
+    map.replaceAll((key, eqs) -> {
+      EKey newKey = new EKey(key.member, eqs.find(Volatile).isPresent() ? Volatile : Pure, eqs.stable, false);
+      Effects effects = solver.pending.get(newKey);
+      if (effects == null || effects.isTop()) {
+        effects = solved.get(newKey);
       }
+      Effects result = effects == null || effects.isTop() ? null : effects;
+      return eqs.update(Pure, result);
     });
-    solver.pending.forEach((key, value) -> {
-      if (!value.isTop()) {
-        partiallySolvedPurity.put(key, value);
-      }
-    });
-    map.replaceAll((key, eqs) -> eqs.update(Pure, partiallySolvedPurity.get(new EKey(key.member, eqs.find(Volatile).isPresent() ? Volatile : Pure, eqs.stable, false))));
   }
 
   private static Equations hash(Equations equations) {
