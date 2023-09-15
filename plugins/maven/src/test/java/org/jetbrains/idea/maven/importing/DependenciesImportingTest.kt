@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.PlatformTestUtil
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.junit.Assume
@@ -1704,7 +1705,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testUpdateRootEntriesWithActualPath() {
+  fun testUpdateRootEntriesWithActualPath() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -1729,7 +1730,8 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     repositoryPath = File(myDir, "__repo").path
     projectsManager.embeddersManager.reset() // to recognize repository change
 
-    updateAllProjectsSync()
+    updateAllProjects()
+    projectsManager.waitForPluginResolution()
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
@@ -1738,7 +1740,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testUpdateRootEntriesWithActualPathForDependenciesWithClassifiers() {
+  fun testUpdateRootEntriesWithActualPathForDependenciesWithClassifiers() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -1762,7 +1764,8 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     repositoryPath = File(myDir, "__repo").path
     projectsManager.embeddersManager.reset() // to recognize repository change
 
-    updateAllProjectsSync()
+    updateAllProjects()
+    projectsManager.waitForPluginResolution()
 
     assertModuleLibDep("project", "Maven: org.testng:testng:jdk15:5.8",
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15.jar!/",
@@ -1771,7 +1774,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoNotPopulateSameRootEntriesOnEveryImport() {
+  fun testDoNotPopulateSameRootEntriesOnEveryImport() = runBlocking() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -1791,8 +1794,8 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/"))
 
     // update twice
-    updateAllProjectsSync()
-    updateAllProjectsSync()
+    updateAllProjects()
+    updateAllProjects()
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/"),
@@ -1802,36 +1805,33 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNotPopulateSameRootEntriesOnEveryImportForSystemLibraries() {
-    createProjectPom("""
-      <groupId>test</groupId>
-      <artifactId>project</artifactId>
-      <version>1</version>
-      <dependencies>
-        <dependency>
-          <groupId>xxx</groupId>
-          <artifactId>yyy</artifactId>
-          <version>1</version>
-          <scope>system</scope>
-          <systemPath>
-      ${getRoot()}/foo/bar.jar</systemPath>
-        </dependency>
-      </dependencies>
-      """.trimIndent())
-    doImportProjects(listOf(myProjectPom), false)
+    val root = getRoot()
+    val path = "jar://$root/foo/bar.jar!/"
+    runBlocking {
+      createProjectPom("""
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+        <dependencies>
+          <dependency>
+            <groupId>xxx</groupId>
+            <artifactId>yyy</artifactId>
+            <version>1</version>
+            <scope>system</scope>
+            <systemPath>$root/foo/bar.jar</systemPath>
+          </dependency>
+        </dependencies>
+        """.trimIndent())
+      doImportProjects(listOf(myProjectPom), false)
 
-    assertModuleLibDep("project", "Maven: xxx:yyy:1",
-                       Arrays.asList("jar://" + getRoot() + "/foo/bar.jar!/"),
-                       emptyList(),
-                       emptyList())
+      assertModuleLibDep("project", "Maven: xxx:yyy:1", listOf(path), emptyList(), emptyList())
 
-    // update twice
-    updateAllProjectsSync()
-    updateAllProjectsSync()
+      // update twice
+      updateAllProjects()
+      updateAllProjects()
 
-    assertModuleLibDep("project", "Maven: xxx:yyy:1",
-                       Arrays.asList("jar://" + getRoot() + "/foo/bar.jar!/"),
-                       emptyList(),
-                       emptyList())
+      assertModuleLibDep("project", "Maven: xxx:yyy:1", listOf(path), emptyList(), emptyList())
+    }
   }
 
   @Test
