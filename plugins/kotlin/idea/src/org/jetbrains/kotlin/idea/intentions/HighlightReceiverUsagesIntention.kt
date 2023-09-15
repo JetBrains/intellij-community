@@ -36,7 +36,7 @@ class HighlightReceiverUsagesIntention : SelfTargetingOffsetIndependentIntention
         application.executeOnPooledThread {
             ReadAction.computeCancellable<Unit, Throwable> {
                 val info = findReceiverInfo(element) ?: return@computeCancellable
-                KotlinHighlightReceiverUsagesHandler(info, editor).highlightUsages()
+                KotlinHighlightReceiverUsagesHandler(info, editor, false).highlightUsages()
             }
         }
     }

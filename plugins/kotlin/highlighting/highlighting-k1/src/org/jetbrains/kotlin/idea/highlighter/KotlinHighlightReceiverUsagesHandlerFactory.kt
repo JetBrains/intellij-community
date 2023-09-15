@@ -34,7 +34,7 @@ class KotlinHighlightReceiverUsagesHandlerFactory : HighlightUsagesHandlerFactor
     override fun createHighlightUsagesHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
         if (!Registry.`is`("kotlin.receiver.usage.highlighting")) return null
         val receiverInfo = ReceiverInfoSearcher.findReceiverInfoForUsageHighlighting(target) ?: return null
-        return KotlinHighlightReceiverUsagesHandler(receiverInfo, editor)
+        return KotlinHighlightReceiverUsagesHandler(receiverInfo, editor, true)
     }
 }
 
@@ -180,7 +180,8 @@ sealed class ReceiverInfo {
 }
 
 class KotlinHighlightReceiverUsagesHandler(
-    private val receiverInfo: ReceiverInfo, editor: Editor
+    private val receiverInfo: ReceiverInfo, editor: Editor,
+    private val allowUsagesFromOtherHandlers: Boolean
 ) : HighlightUsagesHandlerBase<PsiElement>(editor, receiverInfo.psi.containingFile) {
     override fun getTargets(): List<PsiElement> =
         listOf(receiverInfo.psi)
@@ -194,6 +195,8 @@ class KotlinHighlightReceiverUsagesHandler(
             myReadUsages += it
         }
     }
+
+    override fun highlightReferences(): Boolean = allowUsagesFromOtherHandlers
 }
 
 private class ReceiverUsageCollector(
