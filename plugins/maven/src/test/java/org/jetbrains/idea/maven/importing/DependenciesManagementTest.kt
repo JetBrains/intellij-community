@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.io.File
 
@@ -76,8 +77,8 @@ class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testImportingNotInstalledDependencies() {
-    if (ignore()) return
+  fun testImportingNotInstalledDependencies() = runBlocking {
+    if (ignore()) return@runBlocking
 
     repositoryPath = File(myDir, "/repo").path
     updateSettingsXml("""
@@ -131,7 +132,7 @@ class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
     // reset embedders and try to update projects from scratch
     projectsManager.embeddersManager.releaseForcefullyInTests()
 
-    updateAllProjectsSync()
+    updateAllProjects()
 
     assertModuleLibDeps("project", "Maven: junit:junit:4.0")
   }
