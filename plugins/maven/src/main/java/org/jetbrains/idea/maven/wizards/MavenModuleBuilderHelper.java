@@ -221,7 +221,9 @@ public class MavenModuleBuilderHelper {
 
     Map<String, String> props = settings.getMavenProperties();
     props.put("interactiveMode", "false");
-    props.putAll(myPropertiesToCreateByArtifact);
+    if (null != myPropertiesToCreateByArtifact) {
+      props.putAll(myPropertiesToCreateByArtifact);
+    }
 
     runner.run(params, settings, () -> copyGeneratedFiles(workingDir, pom, project, props.get("artifactId")));
   }
