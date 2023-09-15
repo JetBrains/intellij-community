@@ -112,15 +112,13 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
   @Contract(mutates = "param2")
   private static void solvePartially(String className, Map<EKey, Equations> map) {
     PuritySolver solver = new PuritySolver();
-    BiFunction<EKey, Equations, EKey> keyCreator =
-      (key, eqs) -> new EKey(key.member, eqs.find(Volatile).isPresent() ? Volatile : Pure, eqs.stable, false);
     for (Map.Entry<EKey, Equations> entry : map.entrySet()) {
       EKey key = entry.getKey();
       Equations equations = entry.getValue();
-      key = keyCreator.apply(key, equations);
       for (DirectionResultPair drp : equations.results) {
         Result result = drp.result;
         if (result instanceof Effects effects) {
+          key = new EKey(key.member, fromInt(drp.directionKey), equations.stable, false);
           solver.addEquation(key, effects);
         }
       }
@@ -138,7 +136,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
         partiallySolvedPurity.put(key, value);
       }
     });
-    map.replaceAll((key, eqs) -> eqs.update(Pure, partiallySolvedPurity.get(keyCreator.apply(key, eqs))));
+    map.replaceAll((key, eqs) -> eqs.update(Pure, partiallySolvedPurity.get(new EKey(key.member, eqs.find(Volatile).isPresent() ? Volatile : Pure, eqs.stable, false))));
   }
 
   private static Equations hash(Equations equations) {
