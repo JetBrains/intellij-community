@@ -62,6 +62,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
@@ -112,8 +114,8 @@ public final class PluginManagerConfigurable
   private SearchResultPanel myMarketplaceSearchPanel;
   private SearchResultPanel myInstalledSearchPanel;
 
-  private final LinkLabel<Object> myUpdateAll = new LinkLabel<>(IdeBundle.message("plugin.manager.update.all"), null);
-  private final LinkLabel<Object> myUpdateAllBundled = new LinkLabel<>(IdeBundle.message("plugin.manager.update.all"), null);
+  private final LinkLabel<Object> myUpdateAll = new LinkLabelButton<>(IdeBundle.message("plugin.manager.update.all"), null);
+  private final LinkLabel<Object> myUpdateAllBundled = new LinkLabelButton<>(IdeBundle.message("plugin.manager.update.all"), null);
   private final JLabel myUpdateCounter = new CountComponent();
   private final JLabel myUpdateCounterBundled = new CountComponent();
   private final CountIcon myCountIcon = new CountIcon();
@@ -372,6 +374,7 @@ public final class PluginManagerConfigurable
         };
 
         myMarketplacePanel.setSelectionListener(selectionListener);
+        myMarketplacePanel.getAccessibleContext().setAccessibleName(IdeBundle.message("plugin.manager.marketplace.panel.accessible.name"));
         registerCopyProvider(myMarketplacePanel);
 
         //noinspection ConstantConditions
@@ -589,6 +592,21 @@ public final class PluginManagerConfigurable
           @Override
           protected boolean isInClickableArea(Point pt) {
             return true;
+          }
+
+          @Override
+          public AccessibleContext getAccessibleContext() {
+            if (accessibleContext == null) {
+              accessibleContext = new AccessibleLinkComponent();
+            }
+            return accessibleContext;
+          }
+
+          protected class AccessibleLinkComponent extends AccessibleLinkLabel {
+            @Override
+            public AccessibleRole getAccessibleRole() {
+              return AccessibleRole.COMBO_BOX;
+            }
           }
         };
         myMarketplaceSortByAction.setIcon(new Icon() {
@@ -841,6 +859,7 @@ public final class PluginManagerConfigurable
         };
 
         myInstalledPanel.setSelectionListener(selectionListener);
+        myInstalledPanel.getAccessibleContext().setAccessibleName(IdeBundle.message("plugin.manager.installed.panel.accessible.name"));
         registerCopyProvider(myInstalledPanel);
 
         //noinspection ConstantConditions
@@ -1152,7 +1171,7 @@ public final class PluginManagerConfigurable
                 });
               }
               else if (parser.needUpdate) {
-                result.rightAction = new LinkLabel<>(IdeBundle.message("plugin.manager.update.all"), null, (__, ___) -> {
+                result.rightAction = new LinkLabelButton<>(IdeBundle.message("plugin.manager.update.all"), null, (__, ___) -> {
                   result.rightAction.setEnabled(false);
 
                   for (ListPluginComponent plugin : result.ui.plugins) {
@@ -1216,9 +1235,9 @@ public final class PluginManagerConfigurable
       this.descriptors.addAll(descriptors);
       sortByName();
 
-      rightAction = new LinkLabel<>("",
-                                    null,
-                                    (__, ___) -> setEnabledState());
+      rightAction = new LinkLabelButton<>("",
+                                          null,
+                                          (__, ___) -> setEnabledState());
 
       titleWithEnabled(myPluginModel);
     }
@@ -1749,10 +1768,10 @@ public final class PluginManagerConfigurable
     }
 
     if (showAllPredicate.test(group)) {
-      group.rightAction = new LinkLabel<>(IdeBundle.message("plugins.configurable.show.all"),
-                                          null,
-                                          myMarketplaceTab.mySearchListener,
-                                          showAllQuery);
+      group.rightAction = new LinkLabelButton<>(IdeBundle.message("plugins.configurable.show.all"),
+                                                null,
+                                                myMarketplaceTab.mySearchListener,
+                                                showAllQuery);
       group.rightAction.setBorder(JBUI.Borders.emptyRight(5));
     }
 
@@ -1950,5 +1969,37 @@ public final class PluginManagerConfigurable
       }
     }
     return null;
+  }
+
+  private static class LinkLabelButton<T> extends LinkLabel<T> {
+    private LinkLabelButton(@NlsContexts.LinkLabel String text, @Nullable Icon icon) {
+      super(text, icon);
+    }
+
+    private LinkLabelButton(@NlsContexts.LinkLabel String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener) {
+      super(text, icon, aListener);
+    }
+
+    private LinkLabelButton(@NlsContexts.LinkLabel String text,
+                            @Nullable Icon icon,
+                            @Nullable LinkListener<T> aListener,
+                            @Nullable T aLinkData) {
+      super(text, icon, aListener, aLinkData);
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleLinkLabelButton();
+      }
+      return accessibleContext;
+    }
+
+    protected class AccessibleLinkLabelButton extends AccessibleLinkLabel {
+      @Override
+      public AccessibleRole getAccessibleRole() {
+        return AccessibleRole.PUSH_BUTTON;
+      }
+    }
   }
 }

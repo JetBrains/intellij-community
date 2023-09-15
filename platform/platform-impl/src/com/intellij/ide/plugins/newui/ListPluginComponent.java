@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.plaf.ButtonUI;
 import java.awt.*;
@@ -330,6 +332,8 @@ public final class ListPluginComponent extends JPanel {
 
     myLayout.addButtonComponent(myEnableDisableButton);
     myEnableDisableButton.setOpaque(false);
+    myEnableDisableButton.getAccessibleContext()
+      .setAccessibleName(IdeBundle.message("plugins.configurable.enable.checkbox.accessible.name"));
   }
 
   private static @NotNull JCheckBox createEnableDisableButton(@NotNull ActionListener listener) {
@@ -466,6 +470,8 @@ public final class ListPluginComponent extends JPanel {
 
     myLayout.setCheckBoxComponent(myChooseUpdateButton = new JCheckBox((String)null, true));
     myChooseUpdateButton.setOpaque(false);
+    myChooseUpdateButton.getAccessibleContext()
+      .setAccessibleName(IdeBundle.message("plugins.configurable.choose.update.checkbox.accessible.name"));
 
     IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(myPlugin.getPluginId());
     if (descriptor != null) {
@@ -1473,5 +1479,20 @@ public final class ListPluginComponent extends JPanel {
 
   private boolean isInstalledAndEnabled() {
     return PluginManagerCore.getPlugin(myPlugin.getPluginId()) != null && !myPluginModel.getState(myPlugin).isDisabled();
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleListPluginComponent();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleListPluginComponent extends AccessibleJComponent {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibilityUtils.GROUPED_ELEMENTS;
+    }
   }
 }

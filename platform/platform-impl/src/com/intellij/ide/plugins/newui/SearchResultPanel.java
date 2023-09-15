@@ -39,6 +39,7 @@ public abstract class SearchResultPanel {
                            int backTabIndex) {
     this.controller = controller;
     myPanel = panel;
+    myPanel.getAccessibleContext().setAccessibleName(IdeBundle.message("title.search.results"));
     this.tabIndex = tabIndex;
     this.backTabIndex = backTabIndex;
     this.isMarketplace = isMarketplace;
