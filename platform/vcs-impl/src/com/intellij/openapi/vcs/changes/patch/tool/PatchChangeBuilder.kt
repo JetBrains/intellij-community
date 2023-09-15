@@ -49,16 +49,11 @@ class PatchChangeBuilder {
       val trimContext: List<String> = contextBefore.subList(overlappedContext, contextBefore.size)
       addContext(trimContext, beforeRange.start + overlappedContext, afterRange.start + overlappedContext)
 
-
       val deletion = totalLines
-      appendLines(hunk.deletedLines)
+      addChangedLines(hunk.deletedLines, beforeRange.start + contextBefore.size, false)
       val insertion = totalLines
-      appendLines(hunk.insertedLines)
+      addChangedLines(hunk.insertedLines, afterRange.start + contextBefore.size, true)
       val hunkEnd = totalLines
-
-      convertor1.put(deletion, beforeRange.start + contextBefore.size, insertion - deletion)
-      convertor2.put(insertion, afterRange.start + contextBefore.size, hunkEnd - insertion)
-
 
       addContext(contextAfter, beforeRange.end - contextAfter.size, afterRange.end - contextAfter.size)
       lastBeforeLine = beforeRange.end - 1
@@ -71,6 +66,16 @@ class PatchChangeBuilder {
     }
 
     return PatchState(textBuilder, hunks, convertor1.build(), convertor2.build(), separatorLines)
+  }
+
+  private fun addChangedLines(lines: List<String>, lineNumber: Int, isAddition: Boolean) {
+    if (isAddition) {
+      convertor2.put(totalLines, lineNumber, lines.size)
+    }
+    else {
+      convertor1.put(totalLines, lineNumber, lines.size)
+    }
+    appendLines(lines)
   }
 
   private fun addContext(context: List<String>, beforeLineNumber: Int, afterLineNumber: Int) {
