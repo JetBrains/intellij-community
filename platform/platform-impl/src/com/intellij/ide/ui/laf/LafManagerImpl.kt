@@ -494,12 +494,14 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     val lafAdapter = LookAndFeelThemeAdapter(
       base = LookAndFeelThemeAdapter.preInitializedBaseLaf.get() ?: createBaseLaF().also { it.initialize() },
       theme = theme,
-      installEditorScheme = installEditorScheme,
     )
 
     // set L&F
     try {
       UIManager.setLookAndFeel(lafAdapter)
+      if (installEditorScheme) {
+        theme.installEditorScheme(getPreviousSchemeForLaf(theme))
+      }
     }
     catch (e: Exception) {
       LOG.error(e)
@@ -736,7 +738,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     preferredLightThemeId = value.id
   }
 
-  override fun getPreviousSchemeForLaf(lookAndFeelInfo: UIThemeLookAndFeelInfo): EditorColorsScheme? {
+  private fun getPreviousSchemeForLaf(lookAndFeelInfo: UIThemeLookAndFeelInfo): EditorColorsScheme? {
     val schemeName = lafToPreviousScheme.get(lookAndFeelInfo.name) ?: return null
     return EditorColorsManager.getInstance().getScheme(schemeName)
   }

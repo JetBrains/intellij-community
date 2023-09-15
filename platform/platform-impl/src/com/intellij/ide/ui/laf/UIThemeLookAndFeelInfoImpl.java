@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf;
 
-import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -66,7 +65,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
   }
 
   @Override
-  public void installTheme(UIDefaults defaults, boolean lockEditorScheme) {
+  public void installTheme(UIDefaults defaults) {
     defaults.put("ui.theme.is.dark", theme.isDark());
     defaults.put("ClassLoader", theme.getProviderClassLoader());
     theme.applyProperties(defaults);
@@ -82,9 +81,6 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
     }
 
     installBackgroundImage();
-    if (!lockEditorScheme) {
-      installEditorScheme();
-    }
     AppUIUtil.updateForDarcula(theme.isDark());
     isInitialized = true;
   }
@@ -98,18 +94,18 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
     return getTheme().getProviderClassLoader().getResourceAsStream(path);
   }
 
-  protected void installEditorScheme() {
-    EditorColorsScheme scheme = LafManager.getInstance().getPreviousSchemeForLaf(this);
+  @Override
+  public void installEditorScheme(@Nullable EditorColorsScheme previousSchemeForLaf) {
     EditorColorsManager editorColorManager = EditorColorsManager.getInstance();
-    if (scheme == null) {
+    if (previousSchemeForLaf == null) {
       String name = getEditorSchemeName();
       if (name != null) {
-        scheme = editorColorManager.getScheme(name);
+        previousSchemeForLaf = editorColorManager.getScheme(name);
       }
     }
 
-    if (scheme != null) {
-      editorColorManager.setGlobalScheme(scheme);
+    if (previousSchemeForLaf != null) {
+      editorColorManager.setGlobalScheme(previousSchemeForLaf);
     }
   }
 

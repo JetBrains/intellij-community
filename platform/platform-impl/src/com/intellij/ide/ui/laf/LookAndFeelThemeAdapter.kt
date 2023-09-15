@@ -32,7 +32,6 @@ import javax.swing.text.DefaultEditorKit
 internal class LookAndFeelThemeAdapter(
   private val base: LookAndFeel,
   private val theme: UIThemeLookAndFeelInfo,
-  private val installEditorScheme: Boolean,
 ) : BasicLookAndFeel() {
   companion object {
     @JvmField
@@ -50,7 +49,7 @@ internal class LookAndFeelThemeAdapter(
     defaults.put("Menu.arrowIcon", DefaultMenuArrowIcon)
     defaults.put("MenuItem.background", UIManager.getColor("Menu.background"))
 
-    theme.installTheme(defaults, !installEditorScheme)
+    theme.installTheme(defaults)
 
     if (SystemInfoRt.isLinux && listOf("CN", "JP", "KR", "TW").contains(Locale.getDefault().country)) {
       for (key in defaults.keys) {
