@@ -48,14 +48,14 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
     myBuilder!!.parentProject = projectsManager.findProject(pom)
   }
 
-  private fun createNewModule(id: MavenId) {
+  private suspend fun createNewModule(id: MavenId) {
     myBuilder!!.projectId = id
     WriteAction.runAndWait<Exception> {
       val model = getInstance(myProject).getModifiableModel()
       myBuilder!!.createModule(model)
       model.commit()
     }
-    updateAllProjectsSync()
+    updateAllProjects()
   }
 
   @Test
