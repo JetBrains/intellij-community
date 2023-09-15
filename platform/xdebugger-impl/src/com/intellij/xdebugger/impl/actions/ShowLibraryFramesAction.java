@@ -3,14 +3,13 @@ package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
-final class ShowLibraryFramesAction extends ToggleAction implements ActionRemoteBehaviorSpecification.Disabled {
+final class ShowLibraryFramesAction extends ToggleAction {
   // we should remember initial answer "isLibraryFrameFilterSupported" because on stop no debugger process, but UI is still shown
   // - we should avoid "jumping" (visible (start) - invisible (stop) - visible (start again))
   private static final String IS_LIBRARY_FRAME_FILTER_SUPPORTED = "isLibraryFrameFilterSupported";
