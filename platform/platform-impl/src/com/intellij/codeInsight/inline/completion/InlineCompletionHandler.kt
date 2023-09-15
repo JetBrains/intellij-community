@@ -26,11 +26,10 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
 
 @ApiStatus.Experimental
-class InlineCompletionHandler(private val scope: CoroutineScope) {
-  private val job = AtomicReference<Job?>(null)
+class InlineCompletionHandler(scope: CoroutineScope) {
+  private val executor = SafeInlineCompletionExecutor(scope)
   private var lastInvocationTime = 0L
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
 
@@ -85,26 +84,8 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
       return
     }
 
-    switchJobSafely {
+    executor.switchJobSafely {
       invokeRequest(request, provider)
-    }
-  }
-
-  private fun switchJobSafely(block: (suspend CoroutineScope.() -> Unit)?) {
-    // create a new lazy job
-    val nextJob = block?.let { scope.launch(start = CoroutineStart.LAZY, block = block) }
-    scope.launch {
-      while (true) {
-        val currentJob = job.get()
-        currentJob?.cancelAndJoin()
-        // if still have this canceled job, let's switch it to a new one
-        if (job.compareAndSet(currentJob, nextJob)) {
-          LOG.trace("Change job")
-          break
-        }
-      }
-      // start a new actual job if not yet, it may be nextJob OR some even newer job
-      job.get()?.start()
     }
   }
 
@@ -192,13 +173,13 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
   }
 
   fun cancel(editor: Editor) {
-    switchJobSafely {
+    executor.switchJobSafely {
       withContext(Dispatchers.EDT) {
         InlineCompletionContext.getOrNull(editor)?.let { context ->
           hide(editor, false, context)
         }
       }
-      switchJobSafely(null)
+      executor.switchJobSafely(null)
     }
   }
 
@@ -291,6 +272,11 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
   )
   fun invoke(editor: Editor, file: PsiFile, caret: Caret, context: DataContext?) {
     return invoke(InlineCompletionEvent.DirectCall(editor, file, caret, context))
+  }
+
+  @TestOnly
+  suspend fun awaitExecution() {
+    executor.awaitAll()
   }
 
   companion object {
