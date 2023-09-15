@@ -660,6 +660,8 @@ public final class ExpUiIcons {
     /** 20x20 */ public static final @NotNull Icon Problems_20x20 = load("expui/toolwindow/problems@20x20.svg", 1864041050, 2);
     /** 16x16 */ public static final @NotNull Icon Profiler = load("expui/toolwindow/profiler.svg", -2026725006, 2);
     /** 20x20 */ public static final @NotNull Icon Profiler_20x20 = load("expui/toolwindow/profiler@20x20.svg", -700074637, 2);
+    /** 16x16 */ public static final @NotNull Icon ProfilerAndroid = load("expui/toolwindow/profilerAndroid.svg", -926134973, 2);
+    /** 20x20 */ public static final @NotNull Icon ProfilerAndroid_20x20 = load("expui/toolwindow/profilerAndroid@20x20.svg", -487917978, 2);
     /** 16x16 */ public static final @NotNull Icon Project = load("expui/toolwindow/project.svg", 566177333, 2);
     /** 20x20 */ public static final @NotNull Icon Project_20x20 = load("expui/toolwindow/project@20x20.svg", 268424096, 2);
     /** 16x16 */ public static final @NotNull Icon Repositories = load("expui/toolwindow/repositories.svg", 974555029, 2);

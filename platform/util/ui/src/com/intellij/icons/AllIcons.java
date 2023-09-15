@@ -1177,6 +1177,7 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowProblems = load("toolwindows/toolWindowProblems.svg", 1795380210, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowProblemsEmpty = load("toolwindows/toolWindowProblemsEmpty.svg", -1113987786, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowProfiler = load("toolwindows/toolWindowProfiler.svg", 840495627, 2);
+    /** 13x13 */ public static final @NotNull Icon ToolWindowProfilerAndroid = load("toolwindows/toolWindowProfilerAndroid.svg", 252204624, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowProject = load("toolwindows/toolWindowProject.svg", 373456992, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowRun = load("toolwindows/toolWindowRun.svg", 562367487, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowRunWithCoverage = load("toolwindows/toolWindowRunWithCoverage.svg", -2005199929, 2);

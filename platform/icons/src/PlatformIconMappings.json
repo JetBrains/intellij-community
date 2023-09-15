@@ -747,6 +747,7 @@
         "toolwindows/toolWindowProblemsEmpty.svg"
       ],
       "profiler.svg": "toolwindows/toolWindowProfiler.svg",
+      "profilerAndroid.svg": "toolwindows/toolWindowProfilerAndroid.svg",
       "project.svg": "toolwindows/toolWindowProject.svg",
       "run.svg": "toolwindows/toolWindowRun.svg",
       "toolWindowRunWithCoverage.svg": "toolwindows/toolWindowRunWithCoverage.svg",
