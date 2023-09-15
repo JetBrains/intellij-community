@@ -39,7 +39,6 @@ import java.awt.image.BufferedImage
 import java.io.File
 import java.net.InetAddress
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 import javax.imageio.ImageIO
 import kotlin.reflect.full.createInstance
 import kotlin.time.Duration.Companion.milliseconds
@@ -294,12 +293,9 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     }
   }
 
-  private fun screenshotFile(actionName: String, timeStampString: String): File {
-    var fileName = getActionNameAsFileNameSubstring(actionName, timeStampString)
+  private fun screenshotFile(actionName: String, suffix: String, timeStamp: LocalTime): File {
+    var fileName = getArtifactsFileName(actionName, suffix, "png", timeStamp)
 
-    if (!fileName.endsWith(".png")) {
-      fileName += ".png"
-    }
     return File(PathManager.getLogPath()).resolve(fileName)
   }
 
@@ -327,16 +323,16 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
     return runLogged("'$actionName': Making screenshot") {
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) { // even if there is a modal window opened
-        val timeStampString = LocalTime.now().format(DateTimeFormatter.ofPattern("HHmmss"))
+        val timeStamp = LocalTime.now()
 
         return@withContext try {
           val windows = Window.getWindows().filter { it.height != 0 && it.width != 0 }.filter { it.isShowing }
           windows.forEachIndexed { index, window ->
             val screenshotFile = if (window.isFocusAncestor()) {
-              screenshotFile(actionName + "_${index}_focusedWindow", timeStampString)
+              screenshotFile(actionName, "_${index}_focusedWindow", timeStamp)
             }
             else {
-              screenshotFile(actionName + "_$index", timeStampString)
+              screenshotFile(actionName, "_$index", timeStamp)
             }
             makeScreenshotOfComponent(screenshotFile, window)
           }
