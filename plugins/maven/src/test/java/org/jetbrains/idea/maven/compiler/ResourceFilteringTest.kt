@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDocumentManager
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.jps.maven.model.impl.MavenIdBean
@@ -31,7 +32,6 @@ import java.io.IOException
 
 class ResourceFilteringTest : MavenCompilingTestCase() {
   @Test
-  @Throws(Exception::class)
   fun testBasic() {
     createProjectSubFile("resources/file.properties", """
       value=${'$'}{project.version}
@@ -69,7 +69,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testResolveSettingProperty() {
     createProjectSubFile("resources/file.properties", "value=\${settings.localRepository}")
 
@@ -93,7 +92,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testCustomDelimiter() {
     createProjectSubFile("resources/file.properties", """
       value1=${'$'}{project.version}
@@ -139,7 +137,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testPomArtifactId() {
     createProjectSubFile("resources/file.properties", "value=\${pom.artifactId}")
 
@@ -162,7 +159,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testPomVersionInModules() {
     createProjectSubFile("m1/resources/file.properties", "value=\${pom.version}")
 
@@ -198,7 +194,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testDoNotFilterSomeFileByDefault() {
     createProjectSubFile("resources/file.bmp", "value=\${project.version}")
 
@@ -221,7 +216,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testCustomNonFilteredExtensions() {
     createProjectSubFile("resources/file.bmp", "value=\${project.version}")
     createProjectSubFile("resources/file.xxx", "value=\${project.version}")
@@ -257,7 +251,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testFilteringTestResources() {
     createProjectSubFile("resources/file.properties", "value=@project.version@")
 
@@ -280,7 +273,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testExcludesAndIncludes() {
     createProjectSubFile("src/main/resources/file1.properties", "value=\${project.artifactId}")
     createProjectSubFile("src/main/resources/file2.properties", "value=\${project.artifactId}")
@@ -323,7 +315,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testEscapingWindowsChars() {
     createProjectSubFile("resources/file.txt", """
       value=${'$'}{foo}
@@ -358,7 +349,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testDontEscapingWindowsChars() {
     createProjectSubFile("resources/file.txt", "value=\${foo}")
 
@@ -392,7 +382,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testFilteringPropertiesWithEmptyValues() {
     createProjectSubFile("resources/file.properties", "value1=\${foo}\nvalue2=\${bar}")
 
@@ -418,7 +407,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testFilterWithSeveralResourceFolders() {
     createProjectSubFile("resources1/file1.properties", "value=\${project.version}")
     createProjectSubFile("resources2/file2.properties", "value=\${project.version}")
@@ -447,7 +435,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testFilterWithSeveralModules() {
     createProjectSubFile("module1/resources/file1.properties", "value=\${project.version}")
     createProjectSubFile("module2/resources/file2.properties", "value=\${project.version}")
@@ -490,7 +477,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testDoNotFilterIfNotRequested() {
     createProjectSubFile("resources1/file1.properties", "value=\${project.version}")
     createProjectSubFile("resources2/file2.properties", "value=\${project.version}")
@@ -519,7 +505,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testDoNotChangeFileIfPropertyIsNotResolved() {
     createProjectSubFile("resources/file.properties", "value=\${foo.bar}")
 
@@ -542,7 +527,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testChangingResolvedPropsBackWhenSettingsIsChange() {
     createProjectSubFile("resources/file.properties", "value=\${project.version}")
 
@@ -582,7 +566,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testUpdatingWhenPropertiesInFiltersAreChanged() {
     val filter = createProjectSubFile("filters/filter.properties", "xxx=1")
     createProjectSubFile("resources/file.properties", "value=\${xxx}")
@@ -613,7 +596,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testUpdatingWhenPropertiesAreChanged() {
     createProjectSubFile("resources/file.properties", "value=\${foo}")
 
@@ -667,7 +649,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testUpdatingWhenPropertiesInModelAreChanged() {
     createProjectSubFile("resources/file.properties", "value=\${project.name}")
 
@@ -726,8 +707,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testUpdatingWhenProfilesAreChanged() {
+  fun testUpdatingWhenProfilesAreChanged() = runBlocking {
     createProjectSubFile("resources/file.properties", "value=\${foo}")
 
     createProjectPom("""
@@ -766,7 +746,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
     }
     else {
       projectsManager.explicitProfiles = MavenExplicitProfiles(mutableListOf("two"))
-      updateAllProjectsSync()
+      updateAllProjects()
     }
 
     compileModules("project")
@@ -774,7 +754,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testSameFileInSourcesAndTestSources() {
     createProjectSubFile("src/main/resources/file.properties", "foo=\${foo.main}")
     createProjectSubFile("src/test/resources/file.properties", "foo=\${foo.test}")
@@ -809,7 +788,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testCustomFilters() {
     createProjectSubFile("filters/filter1.properties",
                          """
@@ -851,7 +829,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testCustomFiltersViaPlugin() {
     createProjectSubFile("filters/filter.properties", "xxx=value")
     createProjectSubFile("resources/file.properties", "value1=\${xxx}")
@@ -895,7 +872,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testCustomFilterWithPropertyInThePath() {
     createProjectSubFile("filters/filter.properties", "xxx=value")
     createProjectSubFile("resources/file.properties", "value=\${xxx}")
@@ -926,7 +902,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testCustomFiltersFromProfiles() {
     createProjectSubFile("filters/filter1.properties", "xxx=value1")
     createProjectSubFile("filters/filter2.properties", "yyy=value2")
@@ -984,7 +959,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testEscapingFiltering() {
     createProjectSubFile("filters/filter.properties", "xxx=value")
     createProjectSubFile("resources/file.properties",
@@ -1034,7 +1008,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testPropertyPriority() {
     createProjectSubFile("filters/filter.properties", """
    xxx=fromFilterFile
@@ -1074,7 +1047,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testCustomEscapingFiltering() {
     createProjectSubFile("filters/filter.properties", "xxx=value")
     createProjectSubFile("resources/file.properties",
@@ -1118,7 +1090,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(IOException::class)
   fun testDoNotFilterButCopyBigFiles() {
     assertEquals(FileTypes.UNKNOWN, FileTypeManager.getInstance().getFileTypeByFileName("file.xyz"))
 
@@ -1143,7 +1114,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testResourcesOrdering1() {
     createProjectSubFile("resources/file.properties", "value=\${project.version}\n")
 
@@ -1171,7 +1141,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testResourcesOrdering2() {
     createProjectSubFile("resources/file.properties", "value=\${project.version}\n")
 
@@ -1199,7 +1168,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testResourcesOrdering3() {
     createProjectSubFile("resources1/a.txt", "1")
     createProjectSubFile("resources2/a.txt", "2")
@@ -1226,7 +1194,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testResourcesOrdering4() {
     createProjectSubFile("resources1/a.txt", "1")
     createProjectSubFile("resources2/a.txt", "2")
@@ -1255,7 +1222,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testOverwriteParameter1() {
     createProjectSubFile("resources1/a.txt", "1")
     createProjectSubFile("resources2/a.txt", "2")
@@ -1290,7 +1256,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testOverwriteParameter2() {
     createProjectSubFile("resources1/a.txt", "1")
     createProjectSubFile("resources2/a.txt", "2")
