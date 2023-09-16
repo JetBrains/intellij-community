@@ -2375,9 +2375,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
     setIgnoredFilesPathForNextImport(listOf(m2.getPath()))
 
-    if (!isNewImportingProcess) {
-      projectsManager.scheduleForceUpdateMavenProjects(projectsManager.getProjects())
-    }
     importProject()
 
     assertModules("project", "m1")
