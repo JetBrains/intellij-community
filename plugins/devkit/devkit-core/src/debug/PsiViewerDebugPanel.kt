@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.dev.psiViewer.debug
+package org.jetbrains.idea.devkit.debug
 
-import com.intellij.dev.psiViewer.DevPsiViewerBundle
 import com.intellij.dev.psiViewer.PsiViewerDialog
 import com.intellij.dev.psiViewer.PsiViewerSettings
 import com.intellij.dev.psiViewer.ViewerNodeDescriptor
@@ -11,12 +10,7 @@ import com.intellij.ide.util.treeView.IndexComparator
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.CaretEvent
@@ -36,13 +30,13 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
+import org.jetbrains.idea.devkit.DevKitBundle
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.event.TreeSelectionEvent
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
-import kotlin.apply
 
 class PsiViewerDebugPanel(
   private val project: Project,
@@ -62,7 +56,8 @@ class PsiViewerDebugPanel(
   private val initialRange = TextRange.create(editor.selectionModel.selectionStart, editor.selectionModel.selectionEnd)
 
   init {
-    initToolbar()?.let { add(it, BorderLayout.WEST) }
+    val toolBar = initToolbar()
+    add(toolBar, BorderLayout.WEST)
     val splitter = Splitter(false, 0.3f).apply {
       firstComponent = initPsiTree()
       secondComponent = initEditor()?.component
@@ -70,7 +65,7 @@ class PsiViewerDebugPanel(
     add(splitter, BorderLayout.CENTER)
   }
 
-  private fun initToolbar(): JComponent? {
+  private fun initToolbar(): JComponent {
     val toolBarActions = DefaultActionGroup().apply {
       add(OpenDialogAction())
       add(ResetSelection())
@@ -83,8 +78,8 @@ class PsiViewerDebugPanel(
   }
 
   private inner class OpenDialogAction : AnAction(
-    DevPsiViewerBundle.message("psi.viewer.show.open.dialog.action"),
-    DevPsiViewerBundle.message("psi.viewer.show.open.dialog.description"),
+    DevKitBundle.message("psi.viewer.show.open.dialog.action"),
+    DevKitBundle.message("psi.viewer.show.open.dialog.description"),
     AllIcons.ToolbarDecorator.Export
   ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -96,8 +91,8 @@ class PsiViewerDebugPanel(
   }
 
   private inner class ResetSelection : AnAction(
-    DevPsiViewerBundle.message("psi.viewer.show.reset.selection.action"),
-    DevPsiViewerBundle.message("psi.viewer.show.reset.selection.description"),
+    DevKitBundle.message("psi.viewer.show.reset.selection.action"),
+    DevKitBundle.message("psi.viewer.show.reset.selection.description"),
     AllIcons.General.Reset
   ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -110,8 +105,8 @@ class PsiViewerDebugPanel(
 
 
   private inner class ShowWhiteSpaceAction : ToggleAction(
-    DevPsiViewerBundle.message("psi.viewer.show.whitespace.action"),
-    DevPsiViewerBundle.message("psi.viewer.show.whitespace.description"),
+    DevKitBundle.message("psi.viewer.show.whitespace.action"),
+    DevKitBundle.message("psi.viewer.show.whitespace.description"),
     AllIcons.Diff.GutterCheckBox
   ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -126,8 +121,8 @@ class PsiViewerDebugPanel(
   }
 
   private inner class ShowTreeNodesAction : ToggleAction(
-    DevPsiViewerBundle.message("psi.viewer.show.tree.nodes.action"),
-    DevPsiViewerBundle.message("psi.viewer.show.tree.nodes.description"),
+    DevKitBundle.message("psi.viewer.show.tree.nodes.action"),
+    DevKitBundle.message("psi.viewer.show.tree.nodes.description"),
     AllIcons.Actions.PrettyPrint
   ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

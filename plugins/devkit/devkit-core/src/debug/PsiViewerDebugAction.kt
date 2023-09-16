@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.dev.psiViewer.debug
+package org.jetbrains.idea.devkit.debug
 
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.JavaDebugProcess
@@ -8,9 +8,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.memory.action.DebuggerTreeAction
-import com.intellij.dev.psiViewer.DevPsiViewerBundle
 import com.intellij.dev.psiViewer.PsiViewerDialog
-import com.intellij.dev.psiViewer.PsiViewerSettings
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -24,18 +22,19 @@ import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import com.sun.jdi.ObjectReference
+import org.jetbrains.idea.devkit.DevKitBundle
 
 private val LOG = Logger.getInstance(PsiViewerDebugAction::class.java)
 
-private val PSI_ELEMENT = "com.intellij.psi.PsiElement"
+private const val PSI_ELEMENT = "com.intellij.psi.PsiElement"
 
-private val GET_CONTAINING_FILE = "getContainingFile"
+private const val GET_CONTAINING_FILE = "getContainingFile"
 
-private val GET_TEXT = "getText"
+private const val GET_TEXT = "getText"
 
-private val GET_LANGUAGE = "getLanguage"
+private const val GET_LANGUAGE = "getLanguage"
 
-private val GET_ID = "getID"
+private const val GET_ID = "getID"
 
 class PsiViewerDebugAction : DebuggerTreeAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -52,8 +51,8 @@ class PsiViewerDebugAction : DebuggerTreeAction() {
   ) {
     val project = e.project ?: return
     val debugProcess = JavaDebugProcess.getCurrentDebugProcess(e)
-    val suspendContext = debugProcess?.getSuspendManager()?.getPausedContext()
-    debugProcess?.getManagerThread()?.schedule(object : SuspendContextCommandImpl(suspendContext) {
+    val suspendContext = debugProcess?.suspendManager?.getPausedContext()
+    debugProcess?.managerThread?.schedule(object : SuspendContextCommandImpl(suspendContext) {
       override fun contextAction(suspendContext: SuspendContextImpl) {
         try {
           val evalContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
@@ -102,11 +101,11 @@ class PsiViewerDebugAction : DebuggerTreeAction() {
               runnerLayoutUi.selectAndFocus(content, true, true)
             }
 
-            if (PsiViewerSettings.getSettings().showDialogFromDebugAction) showDialog() else showDebugTab()
+            if (PsiViewerDebugSettings.getInstance().showDialogFromDebugAction) showDialog() else showDebugTab()
           }
         } catch (e: EvaluateException) {
           XDebuggerManagerImpl.getNotificationGroup().createNotification(
-            DevPsiViewerBundle.message("debug.evaluation.failed"), NotificationType.ERROR
+            DevKitBundle.message("psi.viewer.debug.evaluation.failed"), NotificationType.ERROR
           )
           LOG.error("Failed to evaluate PSI expression", e)
         }

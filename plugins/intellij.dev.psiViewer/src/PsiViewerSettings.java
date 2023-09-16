@@ -21,8 +21,6 @@ public final class PsiViewerSettings implements PersistentStateComponent<PsiView
   public int treeDividerLocation = 400;
   public int lastSelectedTabIndex = 0;
 
-  public boolean showDialogFromDebugAction = false;
-
   public static PsiViewerSettings getSettings() {
     return ApplicationManager.getApplication().getService(PsiViewerSettings.class);
   }
