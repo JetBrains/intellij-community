@@ -3,9 +3,10 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSAsyncTaskExecutor;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.util.io.DurableDataEnumerator;
+import com.intellij.util.io.dev.StorageFactory;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.dev.intmultimaps.Int2IntMultimap;
@@ -34,8 +35,8 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
 
   public static final int PAGE_SIZE = 8 << 20;
 
-  private final AppendOnlyLog valuesLog;
 
+  private final AppendOnlyLog valuesLog;
 
   private final @NotNull CompletableFuture<Int2IntMultimap> valueHashToIdFuture;
 
@@ -72,8 +73,12 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
     this.valueHashToIdFuture = valueHashToIdFuture;
   }
 
+  private static final StorageFactory<? extends AppendOnlyLog> AOL_FACTORY = AppendOnlyLogFactory
+    .withPageSize(PAGE_SIZE)
+    .failIfDataFormatVersionNotMatch(DATA_FORMAT_VERSION);
+
   public static @NotNull DurableStringEnumerator open(@NotNull Path storagePath) throws IOException {
-    AppendOnlyLog valuesLog = AppendOnlyLogOverMMappedFile.openLog(storagePath, DATA_FORMAT_VERSION, PAGE_SIZE);
+    AppendOnlyLog valuesLog = AOL_FACTORY.open(storagePath);
 
     return new DurableStringEnumerator(
       valuesLog,
@@ -83,7 +88,7 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
 
   public static @NotNull DurableStringEnumerator openAsync(@NotNull Path storagePath,
                                                            @NotNull VFSAsyncTaskExecutor executor) throws IOException {
-    AppendOnlyLogOverMMappedFile valuesLog = AppendOnlyLogOverMMappedFile.openLog(storagePath, DATA_FORMAT_VERSION, PAGE_SIZE);
+    AppendOnlyLog valuesLog = AOL_FACTORY.open(storagePath);
 
     CompletableFuture<Int2IntMultimap> indexBuildingFuture = executor.async(() -> buildValueToIdIndex(valuesLog));
     return new DurableStringEnumerator(

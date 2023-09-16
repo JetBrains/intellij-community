@@ -4,9 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage.Page;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.VersionUpdatedException;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
@@ -230,14 +228,15 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   private final long endOfRecoveredRegion;
 
 
-  private AppendOnlyLogOverMMappedFile(@NotNull MMappedFileStorage storage) throws IOException {
+  public AppendOnlyLogOverMMappedFile(@NotNull MMappedFileStorage storage) throws IOException {
     this.storage = storage;
-    headerPage = storage.pageByOffset(0L);
 
     int pageSize = storage.pageSize();
     if (!is32bAligned(pageSize)) {
       throw new IllegalArgumentException("storage.pageSize(=" + pageSize + ") must be 32b-aligned");
     }
+
+    headerPage = storage.pageByOffset(0L);
 
     int implementationVersion = getImplementationVersion();
     if (implementationVersion == UNSET_VALUE) {
@@ -318,6 +317,11 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
 
   public void setDataVersion(int version) throws IOException {
     setIntHeaderField(HeaderLayout.EXTERNAL_VERSION_OFFSET, version);
+  }
+
+  /** @return true if the log wasn't properly closed and did some compensating recovery measured on open */
+  public boolean wasRecoveryNeeded() {
+    return startOfRecoveredRegion >= 0 && endOfRecoveredRegion > startOfRecoveredRegion;
   }
 
   public Path storagePath() {
@@ -539,36 +543,6 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   @Override
   public String toString() {
     return "AppendOnlyLogOverMMappedFile[" + storage.storagePath() + "]";
-  }
-
-  public static @NotNull AppendOnlyLogOverMMappedFile openLog(@NotNull Path storagePath,
-                                                              int expectedDataFormatVersion) throws IOException {
-    return openLog(storagePath, expectedDataFormatVersion, DEFAULT_PAGE_SIZE);
-  }
-
-  public static @NotNull AppendOnlyLogOverMMappedFile openLog(@NotNull Path storagePath,
-                                                              int expectedDataFormatVersion,
-                                                              int pageSize) throws IOException {
-    MMappedFileStorage storage = new MMappedFileStorage(storagePath, pageSize);
-    try {
-      AppendOnlyLogOverMMappedFile appendOnlyLog = new AppendOnlyLogOverMMappedFile(storage);
-      int dataFormatVersion = appendOnlyLog.getDataVersion();
-      if (dataFormatVersion == 0 && appendOnlyLog.isEmpty()) {
-        appendOnlyLog.setDataVersion(expectedDataFormatVersion);
-      }
-      else if (dataFormatVersion != expectedDataFormatVersion) {
-        appendOnlyLog.close();
-        throw new VersionUpdatedException(storagePath, expectedDataFormatVersion, dataFormatVersion);
-      }
-      return appendOnlyLog;
-    }
-    catch (Throwable t) {
-      Exception closeEx = ExceptionUtil.runAndCatch(storage::close);
-      if (closeEx != null) {
-        t.addSuppressed(closeEx);
-      }
-      throw t;
-    }
   }
 
   // ============== implementation: ======================================================================

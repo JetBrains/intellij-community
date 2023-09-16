@@ -243,7 +243,10 @@ public class AppendOnlyLogOverMMappedFileTest {
   }
 
   private static @NotNull AppendOnlyLogOverMMappedFile openLog(@NotNull Path storageFile) throws IOException {
-    return AppendOnlyLogOverMMappedFile.openLog(storageFile, 0, PAGE_SIZE);
+    return AppendOnlyLogFactory
+      .withPageSize(PAGE_SIZE)
+      .ignoreDataFormatVersion()
+      .open(storageFile);
   }
 
   private static String[] generateRandomStrings(int stringsCount) {

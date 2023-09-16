@@ -2,9 +2,10 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.util.io.DurableDataEnumerator;
+import com.intellij.util.io.dev.StorageFactory;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
@@ -44,55 +45,6 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
   //             corruption
 
   private final @NotNull DurableIntToMultiIntMap valueHashToId;
-
-  public static <K> DurableEnumerator<K> openWithInMemoryMap(@NotNull Path storagePath,
-                                                             @NotNull KeyDescriptorEx<K> valueDescriptor) throws IOException {
-    AppendOnlyLog valuesLog = AppendOnlyLogOverMMappedFile.openLog(
-      storagePath,
-      DATA_FORMAT_VERSION
-    );
-
-    return new DurableEnumerator<>(
-      valueDescriptor,
-      valuesLog,
-      () -> fillValueHashToIdMap(valuesLog, valueDescriptor, new NonDurableNonParallelIntToMultiIntMap())
-    );
-  }
-
-  public static <K> DurableEnumerator<K> openWithDurableMap(@NotNull Path storagePath,
-                                                            @NotNull KeyDescriptorEx<K> valueDescriptor) throws IOException {
-    String name = storagePath.getName(storagePath.getNameCount() - 1).toString();
-    Path hashToIdPath = storagePath.resolveSibling(name + ".hashToId");
-    AppendOnlyLog valuesLog = AppendOnlyLogOverMMappedFile.openLog(
-      storagePath,
-      DATA_FORMAT_VERSION
-    );
-    ExtendibleHashMap valueHashToId = ExtendibleHashMap.open(hashToIdPath);
-    return new DurableEnumerator<>(
-      valueDescriptor,
-      valuesLog,
-      () -> valueHashToId
-    );
-  }
-
-  //TODO RC: valueHashToId could be loaded async -- to not delay initialization (see DurableStringEnumerator)
-  //TODO RC: if valueHashToId is missed/corrupted -> we could rebuild it from .valuesLog
-
-  private static <K> @NotNull DurableIntToMultiIntMap fillValueHashToIdMap(@NotNull AppendOnlyLog valuesLog,
-                                                                           @NotNull KeyDescriptorEx<K> valueDescriptor,
-                                                                           @NotNull DurableIntToMultiIntMap valueHashToId)
-    throws IOException {
-    valuesLog.forEachRecord((logId, buffer) -> {
-      K value = valueDescriptor.read(buffer);
-
-      int valueHash = adjustHash(valueDescriptor.hashCodeOf(value));
-      int id = convertLogIdToEnumeratorId(logId);
-
-      valueHashToId.put(valueHash, id);
-      return true;
-    });
-    return valueHashToId;
-  }
 
   private DurableEnumerator(@NotNull KeyDescriptorEx<V> valueDescriptor,
                             @NotNull AppendOnlyLog valuesLog,
@@ -217,4 +169,68 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
     }
     return hash;
   }
+
+  //================ factories: ================================================================================
+
+
+  private static final StorageFactory<? extends AppendOnlyLog> DEFAULT_AOL_FACTORY = AppendOnlyLogFactory.withPageSize(PAGE_SIZE)
+    .failIfDataFormatVersionNotMatch(DATA_FORMAT_VERSION);
+
+  public static <K> DurableEnumerator<K> openWithInMemoryMap(@NotNull Path storagePath,
+                                                             @NotNull KeyDescriptorEx<K> valueDescriptor) throws IOException {
+    return openWithInMemoryMap(DEFAULT_AOL_FACTORY, storagePath, valueDescriptor);
+  }
+
+  public static <K> DurableEnumerator<K> openWithInMemoryMap(@NotNull StorageFactory<? extends AppendOnlyLog> appendOnlyLogFactory,
+                                                             @NotNull Path storagePath,
+                                                             @NotNull KeyDescriptorEx<K> valueDescriptor) throws IOException {
+    AppendOnlyLog valuesLog = appendOnlyLogFactory.open(storagePath);
+
+    return new DurableEnumerator<>(
+      valueDescriptor,
+      valuesLog,
+      () -> fillValueHashToIdMap(valuesLog, valueDescriptor, new NonDurableNonParallelIntToMultiIntMap())
+    );
+  }
+
+  public static <K> DurableEnumerator<K> openWithDurableMap(@NotNull Path storagePath,
+                                                            @NotNull KeyDescriptorEx<K> valueDescriptor) throws IOException {
+    return openWithDurableMap(DEFAULT_AOL_FACTORY, storagePath, valueDescriptor);
+  }
+
+  public static <K> DurableEnumerator<K> openWithDurableMap(@NotNull StorageFactory<? extends AppendOnlyLog> appendOnlyLogFactory,
+                                                            @NotNull Path storagePath,
+                                                            @NotNull KeyDescriptorEx<K> valueDescriptor) throws IOException {
+    String name = storagePath.getName(storagePath.getNameCount() - 1).toString();
+    Path hashToIdPath = storagePath.resolveSibling(name + ".hashToId");
+
+    AppendOnlyLog valuesLog = appendOnlyLogFactory.open(storagePath);
+
+    ExtendibleHashMap valueHashToId = ExtendibleHashMap.open(hashToIdPath);
+    return new DurableEnumerator<>(
+      valueDescriptor,
+      valuesLog,
+      () -> valueHashToId
+    );
+  }
+
+  //TODO RC: valueHashToId could be loaded async -- to not delay initialization (see DurableStringEnumerator)
+  //TODO RC: if valueHashToId is missed/corrupted -> we could rebuild it from .valuesLog
+
+  private static <K> @NotNull DurableIntToMultiIntMap fillValueHashToIdMap(@NotNull AppendOnlyLog valuesLog,
+                                                                           @NotNull KeyDescriptorEx<K> valueDescriptor,
+                                                                           @NotNull DurableIntToMultiIntMap valueHashToId)
+    throws IOException {
+    valuesLog.forEachRecord((logId, buffer) -> {
+      K value = valueDescriptor.read(buffer);
+
+      int valueHash = adjustHash(valueDescriptor.hashCodeOf(value));
+      int id = convertLogIdToEnumeratorId(logId);
+
+      valueHashToId.put(valueHash, id);
+      return true;
+    });
+    return valueHashToId;
+  }
+
 }
