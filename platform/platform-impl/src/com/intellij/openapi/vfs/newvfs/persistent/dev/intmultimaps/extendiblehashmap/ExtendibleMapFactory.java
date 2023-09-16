@@ -4,14 +4,13 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendibleha
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.dev.StorageFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
-/**
- *
- */
+@ApiStatus.Internal
 public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
   private final int pageSize;
   private final int segmentSize;

@@ -18,7 +18,6 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
-import static com.intellij.util.io.IOUtil.MiB;
 import static java.lang.invoke.MethodHandles.byteBufferViewVarHandle;
 import static java.nio.ByteOrder.nativeOrder;
 
@@ -40,8 +39,6 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   private static final int UNSET_VALUE = 0;
 
   private static final int CURRENT_IMPLEMENTATION_VERSION = 1;
-
-  public static final int DEFAULT_PAGE_SIZE = 4 * MiB;
 
   public static final int MAX_PAYLOAD_SIZE = RecordLayout.RECORD_LENGTH_MASK;
 
@@ -302,20 +299,20 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
    * @return version of the log implementation (i.e., this class) used to create the file.
    * Current version is {@link #CURRENT_IMPLEMENTATION_VERSION}
    */
-  public int getImplementationVersion() throws IOException {
+  public int getImplementationVersion() {
     return getIntHeaderField(HeaderLayout.IMPLEMENTATION_VERSION_OFFSET);
   }
 
-  private void setImplementationVersion(int implementationVersion) throws IOException {
+  private void setImplementationVersion(int implementationVersion) {
     setIntHeaderField(HeaderLayout.IMPLEMENTATION_VERSION_OFFSET, implementationVersion);
   }
 
   /** @return version of _data_ stored in records -- up to the client to define/recognize it */
-  public int getDataVersion() throws IOException {
+  public int getDataVersion() {
     return getIntHeaderField(HeaderLayout.EXTERNAL_VERSION_OFFSET);
   }
 
-  public void setDataVersion(int version) throws IOException {
+  public void setDataVersion(int version) {
     setIntHeaderField(HeaderLayout.EXTERNAL_VERSION_OFFSET, version);
   }
 

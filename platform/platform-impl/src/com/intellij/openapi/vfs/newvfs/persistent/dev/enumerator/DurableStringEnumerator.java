@@ -10,6 +10,7 @@ import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.dev.intmultimaps.Int2IntMultimap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * Suitable for moderately big enumerators that are used very intensively, so
  * increased heap consumption pays off. For general cases use {@link DurableEnumerator}
  */
+@ApiStatus.Internal
 public final class DurableStringEnumerator implements DurableDataEnumerator<String>,
                                                       ScannableDataEnumeratorEx<String> {
 
@@ -73,12 +75,12 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
     this.valueHashToIdFuture = valueHashToIdFuture;
   }
 
-  private static final StorageFactory<? extends AppendOnlyLog> AOL_FACTORY = AppendOnlyLogFactory
+  private static final StorageFactory<? extends AppendOnlyLog> VALUES_LOG_FACTORY = AppendOnlyLogFactory
     .withPageSize(PAGE_SIZE)
     .failIfDataFormatVersionNotMatch(DATA_FORMAT_VERSION);
 
   public static @NotNull DurableStringEnumerator open(@NotNull Path storagePath) throws IOException {
-    AppendOnlyLog valuesLog = AOL_FACTORY.open(storagePath);
+    AppendOnlyLog valuesLog = VALUES_LOG_FACTORY.open(storagePath);
 
     return new DurableStringEnumerator(
       valuesLog,
@@ -88,7 +90,7 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
 
   public static @NotNull DurableStringEnumerator openAsync(@NotNull Path storagePath,
                                                            @NotNull VFSAsyncTaskExecutor executor) throws IOException {
-    AppendOnlyLog valuesLog = AOL_FACTORY.open(storagePath);
+    AppendOnlyLog valuesLog = VALUES_LOG_FACTORY.open(storagePath);
 
     CompletableFuture<Int2IntMultimap> indexBuildingFuture = executor.async(() -> buildValueToIdIndex(valuesLog));
     return new DurableStringEnumerator(

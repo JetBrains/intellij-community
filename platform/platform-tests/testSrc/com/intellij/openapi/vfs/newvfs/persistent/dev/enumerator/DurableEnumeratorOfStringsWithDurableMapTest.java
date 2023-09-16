@@ -17,9 +17,7 @@ public class DurableEnumeratorOfStringsWithDurableMapTest extends StringEnumerat
 
   @Override
   protected DurableEnumerator<String> openEnumerator(@NotNull Path storagePath) throws IOException {
-    return DurableEnumerator.openWithDurableMap(
-      storagePath,
-      StringAsUTF8.INSTANCE
-    );
+    return DurableEnumeratorFactory.defaultWithDurableMap(StringAsUTF8.INSTANCE)
+      .open(storagePath);
   }
 }

@@ -81,6 +81,11 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
   }
 
   @Override
+  public boolean isEmpty() throws IOException {
+    return multimap.size() == 0;
+  }
+
+  @Override
   public synchronized void flush() throws IOException {
     //nothing
   }

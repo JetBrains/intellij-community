@@ -15,5 +15,5 @@ import java.nio.file.Path;
  */
 @FunctionalInterface
 public interface StorageFactory<A> {
-  @NotNull A open(@NotNull Path path) throws IOException;
+  @NotNull A open(@NotNull Path storagePath) throws IOException;
 }

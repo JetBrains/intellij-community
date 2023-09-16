@@ -6,18 +6,22 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.VersionUpdatedException;
 import com.intellij.util.io.dev.StorageFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile.DEFAULT_PAGE_SIZE;
+import static com.intellij.util.io.IOUtil.MiB;
 
 /**
  * Configurable factory for {@link AppendOnlyLogOverMMappedFile}.
  * All major params and initialization conditions, such as dataFormatVersion check, recovery -- are configurable
  */
+@ApiStatus.Internal
 public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMappedFile> {
+  public static final int DEFAULT_PAGE_SIZE = 4 * MiB;
+
   private final int pageSize;
 
   private final int expectedDataVersion;
@@ -35,7 +39,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
     this.prohibitRecovery = prohibitRecovery;
   }
 
-  public static AppendOnlyLogFactory withDefaultPageSize() {
+  public static AppendOnlyLogFactory withDefaults() {
     return withPageSize(DEFAULT_PAGE_SIZE);
   }
 

@@ -191,6 +191,20 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
     return totalEntries;
   }
 
+  @Override
+  public synchronized boolean isEmpty() throws IOException {
+    checkNotClosed();
+    int segmentSize = header.segmentSize();
+    int segmentsCount = header.actualSegmentsCount();
+    for (int segmentIndex = 1; segmentIndex <= segmentsCount; segmentIndex++) {
+      HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, segmentSize);
+      if (segment.aliveEntriesCount() > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
 
   @Override
   public synchronized void flush() throws IOException {

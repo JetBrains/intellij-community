@@ -57,6 +57,8 @@ public interface DurableIntToMultiIntMap extends Flushable, Closeable {
 
   int size() throws IOException;
 
+  boolean isEmpty() throws IOException;
+
 
   @FunctionalInterface
   interface ValueAcceptor {

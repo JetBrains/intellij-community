@@ -2,7 +2,10 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.util.io.StringEnumeratorTestBase;
+import com.intellij.util.io.dev.StorageFactory;
 import com.intellij.util.io.dev.enumerator.StringAsUTF8;
+import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
+import com.intellij.util.io.dev.intmultimaps.NonDurableNonParallelIntToMultiIntMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -17,9 +20,10 @@ public class DurableEnumeratorOfStringsWithInMemoryMapTest extends StringEnumera
 
   @Override
   protected DurableEnumerator<String> openEnumerator(@NotNull Path storagePath) throws IOException {
-    return DurableEnumerator.openWithInMemoryMap(
-      storagePath,
-      StringAsUTF8.INSTANCE
-    );
+    return DurableEnumeratorFactory.defaultWithDurableMap(StringAsUTF8.INSTANCE)
+      .valuesLogFactory(DurableEnumeratorFactory.DEFAULT_VALUES_LOG_FACTORY)
+      .mapFactory((StorageFactory<? extends DurableIntToMultiIntMap>)path -> new NonDurableNonParallelIntToMultiIntMap())
+      .rebuildMapIfInconsistent(true)
+      .open(storagePath);
   }
 }
