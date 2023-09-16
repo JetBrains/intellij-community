@@ -842,12 +842,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
-  private void scheduleUpdateAllProjects(MavenImportSpec spec) {
-    scheduleUpdateProjects(List.of(), spec);
-  }
-
   @ApiStatus.Internal
-  public Promise<Void> scheduleUpdate(
+  private Promise<Void> scheduleUpdate(
     @NotNull List<VirtualFile> filesToUpdate,
     @NotNull List<VirtualFile> filesToDelete,
     MavenImportSpec spec
@@ -898,11 +894,22 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public void forceUpdateProjects() {
-    scheduleUpdateProjects(List.of(), MavenImportSpec.EXPLICIT_IMPORT);
+    scheduleUpdateAllProjects(MavenImportSpec.EXPLICIT_IMPORT);
   }
 
+  /**
+   * @deprecated  Use {@link #scheduleForceUpdateMavenProjects(List)}}
+   */
+  @Deprecated
   public AsyncPromise<Void> forceUpdateProjects(@NotNull Collection<MavenProject> projects) {
-    return (AsyncPromise<Void>)scheduleUpdateProjects(projects, MavenImportSpec.EXPLICIT_IMPORT);
+    var spec = MavenImportSpec.EXPLICIT_IMPORT;
+    MavenDistributionsCache.getInstance(myProject).cleanCaches();
+    MavenWslCache.getInstance().clearCache();
+    final AsyncPromise<Void> promise = new AsyncPromise<>();
+    MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
+      scheduleUpdate(MavenUtil.collectFiles(projects), List.of(), spec).processed(promise);
+    });
+    return promise;
   }
 
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles() {
@@ -928,18 +935,15 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       return;
     }
     MavenLog.LOG.warn("forceUpdateAllProjectsOrFindAllAvailablePomFiles: Linear Import is disabled");
-    scheduleUpdateProjects(List.of(), spec);
+    scheduleUpdateAllProjects(spec);
   }
 
   @ApiStatus.Internal
-  public Promise<Void> scheduleUpdateProjects(
-    @NotNull final Collection<MavenProject> projects,
-    final MavenImportSpec spec
-  ) {
+  public Promise<Void> scheduleUpdateAllProjects(MavenImportSpec spec) {
     if (MavenUtil.isLinearImportEnabled()) {
       MavenLog.LOG.warn("scheduleUpdateProjects: Linear Import is enabled");
       return MavenImportingManager.getInstance(myProject)
-        .openProjectAndImport(new FilesList(ContainerUtil.map(projects, MavenProject::getFile)), getImportingSettings(),
+        .openProjectAndImport(new FilesList(List.of()), getImportingSettings(),
                               getGeneralSettings(), spec).getFinishPromise().then(it -> null);
     }
     MavenLog.LOG.warn("scheduleUpdateProjects: Linear Import is disabled");
@@ -947,12 +951,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     MavenWslCache.getInstance().clearCache();
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
-      if (projects.isEmpty()) {
-        scheduleUpdateAll(spec).processed(promise);
-      }
-      else {
-        scheduleUpdate(MavenUtil.collectFiles(projects), List.of(), spec).processed(promise);
-      }
+      scheduleUpdateAll(spec).processed(promise);
     });
     return promise;
   }

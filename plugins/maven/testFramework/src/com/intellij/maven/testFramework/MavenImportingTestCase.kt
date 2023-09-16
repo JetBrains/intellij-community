@@ -636,11 +636,14 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected fun readProjects(vararg files: VirtualFile?) {
-    val projects: MutableList<MavenProject?> = ArrayList()
+    val projects: MutableList<MavenProject> = ArrayList()
     for (each in files) {
-      projects.add(projectsManager.findProject(each!!))
+      val mavenProject = projectsManager.findProject(each!!)
+      if (null != mavenProject) {
+        projects.add(mavenProject)
+      }
     }
-    projectsManager.forceUpdateProjects(projects)
+    projectsManager.scheduleForceUpdateMavenProjects(projects)
     waitForReadingCompletion()
   }
 

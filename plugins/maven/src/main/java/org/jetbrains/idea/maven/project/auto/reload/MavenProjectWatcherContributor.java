@@ -10,7 +10,6 @@ import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -19,7 +18,7 @@ public class MavenProjectWatcherContributor implements ExternalSystemProjectsWat
 
   @Override
   public void markDirtyAllExternalProjects(@NotNull Project project) {
-    runWhenFullyOpen(project, (manager) -> manager.scheduleUpdateProjects(List.of(), new MavenImportSpec(true, false, false)));
+    runWhenFullyOpen(project, (manager) -> manager.scheduleUpdateAllProjects(new MavenImportSpec(true, false, false)));
   }
 
   @Override
@@ -27,7 +26,7 @@ public class MavenProjectWatcherContributor implements ExternalSystemProjectsWat
     runWhenFullyOpen(module.getProject(), (manager) -> {
       MavenProject mavenProject = manager.findProject(module);
       if (mavenProject != null) {
-        manager.scheduleUpdateProjects(Collections.singletonList(mavenProject), new MavenImportSpec(true, false, false));
+        manager.scheduleUpdateMavenProjects(new MavenImportSpec(true, false, false), List.of(mavenProject.getFile()), List.of());
       }
     });
   }

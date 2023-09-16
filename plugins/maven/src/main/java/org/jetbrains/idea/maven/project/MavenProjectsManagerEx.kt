@@ -48,6 +48,13 @@ interface MavenAsyncProjectsManager {
   fun updateMavenProjectsSync(spec: MavenImportSpec,
                               filesToUpdate: List<VirtualFile>,
                               filesToDelete: List<VirtualFile>): List<Module>
+  fun scheduleForceUpdateMavenProject(mavenProject: MavenProject) =
+    scheduleForceUpdateMavenProjects(listOf(mavenProject))
+  fun scheduleForceUpdateMavenProjects(mavenProjects: List<MavenProject>) =
+    scheduleUpdateMavenProjects(MavenImportSpec.EXPLICIT_IMPORT, mavenProjects.map { it.file }, emptyList())
+  fun scheduleUpdateMavenProjects(spec: MavenImportSpec,
+                                  filesToUpdate: List<VirtualFile>,
+                                  filesToDelete: List<VirtualFile>)
   suspend fun updateMavenProjects(spec: MavenImportSpec,
                                   filesToUpdate: List<VirtualFile>,
                                   filesToDelete: List<VirtualFile>): List<Module>
@@ -73,6 +80,8 @@ interface MavenAsyncProjectsManager {
 }
 
 open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(project) {
+  private val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+
   override suspend fun addManagedFilesWithProfilesAndUpdate(files: List<VirtualFile>,
                                                             profiles: MavenExplicitProfiles,
                                                             modelsProvider: IdeModifiableModelsProvider?,
@@ -219,6 +228,12 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         updateMavenProjects(spec, filesToUpdate, filesToDelete)
       }
     }
+  }
+
+  override fun scheduleUpdateMavenProjects(spec: MavenImportSpec,
+                                           filesToUpdate: List<VirtualFile>,
+                                           filesToDelete: List<VirtualFile>) {
+    cs.launch { updateMavenProjects(spec, filesToUpdate, filesToDelete) }
   }
 
   override suspend fun updateMavenProjects(spec: MavenImportSpec,

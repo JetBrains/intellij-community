@@ -41,7 +41,7 @@ public class MavenProjectRootWatcher implements ModuleRootListener {
     }
 
     if (!deletedFiles.isEmpty() || !newFiles.isEmpty()) {
-      myProjectManager.scheduleUpdate(newFiles, deletedFiles, new MavenImportSpec(false, false, true));
+      myProjectManager.scheduleUpdateMavenProjects(new MavenImportSpec(false, false, true), newFiles, deletedFiles);
     }
   }
 }
