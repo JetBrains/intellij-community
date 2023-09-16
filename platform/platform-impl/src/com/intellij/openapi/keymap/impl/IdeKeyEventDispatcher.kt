@@ -13,7 +13,10 @@ import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.AnActionListener
-import com.intellij.openapi.actionSystem.impl.*
+import com.intellij.openapi.actionSystem.impl.ActionMenu
+import com.intellij.openapi.actionSystem.impl.EdtDataContext
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
@@ -25,9 +28,6 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.impl.keyGestures.KeyboardGestureProcessor
 import com.intellij.openapi.keymap.impl.ui.ShortcutTextField
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.PotemkinOverlayProgress
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -523,43 +523,32 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     if (actions.isEmpty()) {
       return false
     }
-
+    val contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context)
     val wrappedContext = Utils.wrapDataContext(context)
     val project = CommonDataKeys.PROJECT.getData(wrappedContext)
     val dumb = project != null && DumbService.getInstance(project).isDumb
     fireBeforeShortcutTriggered(shortcut = shortcut, actions = actions, context = context)
     val wouldBeEnabledIfNotDumb = ContainerUtil.createLockFreeCopyOnWriteList<AnAction>()
-    val indicator = if (Registry.`is`("actionSystem.update.actions.cancelable.beforeActionPerformedUpdate", true)) {
-      PotemkinOverlayProgress(PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(wrappedContext))
-    }
-    else {
-      ProgressIndicatorBase()
-    }
-    val block: suspend CoroutineScope.() -> Pair<UpdateResult, Boolean>? = block@ {
+
+    val chosenPair = Utils.runWithInputEventEdtDispatcher(contextComponent) {
       val events = ConcurrentHashMap<Presentation, AnActionEvent>()
       val chosen = Utils.runUpdateSessionForInputEvent(
         actions, e, wrappedContext, place, processor, presentationFactory,
         { event -> events.put(event.presentation, event) }) { session, adjusted ->
         doUpdateActionsInner(session, adjusted, dumb, wouldBeEnabledIfNotDumb) { key -> events.get(key) }
-      } ?: return@block null
+      } ?: return@runWithInputEventEdtDispatcher null
       if (!this@IdeKeyEventDispatcher.context.secondStrokeActions.contains(chosen.action)) {
-        //TODO remove, no more freezing (was: use non-frozen data context)
-        val actionEvent = chosen.event.withDataContext(wrappedContext)
-        if (!ActionUtil.lastUpdateAndCheckDumb(chosen.action, actionEvent, false)) {
-          LOG.warn("Action '${actionEvent.presentation.text}' (${chosen.action.javaClass}) has become disabled" +
+        if (!ActionUtil.lastUpdateAndCheckDumb(chosen.action, chosen.event, false)) {
+          LOG.warn("Action '${chosen.event.presentation.text}' (${chosen.action.javaClass}) has become disabled" +
                    " in `beforeActionPerformedUpdate` right after successful `update`")
           logTimeMillis(chosen.startedAt, chosen.action)
         }
         else {
-          return@block Pair(UpdateResult(chosen.action, actionEvent, chosen.startedAt), true)
+          return@runWithInputEventEdtDispatcher Pair(chosen, true)
         }
       }
       Pair(chosen, false)
     }
-    val chosenPair = ProgressManager.getInstance().runProcess(Computable {
-      runBlockingForActionExpand(CoroutineName("doUpdateActionsInner"), block)
-    }, indicator)
-
     val chosen = chosenPair?.first
     val doPerform = chosen != null && chosenPair.second
     val hasSecondStroke = chosen != null && this.context.secondStrokeActions.contains(chosen.action)
@@ -805,6 +794,7 @@ private fun hasMnemonicInBalloons(container: Container?, code: Int): Boolean {
 }
 
 private data class UpdateResult(val action: AnAction, val event: AnActionEvent, val startedAt: Long)
+
 private fun doUpdateActionsInner(session: UpdateSession,
                                  actions: List<AnAction>,
                                  dumb: Boolean,
