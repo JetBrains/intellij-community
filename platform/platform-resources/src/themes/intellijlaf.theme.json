@@ -321,7 +321,7 @@
     },
 
     "GotItTooltip": {
-      "Button.foreground": "white",
+      "Button.foreground": "#000000",
       "Header.foreground": "#000000",
       "background": "grey17",
       "borderColor": "grey05",

@@ -40,7 +40,8 @@
     "Borders.ContrastBorderColor": "#c9c9c9",
 
     "Button": {
-      "background": "#ececec",
+      "background": "#ECECEC",
+      "foreground": "#000000",
       "border": "com.intellij.laf.macos.MacIntelliJButtonBorder",
       "UI": "com.intellij.laf.macos.MacIntelliJButtonUI"
     },
@@ -88,6 +89,7 @@
     },
 
     "EditorTabs.underlinedTabBackground": "#fafafa",
+
     "HelpTooltip": {
       "descriptionSizeDelta": -1,
       "mouseCursorOffset": 17,

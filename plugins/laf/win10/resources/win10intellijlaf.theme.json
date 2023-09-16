@@ -551,7 +551,8 @@
     "Toolbar.Floating.background": "#EDEDED",
 
     "VersionControl": {
-      "MarkerPopup.Toolbar.background": "#FFFFFF"
+      "MarkerPopup.Toolbar.background": "#FFFFFF",
+      "Log.Commit.selectionInactiveBackground": "#D4D4D4"
     },
 
     "WelcomeScreen": {
