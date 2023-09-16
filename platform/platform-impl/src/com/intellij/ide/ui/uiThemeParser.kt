@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
+import com.intellij.ide.ui.laf.IJColorUIResource
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.icons.ImageDataByPathLoader.Companion.findIconByPath
@@ -15,8 +16,9 @@ import java.awt.Insets
 import javax.swing.UIDefaults
 import javax.swing.plaf.BorderUIResource
 import javax.swing.plaf.ColorUIResource
+import javax.swing.plaf.UIResource
 
-fun parseUiThemeValue(key: String, value: Any?, classLoader: ClassLoader): Any? {
+internal fun parseUiThemeValue(key: String, value: Any?, classLoader: ClassLoader): Any? {
   if (value !is String) {
     return value
   }
@@ -32,7 +34,7 @@ fun parseUiThemeValue(key: String, value: Any?, classLoader: ClassLoader): Any? 
       value.startsWith("AllIcons.") -> UIDefaults.LazyValue { getReflectiveIcon(value, classLoader) }
       isColorLike(value) -> {
         parseColorOrNull(value, key)?.let {
-          return ColorUIResource(it)
+          return createColorResource(it, key)
         } ?: value
       }
       else -> {
@@ -134,3 +136,12 @@ private fun parseGrayFilter(value: String): UIUtil.GrayFilter {
 }
 
 internal fun isColorLike(text: String) = text.length <= 9 && text.startsWith('#')
+
+internal fun createColorResource(color: Color?, key: String): UIResource {
+  if (key.startsWith("*.")) {
+    return ColorUIResource(color)
+  }
+  else {
+    return IJColorUIResource(color, key)
+  }
+}

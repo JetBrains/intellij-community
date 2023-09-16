@@ -68,7 +68,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
   public void installTheme(UIDefaults defaults) {
     defaults.put("ui.theme.is.dark", theme.isDark());
     defaults.put("ClassLoader", theme.getProviderClassLoader());
-    theme.applyProperties(defaults);
+    theme.applyTheme(defaults);
     IconPathPatcher patcher = theme.patcher;
     if (patcher != null) {
       IconLoader.installPathPatcher(patcher);

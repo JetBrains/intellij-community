@@ -8,11 +8,14 @@ import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.UIThemeBean.Companion.readTheme
+import com.intellij.ide.ui.laf.IJColor
+import com.intellij.ide.ui.laf.IJColorUIResource
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoImpl
 import com.intellij.ide.ui.laf.UiThemeProviderListManager
 import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.IdeUICustomization
+import com.intellij.ui.JBColor
 import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.ui.svg.newSvgPatcher
 import com.intellij.util.InsecureHashBuilder
@@ -65,12 +68,40 @@ class UITheme internal constructor(
   val emptyFrameBackground: Map<String, Any?>
     get() = bean.emptyFrameBackground ?: emptyMap()
 
-  fun applyProperties(defaults: UIDefaults) {
+  fun applyTheme(defaults: UIDefaults) {
     for ((key, value) in bean.colorMap.map) {
       defaults.put("ColorPalette.$key", if (value is UIResource) value else ColorUIResource(value))
     }
 
-    applyTheme(theme = bean, defaults = defaults, classLoader = providerClassLoader)
+    val colors = bean.colorMap.map.takeIf { it.isNotEmpty() }
+    for ((key, value) in (bean.ui ?: return)) {
+      var color: Color? = null
+      if (colors != null && value is String) {
+        colors.get(value)?.let {
+          color = it
+        }
+      }
+
+      @Suppress("NAME_SHADOWING")
+      val value = color ?: parseUiThemeValue(key = key, value = value, classLoader = providerClassLoader)
+      if (key.startsWith("*.")) {
+        val tail = key.substring(1)
+        addPattern(key, value, defaults)
+        for (k in defaults.keys.toTypedArray()) {
+          if (k is String && k.endsWith(tail)) {
+            if (value is Color && !(value is JBColor && value.name != null)) {
+              defaults.put(k, if (value is UIResource) IJColorUIResource(value, key) else IJColor(value, key))
+            }
+            else {
+              defaults.put(k, value)
+            }
+          }
+        }
+      }
+      else {
+        defaults.put(key, value)
+      }
+    }
   }
 
   @get:ApiStatus.Internal
@@ -172,7 +203,6 @@ private fun createTheme(theme: UIThemeBean,
 
     selectionColorPatcher = object : SvgElementColorPatcherProvider {
       private val svgPatcher = ConcurrentHashMap<UiThemePaletteScope, SvgAttributePatcher>()
-
       private val paletteSvgPatcher: SvgAttributePatcher
 
       init {
@@ -326,33 +356,6 @@ private val colorPalette: @NonNls Map<String, String> = java.util.Map.ofEntries(
   java.util.Map.entry("Tree.iconColor", "#808080"),
   java.util.Map.entry("Tree.iconColor.Dark", "#AFB1B3")
 )
-
-private fun applyTheme(theme: UIThemeBean, defaults: UIDefaults, classLoader: ClassLoader) {
-  val colors = theme.colorMap.map.takeIf { it.isNotEmpty() }
-  for ((key, value) in (theme.ui ?: return)) {
-    var color: Color? = null
-    if (colors != null && value is String) {
-      colors.get(value)?.let {
-        color = it
-      }
-    }
-
-    @Suppress("NAME_SHADOWING")
-    val value = color ?: parseUiThemeValue(key = key, value = value, classLoader = classLoader)
-    if (key.startsWith("*.")) {
-      val tail = key.substring(1)
-      addPattern(key, value, defaults)
-      for (k in defaults.keys.toTypedArray()) {
-        if (k is String && k.endsWith(tail)) {
-          defaults.put(k, value)
-        }
-      }
-    }
-    else {
-      defaults.put(key, value)
-    }
-  }
-}
 
 private fun addPattern(key: String?, value: Any?, defaults: UIDefaults) {
   var o = defaults.get("*")

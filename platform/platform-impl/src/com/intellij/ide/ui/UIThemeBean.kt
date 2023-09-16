@@ -5,15 +5,11 @@ package com.intellij.ide.ui
 
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
-import com.intellij.ide.ui.laf.IJColorUIResource
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.ExperimentalUI
-import java.awt.Color
 import java.util.*
 import java.util.function.BiFunction
-import javax.swing.plaf.ColorUIResource
-import javax.swing.plaf.UIResource
 
 internal class UIThemeBean {
   companion object {
@@ -315,15 +311,6 @@ private fun readMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>
         logError(parser)
       }
     }
-  }
-}
-
-private fun createColorResource(color: Color?, key: String): UIResource {
-  if (key.startsWith("*.")) {
-    return ColorUIResource(color)
-  }
-  else {
-    return IJColorUIResource(color, key)
   }
 }
 
