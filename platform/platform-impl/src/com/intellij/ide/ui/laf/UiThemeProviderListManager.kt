@@ -101,7 +101,7 @@ class UiThemeProviderListManager {
       .mapNotNull { it.theme.get() }
   }
 
-  fun themeProviderAdded(provider: UIThemeProvider): UIThemeLookAndFeelInfo? {
+  internal fun themeProviderAdded(provider: UIThemeProvider): UIThemeLookAndFeelInfo? {
     if (findLaFByProviderId(provider) != null) {
       // provider is already registered
       return null

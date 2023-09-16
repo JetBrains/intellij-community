@@ -72,7 +72,7 @@ class UIThemeProvider : PluginAware {
 
     val pluginDescriptor = pluginDescriptor!!
     try {
-      val classLoader = pluginDescriptor.getPluginClassLoader()
+      val classLoader = pluginDescriptor.getPluginClassLoader() ?: UIThemeProvider::class.java.classLoader
       val data = getThemeJson()
       if (data == null) {
         thisLogger().warn(PluginException(
@@ -84,7 +84,7 @@ class UIThemeProvider : PluginAware {
       return UITheme.loadFromJson(parentTheme = parentTheme,
                                   data = data,
                                   themeId = id!!,
-                                  provider = classLoader,
+                                  classLoader = classLoader,
                                   defaultDarkParent = defaultDarkParent,
                                   defaultLightParent = defaultLightParent)
     }

@@ -105,23 +105,25 @@ public final class TempUIThemeLookAndFeelInfo extends UIThemeLookAndFeelInfoImpl
   }
 
   public static @NotNull UITheme loadTempTheme(@NotNull InputStream stream, @NotNull IconPathPatcher patcher) throws IOException {
-    UITheme theme = UITheme.Companion.loadFromJson(stream, ID);
+    UITheme theme = UITheme.Companion.loadTempThemeFromJson(stream, ID);
 
     IconPathPatcher oldPatcher = theme.patcher;
-    if (oldPatcher != null) {
-      theme.patcher = new IconPathPatcher() {
-        @Override
-        public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
-          String result = oldPatcher.patchPath(path, classLoader);
-          return result == null ? null : patcher.patchPath(result, classLoader);
-        }
-
-        @Override
-        public @Nullable ClassLoader getContextClassLoader(@NotNull String path, @Nullable ClassLoader originalClassLoader) {
-          return patcher.getContextClassLoader(path, originalClassLoader);
-        }
-      };
+    if (oldPatcher == null) {
+      return theme;
     }
+
+    theme.patcher = new IconPathPatcher() {
+      @Override
+      public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
+        String result = oldPatcher.patchPath(path, classLoader);
+        return result == null ? null : patcher.patchPath(result, classLoader);
+      }
+
+      @Override
+      public @Nullable ClassLoader getContextClassLoader(@NotNull String path, @Nullable ClassLoader originalClassLoader) {
+        return patcher.getContextClassLoader(path, originalClassLoader);
+      }
+    };
 
     return theme;
   }

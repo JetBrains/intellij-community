@@ -121,18 +121,21 @@ class UITheme internal constructor(
     const val FILE_EXT_ENDING: String = ".theme.json"
 
     @ApiStatus.Internal
-    fun loadFromJson(stream: InputStream, themeId: @NonNls String): UITheme {
+    fun loadTempThemeFromJson(stream: InputStream, themeId: @NonNls String): UITheme {
       val theme = readTheme(JsonFactory().createParser(stream))
-      return createTheme(themeId = themeId, theme = theme, parentTheme = resolveParentTheme(theme, themeId))
+      return createTheme(themeId = themeId,
+                         theme = theme,
+                         parentTheme = resolveParentTheme(theme, themeId),
+                         classLoader = UITheme::class.java.classLoader)
     }
 
     fun loadFromJson(data: ByteArray?,
                      themeId: @NonNls String,
-                     provider: ClassLoader? = null,
+                     classLoader: ClassLoader,
                      iconMapper: ((String) -> String?)? = null): UITheme {
       val theme = readTheme(JsonFactory().createParser(data))
       val parentTheme = resolveParentTheme(theme, themeId)
-      return createTheme(theme = theme, parentTheme = parentTheme, provider = provider, iconMapper = iconMapper, themeId = themeId)
+      return createTheme(theme = theme, parentTheme = parentTheme, classLoader = classLoader, iconMapper = iconMapper, themeId = themeId)
     }
 
     private fun resolveParentTheme(theme: UIThemeBean, themeId: @NonNls String): UIThemeBean? {
@@ -150,7 +153,7 @@ class UITheme internal constructor(
     internal fun loadFromJson(parentTheme: UITheme?,
                               data: ByteArray,
                               themeId: @NonNls String,
-                              provider: ClassLoader?,
+                              classLoader: ClassLoader,
                               iconMapper: ((String) -> String?)? = null,
                               defaultDarkParent: Supplier<UITheme?>?,
                               defaultLightParent: Supplier<UITheme?>?): UITheme {
@@ -169,7 +172,7 @@ class UITheme internal constructor(
         parent = parentTheme.bean
         bean.parentTheme = parentTheme.id
       }
-      return createTheme(theme = bean, parentTheme = parent, provider = provider, iconMapper = iconMapper, themeId = themeId)
+      return createTheme(theme = bean, parentTheme = parent, classLoader = classLoader, iconMapper = iconMapper, themeId = themeId)
     }
 
     @TestOnly
@@ -180,7 +183,7 @@ class UITheme internal constructor(
 
 private fun createTheme(theme: UIThemeBean,
                         parentTheme: UIThemeBean?,
-                        provider: ClassLoader? = null,
+                        classLoader: ClassLoader,
                         iconMapper: ((String) -> String?)? = null,
                         themeId: @NonNls String): UITheme {
   if (parentTheme != null) {
@@ -246,7 +249,7 @@ private fun createTheme(theme: UIThemeBean,
         return if (value is String) iconMapper(value) else null
       }
 
-      override fun getContextClassLoader(path: String, originalClassLoader: ClassLoader?): ClassLoader? = provider
+      override fun getContextClassLoader(path: String, originalClassLoader: ClassLoader?): ClassLoader = classLoader
     }
 
     colorPatcher = configureIcons(theme = theme, paletteScopeManager = paletteScopeManager, iconMap = iconMap)
@@ -255,7 +258,7 @@ private fun createTheme(theme: UIThemeBean,
   return UITheme(id = themeId,
                  bean = theme,
                  colorPatcher = colorPatcher,
-                 _providerClassLoader = provider,
+                 _providerClassLoader = classLoader,
                  patcher = patcher,
                  selectionColorPatcher = selectionColorPatcher)
 }

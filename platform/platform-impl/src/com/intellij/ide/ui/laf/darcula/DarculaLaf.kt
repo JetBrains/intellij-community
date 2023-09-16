@@ -43,7 +43,7 @@ open class DarculaLaf : BasicLookAndFeel() {
       val filename = "$prefix.theme.json"
       val data = ResourceUtil.getResourceAsBytes(filename, classLoader, /* checkParents */true)
                  ?: throw RuntimeException("Can't load $filename")
-      UITheme.loadFromJson(data = data, themeId = "Darcula", provider = classLoader).applyTheme(defaults = defaults)
+      UITheme.loadFromJson(data = data, themeId = "Darcula", classLoader = classLoader).applyTheme(defaults = defaults)
 
       defaults.put("ui.theme.is.dark", true)
       return defaults
