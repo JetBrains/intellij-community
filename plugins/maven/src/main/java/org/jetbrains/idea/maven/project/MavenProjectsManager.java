@@ -788,7 +788,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   @TestOnly
   public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
     myProjectsTree.resetManagedFilesAndProfiles(files, explicitProfiles);
-    scheduleUpdateAll(new MavenImportSpec(true, true, true));
+    updateAllMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
   }
 
   public synchronized void removeManagedFiles(List<VirtualFile> files) {
