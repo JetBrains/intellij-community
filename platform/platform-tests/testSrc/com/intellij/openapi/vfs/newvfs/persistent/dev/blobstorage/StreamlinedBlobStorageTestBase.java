@@ -113,6 +113,28 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   }
 
   @Test
+  public void wasClosedProperly_isTrueForNewStorage() throws IOException {
+    assertTrue(
+      "New empty storage is always 'closed properly'",
+      storage.wasClosedProperly()
+    );
+  }
+
+  @Test
+  public void wasClosedProperly_isTrueForClosedAndReopenedStorage() throws IOException {
+    storage.close();
+    storage = openStorage(storagePath);
+    assertTrue(
+      "Storage is 'closed properly' if it was closed and opened again",
+      storage.wasClosedProperly()
+    );
+  }
+
+  //RC: there is no easy way to check .wasClosedProperly() is false after not-closing
+  //    because not-closing is hard to do without JVM kill -- most our storages prevent
+  //    reopen already opened file without closing it first.
+
+  @Test
   public void manyRecordsWritten_CouldAllBeReadBackUnchanged_ById() throws Exception {
     final StorageRecord[] recordsToWrite = randomRecordsToStartWith.clone();
     for (int i = 0; i < recordsToWrite.length; i++) {

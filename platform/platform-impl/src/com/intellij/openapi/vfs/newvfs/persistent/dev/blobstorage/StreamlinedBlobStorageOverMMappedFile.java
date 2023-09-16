@@ -73,10 +73,6 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
           "Can't read file[" + storage + "]: version(" + version + ") != storage version (" + STORAGE_VERSION_CURRENT + ")");
       }
       final int fileStatus = readHeaderInt(HeaderLayout.FILE_STATUS_OFFSET);
-      if (fileStatus != FILE_STATUS_SAFELY_CLOSED) {
-        throw new IOException(
-          "Can't read file[" + storage + "]: status(" + fileStatus + ") != SAFELY_CLOSED (" + FILE_STATUS_SAFELY_CLOSED + ")");
-      }
       if (length > Integer.MAX_VALUE * (long)OFFSET_BUCKET) {
         throw new IOException(
           "Can't read file[" + storage + "]: too big, " + length + " > Integer.MAX_VALUE * " + OFFSET_BUCKET);
@@ -89,15 +85,21 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
       recordsDeleted.set(readHeaderInt(HeaderLayout.RECORDS_DELETED_OFFSET));
       totalLiveRecordsPayloadBytes.set(readHeaderLong(HeaderLayout.RECORDS_LIVE_TOTAL_PAYLOAD_SIZE_OFFSET));
       totalLiveRecordsCapacityBytes.set(readHeaderLong(HeaderLayout.RECORDS_LIVE_TOTAL_CAPACITY_SIZE_OFFSET));
+
+      boolean wasClosedProperly = readHeaderInt(HeaderLayout.FILE_STATUS_OFFSET) == FILE_STATUS_PROPERLY_CLOSED;
+      this.wasClosedProperly.set(wasClosedProperly);
     }
-    else {
+    else {//new empty file
       updateNextRecordId(offsetToId(recordsStartOffset()));
 
       putHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET, STORAGE_VERSION_CURRENT);
-      putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, FILE_STATUS_OPENED);
 
-      fileSizeMayChanged(headerPage, HEADER_SIZE);
+      this.wasClosedProperly.set(true);
     }
+
+    putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, FILE_STATUS_OPENED);
+
+    fileSizeMayChanged(headerPage, HEADER_SIZE);
 
     openTelemetryCallback = setupReportingToOpenTelemetry(storage.storagePath().getFileName(), this);
   }
@@ -492,15 +494,11 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
   public void force() throws IOException {
     checkNotClosed();
 
-    putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, FILE_STATUS_SAFELY_CLOSED);
-
     putHeaderInt(HeaderLayout.RECORDS_ALLOCATED_OFFSET, recordsAllocated.get());
     putHeaderInt(HeaderLayout.RECORDS_RELOCATED_OFFSET, recordsRelocated.get());
     putHeaderInt(HeaderLayout.RECORDS_DELETED_OFFSET, recordsDeleted.get());
     putHeaderLong(HeaderLayout.RECORDS_LIVE_TOTAL_PAYLOAD_SIZE_OFFSET, totalLiveRecordsPayloadBytes.get());
     putHeaderLong(HeaderLayout.RECORDS_LIVE_TOTAL_CAPACITY_SIZE_OFFSET, totalLiveRecordsCapacityBytes.get());
-
-    fileSizeMayChanged(headerPage, HEADER_SIZE);
 
     storage.fsync();
   }
@@ -512,14 +510,18 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
     // that. But in .force() we write file status and other header fields, and without .closed
     // flag we'll do that even on already closed storage, which leads to exception.
     if (!closed.get()) {
+      putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, FILE_STATUS_PROPERLY_CLOSED);
+
       force();
+
       closed.set(true);
 
       openTelemetryCallback.close();
+
       //MAYBE RC: it shouldn't be this class's responsibility to close storage, since not this class creates it?
       //          Better whoever creates it -- is responsible for closing it?
-
       storage.close();
+
       headerPage = null;
     }
   }

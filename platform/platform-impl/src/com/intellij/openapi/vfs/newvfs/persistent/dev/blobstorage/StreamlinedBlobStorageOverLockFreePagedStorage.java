@@ -78,11 +78,6 @@ public final class StreamlinedBlobStorageOverLockFreePagedStorage extends Stream
             throw new IOException(
               "Can't read file[" + pagedStorage + "]: version(" + version + ") != storage version (" + STORAGE_VERSION_CURRENT + ")");
           }
-          final int fileStatus = readHeaderInt(HeaderLayout.FILE_STATUS_OFFSET);
-          if (fileStatus != FILE_STATUS_SAFELY_CLOSED) {
-            throw new IOException(
-              "Can't read file[" + pagedStorage + "]: status(" + fileStatus + ") != SAFELY_CLOSED (" + FILE_STATUS_SAFELY_CLOSED + ")");
-          }
           if (length > Integer.MAX_VALUE * (long)OFFSET_BUCKET) {
             throw new IOException(
               "Can't read file[" + pagedStorage + "]: too big, " + length + " > Integer.MAX_VALUE * " + OFFSET_BUCKET);
@@ -94,13 +89,19 @@ public final class StreamlinedBlobStorageOverLockFreePagedStorage extends Stream
           recordsDeleted.set(readHeaderInt(HeaderLayout.RECORDS_DELETED_OFFSET));
           totalLiveRecordsPayloadBytes.set(readHeaderLong(HeaderLayout.RECORDS_LIVE_TOTAL_PAYLOAD_SIZE_OFFSET));
           totalLiveRecordsCapacityBytes.set(readHeaderLong(HeaderLayout.RECORDS_LIVE_TOTAL_CAPACITY_SIZE_OFFSET));
+
+          boolean wasClosedProperly = readHeaderInt(HeaderLayout.FILE_STATUS_OFFSET) == FILE_STATUS_PROPERLY_CLOSED;
+          this.wasClosedProperly.set(wasClosedProperly);
         }
-        else {
+        else {//new empty file
           updateNextRecordId(offsetToId(recordsStartOffset()));
 
           putHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET, STORAGE_VERSION_CURRENT);
-          putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, FILE_STATUS_OPENED);
+
+          this.wasClosedProperly.set(true);
         }
+
+        putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, FILE_STATUS_OPENED);
       }
       finally {
         headerPage.unlockPageForWrite();
@@ -535,8 +536,6 @@ public final class StreamlinedBlobStorageOverLockFreePagedStorage extends Stream
     try (final Page headerPage = pagedStorage.pageByIndex(0, /*forWrite: */ true)) {
       headerPage.lockPageForWrite();
       try {
-        putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, FILE_STATUS_SAFELY_CLOSED);
-
         putHeaderInt(HeaderLayout.RECORDS_ALLOCATED_OFFSET, recordsAllocated.get());
         putHeaderInt(HeaderLayout.RECORDS_RELOCATED_OFFSET, recordsRelocated.get());
         putHeaderInt(HeaderLayout.RECORDS_DELETED_OFFSET, recordsDeleted.get());
@@ -557,14 +556,16 @@ public final class StreamlinedBlobStorageOverLockFreePagedStorage extends Stream
     // that. But in .force() we write file status and other header fields, and without .closed
     // flag we'll do that even on already closed pagedStorage, which leads to exception.
     if (!closed.get()) {
-      force();
-      openTelemetryCallback.close();
-      closed.set(true);
-    }
+      putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, FILE_STATUS_PROPERLY_CLOSED);
 
-    //MAYBE RC: it shouldn't be this class's responsibility to close pagedStorage, since not this class creates it?
-    //          Better whoever creates it -- is responsible for closing it?
-    pagedStorage.close();
+      force();
+      closed.set(true);
+
+      openTelemetryCallback.close();
+      //MAYBE RC: it shouldn't be this class's responsibility to close pagedStorage, since not this class creates it?
+      //          Better whoever creates it -- is responsible for closing it?
+      pagedStorage.close();
+    }
   }
 
   // ============================= implementation: ========================================================================

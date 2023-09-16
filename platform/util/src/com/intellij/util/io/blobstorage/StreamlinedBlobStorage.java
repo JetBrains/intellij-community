@@ -18,7 +18,7 @@ import java.nio.ByteBuffer;
  * Also, read/write methods have direct access to underlying ByteBuffers, to reduce memcopy-ing
  * overhead.
  * <br/>
- * Direct mapping between recordId and offsets means that recordId changes if record is relocated
+ * Direct mapping between recordId and offsets means that recordId changes if the record is relocated
  * (e.g. because its content after update does not fit currently allocated space). This opens the
  * concept of record redirection (redirect-to pointers): if record is relocated to a new location,
  * the old location gets special mark 'redirected', and keeps the new recordId. Clients could
@@ -37,15 +37,23 @@ import java.nio.ByteBuffer;
 public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forceable {
   int NULL_ID = 0;
 
+  /** @return version of storage internal format. Read only -- storage manages it */
   int getStorageVersion() throws IOException;
 
+  /**
+   * @return true if the storage was properly closed last time, false if it wasn't and data could be inconsistent
+   * because of that
+   */
+  boolean wasClosedProperly() throws IOException;
+
+  /** @return version of application data stored in storage -- managed by application */
   int getDataFormatVersion() throws IOException;
 
   void setDataFormatVersion(final int expectedVersion) throws IOException;
 
   /**
    * @return max size of a record this storage could store.
-   * I.e. it is guaranteed storage could store record of that size, but not larger
+   * It is guaranteed storage could store record of that size, but not larger
    */
   int maxPayloadSupported();
 

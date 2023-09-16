@@ -82,8 +82,9 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   //FIXME RC: we assign STATUS_OPENED only for new files, but never for reopened one -- so this corruption-detection
   //          mechanism is barely working
 
+  //=== FILE_STATUS header field values:
   protected static final int FILE_STATUS_OPENED = 0;
-  protected static final int FILE_STATUS_SAFELY_CLOSED = 1;
+  protected static final int FILE_STATUS_PROPERLY_CLOSED = 1;
 
   //=== HEADER format:
   protected static final class HeaderLayout {
@@ -130,6 +131,8 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
 
   /** To avoid write file header to already closed storage */
   protected final AtomicBoolean closed = new AtomicBoolean(false);
+
+  protected final AtomicBoolean wasClosedProperly = new AtomicBoolean(true);
 
   protected final @NotNull SpaceAllocationStrategy allocationStrategy;
 
@@ -187,6 +190,11 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
         "pageSize(=" + pageSize + ") is too small even for a record header(=" + ActualRecords.LargeRecord.INSTANCE.headerSize() + "b)"
       );
     }
+  }
+
+  @Override
+  public boolean wasClosedProperly() {
+    return wasClosedProperly.get();
   }
 
   @Override
