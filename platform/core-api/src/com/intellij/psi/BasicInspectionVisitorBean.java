@@ -5,12 +5,20 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Set;
 
 import static java.util.stream.Collectors.toSet;
 
+/**
+ * Declares a base visitor class for language in order to speedup inspection runs. When a {@link com.intellij.codeInspection.LocalInspectionTool}
+ * returns inheritors of the declared visitor then the inspection engine will be able to infer PSI element classes that it would like to visit.
+ * It makes it possible to skip irrelevant elements in a tree when inspections run.
+ *
+ * @see com.intellij.codeInspection.InspectionVisitorsOptimizer
+ */
 @ApiStatus.Internal
 public final class BasicInspectionVisitorBean {
   @Attribute("class")
@@ -22,7 +30,13 @@ public final class BasicInspectionVisitorBean {
 
   private static volatile Set<String> ourClasses;
 
-  public static Collection<String> getVisitorClasses() {
+  static {
+    EP_NAME.addChangeListener(() -> {
+      ourClasses = null;
+    }, null);
+  }
+
+  public static @NotNull Collection<String> getVisitorClasses() {
     Set<String> set = ourClasses;
     if (set != null) return set;
 
