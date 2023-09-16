@@ -288,12 +288,7 @@ private fun configureIcons(theme: UIThemeBean,
 
   return object : SvgElementColorPatcherProvider {
     override fun attributeForPath(path: String): SvgAttributePatcher? {
-      val scope = paletteScopeManager.getScopeByPath(path) ?: return null
-      if (scope.newPalette.isEmpty()) {
-        return null
-      }
-
-      return newSvgPatcher(digest = scope.digest(), newPalette = scope.newPalette) { scope.alphas.get(it) }
+      return paletteScopeManager.getScopeByPath(path)?.svgColorIconPatcher?.get()
     }
   }
 }

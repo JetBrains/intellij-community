@@ -1,23 +1,31 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.ide.ui
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.ui.svg.SvgAttributePatcher
+import com.intellij.ui.svg.newSvgPatcher
 import com.intellij.util.InsecureHashBuilder
+import com.intellij.util.concurrency.SynchronizedClearableLazy
+import java.util.function.Supplier
 
 internal class UiThemePaletteScope {
+  @JvmField
   val newPalette: MutableMap<String, String> = HashMap()
 
   // 0-255
+  @JvmField
   val alphas: MutableMap<String, Int> = HashMap()
-  private var hash: LongArray? = null
 
-  fun digest(): LongArray {
-    hash?.let {
-      return it
+  @JvmField
+  val svgColorIconPatcher: Supplier<SvgAttributePatcher?> = SynchronizedClearableLazy {
+    if (newPalette.isEmpty()) {
+      return@SynchronizedClearableLazy null
     }
 
-    hash = updateHash(InsecureHashBuilder()).build()
-    return hash!!
+    val hash = updateHash(InsecureHashBuilder()).build()
+    newSvgPatcher(digest = hash, newPalette = newPalette) { alphas.get(it) }
   }
 
   fun updateHash(insecureHashBuilder: InsecureHashBuilder): InsecureHashBuilder {
