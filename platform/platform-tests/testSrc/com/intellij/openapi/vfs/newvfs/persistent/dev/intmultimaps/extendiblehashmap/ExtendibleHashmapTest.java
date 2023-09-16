@@ -16,6 +16,6 @@ public class ExtendibleHashmapTest extends IntToMultiIntMapTestBase<ExtendibleHa
   @Override
   protected ExtendibleHashMap create(@NotNull Path tempDir) throws IOException {
     Path storagePath = tempDir.resolve("map.map");
-    return ExtendibleHashMap.open(storagePath);
+    return ExtendibleMapFactory.defaults().open(storagePath);
   }
 }

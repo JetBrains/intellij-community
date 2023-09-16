@@ -5,14 +5,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
-import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Path;
 import java.util.Objects;
 
 /**
@@ -33,10 +31,6 @@ import java.util.Objects;
 public class ExtendibleHashMap implements DurableIntToMultiIntMap {
   private static final int VERSION = 1;
 
-  public static final int DEFAULT_SEGMENT_SIZE = 1 << 15; //32k
-  public static final int DEFAULT_SEGMENTS_PER_PAGE = 32;
-  public static final int DEFAULT_PAGE_SIZE = DEFAULT_SEGMENT_SIZE * DEFAULT_SEGMENTS_PER_PAGE;
-
   //Binary layout: (header segment) (data segment)+
   //  Header segment: (fixed header fields) (segments table)
   //                  fixed header fields: 80 bytes
@@ -56,12 +50,19 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
   //
   //Header and data segments are of same size -- this simplifies overall layout, since we need to align everything
   // to a page size, and it is much easier to align fixed size segments -- just (pageSize % segmentSize = 0).
-  //
+
+
   //Segment size: 32K seems like a good segment size: header segment could address (32k-80)/2 ~= 16k segments,
   // each segment contains (32k-16)/4/2 ~= 4k of (key:int32,value:int32) entries.
   // Open addressing hashmaps usually sized with loadFactor ~= 0.5, so 4k entries mean ~2k useful payload.
-  // In total, ~16k segments of ~2k key-value pairs each gives us 32M entries max -- suitable for most purposes.
+  // In total, ~16k segments of ~2k key-value pairs each gives us 32M entries max -- suitable for most purposes
+  // (BEWARE: currently only 16M entries could be used, see comment in HeaderLayout)
   // 64k segments make it 4x, which should be enough for everyone.
+
+  public static final int DEFAULT_SEGMENT_SIZE = 1 << 15;   // =32k
+  public static final int DEFAULT_SEGMENTS_PER_PAGE = 32;
+  /** 1M page ~= 64K (key,value) pairs per page */
+  public static final int DEFAULT_STORAGE_PAGE_SIZE = DEFAULT_SEGMENT_SIZE * DEFAULT_SEGMENTS_PER_PAGE;
 
 
   //TODO RC: 'safelyClosed' marker in a header, to detect crashes/incorrect usages
@@ -74,43 +75,17 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
 
   private final transient HashMapAlgo hashMapAlgo = new HashMapAlgo(0.5f);
 
-  public static ExtendibleHashMap open(@NotNull Path storagePath) throws IOException {
-    return open(storagePath, DEFAULT_PAGE_SIZE);
-  }
-
-  public static ExtendibleHashMap open(@NotNull Path storagePath,
-                                       int pageSize) throws IOException {
-    return open(storagePath, pageSize, DEFAULT_SEGMENT_SIZE);
-  }
-
-  public static ExtendibleHashMap open(@NotNull Path storagePath,
-                                       int pageSize,
-                                       int segmentSize) throws IOException {
+  public ExtendibleHashMap(@NotNull MMappedFileStorage storage,
+                           int segmentSize) throws IOException {
+    if (Integer.bitCount(segmentSize) != 1) {
+      throw new IllegalArgumentException("segmentSize(=" + segmentSize + ") must be power of 2");
+    }
+    int pageSize = storage.pageSize();
     if (segmentSize > pageSize) {
       throw new IllegalArgumentException("segmentSize(=" + segmentSize + ") must be <= pageSize(=" + pageSize + ")");
     }
     if ((pageSize % segmentSize) != 0) {
       throw new IllegalArgumentException("segmentSize(=" + segmentSize + ") must align with pageSize(=" + pageSize + ")");
-    }
-
-    int maxFileSize = segmentSize / 2 * segmentSize;
-    MMappedFileStorage storage = new MMappedFileStorage(storagePath, pageSize, maxFileSize);
-    try {
-      return new ExtendibleHashMap(storage, segmentSize);
-    }
-    catch (Throwable t) {
-      Exception closeEx = ExceptionUtil.runAndCatch(storage::close);
-      if (closeEx != null) {
-        t.addSuppressed(closeEx);
-      }
-      throw t;
-    }
-  }
-
-  public ExtendibleHashMap(@NotNull MMappedFileStorage storage,
-                           int segmentSize) throws IOException {
-    if (Integer.bitCount(segmentSize) != 1) {
-      throw new IllegalArgumentException("segmentSize(=" + segmentSize + ") must be power of 2");
     }
 
     synchronized (this) {

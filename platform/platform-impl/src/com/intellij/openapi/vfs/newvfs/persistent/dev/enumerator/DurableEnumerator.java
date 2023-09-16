@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.util.io.DurableDataEnumerator;
 import com.intellij.util.io.dev.StorageFactory;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
@@ -176,6 +177,8 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
   private static final StorageFactory<? extends AppendOnlyLog> DEFAULT_AOL_FACTORY = AppendOnlyLogFactory.withPageSize(PAGE_SIZE)
     .failIfDataFormatVersionNotMatch(DATA_FORMAT_VERSION);
 
+  private static final ExtendibleMapFactory DURABLE_MAP_FACTORY = ExtendibleMapFactory.defaults();
+
   public static <K> DurableEnumerator<K> openWithInMemoryMap(@NotNull Path storagePath,
                                                              @NotNull KeyDescriptorEx<K> valueDescriptor) throws IOException {
     return openWithInMemoryMap(DEFAULT_AOL_FACTORY, storagePath, valueDescriptor);
@@ -201,12 +204,19 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
   public static <K> DurableEnumerator<K> openWithDurableMap(@NotNull StorageFactory<? extends AppendOnlyLog> appendOnlyLogFactory,
                                                             @NotNull Path storagePath,
                                                             @NotNull KeyDescriptorEx<K> valueDescriptor) throws IOException {
+    return openWithDurableMap(appendOnlyLogFactory, DURABLE_MAP_FACTORY, storagePath, valueDescriptor);
+  }
+
+  public static <K> DurableEnumerator<K> openWithDurableMap(@NotNull StorageFactory<? extends AppendOnlyLog> appendOnlyLogFactory,
+                                                            @NotNull ExtendibleMapFactory durableMapFactory,
+                                                            @NotNull Path storagePath,
+                                                            @NotNull KeyDescriptorEx<K> valueDescriptor) throws IOException {
     String name = storagePath.getName(storagePath.getNameCount() - 1).toString();
     Path hashToIdPath = storagePath.resolveSibling(name + ".hashToId");
 
     AppendOnlyLog valuesLog = appendOnlyLogFactory.open(storagePath);
+    ExtendibleHashMap valueHashToId = durableMapFactory.open(hashToIdPath);
 
-    ExtendibleHashMap valueHashToId = ExtendibleHashMap.open(hashToIdPath);
     return new DurableEnumerator<>(
       valueDescriptor,
       valuesLog,

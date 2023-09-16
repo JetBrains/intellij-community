@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleHashMap;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.util.io.AbstractIntToIntBtree;
 import com.intellij.util.io.IntToIntBtree;
 import com.intellij.util.io.IntToIntBtreeLockFree;
@@ -124,7 +125,7 @@ public class IntToIntMapsBenchmark {
     @Setup
     public void setup() throws Exception {
       file = FileUtil.createTempFile("IntToIntBtree", "tst", /*deleteOnExit: */ true);
-      map = ExtendibleHashMap.open(file.toPath());
+      map = ExtendibleMapFactory.defaults().open(file.toPath());
 
 
       generatedKeyValues = generateKeyValues(TOTAL_KEYS);
