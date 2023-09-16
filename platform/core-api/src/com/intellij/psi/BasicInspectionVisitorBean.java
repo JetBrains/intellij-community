@@ -19,7 +19,7 @@ import static java.util.stream.Collectors.toSet;
  *
  * @see com.intellij.codeInspection.InspectionVisitorsOptimizer
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 public final class BasicInspectionVisitorBean {
   @Attribute("class")
   @RequiredElement
