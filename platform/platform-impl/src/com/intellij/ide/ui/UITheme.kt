@@ -7,7 +7,6 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.ide.ui.UIThemeBean.Companion.readTheme
 import com.intellij.ide.ui.laf.IJColor
 import com.intellij.ide.ui.laf.IJColorUIResource
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoImpl

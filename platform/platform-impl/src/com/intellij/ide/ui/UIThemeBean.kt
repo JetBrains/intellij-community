@@ -12,87 +12,6 @@ import java.util.*
 import java.util.function.BiFunction
 
 internal class UIThemeBean {
-  companion object {
-    fun readTheme(parser: JsonParser): UIThemeBean {
-      check(parser.nextToken() == JsonToken.START_OBJECT)
-      val bean = UIThemeBean()
-      while (true) {
-        when (parser.nextToken()) {
-          JsonToken.START_OBJECT -> {
-            when (val fieldName = parser.currentName()) {
-              "icons" -> bean.icons = readMapFromJson(parser)
-              "background" -> bean.background = readMapFromJson(parser)
-              "emptyFrameBackground" -> bean.emptyFrameBackground = readMapFromJson(parser)
-              "colors" -> bean.colorMap.rawMap = readColorMapFromJson(parser, HashMap())
-              "iconColorsOnSelection" -> bean.iconColorOnSelectionMap.rawMap = readColorMapFromJson(parser, HashMap())
-              "ui" -> {
-                // ordered map is required (not clear why)
-                val map = LinkedHashMap<String, Any?>(700)
-                readFlatMapFromJson(parser, map)
-                putDefaultsIfAbsent(map)
-                bean.ui = map
-              }
-              "UIDesigner" -> {
-                parser.skipChildren()
-              }
-              else -> {
-                logger<UIThemeBean>().warn("Unknown field: $fieldName")
-              }
-            }
-          }
-          JsonToken.END_OBJECT -> {
-          }
-          JsonToken.START_ARRAY -> {
-            val fieldName = parser.currentName()
-            val list = ArrayList<String>()
-            while (parser.nextToken() != JsonToken.END_ARRAY) {
-              when (parser.currentToken()) {
-                JsonToken.VALUE_STRING -> {
-                  list.add(parser.valueAsString)
-                }
-                else -> {}
-              }
-            }
-
-            when (fieldName) {
-              "additionalEditorSchemes" -> {
-                bean.additionalEditorSchemes = java.util.List.copyOf(list)
-              }
-              else -> {
-                logger<UIThemeBean>().warn("Unknown field: ${parser.currentName()}")
-              }
-            }
-          }
-          JsonToken.VALUE_STRING -> {
-            when (parser.currentName()) {
-              "id" -> {
-                logger<UIThemeBean>().warn("Do not set theme id in JSON (value=${parser.valueAsString})")
-              }
-              "name" -> bean.name = parser.valueAsString
-              "nameKey" -> bean.nameKey = parser.valueAsString
-              "parentTheme" -> bean.parentTheme = parser.valueAsString
-              "resourceBundle" -> bean.resourceBundle = parser.valueAsString
-              "author" -> bean.author = parser.valueAsString
-
-              "editorScheme" -> bean.editorScheme = parser.valueAsString
-            }
-          }
-          JsonToken.VALUE_TRUE -> readTopLevelBoolean(parser, bean, value = true)
-          JsonToken.VALUE_FALSE -> readTopLevelBoolean(parser, bean, value = false)
-          JsonToken.FIELD_NAME -> {
-          }
-          null -> break
-          else -> {
-            logger<UIThemeBean>().warn("Unknown field: ${parser.currentName()}")
-          }
-        }
-      }
-
-      putDefaultsIfAbsent(bean)
-      return bean
-    }
-  }
-
   @JvmField
   var name: String? = null
 
@@ -138,6 +57,85 @@ internal class UIThemeBean {
   var iconColorOnSelectionMap: ColorMap = ColorMap()
 
   override fun toString() = "UIThemeBean(name=$name, parentTheme=$parentTheme, dark=$dark)"
+}
+
+internal fun readTheme(parser: JsonParser): UIThemeBean {
+  check(parser.nextToken() == JsonToken.START_OBJECT)
+  val bean = UIThemeBean()
+  while (true) {
+    when (parser.nextToken()) {
+      JsonToken.START_OBJECT -> {
+        when (val fieldName = parser.currentName()) {
+          "icons" -> bean.icons = readMapFromJson(parser)
+          "background" -> bean.background = readMapFromJson(parser)
+          "emptyFrameBackground" -> bean.emptyFrameBackground = readMapFromJson(parser)
+          "colors" -> bean.colorMap.rawMap = readColorMapFromJson(parser, HashMap())
+          "iconColorsOnSelection" -> bean.iconColorOnSelectionMap.rawMap = readColorMapFromJson(parser, HashMap())
+          "ui" -> {
+            // ordered map is required (not clear why)
+            val map = LinkedHashMap<String, Any?>(700)
+            readFlatMapFromJson(parser, map)
+            putDefaultsIfAbsent(map)
+            bean.ui = map
+          }
+          "UIDesigner" -> {
+            parser.skipChildren()
+          }
+          else -> {
+            logger<UIThemeBean>().warn("Unknown field: $fieldName")
+          }
+        }
+      }
+      JsonToken.END_OBJECT -> {
+      }
+      JsonToken.START_ARRAY -> {
+        val fieldName = parser.currentName()
+        val list = ArrayList<String>()
+        while (parser.nextToken() != JsonToken.END_ARRAY) {
+          when (parser.currentToken()) {
+            JsonToken.VALUE_STRING -> {
+              list.add(parser.valueAsString)
+            }
+            else -> {}
+          }
+        }
+
+        when (fieldName) {
+          "additionalEditorSchemes" -> {
+            bean.additionalEditorSchemes = java.util.List.copyOf(list)
+          }
+          else -> {
+            logger<UIThemeBean>().warn("Unknown field: ${parser.currentName()}")
+          }
+        }
+      }
+      JsonToken.VALUE_STRING -> {
+        when (parser.currentName()) {
+          "id" -> {
+            logger<UIThemeBean>().warn("Do not set theme id in JSON (value=${parser.valueAsString})")
+          }
+          "name" -> bean.name = parser.valueAsString
+          "nameKey" -> bean.nameKey = parser.valueAsString
+          "parentTheme" -> bean.parentTheme = parser.valueAsString
+          "resourceBundle" -> bean.resourceBundle = parser.valueAsString
+          "author" -> bean.author = parser.valueAsString
+
+          "editorScheme" -> bean.editorScheme = parser.valueAsString
+        }
+      }
+      JsonToken.VALUE_TRUE -> readTopLevelBoolean(parser, bean, value = true)
+      JsonToken.VALUE_FALSE -> readTopLevelBoolean(parser, bean, value = false)
+      JsonToken.FIELD_NAME -> {
+      }
+      null -> break
+      else -> {
+        logger<UIThemeBean>().warn("Unknown field: ${parser.currentName()}")
+      }
+    }
+  }
+
+  putDefaultsIfAbsent(bean)
+  return bean
 }
 
 /**
