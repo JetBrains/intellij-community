@@ -843,56 +843,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @ApiStatus.Internal
-  private Promise<Void> scheduleUpdate(
-    @NotNull List<VirtualFile> filesToUpdate,
-    @NotNull List<VirtualFile> filesToDelete,
-    MavenImportSpec spec
-  ) {
-
-    if (MavenUtil.isLinearImportEnabled()) {
-      return MavenImportingManager.getInstance(myProject).scheduleUpdate(filesToUpdate, filesToDelete, spec).getFinishPromise()
-        .then(it -> null);
-    }
-
-    return scheduleUpdateSuspendable(spec, filesToUpdate, filesToDelete);
-  }
-
-  private Promise<Void> scheduleUpdateSuspendable(MavenImportSpec spec,
-                                                  List<VirtualFile> filesToUpdate,
-                                                  List<VirtualFile> filesToDelete) {
-    final AsyncPromise<Void> promise = new AsyncPromise<>();
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        updateMavenProjectsSync(spec, filesToUpdate, filesToDelete, promise);
-      }
-      else {
-        MavenLog.LOG.warn("updateAllMavenProjectsSync skipped in write action");
-      }
-    }
-    else {
-      AppExecutorUtil.getAppExecutorService().execute(() -> {
-        updateMavenProjectsSync(spec, filesToUpdate, filesToDelete, promise);
-      });
-    }
-
-    return promise;
-  }
-
-  private void updateMavenProjectsSync(MavenImportSpec spec,
-                                       List<VirtualFile> filesToUpdate,
-                                       List<VirtualFile> filesToDelete,
-                                       AsyncPromise<Void> promise) {
-    try {
-      updateMavenProjectsSync(spec, filesToUpdate, filesToDelete);
-      promise.setResult(null);
-    }
-    catch (Exception e) {
-      promise.setError(e);
-    }
-  }
-
-  @ApiStatus.Internal
   public void forceUpdateProjects() {
     scheduleUpdateAllProjects(MavenImportSpec.EXPLICIT_IMPORT);
   }
@@ -901,16 +851,13 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
    * @deprecated  Use {@link #scheduleForceUpdateMavenProjects(List)}}
    */
   @Deprecated
-  public AsyncPromise<Void> forceUpdateProjects(@NotNull Collection<MavenProject> projects) {
-    var spec = MavenImportSpec.EXPLICIT_IMPORT;
-    MavenDistributionsCache.getInstance(myProject).cleanCaches();
-    MavenWslCache.getInstance().clearCache();
-    final AsyncPromise<Void> promise = new AsyncPromise<>();
-    MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
-      scheduleUpdate(MavenUtil.collectFiles(projects), List.of(), spec).processed(promise);
-    });
-    return promise;
+  // used in third-party plugins
+  public AsyncPromise<Void> forceUpdateProjects(@NotNull Collection<@NotNull MavenProject> projects) {
+    return doForceUpdateProjects(projects);
   }
+
+  @Deprecated
+  protected abstract AsyncPromise<Void> doForceUpdateProjects(@NotNull Collection<@NotNull MavenProject> projects);
 
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles() {
     forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec.EXPLICIT_IMPORT);

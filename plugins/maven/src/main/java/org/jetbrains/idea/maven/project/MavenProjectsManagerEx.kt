@@ -27,6 +27,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
@@ -45,9 +46,7 @@ import java.util.function.Supplier
 interface MavenAsyncProjectsManager {
   fun updateAllMavenProjectsSync(spec: MavenImportSpec): List<Module>
   suspend fun updateAllMavenProjects(spec: MavenImportSpec): List<Module>
-  fun updateMavenProjectsSync(spec: MavenImportSpec,
-                              filesToUpdate: List<VirtualFile>,
-                              filesToDelete: List<VirtualFile>): List<Module>
+
   fun scheduleForceUpdateMavenProject(mavenProject: MavenProject) =
     scheduleForceUpdateMavenProjects(listOf(mavenProject))
   fun scheduleForceUpdateMavenProjects(mavenProjects: List<MavenProject>) =
@@ -202,32 +201,14 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     importMavenProjects(projectsToImport)
   }
 
-  override fun updateMavenProjectsSync(spec: MavenImportSpec,
-                                       filesToUpdate: List<VirtualFile>,
-                                       filesToDelete: List<VirtualFile>): List<Module> {
-    MavenLog.LOG.warn("updateMavenProjectsSync started, edt=" + ApplicationManager.getApplication().isDispatchThread)
-    try {
-      return doUpdateMavenProjectsSync(spec, filesToUpdate, filesToDelete)
+  @Deprecated("Use {@link #scheduleForceUpdateMavenProjects(List)}}")
+  override fun doForceUpdateProjects(projects: Collection<MavenProject>): AsyncPromise<Void> {
+    val promise = AsyncPromise<Void>()
+    cs.launch {
+      updateMavenProjects(MavenImportSpec.EXPLICIT_IMPORT, projects.map { it.file }, emptyList())
+      promise.setResult(null)
     }
-    finally {
-      MavenLog.LOG.warn("updateMavenProjectsSync finished, edt=" + ApplicationManager.getApplication().isDispatchThread)
-    }
-  }
-
-  private fun doUpdateMavenProjectsSync(spec: MavenImportSpec,
-                                        filesToUpdate: List<VirtualFile>,
-                                        filesToDelete: List<VirtualFile>): List<Module> {
-    // unit tests
-    if (ApplicationManager.getApplication().isDispatchThread) {
-      return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
-        updateMavenProjects(spec, filesToUpdate, filesToDelete)
-      }
-    }
-    else {
-      return runBlockingMaybeCancellable {
-        updateMavenProjects(spec, filesToUpdate, filesToDelete)
-      }
-    }
+    return promise
   }
 
   override fun scheduleUpdateMavenProjects(spec: MavenImportSpec,
