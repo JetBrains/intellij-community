@@ -43,7 +43,9 @@ class UIThemeProvider : PluginAware {
   @JvmField
   var id: String? = null
 
+  @Deprecated("Please specify parentTheme in JSON")
   @Attribute("parentTheme")
+  @JvmField
   var parentTheme: String? = null
 
   @Attribute("targetUi")
