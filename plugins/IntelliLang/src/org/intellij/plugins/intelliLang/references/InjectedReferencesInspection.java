@@ -42,7 +42,7 @@ public class InjectedReferencesInspection extends LocalInspectionTool {
     }
 
     @Override
-    public List<Class<?>> getHintPsiElements() {
+    public @NotNull List<Class<?>> getHintPsiElements() {
       return List.of(PsiLanguageInjectionHost.class, ContributedReferenceHost.class);
     }
 

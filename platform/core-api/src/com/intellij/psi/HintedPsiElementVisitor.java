@@ -2,6 +2,7 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -21,5 +22,5 @@ public interface HintedPsiElementVisitor {
   /**
    * @return PSI element classes to visit
    */
-  List<Class<?>> getHintPsiElements();
+  @NotNull List<Class<?>> getHintPsiElements();
 }
