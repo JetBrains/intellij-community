@@ -44,7 +44,5 @@ internal fun importProject(project: Project) {
     else {
       mavenManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
     }
-
-    MavenProjectsManager.getInstance(project).waitForImportCompletion()
   }
 }

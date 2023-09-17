@@ -130,7 +130,7 @@ public abstract class AbstractExternalSystemSettings<
   public void linkProject(@NotNull PS settings) throws IllegalArgumentException {
     PS existing = getLinkedProjectSettings(settings.getExternalProjectPath());
     if (existing != null) {
-      throw new IllegalArgumentException(String.format(
+      throw new AlreadyImportedProjectException(String.format(
         "Can't link project '%s'. Reason: it's already linked to the IDE project",
         settings.getExternalProjectPath()
       ));
@@ -277,5 +277,11 @@ public abstract class AbstractExternalSystemSettings<
     Set<S> getLinkedExternalProjectsSettings();
 
     void setLinkedExternalProjectsSettings(Set<S> settings);
+  }
+
+  public static class AlreadyImportedProjectException extends IllegalArgumentException {
+    public AlreadyImportedProjectException(String s) {
+      super(s);
+    }
   }
 }
