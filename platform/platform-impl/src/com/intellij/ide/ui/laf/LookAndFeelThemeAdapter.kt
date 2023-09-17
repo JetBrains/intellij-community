@@ -51,6 +51,8 @@ internal class LookAndFeelThemeAdapter(
 
     theme.installTheme(defaults)
 
+    defaults.put("Tree.ancestorInputMap", null)
+
     if (SystemInfoRt.isLinux && listOf("CN", "JP", "KR", "TW").contains(Locale.getDefault().country)) {
       for (key in defaults.keys) {
         if (key.toString().endsWith(".font")) {

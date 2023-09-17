@@ -1329,7 +1329,6 @@ internal val patchableFontResources: Array<String> = arrayOf("Button.font", "Tog
                                                              "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font")
 
 internal fun initFontDefaults(defaults: UIDefaults, uiFont: FontUIResource) {
-  defaults.put("Tree.ancestorInputMap", null)
   val textFont = FontUIResource(uiFont)
   val monoFont = FontUIResource("Monospaced", Font.PLAIN, uiFont.size)
   for (fontResource in patchableFontResources) {
