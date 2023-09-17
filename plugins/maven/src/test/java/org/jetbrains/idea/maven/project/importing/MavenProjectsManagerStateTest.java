@@ -15,6 +15,11 @@ import java.util.Collections;
 
 public class MavenProjectsManagerStateTest extends MavenMultiVersionImportingTestCase {
   @Override
+  protected boolean runInDispatchThread() {
+    return false;
+  }
+
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     initProjectsManager(true);

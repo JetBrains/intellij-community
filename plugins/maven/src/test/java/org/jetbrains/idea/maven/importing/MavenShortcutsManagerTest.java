@@ -19,6 +19,11 @@ import java.util.Collections;
 import java.util.List;
 
 public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCase {
+  @Override
+  protected boolean runInDispatchThread() {
+    return false;
+  }
+
   private MavenShortcutsManager myShortcutsManager;
 
   @Override

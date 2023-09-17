@@ -107,38 +107,25 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
     val modelsProvider = optionalModelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
 
+    project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).importStarted()
     val importResult = withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
-      blockingContext { doImport(projectsToImport, modelsProvider) }
+      blockingContext {
+        runImportProjectActivity(projectsToImport, modelsProvider)
+      }
     }
+    project.messageBus.syncPublisher(MavenImportListener.TOPIC).importFinished(projectsToImport.keys, importResult.createdModules)
 
     getVirtualFileManager().asyncRefresh()
 
     withBackgroundProgress(project, MavenProjectBundle.message("maven.post.processing"), true) {
       blockingContext {
-        performPostImportTasks(importResult.postTasks)
+        val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
+        for (task in importResult.postTasks) {
+          task.perform(myProject, embeddersManager, mavenConsole, indicator)
+        }
       }
     }
     return importResult.createdModules
-  }
-
-  private fun performPostImportTasks(postTasks: List<MavenProjectsProcessorTask>) {
-    val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
-    for (task in postTasks) {
-      task.perform(myProject, embeddersManager, mavenConsole, indicator)
-    }
-  }
-
-  private fun doImport(projectsToImport: Map<MavenProject, MavenProjectChanges>,
-                       modelsProvider: IdeModifiableModelsProvider): ImportResult {
-    project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).importStarted()
-
-    val importResult = runImportProjectActivity(projectsToImport, modelsProvider)
-
-    val createdModules = importResult.createdModules
-
-    project.messageBus.syncPublisher(MavenImportListener.TOPIC).importFinished(projectsToImport.keys, createdModules)
-
-    return importResult
   }
 
   private fun runImportProjectActivity(projectsToImport: Map<MavenProject, MavenProjectChanges>,
