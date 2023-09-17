@@ -9,7 +9,7 @@ import java.io.IOException;
 public class MavenSurefirePluginTest extends MavenDomWithIndicesTestCase {
   @Override
   protected MavenIndicesTestFixture createIndicesFixture() {
-    return new MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins", new String[]{"local1"});
+    return new MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins", "local1");
   }
 
   @Test
