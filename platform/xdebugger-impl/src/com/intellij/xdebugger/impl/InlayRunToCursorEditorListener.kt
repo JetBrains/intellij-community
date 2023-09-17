@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.HintHint
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -50,7 +51,8 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
   companion object {
     @JvmStatic
     val isInlayRunToCursorEnabled: Boolean get() =
-      Registry.`is`("debugger.inlayRunToCursor") || AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor")
+      Registry.`is`("debugger.inlayRunToCursor") ||
+      AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor") && PlatformUtils.isIntelliJ()
   }
 
   private var currentHint = WeakReference<RunToCursorHint?>(null)
