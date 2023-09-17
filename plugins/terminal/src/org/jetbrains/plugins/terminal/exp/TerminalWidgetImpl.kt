@@ -105,7 +105,6 @@ class TerminalWidgetImpl(private val project: Project,
   private class TerminalPlaceholder : TerminalContentView {
 
     private val postponedTerminationCallbackInfos: MutableList<Pair<Runnable, Disposable>> = CopyOnWriteArrayList()
-    private var destView: TerminalContentView? = null
 
     override val component: JComponent = object : JPanel() {
       override fun getBackground(): Color {
@@ -124,28 +123,18 @@ class TerminalWidgetImpl(private val project: Project,
     override fun isFocused(): Boolean = false
 
     override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
-      synchronized(this) {
-        destView?.addTerminationCallback(onTerminated, parentDisposable) ?: run {
-          postponedTerminationCallbackInfos.add(Pair(onTerminated, parentDisposable))
-        }
-      }
+      postponedTerminationCallbackInfos.add(Pair(onTerminated, parentDisposable))
     }
 
     fun moveTerminationCallbacksTo(destView: TerminalContentView) {
-      synchronized(this) {
-        this.destView = destView
-        for (info in postponedTerminationCallbackInfos) {
-          destView.addTerminationCallback(info.first, info.second)
-        }
-        postponedTerminationCallbackInfos.clear()
+      for (info in postponedTerminationCallbackInfos) {
+        destView.addTerminationCallback(info.first, info.second)
       }
+      postponedTerminationCallbackInfos.clear()
     }
 
     override fun dispose() {
-      synchronized(this) {
-        destView = null
-        postponedTerminationCallbackInfos.clear()
-      }
+      postponedTerminationCallbackInfos.clear()
     }
   }
 }
