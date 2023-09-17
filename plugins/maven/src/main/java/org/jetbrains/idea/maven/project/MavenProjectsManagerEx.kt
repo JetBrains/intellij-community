@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -118,17 +117,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   private inner class MavenProjectsManagerImporter(private val modelsProvider: IdeModifiableModelsProvider,
                                                    private val projectsToImport: Map<MavenProject, MavenProjectChanges>) {
-    @RequiresBlockingContext
-    fun importMavenProjectsBlocking(): List<Module> {
-      return runBlockingMaybeCancellable { importMavenProjectsBg() }
-    }
-
-    suspend fun importMavenProjects(): List<Module> {
-      return importMavenProjectsBg()
-    }
-
     @RequiresBackgroundThread
-    suspend fun importMavenProjectsBg(): List<Module> {
+    suspend fun importMavenProjects(): List<Module> {
       val importResult = withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
         val importResult = blockingContext { doImport() }
         val fm = getVirtualFileManager()
