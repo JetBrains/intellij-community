@@ -43,10 +43,6 @@ public class LombokRenameTest extends LightJavaCodeInsightFixtureTestCase {
                        .clearSomeStrValues()
                        .build();
            }
-
-           public static void main(String[] args) {
-
-           }
        }""";
     myFixture.configureByText(JavaFileType.INSTANCE, testFileData);
 
@@ -58,5 +54,44 @@ public class LombokRenameTest extends LightJavaCodeInsightFixtureTestCase {
 
     final PsiMethod doSomethingMethod = appBuilderClass.getContainingClass().findMethodsByName("doSomething", false)[0];
     assertTrue(doSomethingMethod.getBody().getText().contains("withFirmPartyGfcId_NewName(\"firm_party_gfcid\")"));
+  }
+
+  public void testLombokRenameFieldInBuilderWithoutPrefix() {
+
+    final @Language("JAVA") String testFileData = """
+      import lombok.Builder;
+      import lombok.Data;
+      import lombok.Singular;
+
+      import java.util.List;
+
+       @Data
+       @Builder
+       public class App {
+
+           private String firmPartyGfcId<caret>;
+
+           @Singular
+           private List<String> someStrValues;
+
+           public static App doSomething() {
+               return App.builder()
+                       .firmPartyGfcId("firm_party_gfcid")
+                       .someStrValue("someValue")
+                       .someStrValues(List.of("xyz"))
+                       .clearSomeStrValues()
+                       .build();
+           }
+       }""";
+    myFixture.configureByText(JavaFileType.INSTANCE, testFileData);
+
+    myFixture.renameElementAtCaret("firmPartyGfcId_NewName");
+
+
+    final PsiClass appBuilderClass = myFixture.findClass("App.AppBuilder");
+    assertEquals(1, appBuilderClass.findMethodsByName("firmPartyGfcId_NewName", false).length);
+
+    final PsiMethod doSomethingMethod = appBuilderClass.getContainingClass().findMethodsByName("doSomething", false)[0];
+    assertTrue(doSomethingMethod.getBody().getText().contains("firmPartyGfcId_NewName(\"firm_party_gfcid\")"));
   }
 }
