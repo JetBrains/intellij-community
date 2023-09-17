@@ -146,13 +146,13 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   override fun listenForSettingsChanges() {
     importingSettings.addListener(object : MavenImportingSettings.Listener {
       override fun createModuleForAggregatorsChanged() {
-        performInBackground {
+        cs.launch {
           doImportMavenProjects(emptyMap(), null)
         }
       }
 
       override fun updateAllProjectStructure() {
-        performInBackground {
+        cs.launch {
           importAllProjects()
         }
       }
