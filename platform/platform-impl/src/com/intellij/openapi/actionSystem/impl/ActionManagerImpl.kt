@@ -558,46 +558,16 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
       registerOrReplaceActionInner(element = element, id = id, action = group, plugin = module)
 
-      val presentation = group.templatePresentation
-      // don't override value which was set in API with empty value from xml descriptor
-      if (!presentation.hasText()) {
-        val text = Supplier {
-          computeActionText(bundle = bundle,
-                            id = id,
-                            elementType = GROUP_ELEMENT_NAME,
-                            textValue = element.attributes.get(TEXT_ATTR_NAME),
-                            classLoader = classLoader)
-        }
-        if (!text.get().isNullOrEmpty()) {
-          presentation.setText(text)
-        }
-      }
-
-      // description
-      val description = element.attributes.get(DESCRIPTION) //NON-NLS
-      if (bundle == null) {
-        // don't override value which was set in API with empty value from xml descriptor
-        if (!description.isNullOrEmpty() || presentation.description == null) {
-          presentation.description = description
-        }
-      }
-      else {
-        val descriptionSupplier = Supplier {
-          computeDescription(bundle = bundle,
-                             id = id,
-                             elementType = GROUP_ELEMENT_NAME,
-                             descriptionValue = description,
-                             classLoader = classLoader)
-        }
-        // don't override value which was set in API with empty value from xml descriptor
-        if (!descriptionSupplier.get().isNullOrEmpty() || presentation.description == null) {
-          presentation.setDescription(descriptionSupplier)
-        }
-      }
-
-      if (iconPath != null && group !is ActionGroupStub) {
-        presentation.icon = loadIcon(module = module, iconPath = iconPath, requestor = className)
-      }
+      configureGroupDescriptionAndIcon(presentation = group.templatePresentation,
+                                       description = element.attributes.get(DESCRIPTION),
+                                       textValue = element.attributes.get(TEXT_ATTR_NAME),
+                                       group = group,
+                                       bundle = bundle,
+                                       id = id,
+                                       classLoader = classLoader,
+                                       iconPath = iconPath,
+                                       module = module,
+                                       className = className)
 
       val searchable = element.attributes.get("searchable")
       if (searchable != null) {
@@ -1770,4 +1740,50 @@ internal fun convertStub(stub: ActionStub): AnAction? {
   stub.initAction(anAction)
   updateIconFromStub(stub = stub, anAction = anAction, componentManager = componentManager)
   return anAction
+}
+
+private fun configureGroupDescriptionAndIcon(presentation: Presentation,
+                                             @NlsSafe description: String?,
+                                             textValue: String?,
+                                             group: ActionGroup,
+                                             bundle: ResourceBundle?,
+                                             id: String,
+                                             classLoader: ClassLoader,
+                                             iconPath: String?,
+                                             module: IdeaPluginDescriptorImpl,
+                                             className: String?) {
+  // don't override value which was set in API with empty value from xml descriptor
+  if (!presentation.hasText()) {
+    val text = Supplier {
+      computeActionText(bundle = bundle, id = id, elementType = GROUP_ELEMENT_NAME, textValue = textValue, classLoader = classLoader)
+    }
+    if (!text.get().isNullOrEmpty()) {
+      presentation.setText(text)
+    }
+  }
+
+  // description
+  if (bundle == null) {
+    // don't override value which was set in API with empty value from xml descriptor
+    if (!description.isNullOrEmpty() || presentation.description == null) {
+      presentation.description = description
+    }
+  }
+  else {
+    val descriptionSupplier = Supplier {
+      computeDescription(bundle = bundle,
+                         id = id,
+                         elementType = GROUP_ELEMENT_NAME,
+                         descriptionValue = description,
+                         classLoader = classLoader)
+    }
+    // don't override value which was set in API with empty value from xml descriptor
+    if (!descriptionSupplier.get().isNullOrEmpty() || presentation.description == null) {
+      presentation.setDescription(descriptionSupplier)
+    }
+  }
+
+  if (iconPath != null && group !is ActionGroupStub) {
+    presentation.icon = loadIcon(module = module, iconPath = iconPath, requestor = className)
+  }
 }

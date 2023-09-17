@@ -321,7 +321,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
       presentation = createTemplatePresentation();
       LOG.assertTrue(presentation.isTemplate(), "Not a template presentation");
       myTemplatePresentation = presentation;
-      if (this instanceof ActionGroup) { // init group flags from deprecated methods
+      if (this instanceof ActionGroup) {
+        // init group flags from deprecated methods
         //myTemplatePresentation.setPopupGroup(((ActionGroup)this).isPopup());
         myTemplatePresentation.setHideGroupIfEmpty(((ActionGroup)this).hideIfNoVisibleChildren());
         myTemplatePresentation.setDisableGroupIfEmpty(((ActionGroup)this).disableIfNoVisibleChildren());
@@ -362,7 +363,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   /**
    * Sets the flag indicating whether the action has an internal or a user-customized icon.
    *
-   * @param isDefaultIconSet true if the icon is internal, false if the icon is customized by the user
+   * @param isDefaultIconSet true if the icon is internal, false if the user customizes the icon
    */
   public void setDefaultIcon(boolean isDefaultIconSet) {
     myIsDefaultIcon = isDefaultIconSet;
@@ -371,7 +372,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   /**
    * Returns true if the action has an internal, not user-customized icon.
    *
-   * @return true if the icon is internal, false if the icon is customized by the user.
+   * @return true if the icon is internal, false if the user customizes the icon.
    */
   public boolean isDefaultIcon() {
     return myIsDefaultIcon;
