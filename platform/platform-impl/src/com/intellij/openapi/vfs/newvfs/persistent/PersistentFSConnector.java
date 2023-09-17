@@ -7,6 +7,8 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.VersionUpdatedException;
 import org.jetbrains.annotations.NotNull;
@@ -227,7 +229,8 @@ final class PersistentFSConnector {
       return connection;
     }
     catch (Throwable e) { // IOException, IllegalArgumentException, AssertionError
-      LOG.warn("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + e.getMessage());
+      String errorMessage = ExceptionUtil.getNonEmptyMessage(e, "<unrecognized>");
+      LOG.warn("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + errorMessage);
       try {
         vfsLoader.closeEverything();
         if (e instanceof CachesWereRecoveredFromLogException) {
@@ -262,7 +265,7 @@ final class PersistentFSConnector {
         throw new VFSInitException(IMPL_VERSION_MISMATCH, "Some of storages versions were changed", e);
       }
 
-      throw new VFSInitException(UNRECOGNIZED, "VFS init failure of unrecognized category: " + e, e);
+      throw new VFSInitException(UNRECOGNIZED, "VFS init failure of unrecognized category: " + errorMessage, e);
     }
   }
 }

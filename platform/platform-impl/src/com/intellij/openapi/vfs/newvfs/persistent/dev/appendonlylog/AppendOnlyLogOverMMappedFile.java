@@ -240,8 +240,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
       setImplementationVersion(CURRENT_IMPLEMENTATION_VERSION);
     }
     else if (implementationVersion != CURRENT_IMPLEMENTATION_VERSION) {
-      throw new IOException("Storage .implementationVersion(=" + implementationVersion + ") is not supported: " +
-                            CURRENT_IMPLEMENTATION_VERSION + " is the supported one.");
+      throw new IOException(getClass().getSimpleName() + " .implementationVersion(=" + implementationVersion + ") is not supported: " +
+                            CURRENT_IMPLEMENTATION_VERSION + " is the currently supported version.");
     }
 
 
@@ -444,7 +444,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
 
       if (pageSize - recordOffsetInPage <= RecordLayout.RECORD_HEADER_SIZE) {
         throw new IOException(
-          "Storage corrupted: recordOffsetInPage(=" + recordOffsetInPage + ") less than " +
+          getClass().getSimpleName() + " corrupted: recordOffsetInPage(=" + recordOffsetInPage + ") less than " +
           "RECORD_HEADER(=" + RecordLayout.RECORD_HEADER_SIZE + "b) left until " +
           "pageEnd(" + pageSize + ") -- all records must be 32b-aligned"
         );
@@ -691,7 +691,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
 
       if (pageSize - recordOffsetInPage <= RecordLayout.RECORD_HEADER_SIZE) {
         throw new IOException(
-          "Storage corrupted: recordOffsetInPage(=" + recordOffsetInPage + ") less than " +
+          getClass().getSimpleName()+" corrupted: recordOffsetInPage(=" + recordOffsetInPage + ") less than " +
           "RECORD_HEADER(=" + RecordLayout.RECORD_HEADER_SIZE + "b) left until " +
           "pageEnd(" + pageSize + ") -- all records must be 32b-aligned"
         );

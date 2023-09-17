@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlo
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverPagedStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.ContentHashEnumeratorOverDurableEnumerator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
@@ -31,6 +32,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import net.sf.cglib.core.CollectionUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor.hasDeletedFlag;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
@@ -61,6 +64,35 @@ public final class PersistentFSLoader {
   private static final Logger LOG = Logger.getInstance(PersistentFSLoader.class);
 
   private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT = new StorageLockContext(false, true);
+
+  /**
+   * We want the 'main exception' to be 1) IOException 2) with +/- descriptive message.
+   * So:
+   *    => We look for such an exception among .exceptions, and if there is one -> use it as the main one
+   *    => Otherwise we create IOException with the first non-empty error message among .exceptions
+   * In both cases, we attach all other exceptions to .suppressed list of the main exception
+   */
+  private static final @NotNull Function<List<? extends Throwable>, IOException> ASYNC_EXCEPTIONS_REPORTER = exceptions -> {
+    IOException mainException = (IOException)ContainerUtil.find(exceptions, e -> e instanceof IOException);
+    if (mainException != null && !mainException.getMessage().isEmpty()) {
+      for (Throwable exception : exceptions) {
+        if (exception != mainException) {
+          mainException.addSuppressed(exception);
+        }
+      }
+    }
+    else {
+      String nonEmptyErrorMessage = exceptions.stream()
+        .map(e -> ExceptionUtil.getNonEmptyMessage(e, ""))
+        .filter(message -> !message.isBlank())
+        .findFirst().orElse("<Error message not found>");
+      mainException = new IOException(nonEmptyErrorMessage);
+      for (Throwable exception : exceptions) {
+        mainException.addSuppressed(exception);
+      }
+    }
+    return mainException;
+  };
 
   private final PersistentFSPaths vfsPaths;
 
@@ -188,13 +220,11 @@ public final class PersistentFSLoader {
     });
 
     ExceptionUtil.runAllAndRethrowAllExceptions(
-      new IOException(),
+      ASYNC_EXCEPTIONS_REPORTER,
       () -> {
         //MAYBE RC: I'd like to have completely new Enumerator here:
         //          1. Without legacy issues with null vs 'null' strings
         //          2. With explicit 'id' stored in a file (instead of implicit id=row num)
-        //          3. With CopyOnWrite concurrent strategy (hence very cheap .enumerate() for already enumerated values)
-        //          ...next time we bump FSRecords version
         attributesEnumerator = new SimpleStringPersistentEnumerator(enumeratedAttributesFile);
       },
       () -> {
