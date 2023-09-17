@@ -101,16 +101,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   private suspend fun doImportMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>,
                                             modelsProvider: IdeModifiableModelsProvider?): List<Module> {
-    return prepareImporter(modelsProvider, projectsToImport).importMavenProjects()
-  }
-
-  private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider?,
-                              projectsToImport: Map<MavenProject, MavenProjectChanges>): MavenProjectsManagerImporter {
     if (projectsToImport.any { it.key == null }) {
       throw IllegalArgumentException("Null key in projectsToImport")
     }
     val finalModelsProvider = modelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
-    return MavenProjectsManagerImporter(finalModelsProvider, projectsToImport)
+    return MavenProjectsManagerImporter(finalModelsProvider, projectsToImport).importMavenProjects()
   }
 
   private data class ImportResult(val createdModules: List<Module>, val postTasks: List<MavenProjectsProcessorTask>)
