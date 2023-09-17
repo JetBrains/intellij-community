@@ -101,6 +101,8 @@ class VcsLogChangesBrowser internal constructor(project: Project,
     hideViewerBorder()
     setup(viewerScrollPane, Side.TOP)
 
+    getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.changes.accessible.name"))
+
     myViewer.setEmptyText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"))
     myViewer.rebuildTree()
   }
