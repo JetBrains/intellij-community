@@ -405,15 +405,10 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     @Suppress("HardCodedStringLiteral")
     val descriptionValue = element.attributes.get(DESCRIPTION)
     val stub = ActionStub(className, id, module, iconPath, ProjectType.create(projectType)) {
-      val text = Supplier {
-        computeActionText(bundle = bundle, id = id, elementType = ACTION_ELEMENT_NAME, textValue = textValue, classLoader = classLoader)
-      }
-      if (text.get() == null) {
-        LOG.error(PluginException("'text' attribute is mandatory (actionId=$id, module= $module)", module.pluginId))
-      }
-
       val presentation = Presentation.newTemplatePresentation()
-      presentation.setText(text)
+      presentation.setText(Supplier {
+        computeActionText(bundle = bundle, id = id, elementType = ACTION_ELEMENT_NAME, textValue = textValue, classLoader = classLoader)
+      })
       if (bundle == null) {
         presentation.description = descriptionValue
       }
@@ -1502,15 +1497,16 @@ private fun computeActionText(bundle: ResourceBundle?,
                               textValue: String?,
                               classLoader: ClassLoader): @NlsActions.ActionText String? {
   var effectiveBundle = bundle
-  val defaultValue = textValue ?: ""
   if (effectiveBundle != null && DefaultBundleService.isDefaultBundle()) {
     effectiveBundle = DynamicBundle.getResourceBundle(classLoader, effectiveBundle.baseBundleName)
   }
   if (effectiveBundle == null) {
-    return defaultValue
+    return textValue
   }
   else {
-    return AbstractBundle.messageOrDefault(effectiveBundle, "$elementType.$id.$TEXT_ATTR_NAME", defaultValue)
+    // messageOrDefault doesn't like default value as null
+    // (it counts it as a lack of default value, that's why we use empty string instead of null)
+    return AbstractBundle.messageOrDefault(effectiveBundle, "$elementType.$id.$TEXT_ATTR_NAME", textValue ?: "")?.takeIf { it.isNotEmpty() }
   }
 }
 
@@ -1753,13 +1749,8 @@ private fun configureGroupDescriptionAndIcon(presentation: Presentation,
                                              module: IdeaPluginDescriptorImpl,
                                              className: String?) {
   // don't override value which was set in API with empty value from xml descriptor
-  if (!presentation.hasText()) {
-    val text = Supplier {
-      computeActionText(bundle = bundle, id = id, elementType = GROUP_ELEMENT_NAME, textValue = textValue, classLoader = classLoader)
-    }
-    if (!text.get().isNullOrEmpty()) {
-      presentation.setText(text)
-    }
+  presentation.setFallbackPresentationText {
+    computeActionText(bundle = bundle, id = id, elementType = GROUP_ELEMENT_NAME, textValue = textValue, classLoader = classLoader)
   }
 
   // description

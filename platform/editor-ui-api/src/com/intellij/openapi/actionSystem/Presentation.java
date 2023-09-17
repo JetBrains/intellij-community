@@ -257,6 +257,16 @@ public final class Presentation implements Cloneable {
     setText(text, true);
   }
 
+  @ApiStatus.Internal
+  public void setFallbackPresentationText(@NotNull Supplier<String> supplier) {
+    Supplier<TextWithMnemonic> original = myTextWithMnemonicSupplier;
+    Supplier<TextWithMnemonic> fallback = getTextWithMnemonic(supplier, true);
+    myTextWithMnemonicSupplier = () -> {
+      TextWithMnemonic result = original.get();
+      return result == null ? fallback.get() : result;
+    };
+  }
+
   /**
    * @return the text with mnemonic, properly escaped, so it could be passed to {@link #setText(String)} (e.g. to copy the presentation).
    */
@@ -368,7 +378,7 @@ public final class Presentation implements Cloneable {
   /**
    * For an action group presentation sets whether the action group is a popup group or not.
    * A popup action group is shown as a submenu, a toolbar button that shows a popup when clicked, etc.
-   * A non-popup action group child actions are injected into the group parent group.
+   * A non-popup action group child actions are injected into the parent group.
    */
   public void setPopupGroup(boolean popup) {
     myFlags = BitUtil.set(myFlags, IS_POPUP_GROUP, popup);
