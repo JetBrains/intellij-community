@@ -7,13 +7,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
+import org.intellij.lang.annotations.Language;
 
 import java.util.List;
 
 public class SuperBuilderQuickFixTest extends AbstractLombokLightCodeInsightTestCase {
 
-  public void testAddModifiersAbstractStaticOnInnerBuilderClass() {
-    myFixture.configureByText(JavaFileType.INSTANCE, """
+  public void testAddModifiersAbstractAndStaticOnInnerBuilderClass() {
+    @Language("JAVA") final String text = """
       import lombok.experimental.SuperBuilder;
 
        @SuperBuilder
@@ -32,9 +33,61 @@ public class SuperBuilderQuickFixTest extends AbstractLombokLightCodeInsightTest
                }
            }
        }
-      """);
+      """;
+    myFixture.configureByText(JavaFileType.INSTANCE, text);
+
+    assertTrue(hasActionWithText("Make 'DeltaOfferComponentBuilder' abstract and static"));
+  }
+
+  public void testAddModifiersAbstractOnInnerBuilderClass() {
+    @Language("JAVA") final String text = """
+      import lombok.experimental.SuperBuilder;
+
+       @SuperBuilder
+       class DeltaComponentWithSalesAndTechComponentId {
+       }
+
+       @SuperBuilder<caret>
+       public class DeltaOfferComponent extends DeltaComponentWithSalesAndTechComponentId {
+
+           Integer max;
+
+           public static class DeltaOfferComponentBuilder {
+               public DeltaOfferComponentBuilder max(Integer max) {
+                   this.max = max;
+                   return this;
+               }
+           }
+       }
+      """;
+    myFixture.configureByText(JavaFileType.INSTANCE, text);
 
     assertTrue(hasActionWithText("Make 'DeltaOfferComponentBuilder' abstract"));
+  }
+
+  public void testAddModifiersStaticOnInnerBuilderClass() {
+    @Language("JAVA") final String text = """
+      import lombok.experimental.SuperBuilder;
+
+       @SuperBuilder
+       class DeltaComponentWithSalesAndTechComponentId {
+       }
+
+       @SuperBuilder<caret>
+       public class DeltaOfferComponent extends DeltaComponentWithSalesAndTechComponentId {
+
+           Integer max;
+
+           public abstract class DeltaOfferComponentBuilder {
+               public DeltaOfferComponentBuilder max(Integer max) {
+                   this.max = max;
+                   return this;
+               }
+           }
+       }
+      """;
+    myFixture.configureByText(JavaFileType.INSTANCE, text);
+
     assertTrue(hasActionWithText("Make 'DeltaOfferComponentBuilder' static"));
   }
 

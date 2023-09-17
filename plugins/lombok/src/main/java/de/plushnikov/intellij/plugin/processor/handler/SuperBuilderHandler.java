@@ -1,15 +1,17 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
+import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
-import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
+import de.plushnikov.intellij.plugin.quickfix.AddAbstractAndStaticModifiersFix;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -53,13 +55,22 @@ public class SuperBuilderHandler extends BuilderHandler {
         return false;
       }
 
-      final boolean isStaticAndAbstract = existingInnerBuilderClass.hasModifierProperty(PsiModifier.STATIC) &&
-                                          existingInnerBuilderClass.hasModifierProperty(PsiModifier.ABSTRACT);
+      final boolean isStatic = existingInnerBuilderClass.hasModifierProperty(PsiModifier.STATIC);
+      final boolean isAbstract = existingInnerBuilderClass.hasModifierProperty(PsiModifier.ABSTRACT);
 
-      if (!isStaticAndAbstract) {
-        problemSink.addErrorMessage("inspection.message.existing.builder.must.be.abstract.static.inner.class")
-          .withLocalQuickFixes(() -> PsiQuickFixFactory.createModifierListFix(existingInnerBuilderClass, PsiModifier.ABSTRACT, true, false),
-                               () -> PsiQuickFixFactory.createModifierListFix(existingInnerBuilderClass, PsiModifier.STATIC, true, false));
+      if (!isStatic || !isAbstract) {
+        final LombokProblem problem =
+          problemSink.addErrorMessage("inspection.message.existing.builder.must.be.abstract.static.inner.class");
+
+        if (!isAbstract && !isStatic) {
+          problem.withLocalQuickFixes(() -> new AddAbstractAndStaticModifiersFix(existingInnerBuilderClass));
+        }
+        else if (!isAbstract) {
+          problem.withLocalQuickFixes(() -> new ModifierFix(existingInnerBuilderClass, PsiModifier.ABSTRACT, true, false));
+        }
+        else {
+          problem.withLocalQuickFixes(() -> new ModifierFix(existingInnerBuilderClass, PsiModifier.STATIC, true, false));
+        }
         return false;
       }
     }
