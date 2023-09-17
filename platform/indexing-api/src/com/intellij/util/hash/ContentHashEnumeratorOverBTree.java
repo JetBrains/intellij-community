@@ -18,8 +18,7 @@ import java.util.Arrays;
 @ApiStatus.Internal
 public class ContentHashEnumeratorOverBTree extends PersistentBTreeEnumerator<byte[]> implements ContentHashEnumerator {
 
-
-  ContentHashEnumeratorOverBTree(@NotNull Path contentsHashesFile) throws IOException {
+  public ContentHashEnumeratorOverBTree(@NotNull Path contentsHashesFile) throws IOException {
     this(contentsHashesFile, null);
   }
 

@@ -262,7 +262,7 @@ final class PersistentFSConnector {
         throw new VFSInitException(IMPL_VERSION_MISMATCH, "Some of storages versions were changed", e);
       }
 
-      throw new VFSInitException(UNRECOGNIZED, "VFS init failure of unrecognized category: " + e.getMessage(), e);
+      throw new VFSInitException(UNRECOGNIZED, "VFS init failure of unrecognized category: " + e, e);
     }
   }
 }

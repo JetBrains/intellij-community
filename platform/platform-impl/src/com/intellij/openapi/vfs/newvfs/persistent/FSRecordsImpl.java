@@ -92,6 +92,8 @@ public final class FSRecordsImpl {
   private static final boolean USE_MRU_FILE_NAME_CACHE = getBooleanProperty("vfs.name-cache.use-mru", true);
 
   public static final boolean USE_CONTENT_STORAGE_OVER_NEW_FILE_PAGE_CACHE = getBooleanProperty("vfs.content-storage.use-lock-free-page-cache", true);
+
+  public static final boolean USE_CONTENT_HASH_STORAGE_OVER_MMAPPED_FILE = getBooleanProperty("vfs.content-hash-storage.use-mmapped-file", false);
   //@formatter:on
 
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
