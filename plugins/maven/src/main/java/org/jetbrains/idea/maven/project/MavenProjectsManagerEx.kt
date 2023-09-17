@@ -108,11 +108,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     val modelsProvider = optionalModelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
 
     val importResult = withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
-      val importResult = blockingContext { doImport(projectsToImport, modelsProvider) }
-      val fm = getVirtualFileManager()
-      fm.asyncRefresh()
-      importResult
+      blockingContext { doImport(projectsToImport, modelsProvider) }
     }
+
+    getVirtualFileManager().asyncRefresh()
+
     withBackgroundProgress(project, MavenProjectBundle.message("maven.post.processing"), true) {
       blockingContext {
         performPostImportTasks(importResult.postTasks)
