@@ -42,5 +42,5 @@ sealed interface EnvironmentKey {
 
 val EnvironmentKey.description: @Nls String
   get() = EnvironmentKeyProvider.EP_NAME.extensionList.firstNotNullOfOrNull { provider ->
-    provider.knownKeys[this]
+    provider.knownKeys[this]?.get()
   } ?: error("Key ${this.id} must be registered in some ${EnvironmentKeyProvider}")

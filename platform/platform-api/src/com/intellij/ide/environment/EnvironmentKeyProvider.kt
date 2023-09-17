@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.util.function.Supplier
 
 /**
  * Used for registering environment keys.
@@ -23,7 +24,7 @@ interface EnvironmentKeyProvider {
    * Returns all keys that are used by a client of [EnvironmentService].
    * Each [EnvironmentKey] must be registered at least in one [EnvironmentKeyProvider.knownKeys].
    */
-  val knownKeys: Map<EnvironmentKey, @EnvironmentKeyDescription String>
+  val knownKeys: Map<EnvironmentKey, Supplier<@EnvironmentKeyDescription String>>
 
   /**
    * Returns all keys that are absolutely required for a project to be configured without interaction with the user.
