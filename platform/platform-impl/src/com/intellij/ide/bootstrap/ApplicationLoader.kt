@@ -19,7 +19,6 @@ import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.laf.LafManagerImpl
-import com.intellij.ide.ui.laf.UiThemeProviderListManager
 import com.intellij.idea.*
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.openapi.application.*
@@ -238,14 +237,9 @@ private suspend fun preInitApp(app: ApplicationImpl,
       }
     }
 
-    coroutineScope {
-      launch {
-        // used by LafManager
-        app.serviceAsync<UISettings>()
-      }
-      launch(CoroutineName("UiThemeProviderListManager preloading")) {
-        app.serviceAsync<UiThemeProviderListManager>()
-      }
+    launch {
+      // used by LafManager
+      app.serviceAsync<UISettings>()
     }
 
     span("laf initialization") {
