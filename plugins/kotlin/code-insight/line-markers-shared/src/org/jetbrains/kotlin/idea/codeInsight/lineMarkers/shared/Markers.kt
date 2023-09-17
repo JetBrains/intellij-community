@@ -2,12 +2,29 @@
 package org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared
 
 import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.SearchScope
+import com.intellij.psi.util.parentOfType
+import com.intellij.refactoring.suggested.createSmartPointer
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 
 val KtNamedDeclaration.expectOrActualAnchor: PsiElement
     @ApiStatus.Internal
@@ -138,3 +155,101 @@ fun buildNavigateToExpectedDeclarationsPopup(element: PsiElement?, allNavigatabl
         )
     }
 }
+
+fun KtDeclaration.isEffectivelyActualDeclaration(checkConstructor: Boolean = true): Boolean = when {
+    hasActualModifier() -> true
+    this is KtEnumEntry || checkConstructor && this is KtConstructor<*> -> containingClass()?.hasActualModifier() == true
+    else -> false
+}
+
+fun KtDeclaration.isExpectDeclaration(): Boolean {
+    return when {
+        hasExpectModifier() -> true
+        else -> containingClassOrObject?.isExpectDeclaration() == true
+    }
+}
+
+fun hasExpectForActual(declaration: KtDeclaration): Boolean {
+    return analyze(declaration) {
+        val symbol: KtDeclarationSymbol = declaration.getSymbol()
+        symbol.getExpectsForActual().isNotEmpty()
+    }
+}
+
+fun KtDeclaration.allNavigatableExpectedDeclarations(): List<SmartPsiElementPointer<KtDeclaration>> {
+    return expectedDeclarationIfAny() + findMarkerBoundDeclarations().flatMap { it.expectedDeclarationIfAny() }
+}
+
+internal fun KtDeclaration.expectedDeclarationIfAny(): List<SmartPsiElementPointer<KtDeclaration>> {
+    val declaration = this
+    return analyze(this) {
+        val symbol: KtDeclarationSymbol = declaration.getSymbol()
+        (symbol.getExpectsForActual().mapNotNull { (it.psi as? KtDeclaration)?.createSmartPointer() })
+    }
+}
+
+@RequiresBackgroundThread(generateAssertion = false)
+internal fun KtDeclaration.findAllExpectForActual(searchScope: SearchScope = runReadAction { useScope }): Sequence<SmartPsiElementPointer<KtDeclaration>> {
+    val declaration = this
+    val scope = searchScope as? GlobalSearchScope ?: return emptySequence()
+    val containingClassOrObjectOrSelf = containingClassOrObjectOrSelf()
+    // covers cases like classes, class functions and class properties
+    containingClassOrObjectOrSelf?.fqName?.let { fqName ->
+        val classOrObjects = KotlinFullClassNameIndex.getAllElements(fqName.asString(), project, scope, filter = {
+            it.matchesWithActual(containingClassOrObjectOrSelf)
+        })
+        return if (classOrObjects.isNotEmpty()) {
+            classOrObjects.asSequence().mapNotNull { classOrObject ->
+                when (declaration) {
+                    is KtClassOrObject -> classOrObject
+                    is KtNamedDeclaration -> classOrObject.declarations.firstOrNull {
+                        it is KtNamedDeclaration && it.name == declaration.name && it.matchesWithActual(declaration)
+                    }
+
+                    else -> null
+                }?.createSmartPointer()
+            }
+        } else {
+            val typeAliases = KotlinTopLevelTypeAliasFqNameIndex.getAllElements(fqName.asString(), project, scope, filter = {
+                it.matchesWithActual(containingClassOrObjectOrSelf)
+            })
+            typeAliases.asSequence().mapNotNull { classOrObject ->
+                when (declaration) {
+                    is KtClassOrObject -> classOrObject
+                    else -> null
+                }?.createSmartPointer()
+            }
+        }
+    }
+    // top level functions
+    val packageFqName = declaration.containingKtFile.packageFqName
+    val topLevelFqName = packageFqName.child(Name.identifier(declaration.name!!)).asString()
+    return when (declaration) {
+        is KtNamedFunction -> {
+            KotlinTopLevelFunctionFqnNameIndex.getAllElements(topLevelFqName, project, scope) {
+                it.matchesWithActual(declaration)
+            }.asSequence().map(KtNamedFunction::createSmartPointer)
+        }
+
+        is KtProperty -> {
+            KotlinTopLevelPropertyFqnNameIndex.getAllElements(topLevelFqName, project, scope) {
+                it.matchesWithActual(declaration)
+            }.asSequence().map(KtProperty::createSmartPointer)
+        }
+
+        else -> emptySequence()
+    }
+}
+
+private fun KtDeclaration.matchesWithActual(actualDeclaration: KtDeclaration): Boolean {
+    val declaration = this
+    return declaration.hasActualModifier() && analyze(declaration) {
+        val symbol: KtDeclarationSymbol = declaration.getSymbol()
+        return symbol.getExpectsForActual().any { it.psi == actualDeclaration }
+    }
+}
+
+fun KtDeclaration.allNavigatableActualDeclarations(): Collection<SmartPsiElementPointer<KtDeclaration>> =
+    findAllExpectForActual().toSet() + findMarkerBoundDeclarations().flatMap { it.findAllExpectForActual() }
+
+fun KtElement.containingClassOrObjectOrSelf(): KtClassOrObject? = parentOfType(withSelf = true)
