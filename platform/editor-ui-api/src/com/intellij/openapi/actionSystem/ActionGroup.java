@@ -55,7 +55,10 @@ public abstract class ActionGroup extends AnAction {
 
   public ActionGroup(@NotNull Supplier<@ActionText String> shortName, boolean popup) {
     super(shortName);
-    setPopup(popup);
+    // avoid creating template presentation right on init
+    if (popup) {
+      getTemplatePresentation().setPopupGroup(popup);
+    }
   }
 
   public ActionGroup(@Nullable @ActionText String text,
