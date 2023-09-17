@@ -45,6 +45,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     project.serviceAsync<ExternalSystemInProgressService>().trackConfigurationActivity {
+      project.serviceAsync<ExternalSystemInProgressService>().unlinkedActivityStarted()
       loadProjectIfSingleUnlinkedProjectFound(project)
       val projectRoots = installProjectRootsScanner(project)
       installUnlinkedProjectScanner(project, projectRoots)

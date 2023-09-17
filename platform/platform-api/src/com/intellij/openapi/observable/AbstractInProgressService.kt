@@ -59,7 +59,7 @@ abstract class AbstractInProgressService(private val scope: CoroutineScope) {
     }
   }
 
-  fun isInProgress(): Boolean {
+  open fun isInProgress(): Boolean {
     return inProgress != 0
   }
 }
