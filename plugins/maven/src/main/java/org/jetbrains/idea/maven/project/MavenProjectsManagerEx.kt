@@ -99,71 +99,67 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     return createdModules
   }
 
+  @RequiresBackgroundThread
   private suspend fun doImportMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>,
-                                            modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+                                            optionalModelsProvider: IdeModifiableModelsProvider?): List<Module> {
     if (projectsToImport.any { it.key == null }) {
       throw IllegalArgumentException("Null key in projectsToImport")
     }
-    val finalModelsProvider = modelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
-    return MavenProjectsManagerImporter(finalModelsProvider, projectsToImport).importMavenProjects()
+    val modelsProvider = optionalModelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
+
+    val importResult = withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
+      val importResult = blockingContext { doImport(projectsToImport, modelsProvider) }
+      val fm = getVirtualFileManager()
+      fm.asyncRefresh()
+      importResult
+    }
+    withBackgroundProgress(project, MavenProjectBundle.message("maven.post.processing"), true) {
+      blockingContext {
+        performPostImportTasks(importResult.postTasks)
+      }
+    }
+    return importResult.createdModules
+  }
+
+  private fun performPostImportTasks(postTasks: List<MavenProjectsProcessorTask>) {
+    val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
+    for (task in postTasks) {
+      task.perform(myProject, embeddersManager, mavenConsole, indicator)
+    }
+  }
+
+  private fun doImport(projectsToImport: Map<MavenProject, MavenProjectChanges>,
+                       modelsProvider: IdeModifiableModelsProvider): ImportResult {
+    project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).importStarted()
+
+    val importResult = runImportProjectActivity(projectsToImport, modelsProvider)
+
+    val createdModules = importResult.createdModules
+
+    project.messageBus.syncPublisher(MavenImportListener.TOPIC).importFinished(projectsToImport.keys, createdModules)
+
+    return importResult
+  }
+
+  private fun runImportProjectActivity(projectsToImport: Map<MavenProject, MavenProjectChanges>,
+                                       modelsProvider: IdeModifiableModelsProvider): ImportResult {
+    val activity = importActivityStarted(project, MavenUtil.SYSTEM_ID) {
+      listOf(ProjectImportCollector.TASK_CLASS.with(MavenImportStats.ImportingTaskOld::class.java))
+    }
+    try {
+      val projectImporter = MavenProjectImporter.createImporter(
+        project, projectsTree, projectsToImport,
+        modelsProvider, importingSettings, myPreviewModule, activity
+      )
+      val postTasks = projectImporter.importProject()
+      return ImportResult(projectImporter.createdModules(), postTasks ?: emptyList())
+    }
+    finally {
+      activity.finished()
+    }
   }
 
   private data class ImportResult(val createdModules: List<Module>, val postTasks: List<MavenProjectsProcessorTask>)
-
-  private inner class MavenProjectsManagerImporter(private val modelsProvider: IdeModifiableModelsProvider,
-                                                   private val projectsToImport: Map<MavenProject, MavenProjectChanges>) {
-    @RequiresBackgroundThread
-    suspend fun importMavenProjects(): List<Module> {
-      val importResult = withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
-        val importResult = blockingContext { doImport() }
-        val fm = getVirtualFileManager()
-        fm.asyncRefresh()
-        return@withBackgroundProgress importResult
-      }
-      withBackgroundProgress(project, MavenProjectBundle.message("maven.post.processing"), true) {
-        blockingContext {
-          performPostImportTasks(importResult.postTasks)
-        }
-      }
-      return importResult.createdModules
-    }
-
-    private fun performPostImportTasks(postTasks: List<MavenProjectsProcessorTask>) {
-      val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
-      for (task in postTasks) {
-        task.perform(myProject, embeddersManager, mavenConsole, indicator)
-      }
-    }
-
-    private fun doImport(): ImportResult {
-      project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).importStarted()
-
-      val importResult = runImportProjectActivity()
-
-      val createdModules = importResult.createdModules
-
-      project.messageBus.syncPublisher(MavenImportListener.TOPIC).importFinished(projectsToImport.keys, createdModules)
-
-      return importResult
-    }
-
-    private fun runImportProjectActivity(): ImportResult {
-      val activity = importActivityStarted(project, MavenUtil.SYSTEM_ID) {
-        listOf(ProjectImportCollector.TASK_CLASS.with(MavenImportStats.ImportingTaskOld::class.java))
-      }
-      try {
-        val projectImporter = MavenProjectImporter.createImporter(
-          project, projectsTree, projectsToImport,
-          modelsProvider, importingSettings, myPreviewModule, activity
-        )
-        val postTasks = projectImporter.importProject()
-        return ImportResult(projectImporter.createdModules(), postTasks ?: emptyList())
-      }
-      finally {
-        activity.finished()
-      }
-    }
-  }
 
   override fun listenForSettingsChanges() {
     importingSettings.addListener(object : MavenImportingSettings.Listener {
