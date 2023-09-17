@@ -38,10 +38,18 @@ sealed interface ProblemLocation {
   }
 }
 
-class GeneratedCode(
+sealed interface GeneratedCode
+
+class ObjClassGeneratedCode(
   val target: ObjClass<*>,
   val builderInterface: String,
   val companionObject: String,
   val topLevelCode: String?,
   val implementationClass: String?
-)
+): GeneratedCode
+
+class ObjModuleFileGeneratedCode(
+  val fileName: String,
+  val objModuleName: String,
+  val generatedCode: String
+): GeneratedCode
