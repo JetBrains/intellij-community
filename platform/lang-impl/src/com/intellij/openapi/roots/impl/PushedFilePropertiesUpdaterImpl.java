@@ -47,7 +47,10 @@ import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -421,12 +424,12 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       fileOrDir.getChildren(); // outside read action to avoid freezes
     }
 
-    if (fileOrDir instanceof VirtualFileWithId) {
+    ReadAction.run(() -> {
+      if (!fileOrDir.isValid() || !(fileOrDir instanceof VirtualFileWithId)) return;
       doApplyPushersToFile(fileOrDir, pushers, moduleValues);
-    }
+    });
   }
 
-  @NonBlocking
   private void doApplyPushersToFile(@NotNull VirtualFile fileOrDir,
                                     @NotNull List<? extends FilePropertyPusher<?>> pushers,
                                     Object @Nullable[] moduleValues) {
@@ -434,18 +437,13 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     for (int i = 0; i < pushers.size(); i++) {
       //noinspection unchecked
       FilePropertyPusher<Object> pusher = (FilePropertyPusher<Object>)pushers.get(i);
+      if (isDir
+          ? !pusher.acceptsDirectory(fileOrDir, myProject)
+          : pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir, myProject)) {
+        continue;
+      }
       Object value = moduleValues != null ? moduleValues[i] : null;
-
-      ReadAction.nonBlocking(() -> {
-          if (isDir
-              ? !pusher.acceptsDirectory(fileOrDir, myProject)
-              : pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir, myProject)) {
-            return;
-          }
-          findAndUpdateValue(fileOrDir, pusher, value);
-        })
-        .expireWhen(() -> !fileOrDir.isValid())
-        .executeSynchronously();
+      findAndUpdateValue(fileOrDir, pusher, value);
     }
   }
 
