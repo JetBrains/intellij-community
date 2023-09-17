@@ -14,6 +14,8 @@ interface ObjModule : Obj {
 
   val types: List<ObjClass<*>>
 
+  val abstractTypes: List<ValueType.AbstractClass<*>>
+
   val extensions: List<ExtProperty<*, *>>
 
   /**
