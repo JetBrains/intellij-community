@@ -55,7 +55,7 @@ public class OnePixelDivider extends Divider {
       final Supplier<Insets> blindZone = ((OnePixelSplitter)mySplitter).getBlindZone();
       if (blindZone != null) {
         final Insets insets = blindZone.get();
-        if (insets != null) {
+        if (insets != null && bounds != null) {
           bounds.x += insets.left;
           bounds.y += insets.top;
           bounds.width -= insets.left + insets.right;
