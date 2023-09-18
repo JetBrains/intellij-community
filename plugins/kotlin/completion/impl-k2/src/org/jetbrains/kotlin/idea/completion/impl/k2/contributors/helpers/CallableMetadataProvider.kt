@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
+import org.jetbrains.kotlin.idea.completion.lookups.isExtensionCall
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
@@ -75,13 +76,14 @@ internal object CallableMetadataProvider {
         context: WeighingContext,
         signature: KtCallableSignature<*>,
         symbolOrigin: CompletionSymbolOrigin,
+        isFunctionalVariableCall: Boolean,
     ): CallableMetadata? {
         val symbol = signature.symbol
         if (symbol is KtSyntheticJavaPropertySymbol) {
-            return getCallableMetadata(context, symbol.javaGetterSymbol.asSignature(), symbolOrigin)
+            return getCallableMetadata(context, symbol.javaGetterSymbol.asSignature(), symbolOrigin, isFunctionalVariableCall)
         }
 
-        if (symbol.isExtension) return extensionWeight(signature, context)
+        if (symbol.isExtensionCall(isFunctionalVariableCall)) return extensionWeight(signature, context, isFunctionalVariableCall)
 
         return when (val scopeKind = (symbolOrigin as? CompletionSymbolOrigin.Scope)?.kind) {
             is KtScopeKind.LocalScope -> CallableMetadata(CallableKind.LOCAL, scopeKind.indexInTower)
@@ -132,9 +134,14 @@ internal object CallableMetadataProvider {
     private fun extensionWeight(
         signature: KtCallableSignature<*>,
         context: WeighingContext,
+        isFunctionalVariableCall: Boolean,
     ): CallableMetadata? {
         val actualReceiverTypes = getActualReceiverTypes(context)
-        val expectedExtensionReceiverType = signature.receiverType ?: return null
+        val expectedExtensionReceiverType = if (isFunctionalVariableCall) {
+            (signature.returnType as? KtFunctionalType)?.receiverType
+        } else {
+            signature.receiverType
+        } ?: return null
 
         // If a symbol expects an extension receiver, then either
         //   * the call site explicitly specifies the extension receiver , or
