@@ -27,7 +27,6 @@ internal fun parseUiThemeValue(key: String, value: Any?, classLoader: ClassLoade
     return when {
       value.endsWith(".png") || value.endsWith(".svg") -> parseImageFile(value, classLoader)
       key.endsWith("Border") || key.endsWith("border") -> parseBorder(value, classLoader)
-      key.endsWith("Size") -> parseSize(value)
       key.endsWith("Width") || key.endsWith("Height") -> getIntegerOrFloat(value, key)
       value.startsWith("AllIcons.") -> UIDefaults.LazyValue { getReflectiveIcon(value, classLoader) }
       else -> {
@@ -144,6 +143,7 @@ internal fun createColorResource(color: Color?, key: String): UIResource {
 internal fun parseStringValue(value: String, key: String): Any {
   return when {
     key.endsWith("Insets") || key.endsWith(".insets") || key.endsWith("padding") -> parseInsets(value)
+    key.endsWith("Size") -> parseSize(value)
     isColorLike(value) -> {
       val color = parseColorOrNull(value, null)
       if (color == null) {
