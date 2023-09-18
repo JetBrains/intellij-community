@@ -77,12 +77,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @State(name = "XDebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class XDebuggerManagerImpl extends XDebuggerManager implements PersistentStateComponent<XDebuggerState>, Disposable {
-  /**
-   * @deprecated Use {@link #getNotificationGroup()}
-   */
-  @Deprecated(forRemoval = true)
-  public static final NotificationGroup NOTIFICATION_GROUP = getNotificationGroup();
-
   public static final DataKey<Integer> ACTIVE_LINE_NUMBER = DataKey.create("active.line.number");
 
   private final Project myProject;
