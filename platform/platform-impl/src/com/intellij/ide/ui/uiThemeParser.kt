@@ -80,22 +80,32 @@ private fun parseImageFile(value: String, classLoader: ClassLoader): Any {
   return UIDefaults.LazyValue { findIconByPath(path = value, classLoader = classLoader, cache = null, toolTip = null) }
 }
 
-private fun parseBorder(value: String, classLoader: ClassLoader): Any? {
-  return try {
-    val parsedValues = parseMultiValue(value).toList()
-    when (parsedValues.size) {
-      4 -> BorderUIResource.EmptyBorderUIResource(parseInsets(value))
-      5 -> JBUI.asUIResource(JBUI.Borders.customLine(ColorHexUtil.fromHex(parsedValues[4]),
-                                                     parsedValues[0].toInt(),
-                                                     parsedValues[1].toInt(),
-                                                     parsedValues[2].toInt(),
-                                                     parsedValues[3].toInt()))
-      else -> parseBorderColorOrBorderClass(value, classLoader)
+private fun parseBorder(value: String, classLoader: ClassLoader?): Any? {
+  try {
+    val parsedValues = parseMultiValue(value).iterator()
+    val v1 = parsedValues.next()
+    if (parsedValues.hasNext()) {
+      val v2 = parsedValues.next()
+      val v3 = parsedValues.next()
+      val v4 = parsedValues.next()
+      if (parsedValues.hasNext()) {
+        return JBUI.asUIResource(JBUI.Borders.customLine(ColorHexUtil.fromHex(parsedValues.next()),
+                                                         v1.toInt(),
+                                                         v2.toInt(),
+                                                         v3.toInt(),
+                                                         v4.toInt()))
+      }
+      else {
+        return BorderUIResource.EmptyBorderUIResource(JBInsets(v1.toInt(), v2.toInt(), v3.toInt(), v4.toInt()).asUIResource())
+      }
+    }
+    else {
+      return if (classLoader == null) value else parseBorderColorOrBorderClass(value, classLoader)
     }
   }
   catch (e: Exception) {
     logger<UITheme>().warn(e)
-    null
+    return null
   }
 }
 
@@ -150,10 +160,11 @@ internal fun createColorResource(color: Color?, key: String): UIResource {
   }
 }
 
-internal fun parseStringValue(value: String, key: String): Any {
+internal fun parseStringValue(value: String, key: String): Any? {
   return when {
     key.endsWith("Insets") || key.endsWith(".insets") || key.endsWith("padding") -> parseInsets(value)
     key.endsWith("Size") -> parseSize(value)
+    key.endsWith("Border") || key.endsWith("border") -> parseBorder(value, classLoader = null)
     isColorLike(value) -> {
       val color = parseColorOrNull(value, null)
       if (color == null) {
