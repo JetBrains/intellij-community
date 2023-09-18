@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -9,17 +10,22 @@ class InlineCompletionContext internal constructor(val editor: Editor) {
   val state = InlineState()
 
   val isCurrentlyDisplayingInlays: Boolean
+    @RequiresEdt
     get() = state.elements.any { !it.isEmpty }
 
   val startOffset: Int?
+    @RequiresEdt
     get() = state.firstElement?.offset
 
   val lastOffset: Int?
+    @RequiresEdt
     get() = state.lastElement?.offset
 
   val lineToInsert: String
+    @RequiresEdt
     get() = state.elements.joinToString("") { it.text }
 
+  @RequiresEdt
   fun clear() {
     state.clear()
   }

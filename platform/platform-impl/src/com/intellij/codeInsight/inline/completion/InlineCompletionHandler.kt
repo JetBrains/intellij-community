@@ -63,9 +63,16 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     eventListeners.removeListener(listener)
   }
 
+  @RequiresEdt
   fun invoke(event: InlineCompletionEvent.DocumentChange) = invokeEvent(event)
+
+  @RequiresEdt
   fun invoke(event: InlineCompletionEvent.CaretMove) = invokeEvent(event)
+
+  @RequiresEdt
   fun invoke(event: InlineCompletionEvent.LookupChange) = invokeEvent(event)
+
+  @RequiresEdt
   fun invoke(event: InlineCompletionEvent.DirectCall) = invokeEvent(event)
 
   private fun invokeEvent(event: InlineCompletionEvent) {
@@ -132,6 +139,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     return provider.getProposals(request)
   }
 
+  @RequiresEdt
   private fun showInlineElement(
     element: InlineCompletionElement,
     index: Int,
@@ -142,11 +150,13 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     context.renderElement(element, offset)
   }
 
+  @RequiresEdt
   private fun InlineCompletionContext.renderElement(element: InlineCompletionElement, startOffset: Int) {
     element.render(editor, lastOffset ?: startOffset)
     state.addElement(element)
   }
 
+  @RequiresEdt
   fun insert(editor: Editor) {
     val context = InlineCompletionContext.getOrNull(editor) ?: return
     trace(InlineCompletionEventType.Insert)
@@ -161,6 +171,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     hide(editor, false, context)
   }
 
+  @RequiresEdt
   fun hide(editor: Editor, explicit: Boolean, context: InlineCompletionContext) {
     if (context.isCurrentlyDisplayingInlays) {
       trace(InlineCompletionEventType.Hide(explicit))
@@ -188,6 +199,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   /**
    * @return `true` if update was successful. Otherwise, [hide] is invoked to invalidate the current context.
    */
+  @RequiresEdt
   @RequiresBlockingContext
   private fun updateContextOrInvalidate(
     request: InlineCompletionRequest,
@@ -198,7 +210,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
       return true // Fast fall to not slow down editor
     }
     if ((provider != null) && (session.provider != provider) || session.provider.requiresInvalidation(request.event)) {
-      application.invokeAndWait { session.invalidate() }
+      session.invalidate()
       return false
     }
 
@@ -206,16 +218,14 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     val result = updateContext(context, request.event)
     when (result) {
       is UpdateContextResult.Changed -> {
-        application.invokeLater {
-          context.editor.inlayModel.execute(true) {
-            context.clear()
-            trace(InlineCompletionEventType.Change(result.truncateTyping))
-            result.newElements.forEach { context.renderElement(it, request.endOffset) }
-          }
+        context.editor.inlayModel.execute(true) {
+          context.clear()
+          trace(InlineCompletionEventType.Change(result.truncateTyping))
+          result.newElements.forEach { context.renderElement(it, request.endOffset) }
         }
       }
       is UpdateContextResult.Same -> Unit
-      is UpdateContextResult.Invalidated -> application.invokeAndWait { session.invalidate() }
+      is UpdateContextResult.Invalidated -> session.invalidate()
     }
     return result != UpdateContextResult.Invalidated
   }
