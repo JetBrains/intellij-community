@@ -214,7 +214,7 @@ public final class ComponentUtil {
   public static void decorateWindowHeader(JRootPane pane) {
     if (pane != null && SystemInfoRt.isMac) {
       pane.putClientProperty("apple.awt.windowAppearance",
-                             StartupUiUtil.isDarkTheme() ? "NSAppearanceNameVibrantDark" : "NSAppearanceNameVibrantLight");
+                             StartupUiUtil.INSTANCE.isDarkTheme() ? "NSAppearanceNameVibrantDark" : "NSAppearanceNameVibrantLight");
     }
   }
 }

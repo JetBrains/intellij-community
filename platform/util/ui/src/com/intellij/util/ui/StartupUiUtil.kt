@@ -41,12 +41,13 @@ object StartupUiUtil {
     @ScheduledForRemoval
     get() = isDarkTheme
 
-  @JvmStatic
+  @get:Internal
   val isDarkTheme: Boolean
     get() {
       // Do not use UIManager.getLookAndFeel().defaults because it won't work.
       // We use UIManager.getLookAndFeelDefaults() in installTheme in com.intellij.ide.ui.laf.LafManagerImpl.doSetLaF
-      return UIManager.getLookAndFeelDefaults().getBoolean("ui.theme.is.dark")
+      val lookAndFeelDefaults = UIManager.getLookAndFeelDefaults()
+      return lookAndFeelDefaults == null || lookAndFeelDefaults.getBoolean("ui.theme.is.dark")
     }
 
   @JvmStatic

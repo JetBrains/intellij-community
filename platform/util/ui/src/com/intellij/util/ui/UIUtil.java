@@ -1071,11 +1071,11 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated Do not use it. Use {@link StartupUiUtil#isDarkTheme}
+   * @deprecated Do not use it. Use {@link JBColor}.
    */
   @Deprecated(forRemoval = true)
   public static boolean isUnderDarcula() {
-    return StartupUiUtil.isDarkTheme();
+    return StartupUiUtil.INSTANCE.isDarkTheme();
   }
 
   public static boolean isUnderIntelliJLaF() {
