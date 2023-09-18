@@ -27,8 +27,11 @@ internal fun parseUiThemeValue(key: String, value: Any?, classLoader: ClassLoade
     return when {
       value.endsWith(".png") || value.endsWith(".svg") -> parseImageFile(value, classLoader)
       key.endsWith("Border") || key.endsWith("border") -> parseBorder(value, classLoader)
-      key.endsWith("Width") || key.endsWith("Height") -> getIntegerOrFloat(value, key)
+      // not a part of parseStringValue - doesn't make sense, the value must be specified as number in JSON
+      key.endsWith("Width") || key.endsWith("Height") -> getIntegerOrFloat(value = value, key = key)
       value.startsWith("AllIcons.") -> UIDefaults.LazyValue { getReflectiveIcon(value, classLoader) }
+      // do not try to parse as number values that definitely should be a UI class name
+      key.endsWith("UI") -> value
       else -> {
         // ShowUIDefaultsContent can call parseUiThemeValue directly, that's why value maybe not yet parsed
         parseStringValue(value = value, key = key).let {
@@ -80,9 +83,11 @@ private fun parseBorder(value: String, classLoader: ClassLoader): Any? {
     val parsedValues = parseMultiValue(value).toList()
     when (parsedValues.size) {
       4 -> BorderUIResource.EmptyBorderUIResource(parseInsets(value))
-      5 -> JBUI.asUIResource(JBUI.Borders.customLine(
-        ColorHexUtil.fromHex(parsedValues[4]), parsedValues[0].toInt(), parsedValues[1].toInt(), parsedValues[2].toInt(),
-        parsedValues[3].toInt()))
+      5 -> JBUI.asUIResource(JBUI.Borders.customLine(ColorHexUtil.fromHex(parsedValues[4]),
+                                                     parsedValues[0].toInt(),
+                                                     parsedValues[1].toInt(),
+                                                     parsedValues[2].toInt(),
+                                                     parsedValues[3].toInt()))
       else -> parseBorderColorOrBorderClass(value, classLoader)
     }
   }
@@ -93,7 +98,7 @@ private fun parseBorder(value: String, classLoader: ClassLoader): Any? {
 }
 
 private fun parseBorderColorOrBorderClass(value: String, classLoader: ClassLoader): Any? {
-  val color = parseColorOrNull(value, null)
+  val color = parseColorOrNull(value = value, key = null)
   if (color == null) {
     val aClass = classLoader.loadClass(value)
     val constructor = aClass.getDeclaredConstructor()

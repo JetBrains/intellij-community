@@ -294,7 +294,7 @@
     },
 
     "List": {
-      "rowHeight": "24",
+      "rowHeight": 24,
       "border": "4,0,4,0",
       "Button": {
         "separatorColor": "#FFFFFFB3",

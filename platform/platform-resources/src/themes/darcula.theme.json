@@ -88,7 +88,7 @@
       "focusedBorderColor": "#466d94",
       "paintShadow": true,
       "shadowColor": "#36363680",
-      "shadowWidth": "2",
+      "shadowWidth": 2,
       "startBackground": "#4C5052",
       "startBorderColor": "#5e6060",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI"
