@@ -485,6 +485,22 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   @NotNull
+  public Map<String, Property> getPropertiesInherited(@Nullable TypeEvalContext context) {
+    initLocalProperties();
+    Map<String, Property> propertiesHashMap = new HashMap<>(myLocalPropertyCache);
+
+    for (PyClass superClass : getAncestorClasses(context)) {
+      Map<String, Property> superClassProperties = superClass.getPropertiesInherited(context);
+      for (Map.Entry<String, Property> entry : superClassProperties.entrySet()) {
+        // Do not replace existing property in case superclass have it, keep only subclass properties
+        propertiesHashMap.putIfAbsent(entry.getKey(), entry.getValue());
+      }
+    }
+    return propertiesHashMap;
+  }
+
+  @Override
+  @NotNull
   public Map<String, Property> getProperties() {
     initLocalProperties();
     return new HashMap<>(myLocalPropertyCache);
