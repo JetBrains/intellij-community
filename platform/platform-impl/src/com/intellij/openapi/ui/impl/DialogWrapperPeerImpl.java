@@ -245,7 +245,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   @Override
-  @SuppressWarnings("SSBasedInspection")
   protected void dispose() {
     LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
     for (Runnable runnable : myDisposeActions) {
@@ -392,7 +391,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   @Override
   public CompletableFuture<?> show() {
     LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
-    CompletableFuture<Void> result = new CompletableFuture<>();
 
     AnCancelAction anCancelAction = new AnCancelAction();
     JRootPane rootPane = getRootPane();
@@ -467,6 +465,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       componentToRestoreFocus = kfm.getPermanentFocusOwner();
     }
 
+    CompletableFuture<Void> result = new CompletableFuture<>();
     SplashManagerKt.hideSplash();
     try (
       AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET);
@@ -750,9 +749,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           LOG.debug("The initial size after coercing it to be at least the minimum size: " + initial);
         }
         float hs = dialogWrapper.getHorizontalStretch();
-        initial.width *= hs;
+        initial.width *= (int)hs;
         float vs = dialogWrapper.getVerticalStretch();
-        initial.height *= vs;
+        initial.height *= (int)vs;
         if (LOG.isDebugEnabled()) {
           LOG.debug("Setting the initial size after stretching it by (" + hs + "," + vs + "): " + initial);
         }

@@ -211,7 +211,7 @@ public final class ComponentUtil {
     component.putClientProperty(IS_SHOWING, value ? Boolean.TRUE : null);
   }
 
-  public static void decorateWindowHeader(JRootPane pane) {
+  public static void decorateWindowHeader(@Nullable JRootPane pane) {
     if (pane != null && SystemInfoRt.isMac) {
       pane.putClientProperty("apple.awt.windowAppearance",
                              StartupUiUtil.INSTANCE.isDarkTheme() ? "NSAppearanceNameVibrantDark" : "NSAppearanceNameVibrantLight");
