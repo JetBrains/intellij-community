@@ -199,7 +199,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
             ToolbarFrameHeader(coroutineScope = coroutineScope.childScope(),
                                frame = frame,
                                rootPane = this,
-                               ideMenuBar = ideMenu as IdeMenuBar)
+                               ideMenuBar = ideMenu as IdeJMenuBar)
           }
         }
         else {
@@ -833,7 +833,7 @@ private fun createMacAwareMenuBar(frame: JFrame,
                        mainMenuActionGroupProvider = { mainMenuActionGroup ?: getAndWrapMainMenuActionGroup() })
     }
     else {
-      val menuBar = IdeMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = mainMenuActionGroup)
+      val menuBar = IdeJMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = mainMenuActionGroup)
       // if -DjbScreenMenuBar.enabled=false
       frame.jMenuBar = menuBar
       if (!ExperimentalUI.isNewUI()) component.jMenuBar = menuBar
@@ -846,12 +846,12 @@ private fun createMacAwareMenuBar(frame: JFrame,
   }
 }
 
-internal fun createMenuBar(coroutineScope: CoroutineScope, frame: JFrame, customMenuGroup: ActionGroup?): IdeMenuBar {
+internal fun createMenuBar(coroutineScope: CoroutineScope, frame: JFrame, customMenuGroup: ActionGroup?): IdeJMenuBar {
   if (SystemInfoRt.isLinux) {
     return LinuxIdeMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = customMenuGroup)
   }
   else {
-    return IdeMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = customMenuGroup)
+    return IdeJMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = customMenuGroup)
   }
 }
 

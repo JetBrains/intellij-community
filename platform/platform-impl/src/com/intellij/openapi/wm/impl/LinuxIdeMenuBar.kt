@@ -11,7 +11,7 @@ import java.awt.event.WindowEvent
 import javax.swing.JFrame
 
 internal class LinuxIdeMenuBar(coroutineScope: CoroutineScope, frame: JFrame, customMenuGroup: ActionGroup?)
-  : IdeMenuBar(coroutineScope, frame, customMenuGroup) {
+  : IdeJMenuBar(coroutineScope, frame, customMenuGroup) {
   companion object {
     fun doBindAppMenuOfParent(frame: JFrame, parentFrame: JFrame) {
       val globalMenu = (parentFrame.jMenuBar as? LinuxIdeMenuBar)?.globalMenu ?: return
@@ -36,7 +36,7 @@ internal class LinuxIdeMenuBar(coroutineScope: CoroutineScope, frame: JFrame, cu
   private var globalMenu: GlobalMenuLinux? = null
 
   override val isDarkMenu: Boolean
-    get() = super.isDarkMenu || globalMenu != null
+    get() = globalMenu != null
 
   override fun updateGlobalMenuRoots() {
     super.updateGlobalMenuRoots()

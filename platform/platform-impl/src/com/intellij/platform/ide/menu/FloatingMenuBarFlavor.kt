@@ -23,7 +23,7 @@ import kotlin.math.sqrt
 
 private const val COLLAPSED_HEIGHT = 2
 
-internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuFlavor {
+internal class FloatingMenuBarFlavor(private val menuBar: IdeJMenuBar) : IdeMenuFlavor {
   private var clockPanel: ClockPanel? = null
   private var exitFullScreenButton: FloatingMenuBarExitFullScreenButton? = null
 
@@ -250,7 +250,7 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
 private class MyMouseListener : MouseAdapter() {
   override fun mousePressed(e: MouseEvent) {
     val c = e.component
-    if (c !is IdeMenuBar) {
+    if (c !is IdeJMenuBar) {
       return
     }
 

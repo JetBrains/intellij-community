@@ -8,11 +8,12 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
+import com.intellij.openapi.wm.impl.IdeJMenuBar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.swing.MenuSelectionManager
 
-internal open class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: MenuBarImpl) : IdeMenuBarHelper(flavor, menuBar) {
+internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMenuBar.JMenuBarImpl) : IdeMenuBarHelper(flavor, menuBar) {
   override fun isUpdateForbidden() = MenuSelectionManager.defaultManager().selectedPath.isNotEmpty()
 
   override suspend fun postInitActions(actions: List<ActionGroup>) {
@@ -64,7 +65,7 @@ internal open class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: M
                                       group = action,
                                       presentationFactory = presentationFactory,
                                       isMnemonicEnabled = enableMnemonics,
-                                      useDarkIcons = menuBar.isDarkMenu,
+                                      useDarkIcons = (menuBar as IdeJMenuBar.JMenuBarImpl).isDarkMenu,
                                       isHeaderMenuItem = true)
           if (isCustomDecorationActive) {
             actionMenu.isOpaque = false

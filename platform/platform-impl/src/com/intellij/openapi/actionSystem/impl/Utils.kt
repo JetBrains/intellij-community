@@ -35,7 +35,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.openapi.wm.impl.IdeMenuBar
+import com.intellij.openapi.wm.impl.IdeJMenuBar
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.menu.MacNativeActionMenuItem
 import com.intellij.platform.ide.menu.createMacNativeActionMenu
@@ -446,7 +446,7 @@ object Utils {
     val rootPane = if (point == null) null else UIUtil.getRootPane(point.component)
     val glassPane = (if (rootPane == null) null else rootPane.glassPane as JComponent?) ?: return null
     val comp = point!!.originalComponent
-    if ((comp is ActionMenu && comp.getParent() is IdeMenuBar) ||
+    if ((comp is ActionMenu && comp.getParent() is IdeJMenuBar) ||
         (ActionPlaces.EDITOR_GUTTER_POPUP == place &&
          comp is EditorGutterComponentEx &&
          comp.getGutterRenderer(point.originalPoint) != null)) {

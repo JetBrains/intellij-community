@@ -73,7 +73,6 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
     val frame: JFrame
 
     val coroutineScope: CoroutineScope
-    val isDarkMenu: Boolean
     val component: JComponent
 
     fun updateGlobalMenuRoots()

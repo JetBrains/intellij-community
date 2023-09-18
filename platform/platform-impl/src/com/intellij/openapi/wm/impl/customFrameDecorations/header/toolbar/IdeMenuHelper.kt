@@ -2,14 +2,14 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
-import com.intellij.openapi.wm.impl.IdeMenuBar
+import com.intellij.openapi.wm.impl.IdeJMenuBar
 import com.intellij.ui.JBColor
 import com.intellij.ui.plaf.beg.IdeaMenuUI
 import kotlinx.coroutines.CoroutineScope
 import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent
 
-internal class IdeMenuHelper(private val menu: IdeMenuBar, coroutineScope: CoroutineScope?) {
+internal class IdeMenuHelper(private val menu: IdeJMenuBar, coroutineScope: CoroutineScope?) {
   private val containerListener = object : ContainerAdapter() {
     override fun componentAdded(e: ContainerEvent?) {
       updateUI()

@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.EDT
+import com.intellij.ui.mac.foundation.NSDefaults
 import com.intellij.ui.mac.screenmenu.MenuBar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -43,7 +44,7 @@ internal open class PeerBasedIdeMenuBarHelper(private val screenMenuPeer: MenuBa
                                                          presentationFactory = presentationFactory,
                                                          isMnemonicEnabled = enableMnemonics,
                                                          frame = menuBar.frame,
-                                                         useDarkIcons = menuBar.isDarkMenu)
+                                                         useDarkIcons = NSDefaults.isDarkMenuBar())
             )
           }
         }

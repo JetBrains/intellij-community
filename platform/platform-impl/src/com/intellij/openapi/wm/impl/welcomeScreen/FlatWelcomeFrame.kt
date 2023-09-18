@@ -29,7 +29,7 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
-import com.intellij.openapi.wm.impl.IdeMenuBar
+import com.intellij.openapi.wm.impl.IdeJMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent.Companion.getCustomContentHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.DefaultFrameHeader
@@ -521,7 +521,7 @@ private fun createWelcomeMenuBar(frame: JFrame, parentCoroutineScope: CoroutineS
                      mainMenuActionGroupProvider = mainMenuActionGroupProvider)
   }
   else {
-    frame.rootPane.jMenuBar = object : IdeMenuBar(parentCoroutineScope.childScope(), frame) {
+    frame.rootPane.jMenuBar = object : IdeJMenuBar(parentCoroutineScope.childScope(), frame) {
       override suspend fun getMainMenuActionGroup(): ActionGroup = mainMenuActionGroupProvider()
     }
   }

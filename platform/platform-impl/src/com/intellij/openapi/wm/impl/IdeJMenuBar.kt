@@ -7,13 +7,11 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.ide.menu.*
 import com.intellij.ui.Gray
 import com.intellij.ui.ScreenUtil
-import com.intellij.ui.mac.foundation.NSDefaults
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.plaf.beg.IdeaMenuUI
 import com.intellij.util.ui.JBUI
@@ -38,9 +36,9 @@ internal enum class IdeMenuBarState {
 }
 
 @Suppress("LeakingThis")
-open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope: CoroutineScope,
-                                           @JvmField internal val frame: JFrame,
-                                           private val customMenuGroup: ActionGroup? = null)
+open class IdeJMenuBar internal constructor(@JvmField internal val coroutineScope: CoroutineScope,
+                                            @JvmField internal val frame: JFrame,
+                                            private val customMenuGroup: ActionGroup? = null)
   : JMenuBar(), ActionAwareIdeMenuBar {
 
   private val menuBarHelper: IdeMenuBarHelper
@@ -60,27 +58,27 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
       }
     }
 
-    val facade = object : IdeMenuBarHelper.MenuBarImpl {
-      override val frame: JFrame
-        get() = this@IdeMenuBar.frame
-      override val coroutineScope: CoroutineScope
-        get() = this@IdeMenuBar.coroutineScope
-      override val isDarkMenu: Boolean
-        get() = this@IdeMenuBar.isDarkMenu
-      override val component: JComponent
-        get() = this@IdeMenuBar
-
-      override fun updateGlobalMenuRoots() {
-        this@IdeMenuBar.updateGlobalMenuRoots()
-      }
-
-      override suspend fun getMainMenuActionGroup(): ActionGroup? = customMenuGroup ?: this@IdeMenuBar.getMainMenuActionGroup()
-    }
-
-    menuBarHelper = JMenuBasedIdeMenuBarHelper(flavor = flavor, menuBar = facade)
+    menuBarHelper = JMenuBasedIdeMenuBarHelper(flavor = flavor, menuBar = JMenuBarImpl(this))
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       isOpaque = false
     }
+  }
+
+  internal class JMenuBarImpl(private val bar: IdeJMenuBar) : IdeMenuBarHelper.MenuBarImpl {
+    override val frame: JFrame
+      get() = bar.frame
+    override val coroutineScope: CoroutineScope
+      get() = bar.coroutineScope
+    val isDarkMenu: Boolean
+      get() = bar.isDarkMenu
+    override val component: JComponent
+      get() = bar
+
+    override fun updateGlobalMenuRoots() {
+      bar.updateGlobalMenuRoots()
+    }
+
+    override suspend fun getMainMenuActionGroup(): ActionGroup? = bar.customMenuGroup ?: bar.getMainMenuActionGroup()
   }
 
   override fun add(menu: JMenu): JMenu {
@@ -101,7 +99,7 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
     }
 
     // fix for a Darcula double border
-    if (state == IdeMenuBarState.TEMPORARY_EXPANDED && StartupUiUtil.isUnderDarcula) {
+    if (state == IdeMenuBarState.TEMPORARY_EXPANDED && StartupUiUtil.isDarkTheme) {
       return JBUI.Borders.customLine(Gray._75, 0, 0, 1, 0)
     }
 
@@ -153,8 +151,8 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
     menuBarHelper.updateMenuActions(forceRebuild)
   }
 
-  internal open val isDarkMenu: Boolean
-    get() = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar()
+  protected open val isDarkMenu: Boolean
+    get() = false
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
@@ -178,10 +176,9 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
         return
       }
     }
-    if (StartupUiUtil.isUnderDarcula || StartupUiUtil.isUnderIntelliJLaF()) {
-      g.color = IdeaMenuUI.getMenuBackgroundColor()
-      g.fillRect(0, 0, width, height)
-    }
+
+    g.color = IdeaMenuUI.getMenuBackgroundColor()
+    g.fillRect(0, 0, width, height)
   }
 
   override fun paintChildren(g: Graphics) {
@@ -218,7 +215,7 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
 }
 
 private val LOG: Logger
-  get() = logger<IdeMenuBar>()
+  get() = logger<IdeJMenuBar>()
 
 // NOTE: for OSX only
 internal fun doUpdateAppMenu() {
@@ -227,7 +224,7 @@ internal fun doUpdateAppMenu() {
   }
 
   // 1. rename with localized
-  Menu.renameAppMenuItems(DynamicBundle(IdeMenuBar::class.java, "messages.MacAppMenuBundle"))
+  Menu.renameAppMenuItems(DynamicBundle(IdeJMenuBar::class.java, "messages.MacAppMenuBundle"))
 
   //
   // 2. add custom new items in AppMenu
@@ -251,7 +248,7 @@ internal fun installAppMenuIfNeeded(frame: JFrame) {
 
   val menuBar = frame.jMenuBar
   // must be called when frame is visible (otherwise frame.getPeer() == null)
-  if (menuBar is IdeMenuBar) {
+  if (menuBar is IdeJMenuBar) {
     try {
       menuBar.doInstallAppMenuIfNeeded(frame)
     }

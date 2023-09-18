@@ -22,7 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.openapi.wm.impl.IdeMenuBar
+import com.intellij.openapi.wm.impl.IdeJMenuBar
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.messages.MessageBusConnection
@@ -206,7 +206,7 @@ class MainMenuButton {
 
   private inner class SubMenuShortcutsManager {
 
-    private var ideMenuBar: IdeMenuBar? = null
+    private var ideMenuBar: IdeJMenuBar? = null
     private val listener = Runnable {
       ideMenuBar?.let {
         updateKeyStrokes(it.rootMenuItems)
@@ -214,7 +214,7 @@ class MainMenuButton {
     }
     private var registeredActions = mutableListOf<ShowSubMenuAction>()
 
-    fun init(ideMenuBar: IdeMenuBar) {
+    fun init(ideMenuBar: IdeJMenuBar) {
       reset()
       this.ideMenuBar = ideMenuBar
       ideMenuBar.addUpdateGlobalMenuRootsListener(listener)

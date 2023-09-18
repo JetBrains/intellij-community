@@ -14,7 +14,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.impl.IdeMenuBar;
+import com.intellij.openapi.wm.impl.IdeJMenuBar;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
@@ -66,7 +66,7 @@ public final class PopupMenuPreloader implements HierarchyListener {
       return;
     }
     if (component instanceof EditorComponentImpl && ourEditorContextMenuPreloadCount > 4 ||
-        component instanceof IdeMenuBar && SwingUtilities.getWindowAncestor(component) instanceof IdeFrame.Child) {
+        component instanceof IdeJMenuBar && SwingUtilities.getWindowAncestor(component) instanceof IdeFrame.Child) {
       return;
     }
     Runnable runnable = () -> {

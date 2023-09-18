@@ -177,7 +177,7 @@ private class EWMHFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(frame)
   override suspend fun toggleFullScreen(state: Boolean): Boolean {
     X11UiUtil.toggleFullScreenMode(frame)
     val menuBar = frame.jMenuBar
-    if (menuBar is IdeMenuBar) {
+    if (menuBar is IdeJMenuBar) {
       menuBar.onToggleFullScreen(state)
     }
     withContext(Dispatchers.EDT) {
