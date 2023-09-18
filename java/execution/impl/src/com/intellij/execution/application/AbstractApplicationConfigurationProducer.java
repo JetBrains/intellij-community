@@ -10,8 +10,8 @@ import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaUnnamedClassUtil;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +61,7 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
 
   private void setupConfiguration(T configuration, final PsiClass aClass, final ConfigurationContext context) {
     if (aClass instanceof PsiUnnamedClass) {
-      configuration.setMainClassName(StringUtil.trimEnd(aClass.getContainingFile().getName(), ".java"));
+      configuration.setMainClassName(JavaUnnamedClassUtil.trimJavaExtension(aClass.getContainingFile().getName()));
       configuration.setUnnamedClassConfiguration(true);
     } else {
       configuration.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(aClass));
@@ -81,7 +81,7 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
     final PsiClass aClass = PsiTreeUtil.getParentOfType(singleClassLocation.getPsiElement(), PsiClass.class, false);
     if (aClass != null) {
       final String className = aClass instanceof PsiUnnamedClass
-                               ? StringUtil.trimEnd(aClass.getContainingFile().getName(), ".java")
+                               ? JavaUnnamedClassUtil.trimJavaExtension(aClass.getContainingFile().getName())
                                : JavaExecutionUtil.getRuntimeQualifiedName(aClass);
       if (!Objects.equals(className, appConfiguration.getMainClassName())) return false;
 

@@ -9,8 +9,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Predicates;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.java.JavaUnnamedClassIndexKt;
+import com.intellij.psi.util.JavaUnnamedClassUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.ui.TextFieldWithAutoCompletion.StringsCompletionProvider;
@@ -102,7 +102,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
           ? List.of()
           : ContainerUtil.map(
             FileBasedIndex.getInstance().getAllKeys(JavaUnnamedClassIndexKt.getId(), getProject()),
-            fileName -> StringUtil.trimEnd(fileName, ".java")
+            fileName -> JavaUnnamedClassUtil.trimExtension(fileName)
           ),
           AllIcons.RunConfigurations.Application
         ),
