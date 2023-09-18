@@ -80,8 +80,8 @@ public class ForStatementFixer implements Fixer {
    * @param lastValidForPart last valid element of the target 'for' loop
    * @param forStatement     PSI element for the target 'for' loop
    */
-  private void registerErrorOffset(@NotNull Editor editor, @NotNull AbstractBasicJavaSmartEnterProcessor processor,
-                                   @NotNull ASTNode lastValidForPart, @NotNull ASTNode forStatement) {
+  private static void registerErrorOffset(@NotNull Editor editor, @NotNull AbstractBasicJavaSmartEnterProcessor processor,
+                                          @NotNull ASTNode lastValidForPart, @NotNull ASTNode forStatement) {
     final Project project = editor.getProject();
     int offset = lastValidForPart.getTextRange().getEndOffset();
     if (project != null && CodeStyle.getSettings(editor).getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_COMMA) {

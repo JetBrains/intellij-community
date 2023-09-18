@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
@@ -60,7 +60,7 @@ public class JavadocLineStartHandler extends EditorActionHandler.ForEachCaret {
             else {
               caret.removeSelection();
             }
-            EditorModificationUtil.scrollToCaret(editor);
+            EditorModificationUtilEx.scrollToCaret(editor);
             return;
           }
         }
@@ -69,7 +69,7 @@ public class JavadocLineStartHandler extends EditorActionHandler.ForEachCaret {
     myOriginalHandler.execute(editor, caret, dataContext);
   }
 
-  private boolean isJavaFile(@Nullable PsiFile file){
+  private static boolean isJavaFile(@Nullable PsiFile file){
     return file instanceof AbstractBasicJavaFile;
   }
 }

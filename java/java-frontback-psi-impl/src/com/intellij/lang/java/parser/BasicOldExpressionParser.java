@@ -57,11 +57,15 @@ public class BasicOldExpressionParser {
     return parseAssignment(builder);
   }
 
+  //for compatibility
+  @SuppressWarnings("unused")
   @Nullable
   PsiBuilder.Marker parse(@NotNull PsiBuilder builder, final int mode) {
     return parseAssignment(builder, mode);
   }
 
+  //for compatibility
+  @SuppressWarnings("unused")
   @Nullable
   public PsiBuilder.Marker parseCaseLabel(@NotNull PsiBuilder builder) {
     return myParser.getStatementParser().parseCaseLabel(builder).first;

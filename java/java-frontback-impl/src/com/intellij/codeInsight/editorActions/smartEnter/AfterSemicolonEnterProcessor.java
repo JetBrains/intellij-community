@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,21 +24,21 @@ public class AfterSemicolonEnterProcessor implements ASTNodeEnterProcessor {
     if (psiElement == null) {
       return false;
     }
-    if (BasicJavaAstTreeUtil.is(astNode, BasicJavaElementType.BASIC_EXPRESSION_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, BasicJavaElementType.BASIC_DECLARATION_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, BasicJavaElementType.BASIC_DO_WHILE_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, BasicJavaElementType.BASIC_RETURN_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, BasicJavaElementType.BASIC_THROW_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, BasicJavaElementType.BASIC_BREAK_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, BasicJavaElementType.BASIC_CONTINUE_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, BasicJavaElementType.BASIC_YIELD_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, BasicJavaElementType.BASIC_ASSERT_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, Set.of(BasicJavaElementType.BASIC_FIELD, BasicJavaElementType.BASIC_ENUM_CONSTANT)) ||
+    if (BasicJavaAstTreeUtil.is(astNode, BASIC_EXPRESSION_STATEMENT) ||
+        BasicJavaAstTreeUtil.is(astNode, BASIC_DECLARATION_STATEMENT) ||
+        BasicJavaAstTreeUtil.is(astNode, BASIC_DO_WHILE_STATEMENT) ||
+        BasicJavaAstTreeUtil.is(astNode, BASIC_RETURN_STATEMENT) ||
+        BasicJavaAstTreeUtil.is(astNode, BASIC_THROW_STATEMENT) ||
+        BasicJavaAstTreeUtil.is(astNode, BASIC_BREAK_STATEMENT) ||
+        BasicJavaAstTreeUtil.is(astNode, BASIC_CONTINUE_STATEMENT) ||
+        BasicJavaAstTreeUtil.is(astNode, BASIC_YIELD_STATEMENT) ||
+        BasicJavaAstTreeUtil.is(astNode, BASIC_ASSERT_STATEMENT) ||
+        BasicJavaAstTreeUtil.is(astNode, Set.of(BASIC_FIELD, BASIC_ENUM_CONSTANT)) ||
         isImportStatementBase(psiElement) ||
         isMethodWithoutBody(psiElement)) {
       int errorOffset = getErrorElementOffset(psiElement);
       int elementEndOffset = astNode.getTextRange().getEndOffset();
-      if (BasicJavaAstTreeUtil.is(astNode, BasicJavaElementType.BASIC_ENUM_CONSTANT)) {
+      if (BasicJavaAstTreeUtil.is(astNode, BASIC_ENUM_CONSTANT)) {
         final CharSequence text = editor.getDocument().getCharsSequence();
         final int commaOffset = CharArrayUtil.shiftForwardUntil(text, elementEndOffset, ",");
         if (commaOffset < text.length()) {
@@ -79,13 +78,13 @@ public class AfterSemicolonEnterProcessor implements ASTNodeEnterProcessor {
     return true;
   }
 
-  private boolean isMethodWithoutBody(@Nullable PsiElement psiElement){
+  private static boolean isMethodWithoutBody(@Nullable PsiElement psiElement){
     ASTNode node = BasicJavaAstTreeUtil.toNode(psiElement);
     return BasicJavaAstTreeUtil.is(node, BASIC_METHOD) &&
            !shouldHaveBody(node);
   }
 
-  private boolean isImportStatementBase(@Nullable PsiElement psiElement){
+  private static boolean isImportStatementBase(@Nullable PsiElement psiElement){
     ASTNode node = BasicJavaAstTreeUtil.toNode(psiElement);
     return
       BasicJavaAstTreeUtil.is(node, BASIC_IMPORT_STATEMENT) ||

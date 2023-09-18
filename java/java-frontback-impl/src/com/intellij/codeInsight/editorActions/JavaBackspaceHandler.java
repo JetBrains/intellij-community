@@ -21,7 +21,7 @@ public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
                                                                     editor, JavaTokenType.DOT, JavaTokenType.IDENTIFIER, true);
   }
 
-  private boolean isHigherThan50r(@Nullable PsiFile file){
+  private static boolean isHigherThan50r(@Nullable PsiFile file){
       return file instanceof AbstractBasicJavaFile &&
              AbstractBasicJavaDefinitionService.getJavaDefinitionService().getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5);
   }

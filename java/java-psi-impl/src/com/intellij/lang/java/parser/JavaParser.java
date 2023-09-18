@@ -15,9 +15,7 @@
  */
 package com.intellij.lang.java.parser;
 
-import com.intellij.psi.impl.source.AbstractBasicJavaDocElementTypeFactory;
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
-import com.intellij.psi.impl.source.tree.JavaDocElementTypeFactory;
 import com.intellij.psi.impl.source.tree.JavaElementTypeFactory;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,10 +80,6 @@ public class JavaParser extends BasicJavaParser {
   @NotNull
   public PatternParser getPatternParser() {
     return myPatternParser;
-  }
-  @Override
-  public AbstractBasicJavaDocElementTypeFactory getJavaDocElementTypeFactory() {
-    return JavaDocElementTypeFactory.INSTANCE;
   }
 
   @Override

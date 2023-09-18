@@ -29,7 +29,6 @@ public class BasicDeclarationParser {
     FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE
   }
 
-  private final TokenSet AFTER_END_DECLARATION_SET;
   private static final TokenSet BEFORE_LBRACE_ELEMENTS_SET = TokenSet.create(
     JavaTokenType.IDENTIFIER, JavaTokenType.COMMA, JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.IMPLEMENTS_KEYWORD, JavaTokenType.LPARENTH);
   private static final TokenSet APPEND_TO_METHOD_SET = TokenSet.create(
@@ -51,8 +50,6 @@ public class BasicDeclarationParser {
   public BasicDeclarationParser(@NotNull final BasicJavaParser javaParser) {
     myParser = javaParser;
     myJavaElementTypeContainer = javaParser.getJavaElementTypeFactory().getContainer();
-    AFTER_END_DECLARATION_SET = TokenSet.create(
-      myJavaElementTypeContainer.FIELD, myJavaElementTypeContainer.METHOD);
     TYPE_START = TokenSet.orSet(
       PRIMITIVE_TYPE_BIT_SET.toTokenSet(),
       TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT, JavaTokenType.VAR_KEYWORD));

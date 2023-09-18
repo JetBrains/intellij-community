@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
-import com.intellij.psi.impl.source.AbstractBasicJavaDocElementTypeFactory;
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +28,6 @@ abstract public class BasicJavaParser {
 
   @NotNull
   abstract public BasicPatternParser getPatternParser();
-
-  abstract public AbstractBasicJavaDocElementTypeFactory getJavaDocElementTypeFactory();
 
   abstract public AbstractBasicJavaElementTypeFactory getJavaElementTypeFactory();
 }
