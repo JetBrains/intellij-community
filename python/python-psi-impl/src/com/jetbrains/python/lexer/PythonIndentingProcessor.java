@@ -20,7 +20,6 @@ import com.intellij.lexer.FlexLexer;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -44,7 +43,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   private int myLineBreakBeforeFirstCommentIndex = -1;
   protected boolean myProcessSpecialTokensPending = false;
 
-  private final Stack<String> myFStringStack = new Stack<>();
+  private final Stack<FString> myFStringStack = new Stack<>();
 
   private static final boolean DUMP_TOKENS = false;
   private final TokenSet RECOVERY_TOKENS = PythonDialectsTokenSetProvider.getInstance().getUnbalancedBracesRecoveryTokens();
@@ -200,15 +199,32 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
       final int prefixLength = PyStringLiteralUtil.getPrefixLength(tokenText);
       final String openingQuotes = tokenText.substring(prefixLength);
       assert !openingQuotes.isEmpty();
-      myFStringStack.push(openingQuotes);
+      myFStringStack.push(new FString(openingQuotes, new Stack<>()));
     }
     else if (isBaseAt(PyTokenTypes.FSTRING_END)) {
       while (!myFStringStack.isEmpty()) {
-        final String lastOpeningQuotes = myFStringStack.pop();
-        if (lastOpeningQuotes.equals(tokenText)) {
+        final FString lastFString = myFStringStack.pop();
+        if (lastFString.quotes.equals(tokenText)) {
           break;
         }
       }
+    }
+    else if (isBaseAt(PyTokenTypes.FSTRING_FRAGMENT_START)) {
+      assert !myFStringStack.isEmpty();
+      myFStringStack.peek().fragments.push(FStringFragmentPart.EXPRESSION);
+    }
+    else if (isBaseAt(PyTokenTypes.FSTRING_FRAGMENT_END)) {
+      assert !myFStringStack.isEmpty();
+      FString topmostFString = myFStringStack.peek();
+      assert !topmostFString.fragments.isEmpty();
+      topmostFString.fragments.pop();
+    }
+    else if (isBaseAt(PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START) || isBaseAt(PyTokenTypes.FSTRING_FRAGMENT_TYPE_CONVERSION)) {
+      assert !myFStringStack.isEmpty();
+      FString topmostFString = myFStringStack.peek();
+      assert !topmostFString.fragments.isEmpty();
+      topmostFString.fragments.pop();
+      topmostFString.fragments.push(FStringFragmentPart.TYPE_CONVERSION_OR_FORMAT);
     }
   }
 
@@ -343,14 +359,9 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   }
 
   protected void processLineBreak(int startPos) {
-    // See https://www.python.org/dev/peps/pep-0498/#expression-evaluation
-    final boolean allFStringsAreTripleQuoted = ContainerUtil.and(myFStringStack, quotes -> quotes.length() == 3);
-    final boolean insideImplicitFragmentParentheses = !myFStringStack.isEmpty() && allFStringsAreTripleQuoted;
-    final boolean shouldTerminateFStrings = !myFStringStack.isEmpty() && !allFStringsAreTripleQuoted;
-    if ((myBraceLevel == 0 && !insideImplicitFragmentParentheses) || shouldTerminateFStrings) {
-      if (myLineHasSignificantTokens || shouldTerminateFStrings) {
+    if (myBraceLevel == 0 && isOutsideFStringOrInsideItsLineBreakSensitiveTextPart()) {
+      if (myLineHasSignificantTokens) {
         pushToken(PyTokenTypes.STATEMENT_BREAK, startPos, startPos);
-        myFStringStack.clear();
       }
       myLineHasSignificantTokens = false;
       advanceBase();
@@ -359,6 +370,14 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     else {
       processInsignificantLineBreak(startPos, false);
     }
+  }
+
+  private boolean isOutsideFStringOrInsideItsLineBreakSensitiveTextPart() {
+    if (myFStringStack.isEmpty()) return true;
+    FString topmostFString = myFStringStack.peek();
+    // In triple-quoted f-strings one can put line breaks in any plain-text part
+    if (topmostFString.quotes.length() != 1) return false;
+    return topmostFString.fragments.isEmpty() || topmostFString.fragments.peek() == FStringFragmentPart.TYPE_CONVERSION_OR_FORMAT;
   }
 
   protected void processInsignificantLineBreak(int startPos,
@@ -485,4 +504,13 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   protected IElementType getCommentTokenType() {
     return PyTokenTypes.END_OF_LINE_COMMENT;
   }
+
+  private record FString(@NotNull String quotes, @NotNull Stack<FStringFragmentPart> fragments) {
+  }
+
+  private enum FStringFragmentPart {
+    EXPRESSION,
+    TYPE_CONVERSION_OR_FORMAT,
+  }
+
 }
