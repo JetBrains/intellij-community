@@ -61,32 +61,40 @@ object KotlinUnusedSymbolUtil {
 
   // Simple PSI-based checks
   fun isApplicableByPsi(declaration: KtNamedDeclaration): Boolean {
-    // never mark companion object as unused (there are too many reasons it can be needed for)
-    if (declaration is KtObjectDeclaration && declaration.isCompanion()) return false
+      // never mark companion object as unused (there are too many reasons it can be needed for)
+      if (declaration is KtObjectDeclaration && declaration.isCompanion()) return false
 
-    if (declaration is KtParameter) {
-      // nameless parameters like `(Type) -> Unit` make no sense to highlight
-      if (declaration.name == null) return false
-      // functional type params like `fun foo(u: (usedParam: Type) -> Unit)` shouldn't be highlighted because they could be implicitly used by lambda arguments
-      if (declaration.isFunctionTypeParameter) return false
-      val ownerFunction = declaration.getOwnerFunction()
-      if (ownerFunction is KtConstructor<*>) {
-        // constructor parameters of data class are considered used because they are implicitly used in equals() (???)
-        val containingClass = declaration.containingClass()
-        if (containingClass?.isData() == true) return false
-        // constructor parameters-fields of value class are considered used because they are implicitly used in equals() (???)
-        if (containingClass?.isValue() == true && declaration.hasValOrVar()) return false
-        // constructor parameters-fields of inline class are considered used because they are implicitly used in equals() (???)
-        if (containingClass?.isInline() == true && declaration.hasValOrVar()) return false
+      if (declaration is KtParameter) {
+          // nameless parameters like `(Type) -> Unit` make no sense to highlight
+          if (declaration.name == null) return false
+          // functional type params like `fun foo(u: (usedParam: Type) -> Unit)` shouldn't be highlighted because they could be implicitly used by lambda arguments
+          if (declaration.isFunctionTypeParameter) return false
+          val ownerFunction = declaration.getOwnerFunction()
+          if (ownerFunction is KtConstructor<*>) {
+              // constructor parameters of data class are considered used because they are implicitly used in equals() (???)
+              val containingClass = declaration.containingClass()
+              if (containingClass?.isData() == true) return false
+              // constructor parameters-fields of value class are considered used because they are implicitly used in equals() (???)
+              if (containingClass?.isValue() == true && declaration.hasValOrVar()) return false
+              // constructor parameters-fields of inline class are considered used because they are implicitly used in equals() (???)
+              if (containingClass?.isInline() == true && declaration.hasValOrVar()) return false
+          }
+          else if (ownerFunction is KtFunctionLiteral) {
+              // do not highlight unused in .forEach { (a,b) -> {} }
+              return false
+          }
+          else if (ownerFunction is KtFunction) {
+              if (isEffectivelyAbstract(ownerFunction)) {
+                  return false
+              }
+              if (ownerFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
+                  return false
+              }
+              if (ownerFunction.hasModifier(KtTokens.OPEN_KEYWORD)) { // maybe one of overriders does use this parameter
+                  return false
+              }
+          }
       }
-      else if (ownerFunction is KtFunctionLiteral) {
-        // do not highlight unused in .forEach { (a,b) -> {} }
-        return false
-      }
-      else if (ownerFunction is KtFunction && (isEffectivelyAbstract(ownerFunction) || ownerFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD))) {
-        return false
-      }
-    }
 
       return !declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)
   }

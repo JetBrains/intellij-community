@@ -208,6 +208,11 @@ public class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2LocalInsp
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/parameterOfFunctionInInterface.kt");
     }
 
+    @TestMetadata("parameterOfOpenFunction.kt")
+    public void testParameterOfOpenFunction() throws Exception {
+        runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/parameterOfOpenFunction.kt");
+    }
+
     @TestMetadata("parameterOfOverriddenFunction.kt")
     public void testParameterOfOverriddenFunction() throws Exception {
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/parameterOfOverriddenFunction.kt");

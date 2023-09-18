@@ -17106,6 +17106,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/parameterOfFunctionInInterface.kt");
         }
 
+        @TestMetadata("parameterOfOpenFunction.kt")
+        public void testParameterOfOpenFunction() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/parameterOfOpenFunction.kt");
+        }
+
         @TestMetadata("parameterOfOverriddenFunction.kt")
         public void testParameterOfOverriddenFunction() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/parameterOfOverriddenFunction.kt");
