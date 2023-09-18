@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.JBColor;
+import com.intellij.util.BitUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -54,6 +55,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.*;
@@ -561,13 +563,14 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       ClickAction action = null;
       if (breakpoint != null) {
         // mimic gutter icon
-        if (button == MouseEvent.BUTTON1) {
-          action = Registry.is("debugger.click.disable.breakpoints")
+        if (button == MouseEvent.BUTTON2 ||
+            (button == MouseEvent.BUTTON1 && BitUtil.isSet(event.getModifiersEx(), InputEvent.ALT_DOWN_MASK))) {
+          action = !Registry.is("debugger.click.disable.breakpoints")
                    ? ClickAction.ENABLE_DISABLE
                    : ClickAction.REMOVE;
         }
-        else if (button == MouseEvent.BUTTON2) {
-          action = !Registry.is("debugger.click.disable.breakpoints")
+        else if (button == MouseEvent.BUTTON1) {
+          action = Registry.is("debugger.click.disable.breakpoints")
                    ? ClickAction.ENABLE_DISABLE
                    : ClickAction.REMOVE;
         }
