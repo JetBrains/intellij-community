@@ -13,6 +13,8 @@ import com.intellij.util.ui.JBUI
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Insets
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import javax.swing.UIDefaults
 import javax.swing.plaf.BorderUIResource
 import javax.swing.plaf.ColorUIResource
@@ -97,13 +99,14 @@ private fun parseBorder(value: String, classLoader: ClassLoader): Any? {
   }
 }
 
+private val LOOKUP = MethodHandles.lookup()
+
 private fun parseBorderColorOrBorderClass(value: String, classLoader: ClassLoader): Any? {
   val color = parseColorOrNull(value = value, key = null)
   if (color == null) {
     val aClass = classLoader.loadClass(value)
-    val constructor = aClass.getDeclaredConstructor()
-    constructor.isAccessible = true
-    return constructor.newInstance()
+    val constructor = MethodHandles.privateLookupIn(aClass, LOOKUP).findConstructor(aClass, MethodType.methodType(Void.TYPE))
+    return constructor.invoke()
   }
   else {
     return JBUI.asUIResource(JBUI.Borders.customLine(color, 1))
