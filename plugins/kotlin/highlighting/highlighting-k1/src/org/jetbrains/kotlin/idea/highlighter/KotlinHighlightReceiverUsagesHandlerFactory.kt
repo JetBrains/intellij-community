@@ -65,7 +65,7 @@ object ReceiverInfoSearcher {
     private fun checkIfInThisReference(target: PsiElement): ReceiverInfo? {
         if (target.elementType != KtTokens.THIS_KEYWORD) return null
         val refExpr = target.parent as? KtReferenceExpression ?: return null
-        val bindingContext = refExpr.analyze(BodyResolveMode.FULL)
+        val bindingContext = refExpr.analyze(BodyResolveMode.PARTIAL)
         val resolvedCall = refExpr.getResolvedCall(bindingContext) ?: return null
 
         findReceiverByThisRef(resolvedCall)?.let { receiverTypeReference ->
@@ -130,9 +130,12 @@ sealed class ReceiverInfo {
     protected abstract fun elementsToProcess(): Sequence<KtElement>
 
     open fun collectReceiverUsages(consumer: (TextRange) -> Unit) {
-        val bindingContext = psi.safeAnalyze(BodyResolveMode.FULL)
+        val bindingContext = psi.safeAnalyze(BodyResolveMode.PARTIAL)
         val callableDescriptor = getDescriptor(bindingContext) ?: return
-        processInternalReferences(bindingContext, ReceiverUsageCollector(callableDescriptor, consumer))
+        val visitor = ReceiverUsageCollector(callableDescriptor, consumer)
+        for (element in elementsToProcess()) {
+            element.accept(visitor, Unit)
+        }
     }
 
     class Function(override val psi: KtFunction) : ReceiverInfo() {
@@ -168,15 +171,6 @@ sealed class ReceiverInfo {
         override fun elementsToProcess(): Sequence<KtElement> =
             sequenceOfNotNull(psi.bodyExpression) + psi.valueParameters.asSequence().mapNotNull { it.defaultValue }
     }
-
-    private fun processInternalReferences(
-        bindingContext: BindingContext,
-        visitor: KtTreeVisitor<BindingContext>
-    ) {
-        for (element in elementsToProcess()) {
-            element.accept(visitor, bindingContext)
-        }
-    }
 }
 
 class KotlinHighlightReceiverUsagesHandler(
@@ -202,7 +196,7 @@ class KotlinHighlightReceiverUsagesHandler(
 private class ReceiverUsageCollector(
     val callableDescriptor: CallableDescriptor,
     val consumer: (TextRange) -> Unit
-) : KtTreeVisitor<BindingContext>() {
+) : KtTreeVisitor<Unit>() {
     private fun processExplicitThis(
         expression: KtSimpleNameExpression,
         receiverDescriptor: ReceiverParameterDescriptor
@@ -231,19 +225,20 @@ private class ReceiverUsageCollector(
 
     private fun processThisCall(
         expression: KtSimpleNameExpression,
-        context: BindingContext,
+        expressionBindingContext: BindingContext,
         extensionReceiver: ReceiverValue?,
         dispatchReceiver: ReceiverValue?
     ) {
         if ((expression.parent as? KtThisExpression)?.parent !is KtCallExpression) return
         when (callableDescriptor) {
-            extensionReceiver.getReceiverTargetDescriptor(context) -> consumer(expression.textRange)
-            dispatchReceiver.getReceiverTargetDescriptor(context) -> consumer(expression.textRange)
+            extensionReceiver.getReceiverTargetDescriptor(expressionBindingContext) -> consumer(expression.textRange)
+            dispatchReceiver.getReceiverTargetDescriptor(expressionBindingContext) -> consumer(expression.textRange)
         }
     }
 
-    override fun visitSimpleNameExpression(expression: KtSimpleNameExpression, context: BindingContext): Void? {
-        val resolvedCall = expression.getResolvedCall(context) ?: return null
+    override fun visitSimpleNameExpression(expression: KtSimpleNameExpression, data: Unit): Void? {
+        val bindingContext = expression.safeAnalyze(BodyResolveMode.PARTIAL)
+        val resolvedCall = expression.getResolvedCall(bindingContext) ?: return null
 
         val resultingDescriptor = resolvedCall.resultingDescriptor
         if (resultingDescriptor is ReceiverParameterDescriptor) {
@@ -260,7 +255,7 @@ private class ReceiverUsageCollector(
         if (receiverValue is ImplicitReceiver) {
             processImplicitThis(resolvedCall.call.callElement, receiverValue)
         } else {
-            processThisCall(expression, context, extensionReceiver, dispatchReceiver)
+            processThisCall(expression, bindingContext, extensionReceiver, dispatchReceiver)
         }
 
         return null
