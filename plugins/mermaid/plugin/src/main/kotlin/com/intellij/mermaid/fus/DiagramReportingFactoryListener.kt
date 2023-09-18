@@ -58,7 +58,10 @@ internal class DiagramReportingFactoryListener: EditorFactoryListener {
 
   private fun reportFromRegularFile(file: PsiFile) {
     val files = collectInjectedMermaidFiles(file)
-    val types = files.mapNotNull { it.obtainDiagramType() }
+    val types = files.mapNotNull { it.obtainDiagramType() }.toList()
+    if (types.isEmpty()) {
+      return
+    }
     for (type in types) {
       MermaidCollector.reportDiagramUsed(type, file.fileType)
     }
