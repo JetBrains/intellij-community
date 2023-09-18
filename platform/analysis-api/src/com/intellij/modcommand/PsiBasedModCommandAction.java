@@ -65,13 +65,19 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
     if (context.element() != null && context.element().isValid()) {
       return ObjectUtils.tryCast(context.element(), cls);
     }
-    PsiElement element = file.findElementAt(offset);
-    E target = PsiTreeUtil.getNonStrictParentOfType(element, cls);
-    if (target == null && offset > 0) {
-      element = file.findElementAt(offset - 1);
-      target = PsiTreeUtil.getNonStrictParentOfType(element, cls);
+    PsiElement right = file.findElementAt(offset);
+    PsiElement left = offset > 0 ? file.findElementAt(offset - 1) : right;
+    if (left == null && right == null) return null;
+    if (left == null) left = right;
+    if (right == null) right = left;
+    PsiElement commonParent = PsiTreeUtil.findCommonParent(left, right);
+    while (left != commonParent || right != commonParent) {
+      if (cls.isInstance(right)) return cls.cast(right);
+      if (cls.isInstance(left)) return cls.cast(left);
+      if (left != commonParent) left = left.getParent();
+      if (right != commonParent) right = right.getParent();
     }
-    return target;
+    return PsiTreeUtil.getNonStrictParentOfType(commonParent, cls);
   }
 
   @Override
