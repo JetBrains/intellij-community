@@ -8,6 +8,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
+import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import javax.swing.Action
 
 class GHPRErrorStatusPresenter(
@@ -19,9 +20,9 @@ class GHPRErrorStatusPresenter(
 
   override fun getErrorTitle(error: Throwable): @Nls String = GithubBundle.message("pull.request.list.cannot.load")
 
-  override fun getErrorDescription(error: Throwable): @Nls String? = when (error) {
-    is GithubAuthenticationException -> GithubBundle.message("pull.request.list.error.authorization")
-    else -> null
+  override fun getErrorDescription(error: Throwable): @Nls String {
+    return if (error is GithubAuthenticationException) GithubBundle.message("pull.request.list.error.authorization")
+    else GHHtmlErrorPanel.getLoadingErrorText(error)
   }
 
   override fun getErrorAction(error: Throwable): Action = errorHandler.getActionForError(error)
