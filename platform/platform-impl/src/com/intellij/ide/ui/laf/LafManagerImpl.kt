@@ -131,7 +131,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   // We remember the last used editor scheme for each laf in order to restore it after switching laf
   private var rememberSchemeForLaf = true
-  private val lafToPreviousScheme: MutableMap<String, String> = mutableMapOf()
+  private val lafToPreviousScheme = HashMap<String, String>()
 
   /**
    * Stores values of options from [UISettings] which were used to set up current LaF.
@@ -453,7 +453,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
     rememberSchemeForLaf(EditorColorsManager.getInstance().globalScheme)
 
-    if (oldLaf !== lookAndFeelInfo && oldLaf is UIThemeLookAndFeelInfoImpl) {
+    if (oldLaf !== lookAndFeelInfo && oldLaf != null) {
       oldLaf.dispose()
     }
     if (doSetLaF(lookAndFeelInfo, installEditorScheme)) {
@@ -464,13 +464,13 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     selectComboboxModel()
     if (!isFirstSetup && installEditorScheme) {
       if (processChangeSynchronously) {
-        updateEditorSchemeIfNecessary(oldLaf, true)
+        updateEditorSchemeIfNecessary(oldLaf = oldLaf, processChangeSynchronously = true)
         UISettings.getInstance().fireUISettingsChanged()
         ActionToolbarImpl.updateAllToolbarsImmediately()
       }
       else {
         coroutineScope.launch(Dispatchers.EDT) {
-          updateEditorSchemeIfNecessary(oldLaf, false)
+          updateEditorSchemeIfNecessary(oldLaf = oldLaf, processChangeSynchronously = false)
           UISettings.getInstance().fireUISettingsChanged()
           ActionToolbarImpl.updateAllToolbarsImmediately()
         }
@@ -536,25 +536,25 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   private fun updateEditorSchemeIfNecessary(oldLaf: UIThemeLookAndFeelInfo?, processChangeSynchronously: Boolean) {
+    val currentTheme = currentTheme
     if (oldLaf is TempUIThemeLookAndFeelInfo || currentTheme is TempUIThemeLookAndFeelInfo) {
       return
     }
-    if (currentTheme is UIThemeLookAndFeelInfo && (currentTheme as UIThemeLookAndFeelInfo).editorSchemeName != null) {
+    if (currentTheme?.editorSchemeName != null) {
       return
     }
 
-    val editorColorManager = EditorColorsManager.getInstance()
+    val editorColorManager = EditorColorsManager.getInstance() as EditorColorsManagerImpl
     val current = editorColorManager.globalScheme
     if (currentTheme != null) {
-      val previousSchemeForLaf = getPreviousSchemeForLaf(currentTheme!!)
-      if (previousSchemeForLaf != null) {
-        (editorColorManager as EditorColorsManagerImpl).setGlobalScheme(previousSchemeForLaf, processChangeSynchronously)
+      getPreviousSchemeForLaf(currentTheme)?.let {
+        editorColorManager.setGlobalScheme(scheme = it, processChangeSynchronously = processChangeSynchronously)
         return
       }
     }
 
     val dark = StartupUiUtil.isDarkTheme
-    val wasUITheme = oldLaf is UIThemeLookAndFeelInfo
+    val wasUITheme = oldLaf != null
     if (wasUITheme || dark != ColorUtil.isDark(current.defaultBackground)) {
       var targetScheme = defaultNonLaFSchemeName(dark)
       val properties = PropertiesComponent.getInstance()
@@ -567,9 +567,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       if (!wasUITheme) {
         properties.setValue(toSavedEditorThemeKey, current.name, if (dark) EditorColorsScheme.DEFAULT_SCHEME_NAME else DarculaLaf.NAME)
       }
-      val scheme = editorColorManager.getScheme(targetScheme)
-      if (scheme != null) {
-        (editorColorManager as EditorColorsManagerImpl).setGlobalScheme(scheme, processChangeSynchronously)
+      editorColorManager.getScheme(targetScheme)?.let {
+        editorColorManager.setGlobalScheme(it, processChangeSynchronously)
       }
     }
   }
