@@ -23,10 +23,12 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectIndexed
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEmpty
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Experimental
 class InlineCompletionHandler(scope: CoroutineScope) {
@@ -105,7 +107,6 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     // If you write a test and observe an infinite hang here, set [UsefulTestCase.runInDispatchThread] to false.
     withContext(Dispatchers.EDT) {
       resultFlow
-        .onStart { isShowing.set(true) }
         .onEmpty {
           trace(InlineCompletionEventType.Empty)
           InlineCompletionSession.remove(editor)
@@ -116,7 +117,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
         .collectIndexed { index, it ->
           ensureActive()
 
-          if (!isShowing.get() || modificationStamp != request.document.modificationStamp) {
+          if (modificationStamp != request.document.modificationStamp) {
             cancel()
             return@collectIndexed
           }
@@ -165,7 +166,6 @@ class InlineCompletionHandler(scope: CoroutineScope) {
       trace(InlineCompletionEventType.Hide(explicit))
     }
 
-    isShowing.set(false)
     InlineCompletionSession.remove(editor)
   }
 
@@ -180,7 +180,6 @@ class InlineCompletionHandler(scope: CoroutineScope) {
 
   fun complete(isActive: Boolean, editor: Editor, cause: Throwable?, context: InlineCompletionContext) {
     trace(InlineCompletionEventType.Completion(cause, isActive))
-    isShowing.set(false)
     if (cause != null) {
       hide(editor, false, context)
     }
@@ -278,8 +277,6 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     val KEY = Key.create<InlineCompletionHandler>("inline.completion.handler")
 
     fun getOrNull(editor: Editor) = editor.getUserData(KEY)
-
-    val isShowing: AtomicBoolean = AtomicBoolean(false)
 
     private var testProvider: InlineCompletionProvider? = null
 
