@@ -2,8 +2,6 @@
 package com.intellij.gradle.toolingExtension.impl.model.taskModel;
 
 import com.intellij.gradle.toolingExtension.impl.util.GradleResultUtil;
-import org.jetbrains.plugins.gradle.tooling.Message;
-import org.jetbrains.plugins.gradle.tooling.MessageBuilder;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.internal.tasks.DefaultTaskContainer;
@@ -11,7 +9,10 @@ import org.gradle.api.tasks.TaskContainer;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.tooling.*;
+import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
+import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
+import org.jetbrains.plugins.gradle.tooling.Message;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 
 import java.util.Collections;
 import java.util.Set;
@@ -53,11 +54,12 @@ public class GradleTaskModelBuilder extends AbstractModelBuilderService {
       });
     }
     catch (Exception e) {
-      Message message = MessageBuilder.create(
-        "Project tasks collecting failure",
-        "Tasks for " + project + " cannot be collected due to plugin exception."
-      ).warning().withException(e).build();
-      context.report(project, message);
+      context.getMessageReporter().createMessage()
+        .withTitle("Project tasks collecting failure")
+        .withText("Tasks for " + project + " cannot be collected due to plugin exception.")
+        .withException(e)
+        .withKind(Message.Kind.WARNING)
+        .reportMessage(project);
       return Collections.emptySet();
     }
   }

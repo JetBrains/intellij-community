@@ -6,7 +6,6 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.Message;
-import org.jetbrains.plugins.gradle.tooling.MessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider;
 
@@ -41,13 +40,15 @@ public final class GradleTaskCache {
   private Set<Task> getProjectTasks(@NotNull Project project) {
     Set<Task> projectTasks = allTasks.get(project);
     if (projectTasks == null) {
-      Exception stackTrace = new IllegalStateException();
-      Message message = MessageBuilder.create(
-        "Project tasks aren't found",
-        "Tasks for " + project + " wasn't collected. " +
-        "All tasks should be collected during " + GradleModelFetchPhase.TASK_WARM_UP_PHASE + "."
-      ).error().withException(stackTrace).build();
-      context.report(project, message);
+      context.getMessageReporter().createMessage()
+        .withTitle("Project tasks aren't found")
+        .withText(
+          "Tasks for " + project + " wasn't collected. " +
+          "All tasks should be collected during " + GradleModelFetchPhase.TASK_WARM_UP_PHASE + "."
+        )
+        .withException(new IllegalStateException())
+        .withKind(Message.Kind.ERROR)
+        .reportMessage(project);
       return Collections.emptySet();
     }
     return projectTasks;
@@ -56,11 +57,12 @@ public final class GradleTaskCache {
   public void setTasks(@NotNull Project project, @NotNull Set<Task> tasks) {
     Set<Task> previousTasks = allTasks.put(project, tasks);
     if (previousTasks != null) {
-      Message message = MessageBuilder.create(
-        "Project tasks redefinition",
-        "Tasks for " + project + " was already collected."
-      ).error().build();
-      context.report(project, message);
+      context.getMessageReporter().createMessage()
+        .withTitle("Project tasks redefinition")
+        .withText("Tasks for " + project + " was already collected.")
+        .withException(new IllegalStateException())
+        .withKind(Message.Kind.ERROR)
+        .reportMessage(project);
     }
   }
 

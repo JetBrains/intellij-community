@@ -6,7 +6,6 @@ import org.gradle.api.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.Message;
-import org.jetbrains.plugins.gradle.tooling.MessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,13 +25,15 @@ public class GradleSourceSetCache {
   public @NotNull DefaultGradleSourceSetModel getSourceSetModel(@NotNull Project project) {
     DefaultGradleSourceSetModel sourceSetModel = allSourceSetModels.get(project);
     if (sourceSetModel == null) {
-      Exception stackTrace = new IllegalStateException();
-      Message message = MessageBuilder.create(
-        "Project source set model isn't found",
-        "Source sets for " + project + " wasn't collected. " +
-        "All source sets should be collected during " + GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE + "."
-      ).error().withException(stackTrace).build();
-      context.report(project, message);
+      context.getMessageReporter().createMessage()
+        .withTitle("Project source set model isn't found")
+        .withText(
+          "Source sets for " + project + " wasn't collected. " +
+          "All source sets should be collected during " + GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE + "."
+        )
+        .withException(new IllegalStateException())
+        .withKind(Message.Kind.ERROR)
+        .reportMessage(project);
       return new DefaultGradleSourceSetModel();
     }
     return sourceSetModel;
@@ -41,11 +42,12 @@ public class GradleSourceSetCache {
   public void setSourceSetModel(@NotNull Project project, @NotNull DefaultGradleSourceSetModel sourceSetModel) {
     DefaultGradleSourceSetModel previousSourceSetModel = allSourceSetModels.put(project, sourceSetModel);
     if (previousSourceSetModel != null) {
-      Message message = MessageBuilder.create(
-        "Project source set model redefinition",
-        "Source sets for " + project + " was already collected."
-      ).error().build();
-      context.report(project, message);
+      context.getMessageReporter().createMessage()
+        .withTitle("Project source set model redefinition")
+        .withText("Source sets for " + project + " was already collected.")
+        .withException(new IllegalStateException())
+        .withKind(Message.Kind.ERROR)
+        .reportMessage(project);
     }
   }
 

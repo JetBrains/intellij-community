@@ -166,12 +166,12 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
   public static void reportModelBuilderFailure(
     @NotNull Project project,
     @NotNull ModelBuilderService service,
-    @NotNull ModelBuilderContext modelBuilderContext,
+    @NotNull ModelBuilderContext context,
     @NotNull Exception exception
   ) {
     try {
       Message message = service.getErrorMessageBuilder(project, exception).buildMessage();
-      modelBuilderContext.report(project, message);
+      context.getMessageReporter().reportMessage(project, message);
     }
     catch (Throwable e) {
       LOG.warn("Failed to report model builder error", e);

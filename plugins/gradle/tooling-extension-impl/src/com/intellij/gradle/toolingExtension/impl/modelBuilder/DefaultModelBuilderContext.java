@@ -52,9 +52,4 @@ public final class DefaultModelBuilderContext implements ModelBuilderContext {
       return (T)data;
     }
   }
-
-  @Override
-  public void report(@NotNull Project project, @NotNull Message message) {
-    getMessageReporter().report(project, message);
-  }
 }

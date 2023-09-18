@@ -85,10 +85,4 @@ public final class MessageBuilder {
     }
     return sw.toString();
   }
-
-  public static @NotNull MessageBuilder create(@NotNull String title, @NotNull String text) {
-    return new MessageBuilder()
-      .withTitle(title)
-      .withText(text);
-  }
 }

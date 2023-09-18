@@ -85,11 +85,12 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         }
       }
       catch (e) {
-        Message message = MessageBuilder.create(
-          "Jar task configuration error",
-          "Cannot resolve artifact file for the project Jar task: " + jar.path
-        ).warning().withException(e).build()
-        context.report(project, message)
+        context.getMessageReporter().createMessage()
+          .withTitle("Jar task configuration error")
+          .withText("Cannot resolve artifact file for the project Jar task: " + jar.path)
+          .withKind(Message.Kind.WARNING)
+          .withException(e)
+          .reportMessage(project)
       }
     })
     return taskArtifacts
@@ -111,11 +112,12 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         }
       }
       catch (e) {
-        Message message = MessageBuilder.create(
-          "Jar task configuration error",
-          "Cannot resolve artifact file for the project Jar task: " + jar.path
-        ).warning().withException(e).build()
-        context.report(project, message)
+        context.getMessageReporter().createMessage()
+          .withTitle("Jar task configuration error")
+          .withText("Cannot resolve artifact file for the project Jar task: " + jar.path)
+          .withKind(Message.Kind.WARNING)
+          .withException(e)
+          .reportMessage(project)
       }
     })
     return additionalArtifacts
@@ -138,11 +140,12 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         configurationArtifacts.put(configurationName, new LinkedHashSet<>(files))
       }
       catch (Exception e) {
-        Message message = MessageBuilder.create(
-          "Project configuration error",
-          "Cannot resolve artifact files for project configuration" + configuration
-        ).warning().withException(e).build()
-        context.report(project, message)
+        context.getMessageReporter().createMessage()
+          .withTitle("Jar task configuration error")
+          .withText("Cannot resolve artifact files for project configuration" + configuration)
+          .withKind(Message.Kind.WARNING)
+          .withException(e)
+          .reportMessage(project)
       }
     }
     return configurationArtifacts
@@ -577,7 +580,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     if (sourceSetContainer == null || sourceSetContainer.isEmpty()) {
       return true
     }
-    def outputFiles = new HashSet<File>();
+    def outputFiles = new HashSet<File>()
     sourceSetContainer.all { SourceSet ss -> outputFiles.addAll(ss.output.files) }
     for (Object path: getArchiveTaskSourcePaths(archiveTask)) {
       if (isSafeToResolve(path, project) || isResolvableFileCollection(path, project)) {

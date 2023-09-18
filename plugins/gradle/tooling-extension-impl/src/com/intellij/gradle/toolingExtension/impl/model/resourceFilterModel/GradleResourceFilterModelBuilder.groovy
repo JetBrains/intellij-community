@@ -57,7 +57,7 @@ class GradleResourceFilterModelBuilder {
       }
     }
     catch (Exception ignored) {
-      context.report(project, ErrorMessageBuilder.create(project, "Resource configuration errors")
+      context.getMessageReporter().reportMessage(project, ErrorMessageBuilder.create(project, "Resource configuration errors")
         .withDescription("Cannot resolve resource filtering of " + action.class.simpleName + ". " +
                          "IDEA may fail to build project. " +
                          "Consider using delegated build (enabled by default).")
