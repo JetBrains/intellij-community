@@ -33,7 +33,6 @@ import org.jetbrains.annotations.TestOnly
 @ApiStatus.Experimental
 class InlineCompletionHandler(scope: CoroutineScope) {
   private val executor = SafeInlineCompletionExecutor(scope)
-  private var lastInvocationTime = 0L
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
 
   init {
@@ -105,7 +104,6 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     val editor = request.editor
     val offset = request.endOffset
 
-    lastInvocationTime = System.currentTimeMillis()
     val modificationStamp = request.document.modificationStamp
     val resultFlow = request(provider, request) // .flowOn(Dispatchers.IO)
 
@@ -135,7 +133,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   }
 
   suspend fun request(provider: InlineCompletionProvider, request: InlineCompletionRequest): Flow<InlineCompletionElement> {
-    trace(InlineCompletionEventType.Request(lastInvocationTime, request, provider::class.java))
+    trace(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java))
     return provider.getProposals(request)
   }
 
