@@ -643,7 +643,7 @@
 
     <!-- Refactor -->
     <group id="RefactoringMenu" popup="true">
-    <action id="Refactorings.QuickListPopupAction" class="com.intellij.refactoring.actions.RefactoringQuickListPopupAction"/>
+      <action id="Refactorings.QuickListPopupAction" class="com.intellij.refactoring.actions.RefactoringQuickListPopupAction"/>
       <action id="RenameElement" class="com.intellij.refactoring.actions.RenameElementAction"/>
       <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction"/>
       <separator/>
@@ -1751,9 +1751,7 @@
     </group>
     <action internal="true" id="ShowUsageFeatures" class ="com.intellij.usages.similarity.internal.ShowUsageFeaturesInternalAction"/>
 
-    <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction">
-      <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
-    </action>
+    <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction"/>
 
     <group id="InlineCompletion.Settings" popup="true" internal="true"/>
     <action id="CallInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.CallInlineCompletionAction"/>

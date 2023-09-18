@@ -6,6 +6,7 @@ import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
@@ -74,6 +75,12 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     LOG.trace("Start processing inline event $event")
     if (isMuted.get()) {
       LOG.trace("Muted")
+      return
+    }
+
+    // Wait for [TabEnterUsageDetector] to decide which shortcut to use
+    if (!application.isUnitTestMode && !PropertiesComponent.getInstance().getBoolean(INLINE_COMPLETION_INSERT_SHORTCUT_DETECTED, false)) {
+      trace(InlineCompletionEventType.Mute("deciding shortcut for insertion"))
       return
     }
 
@@ -315,3 +322,5 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     }
   }
 }
+
+const val INLINE_COMPLETION_INSERT_SHORTCUT_DETECTED = "ic_insert_shortcut_detected"

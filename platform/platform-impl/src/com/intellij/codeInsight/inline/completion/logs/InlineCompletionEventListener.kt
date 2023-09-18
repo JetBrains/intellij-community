@@ -9,6 +9,7 @@ import java.util.*
 
 @ApiStatus.Experimental
 sealed class InlineCompletionEventType {
+  data class Mute(val cause: String? = null) : InlineCompletionEventType()
   data class Request(val lastInvocation: Long,
                      val request: InlineCompletionRequest,
                      val provider: Class<out InlineCompletionProvider>) : InlineCompletionEventType()
@@ -30,6 +31,7 @@ interface InlineCompletionEventListener : EventListener {
 interface InlineCompletionEventAdapter : InlineCompletionEventListener {
   override fun on(event: InlineCompletionEventType) {
     when (event) {
+      is InlineCompletionEventType.Mute -> onMute(event)
       is InlineCompletionEventType.Request -> onRequest(event)
       is InlineCompletionEventType.Show -> onShow(event)
       is InlineCompletionEventType.Change -> onChange(event)
@@ -40,6 +42,7 @@ interface InlineCompletionEventAdapter : InlineCompletionEventListener {
     }
   }
 
+  fun onMute(event: InlineCompletionEventType.Mute) {}
   fun onRequest(event: InlineCompletionEventType.Request) {}
   fun onShow(event: InlineCompletionEventType.Show) {}
   fun onChange(event: InlineCompletionEventType.Change) {}
