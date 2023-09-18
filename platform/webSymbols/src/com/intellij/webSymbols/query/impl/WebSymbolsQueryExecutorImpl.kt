@@ -12,10 +12,7 @@ import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.impl.selectBest
 import com.intellij.webSymbols.query.*
-import com.intellij.webSymbols.utils.asSingleSymbol
-import com.intellij.webSymbols.utils.completeMatch
-import com.intellij.webSymbols.utils.hideFromCompletion
-import com.intellij.webSymbols.utils.nameSegments
+import com.intellij.webSymbols.utils.*
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
@@ -151,9 +148,7 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
           scope.getSymbols(namespace, kind, params, Stack(finalContext))
             .filterIsInstance<WebSymbol>()
             .flatMap { it.list(Stack(finalContext), params) }
-            .filter { it.completeMatch }
         }
-        .distinct()
         .flatMap {
           ProgressManager.checkCanceled()
           resultsCustomizer.apply(listOf(it), params.strictScope, namespace, kind, it.name)
@@ -164,9 +159,19 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
           ?: it.name
         }
         .values
-        .mapNotNull {
-          it.selectBest(WebSymbol::nameSegments, WebSymbol::priority, WebSymbol::extension).asSingleSymbol()
+        .mapNotNull { list ->
+          list.selectBest(WebSymbol::nameSegments, WebSymbol::priority, WebSymbol::extension)
+            .asSingleSymbol()
+            ?.let {
+              params.queryExecutor.namesProvider
+                .getNames(it.namespace, it.kind, it.name, WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
+                .firstOrNull()
+                ?.let { name -> it.withMatchedName(name) }
+            }
         }
+        .sortedWith(Comparator.comparingDouble { it: WebSymbol -> -(it.priority ?: WebSymbol.Priority.NORMAL).value }
+                      .thenComparingInt { -(it.proximity ?: 0) }
+                      .thenComparing { it: WebSymbol -> it.name })
       result
     }
 
@@ -244,10 +249,7 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
           it.getMatchingSymbols(qName.namespace, qName.kind, qName.name, contextQueryParams, Stack(scope))
         }
         scopeSymbols.flatMapTo(scope) {
-          if (it is WebSymbol)
-            it.queryScope
-          else
-            listOf(it)
+          it.queryScope
         }
       }
       val lastSection = path.last()
@@ -288,21 +290,6 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
         ?.let { item.withPriority(it) }
       ?: item
     }
-
-  private fun WebSymbol.list(context: Stack<WebSymbolsScope>,
-                             params: WebSymbolsListSymbolsQueryParams): List<WebSymbol> {
-    pattern?.let { pattern ->
-      context.push(this)
-      try {
-        return pattern
-          .list(this, context, params)
-      }
-      finally {
-        context.pop()
-      }
-    }
-    return listOf(this)
-  }
 
 }
 

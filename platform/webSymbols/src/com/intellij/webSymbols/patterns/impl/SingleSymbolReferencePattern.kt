@@ -33,6 +33,17 @@ class SingleSymbolReferencePattern(private val path: List<WebSymbolQualifiedName
     else
       emptyList()
 
+  override fun list(owner: WebSymbol?,
+                    scopeStack: Stack<WebSymbolsScope>,
+                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                    params: ListParameters): List<ListResult> =
+    if (owner != null) {
+      params.queryExecutor.runNameMatchQuery(path, virtualSymbols, abstractSymbols, false, scopeStack.toList())
+        .asSingleSymbol()
+        ?.let { listOf(ListResult(owner.name, WebSymbolNameSegment(0, owner.name.length, it))) }
+      ?: emptyList()
+    } else emptyList()
+
   override fun complete(owner: WebSymbol?,
                         scopeStack: Stack<WebSymbolsScope>,
                         symbolsResolver: WebSymbolsPatternSymbolsResolver?,

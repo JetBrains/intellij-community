@@ -37,6 +37,12 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
     else emptyList()
   }
 
+  override fun list(owner: WebSymbol?,
+                    scopeStack: Stack<WebSymbolsScope>,
+                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                    params: ListParameters): List<ListResult> =
+    emptyList()
+
   override fun complete(owner: WebSymbol?,
                         scopeStack: Stack<WebSymbolsScope>,
                         symbolsResolver: WebSymbolsPatternSymbolsResolver?,

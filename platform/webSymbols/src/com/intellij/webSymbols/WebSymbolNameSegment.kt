@@ -52,8 +52,12 @@ class WebSymbolNameSegment(val start: Int,
                     priority: WebSymbol.Priority? = null,
                     proximity: Int? = null,
                     problem: MatchProblem? = null,
-                    symbols: List<WebSymbol> = emptyList()): WebSymbolNameSegment =
-    WebSymbolNameSegment(start, end, this.symbols + symbols, problem ?: this.problem,
+                    symbols: List<WebSymbol> = emptyList(),
+                    start: Int? = null,
+                    end: Int? = null,
+  ): WebSymbolNameSegment =
+    WebSymbolNameSegment(start ?: this.start, end ?: this.end,
+                         this.symbols + symbols, problem ?: this.problem,
                          displayName, matchScore, symbolKinds,
                          apiStatus ?: this.explicitApiStatus, priority ?: this.explicitPriority,
                          proximity ?: this.explicitProximity)

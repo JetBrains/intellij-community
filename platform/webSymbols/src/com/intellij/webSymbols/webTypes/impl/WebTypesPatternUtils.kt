@@ -13,6 +13,7 @@ import com.intellij.webSymbols.patterns.impl.*
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.webSymbols.webTypes.json.*
 
@@ -74,10 +75,10 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
   override val isStaticAndRequired: Boolean
     get() = pattern.delegate == null && pattern.items == null && pattern.required != false
 
-  override fun getOptions(params: MatchParameters,
+  override fun getOptions(queryExecutor: WebSymbolsQueryExecutor,
                           scopeStack: Stack<WebSymbolsScope>): ComplexPatternOptions {
-    val queryParams = WebSymbolsNameMatchQueryParams(params.queryExecutor, true, false)
-    val delegate = pattern.delegate?.resolve(null, scopeStack, queryParams.queryExecutor)?.firstOrNull()
+    val queryParams = WebSymbolsNameMatchQueryParams(queryExecutor, true, false)
+    val delegate = pattern.delegate?.list(scopeStack, queryParams.queryExecutor)?.asSingleSymbol()
 
     // Allow delegate pattern to override settings
     val apiStatus = delegate?.apiStatus?.takeIf { it.isDeprecatedOrObsolete() }
@@ -121,11 +122,26 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
         ?.applyIcons(delegate)
       ?: emptyList()
 
+    override fun listSymbols(scopeStack: Stack<WebSymbolsScope>, queryExecutor: WebSymbolsQueryExecutor): List<WebSymbol> =
+      delegate.pattern
+        ?.list(delegate, scopeStack, this, ListParameters(queryExecutor))
+        ?.flatMap { listResult ->
+          if (listResult.segments.size == 1
+              && listResult.segments[0].canUnwrapSymbols()) {
+            listResult.segments[0].symbols
+          } else {
+            val lastContribution = scopeStack.peek() as WebSymbol
+            listOf(WebSymbolMatch.create (listResult.name, listResult.segments,
+                                          lastContribution.namespace, SPECIAL_MATCHED_CONTRIB,
+                                          lastContribution.origin))
+          }
+        }
+      ?: emptyList()
+
     override fun matchName(name: String, scopeStack: Stack<WebSymbolsScope>, queryExecutor: WebSymbolsQueryExecutor): List<WebSymbol> =
       delegate.pattern
         ?.match(delegate, scopeStack, null,
                 MatchParameters(name, queryExecutor), 0, name.length)
-        ?.asSequence()
         ?.flatMap { matchResult ->
           if (matchResult.start == matchResult.end) {
             emptySequence()
@@ -141,7 +157,6 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
                                              lastContribution.origin))
           }
         }
-        ?.toList()
       ?: emptyList()
 
   }
@@ -159,17 +174,11 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
                                 queryExecutor: WebSymbolsQueryExecutor): List<WebSymbolCodeCompletionItem> =
       items.flatMap { it.codeCompletion(name, scopeStack, queryExecutor, position) }
 
+    override fun listSymbols(scopeStack: Stack<WebSymbolsScope>, queryExecutor: WebSymbolsQueryExecutor): List<WebSymbol> =
+      items.flatMap { it.list(scopeStack, queryExecutor) }
+
     override fun matchName(name: String, scopeStack: Stack<WebSymbolsScope>, queryExecutor: WebSymbolsQueryExecutor): List<WebSymbol> =
-      items.asSequence()
-        .flatMap { it.resolve(name, scopeStack, queryExecutor) }
-        .flatMap {
-          if (it is WebSymbolMatch
-              && it.nameSegments.size == 1
-              && it.nameSegments[0].canUnwrapSymbols())
-            it.nameSegments[0].symbols
-          else listOf(it)
-        }
-        .toList()
+      items.flatMap { it.match(name, scopeStack, queryExecutor) }
 
   }
 }

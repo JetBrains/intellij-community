@@ -59,6 +59,29 @@ internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPatt
     ))
   }
 
+  override fun list(owner: WebSymbol?,
+                    scopeStack: Stack<WebSymbolsScope>,
+                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                    params: ListParameters): List<ListResult> =
+    symbolsResolver
+      ?.listSymbols(scopeStack, params.queryExecutor)
+      ?.let { list ->
+        when {
+          list.size == 1 && list[0] is WebSymbolMatch ->
+            (list[0] as WebSymbolMatch).let {
+              listOf(ListResult(it.name, it.nameSegments))
+            }
+
+          list.isNotEmpty() ->
+            list.map {
+              ListResult(it.name, WebSymbolNameSegment(0, it.name.length, it))
+            }
+
+          else -> emptyList()
+        }
+      }
+    ?: emptyList()
+
   override fun complete(owner: WebSymbol?,
                         scopeStack: Stack<WebSymbolsScope>,
                         symbolsResolver: WebSymbolsPatternSymbolsResolver?,

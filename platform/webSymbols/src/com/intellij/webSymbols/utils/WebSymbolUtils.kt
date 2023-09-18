@@ -50,13 +50,20 @@ fun List<WebSymbol>.asSingleSymbol(): WebSymbol? =
     this[0]
   else {
     val first = this[0]
-    WebSymbolMatch.create(first.name, listOf(WebSymbolNameSegment(0, first.name.length, sortSymbolsByPriority())),
-                          first.namespace, first.kind, first.origin)
+    if (any { it.namespace != first.namespace || it.kind != first.kind })
+      null
+    else
+      WebSymbolMatch.create(first.name, listOf(WebSymbolNameSegment(0, first.name.length, sortSymbolsByPriority())),
+                            first.namespace, first.kind, first.origin)
   }
 
 fun WebSymbol.withMatchedName(matchedName: String) =
   if (matchedName != name) {
-    WebSymbolMatch.create(matchedName, listOf(WebSymbolNameSegment(0, matchedName.length, this)), namespace, kind, origin)
+    val nameSegment = if (this is WebSymbolMatch && nameSegments.size == 1)
+      nameSegments[0].copy(start = 0, end = matchedName.length)
+    else
+      WebSymbolNameSegment(0, matchedName.length, this)
+    WebSymbolMatch.create(matchedName, listOf(nameSegment), namespace, kind, origin)
   }
   else this
 
@@ -109,7 +116,7 @@ fun WebSymbol.match(nameToMatch: String,
           }
           else {
             WebSymbolMatch.create(nameToMatch, matchResult.segments,
-                                  this.namespace, kind, this.origin)
+                                  namespace, kind, origin)
           }
         }
     }
@@ -124,6 +131,24 @@ fun WebSymbol.match(nameToMatch: String,
   else {
     emptyList()
   }
+}
+
+fun WebSymbol.list(context: Stack<WebSymbolsScope>,
+                   params: WebSymbolsListSymbolsQueryParams): List<WebSymbol> {
+  pattern?.let { pattern ->
+    context.push(this)
+    try {
+      return pattern
+        .list(this, context, params)
+        .map {
+          WebSymbolMatch.create(it.name, it.segments, namespace, kind, origin)
+        }
+    }
+    finally {
+      context.pop()
+    }
+  }
+  return listOf(this)
 }
 
 fun WebSymbol.toCodeCompletionItems(name: String,

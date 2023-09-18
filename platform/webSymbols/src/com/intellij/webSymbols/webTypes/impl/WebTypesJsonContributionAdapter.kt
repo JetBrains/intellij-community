@@ -107,8 +107,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
       get() = _superContributions
               ?: base.contribution.extends
                 .also { _superContributions = emptyList() }
-                ?.resolve(null, listOf(), queryExecutor, true, true)
-                ?.toList()
+                ?.list(listOf(), queryExecutor, true, true)
                 ?.also { contributions -> _superContributions = contributions }
               ?: emptyList()
 

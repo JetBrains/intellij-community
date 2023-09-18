@@ -25,10 +25,9 @@ abstract class WebSymbolsPattern {
 
   internal fun list(owner: WebSymbol?,
                     scope: Stack<WebSymbolsScope>,
-                    params: WebSymbolsListSymbolsQueryParams): List<WebSymbol> =
+                    params: WebSymbolsListSymbolsQueryParams): List<ListResult> =
     list(owner, scope, null, ListParameters(params))
-      .items
-      .mapNotNull { it.symbol }
+      .map { it.removeEmptySegments() }
 
   internal fun complete(owner: WebSymbol?,
                         scope: Stack<WebSymbolsScope>,
@@ -42,11 +41,10 @@ abstract class WebSymbolsPattern {
                               symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                               params: MatchParameters, start: Int, end: Int): List<MatchResult>
 
-  internal /*abstract*/ fun list(owner: WebSymbol?,
-                                 scopeStack: Stack<WebSymbolsScope>,
-                                 symbolsResolver: WebSymbolsPatternSymbolsResolver?,
-                                 params: ListParameters): CompletionResults =
-    TODO()
+  internal abstract fun list(owner: WebSymbol?,
+                             scopeStack: Stack<WebSymbolsScope>,
+                             symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                             params: ListParameters): List<ListResult>
 
   internal abstract fun complete(owner: WebSymbol?,
                                  scopeStack: Stack<WebSymbolsScope>,

@@ -28,6 +28,7 @@ import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.js.WebSymbolJsKind
+import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConverter
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
@@ -179,31 +180,62 @@ internal fun Reference.getSymbolKind(context: WebSymbol?): WebSymbolQualifiedKin
       WebSymbolQualifiedKind(it.namespace, it.kind)
     }
 
-internal fun Reference.resolve(name: String?,
-                               scope: List<WebSymbolsScope>,
-                               queryExecutor: WebSymbolsQueryExecutor,
-                               virtualSymbols: Boolean = true,
-                               abstractSymbols: Boolean = false): List<WebSymbol> {
+internal fun Reference.match(name: String,
+                             scope: List<WebSymbolsScope>,
+                             queryExecutor: WebSymbolsQueryExecutor,
+                             virtualSymbols: Boolean = true,
+                             abstractSymbols: Boolean = false): List<WebSymbol> =
+  if (name.isEmpty())
+    emptyList()
+  else
+    resolve(name, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
+      runNameMatchQuery(path, virtualSymbols2, abstractSymbols2, false, scope)
+    }
+
+internal fun Reference.list(scope: List<WebSymbolsScope>,
+                            queryExecutor: WebSymbolsQueryExecutor,
+                            virtualSymbols: Boolean = true,
+                            abstractSymbols: Boolean = false): List<WebSymbol> =
+  resolve(null, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
+    if (path.isEmpty()) return@resolve emptyList()
+    val lastSegment = path.last()
+    runListSymbolsQuery(path.subList(0, path.size - 1), lastSegment.namespace, lastSegment.kind,
+                        virtualSymbols2, abstractSymbols2, false, scope)
+  }
+
+private fun Reference.resolve(
+  name: String?,
+  scope: List<WebSymbolsScope>,
+  queryExecutor: WebSymbolsQueryExecutor,
+  virtualSymbols: Boolean,
+  abstractSymbols: Boolean,
+  queryRunner: WebSymbolsQueryExecutor.(List<WebSymbolQualifiedName>, Boolean, Boolean) -> List<WebSymbol>
+): List<WebSymbol> {
   ProgressManager.checkCanceled()
-  if (name != null && name.isEmpty())
-    return emptyList()
   return when (val reference = this.value) {
-    is String -> queryExecutor.runNameMatchQuery(
+    is String -> queryExecutor.queryRunner(
       parseWebTypesPath(reference + if (name != null) "/$name" else "", scope.lastWebSymbol),
-      virtualSymbols, abstractSymbols, scope = scope)
+      virtualSymbols, abstractSymbols)
     is ReferenceWithProps -> {
       val nameConversionRules = reference.createNameConversionRules(scope.lastWebSymbol)
       val path = parseWebTypesPath((reference.path ?: return emptyList()) + if (name != null) "/$name" else "", scope.lastWebSymbol)
-      val matches = queryExecutor.withNameConversionRules(nameConversionRules)
-        .runNameMatchQuery(path, reference.includeVirtual ?: virtualSymbols,
-                           reference.includeAbstract ?: abstractSymbols,
-                           false, scope)
+      val matches = queryExecutor.withNameConversionRules(nameConversionRules).queryRunner(
+        path, reference.includeVirtual ?: virtualSymbols, reference.includeAbstract ?: abstractSymbols)
       if (reference.filter == null) return matches
       val properties = reference.additionalProperties.toMap()
       WebSymbolsFilter.get(reference.filter)
         .filterNameMatches(matches, queryExecutor, scope, properties)
     }
     else -> throw IllegalArgumentException(reference::class.java.name)
+  }.flatMap { symbol ->
+    if (symbol is WebSymbolMatch
+        && symbol.nameSegments.size == 1
+        && symbol.nameSegments[0].let {segment ->
+          segment.canUnwrapSymbols()
+          && segment.symbols.all { it.name == symbol.name }
+      })
+      symbol.nameSegments[0].symbols
+    else listOf(symbol)
   }
 }
 

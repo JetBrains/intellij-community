@@ -4,8 +4,8 @@ package com.intellij.webSymbols.patterns
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.WebSymbolsScope
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.patterns.impl.*
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
 object WebSymbolsPatternFactory {
 
@@ -16,8 +16,8 @@ object WebSymbolsPatternFactory {
       override fun getPatterns(): List<WebSymbolsPattern> =
         patternsProvider()
 
-      override fun getOptions(params: MatchParameters, scopeStack: Stack<WebSymbolsScope>): ComplexPatternOptions =
-        optionsProvider(params.queryExecutor, scopeStack)
+      override fun getOptions(queryExecutor: WebSymbolsQueryExecutor, scopeStack: Stack<WebSymbolsScope>): ComplexPatternOptions =
+        optionsProvider(queryExecutor, scopeStack)
 
       override val isStaticAndRequired: Boolean
         get() = isStaticAndRequiredProvider()
@@ -32,7 +32,7 @@ object WebSymbolsPatternFactory {
       override fun getPatterns(): List<WebSymbolsPattern> =
         patterns.toList()
 
-      override fun getOptions(params: MatchParameters, scopeStack: Stack<WebSymbolsScope>): ComplexPatternOptions =
+      override fun getOptions(queryExecutor: WebSymbolsQueryExecutor, scopeStack: Stack<WebSymbolsScope>): ComplexPatternOptions =
         options
 
       override val isStaticAndRequired: Boolean

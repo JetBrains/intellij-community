@@ -18,7 +18,7 @@ internal fun WebSymbolCodeCompletionItem.withStopSequencePatternEvaluation(stop:
 internal val WebSymbolCodeCompletionItem.stopSequencePatternEvaluation
   get() = (this as WebSymbolCodeCompletionItemImpl).stopSequencePatternEvaluation
 
-internal fun MatchResult.addOwner(owner: WebSymbol): MatchResult {
+internal fun <T: MatchResult> T.addOwner(owner: WebSymbol): T {
   val newSegments = mutableListOf<WebSymbolNameSegment>()
   var foundNonEmpty = false
   var applied = false
@@ -46,8 +46,15 @@ internal fun MatchResult.addOwner(owner: WebSymbol): MatchResult {
   if (!applied) {
     newSegments.add(0, WebSymbolNameSegment(start, start, owner))
   }
-  return MatchResult(newSegments)
+  return copy(segments = newSegments)
 }
+
+@Suppress("UNCHECKED_CAST")
+internal fun <T: MatchResult> T.copy(segments: List<WebSymbolNameSegment>): T =
+  when(this) {
+    is ListResult -> ListResult(name, segments)
+    else -> MatchResult(segments)
+  } as T
 
 internal fun List<WebSymbolCodeCompletionItem>.applyIcons(symbol: WebSymbol) =
   if (symbol.icon != null) {
@@ -100,27 +107,33 @@ internal fun <T> withPrevMatchScope(scopeStack: Stack<WebSymbolsScope>,
     }
   }
 
-internal fun MatchResult.applyToSegments(vararg contributions: WebSymbol,
+internal fun <T:MatchResult> T.applyToSegments(vararg contributions: WebSymbol,
                                          apiStatus: WebSymbolApiStatus? = null,
                                          priority: WebSymbol.Priority? = null,
-                                         proximity: Int? = null): MatchResult =
+                                         proximity: Int? = null): T =
   if (apiStatus != null || priority != null || proximity != null || contributions.isNotEmpty())
-    MatchResult(
+    copy(
       segments.map {
         it.copy(apiStatus = apiStatus, priority = priority, proximity = proximity, symbols = contributions.toList())
       })
   else
     this
 
+internal fun ListResult.removeEmptySegments(): ListResult =
+  ListResult(
+    name,
+    segments.filter { !it.isEmpty()}
+      .ifEmpty { listOf(segments.first()) }
+  )
+
 internal fun MatchResult.removeEmptySegments(): MatchResult =
   MatchResult(
-    segments.filter {
-      it.start != it.end
-      || it.problem != null
-      || it.symbols.isNotEmpty()
-      || it.apiStatus != null
-      || it.proximity != null
-    }.ifEmpty { listOf(segments.first()) })
+    segments.filter { !it.isEmpty()}
+      .ifEmpty { listOf(segments.first()) }
+  )
+
+internal fun WebSymbolNameSegment.isEmpty() =
+  start == end && problem == null && symbols.isEmpty() && apiStatus == null
 
 internal fun MatchResult.prefixedWith(prevResult: MatchResult?): MatchResult =
   prevResult?.let { MatchResult(it.segments + this.segments) }

@@ -56,6 +56,26 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
       }
     }
 
+  override fun list(owner: WebSymbol?,
+                    scopeStack: Stack<WebSymbolsScope>,
+                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                    params: ListParameters): List<ListResult> =
+    process(emptyList()) { matches, pattern, staticPrefixes ->
+      if (matches.isEmpty()) {
+        pattern.list(null, scopeStack, symbolsResolver, params)
+          .filter { result -> staticPrefixes.none { !result.name.contains(it) }}
+      }
+      else {
+        matches.flatMap { prevResult ->
+          withPrevMatchScope(scopeStack, prevResult.segments) {
+            pattern.list(null, scopeStack, symbolsResolver, params)
+              .filter { result -> staticPrefixes.none { !result.name.contains(it) }}
+              .map { it.prefixedWith(prevResult) }
+          }
+        }
+      }
+    }
+
   override fun complete(owner: WebSymbol?,
                         scopeStack: Stack<WebSymbolsScope>,
                         symbolsResolver: WebSymbolsPatternSymbolsResolver?,
@@ -429,10 +449,9 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
   override fun toString(): String =
     patternsProvider().toString()
 
-  data class SequenceCompletionResult(val prevResult: MatchResult?,
+  private data class SequenceCompletionResult(val prevResult: MatchResult?,
                                       val lastMatched: MatchResult,
                                       val requiredCompletionChain: WebSymbolCodeCompletionItem?,
                                       val onlyRequired: Boolean = false)
-
 
 }
