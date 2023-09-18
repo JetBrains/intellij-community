@@ -107,26 +107,14 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
     val modelsProvider = optionalModelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
 
-    project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).importStarted()
     val importResult = withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
       blockingContext {
-        val activity = importActivityStarted(project, MavenUtil.SYSTEM_ID) {
-          listOf(ProjectImportCollector.TASK_CLASS.with(MavenImportStats.ImportingTaskOld::class.java))
-        }
-        try {
-          val projectImporter = MavenProjectImporter.createImporter(
-            project, projectsTree, projectsToImport,
-            modelsProvider, importingSettings, myPreviewModule, activity
-          )
-          val postTasks = projectImporter.importProject()
-          return@blockingContext ImportResult(projectImporter.createdModules(), postTasks ?: emptyList())
-        }
-        finally {
-          activity.finished()
-        }
+        project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).importStarted()
+        val importResult = runImportProjectActivity(projectsToImport, modelsProvider)
+        project.messageBus.syncPublisher(MavenImportListener.TOPIC).importFinished(projectsToImport.keys, importResult.createdModules)
+        importResult
       }
     }
-    project.messageBus.syncPublisher(MavenImportListener.TOPIC).importFinished(projectsToImport.keys, importResult.createdModules)
 
     getVirtualFileManager().asyncRefresh()
 
@@ -139,6 +127,24 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       }
     }
     return importResult.createdModules
+  }
+
+  private fun runImportProjectActivity(projectsToImport: Map<MavenProject, MavenProjectChanges>,
+                                       modelsProvider: IdeModifiableModelsProvider): ImportResult {
+    val activity = importActivityStarted(project, MavenUtil.SYSTEM_ID) {
+      listOf(ProjectImportCollector.TASK_CLASS.with(MavenImportStats.ImportingTaskOld::class.java))
+    }
+    try {
+      val projectImporter = MavenProjectImporter.createImporter(
+        project, projectsTree, projectsToImport,
+        modelsProvider, importingSettings, myPreviewModule, activity
+      )
+      val postTasks = projectImporter.importProject()
+      return ImportResult(projectImporter.createdModules(), postTasks ?: emptyList())
+    }
+    finally {
+      activity.finished()
+    }
   }
 
   private data class ImportResult(val createdModules: List<Module>, val postTasks: List<MavenProjectsProcessorTask>)
