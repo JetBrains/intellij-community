@@ -4,7 +4,7 @@ package com.intellij.util.indexing.roots;
 import com.intellij.platform.workspace.storage.EntityReference;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.indexing.roots.origin.CustomKindEntityOrigin;
-import com.intellij.util.indexing.roots.origin.CustomKindKindEntityOriginImpl;
+import com.intellij.util.indexing.roots.origin.CustomKindEntityOriginImpl;
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +27,6 @@ public final class CustomKindEntityIteratorImpl extends RootHolderIteratorBase {
   @NotNull
   @Override
   public CustomKindEntityOrigin getOrigin() {
-    return new CustomKindKindEntityOriginImpl(entityReference, roots);
+    return new CustomKindEntityOriginImpl(entityReference, roots);
   }
 }
