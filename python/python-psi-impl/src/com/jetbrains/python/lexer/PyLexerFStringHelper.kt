@@ -14,11 +14,7 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
 
   fun handleFStringStartInFragment(): IElementType {
     val prefixAndQuotes = myLexer.yytext().toString()
-    val (_, offset) = findFStringTerminator(prefixAndQuotes)
-    if (offset == prefixAndQuotes.length) {
-      return pushFString(prefixAndQuotes)
-    }
-    return PyTokenTypes.IDENTIFIER
+    return pushFString(prefixAndQuotes)
   }
 
   fun handleFStringStart(): IElementType {
@@ -90,9 +86,6 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
   }
 
   fun handleLineBreakInFragment(): IElementType {
-    val text = myLexer.yytext().toString()
-    // We will return a line break anyway, but we need to transit from FSTRING state of the lexer
-    findFStringTerminator(text)
     return PyTokenTypes.LINE_BREAK
   }
 
@@ -106,15 +99,7 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
   }
 
   fun handleStringLiteral(stringLiteralType: IElementType): IElementType {
-    val stringText = myLexer.yytext().toString()
-    val prefixLength = PyStringLiteralUtil.getPrefixLength(stringText)
-
-    val (type, offset) = findFStringTerminator(stringText)
-    return when (offset) {
-      0 -> type!!
-      prefixLength -> PyTokenTypes.IDENTIFIER
-      else -> stringLiteralType
-    }
+    return stringLiteralType
   }
 
   private fun findFStringTerminator(text: String): Pair<IElementType?, Int> {
@@ -126,8 +111,8 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
         continue
       }
       if (c == '\n') {
-        val insideSingleQuoted = myFStringStates.any { it.openingQuotes.length == 1 }
-        if (insideSingleQuoted) {
+        val topmostFStringIsSingleQuoted = myFStringStates.peek().openingQuotes.length == 1
+        if (topmostFStringIsSingleQuoted) {
           if (i == 0) {
             // Terminate all f-strings and insert STATEMENT_BREAK at this point
             dropFStringStateWithAllNested(0)
@@ -138,13 +123,13 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
       }
       else {
         val nextThree = text.substring(i, min(text.length, i + 3))
-        val lastWithMatchingQuotesIndex = myFStringStates.indexOfLast { nextThree.startsWith(it.openingQuotes) }
-        if (lastWithMatchingQuotesIndex >= 0) {
-          val state = myFStringStates[lastWithMatchingQuotesIndex]
+        val topmostFStringState = myFStringStates.peek()
+        val closesTopmostFStringQuotes =  nextThree.startsWith(topmostFStringState.openingQuotes)
+        if (closesTopmostFStringQuotes) {
           if (i == 0) {
-            dropFStringStateWithAllNested(lastWithMatchingQuotesIndex)
+            dropFStringStateWithAllNested(myFStringStates.size - 1)
           }
-          pushBackToOrConsumeMatch(i, state.openingQuotes.length)
+          pushBackToOrConsumeMatch(i, topmostFStringState.openingQuotes.length)
           return Pair(PyTokenTypes.FSTRING_END, i)
         }
       }
