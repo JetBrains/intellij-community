@@ -15,20 +15,7 @@ class OtherOptions(val callback: (Int) -> Unit) : ProductChooserAction(), LinkAc
 
   private var jb: List<AnAction>? = null
   private var sync: List<AnAction>? = null
-  private val config = object : DumbAwareAction() {
-    init {
-      templatePresentation.text = "Config or Installation Directory"
-      templatePresentation.icon = AllIcons.Ide.ConfigFile
-    }
-
-    override fun displayTextInToolbar(): Boolean {
-      return true
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-
-    }
-  }
+  private val config = ConfigAction()
 
   override fun displayTextInToolbar(): Boolean {
     return true
