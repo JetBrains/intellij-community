@@ -241,7 +241,7 @@ fun createCompletionResultSet(retrievalService: PyRuntimeCompletionRetrievalServ
                               parameters: CompletionParameters): List<LookupElement> {
   if (!retrievalService.canComplete(parameters)) return emptyList()
   val project = parameters.editor.project ?: return emptyList()
-  val treeNodeList = runtimeService.getGlobalPythonVariables(parameters.originalFile.virtualFile, project, parameters.editor)
+  val treeNodeList = runtimeService.getGlobalPythonVariables(parameters.originalFile.virtualFile, project)
                      ?: return emptyList()
   val pyObjectCandidates = getCompleteAttribute(parameters)
 
