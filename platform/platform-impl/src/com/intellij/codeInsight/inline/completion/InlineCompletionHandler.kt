@@ -207,7 +207,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     if (provider == null && !session.context.isCurrentlyDisplayingInlays) {
       return true // Fast fall to not slow down editor
     }
-    if ((provider != null) && (session.provider != provider) || session.provider.requiresInvalidation(request.event)) {
+    if ((provider != null && session.provider != provider) || session.provider.requiresInvalidation(request.event)) {
       session.invalidate()
       return false
     }
