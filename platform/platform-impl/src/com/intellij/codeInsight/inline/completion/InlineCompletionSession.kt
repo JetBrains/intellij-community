@@ -11,9 +11,9 @@ internal data class InlineCompletionSession(val context: InlineCompletionContext
     private val LOG = thisLogger()
     private val INLINE_COMPLETION_SESSION = Key.create<InlineCompletionSession>("inline.completion.session")
 
-    fun getOrNull(editor: Editor): InlineCompletionSession? = editor.getUserData(INLINE_COMPLETION_SESSION)
+    internal fun getOrNull(editor: Editor): InlineCompletionSession? = editor.getUserData(INLINE_COMPLETION_SESSION)
 
-    fun getOrInit(editor: Editor, provider: InlineCompletionProvider): InlineCompletionSession {
+    internal fun getOrInit(editor: Editor, provider: InlineCompletionProvider): InlineCompletionSession {
       val currentSession = getOrNull(editor)
       if (currentSession != null && currentSession.provider == provider) {
         return currentSession
@@ -23,7 +23,7 @@ internal data class InlineCompletionSession(val context: InlineCompletionContext
       }
     }
 
-    fun remove(editor: Editor) {
+    internal fun remove(editor: Editor) {
       getOrNull(editor)?.context?.clear()
       editor.putUserData(INLINE_COMPLETION_SESSION, null)
       LOG.trace("Remove inline completion session")
