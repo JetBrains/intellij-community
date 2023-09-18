@@ -1203,14 +1203,13 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
     assertCompletionVariantsDoNotInclude(myProjectPom, "project.groupId")
   }
 
-  private fun readWithProfiles(vararg profiles: String) {
+  private suspend fun readWithProfiles(vararg profiles: String) {
     if (isNewImportingProcess) {
       readWithProfilesViaImportFlow(*profiles)
     }
     else {
-      projectsManager.explicitProfiles = MavenExplicitProfiles(Arrays.asList(*profiles))
-      projectsManager.scheduleUpdateAll(MavenImportSpec(false, false, false))
-      waitForReadingCompletion()
+      projectsManager.explicitProfiles = MavenExplicitProfiles(listOf(*profiles))
+      projectsManager.updateAllMavenProjects(MavenImportSpec(false, true, false))
     }
   }
 
