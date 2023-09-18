@@ -684,6 +684,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
                 runTest("../completion/testData/basic/common/extensionFunctionTypeValues/ImplicitReceiver.kt");
             }
 
+            @TestMetadata("Property.kt")
+            public void testProperty() throws Exception {
+                runTest("../completion/testData/basic/common/extensionFunctionTypeValues/Property.kt");
+            }
+
             @TestMetadata("SafeCall.kt")
             public void testSafeCall() throws Exception {
                 runTest("../completion/testData/basic/common/extensionFunctionTypeValues/SafeCall.kt");

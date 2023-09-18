@@ -18,11 +18,11 @@ import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderVariable
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
+import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailTextForVariableCall
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambdaBraces
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.types.Variance
 
 internal class VariableLookupElementFactory {
     context(KtAnalysisSession)
@@ -64,9 +64,7 @@ private fun createLookupElementBuilder(
                     insertEmptyLambda = insertLambdaBraces(functionalType),
                 )
 
-                val tailText = functionalType.parameterTypes.joinToString(prefix = "(", postfix = ")") {
-                    it.render(CompletionShortNamesRenderer.rendererVerbose, position = Variance.INVARIANT)
-                }
+                val tailText = getTailTextForVariableCall(functionalType, signature)
 
                 LookupElementBuilder.create(lookupObject, name.asString())
                     .withTailText(tailText, true)
