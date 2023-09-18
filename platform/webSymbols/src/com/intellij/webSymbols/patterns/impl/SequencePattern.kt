@@ -63,13 +63,13 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
     process(emptyList()) { matches, pattern, staticPrefixes ->
       if (matches.isEmpty()) {
         pattern.list(null, scopeStack, symbolsResolver, params)
-          .filter { result -> staticPrefixes.none { !result.name.contains(it) }}
+          .filter { result -> staticPrefixes.none { it.isNotEmpty() && result.name.contains(it) }}
       }
       else {
         matches.flatMap { prevResult ->
           withPrevMatchScope(scopeStack, prevResult.segments) {
             pattern.list(null, scopeStack, symbolsResolver, params)
-              .filter { result -> staticPrefixes.none { !result.name.contains(it) }}
+              .filter { result -> staticPrefixes.none { it.isNotEmpty() && result.name.contains(it) }}
               .map { it.prefixedWith(prevResult) }
           }
         }

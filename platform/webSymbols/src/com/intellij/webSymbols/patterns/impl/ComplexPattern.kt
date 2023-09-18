@@ -43,7 +43,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                      start: Int,
                      end: Int): List<MatchResult> =
     process(scopeStack, params.queryExecutor) { patterns, newSymbolsResolver, apiStatus,
-                                  isRequired, priority, proximity, repeats, unique ->
+                                                isRequired, priority, proximity, repeats, unique ->
       performPatternMatch(params, start, end, patterns, repeats, unique, scopeStack, newSymbolsResolver)
         .let { matchResults ->
           if (!isRequired)
@@ -70,16 +70,19 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
     process(scopeStack, params.queryExecutor) { patterns, newSymbolsResolver, apiStatus,
-                                  isRequired, priority, proximity, repeats, _ ->
+                                                isRequired, priority, proximity, repeats, _ ->
       if (repeats)
-        emptyList()
+        if (isRequired)
+          emptyList()
+        else
+          listOf(ListResult("", WebSymbolNameSegment(0, 0)))
       else
         patterns
           .flatMap { it.list(null, scopeStack, newSymbolsResolver, params) }
           .postProcess(owner, apiStatus, priority, proximity)
           .let {
             if (!isRequired)
-              it + ListResult("", WebSymbolNameSegment(0,0))
+              it + ListResult("", WebSymbolNameSegment(0, 0))
             else
               it
           }
@@ -93,7 +96,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                         start: Int,
                         end: Int): CompletionResults =
     process(scopeStack, params.queryExecutor) { patterns, newSymbolsResolver, apiStatus,
-                                  isRequired, priority, proximity, repeats, unique ->
+                                                isRequired, priority, proximity, repeats, unique ->
       var staticPrefixes: Set<String> = emptySet()
 
       val runs = if (start == end) {
