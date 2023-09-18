@@ -32,9 +32,11 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   }
 
   @Test
-  fun testResolvingEnvVariableInRepositoryPath() {
+  fun testResolvingEnvVariableInRepositoryPath() = runBlocking {
     val temp = System.getenv(getEnvVar())
-    updateSettingsXml("<localRepository>\${env." + getEnvVar() + "}/tmpRepo</localRepository>")
+    waitForImportWithinTimeout {
+      updateSettingsXml("<localRepository>\${env." + getEnvVar() + "}/tmpRepo</localRepository>")
+    }
     val repo = File("$temp/tmpRepo").getCanonicalFile()
     assertEquals(repo.path, mavenGeneralSettings.getEffectiveLocalRepository().path)
     importProject("""
@@ -54,7 +56,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   }
 
   @Test
-  fun testUpdatingProjectsOnProfilesXmlChange() {
+  fun testUpdatingProjectsOnProfilesXmlChange() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -81,7 +83,8 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                         <sourceDirectory>${'$'}{prop}</sourceDirectory>
                       </build>
                       """.trimIndent())
-    updateSettingsXml("""
+    waitForImportWithinTimeout {
+      updateSettingsXml("""
                         <profiles>
                           <profile>
                             <id>one</id>
@@ -94,13 +97,15 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                           </profile>
                         </profiles>
                         """.trimIndent())
+    }
     importProject()
     val roots = projectsTree.rootProjects
     val parentNode = roots[0]
     val childNode = projectsTree.getModules(roots[0])[0]
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value1")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value1")))
-    updateSettingsXml("""
+    waitForImportWithinTimeout {
+      updateSettingsXml("""
                         <profiles>
                           <profile>
                             <id>one</id>
@@ -113,14 +118,18 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                           </profile>
                         </profiles>
                         """.trimIndent())
+    }
     importProject()
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value2")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value2")))
-    updateSettingsXml("<profiles/>")
+    waitForImportWithinTimeout {
+      updateSettingsXml("<profiles/>")
+    }
     importProject()
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/\${prop}")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/\${prop}")))
-    updateSettingsXml("""
+    waitForImportWithinTimeout {
+      updateSettingsXml("""
                         <profiles>
                           <profile>
                             <id>one</id>
@@ -133,6 +142,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                           </profile>
                         </profiles>
                         """.trimIndent())
+    }
     importProject()
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value2")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value2")))
@@ -166,7 +176,8 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                         <sourceDirectory>${'$'}{prop}</sourceDirectory>
                       </build>
                       """.trimIndent())
-    updateSettingsXml("""
+    waitForImportWithinTimeout {
+      updateSettingsXml("""
                         <profiles>
                           <profile>
                             <id>one</id>
@@ -179,6 +190,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                           </profile>
                         </profiles>
                         """.trimIndent())
+    }
     importProject()
     val roots = projectsTree.rootProjects
     val parentNode = roots[0]
@@ -198,25 +210,27 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   }
 
   @Test
-  fun testUpdatingMavenPathsWhenSettingsChanges() {
+  fun testUpdatingMavenPathsWhenSettingsChanges() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        """.trimIndent())
     val repo1 = File(myDir, "localRepo1")
-    updateSettingsXml("""
-  <localRepository>
-  ${repo1.path}</localRepository>
-  """.trimIndent())
-    waitForReadingCompletion()
+    waitForImportWithinTimeout {
+      updateSettingsXml("""
+                      <localRepository>
+                      ${repo1.path}</localRepository>
+                      """.trimIndent())
+    }
     assertEquals(repo1, mavenGeneralSettings.getEffectiveLocalRepository())
     val repo2 = File(myDir, "localRepo2")
-    updateSettingsXml("""
-  <localRepository>
-  ${repo2.path}</localRepository>
-  """.trimIndent())
-    waitForReadingCompletion()
+    waitForImportWithinTimeout {
+      updateSettingsXml("""
+                      <localRepository>
+                      ${repo2.path}</localRepository>
+                      """.trimIndent())
+    }
     assertEquals(repo2, mavenGeneralSettings.getEffectiveLocalRepository())
   }
 
