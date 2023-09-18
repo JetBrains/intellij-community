@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.icons.ImageDataByPathLoader.Companion.findIconByPath
 import com.intellij.ui.icons.getReflectiveIcon
+import com.intellij.util.ui.GrayFilter
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -25,17 +26,18 @@ internal fun parseUiThemeValue(key: String, value: Any?, classLoader: ClassLoade
   try {
     return when {
       value.endsWith(".png") || value.endsWith(".svg") -> parseImageFile(value, classLoader)
-      key.endsWith("Insets") || key.endsWith(".insets") || key.endsWith("padding") -> parseInsets(value)
       key.endsWith("Border") || key.endsWith("border") -> parseBorder(value, classLoader)
       key.endsWith("Size") -> parseSize(value)
       key.endsWith("Width") || key.endsWith("Height") -> getIntegerOrFloat(value, key)
       value.startsWith("AllIcons.") -> UIDefaults.LazyValue { getReflectiveIcon(value, classLoader) }
-      isColorLike(value) -> {
-        parseColorOrNull(value, key)?.let {
-          return createColorResource(it, key)
-        } ?: value
-      }
       else -> {
+        // ShowUIDefaultsContent can call parseUiThemeValue directly, that's why value maybe not yet parsed
+        parseStringValue(value = value, key = key).let {
+          if (it !is String) {
+            return it
+          }
+        }
+
         // key as null to log as warning
         getIntegerOrFloat(value, null)?.let {
           logger<UITheme>().warn("$key has numeric value but specified as string")
@@ -104,7 +106,7 @@ private fun parseBorderColorOrBorderClass(value: String, classLoader: ClassLoade
   }
 }
 
-internal fun parseMultiValue(value: String) = value.splitToSequence(',').map { it.trim() }.filter { it.isNotEmpty() }
+private fun parseMultiValue(value: String) = value.splitToSequence(',').map { it.trim() }.filter { it.isNotEmpty() }
 
 private fun getIntegerOrFloat(value: String, key: String?): Number? {
   try {
@@ -136,5 +138,29 @@ internal fun createColorResource(color: Color?, key: String): UIResource {
   }
   else {
     return IJColorUIResource(color, key)
+  }
+}
+
+internal fun parseStringValue(value: String, key: String): Any {
+  return when {
+    key.endsWith("Insets") || key.endsWith(".insets") || key.endsWith("padding") -> parseInsets(value)
+    isColorLike(value) -> {
+      val color = parseColorOrNull(value, null)
+      if (color == null) {
+        logger<UITheme>().warn("$key=$value has # prefix but cannot be parsed as color")
+        value
+      }
+      else {
+        createColorResource(color, key)
+      }
+    }
+    key.endsWith("Insets") || key.endsWith(".insets") || key.endsWith("padding") -> parseInsets(value)
+    key.endsWith("grayFilter") -> {
+      val numbers = parseMultiValue(value).iterator()
+      GrayFilter.asUIResource(numbers.next().toInt(), numbers.next().toInt(), numbers.next().toInt())
+    }
+    else -> {
+      value
+    }
   }
 }
