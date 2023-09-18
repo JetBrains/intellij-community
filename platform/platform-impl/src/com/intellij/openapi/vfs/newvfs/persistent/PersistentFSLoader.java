@@ -215,7 +215,17 @@ public final class PersistentFSLoader {
 
 
     CompletableFuture<ContentHashEnumerator> contentHashesEnumeratorFuture = executorService.async(() -> {
-      return createContentHashStorage(contentsHashesFile);
+      try {
+        return createContentHashStorage(contentsHashesFile);
+      }
+      catch (IOException e) {
+        //No need to fail here: just clean contentHashes, and open empty -- content hashes could be re-build
+        // by contentStorage data
+        LOG.warn("ContentHashEnumerator is broken -- clean it, hope it will be recovered from ContentStorage later on. " +
+                 "Cause: " + e.getMessage());
+        IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
+        return createContentHashStorage(contentsHashesFile);
+      }
     });
 
     ExceptionUtil.runAllAndRethrowAllExceptions(
@@ -725,7 +735,6 @@ public final class PersistentFSLoader {
   }
 
   public static @NotNull ContentHashEnumerator createContentHashStorage(@NotNull Path contentsHashesFile) throws IOException {
-    //FIXME RC: we shouldn't fail here -- just create an empty enumerator
     if (FSRecordsImpl.USE_CONTENT_HASH_STORAGE_OVER_MMAPPED_FILE) {
       LOG.info("VFS uses content hash storage over MMappedFile");
       return ContentHashEnumeratorOverDurableEnumerator.open(contentsHashesFile);
