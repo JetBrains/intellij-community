@@ -30,8 +30,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Consumer
 import java.util.function.Predicate
-import java.util.function.Supplier
-import java.util.stream.Collectors
 import kotlin.io.path.Path
 import kotlin.io.path.writeText
 
@@ -90,7 +88,7 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
           if (VfsData.isIsIndexedFlagDisabled()) {
             checkIndexed(fileOrDir, false, "has no indexing timestamp") {
               IndexingStamp.hasIndexingTimeStamp(it.id) ||
-              // com.intellij.util.indexing.FileBasedIndexImpl.getAffectedIndexCandidates returns empty list for such files
+              // com.intellij.util.indexing.FileBasedIndexImpl.getAffectedIndexCandidates returns an empty list for such files
               ProjectCoreUtil.isProjectOrWorkspaceFile(it, it.fileType)
             }
           }
@@ -133,16 +131,14 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
 
       val originalOrderedProviders: List<IndexableFilesIterator> = fbi.getIndexableFilesProviders(project)
 
-      val orderedProviders: List<IndexableFilesIterator> = ArrayList()
-      originalOrderedProviders.stream()
+      val orderedProviders: MutableList<IndexableFilesIterator> = ArrayList()
+      originalOrderedProviders
         .filter { p: IndexableFilesIterator -> p.origin !is SdkOrigin }
-        .collect(Collectors.toCollection(
-          Supplier { orderedProviders }))
+        .toCollection(orderedProviders)
 
-      originalOrderedProviders.stream()
+      originalOrderedProviders
         .filter { p: IndexableFilesIterator -> p.origin is SdkOrigin }
-        .collect(Collectors.toCollection(
-          Supplier { orderedProviders }))
+        .toCollection(orderedProviders )
 
       for (provider in orderedProviders) {
         provider.iterateFiles(project, iterator, VirtualFileFilter.ALL)
