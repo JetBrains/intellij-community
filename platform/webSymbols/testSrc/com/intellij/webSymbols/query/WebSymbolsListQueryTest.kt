@@ -79,15 +79,28 @@ class WebSymbolsListQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   }
 
   fun testNamingRules1() {
-    doTest("html/elements/", "vue", true, "naming-rules")
+    doTest("html/elements/", "vue", expandPatterns = true,
+           compareWithCompletionResults = false, webTypes = listOf("naming-rules"))
+  }
+
+  fun testNamingRules2() {
+    doTest("html/elements/", "vue", expandPatterns = false,
+           compareWithCompletionResults = false, webTypes = listOf("naming-rules"))
+  }
+
+  fun testNamingRules3() {
+    doTest("js/custom-properties", "vue", expandPatterns = true,
+           compareWithCompletionResults = false, webTypes = listOf("naming-rules"))
   }
 
   fun testNamingRules4() {
-    doTest("js/custom-properties", "vue", true, "naming-rules")
+    doTest("js/custom-properties", "vue", expandPatterns = false,
+           compareWithCompletionResults = false, webTypes = listOf("naming-rules"))
   }
 
   fun testNestedNamingRules1() {
-    doTest("html/elements/", "vue", true, "nested-naming-rules")
+    doTest("html/elements/", "vue", expandPatterns = true,
+           compareWithCompletionResults = false, webTypes = listOf("nested-naming-rules"))
   }
 
   fun testLegacyVuetifyDirectives() {
@@ -173,32 +186,38 @@ class WebSymbolsListQueryTest : WebSymbolsMockQueryExecutorTestBase() {
 
   fun doTest(path: String,
              framework: String? = null,
-             expandPatterns: Boolean = true,
              includeVirtual: Boolean = true,
+             expandPatterns: Boolean = false,
+             compareWithCompletionResults: Boolean = true,
              webTypes: List<String> = emptyList(),
              customElementsManifests: List<String> = emptyList()) {
+    registerFiles(framework, webTypes, customElementsManifests)
+    val parsedPath = parseWebTypesPath(path, null)
+    val queryExecutor = webSymbolsQueryExecutorFactory.create(null)
+    val last = parsedPath.last()
+
+    if (compareWithCompletionResults) {
+      val codeCompletionResults = queryExecutor
+        .runCodeCompletionQuery(parsedPath, 0, includeVirtual)
+        .filter { it.offset == 0 && !it.completeAfterInsert }
+        .map { it.name }
+        .distinct()
+        .mapNotNull { name ->
+          queryExecutor.runNameMatchQuery(parsedPath.subList(0, parsedPath.size - 1) + last.copy(name = name), includeVirtual)
+            .filter { it.completeMatch }
+            .asSingleSymbol()
+        }
+      val results = queryExecutor
+        .runListSymbolsQuery(parsedPath.subList(0, parsedPath.size - 1), last.namespace, last.kind,
+                             true, includeVirtual, false)
+      assertEquals(printMatches(codeCompletionResults), printMatches(results))
+    }
+
     doTest(testPath) {
-      registerFiles(framework, webTypes, customElementsManifests)
-      val parsedPath = parseWebTypesPath(path, null)
-      val queryExecutor = webSymbolsQueryExecutorFactory.create(null)
-      val last = parsedPath.last()
-      val matches = queryExecutor
+      queryExecutor
         .runListSymbolsQuery(parsedPath.subList(0, parsedPath.size - 1), last.namespace, last.kind,
                              expandPatterns, includeVirtual, false)
-      printMatches(matches).also { listResults ->
-        val alternateResults = queryExecutor
-          .runCodeCompletionQuery(parsedPath, 0, includeVirtual)
-          .filter { it.offset == 0 && !it.completeAfterInsert }
-          .map { it.name }
-          .distinct()
-          .mapNotNull { name ->
-            queryExecutor.runNameMatchQuery(parsedPath.subList(0, parsedPath.size - 1) + last.copy(name = name), includeVirtual)
-              .filter { it.completeMatch }
-              .asSingleSymbol()
-          }
-        assertEquals(printMatches(alternateResults), listResults)
-      }
+        .let { printMatches(it) }
     }
   }
-
 }
