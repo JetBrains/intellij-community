@@ -1040,6 +1040,7 @@ class JavaToJKTreeBuilder(
                 if (this != null) {
                     (it as PsiOwner).psi = this
                     it.withFormattingFrom(this)
+                    it.withLineBreaksFrom(this, copyLineBreaksBefore = it.commentsBefore.isNotEmpty())
                 }
             }
         }

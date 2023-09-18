@@ -14,12 +14,12 @@ internal class JKCommentPrinter(private val printer: JKPrinter) {
         val text = element.commentsBefore.createText()
         printer.print(text)
 
+        if (printer.lastSymbolIsLineBreak) return
+
         val shouldAddLineBreakAfterComment = (element is JKDeclaration && element.commentsBefore.isNotEmpty()) ||
                 text.hasNoLineBreakAfterSingleLineComment()
 
-        if (element.hasLineBreakBefore) {
-            printer.println(element.lineBreaksBefore)
-        } else if (shouldAddLineBreakAfterComment) {
+        if (element.hasLineBreakBefore || shouldAddLineBreakAfterComment) {
             printer.println()
         }
     }

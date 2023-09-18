@@ -1192,6 +1192,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/comments/commentInsideCall.java");
         }
 
+        @TestMetadata("commentedStatementWithLineBreak.java")
+        public void testCommentedStatementWithLineBreak() throws Exception {
+            runTest("testData/newJ2k/comments/commentedStatementWithLineBreak.java");
+        }
+
         @TestMetadata("comments.java")
         public void testComments() throws Exception {
             runTest("testData/newJ2k/comments/comments.java");
