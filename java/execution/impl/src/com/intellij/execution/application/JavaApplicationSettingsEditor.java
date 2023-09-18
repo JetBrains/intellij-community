@@ -30,9 +30,11 @@ import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;
 
 public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<ApplicationConfiguration> {
   private SettingsEditorFragment<ApplicationConfiguration, MainClassPanel> myMainClassFragment;
+  private final boolean myInitialIsUnnamedClass;
 
   public JavaApplicationSettingsEditor(ApplicationConfiguration configuration) {
     super(configuration);
+    myInitialIsUnnamedClass = configuration.isUnnamedClassConfiguration();
   }
 
   @Override
@@ -53,7 +55,6 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
                                                    ExecutionBundle.message("application.configuration.is.unnamed.class"),
                                                    ExecutionBundle.message("group.java.options"),
                                                    configuration -> {
-                                                     updateMainClassFragment(configuration.isUnnamedClassConfiguration());
                                                      return configuration.isUnnamedClassConfiguration();
                                                    },
                                                    (configuration, value) -> {
@@ -183,7 +184,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     myMainClassFragment.setRemovable(false);
     myMainClassFragment.setEditorGetter(field -> field.getEditorComponent());
     myMainClassFragment.setValidation((configuration) -> mainClassPanel.getValidation(configuration));
-    updateMainClassFragment(false);
+    updateMainClassFragment(myInitialIsUnnamedClass);
     return myMainClassFragment;
   }
 
