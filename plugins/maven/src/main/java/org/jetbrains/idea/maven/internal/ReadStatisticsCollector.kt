@@ -7,6 +7,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.server.DummyMavenServerConnector.Companion.isDummy
 import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.server.MavenServerStatus
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -47,11 +48,7 @@ class ReadStatisticsCollector {
 
     val readMapFromMaven = HashMap<String, Int>()
     val resolvePluginsFromMaven = HashMap<String, Int>()
-    MavenServerManager.getInstance().allConnectors
-      .asSequence()
-      .filter { !it.isDummy() }
-      .mapSafe { it.getDebugStatus(true) }
-      .filter { it.statusCollected }
+    getDebugStatusFromMaven(false)
       .forEach {
         readMapFromMaven.mergeWith(it.fileReadAccessCount)
         resolvePluginsFromMaven.mergeWith(it.pluginResolveCount)
@@ -73,6 +70,19 @@ class ReadStatisticsCollector {
     println("======================================================")
 
     map.clear()
+  }
+
+  private fun getDebugStatusFromMaven(clean: Boolean): List<MavenServerStatus> = MavenServerManager.getInstance().allConnectors
+    .asSequence()
+    .filter { !it.isDummy() }
+    .mapSafe { it.getDebugStatus(clean) }
+    .filter { it.statusCollected }
+    .toList()
+
+  fun reset() {
+    map.clear();
+    getDebugStatusFromMaven(true);
+
   }
 
 
