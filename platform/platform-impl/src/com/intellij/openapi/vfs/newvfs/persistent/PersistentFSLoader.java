@@ -32,7 +32,6 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import net.sf.cglib.core.CollectionUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,8 +67,8 @@ public final class PersistentFSLoader {
   /**
    * We want the 'main exception' to be 1) IOException 2) with +/- descriptive message.
    * So:
-   *    => We look for such an exception among .exceptions, and if there is one -> use it as the main one
-   *    => Otherwise we create IOException with the first non-empty error message among .exceptions
+   * => We look for such an exception among .exceptions, and if there is one -> use it as the main one
+   * => Otherwise we create IOException with the first non-empty error message among .exceptions
    * In both cases, we attach all other exceptions to .suppressed list of the main exception
    */
   private static final @NotNull Function<List<? extends Throwable>, IOException> ASYNC_EXCEPTIONS_REPORTER = exceptions -> {
@@ -618,38 +617,41 @@ public final class PersistentFSLoader {
       final StreamlinedBlobStorage blobStorage;
       if (FSRecordsImpl.USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE && PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
         LOG.info("VFS uses streamlined attributes storage (over new FilePageCache)");
-        blobStorage = new StreamlinedBlobStorageOverLockFreePagedStorage(
-          new PagedFileStorageWithRWLockedPageContent(
-            attributesFile,
-            PERSISTENT_FS_STORAGE_CONTEXT,
-            //RC: make page smaller for the transition period -- new FPCache has quite a small memory bud
-            //    hard to manage huge 10M pages having only ~100-150Mb budget in total, it ruins large-numbers assumptions.
-            1 << 20, //PageCacheUtils.DEFAULT_PAGE_SIZE,
-            /*nativeByteOrder: */  true,
-            PageContentLockingStrategy.LOCK_PER_PAGE
-          ),
-          allocationStrategy
+        PagedFileStorageWithRWLockedPageContent storage = new PagedFileStorageWithRWLockedPageContent(
+          attributesFile,
+          PERSISTENT_FS_STORAGE_CONTEXT,
+          //RC: make page smaller for the transition period: new FPCache has quite a small memory and it's hard
+          //    to manage huge 10Mb pages having only ~100-150Mb budget in total, it ruins large-numbers assumptions
+          1 << 20, //PageCacheUtils.DEFAULT_PAGE_SIZE,
+          /*nativeByteOrder: */  true,
+          PageContentLockingStrategy.LOCK_PER_PAGE
+        );
+        blobStorage = IOUtil.runAndCleanIfFails(
+          () -> new StreamlinedBlobStorageOverLockFreePagedStorage(storage, allocationStrategy),
+          storage
         );
       }
       else if (FSRecordsImpl.USE_ATTRIBUTES_OVER_MMAPPED_FILE) {
         LOG.info("VFS uses streamlined attributes storage (over MMappedFile)");
         int pageSize = 1 << 24;//16Mb
-        blobStorage = new StreamlinedBlobStorageOverMMappedFile(
-          new MMappedFileStorage(attributesFile, pageSize),
-          allocationStrategy
+        MMappedFileStorage storage = new MMappedFileStorage(attributesFile, pageSize);
+        blobStorage = IOUtil.runAndCleanIfFails(
+          () -> new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy),
+          storage
         );
       }
       else {
         LOG.info("VFS uses streamlined attributes storage (over regular FilePageCache)");
-        blobStorage = new StreamlinedBlobStorageOverPagedStorage(
-          new PagedFileStorage(
-            attributesFile,
-            PERSISTENT_FS_STORAGE_CONTEXT,
-            PageCacheUtils.DEFAULT_PAGE_SIZE,
-            /*valuesAreAligned: */ true,
-            /*nativeByteOrder: */  true
-          ),
-          allocationStrategy
+        PagedFileStorage storage = new PagedFileStorage(
+          attributesFile,
+          PERSISTENT_FS_STORAGE_CONTEXT,
+          PageCacheUtils.DEFAULT_PAGE_SIZE,
+          /*valuesAreAligned: */ true,
+          /*nativeByteOrder: */  true
+        );
+        blobStorage = IOUtil.runAndCleanIfFails(
+          () -> new StreamlinedBlobStorageOverPagedStorage(storage, allocationStrategy),
+          () -> storage.close()
         );
       }
       return new AttributesStorageOverBlobStorage(blobStorage);
@@ -723,12 +725,13 @@ public final class PersistentFSLoader {
   }
 
   public static @NotNull ContentHashEnumerator createContentHashStorage(@NotNull Path contentsHashesFile) throws IOException {
+    //FIXME RC: we shouldn't fail here -- just create an empty enumerator
     if (FSRecordsImpl.USE_CONTENT_HASH_STORAGE_OVER_MMAPPED_FILE) {
       LOG.info("VFS uses content hash storage over MMappedFile");
       return ContentHashEnumeratorOverDurableEnumerator.open(contentsHashesFile);
     }
     else {
-      LOG.info("VFS uses content hash storage regular FilePageCache");
+      LOG.info("VFS uses content hash storage over regular FilePageCache");
       return ContentHashEnumerator.open(contentsHashesFile, PERSISTENT_FS_STORAGE_CONTEXT);
     }
   }
@@ -837,7 +840,7 @@ public final class PersistentFSLoader {
   }
 
   public List<VFSInitException> problemsDuringLoad(@NotNull VFSInitException.ErrorCategory firstCategory,
-                                                   @NotNull VFSInitException.ErrorCategory... restCategories) {
+                                                   VFSInitException.ErrorCategory @NotNull ... restCategories) {
     EnumSet<VFSInitException.ErrorCategory> categories = EnumSet.of(firstCategory, restCategories);
     return problemsDuringLoad.stream()
       .filter(p -> categories.contains(p.category()))

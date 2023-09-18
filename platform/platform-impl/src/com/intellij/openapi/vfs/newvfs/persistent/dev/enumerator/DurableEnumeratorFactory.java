@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.dev.StorageFactory;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
@@ -34,7 +35,6 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
   public static final StorageFactory<? extends DurableIntToMultiIntMap> DEFAULT_DURABLE_MAP_FACTORY = ExtendibleMapFactory.defaults();
 
   public static final String MAP_FILE_SUFFIX = ".hashToId";
-
 
 
   private final @NotNull KeyDescriptorEx<V> valueDescriptor;
@@ -100,7 +100,12 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
     Path hashToIdPath = storagePath.resolveSibling(name + mapFileSuffix);
 
     AppendOnlyLog valuesLog = valuesLogFactory.open(storagePath);
-    DurableIntToMultiIntMap valueHashToId = valueHashToIdFactory.open(hashToIdPath);
+    DurableIntToMultiIntMap valueHashToId = IOUtil.runAndCleanIfFails(
+      () -> valueHashToIdFactory.open(hashToIdPath),
+      valuesLog
+    );
+    //TODO RC: We could recover the map from valuesLog -- but we need valueHashToIdFactory.clean() to remove
+    //         the files, and reopen from 0
 
     if (rebuildMapFromLogIfInconsistent) {
       if (!valuesLog.isEmpty() && valueHashToId.isEmpty()) {

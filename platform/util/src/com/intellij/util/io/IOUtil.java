@@ -477,4 +477,27 @@ public final class IOUtil {
     ascii[3] = (byte)((magicWord) & 0xFF);
     return new String(ascii, US_ASCII);
   }
+
+  /**
+   * Method tries to run the supplied factory, and if it fails -- close all supplied {@link AutoCloseable}s on
+   * the exit path. If factory succeeded -- nothing is closed, the result is just returned
+   */
+  public static <R extends AutoCloseable, E extends Throwable> R runAndCleanIfFails(
+    @NotNull ThrowableComputable<R, E> factory,
+    AutoCloseable... storagesToCloseIfFactoryFails) throws E {
+    try {
+      return factory.compute();
+    }
+    catch (Throwable mainEx) {
+      for (final AutoCloseable toClose : storagesToCloseIfFactoryFails) {
+        try {
+          toClose.close();
+        }
+        catch (Throwable closeEx) {
+          mainEx.addSuppressed(closeEx);
+        }
+      }
+      throw mainEx;
+    }
+  }
 }
