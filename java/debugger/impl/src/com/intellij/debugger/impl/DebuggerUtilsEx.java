@@ -48,6 +48,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
 import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.DocumentUtil;
@@ -361,6 +362,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     content.putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, Boolean.TRUE);
     content.setCloseable(true);
     content.setDescription(JavaDebuggerBundle.message("thread.dump"));
+    content.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_GUEST, true);
     ui.addContent(content);
     ui.selectAndFocus(content, true, true);
     myThreadDumpsCount++;
