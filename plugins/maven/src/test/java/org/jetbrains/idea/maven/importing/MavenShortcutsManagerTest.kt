@@ -8,6 +8,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.UsefulTestCase
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.tasks.MavenKeymapExtension
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager
 import org.junit.Test
@@ -39,7 +40,7 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testRefreshingActionsOnImport() {
+  fun testRefreshingActionsOnImport() = runBlocking {
     assertTrue(projectActions.isEmpty())
 
     val p1 = createModulePom("p1", """
@@ -59,8 +60,8 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testRefreshingOnProjectRead() {
-    importProject("""
+  fun testRefreshingOnProjectRead() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -70,7 +71,7 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
     val goal = "clean"
     assignShortcut(myProjectPom, goal, "alt shift X")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -88,8 +89,8 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testRefreshingOnPluginResolve() {
-    importProject("""
+  fun testRefreshingOnPluginResolve() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -100,7 +101,7 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
     val goal = "org.apache.maven.plugins:maven-surefire-plugin:2.4.3:test"
     assignShortcut(myProjectPom, goal, "alt shift X")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -120,14 +121,14 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testActionWhenSeveralSimilarPlugins() {
-    importProject("""
+  fun testActionWhenSeveralSimilarPlugins() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -154,8 +155,8 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testRefreshingOnProjectAddition() {
-    importProject("""
+  fun testRefreshingOnProjectAddition() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -180,7 +181,7 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     assertEmptyKeymap()
     assignShortcut(m, goal, "alt shift X")
@@ -188,7 +189,7 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDeletingActionOnProjectRemoval() {
+  fun testDeletingActionOnProjectRemoval() = runBlocking {
     val p1 = createModulePom("p1", """
       <groupId>test</groupId>
       <artifactId>p1</artifactId>
@@ -227,7 +228,7 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testRefreshingActionsOnChangingIgnoreFlag() {
+  fun testRefreshingActionsOnChangingIgnoreFlag() = runBlocking {
     val p1 = createModulePom("p1", """
       <groupId>test</groupId>
       <artifactId>p1</artifactId>
