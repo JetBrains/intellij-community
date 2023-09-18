@@ -45,13 +45,13 @@ class RecentPlacesFeatures : ElementFeatureProvider {
 
     override fun recentPlaceAdded(changePlace: IdeDocumentHistoryImpl.PlaceInfo, isChanged: Boolean) {
       if (ApplicationManager.getApplication().isUnitTestMode || !changePlace.file.isValid || changePlace.file.isDirectory) return
+      val offset = changePlace.caretPosition?.startOffset ?: return
 
       @Suppress("IncorrectParentDisposable")
       ReadAction
         .nonBlocking<Pair<String, List<String>>?> {
           val provider = PsiManager.getInstance(project).findViewProvider(changePlace.file) ?: return@nonBlocking null
           val namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(provider.baseLanguage)
-          val offset = changePlace.caretPosition?.startOffset ?: return@nonBlocking null
 
           val recentPlace = provider.tryFindElementAt(offset)
           if (recentPlace == null || !namesValidator.isIdentifier(recentPlace.text, project)) {
@@ -67,6 +67,7 @@ class RecentPlacesFeatures : ElementFeatureProvider {
             recentPlacesStorage.putChildren(place2children.second)
           }
         }
+        .coalesceBy(offset)
         .expireWith(project)
         .expireWhen(BooleanSupplier { changePlace.window == null || changePlace.window.isDisposed })
         .submit(AppExecutorUtil.getAppExecutorService())
