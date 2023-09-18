@@ -26,10 +26,7 @@ internal class CompletionAutoPopupPattern(val isSticky: Boolean) : WebSymbolsPat
                     scopeStack: Stack<WebSymbolsScope>,
                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
-    if (isSticky)
-      listOf(ListResult("", WebSymbolNameSegment(0, 0)))
-    else
-      emptyList()
+    emptyList()
 
   override fun complete(owner: WebSymbol?,
                         scopeStack: Stack<WebSymbolsScope>,
