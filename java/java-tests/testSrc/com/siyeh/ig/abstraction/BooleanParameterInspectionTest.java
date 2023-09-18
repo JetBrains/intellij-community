@@ -55,6 +55,18 @@ public class BooleanParameterInspectionTest extends LightJavaInspectionTestCase 
            "}");
   }
 
+  public void testInterfaceMethods() {
+    doTest(
+      """
+          interface I {
+            private boolean check(boolean b) { return !b; }
+            private static boolean check2(boolean b) { return !b; }
+            boolean /*'public' method 'check3()' with 'boolean' parameter*/check3/**/(boolean b);
+          }
+          """
+    );
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new BooleanParameterInspection();

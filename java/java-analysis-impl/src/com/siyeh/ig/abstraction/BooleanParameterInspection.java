@@ -70,10 +70,7 @@ public class BooleanParameterInspection extends BaseInspection {
     public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
-        final PsiClass aClass = method.getContainingClass();
-        if (aClass == null || !aClass.isInterface()) {
-          return;
-        }
+        return;
       }
       if (PropertyUtilBase.isSimplePropertySetter(method) || LibraryUtil.isOverrideOfLibraryMethod(method)) {
         return;
