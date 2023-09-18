@@ -62,17 +62,16 @@ PsiJavaFile:Uncomplete7.java
               PsiWhiteSpace(' ')
               PsiCaseLabelElementList
                 PsiTypeTestPattern
-                  PsiModifierList:
-                    <empty list>
-                  PsiTypeElement:Point
-                    PsiJavaCodeReferenceElement:Point
-                      PsiIdentifier:Point('Point')
-                      PsiReferenceParameterList
-                        <empty list>
-              PsiWhiteSpace(' ')
-              PsiKeyword:when('when')
-              PsiErrorElement:Expression expected
-                <empty list>
+                  PsiPatternVariable:when
+                    PsiModifierList:
+                      <empty list>
+                    PsiTypeElement:Point
+                      PsiJavaCodeReferenceElement:Point
+                        PsiIdentifier:Point('Point')
+                        PsiReferenceParameterList
+                          <empty list>
+                    PsiWhiteSpace(' ')
+                    PsiIdentifier:when('when')
               PsiErrorElement:':' or '->' expected
                 <empty list>
             PsiWhiteSpace('\n        ')

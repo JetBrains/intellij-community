@@ -157,7 +157,7 @@ public class BasicPatternParser {
 
     final boolean hasIdentifier;
     if (builder.getTokenType() == JavaTokenType.IDENTIFIER &&
-        (!PsiKeyword.WHEN.equals(builder.getTokenText()) || isWhenAfterWhen(builder))) {
+        (!PsiKeyword.WHEN.equals(builder.getTokenText()) || isWhenAsIdentifier(isRecord))) {
       // pattern variable after the record structure pattern
       if (isRecord) {
         PsiBuilder.Marker variable = builder.mark();
@@ -189,15 +189,15 @@ public class BasicPatternParser {
     return pattern;
   }
 
-  // There may be a valid code sample:
-  // Rec(int i) when  when     when.foo() -> {}
+  // There may be valid code samples:
+  // Rec(int i) when  when     when.foo() -> {} //now it is unsupported, let's skip it
   //            ^name ^keyword ^guard expr
-  private static boolean isWhenAfterWhen(final PsiBuilder builder) {
-    if (builder.lookAhead(1) != JavaTokenType.IDENTIFIER) return false;
-    PsiBuilder.Marker mark = builder.mark();
-    builder.advanceLexer();
-    boolean isWhenAfterWhen = builder.getTokenType() == JavaTokenType.IDENTIFIER && PsiKeyword.WHEN.equals(builder.getTokenText());
-    mark.rollbackTo();
-    return isWhenAfterWhen;
+  //case When when -> {}
+  //            ^name
+  //case When(when) when              when ->{}
+  //                  ^keyword         ^guard expr
+  private static boolean isWhenAsIdentifier(boolean previousIsRecord) {
+    if(previousIsRecord) return false;
+    return true;
   }
 }
