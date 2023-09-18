@@ -43,7 +43,6 @@ import java.util.function.Supplier
 
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
-  fun updateAllMavenProjectsSync(spec: MavenImportSpec): List<Module>
   fun scheduleUpdateAllMavenProjects(spec: MavenImportSpec)
   suspend fun updateAllMavenProjects(spec: MavenImportSpec): List<Module>
 
@@ -211,36 +210,33 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     return deleted + updated
   }
 
+  @Deprecated("Use {@link #scheduleUpdateAllMavenProjects(List)}}")
   override fun updateAllMavenProjectsSync(spec: MavenImportSpec): List<Module> {
     MavenLog.LOG.warn("updateAllMavenProjectsSync started, edt=" + ApplicationManager.getApplication().isDispatchThread)
     try {
-      return doUpdateAllMavenProjectsSync(spec)
-    }
-    finally {
-      MavenLog.LOG.warn("updateAllMavenProjectsSync finished, edt=" + ApplicationManager.getApplication().isDispatchThread)
-    }
-  }
-
-  private fun doUpdateAllMavenProjectsSync(spec: MavenImportSpec): List<Module> {
-    // unit tests
-    if (ApplicationManager.getApplication().isDispatchThread) {
-      if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-        MavenLog.LOG.warn("Updating maven projects under write action. " +
-                          "This should only happen in test mode. " +
-                          "Resolution and import will be skipped.")
-        readAllMavenProjects(spec)
-        return emptyList()
+      // unit tests
+      if (ApplicationManager.getApplication().isDispatchThread) {
+        if (ApplicationManager.getApplication().isWriteAccessAllowed) {
+          MavenLog.LOG.warn("Updating maven projects under write action. " +
+                            "This should only happen in test mode. " +
+                            "Resolution and import will be skipped.")
+          readAllMavenProjects(spec)
+          return emptyList()
+        }
+        else {
+          return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
+            updateAllMavenProjects(spec)
+          }
+        }
       }
       else {
-        return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
+        return runBlockingMaybeCancellable {
           updateAllMavenProjects(spec)
         }
       }
     }
-    else {
-      return runBlockingMaybeCancellable {
-        updateAllMavenProjects(spec)
-      }
+    finally {
+      MavenLog.LOG.warn("updateAllMavenProjectsSync finished, edt=" + ApplicationManager.getApplication().isDispatchThread)
     }
   }
 

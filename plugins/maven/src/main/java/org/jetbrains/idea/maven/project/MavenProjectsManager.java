@@ -36,6 +36,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
+import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -783,7 +784,17 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return myProjectsTree;
   }
 
+  /**
+   * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenImportSpec)}}
+   */
+  @Deprecated
+  protected abstract List<Module> updateAllMavenProjectsSync(MavenImportSpec spec);
+
   @TestOnly
+  @Deprecated
+  /**
+   * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenImportSpec)}} or {@link #updateAllMavenProjects(MavenImportSpec, Continuation)}
+   */
   public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
     myProjectsTree.resetManagedFilesAndProfiles(files, explicitProfiles);
     updateAllMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
@@ -796,16 +807,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
     myProjectsTree.setExplicitProfiles(profiles);
-  }
-
-  private void updateAllMavenProjectsSync(MavenImportSpec spec, AsyncPromise<Void> promise) {
-    try {
-      updateAllMavenProjectsSync(spec);
-      promise.setResult(null);
-    }
-    catch (Exception e) {
-      promise.setError(e);
-    }
   }
 
   @ApiStatus.Internal
@@ -853,7 +854,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   /**
    * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
    * if project is closed)
-   * @deprecated  Use {@link #updateAllMavenProjectsSync(MavenImportSpec)}}
+   * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenImportSpec)}}
    */
   // used in third-party plugins
   @Deprecated
@@ -932,7 +933,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   /**
-   * @deprecated Use {@link #updateAllMavenProjectsSync(MavenImportSpec)}}
+   * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenImportSpec)}}
    */
   @Deprecated
   // used in third-party plugins
