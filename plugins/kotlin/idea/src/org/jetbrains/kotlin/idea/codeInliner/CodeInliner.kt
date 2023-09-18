@@ -599,7 +599,7 @@ class CodeInliner<TCallElement : KtElement>(
     private fun removeRedundantLambdasAndAnonymousFunctions(pointer: SmartPsiElementPointer<KtElement>) {
         val element = pointer.element ?: return
         for (function in element.collectDescendantsOfType<KtFunction>().asReversed()) {
-            val call = RedundantLambdaOrAnonymousFunctionInspection.findCallIfApplicableTo(function)
+            val call = RedundantLambdaOrAnonymousFunctionInspection.Util.findCallIfApplicableTo(function)
             if (call != null) {
                 KotlinInlineAnonymousFunctionProcessor.performRefactoring(call, editor = null)
             }
@@ -614,7 +614,7 @@ class CodeInliner<TCallElement : KtElement>(
 
     private fun removeRedundantUnitExpressions(pointer: SmartPsiElementPointer<KtElement>) {
         pointer.element?.forEachDescendantOfType<KtReferenceExpression> {
-            if (RedundantUnitExpressionInspection.isRedundantUnit(it)) {
+            if (RedundantUnitExpressionInspection.Util.isRedundantUnit(it)) {
                 it.delete()
             }
         }

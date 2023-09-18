@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.unblockDocument
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -226,8 +227,6 @@ class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedIns
         })
         return result
     }
-
-    companion object {
-        val DEPRECATED_NAME = StandardNames.FqNames.deprecated.shortName()
-    }
 }
+
+private val DEPRECATED_NAME: Name = StandardNames.FqNames.deprecated.shortName()

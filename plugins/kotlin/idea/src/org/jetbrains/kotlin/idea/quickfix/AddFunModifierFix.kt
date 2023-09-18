@@ -47,7 +47,7 @@ class AddFunModifierFix(
         val argument = getStrictParentOfType<KtValueArgument>()?.takeIf { it.getArgumentExpression() == this } ?: return
         val parentCall = argument.getStrictParentOfType<KtCallExpression>() ?: return
 
-        RedundantSamConstructorInspection.replaceSamConstructorCall(this)
+        RedundantSamConstructorInspection.Util.replaceSamConstructorCall(this)
 
         if (parentCall.canMoveLambdaOutsideParentheses()) {
             runWriteActionIfPhysical(parentCall) {

@@ -38,7 +38,7 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
         object : KtVisitorVoid() {
             override fun visitExpression(expression: KtExpression) {
-                val states = getState(expression, skipLongExpressions, reportOnlyIfSingleStatement) ?: return
+                val states = Util.getState(expression, skipLongExpressions, reportOnlyIfSingleStatement) ?: return
                 if (expression.isUsedAsExpression(expression.analyze(BodyResolveMode.PARTIAL_WITH_CFA))) return
                 states.forEach { state ->
                     registerProblem(
@@ -46,8 +46,8 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
                         state.keyword,
                         state.isSerious,
                         when (state.liftType) {
-                            LiftType.LIFT_RETURN_OUT -> LiftReturnOutFix(state.keyword.text)
-                            LiftType.LIFT_ASSIGNMENT_OUT -> LiftAssignmentOutFix(state.keyword.text)
+                            Util.LiftType.LIFT_RETURN_OUT -> LiftReturnOutFix(state.keyword.text)
+                            Util.LiftType.LIFT_ASSIGNMENT_OUT -> LiftAssignmentOutFix(state.keyword.text)
                         },
                         state.highlightElement,
                         state.highlightType
@@ -97,7 +97,7 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
         }
     }
 
-    companion object {
+    object Util {
         private const val LINES_LIMIT = 15
 
         fun getState(

@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 
 class RedundantUnitExpressionInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = referenceExpressionVisitor(fun(expression) {
-        if (isRedundantUnit(expression)) {
+        if (Util.isRedundantUnit(expression)) {
             holder.registerProblem(
                 expression,
                 KotlinBundle.message("redundant.unit"),
@@ -42,7 +42,7 @@ class RedundantUnitExpressionInspection : AbstractKotlinInspection(), CleanupLoc
         }
     })
 
-    companion object {
+    object Util {
         fun isRedundantUnit(referenceExpression: KtReferenceExpression): Boolean {
             if (!referenceExpression.isUnitLiteral) return false
             val parent = referenceExpression.parent ?: return false

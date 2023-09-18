@@ -22,17 +22,18 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-class RedundantAsSequenceInspection : AbstractKotlinInspection() {
-    companion object {
-        private val allowedSequenceFunctionFqNames = listOf(
-            FqName("kotlin.sequences.asSequence"),
-            FqName("kotlin.collections.asSequence")
-        )
-        private val terminations = collectionTerminationFunctionNames.associateWith { FqName("kotlin.sequences.$it") }
-        private val transformationsAndTerminations =
-            collectionTransformationFunctionNames.associateWith { FqName("kotlin.sequences.$it") } + terminations
-    }
+private val allowedSequenceFunctionFqNames: List<FqName> = listOf(
+    FqName("kotlin.sequences.asSequence"),
+    FqName("kotlin.collections.asSequence")
+)
 
+private val terminations: Map<String, FqName> =
+    collectionTerminationFunctionNames.associateWith { FqName("kotlin.sequences.$it") }
+
+private val transformationsAndTerminations: Map<String, FqName> =
+    collectionTransformationFunctionNames.associateWith { FqName("kotlin.sequences.$it") } + terminations
+
+class RedundantAsSequenceInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = qualifiedExpressionVisitor(fun(qualified) {
         val call = qualified.callExpression ?: return
         val callee = call.calleeExpression ?: return

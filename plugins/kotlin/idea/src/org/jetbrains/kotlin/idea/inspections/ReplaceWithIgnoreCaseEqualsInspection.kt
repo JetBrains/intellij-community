@@ -21,21 +21,6 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class ReplaceWithIgnoreCaseEqualsInspection : AbstractKotlinInspection() {
-    companion object {
-        private val caseConversionFunctionFqNames =
-            listOf(FqName("kotlin.text.toUpperCase"), FqName("kotlin.text.toLowerCase")).associateBy { it.shortName().asString() }
-
-        private fun KtExpression.callInfo(): Pair<KtCallExpression, String>? {
-            val call = (this as? KtQualifiedExpression)?.callExpression ?: this as? KtCallExpression ?: return null
-            val calleeText = call.calleeExpression?.text ?: return null
-            return call to calleeText
-        }
-
-        private fun KtCallExpression.fqName(context: BindingContext): FqName? {
-            return getResolvedCall(context)?.resultingDescriptor?.fqNameOrNull()
-        }
-    }
-
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         binaryExpressionVisitor(fun(binaryExpression: KtBinaryExpression) {
             if (binaryExpression.operationToken != KtTokens.EQEQ) return
@@ -78,4 +63,17 @@ class ReplaceWithIgnoreCaseEqualsInspection : AbstractKotlinInspection() {
             binary.replace(newExpression)
         }
     }
+}
+
+private val caseConversionFunctionFqNames: Map<String, FqName> =
+    listOf(FqName("kotlin.text.toUpperCase"), FqName("kotlin.text.toLowerCase")).associateBy { it.shortName().asString() }
+
+private fun KtExpression.callInfo(): Pair<KtCallExpression, String>? {
+    val call = (this as? KtQualifiedExpression)?.callExpression ?: this as? KtCallExpression ?: return null
+    val calleeText = call.calleeExpression?.text ?: return null
+    return call to calleeText
+}
+
+private fun KtCallExpression.fqName(context: BindingContext): FqName? {
+    return getResolvedCall(context)?.resultingDescriptor?.fqNameOrNull()
 }

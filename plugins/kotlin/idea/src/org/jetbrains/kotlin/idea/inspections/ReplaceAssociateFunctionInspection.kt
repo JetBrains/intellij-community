@@ -30,12 +30,13 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
-class ReplaceAssociateFunctionInspection : AbstractKotlinInspection() {
-    companion object {
-        private val associateFunctionNames = listOf("associate", "associateTo")
-        private val associateFqNames = listOf(FqName("kotlin.collections.associate"), FqName("kotlin.sequences.associate"))
-        private val associateToFqNames = listOf(FqName("kotlin.collections.associateTo"), FqName("kotlin.sequences.associateTo"))
+private val associateFunctionNames: List<String> = listOf("associate", "associateTo")
+private val associateFqNames: List<FqName> = listOf(FqName("kotlin.collections.associate"), FqName("kotlin.sequences.associate"))
+private val associateToFqNames: List<FqName> = listOf(FqName("kotlin.collections.associateTo"), FqName("kotlin.sequences.associateTo"))
 
+class ReplaceAssociateFunctionInspection : AbstractKotlinInspection() {
+
+    object Util {
         fun getAssociateFunctionAndProblemHighlightType(
             dotQualifiedExpression: KtDotQualifiedExpression,
             context: BindingContext = dotQualifiedExpression.analyze(BodyResolveMode.PARTIAL)
@@ -83,7 +84,7 @@ class ReplaceAssociateFunctionInspection : AbstractKotlinInspection() {
         val isAssociateTo = fqName in associateToFqNames
         if (!isAssociate && !isAssociateTo) return
 
-        val (associateFunction, highlightType) = getAssociateFunctionAndProblemHighlightType(dotQualifiedExpression, context) ?: return
+        val (associateFunction, highlightType) = Util.getAssociateFunctionAndProblemHighlightType(dotQualifiedExpression, context) ?: return
         holder.registerProblemWithoutOfflineInformation(
             calleeExpression,
             KotlinBundle.message("replace.0.with.1", calleeExpression.text, associateFunction.name(isAssociateTo)),

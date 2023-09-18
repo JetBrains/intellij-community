@@ -93,8 +93,6 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
             KotlinBundle.message("0.has.empty.body", keywordText)
         )
     }
-
-    companion object {
-        private val controlFlowFunctions = listOf("kotlin.also").map { FqName(it) }
-    }
 }
+
+private val controlFlowFunctions: List<FqName> = listOf("kotlin.also").map { FqName(it) }

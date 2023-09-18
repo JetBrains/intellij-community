@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.resolve.jvm.annotations.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Util.getStatus
 
 class MayBeConstantInspection : AbstractKotlinInspection() {
     enum class Status {
@@ -59,7 +60,7 @@ class MayBeConstantInspection : AbstractKotlinInspection() {
         }
     }
 
-    companion object {
+    object Util {
         fun KtProperty.getStatus(): Status {
             if (isLocal || isVar || getter != null ||
                 hasModifier(KtTokens.CONST_KEYWORD) || hasModifier(KtTokens.OVERRIDE_KEYWORD) || hasActualModifier() ||

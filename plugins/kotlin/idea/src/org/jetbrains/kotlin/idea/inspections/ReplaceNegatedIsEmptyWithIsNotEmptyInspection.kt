@@ -38,21 +38,9 @@ class ReplaceNegatedIsEmptyWithIsNotEmptyInspection : AbstractKotlinInspection()
         })
     }
 
-    companion object {
+    object Util {
         fun KtQualifiedExpression.invertSelectorFunction(bindingContext: BindingContext? = null): KtQualifiedExpression? {
             return EmptinessCheckFunctionUtils.invertFunctionCall(this) { fqName(it, bindingContext) } as? KtQualifiedExpression
-        }
-
-        private fun fqName(callExpression: KtCallExpression, bindingContext: BindingContext? = null): FqName? {
-            return callExpression
-                .getResolvedCall(bindingContext ?: callExpression.analyze(BodyResolveMode.PARTIAL))
-                ?.resultingDescriptor
-                ?.fqNameSafe
-        }
-
-        private fun KtExpression.calleeText(): String? {
-            val call = (this as? KtQualifiedExpression)?.callExpression ?: this as? KtCallExpression ?: return null
-            return call.calleeExpression?.text
         }
     }
 }
@@ -73,4 +61,16 @@ class ReplaceNegatedIsEmptyWithIsNotEmptyQuickFix(private val from: String, priv
         }
         prefixExpression.replaced(newExpression)
     }
+}
+
+private fun fqName(callExpression: KtCallExpression, bindingContext: BindingContext? = null): FqName? {
+    return callExpression
+        .getResolvedCall(bindingContext ?: callExpression.analyze(BodyResolveMode.PARTIAL))
+        ?.resultingDescriptor
+        ?.fqNameSafe
+}
+
+private fun KtExpression.calleeText(): String? {
+    val call = (this as? KtQualifiedExpression)?.callExpression ?: this as? KtCallExpression ?: return null
+    return call.calleeExpression?.text
 }

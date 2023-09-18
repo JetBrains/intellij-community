@@ -50,7 +50,7 @@ class RedundantSamConstructorInspection : AbstractKotlinInspection() {
         return callExpressionVisitor(fun(expression) {
             if (expression.valueArguments.isEmpty()) return
 
-            val samConstructorCalls = samConstructorCallsToBeConverted(expression)
+            val samConstructorCalls = Util.samConstructorCallsToBeConverted(expression)
             if (samConstructorCalls.isEmpty()) return
             val single = samConstructorCalls.singleOrNull()
             if (single != null) {
@@ -87,7 +87,7 @@ class RedundantSamConstructorInspection : AbstractKotlinInspection() {
             override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
                 val callExpression = pointer.element ?: return
                 if (!FileModificationService.getInstance().preparePsiElementForWrite(callExpression)) return
-                replaceSamConstructorCall(callExpression)
+                Util.replaceSamConstructorCall(callExpression)
             }
         }
     }
@@ -101,13 +101,13 @@ class RedundantSamConstructorInspection : AbstractKotlinInspection() {
                 val callExpressions = pointers.mapNotNull { it.element }
                 if (!FileModificationService.getInstance().preparePsiElementsForWrite(callExpressions)) return
                 for (callExpression in callExpressions) {
-                    replaceSamConstructorCall(callExpression)
+                    Util.replaceSamConstructorCall(callExpression)
                 }
             }
         }
     }
 
-    companion object {
+    object Util {
         fun replaceSamConstructorCall(callExpression: KtCallExpression): KtLambdaExpression {
             val functionalArgument = callExpression.samConstructorValueArgument()?.getArgumentExpression()
                 ?: throw AssertionError("SAM-constructor should have a FunctionLiteralExpression as single argument: ${callExpression.getElementTextWithContext()}")

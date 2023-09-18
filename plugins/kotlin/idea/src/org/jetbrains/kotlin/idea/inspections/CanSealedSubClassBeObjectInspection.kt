@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.getModalityFromDescriptor
+import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Util.asKtClass
 import org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject.ConvertSealedSubClassToObjectFix
 import org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject.GenerateIdentityEqualsFix
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
@@ -62,89 +63,88 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
         }
     }
 
-    internal companion object {
-        private val EQUALS: String = OperatorNameConventions.EQUALS.asString()
-
-        private const val HASH_CODE: String = "hashCode"
-
-        private fun getExclusivelyClassModifiers(languageVersionSettings: LanguageVersionSettings): List<KtModifierKeywordToken> = listOfNotNull(
-            KtTokens.ANNOTATION_KEYWORD,
-            KtTokens.DATA_KEYWORD.takeUnless { languageVersionSettings.supportsFeature(LanguageFeature.DataObjects) },
-            KtTokens.ENUM_KEYWORD,
-            KtTokens.INNER_KEYWORD,
-            KtTokens.SEALED_KEYWORD,
-        )
-
-        private fun KtClass.matchesCanBeObjectCriteria(): Boolean {
-            return isSubclassOfStatelessSealed()
-                    && withEmptyConstructors()
-                    && hasNoExclusivelyClassModifiers()
-                    && isFinal()
-                    && typeParameters.isEmpty()
-                    && hasNoInnerClass()
-                    && companionObjects.isEmpty()
-                    && hasNoStateOrEquals()
-        }
-
-        private fun KtClassOrObject.isSubclassOfStatelessSealed(): Boolean =
-            superTypeListEntries.asSequence().mapNotNull { it.asKtClass() }.any {
-                it.isSealed() && it.hasNoStateOrEquals() && it.baseClassHasNoStateOrEquals()
-            }
-
+    internal object Util {
         fun KtSuperTypeListEntry.asKtClass(): KtClass? =
             when (val resolved = typeAsUserType?.referenceExpression?.mainReference?.resolve()) {
                 is KtConstructor<*> -> resolved.containingClass()
                 is KtClass -> resolved
                 else -> null
             }
+    }
+}
 
-        private fun KtClass.withEmptyConstructors(): Boolean =
-            primaryConstructorParameters.isEmpty() && secondaryConstructors.all { it.valueParameters.isEmpty() }
+private val EQUALS: String = OperatorNameConventions.EQUALS.asString()
+private const val HASH_CODE: String = "hashCode"
 
-        private fun KtClass.hasNoExclusivelyClassModifiers(): Boolean {
-            val modifierList = modifierList ?: return true
-            return getExclusivelyClassModifiers(languageVersionSettings).none { modifierList.hasModifier(it) }
-        }
+private fun getExclusivelyClassModifiers(languageVersionSettings: LanguageVersionSettings): List<KtModifierKeywordToken> = listOfNotNull(
+    KtTokens.ANNOTATION_KEYWORD,
+    KtTokens.DATA_KEYWORD.takeUnless { languageVersionSettings.supportsFeature(LanguageFeature.DataObjects) },
+    KtTokens.ENUM_KEYWORD,
+    KtTokens.INNER_KEYWORD,
+    KtTokens.SEALED_KEYWORD,
+)
 
-        private fun KtClass.isFinal(): Boolean = getModalityFromDescriptor() == KtTokens.FINAL_KEYWORD
+private fun KtClass.matchesCanBeObjectCriteria(): Boolean {
+    return isSubclassOfStatelessSealed()
+            && withEmptyConstructors()
+            && hasNoExclusivelyClassModifiers()
+            && isFinal()
+            && typeParameters.isEmpty()
+            && hasNoInnerClass()
+            && companionObjects.isEmpty()
+            && hasNoStateOrEquals()
+}
 
-        private tailrec fun KtClass.baseClassHasNoStateOrEquals(): Boolean {
-            val descriptor = resolveToDescriptorIfAny() ?: return false
-            val superDescriptor = descriptor.getSuperClassNotAny() ?: return true // No super class -- no state
-            val superClass = DescriptorToSourceUtils.descriptorToDeclaration(superDescriptor) as? KtClass ?: return false
-            if (!superClass.hasNoStateOrEquals()) return false
-            return superClass.baseClassHasNoStateOrEquals()
-        }
+private fun KtClassOrObject.isSubclassOfStatelessSealed(): Boolean =
+    superTypeListEntries.asSequence().mapNotNull { it.asKtClass() }.any {
+        it.isSealed() && it.hasNoStateOrEquals() && it.baseClassHasNoStateOrEquals()
+    }
 
-        private fun KtClass.hasNoStateOrEquals(): Boolean {
-            if (primaryConstructor?.valueParameters?.isNotEmpty() == true) return false
-            val body = body
-            return body == null || run {
-                val declarations = body.declarations
-                declarations.asSequence().filterIsInstance<KtProperty>().none { property ->
-                    // Simplified "backing field required"
-                    when {
-                        property.isAbstract() -> false
-                        property.initializer != null -> true
-                        property.delegate != null -> false
-                        !property.isVar -> property.getter == null
-                        else -> property.getter == null || property.setter == null
-                    }
-                } && declarations.asSequence().filterIsInstance<KtNamedFunction>().none { function ->
-                    val name = function.name
-                    val valueParameters = function.valueParameters
-                    val noTypeParameters = function.typeParameters.isEmpty()
-                    noTypeParameters && (name == EQUALS && valueParameters.size == 1 || name == HASH_CODE && valueParameters.isEmpty())
-                }
+private fun KtClass.withEmptyConstructors(): Boolean =
+    primaryConstructorParameters.isEmpty() && secondaryConstructors.all { it.valueParameters.isEmpty() }
+
+private fun KtClass.hasNoExclusivelyClassModifiers(): Boolean {
+    val modifierList = modifierList ?: return true
+    return getExclusivelyClassModifiers(languageVersionSettings).none { modifierList.hasModifier(it) }
+}
+
+private fun KtClass.isFinal(): Boolean = getModalityFromDescriptor() == KtTokens.FINAL_KEYWORD
+
+private tailrec fun KtClass.baseClassHasNoStateOrEquals(): Boolean {
+    val descriptor = resolveToDescriptorIfAny() ?: return false
+    val superDescriptor = descriptor.getSuperClassNotAny() ?: return true // No super class -- no state
+    val superClass = DescriptorToSourceUtils.descriptorToDeclaration(superDescriptor) as? KtClass ?: return false
+    if (!superClass.hasNoStateOrEquals()) return false
+    return superClass.baseClassHasNoStateOrEquals()
+}
+
+private fun KtClass.hasNoStateOrEquals(): Boolean {
+    if (primaryConstructor?.valueParameters?.isNotEmpty() == true) return false
+    val body = body
+    return body == null || run {
+        val declarations = body.declarations
+        declarations.asSequence().filterIsInstance<KtProperty>().none { property ->
+            // Simplified "backing field required"
+            when {
+                property.isAbstract() -> false
+                property.initializer != null -> true
+                property.delegate != null -> false
+                !property.isVar -> property.getter == null
+                else -> property.getter == null || property.setter == null
             }
-        }
-
-        private fun KtClass.hasNoInnerClass(): Boolean {
-            val internalClasses = body
-                ?.declarations
-                ?.filterIsInstance<KtClass>() ?: return true
-
-            return internalClasses.none { klass -> klass.isInner() }
+        } && declarations.asSequence().filterIsInstance<KtNamedFunction>().none { function ->
+            val name = function.name
+            val valueParameters = function.valueParameters
+            val noTypeParameters = function.typeParameters.isEmpty()
+            noTypeParameters && (name == EQUALS && valueParameters.size == 1 || name == HASH_CODE && valueParameters.isEmpty())
         }
     }
+}
+
+private fun KtClass.hasNoInnerClass(): Boolean {
+    val internalClasses = body
+        ?.declarations
+        ?.filterIsInstance<KtClass>() ?: return true
+
+    return internalClasses.none { klass -> klass.isInner() }
 }

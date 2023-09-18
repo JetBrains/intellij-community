@@ -30,38 +30,40 @@ class RedundantExplicitTypeInspection : AbstractKotlinInspection() {
                 )
             }
         })
+}
 
-    companion object {
-        fun hasRedundantType(property: KtProperty): Boolean {
-            if (!property.isLocal) return false
-            val typeReference = property.typeReference ?: return false
-            if (typeReference.annotationEntries.isNotEmpty()) return false
-            val initializer = property.initializer ?: return false
+private fun hasRedundantType(property: KtProperty): Boolean {
+    if (!property.isLocal) return false
+    val typeReference = property.typeReference ?: return false
+    if (typeReference.annotationEntries.isNotEmpty()) return false
+    val initializer = property.initializer ?: return false
 
-            val type = property.resolveToDescriptorIfAny()?.type ?: return false
-            if (type is AbbreviatedType) return false
-            when (initializer) {
-                is KtConstantExpression -> {
-                    val fqName = initializer.getClassId()?.asSingleFqName() ?: return false
-                    if (!KotlinBuiltIns.isConstructedFromGivenClass(type, fqName) || type.isMarkedNullable) return false
-                }
-                is KtStringTemplateExpression -> {
-                    if (!KotlinBuiltIns.isString(type)) return false
-                }
-                is KtNameReferenceExpression -> {
-                    if (typeReference.text != initializer.getReferencedName()) return false
-                    val initializerType = initializer.getType(property.analyze(BodyResolveMode.PARTIAL))
-                    if (initializerType != type && initializerType.isCompanionObject()) return false
-                }
-                is KtCallExpression -> {
-                    if (typeReference.text != initializer.calleeExpression?.text) return false
-                }
-                else -> return false
-            }
-            return true
+    val type = property.resolveToDescriptorIfAny()?.type ?: return false
+    if (type is AbbreviatedType) return false
+    when (initializer) {
+        is KtConstantExpression -> {
+            val fqName = initializer.getClassId()?.asSingleFqName() ?: return false
+            if (!KotlinBuiltIns.isConstructedFromGivenClass(type, fqName) || type.isMarkedNullable) return false
         }
 
-        private fun KotlinType?.isCompanionObject() =
-            this?.constructor?.declarationDescriptor?.isCompanionObject() == true
+        is KtStringTemplateExpression -> {
+            if (!KotlinBuiltIns.isString(type)) return false
+        }
+
+        is KtNameReferenceExpression -> {
+            if (typeReference.text != initializer.getReferencedName()) return false
+            val initializerType = initializer.getType(property.analyze(BodyResolveMode.PARTIAL))
+            if (initializerType != type && initializerType.isCompanionObject()) return false
+        }
+
+        is KtCallExpression -> {
+            if (typeReference.text != initializer.calleeExpression?.text) return false
+        }
+
+        else -> return false
     }
+    return true
 }
+
+private fun KotlinType?.isCompanionObject() =
+    this?.constructor?.declarationDescriptor?.isCompanionObject() == true
