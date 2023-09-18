@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.resolve.BindingContext
 
 class KotlinThrowableNotThrownInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = callExpressionVisitor(fun(callExpression) {
@@ -46,7 +47,8 @@ class KotlinThrowableNotThrownInspection : AbstractKotlinInspection() {
     private fun KtExpression.isUsed(): Boolean {
         val context = analyze(BodyResolveMode.PARTIAL_WITH_CFA)
         if (!isUsedAsExpression(context)) return false
-        if (isUsedAsResultOfLambda(context)) return true
+        val isUsedAsResultOfLambda = context[BindingContext.USED_AS_RESULT_OF_LAMBDA, this]
+        if (isUsedAsResultOfLambda == true) return true
         val property = getParentOfTypes(
             true,
             KtThrowExpression::class.java,
