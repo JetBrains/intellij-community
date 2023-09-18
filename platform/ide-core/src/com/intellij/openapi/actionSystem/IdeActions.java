@@ -9,6 +9,7 @@ public interface IdeActions {
   String ACTION_EDITOR_COPY = "EditorCopy";
   String ACTION_EDITOR_PASTE = "EditorPaste";
   String ACTION_EDITOR_PASTE_SIMPLE = "EditorPasteSimple";
+  String ACTION_EDITOR_PASTE_FROM_HISTORY = "PasteMultiple";
   String ACTION_EDITOR_DELETE = "EditorDelete";
   String ACTION_EDITOR_DELETE_TO_WORD_START = "EditorDeleteToWordStart";
   String ACTION_EDITOR_DELETE_TO_WORD_END = "EditorDeleteToWordEnd";
