@@ -38,12 +38,12 @@ fun java.awt.Color.toComposeColor() = Color(
 fun java.awt.Color?.toComposeColorOrUnspecified() = this?.toComposeColor() ?: Color.Unspecified
 
 @Suppress("UnstableApiUsage")
-internal fun retrieveColorOrNull(key: String) =
+fun retrieveColorOrNull(key: String) =
     JBColor.namedColor(key)
         .takeUnless { it.name == "NAMED_COLOR_FALLBACK_MARKER" }
         ?.toComposeColor()
 
-internal fun retrieveColorOrUnspecified(key: String): Color {
+fun retrieveColorOrUnspecified(key: String): Color {
     val color = retrieveColorOrNull(key)
     if (color == null) {
         logger.warn("Color with key \"$key\" not found, fallback to 'Color.Unspecified'")
@@ -51,9 +51,9 @@ internal fun retrieveColorOrUnspecified(key: String): Color {
     return color ?: Color.Unspecified
 }
 
-internal fun retrieveColorsOrUnspecified(vararg keys: String) = keys.map { retrieveColorOrUnspecified(it) }
+fun retrieveColorsOrUnspecified(vararg keys: String) = keys.map { retrieveColorOrUnspecified(it) }
 
-internal fun List<Color>.createVerticalBrush(
+fun List<Color>.createVerticalBrush(
     startY: Float = 0.0f,
     endY: Float = Float.POSITIVE_INFINITY,
     tileMode: TileMode = TileMode.Clamp,
@@ -67,29 +67,29 @@ internal fun List<Color>.createVerticalBrush(
     return Brush.verticalGradient(this, startY, endY, tileMode)
 }
 
-internal fun retrieveIntAsDp(key: String): Dp {
+fun retrieveIntAsDp(key: String): Dp {
     val rawValue = UIManager.get(key)
     if (rawValue is Int) rawValue.dp
 
     keyNotFound(key, "Int")
 }
 
-internal fun retrieveIntAsDpOrUnspecified(key: String) =
+fun retrieveIntAsDpOrUnspecified(key: String) =
     try {
         retrieveIntAsDp(key)
     } catch (ignored: JewelBridgeException) {
         Dp.Unspecified
     }
 
-internal fun retrieveInsetsAsPaddingValues(key: String) =
+fun retrieveInsetsAsPaddingValues(key: String) =
     UIManager.getInsets(key)
         ?.let { PaddingValues(it.left.dp, it.top.dp, it.right.dp, it.bottom.dp) }
         ?: keyNotFound(key, "Insets")
 
-internal fun retrieveArcAsCornerSize(key: String) =
+fun retrieveArcAsCornerSize(key: String) =
     CornerSize(retrieveIntAsDp(key) / 2)
 
-internal fun retrieveArcAsCornerSizeWithFallbacks(vararg keys: String): CornerSize {
+fun retrieveArcAsCornerSizeWithFallbacks(vararg keys: String): CornerSize {
     for (key in keys) {
         val rawValue = UIManager.get(key)
         if (rawValue is Int) {
@@ -106,13 +106,14 @@ internal fun retrieveArcAsCornerSizeWithFallbacks(vararg keys: String): CornerSi
 @OptIn(DependsOnJBR::class)
 private val awtFontManager = AwtFontManager()
 
-internal suspend fun retrieveTextStyle(fontKey: String, colorKey: String? = null): TextStyle {
+@DependsOnJBR
+suspend fun retrieveTextStyle(fontKey: String, colorKey: String? = null): TextStyle {
     val baseColor = colorKey?.let { retrieveColorOrUnspecified(colorKey) } ?: Color.Unspecified
     return retrieveTextStyle(fontKey, color = baseColor)
 }
 
-@OptIn(DependsOnJBR::class)
-internal suspend fun retrieveTextStyle(
+@DependsOnJBR
+suspend fun retrieveTextStyle(
     key: String,
     color: Color = Color.Unspecified,
     lineHeight: TextUnit = TextUnit.Unspecified,
@@ -140,22 +141,10 @@ internal suspend fun retrieveTextStyle(
     }
 }
 
-internal val JBValue.dp
+val JBValue.dp
     get() = unscaled.dp
 
-internal fun TextStyle.derive(sizeDelta: Float, weight: FontWeight? = fontWeight, color: Color = toSpanStyle().color) =
-    copy(fontSize = fontSize - sizeDelta, fontWeight = weight, color = color)
-
-internal operator fun TextUnit.minus(delta: Float) = plus(-delta)
-
-internal operator fun TextUnit.plus(delta: Float) =
-    when {
-        isSp -> TextUnit(value + delta, type)
-        isEm -> TextUnit(value + delta, type)
-        else -> this
-    }
-
-internal fun <T : InteractiveComponentState> retrieveStatefulIcon(
+fun <T : InteractiveComponentState> retrieveStatefulIcon(
     iconPath: String,
     svgLoader: SvgLoader,
     iconData: IntelliJThemeIconData,
@@ -170,7 +159,7 @@ internal fun <T : InteractiveComponentState> retrieveStatefulIcon(
         suffixTokensProvider,
     )
 
-internal fun retrieveStatelessIcon(
+fun retrieveStatelessIcon(
     iconPath: String,
     svgLoader: SvgLoader,
     iconData: IntelliJThemeIconData,
