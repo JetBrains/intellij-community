@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.project.Project;
@@ -60,7 +59,7 @@ public final class IndexLookupTimingsReporting {
    * See {@link #REPORT_TO_FUS_INDIVIDUAL_LOOKUPS_ONLY_LONGER_THAN_MS}
    */
   private static final boolean REPORT_INDIVIDUAL_LOOKUPS_TO_FUS = getBooleanProperty(
-    "IndexLookupTimingsReporting.REPORT_INDIVIDUAL_LOOKUPS_TO_FUS", ApplicationManager.getApplication().isEAP()
+    "IndexLookupTimingsReporting.REPORT_INDIVIDUAL_LOOKUPS_TO_FUS", false
   );
 
   /**
