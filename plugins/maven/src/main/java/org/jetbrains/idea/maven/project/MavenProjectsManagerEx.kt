@@ -44,6 +44,7 @@ import java.util.function.Supplier
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
   fun updateAllMavenProjectsSync(spec: MavenImportSpec): List<Module>
+  fun scheduleUpdateAllMavenProjects(spec: MavenImportSpec)
   suspend fun updateAllMavenProjects(spec: MavenImportSpec): List<Module>
 
   fun scheduleForceUpdateMavenProject(mavenProject: MavenProject) =
@@ -244,6 +245,10 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   private val importMutex = Mutex()
+
+  override fun scheduleUpdateAllMavenProjects(spec: MavenImportSpec) {
+    cs.launch { updateAllMavenProjects(spec) }
+  }
 
   override suspend fun updateAllMavenProjects(spec: MavenImportSpec): List<Module> {
     return updateAllMavenProjects(spec, null)

@@ -18,7 +18,7 @@ public class MavenProjectWatcherContributor implements ExternalSystemProjectsWat
 
   @Override
   public void markDirtyAllExternalProjects(@NotNull Project project) {
-    runWhenFullyOpen(project, (manager) -> manager.scheduleUpdateAllProjects(new MavenImportSpec(true, false, false)));
+    runWhenFullyOpen(project, (manager) -> manager.scheduleUpdateAllMavenProjects(new MavenImportSpec(true, false, false)));
   }
 
   @Override

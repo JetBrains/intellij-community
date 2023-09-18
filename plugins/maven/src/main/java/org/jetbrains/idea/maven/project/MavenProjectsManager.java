@@ -32,7 +32,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
@@ -57,7 +56,6 @@ import org.jetbrains.idea.maven.project.auto.reload.MavenProjectManagerWatcher;
 import org.jetbrains.idea.maven.project.importing.FilesList;
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.project.importing.MavenProjectManagerListenerToBusBridge;
-import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
@@ -155,7 +153,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     myState = state;
     if (isInitialized()) {
       applyStateToTree(myProjectsTree, this);
-      scheduleUpdateAllProjects(new MavenImportSpec(false, false, false));
+      scheduleUpdateAllMavenProjects(new MavenImportSpec(false, false, false));
     }
   }
 
@@ -293,7 +291,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       if (runImportOnStartup.get()) {
         if (!MavenUtil.isLinearImportEnabled()) {
           var forceImport = Boolean.TRUE.equals(myProject.getUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY()));
-          scheduleUpdateAll(new MavenImportSpec(forceImport, forceImport, false));
+          scheduleUpdateAllMavenProjects(new MavenImportSpec(forceImport, forceImport, false));
         }
       }
     }
@@ -498,7 +496,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
     doAddManagedFilesWithProfiles(files, profiles, previewModuleToDelete);
-    scheduleUpdateAll(new MavenImportSpec(false, true, false));
+    scheduleUpdateAllMavenProjects(new MavenImportSpec(false, true, false));
   }
 
   protected void doAddManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
@@ -762,7 +760,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     if (!isInitialized()) {
       initAndActivate();
       if (!MavenUtil.isLinearImportEnabled()) {
-        scheduleUpdateAll(new MavenImportSpec(false, true, false));
+        scheduleUpdateAllMavenProjects(new MavenImportSpec(false, true, false));
       }
     }
     newTree.addListenersFrom(myProjectsTree);
@@ -793,43 +791,11 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public synchronized void removeManagedFiles(List<VirtualFile> files) {
     myProjectsTree.removeManagedFiles(files);
-    scheduleUpdateAll(new MavenImportSpec(false, true, true));
+    scheduleUpdateAllMavenProjects(new MavenImportSpec(false, true, true));
   }
 
   public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
     myProjectsTree.setExplicitProfiles(profiles);
-  }
-
-  /**
-   * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
-   * if project is closed)
-   */
-  @ApiStatus.Internal
-  public Promise<Void> scheduleUpdateAll(MavenImportSpec spec) {
-    if (MavenUtil.isLinearImportEnabled()) {
-      return MavenImportingManager.getInstance(myProject).scheduleImportAll(spec).getFinishPromise().then(it -> null);
-    }
-
-    return scheduleUpdateAllSuspendable(spec);
-  }
-
-  /**
-   * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
-   * if project is closed)
-   */
-  private Promise<Void> scheduleUpdateAllSuspendable(MavenImportSpec spec) {
-    final AsyncPromise<Void> promise = new AsyncPromise<>();
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      updateAllMavenProjectsSync(spec, promise);
-    }
-    else {
-      AppExecutorUtil.getAppExecutorService().execute(() -> {
-        updateAllMavenProjectsSync(spec, promise);
-      });
-    }
-
-    return promise;
   }
 
   private void updateAllMavenProjectsSync(MavenImportSpec spec, AsyncPromise<Void> promise) {
@@ -844,7 +810,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public void forceUpdateProjects() {
-    scheduleUpdateAllProjects(MavenImportSpec.EXPLICIT_IMPORT);
+    scheduleUpdateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT);
   }
 
   /**
@@ -871,7 +837,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec spec) {
-
     if (!isMavenizedProject()) {
       addManagedFiles(collectAllAvailablePomFiles());
     }
@@ -882,25 +847,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       return;
     }
     MavenLog.LOG.warn("forceUpdateAllProjectsOrFindAllAvailablePomFiles: Linear Import is disabled");
-    scheduleUpdateAllProjects(spec);
-  }
-
-  @ApiStatus.Internal
-  public Promise<Void> scheduleUpdateAllProjects(MavenImportSpec spec) {
-    if (MavenUtil.isLinearImportEnabled()) {
-      MavenLog.LOG.warn("scheduleUpdateProjects: Linear Import is enabled");
-      return MavenImportingManager.getInstance(myProject)
-        .openProjectAndImport(new FilesList(List.of()), getImportingSettings(),
-                              getGeneralSettings(), spec).getFinishPromise().then(it -> null);
-    }
-    MavenLog.LOG.warn("scheduleUpdateProjects: Linear Import is disabled");
-    MavenDistributionsCache.getInstance(myProject).cleanCaches();
-    MavenWslCache.getInstance().clearCache();
-    final AsyncPromise<Void> promise = new AsyncPromise<>();
-    MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
-      scheduleUpdateAll(spec).processed(promise);
-    });
-    return promise;
+    scheduleUpdateAllMavenProjects(spec);
   }
 
   /**
