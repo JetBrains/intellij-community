@@ -27,7 +27,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 //TeamCity inherits StringUtil: do not add private constructors!!!
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -2538,12 +2537,6 @@ public class StringUtil extends StringUtilRt {
   public static String @NotNull [] splitByLinesKeepSeparators(@NotNull String string) {
     return Splitters.EOL_SPLIT_KEEP_SEPARATORS.split(string);
   }
-
-  @Contract(pure = true)
-  public static @NotNull Stream<String> splitByLinesKeepSeparatorsAsStream(@NotNull String string) {
-    return Splitters.EOL_SPLIT_KEEP_SEPARATORS.splitAsStream(string);
-  }
-
   @Contract(pure = true)
   public static @NotNull List<Pair<String, Integer>> getWordsWithOffset(@NotNull String s) {
     List<Pair<String, Integer>> res = new ArrayList<>();
