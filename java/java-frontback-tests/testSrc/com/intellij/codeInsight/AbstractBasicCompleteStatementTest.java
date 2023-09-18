@@ -412,6 +412,8 @@ public abstract class AbstractBasicCompleteStatementTest extends LightPlatformCo
   public void testYieldSemicolon() { doTest(); }
   public void testCommentSmartEnter() { doTest(false); }
 
+  public void testWhileStatementWithCondition() { doTest(); }
+
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return new BasicDefaultLightProjectDescriptor();

@@ -553,7 +553,7 @@ public final class BasicJavaAstTreeUtil {
 
   @Nullable
   public static ASTNode getWhileCondition(@Nullable ASTNode element) {
-    if (!is(element, BASIC_DO_WHILE_STATEMENT) ||
+    if (!is(element, BASIC_DO_WHILE_STATEMENT) &&
         !is(element, BASIC_WHILE_STATEMENT)) {
       return null;
     }
