@@ -7,19 +7,22 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackTraceProv
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.LazyCoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineJobHierarchyProvider
 
 class CoroutineLibraryAgent2Proxy(
     private val executionContext: DefaultExecutionContext,
     private val debugProbesImpl: DebugProbesImpl
 ) : CoroutineInfoProvider {
     private val stackTraceProvider = CoroutineStackTraceProvider(executionContext)
+    private val jobHierarchyProvider = CoroutineJobHierarchyProvider()
 
     override fun dumpCoroutinesInfo(): List<CoroutineInfoData> {
         val result = debugProbesImpl.dumpCoroutinesInfo(executionContext)
         return result.map {
             LazyCoroutineInfoData(
                 it,
-                stackTraceProvider
+                stackTraceProvider,
+                jobHierarchyProvider
             )
         }
     }

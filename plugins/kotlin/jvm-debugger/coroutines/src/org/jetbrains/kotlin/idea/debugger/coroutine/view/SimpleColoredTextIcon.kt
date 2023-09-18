@@ -106,7 +106,7 @@ class SimpleColoredTextIconPresentationRenderer {
 
     private val settings: ThreadsViewSettings = ThreadsViewSettings.getInstance()
 
-    fun render(infoData: CoroutineInfoData): SimpleColoredTextIcon {
+    fun render(infoData: CoroutineInfoData, textToHideFromContext: String): SimpleColoredTextIcon {
         val thread = infoData.activeThread
         val name = thread?.name()?.substringBefore(" @${infoData.descriptor.name}") ?: ""
         val threadState = if (thread != null) DebuggerUtilsEx.getThreadStatusText(thread.status()) else ""
@@ -121,6 +121,17 @@ class SimpleColoredTextIconPresentationRenderer {
             label.append(" on thread \"")
             label.appendValue(name)
             label.append("\": $threadState")
+        }
+        infoData.descriptor.contextSummary?.let {
+            // The context summary is the toString output of the context. We know that CombinedContext concatenates the toString output of
+            // its inner contexts, including CoroutineName, Job and the dispatcher. Remove the name, and remove the job or dispatcher
+            // depending on how we're grouped
+            val text = it.replace("CoroutineName(${infoData.descriptor.name})", "")
+                .replace(textToHideFromContext, "")
+                .replace(Regex("(, )+"), ", ")
+                .replace("[, ", "[")
+                .replace(", ]", "]")
+            label.append(" $text")
         }
         return label
     }
@@ -177,7 +188,7 @@ class SimpleColoredTextIconPresentationRenderer {
 
     fun renderCreationNode() =
         SimpleColoredTextIcon(
-            null, true, KotlinDebuggerCoroutinesBundle.message("coroutine.dump.creation.trace")
+            AllIcons.Debugger.Frame, true, KotlinDebuggerCoroutinesBundle.message("coroutine.dump.creation.trace")
         )
 
     fun renderErrorNode(error: String) =
