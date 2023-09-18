@@ -411,11 +411,13 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
   }
 
-  private fun checkOrInstallMavenWrapper(project: Project) {
+  private suspend fun checkOrInstallMavenWrapper(project: Project) {
     if (projectsTree.existingManagedFiles.size == 1) {
       val baseDir = MavenUtil.getBaseDir(projectsTree.existingManagedFiles[0])
       if (MavenUtil.isWrapper(generalSettings)) {
-        MavenWrapperDownloader.checkOrInstallForSync(project, baseDir.toString())
+        withContext(Dispatchers.IO) {
+          MavenWrapperDownloader.checkOrInstallForSync(project, baseDir.toString())
+        }
       }
     }
   }
