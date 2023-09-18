@@ -724,7 +724,7 @@
 
     <group id="Maven.Internal" internal="true" popup="true">
       <action id="Maven.PrintReadStatistics" class="org.jetbrains.idea.maven.internal.MavenShowReadStatisticsAction"/>
-      <action id="Maven.Killall" class="org.jetbrains.idea.maven.internal.MavenShowReadStatisticsAction"/>
+      <action id="Maven.Killall" class="org.jetbrains.idea.maven.internal.MavenKillallConnectors"/>
       <action id="Maven.ShowConnectors" class="org.jetbrains.idea.maven.server.ui.ShowMavenConnectorsAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
