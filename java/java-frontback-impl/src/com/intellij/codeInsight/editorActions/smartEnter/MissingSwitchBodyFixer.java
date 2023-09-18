@@ -4,6 +4,10 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +27,20 @@ public class MissingSwitchBodyFixer implements Fixer {
     assert rParenth != null;
 
     int offset = rParenth.getTextRange().getEndOffset();
-    processor.insertBraces(editor, offset);
+    processor.insertBracesWithNewLine(editor, offset);
+    if (BasicJavaAstTreeUtil.is(astNode, BASIC_SWITCH_EXPRESSION)) {
+      Project project = editor.getProject();
+      PsiElement psiElement = BasicJavaAstTreeUtil.toPsi(astNode);
+      if (project != null && psiElement != null) {
+        SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiElement);
+        processor.commit(editor);
+        PsiElement reparsedSwitch = pointer.getElement();
+        if (reparsedSwitch != null) {
+          editor.getCaretModel().moveToOffset(offset + 1);
+          processor.reformat(editor, pointer.getElement());
+          processor.setSkipEnter(true);
+        }
+      }
+    }
   }
 }
