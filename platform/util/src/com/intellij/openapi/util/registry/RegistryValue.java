@@ -243,12 +243,14 @@ public class RegistryValue {
   }
 
   public void setValue(String value) {
+    resetCache();
+
     RegistryValueListener globalValueChangeListener = myRegistry.getValueChangeListener();
     globalValueChangeListener.beforeValueChanged(this);
     for (RegistryValueListener each : myListeners) {
       each.beforeValueChanged(this);
     }
-    resetCache();
+
     myRegistry.getUserProperties().put(myKey, value);
     LOG.info("Registry value '" + myKey + "' has changed to '" + value + '\'');
 
