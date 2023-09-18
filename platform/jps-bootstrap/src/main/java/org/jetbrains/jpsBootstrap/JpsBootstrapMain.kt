@@ -287,14 +287,12 @@ class JpsBootstrapMain(args: Array<String>?) {
     val modulesSubset = JpsProjectUtils.getRuntimeModulesClasspath(module)
     val jpsBuild = JpsBuild(communityHome, model, jpsBootstrapWorkDir, kotlincHome)
 
-    // Some workarounds like 'kotlinx.kotlinx-serialization-compiler-plugin-for-compilation' library (used as Kotlin compiler plugin)
-    // require that the corresponding library was downloaded. It's unclear from modules structure which libraries exactly required
-    // so download them all
-    //
-    // In case of running from read-to-use classes we need all dependent libraries as well
-    // Instead of calculating what libraries are exactly required, download them all
-    jpsBuild.resolveProjectDependencies()
     if (manifestJsonUrl != null) {
+      // In case of running from read-to-use classes we need all dependent libraries as well
+      // Instead of calculating what libraries are exactly required, download them all
+      // since downloading dependencies only for a few modules is not supported by JPS now
+      jpsBuild.resolveProjectDependencies()
+
       info("Downloading project classes from $manifestJsonUrl")
       ClassesFromCompileInc.downloadProjectClasses(model.project, communityHome, modulesSubset)
     }
