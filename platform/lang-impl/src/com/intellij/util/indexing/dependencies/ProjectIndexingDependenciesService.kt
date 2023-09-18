@@ -8,10 +8,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.serviceContainer.NonInjectable
-import com.intellij.util.io.ResilientFileChannel
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
-import java.nio.ByteBuffer
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption.*
@@ -38,17 +36,28 @@ import kotlin.math.max
  *
  */
 @Service(Service.Level.APP) // TODO: project
-class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting constructor(storagePath: Path) : Disposable {
+class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting constructor(private val storagePath: Path) : Disposable {
   companion object {
     private const val NULL_INDEXING_STAMP: Int = 0
-    private const val CURRENT_STORAGE_VERSION = 0
-    private const val STORAGE_VERSION_OFFSET = 0L
-    private const val INDEXING_STAMP_OFFSET = STORAGE_VERSION_OFFSET + Int.SIZE_BYTES
 
     private val defaultStoragePath = Paths.get(PathManager.getSystemPath(), "caches/indexingStamp.dat")
 
     @JvmStatic
     val NULL_STAMP: FileIndexingStamp = FileIndexingStampImpl(NULL_INDEXING_STAMP)
+
+    private fun requestVfsRebuildDueToError(reason: Throwable) {
+      thisLogger().error(reason)
+      FSRecords.getInstance().scheduleRebuild(reason.message ?: "Failed to read FileIndexingStamp", reason)
+    }
+
+    private fun openOrInitStorage(storagePath: Path): ProjectIndexingDependenciesStorage {
+      try {
+        return ProjectIndexingDependenciesStorage.openOrInit(storagePath)
+      } catch (e: IOException) {
+        requestVfsRebuildDueToError(e)
+        throw e
+      }
+    }
   }
 
   private data class FileIndexingStampImpl(val stamp: Int) : FileIndexingStamp {
@@ -79,64 +88,18 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
   // monotonically growing number.
   private val current = AtomicReference(IndexingRequestTokenImpl(NULL_INDEXING_STAMP))
 
-  // Use under synchronized to avoid data corruption
-  private val storage = ResilientFileChannel.open(storagePath, CREATE, READ, WRITE)
+  private val storage: ProjectIndexingDependenciesStorage = openOrInitStorage(storagePath)
 
   constructor() : this(defaultStoragePath)
 
   init {
-    val fourBytes = ByteBuffer.allocate(Int.SIZE_BYTES)
     try {
-      val storageVersion = readIntOrExecute(fourBytes, STORAGE_VERSION_OFFSET) { bytesRead ->
-        if (bytesRead == -1) {
-          resetStorage() // this is new file. Initialize it.
-        }
-        readIntOrExecute(fourBytes, STORAGE_VERSION_OFFSET) { bytesReadSecondTime ->
-          throw IOException("Could not read storage version (only $bytesReadSecondTime bytes read). Storage path: $storagePath")
-        }
-      }
-
-      if (storageVersion != CURRENT_STORAGE_VERSION) {
-        throw IOException("Incompatible version change in FileIndexingStampService: $storageVersion > $CURRENT_STORAGE_VERSION")
-      }
-
-      val requestId = readIntOrExecute(fourBytes, INDEXING_STAMP_OFFSET) { bytesRead ->
-        throw IOException("Could not read indexing stamp (only $bytesRead bytes read). Storage path: $storagePath")
-      }
+      val requestId = storage.readRequestId()
       current.set(IndexingRequestTokenImpl(requestId))
     }
     catch (ioException: IOException) {
-      resetStorage()
       requestVfsRebuildDueToError(ioException)
-    }
-  }
-
-  private fun readIntOrExecute(fourBytes: ByteBuffer, offset: Long, otherwise: (Int) -> Int): Int {
-    val read = storage.read(fourBytes.clear(), offset)
-    return if (read == Int.SIZE_BYTES) {
-      fourBytes.rewind().getInt()
-    }
-    else {
-      otherwise(read)
-    }
-  }
-
-  private fun requestVfsRebuildDueToError(reason: Throwable) {
-    thisLogger().error(reason)
-    FSRecords.getInstance().scheduleRebuild(reason.message ?: "Failed to read FileIndexingStamp", reason)
-  }
-
-  private fun resetStorage() {
-    // at the moment synchronized is not needed, because resetStorage is only invoked from init
-    // but in future this may change. synchronized is only to make this method future-proof.
-    synchronized(storage) {
-      val fileSize = Int.SIZE_BYTES * 2
-      val bytes = ByteBuffer.allocate(fileSize)
-      bytes.putInt(CURRENT_STORAGE_VERSION)
-      bytes.putInt(NULL_INDEXING_STAMP)
-      storage.write(bytes.rewind(), 0)
-      storage.truncate(fileSize.toLong())
-      storage.force(false)
+      storage.resetStorage()
     }
   }
 
@@ -149,14 +112,8 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
       val next = current.requestId + 1
       IndexingRequestTokenImpl(if (next == NULL_INDEXING_STAMP) NULL_INDEXING_STAMP + 1 else next)
     }.also {
-      synchronized(storage) {
-        val bytes = ByteBuffer.allocate(Int.SIZE_BYTES)
-        // don't use `it`: current.get() will return just updated value or more up-to-date value
-        bytes.putInt(current.get().requestId)
-        val wrote = storage.write(bytes.rewind(), INDEXING_STAMP_OFFSET)
-        thisLogger().assertTrue(wrote == Int.SIZE_BYTES, "Could not write new indexing stamp (only $wrote bytes written)")
-        storage.force(false)
-      }
+      // don't use `it`: current.get() will return just updated value or more up-to-date value
+      storage.writeRequestId(current.get().requestId)
     }
   }
 
