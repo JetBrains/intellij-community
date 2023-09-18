@@ -256,12 +256,17 @@ public class UnrollLoopAction extends PsiUpdateModCommandAction<PsiLoopStatement
       if (statement instanceof PsiDeclarationStatement declaration) {
         if (expressions.size() > 1) return false;
         for (PsiElement element : declaration.getDeclaredElements()) {
+          PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(block.getProject());
           if (element instanceof PsiVariable variable) {
             String name = variable.getName();
-            if (name != null) {
-              if (PsiResolveHelper.getInstance(block.getProject()).resolveReferencedVariable(name, parentBlock) != null) {
-                return false;
-              }
+            if (name != null && resolveHelper.resolveReferencedVariable(name, parentBlock) != null) {
+              return false;
+            }
+          }
+          if (element instanceof PsiClass psiClass) {
+            String name = psiClass.getName();
+            if (name != null && resolveHelper.resolveReferencedClass(name, parentBlock) != null) {
+              return false;
             }
           }
         }
