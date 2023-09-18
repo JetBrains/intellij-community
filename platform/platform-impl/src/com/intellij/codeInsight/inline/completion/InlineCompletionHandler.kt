@@ -215,18 +215,18 @@ class InlineCompletionHandler(scope: CoroutineScope) {
 
     val context = session.context
     val result = updateContext(context, request.event)
-    application.invokeAndWait {
-      when (result) {
-        is UpdateContextResult.Changed -> {
+    when (result) {
+      is UpdateContextResult.Changed -> {
+        application.invokeLater {
           context.editor.inlayModel.execute(true) {
             context.clear()
             trace(InlineCompletionEventType.Change(result.truncateTyping))
             result.newElements.forEach { context.renderElement(it, request.endOffset) }
           }
         }
-        is UpdateContextResult.Same -> Unit
-        is UpdateContextResult.Invalidated -> session.invalidate()
       }
+      is UpdateContextResult.Same -> Unit
+      is UpdateContextResult.Invalidated -> application.invokeAndWait { session.invalidate() }
     }
     return result != UpdateContextResult.Invalidated
   }
