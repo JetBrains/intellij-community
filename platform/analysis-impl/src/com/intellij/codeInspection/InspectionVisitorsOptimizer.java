@@ -3,9 +3,13 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.pom.Navigatable;
+import com.intellij.pom.PomTarget;
 import com.intellij.psi.BasicInspectionVisitorBean;
 import com.intellij.psi.HintedPsiElementVisitor;
 import com.intellij.psi.PsiElement;
@@ -17,6 +21,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -48,9 +53,13 @@ public final class InspectionVisitorsOptimizer {
     if (visitor instanceof HintedPsiElementVisitor) {
       acceptingPsiTypes = ((HintedPsiElementVisitor)visitor).getHintPsiElements();
 
-      if (inTests && !VISITOR_TYPES.get(visitor.getClass()).overridesVisitPsiElement) {
-        LOG.error("HintedPsiElementVisitor implementations must override PsiElementVisitor.visitElement",
-                  visitor.getClass().getName());
+      if (inTests) {
+        VisitorTypes handlesTypes = VISITOR_TYPES.get(visitor.getClass());
+        if (!handlesTypes.overridesVisitPsiElement
+            && !handlesTypes.handlesElementTypes.equals(acceptingPsiTypes)) {
+          LOG.error("HintedPsiElementVisitor implementations must override PsiElementVisitor.visitElement",
+                    visitor.getClass().getName());
+        }
       }
 
       if (acceptingPsiTypes.contains(PsiElement.class) || acceptingPsiTypes.isEmpty()) {
@@ -139,6 +148,11 @@ public final class InspectionVisitorsOptimizer {
                 || aSuper == CompositePsiElement.class
                 || aSuper == ElementBase.class
                 || aSuper == Cloneable.class
+                || aSuper == Iconable.class
+                || aSuper == Serializable.class
+                || aSuper == PomTarget.class
+                || aSuper == Queryable.class
+                || aSuper == Navigatable.class
                 || aSuper == AtomicReference.class);
       });
 
@@ -186,6 +200,11 @@ public final class InspectionVisitorsOptimizer {
             Class<?> parameterType = declaredMethod.getParameterTypes()[0];
             visitClasses.add(parameterType);
           }
+        }
+
+        if (HintedPsiElementVisitor.class.isAssignableFrom(superClass)) {
+          // do not inspect parent
+          break;
         }
 
         superClass = superClass.getSuperclass();
