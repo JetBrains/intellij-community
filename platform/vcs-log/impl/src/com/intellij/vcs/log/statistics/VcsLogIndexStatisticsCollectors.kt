@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
@@ -53,8 +54,11 @@ internal class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesColl
 }
 
 internal class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
-  private val GROUP = EventLogGroup("vcs.log.index.project", 3)
+  private val GROUP = EventLogGroup("vcs.log.index.project", 4)
   private val INDEXING_TIME = GROUP.registerEvent("indexing.time.minutes", EventFields.Count)
+  private val IS_PAUSED = EventFields.Boolean("is_paused")
+  private val INDEXING_TIME_BY_ROOT = GROUP.registerEvent("indexing.time.by.root",
+                                                          EventFields.AnonymizedPath, EventFields.DurationMs, IS_PAUSED)
   private val INDEX_DISABLED = GROUP.registerEvent("index.disabled.in.project", EventFields.Boolean("value"))
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
@@ -65,6 +69,9 @@ internal class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() 
     getIndexCollector(project)?.state?.let { indexCollectorState ->
       val indexingTime = TimeUnit.MILLISECONDS.toMinutes(indexCollectorState.indexTime).toInt()
       usages.add(INDEXING_TIME.metric(indexingTime))
+      for ((root, time) in indexCollectorState.indexTimeByRoot) {
+        usages.add(INDEXING_TIME_BY_ROOT.metric(root.path, time, VcsLogBigRepositoriesList.getInstance().isBig(root)))
+      }
     }
 
     getSharedSettings(project)?.let { sharedSettings ->
@@ -88,10 +95,12 @@ internal class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() 
 
 class VcsLogIndexCollectorState : BaseState() {
   var indexTime by property(0L)
+  var indexTimeByRoot by linkedMap<VirtualFile, Long>()
 
   fun copy(): VcsLogIndexCollectorState {
     val copy = VcsLogIndexCollectorState()
     copy.indexTime = indexTime
+    copy.indexTimeByRoot = indexTimeByRoot.toMap(linkedMapOf())
     return copy
   }
 }
@@ -121,9 +130,11 @@ class VcsLogIndexCollector : PersistentStateComponent<VcsLogIndexCollectorState>
     }
   }
 
-  fun reportIndexingTime(time: Long) {
+  fun reportIndexingTime(root: VirtualFile, time: Long) {
     synchronized(lock) {
       state.indexTime += time
+      state.indexTimeByRoot[root] = (state.indexTimeByRoot[root] ?: 0) + time
+      state.intIncrementModificationCount()
     }
   }
 

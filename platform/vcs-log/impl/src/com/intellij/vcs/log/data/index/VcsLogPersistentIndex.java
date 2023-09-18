@@ -474,7 +474,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         boolean isIndexed = isIndexed(myRoot);
         if (isIndexed || myBigRepositoriesList.isBig(myRoot)) {
           long time = myIndexingTime.get(myRoot).getAndSet(0);
-          myIndexCollector.reportIndexingTime(time);
+          myIndexCollector.reportIndexingTime(myRoot, time);
           if (isIndexed) myListeners.forEach(listener -> listener.indexingFinished(myRoot));
         }
 
