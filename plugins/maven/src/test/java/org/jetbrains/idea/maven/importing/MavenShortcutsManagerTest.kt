@@ -1,84 +1,74 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.importing;
+package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.tasks.MavenKeymapExtension;
-import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.UsefulTestCase
+import org.jetbrains.idea.maven.tasks.MavenKeymapExtension
+import org.jetbrains.idea.maven.tasks.MavenShortcutsManager
+import org.junit.Test
+import java.io.IOException
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
+class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = false
 
-public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCase {
-  @Override
-  protected boolean runInDispatchThread() {
-    return false;
+  private var myShortcutsManager: MavenShortcutsManager? = null
+
+  override fun setUp() {
+    super.setUp()
+    myShortcutsManager = MavenShortcutsManager.getInstance(myProject)
+    myShortcutsManager!!.doInit(myProject)
+    initProjectsManager(true)
   }
 
-  private MavenShortcutsManager myShortcutsManager;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myShortcutsManager = MavenShortcutsManager.getInstance(myProject);
-    myShortcutsManager.doInit(myProject);
-    initProjectsManager(true);
-  }
-
-  @Override
-  public void tearDown() throws Exception {
+  public override fun tearDown() {
     try {
-      MavenKeymapExtension.clearActions(myProject);
+      MavenKeymapExtension.clearActions(myProject)
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
-      myShortcutsManager = null;
-      super.tearDown();
+      myShortcutsManager = null
+      super.tearDown()
     }
   }
 
   @Test
-  public void testRefreshingActionsOnImport() {
-    assertTrue(getProjectActions().isEmpty());
+  fun testRefreshingActionsOnImport() {
+    assertTrue(projectActions.isEmpty())
 
-    VirtualFile p1 = createModulePom("p1", """
+    val p1 = createModulePom("p1", """
       <groupId>test</groupId>
       <artifactId>p1</artifactId>
       <version>1</version>
-      """);
+      """.trimIndent())
 
-    VirtualFile p2 = createModulePom("p2", """
+    val p2 = createModulePom("p2", """
       <groupId>test</groupId>
       <artifactId>p2</artifactId>
       <version>1</version>
-      """);
-    importProjects(p1, p2);
+      """.trimIndent())
+    importProjects(p1, p2)
 
-    assertEmptyKeymap();
+    assertEmptyKeymap()
   }
 
   @Test
-  public void testRefreshingOnProjectRead() {
+  fun testRefreshingOnProjectRead() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
-    assertEmptyKeymap();
-    String goal = "clean";
-    assignShortcut(myProjectPom, goal, "alt shift X");
+    assertEmptyKeymap()
+    val goal = "clean"
+    assignShortcut(myProjectPom, goal, "alt shift X")
 
     importProject("""
                     <groupId>test</groupId>
@@ -92,23 +82,23 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
                         </plugin>
                       </plugins>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    assertKeymapContains(myProjectPom, goal);
+    assertKeymapContains(myProjectPom, goal)
   }
 
   @Test
-  public void testRefreshingOnPluginResolve() {
+  fun testRefreshingOnPluginResolve() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
-    assertEmptyKeymap();
+    assertEmptyKeymap()
 
-    String goal = "org.apache.maven.plugins:maven-surefire-plugin:2.4.3:test";
-    assignShortcut(myProjectPom, goal, "alt shift X");
+    val goal = "org.apache.maven.plugins:maven-surefire-plugin:2.4.3:test"
+    assignShortcut(myProjectPom, goal, "alt shift X")
 
     importProject("""
                     <groupId>test</groupId>
@@ -123,19 +113,19 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
                         </plugin>
                       </plugins>
                     </build>
-                    """);
-    resolvePlugins();
+                    """.trimIndent())
+    resolvePlugins()
 
-    assertKeymapContains(myProjectPom, goal);
+    assertKeymapContains(myProjectPom, goal)
   }
 
   @Test
-  public void testActionWhenSeveralSimilarPlugins() {
+  fun testActionWhenSeveralSimilarPlugins() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
     importProject("""
                     <groupId>test</groupId>
@@ -155,30 +145,30 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
                         </plugin>
                       </plugins>
                     </build>
-                    """);
-    String goal = "org.apache.maven.plugins:maven-surefire-plugin:2.4.3:test";
-    assignShortcut(myProjectPom, goal, "alt shift X");
-    resolvePlugins();
+                    """.trimIndent())
+    val goal = "org.apache.maven.plugins:maven-surefire-plugin:2.4.3:test"
+    assignShortcut(myProjectPom, goal, "alt shift X")
+    resolvePlugins()
 
-    assertKeymapContains(myProjectPom, goal);
+    assertKeymapContains(myProjectPom, goal)
   }
 
   @Test
-  public void testRefreshingOnProjectAddition() {
+  fun testRefreshingOnProjectAddition() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile m = createModulePom("module", """
+    val m = createModulePom("module", """
       <groupId>test</groupId>
       <artifactId>module</artifactId>
       <version>1</version>
-      """);
+      """.trimIndent())
 
-    String goal = "clean";
-    assertKeymapDoesNotContain(m, goal);
+    val goal = "clean"
+    assertKeymapDoesNotContain(m, goal)
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -188,118 +178,117 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
                        <modules>
                          <module>module</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    importProject();
+    importProject()
 
-    assertEmptyKeymap();
-    assignShortcut(m, goal, "alt shift X");
-    assertKeymapContains(m, goal);
+    assertEmptyKeymap()
+    assignShortcut(m, goal, "alt shift X")
+    assertKeymapContains(m, goal)
   }
 
   @Test
-  public void testDeletingActionOnProjectRemoval() throws IOException {
-    final VirtualFile p1 = createModulePom("p1", """
+  fun testDeletingActionOnProjectRemoval() {
+    val p1 = createModulePom("p1", """
       <groupId>test</groupId>
       <artifactId>p1</artifactId>
       <version>1</version>
-      """);
+      """.trimIndent())
 
-    VirtualFile p2 = createModulePom("p2", """
+    val p2 = createModulePom("p2", """
       <groupId>test</groupId>
       <artifactId>p2</artifactId>
       <version>1</version>
-      """);
+      """.trimIndent())
 
-    importProjects(p1, p2);
+    importProjects(p1, p2)
 
-    assertModules("p1", "p2");
+    assertModules("p1", "p2")
 
-    assertEmptyKeymap();
-    String goal = "clean";
-    assignShortcut(p1, goal, "alt shift X");
-    assignShortcut(p2, goal, "alt shift Y");
+    assertEmptyKeymap()
+    val goal = "clean"
+    assignShortcut(p1, goal, "alt shift X")
+    assignShortcut(p2, goal, "alt shift Y")
 
-    assertKeymapContains(p1, goal);
-    assertKeymapContains(p2, goal);
+    assertKeymapContains(p1, goal)
+    assertKeymapContains(p2, goal)
 
-    WriteCommandAction.writeCommandAction(myProject).run(() -> p1.delete(this));
+    WriteCommandAction.writeCommandAction(myProject).run<IOException> { p1.delete(this) }
 
     //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
 
-    importProjects(p1, p2);
+    importProjects(p1, p2)
 
-    assertModules( "p2");
+    assertModules("p2")
 
-    assertKeymapDoesNotContain(p1, goal);
-    assertKeymapContains(p2, goal);
+    assertKeymapDoesNotContain(p1, goal)
+    assertKeymapContains(p2, goal)
   }
 
   @Test
-  public void testRefreshingActionsOnChangingIgnoreFlag() {
-    VirtualFile p1 = createModulePom("p1", """
+  fun testRefreshingActionsOnChangingIgnoreFlag() {
+    val p1 = createModulePom("p1", """
       <groupId>test</groupId>
       <artifactId>p1</artifactId>
       <version>1</version>
-      """);
+      """.trimIndent())
 
-    VirtualFile p2 = createModulePom("p2", """
+    val p2 = createModulePom("p2", """
       <groupId>test</groupId>
       <artifactId>p2</artifactId>
       <version>1</version>
-      """);
-    importProjects(p1, p2);
+      """.trimIndent())
+    importProjects(p1, p2)
 
-    assertEmptyKeymap();
-    String goal = "clean";
-    assignShortcut(p1, goal, "alt shift X");
-    assignShortcut(p2, goal, "alt shift Y");
+    assertEmptyKeymap()
+    val goal = "clean"
+    assignShortcut(p1, goal, "alt shift X")
+    assignShortcut(p2, goal, "alt shift Y")
 
-    assertKeymapContains(p1, goal);
-    assertKeymapContains(p2, goal);
+    assertKeymapContains(p1, goal)
+    assertKeymapContains(p2, goal)
 
-    getProjectsManager().setIgnoredState(Collections.singletonList(getProjectsManager().findProject(p1)), true);
+    projectsManager.setIgnoredState(listOf(projectsManager.findProject(p1)), true)
 
 
-    assertKeymapDoesNotContain(p1, goal);
-    assertKeymapContains(p2, goal);
+    assertKeymapDoesNotContain(p1, goal)
+    assertKeymapContains(p2, goal)
 
-    getProjectsManager().setIgnoredState(Collections.singletonList(getProjectsManager().findProject(p1)), false);
+    projectsManager.setIgnoredState(listOf(projectsManager.findProject(p1)), false)
 
-    assertKeymapContains(p1, goal);
-    assertKeymapContains(p2, goal);
+    assertKeymapContains(p1, goal)
+    assertKeymapContains(p2, goal)
   }
 
-  private void assertKeymapContains(VirtualFile pomFile, String goal) {
-    String id = myShortcutsManager.getActionId(pomFile.getPath(), goal);
-    assertContain(getProjectActions(), id);
+  private fun assertKeymapContains(pomFile: VirtualFile, goal: String) {
+    val id = myShortcutsManager!!.getActionId(pomFile.getPath(), goal)
+    assertContain(projectActions, id)
   }
 
-  private void assertEmptyKeymap() {
-    assertEmpty(getProjectActions());
+  private fun assertEmptyKeymap() {
+    UsefulTestCase.assertEmpty(projectActions)
   }
 
-  private void assertKeymapDoesNotContain(VirtualFile pomFile, String goal) {
-    String id = myShortcutsManager.getActionId(pomFile.getPath(), goal);
-    assertDoNotContain(getProjectActions(), id);
+  private fun assertKeymapDoesNotContain(pomFile: VirtualFile, goal: String) {
+    val id = myShortcutsManager!!.getActionId(pomFile.getPath(), goal)
+    assertDoNotContain(projectActions, id)
   }
 
-  private void assignShortcut(VirtualFile pomFile, String goal, String shortcut) {
-    MavenProject mavenProject = getProjectsManager().findProject(pomFile);
-    assert mavenProject != null;
-    String actionId = myShortcutsManager.getActionId(mavenProject.getPath(), goal);
-    assert actionId != null;
-    AnAction action = ActionManager.getInstance().getAction(actionId);
+  private fun assignShortcut(pomFile: VirtualFile, goal: String, shortcut: String) {
+    val mavenProject = projectsManager.findProject(pomFile)!!
+    val actionId = myShortcutsManager!!.getActionId(mavenProject.path, goal)
+    val action = ActionManager.getInstance().getAction(actionId)
     if (action == null) {
-      MavenKeymapExtension.getOrRegisterAction(mavenProject, actionId, goal);
+      MavenKeymapExtension.getOrRegisterAction(mavenProject, actionId, goal)
     }
-    Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
-    activeKeymap.addShortcut(actionId, KeyboardShortcut.fromString(shortcut));
+    val activeKeymap = KeymapManager.getInstance().getActiveKeymap()
+    activeKeymap.addShortcut(actionId, KeyboardShortcut.fromString(shortcut))
   }
 
-  private List<String> getProjectActions() {
-    String prefix = MavenKeymapExtension.getActionPrefix(myProject, null);
-    return ActionManager.getInstance().getActionIdList(prefix);
-  }
+  private val projectActions: List<String?>
+    get() {
+      val prefix = MavenKeymapExtension.getActionPrefix(myProject, null)
+      return ActionManager.getInstance().getActionIdList(prefix!!)
+    }
 }
