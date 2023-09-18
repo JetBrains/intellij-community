@@ -372,9 +372,16 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     return ModuleRootManager.getInstance(getModule(module))
   }
 
+  @Obsolete
+  // use importProjectAsync(String)
   protected open fun importProject(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String) {
     createProjectPom(xml)
     importProject()
+  }
+
+  protected suspend fun importProjectAsync(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String) {
+    createProjectPom(xml)
+    importProjectAsync()
   }
 
   @Obsolete

@@ -44,7 +44,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testRestarting() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -53,7 +53,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project")
     assertEquals("1", projectsTree.rootProjects[0].name)
     MavenServerManager.getInstance().shutdown(true)
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -68,7 +68,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
     Assume.assumeTrue(isWorkspaceImport)
     try {
       WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE = true
-      importProject("""
+      importProjectAsync("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <version>1</version>
@@ -110,7 +110,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                              </mirrors>
                              </settings>
                              """.trimIndent())
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -148,7 +148,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testImportingFiresRootChangesOnlyOnce() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -159,7 +159,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoRootChangesOnProjectReimportWhenNothingChanges() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -173,7 +173,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent())
     myEventsTestHelper.assertRootsChanged(1)
     myEventsTestHelper.assertWorkspaceModelChanges(if (isWorkspaceImport) 1 else 2)
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -201,7 +201,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
       model.createLibrary(libraryName)
       model.commit()
     }
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -223,7 +223,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testSendWorkspaceEventsOnlyForChangedEntities() = runBlocking {
     Assume.assumeTrue(isWorkspaceImport)
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -296,7 +296,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testResolvingFiresRootChangesOnlyOnce() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -307,7 +307,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNotRecreateModulesBeforeResolution() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -321,7 +321,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   fun testTakingProxySettingsIntoAccount() = runBlocking {
     val helper = MavenCustomRepositoryHelper(myDir, "local1")
     repositoryPath = helper.getTestDataPath("local1")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -374,7 +374,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
       val helper = MavenCustomRepositoryHelper(myDir, "plugins")
       repositoryPath = helper.getTestDataPath("plugins")
       mavenGeneralSettings.isWorkOffline = true
-      importProject("""
+      importProjectAsync("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <version>1</version>
