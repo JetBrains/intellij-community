@@ -58,7 +58,7 @@ private class TabEnterUsageDetector : LookupManagerListener {
     if (!detectionFinished()) return null
     properties.setValue(INLINE_COMPLETION_INSERT_SHORTCUT_DETECTED, true)
     val tabRatio = tabCount.toDouble() / totalCount
-    return (if (tabRatio > TAB_RATIO_THRESHOLD) '\t' else '\n')
+    return (if (tabRatio > TAB_RATIO_THRESHOLD) '\n' else '\t')
       .also { LOG.info("Decided to use `$it` shortcut for InsertInlineCompletionAction.") }
   }
 
