@@ -41,6 +41,7 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : AbstractCommand(tex
 
       override fun daemonStarting(fileEditors: Collection<FileEditor>) {
         if (skipNonPsiFileEditors(fileEditors)) return
+        LOG.info("daemon starting for $fileEditors")
         if (daemonStartTrace != null) {
           val errMsg = "Overlapping highlighting sessions"
           val err = AssertionError(errMsg)
@@ -62,6 +63,7 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : AbstractCommand(tex
 
       private fun daemonStopped(fileEditors: Collection<FileEditor>, canceled: Boolean) {
         if (skipNonPsiFileEditors(fileEditors)) return
+        LOG.info("daemon stopped for $fileEditors")
         daemonStartTrace = null
         val fileEditor = fileEditors.filterIsInstance<TextEditor>().firstOrNull()!!
         val entireFileHighlighted = DaemonCodeAnalyzerImpl.isHighlightingCompleted(fileEditor, project)
