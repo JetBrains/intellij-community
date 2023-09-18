@@ -234,11 +234,11 @@ class PostHighlightingVisitor extends JavaElementVisitor {
       HighlightInfo.Builder builder =
         UnusedSymbolUtil.createUnusedSymbolInfoBuilder(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
       for (IntentionAction fix : quickFixes) {
-        TextRange fixRange = HighlightMethodUtil.getFixRange(parent);
+        TextRange fixRange = parent instanceof PsiField ? HighlightMethodUtil.getFixRange(parent) : null;
         builder.registerFix(fix, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), fixRange, myDeadCodeKey);
       }
       for (IntentionAction fix : quickFixOptions) {
-        TextRange fixRange = HighlightMethodUtil.getFixRange(parent);
+        TextRange fixRange = parent instanceof PsiField ? HighlightMethodUtil.getFixRange(parent) : null;
         builder.registerFix(fix, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), fixRange, null);
       }
       addInfo(holder, builder);
