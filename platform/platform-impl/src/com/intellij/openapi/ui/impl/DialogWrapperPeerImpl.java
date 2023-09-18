@@ -29,7 +29,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -68,6 +67,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public class DialogWrapperPeerImpl extends DialogWrapperPeer {
+  @SuppressWarnings("LoggerInitializedWithForeignClass")
   private static final Logger LOG = Logger.getInstance(DialogWrapper.class);
 
   public static boolean isHeadlessEnv() {
@@ -434,7 +434,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
                                   && !isProgressDialog(); // ProgressWindow starts a modality state itself
     Project project = myProject;
 
-    boolean perProjectModality = project != null && isPerProjectModality();
+    boolean perProjectModality = project != null &&
+                                 !ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED &&
+                                 Registry.is("ide.perProjectModality", false);
     if (changeModalityState) {
       commandProcessor.enterModal();
       if (perProjectModality) {
@@ -524,7 +526,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
     }
-    private boolean hasNoEditingTreesOrTablesUpward(Component comp) {
+
+    private static boolean hasNoEditingTreesOrTablesUpward(Component comp) {
       while (comp != null) {
         if (isEditingTreeOrTable(comp)) return false;
         comp = comp.getParent();
@@ -945,7 +948,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       super.paint(g);
     }
 
-    @SuppressWarnings("SSBasedInspection")
     private final class MyWindowListener extends WindowAdapter {
       @Override
       public void windowClosing(WindowEvent e) {
@@ -1135,19 +1137,5 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   public void setAutoRequestFocus(boolean b) {
     UIUtil.setAutoRequestFocus((JDialog)myDialog, b);
-  }
-
-  private static boolean isPerProjectModality() {
-    if (ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED) {
-      return false;
-    }
-
-    RegistryManager registryManager = getRegistryManager();
-    return registryManager != null && registryManager.is("ide.perProjectModality");
-  }
-
-  private static @Nullable RegistryManager getRegistryManager() {
-    Application app = LoadingState.COMPONENTS_LOADED.isOccurred() ? ApplicationManager.getApplication() : null;
-    return app == null ? null : app.getServiceIfCreated(RegistryManager.class);
   }
 }
