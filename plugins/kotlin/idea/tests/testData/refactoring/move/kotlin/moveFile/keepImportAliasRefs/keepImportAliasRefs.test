@@ -2,5 +2,5 @@
   "mainFile": "two/Source.kt",
   "type": "MOVE_FILES",
   "targetPackage": "three",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }
