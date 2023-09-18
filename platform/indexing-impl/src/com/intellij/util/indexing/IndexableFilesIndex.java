@@ -27,8 +27,7 @@ public interface IndexableFilesIndex {
    */
   static boolean isEnabled() {
    return (Registry.is("indexing.use.indexable.files.index") ||
-           (ApplicationManager.getApplication().isUnitTestMode() && TestModeFlags.is(ENABLE_IN_TESTS))) &&
-          Registry.is("indexing.enable.entity.provider.based.indexing");
+           (ApplicationManager.getApplication().isUnitTestMode() && TestModeFlags.is(ENABLE_IN_TESTS)));
   }
 
   static @NotNull IndexableFilesIndex getInstance(@NotNull Project project) {

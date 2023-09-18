@@ -130,7 +130,7 @@
     <projectService serviceInterface="com.intellij.util.indexing.IndexableFilesIndex"
                     serviceImplementation="com.intellij.util.indexing.roots.IndexableFilesIndexImpl"/>
     <registryKey defaultValue="true" key="indexing.use.indexable.files.index" restartRequired="true"
-                 description="Create separate index to determine fileset to index; needs `indexing.enable.entity.provider.based.indexing` enabled to become enabled"/>
+                 description="Create separate index to determine fileset to index."/>
 
     <applicationService serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
 
@@ -1646,8 +1646,6 @@
 
     <psi.treeChangePreprocessor implementation="com.intellij.util.indexing.events.FileBasedIndexTreeChangePreprocessor"/>
 
-    <registryKey defaultValue="true" description="Use IndexableEntityProviders to iterate project for indexing"
-                 key="indexing.enable.entity.provider.based.indexing"/>
     <registryKey defaultValue="2000"
                  description="Amount in milliseconds to wait for completion contributors till decide whether to insert the single item"
                  key="ide.completion.auto.insert.item.timeout"/>

@@ -3,16 +3,15 @@ package com.intellij.util.indexing.roots
 
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.*
-import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Condition
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.addIfNotNull
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.indexing.AdditionalIndexableFileSet
 import com.intellij.util.indexing.IndexableFilesIndex
 import com.intellij.util.indexing.IndexableSetContributor
@@ -20,9 +19,6 @@ import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusSer
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor
-import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Predicate
@@ -31,46 +27,15 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
   override fun getIndexableFiles(project: Project): List<IndexableFilesIterator> {
     assert(!IndexableFilesIndex.isEnabled()) { "Shouldn't be used with IndexableFilesIndex fully enabled" }
     val providers: List<IndexableFilesIterator>
-    if (shouldIndexProjectBasedOnIndexableEntityProviders()) {
-      val builders: MutableList<IndexableEntityProvider.IndexableIteratorBuilder> = mutableListOf()
-      val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
-      for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
-        if (provider is IndexableEntityProvider.Existing) {
-          addIteratorBuildersFromProvider(provider, entityStorage, project, builders)
-          ProgressManager.checkCanceled()
-        }
+    val builders: MutableList<IndexableEntityProvider.IndexableIteratorBuilder> = mutableListOf()
+    val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
+    for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
+      if (provider is IndexableEntityProvider.Existing) {
+        addIteratorBuildersFromProvider(provider, entityStorage, project, builders)
+        ProgressManager.checkCanceled()
       }
-      providers = IndexableIteratorBuilders.instantiateBuilders(builders, project, entityStorage)
     }
-    else {
-      val seenLibraries: MutableSet<Library> = HashSet()
-      val seenSdks: MutableSet<Sdk> = HashSet()
-      val modules = ModuleManager.getInstance(project).sortedModules
-
-      val providersCollection: MutableList<IndexableFilesIterator> = mutableListOf()
-      for (module in modules) {
-        providersCollection.addAll(ModuleIndexableFilesIteratorImpl.getModuleIterators(module))
-
-        val orderEntries = ModuleRootManager.getInstance(module).orderEntries
-        for (orderEntry in orderEntries) {
-          when (orderEntry) {
-            is LibraryOrderEntry -> {
-              val library = orderEntry.library
-              if (library != null && seenLibraries.add(library)) {
-                providersCollection.addIfNotNull(LibraryIndexableFilesIteratorImpl.createIterator(library))
-              }
-            }
-            is JdkOrderEntry -> {
-              val sdk = orderEntry.jdk
-              if (sdk != null && seenSdks.add(sdk)) {
-                providersCollection.add(SdkIndexableFilesIteratorImpl.createIterator(sdk))
-              }
-            }
-          }
-        }
-      }
-      providers = providersCollection
-    }
+    providers = IndexableIteratorBuilders.instantiateBuilders(builders, project, entityStorage)
     if (DependenciesIndexedStatusService.shouldBeUsed()) {
       val cacheService = DependenciesIndexedStatusService.getInstance(project)
       if (cacheService.shouldSaveStatus()) {
@@ -165,9 +130,6 @@ internal class AdditionalLibraryRootsContributor : IndexableFilesContributor {
 
 internal class WorkspaceFileIndexContributorBasedContributor : IndexableFilesContributor {
   override fun getIndexableFiles(project: Project): List<IndexableFilesIterator> {
-    if (!shouldIndexProjectBasedOnIndexableEntityProviders()) {
-      return emptyList()
-    }
     assert(!IndexableFilesIndex.isEnabled()) { "Shouldn't be used with IndexableFilesIndex fully enabled" }
 
     val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
@@ -189,8 +151,9 @@ internal class WorkspaceFileIndexContributorBasedContributor : IndexableFilesCon
 /**
  * Registry property introduced to provide quick workaround for possible performance issues.
  * To be removed when the feature becomes stable.
- * It's `true` by default in all the IDEs except for Rider. Rider plans to enable it in 2023.1.
+ * It's `true` by default in all the IDEs (for Rider it's enabled since 2023.2).
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
-fun shouldIndexProjectBasedOnIndexableEntityProviders(): Boolean = Registry.`is`("indexing.enable.entity.provider.based.indexing")
+@Deprecated("Please don't use it", ReplaceWith("true"))
+fun shouldIndexProjectBasedOnIndexableEntityProviders(): Boolean = true

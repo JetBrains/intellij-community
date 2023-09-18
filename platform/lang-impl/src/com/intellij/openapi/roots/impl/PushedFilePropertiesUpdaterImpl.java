@@ -10,7 +10,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -353,52 +352,30 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   public static void scanProject(@NotNull Project project,
                                  @NotNull Function<? super Module, ? extends ContentIteratorEx> iteratorProducer) {
     Stream<Runnable> tasksStream;
-    if (StandardContributorsKt.shouldIndexProjectBasedOnIndexableEntityProviders()) {
-      Sequence<ModuleEntity> modulesSequence = ReadAction.compute(() ->
-                                                                    WorkspaceModel.getInstance(project).getCurrentSnapshot().entities(ModuleEntity.class));
-      List<ModuleEntity> moduleEntities = SequencesKt.toList(modulesSequence);
-      IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
-      tasksStream = moduleEntities.stream()
-        .flatMap(moduleEntity -> {
-          return ReadAction.compute(() -> {
-            EntityStorage storage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
-            Module module = ModuleEntityUtils.findModule(moduleEntity, storage);
-            if (module == null) {
-              return Stream.empty();
-            }
-            ProgressManager.checkCanceled();
-            return ContainerUtil.map(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, storage, project),
-                                     it -> new Object() {
-                                       final IndexableFilesIterator files = it;
-                                       final ContentIteratorEx iterator = iteratorProducer.apply(module);
-                                     })
-              .stream()
-              .map(pair -> (Runnable)() -> {
-                pair.files.iterateFiles(project, pair.iterator, indexableFilesDeduplicateFilter);
-              });
-          });
+    Sequence<ModuleEntity> modulesSequence = ReadAction.compute(() ->
+                                                                  WorkspaceModel.getInstance(project).getCurrentSnapshot().entities(ModuleEntity.class));
+    List<ModuleEntity> moduleEntities = SequencesKt.toList(modulesSequence);
+    IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
+    tasksStream = moduleEntities.stream()
+      .flatMap(moduleEntity -> {
+        return ReadAction.compute(() -> {
+          EntityStorage storage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
+          Module module = ModuleEntityUtils.findModule(moduleEntity, storage);
+          if (module == null) {
+            return Stream.empty();
+          }
+          ProgressManager.checkCanceled();
+          return ContainerUtil.map(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, storage, project),
+                                   it -> new Object() {
+                                     final IndexableFilesIterator files = it;
+                                     final ContentIteratorEx iterator = iteratorProducer.apply(module);
+                                   })
+            .stream()
+            .map(pair -> (Runnable)() -> {
+              pair.files.iterateFiles(project, pair.iterator, indexableFilesDeduplicateFilter);
+            });
         });
-    }
-    else {
-      Module[] modules = ReadAction.compute(() -> ModuleManager.getInstance(project).getModules());
-      IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
-      tasksStream = Arrays.stream(modules)
-        .flatMap(module -> {
-          return ReadAction.compute(() -> {
-            if (module.isDisposed()) return Stream.empty();
-            ProgressManager.checkCanceled();
-            //noinspection deprecation
-            return ContainerUtil.map(ModuleIndexableFilesIteratorImpl.getModuleIterators(module), it -> new Object() {
-                final IndexableFilesIterator files = it;
-                final ContentIteratorEx iterator = iteratorProducer.apply(it.getOrigin().getModule());
-              })
-              .stream()
-              .map(pair -> (Runnable)() -> {
-                pair.files.iterateFiles(project, pair.iterator, indexableFilesDeduplicateFilter);
-              });
-          });
-        });
-    }
+      });
     List<Runnable> tasks = tasksStream.collect(Collectors.toList());
     invokeConcurrentlyIfPossible(tasks);
   }

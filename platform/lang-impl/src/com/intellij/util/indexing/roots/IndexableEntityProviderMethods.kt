@@ -42,27 +42,17 @@ object IndexableEntityProviderMethods {
   }
 
   fun createIterators(entity: ModuleEntity, entityStorage: EntityStorage, project: Project): Collection<IndexableFilesIterator> {
-    if (shouldIndexProjectBasedOnIndexableEntityProviders()) {
-      if (IndexableFilesIndex.isEnabled()) {
-        return IndexableFilesIndex.getInstance(project).getModuleIndexingIterators(entity, entityStorage)
-      }
-      val builders = mutableListOf<IndexableEntityProvider.IndexableIteratorBuilder>()
-      for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
-        if (provider is IndexableEntityProvider.Existing) {
-          builders.addAll(provider.getIteratorBuildersForExistingModule(entity, entityStorage, project))
-        }
-      }
-      // so far there are no WorkspaceFileIndexContributors giving module roots, so requesting them is time-consuming and useless
-      return IndexableIteratorBuilders.instantiateBuilders(builders, project, entityStorage)
+    if (IndexableFilesIndex.isEnabled()) {
+      return IndexableFilesIndex.getInstance(project).getModuleIndexingIterators(entity, entityStorage)
     }
-    else {
-      val module = entity.findModule(entityStorage)
-      if (module == null) {
-        return emptyList()
+    val builders = mutableListOf<IndexableEntityProvider.IndexableIteratorBuilder>()
+    for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
+      if (provider is IndexableEntityProvider.Existing) {
+        builders.addAll(provider.getIteratorBuildersForExistingModule(entity, entityStorage, project))
       }
-      @Suppress("DEPRECATION")
-      return ModuleIndexableFilesIteratorImpl.getModuleIterators(module)
     }
+    // so far there are no WorkspaceFileIndexContributors giving module roots, so requesting them is time-consuming and useless
+    return IndexableIteratorBuilders.instantiateBuilders(builders, project, entityStorage)
   }
 
   fun createIterators(sdk: Sdk): List<IndexableFilesIterator> {
