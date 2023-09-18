@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
-import com.intellij.ide.ui.laf.IJColorUIResource
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.icons.ImageDataByPathLoader.Companion.findIconByPath
@@ -17,8 +16,6 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import javax.swing.UIDefaults
 import javax.swing.plaf.BorderUIResource
-import javax.swing.plaf.ColorUIResource
-import javax.swing.plaf.UIResource
 
 internal fun parseUiThemeValue(key: String, value: Any?, classLoader: ClassLoader): Any? {
   if (value !is String) {
@@ -151,9 +148,9 @@ private fun parseInsets(value: String): Insets {
 
 internal fun isColorLike(text: String) = text.length <= 9 && text.startsWith('#')
 
-internal fun createColorResource(color: Color?, key: String): UIResource {
+internal fun createColorResource(color: Color, key: String): Color {
   if (key.startsWith("*.")) {
-    return ColorUIResource(color)
+    return color
   }
   else {
     return IJColorUIResource(color, key)

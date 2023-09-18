@@ -7,10 +7,9 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.ide.ui.laf.IJColor
-import com.intellij.ide.ui.laf.IJColorUIResource
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoImpl
 import com.intellij.ide.ui.laf.UiThemeProviderListManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.IdeUICustomization
@@ -27,7 +26,6 @@ import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 import javax.swing.UIDefaults
-import javax.swing.plaf.ColorUIResource
 import javax.swing.plaf.UIResource
 
 /**
@@ -68,8 +66,18 @@ class UITheme internal constructor(
     get() = bean.emptyFrameBackground ?: emptyMap()
 
   fun applyTheme(defaults: UIDefaults) {
+    for (entry in defaults.entries) {
+      val value = entry.value
+      if (value is Color && !(value is JBColor && value.name != null)) {
+        val key = entry.key.toString()
+        entry.setValue(IJColorUIResource(value, key))
+      }
+    }
+
     for ((key, value) in bean.colorMap.map) {
-      defaults.put("ColorPalette.$key", if (value is UIResource) value else ColorUIResource(value))
+      val k = "ColorPalette.$key"
+      assert(value !is IJColorUIResource)
+      defaults.put(k, IJColorUIResource(color = value, name = k))
     }
 
     val colors = bean.colorMap.map.takeIf { it.isNotEmpty() }
@@ -88,18 +96,29 @@ class UITheme internal constructor(
         addPattern(key, value, defaults)
         for (k in defaults.keys.toTypedArray()) {
           if (k is String && k.endsWith(tail)) {
-            if (value is Color && !(value is JBColor && value.name != null)) {
-              defaults.put(k, if (value is UIResource) IJColorUIResource(value, key) else IJColor(value, key))
-            }
-            else {
-              defaults.put(k, value)
-            }
+            defaults.put(k, transformToIJColorUIResourceIfNeeded(value = value, key = k))
           }
         }
       }
       else {
-        defaults.put(key, value)
+        defaults.put(key, transformToIJColorUIResourceIfNeeded(value = value, key = key))
       }
+    }
+
+    for (entry in defaults.entries) {
+      val value = entry.value
+      if (value is Color && !(value is JBColor && value.name != null)) {
+        thisLogger().warn("${entry.key} is not preprocessed")
+      }
+    }
+  }
+
+  private fun transformToIJColorUIResourceIfNeeded(value: Any?, key: String): Any? {
+    return if (value is Color && !(value is JBColor && value.name != null)) {
+      IJColorUIResource(value, key)
+    }
+    else {
+      value
     }
   }
 
@@ -365,4 +384,10 @@ private fun addPattern(key: String?, value: Any?, defaults: UIDefaults) {
   if (key != null && key.startsWith("*.")) {
     map.put(key.substring(2), value)
   }
+}
+
+internal class IJColorUIResource(color: Color?, private val name: String) : JBColor(Supplier { color }), UIResource {
+  override fun getName(): String = name
+
+  override fun toString(): String = "IJColorUIResource(color=${super.toString()}, name=$name)"
 }

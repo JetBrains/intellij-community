@@ -5,7 +5,6 @@ package com.intellij.ide.ui
 
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
-import com.intellij.ide.ui.laf.IJColorUIResource
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.ColorUtil
@@ -86,20 +85,20 @@ internal fun initializeNamedColors(theme: UIThemeBean) {
   }
 
   // it is critically important to use our JB Color to apply theme on the fly - e.g., dark to light
-  val colorMap = HashMap<String, IJColorUIResource>(rawColorMap.size)
+  val colorMap = HashMap<String, Color>(rawColorMap.size)
   theme.colorMap.map = colorMap
   for ((key, value) in rawColorMap) {
     if (value is AwtColorValue) {
-      colorMap.put(key, IJColorUIResource(value.color, key))
+      colorMap.put(key, value.color)
       continue
     }
 
     when (val color = rawColorMap.get((value as NamedColorValue).name)) {
       null -> {
         LOG.warn("Can't parse '$value' for key '$key'")
-        colorMap.put(key, IJColorUIResource(Gray.TRANSPARENT, key))
+        colorMap.put(key, Gray.TRANSPARENT)
       }
-      is AwtColorValue -> colorMap.put(key, IJColorUIResource(color.color, key))
+      is AwtColorValue -> colorMap.put(key, color.color)
       else -> LOG.warn("Can't handle value $color for key '$key'")
     }
   }
@@ -107,7 +106,7 @@ internal fun initializeNamedColors(theme: UIThemeBean) {
   initColorOnSelectionMap(colorMap, theme)
 }
 
-private fun initColorOnSelectionMap(colorMap: Map<String, IJColorUIResource>, theme: UIThemeBean) {
+private fun initColorOnSelectionMap(colorMap: Map<String, Color>, theme: UIThemeBean) {
   val rawIconColorOnSelectionMap = theme.iconColorOnSelectionMap.rawMap
   if (rawIconColorOnSelectionMap.isNullOrEmpty()) {
     theme.iconColorOnSelectionMap.map = emptyMap()

@@ -8,22 +8,18 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.JBColor
 import com.intellij.ui.TableActions
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.Color
 import java.awt.Font
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.UIDefaults.LazyValue
 import javax.swing.plaf.FontUIResource
-import javax.swing.plaf.UIResource
 import javax.swing.plaf.basic.BasicLookAndFeel
 import javax.swing.plaf.metal.MetalLookAndFeel
 import javax.swing.text.DefaultEditorKit
@@ -59,14 +55,6 @@ internal class LookAndFeelThemeAdapter(
           val font = toFont(defaults, key)
           defaults.put(key, FontUIResource("Dialog", font.style, font.size))
         }
-      }
-    }
-
-    for (entry in defaults.entries) {
-      val value = entry.value
-      if (value is Color && !(value is JBColor && value.name != null)) {
-        val key = entry.key.toString()
-        entry.setValue(if (value is UIResource) IJColorUIResource(value, key) else IJColor(value, key))
       }
     }
     return defaults
@@ -266,12 +254,4 @@ private fun toFont(defaults: UIDefaults, key: Any): Font {
     }
   }
   throw UnsupportedOperationException("Unable to extract Font from \"$key\"")
-}
-
-internal class IJColorUIResource(color: Color?, name: String) : IJColor(color, name), UIResource
-
-internal open class IJColor internal constructor(color: Color?, private val name: String) : JBColor(Supplier { color }) {
-  override fun getName(): String = name
-
-  override fun toString(): String = "${super.toString()} Name: $name"
 }
