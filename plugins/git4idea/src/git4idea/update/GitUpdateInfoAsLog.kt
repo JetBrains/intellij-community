@@ -191,7 +191,7 @@ class GitUpdateInfoAsLog(private val project: Project,
                                           val pathFilter: VcsLogStructureFilter? = null) : VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
     override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
       val logId = generateUpdateTabId()
-      val properties = MyPropertiesForRangeAndUser(rangeFilter, userFilter, pathFilter, project.service<GitUpdateProjectInfoLogProperties>())
+      val properties = MyPropertiesForRange(rangeFilter, userFilter, pathFilter, project.service<GitUpdateProjectInfoLogProperties>())
       val vcsLogFilterer = VcsLogFiltererImpl(logData)
       val initialRangeSortType = properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE)
       val refresher = VisiblePackRefresherImpl(project, logData, VcsLogFilterObject.collection(rangeFilter, userFilter), initialRangeSortType,
@@ -202,8 +202,8 @@ class GitUpdateInfoAsLog(private val project: Project,
     }
   }
 
-  private class MyPropertiesForRangeAndUser(val rangeFilter: VcsLogRangeFilter,
-                                            val userFilter: VcsLogUserFilter?,
+  private class MyPropertiesForRange(val rangeFilter: VcsLogRangeFilter,
+                                     val userFilter: VcsLogUserFilter?,
                                             val pathFilter: VcsLogStructureFilter?,
                                             val mainProperties: GitUpdateProjectInfoLogProperties) : MainVcsLogUiProperties by mainProperties {
     private val filters = mutableMapOf<String, List<String>>()
