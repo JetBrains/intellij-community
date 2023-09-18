@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
@@ -43,7 +43,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testRestarting() {
+  fun testRestarting() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -64,7 +64,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testFallbackToSlowWorkspaceCommit() {
+  fun testFallbackToSlowWorkspaceCommit() = runBlocking {
     Assume.assumeTrue(isWorkspaceImport)
     try {
       WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE = true
@@ -86,7 +86,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
 
-  fun testDoNotFailOnInvalidMirrors() {
+  fun testDoNotFailOnInvalidMirrors() = runBlocking {
     updateSettingsXmlFully("""
                              <settings>
                              <mirrors>
@@ -119,7 +119,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testImportingAllAvailableFilesIfNotInitialized() {
+  fun testImportingAllAvailableFilesIfNotInitialized() = runBlocking {
     createModule("m1")
     createModule("m2")
     createProjectSubDirs("m1/src/main/java",
@@ -139,15 +139,15 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
     assertSources("m1")
     assertSources("m2")
     assertFalse(projectsManager.isMavenizedProject)
-    projectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
-    waitForReadingCompletion()
-    resolveDependenciesAndImport()
+    waitForImportWithinTimeout {
+      projectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+    }
     assertSources("m1", "src/main/java")
     assertSources("m2", "src/main/java")
   }
 
   @Test
-  fun testImportingFiresRootChangesOnlyOnce() {
+  fun testImportingFiresRootChangesOnlyOnce() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -158,7 +158,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoRootChangesOnProjectReimportWhenNothingChanges() {
+  fun testDoRootChangesOnProjectReimportWhenNothingChanges() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -190,13 +190,13 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testSetExternalSourceForExistingLibrary() {
+  fun testSetExternalSourceForExistingLibrary() = runBlocking {
     /* this test checks that the external source will be restored if it wasn't saved due to the bug (IDEA-264750);
        the bug isn't relevant for Workspace Import because it is actual only if "Store generated files under project root" is switched on */
     MavenProjectsManager.getInstance(myProject).importingSettings.setWorkspaceImportEnabled(false)
     val libraryName = "Maven: junit:junit:4.0"
     val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject)
-    WriteAction.runAndWait<RuntimeException> {
+    writeAction {
       val model = libraryTable.getModifiableModel()
       model.createLibrary(libraryName)
       model.commit()
@@ -213,7 +213,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                       </dependency>
                     </dependencies>
                     """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertModules("project")
     val library = getModuleLibDep("project", libraryName).getLibrary()
     assertNotNull(library)
@@ -221,7 +221,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testSendWorkspaceEventsOnlyForChangedEntities() {
+  fun testSendWorkspaceEventsOnlyForChangedEntities() = runBlocking {
     Assume.assumeTrue(isWorkspaceImport)
     importProject("""
                     <groupId>test</groupId>
@@ -245,7 +245,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                       <artifactId>m2</artifactId>
                       <version>1</version>
                       """.trimIndent())
-    importProject()
+    importProjectAsync()
     createModulePom("m1",
                     """
                       <groupId>test</groupId>
@@ -290,12 +290,12 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
           }
         }
       })
-    importProject()
+    importProjectAsync()
     assertEquals(setOf("modified m1", "created Maven: junit:junit:4.0", "created LibraryPropertiesEntityImpl"), changeLog)
   }
 
   @Test
-  fun testResolvingFiresRootChangesOnlyOnce() {
+  fun testResolvingFiresRootChangesOnlyOnce() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -306,7 +306,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoNotRecreateModulesBeforeResolution() {
+  fun testDoNotRecreateModulesBeforeResolution() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -338,7 +338,8 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
     val jarFile = File(repositoryFile, "junit/junit/4.0/junit-4.0.jar")
     assertTrue(jarFile.exists())
     projectsManager.listenForExternalChanges()
-    updateSettingsXml("""
+    waitForImportWithinTimeout {
+      updateSettingsXml("""
                         <proxies>
                          <proxy>
                             <id>my</id>
@@ -349,6 +350,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                           </proxy>
                         </proxies>
                         """.trimIndent())
+    }
     removeFromLocalRepository("junit")
     assertFalse(jarFile.exists())
     try {
@@ -367,7 +369,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
 
-  fun testMavenExtensionsAreLoadedAndAfterProjectsReadIsCalled() {
+  fun testMavenExtensionsAreLoadedAndAfterProjectsReadIsCalled() = runBlocking {
     try {
       val helper = MavenCustomRepositoryHelper(myDir, "plugins")
       repositoryPath = helper.getTestDataPath("plugins")
