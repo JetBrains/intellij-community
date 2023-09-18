@@ -15,6 +15,7 @@ import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.utils.match
 import com.intellij.webSymbols.utils.toCodeCompletionItems
+import com.intellij.webSymbols.utils.withMatchedName
 import java.util.*
 
 internal abstract class SearchMap<T> internal constructor(
@@ -59,6 +60,7 @@ internal abstract class SearchMap<T> internal constructor(
       .asSequence()
       .mapNotNull { statics[SearchMapEntry(namespace, kind, it)] }
       .flatMapWithQueryParameters(params)
+      .map { it.withMatchedName(name) }
       .plus(collectPatternContributions(namespace, kind, name, params, scope))
 
   internal fun getSymbols(namespace: SymbolNamespace,
