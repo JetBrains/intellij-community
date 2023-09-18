@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## 0.0.15
+- [MERMAID-116](https://youtrack.jetbrains.com/issue/MERMAID-116) Updated Mermaid.js version to `10.4.0`
+- [MERMAID-117](https://youtrack.jetbrains.com/issue/MERMAID-117) Added support for defining configuration in front matter header
+- [MERMAID-118](https://youtrack.jetbrains.com/issue/MERMAID-118) Added support for values in sankey diagrams
+- [MERMAID-122](https://youtrack.jetbrains.com/issue/MERMAID-122) Fixed parsing error during subgraph formatting
+- [MERMAID-123](https://youtrack.jetbrains.com/issue/MERMAID-123) Fixed errors caused by class diagram reformatting
+- [MERMAID-126](https://youtrack.jetbrains.com/issue/MERMAID-126) Fixed parsing error during sequence diagram formatting
+- [MERMAID-127](https://youtrack.jetbrains.com/issue/MERMAID-127) Fixed formatting of HTML entity codes
+- [MERMAID-129](https://youtrack.jetbrains.com/issue/MERMAID-129) Added support for case-insensitive `Note` keyword
+
 ## 0.0.14
 - Updated an underlying Mermaid.js version to `10.3.1`
 - [MERMAID-8](https://youtrack.jetbrains.com/issue/MERMAID-8) Added support for Font Awesome icons in mind map diagrams
