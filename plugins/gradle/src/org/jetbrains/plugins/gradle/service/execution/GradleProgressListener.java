@@ -135,8 +135,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
 
   private void sendProgressToOutputIfNeeded(ProgressEvent progressEvent) {
     @NlsSafe final String operationName = progressEvent.getDescriptor().getName();
-    if (progressEvent instanceof StatusEvent) {
-      StatusEvent statusEvent = ((StatusEvent)progressEvent);
+    if (progressEvent instanceof StatusEvent statusEvent) {
       if ("bytes".equals(statusEvent.getUnit())) {
         StatusEvent oldStatusEvent = myDownloadStatusEventIds.get(operationName);
         myDownloadStatusEventIds.put(operationName, statusEvent);
