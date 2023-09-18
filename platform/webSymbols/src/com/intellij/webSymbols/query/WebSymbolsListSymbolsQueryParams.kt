@@ -2,6 +2,7 @@
 package com.intellij.webSymbols.query
 
 data class WebSymbolsListSymbolsQueryParams(override val queryExecutor: WebSymbolsQueryExecutor,
+                                            val expandPatterns: Boolean,
                                             override val virtualSymbols: Boolean = true,
                                             val abstractSymbols: Boolean = false,
                                             val strictScope: Boolean = false) : WebSymbolsQueryParams

@@ -49,11 +49,12 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
 
   fun runListSymbolsQuery(namespace: SymbolNamespace,
                           kind: SymbolKind,
+                          expandPatterns: Boolean,
                           virtualSymbols: Boolean = true,
                           abstractSymbols: Boolean = false,
                           strictScope: Boolean = false): List<WebSymbol> =
     WebSymbolsQueryExecutorFactory.create(tag)
-      .runListSymbolsQuery(namespace, kind, virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
+      .runListSymbolsQuery(namespace, kind, expandPatterns, virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
 
   fun runCodeCompletionQuery(namespace: SymbolNamespace,
                              kind: SymbolKind,

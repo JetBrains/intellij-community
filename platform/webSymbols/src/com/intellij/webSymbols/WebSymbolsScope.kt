@@ -44,7 +44,10 @@ interface WebSymbolsScope : ModificationTracker {
                          name: String,
                          params: WebSymbolsNameMatchQueryParams,
                          scope: Stack<WebSymbolsScope>): List<WebSymbol> =
-    getSymbols(namespace, kind, params.toListSymbolsQueryParams(), scope)
+    getSymbols(namespace, kind,
+               WebSymbolsListSymbolsQueryParams(params.queryExecutor, expandPatterns = false, virtualSymbols = params.virtualSymbols,
+                                                abstractSymbols = params.abstractSymbols, strictScope = params.strictScope),
+               scope)
       .filterIsInstance<WebSymbol>()
       .flatMap { it.match(name, params, scope) }
 

@@ -31,7 +31,7 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
       val symbols = (context.descriptor as? WebSymbolElementDescriptor)?.symbol?.let { listOf(it) }
                     ?: queryExecutor.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ELEMENTS, context.name)
       queryExecutor
-        .runListSymbolsQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, scope = symbols, virtualSymbols = false)
+        .runListSymbolsQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, expandPatterns = true, scope = symbols, virtualSymbols = false)
         .asSequence()
         .filter { !it.hasOnlyStandardHtmlSymbolsOrExtensions() }
         .map { it.getAttributeDescriptor(it.name, context, queryExecutor) }

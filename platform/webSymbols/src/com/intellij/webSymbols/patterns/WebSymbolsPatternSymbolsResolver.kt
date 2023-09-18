@@ -20,7 +20,8 @@ interface WebSymbolsPatternSymbolsResolver {
                      queryExecutor: WebSymbolsQueryExecutor): List<WebSymbolCodeCompletionItem>
 
   fun listSymbols(scopeStack: Stack<WebSymbolsScope>,
-                  queryExecutor: WebSymbolsQueryExecutor): List<WebSymbol>
+                  queryExecutor: WebSymbolsQueryExecutor,
+                  expandPatterns: Boolean): List<WebSymbol>
 
   fun matchName(name: String,
                 scopeStack: Stack<WebSymbolsScope>,

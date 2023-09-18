@@ -4,10 +4,13 @@ package com.intellij.webSymbols.patterns.impl
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
-internal open class ListParameters(val queryExecutor: WebSymbolsQueryExecutor) {
+internal open class ListParameters(
+  val queryExecutor: WebSymbolsQueryExecutor,
+  val expandPatterns: Boolean,
+) {
 
   constructor(params: WebSymbolsListSymbolsQueryParams)
-    : this(params.queryExecutor)
+    : this(params.queryExecutor, params.expandPatterns)
 
   val framework: String? get() = queryExecutor.framework
 

@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.query
 
-import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.completeMatch
 import com.intellij.webSymbols.webSymbolsTestsDataPath
@@ -170,11 +168,12 @@ class WebSymbolsListQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   }
 
   fun doTest(path: String, framework: String?, includeVirtual: Boolean, vararg webTypes: String) {
-    doTest(path, framework, includeVirtual, webTypes = webTypes.toList())
+    doTest(path, framework, includeVirtual = includeVirtual, webTypes = webTypes.toList())
   }
 
   fun doTest(path: String,
              framework: String? = null,
+             expandPatterns: Boolean = true,
              includeVirtual: Boolean = true,
              webTypes: List<String> = emptyList(),
              customElementsManifests: List<String> = emptyList()) {
@@ -185,7 +184,7 @@ class WebSymbolsListQueryTest : WebSymbolsMockQueryExecutorTestBase() {
       val last = parsedPath.last()
       val matches = queryExecutor
         .runListSymbolsQuery(parsedPath.subList(0, parsedPath.size - 1), last.namespace, last.kind,
-                             includeVirtual, false)
+                             expandPatterns, includeVirtual, false)
       printMatches(matches).also { listResults ->
         val alternateResults = queryExecutor
           .runCodeCompletionQuery(parsedPath, 0, includeVirtual)

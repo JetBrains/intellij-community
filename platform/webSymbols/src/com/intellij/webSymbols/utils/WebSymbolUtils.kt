@@ -133,24 +133,6 @@ fun WebSymbol.match(nameToMatch: String,
   }
 }
 
-fun WebSymbol.list(context: Stack<WebSymbolsScope>,
-                   params: WebSymbolsListSymbolsQueryParams): List<WebSymbol> {
-  pattern?.let { pattern ->
-    context.push(this)
-    try {
-      return pattern
-        .list(this, context, params)
-        .map {
-          WebSymbolMatch.create(it.name, it.segments, namespace, kind, origin)
-        }
-    }
-    finally {
-      context.pop()
-    }
-  }
-  return listOf(this)
-}
-
 fun WebSymbol.toCodeCompletionItems(name: String,
                                     params: WebSymbolsCodeCompletionQueryParams,
                                     context: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
@@ -362,7 +344,12 @@ fun WebSymbolsScope.getDefaultCodeCompletions(namespace: SymbolNamespace,
                                               name: String,
                                               params: WebSymbolsCodeCompletionQueryParams,
                                               scope: Stack<WebSymbolsScope>) =
-  getSymbols(namespace, kind, WebSymbolsListSymbolsQueryParams(params.queryExecutor), scope)
+  getSymbols(namespace, kind,
+             WebSymbolsListSymbolsQueryParams(
+               params.queryExecutor,
+               expandPatterns = false,
+               virtualSymbols = params.virtualSymbols
+             ), scope)
     .flatMap { (it as? WebSymbol)?.toCodeCompletionItems(name, params, scope) ?: emptyList() }
 
 internal val List<WebSymbolsScope>.lastWebSymbol: WebSymbol?
