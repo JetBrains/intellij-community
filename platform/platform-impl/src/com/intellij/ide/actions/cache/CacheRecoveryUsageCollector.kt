@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 
 internal object CacheRecoveryUsageCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("cache.recovery.actions", 4)
+  private val GROUP = EventLogGroup("cache.recovery.actions", 5)
 
   private val ACTION_ID_FIELD =
     EventFields.String("action-id",
@@ -49,21 +49,21 @@ internal object CacheRecoveryUsageCollector : CounterUsagesCollector() {
     )
   }
 
-  private val ON_VFS_INIT_FIELD = EventFields.Boolean("on-vfs-init")
-  private val RECOVERY_TIME_MILLIS = EventFields.Long("recovery-time-millis")
-  private val RECOVERED_FILES_COUNT = EventFields.Int("recovered-files")
-  private val BOTCHED_FILES_COUNT = EventFields.Int("botched-files")
-  private val DUPLICATE_CHILDREN_LOST_COUNT = EventFields.Int("duplicate-children-lost")
-  private val DUPLICATE_CHILDREN_DEDUPLICATED_COUNT = EventFields.Int("duplicate-children-deduplicated")
-  private val RECOVERED_ATTRIBUTES_COUNT = EventFields.Long("recovered-attributes")
-  private val DROPPED_ATTRIBUTES_COUNT = EventFields.Long("dropped-attributes")
-  private val RECOVERED_CONTENTS_COUNT = EventFields.Int("recovered-contents")
-  private val LOST_CONTENTS_COUNT = EventFields.Int("lost-contents")
+  private val ON_VFS_INIT_FIELD = EventFields.Boolean("on_vfs_init")
+  private val RECOVERY_TIME_MILLIS = EventFields.Long("recovery_time_millis")
+  private val RECOVERED_FILES_COUNT = EventFields.Int("recovered_files")
+  private val BOTCHED_FILES_COUNT = EventFields.Int("botched_files")
+  private val DUPLICATE_CHILDREN_LOST_COUNT = EventFields.Int("duplicate_children_lost")
+  private val DUPLICATE_CHILDREN_DEDUPLICATED_COUNT = EventFields.Int("duplicate_children_deduplicated")
+  private val RECOVERED_ATTRIBUTES_COUNT = EventFields.Long("recovered_attributes")
+  private val DROPPED_ATTRIBUTES_COUNT = EventFields.Long("dropped_attributes")
+  private val RECOVERED_CONTENTS_COUNT = EventFields.Int("recovered_contents")
+  private val LOST_CONTENTS_COUNT = EventFields.Int("lost_contents")
 
-  private val RECOVERY_FROM_LOG_STARTED_EVENT = GROUP.registerEvent("recovery-from-log-started",
+  private val RECOVERY_FROM_LOG_STARTED_EVENT = GROUP.registerEvent("recovery.from.log.started",
                                                                     ON_VFS_INIT_FIELD)
 
-  private val RECOVERY_FROM_LOG_FINISHED_EVENT = GROUP.registerVarargEvent("recovery-from-log-finished",
+  private val RECOVERY_FROM_LOG_FINISHED_EVENT = GROUP.registerVarargEvent("recovery.from.log.finished",
                                                                            ON_VFS_INIT_FIELD,
                                                                            RECOVERY_TIME_MILLIS,
                                                                            RECOVERED_FILES_COUNT,
