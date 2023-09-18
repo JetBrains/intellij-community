@@ -87,7 +87,8 @@ open class UpdateStrategyCustomization {
 
   /**
    * Override this property and return `true` to show [What's New][com.intellij.platform.ide.customization.ExternalProductResourceUrls.whatIsNewPageUrl]
-   * page after update.
+   * page after major update.
+   * If the built-in (CEF) browser, the IDE will show the page in an editor tab, otherwise it will display a notification instead.
    */
   open val showWhatIsNewPageAfterUpdate: Boolean
     get() = false
