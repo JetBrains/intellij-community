@@ -157,10 +157,10 @@ internal object CallableMetadataProvider {
 
     context(KtAnalysisSession)
     private fun getActualReceiverTypes(context: WeighingContext): List<KtType> {
-        val actualExplicitReceiverType = context.explicitReceiver?.let {
-            getReferencedClassTypeInCallableReferenceExpression(it)
-                ?: getQualifierClassTypeInKDocName(it)
-                ?: (it as? KtExpression)?.getKtType()
+        val actualExplicitReceiverType = context.explicitReceiver?.let { receiver ->
+            getReferencedClassTypeInCallableReferenceExpression(receiver)
+                ?: getQualifierClassTypeInKDocName(receiver)
+                ?: (receiver as? KtExpression)?.getTypeWithCorrectedNullability()
         }
 
         return if (actualExplicitReceiverType != null) {
@@ -168,6 +168,12 @@ internal object CallableMetadataProvider {
         } else {
             context.implicitReceiver.map { it.type }
         }
+    }
+
+    context(KtAnalysisSession)
+    private fun KtExpression.getTypeWithCorrectedNullability(): KtType? {
+        val isSafeCall = parent is KtSafeQualifiedExpression
+        return getKtType()?.applyIf(isSafeCall) { withNullability(KtTypeNullability.NON_NULLABLE) }
     }
 
     context(KtAnalysisSession)

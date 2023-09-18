@@ -442,6 +442,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
                 runTest("../completion/testData/basic/common/boldOrGrayed/KT9835.kt");
             }
 
+            @TestMetadata("MemberAfterNullable.kt")
+            public void testMemberAfterNullable() throws Exception {
+                runTest("../completion/testData/basic/common/boldOrGrayed/MemberAfterNullable.kt");
+            }
+
             @TestMetadata("NonPredictableSmartCast.kt")
             public void testNonPredictableSmartCast() throws Exception {
                 runTest("../completion/testData/basic/common/boldOrGrayed/NonPredictableSmartCast.kt");
