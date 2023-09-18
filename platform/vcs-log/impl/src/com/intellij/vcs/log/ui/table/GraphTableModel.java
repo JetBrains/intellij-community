@@ -23,7 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 
-public final class GraphTableModel extends AbstractTableModel {
+public final class GraphTableModel extends AbstractTableModel implements VcsLogCommitListModel {
   private static final int UP_PRELOAD_COUNT = 20;
   private static final int DOWN_PRELOAD_COUNT = 40;
 
@@ -117,11 +117,17 @@ public final class GraphTableModel extends AbstractTableModel {
     return myLogData;
   }
 
+  @Override
+  public @NotNull VcsLogDataProvider getDataProvider() {
+    return getLogData();
+  }
+
   public @NotNull VcsLogUiProperties getProperties() {
     return myProperties;
   }
 
-  public @NotNull Integer getIdAtRow(int row) {
+  @Override
+  public int getId(int row) {
     return myVisibleDataPack.getVisibleGraph().getRowInfo(row).getCommit();
   }
 
@@ -130,7 +136,7 @@ public final class GraphTableModel extends AbstractTableModel {
   }
 
   public @NotNull List<VcsRef> getRefsAtRow(int row) {
-    return ((RefsModel)myVisibleDataPack.getRefs()).refsToCommit(getIdAtRow(row));
+    return ((RefsModel)myVisibleDataPack.getRefs()).refsToCommit(getId(row));
   }
 
   public @NotNull List<VcsRef> getBranchesAtRow(int row) {
@@ -138,8 +144,7 @@ public final class GraphTableModel extends AbstractTableModel {
   }
 
   public @NotNull VcsFullCommitDetails getFullDetails(int row) {
-    Integer id = getIdAtRow(row);
-    return myLogData.getCommitDetailsGetter().getCachedDataOrPlaceholder(id);
+    return myLogData.getCommitDetailsGetter().getCachedDataOrPlaceholder(getId(row));
   }
 
   public @NotNull VcsCommitMetadata getCommitMetadata(int row) {
@@ -148,7 +153,7 @@ public final class GraphTableModel extends AbstractTableModel {
 
   public @NotNull VcsCommitMetadata getCommitMetadata(int row, boolean load) {
     Iterable<Integer> commitsToLoad = load ? getCommitsToLoad(row) : ContainerUtil.emptyList();
-    return myLogData.getMiniDetailsGetter().getCommitData(getIdAtRow(row), commitsToLoad);
+    return myLogData.getMiniDetailsGetter().getCommitData(getId(row), commitsToLoad);
   }
 
   public @Nullable CommitId getCommitId(int row) {
@@ -175,7 +180,7 @@ public final class GraphTableModel extends AbstractTableModel {
       public Integer next() {
         int nextRow = myRowIndex;
         myRowIndex++;
-        return getIdAtRow(nextRow);
+        return getId(nextRow);
       }
 
       @Override

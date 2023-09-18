@@ -75,7 +75,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.VcsCommitStyleFactory.createStyle;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.*;
 
-public class VcsLogGraphTable extends TableWithProgress implements DataProvider, CopyProvider, Disposable {
+public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitList, DataProvider, CopyProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
 
   private static final int MAX_DEFAULT_DYNAMIC_COLUMN_WIDTH = 300;
@@ -176,6 +176,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   public void dispose() {
   }
 
+  @Override
   public @NotNull VcsLogCommitSelection getSelection() {
     return getModel().createSelection(getSelectedRows());
   }
@@ -700,6 +701,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @Override
   public @NotNull GraphTableModel getModel() {
     return (GraphTableModel)super.getModel();
+  }
+
+  @Override
+  public @NotNull VcsLogCommitListModel getListModel() {
+    return getModel();
   }
 
   @NotNull
