@@ -27,7 +27,7 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
   /**
    * Returns the product name in the form shown at intellij-support.jetbrains.com site and jetbrains.com/feedback/feedback.jsp page
    */
-  abstract val shortProductNameUsedInForms: String
+  abstract val shortProductNameUsedInForms: String?
 
   /**
    * Returns URL of the product page on jetbrains.com site. 
@@ -42,7 +42,7 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
    * The current IDE version number and ID of the requested topic are added to it to obtain the actual URL:
    * [baseWebHelpUrl]`/<version>/?<topicId>`.
    */
-  abstract val baseWebHelpUrl: Url
+  abstract val baseWebHelpUrl: Url?
 
   /**
    * Returns ID of the form used to contact support at intellij-support.jetbrains.com site 
@@ -92,7 +92,9 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
     }
 
   override val feedbackReporter: FeedbackReporter?
-    get() = JetBrainsFeedbackReporter(shortProductNameUsedInForms, zenDeskFeedbackFormData)
+    get() = shortProductNameUsedInForms?.let { productName ->
+      JetBrainsFeedbackReporter(productName, zenDeskFeedbackFormData)
+    }
 
   override val downloadPageUrl: Url?
     get() = productPageUrl.resolve("download")
@@ -100,11 +102,13 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
   override val whatIsNewPageUrl: Url?
     get() = productPageUrl.resolve("whatsnew")
 
-  override val helpPageUrl: ((topicId: String) -> Url)
-    get() = { topicId ->
-      baseWebHelpUrl.resolve("${ApplicationInfo.getInstance().shortVersion}/").addParameters(mapOf(
-        topicId to ""
-      ))
+  override val helpPageUrl: ((topicId: String) -> Url)?
+    get() = baseWebHelpUrl?.let { baseUrl ->
+      { topicId ->
+        baseUrl.resolve("${ApplicationInfo.getInstance().shortVersion}/").addParameters(mapOf(
+          topicId to ""
+        ))
+      }  
     }
 }
 
