@@ -22,4 +22,6 @@ public class DataFlowInspection9Test extends DataFlowInspectionTestCase {
   public void testMutabilityInferred() { doTest(); }
   public void testObjectsRequireNonNullElse() { doTest(); }
   public void testNewCollectionAliasing() { doTest(); }
+
+  public void testOptionalStreamInlining() { doTest(); }
 }
