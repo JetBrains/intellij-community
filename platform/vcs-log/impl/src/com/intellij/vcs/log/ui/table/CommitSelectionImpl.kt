@@ -9,10 +9,8 @@ import java.util.function.Consumer
 
 internal class CommitSelectionImpl(private val logData: VcsLogData,
                                    private val visibleGraph: VisibleGraph<Int>,
-                                   private val selectedRows: IntArray) : VcsLogCommitSelection {
-  override val size get() = selectedRows.size
-
-  override val ids: List<Int> get() = selectedRows.map { getIdAtRow(it) }
+                                   override val rows: IntArray) : VcsLogCommitSelection {
+  override val ids: List<Int> get() = rows.map { getIdAtRow(it) }
 
   override val commits: List<CommitId>
     get() = getDetails { id -> logData.getCommitId(id)!! }
@@ -22,7 +20,7 @@ internal class CommitSelectionImpl(private val logData: VcsLogData,
     get() = getCachedDetails(logData.commitDetailsGetter)
 
   override fun <T> getDetails(detailsGetter: (Int) -> T): List<T> {
-    return getDataForRows(selectedRows) { row -> detailsGetter(getIdAtRow(row)) }
+    return getDataForRows(rows) { row -> detailsGetter(getIdAtRow(row)) }
   }
 
   override fun requestFullDetails(consumer: Consumer<in List<VcsFullCommitDetails>>) {

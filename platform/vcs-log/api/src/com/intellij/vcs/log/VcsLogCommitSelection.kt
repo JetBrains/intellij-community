@@ -12,7 +12,12 @@ interface VcsLogCommitSelection {
   /**
    * Selection size.
    */
-  val size: Int
+  val size: Int get() = rows.size
+
+  /**
+   * Selected rows.
+   */
+  val rows: IntArray
 
   /**
    * Identifiers of the commits selected in the table.

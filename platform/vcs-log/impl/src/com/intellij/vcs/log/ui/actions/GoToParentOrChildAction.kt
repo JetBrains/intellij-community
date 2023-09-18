@@ -100,7 +100,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
   }
 
   private fun getRowsToJump(ui: VcsLogUiEx): List<Int> {
-    val selectedRows = ui.table.selectedRows
+    val selectedRows = ui.table.selection.rows
     if (selectedRows.size != 1) return emptyList()
     return ui.dataPack.visibleGraph.getRowInfo(selectedRows.single()).getAdjacentRows(parent).sorted()
   }
