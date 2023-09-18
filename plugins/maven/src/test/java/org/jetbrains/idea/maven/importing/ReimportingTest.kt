@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class ReimportingTest : MavenMultiVersionImportingTestCase() {
   override fun runInDispatchThread() = false
 
-  override fun setUp() {
+  override fun setUp() = runBlocking {
     super.setUp()
     createProjectPom("""
                        <groupId>test</groupId>
@@ -43,11 +43,11 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       <artifactId>m2</artifactId>
       <version>1</version>
       """.trimIndent())
-    importProject()
+    importProjectAsync()
   }
 
   @Test
-  fun testAddingNewModule() {
+  fun testAddingNewModule() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -66,12 +66,12 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       <version>1</version>
       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
     assertModules("project", "m1", "m2", "m3")
   }
 
   @Test
-  fun testRemovingObsoleteModule() {
+  fun testRemovingObsoleteModule() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -84,12 +84,12 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
-    importProject()
+    importProjectAsync()
     assertModules("project", "m1")
   }
 
   @Test
-  fun testDoesNotRemoveObsoleteModuleIfUserSaysNo() {
+  fun testDoesNotRemoveObsoleteModuleIfUserSaysNo() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -103,7 +103,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
     //configConfirmationForNoAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false)
 
-    importProject()
+    importProjectAsync()
     if (supportsKeepingModulesFromPreviousImport()) {
       assertModules("project", "m1", "m2")
     }
@@ -113,7 +113,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoesNotAskUserTwiceToRemoveTheSameModule() {
+  fun testDoesNotAskUserTwiceToRemoveTheSameModule() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -129,14 +129,14 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
     assertEquals(0, counter.get())
 
-    importProject()
+    importProjectAsync()
     if (null == MavenProjectLegacyImporter.getAnswerToDeleteObsoleteModulesQuestion()) {
       counter.incrementAndGet()
     }
     assertEquals(if (supportsKeepingModulesFromPreviousImport()) 1 else 0, counter.get())
 
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false)
-    importProject()
+    importProjectAsync()
     if (null == MavenProjectLegacyImporter.getAnswerToDeleteObsoleteModulesQuestion()) {
       counter.incrementAndGet()
     }
@@ -144,27 +144,27 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoesNotAskToRemoveManuallyAdderModules() {
+  fun testDoesNotAskToRemoveManuallyAdderModules() = runBlocking {
     createModule("userModule")
     assertModules("project", "m1", "m2", "userModule")
 
     val counter = configConfirmationForNoAnswer()
 
-    importProject()
+    importProjectAsync()
 
     assertEquals(0, counter.get())
     assertModules("project", "m1", "m2", "userModule")
   }
 
   @Test
-  fun testRemovingAndCreatingModulesForAggregativeProjects() {
+  fun testRemovingAndCreatingModulesForAggregativeProjects() = runBlocking {
     createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
       <packaging>pom</packaging>
       """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     assertModules("project", "m1", "m2")
 
@@ -172,7 +172,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
 
     mavenImporterSettings.setCreateModulesForAggregators(false)
-    importProject()
+    importProjectAsync()
     //myProjectsManager.performScheduledImportInTests();
     if (supportsCreateAggregatorOption()) {
       assertModules(mn("project", "m2"))
@@ -182,12 +182,12 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
     }
 
     mavenImporterSettings.setCreateModulesForAggregators(true)
-    importProject()
+    importProjectAsync()
     assertModules("project", "m1", "m2")
   }
 
   @Test
-  fun testDoNotCreateModulesForNewlyCreatedAggregativeProjectsIfNotNecessary() {
+  fun testDoNotCreateModulesForNewlyCreatedAggregativeProjectsIfNotNecessary() = runBlocking {
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     mavenImporterSettings.setCreateModulesForAggregators(false)
@@ -210,7 +210,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       <version>1</version>
       <packaging>pom</packaging>
       """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     if (supportsCreateAggregatorOption()) {
       assertModules("m1", "m2")
@@ -221,7 +221,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testReimportingWithProfiles() {
+  fun testReimportingWithProfiles() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -261,7 +261,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testChangingDependencyTypeToTestJar() {
+  fun testChangingDependencyTypeToTestJar() = runBlocking {
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     val m1 = createModulePom("m1", createPomXmlWithModuleDependency("jar"))
@@ -285,13 +285,13 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testSettingTargetLevel() {
+  fun testSettingTargetLevel() = runBlocking {
     createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertEquals("1.8", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")))
 
     createModulePom("m1", """
@@ -309,7 +309,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
         </plugins>
       </build>
       """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertEquals("1.3", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")))
 
     createModulePom("m1", """
@@ -328,7 +328,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       </build>
       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
     assertEquals("1.6", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")))
 
     // after configuration/target element delete in maven-compiler-plugin CompilerConfiguration#getBytecodeTargetLevel should be also updated
@@ -337,12 +337,12 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertEquals("1.8", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")))
   }
 
   @Test
-  fun testReimportingWhenModuleHaveRootOfTheParent() {
+  fun testReimportingWhenModuleHaveRootOfTheParent() = runBlocking {
     createProjectSubDir("m1/res")
     createProjectPom("""
                        <groupId>test</groupId>
@@ -370,7 +370,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
     //AtomicInteger counter = configConfirmationForNoAnswer();
     val counter = AtomicInteger()
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false)
-    importProject()
+    importProjectAsync()
     resolveDependenciesAndImport()
     if (null == MavenProjectLegacyImporter.getAnswerToDeleteObsoleteModulesQuestion()) {
       counter.incrementAndGet()
@@ -379,12 +379,12 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testMoveModuleWithSystemScopedDependency() {
+  fun testMoveModuleWithSystemScopedDependency() = runBlocking {
     zipFile {
       file("a.txt")
     }.generate(File(projectPath, "lib.jar"))
     createModulePom("m1", generatePomWithSystemDependency("../lib.jar"))
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -397,7 +397,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
     createModulePom("dir/m1", generatePomWithSystemDependency("../../lib.jar"))
-    importProject()
+    importProjectAsync()
     assertModules("project", "m1", "m2")
   }
 
@@ -447,7 +447,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
-    importProject()
+    importProjectAsync()
     assertEquals(LanguageLevel.JDK_1_8, getEffectiveLanguageLevel(getModule("project")))
     assertEquals(LanguageLevel.JDK_1_8, getEffectiveLanguageLevel(getModule(mn("project", "m1"))))
     assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule("project")))
@@ -455,7 +455,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
     createProjectPom(String.format(parentPomTemplate, "1.7"))
 
-    importProject()
+    importProjectAsync()
     assertEquals(LanguageLevel.JDK_1_7, getEffectiveLanguageLevel(getModule("project")))
     assertEquals(LanguageLevel.JDK_1_7, getEffectiveLanguageLevel(getModule(mn("project", "m1"))))
     assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule("project")))
@@ -505,13 +505,13 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
-    importProject()
+    importProjectAsync()
     assertEquals(LanguageLevel.JDK_1_8, getEffectiveLanguageLevel(getModule(mn("project", "m1"))))
     assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))))
 
     createModulePom("m1", String.format(m1pomTemplate, "1.7"))
 
-    importProject()
+    importProjectAsync()
     assertEquals(LanguageLevel.JDK_1_7, getEffectiveLanguageLevel(getModule(mn("project", "m1"))))
     assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))))
   }

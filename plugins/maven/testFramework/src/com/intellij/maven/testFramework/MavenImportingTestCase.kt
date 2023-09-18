@@ -41,6 +41,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
@@ -376,8 +377,15 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     importProject()
   }
 
+  @Obsolete
+  // use importProjectAsync()
   protected fun importProject() {
     importProjectWithProfiles()
+  }
+
+  protected suspend fun importProjectAsync() {
+    initProjectsManager(false)
+    projectsManager.addManagedFilesWithProfilesAndUpdate(listOf(myProjectPom), MavenExplicitProfiles.NONE, null, null)
   }
 
   protected fun importProjectWithErrors() {
@@ -485,11 +493,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed())
     initProjectsManager(false)
     readProjects(files, disabledProfiles, *profiles)
-
-    /*    ApplicationManager.getApplication().invokeAndWait(() -> {
-      myProjectsManager.scheduleImportInTests(files);
-    });*/
-    //MavenImportingTestCaseKt.importMavenProjectsSync(myProjectsManager);
     resolvePlugins()
     val promise = projectsManager.waitForImportCompletion()
     ApplicationManager.getApplication().invokeAndWait { PlatformTestUtil.waitForPromise(promise) }
