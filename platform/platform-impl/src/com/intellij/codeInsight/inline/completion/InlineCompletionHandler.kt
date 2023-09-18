@@ -73,10 +73,6 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     }
 
     LOG.trace("Start processing inline event $event")
-    if (isMuted.get()) {
-      LOG.trace("Muted")
-      return
-    }
 
     // Wait for [TabEnterUsageDetector] to decide which shortcut to use
     if (!application.isUnitTestMode && !PropertiesComponent.getInstance().getBoolean(INLINE_COMPLETION_INSERT_SHORTCUT_DETECTED, false)) {
@@ -146,23 +142,19 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   }
 
   private fun InlineCompletionContext.renderElement(element: InlineCompletionElement, startOffset: Int) {
-    withSafeMute {
-      element.render(editor, lastOffset ?: startOffset)
-      state.addElement(element)
-    }
+    element.render(editor, lastOffset ?: startOffset)
+    state.addElement(element)
   }
 
   fun insert(editor: Editor) {
     val context = InlineCompletionContext.getOrNull(editor) ?: return
     trace(InlineCompletionEventType.Insert)
 
-    withSafeMute {
-      val offset = context.lastOffset ?: return@withSafeMute
-      val currentCompletion = context.lineToInsert
+    val offset = context.lastOffset ?: return
+    val currentCompletion = context.lineToInsert
 
-      editor.document.insertString(offset, currentCompletion)
-      editor.caretModel.moveToOffset(offset + currentCompletion.length)
-    }
+    editor.document.insertString(offset, currentCompletion)
+    editor.caretModel.moveToOffset(offset + currentCompletion.length)
 
     LookupManager.getActiveLookup(editor)?.hideLookup(false) //TODO: remove this
     hide(editor, false, context)
@@ -173,10 +165,8 @@ class InlineCompletionHandler(scope: CoroutineScope) {
       trace(InlineCompletionEventType.Hide(explicit))
     }
 
-    withSafeMute {
-      isShowing.set(false)
-      InlineCompletionSession.remove(editor)
-    }
+    isShowing.set(false)
+    InlineCompletionSession.remove(editor)
   }
 
   fun cancel(editor: Editor) {
@@ -289,21 +279,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
 
     fun getOrNull(editor: Editor) = editor.getUserData(KEY)
 
-    val isMuted: AtomicBoolean = AtomicBoolean(false)
     val isShowing: AtomicBoolean = AtomicBoolean(false)
-
-    inline fun withSafeMute(block: () -> Unit) {
-      mute()
-      try {
-        block()
-      }
-      finally {
-        unmute()
-      }
-    }
-
-    fun mute(): Unit = isMuted.set(true)
-    fun unmute(): Unit = isMuted.set(false)
 
     private var testProvider: InlineCompletionProvider? = null
 
