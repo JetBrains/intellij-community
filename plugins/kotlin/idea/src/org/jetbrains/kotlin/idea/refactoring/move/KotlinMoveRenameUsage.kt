@@ -126,15 +126,13 @@ sealed class KotlinMoveRenameUsage(
                 element, reference, referencedElement, containingFile, addImportToOriginalFile, isInternal
             )
 
-            if (KotlinMoveRefactoringSupport.getInstance().isExtensionRef(element) &&
-                reference.element.getNonStrictParentOfType<KtImportDirective>() == null
-            ) return Unqualifiable(
+            if (isExtensionRef(element) && reference.element.getNonStrictParentOfType<KtImportDirective>() == null) return Unqualifiable(
                 element, reference, referencedElement, containingFile, addImportToOriginalFile, isInternal
             )
 
             element.getParentOfTypeAndBranch<KtCallableReferenceExpression> { callableReference }?.let { callable ->
                 if (callable.receiverExpression != null) {
-                    return if (KotlinMoveRefactoringSupport.getInstance().isQualifiable(callable)) createCallableReference() else null
+                    return if (isQualifiable(callable)) createCallableReference() else null
                 }
                 val target = referencedElement.unwrapped
                 if (target is KtDeclaration && target.parent is KtFile) return createUnQualifiable()

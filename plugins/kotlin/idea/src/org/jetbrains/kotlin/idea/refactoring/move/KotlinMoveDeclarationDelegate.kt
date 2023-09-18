@@ -73,8 +73,7 @@ sealed interface KotlinMoveDeclarationDelegate {
 
                 val isConflict = when (usage) {
                     is ImplicitCompanionAsDispatchReceiverUsageInfo -> {
-                        val isValidTarget = KotlinMoveRefactoringSupport.getInstance()
-                            .isValidTargetForImplicitCompanionAsDispatchReceiver(moveTarget, usage.companionObject)
+                        val isValidTarget = isValidTargetForImplicitCompanionAsDispatchReceiver(moveTarget, usage.companionObject)
                         if (!isValidTarget) {
                             conflicts.putValue(
                                 element,
@@ -106,11 +105,10 @@ sealed interface KotlinMoveDeclarationDelegate {
 
                     if (outerInstanceParameterName != null) {
                         val containingClass = containingClassOrObject ?: return
-                        val moveRefactoringSupport = KotlinMoveRefactoringSupport.getInstance()
-                        val type = moveRefactoringSupport.renderType(containingClass)
+                        val type = renderType(containingClass)
                         val parameter = KtPsiFactory(project).createParameter("private val $outerInstanceParameterName: $type")
                         val addedParameter = createPrimaryConstructorParameterListIfAbsent().addParameter(parameter)
-                        moveRefactoringSupport.addDelayedShorteningRequest(addedParameter)
+                        addDelayedShorteningRequest(addedParameter)
                     }
                 }
             }
