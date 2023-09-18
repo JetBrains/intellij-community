@@ -7,10 +7,7 @@ internal class DocumentChange<T : Comparable<T>>(val key: T, val sideEffect: Doc
 
 internal fun documentChangeAt(offset: Int, task: Document.(Int) -> Unit) = DocumentChange(offset, task)
 
-/**
- * Use this utility if you're like me, and you too have a mushy brain that's struggling to comprehend the order of document changes.
- * It will run tasks from right to left, which makes thinking about the mutations easier.
- */
+/** This utility will run tasks from right to left, which makes comprehending mutations easier. */
 internal fun <T : Comparable<T>> Document.applyChangesOrdered(vararg tasks: DocumentChange<T>) {
   tasks.sortByDescending { it.key }
   for (task in tasks) task.sideEffect(this, task.key)
