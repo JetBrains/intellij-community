@@ -84,9 +84,8 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
     }
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value2")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value2")))
-    waitForImportWithinTimeout {
-      deleteSettingsXml()
-    }
+
+    deleteSettingsXmlAndWaitForImport()
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/\${prop}")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/\${prop}")))
     waitForImportWithinTimeout {
@@ -110,7 +109,7 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
 
   @Test
   fun testUpdatingProjectsOnSettingsXmlCreationAndDeletion() = runBlocking {
-    deleteSettingsXml()
+    deleteSettingsXmlAndWaitForImport()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -129,16 +128,16 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
     }
 
     assertUnorderedElementsAreEqual(projectsTree.getAvailableProfiles(), "one")
-    waitForImportWithinTimeout {
-      deleteSettingsXml()
-    }
+    deleteSettingsXmlAndWaitForImport()
     assertUnorderedElementsAreEqual(projectsTree.getAvailableProfiles())
   }
 
-  private suspend fun deleteSettingsXml() {
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(myDir, "settings.xml"))
-    writeAction {
-      f?.delete(this)
+  private suspend fun deleteSettingsXmlAndWaitForImport() {
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(myDir, "settings.xml"))!!
+    waitForImportWithinTimeout {
+      writeAction {
+        f.delete(this)
+      }
     }
   }
 }
