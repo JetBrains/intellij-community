@@ -14,6 +14,7 @@ import java.util.List;
 public class SuperBuilderQuickFixTest extends AbstractLombokLightCodeInsightTestCase {
 
   public void testAddModifiersAbstractAndStaticOnInnerBuilderClass() {
+    myFixture.enableInspections(LombokInspection.class);
     @Language("JAVA") final String text = """
       import lombok.experimental.SuperBuilder;
 
@@ -35,8 +36,28 @@ public class SuperBuilderQuickFixTest extends AbstractLombokLightCodeInsightTest
        }
       """;
     myFixture.configureByText(JavaFileType.INSTANCE, text);
+    IntentionAction action = myFixture.findSingleIntention("Make 'DeltaOfferComponentBuilder' abstract and static");
+    myFixture.launchAction(action);
+    myFixture.checkResult("""
+                            import lombok.experimental.SuperBuilder;
 
-    assertTrue(hasActionWithText("Make 'DeltaOfferComponentBuilder' abstract and static"));
+                             @SuperBuilder
+                             class DeltaComponentWithSalesAndTechComponentId {
+                             }
+
+                             @SuperBuilder
+                             public class DeltaOfferComponent extends DeltaComponentWithSalesAndTechComponentId {
+
+                                 Integer max;
+
+                                 public abstract static class DeltaOfferComponentBuilder {
+                                     public DeltaOfferComponentBuilder max(Integer max) {
+                                         this.max = max;
+                                         return this;
+                                     }
+                                 }
+                             }
+                            """);
   }
 
   public void testAddModifiersAbstractOnInnerBuilderClass() {
