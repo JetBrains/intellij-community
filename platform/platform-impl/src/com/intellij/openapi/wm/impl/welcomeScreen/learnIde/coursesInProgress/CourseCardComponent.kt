@@ -40,27 +40,27 @@ private val hoverColor: Color = ListPluginComponent.SELECTION_COLOR
 private val infoForeground: Color = NamedColorUtil.getInactiveTextColor()
 val mainBackgroundColor: Color = WelcomeScreenUIManager.getMainAssociatedComponentBackground()
 
-class CourseCardComponent(val data: CourseInfo) : Wrapper() {
+class CourseCardComponent(val data: CourseInfo) : JPanel(BorderLayout()) {
   lateinit var actionComponent: JComponent
   private lateinit var baseComponent: JComponent
   private var isHovered: Boolean = false
 
   init {
-    layout = BoxLayout(this, BoxLayout.X_AXIS)
     border = JBUI.Borders.empty(CARD_GAP)
     preferredSize = JBUI.size(CARD_WIDTH, CARD_HEIGHT)
 
-    val panel = panel {
+    val logoPanel = panel {
       row {
         val icon = data.icon
         if (icon != null) {
           cell(getScaledLogoComponent(icon, this@CourseCardComponent))
             .align(AlignY.TOP).gap(com.intellij.ui.dsl.builder.RightGap.SMALL)
         }
-        cell(createMainComponent()).align(com.intellij.ui.dsl.builder.Align.FILL)
       }
     }
-    setContent(panel)
+    add(logoPanel, BorderLayout.LINE_START)
+    add(createMainComponent(), BorderLayout.CENTER)
+
     updateColors(mainBackgroundColor)
   }
 
@@ -138,6 +138,7 @@ class CourseCardComponent(val data: CourseInfo) : Wrapper() {
     updateColors(mainBackgroundColor)
     setActionComponentVisible(false)
   }
+
   private fun setActionComponentVisible(visible: Boolean) {
     actionComponent.isVisible = visible
     actionComponent.isEnabled = visible
@@ -196,7 +197,7 @@ private class CourseInfoComponent(
     add(Wrapper(infoComponent))
   }
 
-  fun createProgressBar() : JProgressBar {
+  fun createProgressBar(): JProgressBar {
     val progressBar = JProgressBar()
 
     progressBar.setUI(object : DarculaProgressBarUI() {
