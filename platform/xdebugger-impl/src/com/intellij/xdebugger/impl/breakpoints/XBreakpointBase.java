@@ -203,6 +203,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
   }
 
+  @Override
   public String getLogExpression() {
     XExpression expression = getLogExpressionObject();
     return expression != null ? expression.getExpression() : null;
@@ -234,6 +235,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
   }
 
+  @Override
   public String getCondition() {
     XExpression expression = getConditionExpression();
     return expression != null ? expression.getExpression() : null;
