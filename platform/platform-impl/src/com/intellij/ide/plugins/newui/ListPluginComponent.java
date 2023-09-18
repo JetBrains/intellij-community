@@ -1133,7 +1133,7 @@ public final class ListPluginComponent extends JPanel {
     return label;
   }
 
-  public @NotNull List<JComponent> getFocusableComponents() {
+  @NotNull List<JComponent> getFocusableComponents() {
     List<JComponent> components = new ArrayList<>();
     if (UIUtil.isFocusable(myLayout.myCheckBoxComponent)) {
       components.add(myLayout.myCheckBoxComponent);
