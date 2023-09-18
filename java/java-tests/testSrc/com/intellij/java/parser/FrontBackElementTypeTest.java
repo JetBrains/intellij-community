@@ -5,6 +5,7 @@ import com.intellij.lang.java.lexer.BasicJavaLexer;
 import com.intellij.lang.java.parser.BasicJavaParser;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.impl.source.AbstractBasicJavaDocElementTypeFactory;
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
@@ -70,16 +71,24 @@ public class FrontBackElementTypeTest extends AbstractBasicJavaParsingTestCase {
 
   private static void checkContains(String pathToCheck, String target) throws IOException {
     List<Path> paths = Files.walk(Paths.get(pathToCheck).normalize())
-      .filter(  Files::isRegularFile)
+      .filter(Files::isRegularFile)
       .toList();
     for (Path path : paths) {
       //exclude, because element types can be used there
-      if (path.toString().endsWith("ThinJavaParserUtil.java")) {
+      if (path.toString().endsWith("BasicJavaParserUtil.java")) {
         continue;
       }
       String content = FileUtil.loadFile(path.toFile());
-      if (content.contains(target)) {
-        Assert.fail("Probably, file: " + path + " contains reference to " + target);
+      int start = 0;
+      int find = content.indexOf(target, start);
+      while (find != -1) {
+        if (find == 0) {
+          Assert.fail("Probably, file: " + path + " contains reference to " + target);
+        }
+        if (!StringUtil.isLatinAlphanumeric(String.valueOf(content.charAt(find - 1)))) {
+          Assert.fail("Probably, file: " + path + " contains reference to " + target);
+        }
+        find = content.indexOf(target, find + 1);
       }
     }
   }
