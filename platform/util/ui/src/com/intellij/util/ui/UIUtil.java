@@ -41,7 +41,6 @@ import javax.swing.border.LineBorder;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.FontUIResource;
-import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
@@ -178,102 +177,6 @@ public final class UIUtil {
 
   public static @NotNull RGBImageFilter getTextGrayFilter() {
     return GrayFilter.namedFilter("text.grayFilter", new GrayFilter(20, 0, 100));
-  }
-
-  public static class GrayFilter extends RGBImageFilter {
-    private float brightness;
-    private float contrast;
-    private int alpha;
-
-    private int origContrast;
-    private int origBrightness;
-
-    /**
-     * @param brightness in range [-100..100] where 0 has no effect
-     * @param contrast in range [-100..100] where 0 has no effect
-     * @param alpha in range [0..100] where 0 is transparent, 100 has no effect
-     */
-    public GrayFilter(int brightness, int contrast, int alpha) {
-      setBrightness(brightness);
-      setContrast(contrast);
-      setAlpha(alpha);
-    }
-
-    public GrayFilter() {
-      this(0, 0, 100);
-    }
-
-    private void setBrightness(int brightness) {
-      origBrightness = Math.max(-100, Math.min(100, brightness));
-      this.brightness = (float)(Math.pow(origBrightness, 3) / (100f * 100f)); // cubic in [0..100]
-    }
-
-    public int getBrightness() {
-      return origBrightness;
-    }
-
-    private void setContrast(int contrast) {
-      origContrast = Math.max(-100, Math.min(100, contrast));
-      this.contrast = origContrast / 100f;
-    }
-
-    public int getContrast() {
-      return origContrast;
-    }
-
-    private void setAlpha(int alpha) {
-      this.alpha = Math.max(0, Math.min(100, alpha));
-    }
-
-    public int getAlpha() {
-      return alpha;
-    }
-
-    @Override
-    @SuppressWarnings("AssignmentReplaceableWithOperatorAssignment")
-    public int filterRGB(int x, int y, int rgb) {
-      // Use NTSC conversion formula.
-      int gray = (int)(0.30 * (rgb >> 16 & 0xff) +
-                       0.59 * (rgb >> 8 & 0xff) +
-                       0.11 * (rgb & 0xff));
-
-      if (brightness >= 0) {
-        gray = (int)((gray + brightness * 255) / (1 + brightness));
-      }
-      else {
-        gray = (int)(gray / (1 - brightness));
-      }
-
-      if (contrast >= 0) {
-        if (gray >= 127) {
-          gray = (int)(gray + (255 - gray) * contrast);
-        }
-        else {
-          gray = (int)(gray - gray * contrast);
-        }
-      }
-      else {
-        gray = (int)(127 + (gray - 127) * (contrast + 1));
-      }
-
-      int a = ((rgb >> 24) & 0xff) * alpha / 100;
-
-      return (a << 24) | (gray << 16) | (gray << 8) | gray;
-    }
-
-    public @NotNull GrayFilterUIResource asUIResource() {
-      return new GrayFilterUIResource(this);
-    }
-
-    public static final class GrayFilterUIResource extends GrayFilter implements UIResource {
-      public GrayFilterUIResource(@NotNull GrayFilter filter) {
-        super(filter.origBrightness, filter.origContrast, filter.alpha);
-      }
-    }
-
-    public static @NotNull GrayFilter namedFilter(@NotNull String resourceName, @NotNull GrayFilter defaultFilter) {
-      return Objects.requireNonNullElse((GrayFilter)UIManager.get(resourceName), defaultFilter);
-    }
   }
 
   public static @NotNull Couple<Color> getCellColors(@NotNull JTable table, boolean isSel, int row, int column) {

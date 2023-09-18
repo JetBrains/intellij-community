@@ -6,10 +6,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.icons.ImageDataByPathLoader.Companion.findIconByPath
 import com.intellij.ui.icons.getReflectiveIcon
+import com.intellij.util.ui.GrayFilter
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Insets
@@ -130,9 +130,9 @@ private fun parseInsets(value: String): Insets {
   return JBInsets(numbers.next().toInt(), numbers.next().toInt(), numbers.next().toInt(), numbers.next().toInt()).asUIResource()
 }
 
-private fun parseGrayFilter(value: String): UIUtil.GrayFilter {
+private fun parseGrayFilter(value: String): GrayFilter {
   val numbers = parseMultiValue(value).iterator()
-  return UIUtil.GrayFilter(numbers.next().toInt(), numbers.next().toInt(), numbers.next().toInt()).asUIResource()
+  return GrayFilter(numbers.next().toInt(), numbers.next().toInt(), numbers.next().toInt()).asUIResource()
 }
 
 internal fun isColorLike(text: String) = text.length <= 9 && text.startsWith('#')
