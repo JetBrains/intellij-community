@@ -3,6 +3,7 @@ package com.intellij.importSettings.chooser
 
 import com.intellij.icons.AllIcons
 import com.intellij.importSettings.chooser.actions.*
+import com.intellij.importSettings.chooser.ui.UiUtils
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -78,7 +79,7 @@ class ImportSettingsFromDialog : DialogWrapper(null) {
       if (this is ActionToolbarImpl) {
 
         setMinimumButtonSize {
-          JBUI.size(280, 40)
+          JBUI.size(UiUtils.DEFAULT_BUTTON_WIDTH, UiUtils.DEFAULT_BUTTON_HEIGHT)
         }
         setMiniMode(false)
         setActionButtonBorder(4, JBUI.CurrentTheme.RunWidget.toolbarBorderHeight())

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.importSettings.chooser.actions
 
+import com.intellij.importSettings.chooser.ui.ProductChooserRenderer
 import com.intellij.importSettings.data.ActionsDataProvider
 import com.intellij.importSettings.data.Product
 import com.intellij.openapi.actionSystem.*
@@ -19,16 +20,20 @@ open class ProductChooserAction() : DefaultActionGroup() {
 
   override fun actionPerformed(event: AnActionEvent) {
     val widget = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarComboButton?
-    val step = createStep(DefaultActionGroup(), event.dataContext, widget)
+    val step = createStep(this, event.dataContext, widget)
     createPopup(step)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
+  private val renderer = ProductChooserRenderer()
+
+
+
   private fun createPopup(step: ListPopupStep<Any>): ListPopup {
     val result = object : ListPopupImpl(null, step) {
       override fun getListElementRenderer(): ListCellRenderer<*> {
-        return super.getListElementRenderer()
+        return renderer
       }
 
     }
@@ -40,4 +45,5 @@ open class ProductChooserAction() : DefaultActionGroup() {
     return JBPopupFactory.getInstance().createActionsStep(actionGroup, context, ActionPlaces.PROJECT_WIDGET_POPUP, false, false,
                                                           null, widget, false, 0, false)
   }
+
 }
