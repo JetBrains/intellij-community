@@ -2,6 +2,7 @@
 package com.intellij.webSymbols
 
 import com.intellij.webSymbols.query.WebSymbolsCompletionQueryTest
+import com.intellij.webSymbols.query.WebSymbolsListQueryTest
 import com.intellij.webSymbols.query.WebSymbolsNameQueryTest
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
@@ -10,5 +11,6 @@ import org.junit.runners.Suite
 @Suite.SuiteClasses(
   WebSymbolsCompletionQueryTest::class,
   WebSymbolsNameQueryTest::class,
+  WebSymbolsListQueryTest::class,
 )
 class WebSymbolsTestSuite

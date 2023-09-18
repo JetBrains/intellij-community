@@ -30,14 +30,6 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest("html/attributes/v-foo", null, true, "basic-pattern")
   }
 
-  fun testApiStatus() {
-    doTest("html/elements/", null, "api-status")
-  }
-
-  fun testVirtualAttributes() {
-    doTest("html/attributes", null, true, "basic-pattern")
-  }
-
   fun testVueDirectiveWithArguments() {
     doTest("html/elements/foo/attributes/v-on:bar.stop.foo.once", "vue", true, "vue")
   }
@@ -90,10 +82,6 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest("html/elements/foo/attributes/@drag.enter.left.ctrl.exact.stop", "vue", true, "vue", "events")
   }
 
-  fun testVueElementWithExtends1() {
-    doTest("html/elements/TransitionGroup/props", "vue", "vue")
-  }
-
   fun testVueElementWithExtends2() {
     doTest("html/elements/TransitionGroup/attributes/appearActiveClass", "vue", "vue")
   }
@@ -108,10 +96,6 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
 
   fun testVueElementBind1() {
     doTest("html/elements/TransitionGroup/attributes/v-bind:tag", "vue", true, "vue")
-  }
-
-  fun testVueElements() {
-    doTest("html/vue-components", "vue", "vue")
   }
 
   fun testOldVueElement1() {
@@ -130,24 +114,8 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest("html/elements/foo/attributes/v-on_old:click.stop", "vue", true, "vue", "vue-old", "events")
   }
 
-  fun testFrameworkFiltering() {
-    doTest("html/elements", null, true, "vue", "basic")
-  }
-
-  fun testCssProperties1() {
-    doTest("css/properties", null, "css")
-  }
-
-  fun testCssProperties2() {
-    doTest("html/elements/tag-with-css/css/properties", null, "css")
-  }
-
   fun testCssProperties3() {
     doTest("html/elements/tag-with-css/css/properties/global-prop", null, true, "css")
-  }
-
-  fun testCssClasses1() {
-    doTest("html/elements/tag-with-css/css/classes", null, "css")
   }
 
   fun testCssClasses2() {
@@ -306,18 +274,6 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest("html/elements/hello-13Wo-rld", "vue", true, "nested-naming-rules")
   }
 
-  fun testLegacyVuetifyDirectives() {
-    doTest("html/vue-directives", "vue", false, "vuetify-legacy", "vue")
-  }
-
-  fun testLegacyVuetifyComponents() {
-    doTest("html/vue-components", "vue", false, "vuetify-legacy", "vue")
-  }
-
-  fun testLegacyVuetifyComponentProps1() {
-    doTest("html/elements/VAutocomplete/props", "vue", false, "vuetify-legacy", "vue")
-  }
-
   fun testLegacyVuetifyComponentProps2() {
     doTest("html/elements/VAutocomplete/attributes/allowOverflow", "vue", false, "vuetify-legacy", "vue")
   }
@@ -400,36 +356,12 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
            "reference-with-complex-name-conversion")
   }
 
-  fun testJsGlobalSymbols() {
-    doTest("js/symbols", null, "js-globals")
-  }
-
   fun testBasicCustomElementsManifest1() {
     doTest("html/elements/my-EleMeNt", customElementsManifests = listOf("basic"))
   }
 
   fun testBasicCustomElementsManifest2() {
     doTest("html/elements/my-EleMeNt/attributes/disabled", customElementsManifests = listOf("basic"))
-  }
-
-  fun testBasicCustomElementsManifest3() {
-    doTest("html/elements/my-EleMeNt/attributes/", customElementsManifests = listOf("basic"))
-  }
-
-  fun testBasicCustomElementsManifest4() {
-    doTest("html/elements/my-EleMeNt/js/events/", customElementsManifests = listOf("basic"))
-  }
-
-  fun testBasicCustomElementsManifest5() {
-    doTest("html/elements/my-EleMeNt/css/properties/", customElementsManifests = listOf("basic"))
-  }
-
-  fun testBasicCustomElementsManifest6() {
-    doTest("html/elements/my-EleMeNt/css/parts/", customElementsManifests = listOf("basic"))
-  }
-
-  fun testBasicCustomElementsManifest7() {
-    doTest("html/elements/my-EleMeNt/js/properties/", customElementsManifests = listOf("basic"))
   }
 
   fun testNestedPattern1() {
