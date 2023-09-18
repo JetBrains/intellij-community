@@ -96,10 +96,10 @@ internal class GitLabReviewTabComponentFactory(
 
   private fun createSelectorsComponent(cs: CoroutineScope): JComponent {
     val selectorVm = toolwindowViewModel.selectorVm
-
-    val accountsDetailsProvider = GitLabAccountsDetailsProvider(cs) { account ->
+    val accountManager = service<GitLabAccountManager>()
+    val accountsDetailsProvider = GitLabAccountsDetailsProvider(cs, accountManager) { account ->
       // TODO: separate loader
-      service<GitLabAccountManager>().findCredentials(account)?.let { token ->
+      accountManager.findCredentials(account)?.let { token ->
         service<GitLabApiManager>().getClient(account.server, token)
       }
     }

@@ -122,7 +122,7 @@ internal class GitLabCloneRepositoriesViewModelImpl(
 
   private val directoryPath: MutableStateFlow<String> = MutableStateFlow("")
 
-  override val accountDetailsProvider = GitLabAccountsDetailsProvider(cs) { account ->
+  override val accountDetailsProvider = GitLabAccountsDetailsProvider(cs, accountManager) { account ->
     val token = accountManager.findCredentials(account) ?: return@GitLabAccountsDetailsProvider null
     apiManager.getClient(account.server) { token }
   }

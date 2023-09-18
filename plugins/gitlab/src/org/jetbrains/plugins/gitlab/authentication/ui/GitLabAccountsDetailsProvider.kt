@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.authentication.ui
 
 import com.intellij.collaboration.auth.ui.LazyLoadingAccountsDetailsProvider
+import com.intellij.collaboration.auth.ui.cancelOnRemoval
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.openapi.components.service
 import icons.CollaborationToolsIcons
@@ -14,12 +15,30 @@ import org.jetbrains.plugins.gitlab.api.getMetadata
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.api.request.loadImage
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Image
 
-internal class GitLabAccountsDetailsProvider(scope: CoroutineScope,
-                                             private val apiClientSupplier: suspend (GitLabAccount) -> GitLabApi?)
-  : LazyLoadingAccountsDetailsProvider<GitLabAccount, GitLabUserDTO>(scope, CollaborationToolsIcons.Review.DefaultAvatar) {
+internal class GitLabAccountsDetailsProvider private constructor(
+  scope: CoroutineScope,
+  private val apiClientSupplier: suspend (GitLabAccount) -> GitLabApi?
+) : LazyLoadingAccountsDetailsProvider<GitLabAccount, GitLabUserDTO>(scope, CollaborationToolsIcons.Review.DefaultAvatar) {
+
+  constructor(
+    scope: CoroutineScope,
+    accountsModel: GitLabAccountsListModel,
+    apiClientSupplier: suspend (GitLabAccount) -> GitLabApi?
+  ) : this(scope, apiClientSupplier) {
+    cancelOnRemoval(accountsModel.accountsListModel)
+  }
+
+  constructor(
+    scope: CoroutineScope,
+    accountManager: GitLabAccountManager,
+    apiClientSupplier: suspend (GitLabAccount) -> GitLabApi?
+  ) : this(scope, apiClientSupplier) {
+    cancelOnRemoval(scope, accountManager)
+  }
 
   override suspend fun loadDetails(account: GitLabAccount): Result<GitLabUserDTO> {
     try {

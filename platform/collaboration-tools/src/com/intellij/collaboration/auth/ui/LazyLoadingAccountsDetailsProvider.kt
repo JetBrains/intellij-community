@@ -105,6 +105,10 @@ abstract class LazyLoadingAccountsDetailsProvider<A : Account, D : AccountDetail
   })
 }
 
+/**
+ * Add a ListDataListener that monitors changes in the ListModel and clears data for accounts that have been deleted or modified
+ * (e.g. if the API token has been updated)
+ */
 fun <A : Account> LazyLoadingAccountsDetailsProvider<A, *>.cancelOnRemoval(listModel: ListModel<A>) {
   listModel.addListDataListener(object : ListDataListener {
 
@@ -126,6 +130,9 @@ fun <A : Account> LazyLoadingAccountsDetailsProvider<A, *>.cancelOnRemoval(listM
   })
 }
 
+/**
+ * Clears account details when an account is removed or if account credentials are changed
+ */
 fun <A : Account> LazyLoadingAccountsDetailsProvider<A, *>.cancelOnRemoval(scope: CoroutineScope, accountManager: AccountManager<A, *>) {
   scope.launch {
     accountManager.accountsState.collectLatest {
