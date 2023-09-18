@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.toolwindow.ReviewTabsComponentFactory
+import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.util.URIUtil
@@ -95,52 +96,59 @@ internal class GitLabReviewTabComponentFactory(
   }
 
   private fun createSelectorsComponent(cs: CoroutineScope): JComponent {
-    val selectorVm = toolwindowViewModel.selectorVm
     val accountManager = service<GitLabAccountManager>()
-    val accountsDetailsProvider = GitLabAccountsDetailsProvider(cs, accountManager) { account ->
-      // TODO: separate loader
-      accountManager.findCredentials(account)?.let { token ->
-        service<GitLabApiManager>().getClient(account.server, token)
-      }
-    }
-
-    val selectors = RepositoryAndAccountSelectorComponentFactory(selectorVm).create(
-      scope = cs,
-      repoNamer = { mapping ->
-        val allProjects = selectorVm.repositoriesState.value.map { it.repository }
-        getProjectDisplayName(allProjects, mapping.repository)
-      },
-      detailsProvider = accountsDetailsProvider,
-      accountsPopupActionsSupplier = { createPopupLoginActions(selectorVm, it) },
-      submitActionText = GitLabBundle.message("view.merge.requests.button"),
-      loginButtons = createLoginButtons(cs, selectorVm),
-      errorPresenter = GitLabSelectorErrorStatusPresenter(project, cs, selectorVm.accountManager) {
-        selectorVm.submitSelection()
-      }
-    )
-
-    cs.launch {
-      selectorVm.loginRequestsFlow.collect { req ->
-        val account = req.account
-        if (account == null) {
-          val (newAccount, token) = GitLabLoginUtil.logInViaToken(project, selectors, req.repo.repository.serverPath) { server, name ->
-            GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
-          } ?: return@collect
-          req.login(newAccount, token)
-        }
-        else {
-          val token = GitLabLoginUtil.updateToken(project, selectors, account) { server, name ->
-            GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
-          } ?: return@collect
-          req.login(account, token)
-        }
-      }
-    }
-
-    return JPanel(BorderLayout()).apply {
+    val panel = JPanel(BorderLayout()).apply {
       background = UIUtil.getListBackground()
-      add(selectors, BorderLayout.NORTH)
     }
+
+    panel.bindChildIn(cs, toolwindowViewModel.selectorVm, BorderLayout.NORTH) { selectorVm ->
+      if (selectorVm == null) return@bindChildIn null
+      val selectorCs = this
+
+      val accountsDetailsProvider = GitLabAccountsDetailsProvider(selectorCs, accountManager) { account ->
+        // TODO: separate loader
+        accountManager.findCredentials(account)?.let { token ->
+          service<GitLabApiManager>().getClient(account.server, token)
+        }
+      }
+
+      val selectors = RepositoryAndAccountSelectorComponentFactory(selectorVm).create(
+        scope = selectorCs,
+        repoNamer = { mapping ->
+          val allProjects = selectorVm.repositoriesState.value.map { it.repository }
+          getProjectDisplayName(allProjects, mapping.repository)
+        },
+        detailsProvider = accountsDetailsProvider,
+        accountsPopupActionsSupplier = { createPopupLoginActions(selectorVm, it) },
+        submitActionText = GitLabBundle.message("view.merge.requests.button"),
+        loginButtons = createLoginButtons(selectorCs, selectorVm),
+        errorPresenter = GitLabSelectorErrorStatusPresenter(project, selectorCs, selectorVm.accountManager) {
+          selectorVm.submitSelection()
+        }
+      )
+
+      launch {
+        selectorVm.loginRequestsFlow.collect { req ->
+          val account = req.account
+          if (account == null) {
+            val (newAccount, token) = GitLabLoginUtil.logInViaToken(project, selectors, req.repo.repository.serverPath) { server, name ->
+              GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
+            } ?: return@collect
+            req.login(newAccount, token)
+          }
+          else {
+            val token = GitLabLoginUtil.updateToken(project, selectors, account) { server, name ->
+              GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
+            } ?: return@collect
+            req.login(account, token)
+          }
+        }
+      }
+
+      selectors
+    }
+
+    return panel
   }
 
   private fun createLoginButtons(scope: CoroutineScope, vm: GitLabRepositoryAndAccountSelectorViewModel)

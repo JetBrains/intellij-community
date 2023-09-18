@@ -44,7 +44,7 @@ internal class GitLabToolWindowViewModel(
       connection?.let { GitLabToolWindowProjectViewModel(project, accountManager, it, this@GitLabToolWindowViewModel) }
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
-  val selectorVm: GitLabRepositoryAndAccountSelectorViewModel = run {
+  val selectorVm: StateFlow<GitLabRepositoryAndAccountSelectorViewModel?> = isAvailable.mapScoped {
     val preferences = project.service<GitLabMergeRequestsPreferences>()
     GitLabRepositoryAndAccountSelectorViewModel(
       cs, projectsManager, accountManager,
@@ -61,7 +61,7 @@ internal class GitLabToolWindowViewModel(
         submitSelection()
       }
     }
-  }
+  }.stateIn(cs, SharingStarted.Eagerly, null)
 
   private val _activationRequests = MutableSharedFlow<Unit>(1)
   val activationRequests: Flow<Unit> = _activationRequests.asSharedFlow()
