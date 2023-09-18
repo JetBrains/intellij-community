@@ -60,7 +60,7 @@ fun List<WebSymbol>.asSingleSymbol(): WebSymbol? =
 fun WebSymbol.withMatchedName(matchedName: String) =
   if (matchedName != name) {
     val nameSegment = if (this is WebSymbolMatch && nameSegments.size == 1)
-      nameSegments[0].copy(start = 0, end = matchedName.length)
+      nameSegments[0].withRange(0, matchedName.length)
     else
       WebSymbolNameSegment(0, matchedName.length, this)
     WebSymbolMatch.create(matchedName, listOf(nameSegment), namespace, kind, origin)

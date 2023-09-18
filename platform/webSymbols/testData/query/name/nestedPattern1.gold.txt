@@ -24,6 +24,7 @@
    },
    {
     name-part: "bar-",
+    display-name: "Vue component",
     symbol: {
      matchedName: "html/vue-components/<pattern>",
      name: "Special-component",
@@ -41,6 +42,7 @@
    },
    {
     name-part: "bar",
+    display-name: "Vue component",
     symbol: {
      matchedName: "html/attributes/bar",
      origin: "null@null (vue)",

@@ -7,6 +7,7 @@
   segments: [
    {
     name-part: "foo-",
+    display-name: "property name",
     symbol: {
      matchedName: "html/fixed-attrs/<pattern>",
      name: "Nested",
@@ -24,6 +25,7 @@
    },
    {
     name-part: "foo-bar",
+    display-name: "property name",
     problem: UNKNOWN_SYMBOL,
    },
   ],

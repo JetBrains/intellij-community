@@ -68,6 +68,7 @@
    },
    {
     name-part: "bc455",
+    display-name: "modifier",
     matchScore: 0,
     symbol: {
      matchedName: "html/modifiers/<pattern>",

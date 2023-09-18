@@ -2,6 +2,7 @@
 package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.util.applyIf
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
@@ -41,7 +42,9 @@ internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPatt
     return listOf(MatchResult(
       when {
         hits.size == 1 && hits[0] is WebSymbolMatch ->
-          (hits[0] as WebSymbolMatch).nameSegments.map { it.withOffset(start) }
+          (hits[0] as WebSymbolMatch).nameSegments.map {
+            it.withOffset(start).applyIf(it.start != it.end) { withDisplayName(this@SymbolReferencePattern.displayName) }
+          }
 
         hits.isNotEmpty() ->
           listOf(WebSymbolNameSegment(
@@ -68,13 +71,13 @@ internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPatt
       ?.let { list ->
         when {
           list.size == 1 && list[0] is WebSymbolMatch ->
-            (list[0] as WebSymbolMatch).let {
-              listOf(ListResult(it.name, it.nameSegments))
+            (list[0] as WebSymbolMatch).let { match ->
+              listOf(ListResult(match.name, match.nameSegments.map { it.withDisplayName(displayName) }))
             }
 
           list.isNotEmpty() ->
             list.map {
-              ListResult(it.name, WebSymbolNameSegment(0, it.name.length, it))
+              ListResult(it.name, WebSymbolNameSegment(0, it.name.length, it), displayName)
             }
 
           else -> emptyList()
