@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl;
+package com.intellij.platform.ide.menu;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -26,6 +26,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.LinuxGlobalMenuEventHandler;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.ui.ImageUtil;
 import com.sun.jna.Callback;
@@ -158,7 +159,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   private boolean myIsRootsUpdated = false;
   private boolean myIsEnabled = true;
   private boolean myIsDisposed = false;
-  private boolean myIsFirstFilling = true; // don't filter first packet of events (it causes slow reaction of KDE applet)
+  private boolean myIsFirstFilling = true; // don't filter a first packet of events (it causes slow reaction of KDE applet)
 
   private final GlobalMenuLib.JRunnable myOnWindowReleased;
   private final EventFilter myEventFilter = new EventFilter();
@@ -497,7 +498,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     return _findMenuItem(myRoots, uid);
   }
 
-  private static MenuItemInternal _findMenuItem(List<? extends MenuItemInternal> kids, int uid) {
+  private static MenuItemInternal _findMenuItem(List<MenuItemInternal> kids, int uid) {
     if (kids == null || kids.isEmpty()) {
       return null;
     }
@@ -1031,10 +1032,10 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
     void printHierarchy(StringBuilder out, int indent) {
       for (MenuItemInternal kid : children) {
-        if (out.length() > 0) {
+        if (!out.isEmpty()) {
           out.append('\n');
         }
-        for (int c = 0; c < indent; ++c) out.append('\t');
+        out.append("\t".repeat(Math.max(0, indent)));
         out.append(kid.toString());
         kid.printHierarchy(out, indent + 1);
       }

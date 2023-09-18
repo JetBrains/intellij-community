@@ -4,7 +4,6 @@ package com.intellij.platform.ide.menu
 import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.impl.doUpdateAppMenu
 import com.intellij.ui.mac.screenmenu.MenuBar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job

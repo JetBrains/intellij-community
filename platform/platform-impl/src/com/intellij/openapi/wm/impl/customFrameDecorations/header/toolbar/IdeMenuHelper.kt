@@ -2,7 +2,7 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
-import com.intellij.openapi.wm.impl.IdeJMenuBar
+import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.ui.JBColor
 import com.intellij.ui.plaf.beg.IdeaMenuUI
 import kotlinx.coroutines.CoroutineScope
@@ -35,10 +35,12 @@ internal class IdeMenuHelper(private val menu: IdeJMenuBar, coroutineScope: Coro
   }
 
   fun updateUI() {
-    val selectionBackground =
-      if (ProjectWindowCustomizerService.getInstance().isActive())
-        JBColor.namedColor("MainMenu.transparentSelectionBackground", IdeaMenuUI.getDefaultSelectionBackground())
-      else JBColor.namedColor("MainMenu.selectionBackground", IdeaMenuUI.getDefaultSelectionBackground())
+    val selectionBackground = if (ProjectWindowCustomizerService.getInstance().isActive()) {
+      JBColor.namedColor("MainMenu.transparentSelectionBackground", IdeaMenuUI.getDefaultSelectionBackground())
+    }
+    else {
+      JBColor.namedColor("MainMenu.selectionBackground", IdeaMenuUI.getDefaultSelectionBackground())
+    }
 
     for (i in 0..menu.menuCount - 1) {
       val menu = menu.getMenu(i)

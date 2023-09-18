@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.impl.GlobalMenuLinux;
+import com.intellij.platform.ide.menu.GlobalMenuLinux;
 import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 

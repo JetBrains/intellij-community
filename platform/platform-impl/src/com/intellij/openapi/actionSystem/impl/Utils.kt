@@ -35,8 +35,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.openapi.wm.impl.IdeJMenuBar
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.platform.ide.menu.MacNativeActionMenuItem
 import com.intellij.platform.ide.menu.createMacNativeActionMenu
 import com.intellij.ui.AnimatedIcon
@@ -452,6 +452,7 @@ object Utils {
          comp.getGutterRenderer(point.originalPoint) != null)) {
       return null
     }
+
     val isMenuItem = comp is ActionMenu
     val icon = JLabel(if (isMenuItem) AnimatedIcon.Default.INSTANCE else AnimatedIcon.Big.INSTANCE)
     val size = icon.getPreferredSize()

@@ -41,9 +41,7 @@ import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.platform.ide.menu.ActionAwareIdeMenuBar
-import com.intellij.platform.ide.menu.createMacMenuBar
-import com.intellij.platform.ide.menu.getAndWrapMainMenuActionGroup
+import com.intellij.platform.ide.menu.*
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
@@ -75,8 +73,6 @@ private inline fun mainToolbarHasNoActions(mainToolbarActionSupplier: () -> List
   return mainToolbarActionSupplier().all { it.first.getChildren(null).isEmpty() }
 }
 
-internal val isFloatingMenuBarSupported: Boolean
-  get() = !SystemInfoRt.isMac && FrameInfoHelper.isFullScreenSupportedInCurrentOs()
 
 @Suppress("LeakingThis")
 @ApiStatus.Internal

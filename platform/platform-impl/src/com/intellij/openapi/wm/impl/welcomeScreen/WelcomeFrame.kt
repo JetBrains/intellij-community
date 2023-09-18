@@ -24,9 +24,9 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.openapi.wm.impl.WindowManagerImpl
-import com.intellij.openapi.wm.impl.installAppMenuIfNeeded
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
+import com.intellij.platform.ide.menu.installAppMenuIfNeeded
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.BalloonLayoutImpl
 import com.intellij.ui.mac.touchbar.TouchbarSupport

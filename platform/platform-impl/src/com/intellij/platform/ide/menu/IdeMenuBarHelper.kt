@@ -19,7 +19,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.IdeMenuBarState
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow

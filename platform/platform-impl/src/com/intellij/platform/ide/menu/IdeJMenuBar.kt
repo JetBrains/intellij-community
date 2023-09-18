@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl
+package com.intellij.platform.ide.menu
 
 import com.intellij.DynamicBundle
 import com.intellij.ide.ui.UISettings
@@ -9,7 +9,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.platform.ide.menu.*
+import com.intellij.openapi.wm.impl.FrameInfoHelper
+import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.ui.Gray
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.mac.screenmenu.Menu
@@ -23,6 +24,9 @@ import java.awt.Graphics2D
 import java.awt.geom.AffineTransform
 import javax.swing.*
 import javax.swing.border.Border
+
+internal val isFloatingMenuBarSupported: Boolean
+  get() = !SystemInfoRt.isMac && FrameInfoHelper.isFullScreenSupportedInCurrentOs()
 
 internal enum class IdeMenuBarState {
   EXPANDED,

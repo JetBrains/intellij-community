@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSuppor
 import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.adaptV2Widget
+import com.intellij.platform.ide.menu.installAppMenuIfNeeded
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
