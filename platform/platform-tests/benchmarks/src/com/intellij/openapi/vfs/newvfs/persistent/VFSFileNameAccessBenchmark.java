@@ -190,8 +190,9 @@ public class VFSFileNameAccessBenchmark {
         "-Dvfs.name-cache.check-names=false",
         "-Dvfs.name-cache.track-stats=false",
 
-        "-Dvfs.name-cache.enable=true",
-        //"-Dvfs.name-cache.use-mru=true",
+        "-Dvfs.name-cache.impl=mru",
+        //"-Dvfs.name-cache.impl=none",
+        //"-Dvfs.name-cache.impl=slru",
 
         "-Dvfs.use-fast-names-enumerator=false"
       )

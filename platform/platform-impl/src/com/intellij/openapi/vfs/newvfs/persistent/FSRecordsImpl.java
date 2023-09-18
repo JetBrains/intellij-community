@@ -82,18 +82,27 @@ public final class FSRecordsImpl {
 
   //@formatter:off
 
-  public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = getBooleanProperty("vfs.use-streamlined-attributes-storage", true);
+  public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = getBooleanProperty("vfs.attributes-storage.streamlined", true);
+  /** Supported values: 'over-old-page-cache', 'over-lock-free-page-cache', 'over-mmapped-file'... */
+  private static final String ATTRIBUTES_STORAGE_IMPL = System.getProperty("vfs.attributes-storage.impl", "over-lock-free-page-cache");
+  public static final boolean USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE = "over-lock-free-page-cache".equals(ATTRIBUTES_STORAGE_IMPL);
+  public static final boolean USE_ATTRIBUTES_OVER_MMAPPED_FILE = "over-mmapped-file".equals(ATTRIBUTES_STORAGE_IMPL);
+  
   public static final boolean USE_RAW_ACCESS_TO_READ_CHILDREN = getBooleanProperty("vfs.use-raw-access-to-read-children", true);
-  public static final boolean USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE = getBooleanProperty("vfs.attributes-storage.use-lock-free-page-cache", true);
-  public static final boolean USE_ATTRIBUTES_OVER_MMAPPED_FILE = getBooleanProperty("vfs.attributes-storage.use-mmapped-file", false);
 
   public static final boolean USE_FAST_NAMES_IMPLEMENTATION = getBooleanProperty("vfs.use-fast-names-enumerator", true);
-  private static final boolean USE_FILE_NAME_CACHE = getBooleanProperty("vfs.name-cache.enable", true);
-  private static final boolean USE_MRU_FILE_NAME_CACHE = getBooleanProperty("vfs.name-cache.use-mru", true);
 
-  public static final boolean USE_CONTENT_STORAGE_OVER_NEW_FILE_PAGE_CACHE = getBooleanProperty("vfs.content-storage.use-lock-free-page-cache", true);
+  /** Supported values: 'none', 'slru', 'mru' */
+  private static final String NAME_CACHE_IMPL = System.getProperty("vfs.name-cache.impl", "mru");
+  private static final boolean USE_FILE_NAME_CACHE = !"none".equals(NAME_CACHE_IMPL);
+  private static final boolean USE_MRU_FILE_NAME_CACHE = "mru".equals(NAME_CACHE_IMPL);
 
-  public static final boolean USE_CONTENT_HASH_STORAGE_OVER_MMAPPED_FILE = getBooleanProperty("vfs.content-hash-storage.use-mmapped-file", false);
+
+  private static final String CONTENT_STORAGE_IMPL = System.getProperty("vfs.content-storage.impl", "over-lock-free-page-cache");
+  public static final boolean USE_CONTENT_STORAGE_OVER_NEW_FILE_PAGE_CACHE = "over-lock-free-page-cache".equals(CONTENT_STORAGE_IMPL);
+
+  private static final String CONTENT_HASH_IMPL = System.getProperty("vfs.content-hash-storage.impl", "over-old-page-cache");
+  public static final boolean USE_CONTENT_HASH_STORAGE_OVER_MMAPPED_FILE = "over-mmapped-file".equals(CONTENT_HASH_IMPL);
   //@formatter:on
 
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
@@ -211,7 +220,7 @@ public final class FSRecordsImpl {
            nextMask(PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED && USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE,//pageSize was changed on old<->new transition
            nextMask(true,  //former 'inline attributes', feel free to re-use
            nextMask(getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER, false),
-           nextMask(USE_ATTRIBUTES_OVER_MMAPPED_FILE, // feel free to re-use
+           nextMask(USE_ATTRIBUTES_OVER_MMAPPED_FILE, 
            nextMask(true,  // former USE_SMALL_ATTR_TABLE, feel free to re-use
            nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
            nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
@@ -460,7 +469,8 @@ public final class FSRecordsImpl {
     return connection.isDirty();
   }
 
-  @Nullable VfsLogEx getVfsLog() {
+  @Nullable
+  VfsLogEx getVfsLog() {
     return connection.getVfsLog();
   }
 
@@ -478,7 +488,8 @@ public final class FSRecordsImpl {
   /**
    * @return records (ids) freed in previous session, and not yet re-used in a current session.
    */
-  @NotNull IntList getRemainFreeRecords() {
+  @NotNull
+  IntList getRemainFreeRecords() {
     checkNotDisposed();
     return connection.getFreeRecords();
   }
@@ -488,7 +499,8 @@ public final class FSRecordsImpl {
    * Returns !empty list only in unit-tests -- outside of testing records freed in a current session are marked by REMOVED
    * flag, but not collected into free-list
    */
-  @NotNull IntList getNewFreeRecords() {
+  @NotNull
+  IntList getNewFreeRecords() {
     return recordAccessor.getNewFreeRecords();
   }
 
@@ -623,7 +635,9 @@ public final class FSRecordsImpl {
     }
   }
 
-  @NotNull @Unmodifiable List<CharSequence> listNames(int parentId) {
+  @NotNull
+  @Unmodifiable
+  List<CharSequence> listNames(int parentId) {
     return ContainerUtil.map(list(parentId).children, ChildInfo::getName);
   }
 
@@ -644,9 +658,10 @@ public final class FSRecordsImpl {
    * <p>
    * TODO actually everything related to this method is kinda of guru code. Please, don't touch it, people are bad in parallel programming.
    */
-  @NotNull ListResult update(@NotNull VirtualFile parent,
-                             int parentId,
-                             @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
+  @NotNull
+  ListResult update(@NotNull VirtualFile parent,
+                    int parentId,
+                    @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
     SlowOperations.assertSlowOperationsAreAllowed();
     assert parentId > 0 : parentId;
     ListResult children = list(parentId);
@@ -769,7 +784,8 @@ public final class FSRecordsImpl {
     }
   }
 
-  @Nullable String readSymlinkTarget(int fileId) {
+  @Nullable
+  String readSymlinkTarget(int fileId) {
     try (DataInputStream stream = readAttribute(fileId, SYMLINK_TARGET_ATTRIBUTE)) {
       if (stream != null) {
         try {
@@ -847,7 +863,8 @@ public final class FSRecordsImpl {
 
   //========== file record fields accessors: ========================================
 
-  @PersistentFS.Attributes int getFlags(int fileId) {
+  @PersistentFS.Attributes
+  int getFlags(int fileId) {
     try {
       checkNotDisposed();
       return connection.getRecords().getFlags(fileId);
@@ -1097,8 +1114,9 @@ public final class FSRecordsImpl {
 
   //========== file attributes accessors: ========================================
 
-  @Nullable AttributeInputStream readAttributeWithLock(int fileId,
-                                                       @NotNull FileAttribute attribute) {
+  @Nullable
+  AttributeInputStream readAttributeWithLock(int fileId,
+                                             @NotNull FileAttribute attribute) {
     //RC: attributeAccessor acquires lock anyway, no need for additional lock here
     try {
       return readAttribute(fileId, attribute);
@@ -1114,8 +1132,9 @@ public final class FSRecordsImpl {
     return attributeAccessor.readAttribute(fileId, attribute);
   }
 
-  @NotNull AttributeOutputStream writeAttribute(int fileId,
-                                                @NotNull FileAttribute attribute) {
+  @NotNull
+  AttributeOutputStream writeAttribute(int fileId,
+                                       @NotNull FileAttribute attribute) {
     return attributeAccessor.writeAttribute(fileId, attribute);
   }
 
@@ -1149,7 +1168,8 @@ public final class FSRecordsImpl {
 
   //========== file content accessors: ========================================
 
-  @Nullable DataInputStream readContent(int fileId) {
+  @Nullable
+  DataInputStream readContent(int fileId) {
     try {
       return contentAccessor.readContent(fileId);
     }
@@ -1175,7 +1195,8 @@ public final class FSRecordsImpl {
     }
   }
 
-  @NotNull DataInputStream readContentById(int contentId) {
+  @NotNull
+  DataInputStream readContentById(int contentId) {
     try {
       return contentAccessor.readContentDirectly(contentId);
     }
@@ -1210,8 +1231,9 @@ public final class FSRecordsImpl {
     }
   }
 
-  @NotNull DataOutputStream writeContent(int fileId,
-                                         boolean fixedSize) {
+  @NotNull
+  DataOutputStream writeContent(int fileId,
+                                boolean fixedSize) {
     return new DataOutputStream(contentAccessor.new ContentOutputStream(fileId, fixedSize)) {
       @Override
       public void close() {
@@ -1328,8 +1350,9 @@ public final class FSRecordsImpl {
     invertedNameIndexLazy.getValue().checkConsistency();
   }
 
-  @NotNull String describeAlreadyCreatedFile(int fileId,
-                                             int nameId) {
+  @NotNull
+  String describeAlreadyCreatedFile(int fileId,
+                                    int nameId) {
     //RC: Actually, this method is better to be in VfsData class from there it is called.
     //    The only non-public method needed is .list(parentId) -- all other methods are
     //    open to be called from VfsData.
