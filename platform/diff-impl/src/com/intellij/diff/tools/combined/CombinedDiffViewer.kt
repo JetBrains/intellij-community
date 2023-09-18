@@ -34,10 +34,12 @@ import com.intellij.openapi.editor.impl.ScrollingModelImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.JBColor
 import com.intellij.ui.ListenerUtil
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
@@ -83,13 +85,15 @@ class CombinedDiffViewer(
   ).apply {
     DataManager.registerDataProvider(this, this@CombinedDiffViewer)
     border = JBUI.Borders.empty()
-    viewportBorder = JBUI.Borders.empty()
+    viewportBorder = JBUI.Borders.customLineTop(CombinedDiffUI.MAIN_HEADER_BACKGROUND)
     viewport.addChangeListener(ViewportChangeListener())
   }
 
   private val stickyHeaderPanel: Wrapper = Wrapper().apply {
     isOpaque = true
   }
+
+  private val separatorPanel = JPanel(null)
 
   private val contentPanel: JComponent = object : JBLayeredPane() {
     override fun getPreferredSize(): Dimension = scrollPane.preferredSize
@@ -101,6 +105,7 @@ class CombinedDiffViewer(
     isFocusable = false
     add(scrollPane, JLayeredPane.DEFAULT_LAYER, 0)
     add(stickyHeaderPanel, JLayeredPane.POPUP_LAYER, 1)
+    add(separatorPanel, JLayeredPane.POPUP_LAYER, 0)
   }
 
   private val scrollSupport = CombinedDiffScrollSupport(project, this)
@@ -332,7 +337,8 @@ class CombinedDiffViewer(
     val viewRect = scrollPane.viewport.viewRect
     val bounds = blocksPanel.getBlockBounds().firstOrNull { viewRect.intersects(it) } ?: return
     val block = diffBlocks[bounds.blockId]
-    if (block == null) {
+    if (block == null || bounds.minY > viewRect.minY) {
+      separatorPanel.background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
       stickyHeaderPanel.setContent(null)
       stickyHeaderPanel.repaint()
       return
@@ -345,11 +351,14 @@ class CombinedDiffViewer(
     val stickyHeaderY = headerHeightInViewport - headerHeight
 
     //scrollPane.verticalScrollBar.add(JBScrollBar.LEADING, stickyHeader)
-    val showBorder = viewRect.minY > block.component.bounds.minY
+    val showBorder = headerHeightInViewport < headerHeight
+    stickyHeaderPanel.removeAll()
     stickyHeaderPanel.setContent(stickyHeader)
-    stickyHeaderPanel.setBounds(0, stickyHeaderY, block.component.width, headerHeight)
-    stickyHeaderPanel.border = JBUI.Borders.customLineBottom(
-      if (!showBorder) CombinedDiffUI.MAIN_HEADER_BACKGROUND else CombinedDiffUI.EDITOR_BORDER_COLOR)
+    stickyHeaderPanel.setBounds(JBUIScale.scale(CombinedDiffUI.LEFT_RIGHT_INSET),
+                                stickyHeaderY + 1, block.component.width,
+                                headerHeight)
+    separatorPanel.background = if (showBorder) JBColor.border() else CombinedDiffUI.MAIN_HEADER_BACKGROUND
+    separatorPanel.setBounds(0, 0, contentPanel.width, 1)
     stickyHeaderPanel.repaint()
   }
 

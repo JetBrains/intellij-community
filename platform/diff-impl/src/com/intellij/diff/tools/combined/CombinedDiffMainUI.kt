@@ -241,10 +241,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
       .addToLeft(leftToolbarWrapper)
       .addToRight(rightToolbarWrapper)
       .apply {
-        border = JBUI.Borders.compound(
-          JBUI.Borders.customLineBottom(CombinedDiffUI.EDITOR_BORDER_COLOR),
-          JBUI.Borders.empty(CombinedDiffUI.MAIN_HEADER_INSETS)
-        )
+        border = JBUI.Borders.empty(CombinedDiffUI.MAIN_HEADER_INSETS)
       }
     GuiUtils.installVisibilityReferent(topPanel, leftToolbar.component)
     GuiUtils.installVisibilityReferent(topPanel, rightToolbar.component)

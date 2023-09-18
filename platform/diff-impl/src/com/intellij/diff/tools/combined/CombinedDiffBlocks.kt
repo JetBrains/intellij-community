@@ -23,11 +23,11 @@ import com.intellij.util.IconUtil.getIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.FlowLayout
 import javax.swing.Icon
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 interface CombinedBlockId
 
@@ -143,39 +143,26 @@ class CombinedSimpleDiffHeader(project: Project,
 
 data class CombinedPathBlockId(val path: FilePath, val fileStatus: FileStatus, val tag: Any? = null) : CombinedBlockId
 
-class CombinedSimpleDiffBlock(project: Project,
-                              override val id: CombinedPathBlockId,
-                              initialContent: JComponent,
-                              isPathOnlyHeader: Boolean) :
-  JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)),
-  CombinedDiffBlock<CombinedPathBlockId> {
+internal class CombinedSimpleDiffBlock(project: Project,
+                                       override val id: CombinedPathBlockId,
+                                       initialContent: JComponent,
+                                       isPathOnlyHeader: Boolean
+) : CombinedDiffBlock<CombinedPathBlockId>,
+    RoundedPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true), CombinedDiffUI.BLOCK_ARC) {
 
   private val pathOnlyHeader: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, true)
   private val headerWithToolbar: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, false)
 
-  override val header: Wrapper = Wrapper(if (isPathOnlyHeader) pathOnlyHeader else headerWithToolbar).apply {
-    border = JBUI.Borders.customLineTop(CombinedDiffUI.EDITOR_BORDER_COLOR)
+  override val header: Wrapper = Wrapper(if (isPathOnlyHeader) pathOnlyHeader else headerWithToolbar)
+
+  override val stickyHeader: JComponent  = RoundedPanel(BorderLayout(0, 0), CombinedDiffUI.BLOCK_ARC, true)
+  .apply {
+    add(CombinedSimpleDiffHeader(project, id, false), BorderLayout.CENTER)
   }
 
-  override val stickyHeader: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, false)
   override val body: Wrapper = Wrapper(initialContent)
 
   private var editors: List<EditorEx> = emptyList()
-
-  init {
-    add(header)
-    add(body)
-    isOpaque = true
-    background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
-  }
-
-  override fun updateBlockContent(newContent: CombinedDiffBlockContent) {
-    val viewer = newContent.viewer
-    editors = viewer.editors
-    body.setContent(viewer.component)
-    header.setContent(if (viewer is CombinedDiffLoadingBlock) pathOnlyHeader else headerWithToolbar)
-    this.validate()
-  }
 
   override fun getPreferredSize(): Dimension {
     val preferredSize = super.getPreferredSize()
@@ -192,6 +179,23 @@ class CombinedSimpleDiffBlock(project: Project,
     return preferredSize
   }
 
+
+  init {
+    add(header)
+    add(body)
+    isOpaque = true
+    background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
+  }
+
+  override fun updateBlockContent(newContent: CombinedDiffBlockContent) {
+    val viewer = newContent.viewer
+    editors = viewer.editors
+    body.setContent(viewer.component)
+    header.setContent(if (viewer is CombinedDiffLoadingBlock) pathOnlyHeader else headerWithToolbar)
+    validate()
+  }
+
   override val component = this
   override fun dispose() {}
 }
+

@@ -1246,6 +1246,8 @@ private fun applyDensityOnUpdateUi(defaults: UIDefaults) {
     // VCS Combined Diff
     defaults.put(JBUI.CurrentTheme.VersionControl.CombinedDiff.mainToolbarInsetsKey(), cmInsets(1, 10))
     defaults.put(JBUI.CurrentTheme.VersionControl.CombinedDiff.fileToolbarInsetsKey(), cmInsets(7, 10))
+    defaults.put(JBUI.CurrentTheme.VersionControl.CombinedDiff.gapBetweenBlocksKey(), 4)
+    defaults.put(JBUI.CurrentTheme.VersionControl.CombinedDiff.leftRightBlockInsetKey(), 6)
   }
 }
 

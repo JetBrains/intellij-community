@@ -1671,6 +1671,22 @@ public final class JBUI {
         public static @NotNull String fileToolbarInsetsKey() {
           return "CombinedDiff.fileToolbarInsets";
         }
+
+        public static int leftRightBlockInset() {
+          return getInt(leftRightBlockInsetKey(), 12);
+        }
+
+        public static @NotNull String leftRightBlockInsetKey() {
+          return "CombinedDiff.leftRightBlockInset";
+        }
+
+        public static int gapBetweenBlocks() {
+          return getInt(gapBetweenBlocksKey(), 10);
+        }
+
+        public static @NotNull String gapBetweenBlocksKey() {
+          return "CombinedDiff.gapBetweenBlocks";
+        }
       }
     }
 
