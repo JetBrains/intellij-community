@@ -831,7 +831,7 @@ private fun createMacAwareMenuBar(frame: JFrame,
     else {
       val menuBar = IdeJMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = mainMenuActionGroup)
       // if -DjbScreenMenuBar.enabled=false
-      frame.jMenuBar = menuBar
+      if (frame.rootPane != null) frame.jMenuBar = menuBar
       if (!ExperimentalUI.isNewUI()) component.jMenuBar = menuBar
       menuBar
     }
