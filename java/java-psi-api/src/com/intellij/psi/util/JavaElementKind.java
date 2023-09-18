@@ -43,7 +43,8 @@ public enum JavaElementKind {
   EXTENDS_LIST("element.extends.list"),
   RECEIVER_PARAMETER("element.receiver.parameter"),
   METHOD_CALL("element.method.call"),
-  TYPE_ARGUMENTS("element.type.arguments");
+  TYPE_ARGUMENTS("element.type.arguments"),
+  SEMICOLON("element.type.semicolon");
   
   private final @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String propertyKey;
 
@@ -190,6 +191,9 @@ public enum JavaElementKind {
     }
     if (element instanceof PsiSnippetDocTagBody) {
       return SNIPPET_BODY;
+    }
+    if (PsiUtil.isJavaToken(element, JavaTokenType.SEMICOLON)) {
+      return SEMICOLON;
     }
     return UNKNOWN;
   }

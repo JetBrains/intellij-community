@@ -613,7 +613,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (!hasErrorResults()) {
-      add(HighlightUtil.checkLoneSemicolonBetweenPackageStatements(token, type, myLanguageLevel));
+      add(HighlightUtil.checkExtraSemicolonBetweenImportStatements(token, type, myLanguageLevel));
     }
   }
 
