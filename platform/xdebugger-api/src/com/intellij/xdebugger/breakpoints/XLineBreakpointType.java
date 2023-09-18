@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger.breakpoints;
 
@@ -106,7 +106,6 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   // Preserved for API compatibility
-  @SuppressWarnings("RedundantMethodOverride")
   @Override
   public List<? extends AnAction> getAdditionalPopupMenuActions(@NotNull XLineBreakpoint<P> breakpoint, @Nullable XDebugSession currentSession) {
     return super.getAdditionalPopupMenuActions(breakpoint, currentSession);
