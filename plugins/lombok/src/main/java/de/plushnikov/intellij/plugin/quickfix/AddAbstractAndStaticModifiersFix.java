@@ -1,42 +1,27 @@
 package de.plushnikov.intellij.plugin.quickfix;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class AddAbstractAndStaticModifiersFix extends ModCommandQuickFix {
+public class AddAbstractAndStaticModifiersFix extends PsiUpdateModCommandAction<PsiClass> {
   private final String myName;
-  private final SmartPsiElementPointer<PsiElement> myStartElement;
 
   public AddAbstractAndStaticModifiersFix(@NotNull PsiClass psiClass) {
+    super(psiClass);
     myName = psiClass.getName();
-    myStartElement =
-      SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass, psiClass.getContainingFile());
   }
 
   @Override
-  public final @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement psiElement = myStartElement.getElement();
-    if (null != psiElement) {
-      return ModCommand.psiUpdate(psiElement, (e, updater) -> applyFix(e, updater));
-    }
-    else {
-      return ModCommand.nop();
-    }
-  }
-
-  private static void applyFix(@NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-    final PsiModifierListOwner modifierListOwner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false);
-    if (modifierListOwner == null) {
-      return;
-    }
-    final PsiModifierList modifiers = modifierListOwner.getModifierList();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiClass psiClass, @NotNull ModPsiUpdater updater) {
+    final PsiModifierList modifiers = psiClass.getModifierList();
     if (modifiers != null) {
       modifiers.setModifierProperty(PsiModifier.ABSTRACT, true);
       modifiers.setModifierProperty(PsiModifier.STATIC, true);
@@ -44,9 +29,8 @@ public class AddAbstractAndStaticModifiersFix extends ModCommandQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
-    return LombokBundle.message("make.abstract.and.static.modifier.quickfix", myName);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiClass element) {
+    return Presentation.of(LombokBundle.message("make.abstract.and.static.modifier.quickfix", myName));
   }
 
   @NotNull

@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
@@ -63,7 +64,7 @@ public class SuperBuilderHandler extends BuilderHandler {
           problemSink.addErrorMessage("inspection.message.existing.builder.must.be.abstract.static.inner.class");
 
         if (!isAbstract && !isStatic) {
-          problem.withLocalQuickFixes(() -> new AddAbstractAndStaticModifiersFix(existingInnerBuilderClass));
+          problem.withLocalQuickFixes(() -> LocalQuickFix.from(new AddAbstractAndStaticModifiersFix(existingInnerBuilderClass)));
         }
         else if (!isAbstract) {
           problem.withLocalQuickFixes(() -> new ModifierFix(existingInnerBuilderClass, PsiModifier.ABSTRACT, true, false));
