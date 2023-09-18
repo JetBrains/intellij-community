@@ -104,9 +104,11 @@ private val LOOKUP = MethodHandles.lookup()
 private fun parseBorderColorOrBorderClass(value: String, classLoader: ClassLoader): Any? {
   val color = parseColorOrNull(value = value, key = null)
   if (color == null) {
-    val aClass = classLoader.loadClass(value)
-    val constructor = MethodHandles.privateLookupIn(aClass, LOOKUP).findConstructor(aClass, MethodType.methodType(Void.TYPE))
-    return constructor.invoke()
+    return UIDefaults.LazyValue {
+      val aClass = classLoader.loadClass(value)
+      val constructor = MethodHandles.privateLookupIn(aClass, LOOKUP).findConstructor(aClass, MethodType.methodType(Void.TYPE))
+      constructor.invoke()
+    }
   }
   else {
     return JBUI.asUIResource(JBUI.Borders.customLine(color, 1))
