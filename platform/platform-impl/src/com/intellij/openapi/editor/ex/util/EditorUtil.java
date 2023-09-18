@@ -852,6 +852,9 @@ public final class EditorUtil {
    * presentation mode, when adjusted presentation mode font size is used). Returned font has fallback variants (i.e. if main font doesn't
    * support certain Unicode characters, some other font may be used to display them), but fallback mechanism differs from the one used in
    * editor.
+   * <p/>
+   * <b>Note:</b> it's not a font used in the exact instance of {@link Editor},
+   * because of presentation mode adjustment and because of per-editor font size scaling.
    */
   public static Font getEditorFont() {
     float fontSize = UISettingsUtils.getInstance().getScaledEditorFontSize();

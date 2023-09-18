@@ -10,9 +10,9 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.ui.JBColor;
 import com.intellij.util.BitUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IconUtil;
@@ -35,6 +34,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -501,12 +501,18 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       return (inlay.getEditor() instanceof EditorImpl) ? ((EditorImpl)editor).getScale() : 1;
     }
 
+    @NotNull
+    private static FontMetrics getEditorFontMetrics(@NotNull Editor editor) {
+      var colorsScheme = editor.getColorsScheme();
+      var font = UIUtil.getFontWithFallback(colorsScheme.getFont(EditorFontType.PLAIN));
+      var context = FontInfo.getFontRenderContext(editor.getContentComponent());
+      return FontInfo.getFontMetrics(font, context);
+    }
+
     @Override
     public int calcWidthInPixels(@NotNull Inlay inlay) {
-      // FIXME[inline-bp]: we have to use inlay.getEditor()'s font, not global one, because you can change font size per editor
+      var fontMetrics = getEditorFontMetrics(inlay.getEditor());
       var twoChars = "nn"; // Use two average width characters (might be important for non-monospaced fonts).
-      var fontMetrics = FontInfo.getFontMetrics(EditorUtil.getEditorFont(),
-                                                FontInfo.getFontRenderContext(inlay.getEditor().getContentComponent()));
       return fontMetrics.stringWidth(twoChars);
     }
 
@@ -537,13 +543,6 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
       // FIXME[inline-bp]: limit icon size to region size with some padding
       Icon scaledIcon = IconUtil.scale(baseIcon, component, scale());
-
-      // FIXME[inline-bp]: remove this temporary green border
-      //noinspection ConstantValue
-      if (false) {
-        g.setColor(JBColor.GREEN);
-        g.drawRect(targetRegion.x, targetRegion.y, targetRegion.width, targetRegion.height);
-      }
 
       // Draw icon in the center of the region.
       var x = targetRegion.x + targetRegion.width / 2 - scaledIcon.getIconWidth() / 2;
