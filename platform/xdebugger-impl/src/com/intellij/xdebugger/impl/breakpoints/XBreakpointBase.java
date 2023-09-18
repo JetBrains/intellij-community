@@ -34,10 +34,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.breakpoints.SuspendPolicy;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerSupport;
@@ -726,6 +723,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   static class BreakpointGutterIconMerge implements GutterMarkPreprocessor {
     @Override
     public @NotNull List<GutterMark> processMarkers(@NotNull List<GutterMark> marks) {
+      // In general, it seems ok to merge breakpoints because they are drawn one over another in the new UI.
+      // But we disable it in the old mode just for ease of regressions debugging.
+      if (!XLineBreakpointManager.shouldShowBreakpointsInline()) return marks;
+
       var breakpointCount = ContainerUtil.count(marks, m -> m instanceof CommonBreakpointGutterIconRenderer);
       if (breakpointCount <= 1) {
         return marks;
