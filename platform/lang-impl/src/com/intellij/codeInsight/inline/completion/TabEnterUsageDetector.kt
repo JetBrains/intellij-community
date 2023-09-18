@@ -28,11 +28,11 @@ private class TabEnterUsageDetector : LookupManagerListener {
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
     if (detectionFinished()) {
       // Reset previous shortcut for InsertInlineCompletionAction and change to a new one from user's behaviour
-      inlineCompletionChar()?.let { char ->
+      inlineCompletionChar()?.let(::charToShortcut)?.let { shortcut ->
         val keymap = KeymapManager.getInstance().activeKeymap
 
         keymap.removeAllActionShortcuts("InsertInlineCompletionAction")
-        keymap.addShortcut("InsertInlineCompletionAction", KeyboardShortcut(KeyStroke.getKeyStroke(char), null))
+        keymap.addShortcut("InsertInlineCompletionAction", KeyboardShortcut(shortcut, null))
       }
       return
     }
@@ -44,6 +44,14 @@ private class TabEnterUsageDetector : LookupManagerListener {
         }
       }
     })
+  }
+
+  private fun charToShortcut(c: Char): KeyStroke? {
+    return when (c) {
+      '\t' -> "pressed TAB"
+      '\n' -> "pressed ENTER"
+      else -> null
+    }?.let(KeyStroke::getKeyStroke)
   }
 
   private fun inlineCompletionChar(): Char? {
