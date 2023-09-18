@@ -68,7 +68,10 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
         it.filenamePatterns.map { pattern -> TextMateFileNameMatcher.Pattern(pattern) }
       } ?: emptyList()
 
-      TextMateGrammar(fileNameMatchers = fileNameMatchers, plist = plist, overrideName = language?.aliases?.firstOrNull(),
+      TextMateGrammar(fileNameMatchers = fileNameMatchers,
+                      firstLinePattern = language?.firstLine,
+                      plist = plist,
+                      overrideName = language?.aliases?.firstOrNull(),
                       overrideScopeName = grammar.scopeName)
     }
   }
@@ -170,7 +173,8 @@ data class VSCodeExtensionLanguage(val id: VSCodeExtensionLanguageId,
                                    val extensions: List<String> = emptyList(),
                                    val aliases: List<String> = emptyList(),
                                    val filenamePatterns: List<String> = emptyList(),
-                                   val configuration: String?)
+                                   val configuration: String?,
+                                   val firstLine: String?)
 
 data class VSCodeExtensionGrammar(val language: VSCodeExtensionLanguageId?,
                                   val scopeName: String,

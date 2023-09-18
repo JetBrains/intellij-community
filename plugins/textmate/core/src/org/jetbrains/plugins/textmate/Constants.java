@@ -16,6 +16,8 @@ public interface Constants {
   @NonNls String VALUE_KEY = "value";
   @NonNls String TAB_TRIGGER_KEY = "tabTrigger";
   @NonNls String FILE_TYPES_KEY = "fileTypes";
+
+  @NonNls String FIRST_LINE_MATCH = "firstLineMatch";
   @NonNls String INCLUDE_KEY = "include";
   @NonNls String REPOSITORY_KEY = "repository";
   @NonNls String PATTERNS_KEY = "patterns";

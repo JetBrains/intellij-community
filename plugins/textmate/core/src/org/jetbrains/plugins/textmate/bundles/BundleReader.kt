@@ -30,6 +30,7 @@ interface TextMateBundleReader {
 typealias TextMateScopeName = CharSequence
 
 data class TextMateGrammar(val fileNameMatchers: Collection<TextMateFileNameMatcher>,
+                           val firstLinePattern: String?,
                            val plist: Lazy<Plist>,
                            val overrideName: String?,
                            val overrideScopeName: String?)
@@ -58,7 +59,12 @@ fun readTextMateBundle(path: Path): TextMateBundleReader {
         val fileNameMatchers = plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList<Any>()).stringArray.flatMap { s ->
           listOf(TextMateFileNameMatcher.Name(s), TextMateFileNameMatcher.Extension(s))
         }
-        TextMateGrammar(fileNameMatchers = fileNameMatchers, plist = lazy { plist }, overrideName = null, overrideScopeName = null)
+        val firstLinePattern = plist.getPlistValue(Constants.FIRST_LINE_MATCH)?.string
+        TextMateGrammar(fileNameMatchers = fileNameMatchers,
+                        firstLinePattern = firstLinePattern,
+                        plist = lazy { plist },
+                        overrideName = null,
+                        overrideScopeName = null)
       }
     }
 
@@ -87,7 +93,12 @@ fun readSublimeBundle(path: Path): TextMateBundleReader {
         val fileNameMatchers = plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList<Any>()).stringArray.flatMap { s ->
           listOf(TextMateFileNameMatcher.Name(s), TextMateFileNameMatcher.Extension(s))
         }
-        TextMateGrammar(fileNameMatchers = fileNameMatchers, plist = lazy { plist }, overrideName = null, overrideScopeName = null)
+        val firstLinePattern = plist.getPlistValue(Constants.FIRST_LINE_MATCH)?.string
+        TextMateGrammar(fileNameMatchers = fileNameMatchers,
+                        firstLinePattern = firstLinePattern,
+                        plist = lazy { plist },
+                        overrideName = null,
+                        overrideScopeName = null)
       }
     }
 
