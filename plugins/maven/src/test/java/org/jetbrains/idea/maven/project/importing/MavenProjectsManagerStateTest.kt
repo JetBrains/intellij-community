@@ -1,41 +1,34 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.project.importing;
+package org.jetbrains.idea.maven.project.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.project.MavenProjectsManagerState;
-import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
-import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.junit.Assume;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.jetbrains.idea.maven.project.MavenProjectsManagerState
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
+import org.jetbrains.idea.maven.utils.MavenUtil
+import org.junit.Assume
+import org.junit.Test
+import java.util.*
 
-import java.util.Arrays;
-import java.util.Collections;
+class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = false
 
-public class MavenProjectsManagerStateTest extends MavenMultiVersionImportingTestCase {
-  @Override
-  protected boolean runInDispatchThread() {
-    return false;
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    initProjectsManager(true);
-    Assume.assumeFalse(MavenUtil.isLinearImportEnabled());
+  override fun setUp() {
+    super.setUp()
+    initProjectsManager(true)
+    Assume.assumeFalse(MavenUtil.isLinearImportEnabled())
   }
 
   @Test
-  public void testSavingAndLoadingState() {
-    MavenProjectsManagerState state = getProjectsManager().getState();
-    assertTrue(state.originalFiles.isEmpty());
-    assertTrue(MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().enabledProfiles.isEmpty());
-    assertTrue(state.ignoredFiles.isEmpty());
-    assertTrue(state.ignoredPathMasks.isEmpty());
+  fun testSavingAndLoadingState() {
+    var state = projectsManager.getState()
+    assertTrue(state!!.originalFiles.isEmpty())
+    assertTrue(MavenWorkspaceSettingsComponent.getInstance(myProject).settings.enabledProfiles.isEmpty())
+    assertTrue(state.ignoredFiles.isEmpty())
+    assertTrue(state.ignoredPathMasks.isEmpty())
 
-    VirtualFile p1 = createModulePom("project1",
-                                     """
+    val p1 = createModulePom("project1",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>project1</artifactId>
                                        <version>1</version>
@@ -50,10 +43,11 @@ public class MavenProjectsManagerStateTest extends MavenMultiVersionImportingTes
                                          <id>three</id>
                                         </profile>
                                        </profiles>
-                                       """);
+                                       
+                                       """.trimIndent())
 
-    VirtualFile p2 = createModulePom("project2",
-                                     """
+    val p2 = createModulePom("project2",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>project2</artifactId>
                                        <version>1</version>
@@ -61,43 +55,45 @@ public class MavenProjectsManagerStateTest extends MavenMultiVersionImportingTes
                                        <modules>
                                          <module>../project3</module>
                                        </modules>
-                                       """);
+                                       
+                                       """.trimIndent())
 
-    VirtualFile p3 = createModulePom("project3",
-                                     """
+    val p3 = createModulePom("project3",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>project3</artifactId>
                                        <version>1</version>
-                                       """);
+                                       
+                                       """.trimIndent())
 
-    importProjects(p1, p2);
-    getProjectsManager().setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList("one", "two")));
-    setIgnoredFilesPathForNextImport(Arrays.asList(p1.getPath()));
-    setIgnoredPathPatternsForNextImport(Arrays.asList("*.xxx"));
+    importProjects(p1, p2)
+    projectsManager.explicitProfiles = MavenExplicitProfiles(mutableListOf("one", "two"))
+    setIgnoredFilesPathForNextImport(Arrays.asList(p1.getPath()))
+    setIgnoredPathPatternsForNextImport(mutableListOf<String?>("*.xxx"))
 
-    state = getProjectsManager().getState();
-    assertUnorderedPathsAreEqual(state.originalFiles, Arrays.asList(p1.getPath(), p2.getPath()));
-    assertUnorderedElementsAreEqual(MavenWorkspaceSettingsComponent.getInstance(myProject).getState().enabledProfiles, "one", "two");
-    assertUnorderedPathsAreEqual(state.ignoredFiles, Arrays.asList(p1.getPath()));
-    assertUnorderedElementsAreEqual(state.ignoredPathMasks, "*.xxx");
+    state = projectsManager.getState()
+    assertUnorderedPathsAreEqual(state!!.originalFiles, Arrays.asList(p1.getPath(), p2.getPath()))
+    assertUnorderedElementsAreEqual(MavenWorkspaceSettingsComponent.getInstance(myProject).getState().enabledProfiles, "one", "two")
+    assertUnorderedPathsAreEqual(state.ignoredFiles, Arrays.asList(p1.getPath()))
+    assertUnorderedElementsAreEqual(state.ignoredPathMasks, "*.xxx")
 
-    MavenProjectsManagerState newState = new MavenProjectsManagerState();
+    val newState = MavenProjectsManagerState()
 
-    newState.originalFiles = Arrays.asList(p1.getPath(), p3.getPath());
-    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().setEnabledProfiles(Arrays.asList("three"));
-    newState.ignoredFiles = Collections.singleton(p1.getPath());
-    newState.ignoredPathMasks = Arrays.asList("*.zzz");
+    newState.originalFiles = Arrays.asList(p1.getPath(), p3.getPath())
+    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.setEnabledProfiles(mutableListOf("three"))
+    newState.ignoredFiles = setOf(p1.getPath())
+    newState.ignoredPathMasks = mutableListOf("*.zzz")
 
-    getProjectsManager().loadState(newState);
+    projectsManager.loadState(newState)
 
-    assertUnorderedPathsAreEqual(getProjectsManager().getProjectsTreeForTests().getManagedFilesPaths(),
-                                 Arrays.asList(p1.getPath(), p3.getPath()));
-    assertUnorderedElementsAreEqual(getProjectsManager().getExplicitProfiles().getEnabledProfiles(), "three");
-    assertUnorderedPathsAreEqual(getProjectsManager().getIgnoredFilesPaths(), Arrays.asList(p1.getPath()));
-    assertUnorderedElementsAreEqual(getProjectsManager().getIgnoredFilesPatterns(), "*.zzz");
+    assertUnorderedPathsAreEqual(projectsManager.projectsTreeForTests.managedFilesPaths,
+                                 Arrays.asList(p1.getPath(), p3.getPath()))
+    assertUnorderedElementsAreEqual(projectsManager.getExplicitProfiles().enabledProfiles, "three")
+    assertUnorderedPathsAreEqual(projectsManager.getIgnoredFilesPaths(), Arrays.asList(p1.getPath()))
+    assertUnorderedElementsAreEqual(projectsManager.getIgnoredFilesPatterns(), "*.zzz")
 
-    waitForReadingCompletion();
-    assertUnorderedElementsAreEqual(getProjectsManager().getProjectsTreeForTests().getRootProjectsFiles(),
-                                    p1, p3);
+    waitForReadingCompletion()
+    assertUnorderedElementsAreEqual(projectsManager.projectsTreeForTests.rootProjectsFiles,
+                                    p1, p3)
   }
 }
