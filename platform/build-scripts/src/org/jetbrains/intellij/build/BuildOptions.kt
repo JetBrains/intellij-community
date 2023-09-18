@@ -365,23 +365,23 @@ class BuildOptions(
   val nonBundledPluginDirectoriesToInclude: Set<String> = getSetProperty("intellij.build.non.bundled.plugin.dirs.to.include")
 
   /**
-   * If this option and [ProductProperties.supportModularLoading] are set to `true`, a file containing module descriptors will be added to 
+   * If this option and [ProductProperties.supportModularLoading] are set to `true`, a file containing module descriptors will be added to
    * the distribution (IJPL-109), and launchers will use it to start the IDE (IJPL-128).
    */
   @ApiStatus.Experimental
   var useModularLoader = SystemProperties.getBooleanProperty("intellij.build.use.modular.loader", true)
-  
+
   /**
-   * If this option is set to `true` and [enableEmbeddedJetBrainsClient] is enabled, a [runtime module repository][com.intellij.platform.runtime.repository.RuntimeModuleRepository] 
+   * If this option is set to `true` and [enableEmbeddedJetBrainsClient] is enabled, a [runtime module repository][com.intellij.platform.runtime.repository.RuntimeModuleRepository]
    * will be generated in the distribution.
-   * This option doesn't make sense if [modular loader][BuildContext.useModularLoader] is used, in this case the generation is enabled automatically. 
+   * This option doesn't make sense if [modular loader][BuildContext.useModularLoader] is used, in this case the generation is enabled automatically.
    */
   @ApiStatus.Experimental
   var generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", true)
-  
+
   /**
    * If `true` and [ProductProperties.embeddedJetBrainsClientMainModule] is not null, the JAR files in the distribution will be adjusted
-   * to allow starting JetBrains Client directly from the IDE's distribution. 
+   * to allow starting JetBrains Client directly from the IDE's distribution.
    */
   @ApiStatus.Experimental
   var enableEmbeddedJetBrainsClient = SystemProperties.getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true)
@@ -428,8 +428,7 @@ class BuildOptions(
   var isNightlyBuild: Boolean = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_IS_NIGHTLY, (buildNumber?.count { it == '.' } ?: 1) <= 1)
 
   /**
-   * If `false`, [org.jetbrains.intellij.build.impl.projectStructureMapping.buildJarContentReport] won't be affected by
-   * neither [PluginBundlingRestrictions.includeInEapOnly] nor [PluginBundlingRestrictions.includeInNightlyOnly]
+   * If `false`, [org.jetbrains.intellij.build.impl.projectStructureMapping.buildJarContentReport] won't be affected by [PluginBundlingRestrictions.includeInDistribution]
    */
   @set:TestOnly
   @ApiStatus.Internal

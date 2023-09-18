@@ -9,7 +9,7 @@ import org.jetbrains.intellij.build.impl.createIdeClassPath
 import org.jetbrains.intellij.build.impl.createPlatformLayout
 import org.junit.Test
 
-class DistributionJARsBuilderTest {
+class PluginDistributionJARsBuilderTest {
   @Test
   fun verifyStableClasspathOrder() {
     val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
