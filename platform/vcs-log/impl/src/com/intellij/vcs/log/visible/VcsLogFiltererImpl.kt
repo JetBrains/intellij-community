@@ -41,6 +41,9 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                          private val commitDetailsGetter: DataGetter<out VcsFullCommitDetails>,
                          internal val index: VcsLogIndex) : VcsLogFilterer {
 
+  constructor(logData: VcsLogData) : this(logData.logProviders, logData.storage, logData.topCommitsCache, logData.commitDetailsGetter,
+                                          logData.index)
+
   override fun filter(dataPack: DataPack,
                       oldVisiblePack: VisiblePack,
                       sortType: PermanentGraph.SortType,

@@ -323,9 +323,7 @@ public class VcsLogManager implements Disposable {
     @Override
     public T createLogUi(@NotNull Project project, @NotNull VcsLogData logData) {
       MainVcsLogUiProperties properties = myUiProperties.createProperties(myLogId);
-      VcsLogFiltererImpl vcsLogFilterer = new VcsLogFiltererImpl(logData.getLogProviders(), logData.getStorage(),
-                                                                 logData.getTopCommitsCache(),
-                                                                 logData.getCommitDetailsGetter(), logData.getIndex());
+      VcsLogFiltererImpl vcsLogFilterer = new VcsLogFiltererImpl(logData);
       PermanentGraph.SortType initialSortType = properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE);
       VcsLogFilterCollection initialFilters = myFilters == null ? VcsLogFilterObject.collection() : myFilters;
       VisiblePackRefresherImpl refresher = new VisiblePackRefresherImpl(project, logData, initialFilters, initialSortType,

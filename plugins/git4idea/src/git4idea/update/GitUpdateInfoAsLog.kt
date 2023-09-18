@@ -192,8 +192,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
       val logId = generateUpdateTabId()
       val properties = MyPropertiesForRangeAndUser(rangeFilter, userFilter, pathFilter, project.service<GitUpdateProjectInfoLogProperties>())
-      val vcsLogFilterer = VcsLogFiltererImpl(logData.logProviders, logData.storage, logData.topCommitsCache, logData.commitDetailsGetter,
-                                              logData.index)
+      val vcsLogFilterer = VcsLogFiltererImpl(logData)
       val initialRangeSortType = properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE)
       val refresher = VisiblePackRefresherImpl(project, logData, VcsLogFilterObject.collection(rangeFilter, userFilter), initialRangeSortType,
                                                vcsLogFilterer, logId)
