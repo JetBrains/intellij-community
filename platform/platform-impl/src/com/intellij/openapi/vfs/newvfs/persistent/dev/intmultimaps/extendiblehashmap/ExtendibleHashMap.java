@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendibleha
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.io.ClosedStorageException;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,10 +32,13 @@ import java.util.Objects;
 public class ExtendibleHashMap implements DurableIntToMultiIntMap {
   private static final int VERSION = 1;
 
+  /** First header int32 to recognize this file type */
+  private static final int MAGIC_WORD = IOUtil.asciiToMagicWord("EHMM");
+
   //Binary layout: (header segment) (data segment)+
   //  Header segment: (fixed header fields) (segments table)
   //                  fixed header fields: 80 bytes
-  //                                       versions, etc...
+  //                                       magicWord, versions, etc...
   //                                       segmentsTableSize: int32
   //                                       segmentsCount:     int32
   //                                       globalDepth:       int8
@@ -99,22 +103,34 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
       };
 
       header = new HeaderLayout(bufferSource, segmentSize);
-      if (!fileIsEmpty) {
-        if (header.version() != VERSION) {
-          throw new IOException("On-disk version(=" + header.version() + ") != current impl version(=" + VERSION + ")");
-        }
-        if (header.segmentSize() != segmentSize) {
-          throw new IOException(
-            "On-disk segmentSize(=" + segmentSize + ") != segmentSize(=" + header.segmentSize() + ") storage was initialized with");
-        }
-      }
-      else {
-        header.segmentSize(segmentSize);
+
+      if (fileIsEmpty) {
+        header.magicWord(MAGIC_WORD);
         header.version(VERSION);
+        header.segmentSize(segmentSize);
         header.globalHashSuffixDepth(0);
         header.actualSegmentsCount(0);
         HashMapSegmentLayout segment = allocateSegment(0, header.globalHashSuffixDepth());
         header.updateSegmentIndex(0, segment.segmentIndex());
+      }
+      else {
+        int magicWord = header.magicWord();
+        if (magicWord != MAGIC_WORD) {
+          throw new IOException(
+            "[" + storage.storagePath() + "] is of incorrect type: " +
+            ".magicWord(=" + magicWord + ", '" + IOUtil.magicWordToASCII(magicWord) + "') != " + MAGIC_WORD + " expected");
+        }
+
+        if (header.version() != VERSION) {
+          throw new IOException(
+            "[" + storage.storagePath() + "]: version(=" + header.version() + ") != current impl version(=" + VERSION + ")");
+        }
+        
+        if (header.segmentSize() != segmentSize) {
+          throw new IOException(
+            "[" + storage.storagePath() + "]: segmentSize(=" + segmentSize + ") != segmentSize(=" + header.segmentSize() + ")" +
+            " storage was initialized with");
+        }
       }
     }
   }
@@ -421,11 +437,12 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
   @VisibleForTesting
   static final class HeaderLayout {
     //@formatter:off
-    private static final int VERSION_OFFSET                  = 0;   //int32
-    private static final int SEGMENT_SIZE_OFFSET             = 4;   //int32
-    private static final int ACTUAL_SEGMENTS_COUNT_OFFSET    = 8;   //int32
-    private static final int GLOBAL_HASH_SUFFIX_DEPTH_OFFSET = 12;  //int8
-    // region [13..79] is reserved for generations to come
+    private static final int MAGIC_WORD_OFFSET               = 0;   //int32
+    private static final int VERSION_OFFSET                  = 4;   //int32
+    private static final int SEGMENT_SIZE_OFFSET             = 8;   //int32
+    private static final int ACTUAL_SEGMENTS_COUNT_OFFSET    = 12;  //int32
+    private static final int GLOBAL_HASH_SUFFIX_DEPTH_OFFSET = 16;  //int8
+    // region [17..79] is reserved for the generations to come
     private static final int STATIC_HEADER_SIZE              = 80;
 
     private static final int SEGMENTS_TABLE_OFFSET = STATIC_HEADER_SIZE; //int16[N]
@@ -448,6 +465,14 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
       }
       this.headerSize = headerSize;//must be ==segmentSize
       headerBuffer = bufferSource.slice(0, headerSize);
+    }
+
+    public int magicWord() {
+      return headerBuffer.getInt(MAGIC_WORD_OFFSET);
+    }
+
+    public void magicWord(int magicWord) {
+      headerBuffer.putInt(MAGIC_WORD_OFFSET, magicWord);
     }
 
     public int version() {

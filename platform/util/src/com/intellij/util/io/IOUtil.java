@@ -26,6 +26,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.IntFunction;
 
+import static java.nio.charset.StandardCharsets.US_ASCII;
+
 public final class IOUtil {
   public static final int KiB = 1024;
   public static final int MiB = 1024 * 1024;
@@ -449,5 +451,30 @@ public final class IOUtil {
       }
     }
     return sb.toString();
+  }
+
+  /** Convert 4-chars ascii string into an int32 'magicWord' -- i.e. reserved header value used to identify a file format. */
+  public static int asciiToMagicWord(@NotNull String ascii) {
+    if (ascii.length() != 4) {
+      throw new IllegalArgumentException("ascii[" + ascii + "] must be 4 ASCII chars long");
+    }
+    byte[] bytes = ascii.getBytes(US_ASCII);
+    if (bytes.length != 4) {
+      throw new IllegalArgumentException("ascii bytes [" + toHexString(bytes) + "].length must be 4");
+    }
+
+    return (Byte.toUnsignedInt(bytes[0]) << 24)
+           | (Byte.toUnsignedInt(bytes[1]) << 16)
+           | (Byte.toUnsignedInt(bytes[2]) << 8)
+           | Byte.toUnsignedInt(bytes[3]);
+  }
+
+  public static String magicWordToASCII(int magicWord) {
+    byte[] ascii = new byte[4];
+    ascii[0] = (byte)((magicWord >> 24) & 0xFF);
+    ascii[1] = (byte)((magicWord >> 16) & 0xFF);
+    ascii[2] = (byte)((magicWord >> 8) & 0xFF);
+    ascii[3] = (byte)((magicWord) & 0xFF);
+    return new String(ascii, US_ASCII);
   }
 }
