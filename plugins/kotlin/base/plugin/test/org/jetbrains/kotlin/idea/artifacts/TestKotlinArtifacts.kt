@@ -27,6 +27,9 @@ object TestKotlinArtifacts {
     private fun getJar(artifactId: String): File =
         downloadOrReportUnavailability(artifactId, KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName))
 
+    private fun getKlib(artifactId: String): File =
+        downloadOrReportUnavailability(artifactId, KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName), suffix = ".klib")
+
     private fun getSourcesJar(artifactId: String): File {
         val version = KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName)
         return downloadOrReportUnavailability(artifactId, version, suffix = "-sources.jar")
@@ -57,30 +60,12 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinStdlibJdk7Sources: File by lazy { getSourcesJar("kotlin-stdlib-jdk7") }
     @JvmStatic val kotlinStdlibJdk8: File by lazy { getJar("kotlin-stdlib-jdk8") }
     @JvmStatic val kotlinStdlibJdk8Sources: File by lazy { getSourcesJar("kotlin-stdlib-jdk8") }
-    @JvmStatic val kotlinStdlibJs: File by lazy {
-        downloadOrReportUnavailability(
-            "kotlin-stdlib-js",
-            KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName),
-            ".klib"
-        )
-    }
-    @JvmStatic val kotlinDomApiCompat: File by lazy {
-        downloadOrReportUnavailability(
-            "kotlin-dom-api-compat",
-            KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName),
-            ".klib"
-        )
-    }
-    @JvmStatic val kotlinStdlibWasmJs: File by lazy {
-        downloadOrReportUnavailability(
-            "kotlin-stdlib-wasm-js",
-            KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName),
-            ".klib"
-        )
-    }
+    @JvmStatic val kotlinStdlibJs: File by lazy { getKlib("kotlin-stdlib-js") }
+    @JvmStatic val kotlinDomApiCompat: File by lazy { getKlib("kotlin-dom-api-compat") }
+    @JvmStatic val kotlinStdlibWasmJs: File by lazy { getKlib("kotlin-stdlib-wasm-js") }
     @JvmStatic val kotlinStdlibSources: File by lazy { getSourcesJar("kotlin-stdlib") }
     @JvmStatic val kotlinTest: File by lazy { getJar("kotlin-test") }
-    @JvmStatic val kotlinTestJs: File by lazy { getJar("kotlin-test-js") }
+    @JvmStatic val kotlinTestJs: File by lazy { getKlib("kotlin-test-js") }
     @JvmStatic val kotlinTestJunit: File by lazy { getJar("kotlin-test-junit") }
     @JvmStatic val parcelizeRuntime: File by lazy { getJar("parcelize-compiler-plugin-for-ide") }
 
