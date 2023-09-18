@@ -4,18 +4,11 @@ package com.intellij.execution.application;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.ui.*;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Predicates;
-import com.intellij.psi.impl.java.JavaUnnamedClassIndexKt;
-import com.intellij.psi.util.JavaUnnamedClassUtil;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.TextFieldWithAutoCompletion;
-import com.intellij.ui.TextFieldWithAutoCompletion.StringsCompletionProvider;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +67,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
 
   private class MainClassPanel extends JPanel {
     private final ClassEditorField myClassEditorField;
-    private final TextFieldWithAutoCompletion<String> myUnnamedClassField;
+    private final JBTextField myUnnamedClassField;
     private boolean myIsUnnamedClassConfiguration;
 
     private MainClassPanel(ModuleClasspathCombo classpathCombo) {
@@ -95,24 +88,11 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
       GridBag constraints = new GridBag().setDefaultFill(GridBagConstraints.HORIZONTAL).setDefaultWeightX(1.0);
       add(myClassEditorField, constraints.nextLine());
 
-      myUnnamedClassField = new TextFieldWithAutoCompletion<>(
-        getProject(),
-        new StringsCompletionProvider(
-          DumbService.isDumb(getProject())
-          ? List.of()
-          : ContainerUtil.map(
-            FileBasedIndex.getInstance().getAllKeys(JavaUnnamedClassIndexKt.getId(), getProject()),
-            fileName -> JavaUnnamedClassUtil.trimExtension(fileName)
-          ),
-          AllIcons.RunConfigurations.Application
-        ),
-        true,
-        ""
-      );
+      myUnnamedClassField = new JBTextField();
       CommonParameterFragments.setMonospaced(myUnnamedClassField);
       String unnamedClassPlaceholder = ExecutionBundle.message("application.configuration.main.unnamed.class.placeholder");
       myUnnamedClassField.setVisible(myIsUnnamedClassConfiguration);
-      myUnnamedClassField.setPlaceholder(unnamedClassPlaceholder);
+      myUnnamedClassField.getEmptyText().setText(unnamedClassPlaceholder);
       myUnnamedClassField.getAccessibleContext().setAccessibleName(unnamedClassPlaceholder);
       setMinimumWidth(myUnnamedClassField, 300);
       add(myUnnamedClassField, constraints.nextLine());
