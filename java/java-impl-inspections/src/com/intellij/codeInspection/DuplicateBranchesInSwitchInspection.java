@@ -456,7 +456,8 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
         if (prevElement != null) moveTarget = prevElement;
       }
       if (PsiUtil.isLanguageLevel14OrHigher(moveTarget) && moveTarget instanceof PsiSwitchLabelStatement labelStatement &&
-          myBranchToDelete.canCopyCaseValues() && !SwitchUtils.isCaseNull(labelStatement)) {
+          myBranchToDelete.canCopyCaseValues() && !SwitchUtils.isCaseNull(labelStatement) &&
+          labelStatement.getGuardExpression() == null) {
         for (PsiElement element : myBranchPrefixToMove) {
           if (element instanceof PsiSwitchLabelStatement statement) {
             if (SwitchUtils.isCaseNull(statement) && myLabelToMergeWith.isDefaultCase()) {
@@ -626,6 +627,15 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
     abstract boolean canMergeBranch();
 
+    private boolean canMergeWith(@NotNull BranchBase<?> other) {
+      if (isDefault() || other.isDefault()) return true;
+      PsiCaseLabelElementList thisList = myLabel.getCaseLabelElementList();
+      boolean thisPattern = thisList != null && ContainerUtil.exists(thisList.getElements(), e -> e instanceof PsiPattern);
+      PsiCaseLabelElementList otherList = other.myLabel.getCaseLabelElementList();
+      boolean otherPattern = otherList != null && ContainerUtil.exists(otherList.getElements(), e -> e instanceof PsiPattern);
+      return otherPattern == thisPattern;
+    }
+
     int effectiveLength() {
       if (myStatements.length == 1 && myStatements[0] instanceof PsiBlockStatement) {
         return ((PsiBlockStatement)myStatements[0]).getCodeBlock().getStatementCount();
@@ -648,6 +658,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
     @Nullable
     Match match(BranchBase<?> other) {
+      if (!canMergeWith(other)) return null;
       return getFinder().isDuplicate(other.myStatements[0], true);
     }
 
@@ -797,7 +808,6 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     private static boolean calculateCanMergeBranches(PsiSwitchLabelStatement @NotNull [] labels) {
-      PsiExpression guard0 = labels[0].getGuardExpression();
       for (PsiSwitchLabelStatement label : labels) {
         PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
         if (labelElementList == null) continue;
