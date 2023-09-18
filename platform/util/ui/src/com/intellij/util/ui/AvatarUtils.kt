@@ -16,11 +16,11 @@ import java.awt.image.BufferedImage
 import kotlin.math.abs
 
 
-class AvatarIcon(private val targetSize: Int,
-                 private val arcRatio: Double,
-                 private val gradientSeed: String,
-                 private val avatarName: String,
-                 private val palette: ColorPalette = AvatarPalette) : JBCachingScalableIcon<AvatarIcon>() {
+class AvatarIcon(val targetSize: Int,
+                 val arcRatio: Double,
+                 val gradientSeed: String,
+                 val avatarName: String,
+                 val palette: ColorPalette = AvatarPalette) : JBCachingScalableIcon<AvatarIcon>() {
   private var cachedImage: BufferedImage? = null
   private var cachedImageScale: Float? = null
   private var cachedImageColor: Color? = null
@@ -187,7 +187,8 @@ interface ColorPalette {
   fun gradient(seed: String? = null): Pair<Color, Color> = select(gradients, seed)
 }
 
-private object AvatarPalette : ColorPalette {
+@Internal
+object AvatarPalette : ColorPalette {
   override val gradients: Array<Pair<Color, Color>>
     get() {
       return arrayOf(
