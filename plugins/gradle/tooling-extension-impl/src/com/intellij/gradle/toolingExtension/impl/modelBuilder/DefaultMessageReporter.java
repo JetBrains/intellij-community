@@ -9,20 +9,24 @@ import org.gradle.internal.logging.progress.ProgressLoggerFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.Message;
+import org.jetbrains.plugins.gradle.tooling.MessageReportBuilder;
 import org.jetbrains.plugins.gradle.tooling.MessageReporter;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ApiStatus.Internal
-public class DefaultMessageReporter implements MessageReporter {
-
-  public static final String MODEL_BUILDER_SERVICE_MESSAGE_PREFIX = "ModelBuilderService message: ";
+public final class DefaultMessageReporter implements MessageReporter {
 
   private static final Logger LOG = LoggerFactory.getLogger("org.jetbrains.plugins.gradle.toolingExtension.modelBuilder");
 
   @Override
-  public void report(@NotNull Project project, @NotNull Message message) {
+  public @NotNull MessageReportBuilder createMessage() {
+    return new DefaultMessageReportBuilder(this);
+  }
+
+  @Override
+  public void reportMessage(@NotNull Project project, @NotNull Message message) {
     try {
       if (project instanceof DefaultProject) {
         reportMessageByProgressLogger((DefaultProject)project, message);

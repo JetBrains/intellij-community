@@ -1,15 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling;
 
+import org.gradle.api.Project;
 import org.gradle.api.invocation.Gradle;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
  */
-public interface ModelBuilderContext extends MessageReporter {
+public interface ModelBuilderContext {
 
   @NotNull Gradle getGradle();
+
+  @NotNull MessageReporter getMessageReporter();
+
+  void report(@NotNull Project project, @NotNull Message message);
 
   /**
    * @return cached data if it's already created, newly created data otherwise

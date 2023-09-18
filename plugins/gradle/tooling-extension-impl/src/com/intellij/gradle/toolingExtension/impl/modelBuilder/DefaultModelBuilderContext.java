@@ -1,19 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.modelBuilder;
 
-import org.gradle.api.Project;
 import org.gradle.api.invocation.Gradle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.tooling.Message;
+import org.jetbrains.plugins.gradle.tooling.MessageReporter;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class DefaultModelBuilderContext implements ModelBuilderContext {
 
-  private final Map<DataProvider<?>, Object> myMap = new IdentityHashMap<>();
   private final Gradle myGradle;
+  private final MessageReporter myMessageReporter = new DefaultMessageReporter();
+  private final Map<DataProvider<?>, Object> myMap = new IdentityHashMap<>();
 
   public DefaultModelBuilderContext(Gradle gradle) {
     myGradle = gradle;
@@ -22,6 +24,11 @@ public final class DefaultModelBuilderContext implements ModelBuilderContext {
   @Override
   public @NotNull Gradle getGradle() {
     return myGradle;
+  }
+
+  @Override
+  public @NotNull MessageReporter getMessageReporter() {
+    return myMessageReporter;
   }
 
   @NotNull
@@ -48,6 +55,6 @@ public final class DefaultModelBuilderContext implements ModelBuilderContext {
 
   @Override
   public void report(@NotNull Project project, @NotNull Message message) {
-    new DefaultMessageReporter().report(project, message);
+    getMessageReporter().report(project, message);
   }
 }

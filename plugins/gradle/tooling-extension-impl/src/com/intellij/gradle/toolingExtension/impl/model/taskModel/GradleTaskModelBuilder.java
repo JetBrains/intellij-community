@@ -2,6 +2,8 @@
 package com.intellij.gradle.toolingExtension.impl.model.taskModel;
 
 import com.intellij.gradle.toolingExtension.impl.util.GradleResultUtil;
+import org.jetbrains.plugins.gradle.tooling.Message;
+import org.jetbrains.plugins.gradle.tooling.MessageBuilder;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.internal.tasks.DefaultTaskContainer;
