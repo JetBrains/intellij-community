@@ -26,7 +26,7 @@ class AssertKotlinFileInSpecificRootCommand(text: String, line: Int) : PlaybackC
             val psiFIle = file.findPsiFile(project) ?: error("Fail to find psi file $filePath")
             val ktModule = ProjectStructureProvider.getModule(project, psiFIle , null)
             if (ktModule !is KtSourceModule) {
-                throw IllegalStateException("File $file not in kt source root module")
+                throw IllegalStateException("File $file ($ktModule) not in kt source root module")
             }
         }
     }
