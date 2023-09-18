@@ -196,10 +196,6 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     }
   }
 
-  private fun getContextUpdater(): DefinedInlineCompletionContextUpdater {
-    return CompositeContextUpdater(AppendPrefixContextUpdater(), LookupChangeContextUpdater()).invalidateOnUndefined()
-  }
-
   /**
    * @return `true` if update was successful. Otherwise, [hide] is invoked to invalidate the current context.
    */
@@ -210,29 +206,29 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   ): Boolean {
     val session = InlineCompletionSession.getOrNull(request.editor) ?: return false
     if (provider == null && !session.context.isCurrentlyDisplayingInlays) {
-      return true // Fast fall not to slow down editor
+      return true // Fast fall to not slow down editor
     }
-    if (provider != null && session.provider != provider || session.provider.requiresInvalidation(request.event)) {
+    if ((provider != null) && (session.provider != provider) || session.provider.requiresInvalidation(request.event)) {
       application.invokeAndWait { session.invalidate() }
       return false
     }
 
     val context = session.context
-    val result = getContextUpdater().onEvent(context, request.event)
+    val result = updateContext(context, request.event)
     application.invokeAndWait {
       when (result) {
-        is InlineCompletionContextUpdater.Result.Updated.Changed -> {
+        is UpdateContextResult.Changed -> {
           context.editor.inlayModel.execute(true) {
             context.clear()
             trace(InlineCompletionEventType.Change(result.truncateTyping))
             result.newElements.forEach { context.renderElement(it, request.endOffset) }
           }
         }
-        is InlineCompletionContextUpdater.Result.Updated.Same -> Unit
-        is InlineCompletionContextUpdater.Result.Invalidated -> session.invalidate()
+        is UpdateContextResult.Same -> Unit
+        is UpdateContextResult.Invalidated -> session.invalidate()
       }
     }
-    return result is InlineCompletionContextUpdater.Result.Updated
+    return result != UpdateContextResult.Invalidated
   }
 
   @RequiresEdt
