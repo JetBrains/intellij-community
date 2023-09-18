@@ -24,15 +24,38 @@ public class DefaultMessageReporter implements MessageReporter {
   @Override
   public void report(@NotNull Project project, @NotNull Message message) {
     try {
-      ProgressLoggerFactory progressLoggerFactory = ((DefaultProject)project).getServices().get(ProgressLoggerFactory.class);
-      ProgressLogger operation = progressLoggerFactory.newOperation(ModelBuilderService.class);
-      String jsonMessage = new GsonBuilder().create().toJson(message);
-      operation.setDescription(MODEL_BUILDER_SERVICE_MESSAGE_PREFIX + jsonMessage);
-      operation.started();
-      operation.completed();
+      if (project instanceof DefaultProject) {
+        reportMessageByProgressLogger((DefaultProject)project, message);
+      }
+      else {
+        reportMessageByGlobalLogger(message);
+      }
     }
     catch (Throwable e) {
       LOG.warn("Failed to report model builder message", e);
+    }
+  }
+
+  private static void reportMessageByProgressLogger(@NotNull DefaultProject project, @NotNull Message message) {
+    ProgressLoggerFactory progressLoggerFactory = project.getServices().get(ProgressLoggerFactory.class);
+    ProgressLogger operation = progressLoggerFactory.newOperation(ModelBuilderService.class);
+    String jsonMessage = new GsonBuilder().create().toJson(message);
+    operation.setDescription(MODEL_BUILDER_SERVICE_MESSAGE_PREFIX + jsonMessage);
+    operation.started();
+    operation.completed();
+  }
+
+  private static void reportMessageByGlobalLogger(@NotNull Message message) {
+    switch (message.getKind()) {
+      case ERROR:
+        LOG.error(message.getText());
+        break;
+      case WARNING:
+        LOG.warn(message.getText());
+        break;
+      case INFO:
+        LOG.info(message.getText());
+        break;
     }
   }
 }
