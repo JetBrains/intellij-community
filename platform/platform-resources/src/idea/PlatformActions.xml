@@ -311,7 +311,10 @@
       <action id="EditorDecreaseFontSizeGlobal" class="com.intellij.openapi.editor.actions.ChangeEditorFontSizeAction$DecreaseEditorFontSizeGlobal"/>
 
       <action id="EditorScrollToCenter" class="com.intellij.openapi.editor.actions.ScrollToCenterAction"/>
-      <action id="EditorToggleCase" class="com.intellij.openapi.editor.actions.ToggleCaseAction"/>
+      <action id="EditorToggleCase" class="com.intellij.openapi.editor.actions.ToggleCaseAction">
+        <synonym key="action.EditorToggleCase.synonym.upper"/>
+        <synonym key="action.EditorToggleCase.synonym.lower"/>
+      </action>
       <action id="EditorJoinLines" class="com.intellij.openapi.editor.actions.JoinLinesAction"/>
       <action id="FillParagraph" class="com.intellij.codeInsight.editorActions.fillParagraph.FillParagraphAction"/>
       <action id="EditorSelectLine" class="com.intellij.openapi.editor.actions.ExtendLineSelectionAction"/>
