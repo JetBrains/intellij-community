@@ -11,6 +11,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.impl.filterByQueryParams
 import com.intellij.webSymbols.impl.selectBest
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.utils.asSingleSymbol
@@ -141,6 +142,7 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
           scope.getSymbols(namespace, kind, params, Stack(finalContext))
         }
         .filterIsInstance<WebSymbol>()
+        .filterByQueryParams(params)
         .applyIf(params.expandPatterns) {
           flatMap {
             if (it.pattern != null)
@@ -161,10 +163,13 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
             .selectBest(WebSymbol::nameSegments, WebSymbol::priority, WebSymbol::extension)
             .asSingleSymbol()
             ?.let {
-              params.queryExecutor.namesProvider
-                .getNames(it.namespace, it.kind, it.name, WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
-                .firstOrNull()
-                ?.let { name -> it.withMatchedName(name) }
+              if (params.expandPatterns)
+                params.queryExecutor.namesProvider
+                  .getNames(it.namespace, it.kind, it.name, WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
+                  .firstOrNull()
+                  ?.let { name -> it.withMatchedName(name) }
+              else
+                it
             }
         }
         .sortedWith(Comparator.comparingDouble { it: WebSymbol -> -(it.priority ?: WebSymbol.Priority.NORMAL).value }
