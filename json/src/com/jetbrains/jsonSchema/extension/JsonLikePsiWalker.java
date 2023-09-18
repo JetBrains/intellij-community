@@ -43,17 +43,6 @@ public interface JsonLikePsiWalker {
 
   Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement originalPosition, PsiElement computedPosition);
 
-  /**
-   * @param accessor A list of names representing the path you need to navigate down
-   * @param start Does <b>NOT</b> always represent a direct object that can be searched for children.
-   *              If it's not an object, start looking from its siblings
-   * @return The object that is a sub-child of [start] or null if it can not be found
-   */
-  @ApiStatus.Experimental
-  default @Nullable PsiElement findChildBy(@NotNull List<String> accessor, @Nullable PsiElement start) {
-    return start;
-  }
-
   default int indentOf(@NotNull PsiElement element) {
     return 0;
   }

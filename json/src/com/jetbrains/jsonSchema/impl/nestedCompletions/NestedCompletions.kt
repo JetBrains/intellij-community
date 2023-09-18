@@ -11,10 +11,13 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.parents
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.applyIf
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
+import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter
+import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver
 
@@ -58,7 +61,7 @@ internal fun LookupElementBuilder.prefixedBy(path: SchemaPath?, treeWalker: Json
           insertHandler?.handleInsert(context, element) // Perform existing handler.
           context.file.findElementAt(context.startOffset)
             ?.sideEffect { completedElement ->
-              createMoveData(treeWalker, completedElement, path.accessor())
+              createMoveData(treeWalker.findContainingObjectAdapter(completedElement), path.accessor())
                 .performMove(treeWalker, context, completedElement)
             }
         }
@@ -217,10 +220,25 @@ private fun createTextWrapper(treeWalker: JsonLikePsiWalker, accessor: List<Stri
 }
 
 internal fun JsonLikePsiWalker.findChildBy(path: SchemaPath?, start: PsiElement): PsiElement =
-  path
-    ?.accessor()
-    ?.let { findChildBy(it, start) }
-  ?: start
+  path?.let {
+    findContainingObjectAdapter(start)
+      ?.findChildBy(path.accessor(), offset = 0)
+      ?.delegate
+  } ?: start
+
+private fun JsonLikePsiWalker.findContainingObjectAdapter(start: PsiElement) =
+  start.parents(true).firstNotNullOfOrNull { createValueAdapter(it)?.asObject }
+
+internal tailrec fun JsonObjectValueAdapter.findChildBy(path: List<String>, offset: Int): JsonValueAdapter? =
+  if(offset > path.lastIndex) this
+  else childByName(path[offset])
+    ?.asObject
+    ?.findChildBy(path, offset + 1)
+
+private fun JsonObjectValueAdapter.childByName(name: String): JsonValueAdapter? =
+  propertyList.firstOrNull { it.name == name }
+    ?.values
+    ?.firstOrNull()
 
 private class WrappedText(val prefix: String, val wrapped: WrappedText?, val suffix: String)
 
@@ -275,18 +293,18 @@ private fun TextWithAdditionalCaretOffset.withTextPrefixedBy(prefix: String) =
  */
 private class NestedCompletionMoveData(val destination: PsiElement?, val wrappingPath: List<String>)
 
-private fun createMoveData(treeWalker: JsonLikePsiWalker, completedElement: PsiElement, accessor: List<String>): NestedCompletionMoveData {
-  var currentNode: PsiElement = completedElement
+private fun createMoveData(objectWhereUserIsWithCursor: JsonObjectValueAdapter?, accessor: List<String>): NestedCompletionMoveData {
+  var currentNode: JsonObjectValueAdapter? = objectWhereUserIsWithCursor
   var i = 0
   while (i < accessor.size) {
-    val nextChild = treeWalker.findChildBy(listOf(accessor[i]), currentNode)
-    if (nextChild == null) break
-    currentNode = nextChild
+    val nextNode = currentNode?.childByName(accessor[i])?.asObject
+    if (nextNode == null) break
+    currentNode = nextNode
     i++
   }
 
   return NestedCompletionMoveData(
-    destination = currentNode.takeUnless { i == 0 },
+    destination = currentNode?.takeUnless { i == 0 }?.delegate,
     wrappingPath = accessor.subList(i, accessor.size),
   )
 }

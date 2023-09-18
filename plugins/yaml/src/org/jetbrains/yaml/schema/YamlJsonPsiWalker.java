@@ -149,24 +149,6 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  @ApiStatus.Experimental
-  public @Nullable PsiElement findChildBy(@NotNull List<String> accessor, @Nullable PsiElement start) {
-    return accessor.isEmpty()
-           ? start
-           : findChildBy(accessor, 0, PsiTreeUtil.getParentOfType(start, YAMLMapping.class, false));
-  }
-
-  private static @Nullable PsiElement findChildBy(List<String> accessor, int offset, PsiElement current) {
-    if (accessor.size() <= offset) return current;
-    if (!(current instanceof YAMLMapping node)) return null;
-
-    YAMLKeyValue pair = node.getKeyValueByKey(accessor.get(offset));
-    return pair == null
-           ? null
-           : findChildBy(accessor, offset + 1, pair.getValue());
-  }
-
-  @Override
   public int indentOf(@NotNull PsiElement element) {
     return YAMLUtil.getIndentToThisElement(element);
   }
