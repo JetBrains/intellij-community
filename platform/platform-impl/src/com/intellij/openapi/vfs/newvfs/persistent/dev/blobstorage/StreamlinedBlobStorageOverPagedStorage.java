@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.ActualRecords.recordLayoutForType;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.ActualRecords.recordSizeTypeByCapacity;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.OFFSET_BUCKET;
+import static com.intellij.util.io.IOUtil.magicWordToASCII;
 
 
 /**
@@ -65,18 +66,45 @@ public final class StreamlinedBlobStorageOverPagedStorage extends StreamlinedBlo
       final DirectBufferWrapper headerPage = pagedStorage.getByteBuffer(0, /*forWrite: */ true);
       try {
         final long length = pagedStorage.length();
-        if (length >= headerSize()) {
+        if (length > MAX_FILE_LENGTH) {
+          throw new IOException(
+            "Can't read file[" + pagedStorage + "]: too big, " + length + "b > max(Integer.MAX_VALUE * " + OFFSET_BUCKET + ")");
+        }
+
+        if (length == 0) {//new empty file
+          putHeaderInt(HeaderLayout.MAGIC_WORD_OFFSET, MAGIC_WORD);
+          putHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET, STORAGE_VERSION_CURRENT);
+          putHeaderInt(HeaderLayout.PAGE_SIZE_OFFSET, pageSize);
+
+          updateNextRecordId(offsetToId(recordsStartOffset()));
+
+          this.wasClosedProperly.set(true);
+        }
+        else {
+          final int magicWord = readHeaderInt(HeaderLayout.MAGIC_WORD_OFFSET);
+          if (magicWord != MAGIC_WORD) {
+            throw new IOException("[" + pagedStorage.getFile() + "] is of incorrect type: " +
+                                  ".magicWord(=" + magicWord + ", '" + magicWordToASCII(magicWord) + "') != " + MAGIC_WORD + " expected");
+          }
+
           final int version = readHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET);
           if (version != STORAGE_VERSION_CURRENT) {
             throw new IOException(
               "Can't read file[" + pagedStorage + "]: version(" + version + ") != storage version (" + STORAGE_VERSION_CURRENT + ")");
           }
-          if (length > Integer.MAX_VALUE * (long)OFFSET_BUCKET) {
+          if (length > MAX_FILE_LENGTH) {
             throw new IOException(
               "Can't read file[" + pagedStorage + "]: too big, " + length + " > Integer.MAX_VALUE * " + OFFSET_BUCKET);
           }
 
-          updateNextRecordId(offsetToId(length));
+          final int filePageSize = readHeaderInt(HeaderLayout.PAGE_SIZE_OFFSET);
+          if (pageSize != filePageSize) {
+            throw new IOException("[" + pagedStorage.getFile() + "]: file created with pageSize=" + filePageSize +
+                                  " but current storage.pageSize=" + pageSize);
+          }
+
+          int nextRecordId = readHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET);
+          updateNextRecordId(nextRecordId);
 
           recordsAllocated.set(readHeaderInt(HeaderLayout.RECORDS_ALLOCATED_OFFSET));
           recordsRelocated.set(readHeaderInt(HeaderLayout.RECORDS_RELOCATED_OFFSET));
@@ -86,13 +114,6 @@ public final class StreamlinedBlobStorageOverPagedStorage extends StreamlinedBlo
 
           boolean wasClosedProperly = readHeaderInt(HeaderLayout.FILE_STATUS_OFFSET) == FILE_STATUS_PROPERLY_CLOSED;
           this.wasClosedProperly.set(wasClosedProperly);
-        }
-        else {//new empty file
-          updateNextRecordId(offsetToId(recordsStartOffset()));
-
-          putHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET, STORAGE_VERSION_CURRENT);
-
-          this.wasClosedProperly.set(true);
         }
 
 
@@ -581,6 +602,7 @@ public final class StreamlinedBlobStorageOverPagedStorage extends StreamlinedBlo
     try {
       final DirectBufferWrapper headerPage = pagedStorage.getByteBuffer(0, /*forWrite: */ true);
       try {
+        putHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET, nextRecordId);
         putHeaderInt(HeaderLayout.RECORDS_ALLOCATED_OFFSET, recordsAllocated.get());
         putHeaderInt(HeaderLayout.RECORDS_RELOCATED_OFFSET, recordsRelocated.get());
         putHeaderInt(HeaderLayout.RECORDS_DELETED_OFFSET, recordsDeleted.get());

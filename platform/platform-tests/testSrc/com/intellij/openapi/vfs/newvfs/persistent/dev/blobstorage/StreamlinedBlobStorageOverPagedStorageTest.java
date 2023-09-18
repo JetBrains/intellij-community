@@ -35,12 +35,17 @@ public class StreamlinedBlobStorageOverPagedStorageTest extends StreamlinedBlobS
       true,
       true
     );
-    return new StreamlinedBlobStorageOverPagedStorage(
-      pagedStorage,
-      allocationStrategy
-    );
+    try {
+      return new StreamlinedBlobStorageOverPagedStorage(
+        pagedStorage,
+        allocationStrategy
+      );
+    }
+    catch (Throwable t) {
+      storage.close();
+      throw t;
+    }
   }
-
 
 
   @Override

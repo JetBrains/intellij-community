@@ -16,7 +16,9 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -67,11 +69,10 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   protected StorageRecord[] randomRecordsToStartWith;
 
   @Before
-  public void setup() throws Exception {
+  public void generateRandomRecords() throws Exception {
     randomRecordsToStartWith = generateRecords(ENOUGH_RECORDS, storage.maxPayloadSupported());
   }
 
-  /* ======================== TESTS (specific for this impl) ===================================== */
   @Test
   public void emptyStorageHasNoRecords() throws Exception {
     final IntArrayList nonExistentIds = new IntArrayList();
@@ -90,6 +91,24 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
       );
     }
   }
+
+
+  @Test
+  public void openFileWithIncorrectMagicWordFails() throws Exception {
+    storage.close();
+    Files.write(storagePath, new byte[]{1, 2, 3, 4}, StandardOpenOption.WRITE);
+
+    try {
+      openStorage(storagePath);
+    }
+    catch (IOException e) {
+      assertTrue(
+        "Expect error message about 'magicWord mismatch'",
+        e.getMessage().contains("magicWord")
+      );
+    }
+  }
+
 
   @Test
   public void dataFormatVersion_CouldBeWritten_AndReadBackAsIs_AfterStorageReopened() throws Exception {

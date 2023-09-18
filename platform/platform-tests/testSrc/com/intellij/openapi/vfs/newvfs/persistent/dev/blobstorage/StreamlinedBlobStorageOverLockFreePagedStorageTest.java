@@ -43,15 +43,21 @@ public class StreamlinedBlobStorageOverLockFreePagedStorageTest
   @Override
   protected StreamlinedBlobStorageOverLockFreePagedStorage openStorage(final Path pathToStorage) throws IOException {
     PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(
-        pathToStorage,
-        LOCK_CONTEXT,
-        pageSize,
-        PageContentLockingStrategy.LOCK_PER_PAGE
-      );
-    return new StreamlinedBlobStorageOverLockFreePagedStorage(
-      pagedStorage,
-      allocationStrategy
+      pathToStorage,
+      LOCK_CONTEXT,
+      pageSize,
+      PageContentLockingStrategy.LOCK_PER_PAGE
     );
+    try {
+      return new StreamlinedBlobStorageOverLockFreePagedStorage(
+        pagedStorage,
+        allocationStrategy
+      );
+    }
+    catch (Throwable t) {
+      storage.close();
+      throw t;
+    }
   }
 
   @Override

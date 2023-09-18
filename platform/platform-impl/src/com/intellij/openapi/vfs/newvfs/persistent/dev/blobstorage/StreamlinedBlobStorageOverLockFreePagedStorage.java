@@ -21,6 +21,7 @@ import java.nio.file.Path;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.ActualRecords.*;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.OFFSET_BUCKET;
+import static com.intellij.util.io.IOUtil.magicWordToASCII;
 
 /**
  * Implements {@link StreamlinedBlobStorage} blobs over {@link PagedFileStorageWithRWLockedPageContent} storage.
@@ -50,6 +51,7 @@ public final class StreamlinedBlobStorageOverLockFreePagedStorage extends Stream
 
   public static final int STORAGE_VERSION_CURRENT = 2;
 
+
   /* ============== instance fields: ====================================================================== */
 
 
@@ -66,23 +68,51 @@ public final class StreamlinedBlobStorageOverLockFreePagedStorage extends Stream
           pagedStorage.getPageSize(),
           pagedStorage.isNativeBytesOrder() ? ByteOrder.nativeOrder() : ByteOrder.BIG_ENDIAN
     );
+
     this.pagedStorage = pagedStorage;
+    final int pageSize = pagedStorage.getPageSize();
 
     try (final Page headerPage = pagedStorage.pageByIndex(0, /*forWrite: */ true)) {
       headerPage.lockPageForWrite();
       try {
         final long length = pagedStorage.length();
-        if (length >= headerSize()) {
-          final int version = readHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET);
+        if (length > MAX_FILE_LENGTH) {
+          throw new IOException(
+            "Can't read file[" + pagedStorage + "]: too big, " + length + "b > max(Integer.MAX_VALUE * " + OFFSET_BUCKET + ")");
+        }
+
+        if (length == 0) {//new empty file
+          putHeaderInt(HeaderLayout.MAGIC_WORD_OFFSET, MAGIC_WORD);
+          putHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET, STORAGE_VERSION_CURRENT);
+          putHeaderInt(HeaderLayout.PAGE_SIZE_OFFSET, pageSize);
+          ((PageUnsafe)headerPage).regionModified(0, headerSize());
+
+          updateNextRecordId(offsetToId(recordsStartOffset()));
+
+          this.wasClosedProperly.set(true);
+        }
+        else {
+          final int magicWord = readHeaderInt(HeaderLayout.MAGIC_WORD_OFFSET);
+          if (magicWord != MAGIC_WORD) {
+            throw new IOException("[" + pagedStorage.getFile() + "] is of incorrect type: " +
+                                  ".magicWord(=" + magicWord + ", '" + magicWordToASCII(magicWord) + "') != " + MAGIC_WORD + " expected");
+          }
+
+          final int version = getStorageVersion();
           if (version != STORAGE_VERSION_CURRENT) {
             throw new IOException(
               "Can't read file[" + pagedStorage + "]: version(" + version + ") != storage version (" + STORAGE_VERSION_CURRENT + ")");
           }
-          if (length > Integer.MAX_VALUE * (long)OFFSET_BUCKET) {
-            throw new IOException(
-              "Can't read file[" + pagedStorage + "]: too big, " + length + " > Integer.MAX_VALUE * " + OFFSET_BUCKET);
+
+          final int filePageSize = readHeaderInt(HeaderLayout.PAGE_SIZE_OFFSET);
+          if (pageSize != filePageSize) {
+            throw new IOException("[" + pagedStorage.getFile() + "]: file created with pageSize=" + filePageSize +
+                                  " but current storage.pageSize=" + pageSize);
           }
-          updateNextRecordId(offsetToId(length));
+
+
+          int nextRecordId = readHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET);
+          updateNextRecordId(nextRecordId);
 
           recordsAllocated.set(readHeaderInt(HeaderLayout.RECORDS_ALLOCATED_OFFSET));
           recordsRelocated.set(readHeaderInt(HeaderLayout.RECORDS_RELOCATED_OFFSET));
@@ -92,13 +122,6 @@ public final class StreamlinedBlobStorageOverLockFreePagedStorage extends Stream
 
           boolean wasClosedProperly = readHeaderInt(HeaderLayout.FILE_STATUS_OFFSET) == FILE_STATUS_PROPERLY_CLOSED;
           this.wasClosedProperly.set(wasClosedProperly);
-        }
-        else {//new empty file
-          updateNextRecordId(offsetToId(recordsStartOffset()));
-
-          putHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET, STORAGE_VERSION_CURRENT);
-
-          this.wasClosedProperly.set(true);
         }
 
         putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, FILE_STATUS_OPENED);
@@ -536,6 +559,7 @@ public final class StreamlinedBlobStorageOverLockFreePagedStorage extends Stream
     try (final Page headerPage = pagedStorage.pageByIndex(0, /*forWrite: */ true)) {
       headerPage.lockPageForWrite();
       try {
+        putHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET, nextRecordId);
         putHeaderInt(HeaderLayout.RECORDS_ALLOCATED_OFFSET, recordsAllocated.get());
         putHeaderInt(HeaderLayout.RECORDS_RELOCATED_OFFSET, recordsRelocated.get());
         putHeaderInt(HeaderLayout.RECORDS_DELETED_OFFSET, recordsDeleted.get());

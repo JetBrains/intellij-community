@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.ActualRecords.recordLayoutForType;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.ActualRecords.recordSizeTypeByCapacity;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.OFFSET_BUCKET;
+import static com.intellij.util.io.IOUtil.magicWordToASCII;
 
 
 /**
@@ -36,12 +37,6 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
   public static final int STORAGE_VERSION_CURRENT = 1;
 
   //For general persistent format description see comments in superclass
-
-  //TODO maybe HEADER_OFFSET_RECORDS_LIVE_TOTAL_CAPACITY_SIZE is really the same number???
-  private static final int HEADER_OFFSET_ACTUAL_LENGTH = HeaderLayout.DATA_FORMAT_VERSION_OFFSET + Integer.BYTES;
-
-  //FIXME RC: this field shadows same-name field from superclass
-  private static final int HEADER_SIZE = HEADER_OFFSET_ACTUAL_LENGTH + Long.BYTES;
 
   /* ============== instance fields: ====================================================================== */
 
@@ -63,22 +58,45 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
 
     this.storage = storage;
 
+    //Important to ask file size _before_ requesting headerPage -- since file is expanded during that request
+    final long length = storage.actualFileSize();
+    if (length > MAX_FILE_LENGTH) {
+      throw new IOException(
+        "Can't read file[" + storage + "]: too big, " + length + " > Integer.MAX_VALUE * " + OFFSET_BUCKET);
+    }
+
     headerPage = storage.pageByOffset(0L);
 
-    final long length = actualLength();
-    if (length >= headerSize()) {
+    if (length == 0) {//new empty file
+      putHeaderInt(HeaderLayout.MAGIC_WORD_OFFSET, MAGIC_WORD);
+      putHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET, STORAGE_VERSION_CURRENT);
+      putHeaderInt(HeaderLayout.PAGE_SIZE_OFFSET, pageSize);
+
+      updateNextRecordId(offsetToId(recordsStartOffset()));
+
+      this.wasClosedProperly.set(true);
+    }
+    else {
+      final int magicWord = readHeaderInt(HeaderLayout.MAGIC_WORD_OFFSET);
+      if (magicWord != MAGIC_WORD) {
+        throw new IOException("[" + storage.storagePath() + "] is of incorrect type: " +
+                              ".magicWord(=" + magicWord + ", '" + magicWordToASCII(magicWord) + "') != " + MAGIC_WORD + " expected");
+      }
+
       final int version = readHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET);
       if (version != STORAGE_VERSION_CURRENT) {
         throw new IOException(
           "Can't read file[" + storage + "]: version(" + version + ") != storage version (" + STORAGE_VERSION_CURRENT + ")");
       }
-      final int fileStatus = readHeaderInt(HeaderLayout.FILE_STATUS_OFFSET);
-      if (length > Integer.MAX_VALUE * (long)OFFSET_BUCKET) {
-        throw new IOException(
-          "Can't read file[" + storage + "]: too big, " + length + " > Integer.MAX_VALUE * " + OFFSET_BUCKET);
+
+      final int filePageSize = readHeaderInt(HeaderLayout.PAGE_SIZE_OFFSET);
+      if (pageSize != filePageSize) {
+        throw new IOException("[" + storage.storagePath() + "]: file created with pageSize=" + filePageSize +
+                              " but current storage.pageSize=" + pageSize);
       }
 
-      updateNextRecordId(offsetToId(length));
+      int nextRecordId = readHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET);
+      updateNextRecordId(nextRecordId);
 
       recordsAllocated.set(readHeaderInt(HeaderLayout.RECORDS_ALLOCATED_OFFSET));
       recordsRelocated.set(readHeaderInt(HeaderLayout.RECORDS_RELOCATED_OFFSET));
@@ -89,17 +107,8 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
       boolean wasClosedProperly = readHeaderInt(HeaderLayout.FILE_STATUS_OFFSET) == FILE_STATUS_PROPERLY_CLOSED;
       this.wasClosedProperly.set(wasClosedProperly);
     }
-    else {//new empty file
-      updateNextRecordId(offsetToId(recordsStartOffset()));
-
-      putHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET, STORAGE_VERSION_CURRENT);
-
-      this.wasClosedProperly.set(true);
-    }
 
     putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, FILE_STATUS_OPENED);
-
-    fileSizeMayChanged(headerPage, HEADER_SIZE);
 
     openTelemetryCallback = setupReportingToOpenTelemetry(storage.storagePath().getFileName(), this);
   }
@@ -322,7 +331,6 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
           //    buffer, not allocate the new buffer -- but ok, we could deal with it:
           recordLayout.putRecord(buffer, offsetOnPage,
                                  recordCapacity, newRecordLength, NULL_ID, newRecordContent);
-          fileSizeMayChanged(page, offsetOnPage + recordLayout.headerSize() + newRecordLength);
 
           totalLiveRecordsPayloadBytes.addAndGet(newRecordLength - recordActualLength);
         }
@@ -336,8 +344,6 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
           // changed since MovedRecord has another headerSize than Small|LargeRecord
           final int movedRecordCapacity = recordLayout.fullRecordSize(recordCapacity) - movedRecordLayout.headerSize();
           movedRecordLayout.putRecord(buffer, offsetOnPage, movedRecordCapacity, 0, redirectToId, null);
-
-          fileSizeMayChanged(page, offsetOnPage + movedRecordLayout.headerSize());
 
           totalLiveRecordsPayloadBytes.addAndGet(-recordActualLength);
           totalLiveRecordsCapacityBytes.addAndGet(-recordCapacity);
@@ -359,7 +365,6 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
                                                      ": can't be, since recordContent.capacity()==recordCapacity!";
         recordLayout.putLength(buffer, offsetOnPage, newRecordLength);
 
-        fileSizeMayChanged(page, offsetOnPage + recordLayout.headerSize() + newRecordLength);
 
         totalLiveRecordsPayloadBytes.addAndGet(newRecordLength - recordActualLength);
       }
@@ -403,7 +408,6 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
 
         // (redirectToId=NULL) <=> 'record deleted' ('moved nowhere')
         ((RecordLayout.MovedRecord)recordLayout).putRedirectTo(buffer, offsetOnPage, NULL_ID);
-        fileSizeMayChanged(page, offsetOnPage + recordLayout.headerSize());
       }
       case RecordLayout.RECORD_TYPE_ACTUAL -> {
         final RecordLayout.MovedRecord movedRecordLayout = RecordLayout.MovedRecord.INSTANCE;
@@ -412,7 +416,6 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
         final int deletedRecordCapacity = recordLayout.fullRecordSize(recordCapacity) - movedRecordLayout.headerSize();
         // set (redirectToId=NULL) to mark record as deleted ('moved nowhere')
         movedRecordLayout.putRecord(buffer, offsetOnPage, deletedRecordCapacity, 0, NULL_ID, null);
-        fileSizeMayChanged(page, offsetOnPage + movedRecordLayout.headerSize());
       }
       default -> throw new AssertionError("RecordType(" + recordType + ") should not appear in the chain: " +
                                           "it is either not implemented yet, or all wrong");
@@ -494,6 +497,7 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
   public void force() throws IOException {
     checkNotClosed();
 
+    putHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET, nextRecordId);
     putHeaderInt(HeaderLayout.RECORDS_ALLOCATED_OFFSET, recordsAllocated.get());
     putHeaderInt(HeaderLayout.RECORDS_RELOCATED_OFFSET, recordsRelocated.get());
     putHeaderInt(HeaderLayout.RECORDS_DELETED_OFFSET, recordsDeleted.get());
@@ -536,36 +540,29 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
   // === storage header accessors: ===
 
   private int readHeaderInt(final int offset) {
-    assert (0 <= offset && offset <= HEADER_SIZE - Integer.BYTES)
-      : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Integer.BYTES) + "]";
+    assert (0 <= offset && offset <= HeaderLayout.HEADER_SIZE - Integer.BYTES)
+      : "header offset(=" + offset + ") must be in [0," + (HeaderLayout.HEADER_SIZE - Integer.BYTES) + "]";
     return headerPage.rawPageBuffer().getInt(offset);
   }
 
   private void putHeaderInt(final int offset,
                             final int value) {
-    assert (0 <= offset && offset <= HEADER_SIZE - Integer.BYTES)
-      : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Integer.BYTES) + "]";
+    assert (0 <= offset && offset <= HeaderLayout.HEADER_SIZE - Integer.BYTES)
+      : "header offset(=" + offset + ") must be in [0," + (HeaderLayout.HEADER_SIZE - Integer.BYTES) + "]";
     headerPage.rawPageBuffer().putInt(offset, value);
   }
 
   private long readHeaderLong(final int offset) {
-    assert (0 <= offset && offset <= HEADER_SIZE - Long.BYTES)
-      : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Long.BYTES) + "]";
+    assert (0 <= offset && offset <= HeaderLayout.HEADER_SIZE - Long.BYTES)
+      : "header offset(=" + offset + ") must be in [0," + (HeaderLayout.HEADER_SIZE - Long.BYTES) + "]";
     return headerPage.rawPageBuffer().getLong(offset);
   }
 
   private void putHeaderLong(final int offset,
                              final long value) {
-    assert (0 <= offset && offset <= HEADER_SIZE - Long.BYTES)
-      : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Long.BYTES) + "]";
+    assert (0 <= offset && offset <= HeaderLayout.HEADER_SIZE - Long.BYTES)
+      : "header offset(=" + offset + ") must be in [0," + (HeaderLayout.HEADER_SIZE - Long.BYTES) + "]";
     headerPage.rawPageBuffer().putLong(offset, value);
-  }
-
-  /** Storage header size */
-  //RC: Method instead of constant because I expect headers to become variable-size with 'auxiliary headers' introduction
-  @Override
-  protected long headerSize() {
-    return HEADER_SIZE;
   }
 
   /**
@@ -574,15 +571,7 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
    * in advance.
    */
   private long actualLength() {
-    return readHeaderLong(HEADER_OFFSET_ACTUAL_LENGTH);
-  }
-
-  private void fileSizeMayChanged(Page page,
-                                  int maxWrittenOffsetInPage) {
-    long writtenOffsetInFile = page.firstOffsetInFile() + maxWrittenOffsetInPage;
-    if (writtenOffsetInFile > actualLength()) {
-      putHeaderLong(HEADER_OFFSET_ACTUAL_LENGTH, writtenOffsetInFile);
-    }
+    return idToOffset(nextRecordId);
   }
 
   // === storage records accessors: ===
@@ -629,7 +618,6 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
       recordLayout.putRecord(page.rawPageBuffer(), offsetOnPage,
                              actualRecordCapacity, newRecordLength, NULL_ID,
                              content);
-      fileSizeMayChanged(page, offsetOnPage + actualRecordSize);
       return newRecordId;
     }
     finally {
@@ -650,6 +638,5 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
     final Page page = storage.pageByOffset(recordOffset);
     final int capacity = remainingOnPage - paddingRecord.headerSize();
     paddingRecord.putRecord(page.rawPageBuffer(), offsetInPage, capacity, 0, NULL_ID, null);
-    fileSizeMayChanged(page, offsetInPage + paddingRecord.headerSize());
   }
 }

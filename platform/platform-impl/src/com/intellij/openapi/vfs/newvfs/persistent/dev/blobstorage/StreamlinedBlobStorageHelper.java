@@ -5,6 +5,7 @@ import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.ActualRecords;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.io.ClosedStorageException;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
@@ -36,6 +37,13 @@ import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storag
  * and implement adapters for different storages.
  */
 public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobStorage {
+
+  /** First header int32, used to recognize this storage's file type */
+  protected static final int MAGIC_WORD = IOUtil.asciiToMagicWord("SBlS");
+
+  //=== FILE_STATUS header field values:
+  protected static final int FILE_STATUS_OPENED = 0;
+  protected static final int FILE_STATUS_PROPERLY_CLOSED = 1;
 
   /* ======== Persistent format: =================================================================== */
 
@@ -79,42 +87,39 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   //    b) implement something like BlobStorageHousekeeper, which runs in dedicated thread, with some precautions to not
   //       interrupt frontend work.
 
-  //FIXME RC: we assign STATUS_OPENED only for new files, but never for reopened one -- so this corruption-detection
-  //          mechanism is barely working
-
-  //=== FILE_STATUS header field values:
-  protected static final int FILE_STATUS_OPENED = 0;
-  protected static final int FILE_STATUS_PROPERLY_CLOSED = 1;
-
-  //=== HEADER format:
   protected static final class HeaderLayout {
-    /**
-     * Version of this storage persistent format -- i.e. if !=STORAGE_VERSION_CURRENT, this class probably
-     * can't read the file. Managed by the storage itself.
-     */
-    static final int STORAGE_VERSION_OFFSET = 0;
-    static final int FILE_STATUS_OFFSET = STORAGE_VERSION_OFFSET + Integer.BYTES;
+    //@formatter:off
 
-    static final int RECORDS_ALLOCATED_OFFSET = FILE_STATUS_OFFSET + Integer.BYTES;
-    static final int RECORDS_RELOCATED_OFFSET = RECORDS_ALLOCATED_OFFSET + Integer.BYTES;
-    static final int RECORDS_DELETED_OFFSET = RECORDS_RELOCATED_OFFSET + Integer.BYTES;
+    /** Encodes storage (file) type */
+    static final int MAGIC_WORD_OFFSET                           = 0;   //int32
 
-    static final int RECORDS_LIVE_TOTAL_PAYLOAD_SIZE_OFFSET = RECORDS_DELETED_OFFSET + Integer.BYTES;
-    static final int RECORDS_LIVE_TOTAL_CAPACITY_SIZE_OFFSET = RECORDS_LIVE_TOTAL_PAYLOAD_SIZE_OFFSET + Long.BYTES;
+    /** Version of this storage persistent format */
+    static final int STORAGE_VERSION_OFFSET                      = 4;   //int32
+    /** pageSize is a part of binary layout: records are page-aligned */
+    static final int PAGE_SIZE_OFFSET                            = 8;   //int32
+    static final int FILE_STATUS_OFFSET                          = 12;  //int32
 
-    /**
-     * Version of data, stored in a blobs, managed by client code.
-     * MAYBE this should not be a part of standard header, but implemented on the top of 'additional headers'
-     * (see below)?
-     */
-    static final int DATA_FORMAT_VERSION_OFFSET = RECORDS_LIVE_TOTAL_CAPACITY_SIZE_OFFSET + Long.BYTES;
+    static final int NEXT_RECORD_ID_OFFSET                       = 16;  //int32
+
+    static final int RECORDS_ALLOCATED_OFFSET                    = 20;  //int32
+    static final int RECORDS_RELOCATED_OFFSET                    = 24;  //int32
+    static final int RECORDS_DELETED_OFFSET                      = 28;  //int32
+
+    static final int RECORDS_LIVE_TOTAL_PAYLOAD_SIZE_OFFSET      = 32;  //int64
+    static final int RECORDS_LIVE_TOTAL_CAPACITY_SIZE_OFFSET     = 40;  //int64
+
+    /** Version of data, stored in a blobs, managed by client code */
+    static final int DATA_FORMAT_VERSION_OFFSET                  = 48;  //int32
 
 
-    //Reserve 8 additional
-    static final int HEADER_SIZE = DATA_FORMAT_VERSION_OFFSET + Integer.BYTES;
-    //MAYBE allow to reserve additional space in header for something implemented on the top of the storage?
+    static final int FIRST_UNUSED_FIELD_OFFSET                   = 52;
+
+    //Bytes [52..64] is reserved for the generations to come:
+    static final int HEADER_SIZE                                 = 64;
+
+    //@formatter:off
+
   }
-
 
   /**
    * Different record types support different capacities, even larger than this one. But most records
@@ -128,6 +133,8 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
    * If a chain is longer, it is considered a bug (cyclic reference, or alike) and IOException is thrown.
    */
   protected static final int MAX_REDIRECTS = 256;
+
+  protected static final long MAX_FILE_LENGTH = Integer.MAX_VALUE * (long)OFFSET_BUCKET;
 
   /** To avoid write file header to already closed storage */
   protected final AtomicBoolean closed = new AtomicBoolean(false);
@@ -151,7 +158,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   //FIXME RC: always store nextRecordId in a header! this way all implementations headers will be the same
   /** Field could be read as volatile, but writes are protected with this intrinsic lock */
   //@GuardedBy(this)
-  private volatile int nextRecordId;
+  protected volatile int nextRecordId;
 
 
   //==== monitoring fields: =======================================================================================
@@ -276,8 +283,8 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   }
 
   /** Storage header size */
-  //RC: Method instead of constant because I expect headers to become variable-size with 'auxiliary headers' introduction
-  protected long headerSize() {
+  protected int headerSize() {
+    //RC: Use method instead of constant because I'm thinking about variable-size header, maybe...
     return HeaderLayout.HEADER_SIZE;
   }
 
@@ -313,6 +320,9 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
 
 
   protected void updateNextRecordId(int nextRecordId) {
+    if( nextRecordId <= NULL_ID ){
+      throw new IllegalArgumentException("nextRecordId(="+nextRecordId+") must be >0");
+    }
     synchronized (this) {
       this.nextRecordId = nextRecordId;
     }

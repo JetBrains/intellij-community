@@ -32,7 +32,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   private static final boolean ADD_LOG_CONTENT = getBooleanProperty("AppendOnlyLogOverMMappedFile.ADD_LOG_CONTENT", true);
   //@formatter:on
 
-  /** First header int32 to recognize this storage's file type */
+  /** First header int32, used to recognize this storage's file type */
   private static final int MAGIC_WORD = IOUtil.asciiToMagicWord("AOLM");
 
 

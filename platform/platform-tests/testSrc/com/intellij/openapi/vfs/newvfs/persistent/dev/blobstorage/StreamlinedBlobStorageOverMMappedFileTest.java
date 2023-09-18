@@ -30,7 +30,13 @@ public class StreamlinedBlobStorageOverMMappedFileTest extends StreamlinedBlobSt
     int pageSize = Math.max(this.pageSize, 1 << 20);
     MMappedFileStorage storage = new MMappedFileStorage(pathToStorage, pageSize);
     //storage.pageByOffset(64<<20);
-    return new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy);
+    try {
+      return new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy);
+    }
+    catch (Throwable t) {
+      storage.close();
+      throw t;
+    }
   }
 
   @Override
