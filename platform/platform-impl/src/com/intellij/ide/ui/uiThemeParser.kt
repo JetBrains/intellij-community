@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.icons.ImageDataByPathLoader.Companion.findIconByPath
 import com.intellij.ui.icons.getReflectiveIcon
-import com.intellij.util.ui.GrayFilter
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -30,7 +29,6 @@ internal fun parseUiThemeValue(key: String, value: Any?, classLoader: ClassLoade
       key.endsWith("Border") || key.endsWith("border") -> parseBorder(value, classLoader)
       key.endsWith("Size") -> parseSize(value)
       key.endsWith("Width") || key.endsWith("Height") -> getIntegerOrFloat(value, key)
-      key.endsWith("grayFilter") -> parseGrayFilter(value)
       value.startsWith("AllIcons.") -> UIDefaults.LazyValue { getReflectiveIcon(value, classLoader) }
       isColorLike(value) -> {
         parseColorOrNull(value, key)?.let {
@@ -106,7 +104,7 @@ private fun parseBorderColorOrBorderClass(value: String, classLoader: ClassLoade
   }
 }
 
-private fun parseMultiValue(value: String) = value.splitToSequence(',').map { it.trim() }.filter { it.isNotEmpty() }
+internal fun parseMultiValue(value: String) = value.splitToSequence(',').map { it.trim() }.filter { it.isNotEmpty() }
 
 private fun getIntegerOrFloat(value: String, key: String?): Number? {
   try {
@@ -128,11 +126,6 @@ private fun parseSize(value: String): Dimension {
 private fun parseInsets(value: String): Insets {
   val numbers = parseMultiValue(value).iterator()
   return JBInsets(numbers.next().toInt(), numbers.next().toInt(), numbers.next().toInt(), numbers.next().toInt()).asUIResource()
-}
-
-private fun parseGrayFilter(value: String): GrayFilter {
-  val numbers = parseMultiValue(value).iterator()
-  return GrayFilter(numbers.next().toInt(), numbers.next().toInt(), numbers.next().toInt()).asUIResource()
 }
 
 internal fun isColorLike(text: String) = text.length <= 9 && text.startsWith('#')

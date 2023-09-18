@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.JsonToken
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.ui.GrayFilter
 import java.util.*
 import java.util.function.BiFunction
 
@@ -202,19 +203,25 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
       JsonToken.VALUE_STRING -> {
         putEntry(prefix, result, parser, path) { key ->
           val text = parser.text
-          if (isColorLike(text)) {
-            val color = parseColorOrNull(text, null)
-            if (color == null) {
-              logger<UITheme>().warn("${(if (prefix.isEmpty()) "" else (prefix.joinToString(".") + ".")) + path}=" +
-                                     "$text has # prefix but cannot be parsed as color")
+          when {
+            isColorLike(text) -> {
+              val color = parseColorOrNull(text, null)
+              if (color == null) {
+                logger<UITheme>().warn("${(if (prefix.isEmpty()) "" else (prefix.joinToString(".") + ".")) + path}=" +
+                                       "$text has # prefix but cannot be parsed as color")
+                text
+              }
+              else {
+                createColorResource(color, key)
+              }
+            }
+            key.endsWith("grayFilter") -> {
+              val numbers = parseMultiValue(text).iterator()
+              GrayFilter.asUIResource(numbers.next().toInt(), numbers.next().toInt(), numbers.next().toInt())
+            }
+            else -> {
               text
             }
-            else {
-              createColorResource(color, key)
-            }
-          }
-          else {
-            text
           }
         }
       }

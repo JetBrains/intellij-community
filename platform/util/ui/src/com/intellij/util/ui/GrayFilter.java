@@ -10,13 +10,14 @@ import java.awt.image.RGBImageFilter;
 import java.util.Objects;
 
 @ApiStatus.Internal
+@ApiStatus.NonExtendable
 public class GrayFilter extends RGBImageFilter {
-  private float brightness;
-  private float contrast;
-  private int alpha;
+  private final float brightness;
+  private final float contrast;
+  private final int alpha;
 
-  private int origContrast;
-  private int origBrightness;
+  private final int origContrast;
+  private final int origBrightness;
 
   /**
    * @param brightness in range [-100..100] where 0 has no effect
@@ -24,35 +25,25 @@ public class GrayFilter extends RGBImageFilter {
    * @param alpha      in range [0..100] where 0 is transparent, 100 has no effect
    */
   public GrayFilter(int brightness, int contrast, int alpha) {
-    setBrightness(brightness);
-    setContrast(contrast);
-    setAlpha(alpha);
+    origBrightness = Math.max(-100, Math.min(100, brightness));
+    this.brightness = (float)(Math.pow(origBrightness, 3) / (100f * 100f)); // cubic in [0..100]
+
+    origContrast = Math.max(-100, Math.min(100, contrast));
+    this.contrast = origContrast / 100f;
+
+    this.alpha = Math.max(0, Math.min(100, alpha));
   }
 
   public GrayFilter() {
     this(0, 0, 100);
   }
 
-  private void setBrightness(int brightness) {
-    origBrightness = Math.max(-100, Math.min(100, brightness));
-    this.brightness = (float)(Math.pow(origBrightness, 3) / (100f * 100f)); // cubic in [0..100]
-  }
-
   public int getBrightness() {
     return origBrightness;
   }
 
-  private void setContrast(int contrast) {
-    origContrast = Math.max(-100, Math.min(100, contrast));
-    this.contrast = origContrast / 100f;
-  }
-
   public int getContrast() {
     return origContrast;
-  }
-
-  private void setAlpha(int alpha) {
-    this.alpha = Math.max(0, Math.min(100, alpha));
   }
 
   public int getAlpha() {
@@ -91,13 +82,13 @@ public class GrayFilter extends RGBImageFilter {
     return (a << 24) | (gray << 16) | (gray << 8) | gray;
   }
 
-  public @NotNull GrayFilterUIResource asUIResource() {
-    return new GrayFilterUIResource(this);
+  public static @NotNull GrayFilter asUIResource(int brightness, int contrast, int alpha) {
+    return new GrayFilterUIResource(brightness, contrast, alpha);
   }
 
-  public static final class GrayFilterUIResource extends GrayFilter implements UIResource {
-    public GrayFilterUIResource(@NotNull GrayFilter filter) {
-      super(filter.origBrightness, filter.origContrast, filter.alpha);
+  private static final class GrayFilterUIResource extends GrayFilter implements UIResource {
+    private GrayFilterUIResource(int brightness, int contrast, int alpha) {
+      super(brightness, contrast, alpha);
     }
   }
 
