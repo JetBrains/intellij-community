@@ -16,6 +16,9 @@
     <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
                         serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"
                         overrides="true"/>
+    <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls"
+                        serviceImplementation="com.intellij.pycharm.community.customization.PyCharmExternalResourceUrls"
+                        overrides="true"/>
     <ide.newUiOnboarding ideHelpName="pycharm">
       <remove stepId="codeWithMe"/>
     </ide.newUiOnboarding>
