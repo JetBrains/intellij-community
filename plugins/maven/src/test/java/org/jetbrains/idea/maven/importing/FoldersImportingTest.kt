@@ -49,7 +49,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testSimpleProjectStructure() = runBlocking {
     createStdProjectFolders()
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -103,7 +103,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   fun testDoesNotResetUserFolders() = runBlocking {
     val dir1 = createProjectSubDir("userSourceFolder")
     val dir2 = createProjectSubDir("userExcludedFolder")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -124,7 +124,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
       assertSources("project", "userSourceFolder")
     }
     assertExcludes("project", "target", "userExcludedFolder")
-    importProject()
+    updateAllProjects()
     if (supportsImportOfNonExistingFolders()) {
       assertSources("project", "src/main/java")
     }
@@ -145,7 +145,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testClearParentAndSubFoldersOfNewlyImportedFolders() = runBlocking {
     createStdProjectFolders()
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -162,7 +162,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                        """.trimIndent())
     resolveFoldersAndImport()
     assertSources("project", "src")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -174,7 +174,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testSourceFoldersOnReimport() = runBlocking {
     createProjectSubDirs("src1", "src2")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -216,7 +216,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   fun testCustomSourceFolders() = runBlocking {
     createStdProjectFolders()
     createProjectSubDirs("src", "test", "res1", "res2", "testRes1", "testRes2")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -273,7 +273,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
         </testResources>
       </build>
       """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertModules("project", "m")
     assertContentRoots("project",
                        projectPath)
@@ -288,7 +288,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testSourceFolderPointsToProjectRoot() = runBlocking {
     createStdProjectFolders()
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -307,7 +307,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testResourceFolderPointsToProjectRoot() = runBlocking {
     createStdProjectFolders()
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -328,7 +328,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testResourceFolderPointsToProjectRootParent() = runBlocking {
     createStdProjectFolders()
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -349,7 +349,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testSourceFolderPointsToProjectRootParent() = runBlocking {
     createStdProjectFolders()
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -389,7 +389,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   fun testPluginSources() = runBlocking {
     createStdProjectFolders()
     createProjectSubDirs("src1", "src2")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -428,7 +428,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   fun testPluginSourceDuringGenerateResourcesPhase() = runBlocking {
     createStdProjectFolders()
     createProjectSubDirs("extraResources")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -467,7 +467,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     createStdProjectFolders()
     createProjectSubDirs("extraTestResources")
     mavenImporterSettings.updateFoldersOnImportPhase = "generate-test-resources"
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -505,7 +505,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   fun testPluginSourcesWithRelativePath() = runBlocking {
     createStdProjectFolders()
     createProjectSubDirs("relativePath")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -543,7 +543,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   fun testPluginSourcesWithVariables() = runBlocking {
     createStdProjectFolders()
     createProjectSubDirs("target/src")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -633,7 +633,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                       <artifactId>m2</artifactId>
                       <version>1</version>
                       """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertModules("project", "m1", "m2")
     resolveFoldersAndImport()
     assertSources("m1", "src/foo", "src/main/java")
@@ -647,7 +647,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     createProjectSubDirs("resources1", "resources2")
     createProjectSubDirs("test1", "test2")
     createProjectSubDirs("test-resources1", "test-resources2")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -775,7 +775,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
       val pluginFile = File(getRepositoryPath(),
                             "org/codehaus/mojo/build-helper-maven-plugin/1.2/build-helper-maven-plugin-1.2.jar")
       assertFalse(pluginFile.exists())
-      importProject("""
+      importProjectAsync("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <version>1</version>
@@ -819,7 +819,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     createProjectSubFile("target/generated-sources/src2/com/B.java", "package com; class B {}")
     createProjectSubFile("target/generated-test-sources/test1/com/test/A.java", "package com.test; class A {}")
     createProjectSubFile("target/generated-test-sources/test2/com/test/B.java", "package com.test; class B {}")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -844,7 +844,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     createProjectSubFile("target/generated-sources/src2/com/B.java", "package com; class B {}")
     createProjectSubFile("target/generated-test-sources/test1/com/test/A.java", "package com.test; class A {}")
     createProjectSubFile("target/generated-test-sources/test2/com/test/B.java", "package com.test; class B {}")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -925,7 +925,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                       """.trimIndent())
     createProjectSubFile("custom-sources/com/CustomSource.java", "package com; class CustomSource {}")
     createProjectSubFile("m1/src/main/resources/test.txt", "resource")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -957,7 +957,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   fun testAddingExistingGeneratedSources2() = runBlocking {
     createStdProjectFolders()
     createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -974,7 +974,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     MavenProjectsManager.getInstance(myProject).importingSettings.setGeneratedSourcesFolder(
       MavenImportingSettings.GeneratedSourcesFolder.SUBFOLDER)
     createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -992,7 +992,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
       MavenImportingSettings.GeneratedSourcesFolder.GENERATED_SOURCE_FOLDER)
     createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}")
     createProjectSubFile("target/generated-sources/annotations/com/B.java", "package com; class B {}")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1010,7 +1010,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
       MavenImportingSettings.GeneratedSourcesFolder.AUTODETECT)
     createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}")
     createProjectSubFile("target/generated-sources/annotations/com/B.java", "package com; class B {}")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1028,7 +1028,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
       MavenImportingSettings.GeneratedSourcesFolder.AUTODETECT)
     createProjectSubFile("target/generated-test-sources/com/A.java", "package com; class A {}")
     createProjectSubFile("target/generated-test-sources/test-annotations/com/B.java", "package com; class B {}")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1047,7 +1047,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
       MavenImportingSettings.GeneratedSourcesFolder.IGNORE)
     createProjectSubFile("target/generated-sources/annotations/A.java", "package com; class A {}")
     createProjectSubFile("target/generated-sources/annotations/com/B.java", "package com; class B {}")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1062,7 +1062,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     createProjectSubFile("target/generated-sources/A1/B1/com/A1.java", "package com; class A1 {}")
     createProjectSubFile("target/generated-sources/A1/B2/com/A2.java", "package com; class A2 {}")
     createProjectSubFile("target/generated-sources/A2/com/A3.java", "package com; class A3 {}")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1080,7 +1080,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     createStdProjectFolders()
     createProjectSubFile("target/generated-sources/A1/B1/com/A1.java", "package com; class A1 {}")
     createProjectSubFile("target/generated-sources/A2.java", "class A2 {}")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1096,7 +1096,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     createStdProjectFolders()
     createProjectSubDirsWithFile("targetCustom/generated-sources/src",
                                  "targetCustom/generated-test-sources/test")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1119,7 +1119,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     createStdProjectFolders()
     createProjectSubDirs("target/generated-sources/main/src",
                          "target/generated-test-sources/test/src")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1177,7 +1177,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     }
     createProjectSubFile("target/generated-sources/f.txt")
     createProjectSubFile("target/generated-test-sources/f.txt")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1191,7 +1191,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testExcludingOutputDirectories() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1206,7 +1206,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testExcludingOutputDirectoriesIfProjectOutputIsUsed() = runBlocking {
     mavenImporterSettings.isUseMavenOutput = false
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1238,11 +1238,11 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                     "<groupId>test</groupId>" +
                     "<artifactId>m2</artifactId>" +
                     "<version>1</version>")
-    importProject()
+    importProjectAsync()
     assertModules("project", "m1", "m2")
     getInstance(myProject).setUnloadedModulesSync(listOf("m2"))
     assertModules("project", "m1")
-    importProject()
+    importProjectAsync()
     assertModules("project", "m1")
     val m2 = getInstance(myProject).getUnloadedModuleDescription("m2")
     assertNotNull(m2)
@@ -1251,7 +1251,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testExcludingCustomOutputDirectories() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1273,7 +1273,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testExcludingCustomOutputUnderTargetUsingStandardVariable() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1291,7 +1291,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNotExcludeExcludeOutputDirectoryWhenItPointstoRoot() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1310,7 +1310,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testOutputDirsOutsideOfContentRoot() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1346,7 +1346,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
         """.trimIndent()))
     File(myProjectRoot.getPath(), "m1/sources").mkdirs()
     File(myProjectRoot.getPath(), "m1/tests").mkdirs()
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <packaging>pom</packaging>
@@ -1388,7 +1388,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     createStdProjectFolders("m1")
     createProjectSubDirs("m1/sources/resources",
                          "m1/tests")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <packaging>pom</packaging>
@@ -1470,7 +1470,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
         """.trimIndent()))
     File(myProjectRoot.getPath(), "pom-sources").mkdirs()
     File(myProjectRoot.getPath(), "custom-sources").mkdirs()
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <packaging>pom</packaging>
@@ -1513,7 +1513,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                                  "target/bar",
                                  "target/generated-sources/baz",
                                  "target/generated-test-sources/bazz")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1535,7 +1535,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     createProjectSubDirs("target/src",
                          "target/test",
                          "target/xxx")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1551,7 +1551,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testDoesNotExcludeSourcesUnderTargetDirWithProperties() = runBlocking {
     createProjectSubDirs("target/src", "target/xxx")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1569,7 +1569,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     createStdProjectFolders()
     createProjectSubDirs("target/src/main",
                          "target/foo")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1588,7 +1588,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     createStdProjectFolders()
     val subDir = createProjectSubDir("target/foo")
     createProjectSubDirsWithFile("target/generated-sources/baz")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1606,7 +1606,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
         fail("Unable to delete the file: " + e.message)
       }
     }
-    importProject()
+    importProjectAsync()
     assertExcludes("project", "target")
   }
 
@@ -1620,7 +1620,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                                  "target/generated-sources/annotations",
                                  "target/generated-sources/test-annotations",
                                  "target/generated-test-sources/foo")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1676,7 +1676,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
       }
     }
     testAssertions.accept(true)
-    importProject()
+    updateAllProjects()
     testAssertions.accept(supportsLegacyKeepingFoldersFromPreviousImport())
     resolveFoldersAndImport()
     testAssertions.accept(supportsLegacyKeepingFoldersFromPreviousImport())
@@ -1687,7 +1687,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     createProjectSubDirs("target/foo")
     createProjectSubDirs("target/src")
     createProjectSubDirs("target/test/subFolder")
-    importProject("""
+    importProjectAsync("""
                    <groupId>test</groupId>
                    <artifactId>project</artifactId>
                    <version>1</version>
@@ -1702,7 +1702,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                          <testSourceDirectory>target/test/subFolder</testSourceDirectory>
                        </build>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
     //resolveFoldersAndImport();
     assertSources("project", "target/src")
     assertTestSources("project", "target/test/subFolder")
@@ -1712,7 +1712,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testUnexcludeNewSourcesUnderCompilerOutputDir() = runBlocking {
     createProjectSubDirs("target/classes/src")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1741,7 +1741,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                                  "target/generated-sources/annotations",
                                  "target/generated-test-sources/test-annotations",
                                  "target/generated-test-sources/foo")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1767,7 +1767,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                                  "target/generated-sources/annotations",
                                  "target/generated-sources/test-annotations",
                                  "target/generated-test-sources/foo")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1809,7 +1809,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                                  "target/generated-test-sources/foo",
                                  "target/generated-test-sources/test-annotations"
     )
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1885,7 +1885,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     )
     createProjectSubDirs("AA/src/test/resources")
     createProjectSubDirs("BB/src/test/resources")
-    importProject()
+    importProjectAsync()
     val parameters: CommonProgramRunConfigurationParameters = object : CommonProgramRunConfigurationParameters {
       override fun getProject(): Project {
         return myProject
