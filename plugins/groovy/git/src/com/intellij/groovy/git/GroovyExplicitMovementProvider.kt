@@ -16,7 +16,7 @@ class GroovyExplicitMovementProvider : GitCheckinExplicitMovementProvider() {
     return GroovyGitBundle.message("groovyToJava.extra.commit.description")
   }
 
-  override fun getCommitMessage(oldCommitMessage: String): String {
+  override fun getCommitMessage(project: Project, oldCommitMessage: String): String {
     return GroovyGitBundle.message("groovyToJava.extra.commit.commit.message")
   }
 

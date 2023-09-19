@@ -902,7 +902,7 @@ class GitCommitTest : GitSingleRepoTest() {
 
     override fun getDescription(): String = "explicit movement in tests"
 
-    override fun getCommitMessage(originalCommitMessage: String): String = description
+    override fun getCommitMessage(project: Project, originalCommitMessage: String): String = description
 
     override fun collectExplicitMovements(project: Project,
                                           beforePaths: MutableList<FilePath>,

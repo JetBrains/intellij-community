@@ -572,7 +572,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     for (GitCheckinExplicitMovementProvider provider : providers) {
       Collection<Movement> providerMovements = provider.collectExplicitMovements(myProject, beforePaths, afterPaths);
       if (!providerMovements.isEmpty()) {
-        message = provider.getCommitMessage(message);
+        message = provider.getCommitMessage(myProject, message);
         movedPaths.addAll(providerMovements);
       }
     }
