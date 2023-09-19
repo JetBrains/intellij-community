@@ -23,6 +23,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitRevi
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModel.SubmittableReview
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.getSubmittableReview
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModelImpl
 
 internal interface GitLabMergeRequestDiffViewModel {
   val avatarIconsProvider: IconsProvider<GitLabUserDTO>
@@ -35,7 +37,7 @@ internal interface GitLabMergeRequestDiffViewModel {
   val changes: SharedFlow<GitLabMergeRequestChanges>
   val changesToShow: SharedFlow<ChangesSelection>
 
-  fun getViewModelFor(change: Change): Flow<GitLabMergeRequestDiffChangeViewModel?>
+  fun getViewModelFor(change: Change): Flow<GitLabMergeRequestChangeViewModel?>
 
   fun setDiscussionsViewOption(viewOption: DiscussionsViewOption)
 
@@ -70,17 +72,17 @@ internal class GitLabMergeRequestDiffViewModelImpl(
   override val changesToShow: SharedFlow<ChangesSelection> =
     diffBridge.displayedChanges.modelFlow(cs, LOG)
 
-  private val vmsByChange: Flow<Map<Change, GitLabMergeRequestDiffChangeViewModel>> =
+  private val vmsByChange: Flow<Map<Change, GitLabMergeRequestChangeViewModel>> =
     createVmsByChangeFlow().modelFlow(cs, LOG)
 
-  private fun createVmsByChangeFlow(): Flow<Map<Change, GitLabMergeRequestDiffChangeViewModel>> =
+  private fun createVmsByChangeFlow(): Flow<Map<Change, GitLabMergeRequestChangeViewModel>> =
     mergeRequest.changes
       .map(GitLabMergeRequestChanges::getParsedChanges)
       .map { it.patchesByChange.asIterable() }
       .associateBy(
         { (change, _) -> change },
         { (_, diffData) ->
-          GitLabMergeRequestDiffChangeViewModelImpl(project, this, currentUser, mergeRequest, diffData, discussionsViewOption)
+          GitLabMergeRequestChangeViewModelImpl(project, this, currentUser, mergeRequest, diffData, discussionsViewOption)
         },
         { destroy() },
         customHashingStrategy = CODE_REVIEW_CHANGE_HASHING_STRATEGY
@@ -95,7 +97,7 @@ internal class GitLabMergeRequestDiffViewModelImpl(
 
   override var submitReviewInputHandler: (suspend (GitLabMergeRequestSubmitReviewViewModel) -> Unit)? = null
 
-  override fun getViewModelFor(change: Change): Flow<GitLabMergeRequestDiffChangeViewModel?> =
+  override fun getViewModelFor(change: Change): Flow<GitLabMergeRequestChangeViewModel?> =
     vmsByChange.map { it[change] }
 
   override fun setDiscussionsViewOption(viewOption: DiscussionsViewOption) {

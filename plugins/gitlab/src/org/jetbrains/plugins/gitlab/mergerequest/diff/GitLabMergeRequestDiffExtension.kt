@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffInlayComponentsFactory
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiffDiscussionViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -121,7 +122,7 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
   }
 }
 
-private class NewNoteDiffInlayViewModel(private val changeVm: GitLabMergeRequestDiffChangeViewModel,
+private class NewNoteDiffInlayViewModel(private val changeVm: GitLabMergeRequestChangeViewModel,
                                         private val newLocation: DiffLineLocation,
                                         val editVm: NewGitLabNoteViewModel) : DiffMapped {
   val id: String = "NEW_AT_$newLocation"
@@ -133,7 +134,7 @@ private class NewNoteDiffInlayViewModel(private val changeVm: GitLabMergeRequest
   }
 }
 
-private fun DiffViewerBase.controlAddCommentActionsIn(cs: CoroutineScope, vm: GitLabMergeRequestDiffChangeViewModel) {
+private fun DiffViewerBase.controlAddCommentActionsIn(cs: CoroutineScope, vm: GitLabMergeRequestChangeViewModel) {
   when (this) {
     is SimpleOnesideDiffViewer -> {
       editor.controlGutterIconsIn(cs) { line ->
@@ -168,7 +169,7 @@ private fun DiffViewerBase.controlAddCommentActionsIn(cs: CoroutineScope, vm: Gi
 
 private class AddCommentGutterIconRenderer(
   override val line: Int,
-  private val vm: GitLabMergeRequestDiffChangeViewModel,
+  private val vm: GitLabMergeRequestChangeViewModel,
   private val lineLocator: () -> DiffLineLocation?
 ) : GutterIconRenderer(), LineHoverAwareGutterMark, DumbAware {
 

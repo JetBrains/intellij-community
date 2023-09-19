@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.diff
+package org.jetbrains.plugins.gitlab.mergerequest.ui.review
 
 import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
@@ -29,7 +29,7 @@ import org.jetbrains.plugins.gitlab.ui.comment.*
 private typealias DiscussionsFlow = Flow<Collection<GitLabMergeRequestDiffDiscussionViewModel>>
 private typealias NewDiscussionsFlow = Flow<Map<DiffLineLocation, NewGitLabNoteViewModel>>
 
-internal interface GitLabMergeRequestDiffChangeViewModel {
+internal interface GitLabMergeRequestChangeViewModel {
   val isCumulativeChange: Boolean
 
   val discussions: DiscussionsFlow
@@ -42,16 +42,16 @@ internal interface GitLabMergeRequestDiffChangeViewModel {
   fun cancelNewDiscussion(location: DiffLineLocation)
 }
 
-private val LOG = logger<GitLabMergeRequestDiffChangeViewModel>()
+private val LOG = logger<GitLabMergeRequestChangeViewModel>()
 
-internal class GitLabMergeRequestDiffChangeViewModelImpl(
+internal class GitLabMergeRequestChangeViewModelImpl(
   project: Project,
   parentCs: CoroutineScope,
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
   private val diffData: GitTextFilePatchWithHistory,
   override val discussionsViewOption: StateFlow<DiscussionsViewOption>
-) : GitLabMergeRequestDiffChangeViewModel {
+) : GitLabMergeRequestChangeViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default + CoroutineName("GitLab Merge Request Review Diff Change"))
 
