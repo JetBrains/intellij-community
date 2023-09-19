@@ -10,9 +10,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.extensions.Extensions
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
@@ -152,9 +149,11 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
     }
 
     private fun Project.isGradleSyncPending(): Boolean {
-        val notificationVisibleProperty =
-            ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(this, ProjectSystemId("GRADLE", "Gradle"))
-        return notificationVisibleProperty.get()
+        return KotlinProjectConfigurationService.getInstance(this).isGradleSyncPending()
+    }
+
+    private fun Project.isGradleSyncInProgress(): Boolean {
+        return KotlinProjectConfigurationService.getInstance(this).isGradleSyncInProgress()
     }
 
     private fun calculateAutoConfigSettingsReadAction(module: Module): AutoConfigurationSettings? {
@@ -203,8 +202,8 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         }
     }
 
-    private fun Project.scheduleGradleSync() {
-        ExternalSystemProjectTracker.getInstance(this).scheduleProjectRefresh()
+    private fun Project.queueGradleSync() {
+        KotlinProjectConfigurationService.getInstance(this).queueGradleSync()
     }
 
     override suspend fun runAutoConfig(settings: AutoConfigurationSettings) {
@@ -245,7 +244,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         UndoManager.getInstance(project).undoableActionPerformed(object : BasicUndoableAction() {
             override fun undo() {
                 if (isAutoConfig && firstModule != null) {
-                    project.scheduleGradleSync()
+                    project.queueGradleSync()
                     KotlinAutoConfigurationNotificationHolder.getInstance(project)
                         .showAutoConfigurationUndoneNotification(firstModule)
                 }
@@ -254,7 +253,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
             override fun redo() {
                 if (isAutoConfig && firstModule != null) {
-                    project.scheduleGradleSync()
+                    project.queueGradleSync()
                     KotlinAutoConfigurationNotificationHolder.getInstance(project).reshowAutoConfiguredNotification(firstModule)
                 }
             }
@@ -291,7 +290,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                         val changedFiles = configureAction()
                         val firstModule = modules.firstOrNull()
                         if (isAutoConfig && firstModule != null) {
-                            project.scheduleGradleSync()
+                            project.queueGradleSync()
                         }
                         addUndoListener(project, modules, isAutoConfig)
                         progressReporter?.fraction(1.0)

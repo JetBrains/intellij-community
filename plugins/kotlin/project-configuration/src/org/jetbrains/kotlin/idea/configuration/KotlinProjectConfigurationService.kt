@@ -4,6 +4,9 @@ package org.jetbrains.kotlin.idea.configuration
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.withBackgroundProgress
@@ -12,6 +15,7 @@ import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
@@ -37,6 +41,12 @@ class KotlinProjectConfigurationService(private val project: Project, private va
         return System.currentTimeMillis() >= cooldownEnd
     }
 
+    fun isGradleSyncPending(): Boolean {
+        val notificationVisibleProperty =
+            ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(project, ProjectSystemId("GRADLE", "Gradle"))
+        return notificationVisibleProperty.get()
+    }
+
     fun refreshEditorNotifications() {
         // We want to remove the "Kotlin not configured" notification banner as fast as possible
         // once a gradle reload was started.
@@ -47,6 +57,42 @@ class KotlinProjectConfigurationService(private val project: Project, private va
 
         openKotlinFiles.forEach {
             editorNotifications.updateNotifications(it)
+        }
+    }
+
+    @Volatile
+    private var gradleSyncInProgress: Boolean = false
+
+    @Volatile
+    private var gradleSyncQueued: Boolean = false
+
+    fun isGradleSyncInProgress(): Boolean {
+        return gradleSyncInProgress
+    }
+
+    /**
+     * Executes a Gradle sync now, provided no Gradle sync is currently running.
+     * Otherwise, waits for the current sync to finish and schedules a new sync.
+     */
+    fun queueGradleSync() {
+        if (gradleSyncInProgress) {
+            gradleSyncQueued = true
+        } else {
+            ExternalSystemProjectTracker.getInstance(project).scheduleProjectRefresh()
+        }
+    }
+
+    @ApiStatus.Internal
+    fun onGradleSyncStarted() {
+        gradleSyncInProgress = true
+    }
+
+    @ApiStatus.Internal
+    fun onGradleSyncFinished() {
+        gradleSyncInProgress = false
+        if (gradleSyncQueued) {
+            gradleSyncQueued = false
+            ExternalSystemProjectTracker.getInstance(project).scheduleProjectRefresh()
         }
     }
 

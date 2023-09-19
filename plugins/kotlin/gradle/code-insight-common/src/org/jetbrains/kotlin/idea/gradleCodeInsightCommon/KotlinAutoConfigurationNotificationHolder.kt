@@ -14,6 +14,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.changes.Change
+import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 import org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider
 import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
 import org.jetbrains.kotlin.idea.configuration.ui.changes.KotlinConfiguratorChangesDialog
@@ -107,6 +108,15 @@ class KotlinAutoConfigurationNotificationHolder(private val project: Project) : 
     private fun configureKotlinManuallyAction(module: Module) = NotificationAction.create(
         KotlinProjectConfigurationBundle.message("configure.kotlin.manually")
     ) { e, notification ->
+        if (KotlinProjectConfigurationService.getInstance(project).isGradleSyncInProgress()) {
+            Messages.showWarningDialog(
+                project,
+                KotlinProjectConfigurationBundle.message("auto.configure.kotlin.wait.gradle.sync.finished"),
+                KotlinProjectConfigurationBundle.message("auto.configure.kotlin.wait.gradle.sync.finished.title")
+            )
+            return@create
+        }
+
         val configurators = getAbleToRunConfigurators(module).toList()
         if (configurators.size > 1) {
             KotlinSetupEnvironmentNotificationProvider.createConfiguratorsPopup(project, configurators).showInBestPositionFor(e.dataContext)
