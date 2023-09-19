@@ -79,7 +79,9 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
       else
         patterns
           .flatMap { it.list(null, scopeStack, newSymbolsResolver, params) }
-          .postProcess(owner, apiStatus, priority, proximity)
+          .groupBy { it.name }
+          .values
+          .flatMap { it.postProcess(owner, apiStatus, priority, proximity) }
           .let {
             if (!isRequired)
               it + ListResult("", WebSymbolNameSegment(0, 0))

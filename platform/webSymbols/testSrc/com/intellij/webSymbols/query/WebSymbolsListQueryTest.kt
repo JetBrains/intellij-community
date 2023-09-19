@@ -153,6 +153,10 @@ class WebSymbolsListQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest("js/symbols", null, "js-globals")
   }
 
+  fun testMultipleReferences() {
+    doTest("html/attributes", null, "multiple-references")
+  }
+
   fun testBasicCustomElementsManifest1() {
     doTest("html/elements/", customElementsManifests = listOf("basic"))
   }

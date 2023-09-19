@@ -7,10 +7,12 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.impl.selectBest
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.utils.lastWebSymbol
+import com.intellij.webSymbols.utils.nameSegments
 import kotlin.math.max
 
 internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPattern() {
@@ -37,6 +39,7 @@ internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPatt
     ProgressManager.checkCanceled()
     val hits = symbolsResolver
                  ?.matchName(params.name.substring(start, end), scopeStack, params.queryExecutor)
+                 ?.selectBest(WebSymbol::nameSegments, WebSymbol::priority, WebSymbol::extension)
                ?: emptyList()
 
     return listOf(MatchResult(
@@ -69,8 +72,8 @@ internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPatt
     symbolsResolver
       ?.listSymbols(scopeStack, params.queryExecutor, params.expandPatterns)
       ?.groupBy { it.name }
-      ?.values
-      ?.flatMap { list ->
+      ?.flatMap { (name, rawList) ->
+        val list = rawList.selectBest(WebSymbol::nameSegments, WebSymbol::priority, WebSymbol::extension)
         when {
           list.size == 1 && list[0] is WebSymbolMatch ->
             (list[0] as WebSymbolMatch).let { match ->
@@ -78,9 +81,9 @@ internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPatt
             }
 
           list.isNotEmpty() ->
-            list.map {
-              ListResult(it.name, WebSymbolNameSegment(0, it.name.length, it), displayName)
-            }
+            listOf(ListResult(name, WebSymbolNameSegment(
+              0, name.length, list, displayName = displayName
+            )))
 
           else -> emptyList()
         }

@@ -356,6 +356,14 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
            "reference-with-complex-name-conversion")
   }
 
+  fun testMultipleReferences1() {
+    doTest("html/attributes/test-the-a", null, "multiple-references")
+  }
+
+  fun testMultipleReferences2() {
+    doTest("html/attributes/test-the-b", null, "multiple-references")
+  }
+
   fun testBasicCustomElementsManifest1() {
     doTest("html/elements/my-EleMeNt", customElementsManifests = listOf("basic"))
   }

@@ -9,8 +9,8 @@ internal class ListResult(
   segments: List<WebSymbolNameSegment>,
 ) : MatchResult(segments) {
 
-  constructor(name: String, segment: WebSymbolNameSegment, displayName: String? = null) :
-    this(name, listOf(segment.unpackIfPossible(name).withDisplayName(displayName)))
+  constructor(name: String, segment: WebSymbolNameSegment) :
+    this(name, listOf(segment.unpackIfPossible(name)))
 
   fun prefixedWith(prevResult: ListResult): ListResult =
     ListResult(prevResult.name + name, prevResult.segments + segments.map { it.withOffset(prevResult.name.length) })
