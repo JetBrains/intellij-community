@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.idea.devkit.inspections.CancellationCheckProvider
+import org.jetbrains.idea.devkit.kotlin.util.findContext
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
