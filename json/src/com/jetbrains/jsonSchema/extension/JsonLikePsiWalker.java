@@ -43,10 +43,12 @@ public interface JsonLikePsiWalker {
 
   Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement originalPosition, PsiElement computedPosition);
 
+  /** Returns the indent of the given element in its file expressed in number of spaces */
   default int indentOf(@NotNull PsiElement element) {
     return 0;
   }
 
+  /** Returns the indent, expressed in number of spaces, that this file has per indent level */
   default int indentOf(@NotNull PsiFile file) {
     return 4;
   }
