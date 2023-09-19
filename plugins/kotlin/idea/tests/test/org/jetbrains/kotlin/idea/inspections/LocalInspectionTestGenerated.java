@@ -17396,6 +17396,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithNestedEnum2.kt");
         }
 
+        @TestMetadata("valInPrimaryConstructor.kt")
+        public void testValInPrimaryConstructor() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/valInPrimaryConstructor.kt");
+        }
+
         @TestMetadata("valueClassGenericParameter.kt")
         public void testValueClassGenericParameter() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/valueClassGenericParameter.kt");

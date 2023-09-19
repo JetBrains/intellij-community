@@ -52,7 +52,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
         val packageName = AbstractK2LocalInspectionAndGeneralHighlightingTest::class.java.`package`.name
         val generatedClassName = "$packageName.K2UnusedSymbolHighlightingTestGenerated"
         testClass<AbstractK2LocalInspectionAndGeneralHighlightingTest>(generatedClassName) {
-            model("${idea}/inspectionsLocal/unusedSymbol")
+            model("${idea}/inspectionsLocal/unusedSymbol", pattern = Patterns.KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractK2InspectionTest> {

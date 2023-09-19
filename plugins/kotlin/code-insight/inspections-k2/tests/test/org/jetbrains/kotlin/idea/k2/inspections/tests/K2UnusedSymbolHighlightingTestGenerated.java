@@ -498,6 +498,11 @@ public class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2LocalInsp
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithNestedEnum2.kt");
     }
 
+    @TestMetadata("valInPrimaryConstructor.kt")
+    public void testValInPrimaryConstructor() throws Exception {
+        runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/valInPrimaryConstructor.kt");
+    }
+
     @TestMetadata("valueClassGenericParameter.kt")
     public void testValueClassGenericParameter() throws Exception {
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/valueClassGenericParameter.kt");
