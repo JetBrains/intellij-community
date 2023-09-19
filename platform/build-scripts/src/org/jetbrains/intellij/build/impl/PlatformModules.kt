@@ -220,6 +220,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
     // Scala uses GeneralCommandLine in JPS plugin
     "intellij.platform.ide.util.io",
     "intellij.platform.extensions",
+    "intellij.platform.util.nanoxml",
   ), productLayout = productLayout, layout = layout)
   addModule("externalProcess-rt.jar", listOf(
     "intellij.platform.externalProcessAuthHelper.rt"

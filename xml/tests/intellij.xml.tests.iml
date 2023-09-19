@@ -18,7 +18,7 @@
     <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="xml-resolver" level="project" />
-    <orderEntry type="library" name="NanoXML" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.langInjection" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.langInjection" />

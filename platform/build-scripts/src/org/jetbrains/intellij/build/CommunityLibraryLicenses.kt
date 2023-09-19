@@ -864,9 +864,10 @@ object CommunityLibraryLicenses {
     //LibraryLicense(name = "Moshi", libraryName = "moshi", url = "https://github.com/square/moshi")
     //  .apache("https://github.com/square/moshi/blob/master/LICENSE.txt"),
 
-    LibraryLicense(libraryName = "NanoXML", license = "zlib/libpng",
+    LibraryLicense(name = "NanoXML", license = "zlib/libpng", version = "2.2.3",
                    url = "https://central.sonatype.com/artifact/be.cyberelf.nanoxml/nanoxml/2.2.3",
-                   licenseUrl = "https://github.com/saulhidalgoaular/nanoxml/raw/master/LICENSE.txt")
+                   licenseUrl = "https://github.com/saulhidalgoaular/nanoxml/raw/master/LICENSE.txt",
+                   attachedTo = "intellij.platform.util.nanoxml")
       .suppliedByPersons("Marc De Scheemaecker", "Saul Hidalgo"),
     LibraryLicense(name = "nest_asyncio", attachedTo = "intellij.python.community.impl",
                    url = "https://github.com/erdewit/nest_asyncio", license = "BSD 2-Clause License",

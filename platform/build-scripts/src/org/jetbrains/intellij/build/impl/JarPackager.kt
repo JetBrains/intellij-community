@@ -58,7 +58,6 @@ private val libsThatUsedInJps = java.util.Set.of(
   "OroMatcher",
   "jgoodies-forms",
   "jgoodies-common",
-  "NanoXML",
   // see ArtifactRepositoryManager.getClassesFromDependencies
   "plexus-utils",
   "http-client",
