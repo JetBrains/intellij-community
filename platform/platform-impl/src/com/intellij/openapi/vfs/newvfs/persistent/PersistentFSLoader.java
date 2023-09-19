@@ -645,7 +645,7 @@ public final class PersistentFSLoader {
         );
       }
       else if (FSRecordsImpl.USE_ATTRIBUTES_OVER_MMAPPED_FILE) {
-        LOG.info("VFS uses streamlined attributes storage (over MMappedFile)");
+        LOG.info("VFS uses streamlined attributes storage (over mmapped file)");
         int pageSize = 1 << 24;//16Mb
         blobStorage = IOUtil.wrapSafely(
           new MMappedFileStorage(attributesFile, pageSize),
@@ -686,7 +686,7 @@ public final class PersistentFSLoader {
 
   private @NotNull ScannableDataEnumeratorEx<String> createFileNamesEnumerator(@NotNull Path namesFile) throws IOException {
     if (FSRecordsImpl.USE_FAST_NAMES_IMPLEMENTATION) {
-      LOG.info("VFS uses 'fast' (hash) names enumerator");
+      LOG.info("VFS uses 'fast' names enumerator (over mmapped file)");
       //if we use _same_ namesFile for fast/regular enumerator (which seems natural at a first glance), then
       // on transition, fast enumerator couldn't recognize regular enumerator file format, and throws some
       // bizare exception => VFS is rebuilt, but with rebuildCause=UNRECOGNIZED instead of 'version mismatch'.
@@ -737,7 +737,7 @@ public final class PersistentFSLoader {
 
   public static @NotNull ContentHashEnumerator createContentHashStorage(@NotNull Path contentsHashesFile) throws IOException {
     if (FSRecordsImpl.USE_CONTENT_HASH_STORAGE_OVER_MMAPPED_FILE) {
-      LOG.info("VFS uses content hash storage over MMappedFile");
+      LOG.info("VFS uses content hash storage over mmapped file");
       return ContentHashEnumeratorOverDurableEnumerator.open(contentsHashesFile);
     }
     else {

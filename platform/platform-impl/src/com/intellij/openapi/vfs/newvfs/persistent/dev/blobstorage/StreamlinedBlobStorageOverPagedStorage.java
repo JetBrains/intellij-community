@@ -90,7 +90,7 @@ public final class StreamlinedBlobStorageOverPagedStorage extends StreamlinedBlo
           final int version = readHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET);
           if (version != STORAGE_VERSION_CURRENT) {
             throw new IOException(
-              "Can't read file[" + pagedStorage + "]: version(" + version + ") != storage version (" + STORAGE_VERSION_CURRENT + ")");
+              "Can't read file[" + pagedStorage + "]: file version(" + version + ") != current impl version (" + STORAGE_VERSION_CURRENT + ")");
           }
           if (length > MAX_FILE_LENGTH) {
             throw new IOException(

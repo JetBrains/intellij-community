@@ -507,9 +507,9 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
     return "PagedFileStorage[" + file + "]" +
            "{size: " + actualSize.get() + ", dirtyPages: " + dirtyPagesCount.get() + "}" +
            "{pageSize: " + pageSize + ", "
-           + (isClosed() ? "closed " : " ")
-           + (isReadOnly() ? "readOnly " : " ")
-           + (isNativeBytesOrder() ? "nativeByteOrder " : " ")
+           + (isClosed() ? "closed " : "")
+           + (isReadOnly() ? "readOnly " : "")
+           + (isNativeBytesOrder() ? "nativeByteOrder" : "")
            + "}";
   }
 

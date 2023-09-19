@@ -86,7 +86,7 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
       final int version = readHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET);
       if (version != STORAGE_VERSION_CURRENT) {
         throw new IOException(
-          "Can't read file[" + storage + "]: version(" + version + ") != storage version (" + STORAGE_VERSION_CURRENT + ")");
+          "Can't read file[" + storage + "]: file version(" + version + ") != current impl version (" + STORAGE_VERSION_CURRENT + ")");
       }
 
       final int filePageSize = readHeaderInt(HeaderLayout.PAGE_SIZE_OFFSET);

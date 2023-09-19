@@ -49,7 +49,7 @@ public final class StreamlinedBlobStorageOverLockFreePagedStorage extends Stream
   //      RC: actually, it could be easier to just use single per-file lock to protect all the pages
   //          than to deal with page lock ordering
 
-  public static final int STORAGE_VERSION_CURRENT = 2;
+  public static final int STORAGE_VERSION_CURRENT = 1;
 
 
   /* ============== instance fields: ====================================================================== */
@@ -101,7 +101,7 @@ public final class StreamlinedBlobStorageOverLockFreePagedStorage extends Stream
           final int version = getStorageVersion();
           if (version != STORAGE_VERSION_CURRENT) {
             throw new IOException(
-              "Can't read file[" + pagedStorage + "]: version(" + version + ") != storage version (" + STORAGE_VERSION_CURRENT + ")");
+              "Can't read file[" + pagedStorage + "]: file version(" + version + ") != current impl version (" + STORAGE_VERSION_CURRENT + ")");
           }
 
           final int filePageSize = readHeaderInt(HeaderLayout.PAGE_SIZE_OFFSET);
