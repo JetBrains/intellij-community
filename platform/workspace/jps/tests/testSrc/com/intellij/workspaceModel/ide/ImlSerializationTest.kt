@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.ide
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
+import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity2
 import com.intellij.platform.workspace.storage.tests.SerializationRoundTripChecker
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -47,8 +47,8 @@ class ImlSerializationTest {
     checkSerializationSize(bytes, expectedSize, 2_000)
 
     @Suppress("KotlinConstantConditions")
-    assertTrue("v54" == EntityStorageSerializerImpl.SERIALIZER_VERSION,
-               "This assertion is a reminder. Have you updated the serializer? Update the serializer version!")
+    assertTrue("v1" == EntityStorageSerializerImpl.STORAGE_SERIALIZATION_VERSION,
+               "This assertion is a reminder. Have you updated the serializer? Update the serialization version!")
   }
 
   @Test

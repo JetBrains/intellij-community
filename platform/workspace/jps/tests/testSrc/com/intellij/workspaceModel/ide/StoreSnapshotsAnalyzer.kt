@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
+import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.impl.MatchedEntitySource
 import com.intellij.platform.workspace.storage.impl.SimpleEntityTypesResolver
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
