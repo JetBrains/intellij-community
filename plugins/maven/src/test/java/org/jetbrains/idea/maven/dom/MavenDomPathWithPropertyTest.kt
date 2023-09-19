@@ -1,15 +1,12 @@
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiManager;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.psi.PsiManager
+import org.junit.Test
 
-import java.io.IOException;
-
-public class MavenDomPathWithPropertyTest extends MavenDomTestCase {
+class MavenDomPathWithPropertyTest : MavenDomTestCase() {
   @Test
-  public void testRename() {
+  fun testRename() {
     importProject(
       """
         <groupId>test</groupId>
@@ -27,10 +24,10 @@ public class MavenDomPathWithPropertyTest extends MavenDomTestCase {
               <directory>aaa/bbb/res</directory>
             </resource>
             <resource>
-              <directory>${pom.basedir}/aaa/bbb/res</directory>
+              <directory>${'$'}{pom.basedir}/aaa/bbb/res</directory>
             </resource>
             <resource>
-              <directory>${pom.basedir}/@ppp@/bbb/res</directory>
+              <directory>${'$'}{pom.basedir}/@ppp@/bbb/res</directory>
             </resource>
             <resource>
               <directory>@ppp@/bbb/res</directory>
@@ -40,24 +37,24 @@ public class MavenDomPathWithPropertyTest extends MavenDomTestCase {
             </resource>
           </resources>
         </build>
-        """);
+        """.trimIndent())
 
-    VirtualFile dir = createProjectSubDir("aaa/bbb/res");
+    val dir = createProjectSubDir("aaa/bbb/res")
 
-    VirtualFile bbb = dir.getParent();
-    myFixture.renameElement(PsiManager.getInstance(myFixture.getProject()).findDirectory(bbb), "Z");
+    val bbb = dir.getParent()
+    myFixture.renameElement(PsiManager.getInstance(myFixture.getProject()).findDirectory(bbb)!!, "Z")
 
 
-    String text = PsiManager.getInstance(myFixture.getProject()).findFile(myProjectPom).getText();
-    assert text.contains("<directory>aaa/Z/res</directory>");
-    assert text.contains("<directory>aaa/Z/res</directory>");
-    assert text.contains("<directory>aaa/Z/res</directory>");
-    assert text.contains("<directory>aaa/Z/res</directory>");
-    assert text.contains("<directory>aaa/Z/@rrr@</directory>");
+    val text = PsiManager.getInstance(myFixture.getProject()).findFile(myProjectPom)!!.getText()
+    assert(text.contains("<directory>aaa/Z/res</directory>"))
+    assert(text.contains("<directory>aaa/Z/res</directory>"))
+    assert(text.contains("<directory>aaa/Z/res</directory>"))
+    assert(text.contains("<directory>aaa/Z/res</directory>"))
+    assert(text.contains("<directory>aaa/Z/@rrr@</directory>"))
   }
 
   @Test
-  public void testCompletionDirectoriesOnly() throws IOException {
+  fun testCompletionDirectoriesOnly() {
     createProjectPom(
       """
             <groupId>test</groupId>
@@ -75,14 +72,13 @@ public class MavenDomPathWithPropertyTest extends MavenDomTestCase {
                 </resource>
               </resources>
             </build>
-            \
-        """);
+            """.trimIndent())
 
-    createProjectSubFile("aaa/a.txt");
-    createProjectSubFile("aaa/b.txt");
-    createProjectSubDir("aaa/res1");
-    createProjectSubDir("aaa/res2");
+    createProjectSubFile("aaa/a.txt")
+    createProjectSubFile("aaa/b.txt")
+    createProjectSubDir("aaa/res1")
+    createProjectSubDir("aaa/res2")
 
-    assertCompletionVariants(myProjectPom, "res1", "res2");
+    assertCompletionVariants(myProjectPom, "res1", "res2")
   }
 }

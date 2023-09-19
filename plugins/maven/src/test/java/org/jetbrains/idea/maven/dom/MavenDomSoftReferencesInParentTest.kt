@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenDomTestCase
+import org.junit.Test
 
-public class MavenDomSoftReferencesInParentTest extends MavenDomTestCase {
-
+class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
   @Test
-  public void testDoNotHighlightSourceDirectoryInParentPom() {
+  fun testDoNotHighlightSourceDirectoryInParentPom() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -32,13 +31,13 @@ public class MavenDomSoftReferencesInParentTest extends MavenDomTestCase {
                     <testSourceDirectory>qwqwq/weqweqw</testSourceDirectory>
                     <scriptSourceDirectory>dfsdf/fsdf</scriptSourceDirectory>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
-  @Test 
-  public void testHighlightSourceDirectory() {
+  @Test
+  fun testHighlightSourceDirectory() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -49,7 +48,7 @@ public class MavenDomSoftReferencesInParentTest extends MavenDomTestCase {
                     <testSourceDirectory>foo2</testSourceDirectory>
                     <scriptSourceDirectory>foo3</scriptSourceDirectory>
                     </build>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -61,10 +60,8 @@ public class MavenDomSoftReferencesInParentTest extends MavenDomTestCase {
                        <testSourceDirectory><error>foo2</error></testSourceDirectory>
                        <scriptSourceDirectory><error>foo3</error></scriptSourceDirectory>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
-
-
 }

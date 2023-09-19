@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import com.intellij.spellchecker.inspections.SpellCheckingInspection;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.spellchecker.inspections.SpellCheckingInspection
+import org.junit.Test
 
-public class MavenSpellcheckerTest extends MavenDomTestCase {
-
+class MavenSpellcheckerTest : MavenDomTestCase() {
   @Test
-  public void testSpell() {
-    myFixture.enableInspections(SpellCheckingInspection.class);
+  fun testSpell() {
+    myFixture.enableInspections(SpellCheckingInspection::class.java)
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -37,9 +36,9 @@ public class MavenSpellcheckerTest extends MavenDomTestCase {
                            <version>4.0</version>
                            <type>pom</type>
                          </dependency>
-                       </dependencies>""");
+                       </dependencies>
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
-
 }

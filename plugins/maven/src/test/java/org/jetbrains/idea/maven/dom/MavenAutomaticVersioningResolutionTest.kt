@@ -1,20 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection;
-import org.junit.Test;
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.maven.testFramework.MavenDomTestCase
+import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection
+import org.junit.Test
 
-import java.io.IOException;
-import java.util.Collections;
-
-public class MavenAutomaticVersioningResolutionTest extends MavenDomTestCase {
-
+class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
   @Test
-  public void testAutomaticParentVersionResolutionForMaven4() throws IOException {
-
-    assumeVersionAtLeast("4.0.0-alpha-2");
+  fun testAutomaticParentVersionResolutionForMaven4() {
+    assumeVersionAtLeast("4.0.0-alpha-2")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -23,18 +18,18 @@ public class MavenAutomaticVersioningResolutionTest extends MavenDomTestCase {
                        <modules>
                         <module>m</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile m = createModulePom("m",
-                                    """
+    val m = createModulePom("m",
+                            """
                                       <parent>
                                         <groupId>test</groupId>
                                         <artifactId>project</artifactId>
                                       </parent>
                                        <artifactId>m</artifactId>
-                                      """);
-    importProject();
-    assertEquals("1.1", getProjectsManager().findProject(m).getMavenId().getVersion());
+                                      """.trimIndent())
+    importProject()
+    assertEquals("1.1", projectsManager.findProject(m)!!.mavenId.version)
 
     createModulePom("m",
                     """
@@ -43,16 +38,15 @@ public class MavenAutomaticVersioningResolutionTest extends MavenDomTestCase {
                         <artifactId><caret>project</artifactId>
                       </parent>
                        <artifactId>m</artifactId>
-                      """);
-    assertResolved(m, findPsiFile(myProjectPom));
-    myFixture.enableInspections(Collections.singletonList(MavenParentMissedVersionInspection.class));
-    checkHighlighting(m);
+                      """.trimIndent())
+    assertResolved(m, findPsiFile(myProjectPom))
+    myFixture.enableInspections(listOf<Class<out LocalInspectionTool?>>(MavenParentMissedVersionInspection::class.java))
+    checkHighlighting(m)
   }
 
   @Test
-  public void testAutomaticParentVersionResolutionIsNotEnabledForMaven3() throws IOException {
-
-    assumeVersionLessThan("4.0.0-alpha-2");
+  fun testAutomaticParentVersionResolutionIsNotEnabledForMaven3() {
+    assumeVersionLessThan("4.0.0-alpha-2")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -61,17 +55,17 @@ public class MavenAutomaticVersioningResolutionTest extends MavenDomTestCase {
                        <modules>
                         <module>m</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile m = createModulePom("m",
-                                    """
+    val m = createModulePom("m",
+                            """
                                       <parent>
                                         <groupId>test</groupId>
                                         <artifactId>project</artifactId>
                                       </parent>
                                        <artifactId>m</artifactId>
-                                      """);
-    importProject();
+                                      """.trimIndent())
+    importProject()
 
     createModulePom("m",
                     """
@@ -80,15 +74,14 @@ public class MavenAutomaticVersioningResolutionTest extends MavenDomTestCase {
                           <artifactId>project</artifactId>
                         </parent>
                          <artifactId>m</artifactId>
-                        """);
-    myFixture.enableInspections(Collections.singletonList(MavenParentMissedVersionInspection.class));
-    checkHighlighting(m);
+                        """.trimIndent())
+    myFixture.enableInspections(listOf<Class<out LocalInspectionTool?>>(MavenParentMissedVersionInspection::class.java))
+    checkHighlighting(m)
   }
 
   @Test
-  public void testAutomaticDependencyVersionResolutionForMaven4() throws IOException {
-
-    assumeVersionAtLeast("4.0.0-alpha-2");
+  fun testAutomaticDependencyVersionResolutionForMaven4() {
+    assumeVersionAtLeast("4.0.0-alpha-2")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -98,18 +91,18 @@ public class MavenAutomaticVersioningResolutionTest extends MavenDomTestCase {
                         <module>m1</module>
                         <module>m2</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile m1 = createModulePom("m1",
-                                     """
+    val m1 = createModulePom("m1",
+                             """
                                        <parent>
                                          <groupId>test</groupId>
                                          <artifactId>project</artifactId>
                                        </parent>
                                         <artifactId>m1</artifactId>
-                                       """);
-    VirtualFile m2 = createModulePom("m2",
-                                     """
+                                       """.trimIndent())
+    val m2 = createModulePom("m2",
+                             """
                                        <parent>
                                          <groupId>test</groupId>
                                          <artifactId>project</artifactId>
@@ -121,11 +114,11 @@ public class MavenAutomaticVersioningResolutionTest extends MavenDomTestCase {
                                             <artifactId>m1</artifactId>
                                           </dependency>
                                         </dependencies>
-                                       """);
-    importProject();
-    assertEquals("1.1", getProjectsManager().findProject(m1).getMavenId().getVersion());
-    assertEquals("1.1", getProjectsManager().findProject(m2).getMavenId().getVersion());
-    assertModuleModuleDeps("m2", "m1");
+                                       """.trimIndent())
+    importProject()
+    assertEquals("1.1", projectsManager.findProject(m1)!!.mavenId.version)
+    assertEquals("1.1", projectsManager.findProject(m2)!!.mavenId.version)
+    assertModuleModuleDeps("m2", "m1")
 
     createModulePom("m2",
                     """
@@ -140,15 +133,14 @@ public class MavenAutomaticVersioningResolutionTest extends MavenDomTestCase {
                            <artifactId>m1</artifactId>
                          </dependency>
                        </dependencies>
-                      """);
-    assertResolved(m2, findPsiFile(m1));
-    checkHighlighting(m2);
+                      """.trimIndent())
+    assertResolved(m2, findPsiFile(m1))
+    checkHighlighting(m2)
   }
 
   @Test
-  public void testAutomaticDependencyVersionResolutionForMaven4AndRelativePath() throws IOException {
-
-    assumeVersionAtLeast("4.0.0-alpha-2");
+  fun testAutomaticDependencyVersionResolutionForMaven4AndRelativePath() {
+    assumeVersionAtLeast("4.0.0-alpha-2")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -157,29 +149,29 @@ public class MavenAutomaticVersioningResolutionTest extends MavenDomTestCase {
                        <modules>
                         <module>m/m1</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile m1 = createModulePom("m/m1",
-                                     """
+    val m1 = createModulePom("m/m1",
+                             """
                                        <parent>
                                          <groupId>test</groupId>
                                          <artifactId>project</artifactId>
                                          <relativePath>../../pom.xml</relativePath>
                                        </parent>
                                         <artifactId>m1</artifactId>
-                                       """);
-    importProject();
-    assertEquals("1.1", getProjectsManager().findProject(m1).getMavenId().getVersion());
+                                       """.trimIndent())
+    importProject()
+    assertEquals("1.1", projectsManager.findProject(m1)!!.mavenId.version)
 
     createModulePom("m/m1",
-                                     """
+                    """
                                        <parent>
                                          <groupId>test</groupId>
                                          <artifactId><caret>project</artifactId>
                                          <relativePath>../../pom.xml</relativePath>
                                        </parent>
                                         <artifactId>m1</artifactId>
-                                       """);
-    assertResolved(m1, findPsiFile(myProjectPom));
+                                       """.trimIndent())
+    assertResolved(m1, findPsiFile(myProjectPom))
   }
 }

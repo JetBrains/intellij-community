@@ -1,16 +1,12 @@
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.lookup.LookupElement;
-import org.junit.Test;
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.testFramework.UsefulTestCase
+import org.junit.Test
 
-import java.util.Arrays;
-
-public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestCase {
-
-
+class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   @Test
-  public void testCompletion() {
+  fun testCompletion() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -20,13 +16,13 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                            ju<caret>
                          </dependency>
                        </dependencies>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "junit:junit");
+    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "junit:junit")
   }
 
   @Test
-  public void testInsertDependency() {
+  fun testInsertDependency() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -34,14 +30,14 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                        <dependencies>
                          <dependency>juni<caret></dependency>
                        </dependencies>
-                       """);
+                       """.trimIndent())
 
-    configTest(myProjectPom);
-    LookupElement[] elements = myFixture.completeBasic();
-    assertCompletionVariants(myFixture, RENDERING_TEXT, "junit:junit");
-    assertSize(1, elements);
+    configTest(myProjectPom)
+    val elements = myFixture.completeBasic()
+    assertCompletionVariants(myFixture, RENDERING_TEXT, "junit:junit")
+    UsefulTestCase.assertSize(1, elements)
 
-    myFixture.type('\n');
+    myFixture.type('\n')
 
 
     myFixture.checkResult(createPomXml("""
@@ -56,11 +52,11 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                                <scope>test</scope>
                                            </dependency>
                                          </dependencies>
-                                         """));
+                                         """.trimIndent()))
   }
 
   @Test
-  public void testInsertManagedDependency() {
+  fun testInsertManagedDependency() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -77,12 +73,12 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                        <dependencies>
                          <dependency>junit:<caret></dependency>
                        </dependencies>
-                       """);
+                       """.trimIndent())
 
-    configTest(myProjectPom);
-    myFixture.complete(CompletionType.BASIC);
-    assertCompletionVariants(myFixture, RENDERING_TEXT, "junit:junit");
-    myFixture.type('\n');
+    configTest(myProjectPom)
+    myFixture.complete(CompletionType.BASIC)
+    assertCompletionVariants(myFixture, RENDERING_TEXT, "junit:junit")
+    myFixture.type('\n')
 
     myFixture.checkResult(createPomXml("""
                                          <groupId>test</groupId>
@@ -104,11 +100,11 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                                <scope>test</scope>
                                            </dependency>
                                          </dependencies>
-                                         """));
+                                         """.trimIndent()))
   }
 
   @Test
-  public void testInsertManagedDependencyWithTypeAndClassifier() {
+  fun testInsertManagedDependencyWithTypeAndClassifier() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -123,22 +119,22 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                              <groupId>junit</groupId>
                              <artifactId>junit</artifactId>
                              <version>4.0</version>
-                             <type>${junitType}</type>
-                             <classifier>${junitClassifier}</classifier>
+                             <type>${'$'}{junitType}</type>
+                             <classifier>${'$'}{junitClassifier}</classifier>
                            </dependency>
                          </dependencies>
                        </dependencyManagement>
                        <dependencies>
                          <dependency>junit:<caret></dependency>
                        </dependencies>
-                       """);
+                       """.trimIndent())
 
-    configTest(myProjectPom);
+    configTest(myProjectPom)
 
-    LookupElement[] elements = myFixture.completeBasic();
-    assertSize(1, elements);
+    val elements = myFixture.completeBasic()
+    UsefulTestCase.assertSize(1, elements)
 
-    myFixture.type('\n');
+    myFixture.type('\n')
 
 
     myFixture.checkResult(createPomXml("""
@@ -155,8 +151,8 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                                <groupId>junit</groupId>
                                                <artifactId>junit</artifactId>
                                                <version>4.0</version>
-                                               <type>${junitType}</type>
-                                               <classifier>${junitClassifier}</classifier>
+                                               <type>${'$'}{junitType}</type>
+                                               <classifier>${'$'}{junitClassifier}</classifier>
                                              </dependency>
                                            </dependencies>
                                          </dependencyManagement>
@@ -164,21 +160,21 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                            <dependency>
                                                <groupId>junit</groupId>
                                                <artifactId>junit</artifactId>
-                                               <type>${junitType}</type>
-                                               <classifier>${junitClassifier}</classifier>
+                                               <type>${'$'}{junitType}</type>
+                                               <classifier>${'$'}{junitClassifier}</classifier>
                                                <scope>test</scope>
                                            </dependency>
                                          </dependencies>
-                                         """));
+                                         """.trimIndent()))
   }
 
   @Test
-  public void testCompletionArtifactIdThenVersion() {
+  fun testCompletionArtifactIdThenVersion() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -187,19 +183,19 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                            <artifactId>juni<caret></artifactId>
                          </dependency>
                        </dependencies>
-                       """);
+                       """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(myProjectPom);
+    myFixture.configureFromExistingVirtualFile(myProjectPom)
 
-    LookupElement[] elements = myFixture.completeBasic();
-    assertTrue(elements.length > 0);
-    assertEquals("junit:junit:3.8.1", elements[0].getLookupString());
+    var elements = myFixture.completeBasic()
+    assertTrue(elements.size > 0)
+    assertEquals("junit:junit:3.8.1", elements[0].getLookupString())
 
-    myFixture.type('\n');
+    myFixture.type('\n')
 
-    elements = myFixture.completeBasic();
-    assertSize(1, elements);
-    myFixture.type('\n');
+    elements = myFixture.completeBasic()
+    UsefulTestCase.assertSize(1, elements)
+    myFixture.type('\n')
 
     myFixture.checkResult(createPomXml("""
                                          <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -211,18 +207,19 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                                <scope>test</scope>
                                            </dependency>
                                          </dependencies>
-                                         """));
+                                         """.trimIndent()))
 
-    assertTrue(myFixture.getLookupElementStrings().containsAll(Arrays.asList("3.8.1", "4.0")));
+    assertTrue(
+      myFixture.getLookupElementStrings()!!.containsAll(mutableListOf("3.8.1", "4.0")))
   }
 
   @Test
-  public void testCompletionArtifactIdThenGroupIdThenInsertVersion() {
+  fun testCompletionArtifactIdThenGroupIdThenInsertVersion() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -231,19 +228,19 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                            <artifactId>intellijartif<caret></artifactId>
                          </dependency>
                        </dependencies>
-                       """);
+                       """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(myProjectPom);
+    myFixture.configureFromExistingVirtualFile(myProjectPom)
 
-    LookupElement[] elements = myFixture.completeBasic();
+    val elements = myFixture.completeBasic()
 
-    assertCompletionVariants(myFixture, RENDERING_TEXT, "intellijartifactanother", "intellijartifact");
+    assertCompletionVariants(myFixture, RENDERING_TEXT, "intellijartifactanother", "intellijartifact")
 
-    myFixture.type('\n');
+    myFixture.type('\n')
 
-    assertCompletionVariants(myFixture, RENDERING_TEXT, "org.intellijgroup");
+    assertCompletionVariants(myFixture, RENDERING_TEXT, "org.intellijgroup")
 
-    myFixture.type("\n");
+    myFixture.type("\n")
 
     myFixture.checkResult(createPomXml("""
                                          <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -254,16 +251,16 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                                <version>1.0</version>
                                            </dependency>
                                          </dependencies>
-                                         """));
+                                         """.trimIndent()))
   }
 
   @Test
-  public void testCompletionArtifactIdNonExactmatch() {
+  fun testCompletionArtifactIdNonExactmatch() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -272,24 +269,24 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                            <artifactId>intellijmavent<caret></artifactId>
                          </dependency>
                        </dependencies>
-                       """);
+                       """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(myProjectPom);
-    LookupElement[] elements = myFixture.completeBasic();
-    assertSize(1, elements);
+    myFixture.configureFromExistingVirtualFile(myProjectPom)
+    val elements = myFixture.completeBasic()
+    UsefulTestCase.assertSize(1, elements)
 
-    myFixture.type('\n');
+    myFixture.type('\n')
 
-    assertCompletionVariants(myFixture, RENDERING_TEXT, "org.example");
+    assertCompletionVariants(myFixture, RENDERING_TEXT, "org.example")
   }
 
   @Test
-  public void testCompletionArtifactIdInsideManagedDependency() {
+  fun testCompletionArtifactIdInsideManagedDependency() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -300,21 +297,21 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                </dependency>
                            </dependencies>
                        </dependencyManagement>
-                       """);
+                       """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(myProjectPom);
+    myFixture.configureFromExistingVirtualFile(myProjectPom)
 
-    LookupElement[] elements = myFixture.completeBasic();
-    assertSize(1, elements);
-    myFixture.type('\n');
+    val elements = myFixture.completeBasic()
+    UsefulTestCase.assertSize(1, elements)
+    myFixture.type('\n')
 
-    assertCompletionVariants(myFixture, RENDERING_TEXT, "org.example");
+    assertCompletionVariants(myFixture, RENDERING_TEXT, "org.example")
 
-    myFixture.type('\n');
+    myFixture.type('\n')
 
-    assertCompletionVariants(myFixture, RENDERING_TEXT, "1.0", "2.0");
+    assertCompletionVariants(myFixture, RENDERING_TEXT, "1.0", "2.0")
 
-    myFixture.type('\n');
+    myFixture.type('\n')
 
     myFixture.checkResult(createPomXml("""
                                          <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -327,11 +324,11 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                                  </dependency>
                                              </dependencies>
                                          </dependencyManagement>
-                                         """));
+                                         """.trimIndent()))
   }
 
   @Test
-  public void testCompletionArtifactIdWithManagedDependency() {
+  fun testCompletionArtifactIdWithManagedDependency() {
     importProject("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                       <dependencyManagement>
@@ -343,7 +340,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                           </dependency>
                         </dependencies>
                       </dependencyManagement>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -361,17 +358,17 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                            <artifactId>intellijartifactan<caret></artifactId>
                          </dependency>
                        </dependencies>
-                       """);
+                       """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(myProjectPom);
+    myFixture.configureFromExistingVirtualFile(myProjectPom)
 
-    LookupElement[] elements = myFixture.completeBasic();
-    assertSize(1, elements);
-    myFixture.type('\n');
+    var elements = myFixture.completeBasic()
+    UsefulTestCase.assertSize(1, elements!!)
+    myFixture.type('\n')
 
-    elements = myFixture.completeBasic();
-    assertSize(1, elements);
-    myFixture.type('\n');
+    elements = myFixture.completeBasic()
+    UsefulTestCase.assertSize(1, elements)
+    myFixture.type('\n')
 
     myFixture.checkResult(createPomXml("""
                                          <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -390,12 +387,12 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                                <artifactId>intellijartifactanother</artifactId>
                                            </dependency>
                                          </dependencies>
-                                         """
-    ));
+                                         """.trimIndent()
+    ))
   }
 
   @Test
-  public void testCompletionGroupIdWithManagedDependencyWithTypeAndClassifier() {
+  fun testCompletionGroupIdWithManagedDependencyWithTypeAndClassifier() {
     importProject("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                     <properties>
@@ -405,13 +402,13 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                         <dependency>
                           <groupId>commons-io</groupId>
                           <artifactId>commons-io</artifactId>
-                          <classifier>${ioClassifier}</classifier>
-                          <type>${ioType}</type>
+                          <classifier>${'$'}{ioClassifier}</classifier>
+                          <type>${'$'}{ioType}</type>
                           <version>2.4</version>
                         </dependency>
                       </dependencies>
                     </dependencyManagement>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -420,8 +417,8 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                            <dependency>
                              <groupId>commons-io</groupId>
                              <artifactId>commons-io</artifactId>
-                             <classifier>${ioClassifier}</classifier>
-                             <type>${ioType}</type>
+                             <classifier>${'$'}{ioClassifier}</classifier>
+                             <type>${'$'}{ioType}</type>
                              <version>2.4</version>
                            </dependency>
                          </dependencies>
@@ -432,13 +429,13 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                              <artifactId>commons-io</artifactId>
                          </dependency>
                        </dependencies>
-                       """);
+                       """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(myProjectPom);
+    myFixture.configureFromExistingVirtualFile(myProjectPom)
 
-    LookupElement[] elements = myFixture.complete(CompletionType.BASIC);
-    assertSize(1, elements);
-    myFixture.type('\n');
+    val elements = myFixture.complete(CompletionType.BASIC)
+    UsefulTestCase.assertSize(1, elements)
+    myFixture.type('\n')
 
     myFixture.checkResult(createPomXml("""
                                          <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -447,8 +444,8 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                              <dependency>
                                                <groupId>commons-io</groupId>
                                                <artifactId>commons-io</artifactId>
-                                               <classifier>${ioClassifier}</classifier>
-                                               <type>${ioType}</type>
+                                               <classifier>${'$'}{ioClassifier}</classifier>
+                                               <type>${'$'}{ioType}</type>
                                                <version>2.4</version>
                                              </dependency>
                                            </dependencies>
@@ -457,11 +454,11 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                            <dependency>
                                                <groupId>commons-io</groupId>
                                                <artifactId>commons-io</artifactId>
-                                               <type>${ioType}</type>
-                                               <classifier>${ioClassifier}</classifier>
+                                               <type>${'$'}{ioType}</type>
+                                               <classifier>${'$'}{ioClassifier}</classifier>
                                            </dependency>
                                          </dependencies>
-                                         """
-    ));
+                                         """.trimIndent()
+    ))
   }
 }

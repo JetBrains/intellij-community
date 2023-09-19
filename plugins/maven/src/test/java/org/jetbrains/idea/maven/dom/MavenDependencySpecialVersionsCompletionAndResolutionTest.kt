@@ -1,17 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import org.junit.Test;
+import org.junit.Test
 
-public class MavenDependencySpecialVersionsCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+class MavenDependencySpecialVersionsCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
+  override fun setUp() {
+    super.setUp()
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
   }
 
   //@Test 
@@ -32,9 +31,8 @@ public class MavenDependencySpecialVersionsCompletionAndResolutionTest extends M
   //  VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath);
   //  assertResolved(myProjectPom, findPsiFile(f));
   //}
-
   @Test
-  public void testDoNotHighlightVersionRanges() {
+  fun testDoNotHighlightVersionRanges() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -46,13 +44,13 @@ public class MavenDependencySpecialVersionsCompletionAndResolutionTest extends M
                            <version>[1,2]</version>
                          </dependency>
                        </dependencies>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
-  @Test 
-  public void testDoNotHighlightLatestAndReleaseDependencies() {
+  @Test
+  fun testDoNotHighlightLatestAndReleaseDependencies() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -69,8 +67,8 @@ public class MavenDependencySpecialVersionsCompletionAndResolutionTest extends M
                            <version>RELEASE</version>
                          </dependency>
                        </dependencies>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 }

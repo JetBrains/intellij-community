@@ -13,45 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenDomTestCase
+import org.junit.Test
 
-public class MavenPackagingCompletionTest extends MavenDomTestCase {
+class MavenPackagingCompletionTest : MavenDomTestCase() {
   @Test
-  public void testVariants() {
+  fun testVariants() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging><caret></packaging>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "jar", "pom", "war", "ejb", "ejb-client", "ear", "bundle", "maven-plugin");
+    assertCompletionVariants(myProjectPom, "jar", "pom", "war", "ejb", "ejb-client", "ear", "bundle", "maven-plugin")
   }
 
   @Test
-  public void testDoNotHighlightUnknownPackagingTypes() {
+  fun testDoNotHighlightUnknownPackagingTypes() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>xxx</packaging>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 }

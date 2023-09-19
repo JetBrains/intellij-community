@@ -1,147 +1,145 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import org.junit.Test;
+import com.intellij.psi.PsiFile
+import com.intellij.testFramework.UsefulTestCase
+import org.junit.Test
 
-public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
+  override fun setUp() {
+    super.setUp()
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
   }
 
   @Test
-  public void testCompletionRelativePath() throws Exception {
-    createProjectSubDir("src");
-    createProjectSubFile("a.txt", "");
+  fun testCompletionRelativePath() {
+    createProjectSubDir("src")
+    createProjectSubFile("a.txt", "")
 
-    VirtualFile modulePom = createModulePom("module1",
-                                            """
+    val modulePom = createModulePom("module1",
+                                    """
                                               <groupId>test</groupId>
                                               <artifactId>module1</artifactId>
                                               <version>1</version>
                                               <parent>
                                               <relativePath>../<caret></relativePath>
                                               </parent>
-                                              """);
+                                              """.trimIndent())
 
-    assertCompletionVariants(modulePom, "src", "module1", "pom.xml");
+    assertCompletionVariants(modulePom, "src", "module1", "pom.xml")
   }
 
-  @Test 
-  public void testRelativePathDefaultValue() {
+  @Test
+  fun testRelativePathDefaultValue() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile modulePom = createModulePom("module1",
-                                            """
+    val modulePom = createModulePom("module1",
+                                    """
                                               <groupId>test</groupId>
                                               <artifactId>module1</artifactId>
                                               <version>1</version>
                                               <parent>
                                               <relativePath>../pom.<caret>xml</relativePath>
                                               </parent>
-                                              """);
+                                              """.trimIndent())
 
-    configTest(modulePom);
-    PsiElement elementAtCaret = myFixture.getElementAtCaret();
+    configTest(modulePom)
+    val elementAtCaret = myFixture.getElementAtCaret()
 
-    assertInstanceOf(elementAtCaret, PsiFile.class);
-    assertEquals(((PsiFile)elementAtCaret).getVirtualFile(), myProjectPom);
+    UsefulTestCase.assertInstanceOf(elementAtCaret, PsiFile::class.java)
+    assertEquals((elementAtCaret as PsiFile).getVirtualFile(), myProjectPom)
   }
 
-  @Test 
-  public void testUnderstandingProjectSchemaWithoutNamespace() {
+  @Test
+  fun testUnderstandingProjectSchemaWithoutNamespace() {
     myFixture.saveText(myProjectPom,
                        """
                          <project>
                            <dep<caret>
                          </project>
-                         """);
+                         """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "dependencies", "dependencyManagement");
+    assertCompletionVariants(myProjectPom, "dependencies", "dependencyManagement")
   }
 
-  @Test 
-  public void testUnderstandingProfilesSchemaWithoutNamespace() {
-    VirtualFile profiles = createProfilesXml("""
+  @Test
+  fun testUnderstandingProfilesSchemaWithoutNamespace() {
+    val profiles = createProfilesXml("""
                                                <profile>
                                                  <<caret>
                                                </profile>
-                                               """);
+                                               """.trimIndent())
 
-    assertCompletionVariantsInclude(profiles, "id", "activation");
+    assertCompletionVariantsInclude(profiles, "id", "activation")
   }
 
-  @Test 
-  public void testUnderstandingSettingsSchemaWithoutNamespace() throws Exception {
-    VirtualFile settings = updateSettingsXml("""
+  @Test
+  fun testUnderstandingSettingsSchemaWithoutNamespace() {
+    val settings = updateSettingsXml("""
                                                <profiles>
                                                  <profile>
                                                    <<caret>
                                                  </profile>
                                                </profiles>
-                                               """);
+                                               """.trimIndent())
 
-    assertCompletionVariantsInclude(settings, "id", "activation");
+    assertCompletionVariantsInclude(settings, "id", "activation")
   }
 
-  @Test 
-  public void testAbsentModelVersion() {
+  @Test
+  fun testAbsentModelVersion() {
     myFixture.saveText(myProjectPom,
                        """
                          <<error descr="'modelVersion' child tag should be defined">project</error> xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
                            <artifactId>foo</artifactId>
                          </project>
-                         """);
-    checkHighlighting();
+                         """.trimIndent())
+    checkHighlighting()
   }
 
-  @Test 
-  public void testAbsentArtifactId() {
+  @Test
+  fun testAbsentArtifactId() {
     myFixture.saveText(myProjectPom,
                        """
                          <<error descr="'artifactId' child tag should be defined">project</error> xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
                            <modelVersion>4.0.0</modelVersion>
                          </project>
-                         """);
-    checkHighlighting();
+                         """.trimIndent())
+    checkHighlighting()
   }
 
-  @Test 
-  public void testUnknownModelVersion() {
+  @Test
+  fun testUnknownModelVersion() {
     myFixture.saveText(myProjectPom,
                        """
                          <project xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
                            <modelVersion><error descr="Unsupported model version. Only version 4.0.0 is supported.">666</error></modelVersion>
                            <artifactId>foo</artifactId>
                          </project>
-                         """);
-    checkHighlighting();
+                         """.trimIndent())
+    checkHighlighting()
   }
 
-  @Test 
-  public void testEmptyValues() {
+  @Test
+  fun testEmptyValues() {
     createProjectPom("""
                        <<error>groupId</error>></groupId>
                        <<error>artifactId</error>></artifactId>
                        <<error>version</error>></version>
-                       """);
-    checkHighlighting();
+                       """.trimIndent())
+    checkHighlighting()
   }
 
-  @Test 
-  public void testAddingSettingsXmlReadingProblemsToProjectTag() throws Exception {
+  @Test
+  fun testAddingSettingsXmlReadingProblemsToProjectTag() {
     myFixture.saveText(myProjectPom,
                        """
                          <project>
@@ -150,10 +148,10 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                            <artifactId>project</artifactId>
                            <version>1</version>
                          </project>
-                         """);
-    updateSettingsXml("<<<");
+                         """.trimIndent())
+    updateSettingsXml("<<<")
 
-    readProjects();
+    readProjects()
 
     myFixture.saveText(myProjectPom,
                        """
@@ -163,12 +161,12 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                            <artifactId>project</artifactId>
                            <version>1</version>
                          </project>
-                         """);
-    checkHighlighting();
+                         """.trimIndent())
+    checkHighlighting()
   }
 
   @Test
-  public void testAddingProfilesXmlReadingProblemsToProjectTag() throws Exception {
+  fun testAddingProfilesXmlReadingProblemsToProjectTag() {
     myFixture.saveText(myProjectPom,
                        """
                          <project>
@@ -177,10 +175,10 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                            <artifactId>project</artifactId>
                            <version>1</version>
                          </project>
-                         """);
-    createProfilesXml("<<<");
+                         """.trimIndent())
+    createProfilesXml("<<<")
 
-    readProjects();
+    readProjects()
 
     myFixture.saveText(myProjectPom,
                        """
@@ -190,12 +188,12 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                            <artifactId>project</artifactId>
                            <version>1</version>
                          </project>
-                         """);
-    checkHighlighting();
+                         """.trimIndent())
+    checkHighlighting()
   }
 
   @Test
-  public void testAddingStructureReadingProblemsToParentTag() throws Exception {
+  fun testAddingStructureReadingProblemsToParentTag() {
     myFixture.saveText(myProjectPom,
                        """
                          <project>
@@ -209,9 +207,9 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                              <version>1</version>
                            </parent>
                          </project>
-                         """);
+                         """.trimIndent())
 
-    readProjects();
+    readProjects()
 
     myFixture.saveText(myProjectPom,
                        """
@@ -226,19 +224,20 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                              <version>1</version>
                            </parent>
                          </project>
-                         """);
+                         """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
   @Test
-  public void testAddingParentReadingProblemsToParentTag() throws Exception {
+  fun testAddingParentReadingProblemsToParentTag() {
     createModulePom("parent",
                     """
                       <groupId>test</groupId>
                       <artifactId>parent</artifactId>
                       <version>1</version>
-                      <<<""");
+                      <<<
+                      """.trimIndent())
 
     myFixture.saveText(myProjectPom,
                        """
@@ -254,8 +253,8 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                              <relativePath>parent/pom.xml</relativePath>
                            </parent>
                          </project>
-                         """);
-    readProjects();
+                         """.trimIndent())
+    readProjects()
 
     myFixture.saveText(myProjectPom,
                        """
@@ -271,12 +270,12 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                              <relativePath>parent/pom.xml</relativePath>
                            </parent>
                          </project>
-                         """);
-    checkHighlighting();
+                         """.trimIndent())
+    checkHighlighting()
   }
 
   @Test
-  public void testDoNotAddReadingSyntaxProblemsToProjectTag() throws Exception {
+  fun testDoNotAddReadingSyntaxProblemsToProjectTag() {
     myFixture.saveText(myProjectPom,
                        """
                          <project>
@@ -285,9 +284,9 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                            <artifactId>project</artifactId>
                            <version>1</version>
                            <</project>
-                         """);
+                         """.trimIndent())
 
-    readProjects();
+    readProjects()
 
     myFixture.saveText(myProjectPom,
                        """
@@ -297,12 +296,12 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                            <artifactId>project</artifactId>
                            <version>1</version>
                            <<error><</error>/project>
-                         """);
-    checkHighlighting();
+                         """.trimIndent())
+    checkHighlighting()
   }
 
   @Test
-  public void testDoNotAddDependencyAndModuleProblemsToProjectTag() throws Exception {
+  fun testDoNotAddDependencyAndModuleProblemsToProjectTag() {
     myFixture.saveText(myProjectPom,
                        """
                          <project>
@@ -322,9 +321,9 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                              </dependency>
                            </dependencies>
                          </project>
-                         """);
+                         """.trimIndent())
 
-    readProjects();
+    readProjects()
 
     myFixture.saveText(myProjectPom,
                        """
@@ -345,7 +344,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                              </dependency>
                            </dependencies>
                          </project>
-                         """);
-    checkHighlighting();
+                         """.trimIndent())
+    checkHighlighting()
   }
 }

@@ -1,16 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.dom.converters;
+package org.jetbrains.idea.maven.dom.converters
 
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import com.intellij.util.xml.impl.ConvertContextFactory;
-import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.util.xml.impl.ConvertContextFactory
+import org.jetbrains.idea.maven.dom.MavenDomUtil
+import org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesHelper.getMavenId
+import org.junit.Test
 
-public class MavenArtifactCoordinatesHelperTest extends MavenDomTestCase {
-
+class MavenArtifactCoordinatesHelperTest : MavenDomTestCase() {
   @Test
-  public void testGetPluginVersionFromParentPluginManagement() {
-    var parentFile = createProjectPom("""
+  fun testGetPluginVersionFromParentPluginManagement() {
+    val parentFile = createProjectPom("""
                 <groupId>group</groupId>
                 <artifactId>parent</artifactId>
                 <version>1</version>
@@ -26,8 +26,8 @@ public class MavenArtifactCoordinatesHelperTest extends MavenDomTestCase {
                     </plugins>
                   </pluginManagement>
                 </build>
-                """);
-    var m1File = createModulePom("m1", """
+                """.trimIndent())
+    val m1File = createModulePom("m1", """
                 <artifactId>m1</artifactId>
                 <version>1</version>
                 <parent>
@@ -42,18 +42,17 @@ public class MavenArtifactCoordinatesHelperTest extends MavenDomTestCase {
                     </plugin>
                   </plugins>
                 </build>
-                """);
-    importProject();
+                """.trimIndent())
+    importProject()
 
-    var pluginVersion = "1.0.0";
+    val pluginVersion = "1.0.0"
 
-    var mavenModel = MavenDomUtil.getMavenDomProjectModel(myProject, m1File);
-    var coords = mavenModel.getBuild().getPlugins().getPlugins().get(0);
-    var converterContext = ConvertContextFactory.createConvertContext(mavenModel);
+    val mavenModel = MavenDomUtil.getMavenDomProjectModel(myProject, m1File)
+    val coords = mavenModel!!.getBuild().getPlugins().getPlugins()[0]
+    val converterContext = ConvertContextFactory.createConvertContext(mavenModel)
 
-    var mavenId = MavenArtifactCoordinatesHelper.getMavenId(coords, converterContext);
+    val mavenId = getMavenId(coords, converterContext)
 
-    assertEquals(pluginVersion, mavenId.getVersion());
+    assertEquals(pluginVersion, mavenId.version)
   }
-
 }

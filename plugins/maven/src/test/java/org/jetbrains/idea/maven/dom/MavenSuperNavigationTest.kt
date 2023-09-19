@@ -1,14 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import com.intellij.maven.testFramework.MavenTestCase;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenDomTestCase
+import org.junit.Test
 
-public class MavenSuperNavigationTest extends MavenDomTestCase {
-
+class MavenSuperNavigationTest : MavenDomTestCase() {
   @Test
-  public void testNavigationToManagingDependencyWithoutModules() {
+  fun testNavigationToManagingDependencyWithoutModules() {
     configureProjectPom(
       """
         <groupId>test</groupId>
@@ -29,12 +27,12 @@ public class MavenSuperNavigationTest extends MavenDomTestCase {
             <artifactId>junit<caret></artifactId>
           </dependency>
         </dependencies>
-        """);
+        """.trimIndent())
 
-    myFixture.performEditorAction("GotoSuperMethod");
+    myFixture.performEditorAction("GotoSuperMethod")
 
     myFixture.checkResultWithInlays(
-      MavenTestCase.createPomXml(
+      createPomXml(
         """
           <groupId>test</groupId>
           <artifactId>project</artifactId>
@@ -54,11 +52,11 @@ public class MavenSuperNavigationTest extends MavenDomTestCase {
               <artifactId>junit</artifactId>
             </dependency>
           </dependencies>
-          """));
+          """.trimIndent()))
   }
 
   @Test
-  public void testNavigationToManagingPluginWithoutModules() {
+  fun testNavigationToManagingPluginWithoutModules() {
     configureProjectPom(
       """
         <groupId>test</groupId>
@@ -79,13 +77,14 @@ public class MavenSuperNavigationTest extends MavenDomTestCase {
               <artifactId>maven-compiler-plugin</artifactId>
             </plugin>
           </plugins>
-        </build>"""
-    );
+        </build>
+        """.trimIndent()
+    )
 
-    myFixture.performEditorAction("GotoSuperMethod");
+    myFixture.performEditorAction("GotoSuperMethod")
 
     myFixture.checkResultWithInlays(
-      MavenTestCase.createPomXml(
+      createPomXml(
         """
           <groupId>test</groupId>
           <artifactId>project</artifactId>
@@ -105,13 +104,14 @@ public class MavenSuperNavigationTest extends MavenDomTestCase {
                 <artifactId>maven-compiler-plugin</artifactId>
               </plugin>
             </plugins>
-          </build>"""
-      ));
+          </build>
+          """.trimIndent()
+      ))
   }
 
   @Test
-  public void testGotoToParentProject() {
-    var parent = createProjectPom(
+  fun testGotoToParentProject() {
+    val parent = createProjectPom(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -120,9 +120,9 @@ public class MavenSuperNavigationTest extends MavenDomTestCase {
         <modules>
           <module>m1</module>
         </modules>
-        """);
+        """.trimIndent())
 
-    var m1 = createModulePom(
+    val m1 = createModulePom(
       "m1",
       """
         <parent>
@@ -131,18 +131,18 @@ public class MavenSuperNavigationTest extends MavenDomTestCase {
           <version><caret>1</version>
         </parent>
         <artifactId>m1</artifactId>
-        """);
+        """.trimIndent())
 
-    configTest(m1);
-    myFixture.performEditorAction("GotoSuperMethod");
+    configTest(m1)
+    myFixture.performEditorAction("GotoSuperMethod")
 
-    var offset = getEditorOffset(parent);
-    assertEquals(0, offset);
+    val offset = getEditorOffset(parent)
+    assertEquals(0, offset)
   }
 
   @Test
-  public void testNavigationToManagingDependencyWithModules() {
-    var parent = createProjectPom(
+  fun testNavigationToManagingDependencyWithModules() {
+    val parent = createProjectPom(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -160,9 +160,9 @@ public class MavenSuperNavigationTest extends MavenDomTestCase {
         <modules>
           <module>m1</module>
         </modules>
-        """);
+        """.trimIndent())
 
-    var m1 = createModulePom(
+    val m1 = createModulePom(
       "m1",
       """
         <parent>
@@ -176,15 +176,16 @@ public class MavenSuperNavigationTest extends MavenDomTestCase {
             <groupId><caret>junit</groupId>
             <artifactId>junit<caret></artifactId>
           </dependency>
-        </dependencies>"""
-    );
+        </dependencies>
+        """.trimIndent()
+    )
 
-    configTest(m1);
-    myFixture.performEditorAction("GotoSuperMethod");
+    configTest(m1)
+    myFixture.performEditorAction("GotoSuperMethod")
 
-    configTest(parent);
+    configTest(parent)
     myFixture.checkResultWithInlays(
-      MavenTestCase.createPomXml(
+      createPomXml(
         """
           <groupId>test</groupId>
           <artifactId>project</artifactId>
@@ -202,12 +203,12 @@ public class MavenSuperNavigationTest extends MavenDomTestCase {
           <modules>
             <module>m1</module>
           </modules>
-          """));
+          """.trimIndent()))
   }
 
   @Test
-  public void testNavigationToManagingPluginWithModules() {
-    var parent = createProjectPom(
+  fun testNavigationToManagingPluginWithModules() {
+    val parent = createProjectPom(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -226,10 +227,11 @@ public class MavenSuperNavigationTest extends MavenDomTestCase {
           	   </plugin>
             </plugins>
           </pluginManagement>
-        </build>"""
-    );
+        </build>
+        """.trimIndent()
+    )
 
-    var m1 = createModulePom(
+    val m1 = createModulePom(
       "m1",
       """
         <parent>
@@ -245,15 +247,16 @@ public class MavenSuperNavigationTest extends MavenDomTestCase {
         		   <artifactId>maven-compiler-plugin</artifactId>
         	   </plugin>
           </plugins>
-        </build>"""
-    );
+        </build>
+        """.trimIndent()
+    )
 
-    configTest(m1);
-    myFixture.performEditorAction("GotoSuperMethod");
+    configTest(m1)
+    myFixture.performEditorAction("GotoSuperMethod")
 
-    configTest(parent);
+    configTest(parent)
     myFixture.checkResultWithInlays(
-      MavenTestCase.createPomXml(
+      createPomXml(
         """
           <groupId>test</groupId>
           <artifactId>project</artifactId>
@@ -272,7 +275,8 @@ public class MavenSuperNavigationTest extends MavenDomTestCase {
             	   </plugin>
               </plugins>
             </pluginManagement>
-          </build>"""
-      ));
+          </build>
+          """.trimIndent()
+      ))
   }
 }

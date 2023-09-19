@@ -1,11 +1,11 @@
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenDomTestCase
+import org.junit.Test
 
-public class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTestCase {
+class MavenDontCheckDependencyInManagementSectionTest : MavenDomTestCase() {
   @Test
-  public void testHighlighting() {
+  fun testHighlighting() {
     importProject(
       """
         <groupId>test</groupId>
@@ -49,7 +49,7 @@ public class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTes
               </plugins>
             </pluginManagement>
           </build>
-        """);
+        """.trimIndent())
 
     createProjectPom(
       """
@@ -94,8 +94,8 @@ public class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTes
               </plugins>
             </pluginManagement>
           </build>
-        """);
+        """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 }

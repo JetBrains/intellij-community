@@ -13,29 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.ElementManipulators;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection;
-import org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection;
-import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection;
-import org.junit.Test;
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.psi.ElementManipulators
+import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection
+import org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection
+import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection
+import org.junit.Test
 
-import java.util.Collections;
-
-public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
-
+class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   @Test
-  public void testVariants() {
+  fun testVariants() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -46,8 +41,8 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <artifactId>junit</artifactId>
                          <version></version>
                        </parent>
-                       """);
-    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "junit");
+                       """.trimIndent())
+    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "junit")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -57,8 +52,8 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <groupId>junit</groupId>
                          <artifactId><caret></artifactId>
                        </parent>
-                       """);
-    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "junit");
+                       """.trimIndent())
+    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "junit")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -69,26 +64,26 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <artifactId>junit</artifactId>
                          <version><caret></version>
                        </parent>
-                       """);
-    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "3.8.1", "3.8.2", "4.0");
+                       """.trimIndent())
+    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "3.8.1", "3.8.2", "4.0")
   }
 
   @Test
-  public void testResolutionInsideTheProject() throws Exception {
+  fun testResolutionInsideTheProject() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile m = createModulePom("m",
-                                    """
+    val m = createModulePom("m",
+                            """
                                       <groupId>test</groupId>
                                       <artifactId>m</artifactId>
                                       <version>1</version>
-                                      """);
+                                      """.trimIndent())
 
-    importProjects(myProjectPom, m);
+    importProjects(myProjectPom, m)
 
     createModulePom("m", """
       <groupId>test</groupId>
@@ -99,18 +94,18 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
         <artifactId>project</artifactId>
         <version>1</version>
       </parent>
-      """);
+      """.trimIndent())
 
-    assertResolved(m, findPsiFile(myProjectPom));
+    assertResolved(m, findPsiFile(myProjectPom))
   }
 
   @Test
-  public void testResolutionOutsideOfTheProject() throws Exception {
+  fun testResolutionOutsideOfTheProject() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -121,20 +116,20 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <artifactId>junit</artifactId>
                          <version>4.0</version>
                        </parent>
-                       """);
+                       """.trimIndent())
 
-    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
-    VirtualFile f = LocalFileSystem.getInstance().findFileByPath(filePath);
-    assertResolved(myProjectPom, findPsiFile(f));
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
+    val f = LocalFileSystem.getInstance().findFileByPath(filePath)
+    assertResolved(myProjectPom, findPsiFile(f))
   }
 
   @Test
-  public void testResolvingByRelativePath() throws Throwable {
+  fun testResolvingByRelativePath() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -146,25 +141,25 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <version>1</version>
                          <relativePath>parent/pom.xml</relativePath>
                        </parent>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile parent = createModulePom("parent",
-                                         """
+    val parent = createModulePom("parent",
+                                 """
                                            <groupId>test</groupId>
                                            <artifactId>parent</artifactId>
                                            <version>1</version>
-                                           """);
+                                           """.trimIndent())
 
-    assertResolved(myProjectPom, findPsiFile(parent));
+    assertResolved(myProjectPom, findPsiFile(parent))
   }
 
   @Test
-  public void testResolvingByRelativePathWithProperties() throws Throwable {
+  fun testResolvingByRelativePathWithProperties() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -177,34 +172,34 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <groupId><caret>test</groupId>
                          <artifactId>parent</artifactId>
                          <version>1</version>
-                         <relativePath>${parentPath}</relativePath>
+                         <relativePath>${'$'}{parentPath}</relativePath>
                        </parent>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile parent = createModulePom("parent",
-                                         """
+    val parent = createModulePom("parent",
+                                 """
                                            <groupId>test</groupId>
                                            <artifactId>parent</artifactId>
                                            <version>1</version>
-                                           """);
+                                           """.trimIndent())
 
-    assertResolved(myProjectPom, findPsiFile(parent));
+    assertResolved(myProjectPom, findPsiFile(parent))
   }
 
   @Test
-  public void testResolvingByRelativePathWhenOutsideOfTheProject() throws Throwable {
-    VirtualFile parent = createPomFile(myProjectRoot.getParent(),
-                                       """
+  fun testResolvingByRelativePathWhenOutsideOfTheProject() {
+    val parent = createPomFile(myProjectRoot.getParent(),
+                               """
                                          <groupId>test</groupId>
                                          <artifactId>project</artifactId>
                                          <version>1</version>
-                                         """);
+                                         """.trimIndent())
 
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -216,27 +211,27 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <version>1</version>
                          <relativePath>../pom.xml</relativePath>
                        </parent>
-                       """);
+                       """.trimIndent())
 
-    assertResolved(myProjectPom, findPsiFile(parent));
+    assertResolved(myProjectPom, findPsiFile(parent))
   }
 
   @Test
-  public void testDoNotHighlightResolvedParentByRelativePathWhenOutsideOfTheProject() {
+  fun testDoNotHighlightResolvedParentByRelativePathWhenOutsideOfTheProject() {
     createPomFile(myProjectRoot.getParent(),
                   """
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile projectPom = createProjectPom("""
+    val projectPom = createProjectPom("""
                                                 <groupId>test</groupId>
                                                 <artifactId>project</artifactId>
                                                 <version>1</version>
-                                                """);
+                                                """.trimIndent())
 
-    importProject();
+    importProject()
 
     setPomContent(projectPom,
                   """
@@ -249,20 +244,20 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                       <version>1</version>
                       <relativePath>../pom.xml</relativePath>
                     </parent>
-                    """);
+                    """.trimIndent())
 
-    myFixture.enableInspections(MavenRedundantGroupIdInspection.class);
-    checkHighlighting();
+    myFixture.enableInspections(MavenRedundantGroupIdInspection::class.java)
+    checkHighlighting()
   }
 
   @Test
-  public void testHighlightParentProperties() {
-    assumeVersionMoreThan("3.5.0");
+  fun testHighlightParentProperties() {
+    assumeVersionMoreThan("3.5.0")
 
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project0</artifactId>
-                       <version>1.${revision}</version>
+                       <version>1.${'$'}{revision}</version>
                        <packaging>pom</packaging>
                        <modules>
                          <module>m1</module>
@@ -272,52 +267,52 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <revision>0</revision>
                          <anotherProperty>0</anotherProperty>
                        </properties>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile m1= createModulePom("m1",
-                                    """
+    val m1 = createModulePom("m1",
+                             """
                                       <parent>
                                       <groupId>test</groupId>
                                       <artifactId>project0</artifactId>
-                                      <version>1.${revision}</version>
+                                      <version>1.${'$'}{revision}</version>
                                       </parent>
                                       <artifactId>m1</artifactId>
-                                      """);
+                                      """.trimIndent())
 
-    VirtualFile m2 = createModulePom("m2",
-                                     """
+    var m2 = createModulePom("m2",
+                             """
                                        <parent>
                                        <groupId>test</groupId>
                                        <artifactId>project0</artifactId>
-                                       <version>1.${revision}</version>
+                                       <version>1.${'$'}{revision}</version>
                                        </parent>
                                        <artifactId>m1</artifactId>
-                                       """);
+                                       """.trimIndent())
 
-    importProject();
+    importProject()
 
     m2 = createModulePom("m2",
                          """
                            <parent>
                            <groupId>test</groupId>
-                           <artifactId><error descr="Properties in parent definition are prohibited">project${anotherProperty}</error></artifactId>
-                           <version>1.${revision}</version>
+                           <artifactId><error descr="Properties in parent definition are prohibited">project${'$'}{anotherProperty}</error></artifactId>
+                           <version>1.${'$'}{revision}</version>
                            </parent>
                            <artifactId>m1</artifactId>
-                           """);
+                           """.trimIndent())
 
-    myFixture.enableInspections(Collections.singletonList(MavenPropertyInParentInspection.class));
-    checkHighlighting(m2);
+    myFixture.enableInspections(listOf<Class<out LocalInspectionTool?>>(MavenPropertyInParentInspection::class.java))
+    checkHighlighting(m2)
   }
 
   @Test
-  public void testHighlightParentPropertiesForMavenLess35() throws Exception {
-    assumeVersionLessThan("3.5.0");
+  fun testHighlightParentPropertiesForMavenLess35() {
+    assumeVersionLessThan("3.5.0")
 
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project0</artifactId>
-                       <version>1.${revision}</version>
+                       <version>1.${'$'}{revision}</version>
                        <packaging>pom</packaging>
                        <modules>
                          <module>m1</module>
@@ -327,51 +322,51 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <revision>0</revision>
                          <anotherProperty>0</anotherProperty>
                        </properties>
-                       """);
+                       """.trimIndent())
 
     createModulePom("m1",
                     """
                       <parent>
                       <groupId>test</groupId>
                       <artifactId>project0</artifactId>
-                      <version>1.${revision}</version>
+                      <version>1.${'$'}{revision}</version>
                       </parent>
                       <artifactId>m1</artifactId>
-                      """);
+                      """.trimIndent())
 
     createModulePom("m2",
                     """
                       <parent>
                       <groupId>test</groupId>
                       <artifactId>project0</artifactId>
-                      <version>1.${revision}</version>
+                      <version>1.${'$'}{revision}</version>
                       </parent>
                       <artifactId>m1</artifactId>
-                      """);
+                      """.trimIndent())
 
-    importProject();
+    importProject()
 
-    VirtualFile m2 = createModulePom("m2",
-                                     """
+    val m2 = createModulePom("m2",
+                             """
                                        <parent>
                                        <groupId>test</groupId>
-                                       <artifactId><error descr="Properties in parent definition are prohibited">project${anotherProperty}</error></artifactId>
-                                       <version><error descr="Properties in parent definition are prohibited">1.${revision}</error></version>
+                                       <artifactId><error descr="Properties in parent definition are prohibited">project${'$'}{anotherProperty}</error></artifactId>
+                                       <version><error descr="Properties in parent definition are prohibited">1.${'$'}{revision}</error></version>
                                        </parent>
                                        <artifactId>m1</artifactId>
-                                       """);
+                                       """.trimIndent())
 
-    myFixture.enableInspections(Collections.singletonList(MavenPropertyInParentInspection.class));
-    checkHighlighting(m2);
+    myFixture.enableInspections(listOf<Class<out LocalInspectionTool?>>(MavenPropertyInParentInspection::class.java))
+    checkHighlighting(m2)
   }
 
   @Test
-  public void testRelativePathCompletion() {
+  fun testRelativePathCompletion() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -383,31 +378,32 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <version>1</version>
                          <relativePath><caret></relativePath>
                        </parent>
-                       """);
+                       """.trimIndent())
 
     createModulePom("dir/one",
                     """
                       <groupId>test</groupId>
                       <artifactId>one</artifactId>
                       <version>1</version>
-                      """);
+                      """.trimIndent())
 
     createModulePom("two",
                     """
                       <groupId>test</groupId>
                       <artifactId>two</artifactId>
                       <version>1</version>
-                      """);
+                      """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "dir", "two", "pom.xml");
+    assertCompletionVariants(myProjectPom, "dir", "two", "pom.xml")
   }
 
   @Test
-  public void testRelativePathCompletion_2() {
+  fun testRelativePathCompletion_2() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
-                    <version>1</version>""");
+                    <version>1</version>
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -419,32 +415,35 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <version>1</version>
                          <relativePath>dir/<caret></relativePath>
                        </parent>
-                       """);
+                       """.trimIndent())
 
     createModulePom("dir/one", """
       <groupId>test</groupId>
       <artifactId>one</artifactId>
-      <version>1</version>""");
+      <version>1</version>
+      """.trimIndent())
 
     createModulePom("dir/two", """
       <groupId>test</groupId>
       <artifactId>two</artifactId>
-      <version>1</version>""");
+      <version>1</version>
+      """.trimIndent())
     createModulePom("dir", """
       <groupId>test</groupId>
       <artifactId>two</artifactId>
-      <version>1</version>""");
+      <version>1</version>
+      """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "one", "two", "pom.xml");
+    assertCompletionVariants(myProjectPom, "one", "two", "pom.xml")
   }
 
   @Test
-  public void testHighlightingUnknownValues() {
+  fun testHighlightingUnknownValues() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -455,13 +454,13 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <artifactId><error>xxx</error></artifactId>
                          <version><error>xxx</error></version>
                        </parent>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
   @Test
-  public void testHighlightingAbsentGroupId() {
+  fun testHighlightingAbsentGroupId() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -470,13 +469,13 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <artifactId><error>junit</error></artifactId>
                          <version><error>4.0</error></version>
                        </parent>
-                       """);
-    importProjectWithErrors();
-    checkHighlighting();
+                       """.trimIndent())
+    importProjectWithErrors()
+    checkHighlighting()
   }
 
   @Test
-  public void testHighlightingAbsentArtifactId() {
+  fun testHighlightingAbsentArtifactId() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -485,13 +484,13 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <groupId>junit</groupId>
                          <version><error>4.0</error></version>
                        </parent>
-                       """);
-    importProjectWithErrors();
-    checkHighlighting();
+                       """.trimIndent())
+    importProjectWithErrors()
+    checkHighlighting()
   }
 
   @Test
-  public void testHighlightingAbsentVersion() {
+  fun testHighlightingAbsentVersion() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -500,20 +499,20 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <groupId>junit</groupId>
                          <artifactId>junit</artifactId>
                        </parent>
-                       """);
-    importProjectWithErrors();
+                       """.trimIndent())
+    importProjectWithErrors()
 
-    myFixture.enableInspections(MavenParentMissedVersionInspection.class);
-    checkHighlighting();
+    myFixture.enableInspections(MavenParentMissedVersionInspection::class.java)
+    checkHighlighting()
   }
 
   @Test
-  public void testHighlightingInvalidRelativePath() {
+  fun testHighlightingInvalidRelativePath() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -525,27 +524,27 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <version>4.0</version>
                          <relativePath><error>parent</error>/<error>pom.xml</error></relativePath>
                        </parent>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
   @Test
-  public void testPathQuickFixForInvalidValue() {
+  fun testPathQuickFixForInvalidValue() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile m = createModulePom("bar",
-                                    """
+    val m = createModulePom("bar",
+                            """
                                       <groupId>test</groupId>
                                       <artifactId>one</artifactId>
                                       <version>1</version>
-                                      """);
+                                      """.trimIndent())
 
-    importProjects(myProjectPom, m);
+    importProjects(myProjectPom, m)
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -557,33 +556,33 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <version>1</version>
                          <relativePath><caret>xxx</relativePath>
                        </parent>
-                       """);
+                       """.trimIndent())
 
-    IntentionAction i = getIntentionAtCaret("Fix Relative Path");
-    assertNotNull(i);
+    val i = getIntentionAtCaret("Fix Relative Path")
+    assertNotNull(i)
 
-    myFixture.launchAction(i);
-    PsiElement el = getElementAtCaret(myProjectPom);
+    myFixture.launchAction(i)
+    val el = getElementAtCaret(myProjectPom)
 
-    assertEquals("bar/pom.xml", ElementManipulators.getValueText(el));
+    assertEquals("bar/pom.xml", ElementManipulators.getValueText(el))
   }
 
   @Test
-  public void testDoNotShowPathQuickFixForValidPath() {
+  fun testDoNotShowPathQuickFixForValidPath() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile m = createModulePom("bar",
-                                    """
+    val m = createModulePom("bar",
+                            """
                                       <groupId>test</groupId>
                                       <artifactId>one</artifactId>
                                       <version>1</version>
-                                      """);
+                                      """.trimIndent())
 
-    importProjects(myProjectPom, m);
+    importProjects(myProjectPom, m)
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -595,8 +594,8 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <version>1</version>
                          <relativePath><caret>bar/pom.xml</relativePath>
                        </parent>
-                       """);
+                       """.trimIndent())
 
-    assertNull(getIntentionAtCaret("Fix relative path"));
+    assertNull(getIntentionAtCaret("Fix relative path"))
   }
 }

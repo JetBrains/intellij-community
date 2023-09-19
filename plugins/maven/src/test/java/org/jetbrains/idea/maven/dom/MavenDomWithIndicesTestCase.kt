@@ -13,132 +13,124 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.testFramework.ExtensionTestUtil;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.idea.maven.indices.MavenIndicesManager;
-import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
-import org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory;
-import org.jetbrains.idea.maven.server.MavenServerConnector;
-import org.jetbrains.idea.maven.server.MavenServerDownloadListener;
-import org.jetbrains.idea.reposearch.DependencySearchService;
+import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.idea.maven.indices.MavenIndicesManager
+import org.jetbrains.idea.maven.indices.MavenIndicesManager.MavenIndexerListener
+import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
+import org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory
+import org.jetbrains.idea.maven.server.MavenServerConnector
+import org.jetbrains.idea.maven.server.MavenServerDownloadListener
+import org.jetbrains.idea.reposearch.DependencySearchService
+import java.io.File
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
-import java.io.File;
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
-  protected MavenIndicesTestFixture myIndicesFixture;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    ExtensionTestUtil.maskExtensions(DependencySearchService.EP_NAME,
-                                     Collections.singletonList(new MavenCompletionProviderFactory()),
-                                     getTestRootDisposable(), false, null);
-    myIndicesFixture = createIndicesFixture();
-    myIndicesFixture.setUpBeforeImport();
+abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
+  protected var myIndicesFixture: MavenIndicesTestFixture? = null
+  override fun setUp() {
+    super.setUp()
+    maskExtensions(DependencySearchService.EP_NAME,
+                   listOf(MavenCompletionProviderFactory()),
+                   getTestRootDisposable(), false, null)
+    myIndicesFixture = createIndicesFixture()
+    myIndicesFixture!!.setUpBeforeImport()
 
     if (importProjectOnSetup()) {
       importProject("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <version>1</version>
-                      """);
+                      """.trimIndent())
     }
-    ApplicationManager.getApplication().invokeAndWait(() -> myIndicesFixture.setUpAfterImport());
+    ApplicationManager.getApplication().invokeAndWait { myIndicesFixture!!.setUpAfterImport() }
   }
 
-  protected boolean importProjectOnSetup() {
-    return false;
+  protected open fun importProjectOnSetup(): Boolean {
+    return false
   }
 
-  protected MavenIndicesTestFixture createIndicesFixture() {
-    return new MavenIndicesTestFixture(myDir.toPath(), myProject);
+  protected open fun createIndicesFixture(): MavenIndicesTestFixture {
+    return MavenIndicesTestFixture(myDir.toPath(), myProject)
   }
-
-  @Override
-  protected void tearDown() throws Exception {
+  override fun tearDown() {
     try {
       if (myIndicesFixture != null) {
-        myIndicesFixture.tearDown();
-        myIndicesFixture = null;
+        myIndicesFixture!!.tearDown()
+        myIndicesFixture = null
       }
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
-      super.tearDown();
+      super.tearDown()
     }
   }
 
-  protected void runAndExpectPluginIndexEvents(Set<String> expectedArtifactIds, Runnable action) {
-    var latch = new CountDownLatch(1);
-    Set<String> artifactIdsToIndex = ConcurrentHashMap.newKeySet();
-    artifactIdsToIndex.addAll(expectedArtifactIds);
+  protected fun runAndExpectPluginIndexEvents(expectedArtifactIds: Set<String>?, action: Runnable) {
+    val latch = CountDownLatch(1)
+    val artifactIdsToIndex: MutableSet<String> = ConcurrentHashMap.newKeySet()
+    artifactIdsToIndex.addAll(expectedArtifactIds!!)
 
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
-      .subscribe(MavenIndicesManager.INDEXER_TOPIC, new MavenIndicesManager.MavenIndexerListener() {
-        @Override
-        public void indexUpdated(Set<File> added, Set<File> failedToAdd) {
-          artifactIdsToIndex.removeIf(artifactId -> ContainerUtil.exists(added, file -> file.getPath().contains(artifactId)));
-          if (artifactIdsToIndex.isEmpty()) {
-            latch.countDown();
+      .subscribe(MavenIndicesManager.INDEXER_TOPIC, MavenIndexerListener { added, failedToAdd ->
+        artifactIdsToIndex.removeIf { artifactId: String? ->
+          ContainerUtil.exists(added) { file: File ->
+            file.path.contains(
+              artifactId!!)
           }
         }
-      });
+        if (artifactIdsToIndex.isEmpty()) {
+          latch.countDown()
+        }
+      })
 
-    action.run();
+    action.run()
 
     try {
-      latch.await(1, TimeUnit.MINUTES);
+      latch.await(1, TimeUnit.MINUTES)
     }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
+    catch (e: InterruptedException) {
+      throw RuntimeException(e)
     }
 
-    assertTrue("Maven plugins are not indexed in time: " + String.join(", ", artifactIdsToIndex), artifactIdsToIndex.isEmpty());
+    assertTrue("Maven plugins are not indexed in time: " + java.lang.String.join(", ", artifactIdsToIndex), artifactIdsToIndex.isEmpty())
   }
 
-  protected void runAndExpectArtifactDownloadEvents(String groupId, Set<String> artifactIds, Runnable action) {
-    var groupFolder = groupId.replace('.', '/');
-    var latch = new CountDownLatch(1);
-    Set<String> actualEvents = ConcurrentHashMap.newKeySet();
-    var downloadListener = new MavenServerDownloadListener() {
-      @Override
-      public void artifactDownloaded(File file, String relativePath) {
-        if (relativePath.startsWith(groupFolder)) {
-          var artifactId = relativePath.substring(groupFolder.length()).split("/")[1];
-          if (artifactIds.contains(artifactId)) {
-            actualEvents.add(artifactId);
-            if (actualEvents.size() == artifactIds.size()) {
-              latch.countDown();
-            }
+  protected fun runAndExpectArtifactDownloadEvents(groupId: String, artifactIds: Set<String>, action: Runnable) {
+    val groupFolder = groupId.replace('.', '/')
+    val latch = CountDownLatch(1)
+    val actualEvents: MutableSet<String> = ConcurrentHashMap.newKeySet()
+    val downloadListener = MavenServerDownloadListener { file, relativePath ->
+      if (relativePath.startsWith(groupFolder)) {
+        val artifactId = relativePath.substring(groupFolder.length).split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[1]
+        if (artifactIds.contains(artifactId)) {
+          actualEvents.add(artifactId)
+          if (actualEvents.size == artifactIds.size) {
+            latch.countDown()
           }
         }
       }
-    };
+    }
 
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
-      .subscribe(MavenServerConnector.DOWNLOAD_LISTENER_TOPIC, downloadListener);
+      .subscribe(MavenServerConnector.DOWNLOAD_LISTENER_TOPIC, downloadListener)
 
-    action.run();
+    action.run()
 
     try {
-      latch.await(1, TimeUnit.MINUTES);
+      latch.await(1, TimeUnit.MINUTES)
     }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
+    catch (e: InterruptedException) {
+      throw RuntimeException(e)
     }
 
-    assertUnorderedElementsAreEqual(artifactIds, actualEvents);
+    assertUnorderedElementsAreEqual(artifactIds, actualEvents)
   }
-
 }

@@ -29,7 +29,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     new ExternalLibraryDescriptor("commons-io", "commons-io", "2.4", "2.4");
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     RunAll.runAll(
       () -> stopMavenImportManager(),
       () -> super.tearDown()

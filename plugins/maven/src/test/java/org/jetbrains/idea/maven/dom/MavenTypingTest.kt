@@ -13,111 +13,111 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.openapi.vfs.VirtualFile
+import org.junit.Test
 
-public class MavenTypingTest extends MavenDomTestCase {
+class MavenTypingTest : MavenDomTestCase() {
   @Test
-  public void testTypingOpenBrace() {
+  fun testTypingOpenBrace() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <name>$<caret></name>
-                       """);
+                       <name>${'$'}<caret></name>
+                       """.trimIndent())
 
     assertTypeResult('{',
                      """
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <name>${<caret>}</name>
-                       """);
+                       <name>${'$'}{<caret>}</name>
+                       """.trimIndent())
   }
 
-  @Test 
-  public void testTypingOpenBraceInsideOtherBrace() {
+  @Test
+  fun testTypingOpenBraceInsideOtherBrace() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <name>${<caret></name>
-                       """);
+                       <name>${'$'}{<caret></name>
+                       """.trimIndent())
 
     assertTypeResult('{',
                      """
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <name>${{<caret></name>
-                       """);
+                       <name>${'$'}{{<caret></name>
+                       """.trimIndent())
   }
 
-  @Test 
-  public void testTypingOpenBraceWithExistingClosedBrace() {
+  @Test
+  fun testTypingOpenBraceWithExistingClosedBrace() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <name>$<caret>}</name>
-                       """);
+                       <name>${'$'}<caret>}</name>
+                       """.trimIndent())
 
     assertTypeResult('{',
                      """
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <name>${<caret>}</name>
-                       """);
+                       <name>${'$'}{<caret>}</name>
+                       """.trimIndent())
   }
 
-  @Test 
-  public void testTypingOpenBraceBeforeChar() {
+  @Test
+  fun testTypingOpenBraceBeforeChar() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <name>$<caret>foo</name>
-                       """);
+                       <name>${'$'}<caret>foo</name>
+                       """.trimIndent())
 
     assertTypeResult('{',
                      """
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <name>${<caret>foo</name>
-                       """);
+                       <name>${'$'}{<caret>foo</name>
+                       """.trimIndent())
   }
 
-  @Test 
-  public void testTypingOpenBraceBeforeWhitespace() {
+  @Test
+  fun testTypingOpenBraceBeforeWhitespace() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <name>$<caret> foo</name>
-                       """);
+                       <name>${'$'}<caret> foo</name>
+                       """.trimIndent())
 
     assertTypeResult('{',
                      """
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <name>${<caret>} foo</name>
-                       """);
+                       <name>${'$'}{<caret>} foo</name>
+                       """.trimIndent())
   }
 
-  @Test 
-  public void testTypingOpenBraceWithoutDollar() {
+  @Test
+  fun testTypingOpenBraceWithoutDollar() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name><caret></name>
-                       """);
+                       """.trimIndent())
 
     assertTypeResult('{',
                      """
@@ -125,18 +125,19 @@ public class MavenTypingTest extends MavenDomTestCase {
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <name>{<caret></name>
-                       """);
+                       """.trimIndent())
   }
 
-  @Test 
-  public void testTypingOpenBraceInTheEndOfFile() throws Exception {
-    VirtualFile f = createProjectSubFile("pom.xml",
-                                         """
+  @Test
+  fun testTypingOpenBraceInTheEndOfFile() {
+    val f = createProjectSubFile("pom.xml",
+                                 """
                                            <project>
                                              <groupId>test</groupId>
                                              <artifactId>project</artifactId>
                                              <version>1</version>
-                                             <name>$<caret>""");
+                                             <name>${'$'}<caret>
+                                             """.trimIndent())
 
     assertTypeResultInRegularFile(f, '{',
                                   """
@@ -144,37 +145,38 @@ public class MavenTypingTest extends MavenDomTestCase {
                                       <groupId>test</groupId>
                                       <artifactId>project</artifactId>
                                       <version>1</version>
-                                      <name>${<caret>}""");
+                                      <name>${'$'}{<caret>}
+                                      """.trimIndent())
   }
 
-  @Test 
-  public void testTypingOpenBraceInsideTag() {
+  @Test
+  fun testTypingOpenBraceInsideTag() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <$<caret>name>
-                       """);
+                       <${'$'}<caret>name>
+                       """.trimIndent())
 
     assertTypeResult('{',
                      """
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <${<caret>}name>
-                       """);
+                       <${'$'}{<caret>}name>
+                       """.trimIndent())
   }
 
-  @Test 
-  public void testDoNotHandleNonMavenFiles() throws Exception {
-    VirtualFile f = createProjectSubFile("foo.xml", "$<caret>");
+  @Test
+  fun testDoNotHandleNonMavenFiles() {
+    val f = createProjectSubFile("foo.xml", "$<caret>")
 
-    assertTypeResultInRegularFile(f, '{', "${<caret>");
+    assertTypeResultInRegularFile(f, '{', "\${<caret>")
   }
 
-  @Test 
-  public void testWorksInFilteredResources() throws Exception {
-    createProjectSubDir("res");
+  @Test
+  fun testWorksInFilteredResources() {
+    createProjectSubDir("res")
 
     importProject("""
                     <groupId>test</groupId>
@@ -188,17 +190,17 @@ public class MavenTypingTest extends MavenDomTestCase {
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=$<caret>");
+    val f = createProjectSubFile("res/foo.properties",
+                                 "foo=$<caret>")
 
-    assertTypeResultInRegularFile(f, '{', "foo=${<caret>}");
+    assertTypeResultInRegularFile(f, '{', "foo=\${<caret>}")
   }
 
-  @Test 
-  public void testDoesNotWorInNotFilteredResources() throws Exception {
-    createProjectSubDir("res");
+  @Test
+  fun testDoesNotWorInNotFilteredResources() {
+    createProjectSubDir("res")
 
     importProject("""
                     <groupId>test</groupId>
@@ -212,81 +214,81 @@ public class MavenTypingTest extends MavenDomTestCase {
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=$<caret>");
+    val f = createProjectSubFile("res/foo.properties",
+                                 "foo=$<caret>")
 
-    assertTypeResultInRegularFile(f, '{', "foo=${<caret>");
+    assertTypeResultInRegularFile(f, '{', "foo=\${<caret>")
   }
 
-  @Test 
-  public void testDeletingOpenBrace() throws Exception {
+  @Test
+  fun testDeletingOpenBrace() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <name>${<caret>}</name>
-                       """);
+                       <name>${'$'}{<caret>}</name>
+                       """.trimIndent())
 
     assertBackspaceResult("""
                             <groupId>test</groupId>
                             <artifactId>project</artifactId>
                             <version>1</version>
-                            <name>$<caret></name>
-                            """);
+                            <name>${'$'}<caret></name>
+                            """.trimIndent())
   }
 
-  @Test 
-  public void testDeletingOpenBraceWithTextInside() throws Exception {
+  @Test
+  fun testDeletingOpenBraceWithTextInside() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <name>${<caret>foo}</name>
-                       """);
+                       <name>${'$'}{<caret>foo}</name>
+                       """.trimIndent())
 
     assertBackspaceResult("""
                             <groupId>test</groupId>
                             <artifactId>project</artifactId>
                             <version>1</version>
-                            <name>$<caret>foo}</name>
-                            """);
+                            <name>${'$'}<caret>foo}</name>
+                            """.trimIndent())
   }
 
-  @Test 
-  public void testDeletingOpenBraceWithoutClosed() throws Exception {
+  @Test
+  fun testDeletingOpenBraceWithoutClosed() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <name>${<caret></name>
-                       """);
+                       <name>${'$'}{<caret></name>
+                       """.trimIndent())
 
     assertBackspaceResult("""
                             <groupId>test</groupId>
                             <artifactId>project</artifactId>
                             <version>1</version>
-                            <name>$<caret></name>
-                            """);
+                            <name>${'$'}<caret></name>
+                            """.trimIndent())
   }
 
-  @Test 
-  public void testDoNotHandleDeletionInsideRegularFile() throws Exception {
-    VirtualFile f = createProjectSubFile("foo.html", "${<caret>}");
-    assertBackspaceResultInRegularFile(f, "$<caret>}");
+  @Test
+  fun testDoNotHandleDeletionInsideRegularFile() {
+    val f = createProjectSubFile("foo.html", "\${<caret>}")
+    assertBackspaceResultInRegularFile(f, "$<caret>}")
   }
 
-  @Test 
-  public void testDeletingInTheEndOfFile() throws Exception {
-    VirtualFile f = createProjectSubFile("pom.xml",
-                                         """
+  @Test
+  fun testDeletingInTheEndOfFile() {
+    val f = createProjectSubFile("pom.xml",
+                                 """
                                            <project>
                                              <groupId>test</groupId>
                                              <artifactId>project</artifactId>
                                              <version>1</version>
-                                             <name>${<caret>
-                                           """);
+                                             <name>${'$'}{<caret>
+                                           """.trimIndent())
 
     assertBackspaceResultInRegularFile(f,
                                        """
@@ -294,24 +296,24 @@ public class MavenTypingTest extends MavenDomTestCase {
                                            <groupId>test</groupId>
                                            <artifactId>project</artifactId>
                                            <version>1</version>
-                                           <name>$<caret>
-                                         """);
+                                           <name>${'$'}<caret>
+                                         """.trimIndent())
   }
 
-  private void assertTypeResult(char c, String xml) {
-    assertTypeResultInRegularFile(myProjectPom, c, createPomXml(xml));
+  private fun assertTypeResult(c: Char, xml: String) {
+    assertTypeResultInRegularFile(myProjectPom, c, createPomXml(xml))
   }
 
-  private void assertTypeResultInRegularFile(VirtualFile f, char c, String expected) {
-    type(f, c);
-    myFixture.checkResult(expected);
+  private fun assertTypeResultInRegularFile(f: VirtualFile, c: Char, expected: String) {
+    type(f, c)
+    myFixture.checkResult(expected)
   }
 
-  private void assertBackspaceResult(String xml) {
-    assertTypeResult('\b', xml);
+  private fun assertBackspaceResult(xml: String) {
+    assertTypeResult('\b', xml)
   }
 
-  private void assertBackspaceResultInRegularFile(VirtualFile f, String content) {
-    assertTypeResultInRegularFile(f, '\b', content);
+  private fun assertBackspaceResultInRegularFile(f: VirtualFile, content: String) {
+    assertTypeResultInRegularFile(f, '\b', content)
   }
 }

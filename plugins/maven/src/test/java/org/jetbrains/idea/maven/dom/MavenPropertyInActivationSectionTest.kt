@@ -1,13 +1,11 @@
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenDomTestCase
+import org.junit.Test
 
-import java.io.IOException;
-
-public class MavenPropertyInActivationSectionTest extends MavenDomTestCase {
+class MavenPropertyInActivationSectionTest : MavenDomTestCase() {
   @Test
-  public void testResolvePropertyFromActivationSection() throws IOException {
+  fun testResolvePropertyFromActivationSection() {
     importProject(
       """
           <groupId>example</groupId>
@@ -26,19 +24,19 @@ public class MavenPropertyInActivationSectionTest extends MavenDomTestCase {
               </activation>
 
               <properties>
-                <glassfish.home.path>${env.GLASSFISH_HOME_123}</glassfish.home.path>
+                <glassfish.home.path>${'$'}{env.GLASSFISH_HOME_123}</glassfish.home.path>
               </properties>
             </profile>
 
           </profiles>
 
           <properties>
-            <aaa>\\${env.GLASSFISH_HOME_123}</aaa>
+            <aaa>\${'$'}{env.GLASSFISH_HOME_123}</aaa>
           </properties>
-        """);
+        """.trimIndent())
 
 
-    assert getReference(myProjectPom, "env.GLASSFISH_HOME_123", 1).resolve() != null;
-    assert getReference(myProjectPom, "env.GLASSFISH_HOME_123", 2).resolve() == null;
+    assert(getReference(myProjectPom, "env.GLASSFISH_HOME_123", 1)!!.resolve() != null)
+    assert(getReference(myProjectPom, "env.GLASSFISH_HOME_123", 2)!!.resolve() == null)
   }
 }

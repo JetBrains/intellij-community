@@ -1,14 +1,12 @@
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import com.intellij.psi.PsiElement;
-import org.junit.Test;
+import com.intellij.codeInsight.documentation.DocumentationManager
+import com.intellij.maven.testFramework.MavenDomTestCase
+import org.junit.Test
 
-public class MavenPomXmlDocumentationTest extends MavenDomTestCase {
+class MavenPomXmlDocumentationTest : MavenDomTestCase() {
   @Test
-  public void testDocumentation() {
+  fun testDocumentation() {
     createProjectPom(
       """
         <groupId>test</groupId>
@@ -16,9 +14,11 @@ public class MavenPomXmlDocumentationTest extends MavenDomTestCase {
         <version>1</version>
         <scm>
           <connection<caret>></connection>
-        </scm>""");
+        </scm>
+        """.trimIndent())
 
-    String expectedText =
+    val expectedText =
+
       """
         Tag name:&nbsp;<b>connection</b><br>Description  :&nbsp;The source control management system URL
                     that describes the repository and how to connect to the
@@ -27,14 +27,16 @@ public class MavenPomXmlDocumentationTest extends MavenDomTestCase {
                     and <a href="https://maven.apache.org/scm/scms-overview.html">list of supported SCMs</a>.
                     This connection is read-only.
                     <br><b>Default value is</b>: parent value [+ path adjustment] + (artifactId or project.directory property), or just parent value if
-                    scm&apos;s <code>child.scm.connection.inherit.append.path="false"</code><br>Version  :&nbsp;4.0.0+""";
+                    scm&apos;s <code>child.scm.connection.inherit.append.path="false"</code><br>Version  :&nbsp;4.0.0+
+                    """.trimIndent()
 
-    PsiElement originalElement = getElementAtCaret(myProjectPom);
-    DocumentationManager documentationManager = DocumentationManager.getInstance(myProject);
-    PsiElement targetElement = documentationManager.findTargetElement(getEditor(), getTestPsiFile(), originalElement);
+    val originalElement = getElementAtCaret(myProjectPom)
+    val documentationManager = DocumentationManager.getInstance(myProject)
+    val targetElement = documentationManager.findTargetElement(editor, testPsiFile, originalElement)
 
-    DocumentationProvider provider = DocumentationManager.getProviderFromElement(targetElement);
+    val provider = DocumentationManager.getProviderFromElement(targetElement)
 
-    assert expectedText.replaceAll(" +", " ").equals(provider.generateDoc(targetElement, originalElement).replaceAll(" +", " "));
+    assert(
+      expectedText.replace(" +".toRegex(), " ") == provider.generateDoc(targetElement, originalElement)!!.replace(" +".toRegex(), " "))
   }
 }

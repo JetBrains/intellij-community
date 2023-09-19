@@ -1,28 +1,22 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiReference;
-import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
-import org.junit.Test;
+import com.intellij.openapi.vfs.LocalFileSystem
+import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.junit.Test
 
-import java.util.Set;
-
-public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
-
-  @Override
-  protected MavenIndicesTestFixture createIndicesFixture() {
-    return new MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins");
+class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
+  override fun createIndicesFixture(): MavenIndicesTestFixture {
+    return MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins")
   }
 
-  @Override
-  protected boolean importProjectOnSetup() {
-    return true;
+  override fun importProjectOnSetup(): Boolean {
+    return true
   }
 
   @Test
-  public void testGroupIdCompletion() {
+  fun testGroupIdCompletion() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -34,14 +28,14 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                            </extension>
                          </extensions>
                        </build>
-                       """);
+                       """.trimIndent())
 
     assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT,
-                                    "org.apache.maven.plugins", "org.codehaus.plexus", "test", "intellij.test", "org.codehaus.mojo");
+                                    "org.apache.maven.plugins", "org.codehaus.plexus", "test", "intellij.test", "org.codehaus.mojo")
   }
 
-  @Test 
-  public void testArtifactIdCompletion() {
+  @Test
+  fun testArtifactIdCompletion() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -54,16 +48,16 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                            </extension>
                          </extensions>
                        </build>
-                       """);
+                       """.trimIndent())
 
 
     assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin",
                                     "maven-resources-plugin", "maven-surefire-plugin", "maven-jar-plugin", "maven-clean-plugin",
-                                    "maven-install-plugin", "maven-compiler-plugin", "maven-deploy-plugin");
+                                    "maven-install-plugin", "maven-compiler-plugin", "maven-deploy-plugin")
   }
 
-  @Test 
-  public void testArtifactWithoutGroupCompletion() {
+  @Test
+  fun testArtifactWithoutGroupCompletion() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -75,25 +69,25 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                            </extension>
                          </extensions>
                        </build>
-                       """);
+                       """.trimIndent())
 
     assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT,
-                             "maven-clean-plugin",
-                             "maven-jar-plugin",
-                             "maven-war-plugin",
-                             "maven-deploy-plugin",
-                             "maven-resources-plugin",
-                             "maven-eclipse-plugin",
-                             "maven-install-plugin",
-                             "maven-compiler-plugin",
-                             "maven-site-plugin",
-                             "maven-surefire-plugin",
-                             "build-helper-maven-plugin",
-                             "project");
+                                    "maven-clean-plugin",
+                                    "maven-jar-plugin",
+                                    "maven-war-plugin",
+                                    "maven-deploy-plugin",
+                                    "maven-resources-plugin",
+                                    "maven-eclipse-plugin",
+                                    "maven-install-plugin",
+                                    "maven-compiler-plugin",
+                                    "maven-site-plugin",
+                                    "maven-surefire-plugin",
+                                    "build-helper-maven-plugin",
+                                    "project")
   }
 
-  @Test 
-  public void testCompletionInsideTag() {
+  @Test
+  fun testCompletionInsideTag() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -103,8 +97,9 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                            <extension><caret></extension>
                          </extensions>
                        </build>
-                       """);
-    Set<String> variants = getDependencyCompletionVariants(myProjectPom, info -> info.getGroupId() + ":" + info.getArtifactId());
+                       """.trimIndent())
+    val variants = getDependencyCompletionVariants(
+      myProjectPom) { info: MavenRepositoryArtifactInfo -> info.getGroupId() + ":" + info.getArtifactId() }
 
     assertContain(variants,
                   "org.apache.maven.plugins:maven-clean-plugin",
@@ -118,11 +113,11 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                   "org.apache.maven.plugins:maven-surefire-plugin",
                   "org.apache.maven.plugins:maven-war-plugin",
                   "org.codehaus.mojo:build-helper-maven-plugin",
-                  "test:project");
+                  "test:project")
   }
 
-  @Test 
-  public void testResolving() throws Exception {
+  @Test
+  fun testResolving() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -134,21 +129,21 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                            </extension>
                          </extensions>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    String pluginVersion = getDefaultPluginVersion("org.apache.maven:maven-compiler-plugin");
-    String pluginPath =
-      "plugins/org/apache/maven/plugins/maven-compiler-plugin/" + pluginVersion + "/maven-compiler-plugin-" + pluginVersion + ".pom";
-    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
-    VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
-    assertNotNull("file: " + filePath + " not exists!", f);
-    assertResolved(myProjectPom, findPsiFile(f));
+    val pluginVersion = getDefaultPluginVersion("org.apache.maven:maven-compiler-plugin")
+    val pluginPath =
+      "plugins/org/apache/maven/plugins/maven-compiler-plugin/$pluginVersion/maven-compiler-plugin-$pluginVersion.pom"
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath(pluginPath)
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+    assertNotNull("file: $filePath not exists!", f)
+    assertResolved(myProjectPom, findPsiFile(f))
   }
 
 
   @Test
-  public void testResolvingAbsentPlugins() {
-    removeFromLocalRepository("org/apache/maven/plugins/maven-compiler-plugin");
+  fun testResolvingAbsentPlugins() {
+    removeFromLocalRepository("org/apache/maven/plugins/maven-compiler-plugin")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -161,15 +156,15 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                            </extension>
                          </extensions>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    PsiReference ref = getReferenceAtCaret(myProjectPom);
-    assertNotNull(ref);
-    ref.resolve(); // shouldn't throw;
+    val ref = getReferenceAtCaret(myProjectPom)
+    assertNotNull(ref)
+    ref.resolve() // shouldn't throw;
   }
 
-  @Test 
-  public void testDoNotHighlightAbsentGroupIdAndVersion() {
+  @Test
+  fun testDoNotHighlightAbsentGroupIdAndVersion() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -181,12 +176,12 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                            </extension>
                          </extensions>
                        </build>
-                       """);
-    checkHighlighting();
+                       """.trimIndent())
+    checkHighlighting()
   }
 
-  @Test 
-  public void testHighlightingAbsentArtifactId() {
+  @Test
+  fun testHighlightingAbsentArtifactId() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -197,8 +192,8 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                            </extension>
                          </extensions>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 }

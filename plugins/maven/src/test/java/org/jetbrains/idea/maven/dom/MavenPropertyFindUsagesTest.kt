@@ -1,130 +1,127 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenDomTestCase
+import org.junit.Test
 
-import java.util.List;
-
-public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+class MavenPropertyFindUsagesTest : MavenDomTestCase() {
+  override fun setUp() {
+    super.setUp()
 
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>module1</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
   }
 
   @Test
-  public void testFindModelPropertyFromReference() throws Exception {
+  fun testFindModelPropertyFromReference() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1</version>
-                       <name>${<caret>project.version}</name>
-                       <description>${project.version}</description>
-                       """);
+                       <name>${'$'}{<caret>project.version}</name>
+                       <description>${'$'}{project.version}</description>
+                       """.trimIndent())
 
     assertSearchResults(myProjectPom,
                         findTag("project.name"),
-                        findTag("project.description"));
+                        findTag("project.description"))
   }
 
-  @Test 
-  public void testFindModelPropertyFromReferenceWithDifferentQualifiers() throws Exception {
+  @Test
+  fun testFindModelPropertyFromReferenceWithDifferentQualifiers() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1</version>
-                       <name>${<caret>version}</name>
-                       <description>${pom.version}</description>
-                       """);
+                       <name>${'$'}{<caret>version}</name>
+                       <description>${'$'}{pom.version}</description>
+                       """.trimIndent())
 
     assertSearchResults(myProjectPom,
                         findTag("project.name"),
-                        findTag("project.description"));
+                        findTag("project.description"))
   }
 
-  @Test 
-  public void testFindUsagesFromTag() throws Exception {
+  @Test
+  fun testFindUsagesFromTag() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <<caret>version>1</version>
-                       <name>${project.version}</name>
-                       <description>${version}</description>
-                       """);
+                       <name>${'$'}{project.version}</name>
+                       <description>${'$'}{version}</description>
+                       """.trimIndent())
 
     assertSearchResults(myProjectPom,
                         findTag("project.name"),
-                        findTag("project.description"));
+                        findTag("project.description"))
   }
 
-  @Test 
-  public void testFindUsagesFromTagValue() throws Exception {
+  @Test
+  fun testFindUsagesFromTagValue() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1<caret>1</version>
-                       <name>${project.version}</name>
-                       """);
+                       <name>${'$'}{project.version}</name>
+                       """.trimIndent())
 
-    assertSearchResults(myProjectPom, findTag("project.name"));
+    assertSearchResults(myProjectPom, findTag("project.name"))
   }
 
-  @Test 
-  public void testFindUsagesFromProperty() throws Exception {
+  @Test
+  fun testFindUsagesFromProperty() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>11</version>
-                       <name>${foo}</name>
+                       <name>${'$'}{foo}</name>
                        <properties>
                          <f<caret>oo>value</foo>
                        </properties>
-                       """);
+                       """.trimIndent())
 
-    assertSearchResultsInclude(myProjectPom, findTag("project.name"));
+    assertSearchResultsInclude(myProjectPom, findTag("project.name"))
   }
 
-  @Test 
-  public void testFindUsagesForEnvProperty() throws Exception {
-    createProjectPom("<groupId>test</groupId>\n" +
-                     "<artifactId>module1</artifactId>\n" +
-                     "<version>11</version>\n" +
-                     "<name>${env.<caret>" + getEnvVar() + "}</name>\n" +
-                     "<description>${env." + getEnvVar() + "}</description>\n");
+  @Test
+  fun testFindUsagesForEnvProperty() {
+    createProjectPom("""
+  <groupId>test</groupId>
+  <artifactId>module1</artifactId>
+  <version>11</version>
+  <name>${"$"}{env.<caret>${getEnvVar()}}</name>
+  <description>${"$"}{env.${getEnvVar()}}</description>
+  """.trimIndent())
 
-    assertSearchResultsInclude(myProjectPom, findTag("project.name"), findTag("project.description"));
+    assertSearchResultsInclude(myProjectPom, findTag("project.name"), findTag("project.description"))
   }
 
-  @Test 
-  public void testFindUsagesForSystemProperty() throws Exception {
+  @Test
+  fun testFindUsagesForSystemProperty() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>11</version>
-                       <name>${use<caret>r.home}</name>
-                       <description>${user.home}</description>
-                       """);
+                       <name>${'$'}{use<caret>r.home}</name>
+                       <description>${'$'}{user.home}</description>
+                       """.trimIndent())
 
-    assertSearchResultsInclude(myProjectPom, findTag("project.name"), findTag("project.description"));
+    assertSearchResultsInclude(myProjectPom, findTag("project.name"), findTag("project.description"))
   }
 
-  @Test 
-  public void testFindUsagesForSystemPropertyInFilteredResources() throws Exception {
-    createProjectSubDir("res");
+  @Test
+  fun testFindUsagesForSystemPropertyInFilteredResources() {
+    createProjectSubDir("res")
 
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>module1</artifactId>
                     <version>1</version>
-                    <name>${user.home}</name>
+                    <name>${'$'}{user.home}</name>
                     <build>
                       <resources>
                         <resource>
@@ -133,27 +130,27 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=abc${user<caret>.home}abc");
+    val f = createProjectSubFile("res/foo.properties",
+                                 "foo=abc\${user<caret>.home}abc")
 
-    List<PsiElement> result = search(f);
-    assertContain(result, findTag("project.name"), MavenDomUtil.findPropertyValue(myProject, f, "foo"));
+    val result = search(f)
+    assertContain(result, findTag("project.name"), MavenDomUtil.findPropertyValue(myProject, f, "foo"))
   }
 
-  @Test 
-  public void testHighlightingFromTag() {
+  @Test
+  fun testHighlightingFromTag() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version><caret>1</version>
-                       <name>${project.version}</name>
-                       <description>${version}</description>
-                       """);
+                       <name>${'$'}{project.version}</name>
+                       <description>${'$'}{version}</description>
+                       """.trimIndent())
 
     assertHighlighted(myProjectPom,
-                      new HighlightPointer(findTag("project.name"), "project.version"),
-                      new HighlightPointer(findTag("project.description"), "version"));
+                      HighlightPointer(findTag("project.name"), "project.version"),
+                      HighlightPointer(findTag("project.description"), "version"))
   }
 }

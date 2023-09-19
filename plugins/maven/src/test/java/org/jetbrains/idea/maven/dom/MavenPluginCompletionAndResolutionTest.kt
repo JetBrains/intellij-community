@@ -1,44 +1,32 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.xml.XmlTag;
-import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
-import org.junit.Test;
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.psi.xml.XmlTag
+import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.junit.Test
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Set;
-
-public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
-
-  @Override
-  protected boolean importProjectOnSetup() {
-    return true;
-  }
-  @Override
-  protected MavenIndicesTestFixture createIndicesFixture() {
-    return new MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins");
+class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
+  override fun importProjectOnSetup(): Boolean {
+    return true
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  override fun createIndicesFixture(): MavenIndicesTestFixture {
+    return MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins")
+  }
+  override fun setUp() {
+    super.setUp()
 
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
   }
 
   @Test
-  public void testGroupIdCompletion() {
+  fun testGroupIdCompletion() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -50,14 +38,14 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
     assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "intellij.test", "test", "org.apache.maven.plugins", "org.codehaus.mojo",
-                                    "org.codehaus.plexus");
+                                    "org.codehaus.plexus")
   }
 
-  @Test 
-  public void testArtifactIdCompletion() {
+  @Test
+  fun testArtifactIdCompletion() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -70,15 +58,15 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
     assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin",
                                     "maven-resources-plugin", "maven-surefire-plugin", "maven-jar-plugin", "maven-clean-plugin",
-                                    "maven-install-plugin", "maven-compiler-plugin", "maven-deploy-plugin");
+                                    "maven-install-plugin", "maven-compiler-plugin", "maven-deploy-plugin")
   }
 
-  @Test 
-  public void testVersionCompletion() {
+  @Test
+  fun testVersionCompletion() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -92,22 +80,22 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
 
     if (mavenVersionIsOrMoreThan("3.9.3")) {
-      assertCompletionVariants(myProjectPom, "2.0.2", "3.1", "3.10.1", "3.11.0");
+      assertCompletionVariants(myProjectPom, "2.0.2", "3.1", "3.10.1", "3.11.0")
     }
     else if (mavenVersionIsOrMoreThan("3.9.0")) {
-      assertCompletionVariants(myProjectPom, "2.0.2", "3.1", "3.10.1");
+      assertCompletionVariants(myProjectPom, "2.0.2", "3.1", "3.10.1")
     }
     else {
-      assertCompletionVariants(myProjectPom, "2.0.2", "3.1");
+      assertCompletionVariants(myProjectPom, "2.0.2", "3.1")
     }
   }
 
   @Test
-  public void testPluginWithoutGroupIdResolution() throws IOException {
+  fun testPluginWithoutGroupIdResolution() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -120,18 +108,18 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    String pluginPath =
-      "plugins/org/apache/maven/plugins/maven-surefire-plugin/2.12.4/maven-surefire-plugin-2.12.4.pom";
-    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
-    VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
-    assertNotNull("file: " + filePath + " not exists!", f);
-    assertResolved(myProjectPom, findPsiFile(f));
+    val pluginPath =
+      "plugins/org/apache/maven/plugins/maven-surefire-plugin/2.12.4/maven-surefire-plugin-2.12.4.pom"
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath(pluginPath)
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+    assertNotNull("file: $filePath not exists!", f)
+    assertResolved(myProjectPom, findPsiFile(f))
   }
 
-  @Test 
-  public void testArtifactWithoutGroupCompletion() {
+  @Test
+  fun testArtifactWithoutGroupCompletion() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -143,25 +131,25 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
     assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT,
-                             "project",
-                             "maven-clean-plugin",
-                             "maven-jar-plugin",
-                             "maven-war-plugin",
-                             "maven-deploy-plugin",
-                             "maven-resources-plugin",
-                             "maven-eclipse-plugin",
-                             "maven-install-plugin",
-                             "maven-compiler-plugin",
-                             "maven-site-plugin",
-                             "maven-surefire-plugin",
-                             "build-helper-maven-plugin");
+                                    "project",
+                                    "maven-clean-plugin",
+                                    "maven-jar-plugin",
+                                    "maven-war-plugin",
+                                    "maven-deploy-plugin",
+                                    "maven-resources-plugin",
+                                    "maven-eclipse-plugin",
+                                    "maven-install-plugin",
+                                    "maven-compiler-plugin",
+                                    "maven-site-plugin",
+                                    "maven-surefire-plugin",
+                                    "build-helper-maven-plugin")
   }
 
-  @Test 
-  public void testCompletionInsideTag() {
+  @Test
+  fun testCompletionInsideTag() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -171,8 +159,9 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            <plugin><caret></plugin>
                          </plugins>
                        </build>
-                       """);
-    Set<String> variants = getDependencyCompletionVariants(myProjectPom, info -> info.getGroupId() + ":" + info.getArtifactId());
+                       """.trimIndent())
+    val variants = getDependencyCompletionVariants(
+      myProjectPom) { info: MavenRepositoryArtifactInfo -> info.getGroupId() + ":" + info.getArtifactId() }
 
 
     assertContain(variants,
@@ -187,11 +176,11 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                   "org.apache.maven.plugins:maven-surefire-plugin",
                   "org.apache.maven.plugins:maven-war-plugin",
                   "org.codehaus.mojo:build-helper-maven-plugin",
-                  "test:project");
+                  "test:project")
   }
 
-  @Test 
-  public void testVersionWithoutGroupCompletion() {
+  @Test
+  fun testVersionWithoutGroupCompletion() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -204,21 +193,21 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
     if (mavenVersionIsOrMoreThan("3.9.3")) {
-      assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1", "3.11.0");
+      assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1", "3.11.0")
     }
     else if (mavenVersionIsOrMoreThan("3.9.0")) {
-      assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1");
+      assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1")
     }
     else {
-      assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1");
+      assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1")
     }
   }
 
-  @Test 
-  public void testResolvingPlugins() throws Exception {
+  @Test
+  fun testResolvingPlugins() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -230,20 +219,20 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
-    var pluginVersion = getDefaultPluginVersion("org.apache.maven:maven-compiler-plugin");
+                       """.trimIndent())
+    val pluginVersion = getDefaultPluginVersion("org.apache.maven:maven-compiler-plugin")
 
-    String pluginPath =
-      "plugins/org/apache/maven/plugins/maven-compiler-plugin/" + pluginVersion + "/maven-compiler-plugin-" + pluginVersion + ".pom";
-    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
-    VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
-    assertNotNull("file: " + filePath + " not exists!", f);
-    assertResolved(myProjectPom, findPsiFile(f));
+    val pluginPath =
+      "plugins/org/apache/maven/plugins/maven-compiler-plugin/$pluginVersion/maven-compiler-plugin-$pluginVersion.pom"
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath(pluginPath)
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+    assertNotNull("file: $filePath not exists!", f)
+    assertResolved(myProjectPom, findPsiFile(f))
   }
 
-  @Test 
-  public void testResolvingAbsentPlugins() {
-    removeFromLocalRepository("org/apache/maven/plugins/maven-compiler-plugin");
+  @Test
+  fun testResolvingAbsentPlugins() {
+    removeFromLocalRepository("org/apache/maven/plugins/maven-compiler-plugin")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -256,15 +245,15 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    PsiReference ref = getReferenceAtCaret(myProjectPom);
-    assertNotNull(ref);
-    ref.resolve(); // shouldn't throw;
+    val ref = getReferenceAtCaret(myProjectPom)
+    assertNotNull(ref)
+    ref.resolve() // shouldn't throw;
   }
 
-  @Test 
-  public void testDoNotHighlightAbsentGroupIdAndVersion() {
+  @Test
+  fun testDoNotHighlightAbsentGroupIdAndVersion() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -276,12 +265,12 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
-    checkHighlighting();
+                       """.trimIndent())
+    checkHighlighting()
   }
 
-  @Test 
-  public void testHighlightingAbsentArtifactId() {
+  @Test
+  fun testHighlightingAbsentArtifactId() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -292,24 +281,24 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
-  @Test 
-  public void testBasicConfigurationCompletion() {
-    putCaretInConfigurationSection();
-    assertCompletionVariantsInclude(myProjectPom, "source", "target");
+  @Test
+  fun testBasicConfigurationCompletion() {
+    putCaretInConfigurationSection()
+    assertCompletionVariantsInclude(myProjectPom, "source", "target")
   }
 
-  @Test 
-  public void testIncludingConfigurationParametersFromAllTheMojos() {
-    putCaretInConfigurationSection();
-    assertCompletionVariantsInclude(myProjectPom, "excludes", "testExcludes");
+  @Test
+  fun testIncludingConfigurationParametersFromAllTheMojos() {
+    putCaretInConfigurationSection()
+    assertCompletionVariantsInclude(myProjectPom, "excludes", "testExcludes")
   }
 
-  private void putCaretInConfigurationSection() {
+  private fun putCaretInConfigurationSection() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -324,11 +313,11 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
   }
 
-  @Test 
-  public void testNoParametersForUnknownPlugin() {
+  @Test
+  fun testNoParametersForUnknownPlugin() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -343,13 +332,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom);
+    assertCompletionVariants(myProjectPom)
   }
 
-  @Test 
-  public void testNoParametersIfNothingIsSpecified() {
+  @Test
+  fun testNoParametersIfNothingIsSpecified() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -363,13 +352,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom);
+    assertCompletionVariants(myProjectPom)
   }
 
-  @Test 
-  public void testResolvingParamaters() {
+  @Test
+  fun testResolvingParamaters() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -384,19 +373,19 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    PsiReference ref = getReferenceAtCaret(myProjectPom);
-    assertNotNull(ref);
-    PsiElement resolved = ref.resolve();
-    assertNotNull(resolved);
-    assertTrue(resolved instanceof XmlTag);
-    assertEquals("parameter", ((XmlTag)resolved).getName());
-    assertEquals("includes", ((XmlTag)resolved).findFirstSubTag("name").getValue().getText());
+    val ref = getReferenceAtCaret(myProjectPom)
+    assertNotNull(ref)
+    val resolved = ref.resolve()
+    assertNotNull(resolved)
+    assertTrue(resolved is XmlTag)
+    assertEquals("parameter", (resolved as XmlTag?)!!.getName())
+    assertEquals("includes", resolved!!.findFirstSubTag("name")!!.getValue().getText())
   }
 
-  @Test 
-  public void testResolvingInnerParamatersIntoOuter() {
+  @Test
+  fun testResolvingInnerParamatersIntoOuter() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -412,19 +401,19 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    PsiReference ref = getReferenceAtCaret(myProjectPom);
-    assertNotNull(ref);
-    PsiElement resolved = ref.resolve();
-    assertNotNull(resolved);
-    assertTrue(resolved instanceof XmlTag);
-    assertEquals("parameter", ((XmlTag)resolved).getName());
-    assertEquals("includes", ((XmlTag)resolved).findFirstSubTag("name").getValue().getText());
+    val ref = getReferenceAtCaret(myProjectPom)
+    assertNotNull(ref)
+    val resolved = ref.resolve()
+    assertNotNull(resolved)
+    assertTrue(resolved is XmlTag)
+    assertEquals("parameter", (resolved as XmlTag?)!!.getName())
+    assertEquals("includes", resolved!!.findFirstSubTag("name")!!.getValue().getText())
   }
 
-  @Test 
-  public void testGoalsCompletionAndHighlighting() {
+  @Test
+  fun testGoalsCompletionAndHighlighting() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -443,9 +432,9 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "help", "compile", "testCompile");
+    assertCompletionVariants(myProjectPom, "help", "compile", "testCompile")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -465,13 +454,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
-  @Test 
-  public void testDontHighlightGoalsForUnresolvedPlugin() {
+  @Test
+  fun testDontHighlightGoalsForUnresolvedPlugin() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -501,13 +490,14 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                              </executions>
                            </plugin>
                          </plugins>
-                       </build>""");
+                       </build>
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
-  @Test 
-  public void testGoalsCompletionAndHighlightingInPluginManagement() {
+  @Test
+  fun testGoalsCompletionAndHighlightingInPluginManagement() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -528,9 +518,9 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                          </plugins>
                          </pluginManagement>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "help", "compile", "testCompile");
+    assertCompletionVariants(myProjectPom, "help", "compile", "testCompile")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -552,13 +542,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                          </plugins>
                          </pluginManagement>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
-  @Test 
-  public void testGoalsResolution() {
+  @Test
+  fun testGoalsResolution() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -577,21 +567,21 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    PsiReference ref = getReferenceAtCaret(myProjectPom);
-    assertNotNull(ref);
+    val ref = getReferenceAtCaret(myProjectPom)
+    assertNotNull(ref)
 
-    PsiElement resolved = ref.resolve();
-    assertNotNull(resolved);
-    assertTrue(resolved instanceof XmlTag);
-    assertEquals("mojo", ((XmlTag)resolved).getName());
-    assertEquals("compile", ((XmlTag)resolved).findFirstSubTag("goal").getValue().getText());
+    val resolved = ref.resolve()
+    assertNotNull(resolved)
+    assertTrue(resolved is XmlTag)
+    assertEquals("mojo", (resolved as XmlTag?)!!.getName())
+    assertEquals("compile", resolved!!.findFirstSubTag("goal")!!.getValue().getText())
   }
 
 
-  @Test 
-  public void testMavenDependencyReferenceProvider() {
+  @Test
+  fun testMavenDependencyReferenceProvider() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -617,16 +607,15 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                                    </plugin>
                                </plugins>
                            </build>
-                       """);
+                       """.trimIndent())
 
-    PsiReference ref = getReferenceAtCaret(myProjectPom);
-    assertNotNull(ref);
-
+    val ref = getReferenceAtCaret(myProjectPom)
+    assertNotNull(ref)
   }
 
 
-  @Test 
-  public void testGoalsCompletionAndResolutionForUnknownPlugin() throws Throwable {
+  @Test
+  fun testGoalsCompletionAndResolutionForUnknownPlugin() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -645,9 +634,9 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom);
+    assertCompletionVariants(myProjectPom)
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -667,13 +656,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    assertUnresolved(myProjectPom);
+    assertUnresolved(myProjectPom)
   }
 
-  @Test 
-  public void testPhaseCompletionAndHighlighting() {
+  @Test
+  fun testPhaseCompletionAndHighlighting() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -690,9 +679,9 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariantsInclude(myProjectPom, "clean", "compile", "package");
+    assertCompletionVariantsInclude(myProjectPom, "clean", "compile", "package")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -710,13 +699,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
-  @Test 
-  public void testNoExecutionParametersIfNoGoalNorIdAreSpecified() {
+  @Test
+  fun testNoExecutionParametersIfNoGoalNorIdAreSpecified() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -735,13 +724,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom);
+    assertCompletionVariants(myProjectPom)
   }
 
-  @Test 
-  public void testExecutionParametersForSpecificGoal() {
+  @Test
+  fun testExecutionParametersForSpecificGoal() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -763,15 +752,15 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    List<String> variants = getCompletionVariants(myProjectPom);
-    assertTrue(variants.toString(), variants.contains("excludes"));
-    assertFalse(variants.toString(), variants.contains("testExcludes"));
+    val variants = getCompletionVariants(myProjectPom)
+    assertTrue(variants.toString(), variants.contains("excludes"))
+    assertFalse(variants.toString(), variants.contains("testExcludes"))
   }
 
-  @Test 
-  public void testExecutionParametersForDefaultGoalExecution() {
+  @Test
+  fun testExecutionParametersForDefaultGoalExecution() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -791,15 +780,15 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    List<String> variants = getCompletionVariants(myProjectPom);
-    assertTrue(variants.toString(), variants.contains("excludes"));
-    assertFalse(variants.toString(), variants.contains("testExcludes"));
+    val variants = getCompletionVariants(myProjectPom)
+    assertTrue(variants.toString(), variants.contains("excludes"))
+    assertFalse(variants.toString(), variants.contains("testExcludes"))
   }
 
-  @Test 
-  public void testExecutionParametersForSeveralSpecificGoals() {
+  @Test
+  fun testExecutionParametersForSeveralSpecificGoals() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -822,13 +811,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariantsInclude(myProjectPom, "excludes", "testExcludes");
+    assertCompletionVariantsInclude(myProjectPom, "excludes", "testExcludes")
   }
 
-  @Test 
-  public void testAliasCompletion() {
+  @Test
+  fun testAliasCompletion() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -843,13 +832,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariantsInclude(myProjectPom, "warSourceExcludes", "excludes");
+    assertCompletionVariantsInclude(myProjectPom, "warSourceExcludes", "excludes")
   }
 
-  @Test 
-  public void testListElementsCompletion() {
+  @Test
+  fun testListElementsCompletion() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -867,13 +856,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "exclude");
+    assertCompletionVariants(myProjectPom, "exclude")
   }
 
-  @Test 
-  public void testListElementWhatHasUnpluralizedNameCompletion() {
+  @Test
+  fun testListElementWhatHasUnpluralizedNameCompletion() {
     // NPE test - StringUtil.unpluralize returns null.
 
     createProjectPom("""
@@ -892,13 +881,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "additionalConfig", "config");
+    assertCompletionVariants(myProjectPom, "additionalConfig", "config")
   }
 
-  @Test 
-  public void testDoNotHighlightUnknownElementsUnderLists() {
+  @Test
+  fun testDoNotHighlightUnknownElementsUnderLists() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -915,13 +904,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
-  @Test 
-  public void testArrayElementsCompletion() {
+  @Test
+  fun testArrayElementsCompletion() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -939,14 +928,14 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "resource", "webResource");
+    assertCompletionVariants(myProjectPom, "resource", "webResource")
   }
 
-  @Test 
-  public void testCompletionInCustomObjects() {
-    if (ignore()) return;
+  @Test
+  fun testCompletionInCustomObjects() {
+    if (ignore()) return
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -966,13 +955,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom);
+    assertCompletionVariants(myProjectPom)
   }
 
-  @Test 
-  public void testDocumentationForParameter() throws Exception {
+  @Test
+  fun testDocumentationForParameter() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -987,35 +976,37 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
     if (mavenVersionIsOrMoreThan("3.9.3")) {
       assertDocumentation("""
-          Type: <b>java.lang.String</b><br>Default Value: <b>1.8</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.
+          Type: <b>java.lang.String</b><br>Default Value: <b>1.8</b><br>Expression: <b>${'$'}{maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.
 
-          NOTE:\s
+          NOTE: 
 
           Since 3.8.0 the default value has changed from 1.5 to 1.6
 
           Since 3.9.0 the default value has changed from 1.6 to 1.7
 
-          Since 3.11.0 the default value has changed from 1.7 to 1.8</i>""");
+          Since 3.11.0 the default value has changed from 1.7 to 1.8</i>
+          """.trimIndent())
     }
     else if (mavenVersionIsOrMoreThan("3.9.0")) {
       assertDocumentation("""
-          Type: <b>java.lang.String</b><br>Default Value: <b>1.7</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i><p>The -source argument for the Java compiler.</p>
+          Type: <b>java.lang.String</b><br>Default Value: <b>1.7</b><br>Expression: <b>${'$'}{maven.compiler.source}</b><br><br><i><p>The -source argument for the Java compiler.</p>
 
           <b>NOTE: </b>Since 3.8.0 the default value has changed from 1.5 to 1.6.
-          Since 3.9.0 the default value has changed from 1.6 to 1.7</i>""");
+          Since 3.9.0 the default value has changed from 1.6 to 1.7</i>
+          """.trimIndent())
     }
     else {
       assertDocumentation(
-        "Type: <b>java.lang.String</b><br>Default Value: <b>1.5</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.</i>");
+        "Type: <b>java.lang.String</b><br>Default Value: <b>1.5</b><br>Expression: <b>\${maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.</i>")
     }
   }
 
-  @Test 
-  public void testDoNotCompleteNorHighlightNonPluginConfiguration() {
+  @Test
+  fun testDoNotCompleteNorHighlightNonPluginConfiguration() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1031,13 +1022,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </notifier>
                          </notifiers>
                        </ciManagement>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
-  @Test 
-  public void testDoNotHighlightInnerParameters() {
+  @Test
+  fun testDoNotHighlightInnerParameters() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1054,13 +1045,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
-  @Test 
-  public void testDoNotHighlightRequiredParametersWithDefaultValues() {
+  @Test
+  fun testDoNotHighlightRequiredParametersWithDefaultValues() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1076,13 +1067,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting(); // surefire plugin has several required parameters with default values.
+    checkHighlighting() // surefire plugin has several required parameters with default values.
   }
 
-  @Test 
-  public void testDoNotHighlightInnerParameterAttributes() {
+  @Test
+  fun testDoNotHighlightInnerParameterAttributes() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1102,13 +1093,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
-  @Test 
-  public void testDoNotCompleteParameterAttributes() {
+  @Test
+  fun testDoNotCompleteParameterAttributes() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1123,13 +1114,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "combine.children", "combine.self");
+    assertCompletionVariants(myProjectPom, "combine.children", "combine.self")
   }
 
-  @Test 
-  public void testWorksWithPropertiesInPluginId() {
+  @Test
+  fun testWorksWithPropertiesInPluginId() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1139,8 +1130,8 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <plugin.artifactId>maven-compiler-plugin</plugin.artifactId>
                          <plugin.version>2.0.2</plugin.version>
                        </properties>
-                       """);
-    importProject(); // let us recognize the properties first
+                       """.trimIndent())
+    importProject() // let us recognize the properties first
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -1154,22 +1145,22 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                        <build>
                          <plugins>
                            <plugin>
-                             <groupId>${plugin.groupId}</groupId>
-                             <artifactId>${plugin.artifactId}</artifactId>
-                             <version>${plugin.version}</version>
+                             <groupId>${'$'}{plugin.groupId}</groupId>
+                             <artifactId>${'$'}{plugin.artifactId}</artifactId>
+                             <version>${'$'}{plugin.version}</version>
                              <configuration>
                                <source></source>
                              </configuration>
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
-  @Test 
-  public void testDoNotHighlightPropertiesForUnknownPlugins() {
+  @Test
+  fun testDoNotHighlightPropertiesForUnknownPlugins() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1186,13 +1177,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
-  @Test 
-  public void testTellNobodyThatIdeaIsRulezzz() {
+  @Test
+  fun testTellNobodyThatIdeaIsRulezzz() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1209,8 +1200,8 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom);
+    assertCompletionVariants(myProjectPom)
   }
 }

@@ -13,29 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.lang.properties.IProperty;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
-import org.junit.Test;
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.xml.XmlAttribute
+import org.intellij.lang.annotations.Language
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
+import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference
+import org.junit.Test
 
-import java.util.Set;
-
-public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
+class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   @Test
-  public void testBasic() throws Exception {
-    createProjectSubDir("res");
+  fun testBasic() {
+    createProjectSubDir("res")
 
     importProject("""
                     <groupId>test</groupId>
@@ -49,17 +43,17 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=abc${project<caret>.version}abc");
+    val f = createProjectSubFile("res/foo.properties",
+                                 "foo=abc\${project<caret>.version}abc")
 
-    assertResolved(f, findTag("project.version"));
+    assertResolved(f, findTag("project.version"))
   }
 
   @Test
-  public void testTestResourceProperties() throws Exception {
-    createProjectSubDir("res");
+  fun testTestResourceProperties() {
+    createProjectSubDir("res")
 
     importProject("""
                     <groupId>test</groupId>
@@ -73,17 +67,17 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </testResource>
                       </testResources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=abc${project<caret>.version}abc");
+    val f = createProjectSubFile("res/foo.properties",
+                                 "foo=abc\${project<caret>.version}abc")
 
-    assertResolved(f, findTag("project.version"));
+    assertResolved(f, findTag("project.version"))
   }
 
   @Test
-  public void testBasicAt() throws Exception {
-    createProjectSubDir("res");
+  fun testBasicAt() {
+    createProjectSubDir("res")
 
     importProject("""
                     <groupId>test</groupId>
@@ -97,17 +91,17 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=abc@project<caret>.version@abc");
+    val f = createProjectSubFile("res/foo.properties",
+                                 "foo=abc@project<caret>.version@abc")
 
-    assertResolved(f, findTag("project.version"));
+    assertResolved(f, findTag("project.version"))
   }
 
   @Test
-  public void testCorrectlyCalculatingBaseDir() throws Exception {
-    createProjectSubDir("res");
+  fun testCorrectlyCalculatingBaseDir() {
+    createProjectSubDir("res")
 
     importProject("""
                     <groupId>test</groupId>
@@ -121,18 +115,18 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=abc${basedir<caret>}abc");
+    val f = createProjectSubFile("res/foo.properties",
+                                 "foo=abc\${basedir<caret>}abc")
 
-    PsiDirectory baseDir = PsiManager.getInstance(myProject).findDirectory(myProjectPom.getParent());
-    assertResolved(f, baseDir);
+    val baseDir = PsiManager.getInstance(myProject).findDirectory(myProjectPom.getParent())
+    assertResolved(f, baseDir!!)
   }
 
   @Test
-  public void testResolvingToNonManagedParentProperties() throws Exception {
-    createProjectSubDir("res");
+  fun testResolvingToNonManagedParentProperties() {
+    createProjectSubDir("res")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -152,10 +146,10 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                            </resource>
                          </resources>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile parent = createModulePom("parent",
-                                         """
+    val parent = createModulePom("parent",
+                                 """
                                            <groupId>test</groupId>
                                            <artifactId>parent</artifactId>
                                            <version>1</version>
@@ -163,19 +157,19 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                                            <properties>
                                              <parentProp>value</parentProp>
                                            </properties>
-                                           """);
+                                           """.trimIndent())
 
-    importProject();
+    importProject()
 
-    VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=${parentProp<caret>}");
+    val f = createProjectSubFile("res/foo.properties",
+                                 "foo=\${parentProp<caret>}")
 
-    assertResolved(f, findTag(parent, "project.properties.parentProp"));
+    assertResolved(f, findTag(parent, "project.properties.parentProp"))
   }
 
   @Test
-  public void testResolvingToProfileProperties() throws Exception {
-    createProjectSubDir("res");
+  fun testResolvingToProfileProperties() {
+    createProjectSubDir("res")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -197,19 +191,19 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                            </resource>
                          </resources>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    importProjectWithProfiles("one");
+    importProjectWithProfiles("one")
 
-    VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=@profileProp<caret>@");
+    val f = createProjectSubFile("res/foo.properties",
+                                 "foo=@profileProp<caret>@")
 
-    assertResolved(f, findTag(myProjectPom, "project.profiles[0].properties.profileProp", MavenDomProjectModel.class));
+    assertResolved(f, findTag(myProjectPom, "project.profiles[0].properties.profileProp", MavenDomProjectModel::class.java))
   }
 
   @Test
-  public void testDoNotResolveOutsideResources() throws Exception {
-    createProjectSubDir("res");
+  fun testDoNotResolveOutsideResources() {
+    createProjectSubDir("res")
 
     importProject("""
                     <groupId>test</groupId>
@@ -223,16 +217,16 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("foo.properties",
-                                         "foo=abc${project<caret>.version}abc");
-    assertNoReferences(f, MavenPropertyPsiReference.class);
+    val f = createProjectSubFile("foo.properties",
+                                 "foo=abc\${project<caret>.version}abc")
+    assertNoReferences(f, MavenPropertyPsiReference::class.java)
   }
 
   @Test
-  public void testDoNotResolveNonFilteredResources() throws Exception {
-    createProjectSubDir("res");
+  fun testDoNotResolveNonFilteredResources() {
+    createProjectSubDir("res")
 
     importProject("""
                     <groupId>test</groupId>
@@ -246,16 +240,16 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=abc${project<caret>.version}abc");
-    assertNoReferences(f, MavenPropertyPsiReference.class);
+    val f = createProjectSubFile("res/foo.properties",
+                                 "foo=abc\${project<caret>.version}abc")
+    assertNoReferences(f, MavenPropertyPsiReference::class.java)
   }
 
   @Test
-  public void testUsingFilters() throws Exception {
-    VirtualFile filter = createProjectSubFile("filters/filter.properties", "xxx=1");
+  fun testUsingFilters() {
+    val filter = createProjectSubFile("filters/filter.properties", "xxx=1")
 
     importProject("""
                     <groupId>test</groupId>
@@ -272,23 +266,22 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=abc${xx<caret>x}abc");
-    assertResolved(f, findPropertyPsiElement(filter, "xxx"));
+    val f = createProjectSubFile("res/foo.properties",
+                                 "foo=abc\${xx<caret>x}abc")
+    assertResolved(f, findPropertyPsiElement(filter, "xxx")!!)
   }
 
-  @Nullable
-  private PsiElement findPropertyPsiElement(final VirtualFile filter, final String propName) {
-    final IProperty property = MavenDomUtil.findProperty(myProject, filter, propName);
-    return property != null ? property.getPsiElement() : null;
+  private fun findPropertyPsiElement(filter: VirtualFile, propName: String): PsiElement? {
+    val property = MavenDomUtil.findProperty(myProject, filter, propName)
+    return property?.getPsiElement()
   }
 
   @Test
-  public void testCompletionFromFilters() throws Exception {
-    createProjectSubFile("filters/filter1.properties", "xxx=1");
-    createProjectSubFile("filters/filter2.properties", "yyy=1");
+  fun testCompletionFromFilters() {
+    createProjectSubFile("filters/filter1.properties", "xxx=1")
+    createProjectSubFile("filters/filter2.properties", "yyy=1")
 
     importProject("""
                     <groupId>test</groupId>
@@ -306,18 +299,18 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.properties", "foo=abc${<caret>}abc");
-    assertCompletionVariantsInclude(f, "xxx", "yyy");
+    var f = createProjectSubFile("res/foo.properties", "foo=abc\${<caret>}abc")
+    assertCompletionVariantsInclude(f, "xxx", "yyy")
 
-    f = createProjectSubFile("res/foo2.properties", "foo=abc@<caret>@abc");
-    assertCompletionVariantsInclude(f, "xxx", "yyy");
+    f = createProjectSubFile("res/foo2.properties", "foo=abc@<caret>@abc")
+    assertCompletionVariantsInclude(f, "xxx", "yyy")
   }
 
   @Test
-  public void testSearchingFromFilters() throws Exception {
-    createProjectSubFile("filters/filter.properties", "xxx=1");
+  fun testSearchingFromFilters() {
+    createProjectSubFile("filters/filter.properties", "xxx=1")
 
     importProject("""
                     <groupId>test</groupId>
@@ -334,19 +327,22 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=${xxx}\n" +
-                                         "foo2=@xxx@");
-    VirtualFile filter = createProjectSubFile("filters/filter.properties", "xx<caret>x=1");
+    val f = createProjectSubFile("res/foo.properties",
+                                 """
+                                        foo=${"$"}{xxx}
+                                        foo2=@xxx@
+                                        """.trimIndent())
+    val filter = createProjectSubFile("filters/filter.properties", "xx<caret>x=1")
 
-    assertSearchResultsInclude(filter, MavenDomUtil.findPropertyValue(myProject, f, "foo"), MavenDomUtil.findPropertyValue(myProject, f, "foo2"));
+    assertSearchResultsInclude(filter, MavenDomUtil.findPropertyValue(myProject, f, "foo"),
+                               MavenDomUtil.findPropertyValue(myProject, f, "foo2"))
   }
 
   @Test
-  public void testCompletionAfterOpenBrace() throws Exception {
-    createProjectSubDir("res");
+  fun testCompletionAfterOpenBrace() {
+    createProjectSubDir("res")
 
     importProject("""
                     <groupId>test</groupId>
@@ -360,17 +356,17 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=abc${<caret>\n");
+    val f = createProjectSubFile("res/foo.properties",
+                                 "foo=abc\${<caret>\n")
 
-    assertCompletionVariantsInclude(f, "project.version");
+    assertCompletionVariantsInclude(f, "project.version")
   }
 
   @Test
-  public void testCompletionAfterOpenBraceInTheBeginningOfFile() throws Exception {
-    createProjectSubDir("res");
+  fun testCompletionAfterOpenBraceInTheBeginningOfFile() {
+    createProjectSubDir("res")
 
     importProject("""
                     <groupId>test</groupId>
@@ -384,19 +380,19 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.txt",
-                                         "${<caret>\n");
+    val f = createProjectSubFile("res/foo.txt",
+                                 "\${<caret>\n")
 
-    assertCompletionVariantsInclude(f, "project.version");
+    assertCompletionVariantsInclude(f, "project.version")
   }
 
   @Test
-  public void testCompletionAfterOpenBraceInTheBeginningOfPropertiesFile() throws Exception {
-    if (ignore()) return;
+  fun testCompletionAfterOpenBraceInTheBeginningOfPropertiesFile() {
+    if (ignore()) return
 
-    createProjectSubDir("res");
+    createProjectSubDir("res")
 
     importProject("""
                     <groupId>test</groupId>
@@ -410,17 +406,17 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "${<caret>\n");
+    val f = createProjectSubFile("res/foo.properties",
+                                 "\${<caret>\n")
 
-    assertCompletionVariantsInclude(f, "project.version");
+    assertCompletionVariantsInclude(f, "project.version")
   }
 
   @Test
-  public void testCompletionInEmptyFile() throws Exception {
-    createProjectSubDir("res");
+  fun testCompletionInEmptyFile() {
+    createProjectSubDir("res")
 
     importProject("""
                     <groupId>test</groupId>
@@ -434,17 +430,17 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "<caret>\n");
+    val f = createProjectSubFile("res/foo.properties",
+                                 "<caret>\n")
 
-    assertCompletionVariantsDoNotInclude(f, "project.version");
+    assertCompletionVariantsDoNotInclude(f, "project.version")
   }
 
   @Test
-  public void testRenaming() throws Exception {
-    createProjectSubDir("res");
+  fun testRenaming() {
+    createProjectSubDir("res")
 
     importProject("""
                     <groupId>test</groupId>
@@ -461,14 +457,14 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=abc${f<caret>oo}abc");
+    val f = createProjectSubFile("res/foo.properties",
+                                 "foo=abc\${f<caret>oo}abc")
 
-    assertResolved(f, findTag("project.properties.foo"));
+    assertResolved(f, findTag("project.properties.foo"))
 
-    doRename(f, "bar");
+    doRename(f, "bar")
 
     assertEquals(createPomXml("""
                                 <groupId>test</groupId>
@@ -485,16 +481,16 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                                     </resource>
                                   </resources>
                                 </build>
-                                """),
-                 findPsiFile(myProjectPom).getText());
+                                """.trimIndent()),
+                 findPsiFile(myProjectPom).getText())
 
-    assertEquals("foo=abc${bar}abc", findPsiFile(f).getText());
+    assertEquals("foo=abc\${bar}abc", findPsiFile(f).getText())
   }
 
   @Test
-  public void testRenamingFilteredProperty() throws Exception {
-    VirtualFile filter = createProjectSubFile("filters/filter.properties", "xxx=1");
-    createProjectSubDir("res");
+  fun testRenamingFilteredProperty() {
+    val filter = createProjectSubFile("filters/filter.properties", "xxx=1")
+    createProjectSubDir("res")
 
     importProject("""
                     <groupId>test</groupId>
@@ -511,21 +507,21 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=abc${x<caret>xx}abc");
-    assertResolved(f, findPropertyPsiElement(filter, "xxx"));
-    myFixture.configureFromExistingVirtualFile(filter);
-    doInlineRename(f, "bar");
+    val f = createProjectSubFile("res/foo.properties",
+                                 "foo=abc\${x<caret>xx}abc")
+    assertResolved(f, findPropertyPsiElement(filter, "xxx")!!)
+    myFixture.configureFromExistingVirtualFile(filter)
+    doInlineRename(f, "bar")
 
-    assertEquals("foo=abc${bar}abc", findPsiFile(f).getText());
-    assertEquals("bar=1", findPsiFile(filter).getText());
+    assertEquals("foo=abc\${bar}abc", findPsiFile(f).getText())
+    assertEquals("bar=1", findPsiFile(filter).getText())
   }
 
   @Test
-  public void testCustomDelimiters() throws Exception {
-    createProjectSubDir("res");
+  fun testCustomDelimiters() {
+    createProjectSubDir("res")
 
     importProjectAndExpectResourcePluginIndexed("""
                     <groupId>test</groupId>
@@ -552,24 +548,25 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </plugin>
                       </plugins>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo1.properties",
-                                         """
-                                           foo1=${basedir}
+    val f = createProjectSubFile("res/foo1.properties",
+                                 """
+                                           foo1=${'$'}{basedir}
                                            foo2=|pom.baseUri|
-                                           foo3=a(ve|rsion]""");
+                                           foo3=a(ve|rsion]
+                                           """.trimIndent())
 
-    assertNotNull(resolveReference(f, "basedir"));
-    assertNotNull(resolveReference(f, "pom.baseUri"));
-    PsiReference ref = getReference(f, "ve|rsion");
-    assertNotNull(ref);
-    assertTrue(ref.isSoft());
+    assertNotNull(resolveReference(f, "basedir"))
+    assertNotNull(resolveReference(f, "pom.baseUri"))
+    val ref = getReference(f, "ve|rsion")
+    assertNotNull(ref)
+    assertTrue(ref!!.isSoft())
   }
 
   @Test
-  public void testDontUseDefaultDelimiter1() throws Exception {
-    createProjectSubDir("res");
+  fun testDontUseDefaultDelimiter1() {
+    createProjectSubDir("res")
 
     importProjectAndExpectResourcePluginIndexed("""
                     <groupId>test</groupId>
@@ -596,24 +593,26 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </plugin>
                       </plugins>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo1.properties",
-                                         "foo1=${basedir}\n" +
-                                         "foo2=|pom.baseUri|");
+    val f = createProjectSubFile("res/foo1.properties",
+                                 """
+                                        foo1=${"$"}{basedir}
+                                        foo2=|pom.baseUri|
+                                        """.trimIndent())
 
-    assert !(getReference(f, "basedir") instanceof MavenPropertyPsiReference);
-    assertNotNull(resolveReference(f, "pom.baseUri"));
+    assert(getReference(f, "basedir") !is MavenPropertyPsiReference)
+    assertNotNull(resolveReference(f, "pom.baseUri"))
   }
 
   @Test
-  public void testDoNotAddReferenceToDelimiterDefinition() {
+  fun testDoNotAddReferenceToDelimiterDefinition() {
     importProjectAndExpectResourcePluginIndexed("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     <properties>
-                      <aaa>${zzz}</aaa>
+                      <aaa>${'$'}{zzz}</aaa>
                     </properties>
                     <build>
                       <plugins>
@@ -621,37 +620,39 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                           <artifactId>maven-resources-plugin</artifactId>
                           <configuration>
                             <delimiters>
-                              <delimiter>${*}</delimiter>
+                              <delimiter>${'$'}{*}</delimiter>
                             </delimiters>
                           </configuration>
                         </plugin>
                       </plugins>
-                    </build>""");
+                    </build>
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <properties>
-                         <aaa>${<error descr="Cannot resolve symbol 'zzz'">zzz</error>}</aaa></properties>
+                         <aaa>${'$'}{<error descr="Cannot resolve symbol 'zzz'">zzz</error>}</aaa></properties>
                        <build>
                          <plugins>
                            <plugin>
                              <artifactId>maven-resources-plugin</artifactId>      <configuration>
                                <delimiters>
-                                 <delimiter>${*}</delimiter>
+                                 <delimiter>${'$'}{*}</delimiter>
                                </delimiters>
                              </configuration>
                            </plugin>
                          </plugins>
-                       </build>""");
+                       </build>
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
   @Test
-  public void testReferencesInXml() throws Exception {
-    createProjectSubDir("res");
+  fun testReferencesInXml() {
+    createProjectSubDir("res")
 
     importProject("""
                     <groupId>test</groupId>
@@ -665,33 +666,33 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                         </resource>
                       </resources>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile f = createProjectSubFile("res/foo.xml",
-                                         """
-                                           <root attr='${based<caret>ir}'>
+    val f = createProjectSubFile("res/foo.xml",
+                                 """
+                                           <root attr='${'$'}{based<caret>ir}'>
                                            </root>
-                                           """);
+                                           """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(f);
+    myFixture.configureFromExistingVirtualFile(f)
 
-    XmlAttribute attribute = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), XmlAttribute.class);
+    val attribute = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), XmlAttribute::class.java)
 
-    PsiReference[] references = attribute.getReferences();
+    val references = attribute!!.getReferences()
 
-    for (PsiReference ref : references) {
-      if (ref.resolve() instanceof PsiDirectory) {
-        return; // Maven references was added.
+    for (ref in references) {
+      if (ref.resolve() is PsiDirectory) {
+        return  // Maven references was added.
       }
     }
 
-    fail("Maven filter reference was not added");
+    fail("Maven filter reference was not added")
   }
 
-  private void importProjectAndExpectResourcePluginIndexed(@NotNull @Language(value = "XML", prefix = "<project>", suffix = "</project>") String xml) {
-    runAndExpectPluginIndexEvents(Set.of("maven-resources-plugin"), () -> {
-      importProject(xml);
-    });
+  private fun importProjectAndExpectResourcePluginIndexed(@Language(value = "XML", prefix = "<project>",
+                                                                    suffix = "</project>") xml: String) {
+    runAndExpectPluginIndexEvents(setOf("maven-resources-plugin")) {
+      importProject(xml)
+    }
   }
-
 }

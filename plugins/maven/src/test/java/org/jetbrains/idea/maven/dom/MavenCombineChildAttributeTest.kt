@@ -1,11 +1,11 @@
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenDomTestCase
+import org.junit.Test
 
-public class MavenCombineChildAttributeTest extends MavenDomTestCase {
+class MavenCombineChildAttributeTest : MavenDomTestCase() {
   @Test
-  public void testCompletion() {
+  fun testCompletion() {
     createProjectPom(
       """
               <groupId>test</groupId>
@@ -31,8 +31,8 @@ public class MavenCombineChildAttributeTest extends MavenDomTestCase {
                   </plugin>
                 </plugins>
               </build>
-        """);
+        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "override", "append");
+    assertCompletionVariants(myProjectPom, "override", "append")
   }
 }

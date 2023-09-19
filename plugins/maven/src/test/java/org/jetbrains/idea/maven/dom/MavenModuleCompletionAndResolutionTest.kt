@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import org.junit.Test;
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.psi.PsiDocumentManager
+import org.junit.Test
 
-public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
+class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   @Test
-  public void testCompleteFromAllAvailableModules() {
+  fun testCompleteFromAllAvailableModules() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -36,17 +32,17 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <module>m1</module>
                          <module>m2</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
     createModulePom("m1",
                     """
                       <groupId>test</groupId>
                       <artifactId>m1</artifactId>
                       <version>1</version>
-                      """);
+                      """.trimIndent())
 
-    VirtualFile module2Pom = createModulePom("m2",
-                                             """
+    val module2Pom = createModulePom("m2",
+                                     """
                                                <groupId>test</groupId>
                                                <artifactId>m2</artifactId>
                                                <version>1</version>
@@ -54,17 +50,17 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                                                <modules>
                                                  <module>m3</module>
                                                </modules>
-                                               """);
+                                               """.trimIndent())
 
     createModulePom("m2/m3",
                     """
                       <groupId>test</groupId>
                       <artifactId>m3</artifactId>
                       <version>1</version>
-                      """);
+                      """.trimIndent())
 
-    importProject();
-    assertModules("project", "m1", "m2", "m3");
+    importProject()
+    assertModules("project", "m1", "m2", "m3")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -76,9 +72,9 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <module>m2</module>
                          <module><caret></module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "m1", "m2", "m2/m3");
+    assertCompletionVariants(myProjectPom, "m1", "m2", "m2/m3")
 
     createModulePom("m2", """
       <groupId>test</groupId>
@@ -89,20 +85,20 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
         <module>m3</module>
         <module><caret></module>
       </modules>
-      """);
+      """.trimIndent())
 
-    assertCompletionVariants(module2Pom, "..", "../m1", "m3");
+    assertCompletionVariants(module2Pom, "..", "../m1", "m3")
   }
 
-  @Test 
-  public void testDoesNotCompeteIfThereIsNoModules() {
+  @Test
+  fun testDoesNotCompeteIfThereIsNoModules() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
-                       """);
-    importProject();
+                       """.trimIndent())
+    importProject()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -112,34 +108,34 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                        <modules>
                          <module><caret></module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom);
+    assertCompletionVariants(myProjectPom)
   }
 
-  @Test 
-  public void testIncludesAllThePomsAvailable() {
+  @Test
+  fun testIncludesAllThePomsAvailable() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
-                       """);
-    importProject();
+                       """.trimIndent())
+    importProject()
 
     createModulePom("subDir1",
                     """
                       <groupId>test</groupId>
                       <artifactId>m1</artifactId>
                       <version>1</version>
-                      """);
+                      """.trimIndent())
 
     createModulePom("subDir1/subDir2",
                     """
                       <groupId>test</groupId>
                       <artifactId>m2</artifactId>
                       <version>1</version>
-                      """);
+                      """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -149,13 +145,13 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                        <modules>
                          <module><caret></module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "subDir1", "subDir1/subDir2");
+    assertCompletionVariants(myProjectPom, "subDir1", "subDir1/subDir2")
   }
 
-  @Test 
-  public void testResolution() throws Exception {
+  @Test
+  fun testResolution() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -165,23 +161,23 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <module>m1</module>
                          <module>m2</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile m1 = createModulePom("m1",
-                                     """
+    val m1 = createModulePom("m1",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>m1</artifactId>
                                        <version>1</version>
-                                       """);
+                                       """.trimIndent())
 
-    VirtualFile m2 = createModulePom("m2",
-                                     """
+    val m2 = createModulePom("m2",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>m2</artifactId>
                                        <version>1</version>
-                                       """);
+                                       """.trimIndent())
 
-    importProject();
+    importProject()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -192,9 +188,9 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <module>m<caret>1</module>
                          <module>m2</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    assertResolved(myProjectPom, findPsiFile(m1), "m1");
+    assertResolved(myProjectPom, findPsiFile(m1), "m1")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -205,9 +201,9 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <module>m1</module>
                          <module>m<caret>2</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    assertResolved(myProjectPom, findPsiFile(m2), "m2");
+    assertResolved(myProjectPom, findPsiFile(m2), "m2")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -217,13 +213,13 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                        <modules>
                          <module>unknown<caret>Module</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    assertUnresolved(myProjectPom, "unknownModule");
+    assertUnresolved(myProjectPom, "unknownModule")
   }
 
-  @Test 
-  public void testResolutionWithSlashes() throws Exception {
+  @Test
+  fun testResolutionWithSlashes() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -232,16 +228,16 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                        <modules>
                          <module>./m</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile m = createModulePom("m",
-                                    """
+    val m = createModulePom("m",
+                            """
                                       <groupId>test</groupId>
                                       <artifactId>m</artifactId>
                                       <version>1</version>
-                                      """);
+                                      """.trimIndent())
 
-    importProject();
+    importProject()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -251,9 +247,9 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                        <modules>
                          <module>./m<caret></module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    assertResolved(myProjectPom, findPsiFile(m), "./m");
+    assertResolved(myProjectPom, findPsiFile(m), "./m")
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -261,15 +257,15 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                        <version>1</version>
                        <packaging>pom</packaging>
                        <modules>
-                         <module>.\\m<caret></module>
+                         <module>.\m<caret></module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    assertResolved(myProjectPom, findPsiFile(m), ".\\m");
+    assertResolved(myProjectPom, findPsiFile(m), ".\\m")
   }
 
-  @Test 
-  public void testResolutionWithProperties() throws Exception {
+  @Test
+  fun testResolutionWithProperties() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -279,33 +275,18 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <dirName>subDir</dirName>
                        </properties>
                        <modules>
-                         <module>${dirName}/m</module>
+                         <module>${'$'}{dirName}/m</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile m = createModulePom("subDir/m",
-                                    """
+    val m = createModulePom("subDir/m",
+                            """
                                       <groupId>test</groupId>
                                       <artifactId>m</artifactId>
                                       <version>1</version>
-                                      """);
+                                      """.trimIndent())
 
-    importProject();
-
-    createProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <packaging>pom</packaging>
-                       <properties>
-                         <dirName>subDir</dirName>
-                       </properties>
-                       <modules>
-                         <module><caret>${dirName}/m</module>
-                       </modules>
-                       """);
-
-    assertResolved(myProjectPom, findPsiFile(m), "subDir/m");
+    importProject()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -316,22 +297,37 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <dirName>subDir</dirName>
                        </properties>
                        <modules>
-                         <module>${<caret>dirName}/m</module>
+                         <module><caret>${'$'}{dirName}/m</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    assertResolved(myProjectPom, findTag(myProjectPom, "project.properties.dirName"));
+    assertResolved(myProjectPom, findPsiFile(m), "subDir/m")
+
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <properties>
+                         <dirName>subDir</dirName>
+                       </properties>
+                       <modules>
+                         <module>${'$'}{<caret>dirName}/m</module>
+                       </modules>
+                       """.trimIndent())
+
+    assertResolved(myProjectPom, findTag(myProjectPom, "project.properties.dirName"))
   }
 
-  @Test 
-  public void testCreatePomQuickFix() {
+  @Test
+  fun testCreatePomQuickFix() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
-                       """);
-    importProject();
+                       """.trimIndent())
+    importProject()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -341,12 +337,12 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                        <modules>
                          <module>subDir/new<caret>Module</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
-    assertNotNull(i);
+    val i = getIntentionAtCaret(createModuleIntention)
+    assertNotNull(i)
 
-    myFixture.launchAction(i);
+    myFixture.launchAction(i)
 
     assertCreateModuleFixResult(
       "subDir/newModule/pom.xml",
@@ -361,19 +357,20 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
             <artifactId>newModule</artifactId>
             <version>1</version>
 
-           \s
-        </project>""");
+            
+        </project>
+        """.trimIndent())
   }
 
-  @Test 
-  public void testCreatePomQuickFixCustomPomFileName() {
+  @Test
+  fun testCreatePomQuickFixCustomPomFileName() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
-                       """);
-    importProject();
+                       """.trimIndent())
+    importProject()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -383,12 +380,12 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                        <modules>
                          <module>subDir/new<caret>Module.xml</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
-    assertNotNull(i);
+    val i = getIntentionAtCaret(createModuleIntention)
+    assertNotNull(i)
 
-    myFixture.launchAction(i);
+    myFixture.launchAction(i)
 
     assertCreateModuleFixResult(
       "subDir/newModule.xml",
@@ -403,19 +400,20 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
             <artifactId>subDir</artifactId>
             <version>1</version>
 
-           \s
-        </project>""");
+            
+        </project>
+        """.trimIndent())
   }
 
-  @Test 
-  public void testCreatePomQuickFixInDotXmlFolder() throws Exception {
+  @Test
+  fun testCreatePomQuickFixInDotXmlFolder() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
-                       """);
-    importProject();
+                       """.trimIndent())
+    importProject()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -425,13 +423,13 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                        <modules>
                          <module>subDir/new<caret>Module.xml</module>
                        </modules>
-                       """);
-    createProjectSubFile("subDir/newModule.xml/empty"); // ensure that "subDir/newModule.xml" exists as a directory
+                       """.trimIndent())
+    createProjectSubFile("subDir/newModule.xml/empty") // ensure that "subDir/newModule.xml" exists as a directory
 
-    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
-    assertNotNull(i);
+    val i = getIntentionAtCaret(createModuleIntention)
+    assertNotNull(i)
 
-    myFixture.launchAction(i);
+    myFixture.launchAction(i)
 
     assertCreateModuleFixResult(
       "subDir/newModule.xml/pom.xml",
@@ -446,19 +444,20 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
             <artifactId>newModule.xml</artifactId>
             <version>1</version>
 
-           \s
-        </project>""");
+            
+        </project>
+        """.trimIndent())
   }
 
-  @Test 
-  public void testCreatePomQuickFixTakesGroupAndVersionFromSuperParent() {
+  @Test
+  fun testCreatePomQuickFixTakesGroupAndVersionFromSuperParent() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
-                       """);
-    importProject();
+                       """.trimIndent())
+    importProject()
 
     createProjectPom("""
                        <artifactId>project</artifactId>
@@ -471,12 +470,12 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                        <modules>
                          <module>new<caret>Module</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
-    assertNotNull(i);
+    val i = getIntentionAtCaret(createModuleIntention)
+    assertNotNull(i)
 
-    myFixture.launchAction(i);
+    myFixture.launchAction(i)
 
     assertCreateModuleFixResult(
       "newModule/pom.xml",
@@ -491,19 +490,20 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
             <artifactId>newModule</artifactId>
             <version>parentVersion</version>
 
-           \s
-        </project>""");
+            
+        </project>
+        """.trimIndent())
   }
 
-  @Test 
-  public void testCreatePomQuickFixWithProperties() {
+  @Test
+  fun testCreatePomQuickFixWithProperties() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
-                       """);
-    importProject();
+                       """.trimIndent())
+    importProject()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -513,28 +513,28 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                          <dirName>subDir</dirName>
                        </properties>
                        <modules>
-                         <module>${dirName}/new<caret>Module</module>
+                         <module>${'$'}{dirName}/new<caret>Module</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
-    assertNotNull(i);
+    val i = getIntentionAtCaret(createModuleIntention)
+    assertNotNull(i)
 
-    myFixture.launchAction(i);
+    myFixture.launchAction(i)
 
-    VirtualFile pom = myProjectRoot.findFileByRelativePath("subDir/newModule/pom.xml");
-    assertNotNull(pom);
+    val pom = myProjectRoot.findFileByRelativePath("subDir/newModule/pom.xml")
+    assertNotNull(pom)
   }
 
-  @Test 
-  public void testCreatePomQuickFixTakesDefaultGroupAndVersionIfNothingToOffer() {
+  @Test
+  fun testCreatePomQuickFixTakesDefaultGroupAndVersionIfNothingToOffer() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
-                       """);
-    importProject();
+                       """.trimIndent())
+    importProject()
 
     createProjectPom("""
                        <artifactId>project</artifactId>
@@ -542,11 +542,11 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                        <modules>
                          <module>new<caret>Module</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
-    assertNotNull(i);
-    myFixture.launchAction(i);
+    val i = getIntentionAtCaret(createModuleIntention)
+    assertNotNull(i)
+    myFixture.launchAction(i)
 
     assertCreateModuleFixResult(
       "newModule/pom.xml",
@@ -561,19 +561,20 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
             <artifactId>newModule</artifactId>
             <version>version</version>
 
-           \s
-        </project>""");
+            
+        </project>
+        """.trimIndent())
   }
 
-  @Test 
-  public void testCreateModuleWithParentQuickFix() {
+  @Test
+  fun testCreateModuleWithParentQuickFix() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
-                       """);
-    importProject();
+                       """.trimIndent())
+    importProject()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -583,11 +584,11 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                        <modules>
                          <module>new<caret>Module</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    IntentionAction i = getIntentionAtCaret(getCreateModuleWithParentIntention());
-    assertNotNull(i);
-    myFixture.launchAction(i);
+    val i = getIntentionAtCaret(createModuleWithParentIntention)
+    assertNotNull(i)
+    myFixture.launchAction(i)
 
     assertCreateModuleFixResult(
       "newModule/pom.xml",
@@ -608,19 +609,20 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
             <artifactId>newModule</artifactId>
             <version>1</version>
 
-           \s
-        </project>""");
+            
+        </project>
+        """.trimIndent())
   }
 
-  @Test 
-  public void testCreateModuleWithParentQuickFix2() {
+  @Test
+  fun testCreateModuleWithParentQuickFix2() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
-                       """);
-    importProject();
+                       """.trimIndent())
+    importProject()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -630,11 +632,11 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                        <modules>
                          <module>ppp/new<caret>Module</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    IntentionAction i = getIntentionAtCaret(getCreateModuleWithParentIntention());
-    assertNotNull(i);
-    myFixture.launchAction(i);
+    val i = getIntentionAtCaret(createModuleWithParentIntention)
+    assertNotNull(i)
+    myFixture.launchAction(i)
 
     assertCreateModuleFixResult(
       "ppp/newModule/pom.xml",
@@ -656,21 +658,22 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
             <artifactId>newModule</artifactId>
             <version>1</version>
 
-           \s
-        </project>""");
+            
+        </project>
+        """.trimIndent())
   }
 
-  @Test 
-  public void testCreateModuleWithParentQuickFix3() {
-    VirtualFile parentPom = createModulePom("parent",
-                                            """
+  @Test
+  fun testCreateModuleWithParentQuickFix3() {
+    val parentPom = createModulePom("parent",
+                                    """
                                               <groupId>test</groupId>
                                               <artifactId>project</artifactId>
                                               <version>1</version>
                                               <packaging>pom</packaging>
-                                              """);
+                                              """.trimIndent())
 
-    importProject(parentPom);
+    importProject(parentPom)
 
     myFixture.saveText(parentPom, createPomXml(
       """
@@ -681,11 +684,11 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
         <modules>
           <module>../ppp/new<caret>Module</module>
         </modules>
-        """));
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    IntentionAction i = getIntentionAtCaret(parentPom, getCreateModuleWithParentIntention());
-    assertNotNull(i);
-    myFixture.launchAction(i);
+        """.trimIndent()))
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments()
+    val i = getIntentionAtCaret(parentPom, createModuleWithParentIntention)
+    assertNotNull(i)
+    myFixture.launchAction(i)
 
     assertCreateModuleFixResult(
       "ppp/newModule/pom.xml",
@@ -707,19 +710,20 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
             <artifactId>newModule</artifactId>
             <version>1</version>
 
-           \s
-        </project>""");
+            
+        </project>
+        """.trimIndent())
   }
 
-  @Test 
-  public void testDoesNotShowCreatePomQuickFixForEmptyModuleTag() {
+  @Test
+  fun testDoesNotShowCreatePomQuickFixForEmptyModuleTag() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
-                       """);
-    importProject();
+                       """.trimIndent())
+    importProject()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -729,13 +733,13 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                        <modules>
                          <module><caret></module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    assertNull(getIntentionAtCaret(getCreateModuleIntention()));
+    assertNull(getIntentionAtCaret(createModuleIntention))
   }
 
-  @Test 
-  public void testDoesNotShowCreatePomQuickFixExistingModule() {
+  @Test
+  fun testDoesNotShowCreatePomQuickFixExistingModule() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -744,15 +748,15 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                        <modules>
                          <module>module</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
     createModulePom("module",
                     """
                       <groupId>test</groupId>
                       <artifactId>module</artifactId>
                       <version>1</version>
-                      """);
-    importProject();
+                      """.trimIndent())
+    importProject()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -762,28 +766,28 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                        <modules>
                          <module>m<caret>odule</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    assertNull(getIntentionAtCaret(getCreateModuleIntention()));
+    assertNull(getIntentionAtCaret(createModuleIntention))
   }
 
-  private void assertCreateModuleFixResult(String relativePath, String expectedText) {
-    VirtualFile pom = myProjectRoot.findFileByRelativePath(relativePath);
-    assertNotNull(pom);
+  private fun assertCreateModuleFixResult(relativePath: String, expectedText: String) {
+    val pom = myProjectRoot.findFileByRelativePath(relativePath)
+    assertNotNull(pom)
 
-    Document doc = FileDocumentManager.getInstance().getDocument(pom);
+    val doc = FileDocumentManager.getInstance().getDocument(pom!!)
 
-    Editor selectedEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-    assertEquals(doc, selectedEditor.getDocument());
+    val selectedEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor()
+    assertEquals(doc, selectedEditor!!.getDocument())
 
-    assertEquals(expectedText, doc.getText());
+    assertEquals(expectedText, doc!!.text)
   }
 
-  private static String getCreateModuleIntention() {
-    return MavenDomBundle.message("fix.create.module");
-  }
+  companion object {
+    private val createModuleIntention: String
+      get() = MavenDomBundle.message("fix.create.module")
 
-  private static String getCreateModuleWithParentIntention() {
-    return MavenDomBundle.message("fix.create.module.with.parent");
+    private val createModuleWithParentIntention: String
+      get() = MavenDomBundle.message("fix.create.module.with.parent")
   }
 }
