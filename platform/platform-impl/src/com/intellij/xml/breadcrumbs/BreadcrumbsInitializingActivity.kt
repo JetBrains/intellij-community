@@ -156,10 +156,10 @@ private fun isSuitable(project: Project, file: VirtualFile, forcedShown: Boolean
     return false
   }
   val providerExists = BreadcrumbsUtilEx.findProvider(file, project, forcedShown) != null
-  if (!providerExists) {
-    return false
-  }
+
   for (collector in FileBreadcrumbsCollector.EP_NAME.getExtensions(project)) {
+    if (!providerExists && collector.requiresProvider()) continue
+
     if (collector.handlesFile(file)) {
       return true
     }

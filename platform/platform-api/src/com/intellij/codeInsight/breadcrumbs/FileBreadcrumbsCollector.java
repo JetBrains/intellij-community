@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,10 @@ public abstract class FileBreadcrumbsCollector {
                                                                    @NotNull Document document,
                                                                    int offset,
                                                                    @Nullable Boolean forcedShown);
+
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  public boolean requiresProvider() { return true; }
 
   public static FileBreadcrumbsCollector findBreadcrumbsCollector(Project project, VirtualFile file) {
     if (file != null) {
