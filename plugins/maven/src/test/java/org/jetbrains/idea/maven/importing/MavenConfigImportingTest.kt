@@ -1,141 +1,152 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.importing;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
-import org.jetbrains.idea.maven.model.MavenConstants;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.WriteAction
+import com.intellij.testFramework.UsefulTestCase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper
+import org.jetbrains.idea.maven.model.MavenConstants
+import org.junit.Test
+import java.io.IOException
+import java.nio.charset.StandardCharsets
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
-public class MavenConfigImportingTest extends MavenDomTestCase {
-
+class MavenConfigImportingTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = false
+  
   @Test
-  public void testResolveJvmConfigProperty() throws IOException {
-    createProjectSubFile(MavenConstants.JVM_CONFIG_RELATIVE_PATH, "-Dver=1");
-    importProject("""
+  fun testResolveJvmConfigProperty() = runBlocking {
+    createProjectSubFile(MavenConstants.JVM_CONFIG_RELATIVE_PATH, "-Dver=1")
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
-                    <version>${ver}</version>""");
+                    <version>${'$'}{ver}</version>
+                    """.trimIndent())
 
-    MavenProject mavenProject = getProjectsManager().findProject(getModule("project"));
-    assertEquals("1", mavenProject.getMavenId().getVersion());
+    val mavenProject = projectsManager.findProject(getModule("project"))
+    assertEquals("1", mavenProject!!.mavenId.version)
   }
 
   @Test
-  public void testResolveMavenConfigProperty() throws IOException {
-    createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1");
-    importProject("""
+  fun testResolveMavenConfigProperty() = runBlocking {
+    createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1")
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
-                    <version>${ver}</version>""");
+                    <version>${'$'}{ver}</version>
+                    """.trimIndent())
 
-    MavenProject mavenProject = getProjectsManager().findProject(getModule("project"));
-    assertEquals("1", mavenProject.getMavenId().getVersion());
+    val mavenProject = projectsManager.findProject(getModule("project"))
+    assertEquals("1", mavenProject!!.mavenId.version)
   }
 
   @Test
-  public void testResolvePropertyPriority() throws IOException {
-    createProjectSubFile(MavenConstants.JVM_CONFIG_RELATIVE_PATH, "-Dver=ignore");
-    createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1");
-    importProject("""
+  fun testResolvePropertyPriority() = runBlocking {
+    createProjectSubFile(MavenConstants.JVM_CONFIG_RELATIVE_PATH, "-Dver=ignore")
+    createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1")
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
-                    <version>${ver}</version>
+                    <version>${'$'}{ver}</version>
                     <properties>
-                      <ver>ignore</ver></properties>""");
+                      <ver>ignore</ver></properties>
+                      """.trimIndent())
 
-    MavenProject mavenProject = getProjectsManager().findProject(getModule("project"));
-    assertEquals("1", mavenProject.getMavenId().getVersion());
+    val mavenProject = projectsManager.findProject(getModule("project"))
+    assertEquals("1", mavenProject!!.mavenId.version)
   }
 
   @Test
-  public void testResolveConfigPropertiesInModules() throws IOException {
-    assumeVersionMoreThan("3.3.1");
-    createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1 -DmoduleName=m1");
+  fun testResolveConfigPropertiesInModules() = runBlocking {
+    assumeVersionMoreThan("3.3.1")
+    createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1 -DmoduleName=m1")
 
     createModulePom("m1", """
-      <artifactId>${moduleName}</artifactId>
-      <version>${ver}</version>
+      <artifactId>${'$'}{moduleName}</artifactId>
+      <version>${'$'}{ver}</version>
       <parent>
         <groupId>test</groupId>
         <artifactId>project</artifactId>
-        <version>${ver}</version>
-      </parent>""");
+        <version>${'$'}{ver}</version>
+      </parent>
+      """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
-                    <version>${ver}</version>
+                    <version>${'$'}{ver}</version>
                     <packaging>pom</packaging>
                     <modules>
-                      <module>${moduleName}</module></modules>""");
+                      <module>${'$'}{moduleName}</module></modules>
+                      """.trimIndent())
 
-    MavenProject mavenProject = getProjectsManager().findProject(getModule("project"));
-    assertEquals("1", mavenProject.getMavenId().getVersion());
+    val mavenProject = projectsManager.findProject(getModule("project"))
+    assertEquals("1", mavenProject!!.mavenId.version)
 
-    MavenProject module = getProjectsManager().findProject(getModule(mn("project", "m1")));
-    assertNotNull(module);
+    val module = projectsManager.findProject(getModule(mn("project", "m1")))
+    assertNotNull(module)
 
-    assertEquals("m1", module.getMavenId().getArtifactId());
-    assertEquals("1", module.getMavenId().getVersion());
+    assertEquals("m1", module!!.mavenId.artifactId)
+    assertEquals("1", module.mavenId.version)
   }
 
   @Test
-  public void testMavenConfigCompletion() throws Exception {
-    createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dconfig.version=1");
-    importProject("""
+  fun testMavenConfigCompletion() = runBlocking {
+    createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dconfig.version=1")
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
-                    <version>1</version>""");
+                    <version>1</version>
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
-                       <version>${config.<caret></version>""");
+                       <version>${'$'}{config.<caret></version>
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "config.version");
+    assertCompletionVariants(myProjectPom, "config.version")
   }
 
   @Test
-  public void testMavenConfigReferenceResolving() throws IOException {
-    createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dconfig.version=1");
-    importProject("""
+  fun testMavenConfigReferenceResolving() = runBlocking {
+    createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dconfig.version=1")
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
-                    <version>${config.version}</version>""");
+                    <version>${'$'}{config.version}</version>
+                    """.trimIndent())
 
-    PsiElement resolvedReference = getReference(myProjectPom, "config.version", 0).resolve();
-    assertNotNull(resolvedReference);
+    val resolvedReference = withContext(Dispatchers.EDT) { getReference(myProjectPom, "config.version", 0)!!.resolve() }
+    assertNotNull(resolvedReference)
 
-    assertInstanceOf(resolvedReference, MavenPsiElementWrapper.class);
-    assertEquals("1", ((MavenPsiElementWrapper)resolvedReference).getName());
+    UsefulTestCase.assertInstanceOf(resolvedReference, MavenPsiElementWrapper::class.java)
+    assertEquals("1", (resolvedReference as MavenPsiElementWrapper?)!!.name)
   }
 
   @Test
-  public void testReimportOnConfigChange() throws IOException {
-    VirtualFile configFile = createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1");
-    importProject("""
+  fun testReimportOnConfigChange() = runBlocking {
+    val configFile = createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1")
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
-                    <version>${ver}</version>""");
+                    <version>${'$'}{ver}</version>
+                    """.trimIndent())
 
-    MavenProject mavenProject = getProjectsManager().findProject(getModule("project"));
-    assertEquals("1", mavenProject.getMavenId().getVersion());
+    var mavenProject = projectsManager.findProject(getModule("project"))
+    assertEquals("1", mavenProject!!.mavenId.version)
 
-    WriteAction.runAndWait(() -> {
-      byte[] content = "-Dver=2".getBytes(StandardCharsets.UTF_8);
-      configFile.setBinaryContent(content, -1, configFile.getTimeStamp() + 1);
-    });
-    configConfirmationForYesAnswer();
-    importProject();
+    WriteAction.runAndWait<IOException> {
+      val content = "-Dver=2".toByteArray(StandardCharsets.UTF_8)
+      configFile.setBinaryContent(content, -1, configFile.getTimeStamp() + 1)
+    }
+    configConfirmationForYesAnswer()
+    importProjectAsync()
 
-    mavenProject = getProjectsManager().findProject(getModule("project"));
-    assertEquals("2", mavenProject.getMavenId().getVersion());
+    mavenProject = projectsManager.findProject(getModule("project"))
+    assertEquals("2", mavenProject!!.mavenId.version)
   }
 }
