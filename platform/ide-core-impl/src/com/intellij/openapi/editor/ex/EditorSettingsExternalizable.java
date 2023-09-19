@@ -257,7 +257,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     String newValue = buffer.toString();
 
     String old = myOptions.USE_SOFT_WRAPS;
-    if (old.equals(newValue)) return;
+    if (old != null && old.equals(newValue)) return;  // newValue is not null
     myOptions.USE_SOFT_WRAPS = newValue;
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_USE_SOFT_WRAPS, old, newValue);
   }
@@ -654,7 +654,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setStripTrailingSpaces(@StripTrailingSpaces String stripTrailingSpaces) {
     String old = myOptions.STRIP_TRAILING_SPACES;
-    if (old.equals(stripTrailingSpaces)) return;
+    if (old == null && stripTrailingSpaces == null ||
+        old != null && old.equals(stripTrailingSpaces)) return;
     myOptions.STRIP_TRAILING_SPACES = stripTrailingSpaces;
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_STRIP_TRAILING_SPACES, old, stripTrailingSpaces);
   }
@@ -984,7 +985,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setSoftWrapFileMasks(@NotNull String value) {
     String old = myOptions.SOFT_WRAP_FILE_MASKS;
-    if (old.equals(value)) return;
+    if (old != null && old.equals(value)) return;  // `value` is not null
     myOptions.SOFT_WRAP_FILE_MASKS = value;
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SOFT_WRAP_FILE_MASKS, old, value);
   }
