@@ -1,29 +1,25 @@
-package org.jetbrains.idea.maven.importing;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import groovy.lang.Closure;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.vfs.VfsUtil
+import kotlinx.coroutines.runBlocking
+import org.junit.Test
 
-import java.io.IOException;
+class EncodingImportingTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = false
 
-public class EncodingImportingTest extends MavenMultiVersionImportingTestCase {
   @Test
-  public void testEncodingDefinedByProperty() throws IOException {
-    final byte[] text = new byte[]{-12, -59, -53, -45, -44};// Russian text in koi8-r encoding.
+  fun testEncodingDefinedByProperty() = runBlocking {
+    val text = byteArrayOf(-12, -59, -53, -45, -44) // Russian text in koi8-r encoding.
 
-    final VirtualFile file = createProjectSubFile("src/main/resources/A.txt");
-    ApplicationManager.getApplication().runWriteAction(new Closure(this, this) {
-      public void doCall(Object it) throws IOException { file.setBinaryContent(text); }
+    val file = createProjectSubFile("src/main/resources/A.txt")
+    writeAction {
+      file.setBinaryContent(text)
+    }
 
-      public void doCall() throws IOException {
-        doCall(null);
-      }
-    });
-
-    importProject(
+    importProjectAsync(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -32,27 +28,23 @@ public class EncodingImportingTest extends MavenMultiVersionImportingTestCase {
         <properties>
         <project.build.sourceEncoding>koi8-r</project.build.sourceEncoding>
         </properties>
-        """);
+        """.trimIndent())
 
-    String loadedText = VfsUtil.loadText(file);
+    val loadedText = VfsUtil.loadText(file)
 
-    assert loadedText.equals(new String(text, "koi8-r"));
+    assert(loadedText == String(text, charset("koi8-r")))
   }
 
   @Test
-  public void testEncodingDefinedByPluginConfig() throws IOException {
-    final byte[] text = new byte[]{-12, -59, -53, 45, -44};// Russian text in koi8-r encoding.
+  fun testEncodingDefinedByPluginConfig() = runBlocking {
+    val text = byteArrayOf(-12, -59, -53, 45, -44) // Russian text in koi8-r encoding.
 
-    final VirtualFile file = createProjectSubFile("src/main/resources/A.txt");
-    ApplicationManager.getApplication().runWriteAction(new Closure(this, this) {
-      public void doCall(Object it) throws IOException { file.setBinaryContent(text); }
+    val file = createProjectSubFile("src/main/resources/A.txt")
+    writeAction {
+      file.setBinaryContent(text)
+    }
 
-      public void doCall() throws IOException {
-        doCall(null);
-      }
-    });
-
-    importProject(
+    importProjectAsync(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -68,10 +60,10 @@ public class EncodingImportingTest extends MavenMultiVersionImportingTestCase {
               </plugin>
             </plugins>
           </build>
-        """);
+        """.trimIndent())
 
-    String loadedText = VfsUtil.loadText(file);
+    val loadedText = VfsUtil.loadText(file)
 
-    assert loadedText.equals(new String(text, "koi8-r"));
+    assert(loadedText == String(text, charset("koi8-r")))
   }
 }
