@@ -500,6 +500,8 @@ public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Seri
 
   public abstract fun getEntityInterface(): Class<out WorkspaceEntity>
 
+  public abstract fun getMetadata(): EntityMetadata
+
   @Suppress("UNCHECKED_CAST")
   public override fun clone(): WorkspaceEntityData<E> = super.clone() as WorkspaceEntityData<E>
 
