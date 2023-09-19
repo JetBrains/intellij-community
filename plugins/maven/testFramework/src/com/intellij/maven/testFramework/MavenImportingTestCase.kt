@@ -391,8 +391,16 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected suspend fun importProjectAsync() {
+    importProjectsAsync(listOf(myProjectPom))
+  }
+
+  protected suspend fun importProjectAsync(file: VirtualFile) {
+    importProjectsAsync(listOf(file))
+  }
+
+  protected suspend fun importProjectsAsync(files: List<VirtualFile>) {
     initProjectsManager(false)
-    projectsManager.addManagedFilesWithProfilesAndUpdate(listOf(myProjectPom), MavenExplicitProfiles.NONE, null, null)
+    projectsManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
   }
 
   protected fun importProjectWithErrors() {
