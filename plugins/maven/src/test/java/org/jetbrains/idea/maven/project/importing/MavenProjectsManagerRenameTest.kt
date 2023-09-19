@@ -25,7 +25,7 @@ class MavenProjectsManagerRenameTest : MavenMultiVersionImportingTestCase() {
                            <maven.compiler.testTarget>11</maven.compiler.testTarget>
                        </properties>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertModules("project", "project.main", "project.test")
 
     renameModule("project", "group.prefix.project")
@@ -49,7 +49,7 @@ class MavenProjectsManagerRenameTest : MavenMultiVersionImportingTestCase() {
                            <maven.compiler.testTarget>11</maven.compiler.testTarget>
                        </properties>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertModules("project", "project.main", "project.test")
 
     renameModule("project.main", "project.verymain")
