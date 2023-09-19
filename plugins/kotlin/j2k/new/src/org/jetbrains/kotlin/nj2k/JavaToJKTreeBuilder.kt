@@ -1209,8 +1209,12 @@ class JavaToJKTreeBuilder(
     }
 
     // we don't want to capture comments of next declaration/statement
-    private fun PsiElement.takeCommentsAfterNeeded() =
-        this !is PsiMember && this !is PsiStatement
+    // unless it is the last declaration in scope
+    private fun PsiElement.takeCommentsAfterNeeded(): Boolean = when (this) {
+        is PsiMember -> getNextSiblingIgnoringWhitespaceAndComments() !is PsiMember
+        is PsiStatement -> false
+        else -> true
+    }
 
     private fun <O : JKFormattingOwner> O.withLineBreaksFrom(psi: PsiElement?, copyLineBreaksBefore: Boolean = false) =
         with(formattingCollector) {

@@ -1212,6 +1212,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/comments/comments3.java");
         }
 
+        @TestMetadata("commentsAfterLastElement.java")
+        public void testCommentsAfterLastElement() throws Exception {
+            runTest("testData/newJ2k/comments/commentsAfterLastElement.java");
+        }
+
         @TestMetadata("commentsForConstructors.java")
         public void testCommentsForConstructors() throws Exception {
             runTest("testData/newJ2k/comments/commentsForConstructors.java");
