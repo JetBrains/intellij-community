@@ -7,9 +7,10 @@ import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
-public abstract class WorkspaceEntityBase : WorkspaceEntity, Any() {
+public abstract class WorkspaceEntityBase(private var currentEntityData: WorkspaceEntityData<out WorkspaceEntity>? = null) : WorkspaceEntity {
   //override lateinit var entitySource: EntitySource
   //  internal set
 
@@ -67,6 +68,13 @@ public abstract class WorkspaceEntityBase : WorkspaceEntity, Any() {
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> = id.clazz.findWorkspaceEntity()
 
+
+  internal open fun getData(): WorkspaceEntityData<out WorkspaceEntity> =
+    currentEntityData ?: throw IllegalStateException("Entity data is not initialized")
+
+  internal fun getMetadata(): EntityMetadata = getData().getMetadata()
+
+
   override fun toString(): String = id.asString()
 
   override fun equals(other: Any?): Boolean {
@@ -93,7 +101,7 @@ public data class EntityLink(
 internal val EntityLink.remote: EntityLink
   get() = EntityLink(!this.isThisFieldChild, connectionId)
 
-public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEntityData<T>>(protected var currentEntityData: E?) : WorkspaceEntityBase(), WorkspaceEntity.Builder<T> {
+public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEntityData<T>>(protected var currentEntityData: E?) : WorkspaceEntityBase(currentEntityData), WorkspaceEntity.Builder<T> {
   /**
    * In case any of two referred entities is not added to diff, the reference between entities will be stored in this field
    */
@@ -395,6 +403,8 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
       applyRef(connectionId, entity)
     }
   }
+
+  override fun getData(): WorkspaceEntityData<out WorkspaceEntity> = this.getEntityData()
 
   public fun getEntityData(supposedModification: Boolean = false): E {
     if (currentEntityData != null) return currentEntityData!!
