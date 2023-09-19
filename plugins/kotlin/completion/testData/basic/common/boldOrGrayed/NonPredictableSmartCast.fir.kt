@@ -15,5 +15,4 @@ fun f(pair: Pair<out Any, out Any>) {
 // EXIST: { lookupString: "forString", attributes: "grayed", icon: "Function"}
 // EXIST: { lookupString: "forAny", attributes: "bold", icon: "Function"}
 
-/*TODO: { lookupString: "forT", attributes: "" }*/
-// EXIST: { lookupString: "forT", attributes: "grayed", icon: "Function"}
+// EXIST: { lookupString: "forT", attributes: "", icon: "Function"}
