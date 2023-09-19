@@ -68,7 +68,7 @@ interface SampleEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SampleEntity, modification: SampleEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: SampleEntity, modification: SampleEntity.Builder.() -> Unit): SampleEntity = modifyEntity(
   SampleEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -101,7 +101,8 @@ interface ChildSampleEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildSampleEntity, modification: ChildSampleEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ChildSampleEntity,
+                                      modification: ChildSampleEntity.Builder.() -> Unit): ChildSampleEntity = modifyEntity(
   ChildSampleEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -148,7 +149,8 @@ interface SecondSampleEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SecondSampleEntity, modification: SecondSampleEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: SecondSampleEntity,
+                                      modification: SecondSampleEntity.Builder.() -> Unit): SecondSampleEntity = modifyEntity(
   SecondSampleEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -181,7 +183,7 @@ interface SourceEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SourceEntity, modification: SourceEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: SourceEntity, modification: SourceEntity.Builder.() -> Unit): SourceEntity = modifyEntity(
   SourceEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -214,7 +216,8 @@ interface ChildSourceEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildSourceEntity, modification: ChildSourceEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ChildSourceEntity,
+                                      modification: ChildSourceEntity.Builder.() -> Unit): ChildSourceEntity = modifyEntity(
   ChildSourceEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -249,7 +252,8 @@ interface SymbolicIdEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SymbolicIdEntity, modification: SymbolicIdEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: SymbolicIdEntity,
+                                      modification: SymbolicIdEntity.Builder.() -> Unit): SymbolicIdEntity = modifyEntity(
   SymbolicIdEntity.Builder::class.java, entity, modification)
 //endregion
 

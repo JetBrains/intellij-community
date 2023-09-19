@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -12,18 +13,19 @@ import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
 @GeneratedCodeImplVersion(2)
-open class ChildWithExtensionParentImpl(val dataSource: ChildWithExtensionParentData) : ChildWithExtensionParent, WorkspaceEntityBase() {
+open class ChildWithExtensionParentImpl(private val dataSource: ChildWithExtensionParentData) : ChildWithExtensionParent, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -37,6 +39,7 @@ open class ChildWithExtensionParentImpl(val dataSource: ChildWithExtensionParent
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: ChildWithExtensionParentData?) : ModifiableWorkspaceEntityBase<ChildWithExtensionParent, ChildWithExtensionParentData>(
     result), ChildWithExtensionParent.Builder {
@@ -66,7 +69,7 @@ open class ChildWithExtensionParentImpl(val dataSource: ChildWithExtensionParent
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -113,7 +116,7 @@ open class ChildWithExtensionParentImpl(val dataSource: ChildWithExtensionParent
 class ChildWithExtensionParentData : WorkspaceEntityData<ChildWithExtensionParent>() {
   lateinit var data: String
 
-  fun isDataInitialized(): Boolean = ::data.isInitialized
+  internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChildWithExtensionParent> {
     val modifiable = ChildWithExtensionParentImpl.Builder(null)
@@ -130,6 +133,11 @@ class ChildWithExtensionParentData : WorkspaceEntityData<ChildWithExtensionParen
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.ChildWithExtensionParent") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -183,9 +191,5 @@ class ChildWithExtensionParentData : WorkspaceEntityData<ChildWithExtensionParen
     var result = javaClass.hashCode()
     result = 31 * result + data.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

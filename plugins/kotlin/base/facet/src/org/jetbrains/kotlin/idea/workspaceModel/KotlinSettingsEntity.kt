@@ -151,8 +151,10 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: KotlinSettingsEntity, modification: KotlinSettingsEntity.Builder.() -> Unit) =
-    modifyEntity(KotlinSettingsEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+    entity: KotlinSettingsEntity,
+    modification: KotlinSettingsEntity.Builder.() -> Unit
+): KotlinSettingsEntity = modifyEntity(KotlinSettingsEntity.Builder::class.java, entity, modification)
 
 var ModuleEntity.Builder.kotlinSettings: @Child List<KotlinSettingsEntity>
         by WorkspaceEntity.extension()

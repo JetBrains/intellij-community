@@ -3,6 +3,11 @@ package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -40,7 +45,8 @@ interface FacetsOrderEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FacetsOrderEntity, modification: FacetsOrderEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: FacetsOrderEntity,
+                                      modification: FacetsOrderEntity.Builder.() -> Unit): FacetsOrderEntity = modifyEntity(
   FacetsOrderEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -48,7 +54,7 @@ val ModuleEntity.facetOrder: @Child FacetsOrderEntity?
     by WorkspaceEntity.extension()
 
 /**
- * Stores order of excluded roots in iml file. 
+ * Stores order of excluded roots in iml file.
  * This is needed to ensure that corresponding tags are saved in the same order to avoid unnecessary modifications of iml file.
  */
 interface ExcludeUrlOrderEntity : WorkspaceEntity {
@@ -82,6 +88,7 @@ interface ExcludeUrlOrderEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ExcludeUrlOrderEntity, modification: ExcludeUrlOrderEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ExcludeUrlOrderEntity,
+                                      modification: ExcludeUrlOrderEntity.Builder.() -> Unit): ExcludeUrlOrderEntity = modifyEntity(
   ExcludeUrlOrderEntity.Builder::class.java, entity, modification)
 //endregion

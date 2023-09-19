@@ -45,7 +45,8 @@ interface ParentNullableEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentNullableEntity, modification: ParentNullableEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ParentNullableEntity,
+                                      modification: ParentNullableEntity.Builder.() -> Unit): ParentNullableEntity = modifyEntity(
   ParentNullableEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -79,6 +80,7 @@ interface ChildNullableEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildNullableEntity, modification: ChildNullableEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ChildNullableEntity,
+                                      modification: ChildNullableEntity.Builder.() -> Unit): ChildNullableEntity = modifyEntity(
   ChildNullableEntity.Builder::class.java, entity, modification)
 //endregion

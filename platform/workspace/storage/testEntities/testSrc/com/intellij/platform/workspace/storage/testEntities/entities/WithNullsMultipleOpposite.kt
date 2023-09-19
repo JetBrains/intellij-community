@@ -40,7 +40,7 @@ interface ParentWithNullsOppositeMultiple : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ParentWithNullsOppositeMultiple,
-                                      modification: ParentWithNullsOppositeMultiple.Builder.() -> Unit) = modifyEntity(
+                                      modification: ParentWithNullsOppositeMultiple.Builder.() -> Unit): ParentWithNullsOppositeMultiple = modifyEntity(
   ParentWithNullsOppositeMultiple.Builder::class.java, entity, modification)
 
 var ParentWithNullsOppositeMultiple.Builder.children: @Child List<ChildWithNullsOppositeMultiple>
@@ -79,7 +79,7 @@ interface ChildWithNullsOppositeMultiple : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ChildWithNullsOppositeMultiple,
-                                      modification: ChildWithNullsOppositeMultiple.Builder.() -> Unit) = modifyEntity(
+                                      modification: ChildWithNullsOppositeMultiple.Builder.() -> Unit): ChildWithNullsOppositeMultiple = modifyEntity(
   ChildWithNullsOppositeMultiple.Builder::class.java, entity, modification)
 //endregion
 

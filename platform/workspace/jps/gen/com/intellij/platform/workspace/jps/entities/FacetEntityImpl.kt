@@ -5,6 +5,7 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -14,26 +15,24 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.SoftLinkable
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
-import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
 @GeneratedCodeImplVersion(2)
-open class FacetEntityImpl(val dataSource: FacetEntityData) : FacetEntity, WorkspaceEntityBase() {
+open class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java,
                                                                           ConnectionId.ConnectionType.ONE_TO_MANY, false)
     internal val UNDERLYINGFACET_CONNECTION_ID: ConnectionId = ConnectionId.create(FacetEntity::class.java, FacetEntity::class.java,
                                                                                    ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
       UNDERLYINGFACET_CONNECTION_ID,
     )
@@ -65,6 +64,7 @@ open class FacetEntityImpl(val dataSource: FacetEntityData) : FacetEntity, Works
     return connections
   }
 
+
   class Builder(result: FacetEntityData?) : ModifiableWorkspaceEntityBase<FacetEntity, FacetEntityData>(result), FacetEntity.Builder {
     constructor() : this(FacetEntityData())
 
@@ -92,7 +92,7 @@ open class FacetEntityImpl(val dataSource: FacetEntityData) : FacetEntity, Works
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -258,52 +258,15 @@ open class FacetEntityImpl(val dataSource: FacetEntityData) : FacetEntity, Works
   }
 }
 
-class FacetEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetEntity>(), SoftLinkable {
+class FacetEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetEntity>() {
   lateinit var name: String
   lateinit var moduleId: ModuleId
   lateinit var facetType: String
   var configurationXmlTag: String? = null
 
-  fun isNameInitialized(): Boolean = ::name.isInitialized
-  fun isModuleIdInitialized(): Boolean = ::moduleId.isInitialized
-  fun isFacetTypeInitialized(): Boolean = ::facetType.isInitialized
-
-  override fun getLinks(): Set<SymbolicEntityId<*>> {
-    val result = HashSet<SymbolicEntityId<*>>()
-    result.add(moduleId)
-    return result
-  }
-
-  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-    index.index(this, moduleId)
-  }
-
-  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-    // TODO verify logic
-    val mutablePreviousSet = HashSet(prev)
-    val removedItem_moduleId = mutablePreviousSet.remove(moduleId)
-    if (!removedItem_moduleId) {
-      index.index(this, moduleId)
-    }
-    for (removed in mutablePreviousSet) {
-      index.remove(this, removed)
-    }
-  }
-
-  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
-    var changed = false
-    val moduleId_data = if (moduleId == oldLink) {
-      changed = true
-      newLink as ModuleId
-    }
-    else {
-      null
-    }
-    if (moduleId_data != null) {
-      moduleId = moduleId_data
-    }
-    return changed
-  }
+  internal fun isNameInitialized(): Boolean = ::name.isInitialized
+  internal fun isModuleIdInitialized(): Boolean = ::moduleId.isInitialized
+  internal fun isFacetTypeInitialized(): Boolean = ::facetType.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FacetEntity> {
     val modifiable = FacetEntityImpl.Builder(null)
@@ -320,6 +283,10 @@ class FacetEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetEntity
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.FacetEntity") as EntityMetadata
   }
 
   override fun symbolicId(): SymbolicEntityId<*> {
@@ -393,10 +360,5 @@ class FacetEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetEntity
     result = 31 * result + facetType.hashCode()
     result = 31 * result + configurationXmlTag.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(ModuleId::class.java)
-    collector.sameForAllEntities = true
   }
 }

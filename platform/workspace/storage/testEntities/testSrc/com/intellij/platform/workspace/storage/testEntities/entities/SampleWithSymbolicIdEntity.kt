@@ -69,7 +69,7 @@ interface SampleWithSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: SampleWithSymbolicIdEntity,
-                                      modification: SampleWithSymbolicIdEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: SampleWithSymbolicIdEntity.Builder.() -> Unit): SampleWithSymbolicIdEntity = modifyEntity(
   SampleWithSymbolicIdEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -107,6 +107,7 @@ interface ChildWpidSampleEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildWpidSampleEntity, modification: ChildWpidSampleEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ChildWpidSampleEntity,
+                                      modification: ChildWpidSampleEntity.Builder.() -> Unit): ChildWpidSampleEntity = modifyEntity(
   ChildWpidSampleEntity.Builder::class.java, entity, modification)
 //endregion

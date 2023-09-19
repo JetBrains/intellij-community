@@ -39,7 +39,7 @@ interface ChildWithExtensionParent : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ChildWithExtensionParent,
-                                      modification: ChildWithExtensionParent.Builder.() -> Unit) = modifyEntity(
+                                      modification: ChildWithExtensionParent.Builder.() -> Unit): ChildWithExtensionParent = modifyEntity(
   ChildWithExtensionParent.Builder::class.java, entity, modification)
 
 var ChildWithExtensionParent.Builder.parent: AbstractParentEntity?
@@ -101,7 +101,8 @@ interface SpecificParent : AbstractParentEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SpecificParent, modification: SpecificParent.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: SpecificParent,
+                                      modification: SpecificParent.Builder.() -> Unit): SpecificParent = modifyEntity(
   SpecificParent.Builder::class.java, entity, modification)
 //endregion
 

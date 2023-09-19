@@ -13,18 +13,19 @@ import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
 @GeneratedCodeImplVersion(2)
-open class SpecificChildWithLinkToParentEntityImpl(val dataSource: SpecificChildWithLinkToParentEntityData) : SpecificChildWithLinkToParentEntity, WorkspaceEntityBase() {
+open class SpecificChildWithLinkToParentEntityImpl(private val dataSource: SpecificChildWithLinkToParentEntityData) : SpecificChildWithLinkToParentEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -38,6 +39,7 @@ open class SpecificChildWithLinkToParentEntityImpl(val dataSource: SpecificChild
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: SpecificChildWithLinkToParentEntityData?) : ModifiableWorkspaceEntityBase<SpecificChildWithLinkToParentEntity, SpecificChildWithLinkToParentEntityData>(
     result), SpecificChildWithLinkToParentEntity.Builder {
@@ -67,7 +69,7 @@ open class SpecificChildWithLinkToParentEntityImpl(val dataSource: SpecificChild
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -114,7 +116,7 @@ open class SpecificChildWithLinkToParentEntityImpl(val dataSource: SpecificChild
 class SpecificChildWithLinkToParentEntityData : WorkspaceEntityData<SpecificChildWithLinkToParentEntity>() {
   lateinit var data: String
 
-  fun isDataInitialized(): Boolean = ::data.isInitialized
+  internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SpecificChildWithLinkToParentEntity> {
     val modifiable = SpecificChildWithLinkToParentEntityImpl.Builder(null)
@@ -131,6 +133,11 @@ class SpecificChildWithLinkToParentEntityData : WorkspaceEntityData<SpecificChil
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.SpecificChildWithLinkToParentEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -184,9 +191,5 @@ class SpecificChildWithLinkToParentEntityData : WorkspaceEntityData<SpecificChil
     var result = javaClass.hashCode()
     result = 31 * result + data.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

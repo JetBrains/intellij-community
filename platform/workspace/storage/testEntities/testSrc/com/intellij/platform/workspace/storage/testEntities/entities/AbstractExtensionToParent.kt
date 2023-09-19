@@ -38,7 +38,7 @@ interface ParentWithLinkToAbstractChild : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ParentWithLinkToAbstractChild,
-                                      modification: ParentWithLinkToAbstractChild.Builder.() -> Unit) = modifyEntity(
+                                      modification: ParentWithLinkToAbstractChild.Builder.() -> Unit): ParentWithLinkToAbstractChild = modifyEntity(
   ParentWithLinkToAbstractChild.Builder::class.java, entity, modification)
 //endregion
 
@@ -100,7 +100,7 @@ interface SpecificChildWithLinkToParentEntity : AbstractChildWithLinkToParentEnt
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: SpecificChildWithLinkToParentEntity,
-                                      modification: SpecificChildWithLinkToParentEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: SpecificChildWithLinkToParentEntity.Builder.() -> Unit): SpecificChildWithLinkToParentEntity = modifyEntity(
   SpecificChildWithLinkToParentEntity.Builder::class.java, entity, modification)
 //endregion
 

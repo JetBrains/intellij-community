@@ -40,7 +40,8 @@ interface ParentChainEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentChainEntity, modification: ParentChainEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ParentChainEntity,
+                                      modification: ParentChainEntity.Builder.() -> Unit): ParentChainEntity = modifyEntity(
   ParentChainEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -128,7 +129,7 @@ interface CompositeChildAbstractEntity : CompositeAbstractEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: CompositeChildAbstractEntity,
-                                      modification: CompositeChildAbstractEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: CompositeChildAbstractEntity.Builder.() -> Unit): CompositeChildAbstractEntity = modifyEntity(
   CompositeChildAbstractEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -157,6 +158,6 @@ interface SimpleChildAbstractEntity : SimpleAbstractEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: SimpleChildAbstractEntity,
-                                      modification: SimpleChildAbstractEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: SimpleChildAbstractEntity.Builder.() -> Unit): SimpleChildAbstractEntity = modifyEntity(
   SimpleChildAbstractEntity.Builder::class.java, entity, modification)
 //endregion
