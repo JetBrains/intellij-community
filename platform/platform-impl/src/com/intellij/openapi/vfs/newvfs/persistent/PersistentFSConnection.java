@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.core.CoreBundle;
+import com.intellij.ide.actions.cache.RecoverVfsFromLogAction;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Forceable;
@@ -44,6 +45,8 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Future;
@@ -435,8 +438,16 @@ public final class PersistentFSConnection {
   }
 
   private static void showCorruptionNotification(boolean insisting) {
-    AnAction restartIdeAction = ActionManager.getInstance().getAction("RestartIde");
     NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("IDE Caches");
+    var actions = new ArrayList<AnAction>();
+    { // collect available actions
+      AnAction recoverCachesFromLogAction = ActionManager.getInstance().getAction("RecoverCachesFromLog");
+      if (recoverCachesFromLogAction != null && RecoverVfsFromLogAction.isAvailable()) {
+        actions.add(recoverCachesFromLogAction);
+      }
+      AnAction restartIdeAction = ActionManager.getInstance().getAction("RestartIde");
+      actions.add(restartIdeAction);
+    }
     if (insisting) {
       notificationGroup.createNotification(
           CoreBundle.message("vfs.corruption.notification.title"),
@@ -444,7 +455,7 @@ public final class PersistentFSConnection {
           INFORMATION
         )
         .setImportant(true)
-        .addAction(restartIdeAction)
+        .addActions((Collection<? extends AnAction>)actions)
         .notify(null);
     }
     else {
@@ -453,7 +464,7 @@ public final class PersistentFSConnection {
           CoreBundle.message("vfs.corruption.notification.insist.text"),
           ERROR
         )
-        .addAction(restartIdeAction)
+        .addActions((Collection<? extends AnAction>)actions)
         .notify(null);
     }
   }

@@ -34,6 +34,7 @@ class RecoverVfsFromLogAction : AnAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   companion object {
+    @JvmStatic
     val isAvailable: Boolean = VfsLog.isVfsTrackingEnabled
 
     internal fun performCacheRecovery(project: Project?) {
