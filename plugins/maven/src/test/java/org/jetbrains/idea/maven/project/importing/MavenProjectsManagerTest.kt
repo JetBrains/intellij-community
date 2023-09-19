@@ -608,8 +608,10 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     assertEquals(3, ModuleManager.getInstance(myProject).modules.size)
     configConfirmationForYesAnswer()
     val action = RemoveManagedFilesAction()
-    withContext(Dispatchers.EDT) {
-      action.actionPerformed(TestActionEvent.createTestEvent(action, createTestDataContext(mavenParentPom)))
+    waitForImportWithinTimeout {
+      withContext(Dispatchers.EDT) {
+        action.actionPerformed(TestActionEvent.createTestEvent(action, createTestDataContext(mavenParentPom)))
+      }
     }
     assertEquals(1, ModuleManager.getInstance(myProject).modules.size)
     assertEquals("non-maven", ModuleManager.getInstance(myProject).modules[0].getName())
@@ -618,7 +620,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     //should then import project in non-ignored state again
     importProjectAsync(mavenParentPom)
     assertEquals(3, ModuleManager.getInstance(myProject).modules.size)
-    UsefulTestCase.assertEmpty(projectsManager.getIgnoredFilesPaths())
+    UsefulTestCase.assertEmpty(projectsManager.ignoredFilesPaths)
   }
 
   @Test
