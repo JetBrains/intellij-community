@@ -931,6 +931,7 @@
     </group>
 
     <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
+    <action id="RecoverCachesFromLog" class="com.intellij.ide.actions.cache.RecoverVfsFromLogAction"/>
 
     <group id="MainToolBar">
       <reference ref="OpenFile"/>
