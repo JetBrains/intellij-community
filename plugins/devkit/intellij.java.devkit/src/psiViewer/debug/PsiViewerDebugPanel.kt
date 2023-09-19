@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.debug
+package com.intellij.java.devkit.psiViewer.debug
 
 import com.intellij.dev.psiViewer.PsiViewerDialog
 import com.intellij.dev.psiViewer.PsiViewerSettings
@@ -7,6 +7,7 @@ import com.intellij.dev.psiViewer.ViewerNodeDescriptor
 import com.intellij.dev.psiViewer.ViewerTreeStructure
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.treeView.IndexComparator
+import com.intellij.java.devkit.psiViewer.JavaPsiViewerBundle
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
@@ -30,7 +31,6 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
-import org.jetbrains.idea.devkit.DevKitBundle
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -78,8 +78,8 @@ class PsiViewerDebugPanel(
   }
 
   private inner class OpenDialogAction : AnAction(
-    DevKitBundle.message("psi.viewer.show.open.dialog.action"),
-    DevKitBundle.message("psi.viewer.show.open.dialog.description"),
+    JavaPsiViewerBundle.message("psi.viewer.show.open.dialog.action"),
+    JavaPsiViewerBundle.message("psi.viewer.show.open.dialog.description"),
     AllIcons.ToolbarDecorator.Export
   ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -91,8 +91,8 @@ class PsiViewerDebugPanel(
   }
 
   private inner class ResetSelection : AnAction(
-    DevKitBundle.message("psi.viewer.show.reset.selection.action"),
-    DevKitBundle.message("psi.viewer.show.reset.selection.description"),
+    JavaPsiViewerBundle.message("psi.viewer.show.reset.selection.action"),
+    JavaPsiViewerBundle.message("psi.viewer.show.reset.selection.description"),
     AllIcons.General.Reset
   ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -105,8 +105,8 @@ class PsiViewerDebugPanel(
 
 
   private inner class ShowWhiteSpaceAction : ToggleAction(
-    DevKitBundle.message("psi.viewer.show.whitespace.action"),
-    DevKitBundle.message("psi.viewer.show.whitespace.description"),
+    JavaPsiViewerBundle.message("psi.viewer.show.whitespace.action"),
+    JavaPsiViewerBundle.message("psi.viewer.show.whitespace.description"),
     AllIcons.Diff.GutterCheckBox
   ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -121,8 +121,8 @@ class PsiViewerDebugPanel(
   }
 
   private inner class ShowTreeNodesAction : ToggleAction(
-    DevKitBundle.message("psi.viewer.show.tree.nodes.action"),
-    DevKitBundle.message("psi.viewer.show.tree.nodes.description"),
+    JavaPsiViewerBundle.message("psi.viewer.show.tree.nodes.action"),
+    JavaPsiViewerBundle.message("psi.viewer.show.tree.nodes.description"),
     AllIcons.Actions.PrettyPrint
   ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

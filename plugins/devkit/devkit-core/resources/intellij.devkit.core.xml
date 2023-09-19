@@ -672,10 +672,5 @@
     <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">
       <add-to-group group-id="Internal.Dump"/>
     </action>
-
-    <action class="org.jetbrains.idea.devkit.debug.PsiViewerDebugAction" id="Debug.PsiViewer">
-      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Memory.CalculateRetainedSize"/>
-    </action>
-    <action class="org.jetbrains.idea.devkit.debug.PsiViewerDebugSelectUIAction" id="Debug.PsiViewer.Toggle.UI"/>
   </actions>
 </idea-plugin>

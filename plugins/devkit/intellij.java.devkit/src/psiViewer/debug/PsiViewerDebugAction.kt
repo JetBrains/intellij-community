@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.debug
+package com.intellij.java.devkit.psiViewer.debug
 
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.JavaDebugProcess
@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.memory.action.DebuggerTreeAction
 import com.intellij.dev.psiViewer.PsiViewerDialog
+import com.intellij.java.devkit.psiViewer.JavaPsiViewerBundle
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -22,18 +23,12 @@ import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import com.sun.jdi.ObjectReference
-import org.jetbrains.idea.devkit.DevKitBundle
 
 private val LOG = Logger.getInstance(PsiViewerDebugAction::class.java)
-
 private const val PSI_ELEMENT = "com.intellij.psi.PsiElement"
-
 private const val GET_CONTAINING_FILE = "getContainingFile"
-
 private const val GET_TEXT = "getText"
-
 private const val GET_LANGUAGE = "getLanguage"
-
 private const val GET_ID = "getID"
 
 class PsiViewerDebugAction : DebuggerTreeAction() {
@@ -105,7 +100,7 @@ class PsiViewerDebugAction : DebuggerTreeAction() {
           }
         } catch (e: EvaluateException) {
           XDebuggerManagerImpl.getNotificationGroup().createNotification(
-            DevKitBundle.message("psi.viewer.debug.evaluation.failed"), NotificationType.ERROR
+            JavaPsiViewerBundle.message("psi.viewer.debug.evaluation.failed"), NotificationType.ERROR
           )
           LOG.error("Failed to evaluate PSI expression", e)
         }
