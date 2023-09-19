@@ -5,16 +5,19 @@ import com.intellij.execution.impl.RunManagerImpl.Companion.getInstanceImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.replaceService
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
-import com.intellij.ui.treeStructure.SimpleNode
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
 import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorState
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -28,7 +31,9 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
   private var myNavigator: MavenProjectsNavigator? = null
   private var myStructure: MavenProjectsStructure? = null
 
-  override fun setUp() {
+  override fun runInDispatchThread() = false
+
+  override fun setUp() = runBlocking {
     super.setUp()
     myProject.replaceService(ToolWindowManager::class.java, object : ToolWindowHeadlessManagerImpl(myProject) {
       override fun invokeLater(runnable: Runnable) {
@@ -37,11 +42,13 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
     }, testRootDisposable)
     initProjectsManager(false)
 
-    myNavigator = MavenProjectsNavigator.getInstance(myProject)
-    myNavigator!!.initForTests()
-    myNavigator!!.groupModules = true
+    withContext(Dispatchers.EDT) {
+      myNavigator = MavenProjectsNavigator.getInstance(myProject)
+      myNavigator!!.initForTests()
+      myNavigator!!.groupModules = true
 
-    myStructure = myNavigator!!.structureForTests
+      myStructure = myNavigator!!.structureForTests
+    }
   }
 
   override fun tearDown() {
@@ -71,7 +78,6 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
 
 
     projectsManager.fireActivatedInTests()
-    waitForMavenUtilRunnablesComplete()
     assertEquals(1, rootNodes.size)
     assertEquals(1, rootNodes[0].projectNodesInTests.size)
   }
@@ -189,9 +195,9 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
 
-    projectsManager.removeManagedFiles(listOf(myProjectPom))
-    waitForImportCompletion()
-    waitForMavenUtilRunnablesComplete()
+    waitForImportWithinTimeout {
+      projectsManager.removeManagedFiles(listOf(myProjectPom))
+    }
     UsefulTestCase.assertEmpty(projectsManager.getRootProjects())
     assertEquals(0, rootNodes.size)
   }
@@ -232,11 +238,9 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
     assertEquals(1, rootNodes[0].projectNodesInTests[0].projectNodesInTests.size)
 
     myNavigator!!.groupModules = false
-    waitForMavenUtilRunnablesComplete()
     assertEquals(3, rootNodes.size)
 
     myNavigator!!.groupModules = true
-    waitForMavenUtilRunnablesComplete()
     assertEquals(1, rootNodes.size)
     assertEquals(1, rootNodes[0].projectNodesInTests.size)
     assertEquals(1, rootNodes[0].projectNodesInTests[0].projectNodesInTests.size)
@@ -262,24 +266,23 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       """.trimIndent())
     readFiles(myProjectPom, m)
 
-    projectsManager.getProjectsTree().ignoredFilesPaths = listOf(m.getPath())
+    projectsManager.waitForPluginResolution()
+
+    projectsManager.projectsTree.ignoredFilesPaths = listOf(m.getPath())
 
     myNavigator!!.showIgnored = true
-    waitForMavenUtilRunnablesComplete()
     assertTrue(rootNodes[0].isVisible())
-    waitForPluginNodesUpdated()
-    val childNodeNamesBefore = rootNodes[0].getChildren().map { node: SimpleNode -> node.getName() }.toSet()
+    val childNodeNamesBefore = rootNodes[0].children.map { it.name }.toSet()
     assertEquals(setOf("Lifecycle", "Plugins", "m"), childNodeNamesBefore)
 
     myNavigator!!.showIgnored = false
-    waitForMavenUtilRunnablesComplete()
     assertTrue(rootNodes[0].isVisible())
     waitForPluginNodesUpdated()
-    val childNodeNamesAfter = rootNodes[0].getChildren().map { node: SimpleNode -> node.getName() }.toSet()
+    val childNodeNamesAfter = rootNodes[0].children.map { it.name }.toSet()
     assertEquals(setOf("Lifecycle", "Plugins"), childNodeNamesAfter)
   }
 
-  private fun waitForPluginNodesUpdated() = runBlocking {
+  private fun waitForPluginNodesUpdated() {
     val pluginsNode = rootNodes[0].pluginsNode
     PlatformTestUtil.waitWithEventsDispatching({ "Waiting for Plugins to be updated" },
                                                { !pluginsNode.pluginNodes.isEmpty() }, 10)
@@ -315,7 +318,6 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
     assertEquals(1, projectNode.projectNodesInTests.size)
 
     myNavigator!!.showIgnored = false
-    waitForMavenUtilRunnablesComplete()
     assertEquals(2, rootNodes.size)
     assertEquals(1, myStructure!!.rootElement.getChildren().size) // only one of them is visible
     projectNode = myStructure!!.rootElement.getChildren()[0] as ProjectNode
@@ -383,7 +385,6 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
     newState.groupStructurally = false
     myNavigator!!.loadState(newState)
 
-    waitForMavenUtilRunnablesComplete()
     assertEquals(2, rootNodes.size)
   }
 
@@ -398,7 +399,9 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
                        """.trimIndent())
 
     readFiles(myProjectPom)
-    assertTrue(rootNodes[0].navigatable!!.canNavigateToSource())
+    withContext(Dispatchers.EDT) {
+      assertTrue(rootNodes[0].navigatable!!.canNavigateToSource())
+    }
   }
 
   @Test
@@ -482,7 +485,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
     runManager.removeConfiguration(configuration)
   }
 
-  private fun readFiles(vararg files: VirtualFile) {
+  private suspend fun readFiles(vararg files: VirtualFile) {
     if (isNewImportingProcess) {
       val flow = MavenImportFlow()
       val allFiles: MutableList<VirtualFile> = ArrayList(projectsManager.getProjectsFiles())
@@ -501,11 +504,9 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
         myNavigator!!.scheduleStructureUpdate()
       }[10, TimeUnit.SECONDS]
 
-      waitForMavenUtilRunnablesComplete()
     }
     else {
-      projectsManager.addManagedFiles(listOf(*files))
-      waitForReadingCompletion()
+      projectsManager.addManagedFilesWithProfilesAndUpdate(listOf(*files), MavenExplicitProfiles.NONE, null, null)
     }
   }
 
