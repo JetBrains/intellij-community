@@ -39,7 +39,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     }
     val repo = File("$temp/tmpRepo").getCanonicalFile()
     assertEquals(repo.path, mavenGeneralSettings.getEffectiveLocalRepository().path)
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -98,7 +98,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                         </profiles>
                         """.trimIndent())
     }
-    importProject()
+    importProjectAsync()
     val roots = projectsTree.rootProjects
     val parentNode = roots[0]
     val childNode = projectsTree.getModules(roots[0])[0]
@@ -119,13 +119,13 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                         </profiles>
                         """.trimIndent())
     }
-    importProject()
+    importProjectAsync()
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value2")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value2")))
     waitForImportWithinTimeout {
       updateSettingsXml("<profiles/>")
     }
-    importProject()
+    importProjectAsync()
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/\${prop}")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/\${prop}")))
     waitForImportWithinTimeout {
@@ -143,7 +143,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                         </profiles>
                         """.trimIndent())
     }
-    importProject()
+    importProjectAsync()
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value2")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value2")))
   }
@@ -191,7 +191,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                         </profiles>
                         """.trimIndent())
     }
-    importProject()
+    importProjectAsync()
     val roots = projectsTree.rootProjects
     val parentNode = roots[0]
     val childNode = projectsTree.getModules(roots[0])[0]
@@ -251,7 +251,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                                             <artifactId>m</artifactId>
                                             <version>1</version>
                                             """.trimIndent())
-    importProject()
+    importProjectAsync()
     //myProjectsManager.performScheduledImportInTests(); // ensure no pending requests
     assertModules("project", mn("project", "m"))
     runWriteAction<IOException> { m.delete(this) }
@@ -264,7 +264,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
   @Test
   fun testHandlingDirectoryWithPomFileDeletion() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <packaging>pom</packaging>
@@ -297,7 +297,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
   @Test
   fun testScheduleReimportWhenPluginConfigurationChangesInTagName() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -338,7 +338,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
   @Test
   fun testUpdatingProjectsWhenAbsentModuleFileAppears() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>parent</artifactId>
                     <version>1</version>
@@ -365,7 +365,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
   @Test
   fun testScheduleReimportWhenPluginConfigurationChangesInValue() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -433,7 +433,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
       <artifactId>m2</artifactId>
       <version>1</version>
       """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertModuleModuleDeps("m1", "m2")
     assertModuleLibDeps("m1")
     createModulePom("m2", """
@@ -456,7 +456,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   @Test
   fun testAddingManagedFileAndChangingAggregation() = runBlocking {
     Assume.assumeTrue(isWorkspaceImport)
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>parent</artifactId>
                     <version>1</version>
@@ -467,24 +467,25 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                     """.trimIndent())
     val m = createModulePom("m",
                             """
-                                      <groupId>test</groupId>
-                                      <artifactId>m</artifactId>
-                                      <version>1</version>
-                                      """.trimIndent())
+                            <groupId>test</groupId>
+                            <artifactId>m</artifactId>
+                            <version>1</version>
+                            """.trimIndent())
     scheduleProjectImportAndWaitAsync()
     assertEquals(1, projectsTree.rootProjects.size)
     assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
-    projectsManager.addManagedFiles(listOf(m))
-    waitForReadingCompletion()
+
+    updateAllProjects()
     assertEquals(1, projectsTree.rootProjects.size)
     assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
+
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    updateAllProjects()
     assertEquals(1, projectsTree.rootProjects.size)
     assertEquals(0, projectsTree.getModules(projectsTree.rootProjects[0]).size)
   }
@@ -525,7 +526,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
         </dependency>
       </dependencies>
       """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertModules("project", "m1", "m2")
     assertModuleModuleDeps("m1", "m2")
     assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
@@ -542,7 +543,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
   @Test
   fun testUpdatingProjectsWhenAbsentManagedProjectFileAppears() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>parent</artifactId>
                     <version>1</version>
@@ -556,7 +557,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
-    importProject()
+    importProjectAsync()
     assertEquals(0, projectsTree.rootProjects.size)
     createProjectPom("""
                        <groupId>test</groupId>
@@ -567,7 +568,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                          <module>m</module>
                        </modules>
                        """.trimIndent())
-    //importProject();
+    //importProjectAsync();
     scheduleProjectImportAndWaitAsync()
     assertEquals(1, projectsTree.rootProjects.size)
   }
@@ -647,7 +648,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                                             <artifactId>m</artifactId>
                                             <version>1</version>
                                             """.trimIndent())
-    importProject()
+    importProjectAsync()
     val oldDir = m.getParent()
     writeAction {
       val newDir = myProjectRoot.createChildDirectory(this, "m2")
