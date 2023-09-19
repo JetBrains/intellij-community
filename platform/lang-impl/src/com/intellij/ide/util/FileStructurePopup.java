@@ -792,7 +792,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       EventFields.PluginInfoFromInstance.with(action),
       EventFields.ActionPlace.with(ActionPlaces.FILE_STRUCTURE_POPUP),
       EventFields.CurrentFile.with(language),
-      ActionsEventLogGroup.ACTION_CLASS.with(action.getClass().getName()),
+      ActionsEventLogGroup.ACTION_CLASS.with(action.getClass()),
       ActionsEventLogGroup.ACTION_ID.with(action.getClass().getName())
     );
   }

@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.getPluginInfo
+import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import kotlin.reflect.KProperty
@@ -13,7 +14,8 @@ sealed class EventField<T> {
   abstract val name: String
   abstract fun addData(fuData: FeatureUsageData, value: T)
 
-  @Contract(pure = true) infix fun with(data: T): EventPair<T> = EventPair(this, data)
+  @Contract(pure = true)
+  infix fun with(data: T): EventPair<T> = EventPair(this, data)
 }
 
 abstract class PrimitiveEventField<T> : EventField<T>() {
@@ -249,7 +251,7 @@ abstract class StringListEventField(override val name: String) : ListEventField<
   data class ValidatedByCustomValidationRule(
     @NonNls override val name: String,
     @NonNls val customValidationRule: Class<out CustomValidationRule>
-    ) : StringListEventField(name) {
+  ) : StringListEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{util#${CustomValidationRule.getCustomValidationRuleInstance(customValidationRule).ruleId}}")
   }
@@ -265,14 +267,17 @@ abstract class StringListEventField(override val name: String) : ListEventField<
   }
 }
 
-data class ClassEventField(override val name: String): PrimitiveEventField<Class<*>?>() {
+data class ClassEventField(override val name: String) : PrimitiveEventField<Class<*>?>() {
 
   override fun addData(fuData: FeatureUsageData, value: Class<*>?) {
     if (value == null) {
       return
     }
     val pluginInfo = getPluginInfo(value)
-    fuData.addData(name, if (pluginInfo.isSafeToReport()) value.name else "third.party")
+    fuData.addData(name,
+                   if (pluginInfo.isSafeToReport()) StringUtil.substringBeforeLast(value.name, "$\$Lambda$", true)
+                   else "third.party"
+    )
   }
 
   override val validationRule: List<String>
