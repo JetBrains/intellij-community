@@ -4,6 +4,7 @@ import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.EntityStorage
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 
 val ObjProperty<*, *>.implWsEntityFieldCode: String
   get() = buildString {

@@ -1,9 +1,9 @@
 package com.intellij.workspaceModel.codegen.impl.writer.fields
 
-import com.intellij.workspaceModel.codegen.impl.writer.isRefType
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.writer.*
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.isRefType
 
 data class RefMethods(val getter: QualifiedName, val setter: QualifiedName)
 
