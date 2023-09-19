@@ -10,7 +10,6 @@ fun ToolWindow.addComposeTab(
     isCloseable: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    System.setProperty("compose.swing.render.on.graphics", "true")
     val composePanel = ComposePanel()
     composePanel.setContent(content)
     val tabContent = contentManager.factory.createContent(composePanel, tabDisplayName, isLockable)
