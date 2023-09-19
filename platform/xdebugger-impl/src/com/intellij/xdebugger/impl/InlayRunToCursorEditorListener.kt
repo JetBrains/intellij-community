@@ -157,7 +157,7 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
 
     val position = SwingUtilities.convertPoint(
       editor.getContentComponent(),
-      Point(JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT) - (group.childrenCount - 1) * JBUI.scale(ACTION_BUTTON_SIZE), lineY + (editor.lineHeight - JBUI.scale(ACTION_BUTTON_SIZE))/2),
+      Point(JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT)/* - (group.childrenCount - 1) * JBUI.scale(ACTION_BUTTON_SIZE)*/, lineY + (editor.lineHeight - JBUI.scale(ACTION_BUTTON_SIZE))/2),
       editor.getComponent().rootPane.layeredPane
     )
 
