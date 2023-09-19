@@ -162,6 +162,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
                 }
 
             ApplicationManager.getApplication().invokeLater {
+                if (project.isDisposed) return@invokeLater
                 filesToOpen.forEach {
                     FileEditorManager.getInstance(project).openFile(it, true)
                 }
