@@ -314,7 +314,10 @@ private val expectedKryoRegistration = """
   [108, kotlin.collections.EmptyList]
   [109, kotlin.collections.EmptySet]
   [110, Object[]]
-  [111, java.util.UUID]
+  [111, com.intellij.platform.workspace.storage.impl.AnonymizedEntitySource]
+  [112, com.intellij.platform.workspace.storage.impl.MatchedEntitySource]
+  [113, com.intellij.platform.workspace.storage.impl.UnmatchedEntitySource]
+  [114, java.util.UUID]
 """.trimIndent()
 
 private inline fun withTempFile(task: (file: Path) -> Unit) {
