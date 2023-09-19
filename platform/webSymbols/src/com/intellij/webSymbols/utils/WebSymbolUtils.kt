@@ -43,14 +43,14 @@ inline fun <T : Any, P : Any> T.applyIfNotNull(param: P?, block: T.(P) -> T): T 
 fun List<WebSymbol>.hasOnlyExtensions(): Boolean =
   all { it.extension }
 
-fun List<WebSymbol>.asSingleSymbol(): WebSymbol? =
+fun List<WebSymbol>.asSingleSymbol(force: Boolean = false): WebSymbol? =
   if (isEmpty())
     null
   else if (size == 1)
     this[0]
   else {
     val first = this[0]
-    if (any { it.namespace != first.namespace || it.kind != first.kind })
+    if (!force && any { it.namespace != first.namespace || it.kind != first.kind })
       null
     else
       WebSymbolMatch.create(first.name, listOf(WebSymbolNameSegment(0, first.name.length, sortSymbolsByPriority())),
