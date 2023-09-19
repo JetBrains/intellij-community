@@ -13,107 +13,103 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.execution;
+package org.jetbrains.idea.maven.execution
 
-import com.intellij.execution.CantRunException;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.util.containers.ContainerUtil;
-import org.intellij.lang.annotations.Language;
-import org.jetbrains.idea.maven.project.MavenProjectSettings;
-import org.junit.Test;
+import com.intellij.execution.CantRunException
+import com.intellij.execution.configurations.JavaParameters
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.util.containers.ContainerUtil
+import org.intellij.lang.annotations.Language
+import org.jetbrains.idea.maven.project.MavenProjectSettings
+import org.junit.Test
+import java.io.File
 
-import java.io.File;
-import java.util.Collections;
-import java.util.List;
-
-import static java.util.Arrays.asList;
-
-public class MavenJUnitPatcherTest extends MavenMultiVersionImportingTestCase {
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    MavenProjectSettings.getInstance(myProject).getTestRunningSettings().setPassArgLine(true);
-    MavenProjectSettings.getInstance(myProject).getTestRunningSettings().setPassEnvironmentVariables(true);
-    MavenProjectSettings.getInstance(myProject).getTestRunningSettings().setPassSystemProperties(true);
+class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
+  @Throws(Exception::class)
+  override fun setUp() {
+    super.setUp()
+    MavenProjectSettings.getInstance(myProject).testRunningSettings.isPassArgLine = true
+    MavenProjectSettings.getInstance(myProject).testRunningSettings.isPassEnvironmentVariables = true
+    MavenProjectSettings.getInstance(myProject).testRunningSettings.isPassSystemProperties = true
   }
 
   @Test
-  public void ExcludeClassPathElement() throws CantRunException {
-    String[] excludeSpecifications = {
+  @Throws(CantRunException::class)
+  fun ExcludeClassPathElement() {
+    val excludeSpecifications = arrayOf(
       """
 <classpathDependencyExcludes>
 <classpathDependencyExclude>org.jetbrains:annotations</classpathDependencyExclude>
-</classpathDependencyExcludes>""",
+</classpathDependencyExcludes>
+""".trimIndent(),
       """
 <classpathDependencyExcludes>
 <classpathDependencyExcludes>org.jetbrains:annotations</classpathDependencyExcludes>
-</classpathDependencyExcludes>""",
+</classpathDependencyExcludes>
+""".trimIndent(),
       """
 <classpathDependencyExcludes>
 <dependencyExclude>org.jetbrains:annotations</dependencyExclude>
-</classpathDependencyExcludes>""",
+</classpathDependencyExcludes>
+""".trimIndent(),
       """
 <classpathDependencyExcludes>
 org.jetbrains:annotations,
 org.jetbrains:annotations
-</classpathDependencyExcludes>""",
-    };
-    for (String excludeSpecification : excludeSpecifications) {
-      @Language(value = "XML", prefix = "<project>", suffix = "</project>")
-      String pom = "<groupId>test</groupId>\n" +
-                   "<artifactId>m1</artifactId>\n" +
-                   "<version>1</version>\n" +
-                   "<dependencies>\n" +
-                   "  <dependency>\n" +
-                   "    <groupId>org.jetbrains</groupId>\n" +
-                   "    <artifactId>annotations</artifactId>\n" +
-                   "    <version>17.0.0</version>\n" +
-                   "  </dependency>\n" +
-                   "  <dependency>\n" +
-                   "    <groupId>org.jetbrains</groupId>\n" +
-                   "    <artifactId>annotations-java5</artifactId>\n" +
-                   "    <version>17.0.0</version>\n" +
-                   "  </dependency>\n" +
-                   "</dependencies>\n" +
-                   "<build>\n" +
-                   "  <plugins>\n" +
-                   "    <plugin>\n" +
-                   "      <groupId>org.apache.maven.plugins</groupId>\n" +
-                   "      <artifactId>maven-surefire-plugin</artifactId>\n" +
-                   "      <version>2.16</version>\n" +
-                   "      <configuration>\n" +
-                   "        " +
-                   excludeSpecification +
-                   "\n" +
-                   "      </configuration>\n" +
-                   "    </plugin>\n" +
-                   "  </plugins>\n" +
-                   "</build>\n";
-      VirtualFile m1 = createModulePom("m1", pom);
+</classpathDependencyExcludes>
+""".trimIndent(),
+    )
+    for (excludeSpecification in excludeSpecifications) {
+      @Language(value = "XML", prefix = "<project>", suffix = "</project>") val pom = """<groupId>test</groupId>
+<artifactId>m1</artifactId>
+<version>1</version>
+<dependencies>
+  <dependency>
+    <groupId>org.jetbrains</groupId>
+    <artifactId>annotations</artifactId>
+    <version>17.0.0</version>
+  </dependency>
+  <dependency>
+    <groupId>org.jetbrains</groupId>
+    <artifactId>annotations-java5</artifactId>
+    <version>17.0.0</version>
+  </dependency>
+</dependencies>
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-surefire-plugin</artifactId>
+      <version>2.16</version>
+      <configuration>
+        $excludeSpecification
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+"""
+      val m1 = createModulePom("m1", pom)
 
-      importProjects(m1);
-      Module module = getModule("m1");
+      importProjects(m1)
+      val module = getModule("m1")
 
-      MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
-      JavaParameters javaParameters = new JavaParameters();
-      javaParameters.configureByModule(module, JavaParameters.CLASSES_AND_TESTS, IdeaTestUtil.getMockJdk18());
-      assertEquals(excludeSpecification, asList("annotations-17.0.0.jar", "annotations-java5-17.0.0.jar"),
-                   ContainerUtil.map(javaParameters.getClassPath().getPathList(), path -> new File(path).getName()));
-      mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
-      List<String> classPath = javaParameters.getClassPath().getPathList();
-      assertEquals(excludeSpecification, Collections.singletonList("annotations-java5-17.0.0.jar"),
-                   ContainerUtil.map(classPath, path -> new File(path).getName()));
+      val mavenJUnitPatcher = MavenJUnitPatcher()
+      val javaParameters = JavaParameters()
+      javaParameters.configureByModule(module, JavaParameters.CLASSES_AND_TESTS, IdeaTestUtil.getMockJdk18())
+      assertEquals(excludeSpecification, mutableListOf("annotations-17.0.0.jar", "annotations-java5-17.0.0.jar"),
+                   ContainerUtil.map(javaParameters.classPath.getPathList()) { path: String? -> File(path).getName() })
+      mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
+      val classPath = javaParameters.classPath.getPathList()
+      assertEquals(excludeSpecification, listOf("annotations-java5-17.0.0.jar"),
+                   ContainerUtil.map(classPath) { path: String? -> File(path).getName() })
     }
   }
 
   @Test
-  public void ExcludeScope() throws CantRunException {
-    VirtualFile m1 = createModulePom("m1", """
+  @Throws(CantRunException::class)
+  fun ExcludeScope() {
+    val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -142,25 +138,25 @@ org.jetbrains:annotations
           </plugin>
         </plugins>
       </build>
-      """);
+      """.trimIndent())
 
-    importProjects(m1);
-    Module module = getModule("m1");
+    importProjects(m1)
+    val module = getModule("m1")
 
-    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
-    JavaParameters javaParameters = new JavaParameters();
-    javaParameters.configureByModule(module, JavaParameters.CLASSES_AND_TESTS, IdeaTestUtil.getMockJdk18());
-    assertEquals(asList("annotations-17.0.0.jar", "annotations-java5-17.0.0.jar"),
-                 ContainerUtil.map(javaParameters.getClassPath().getPathList(), path -> new File(path).getName()));
-    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
-    List<String> classPath = javaParameters.getClassPath().getPathList();
-    assertEquals(Collections.singletonList("annotations-17.0.0.jar"),
-                 ContainerUtil.map(classPath, path -> new File(path).getName()));
+    val mavenJUnitPatcher = MavenJUnitPatcher()
+    val javaParameters = JavaParameters()
+    javaParameters.configureByModule(module, JavaParameters.CLASSES_AND_TESTS, IdeaTestUtil.getMockJdk18())
+    assertEquals(mutableListOf("annotations-17.0.0.jar", "annotations-java5-17.0.0.jar"),
+                 ContainerUtil.map(javaParameters.classPath.getPathList()) { path: String? -> File(path).getName() })
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
+    val classPath = javaParameters.classPath.getPathList()
+    assertEquals(listOf("annotations-17.0.0.jar"),
+                 ContainerUtil.map(classPath) { path: String? -> File(path).getName() })
   }
 
   @Test
-  public void AddClassPath() {
-    VirtualFile m1 = createModulePom("m1", """
+  fun AddClassPath() {
+    val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -180,21 +176,21 @@ org.jetbrains:annotations
           </plugin>
         </plugins>
       </build>
-      """);
+      """.trimIndent())
 
-    importProjects(m1);
-    Module module = getModule("m1");
+    importProjects(m1)
+    val module = getModule("m1")
 
-    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
-    JavaParameters javaParameters = new JavaParameters();
-    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
-    List<String> classPath = javaParameters.getClassPath().getPathList();
-    assertEquals(asList("path/to/additional/resources", "path/to/additional/jar", "path/to/csv/jar1", "path/to/csv/jar2"), classPath);
+    val mavenJUnitPatcher = MavenJUnitPatcher()
+    val javaParameters = JavaParameters()
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
+    val classPath = javaParameters.classPath.getPathList()
+    assertEquals(mutableListOf("path/to/additional/resources", "path/to/additional/jar", "path/to/csv/jar1", "path/to/csv/jar2"), classPath)
   }
 
   @Test
-  public void ArgList() {
-    VirtualFile m1 = createModulePom("m1", """
+  fun ArgList() {
+    val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -215,21 +211,21 @@ org.jetbrains:annotations
           </configuration>
         </plugin>
       </plugins></build>
-      """);
+      """.trimIndent())
 
-    importProjects(m1);
-    Module module = getModule("m1");
+    importProjects(m1)
+    val module = getModule("m1")
 
-    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
-    JavaParameters javaParameters = new JavaParameters();
-    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
-    assertEquals(asList("-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces"),
-                 javaParameters.getVMParametersList().getList());
+    val mavenJUnitPatcher = MavenJUnitPatcher()
+    val javaParameters = JavaParameters()
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
+    assertEquals(mutableListOf("-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces"),
+                 javaParameters.vmParametersList.getList())
   }
 
   @Test
-  public void IgnoreJaCoCoOption() {
-    VirtualFile m1 = createModulePom("m1", """
+  fun IgnoreJaCoCoOption() {
+    val m1 = createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><build>
         <plugins>
           <plugin>
@@ -249,24 +245,24 @@ org.jetbrains:annotations
           </plugin>
         </plugins>
       </build>
-      """);
+      """.trimIndent())
 
-    importProjects(m1);
-    Module module = getModule("m1");
+    importProjects(m1)
+    val module = getModule("m1")
 
-    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
-    JavaParameters javaParameters = new JavaParameters();
-    javaParameters.getVMParametersList().addParametersString("-ea");
-    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
-    assertEquals(asList("-ea", "-Dmyprop=abc", "@{unresolved}"),
-                 javaParameters.getVMParametersList().getList());
+    val mavenJUnitPatcher = MavenJUnitPatcher()
+    val javaParameters = JavaParameters()
+    javaParameters.vmParametersList.addParametersString("-ea")
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
+    assertEquals(mutableListOf("-ea", "-Dmyprop=abc", "@{unresolved}"),
+                 javaParameters.vmParametersList.getList())
   }
 
   @Test
-  public void ImplicitArgLine() {
-    VirtualFile m1 = createModulePom("m1", """
+  fun ImplicitArgLine() {
+    val m1 = createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><properties>
-        <argLine>-Dfoo=${version}</argLine>
+        <argLine>-Dfoo=${'$'}{version}</argLine>
       </properties>
 
       <build>
@@ -278,21 +274,21 @@ org.jetbrains:annotations
           </plugin>
         </plugins>
       </build>
-      """);
+      """.trimIndent())
 
-    importProjects(m1);
-    Module module = getModule("m1");
+    importProjects(m1)
+    val module = getModule("m1")
 
-    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
-    JavaParameters javaParameters = new JavaParameters();
-    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
-    assertEquals(asList("-Dfoo=1"),
-                 javaParameters.getVMParametersList().getList());
+    val mavenJUnitPatcher = MavenJUnitPatcher()
+    val javaParameters = JavaParameters()
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
+    assertEquals(mutableListOf("-Dfoo=1"),
+                 javaParameters.vmParametersList.getList())
   }
 
   @Test
-  public void VmPropertiesResolve() {
-    VirtualFile m1 = createModulePom("m1", """
+  fun VmPropertiesResolve() {
+    val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -309,27 +305,28 @@ org.jetbrains:annotations
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.16</version>
           <configuration>
-            <argLine>-Xmx2048M -XX:MaxPermSize=512M "-Dargs=can have spaces" ${argLineApx}</argLine>
+            <argLine>-Xmx2048M -XX:MaxPermSize=512M "-Dargs=can have spaces" ${'$'}{argLineApx}</argLine>
           </configuration>
         </plugin>
       </plugins></build>
-      """);
+      """.trimIndent())
 
-    importProjects(m1);
-    Module module = getModule("m1");
+    importProjects(m1)
+    val module = getModule("m1")
 
-    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
-    JavaParameters javaParameters = new JavaParameters();
-    javaParameters.getVMParametersList().addProperty("argLineApx", "-DsomeKey=someValue");
-    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
+    val mavenJUnitPatcher = MavenJUnitPatcher()
+    val javaParameters = JavaParameters()
+    javaParameters.vmParametersList.addProperty("argLineApx", "-DsomeKey=someValue")
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
     assertEquals(
-      asList("-DargLineApx=-DsomeKey=someValue", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces", "-DsomeKey=someValue"),
-      javaParameters.getVMParametersList().getList());
+      mutableListOf("-DargLineApx=-DsomeKey=someValue", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces",
+                    "-DsomeKey=someValue"),
+      javaParameters.vmParametersList.getList())
   }
 
   @Test
-  public void ArgLineLateReplacement() {
-    VirtualFile m1 = createModulePom("m1", """
+  fun ArgLineLateReplacement() {
+    val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -343,21 +340,21 @@ org.jetbrains:annotations
           </configuration>
         </plugin>
       </plugins></build>
-      """);
+      """.trimIndent())
 
-    importProjects(m1);
-    Module module = getModule("m1");
+    importProjects(m1)
+    val module = getModule("m1")
 
-    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
-    JavaParameters javaParameters = new JavaParameters();
-    javaParameters.getVMParametersList().add("-ea");
-    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
-    assertEquals(asList("-ea", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces"),
-                 javaParameters.getVMParametersList().getList());
+    val mavenJUnitPatcher = MavenJUnitPatcher()
+    val javaParameters = JavaParameters()
+    javaParameters.vmParametersList.add("-ea")
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
+    assertEquals(mutableListOf("-ea", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces"),
+                 javaParameters.vmParametersList.getList())
   }
 
   @Test
-  public void ArgLineLateReplacementParentProperty() {
+  fun ArgLineLateReplacementParentProperty() {
     createProjectPom(
       """
         <groupId>test</groupId>
@@ -370,11 +367,11 @@ org.jetbrains:annotations
         <modules>
           <module>m1</module>
         </modules>
-        """);
+        """.trimIndent())
 
     createModulePom(
-        "m1",
-        """
+      "m1",
+      """
           <groupId>test</groupId>
           <artifactId>m1</artifactId>
           <version>1</version>
@@ -398,29 +395,29 @@ org.jetbrains:annotations
               </plugin>
             </plugins>
           </build>
-          """);
+          """.trimIndent())
 
-    importProject();
-    Module module = getModule(mn("project", "m1"));
+    importProject()
+    val module = getModule(mn("project", "m1"))
 
-    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
-    JavaParameters javaParameters = new JavaParameters();
-    javaParameters.getVMParametersList().add("-ea");
-    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
+    val mavenJUnitPatcher = MavenJUnitPatcher()
+    val javaParameters = JavaParameters()
+    javaParameters.vmParametersList.add("-ea")
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
     assertEquals(
-        asList("-ea", "module.value", "parent.value"),
-        javaParameters.getVMParametersList().getList());
+      mutableListOf("-ea", "module.value", "parent.value"),
+      javaParameters.vmParametersList.getList())
   }
 
   @Test
-  public void ArgLineRefersAnotherProperty() {
-    VirtualFile m1 = createModulePom("m1", """
+  fun ArgLineRefersAnotherProperty() {
+    val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
       <properties>
         <app.testing.jvm.args>-Xms256m -Xmx1524m -Duser.language=en</app.testing.jvm.args>
-        <argLine>${app.testing.jvm.args}</argLine>
+        <argLine>${'$'}{app.testing.jvm.args}</argLine>
       </properties>
       <build><plugins>
         <plugin>
@@ -432,40 +429,41 @@ org.jetbrains:annotations
           </configuration>
         </plugin>
       </plugins></build>
-      """);
+      """.trimIndent())
 
-    importProjects(m1);
-    Module module = getModule("m1");
+    importProjects(m1)
+    val module = getModule("m1")
 
-    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
-    JavaParameters javaParameters = new JavaParameters();
-    javaParameters.getVMParametersList().add("-ea");
-    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
-    assertEquals(asList("-ea", "-Xms256m", "-Xmx1524m", "-Duser.language=en"),
-                 javaParameters.getVMParametersList().getList());
+    val mavenJUnitPatcher = MavenJUnitPatcher()
+    val javaParameters = JavaParameters()
+    javaParameters.vmParametersList.add("-ea")
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
+    assertEquals(mutableListOf("-ea", "-Xms256m", "-Xmx1524m", "-Duser.language=en"),
+                 javaParameters.vmParametersList.getList())
   }
 
   @Test
-  public void ArgLineProperty() {
-    VirtualFile m1 = createModulePom("m1", """
+  fun ArgLineProperty() {
+    val m1 = createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><properties>
       <argLine>-DsomeProp=Hello</argLine>
-      </properties><build><plugins>  <plugin>    <groupId>org.apache.maven.plugins</groupId>    <artifactId>maven-surefire-plugin</artifactId>    <version>2.16</version>    <configuration>      <argLine>@{argLine} -Xmx2048M -XX:MaxPermSize=512M "-Dargs=can have spaces"</argLine>    </configuration>  </plugin></plugins></build>""");
+      </properties><build><plugins>  <plugin>    <groupId>org.apache.maven.plugins</groupId>    <artifactId>maven-surefire-plugin</artifactId>    <version>2.16</version>    <configuration>      <argLine>@{argLine} -Xmx2048M -XX:MaxPermSize=512M "-Dargs=can have spaces"</argLine>    </configuration>  </plugin></plugins></build>
+      """.trimIndent())
 
-    importProjects(m1);
-    Module module = getModule("m1");
+    importProjects(m1)
+    val module = getModule("m1")
 
-    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
-    JavaParameters javaParameters = new JavaParameters();
-    javaParameters.getVMParametersList().add("-ea");
-    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
-    assertEquals(asList("-ea", "-DsomeProp=Hello", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces"),
-                 javaParameters.getVMParametersList().getList());
+    val mavenJUnitPatcher = MavenJUnitPatcher()
+    val javaParameters = JavaParameters()
+    javaParameters.vmParametersList.add("-ea")
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
+    assertEquals(mutableListOf("-ea", "-DsomeProp=Hello", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces"),
+                 javaParameters.vmParametersList.getList())
   }
 
   @Test
-  public void ResolvePropertiesUsingAt() {
-    VirtualFile m1 = createModulePom("m1", """
+  fun ResolvePropertiesUsingAt() {
+    val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -484,16 +482,16 @@ org.jetbrains:annotations
           </plugin>
         </plugins>
       </build>
-      """);
+      """.trimIndent())
 
-    importProjects(m1);
-    Module module = getModule("m1");
+    importProjects(m1)
+    val module = getModule("m1")
 
-    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
-    JavaParameters javaParameters = new JavaParameters();
-    javaParameters.getVMParametersList().add("-ea");
-    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
-    assertEquals(asList("-ea", "-Dfoo=bar"),
-                 javaParameters.getVMParametersList().getList());
+    val mavenJUnitPatcher = MavenJUnitPatcher()
+    val javaParameters = JavaParameters()
+    javaParameters.vmParametersList.add("-ea")
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
+    assertEquals(mutableListOf("-ea", "-Dfoo=bar"),
+                 javaParameters.vmParametersList.getList())
   }
 }

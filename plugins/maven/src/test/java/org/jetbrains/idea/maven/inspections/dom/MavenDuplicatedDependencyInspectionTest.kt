@@ -1,13 +1,13 @@
-package org.jetbrains.idea.maven.inspections.dom;
+package org.jetbrains.idea.maven.inspections.dom
 
-import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase;
-import org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspection;
-import org.junit.Test;
+import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase
+import org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspection
+import org.junit.Test
 
-public class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndicesTestCase {
+class MavenDuplicatedDependencyInspectionTest : MavenDomWithIndicesTestCase() {
   @Test
-  public void testDuplicatedInSameFile() {
-    myFixture.enableInspections(MavenDuplicateDependenciesInspection.class);
+  fun testDuplicatedInSameFile() {
+    myFixture.enableInspections(MavenDuplicateDependenciesInspection::class.java)
 
     createProjectPom("""
                        <groupId>mavenParent</groupId>
@@ -26,14 +26,15 @@ public class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndices
                            <artifactId>junit</artifactId>
                            <version>3.8.2</version>
                          </dependency>
-                       </dependencies>""");
+                       </dependencies>
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
   @Test
-  public void testDuplicatedInSameFileDifferentVersion() {
-    myFixture.enableInspections(MavenDuplicateDependenciesInspection.class);
+  fun testDuplicatedInSameFileDifferentVersion() {
+    myFixture.enableInspections(MavenDuplicateDependenciesInspection::class.java)
 
     createProjectPom("""
                        <groupId>mavenParent</groupId>
@@ -51,14 +52,15 @@ public class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndices
                            <artifactId>junit</artifactId>
                            <version>3.8.1</version>
                          </dependency>
-                       </dependencies>""");
+                       </dependencies>
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
   @Test
-  public void testDuplicatedInParentDifferentScope() {
-    myFixture.enableInspections(MavenDuplicateDependenciesInspection.class);
+  fun testDuplicatedInParentDifferentScope() {
+    myFixture.enableInspections(MavenDuplicateDependenciesInspection::class.java)
 
     createModulePom("child", """
       <groupId>mavenParent</groupId>
@@ -78,7 +80,8 @@ public class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndices
           <version>3.8.2</version>
           <scope>runtime</scope>
         </dependency>
-      </dependencies>""");
+      </dependencies>
+      """.trimIndent())
 
     createProjectPom("""
                        <groupId>mavenParent</groupId>
@@ -97,16 +100,17 @@ public class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndices
                            <version>3.8.2</version>
                            <scope>provided</scope>
                          </dependency>
-                       </dependencies>""");
+                       </dependencies>
+                       """.trimIndent())
 
-    importProject();
+    importProject()
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
   @Test
-  public void testDuplicatedInParentSameScope() {
-    myFixture.enableInspections(MavenDuplicateDependenciesInspection.class);
+  fun testDuplicatedInParentSameScope() {
+    myFixture.enableInspections(MavenDuplicateDependenciesInspection::class.java)
 
     createModulePom("child", """
       <groupId>mavenParent</groupId>
@@ -126,7 +130,8 @@ public class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndices
           <version>3.8.1</version>
           <scope>compile</scope>
         </dependency>
-      </dependencies>""");
+      </dependencies>
+      """.trimIndent())
 
     createProjectPom("""
                        <groupId>mavenParent</groupId>
@@ -144,16 +149,17 @@ public class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndices
                            <artifactId>junit</artifactId>
                            <version>3.8.1</version>
                          </dependency>
-                       </dependencies>""");
+                       </dependencies>
+                       """.trimIndent())
 
-    importProjectWithErrors();
+    importProjectWithErrors()
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
   @Test
-  public void testDuplicatedInParentDifferentVersion() {
-    myFixture.enableInspections(MavenDuplicateDependenciesInspection.class);
+  fun testDuplicatedInParentDifferentVersion() {
+    myFixture.enableInspections(MavenDuplicateDependenciesInspection::class.java)
 
     createModulePom("child", """
       <groupId>mavenParent</groupId>
@@ -172,7 +178,8 @@ public class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndices
           <artifactId>junit</artifactId>
           <version>3.8.1</version>
         </dependency>
-      </dependencies>""");
+      </dependencies>
+      """.trimIndent())
 
     importProject("""
                     <groupId>mavenParent</groupId>
@@ -190,14 +197,15 @@ public class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndices
                         <artifactId>junit</artifactId>
                         <version>3.8.2</version>
                       </dependency>
-                    </dependencies>""");
+                    </dependencies>
+                    """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 
   @Test
-  public void testDuplicatedInManagedDependencies() {
-    myFixture.enableInspections(MavenDuplicateDependenciesInspection.class);
+  fun testDuplicatedInManagedDependencies() {
+    myFixture.enableInspections(MavenDuplicateDependenciesInspection::class.java)
 
     createProjectPom("""
                        <groupId>mavenParent</groupId>
@@ -226,8 +234,9 @@ public class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndices
                              <classifier>sources</classifier>
                            </dependency>
                          </dependencies>
-                       </dependencyManagement>""");
+                       </dependencyManagement>
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
 }

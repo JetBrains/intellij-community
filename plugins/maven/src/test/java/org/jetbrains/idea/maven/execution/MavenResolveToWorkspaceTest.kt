@@ -13,29 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.execution;
+package org.jetbrains.idea.maven.execution
 
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.roots.ProjectRootManager
+import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.junit.Test
+import java.io.BufferedInputStream
+import java.io.FileInputStream
+import java.io.IOException
+import java.util.*
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Properties;
-
-public abstract class MavenResolveToWorkspaceTest extends MavenMultiVersionImportingTestCase {
-
+abstract class MavenResolveToWorkspaceTest : MavenMultiVersionImportingTestCase() {
   @Test
-  public void testIgnoredProject() throws Exception {
+  @Throws(Exception::class)
+  fun testIgnoredProject() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -45,21 +39,21 @@ public abstract class MavenResolveToWorkspaceTest extends MavenMultiVersionImpor
                          <module>moduleIgnored</module>
                          <module>moduleB</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile moduleA = createModulePom("moduleA", """
+    val moduleA = createModulePom("moduleA", """
       <groupId>test</groupId>
       <artifactId>moduleA</artifactId>
       <version>1</version>
-      """);
+      """.trimIndent())
 
-    VirtualFile moduleIgnored = createModulePom("moduleIgnored", """
+    val moduleIgnored = createModulePom("moduleIgnored", """
       <groupId>test</groupId>
       <artifactId>moduleIgnored</artifactId>
       <version>1</version>
-      """);
+      """.trimIndent())
 
-    VirtualFile moduleB = createModulePom("moduleB", """
+    val moduleB = createModulePom("moduleB", """
       <groupId>test</groupId>
       <artifactId>moduleB</artifactId>
       <version>1</version>
@@ -74,65 +68,65 @@ public abstract class MavenResolveToWorkspaceTest extends MavenMultiVersionImpor
           <artifactId>moduleIgnored</artifactId>
           <version>1</version>
         </dependency>
-      </dependencies>"""
-    );
+      </dependencies>
+      """.trimIndent()
+    )
 
-    setIgnoredFilesPathForNextImport(Collections.singletonList(moduleIgnored.getPath()));
+    setIgnoredFilesPathForNextImport(listOf(moduleIgnored.getPath()))
 
-    importProject();
+    importProject()
 
-    setIgnoredFilesPathForNextImport(Collections.singletonList(moduleIgnored.getPath()));
+    setIgnoredFilesPathForNextImport(listOf(moduleIgnored.getPath()))
 
     //assertModules("project", "moduleA", "moduleB");
+    WriteAction.run<RuntimeException> { ProjectRootManager.getInstance(myProject).setProjectSdk(createJdk()) }
 
-    WriteAction.run(() -> ProjectRootManager.getInstance(myProject).setProjectSdk(createJdk()));
+    val runnerParameters = MavenRunnerParameters(moduleB.getParent().getPath(), null, false, listOf("jetty:run"), emptyMap())
+    runnerParameters.isResolveToWorkspace = true
 
-    MavenRunnerParameters runnerParameters = new MavenRunnerParameters(moduleB.getParent().getPath(), null, false, Collections.singletonList("jetty:run"), Collections.emptyMap());
-    runnerParameters.setResolveToWorkspace(true);
+    val runnerSettings = MavenRunner.getInstance(myProject).settings.clone()
+    runnerSettings.setJreName(MavenRunnerSettings.USE_INTERNAL_JAVA)
 
-    MavenRunnerSettings runnerSettings = MavenRunner.getInstance(myProject).getSettings().clone();
-    runnerSettings.setJreName(MavenRunnerSettings.USE_INTERNAL_JAVA);
+    val parameters = MavenExternalParameters.createJavaParameters(myProject,
+                                                                  runnerParameters,
+                                                                  MavenProjectsManager.getInstance(myProject).getGeneralSettings(),
+                                                                  runnerSettings,
+                                                                  null)
 
-    JavaParameters parameters = MavenExternalParameters.createJavaParameters(myProject,
-                                                                             runnerParameters,
-                                                                             MavenProjectsManager.getInstance(myProject).getGeneralSettings(),
-                                                                             runnerSettings,
-                                                                             null);
+    var resolveMapFile: String? = null
 
-    String resolveMapFile = null;
+    val prefix = "-D" + MavenModuleMap.PATHS_FILE_PROPERTY + "="
 
-    String prefix = "-D" + MavenModuleMap.PATHS_FILE_PROPERTY + "=";
-
-    for (String param : parameters.getVMParametersList().getParameters()) {
+    for (param in parameters.vmParametersList.parameters) {
       if (param.startsWith(prefix)) {
-        resolveMapFile = param.substring(prefix.length());
-        break;
+        resolveMapFile = param.substring(prefix.length)
+        break
       }
     }
 
-    assertNotNull(resolveMapFile);
+    assertNotNull(resolveMapFile)
 
-    Properties properties = readProperties(resolveMapFile);
+    val properties = readProperties(resolveMapFile)
 
-    assertEquals(moduleA.getPath(), properties.getProperty("test:moduleA:pom:1"));
-    assert properties.getProperty("test:moduleA:jar:1").endsWith("/moduleA/target/classes");
-
-    assertNull(properties.getProperty("test:moduleIgnored:pom:1"));
-    assertNull(properties.getProperty("test:moduleIgnored:jar:1"));
+    assertEquals(moduleA.getPath(), properties.getProperty("test:moduleA:pom:1"))
+    assert(properties.getProperty("test:moduleA:jar:1").endsWith("/moduleA/target/classes"))
+    assertNull(properties.getProperty("test:moduleIgnored:pom:1"))
+    assertNull(properties.getProperty("test:moduleIgnored:jar:1"))
   }
 
-  private static Properties readProperties(String filePath) throws IOException {
-    try (InputStream is = new BufferedInputStream(new FileInputStream(filePath))) {
-      Properties properties = new Properties();
-      properties.load(is);
+  companion object {
+    @Throws(IOException::class)
+    private fun readProperties(filePath: String?): Properties {
+      BufferedInputStream(FileInputStream(filePath)).use { `is` ->
+        val properties = Properties()
+        properties.load(`is`)
 
-      for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-        String value = (String)entry.getValue();
-        entry.setValue(value.replace('\\', '/'));
+        for (entry in properties.entries) {
+          val value = entry.value as String
+          entry.setValue(value.replace('\\', '/'))
+        }
+        return properties
       }
-
-      return properties;
     }
   }
-
 }
