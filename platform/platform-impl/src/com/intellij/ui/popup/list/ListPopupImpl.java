@@ -255,6 +255,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   @Override
+  protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
+    return super.createPopup(parent, step, parentValue);
+  }
+
+  @Override
   protected JComponent createContent() {
     myMouseMotionListener = new MyMouseMotionListener();
     myMouseListener = new MyMouseListener();
@@ -449,16 +454,18 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     if (getSpeedSearch().isHoldingFilter() && myList.getModel().getSize() == 0) return false;
 
-    if (!myExecuteExpandedItemOnClick && myList.getSelectedIndex() == getIndexForShowingChild()) {
-      if (myChild != null && !myChild.isVisible()) setIndexForShowingChild(-1);
-      return false;
-    }
-
     Object[] selectedValues = myList.getSelectedValues();
     if (selectedValues.length == 0) return false;
     ListPopupStep<Object> listStep = getListStep();
     Object selectedValue = selectedValues[0];
-    if (!listStep.isSelectable(selectedValue)) return false;
+
+    boolean selectable = listStep.isSelectable(selectedValue);
+    boolean preferExecution = listStep.isFinal(selectedValue) && selectable && handleFinalChoices;
+    if (!myExecuteExpandedItemOnClick && !preferExecution && myList.getSelectedIndex() == getIndexForShowingChild()) {
+      if (myChild != null && !myChild.isVisible()) setIndexForShowingChild(-1);
+      return false;
+    }
+    if (!selectable) return false;
 
     if ((listStep instanceof MultiSelectionListPopupStep<?> && !((MultiSelectionListPopupStep<Object>)listStep).hasSubstep(Arrays.asList(selectedValues))
          || !listStep.hasSubstep(selectedValue)) && !handleFinalChoices) return false;
