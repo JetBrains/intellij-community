@@ -1,17 +1,29 @@
 package com.intellij.searchEverywhereMl.ranking.features.statistician
 
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.Key
 import com.intellij.psi.statistics.StatisticsManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 
 @Service(Service.Level.APP)
-class SearchEverywhereStatisticianService {
+class SearchEverywhereStatisticianService(private val coroutineScope: CoroutineScope) {
   companion object {
     val KEY: Key<SearchEverywhereStatistician<in Any>> = Key.create("searchEverywhere")
   }
 
-  fun increaseUseCount(element: Any) = getSerializedInfo(element)?.let { StatisticsManager.getInstance().incUseCount(it) }
+  fun increaseUseCount(element: Any) {
+    coroutineScope.launch {
+      val info = getSerializedInfo(element) ?: return@launch
+      val manager = StatisticsManager.getInstance()
+
+      writeAction {
+        manager.incUseCount(info)
+      }
+    }
+  }
 
   fun getCombinedStats(element: Any): SearchEverywhereStatisticianStats? {
     val statisticsManager = StatisticsManager.getInstance()
