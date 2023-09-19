@@ -12,7 +12,6 @@ import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -97,8 +96,6 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
     get() = listCellRendererParams!!.selected
   override val hasFocus: Boolean
     get() = listCellRendererParams!!.hasFocus
-  override val greyForeground: Color
-    get() = if (selected) foreground else NamedColorUtil.getInactiveTextColor()
 
   override var background: Color?
     get() = if (ExperimentalUI.isNewUI()) selectablePanel.selectionColor else selectablePanel.background
@@ -111,7 +108,7 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
       }
     }
 
-  override var foreground: Color = JBUI.CurrentTheme.List.FOREGROUND
+  private var foreground: Color = JBUI.CurrentTheme.List.FOREGROUND
 
   override fun gap(gap: LcrRow.Gap) {
     this.gap = gap
@@ -136,11 +133,11 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
 
     val result = if (initParams.isSimpleText()) {
       lcrCellCache.occupyText().apply {
-        init(text, initParams)
+        init(text, initParams, selected, foreground)
       }
     } else {
       lcrCellCache.occupySimpleColoredText().apply {
-        init(text, initParams)
+        init(text, initParams, selected, foreground)
       }
     }
     add(result, initParams, true)

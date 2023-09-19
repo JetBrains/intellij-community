@@ -2,8 +2,10 @@
 package com.intellij.ui.dsl.listCellRenderer.impl
 
 import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.Color
 import java.awt.Insets
 
 @ApiStatus.Internal
@@ -15,8 +17,10 @@ internal class LcrSimpleColoredTextImpl : LcrCellBaseImpl() {
     isOpaque = false
   }
 
-  fun init(text: @Nls String, initParams: LcrTextInitParamsImpl) {
+  fun init(text: @Nls String, initParams: LcrTextInitParamsImpl, selected: Boolean, rowForeground: Color) {
     component.clear()
-    component.append(text, initParams.attributes!!)
+    component.font = initParams.font
+    val attributes = if (selected) SimpleTextAttributes(initParams.attributes!!.style, rowForeground) else initParams.attributes!!
+    component.append(text, attributes)
   }
 }

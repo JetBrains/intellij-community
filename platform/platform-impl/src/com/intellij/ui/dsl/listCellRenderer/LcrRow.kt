@@ -31,19 +31,9 @@ interface LcrRow<T> {
   val hasFocus: Boolean
 
   /**
-   * A grey text, that is usually used for non-primary information in renderers
-   */
-  val greyForeground: Color
-
-  /**
    * Row background
    */
   var background: Color?
-
-  /**
-   * Row foreground
-   */
-  var foreground: Color
 
   /**
    * The gap between the previous cell and the next one. Not used for the first cell

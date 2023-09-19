@@ -143,7 +143,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
     }
     if (rightText != null) {
       text(rightText) {
-        foreground = this@listCellRenderer.greyForeground
+        foreground = greyForeground
       }
     }
   }

@@ -3,18 +3,17 @@ package com.intellij.ui.dsl.listCellRenderer.impl
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.Color
 import javax.swing.JLabel
-import javax.swing.UIManager
 
 @ApiStatus.Internal
 internal class LcrTextImpl : LcrCellBaseImpl() {
 
   override val component: JLabel = JLabel()
 
-  fun init(text: @Nls String, initParams: LcrTextInitParamsImpl) {
+  fun init(text: @Nls String, initParams: LcrTextInitParamsImpl, selected: Boolean, rowForeground: Color) {
     component.text = text
-    // Restore default font, so IDE scaling is applied as well
-    component.font = UIManager.getFont("Label.font")
-    component.foreground = initParams.foreground
+    component.font = initParams.font
+    component.foreground = if (selected) rowForeground else initParams.foreground
   }
 }
