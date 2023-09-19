@@ -171,9 +171,9 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
 
-    mavenImporterSettings.setCreateModulesForAggregators(false)
-    importProjectAsync()
-    //myProjectsManager.performScheduledImportInTests();
+    waitForImportWithinTimeout {
+      mavenImporterSettings.setCreateModulesForAggregators(false)
+    }
     if (supportsCreateAggregatorOption()) {
       assertModules(mn("project", "m2"))
     }
@@ -181,8 +181,9 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       assertModules("project", "m1", "m2")
     }
 
-    mavenImporterSettings.setCreateModulesForAggregators(true)
-    importProjectAsync()
+    waitForImportWithinTimeout {
+      mavenImporterSettings.setCreateModulesForAggregators(true)
+    }
     assertModules("project", "m1", "m2")
   }
 
