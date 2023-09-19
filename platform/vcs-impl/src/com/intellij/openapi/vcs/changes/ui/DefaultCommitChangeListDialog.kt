@@ -27,8 +27,6 @@ class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : 
                                                         workflow.isDefaultCommitEnabled, workflow.isPartialCommitEnabled)
 
   init {
-    LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
-
     val branchComponent = CurrentBranchComponent(browser.viewer, pathsProvider = { getDisplayedPaths() })
     Disposer.register(this, branchComponent)
 
