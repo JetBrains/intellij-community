@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.task;
 
 import com.intellij.execution.Executor;
@@ -94,16 +94,14 @@ public abstract class ProjectTaskRunner {
    * This method can be used when execution of some "Run Configuration" should be delegated to another tool.
    * E.g. delegated run of an "ApplicationConfiguration" by external tool.
    */
-  @Nullable
-  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
+  public @Nullable ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
                                                          @NotNull ExecuteRunConfigurationTask task,
                                                          @Nullable Executor executor) {
     return null;
   }
 
   @ApiStatus.Experimental
-  @Nullable
-  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, ProjectTask @NotNull ... tasks) {
+  public @Nullable ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, ProjectTask @NotNull ... tasks) {
     if (tasks.length == 0) return null;
     if (tasks.length == 1 && tasks[0] instanceof ExecuteRunConfigurationTask) {
       return createExecutionEnvironment(project, (ExecuteRunConfigurationTask)tasks[0], null);

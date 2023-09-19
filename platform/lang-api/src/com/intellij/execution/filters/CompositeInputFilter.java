@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.filters;
 
@@ -28,8 +28,7 @@ public class CompositeInputFilter implements InputFilter {
   }
 
   @Override
-  @Nullable
-  public List<Pair<String, ConsoleViewContentType>> applyFilter(@NotNull final String text, @NotNull final ConsoleViewContentType contentType) {
+  public @Nullable List<Pair<String, ConsoleViewContentType>> applyFilter(final @NotNull String text, final @NotNull ConsoleViewContentType contentType) {
     boolean dumb = myDumbService.isDumb();
     for (InputFilterWrapper filter : myFilters) {
       if (!dumb || filter.isDumbAware) {
@@ -48,7 +47,7 @@ public class CompositeInputFilter implements InputFilter {
   }
 
   private static class InputFilterWrapper implements InputFilter {
-    @NotNull private final InputFilter myOriginal;
+    private final @NotNull InputFilter myOriginal;
     private boolean isBroken;
     private final boolean isDumbAware;
 
@@ -57,9 +56,8 @@ public class CompositeInputFilter implements InputFilter {
       myOriginal = original;
     }
 
-    @Nullable
     @Override
-    public List<Pair<String, ConsoleViewContentType>> applyFilter(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
+    public @Nullable List<Pair<String, ConsoleViewContentType>> applyFilter(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
       if (!isBroken) {
         try {
           return myOriginal.applyFilter(text, contentType);

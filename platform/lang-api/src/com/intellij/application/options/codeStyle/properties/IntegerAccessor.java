@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.properties;
 
 import org.jetbrains.annotations.NotNull;
@@ -11,9 +11,8 @@ public class IntegerAccessor extends CodeStyleFieldAccessor<Integer,Integer> {
     super(object, field);
   }
 
-  @Nullable
   @Override
-  protected Integer parseString(@NotNull String string) {
+  protected @Nullable Integer parseString(@NotNull String string) {
     try {
       return Integer.parseInt(string);
     }
@@ -22,9 +21,8 @@ public class IntegerAccessor extends CodeStyleFieldAccessor<Integer,Integer> {
     }
   }
 
-  @Nullable
   @Override
-  protected String valueToString(@NotNull Integer value) {
+  protected @Nullable String valueToString(@NotNull Integer value) {
     return String.valueOf(value);
   }
 
@@ -33,9 +31,8 @@ public class IntegerAccessor extends CodeStyleFieldAccessor<Integer,Integer> {
     return i;
   }
 
-  @NotNull
   @Override
-  protected Integer toExternal(@NotNull Integer value) {
+  protected @NotNull Integer toExternal(@NotNull Integer value) {
     return value;
   }
 

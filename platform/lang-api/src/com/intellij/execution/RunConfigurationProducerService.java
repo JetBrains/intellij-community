@@ -33,9 +33,8 @@ import java.util.Set;
 public final class RunConfigurationProducerService implements PersistentStateComponent<RunConfigurationProducerService.State> {
   private State myState = new State();
 
-  @NotNull
   @Override
-  public State getState() {
+  public @NotNull State getState() {
     return myState;
   }
 
@@ -48,8 +47,7 @@ public final class RunConfigurationProducerService implements PersistentStateCom
     public Set<String> ignoredProducers = new HashSet<>();
   }
 
-  @NotNull
-  public static RunConfigurationProducerService getInstance(@NotNull Project project) {
+  public static @NotNull RunConfigurationProducerService getInstance(@NotNull Project project) {
     return project.getService(RunConfigurationProducerService.class);
   }
 

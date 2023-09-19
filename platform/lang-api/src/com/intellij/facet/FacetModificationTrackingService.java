@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.facet;
 
@@ -20,8 +20,7 @@ public abstract class FacetModificationTrackingService {
     return facet.getModule().getService(FacetModificationTrackingService.class);
   }
 
-  @NotNull
-  public abstract ModificationTracker getFacetModificationTracker(@NotNull Facet<?> facet);
+  public abstract @NotNull ModificationTracker getFacetModificationTracker(@NotNull Facet<?> facet);
 
   public abstract void incFacetModificationTracker(@NotNull Facet<?> facet);
 

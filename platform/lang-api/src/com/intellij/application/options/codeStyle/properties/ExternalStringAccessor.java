@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.properties;
 
 import org.jetbrains.annotations.NotNull;
@@ -11,17 +11,14 @@ public abstract class ExternalStringAccessor<T> extends CodeStyleFieldAccessor<T
     super(object, field);
   }
 
-  @Nullable
   @Override
-  protected abstract T fromExternal(@NotNull String extVal);
+  protected abstract @Nullable T fromExternal(@NotNull String extVal);
 
-  @NotNull
   @Override
-  protected abstract String toExternal(@NotNull T value);
+  protected abstract @NotNull String toExternal(@NotNull T value);
 
-  @Nullable
   @Override
-  protected String parseString(@NotNull String string) {
+  protected @Nullable String parseString(@NotNull String string) {
     return string;
   }
 

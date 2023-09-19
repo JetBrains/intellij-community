@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.task;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -34,10 +20,8 @@ import java.util.stream.Stream;
  * @author Vladislav.Soroka
  */
 public class ProjectTaskContext extends UserDataHolderBase {
-  @Nullable
-  private final Object mySessionId;
-  @Nullable
-  private final RunConfiguration myRunConfiguration;
+  private final @Nullable Object mySessionId;
+  private final @Nullable RunConfiguration myRunConfiguration;
   private final boolean myAutoRun;
   private final MultiMap<String, String> myGeneratedFiles;
   private final List<Supplier<? extends Collection<String>>> myDirtyOutputPaths;
@@ -67,13 +51,11 @@ public class ProjectTaskContext extends UserDataHolderBase {
     myDirtyOutputPaths = ContainerUtil.createConcurrentList();
   }
 
-  @Nullable
-  public Object getSessionId() {
+  public @Nullable Object getSessionId() {
     return mySessionId;
   }
 
-  @Nullable
-  public RunConfiguration getRunConfiguration() {
+  public @Nullable RunConfiguration getRunConfiguration() {
     return myRunConfiguration;
   }
 
@@ -100,9 +82,8 @@ public class ProjectTaskContext extends UserDataHolderBase {
    * It can be requested using the {@link #enableCollectionOfGeneratedFiles()} method by the task initiator, see {@link ProjectTaskManager#run(ProjectTaskContext, ProjectTask)}.
    * Or using the {@link ProjectTaskListener#started(ProjectTaskContext)} event.
    */
-  @NotNull
   @ApiStatus.Experimental
-  public Collection<String> getGeneratedFilesRoots() {
+  public @NotNull Collection<String> getGeneratedFilesRoots() {
     return myGeneratedFiles.keySet();
   }
 
@@ -112,9 +93,8 @@ public class ProjectTaskContext extends UserDataHolderBase {
    * It can be requested using the {@link #enableCollectionOfGeneratedFiles()} method by the task initiator, see {@link ProjectTaskManager#run(ProjectTaskContext, ProjectTask)}.
    * Or using the {@link ProjectTaskListener#started(ProjectTaskContext)} event.
    */
-  @NotNull
   @ApiStatus.Experimental
-  public Collection<String> getGeneratedFilesRelativePaths(@NotNull String root) {
+  public @NotNull Collection<String> getGeneratedFilesRelativePaths(@NotNull String root) {
     return myGeneratedFiles.get(root);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.SearchTopHitProvider;
@@ -28,8 +28,7 @@ public class SearchEverywhereCommandInfo {
     return contributor;
   }
 
-  @NlsSafe
-  public String getCommandWithPrefix() {
+  public @NlsSafe String getCommandWithPrefix() {
     return SearchTopHitProvider.getTopHitAccelerator() + command;
   }
 }

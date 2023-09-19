@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard;
 
 import com.intellij.openapi.util.Conditions;
@@ -36,7 +36,7 @@ final class PanelContentUI implements ContentUI {
     myContentManager = manager;
     manager.addContentManagerListener(new ContentManagerListener() {
       @Override
-      public void selectionChanged(@NotNull final ContentManagerEvent event) {
+      public void selectionChanged(final @NotNull ContentManagerEvent event) {
         initUI();
         if (ContentManagerEvent.ContentOperation.add == event.getOperation()) {
           showContent(event.getContent());
@@ -105,27 +105,23 @@ final class PanelContentUI implements ContentUI {
     return true;
   }
 
-  @NotNull
   @Override
-  public String getCloseActionName() {
+  public @NotNull String getCloseActionName() {
     return "";
   }
 
-  @NotNull
   @Override
-  public String getCloseAllButThisActionName() {
+  public @NotNull String getCloseAllButThisActionName() {
     return "";
   }
 
-  @NotNull
   @Override
-  public String getPreviousContentActionName() {
+  public @NotNull String getPreviousContentActionName() {
     return "";
   }
 
-  @NotNull
   @Override
-  public String getNextContentActionName() {
+  public @NotNull String getNextContentActionName() {
     return "";
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util;
 
@@ -15,26 +15,23 @@ public abstract class TreeFileChooserFactory {
     return project.getService(TreeFileChooserFactory.class);
   }
 
-  @NotNull
-  public abstract TreeFileChooser createFileChooser(@NlsContexts.DialogTitle @NotNull String title,
-                                                    @Nullable PsiFile initialFile,
-                                                    @Nullable FileType fileType,
-                                                    @Nullable TreeFileChooser.PsiFileFilter filter);
+  public abstract @NotNull TreeFileChooser createFileChooser(@NlsContexts.DialogTitle @NotNull String title,
+                                                             @Nullable PsiFile initialFile,
+                                                             @Nullable FileType fileType,
+                                                             @Nullable TreeFileChooser.PsiFileFilter filter);
 
 
-  @NotNull
-  public abstract TreeFileChooser createFileChooser(@NlsContexts.DialogTitle @NotNull String title,
-                                                    @Nullable PsiFile initialFile,
-                                                    @Nullable FileType fileType,
-                                                    @Nullable TreeFileChooser.PsiFileFilter filter,
-                                                    boolean disableStructureProviders);
+  public abstract @NotNull TreeFileChooser createFileChooser(@NlsContexts.DialogTitle @NotNull String title,
+                                                             @Nullable PsiFile initialFile,
+                                                             @Nullable FileType fileType,
+                                                             @Nullable TreeFileChooser.PsiFileFilter filter,
+                                                             boolean disableStructureProviders);
 
 
-  @NotNull
-  public abstract TreeFileChooser createFileChooser(@NlsContexts.DialogTitle @NotNull String title,
-                                                    @Nullable PsiFile initialFile,
-                                                    @Nullable FileType fileType,
-                                                    @Nullable TreeFileChooser.PsiFileFilter filter,
-                                                    boolean disableStructureProviders,
-                                                    boolean showLibraryContents);
+  public abstract @NotNull TreeFileChooser createFileChooser(@NlsContexts.DialogTitle @NotNull String title,
+                                                             @Nullable PsiFile initialFile,
+                                                             @Nullable FileType fileType,
+                                                             @Nullable TreeFileChooser.PsiFileFilter filter,
+                                                             boolean disableStructureProviders,
+                                                             boolean showLibraryContents);
 }

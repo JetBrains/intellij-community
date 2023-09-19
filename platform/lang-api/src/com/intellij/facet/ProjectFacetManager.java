@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet;
 
 import com.intellij.openapi.module.Module;
@@ -20,12 +20,10 @@ public abstract class ProjectFacetManager {
   @RequiresReadLock
   public abstract <F extends Facet<?>> List<F> getFacets(@NotNull FacetTypeId<F> typeId, final Module[] modules);
 
-  @NotNull
   @RequiresReadLock
-  public abstract <F extends Facet<?>> List<F> getFacets(@NotNull FacetTypeId<F> typeId);
+  public abstract @NotNull <F extends Facet<?>> List<F> getFacets(@NotNull FacetTypeId<F> typeId);
 
-  @NotNull
-  public abstract List<Module> getModulesWithFacet(@NotNull FacetTypeId<?> typeId);
+  public abstract @NotNull List<Module> getModulesWithFacet(@NotNull FacetTypeId<?> typeId);
 
   public abstract <C extends FacetConfiguration> C createDefaultConfiguration(@NotNull FacetType<?, C> facetType);
 

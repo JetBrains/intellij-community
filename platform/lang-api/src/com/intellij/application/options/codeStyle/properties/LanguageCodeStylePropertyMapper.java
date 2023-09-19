@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.application.options.IndentOptionsEditor;
@@ -21,10 +21,10 @@ import java.util.*;
 
 @ApiStatus.Experimental
 public final class LanguageCodeStylePropertyMapper extends AbstractCodeStylePropertyMapper {
-  private @NotNull final Language myLanguage;
-  private @NotNull final String myLanguageDomainId;
-  private @Nullable final LanguageCodeStyleSettingsProvider mySettingsProvider;
-  private @NotNull final List<CustomCodeStyleSettings> myCustomSettings;
+  private final @NotNull Language myLanguage;
+  private final @NotNull String myLanguageDomainId;
+  private final @Nullable LanguageCodeStyleSettingsProvider mySettingsProvider;
+  private final @NotNull List<CustomCodeStyleSettings> myCustomSettings;
 
   public LanguageCodeStylePropertyMapper(@NotNull CodeStyleSettings settings,
                                          @NotNull Language language,
@@ -36,9 +36,8 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
     myCustomSettings = getCustomSettings();
   }
 
-  @Nullable
   @Override
-  protected CodeStylePropertyAccessor<?> getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+  protected @Nullable CodeStylePropertyAccessor<?> getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
     CodeStylePropertyAccessor<?> accessor = mySettingsProvider != null ? mySettingsProvider.getAccessor(codeStyleObject, field) : null;
     if (accessor != null) {
       return accessor;
@@ -58,9 +57,8 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
     }
   }
 
-  @NotNull
   @Override
-  protected List<CodeStyleObjectDescriptor> getSupportedFields() {
+  protected @NotNull List<CodeStyleObjectDescriptor> getSupportedFields() {
     List<CodeStyleObjectDescriptor> fieldsDescriptors = new ArrayList<>();
     IndentOptions indentOptions = getRootSettings().getCommonSettings(myLanguage).getIndentOptions();
     if (indentOptions != null) {
@@ -73,14 +71,12 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
     return fieldsDescriptors;
   }
 
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return myLanguage;
   }
 
-  @NotNull
   @Override
-  public String getLanguageDomainId() {
+  public @NotNull String getLanguageDomainId() {
     return myLanguageDomainId;
   }
 
@@ -136,9 +132,8 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
     return mySettingsProvider == null ? Collections.emptySet() : mySettingsProvider.getSupportedFields();
   }
 
-  @Nullable
   @Override
-  public String getPropertyDescription(@NotNull String externalName) {
+  public @Nullable String getPropertyDescription(@NotNull String externalName) {
     String key = "codestyle.property.description." + externalName;
     return OptionsBundle.INSTANCE.containsKey(key) ? OptionsBundle.message(key) : null;
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.extractor.values;
 
 import org.jetbrains.annotations.Contract;
@@ -26,7 +12,7 @@ public class Value {
     ANY
   }
 
-  public static abstract class VAR_KIND {
+  public abstract static class VAR_KIND {
 
     public int getMutagenFactor() {
       return 1;
@@ -152,7 +138,7 @@ public class Value {
         KEEP, BOOL, NOTHING};
   }
 
-  public static abstract class CLASS_BASED_VAR_KIND extends VAR_KIND {
+  public abstract static class CLASS_BASED_VAR_KIND extends VAR_KIND {
 
     private final Class<?> myVarClass;
 
@@ -177,16 +163,11 @@ public class Value {
     return kind.getMutagenFactor();
   }
 
-  @NotNull
-  public final String name;
-  @NotNull
-  public Object value;
-  @NotNull
-  public STATE state;
-  @NotNull
-  public ClassSerializer serializer;
-  @NotNull
-  public final VAR_KIND kind;
+  public final @NotNull String name;
+  public @NotNull Object value;
+  public @NotNull STATE state;
+  public @NotNull ClassSerializer serializer;
+  public final @NotNull VAR_KIND kind;
 
   public Value(@NotNull String name, @NotNull Object value, @NotNull ClassSerializer serializer, @NotNull VAR_KIND kind) {
     this.kind = kind;
@@ -210,9 +191,8 @@ public class Value {
     kind = valueZ.kind;
   }
 
-  @Nullable
   @Contract("false -> null")
-  public Value write(boolean retPrevValue) {
+  public @Nullable Value write(boolean retPrevValue) {
     final Object orig = serializer.write(name, value, retPrevValue);
     return orig == null ? null : new Value(name, orig, serializer, kind);
   }

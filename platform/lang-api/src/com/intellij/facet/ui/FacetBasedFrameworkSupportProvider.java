@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.facet.ui;
 
@@ -37,7 +23,7 @@ import java.util.List;
  */
 public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extends FrameworkSupportProviderBase {
   private static final Logger LOG = Logger.getInstance(FacetBasedFrameworkSupportProvider.class);
-  @NonNls private static final String FACET_SUPPORT_PREFIX = "facet:";
+  private static final @NonNls String FACET_SUPPORT_PREFIX = "facet:";
   private final FacetType<F, ?> myFacetType;
 
   protected FacetBasedFrameworkSupportProvider(@NotNull FacetType<F, ?> facetType) {
@@ -68,8 +54,7 @@ public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extend
   }
 
   @Override
-  @Nullable
-  public String getUnderlyingFrameworkId() {
+  public @Nullable String getUnderlyingFrameworkId() {
     FacetTypeId<?> typeId = myFacetType.getUnderlyingFacetType();
     if (typeId == null) return null;
 
@@ -78,12 +63,12 @@ public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extend
   }
 
   @Override
-  public boolean isEnabledForModuleType(@NotNull final ModuleType moduleType) {
+  public boolean isEnabledForModuleType(final @NotNull ModuleType moduleType) {
     return myFacetType.isSuitableModuleType(moduleType);
   }
 
   @Override
-  public boolean isSupportAlreadyAdded(@NotNull final Module module, @NotNull FacetsProvider facetsProvider) {
+  public boolean isSupportAlreadyAdded(final @NotNull Module module, @NotNull FacetsProvider facetsProvider) {
     return !facetsProvider.getFacetsByType(module, myFacetType.getId()).isEmpty();
   }
 
@@ -93,7 +78,7 @@ public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extend
   }
 
   @Override
-  protected void addSupport(@NotNull final Module module, @NotNull final ModifiableRootModel rootModel, final FrameworkVersion version, final @Nullable Library library) {
+  protected void addSupport(final @NotNull Module module, final @NotNull ModifiableRootModel rootModel, final FrameworkVersion version, final @Nullable Library library) {
     FacetManager facetManager = FacetManager.getInstance(module);
     ModifiableFacetModel model = facetManager.createModifiableModel();
     Facet underlyingFacet = null;

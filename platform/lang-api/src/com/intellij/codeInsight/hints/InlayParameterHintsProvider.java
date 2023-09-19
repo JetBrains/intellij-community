@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -27,8 +27,7 @@ public interface InlayParameterHintsProvider {
    * @param element element for which hints should be shown.
    * @return list of hints to be shown, hints offsets should be located within element's text range.
    */
-  @NotNull
-  default List<InlayInfo> getParameterHints(@NotNull PsiElement element) {
+  default @NotNull List<InlayInfo> getParameterHints(@NotNull PsiElement element) {
     return Collections.emptyList();
   }
 
@@ -37,8 +36,7 @@ public interface InlayParameterHintsProvider {
    * @param element element for which hints should be shown.
    * @return list of hints to be shown, hints offsets should be located within element's text range.
    */
-  @NotNull
-  default List<InlayInfo> getParameterHints(@NotNull PsiElement element, @NotNull PsiFile file) {
+  default @NotNull List<InlayInfo> getParameterHints(@NotNull PsiElement element, @NotNull PsiFile file) {
     return getParameterHints(element);
   }
 
@@ -51,8 +49,7 @@ public interface InlayParameterHintsProvider {
    * @param element the element under the caret
    *
    */
-  @Nullable
-  default HintInfo getHintInfo(@NotNull PsiElement element) {
+  default @Nullable HintInfo getHintInfo(@NotNull PsiElement element) {
     return null;
   }
 
@@ -64,8 +61,7 @@ public interface InlayParameterHintsProvider {
    *
    * @param element the element under the caret
    */
-  @Nullable
-  default HintInfo getHintInfo(@NotNull PsiElement element, @NotNull PsiFile file) {
+  default @Nullable HintInfo getHintInfo(@NotNull PsiElement element, @NotNull PsiFile file) {
     return getHintInfo(element);
   }
 
@@ -79,16 +75,14 @@ public interface InlayParameterHintsProvider {
    * Returns language which exclude list will be appended to the resulting one.
    * E.g. to prevent possible Groovy and Kotlin extensions from showing hints for excluded Java methods.
    */
-  @Nullable
-  default Language getBlackListDependencyLanguage() {
+  default @Nullable Language getBlackListDependencyLanguage() {
     return null;
   }
 
   /**
    * List of supported options, shown in settings dialog.
    */
-  @NotNull
-  default List<Option> getSupportedOptions() {
+  default @NotNull List<Option> getSupportedOptions() {
     return ContainerUtil.emptyList();
   }
 
@@ -102,16 +96,14 @@ public interface InlayParameterHintsProvider {
   /**
    * Text explaining exclude list patterns.
    */
-  @Nls
-  default String getBlacklistExplanationHTML() {
+  default @Nls String getBlacklistExplanationHTML() {
     return CodeInsightBundle.message("inlay.hints.exclude.list.pattern.explanation");
   }
 
   /**
    * Customise hints presentation.
    */
-  @NotNull
-  default String getInlayPresentation(@NotNull String inlayText) {
+  default @NotNull String getInlayPresentation(@NotNull String inlayText) {
     return inlayText + ":";
   }
 
@@ -144,19 +136,15 @@ public interface InlayParameterHintsProvider {
   /**
    * @return Traverser for `root` element subtree.
    */
-  @NotNull
-  default SyntaxTraverser<PsiElement> createTraversal(@NotNull PsiElement root) {
+  default @NotNull SyntaxTraverser<PsiElement> createTraversal(@NotNull PsiElement root) {
     return SyntaxTraverser.psiTraverser(root);
   }
 
-  @Nls
-  default String getDescription() { return null; }
+  default @Nls String getDescription() { return null; }
 
   /**
    * @param key bundle key of the option.
    * @return description of the given option or null (in this case it won't be shown).
    */
-  @Nls
-  @Nullable
-  default String getProperty(String key) { return null; }
+  default @Nls @Nullable String getProperty(String key) { return null; }
 }

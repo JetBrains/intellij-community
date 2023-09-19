@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.diagnostic.PluginException;
@@ -62,8 +48,7 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
   }
 
   @Override
-  @Nullable
-  public Result applyFilter(@NotNull String line, int entireLength) {
+  public @Nullable Result applyFilter(@NotNull String line, int entireLength) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     boolean dumb = myDumbService.isDumb();
     List<Filter> filters = myFilters;
@@ -106,8 +91,7 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
     return createFinalResult(resultItems);
   }
 
-  @NotNull
-  private static Result createFinalResult(@NotNull List<? extends ResultItem> resultItems) {
+  private static @NotNull Result createFinalResult(@NotNull List<? extends ResultItem> resultItems) {
     if (resultItems.size() == 1) {
       ResultItem resultItem = resultItems.get(0);
       return new Result(resultItem.getHighlightStartOffset(), resultItem.getHighlightEndOffset(), resultItem.getHyperlinkInfo(),
@@ -125,8 +109,7 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
     return result.getNextAction() == NextAction.EXIT && !forceUseAllFilters;
   }
 
-  @NotNull
-  private static List<ResultItem> merge(@Nullable List<ResultItem> resultItems, @NotNull Result newResult, int entireLength, @NotNull Filter filter) {
+  private static @NotNull List<ResultItem> merge(@Nullable List<ResultItem> resultItems, @NotNull Result newResult, int entireLength, @NotNull Filter filter) {
     List<ResultItem> newItems = newResult.getResultItems();
     if (resultItems == null) {
       resultItems = new ArrayList<>(newItems.size());
@@ -192,10 +175,8 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
     }
   }
 
-  @NotNull
   @Override
-  @Nls
-  public String getUpdateMessage() {
+  public @NotNull @Nls String getUpdateMessage() {
     List<Filter> filters = myFilters;
     List<String> updateMessage = new ArrayList<>();
     int count = filters.size();
@@ -224,8 +205,7 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
     myIsAnyHeavy |= filter instanceof FilterMixin;
   }
 
-  @NotNull
-  public List<Filter> getFilters() {
+  public @NotNull List<Filter> getFilters() {
     return Collections.unmodifiableList(myFilters);
   }
 
