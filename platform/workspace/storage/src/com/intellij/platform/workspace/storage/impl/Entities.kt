@@ -563,10 +563,6 @@ public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Seri
     throw NotImplementedError()
   }
 
-  public open fun collectClassUsagesData(collector: UsedClassesCollector) {
-    throw NotGeneratedMethodRuntimeException("collectClassUsagesData")
-  }
-
   /**
    * Temporally solution.
    * Get symbolic Id without creating of TypedEntity. Should be in sync with TypedEntityWithSymbolicId.
@@ -588,23 +584,4 @@ public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Seri
 internal fun WorkspaceEntityData<*>.symbolicId(): SymbolicEntityId<*>? = when (this) {
   is WorkspaceEntityData.WithCalculableSymbolicId -> this.symbolicId()
   else -> null
-}
-
-public class UsedClassesCollector(
-  public var sameForAllEntities: Boolean = false,
-  internal var collection: MutableSet<Class<out Any>> = HashSet(),
-  internal var collectionObjects: MutableSet<Class<out Any>> = HashSet(),
-  internal var collectionToInspection: MutableSet<Any> = HashSet(),
-) {
-  public fun add(clazz: Class<out Any>) {
-    collection.add(clazz)
-  }
-
-  public fun addObject(clazz: Class<out Any>) {
-    collectionObjects.add(clazz)
-  }
-
-  public fun addDataToInspect(data: Any) {
-    collectionToInspection.add(data)
-  }
 }
