@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -13,6 +13,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
@@ -1169,7 +1170,7 @@ public final class XDebugSessionImpl implements XDebugSession {
       XDebuggerPerformanceCollector.EXECUTION_POINT_REACHED.log(
         myProject,
         EventFields.FileType.with(fileType),
-        XDebuggerPerformanceCollector.ACTION_ID.with(myUserRequestAction),
+        ActionsEventLogGroup.ACTION_ID.with(myUserRequestAction),
         EventFields.DurationMs.with(durationMs)
       );
       myUserRequestAction = null;

@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionRuleValidator;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -21,12 +21,11 @@ import java.util.Set;
 
 public final class KeymapChangesCollector extends ApplicationUsagesCollector {
 
-  private static final EventLogGroup GROUP = new EventLogGroup("keymap.changes", 1);
+  private static final EventLogGroup GROUP = new EventLogGroup("keymap.changes", 2);
 
-  private static final StringEventField ACTION = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator.class);
   private static final BooleanEventField IMPORTED = EventFields.Boolean("imported");
 
-  private static final VarargEventId KEYMAP_CHANGE = GROUP.registerVarargEvent("keymap.change", ACTION, IMPORTED);
+  private static final VarargEventId KEYMAP_CHANGE = GROUP.registerVarargEvent("keymap.change", ActionsEventLogGroup.ACTION_ID, IMPORTED);
 
   @Override
   public EventLogGroup getGroup() {
@@ -47,10 +46,10 @@ public final class KeymapChangesCollector extends ApplicationUsagesCollector {
     for (String action_id : keymap.getActionIds()) {
       if (ActionsTree.isShortcutCustomized(action_id, keymap)) {
         if (keymapFlagsStorage.hasFlag(keymap, action_id, KeymapFlagsStorage.FLAG_MIGRATED_SHORTCUT)) {
-          data.add(KEYMAP_CHANGE.metric(ACTION.with(action_id), IMPORTED.with(true)));
+          data.add(KEYMAP_CHANGE.metric(ActionsEventLogGroup.ACTION_ID.with(action_id), IMPORTED.with(true)));
         }
         else {
-          data.add(KEYMAP_CHANGE.metric(ACTION.with(action_id))); //reducing data by not reporting optional flag
+          data.add(KEYMAP_CHANGE.metric(ActionsEventLogGroup.ACTION_ID.with(action_id))); //reducing data by not reporting optional flag
         }
       }
     }
