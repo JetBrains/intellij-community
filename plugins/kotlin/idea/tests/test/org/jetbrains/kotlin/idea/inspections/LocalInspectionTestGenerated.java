@@ -5486,6 +5486,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/explicitThis/syntheticJavaProperty_sameNameVariable.kt");
         }
 
+        @TestMetadata("unresolvedReference.kt")
+        public void testUnresolvedReference() throws Exception {
+            runTest("testData/inspectionsLocal/explicitThis/unresolvedReference.kt");
+        }
+
         @TestMetadata("variableWithSameName.kt")
         public void testVariableWithSameName() throws Exception {
             runTest("testData/inspectionsLocal/explicitThis/variableWithSameName.kt");
