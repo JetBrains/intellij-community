@@ -6,6 +6,7 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
@@ -13,16 +14,22 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.*
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
+import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.util.VcsLogUtil
 
 class ResumeIndexingAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    val data = e.getData(VcsLogInternalDataKeys.LOG_DATA)
     val project = e.project
+    if (project == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    val data = e.getData(VcsLogInternalDataKeys.LOG_DATA) ?: project.serviceIfCreated<VcsProjectLog>()?.dataManager
     val index = data?.index as? VcsLogModifiableIndex
-    if (data == null || project == null || !VcsLogSharedSettings.isIndexSwitchedOn(project) || index == null) {
+    if (data == null || !VcsLogSharedSettings.isIndexSwitchedOn(project) || index == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -85,8 +92,9 @@ class ResumeIndexingAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this)
+    val project = e.project ?: return
 
-    val data = e.getRequiredData(VcsLogInternalDataKeys.LOG_DATA)
+    val data = e.getData(VcsLogInternalDataKeys.LOG_DATA) ?: VcsProjectLog.getInstance(project).dataManager ?: return
 
     if (!VcsLogData.isIndexSwitchedOnInRegistry()) {
       val rootsForIndexing = VcsLogPersistentIndex.getAvailableIndexers(data.logProviders).keys
