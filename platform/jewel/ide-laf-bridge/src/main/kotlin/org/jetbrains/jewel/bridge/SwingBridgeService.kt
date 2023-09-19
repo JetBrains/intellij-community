@@ -1,5 +1,8 @@
 package org.jetbrains.jewel.bridge
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.text.TextStyle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -34,10 +37,17 @@ class SwingBridgeService : Disposable {
     // TODO we shouldn't assume it's Int UI, but we only have that for now
     internal val currentBridgeThemeData: StateFlow<BridgeThemeData> =
         IntelliJApplication.lookAndFeelChangedFlow(coroutineScope)
-            .mapLatest { getThemeData() }
+            .mapLatest { tryGettingThemeData() }
             .stateIn(coroutineScope, SharingStarted.Eagerly, BridgeThemeData.DEFAULT)
 
-    private suspend fun getThemeData(): BridgeThemeData {
+    @get:Composable
+    val svgLoader: SvgLoader
+        get() {
+            val data by currentBridgeThemeData.collectAsState()
+            return data.svgLoader
+        }
+
+    private suspend fun tryGettingThemeData(): BridgeThemeData {
         var counter = 0
         while (counter < 20) {
             delay(20.milliseconds)
