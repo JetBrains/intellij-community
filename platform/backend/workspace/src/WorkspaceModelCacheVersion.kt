@@ -6,7 +6,14 @@ package com.intellij.platform.backend.workspace
  * Please update version in case you change the structure of the entities.
  * This interface has a goal to reset saved workspace model cache in case the version of entities has changed.
  * Use workspaceModel.cache.version extension point to register this extension.
+ *
+ * <b>Deprecated</b>: It is no longer necessary to change the cache version.
+ * If the entity structure has changed please execute Generate Workspace Model Implementation
  */
+@Deprecated(
+  "It is no longer necessary to change the cache version." +
+  "If the entity structure has changed please execute Generate Workspace Model Implementation"
+)
 public interface WorkspaceModelCacheVersion {
   public fun getId(): String
   public fun getVersion(): String
