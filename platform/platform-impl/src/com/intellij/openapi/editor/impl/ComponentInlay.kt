@@ -126,7 +126,7 @@ private class ComponentInlaysContainer private constructor(val editor: Editor) :
         if (--contentSizeAwareInlayCount == 0)
           editor.contentComponent.removeComponentListener(contentResizeListener)
       }
-      ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> {
+      ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH -> {
         if (--visibleAreaAwareInlaysCount == 0)
           editor.scrollingModel.removeVisibleAreaListener(visibleAreaListener)
       }
@@ -147,7 +147,7 @@ private class ComponentInlaysContainer private constructor(val editor: Editor) :
         if (contentSizeAwareInlayCount++ == 0)
           editor.contentComponent.addComponentListener(contentResizeListener)
       }
-      ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> {
+      ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH -> {
         if (visibleAreaAwareInlaysCount++ == 0)
           editor.scrollingModel.addVisibleAreaListener(visibleAreaListener)
       }
@@ -181,7 +181,7 @@ private class ComponentInlaysContainer private constructor(val editor: Editor) :
     for (inlay in inlays) {
       inlay.renderer.let {
         it.inlaySize = when (it.alignment) {
-          ComponentInlayAlignment.FIT_CONTENT_WIDTH, ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> it.component.minimumSize
+          ComponentInlayAlignment.FIT_CONTENT_WIDTH, ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH -> it.component.run { Dimension(minimumSize.width, preferredSize.height) }
           else -> it.component.preferredSize
         }
       }
@@ -215,6 +215,7 @@ private class ComponentInlaysContainer private constructor(val editor: Editor) :
         val component = renderer.component
         when (renderer.alignment) {
           ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH, ComponentInlayAlignment.FIT_CONTENT_WIDTH -> component.size = Dimension(bounds.width, renderer.inlaySize.height)
+          ComponentInlayAlignment.FIT_VIEWPORT_WIDTH -> component.size = editor.scrollingModel.visibleArea.let { Dimension(it.width, renderer.inlaySize.height) }
           ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> component.bounds = editor.scrollingModel.visibleArea.let { Rectangle(it.x, renderer.component.y, it.width, renderer.inlaySize.height) }
           else -> component.size = renderer.inlaySize
         }
