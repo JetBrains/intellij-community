@@ -40,8 +40,8 @@ class SwingBridgeService : Disposable {
             .mapLatest { tryGettingThemeData() }
             .stateIn(coroutineScope, SharingStarted.Eagerly, BridgeThemeData.DEFAULT)
 
-    @get:Composable
     val svgLoader: SvgLoader
+        @Composable
         get() {
             val data by currentBridgeThemeData.collectAsState()
             return data.svgLoader

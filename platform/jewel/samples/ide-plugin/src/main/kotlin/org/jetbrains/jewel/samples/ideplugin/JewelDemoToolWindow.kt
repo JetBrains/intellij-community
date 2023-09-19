@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.samples.ideplugin
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,8 +21,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.unit.dp
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
@@ -31,14 +34,17 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.jetbrains.jewel.CheckboxRow
 import org.jetbrains.jewel.DefaultButton
 import org.jetbrains.jewel.ExperimentalJewelApi
+import org.jetbrains.jewel.Icon
 import org.jetbrains.jewel.LazyTree
 import org.jetbrains.jewel.LocalResourceLoader
 import org.jetbrains.jewel.OutlinedButton
 import org.jetbrains.jewel.RadioButtonRow
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.TextField
+import org.jetbrains.jewel.bridge.SwingBridgeService
 import org.jetbrains.jewel.bridge.SwingBridgeTheme
 import org.jetbrains.jewel.bridge.addComposeTab
+import org.jetbrains.jewel.bridge.retrieveStatelessIcon
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.tree.buildTree
 import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
@@ -64,63 +70,6 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
                 ) {
                     ColumnOne(resourceLoader)
                     ColumnTwo(resourceLoader)
-                }
-            }
-        }
-    }
-
-    @Composable
-    private fun ColumnOne(resourceLoader: ResourceLoader) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Text("Here is a selection of our finest components:")
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                var clicks1 by remember { mutableStateOf(0) }
-                OutlinedButton({ clicks1++ }) {
-                    Text("Outlined: $clicks1")
-                }
-                OutlinedButton({ }, enabled = false) {
-                    Text("Outlined")
-                }
-
-                var clicks2 by remember { mutableStateOf(0) }
-                DefaultButton({ clicks2++ }) {
-                    Text("Default: $clicks2")
-                }
-                DefaultButton({ }, enabled = false) {
-                    Text("Default")
-                }
-            }
-
-            var textFieldValue by remember { mutableStateOf("") }
-            TextField(
-                value = textFieldValue,
-                onValueChange = { textFieldValue = it },
-                placeholder = { Text("Write something...") },
-                modifier = Modifier.width(200.dp),
-            )
-
-            var checked by remember { mutableStateOf(false) }
-            CheckboxRow(
-                checked = checked,
-                onCheckedChange = { checked = it },
-                resourceLoader = resourceLoader,
-            ) {
-                Text("Hello, I am a themed checkbox")
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                var index by remember { mutableStateOf(0) }
-                RadioButtonRow(selected = index == 0, resourceLoader, onClick = { index = 0 }) {
-                    Text("I am number one")
-                }
-                RadioButtonRow(selected = index == 1, resourceLoader, onClick = { index = 1 }) {
-                    Text("Sad second")
                 }
             }
         }
@@ -180,6 +129,13 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
                 RadioButtonRow(selected = index == 1, resourceLoader, onClick = { index = 1 }) {
                     Text("Sad second")
                 }
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                val svgLoader = service<SwingBridgeService>().svgLoader
+                val painterProvider = retrieveStatelessIcon("actions/close.svg", svgLoader, IntUiTheme.iconData)
+                val painter by painterProvider.getPainter(resourceLoader)
+                Icon(painter = painter, modifier = Modifier.border(1.dp, Color.Magenta), contentDescription = "An icon")
             }
         }
     }
