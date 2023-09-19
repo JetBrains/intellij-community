@@ -42,7 +42,8 @@ class SingleSymbolReferencePattern(private val path: List<WebSymbolQualifiedName
         .asSingleSymbol()
         ?.let { listOf(ListResult(owner.name, WebSymbolNameSegment(0, owner.name.length, it))) }
       ?: emptyList()
-    } else emptyList()
+    }
+    else emptyList()
 
   override fun complete(owner: WebSymbol?,
                         scopeStack: Stack<WebSymbolsScope>,

@@ -448,8 +448,8 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
     patternsProvider().toString()
 
   private data class SequenceCompletionResult(val prevResult: MatchResult?,
-                                      val lastMatched: MatchResult,
-                                      val requiredCompletionChain: WebSymbolCodeCompletionItem?,
-                                      val onlyRequired: Boolean = false)
+                                              val lastMatched: MatchResult,
+                                              val requiredCompletionChain: WebSymbolCodeCompletionItem?,
+                                              val onlyRequired: Boolean = false)
 
 }

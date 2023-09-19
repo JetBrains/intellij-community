@@ -24,7 +24,8 @@ internal class WebSymbolsHighlightInLanguageEP {
       supportedLanguages.get().any { supportedLang ->
         if (supportedLang is MetaLanguage) {
           supportedLang.matchesLanguage(fileLanguage)
-        } else {
+        }
+        else {
           fileLanguage.isKindOf(supportedLang)
         }
       }

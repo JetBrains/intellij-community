@@ -4,10 +4,11 @@ package com.intellij.webSymbols.webTypes.impl
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
-import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
 
 class WebSymbolsFilterEP internal constructor() : CustomLoadingExtensionPointBean<WebSymbolsFilter>() {
 

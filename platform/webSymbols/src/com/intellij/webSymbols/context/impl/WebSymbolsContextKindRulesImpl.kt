@@ -6,5 +6,7 @@ import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules.DisablementRules
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules.EnablementRules
 
-internal data class WebSymbolsContextKindRulesImpl(override val enable: Map<ContextName, List<EnablementRules>>,
-                                                   override val disable: Map<ContextName, List<DisablementRules>>): WebSymbolsContextKindRules
+internal data class WebSymbolsContextKindRulesImpl(
+  override val enable: Map<ContextName, List<EnablementRules>>,
+  override val disable: Map<ContextName, List<DisablementRules>>
+) : WebSymbolsContextKindRules

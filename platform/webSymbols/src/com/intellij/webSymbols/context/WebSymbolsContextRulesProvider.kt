@@ -6,7 +6,7 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.containers.MultiMap
 import com.intellij.webSymbols.ContextKind
 
-interface WebSymbolsContextRulesProvider: ModificationTracker {
+interface WebSymbolsContextRulesProvider : ModificationTracker {
 
   fun getContextRules(): MultiMap<ContextKind, WebSymbolsContextKindRules>
 

@@ -15,7 +15,8 @@ import com.intellij.webSymbols.WebSymbolDelegate
  * for code completion.
  */
 class CodeCompletionWebSymbolWithDocumentation(delegate: WebSymbol,
-                                               private val location: PsiElement) : WebSymbolDelegate<WebSymbol>(delegate), DocumentationSymbol {
+                                               private val location: PsiElement)
+  : WebSymbolDelegate<WebSymbol>(delegate), DocumentationSymbol {
 
   override fun createPointer(): Pointer<CodeCompletionWebSymbolWithDocumentation> {
     val delegatePtr = delegate.createPointer()

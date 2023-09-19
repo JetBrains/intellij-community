@@ -7,10 +7,10 @@ import com.intellij.webSymbols.query.WebSymbolMatch
 internal class ListResult(
   val name: String,
   segments: List<WebSymbolNameSegment>,
-): MatchResult(segments) {
+) : MatchResult(segments) {
 
-  constructor(name: String, segment: WebSymbolNameSegment, displayName: String? = null):
-    this (name, listOf(segment.unpackIfPossible(name).withDisplayName(displayName)))
+  constructor(name: String, segment: WebSymbolNameSegment, displayName: String? = null) :
+    this(name, listOf(segment.unpackIfPossible(name).withDisplayName(displayName)))
 
   fun prefixedWith(prevResult: ListResult): ListResult =
     ListResult(prevResult.name + name, prevResult.segments + segments.map { it.withOffset(prevResult.name.length) })

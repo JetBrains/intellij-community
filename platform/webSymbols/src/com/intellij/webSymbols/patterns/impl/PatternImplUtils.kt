@@ -18,7 +18,7 @@ internal fun WebSymbolCodeCompletionItem.withStopSequencePatternEvaluation(stop:
 internal val WebSymbolCodeCompletionItem.stopSequencePatternEvaluation
   get() = (this as WebSymbolCodeCompletionItemImpl).stopSequencePatternEvaluation
 
-internal fun <T: MatchResult> T.addOwner(owner: WebSymbol): T {
+internal fun <T : MatchResult> T.addOwner(owner: WebSymbol): T {
   val newSegments = mutableListOf<WebSymbolNameSegment>()
   var foundNonEmpty = false
   var applied = false
@@ -50,8 +50,8 @@ internal fun <T: MatchResult> T.addOwner(owner: WebSymbol): T {
 }
 
 @Suppress("UNCHECKED_CAST")
-internal fun <T: MatchResult> T.copy(segments: List<WebSymbolNameSegment>): T =
-  when(this) {
+internal fun <T : MatchResult> T.copy(segments: List<WebSymbolNameSegment>): T =
+  when (this) {
     is ListResult -> ListResult(name, segments)
     else -> MatchResult(segments)
   } as T
@@ -107,10 +107,10 @@ internal fun <T> withPrevMatchScope(scopeStack: Stack<WebSymbolsScope>,
     }
   }
 
-internal fun <T:MatchResult> T.applyToSegments(vararg contributions: WebSymbol,
-                                         apiStatus: WebSymbolApiStatus? = null,
-                                         priority: WebSymbol.Priority? = null,
-                                         proximity: Int? = null): T =
+internal fun <T : MatchResult> T.applyToSegments(vararg contributions: WebSymbol,
+                                                 apiStatus: WebSymbolApiStatus? = null,
+                                                 priority: WebSymbol.Priority? = null,
+                                                 proximity: Int? = null): T =
   if (apiStatus != null || priority != null || proximity != null || contributions.isNotEmpty())
     copy(
       segments.map {
@@ -122,13 +122,13 @@ internal fun <T:MatchResult> T.applyToSegments(vararg contributions: WebSymbol,
 internal fun ListResult.removeEmptySegments(): ListResult =
   ListResult(
     name,
-    segments.filter { !it.isEmpty()}
+    segments.filter { !it.isEmpty() }
       .ifEmpty { listOf(segments.first()) }
   )
 
 internal fun MatchResult.removeEmptySegments(): MatchResult =
   MatchResult(
-    segments.filter { !it.isEmpty()}
+    segments.filter { !it.isEmpty() }
       .ifEmpty { listOf(segments.first()) }
   )
 

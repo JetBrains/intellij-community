@@ -19,7 +19,9 @@ interface WebSymbolsQueryConfigurator {
   fun getContextRulesProviders(project: Project, dir: VirtualFile): List<WebSymbolsContextRulesProvider> =
     emptyList()
 
-  fun getNameConversionRulesProviders(project: Project, element: PsiElement?, context: WebSymbolsContext): List<WebSymbolNameConversionRulesProvider> =
+  fun getNameConversionRulesProviders(project: Project,
+                                      element: PsiElement?,
+                                      context: WebSymbolsContext): List<WebSymbolNameConversionRulesProvider> =
     emptyList()
 
   fun beforeQueryExecutorCreation(project: Project) {
