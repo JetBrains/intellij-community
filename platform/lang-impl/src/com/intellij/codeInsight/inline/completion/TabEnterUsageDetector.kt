@@ -6,12 +6,8 @@ import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.actionSystem.KeyboardShortcut
-import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.keymap.KeymapManager
-import javax.swing.KeyStroke
 
-private class TabEnterUsageDetector : LookupManagerListener {
+class TabEnterUsageDetector : LookupManagerListener {
   private val properties = PropertiesComponent.getInstance()
 
   private var tabCount
@@ -26,19 +22,10 @@ private class TabEnterUsageDetector : LookupManagerListener {
     get() = tabCount + enterCount
 
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
-    if (detectionFinished()) {
-      // Reset previous shortcut for InsertInlineCompletionAction and change to a new one from user's behaviour
-      inlineCompletionChar()?.let { char ->
-        val keymap = KeymapManager.getInstance().activeKeymap
-
-        keymap.removeAllActionShortcuts("InsertInlineCompletionAction")
-        keymap.addShortcut("InsertInlineCompletionAction", KeyboardShortcut(KeyStroke.getKeyStroke(char), null))
-      }
-      return
-    }
+    if (detectionFinished()) return
     newLookup?.addLookupListener(object : LookupListener {
       override fun itemSelected(event: LookupEvent) {
-        when (event.completionChar) {
+        when (event.completionChar){
           '\t' -> tabCount++
           '\n' -> enterCount++
         }
@@ -46,15 +33,13 @@ private class TabEnterUsageDetector : LookupManagerListener {
     })
   }
 
-  private fun inlineCompletionChar(): Char? {
+  fun inlineCompletionChar(): Char? {
     if (!detectionFinished()) return null
-    properties.setValue(INLINE_COMPLETION_INSERT_SHORTCUT_DETECTED, true)
     val tabRatio = tabCount.toDouble() / totalCount
-    return (if (tabRatio > TAB_RATIO_THRESHOLD) '\t' else '\n')
-      .also { LOG.info("Decided to use `$it` shortcut for InsertInlineCompletionAction.") }
+    return if (tabRatio > TAB_RATIO_THRESHOLD) '\t' else '\n'
   }
 
-  private fun detectionFinished() = totalCount >= SELECTION_COUNT_THRESHOLD
+  fun detectionFinished() = totalCount >= SELECTION_COUNT_THRESHOLD
 
   companion object {
     const val TAB_SELECTION_COUNT_KEY = "tab_selection_count"
@@ -62,7 +47,5 @@ private class TabEnterUsageDetector : LookupManagerListener {
 
     const val SELECTION_COUNT_THRESHOLD = 5
     const val TAB_RATIO_THRESHOLD = 0.1
-
-    val LOG = thisLogger()
   }
 }
