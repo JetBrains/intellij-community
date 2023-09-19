@@ -12,13 +12,12 @@ import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
-import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
 public class FileEqualsUsageInspection extends DevKitUastInspectionBase {
 
-  private static final List<String> METHOD_NAMES = List.of("equals", "compareTo", "hashCode");
+  private static final Set<String> METHOD_NAMES = Set.of("equals", "compareTo", "hashCode");
 
   private static final Set<UastBinaryOperator> SUPPORTED_OPERATORS = Set.of(
     UastBinaryOperator.EQUALS,
