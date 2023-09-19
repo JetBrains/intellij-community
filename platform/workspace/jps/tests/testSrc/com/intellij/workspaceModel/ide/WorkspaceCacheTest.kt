@@ -120,6 +120,7 @@ class WorkspaceCacheTest {
   }
 
   @Test
+  @Ignore("WorkspaceModelCacheVersion is no longer used")
   fun `custom version provider with changed version`() {
     val projectData = prepareProject()
 
