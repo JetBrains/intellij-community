@@ -27,7 +27,7 @@ abstract class FilesScanningTaskBase(private val project: Project) : MergeableQu
 
   final override fun perform(indicator: ProgressIndicator) {
     val progressReporter = IndexingProgressReporter(indicator)
-    val hideProgressInSmartMode = Registry.`is`("scanning.hide.progress.in.smart.mode", false)
+    val hideProgressInSmartMode = shouldHideProgressInSmartMode()
     val shouldShowProgress: StateFlow<Boolean> = if (hideProgressInSmartMode) {
       project.service<DumbModeWhileScanningTrigger>().isDumbModeForScanningActive()
     }
@@ -48,6 +48,8 @@ abstract class FilesScanningTaskBase(private val project: Project) : MergeableQu
       taskScope.cancel()
     }
   }
+
+  protected open fun shouldHideProgressInSmartMode() = Registry.`is`("scanning.hide.progress.in.smart.mode", false)
 
   abstract fun perform(indicator: CheckCancelOnlyProgressIndicator, progressReporter: IndexingProgressReporter)
 

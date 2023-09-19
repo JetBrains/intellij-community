@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestModeFlags;
@@ -62,12 +63,16 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     PUSHING, PUSHING_AND_SCANNING
   }
 
+  private enum FirstScanningState {
+    REQUESTED, PERFORMED
+  }
+
   @SuppressWarnings("StaticNonFinalField") @VisibleForTesting
   public static volatile TestMode ourTestMode;
 
   private static final @NotNull Key<Boolean> CONTENT_SCANNED = Key.create("CONTENT_SCANNED");
   private static final @NotNull Key<Boolean> INDEX_UPDATE_IN_PROGRESS = Key.create("INDEX_UPDATE_IN_PROGRESS");
-  private static final @NotNull Key<Boolean> FIRST_SCANNING_REQUESTED = Key.create("FIRST_SCANNING_REQUESTED");
+  private static final @NotNull Key<FirstScanningState> FIRST_SCANNING_REQUESTED = Key.create("FIRST_SCANNING_REQUESTED");
   private final FileBasedIndexImpl myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
   protected final Project myProject;
   private final boolean myStartSuspended;
@@ -104,6 +109,11 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
       myProject.putUserData(CONTENT_SCANNED, null);
     }
     this.indexingRequest = indexingRequest;
+  }
+
+  @Override
+  protected boolean shouldHideProgressInSmartMode() {
+    return super.shouldHideProgressInSmartMode() || myProject.getUserData(FIRST_SCANNING_REQUESTED) == FirstScanningState.REQUESTED;
   }
 
   @Override
@@ -242,6 +252,8 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
       if (flushQueueAfterScanning) {
         flushPerProjectIndexingQueue(scanningHistory.getScanningReason(), indicator);
       }
+
+      ((UserDataHolderEx)myProject).replace(FIRST_SCANNING_REQUESTED, FirstScanningState.REQUESTED, FirstScanningState.PERFORMED);
     }
   }
 
@@ -346,7 +358,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
   }
 
   public static boolean isFirstProjectScanningRequested(@NotNull Project project) {
-    return Boolean.TRUE.equals(project.getUserData(FIRST_SCANNING_REQUESTED));
+    return project.getUserData(FIRST_SCANNING_REQUESTED) != null;
   }
 
   @NotNull
@@ -547,7 +559,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
                                                   boolean startSuspended,
                                                   @Nullable @NonNls String indexingReason) {
     FileBasedIndex.getInstance().loadIndexes();
-    project.putUserData(FIRST_SCANNING_REQUESTED, true);
+    ((UserDataHolderEx)project).putUserDataIfAbsent(FIRST_SCANNING_REQUESTED, FirstScanningState.REQUESTED);
     IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
     if (TestModeFlags.is(INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY)) {
       LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
