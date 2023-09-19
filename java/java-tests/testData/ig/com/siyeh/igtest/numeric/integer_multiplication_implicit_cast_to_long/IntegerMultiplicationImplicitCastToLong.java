@@ -4,6 +4,7 @@ public class IntegerMultiplicationImplicitCastToLong {
     void rightArgOfShift(int step) {
         // Shift operations are not subjected to binary promotion (JLS 15.19), operands are promoted separately using unary promotion rules
         long l = 1L << (step * 8);
+        l <<= step * 8;
     }
 
     void leftArgOfShift(int i) {

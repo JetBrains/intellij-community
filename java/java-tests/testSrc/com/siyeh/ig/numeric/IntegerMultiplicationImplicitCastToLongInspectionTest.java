@@ -29,6 +29,10 @@ public class IntegerMultiplicationImplicitCastToLongInspectionTest extends Light
     doTest();
   }
 
+  public void testNestedLoop() {
+    doTest();
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

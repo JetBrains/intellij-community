@@ -17,6 +17,7 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.lang.java.parser.BasicExpressionParser;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -28,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantEvaluationOverflowException;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
@@ -151,7 +153,12 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
   }
 
   private static boolean isShiftToken(IElementType tokenType) {
-    return ExpressionParser.SHIFT_OPS.contains(tokenType);
+    return BasicExpressionParser.SHIFT_OPS.contains(tokenType);
+  }
+
+  private static boolean isShiftEqToken(@NotNull IElementType tokenType) {
+    return tokenType.equals(JavaTokenType.LTLTEQ) || tokenType.equals(JavaTokenType.GTGTEQ) ||
+           tokenType.equals(JavaTokenType.GTGTGTEQ);
   }
 
   private static class IntegerMultiplicationImplicitCastToLongInspectionFix extends PsiUpdateModCommandQuickFix {
@@ -232,10 +239,15 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       }
       PsiExpression context = getContainingExpression(expression);
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(context.getParent());
-      if (parent instanceof PsiTypeCastExpression) {
-        PsiType castType = ((PsiTypeCastExpression)parent).getType();
+      if (parent instanceof PsiAssignmentExpression assignment && isShiftEqToken(assignment.getOperationTokenType()) &&
+          PsiTreeUtil.isAncestor(assignment.getRExpression(), context, false)) {
+        // like 'a <<= b * c'; 'b * c' should not be reported even if 'a' is long
+        return;
+      }
+      if (parent instanceof PsiTypeCastExpression cast) {
+        PsiType castType = cast.getType();
         if (isNonLongInteger(castType)) return;
-        if (PsiTypes.longType().equals(castType)) context = (PsiExpression)parent;
+        if (PsiTypes.longType().equals(castType)) context = cast;
       }
       if (!PsiTypes.longType().equals(context.getType()) &&
           !PsiTypes.longType().equals(ExpectedTypeUtils.findExpectedType(context, true))) {
@@ -256,7 +268,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       registerError(expression, tokenType);
     }
 
-    private boolean insideAssertEquals(PsiExpression expression) {
+    private static boolean insideAssertEquals(PsiExpression expression) {
       PsiElement parent = ExpressionUtils.getPassThroughParent(expression);
       if (parent instanceof PsiExpressionList) {
         PsiMethodCallExpression call = ObjectUtils.tryCast(parent.getParent(), PsiMethodCallExpression.class);
@@ -268,7 +280,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       return false;
     }
 
-    private boolean cannotOverflow(@NotNull PsiPolyadicExpression expression, PsiExpression[] operands, boolean shift) {
+    private static boolean cannotOverflow(@NotNull PsiPolyadicExpression expression, PsiExpression[] operands, boolean shift) {
       CommonDataflow.DataflowResult dfr = CommonDataflow.getDataflowResult(expression);
       if (dfr != null) {
         long min = 1, max = 1;
@@ -306,17 +318,16 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       return true;
     }
 
-    private boolean intOverflow(long l) {
+    private static boolean intOverflow(long l) {
       return (int)l != l && l != Integer.MAX_VALUE + 1L;
     }
 
-    private PsiExpression getContainingExpression(
-      PsiExpression expression) {
+    private static PsiExpression getContainingExpression(PsiExpression expression) {
       final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiPolyadicExpression polyParent && TypeConversionUtil.isNumericType(((PsiPolyadicExpression)parent).getType())) {
+      if (parent instanceof PsiPolyadicExpression polyParent && TypeConversionUtil.isNumericType(polyParent.getType())) {
         final IElementType tokenType = polyParent.getOperationTokenType();
         if (!isShiftToken(tokenType) || expression == polyParent.getOperands()[0]) {
-          return getContainingExpression((PsiExpression)parent);
+          return getContainingExpression(polyParent);
         }
       }
       if (parent instanceof PsiParenthesizedExpression ||

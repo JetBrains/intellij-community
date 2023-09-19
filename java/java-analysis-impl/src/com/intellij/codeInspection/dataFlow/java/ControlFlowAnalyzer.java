@@ -699,6 +699,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if(diff >= 0 && diff <= MAX_UNROLL_SIZE) {
       // Unroll small loops
       Objects.requireNonNull(statement.getUpdate()).accept(this);
+      // It's possible that a nested loop may cause widening, dismissing our efforts to track the loop variable
+      // In this case, we should at least ensure that it's not lower than the start. 
+      addInstruction(new PushInstruction(loopVar, null));
+      DfType startBound = PsiTypes.intType().equals(counterType) ? DfTypes.intValue(Math.toIntExact(start)) : DfTypes.longValue(start);
+      addInstruction(new EnsureInstruction(null, RelationType.GE, startBound, null));
+      addInstruction(new PopInstruction());
       addInstruction(new GotoInstruction(startOffset, false));
       return true;
     }
