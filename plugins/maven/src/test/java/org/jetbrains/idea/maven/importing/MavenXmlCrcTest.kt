@@ -1,185 +1,196 @@
-package org.jetbrains.idea.maven.importing;
+package org.jetbrains.idea.maven.importing
 
-import junit.framework.TestCase;
-import org.intellij.lang.annotations.Language;
-import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.junit.Test;
+import junit.framework.TestCase
+import org.intellij.lang.annotations.Language
+import org.jetbrains.idea.maven.utils.MavenUtil
+import org.junit.Test
+import java.io.ByteArrayInputStream
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-
-public class MavenXmlCrcTest extends TestCase {
+class MavenXmlCrcTest : TestCase() {
   @Test
-  public void testCrc() throws IOException {
+  fun testCrc() {
     same("""
            <project a="a" b="b">
            </project>
-           """, """
+           
+           """.trimIndent(), """
            <project a="a"
                     b="b"   >
            </project>
-           """);
+           """.trimIndent())
 
     same("""
            <project>
              <build><a>value</a></build>
            </project>
-           """, """
+           
+           """.trimIndent(), """
            <project>
              <build>
                <a>value</a>
              </build>
            </project>
-           """);
+           """.trimIndent())
 
     same("""
            <project></project>
-           """, """
+           
+           """.trimIndent(), """
            <project>
                  <!-- comment -->
            </project>
-           """);
+           """.trimIndent())
 
     different("""
                 <project>
                   <a>foo</a>
                 </project>
-                """, """
+                
+                """.trimIndent(), """
                 <project>
                   <a>foo</a> text
                 </project>
-                """);
+                """.trimIndent())
 
     different("""
                 <project>
                   <a>foo</a>
                 </project>
-                """, """
+                
+                """.trimIndent(), """
                 <project>
                   <b>foo</b>
                 </project>
-                """);
+                """.trimIndent())
 
     same("""
            <project>
              <a>foo</a>
            </project>
-           """, """
+           
+           """.trimIndent(), """
            <project>
              <a><!-- comment -->foo<!-- comment --></a>
            </project>
-           """);
+           """.trimIndent())
 
     same("""
            <project>
              <a>foo</a>
            </project>
-           """, """
+           
+           """.trimIndent(), """
            <project>
              <a>
              <!-- comment -->foo<!-- comment -->
              </a>
            </project>
-           """);
+           """.trimIndent())
 
     same("""
            <project>
              <a>foo</a>
            </project>
-           """, """
+           
+           """.trimIndent(), """
            <project>
              <a>fo<!-- comment -->o</a>
            </project>
-           """);
+           """.trimIndent())
 
     same("""
            <project>
              ab <a/>cd
            </project>
-           """, """
+           
+           """.trimIndent(), """
            <project>
              ab <a/> <!-- c --> cd
            </project>
-           """);
+           """.trimIndent())
 
     different("""
                 <project>
                   <a>foo bar</a>
                 </project>
-                """, """
+                
+                """.trimIndent(), """
                 <project>
                   <a>foo    bar</a>
                 </project>
-                """);
+                """.trimIndent())
 
     different("""
                 <project>
                   <a>foo bar</a>
                 </project>
-                """, """
+                
+                """.trimIndent(), """
                 <project>
-                  <a>foo\tbar</a>
+                  <a>foo${'\t'}bar</a>
                 </project>
-                """);
+                """.trimIndent())
 
     different("""
                 <project>
                   <a>111</a>
                 </project>
-                """, """
+                
+                """.trimIndent(), """
                 <project>
                   <a>222</a>
                 </project>
-                """);
+                """.trimIndent())
 
     different("""
                 <project>
                 </project>
-                """, """
+                
+                """.trimIndent(), """
                 < project>
                 </project>
-                """);
+                """.trimIndent())
 
     // All invalid xmls are same
     same("\n", """
       <project>
         <sss>
       </project>
-      """);
+      """.trimIndent())
   }
 
-  public void testInvalidXml() throws IOException {
-    assert crc("""
+  fun testInvalidXml() {
+    assert(crc("""
                  <   project>
                  </project>
-                 """) == -1;
-
-    assert crc("""
+                 """.trimIndent()) == -1)
+    assert(crc("""
                  <project>
-                 """) == -1;
-
-    assert crc("""
+                 """.trimIndent()) == -1)
+    assert(crc("""
                  <project>
                    <sss>
                  </project>
-                 """) == -1;
+                 """.trimIndent()) == -1)
   }
 
-  private static int crc(String text) throws IOException {
-    return MavenUtil.crcWithoutSpaces(new ByteArrayInputStream(text.getBytes()));
-  }
+  companion object {
+    private fun crc(text: String): Int {
+      return MavenUtil.crcWithoutSpaces(ByteArrayInputStream(text.toByteArray()))
+    }
 
-  private static void same(@Language("XML") String xml1, @Language("XML") String xml2) throws IOException {
-    int crc1 = crc(xml1);
-    int crc2 = crc(xml2);
+    private fun same(@Language("XML") xml1: String, @Language("XML") xml2: String) {
+      val crc1 = crc(xml1)
+      val crc2 = crc(xml2)
 
-    assert crc1 == crc2;
-  }
+      assert(crc1 == crc2)
+    }
 
-  private static void different(@Language("XML") String xml1, @Language("XML") String xml2) throws IOException {
-    int crc1 = crc(xml1);
-    int crc2 = crc(xml2);
+    private fun different(@Language("XML") xml1: String, @Language("XML") xml2: String) {
+      val crc1 = crc(xml1)
+      val crc2 = crc(xml2)
 
-    assert crc1 != crc2;
+      assert(crc1 != crc2)
+    }
   }
 }
