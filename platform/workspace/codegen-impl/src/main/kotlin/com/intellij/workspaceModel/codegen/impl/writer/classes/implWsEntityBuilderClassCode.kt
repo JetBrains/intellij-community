@@ -3,13 +3,14 @@ package com.intellij.workspaceModel.codegen.impl.writer.classes
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.writer.*
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsBuilderFieldCode
 import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsBuilderIsInitializedCode
 
 fun ObjClass<*>.implWsEntityBuilderCode(): String {
   return """
-    class Builder(result: $javaDataName?): ${ModifiableWorkspaceEntityBase}<$javaFullName, $javaDataName>(result), $javaBuilderName {
-        constructor(): this($javaDataName())
+    $generatedCodeVisibilityModifier class Builder(result: $javaDataName?): ${ModifiableWorkspaceEntityBase}<$javaFullName, $javaDataName>(result), $javaBuilderName {
+        $generatedCodeVisibilityModifier constructor(): this($javaDataName())
         
 ${
     lines(2) {
@@ -46,7 +47,7 @@ ${
       }
       result.append("\n")
 
-      section("fun checkInitialization()") {
+      section("private fun checkInitialization()") {
         line("val _diff = diff")
         list(allFields.noSymbolicId().noOptional().noDefaultValue()) { lineBuilder, field ->
           lineBuilder.implWsBuilderIsInitializedCode(field)
