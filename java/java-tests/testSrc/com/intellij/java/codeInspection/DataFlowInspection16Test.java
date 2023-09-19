@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +19,9 @@ public class DataFlowInspection16Test extends DataFlowInspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
   }
 
-  public void testInstanceOfPattern() { doTest(); }
+  public void testInstanceOfPattern() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20, () -> doTest());
+  }
   public void testSwitchStatements() { doTest(); }
   public void testSwitchStatementUnreachableBranches() { doTest(); }
   public void testSwitchExpressions() { doTest(); }
@@ -37,7 +41,7 @@ public class DataFlowInspection16Test extends DataFlowInspectionTestCase {
                        "@javax.annotation.meta.TypeQualifierDefault({PARAMETER, METHOD}) " +
                        "@javax.annotation.Nonnull " +
                        "public @interface NonnullByDefault {}");
-    doTest(); 
+    doTest();
   }
   public void testStaticFieldInAnonymous() { doTest(); }
 
