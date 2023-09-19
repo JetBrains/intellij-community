@@ -84,7 +84,7 @@ public final class FSRecordsImpl {
 
   public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = getBooleanProperty("vfs.attributes-storage.streamlined", true);
   /** Supported values: 'over-old-page-cache', 'over-lock-free-page-cache', 'over-mmapped-file'... */
-  private static final String ATTRIBUTES_STORAGE_IMPL = System.getProperty("vfs.attributes-storage.impl", "over-lock-free-page-cache");
+  private static final String ATTRIBUTES_STORAGE_IMPL = System.getProperty("vfs.attributes-storage.impl", "over-mmapped-file");
   public static final boolean USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE = "over-lock-free-page-cache".equals(ATTRIBUTES_STORAGE_IMPL);
   public static final boolean USE_ATTRIBUTES_OVER_MMAPPED_FILE = "over-mmapped-file".equals(ATTRIBUTES_STORAGE_IMPL);
   
@@ -101,7 +101,7 @@ public final class FSRecordsImpl {
   private static final String CONTENT_STORAGE_IMPL = System.getProperty("vfs.content-storage.impl", "over-lock-free-page-cache");
   public static final boolean USE_CONTENT_STORAGE_OVER_NEW_FILE_PAGE_CACHE = "over-lock-free-page-cache".equals(CONTENT_STORAGE_IMPL);
 
-  private static final String CONTENT_HASH_IMPL = System.getProperty("vfs.content-hash-storage.impl", "over-old-page-cache");
+  private static final String CONTENT_HASH_IMPL = System.getProperty("vfs.content-hash-storage.impl", "over-mmapped-file");
   public static final boolean USE_CONTENT_HASH_STORAGE_OVER_MMAPPED_FILE = "over-mmapped-file".equals(CONTENT_HASH_IMPL);
   //@formatter:on
 
