@@ -929,11 +929,10 @@ public class StreamChainInliner implements CallInliner {
       if (qualifierExpression != null) {
         PsiType optValueType = PsiUtil.substituteTypeParameter(qualifierExpression.getType(), JAVA_UTIL_OPTIONAL, 0, false);
         if (optValueType != null) {
-          builder.pushExpression(qualifierExpression);
-          builder //optVar
-            .unwrap(SpecialField.OPTIONAL_VALUE) //optVar.value
-            .pushForWrite(builder.createTempVariable(qualifierExpression.getType()))//optVar.value optValueVar
-            .swap() //optValueVar optVar.value
+          builder
+            .pushForWrite(builder.createTempVariable(qualifierExpression.getType()))// optValueVar
+            .pushExpression(qualifierExpression) //optValueVar optVar
+            .unwrap(SpecialField.OPTIONAL_VALUE) //optValueVar optVar.value
             .assign() //optValueVar
             .dup() //optValueVar optValueVar
             .chain(firstStep::before)
