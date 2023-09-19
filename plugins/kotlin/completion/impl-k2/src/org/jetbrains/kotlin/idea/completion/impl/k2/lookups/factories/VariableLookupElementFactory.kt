@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.lookups.*
@@ -26,10 +25,9 @@ import org.jetbrains.kotlin.renderer.render
 
 internal class VariableLookupElementFactory {
     context(KtAnalysisSession)
-fun createLookup(
+    fun createLookup(
         signature: KtVariableLikeSignature<*>,
         options: CallableInsertionOptions,
-        substitutor: KtSubstitutor = KtSubstitutor.Empty(token),
     ): LookupElementBuilder {
         val rendered = renderVariable(signature)
         var builder = createLookupElementBuilder(options, signature, rendered)
@@ -44,7 +42,7 @@ fun createLookup(
     }
 
     context(KtAnalysisSession)
-private fun createLookupElementBuilder(
+    private fun createLookupElementBuilder(
         options: CallableInsertionOptions,
         signature: KtVariableLikeSignature<*>,
         rendered: String,
@@ -87,7 +85,7 @@ private fun createLookupElementBuilder(
     }
 
     context(KtAnalysisSession)
-private fun markIfSyntheticJavaProperty(
+    private fun markIfSyntheticJavaProperty(
         lookupElementBuilder: LookupElementBuilder,
         symbol: KtVariableLikeSymbol
     ): LookupElementBuilder = when (symbol) {
