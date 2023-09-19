@@ -10,6 +10,9 @@ private const val workspaceStorageIndicesPackageName = "$workspaceBasePackageNam
 private const val workspaceStorageAnnotationsPackageName = "$workspaceBasePackageName.storage.annotations"
 private const val workspaceStorageContainersPackageName = "$workspaceBasePackageName.storage.impl.containers"
 
+private const val workspaceStorageMetadataPackageName = "$workspaceBasePackageName.storage.metadata"
+private const val workspaceStorageMetamodelPackageName = "$workspaceStorageMetadataPackageName.model"
+private const val workspaceStorageMetadataImplPackageName = "$workspaceStorageMetadataPackageName.impl"
 
 
 internal val GeneratedCodeApiVersion = fqn(workspaceStoragePackageName, "GeneratedCodeApiVersion")
@@ -62,7 +65,6 @@ internal object WorkspaceEntity {
 }
 
 internal val WorkspaceEntityData = fqn(workspaceStorageImplPackageName, "WorkspaceEntityData")
-internal val UsedClassesCollector = fqn(workspaceStorageImplPackageName, "UsedClassesCollector")
 
 
 internal val EntitySource = fqn(workspaceStoragePackageName, "EntitySource")
@@ -82,6 +84,34 @@ internal object EntityInformation {
     return fqn(packageName, className).toString()
   }
 }
+
+//Storage metamodel classes
+internal object MetadataStorage {
+  private const val BASE_NAME = "MetadataStorageBase"
+  internal const val IMPL_NAME = "MetadataStorageImpl"
+
+  internal val base = fqn(workspaceStorageMetadataImplPackageName, BASE_NAME)
+
+  internal val addMetadata = "addMetadata"
+  internal val getMetadataByTypeFqn = "getMetadataByTypeFqn"
+}
+
+internal val EntityMetadata = fqn(workspaceStorageMetamodelPackageName, "EntityMetadata")
+
+internal val StorageTypeMetadata = fqn(workspaceStorageMetamodelPackageName, "StorageTypeMetadata")
+internal val ClassMetadata = fqn(workspaceStorageMetamodelPackageName, "FinalClassMetadata.ClassMetadata")
+internal val ObjectMetadata = fqn(workspaceStorageMetamodelPackageName, "FinalClassMetadata.ObjectMetadata")
+internal val EnumClassMetadata = fqn(workspaceStorageMetamodelPackageName, "FinalClassMetadata.EnumClassMetadata")
+internal val KnownClass = fqn(workspaceStorageMetamodelPackageName, "FinalClassMetadata.KnownClass")
+internal val AbstractClassMetadata = fqn(workspaceStorageMetamodelPackageName, "ExtendableClassMetadata.AbstractClassMetadata")
+
+internal val OwnPropertyMetadata = fqn(workspaceStorageMetamodelPackageName, "OwnPropertyMetadata")
+internal val ExtPropertyMetadata = fqn(workspaceStorageMetamodelPackageName, "ExtPropertyMetadata")
+
+internal val ParameterizedType = fqn(workspaceStorageMetamodelPackageName, "ValueTypeMetadata.ParameterizedType")
+internal val PrimitiveType = fqn(workspaceStorageMetamodelPackageName, "ValueTypeMetadata.SimpleType.PrimitiveType")
+internal val CustomType = fqn(workspaceStorageMetamodelPackageName, "ValueTypeMetadata.SimpleType.CustomType")
+internal val EntityReference = fqn(workspaceStorageMetamodelPackageName, "ValueTypeMetadata.EntityReference")
 
 // Entity
 internal val LibraryEntity = fqn(workspaceEntitiesPackageName, "LibraryEntity")
