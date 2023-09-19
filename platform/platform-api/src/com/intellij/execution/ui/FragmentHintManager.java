@@ -18,7 +18,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
@@ -31,16 +30,15 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 
 public class FragmentHintManager {
   private final List<SettingsEditorFragment<?, ?>> myFragments = new ArrayList<>();
+  private final Set<String> myHints = new HashSet<>();
   private final @NotNull Consumer<? super String> myHintConsumer;
   private final String myDefaultHint;
   private final String myConfigId;
-  private int myHintNumber;
   private long myHintsShownTime;
 
   public FragmentHintManager(@NotNull Consumer<? super @NlsContexts.DialogMessage String> hintConsumer,
@@ -137,15 +135,16 @@ public class FragmentHintManager {
   private void processKeyEvent(KeyEvent keyEvent) {
     if (keyEvent.getKeyCode() != KeyEvent.VK_ALT) return;
     if (keyEvent.getID() == KeyEvent.KEY_PRESSED) {
-      myHintNumber = 0;
-      myHintsShownTime = System.currentTimeMillis();
       for (SettingsEditorFragment<?, ?> fragment : myFragments) {
         JComponent component = fragment.getComponent();
         Window window = ComponentUtil.getWindow(component);
         if (window == null || !window.isFocused()) {
           return;
         }
-        if (fragment.isSelected() && fragment.getName() != null && component.getRootPane() != null) {
+        if (fragment.isSelected() &&
+            fragment.getName() != null &&
+            component.getRootPane() != null &&
+            !myHints.contains(fragment.toString())) {
           JComponent hintComponent = createHintComponent(fragment);
           Rectangle rect = component.getVisibleRect();
           if (rect.height < component.getHeight()) {
@@ -154,16 +153,23 @@ public class FragmentHintManager {
           RelativePoint point = new RelativePoint(component, new Point(rect.x + rect.width - hintComponent.getPreferredSize().width,
                                                                        rect.y - hintComponent.getPreferredSize().height + 5));
           HintManager.getInstance().showHint(hintComponent, point, HintManager.HIDE_BY_ANY_KEY, -1);
-          myHintNumber++;
+          myHints.add(fragment.toString());
         }
       }
+      if (!myHints.isEmpty() && myHintsShownTime == 0) myHintsShownTime = System.currentTimeMillis();
     }
-    else if (keyEvent.getID() == KeyEvent.KEY_RELEASED && myHintNumber > 0) {
+    else if (keyEvent.getID() == KeyEvent.KEY_RELEASED && !myHints.isEmpty()) {
       HintManager.getInstance().hideAllHints();
       Project project = DataManager.getInstance().getDataContext(keyEvent.getComponent()).getData(CommonDataKeys.PROJECT);
-      FragmentStatisticsService.getInstance().logHintsShown(project, myConfigId, myHintNumber, System.currentTimeMillis() - myHintsShownTime);
+      FragmentStatisticsService.getInstance()
+        .logHintsShown(project, myConfigId, myHints.size(), System.currentTimeMillis() - myHintsShownTime);
       myHintsShownTime = 0;
-      myHintNumber = 0;
+      myHints.clear();
+    }
+    else {
+      HintManager.getInstance().hideAllHints();
+      myHintsShownTime = 0;
+      myHints.clear();
     }
   }
 
