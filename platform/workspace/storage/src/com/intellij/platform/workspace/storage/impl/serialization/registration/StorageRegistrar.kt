@@ -91,6 +91,8 @@ internal class StorageClassesRegistrar(private val serializerUtil: StorageSerial
 
     registerEmptyCollections(kryo)
 
+    registerAnonymizedEntitySources(kryo)
+
     kryo.register(UUID::class.java)
   }
 
@@ -225,5 +227,11 @@ internal class StorageClassesRegistrar(private val serializerUtil: StorageSerial
     registerSingletonSerializer(kryo) { emptyList<Any>() }
     registerSingletonSerializer(kryo) { emptySet<Any>() }
     registerSingletonSerializer(kryo) { emptyArray<Any>() }
+  }
+
+  private fun registerAnonymizedEntitySources(kryo: Kryo) {
+    kryo.register(AnonymizedEntitySource::class.java)
+    kryo.register(MatchedEntitySource::class.java)
+    kryo.register(UnmatchedEntitySource::class.java)
   }
 }

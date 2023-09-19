@@ -6,12 +6,11 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.workspace.storage.*
 import com.intellij.util.io.Compressor
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
+import com.intellij.platform.workspace.storage.impl.serialization.getCacheMetadata
+import com.intellij.platform.workspace.storage.impl.serialization.registration.registerEntitiesClasses
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -86,7 +85,10 @@ internal fun MutableEntityStorageImpl.serializeDiff(file: Path) {
 }
 
 private fun MutableEntityStorageImpl.serializeDiff(serializer: EntityStorageSerializerImpl, file: Path) {
-  serializer.serializeDiffLog(file, changeLog.changeLog.anonymize())
+  serializer.serializeDiffLog(
+    file, changeLog.changeLog.anonymize(),
+    indexes.entitySourceIndex.entries(), indexes.symbolicIdIndex.entries()
+  )
 }
 
 internal fun EntityStorage.anonymize(sourceFilter: ((EntitySource) -> Boolean)?): EntityStorage {
@@ -215,15 +217,15 @@ private fun serializeContentToFolder(contentFolder: Path,
   else null
 }
 
-private fun EntityStorageSerializerImpl.serializeDiffLog(file: Path, log: ChangeLog) {
-  throw UnsupportedOperationException("Function is unsupported")
-  /*val output = createKryoOutput(file)
+private fun EntityStorageSerializerImpl.serializeDiffLog(file: Path, log: ChangeLog,
+                                                         entitySources: Collection<EntitySource>,
+                                                         symbolicIds: Collection<SymbolicEntityId<*>>) {
+  val output = createKryoOutput(file)
   try {
     val (kryo, classCache) = createKryo()
 
     // Save version
     output.writeString(serializerDataFormatVersion)
-    saveContributedVersions(kryo, output)
 
     val entityDataSequence = log.values.mapNotNull {
       when (it) {
@@ -235,25 +237,26 @@ private fun EntityStorageSerializerImpl.serializeDiffLog(file: Path, log: Change
       }
     }.asSequence()
 
-    collectAndRegisterClasses(kryo, output, entityDataSequence)
+    val entitiesMetadata = getCacheMetadata(entityDataSequence, entitySources, symbolicIds, typesResolver)
+    kryo.writeObject(output, entitiesMetadata)
+
+    registerEntitiesClasses(kryo, entitiesMetadata, typesResolver, classCache)
 
     kryo.writeClassAndObject(output, log)
   }
   finally {
     closeOutput(output)
-  }*/
+  }
 }
 
 private fun EntityStorageSerializerImpl.serializeClassToIntConverter(file: Path) {
-  throw UnsupportedOperationException("Function is unsupported")
-  /*val converterMap = ClassToIntConverter.INSTANCE.getMap().toMap()
+  val converterMap = ClassToIntConverter.getInstance().getMap().toMap()
   val output = createKryoOutput(file)
   try {
     val (kryo, _) = createKryo()
 
     // Save version
     output.writeString(serializerDataFormatVersion)
-    saveContributedVersions(kryo, output)
 
     val mapData = converterMap.map { (key, value) -> key.typeInfo to value }
 
@@ -261,7 +264,7 @@ private fun EntityStorageSerializerImpl.serializeClassToIntConverter(file: Path)
   }
   finally {
     closeOutput(output)
-  }*/
+  }
 }
 
 internal fun reportConsistencyIssue(message: String,

@@ -42,7 +42,7 @@ import kotlin.system.measureNanoTime
 private val LOG = logger<EntityStorageSerializerImpl>()
 
 public class EntityStorageSerializerImpl(
-  private val typesResolver: EntityTypesResolver,
+  internal val typesResolver: EntityTypesResolver,
   private val virtualFileManager: VirtualFileUrlManager,
   private val urlRelativizer: UrlRelativizer? = null
 ) : EntityStorageSerializer {
@@ -248,8 +248,7 @@ public class EntityStorageSerializerImpl(
   @TestOnly
   @Suppress("UNCHECKED_CAST")
   public fun deserializeCacheAndDiffLog(file: Path, diffLogFile: Path): MutableEntityStorage? {
-    throw UnsupportedOperationException("Function is unsupported")
-    /*val builder = deserializeCache(file).getOrThrow() ?: return null
+    val builder = deserializeCache(file).getOrThrow() ?: return null
 
     var log: ChangeLog
     createKryoInput(diffLogFile).use { input ->
@@ -262,9 +261,15 @@ public class EntityStorageSerializerImpl(
         return null
       }
 
-      if (!checkContributedVersion(kryo, input)) return null
+      val cacheMetadata = kryo.readObject(input, CacheMetadata::class.java)
+      val currentMetadata = loadCurrentEntitiesMetadata(cacheMetadata, typesResolver)
+      val comparisonResult = compareMetadata(cacheMetadata, currentMetadata)
+      if (!comparisonResult.areEquals) {
+        LOG.info("Cache isn't loaded. Reason:\n${comparisonResult.info}")
+        return null
+      }
 
-      readAndRegisterClasses(input, kryo, classCache)
+      readAndRegisterClasses(kryo, input, cacheMetadata, classCache)
 
       log = kryo.readClassAndObject(input) as ChangeLog
     }
@@ -273,14 +278,13 @@ public class EntityStorageSerializerImpl(
     builder.changeLog.changeLog.clear()
     builder.changeLog.changeLog.putAll(log)
 
-    return builder*/
+    return builder
   }
 
   @TestOnly
   @Suppress("UNCHECKED_CAST")
   public fun deserializeClassToIntConverter(file: Path) {
-    throw UnsupportedOperationException("Function is unsupported")
-    /*createKryoInput(file).use { input ->
+    createKryoInput(file).use { input ->
       val (kryo, _) = createKryo()
 
       // Read version
@@ -290,31 +294,29 @@ public class EntityStorageSerializerImpl(
         return
       }
 
-      if (!checkContributedVersion(kryo, input)) return
-
       val classes = kryo.readClassAndObject(input) as List<Pair<TypeInfo, Int>>
       val map = Object2IntOpenHashMap<Class<*>>()
       for ((first, second) in classes) {
-        map.put(typesResolver.resolveClass(first.name, first.pluginId), second)
+        map.put(typesResolver.resolveClass(first.fqName, first.pluginId), second)
       }
-      ClassToIntConverter.INSTANCE.fromMap(map)
-    }*/
+      ClassToIntConverter.getInstance().fromMap(map)
+    }
   }
 
-  private fun createKryoOutput(file: Path): Output {
+  internal fun createKryoOutput(file: Path): Output {
     val output = KryoOutput(file)
     output.variableLengthEncoding = false
     return output
   }
 
-  private fun createKryoInput(file: Path): Input {
+  internal fun createKryoInput(file: Path): Input {
     val input = KryoInput(file)
     input.variableLengthEncoding = false
     return input
   }
 
 
-  private fun closeOutput(output: Output) {
+  internal fun closeOutput(output: Output) {
     try {
       output.close()
     }
