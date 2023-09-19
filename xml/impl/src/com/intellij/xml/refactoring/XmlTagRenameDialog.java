@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.refactoring;
 
 import com.intellij.codeInsight.completion.TagNameReferenceCompletionProvider;
@@ -41,7 +41,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   private final XmlTag myTag;
   private NameSuggestionsField.DataChanged myNameChangedListener;
 
-  public XmlTagRenameDialog(@NotNull final Editor editor, @NotNull final PsiElement element, @NotNull final XmlTag tag) {
+  public XmlTagRenameDialog(final @NotNull Editor editor, final @NotNull PsiElement element, final @NotNull XmlTag tag) {
     super(element.getProject(), true);
 
     myEditor = editor;
@@ -69,12 +69,12 @@ public class XmlTagRenameDialog extends RefactoringDialog {
     return false;
   }
 
-  private static String getFullName(@NotNull final XmlTag tag) {
+  private static String getFullName(final @NotNull XmlTag tag) {
     final String name = DescriptiveNameUtil.getDescriptiveName(tag);
     return (UsageViewUtil.getType(tag) + " " + name).trim();
   }
 
-  public static void renameXmlTag(final Editor editor, @NotNull final PsiElement element, @NotNull final XmlTag tag) {
+  public static void renameXmlTag(final Editor editor, final @NotNull PsiElement element, final @NotNull XmlTag tag) {
     final XmlTagRenameDialog dialog = new XmlTagRenameDialog(editor, element, tag);
     dialog.show();
   }
@@ -121,8 +121,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return null;
   }
 

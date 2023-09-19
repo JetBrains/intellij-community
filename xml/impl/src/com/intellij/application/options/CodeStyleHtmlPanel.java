@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.RightMarginForm;
@@ -290,8 +290,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  @NotNull
-  protected FileType getFileType() {
+  protected @NotNull FileType getFileType() {
     return HtmlFileType.INSTANCE;
   }
 

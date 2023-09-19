@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -132,7 +132,7 @@ final class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       if (ns.isEmpty()) continue;
       fbi.processValues(XmlNamespaceIndex.NAME, ns, null, new FileBasedIndex.ValueProcessor<>() {
         @Override
-        public boolean process(@NotNull final VirtualFile file, XsdNamespaceBuilder value) {
+        public boolean process(final @NotNull VirtualFile file, XsdNamespaceBuilder value) {
           List<String> tags = value.getRootTags();
           for (String s : tags) {
             elements.add(LookupElementBuilder.create(s)

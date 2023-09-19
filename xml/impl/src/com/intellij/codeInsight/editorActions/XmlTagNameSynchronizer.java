@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
@@ -406,8 +406,7 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
       return extension.isValidTagNameChar(c);
     }
 
-    @Nullable
-    private XmlExtension getXmlExtension() {
+    private @Nullable XmlExtension getXmlExtension() {
       Document document = myEditor.getDocument();
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       PsiFile psiFile = file != null && file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null;
@@ -502,8 +501,7 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
       return document.getText(leader).equals(document.getText(support));
     }
 
-    @Nullable
-    private static TextRange findSupportRange(@Nullable PsiElement leader) {
+    private static @Nullable TextRange findSupportRange(@Nullable PsiElement leader) {
       if (leader == null || TreeUtil.findSibling(leader.getNode(), XmlTokenType.XML_TAG_END) == null) return null;
       PsiElement support = RenameTagBeginOrEndIntentionAction.findOtherSide(leader, false);
       if (support == null || leader == support) support = RenameTagBeginOrEndIntentionAction.findOtherSide(leader, true);

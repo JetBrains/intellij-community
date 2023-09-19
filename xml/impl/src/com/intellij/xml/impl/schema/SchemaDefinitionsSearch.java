@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,7 +26,7 @@ import java.util.function.BiFunction;
 
 public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement> {
   @Override
-  public boolean execute(@NotNull final PsiElement queryParameters, @NotNull final Processor<? super PsiElement> consumer) {
+  public boolean execute(final @NotNull PsiElement queryParameters, final @NotNull Processor<? super PsiElement> consumer) {
     if (queryParameters instanceof XmlTag xml) {
       if (ReadAction.compute(() -> isTypeElement(xml))) {
         final Collection<SchemaTypeInfo> infos = ReadAction.compute(() -> gatherInheritors(xml));

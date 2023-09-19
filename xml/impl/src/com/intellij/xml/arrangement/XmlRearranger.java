@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.arrangement;
 
 import com.intellij.openapi.editor.Document;
@@ -44,25 +44,22 @@ public class XmlRearranger
 
   private static final DefaultArrangementSettingsSerializer SETTINGS_SERIALIZER = new DefaultArrangementSettingsSerializer(DEFAULT_SETTINGS);
 
-  @NotNull
-  public static StdArrangementMatchRule attrArrangementRule(@NotNull String nameFilter,
-                                                            @NotNull String namespaceFilter,
-                                                            @NotNull ArrangementSettingsToken orderType) {
+  public static @NotNull StdArrangementMatchRule attrArrangementRule(@NotNull String nameFilter,
+                                                                     @NotNull String namespaceFilter,
+                                                                     @NotNull ArrangementSettingsToken orderType) {
     return new StdArrangementMatchRule(new StdArrangementEntryMatcher(ArrangementUtil.combine(
       new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, nameFilter),
       new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.XML_NAMESPACE, namespaceFilter)
     )), orderType);
   }
 
-  @NotNull
   @Override
-  public ArrangementSettingsSerializer getSerializer() {
+  public @NotNull ArrangementSettingsSerializer getSerializer() {
     return SETTINGS_SERIALIZER;
   }
 
-  @Nullable
   @Override
-  public StdArrangementSettings getDefaultSettings() {
+  public @Nullable StdArrangementSettings getDefaultSettings() {
     return DEFAULT_SETTINGS;
   }
 
@@ -75,19 +72,17 @@ public class XmlRearranger
         || BY_NAME.equals(token);
   }
 
-  @NotNull
   @Override
-  public Collection<Set<ArrangementSettingsToken>> getMutexes() {
+  public @NotNull Collection<Set<ArrangementSettingsToken>> getMutexes() {
     return Collections.singleton(SUPPORTED_TYPES);
   }
 
-  @Nullable
   @Override
-  public Pair<XmlElementArrangementEntry, List<XmlElementArrangementEntry>> parseWithNew(@NotNull PsiElement root,
-                                                                                         @Nullable Document document,
-                                                                                         @NotNull Collection<? extends TextRange> ranges,
-                                                                                         @NotNull PsiElement element,
-                                                                                         @NotNull ArrangementSettings settings)
+  public @Nullable Pair<XmlElementArrangementEntry, List<XmlElementArrangementEntry>> parseWithNew(@NotNull PsiElement root,
+                                                                                                   @Nullable Document document,
+                                                                                                   @NotNull Collection<? extends TextRange> ranges,
+                                                                                                   @NotNull PsiElement element,
+                                                                                                   @NotNull ArrangementSettings settings)
   {
     final XmlArrangementParseInfo newEntryInfo = new XmlArrangementParseInfo();
     element.accept(new XmlArrangementVisitor(newEntryInfo, Collections.singleton(element.getTextRange())));
@@ -101,12 +96,11 @@ public class XmlRearranger
     return Pair.create(entry, existingEntriesInfo.getEntries());
   }
 
-  @NotNull
   @Override
-  public List<XmlElementArrangementEntry> parse(@NotNull PsiElement root,
-                                                @Nullable Document document,
-                                                @NotNull Collection<? extends TextRange> ranges,
-                                                @NotNull ArrangementSettings settings) {
+  public @NotNull List<XmlElementArrangementEntry> parse(@NotNull PsiElement root,
+                                                         @Nullable Document document,
+                                                         @NotNull Collection<? extends TextRange> ranges,
+                                                         @NotNull ArrangementSettings settings) {
     final XmlArrangementParseInfo parseInfo = new XmlArrangementParseInfo();
     root.accept(new XmlArrangementVisitor(parseInfo, ranges));
     return parseInfo.getEntries();
@@ -120,15 +114,13 @@ public class XmlRearranger
     return -1;
   }
 
-  @Nullable
   @Override
-  public List<CompositeArrangementSettingsToken> getSupportedGroupingTokens() {
+  public @Nullable List<CompositeArrangementSettingsToken> getSupportedGroupingTokens() {
     return null;
   }
 
-  @Nullable
   @Override
-  public List<CompositeArrangementSettingsToken> getSupportedMatchingTokens() {
+  public @Nullable List<CompositeArrangementSettingsToken> getSupportedMatchingTokens() {
     return List.of(
       new CompositeArrangementSettingsToken(TYPE, SUPPORTED_TYPES),
       new CompositeArrangementSettingsToken(StdArrangementTokens.Regexp.NAME),
@@ -137,9 +129,8 @@ public class XmlRearranger
     );
   }
 
-  @NotNull
   @Override
-  public ArrangementEntryMatcher buildMatcher(@NotNull ArrangementMatchCondition condition) throws IllegalArgumentException {
+  public @NotNull ArrangementEntryMatcher buildMatcher(@NotNull ArrangementMatchCondition condition) throws IllegalArgumentException {
     throw new IllegalArgumentException("Can't build a matcher for condition " + condition);
   }
 }

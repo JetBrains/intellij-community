@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.HtmlSettings;
@@ -102,8 +102,7 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
     return xmlTag != null && xmlTag.getLanguage() == XHTMLLanguage.INSTANCE;
   }
 
-  @NonNls
-  public static String @NotNull [] addSpecificCompletions(final XmlAttribute attribute) {
+  public static @NonNls String @NotNull [] addSpecificCompletions(final XmlAttribute attribute) {
     @NonNls String name = attribute.getName();
     final XmlTag tag = attribute.getParent();
     if (tag == null) return ArrayUtilRt.EMPTY_STRING_ARRAY;

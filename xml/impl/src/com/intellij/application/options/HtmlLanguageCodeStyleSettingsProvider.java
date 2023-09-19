@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.lang.Language;
@@ -16,9 +16,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class HtmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
-  @NotNull
   @Override
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return HTMLLanguage.INSTANCE;
   }
 
@@ -31,9 +30,8 @@ public class HtmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     return XmlBundle.message("options.html.display.name");
   }
 
-  @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
+  public @Nullable CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new HtmlCodeStyleSettings(settings);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.template.formatter;
 
 import com.intellij.formatting.*;
@@ -74,8 +74,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
     return super.createModel(formattingContext);
   }
 
-  @NotNull
-  protected DocumentBasedFormattingModel createDummyModel(Block rootBlock, CodeStyleSettings settings, @NotNull PsiFile psiFile) {
+  protected @NotNull DocumentBasedFormattingModel createDummyModel(Block rootBlock, CodeStyleSettings settings, @NotNull PsiFile psiFile) {
     return new DocumentBasedFormattingModel(rootBlock, psiFile.getProject(), settings, psiFile.getFileType(), psiFile);
   }
 
@@ -110,12 +109,11 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
     }
   }
 
-  @Nullable
-  private FormattingModel createTemplateFormattingModelInternal(@NotNull PsiFile file,
-                                                                CodeStyleSettings settings,
-                                                                XmlFormattingPolicy xmlFormattingPolicy,
-                                                                List<? extends PsiElement> elements,
-                                                                Indent indent) throws FragmentedTemplateException {
+  private @Nullable FormattingModel createTemplateFormattingModelInternal(@NotNull PsiFile file,
+                                                                          CodeStyleSettings settings,
+                                                                          XmlFormattingPolicy xmlFormattingPolicy,
+                                                                          List<? extends PsiElement> elements,
+                                                                          Indent indent) throws FragmentedTemplateException {
     if (elements.size() == 0) return null;
     List<Block> templateBlocks = new ArrayList<>();
     for (PsiElement element : elements) {

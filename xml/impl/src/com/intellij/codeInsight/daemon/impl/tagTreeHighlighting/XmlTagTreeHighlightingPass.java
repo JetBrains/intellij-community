@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.tagTreeHighlighting;
 
 import com.intellij.application.options.editor.WebEditorOptions;
@@ -114,14 +114,12 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     return type == XmlTokenType.XML_START_TAG_START || type == XmlTokenType.XML_END_TAG_START || type == XmlTokenType.XML_TAG_END;
   }
 
-  @NotNull
-  private static Pair<TextRange, TextRange> getTagRanges(XmlTag tag) {
+  private static @NotNull Pair<TextRange, TextRange> getTagRanges(XmlTag tag) {
     ASTNode tagNode = tag.getNode();
     return Pair.create(getStartTagRange(tagNode), getEndTagRange(tagNode));
   }
 
-  @Nullable
-  private static TextRange getStartTagRange(ASTNode tagNode) {
+  private static @Nullable TextRange getStartTagRange(ASTNode tagNode) {
     ASTNode startTagStart = XmlChildRole.START_TAG_START_FINDER.findChild(tagNode);
     if (startTagStart == null) {
       return null;
@@ -140,8 +138,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     return new TextRange(startTagStart.getStartOffset(), tagName.getTextRange().getEndOffset());
   }
 
-  @Nullable
-  private static TextRange getEndTagRange(ASTNode tagNode) {
+  private static @Nullable TextRange getEndTagRange(ASTNode tagNode) {
     ASTNode endTagStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(tagNode);
     if (endTagStart == null) {
       return null;
@@ -232,15 +229,13 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     }
   }
 
-  @NotNull
-  private static HighlightInfo createHighlightInfo(Color color, @NotNull TextRange range) {
+  private static @NotNull HighlightInfo createHighlightInfo(Color color, @NotNull TextRange range) {
     TextAttributes attributes = new TextAttributes(null, color, null, null, Font.PLAIN);
     return HighlightInfo.newHighlightInfo(TYPE).range(range).textAttributes(attributes)
       .severity(HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY).createUnconditionally();
   }
 
-  @NotNull
-  private static RangeHighlighter createHighlighter(MarkupModel mm, @NotNull TextRange range, Color color) {
+  private static @NotNull RangeHighlighter createHighlighter(MarkupModel mm, @NotNull TextRange range, Color color) {
     RangeHighlighter highlighter =
       mm.addRangeHighlighter(null, range.getStartOffset(), range.getEndOffset(), 0, HighlighterTargetArea.LINES_IN_RANGE);
 

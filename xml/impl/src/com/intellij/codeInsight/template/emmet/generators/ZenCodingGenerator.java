@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet.generators;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
@@ -24,15 +24,13 @@ public abstract class ZenCodingGenerator {
 
   public abstract TemplateImpl generateTemplate(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context);
 
-  @Nullable
-  public TemplateImpl createTemplateByKey(@NotNull String key, boolean forceSingleTag) {
+  public @Nullable TemplateImpl createTemplateByKey(@NotNull String key, boolean forceSingleTag) {
     return null;
   }
 
   public abstract boolean isMyContext(@NotNull CustomTemplateCallback callback, boolean wrapping);
 
-  @Nullable
-  public String getSuffix() {
+  public @Nullable String getSuffix() {
     return null;
   }
 
@@ -40,13 +38,11 @@ public abstract class ZenCodingGenerator {
 
   public abstract boolean isEnabled();
 
-  @NotNull
-  public static List<ZenCodingGenerator> getInstances() {
+  public static @NotNull List<ZenCodingGenerator> getInstances() {
     return EP_NAME.getExtensionList();
   }
 
-  @Nullable
-  public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
+  public @Nullable String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
     Editor editor = callback.getEditor();
     int currentOffset = editor.getCaretModel().getOffset();
     int startOffset = editor.getDocument().getLineStartOffset(editor.getCaretModel().getLogicalPosition().line);
@@ -54,8 +50,7 @@ public abstract class ZenCodingGenerator {
     return !StringUtil.isEmpty(key) && ZenCodingTemplate.checkTemplateKey(key, callback, this) ? key : null;
   }
 
-  @Nullable
-  protected String computeKey(@NotNull CharSequence text) {
+  protected @Nullable String computeKey(@NotNull CharSequence text) {
     int currentOffset = text.length();
     int groupCount = 0;
     int bracketCount = 0;
@@ -115,16 +110,14 @@ public abstract class ZenCodingGenerator {
     return Character.isDigit(c) || Character.isLetter(c) || StringUtil.containsChar("/>+^[](){}#.*:$-_!@|%", c);
   }
 
-  @NotNull
-  public EmmetParser createParser(List<ZenCodingToken> tokens,
-                                  CustomTemplateCallback callback,
-                                  ZenCodingGenerator generator,
-                                  boolean surroundWithTemplate) {
+  public @NotNull EmmetParser createParser(List<ZenCodingToken> tokens,
+                                           CustomTemplateCallback callback,
+                                           ZenCodingGenerator generator,
+                                           boolean surroundWithTemplate) {
     return new XmlEmmetParser(tokens, callback, generator, surroundWithTemplate);
   }
 
-  @Nullable
-  public Configurable createConfigurable() {
+  public @Nullable Configurable createConfigurable() {
     return null;
   }
   

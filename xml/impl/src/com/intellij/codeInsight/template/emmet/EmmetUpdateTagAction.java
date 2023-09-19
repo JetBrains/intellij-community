@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.application.options.emmet.EmmetOptions;
@@ -43,12 +43,11 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
   private static final String EMMET_LAST_UPDATE_ABBREVIATIONS_KEY = "emmet.last.update.abbreviations";
   private static final EmmetContextHelp CONTEXT_HELP = new EmmetContextHelp(XmlBundle.messagePointer("emmet.context.help.tooltip"));
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {
       @Override
-      public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+      public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
         final XmlTag tag = findTag(editor, file);
         if (tag != null) {
           new EmmetAbbreviationBalloon(EMMET_RECENT_UPDATE_ABBREVIATIONS_KEY, EMMET_LAST_UPDATE_ABBREVIATIONS_KEY,
@@ -72,8 +71,8 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
     };
   }
 
-  public void doUpdateTag(@NotNull final String abbreviation,
-                          @NotNull final XmlTag tag,
+  public void doUpdateTag(final @NotNull String abbreviation,
+                          final @NotNull XmlTag tag,
                           @NotNull PsiFile file,
                           @NotNull Editor editor) throws EmmetException {
     if (!tag.isValid()) return;
@@ -122,8 +121,7 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  @Nullable
-  private static String expandTemplate(@NotNull String abbreviation, @NotNull PsiFile file, @NotNull Editor editor) throws EmmetException {
+  private static @Nullable String expandTemplate(@NotNull String abbreviation, @NotNull PsiFile file, @NotNull Editor editor) throws EmmetException {
     final CollectCustomTemplateCallback callback = new CollectCustomTemplateCallback(editor, file);
     ZenCodingTemplate.expand(abbreviation, callback, XmlZenCodingGeneratorImpl.INSTANCE, Collections.emptyList(),
                              true, Registry.intValue("emmet.segments.limit"));
@@ -148,12 +146,11 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
     }
   }
 
-  @NotNull
-  private static ThrowableRunnable<RuntimeException> doUpdateTagAttributes(@NotNull final XmlTag tag,
-                                                                           @NotNull final PsiFile file,
-                                                                           @Nullable final String newTagName,
-                                                                           @NotNull final Collection<String> classes,
-                                                                           @NotNull final Map<String, String> attributes) {
+  private static @NotNull ThrowableRunnable<RuntimeException> doUpdateTagAttributes(final @NotNull XmlTag tag,
+                                                                                    final @NotNull PsiFile file,
+                                                                                    final @Nullable String newTagName,
+                                                                                    final @NotNull Collection<String> classes,
+                                                                                    final @NotNull Map<String, String> attributes) {
     return () -> {
       if (tag.isValid()) {
         if (!ReadonlyStatusHandler.getInstance(file.getProject()).ensureFilesWritable(Collections.singletonList(file.getVirtualFile()))
@@ -202,8 +199,7 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
     return super.isValidForFile(project, editor, file) && EmmetOptions.getInstance().isEmmetEnabled() && findTag(editor, file) != null;
   }
 
-  @Nullable
-  private static XmlTag findTag(@NotNull Editor editor, @NotNull PsiFile file) {
+  private static @Nullable XmlTag findTag(@NotNull Editor editor, @NotNull PsiFile file) {
     final XmlTag tag = PsiTreeUtil.getNonStrictParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), XmlTag.class);
     return tag != null && HtmlUtil.isHtmlTag(tag) ? tag : null;
   }

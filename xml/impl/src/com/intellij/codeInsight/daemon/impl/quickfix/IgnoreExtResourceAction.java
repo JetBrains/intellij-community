@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -27,7 +27,7 @@ public class IgnoreExtResourceAction extends BaseExtResourceAction {
   }
 
   @Override
-  protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
+  protected void doInvoke(final @NotNull PsiFile file, final int offset, final @NotNull String uri, final Editor editor) throws IncorrectOperationException {
     ExternalResourceManagerEx.getInstanceEx().addIgnoredResources(Collections.singletonList(uri), null);
   }
 
