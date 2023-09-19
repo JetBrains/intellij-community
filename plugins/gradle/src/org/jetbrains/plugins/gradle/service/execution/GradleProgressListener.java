@@ -3,24 +3,23 @@ package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.build.FileNavigatable;
 import com.intellij.build.FilePosition;
+import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.MessageEvent;
+import com.intellij.build.events.impl.FileDownloadEventImpl;
+import com.intellij.build.events.impl.FileDownloadedEventImpl;
 import com.intellij.build.events.impl.MessageEventImpl;
-import com.intellij.build.events.impl.ProgressBuildEventImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import org.gradle.internal.impldep.com.google.gson.GsonBuilder;
-import org.gradle.tooling.events.FinishEvent;
 import org.gradle.tooling.events.ProgressEvent;
 import org.gradle.tooling.events.ProgressListener;
-import org.gradle.tooling.events.StatusEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.Message;
@@ -40,11 +39,11 @@ import static com.intellij.openapi.util.text.StringUtil.formatFileSize;
 public class GradleProgressListener implements ProgressListener, org.gradle.tooling.ProgressListener {
   private static final Logger LOG = Logger.getInstance(GradleProgressListener.class);
 
+  private final GradleDownloadProgressMapper myDownloadProgressMapper;
   private final ExternalSystemTaskNotificationListener myListener;
   private final GradleExecutionProgressMapper myProgressMapper;
   private final ExternalSystemTaskId myTaskId;
   private final Map<Object, Long> myStatusEventIds = new HashMap<>();
-  private final Map<Object, StatusEvent> myDownloadStatusEventIds = new HashMap<>();
   private final String myOperationId;
   private static final String STARTING_GRADLE_DAEMON_EVENT = "Starting Gradle Daemon";
   private ExternalSystemTaskNotificationEvent myLastStatusChange = null;
@@ -65,11 +64,19 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     myTaskId = taskId;
     myOperationId = taskId.hashCode() + ":" + FileUtil.pathHashCode(buildRootDir == null ? UUID.randomUUID().toString() : buildRootDir);
     myProgressMapper = new GradleExecutionProgressMapper();
+    myDownloadProgressMapper = new GradleDownloadProgressMapper();
   }
 
   @Override
   public void statusChanged(ProgressEvent event) {
-    sendProgressToOutputIfNeeded(event);
+    if (myDownloadProgressMapper.canMap(event)) {
+      ExternalSystemTaskNotificationEvent downloadEvent = myDownloadProgressMapper.map(myTaskId, event);
+      if (downloadEvent != null) {
+        myListener.onStatusChange(downloadEvent);
+        sendProgressEventToOutput(downloadEvent);
+        return;
+      }
+    }
     ExternalSystemTaskNotificationEvent progressBuildEvent = null;
     if (myProgressMapper.canMap(event)) {
       progressBuildEvent = myProgressMapper.map(myTaskId, event);
@@ -80,7 +87,6 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
         }
       }
     }
-
     if (progressBuildEvent == null) {
       var taskNotificationEvent = GradleProgressEventConverter.createTaskNotificationEvent(myTaskId, myOperationId, event);
       if (taskNotificationEvent != null) {
@@ -135,38 +141,25 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     return false;
   }
 
-  private void sendProgressToOutputIfNeeded(ProgressEvent progressEvent) {
-    @NlsSafe final String operationName = progressEvent.getDescriptor().getName();
-    if (progressEvent instanceof StatusEvent statusEvent) {
-      if ("bytes".equals(statusEvent.getUnit())) {
-        StatusEvent oldStatusEvent = myDownloadStatusEventIds.get(operationName);
-        myDownloadStatusEventIds.put(operationName, statusEvent);
-        if (oldStatusEvent == null || oldStatusEvent.getProgress() != statusEvent.getProgress()) {
-          long progress = statusEvent.getProgress() > 0 ? statusEvent.getProgress() : 0;
-          long total = statusEvent.getTotal() > 0 ? statusEvent.getTotal() : 0;
-          String text = String.format("%s (%s / %s)", operationName, formatFileSize(progress), formatFileSize(total));
-          if (oldStatusEvent == null) {
-            myListener.onTaskOutput(myTaskId, text, true);
-          }
-          else {
-            myListener.onTaskOutput(myTaskId, "\r" + text, true);
-          }
-        }
-      }
-    }
-    else if (progressEvent instanceof FinishEvent finishEvent) {
-      StatusEvent statusEvent = myDownloadStatusEventIds.remove(operationName);
-      if (statusEvent != null) {
-        var operationResult = finishEvent.getResult();
-        long duration = operationResult.getEndTime() - operationResult.getStartTime();
-        long progress = statusEvent.getProgress() > 0 ? statusEvent.getProgress() : 0;
-        long total = statusEvent.getTotal() > 0 ? statusEvent.getTotal() : 0;
-        String text = String.format("%s, took %s (%s)", operationName, formatDuration(duration), formatFileSize(total));
+  private void sendProgressEventToOutput(ExternalSystemTaskNotificationEvent event) {
+    if (event instanceof ExternalSystemBuildEvent) {
+      BuildEvent buildEvent = ((ExternalSystemBuildEvent)event).getBuildEvent();
+      if (buildEvent instanceof FileDownloadedEventImpl) {
+        long duration = ((FileDownloadedEventImpl)buildEvent).getDuration();
+        String operationName = buildEvent.getMessage();
+        String text = String.format("%s, took %s", operationName, formatDuration(duration));
         myListener.onTaskOutput(myTaskId, "\r" + text + "\n", true);
-        if (total != progress) {
-          ProgressBuildEventImpl progressBuildEvent =
-            new ProgressBuildEventImpl(myTaskId, myTaskId, System.currentTimeMillis(), operationName, total, progress, "bytes");
-          myListener.onStatusChange(new ExternalSystemBuildEvent(myTaskId, progressBuildEvent));
+      }
+      if (buildEvent instanceof FileDownloadEventImpl) {
+        long progress = ((FileDownloadEventImpl)buildEvent).getProgress();
+        long total = ((FileDownloadEventImpl)buildEvent).getTotal();
+        String operationName = buildEvent.getMessage();
+        String text = String.format("%s (%s / %s)", operationName, formatFileSize(progress), formatFileSize(total));
+        if (((FileDownloadEventImpl)buildEvent).isFirstInGroup()) {
+          myListener.onTaskOutput(myTaskId, text, true);
+        }
+        else {
+          myListener.onTaskOutput(myTaskId, "\r" + text, true);
         }
       }
     }
