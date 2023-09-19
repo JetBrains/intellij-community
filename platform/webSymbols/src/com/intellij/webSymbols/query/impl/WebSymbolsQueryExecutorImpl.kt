@@ -173,9 +173,6 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
                 it
             }
         }
-        .sortedWith(Comparator.comparingDouble { it: WebSymbol -> -(it.priority ?: WebSymbol.Priority.NORMAL).value }
-                      .thenComparingInt { -(it.proximity ?: 0) }
-                      .thenComparing { it: WebSymbol -> it.name })
       result
     }
 
