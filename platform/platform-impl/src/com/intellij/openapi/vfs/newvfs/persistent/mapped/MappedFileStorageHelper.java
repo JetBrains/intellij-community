@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage.Page;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -72,7 +73,6 @@ public final class MappedFileStorageHelper implements Closeable {
 
     Path storagePath = fastAttributesDir.resolve(storageName).toAbsolutePath();
 
-    long maxFileSize = HeaderLayout.HEADER_SIZE + bytesPerRow * (long)Integer.MAX_VALUE;
     var recordsStorage = connection.getRecords();
 
     synchronized (storagesRegistry) {
@@ -87,18 +87,19 @@ public final class MappedFileStorageHelper implements Closeable {
         return alreadyExistingHelper;
       }
 
-      MappedFileStorageHelper storageHelper = new MappedFileStorageHelper(
-        new MMappedFileStorage(
-          storagePath,
-          DEFAULT_PAGE_SIZE,
-          maxFileSize
-        ),
-        bytesPerRow,
-        recordsStorage::maxAllocatedID,
-        checkFileIdsBelowMax
+      return IOUtil.wrapSafely(
+        new MMappedFileStorage(storagePath, DEFAULT_PAGE_SIZE),
+        mappedFileStorage -> {
+          MappedFileStorageHelper storageHelper = new MappedFileStorageHelper(
+            mappedFileStorage,
+            bytesPerRow,
+            recordsStorage::maxAllocatedID,
+            checkFileIdsBelowMax
+          );
+          storagesRegistry.put(storagePath, storageHelper);
+          return storageHelper;
+        }
       );
-      storagesRegistry.put(storagePath, storageHelper);
-      return storageHelper;
     }
   }
 

@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendibleha
 
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.dev.StorageFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -55,17 +56,10 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
 
   @Override
   public @NotNull ExtendibleHashMap open(@NotNull Path storagePath) throws IOException {
-    int maxFileSize = segmentSize / 2 * segmentSize;
-    MMappedFileStorage storage = new MMappedFileStorage(storagePath, pageSize, maxFileSize);
-    try {
-      return new ExtendibleHashMap(storage, segmentSize);
-    }
-    catch (Throwable t) {
-      Exception closeEx = ExceptionUtil.runAndCatch(storage::close);
-      if (closeEx != null) {
-        t.addSuppressed(closeEx);
-      }
-      throw t;
-    }
+    //int maxFileSize = segmentSize / 2 * segmentSize;
+    return IOUtil.wrapSafely(
+      new MMappedFileStorage(storagePath, pageSize),
+      storage -> new ExtendibleHashMap(storage, segmentSize)
+    );
   }
 }

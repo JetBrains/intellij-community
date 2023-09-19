@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.mapped;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.IOUtil;
@@ -10,6 +10,7 @@ import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.metrics.ObservableLongMeasurement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -17,11 +18,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.VFS;
 import static com.intellij.util.SystemProperties.getIntProperty;
@@ -39,6 +39,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 @ApiStatus.Internal
 public final class MMappedFileStorage implements Closeable {
   private static final Logger LOG = Logger.getInstance(MMappedFileStorage.class);
+  private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, 1000);
 
   //RC: do we need method like 'unmap', which forcibly unmaps pages, or it is enough to rely on JVM which will
   //    unmap pages eventually, as they are collected by GC?
@@ -103,126 +104,144 @@ public final class MMappedFileStorage implements Closeable {
 
   private final FileChannel channel;
 
-  private final AtomicReferenceArray<Page> pages;
+  private final transient Object pagesLock = new Object();
+  /** see comments in {@link #pageByIndex(int)} */
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private Page[] pages;
 
   private final long maxFileSize;
 
-  public MMappedFileStorage(final Path path,
-                            final int pageSize) throws IOException {
-    //TODO RC: maybe instead of setting maxSize -- make .pages re-allocable?
-    //         It is very rare to have all 2^32 records in VFS
-    this(path, pageSize, PersistentFSRecordsLockFreeOverMMappedFile.RECORD_SIZE_IN_BYTES * (long)Integer.MAX_VALUE);
+  public MMappedFileStorage(Path path,
+                            int pageSize) throws IOException {
+    this(path, pageSize, 0);
   }
 
-  public MMappedFileStorage(final Path path,
-                            final int pageSize,
-                            final long maxFileSize) throws IOException {
+  public MMappedFileStorage(Path path,
+                            int pageSize,
+                            int pagesCountToMapInitially) throws IOException {
     if (pageSize <= 0) {
       throw new IllegalArgumentException("pageSize(=" + pageSize + ") must be >0");
     }
-    if (maxFileSize <= 0) {
-      throw new IllegalArgumentException("maxFileSize(=" + maxFileSize + ") must be >0");
-    }
     if (Integer.bitCount(pageSize) != 1) {
       throw new IllegalArgumentException("pageSize(=" + pageSize + ") must be a power of 2");
+    }
+    if (pagesCountToMapInitially < 0) {
+      throw new IllegalArgumentException("pagesCountToMapInitially(=" + pagesCountToMapInitially + ") must be >= 0");
     }
 
 
     pageSizeBits = Integer.numberOfTrailingZeros(pageSize);
     pageSizeMask = pageSize - 1;
     this.pageSize = pageSize;
-    this.maxFileSize = maxFileSize;
+    this.maxFileSize = pagesCountToMapInitially;
 
     this.storagePath = path;
 
-    final int maxPagesCount = Math.toIntExact(maxFileSize / pageSize);
+    //final long length = Files.exists(path) ? Files.size(path) : 0;
+    //
+    //final int pagesToMapExistingFileContent = (int)((length % pageSize == 0) ?
+    //                                                (length / pageSize) :
+    //                                                ((length / pageSize) + 1));
+    //if (pagesToMapExistingFileContent > initialPagesCount) {
+    //  throw new IllegalStateException(
+    //    "Storage size(" + length + " b) > maxFileSize(" + initialPagesToMap + " b): " +
+    //    "file [" + path + "] is corrupted?");
+    //}
 
-    final long length = Files.exists(path) ? Files.size(path) : 0;
-
-    final int pagesToMapExistingFileContent = (int)((length % pageSize == 0) ?
-                                                    (length / pageSize) :
-                                                    ((length / pageSize) + 1));
-    if (pagesToMapExistingFileContent > maxPagesCount) {
-      throw new IllegalStateException(
-        "Storage size(" + length + " b) > maxFileSize(" + maxFileSize + " b): " +
-        "file [" + path + "] is corrupted?");
-    }
-
-    //allocate array(1200+): not so much to worry about
-    pages = new AtomicReferenceArray<>(maxPagesCount);
 
     channel = FileChannel.open(storagePath, READ, WRITE, CREATE);
 
-    //map already existing file content right away:
-    for (int i = 0; i < pagesToMapExistingFileContent; i++) {
-      Page page = new Page(i, channel, pageSize, byteOrder());
-      pages.set(i, page);
-
-      totalPagesMapped.incrementAndGet();
-      totalBytesMapped.addAndGet(pageSize);
-
-      long pagesMapped = totalPagesMapped.get();
-      if (pagesMapped > PAGES_TO_WARN_THRESHOLD) {
-        LOG.warn(pagesMapped + " pages were mapped -- too many, > " + PAGES_TO_WARN_THRESHOLD + " threshold. " +
-                 "Total mapped size: " + totalBytesMapped.get() + " bytes, storages: " + storages.get());
-      }
+    //map initial pages:
+    pages = new Page[pagesCountToMapInitially];
+    for (int i = 0; i < pagesCountToMapInitially; i++) {
+      pageByIndex(i);
     }
 
     storages.incrementAndGet();
   }
 
 
-  public @NotNull Page pageByOffset(final long offsetInFile) throws IOException {
-    final int pageIndex = pageIndexByOffset(offsetInFile);
+  public @NotNull Page pageByOffset(long offsetInFile) throws IOException {
+    int pageIndex = pageIndexByOffset(offsetInFile);
+    return pageByIndex(pageIndex);
+  }
 
-    Page page = pages.get(pageIndex);
+  public @NotNull Page pageByIndex(int pageIndex) throws IOException {
+    //We access .pages through data-race. This is a benign race, though: basically, the only values one could
+    // read from .pages[i] is {null, Page(i)} -- because those are the only values that are written to .pages[i]
+    // across all the codebase, and JMM guarantees no 'out-of-thin-air' values even in the presence of data race.
+    //Now Page class is immutable (all fields final), hence it could be 'safe-published' even through data race,
+    // so if we read non-null value from .pages[pageIndex] value -- it is a correctly initialized Page(pageIndex)
+    // value that is OK to use. If we read null -- we dive into .pageByIndexLocked() there everything (.pages
+    // resizing and new page mapping) happens under good-old exclusive lock, that guarantees visibility of all
+    // changes done by other threads, and absence of Page duplicates.
+    //
+    Page page = pageOrNull(pages, pageIndex);
     if (page == null) {
-      synchronized (pages) {
-        if (!channel.isOpen()) {
-          throw new ClosedStorageException("Storage already closed");
-        }
-        page = pages.get(pageIndex);
-        if (page == null) {
-          page = new Page(pageIndex, channel, pageSize, byteOrder());
-          pages.set(pageIndex, page);
-
-          totalPagesMapped.incrementAndGet();
-          totalBytesMapped.addAndGet(pageSize);
-        }
-      }
+      page = pageByIndexLocked(pageIndex);
     }
     return page;
   }
 
-  public int pageIndexByOffset(final long offsetInFile) {
+  private Page pageByIndexLocked(int pageIndex) throws IOException {
+    synchronized (pagesLock) {
+      if (!channel.isOpen()) {
+        throw new ClosedStorageException("Storage already closed");
+      }
+      if (pageIndex >= pages.length) {
+        pages = Arrays.copyOf(pages, pageIndex + 1);
+      }
+      Page page = pages[pageIndex];
+
+      if (page == null) {
+        page = new Page(pageIndex, channel, pageSize, byteOrder());
+        pages[pageIndex] = page;
+
+        registerMappedPage(pageSize);
+      }
+      return page;
+    }
+  }
+
+
+  private static @Nullable Page pageOrNull(Page[] pages,
+                                           int pageIndex) {
+    if (0 <= pageIndex && pageIndex < pages.length) {
+      return pages[pageIndex];
+    }
+    return null;
+  }
+
+  public int pageIndexByOffset(long offsetInFile) {
     if (offsetInFile < 0) {
       throw new IllegalArgumentException("offsetInFile(=" + offsetInFile + ") must be >=0");
     }
     return (int)(offsetInFile >> pageSizeBits);
   }
 
-  public int toOffsetInPage(final long offsetInFile) {
+  public int toOffsetInPage(long offsetInFile) {
     return (int)(offsetInFile & pageSizeMask);
   }
 
   @Override
   public void close() throws IOException {
-    synchronized (pages) {
+    synchronized (pagesLock) {
       if (channel.isOpen()) {
         channel.close();
-        for (int i = 0; i < pages.length(); i++) {
-          final Page page = pages.get(i);
+        for (Page page : pages) {
           if (page != null) {
-            //actual buffer releasing happens later, by GC, but at least we don't keep it
-            totalPagesMapped.decrementAndGet();
-            totalBytesMapped.addAndGet(-pageSize);
+            unregisterMappedPage(pageSize);
           }
-          pages.set(i, null);//give GC a chance to unmap buffers
         }
+        //actual buffer unmap()-ing is done later, by GC
+        // let's not delay it by keeping references:
+        Arrays.fill(pages, null);
+
         storages.decrementAndGet();
       }
     }
   }
+
 
   public void fsync() throws IOException {
     if (channel.isOpen()) {
@@ -292,8 +311,8 @@ public final class MMappedFileStorage implements Closeable {
    * pages in between those were never requested, hence not mapped (yet?).
    */
   public long actualFileSize() throws IOException {
-    synchronized (pages) {
-      //RC: Lock the pages to prevent file expansion, which also acquires .pages lock, see .pageByOffset()
+    synchronized (pagesLock) {
+      //RC: Lock the pages to prevent file expansion (file expansion also acquires .pagesLock, see .pageByOffset())
       //    If file is expanded concurrently with this method, we could see not-pageSize-aligned file size,
       //    which is confusing to deal with.
       //    Better to just prohibit such cases: file expansion (=new page allocation) is a relatively rare
@@ -315,7 +334,7 @@ public final class MMappedFileStorage implements Closeable {
     return "MMappedFileStorage[" + storagePath + "]" +
            "[pageSize: " + pageSize +
            ", maxFileSize: " + maxFileSize +
-           ", pages: " + pages.length() +
+           ", pages: " + pages.length +
            ']';
   }
 
@@ -370,5 +389,20 @@ public final class MMappedFileStorage implements Closeable {
     public String toString() {
       return "Page[#" + pageIndex + "][offset: " + offsetInFile + ", length: " + pageBuffer.capacity() + " b)";
     }
+  }
+
+  private static void registerMappedPage(int pageSize) {
+    int pagesMapped = totalPagesMapped.incrementAndGet();
+    totalBytesMapped.addAndGet(pageSize);
+
+    if (pagesMapped > PAGES_TO_WARN_THRESHOLD) {
+      THROTTLED_LOG.warn("Too many pages were mapped: " + pagesMapped + " > " + PAGES_TO_WARN_THRESHOLD + " threshold. " +
+                         "Total mapped size: " + totalBytesMapped.get() + " bytes, storages: " + storages.get());
+    }
+  }
+
+  private static void unregisterMappedPage(int pageSize) {
+    totalPagesMapped.decrementAndGet();
+    totalBytesMapped.addAndGet(-pageSize);
   }
 }
