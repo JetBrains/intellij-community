@@ -24,6 +24,8 @@ interface GitCurrentBranchPresenter {
   data class Presentation(
     val icon: Icon,
     val text: @Nls String,
-    val description: @Nls String?
+    val description: @Nls String?,
+    val hasIncomingChanges: Boolean = false,
+    val hasOutgoingChanges: Boolean= false
   )
 }

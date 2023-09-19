@@ -174,8 +174,15 @@ private constructor(parentCs: CoroutineScope,
     }.distinctUntilChanged { old, new ->
       old?.getOrNull() == new?.getOrNull()
     }.transformLatest { newValue ->
-      val vm = newValue?.getOrNull()?.let { GitLabMergeRequestReviewViewModel(it, this@GitLabToolWindowProjectViewModel) }
-      emit(vm)
+      coroutineScope {
+        val vm = newValue?.getOrNull()?.let {
+          GitLabMergeRequestReviewViewModel(project, this, connection.projectData.projectMapping,
+                                            it, this@GitLabToolWindowProjectViewModel,
+                                            connection.currentUser, avatarIconProvider)
+        }
+        emit(vm)
+        awaitCancellation()
+      }
     }.modelFlow(cs, LOG)
 
   private fun getDiffBridge(mrIid: String): GitLabMergeRequestDiffBridge =

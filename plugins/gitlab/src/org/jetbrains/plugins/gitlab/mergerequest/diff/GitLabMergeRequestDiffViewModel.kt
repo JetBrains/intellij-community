@@ -82,7 +82,8 @@ internal class GitLabMergeRequestDiffViewModelImpl(
       .associateBy(
         { (change, _) -> change },
         { (_, diffData) ->
-          GitLabMergeRequestChangeViewModelImpl(project, this, currentUser, mergeRequest, diffData, discussionsViewOption)
+          GitLabMergeRequestChangeViewModelImpl(project, this, currentUser, mergeRequest, diffData, avatarIconsProvider,
+                                                discussionsViewOption)
         },
         { destroy() },
         customHashingStrategy = CODE_REVIEW_CHANGE_HASHING_STRATEGY

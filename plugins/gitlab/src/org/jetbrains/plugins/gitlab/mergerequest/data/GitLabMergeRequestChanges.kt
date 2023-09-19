@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.api.page.foldToList
+import com.intellij.collaboration.async.withInitial
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
@@ -18,8 +19,12 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitHandlerInputProcessorUtil
 import git4idea.commands.GitLineHandler
 import git4idea.fetch.GitFetchSupport
+import git4idea.remote.hosting.changesSignalFlow
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
@@ -29,10 +34,24 @@ import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.nio.charset.StandardCharsets
 
 interface GitLabMergeRequestChanges {
+  /**
+   * List of merge request commits
+   */
   val commits: List<GitLabCommit>
 
+  /**
+   * State of remote<->local repository sync (to the best of out knowledge)
+   */
+  val localRepositorySynced: StateFlow<Boolean>
+
+  /**
+   * Load and parse changes diffs
+   */
   suspend fun getParsedChanges(): GitBranchComparisonResult
 
+  /**
+   * Check that all merge request revisions are fetched and fetch the missing revisions
+   */
   suspend fun ensureAllRevisionsFetched()
 }
 
@@ -51,6 +70,10 @@ class GitLabMergeRequestChangesImpl(
   private val glProject = projectMapping.repository
 
   override val commits: List<GitLabCommit> = mergeRequestDetails.commits.asReversed()
+
+  override val localRepositorySynced: StateFlow<Boolean> = projectMapping.remote.repository.changesSignalFlow().withInitial(Unit).map {
+    projectMapping.remote.repository.currentRevision == mergeRequestDetails.diffRefs.headSha
+  }.stateIn(cs, SharingStarted.Lazily, false)
 
   private val parsedChanges = cs.async(start = CoroutineStart.LAZY) {
     loadChanges(commits)

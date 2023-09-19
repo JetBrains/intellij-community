@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.review
 import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
@@ -29,13 +30,14 @@ import org.jetbrains.plugins.gitlab.ui.comment.*
 private typealias DiscussionsFlow = Flow<Collection<GitLabMergeRequestDiffDiscussionViewModel>>
 private typealias NewDiscussionsFlow = Flow<Map<DiffLineLocation, NewGitLabNoteViewModel>>
 
-internal interface GitLabMergeRequestChangeViewModel {
+interface GitLabMergeRequestChangeViewModel {
   val isCumulativeChange: Boolean
 
   val discussions: DiscussionsFlow
   val draftDiscussions: DiscussionsFlow
   val newDiscussions: NewDiscussionsFlow
 
+  val avatarIconsProvider: IconsProvider<GitLabUserDTO>
   val discussionsViewOption: StateFlow<DiscussionsViewOption>
 
   fun requestNewDiscussion(location: DiffLineLocation, focus: Boolean)
@@ -50,7 +52,9 @@ internal class GitLabMergeRequestChangeViewModelImpl(
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
   private val diffData: GitTextFilePatchWithHistory,
-  override val discussionsViewOption: StateFlow<DiscussionsViewOption>
+  override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+  override val discussionsViewOption: StateFlow<DiscussionsViewOption>,
+  private val contextDiscussionMappingSide: Side = Side.LEFT
 ) : GitLabMergeRequestChangeViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default + CoroutineName("GitLab Merge Request Review Diff Change"))
@@ -63,7 +67,7 @@ internal class GitLabMergeRequestChangeViewModelImpl(
       GitLabDiscussion::id,
       { disc ->
         GitLabMergeRequestDiffDiscussionViewModelImpl(project, this, diffData, currentUser, disc, discussionsViewOption,
-                                                      mergeRequest.glProject)
+                                                      mergeRequest.glProject, contextDiscussionMappingSide)
       },
       GitLabMergeRequestDiffDiscussionViewModelImpl::destroy
     )
@@ -74,7 +78,10 @@ internal class GitLabMergeRequestChangeViewModelImpl(
     .mapFiltered { it.discussionId == null }
     .mapCaching(
       GitLabNote::id,
-      { note -> GitLabMergeRequestDiffDraftDiscussionViewModel(project, this, diffData, note, mergeRequest.glProject) },
+      { note ->
+        GitLabMergeRequestDiffDraftDiscussionViewModel(project, this, diffData, note,
+                                                       mergeRequest.glProject, contextDiscussionMappingSide)
+      },
       GitLabMergeRequestDiffDraftDiscussionViewModel::destroy
     )
     .modelFlow(cs, LOG)

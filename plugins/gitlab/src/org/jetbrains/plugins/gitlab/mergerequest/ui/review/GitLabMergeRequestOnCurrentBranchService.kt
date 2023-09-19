@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.review
 
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.Service
@@ -36,12 +37,31 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
       val currentBranchName = StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(repository) { branchName ->
         GitBranchPopupActions.truncateBranchName(branchName, repository.project)
       })
-      val text = GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName)
-      return GitCurrentBranchPresenter.Presentation(
-        GitlabIcons.GitLabLogo,
-        text,
-        null
-      )
+      val changesState = vm.actualChangesState.value
+      return when (changesState) {
+        GitLabMergeRequestReviewViewModel.ChangesState.Error -> GitCurrentBranchPresenter.Presentation(
+          GitlabIcons.GitLabLogo,
+          GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
+          GitLabBundle.message("merge.request.on.branch.error", vm.mergeRequestIid, currentBranchName)
+        )
+        GitLabMergeRequestReviewViewModel.ChangesState.Loading -> GitCurrentBranchPresenter.Presentation(
+          CollaborationToolsUIUtil.animatedLoadingIcon,
+          GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
+          GitLabBundle.message("merge.request.on.branch.loading", vm.mergeRequestIid)
+        )
+        GitLabMergeRequestReviewViewModel.ChangesState.OutOfSync -> GitCurrentBranchPresenter.Presentation(
+          GitlabIcons.GitLabLogo,
+          GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
+          GitLabBundle.message("merge.request.on.branch.out.of.sync", vm.mergeRequestIid, currentBranchName),
+          hasIncomingChanges = true, hasOutgoingChanges = true
+        )
+        GitLabMergeRequestReviewViewModel.ChangesState.NotLoaded,
+        is GitLabMergeRequestReviewViewModel.ChangesState.Loaded -> GitCurrentBranchPresenter.Presentation(
+          GitlabIcons.GitLabLogo,
+          GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
+          GitLabBundle.message("merge.request.on.branch.description", vm.mergeRequestIid, currentBranchName)
+        )
+      }
     }
   }
 

@@ -80,6 +80,8 @@
       id="org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneDialogExtension"
       implementation="org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneDialogExtension"
       order="after org.jetbrains.plugins.github.ui.cloneDialog.GHECloneDialogExtension"/>
+
+    <editorFactoryListener implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewController$InstallerListener"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
@@ -175,6 +177,11 @@
     </group>
     <action id="GitLab.MergeRequest.Review.Submit"
             class="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestDiffSubmitReviewAction"/>
+
+    <group id="GitLab.MergeRequest.Review.Editor.Header">
+      <reference id="GitLab.MergeRequest.Review.Submit"/>
+      <reference id="GitLab.Merge.Request.Diff.Discussions.View.Options"/>
+    </group>
 
     <group id="GitLab.Open.In.Browser" class="org.jetbrains.plugins.gitlab.ui.action.GitLabOpenInBrowserActionGroup"
            icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">

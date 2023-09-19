@@ -131,22 +131,23 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
             text = calcText(project, repo)
             icon = repo.calcIcon()
             description = repo.calcTooltip()
+            val changes = repo.currentBranchName?.let { branch ->
+              val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
+              MyRepoChanges(incomingOutgoingManager.hasIncomingFor(gitRepository, branch),
+                            incomingOutgoingManager.hasOutgoingFor(gitRepository, branch))
+            } ?: MyRepoChanges(incoming = false, outgoing = false)
+            e.presentation.putClientProperty(changesKey, changes)
           }
           else {
             text = customPresentation.text
             icon = customPresentation.icon
             description = customPresentation.description
+            val changes = MyRepoChanges(customPresentation.hasIncomingChanges, customPresentation.hasOutgoingChanges)
+            e.presentation.putClientProperty(changesKey, changes)
           }
         }
       }
     }
-
-    val changes = gitRepository?.currentBranchName?.let { branch ->
-      val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
-      MyRepoChanges(incomingOutgoingManager.hasIncomingFor(gitRepository, branch),
-                    incomingOutgoingManager.hasOutgoingFor(gitRepository, branch))
-    } ?: MyRepoChanges(incoming = false, outgoing = false)
-    e.presentation.putClientProperty(changesKey, changes)
   }
 
   @NlsSafe

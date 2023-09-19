@@ -7,6 +7,7 @@ import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.viewer.DiffMapped
+import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
@@ -49,7 +50,8 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
   currentUser: GitLabUserDTO,
   discussion: GitLabMergeRequestDiscussion,
   discussionsViewOption: Flow<DiscussionsViewOption>,
-  glProject: GitLabProjectCoordinates
+  glProject: GitLabProjectCoordinates,
+  contextMappingSide: Side = Side.LEFT
 ) : GitLabMergeRequestDiffDiscussionViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
@@ -92,9 +94,8 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
   override val location: Flow<DiffLineLocation?> = discussion.firstNote().flatMapLatest {
     it?.position ?: flowOf(null)
   }.distinctUntilChanged().map {
-    if (it == null) return@map null
-    it.mapToLocation(diffData)
-  }
+    it?.mapToLocation(diffData, contextMappingSide)
+  }.modelFlow(cs, LOG)
 
   override val isVisible: Flow<Boolean> = combine(resolveVm?.resolved ?: flowOf(false), discussionsViewOption) { isResolved, viewOption ->
     return@combine when (viewOption) {
@@ -115,7 +116,8 @@ class GitLabMergeRequestDiffDraftDiscussionViewModel(
   parentCs: CoroutineScope,
   diffData: GitTextFilePatchWithHistory,
   note: GitLabMergeRequestDraftNote,
-  glProject: GitLabProjectCoordinates
+  glProject: GitLabProjectCoordinates,
+  contextMappingSide: Side = Side.LEFT
 ) : GitLabMergeRequestDiffDiscussionViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
@@ -128,7 +130,7 @@ class GitLabMergeRequestDiffDraftDiscussionViewModel(
 
   override val location: Flow<DiffLineLocation?> = note.position.map {
     if (it == null) return@map null
-    it.mapToLocation(diffData)
+    it.mapToLocation(diffData, contextMappingSide)
   }
 
   override val isVisible: Flow<Boolean> = flowOf(true)
