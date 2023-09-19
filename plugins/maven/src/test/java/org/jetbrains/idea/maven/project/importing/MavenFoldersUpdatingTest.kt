@@ -16,12 +16,15 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager
-import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.importing.MavenEventsTestHelper
 import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.tryUpdateTargetFolders
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter
@@ -32,9 +35,10 @@ import org.junit.Test
 import java.io.File
 
 class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = false
   @Test
-  fun testUpdatingExternallyCreatedFolders() {
-    importProject("""
+  fun testUpdatingExternallyCreatedFolders() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -53,8 +57,8 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testIgnoreTargetFolder() {
-    importProject("""
+  fun testIgnoreTargetFolder() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -73,7 +77,7 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testUpdatingFoldersForAllTheProjects() {
+  fun testUpdatingFoldersForAllTheProjects() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -99,7 +103,7 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
                       <version>1</version>
                       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     assertExcludes("m1", "target")
     assertExcludes("m2", "target")
@@ -119,9 +123,9 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoesNotTouchSourceFolders() {
+  fun testDoesNotTouchSourceFolders() = runBlocking {
     createStdProjectFolders()
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -141,8 +145,8 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoesNotExcludeRegisteredSources() {
-    importProject("""
+  fun testDoesNotExcludeRegisteredSources() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -152,7 +156,7 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
     val sourceDir = File(myProjectRoot.getPath(), "target/src")
     sourceDir.mkdirs()
 
-    ApplicationManager.getApplication().runWriteAction {
+    writeAction {
       val adapter = MavenRootModelAdapter(MavenRootModelAdapterLegacyImpl(
         projectsTree.findProject(myProjectPom)!!,
         getModule("project"),
@@ -174,8 +178,8 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoesNothingWithNonMavenModules() {
-    importProject("""
+  fun testDoesNothingWithNonMavenModules() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -186,23 +190,22 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoNotUpdateOutputFoldersWhenUpdatingExcludedFolders() {
-    importProject("""
+  fun testDoNotUpdateOutputFoldersWhenUpdatingExcludedFolders() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    ApplicationManager.getApplication().runWriteAction {
+    writeAction {
       val adapter = MavenRootModelAdapter(MavenRootModelAdapterLegacyImpl(
         projectsTree.findProject(myProjectPom)!!,
         getModule("project"),
         ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)))
-      adapter.useModuleOutput(File(myProjectRoot.getPath(), "target/my-classes").path,
-                              File(myProjectRoot.getPath(), "target/my-test-classes").path)
+        adapter.useModuleOutput(File(myProjectRoot.getPath(), "target/my-classes").path,
+                                File(myProjectRoot.getPath(), "target/my-test-classes").path)
       adapter.rootModel.commit()
     }
-
 
     updateTargetFolders()
 
@@ -213,8 +216,8 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoNotCommitIfFoldersWasNotChanged() {
-    importProject("""
+  fun testDoNotCommitIfFoldersWasNotChanged() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -232,7 +235,7 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testCommitOnlyOnceForAllModules() {
+  fun testCommitOnlyOnceForAllModules() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -258,7 +261,7 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
                       <version>1</version>
                       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     val eventsTestHelper = MavenEventsTestHelper()
     eventsTestHelper.setUp(myProject)
@@ -282,8 +285,8 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testMarkSourcesAsGeneratedOnReImport() {
-    importProject("""
+  fun testMarkSourcesAsGeneratedOnReImport() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -294,21 +297,23 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
     assertGeneratedSources("project", "target/generated-sources/xxx")
 
     ModuleRootModificationUtil.updateModel(getModule("project")) { model: ModifiableRootModel ->
-      val folders = model.getContentEntries()[0].getSourceFolders()
-      val generated = ContainerUtil.find(folders) { it: SourceFolder -> it.getUrl().endsWith("target/generated-sources/xxx") }
+      val folders = model.contentEntries[0].getSourceFolders()
+      val generated = folders.find { it.getUrl().endsWith("target/generated-sources/xxx") }
       assertNotNull("Generated folder not found", generated)
 
-      val properties = generated.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES)
+      val properties = generated!!.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES)
       assertNotNull(properties)
       properties!!.isForGeneratedSources = false
     }
     assertGeneratedSources("project")
 
-    importProject()
+    updateAllProjects()
     assertGeneratedSources("project", "target/generated-sources/xxx")
   }
 
-  private fun updateTargetFolders() {
-    tryUpdateTargetFolders(myProject)
+  private suspend fun updateTargetFolders() {
+    withContext(Dispatchers.EDT) {
+      tryUpdateTargetFolders(myProject)
+    }
   }
 }
