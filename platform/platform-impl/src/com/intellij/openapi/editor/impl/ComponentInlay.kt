@@ -25,6 +25,7 @@ import javax.swing.JScrollPane
 import javax.swing.RepaintManager
 import javax.swing.SwingUtilities
 import kotlin.math.max
+import kotlin.math.min
 
 @Experimental
 internal class ComponentInlayImpl<T : Component> private constructor(override val component: T, override val inlay: Inlay<*>) : ComponentInlay<T> {
@@ -179,7 +180,8 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     val content = editor.contentComponent
     val initialContentWidth = content.width
     val scrollPane = editor.scrollPane
-    val viewportReservedWidth = if (!isVerticalScrollbarFlipped(scrollPane)) editor.scrollPane.verticalScrollBar.width else 0
+    val viewportReservedWidth = if (!isVerticalScrollbarFlipped(scrollPane)) editor.scrollPane.verticalScrollBar.width + content.insets.left else content.insets.left
+    val visibleArea = scrollPane.viewport.visibleRect
 
     // Step 1: Sync inlay size with preferred component size.
     // Step 1.1: Update inlay size, it may fail in batch mode so need to do it in separate loop
@@ -208,8 +210,8 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
 
     // Step 2: Way editor implemented now it will validate size after inlay update and set it to preferred size which may be less than viewport.
     // We ask parent to layout editor in that case to restore it's size.
-    if (content.width < initialContentWidth) {
-      content.parent.doLayout()
+    if (content.width < initialContentWidth && content.width < visibleArea.width) {
+      content.size = Dimension(min(initialContentWidth, visibleArea.width), content.height)
     }
 
     // Step 3: Set bounds of container to bounds of inner area (without insets) of editor. It defines a viewport for inlay components.
@@ -221,17 +223,15 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
         val component = renderer.component
         when (renderer.alignment) {
           ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH, ComponentInlayAlignment.FIT_CONTENT_WIDTH -> component.size = Dimension(bounds.width, renderer.inlaySize.height)
-          ComponentInlayAlignment.FIT_VIEWPORT_WIDTH -> component.bounds = fitToViewport(renderer, false, viewportReservedWidth)
-          ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> component.bounds = fitToViewport(renderer, true, viewportReservedWidth)
+          ComponentInlayAlignment.FIT_VIEWPORT_WIDTH, ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> component.bounds = fitToViewport(renderer, visibleArea, renderer.alignment, viewportReservedWidth)
           else -> component.size = renderer.inlaySize
         }
       }
     }
   }
 
-  private fun fitToViewport(renderer: ComponentInlayRenderer, shiftToViewport: Boolean, viewportReservedWidth: Int): Rectangle {
-    val visibleArea = editor.scrollingModel.visibleArea
-    val x = if (shiftToViewport) visibleArea.x else 0
+  private fun fitToViewport(renderer: ComponentInlayRenderer, visibleArea: Rectangle, alignment: ComponentInlayAlignment, viewportReservedWidth: Int): Rectangle {
+    val x = if (alignment == ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN) visibleArea.x else 0
     return Rectangle(x, renderer.component.y, max(renderer.component.minimumSize.width, visibleArea.width - viewportReservedWidth), renderer.inlaySize.height)
   }
 
