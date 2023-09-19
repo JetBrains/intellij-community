@@ -93,7 +93,7 @@ public class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     Map<String, DefaultExternalTask> result = new HashMap<>();
 
     GradleTaskCache taskCache = GradleTaskCache.getInstance(context);
-    for (Task task : taskCache.getTasks(project)) {
+    for (Task task : taskCache.getAllTasks(project)) {
       String taskName = task.getName();
       DefaultExternalTask externalTask = result.get(taskName);
       if (externalTask == null) {

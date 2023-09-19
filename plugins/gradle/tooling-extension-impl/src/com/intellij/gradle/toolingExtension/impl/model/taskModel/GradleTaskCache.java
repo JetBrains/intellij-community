@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.taskModel;
 
+import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.tooling.model.ProjectIdentifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
@@ -22,14 +24,14 @@ import java.util.concurrent.ConcurrentMap;
 public final class GradleTaskCache {
 
   private final ModelBuilderContext context;
-  private final ConcurrentMap<Project, Set<Task>> allTasks;
+  private final ConcurrentMap<ProjectIdentifier, Set<Task>> allTasks;
 
   private GradleTaskCache(@NotNull ModelBuilderContext context) {
     this.context = context;
     this.allTasks = new ConcurrentHashMap<>();
   }
 
-  public Set<Task> getTasks(@NotNull Project project) {
+  public Set<Task> getAllTasks(@NotNull Project project) {
     Set<Task> result = new LinkedHashSet<>(getProjectTasks(project));
     for (Project subProject : project.getSubprojects()) {
       result.addAll(getProjectTasks(subProject));
@@ -38,7 +40,8 @@ public final class GradleTaskCache {
   }
 
   private Set<Task> getProjectTasks(@NotNull Project project) {
-    Set<Task> projectTasks = allTasks.get(project);
+    ProjectIdentifier projectIdentifier = GradleProjectUtil.getProjectIdentifier(project);
+    Set<Task> projectTasks = allTasks.get(projectIdentifier);
     if (projectTasks == null) {
       context.getMessageReporter().createMessage()
         .withTitle("Project tasks aren't found")
@@ -54,8 +57,9 @@ public final class GradleTaskCache {
     return projectTasks;
   }
 
-  public void setTasks(@NotNull Project project, @NotNull Set<Task> tasks) {
-    Set<Task> previousTasks = allTasks.put(project, tasks);
+  public void setProjectTasks(@NotNull Project project, @NotNull Set<Task> tasks) {
+    ProjectIdentifier projectIdentifier = GradleProjectUtil.getProjectIdentifier(project);
+    Set<Task> previousTasks = allTasks.put(projectIdentifier, tasks);
     if (previousTasks != null) {
       context.getMessageReporter().createMessage()
         .withTitle("Project tasks redefinition")

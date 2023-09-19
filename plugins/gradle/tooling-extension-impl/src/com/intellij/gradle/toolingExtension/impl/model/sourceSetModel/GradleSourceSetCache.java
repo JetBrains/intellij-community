@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel;
 
+import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import org.gradle.api.Project;
+import org.gradle.tooling.model.ProjectIdentifier;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.Message;
@@ -15,7 +17,7 @@ import java.util.concurrent.ConcurrentMap;
 public class GradleSourceSetCache {
 
   private final ModelBuilderContext context;
-  private final ConcurrentMap<Project, DefaultGradleSourceSetModel> allSourceSetModels;
+  private final ConcurrentMap<ProjectIdentifier, DefaultGradleSourceSetModel> allSourceSetModels;
 
   private GradleSourceSetCache(@NotNull ModelBuilderContext context) {
     this.context = context;
@@ -23,7 +25,8 @@ public class GradleSourceSetCache {
   }
 
   public @NotNull DefaultGradleSourceSetModel getSourceSetModel(@NotNull Project project) {
-    DefaultGradleSourceSetModel sourceSetModel = allSourceSetModels.get(project);
+    ProjectIdentifier projectIdentifier = GradleProjectUtil.getProjectIdentifier(project);
+    DefaultGradleSourceSetModel sourceSetModel = allSourceSetModels.get(projectIdentifier);
     if (sourceSetModel == null) {
       context.getMessageReporter().createMessage()
         .withTitle("Project source set model isn't found")
@@ -40,7 +43,8 @@ public class GradleSourceSetCache {
   }
 
   public void setSourceSetModel(@NotNull Project project, @NotNull DefaultGradleSourceSetModel sourceSetModel) {
-    DefaultGradleSourceSetModel previousSourceSetModel = allSourceSetModels.put(project, sourceSetModel);
+    ProjectIdentifier projectIdentifier = GradleProjectUtil.getProjectIdentifier(project);
+    DefaultGradleSourceSetModel previousSourceSetModel = allSourceSetModels.put(projectIdentifier, sourceSetModel);
     if (previousSourceSetModel != null) {
       context.getMessageReporter().createMessage()
         .withTitle("Project source set model redefinition")

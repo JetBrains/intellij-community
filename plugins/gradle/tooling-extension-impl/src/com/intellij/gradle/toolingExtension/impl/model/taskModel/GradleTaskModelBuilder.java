@@ -36,7 +36,7 @@ public class GradleTaskModelBuilder extends AbstractModelBuilderService {
   public Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context) {
     GradleTaskCache taskCache = GradleTaskCache.getInstance(context);
     Set<Task> projectTasks = collectProjectTasks(project, context);
-    taskCache.setTasks(project, projectTasks);
+    taskCache.setProjectTasks(project, projectTasks);
 
     return new GradleTaskModel() {
     };
