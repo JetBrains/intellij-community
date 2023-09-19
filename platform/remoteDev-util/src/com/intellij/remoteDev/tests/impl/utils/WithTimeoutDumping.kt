@@ -29,12 +29,17 @@ suspend fun <T> withTimeoutDumping(title: String,
       catch (e: TimeoutCancellationException) {
         val coroutinesDump = dumpCoroutines(outerScope)
         deferred.cancel(e)
-        throw TimeoutException("$title: Has not finished in $timeout.\n" +
-                               "------------\n" +
-                               "CoroutineDump:\n" +
-                               coroutinesDump + "\n" +
-                               "------------" +
-                               failMessageProducer?.invoke()?.let { "\n$it" }.orEmpty())
+        throw TimeoutException(buildString {
+          append("$title: Has not finished in $timeout.\n")
+          append("------------\n")
+          append("CoroutineDump:\n")
+          append("$coroutinesDump\n")
+          append("------------")
+          val failMessage = failMessageProducer?.invoke()
+          if (!failMessage.isNullOrBlank()) {
+            append("\n$failMessage")
+          }
+        })
       }
     }
   }
