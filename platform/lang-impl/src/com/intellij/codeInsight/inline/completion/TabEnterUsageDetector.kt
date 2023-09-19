@@ -26,12 +26,14 @@ private class TabEnterUsageDetector : LookupManagerListener {
     get() = tabCount + enterCount
 
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
-    // Do not rerun detection if already detected
-    if (properties.getBoolean(INLINE_COMPLETION_INSERT_SHORTCUT_DETECTED)) {
-      return
-    }
     if (detectionFinished()) {
-      changeInlineCompletionInsertionShortcutFromLookupInsertion()
+      // Reset previous shortcut for InsertInlineCompletionAction and change to a new one from user's behaviour
+      inlineCompletionChar()?.let(::charToShortcut)?.let { shortcut ->
+        val keymap = KeymapManager.getInstance().activeKeymap
+
+        keymap.removeAllActionShortcuts("InsertInlineCompletionAction")
+        keymap.addShortcut("InsertInlineCompletionAction", KeyboardShortcut(shortcut, null))
+      }
       return
     }
     newLookup?.addLookupListener(object : LookupListener {
@@ -52,20 +54,12 @@ private class TabEnterUsageDetector : LookupManagerListener {
     }?.let(KeyStroke::getKeyStroke)
   }
 
-  private fun changeInlineCompletionInsertionShortcutFromLookupInsertion() {
-    if (!detectionFinished()) return
+  private fun inlineCompletionChar(): Char? {
+    if (!detectionFinished()) return null
     properties.setValue(INLINE_COMPLETION_INSERT_SHORTCUT_DETECTED, true)
     val tabRatio = tabCount.toDouble() / totalCount
-    val char = (if (tabRatio > TAB_RATIO_THRESHOLD) '\n' else '\t')
+    return (if (tabRatio > TAB_RATIO_THRESHOLD) '\n' else '\t')
       .also { LOG.info("Decided to use `$it` shortcut for InsertInlineCompletionAction.") }
-
-    // Reset previous shortcut for InsertInlineCompletionAction and change to a new one from user's behaviour
-    char.let(::charToShortcut)?.let { shortcut ->
-      val keymap = KeymapManager.getInstance().activeKeymap
-
-      keymap.removeAllActionShortcuts("InsertInlineCompletionAction")
-      keymap.addShortcut("InsertInlineCompletionAction", KeyboardShortcut(shortcut, null))
-    }
   }
 
   private fun detectionFinished() = totalCount >= SELECTION_COUNT_THRESHOLD

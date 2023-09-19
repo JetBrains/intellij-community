@@ -300,4 +300,4 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   }
 }
 
-const val INLINE_COMPLETION_INSERT_SHORTCUT_DETECTED = "ic_insert_shortcut_detection"
+const val INLINE_COMPLETION_INSERT_SHORTCUT_DETECTED = "ic_insert_shortcut_detected"
