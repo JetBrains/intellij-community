@@ -367,6 +367,7 @@ public final class IOUtil {
   }
 
 
+  private static final byte[] ZEROES = new byte[1024];
   /**
    * Imitates 'fallocate' linux call: ensures file region [channel.size()..upUntilSize) is allocated on disk,
    * and zeroed. We can't call 'fallocate' directly, hence just write zeros into the channel.
@@ -375,8 +376,8 @@ public final class IOUtil {
                                         long upUntilSize) throws IOException {
     long channelSize = channel.size();
     if (channelSize < upUntilSize) {
-      int stride = 1024;
-      ByteBuffer zeros = ByteBuffer.allocate(stride);
+      int stride = ZEROES.length;
+      ByteBuffer zeros = ByteBuffer.wrap(ZEROES);
       for (long pos = channelSize; pos < upUntilSize; pos += stride) {
         int remainsToZero = Math.toIntExact(Math.min(stride, upUntilSize - pos));
         zeros.clear().limit(remainsToZero);
