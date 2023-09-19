@@ -8,7 +8,7 @@ import com.intellij.driver.sdk.waitForSmartMode
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-fun Finder.idea(action: IdeaFrameUI.() -> Unit) {
+fun Finder.ideFrame(action: IdeaFrameUI.() -> Unit) {
   x("//div[@class='IdeFrameImpl']", IdeaFrameUI::class.java).action()
 }
 
