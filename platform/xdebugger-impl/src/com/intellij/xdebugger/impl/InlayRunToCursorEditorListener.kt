@@ -52,7 +52,7 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
     @JvmStatic
     val isInlayRunToCursorEnabled: Boolean get() =
       Registry.`is`("debugger.inlayRunToCursor") ||
-      AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor") && PlatformUtils.isIntelliJ()
+      AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor") && (PlatformUtils.isIntelliJ() || PlatformUtils.isRider())
   }
 
   private var currentHint = WeakReference<RunToCursorHint?>(null)
