@@ -25,7 +25,9 @@ internal interface ClassToIntConverter {
 
   companion object {
     fun getInstance(): ClassToIntConverter =
-      ApplicationManager.getApplication().getService(ClassToIntConverter::class.java)!!
+      ApplicationManager.getApplication()?.getService(ClassToIntConverter::class.java) ?: INSTANCE
+
+    private val INSTANCE: ClassToIntConverter = ClassToIntConverterImpl()
   }
 }
 

@@ -18,7 +18,9 @@ internal interface MetadataTypesFqnComparator {
 
   companion object {
     fun getInstance(): MetadataTypesFqnComparator =
-      ApplicationManager.getApplication().getService(MetadataTypesFqnComparator::class.java)!!
+      ApplicationManager.getApplication()?.getService(MetadataTypesFqnComparator::class.java) ?: INSTANCE
+
+    private val INSTANCE: MetadataTypesFqnComparator = MetadataTypesFqnComparatorImpl()
   }
 }
 

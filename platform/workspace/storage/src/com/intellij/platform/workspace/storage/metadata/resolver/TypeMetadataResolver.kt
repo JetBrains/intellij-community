@@ -18,7 +18,9 @@ internal interface TypeMetadataResolver {
 
   companion object {
     fun getInstance(): TypeMetadataResolver =
-      ApplicationManager.getApplication().getService(TypeMetadataResolver::class.java)!!
+      ApplicationManager.getApplication()?.getService(TypeMetadataResolver::class.java) ?: INSTANCE
+
+    private val INSTANCE = TypeMetadataResolverImpl()
   }
 }
 
