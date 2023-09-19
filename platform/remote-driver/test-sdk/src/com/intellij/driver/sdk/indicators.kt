@@ -6,9 +6,11 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 fun Driver.getProgressIndicators(project: Project): List<StatusBar.TaskInfoPair> {
-  val ideFrame = service<WindowManager>().getIdeFrame(project)
-  val statusBar = ideFrame?.statusBar ?: return emptyList()
-  return statusBar.backgroundProcesses
+  return withContext {
+    val ideFrame = service<WindowManager>().getIdeFrame(project)
+    val statusBar = ideFrame?.getStatusBar() ?: return@withContext emptyList()
+    statusBar.getBackgroundProcesses()
+  }
 }
 
 fun Driver.areIndicatorsVisible(project: Project): Boolean {
