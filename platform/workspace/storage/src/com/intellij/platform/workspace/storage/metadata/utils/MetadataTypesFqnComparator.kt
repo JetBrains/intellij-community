@@ -11,18 +11,18 @@ import com.intellij.platform.workspace.storage.metadata.diff.MetadataComparator
  * The interface is needed to add separate logic during testing.
  * See [com.intellij.platform.workspace.storage.tests.metadata.serialization.service.TestMetadataComparatorUtil]
  */
-internal interface MetadataComparatorUtil {
+internal interface MetadataTypesFqnComparator {
   fun compareFqns(cache: String, current: String): Boolean
 
   fun getTypeFqn(typeMetadata: StorageTypeMetadata): String
 
   companion object {
-    fun getInstance(): MetadataComparatorUtil =
-      ApplicationManager.getApplication().getService(MetadataComparatorUtil::class.java)!!
+    fun getInstance(): MetadataTypesFqnComparator =
+      ApplicationManager.getApplication().getService(MetadataTypesFqnComparator::class.java)!!
   }
 }
 
-internal class MetadataComparatorUtilImpl: MetadataComparatorUtil {
+internal class MetadataTypesFqnComparatorImpl: MetadataTypesFqnComparator {
   override fun compareFqns(cache: String, current: String): Boolean {
     return cache == current
   }

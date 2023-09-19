@@ -9,7 +9,7 @@ import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.Test
 
-class ClassesMetadataSerializationTest: ApplicationRuleService() {
+class ClassesMetadataSerializationTest: MetadataSerializationTest() {
   // SEALED CLASSES
   @Test(expected = UnsupportedEntitiesVersionException::class) //cache version and current version should be different
   fun `simple sealed class entity`() {

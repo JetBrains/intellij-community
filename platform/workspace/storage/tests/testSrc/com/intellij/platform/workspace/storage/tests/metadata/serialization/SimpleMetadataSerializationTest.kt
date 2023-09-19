@@ -4,11 +4,11 @@ package com.intellij.platform.workspace.storage.tests.metadata.serialization
 import com.intellij.platform.workspace.storage.impl.serialization.UnsupportedEntitiesVersionException
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
-import com.intellij.platform.workspace.storage.tests.ApplicationRuleService
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import org.junit.Test
 
-class SimpleMetadataSerializationTest: ApplicationRuleService() {
+class SimpleMetadataSerializationTest: MetadataSerializationTest() {
+
   @Test(expected = UnsupportedEntitiesVersionException::class) //cache version and current version should be different
   fun `changed props order entity`() {
     val builder = createEmptyBuilder()

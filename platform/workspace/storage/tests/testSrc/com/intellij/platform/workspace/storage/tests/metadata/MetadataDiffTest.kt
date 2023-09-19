@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-@TestApplication
 class MetadataDiffTest {
   private val defaultDataClass = createFinalClass(
     fqName = "default data class",

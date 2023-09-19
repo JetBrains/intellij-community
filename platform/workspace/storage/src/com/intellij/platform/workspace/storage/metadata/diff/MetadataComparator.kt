@@ -3,7 +3,7 @@ package com.intellij.platform.workspace.storage.metadata.diff
 
 import com.intellij.platform.workspace.storage.metadata.model.*
 import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata.EnumClassMetadata
-import com.intellij.platform.workspace.storage.metadata.utils.MetadataComparatorUtil
+import com.intellij.platform.workspace.storage.metadata.utils.MetadataTypesFqnComparator
 import com.intellij.platform.workspace.storage.metadata.utils.collectClassesByFqn
 
 internal fun interface MetadataComparator<T> {
@@ -176,7 +176,7 @@ private fun implication(first: Boolean, second: Boolean) = !first || second
 
 
 private val classNameAsKey: (StorageTypeMetadata) -> String =
-  MetadataComparatorUtil.getInstance()::getTypeFqn
+  MetadataTypesFqnComparator.getInstance()::getTypeFqn
 
 private val fqnsComparator: (String, String) -> Boolean =
-  MetadataComparatorUtil.getInstance()::compareFqns
+  MetadataTypesFqnComparator.getInstance()::compareFqns

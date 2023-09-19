@@ -8,7 +8,7 @@ import com.intellij.platform.workspace.storage.tests.ApplicationRuleService
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import org.junit.Test
 
-class PropsMetadataSerializationTest: ApplicationRuleService() {
+class PropsMetadataSerializationTest: MetadataSerializationTest() {
   // COMPUTABLE PROPERTIES
   @Test(expected = UnsupportedEntitiesVersionException::class) //cache version and current version should be different
   fun `computable prop entity`() {

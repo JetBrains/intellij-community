@@ -1007,14 +1007,11 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.workspaceModel.ide.impl.WorkspaceModelFusLogger"/>
 
     <applicationService serviceInterface="com.intellij.platform.workspace.storage.impl.ClassToIntConverter"
-                        serviceImplementation="com.intellij.platform.workspace.storage.impl.ClassToIntConverterImpl"
-                        testServiceImplementation="com.intellij.platform.workspace.storage.tests.metadata.serialization.service.TestClassToIntConverter"/>
+                        serviceImplementation="com.intellij.platform.workspace.storage.impl.ClassToIntConverterImpl"/>
     <applicationService serviceInterface="com.intellij.platform.workspace.storage.metadata.resolver.TypeMetadataResolver"
-                        serviceImplementation="com.intellij.platform.workspace.storage.metadata.resolver.TypeMetadataResolverImpl"
-                        testServiceImplementation="com.intellij.platform.workspace.storage.tests.metadata.serialization.service.TestTypeMetadataResolver"/>
-    <applicationService serviceInterface="com.intellij.platform.workspace.storage.metadata.utils.MetadataComparatorUtil"
-                        serviceImplementation="com.intellij.platform.workspace.storage.metadata.utils.MetadataComparatorUtilImpl"
-                        testServiceImplementation="com.intellij.platform.workspace.storage.tests.metadata.serialization.service.TestMetadataComparatorUtil"/>
+                        serviceImplementation="com.intellij.platform.workspace.storage.metadata.resolver.TypeMetadataResolverImpl"/>
+    <applicationService serviceInterface="com.intellij.platform.workspace.storage.metadata.utils.MetadataTypesFqnComparator"
+                        serviceImplementation="com.intellij.platform.workspace.storage.metadata.utils.MetadataTypesFqnComparatorImpl"/>
 
     <ui.suitableFontProvider implementation="com.intellij.ui.SuitableFontProviderImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.impl.FontFamilyService"

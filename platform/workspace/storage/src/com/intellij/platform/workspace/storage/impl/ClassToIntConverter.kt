@@ -3,7 +3,6 @@ package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.metadata.utils.MetadataComparatorUtil
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import java.util.concurrent.atomic.AtomicReference
