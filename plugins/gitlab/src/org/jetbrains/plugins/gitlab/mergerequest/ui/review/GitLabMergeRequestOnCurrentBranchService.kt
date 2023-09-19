@@ -18,24 +18,25 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.GitlabIcons
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 @Service(Service.Level.PROJECT)
 class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineScope) {
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val mergeRequestIdState: StateFlow<String?> =
+  private val mergeRequestReviewVmState: StateFlow<GitLabMergeRequestReviewViewModel?> =
     project.service<GitLabToolWindowViewModel>().projectVm.flatMapLatest {
-      it?.mergeRequestOnCurrentBranch ?: flowOf(null)
+      it?.currentMergeRequestReviewVm ?: flowOf(null)
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
   class BranchPresenter : GitCurrentBranchPresenter {
     override fun getPresentation(repository: GitRepository): GitCurrentBranchPresenter.Presentation? {
-      val mergeRequestIid = repository.project.service<GitLabMergeRequestOnCurrentBranchService>().mergeRequestIdState.value ?: return null
+      val vm = repository.project.service<GitLabMergeRequestOnCurrentBranchService>().mergeRequestReviewVmState.value ?: return null
       val currentBranchName = StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(repository) { branchName ->
         GitBranchPopupActions.truncateBranchName(branchName, repository.project)
       })
-      val text = GitLabBundle.message("merge.request.on.branch", mergeRequestIid, currentBranchName)
+      val text = GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName)
       return GitCurrentBranchPresenter.Presentation(
         GitlabIcons.GitLabLogo,
         text,
@@ -48,11 +49,8 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
-      val project = e.project
-      val action = project?.service<GitLabToolWindowViewModel>()?.projectVm?.value?.takeIf {
-        it.mergeRequestOnCurrentBranch.value != null
-      }?.let {
-        { it.showMergeRequestOnCurrentBranch() }
+      val action = e.project?.service<GitLabMergeRequestOnCurrentBranchService>()?.mergeRequestReviewVmState?.value?.let {
+        { it.showMergeRequest() }
       }
       e.presentation.isEnabledAndVisible = action != null
       // required for thread safety

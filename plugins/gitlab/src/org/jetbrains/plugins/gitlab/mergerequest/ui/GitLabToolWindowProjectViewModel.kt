@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.icon.CachingIconsProvider
@@ -33,6 +34,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffView
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesController
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesControllerImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersHistoryModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsPersistentFiltersHistory
@@ -48,7 +50,7 @@ private constructor(parentCs: CoroutineScope,
                     private val project: Project,
                     accountManager: GitLabAccountManager,
                     private val connection: GitLabProjectConnection,
-                    private val twVm: GitLabToolWindowViewModel)
+                    val twVm: GitLabToolWindowViewModel)
   : ReviewToolwindowProjectViewModel<GitLabReviewTab, GitLabReviewTabViewModel> {
 
   private val cs = parentCs.childScope()
@@ -102,23 +104,19 @@ private constructor(parentCs: CoroutineScope,
 
   private val tabsGuard = Mutex()
 
-  fun show(mrIid: String) {
+  fun showTab(tab: GitLabReviewTab) {
     cs.launch {
-      showTab(GitLabReviewTab.ReviewSelected(mrIid))
-    }
-  }
-
-  private suspend fun showTab(tab: GitLabReviewTab) {
-    tabsGuard.withLock {
-      val current = _tabs.value
-      val currentVm = current.tabs[tab]
-      if (currentVm == null || !tab.reuseTabOnRequest) {
-        currentVm?.destroy()
-        val tabVm = createVm(tab)
-        _tabs.value = current.copy(current.tabs + (tab to tabVm), tab)
-      }
-      else {
-        _tabs.value = current.copy(selectedTab = tab)
+      tabsGuard.withLock {
+        val current = _tabs.value
+        val currentVm = current.tabs[tab]
+        if (currentVm == null || !tab.reuseTabOnRequest) {
+          currentVm?.destroy()
+          val tabVm = createVm(tab)
+          _tabs.value = current.copy(current.tabs + (tab to tabVm), tab)
+        }
+        else {
+          _tabs.value = current.copy(selectedTab = tab)
+        }
       }
     }
   }
@@ -153,7 +151,7 @@ private constructor(parentCs: CoroutineScope,
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  val mergeRequestOnCurrentBranch: StateFlow<String?> by lazy {
+  private val mergeRequestOnCurrentBranch: Flow<String?> = run {
     val remote = connection.repo.remote.remote
     val gitRepo = connection.repo.remote.repository
     gitRepo.changesSignalFlow().withInitial(Unit).map {
@@ -166,16 +164,19 @@ private constructor(parentCs: CoroutineScope,
       }
     }.catch {
       LOG.warn("Could not lookup a merge request for current branch", it)
-    }.stateIn(cs, SharingStarted.Eagerly, null)
-  }
-
-  fun showMergeRequestOnCurrentBranch() {
-    cs.launch {
-      val id = mergeRequestOnCurrentBranch.first() ?: return@launch
-      showTab(GitLabReviewTab.ReviewSelected(id))
-      twVm.activate()
     }
   }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  val currentMergeRequestReviewVm: Flow<GitLabMergeRequestReviewViewModel?> =
+    mergeRequestOnCurrentBranch.flatMapLatest { id ->
+      id?.let { connection.projectData.mergeRequests.getShared(it) } ?: flowOf(null)
+    }.distinctUntilChanged { old, new ->
+      old?.getOrNull() == new?.getOrNull()
+    }.transformLatest { newValue ->
+      val vm = newValue?.getOrNull()?.let { GitLabMergeRequestReviewViewModel(it, this@GitLabToolWindowProjectViewModel) }
+      emit(vm)
+    }.modelFlow(cs, LOG)
 
   private fun getDiffBridge(mrIid: String): GitLabMergeRequestDiffBridge =
     diffBridgeStore.get(mrIid) {

@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabShowMergeRequestAction : DumbAwareAction(GitLabBundle.messagePointer("merge.request.show.action"),
@@ -27,7 +28,7 @@ class GitLabShowMergeRequestAction : DumbAwareAction(GitLabBundle.messagePointer
     val filesController = e.getRequiredData(GitLabMergeRequestsActionKeys.FILES_CONTROLLER)
     val selection: GitLabMergeRequestDetails = e.getRequiredData(GitLabMergeRequestsActionKeys.SELECTED)
 
-    twVm.show(selection.iid)
+    twVm.showTab(GitLabReviewTab.ReviewSelected(selection.iid))
     filesController.openTimeline(selection.iid, false)
   }
 }
