@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.text.ByteArrayCharSequence;
@@ -479,23 +480,22 @@ public final class IOUtil {
   }
 
   /**
-   * Method tries to run the supplied factory, and if it fails -- close all supplied {@link AutoCloseable}s on
-   * the exit path. If factory succeeded -- nothing is closed, the result is just returned
+   * Tries to wrap storageToWrap into another storage Out with the wrapperer.
+   * If the wrapperer call fails -- close storageToWrap before propagating exception up the callstack.
+   * (If the wrapperer call succeeded -- wrapping storage (Out) is now responsible for the closing of wrapped storage)
    */
-  public static <R extends AutoCloseable, E extends Throwable> R runAndCleanIfFails(
-    @NotNull ThrowableComputable<R, E> factory,
-    AutoCloseable... storagesToCloseIfFactoryFails) throws E {
+  public static <Out extends AutoCloseable, In extends AutoCloseable, E extends Throwable>
+  Out wrapSafely(@NotNull In storageToWrap,
+                 @NotNull ThrowableNotNullFunction<In, Out, E> wrapperer) throws E {
     try {
-      return factory.compute();
+      return wrapperer.fun(storageToWrap);
     }
     catch (Throwable mainEx) {
-      for (final AutoCloseable toClose : storagesToCloseIfFactoryFails) {
-        try {
-          toClose.close();
-        }
-        catch (Throwable closeEx) {
-          mainEx.addSuppressed(closeEx);
-        }
+      try {
+        storageToWrap.close();
+      }
+      catch (Throwable closeEx) {
+        mainEx.addSuppressed(closeEx);
       }
       throw mainEx;
     }

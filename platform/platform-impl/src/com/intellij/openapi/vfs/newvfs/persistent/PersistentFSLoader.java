@@ -627,41 +627,38 @@ public final class PersistentFSLoader {
       final StreamlinedBlobStorage blobStorage;
       if (FSRecordsImpl.USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE && PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
         LOG.info("VFS uses streamlined attributes storage (over new FilePageCache)");
-        PagedFileStorageWithRWLockedPageContent storage = new PagedFileStorageWithRWLockedPageContent(
-          attributesFile,
-          PERSISTENT_FS_STORAGE_CONTEXT,
-          //RC: make page smaller for the transition period: new FPCache has quite a small memory and it's hard
-          //    to manage huge 10Mb pages having only ~100-150Mb budget in total, it ruins large-numbers assumptions
-          1 << 20, //PageCacheUtils.DEFAULT_PAGE_SIZE,
-          /*nativeByteOrder: */  true,
-          PageContentLockingStrategy.LOCK_PER_PAGE
-        );
-        blobStorage = IOUtil.runAndCleanIfFails(
-          () -> new StreamlinedBlobStorageOverLockFreePagedStorage(storage, allocationStrategy),
-          storage
+        blobStorage = IOUtil.wrapSafely(
+          new PagedFileStorageWithRWLockedPageContent(
+            attributesFile,
+            PERSISTENT_FS_STORAGE_CONTEXT,
+            //RC: make page smaller for the transition period: new FPCache has quite a small memory and it's hard
+            //    to manage huge 10Mb pages having only ~100-150Mb budget in total, it ruins large-numbers assumptions
+            1 << 20, //PageCacheUtils.DEFAULT_PAGE_SIZE,
+            /*nativeByteOrder: */  true,
+            PageContentLockingStrategy.LOCK_PER_PAGE
+          ),
+          storage -> new StreamlinedBlobStorageOverLockFreePagedStorage(storage, allocationStrategy)
         );
       }
       else if (FSRecordsImpl.USE_ATTRIBUTES_OVER_MMAPPED_FILE) {
         LOG.info("VFS uses streamlined attributes storage (over MMappedFile)");
         int pageSize = 1 << 24;//16Mb
-        MMappedFileStorage storage = new MMappedFileStorage(attributesFile, pageSize);
-        blobStorage = IOUtil.runAndCleanIfFails(
-          () -> new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy),
-          storage
+        blobStorage = IOUtil.wrapSafely(
+          new MMappedFileStorage(attributesFile, pageSize),
+          storage -> new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy)
         );
       }
       else {
         LOG.info("VFS uses streamlined attributes storage (over regular FilePageCache)");
-        PagedFileStorage storage = new PagedFileStorage(
-          attributesFile,
-          PERSISTENT_FS_STORAGE_CONTEXT,
-          PageCacheUtils.DEFAULT_PAGE_SIZE,
-          /*valuesAreAligned: */ true,
-          /*nativeByteOrder: */  true
-        );
-        blobStorage = IOUtil.runAndCleanIfFails(
-          () -> new StreamlinedBlobStorageOverPagedStorage(storage, allocationStrategy),
-          () -> storage.close()
+        blobStorage = IOUtil.wrapSafely(
+          new PagedFileStorage(
+            attributesFile,
+            PERSISTENT_FS_STORAGE_CONTEXT,
+            PageCacheUtils.DEFAULT_PAGE_SIZE,
+            /*valuesAreAligned: */ true,
+            /*nativeByteOrder: */  true
+          ),
+          storage -> new StreamlinedBlobStorageOverPagedStorage(storage, allocationStrategy)
         );
       }
       return new AttributesStorageOverBlobStorage(blobStorage);

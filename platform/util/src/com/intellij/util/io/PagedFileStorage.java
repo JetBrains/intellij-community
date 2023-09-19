@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -24,7 +25,7 @@ import java.nio.file.Path;
 
 import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
 
-public final class PagedFileStorage implements Forceable/*, PagedStorage*/ {
+public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Closeable {
   static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
 
   private static final int DEFAULT_PAGE_SIZE = PageCacheUtils.DEFAULT_PAGE_SIZE;
@@ -316,6 +317,7 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/ {
     }
   }
 
+  @Override
   public void close() throws IOException {
     ExceptionUtil.runAllAndRethrowAllExceptions(
       new IOException("Failed to close PagedFileStorage[" + getFile() + "]"),

@@ -80,23 +80,25 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
     .failIfDataFormatVersionNotMatch(DATA_FORMAT_VERSION);
 
   public static @NotNull DurableStringEnumerator open(@NotNull Path storagePath) throws IOException {
-    AppendOnlyLog valuesLog = VALUES_LOG_FACTORY.open(storagePath);
-
-    return new DurableStringEnumerator(
-      valuesLog,
-      buildValueToIdIndex(valuesLog)
+    return VALUES_LOG_FACTORY.wrapStorageSafely(
+      storagePath,
+      valuesLog -> new DurableStringEnumerator(
+        valuesLog,
+        buildValueToIdIndex(valuesLog)
+      )
     );
   }
 
   public static @NotNull DurableStringEnumerator openAsync(@NotNull Path storagePath,
                                                            @NotNull VFSAsyncTaskExecutor executor) throws IOException {
-    AppendOnlyLog valuesLog = VALUES_LOG_FACTORY.open(storagePath);
-
-    CompletableFuture<Int2IntMultimap> indexBuildingFuture = executor.async(() -> buildValueToIdIndex(valuesLog));
-    return new DurableStringEnumerator(
-      valuesLog,
-      indexBuildingFuture
-    );
+    return VALUES_LOG_FACTORY.wrapStorageSafely(
+      storagePath,
+      valuesLog -> {
+        return new DurableStringEnumerator(
+          valuesLog,
+          executor.async(() -> buildValueToIdIndex(valuesLog))
+        );
+      });
   }
 
   @Override

@@ -11,8 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static com.intellij.util.io.IOUtil.MiB;
-import static com.intellij.util.io.IOUtil.runAndCleanIfFails;
+import static com.intellij.util.io.IOUtil.*;
 
 /**
  * Configurable factory for {@link AppendOnlyLogOverMMappedFile}.
@@ -65,9 +64,9 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
 
   @Override
   public @NotNull AppendOnlyLogOverMMappedFile open(@NotNull Path storagePath) throws IOException {
-    MMappedFileStorage storage = new MMappedFileStorage(storagePath, pageSize);
-    return runAndCleanIfFails(
-      () -> {
+    return wrapSafely(
+      new MMappedFileStorage(storagePath, pageSize),
+      storage -> {
         AppendOnlyLogOverMMappedFile appendOnlyLog = new AppendOnlyLogOverMMappedFile(storage);
 
         if (prohibitRecovery) {
@@ -88,8 +87,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
         }
 
         return appendOnlyLog;
-      },
-      storage
+      }
     );
   }
 

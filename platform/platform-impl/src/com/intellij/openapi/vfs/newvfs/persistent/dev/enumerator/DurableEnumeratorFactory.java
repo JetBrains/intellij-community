@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
-import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.dev.StorageFactory;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
@@ -99,32 +98,35 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
     String name = storagePath.getName(storagePath.getNameCount() - 1).toString();
     Path hashToIdPath = storagePath.resolveSibling(name + mapFileSuffix);
 
-    AppendOnlyLog valuesLog = valuesLogFactory.open(storagePath);
-    DurableIntToMultiIntMap valueHashToId = IOUtil.runAndCleanIfFails(
-      () -> valueHashToIdFactory.open(hashToIdPath),
-      valuesLog
-    );
-    //TODO RC: We could recover the map from valuesLog -- but we need valueHashToIdFactory.clean() to remove
-    //         the files, and reopen from 0
+    return valuesLogFactory.wrapStorageSafely(
+      storagePath,
+      valuesLog -> valueHashToIdFactory.wrapStorageSafely(
+        hashToIdPath,
+        valueHashToId -> {
+          //TODO RC: We could recover the map from valuesLog -- but we need valueHashToIdFactory.clean() to remove
+          //         the files, and reopen from 0
 
-    if (rebuildMapFromLogIfInconsistent) {
-      if (!valuesLog.isEmpty() && valueHashToId.isEmpty()) {
-        fillValueHashToIdMap(valuesLog, valueDescriptor, valueHashToId);
-      }
-      //TODO RC: check other (potential) inconsistencies:
-      //         log was recovered,
-      //         valueHashToIdMap has 'not closed properly' marker, etc
-      //         ...but to rebuild map in those cases we need .clean() or .createFromScratch() method for map!
-      //MAYBE separate 'always rebuild map' and 'rebuild map if inconsistent'
-      //      (both requires .open(path,CREATE_NEW) method)
-    }
+          if (rebuildMapFromLogIfInconsistent) {
+            if (!valuesLog.isEmpty() && valueHashToId.isEmpty()) {
+              fillValueHashToIdMap(valuesLog, valueDescriptor, valueHashToId);
+            }
+            //TODO RC: check other (potential) inconsistencies:
+            //         log was recovered,
+            //         valueHashToIdMap has 'not closed properly' marker, etc
+            //         ...but to rebuild map in those cases we need .clean() or .createFromScratch() method for map!
+            //MAYBE separate 'always rebuild map' and 'rebuild map if inconsistent'
+            //      (both requires .open(path,CREATE_NEW) method)
+          }
 
-    //TODO RC: valueHashToId could be loaded async -- to not delay initialization (see DurableStringEnumerator)
+          //TODO RC: valueHashToId could be loaded async -- to not delay initialization (see DurableStringEnumerator)
 
-    return new DurableEnumerator<>(
-      valueDescriptor,
-      valuesLog,
-      () -> valueHashToId
+          return new DurableEnumerator<>(
+            valueDescriptor,
+            valuesLog,
+            () -> valueHashToId
+          );
+        }
+      )
     );
   }
 }
