@@ -89,11 +89,21 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     }
 
     executor.switchJobSafely {
-      invokeRequest(request, provider)
+      val newRequest = actualizeRequestOrNull(request)
+      if (newRequest != null) {
+        withContext(Dispatchers.EDT) {
+          InlineCompletionContext.getOrNull(request.editor)?.let { context ->
+            hide(newRequest.editor, false, context)
+          }
+        }
+      }
+      invokeRequest(newRequest ?: request, provider)
     }
   }
 
   private suspend fun invokeRequest(request: InlineCompletionRequest, provider: InlineCompletionProvider) {
+    currentCoroutineContext().ensureActive()
+
     val editor = request.editor
     val offset = request.endOffset
 
@@ -226,6 +236,29 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     if (context.isCurrentlyDisplayingInlays) {
       hide(context.editor, false, context)
     }
+  }
+
+  /**
+   * IDE inserts a paired quote/bracket and moves a caret without any event. It requires us to update request.
+   *
+   * It cannot be invoked when a request is constructed. It must be called after, in order to get
+   * actualized information about offset from EDT.
+   */
+  private suspend fun actualizeRequestOrNull(request: InlineCompletionRequest): InlineCompletionRequest? {
+    if (request.event !is InlineCompletionEvent.DocumentChange) {
+      return null
+    }
+
+    // ML-1237, ML-1281, ML-1232
+    val offsetDelta = withContext(Dispatchers.EDT) { request.editor.caretModel.offset - request.endOffset }
+    if (offsetDelta == 0) {
+      return null
+    }
+
+    return request.copy(
+      startOffset = request.startOffset + offsetDelta,
+      endOffset = request.endOffset + offsetDelta
+    )
   }
 
   private fun trace(event: InlineCompletionEventType) {
