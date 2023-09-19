@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 class ReadStatisticsCollector {
-  private fun shouldCollectMavenStatistics() = Registry.`is`("maven.collect.stat")
+  private fun shouldCollectMavenStatistics() = Registry.`is`("maven.collect.local.stat")
   private val map = ConcurrentHashMap<String, AtomicInteger>()
 
 

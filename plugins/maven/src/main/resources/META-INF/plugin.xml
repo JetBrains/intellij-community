@@ -312,8 +312,8 @@
 
     <statistics.validation.customValidationRule implementation="org.jetbrains.idea.maven.statistics.MavenPluginCoordinatesWhitelistValidationRule"/>
 
-    <registryKey key="maven.collect.stat" defaultValue="false"
-                 description="Collect maven statistics"/>
+    <registryKey key="maven.collect.local.stat" defaultValue="false"
+                 description="Collect local maven statistics. Used in Internal mode. Does not affect FUS"/>
 
     <registryKey key="maven.dedicated.indexer.vmargs" defaultValue="-Xmx1024m"
                  description="Dedicated maven indexer VM arguments, restart maven server or IDEA after changing this parameter"/>
