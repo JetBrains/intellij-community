@@ -80,7 +80,7 @@ private fun <VM : EditorMapped> CoroutineScope.controlInlay(
         val currentInlay = inlay
         if (line != null && isVisible) {
           val offset = editor.document.getLineEndOffset(line)
-          if (currentInlay?.isValid != true && currentInlay?.offset != offset) {
+          if (currentInlay == null || !currentInlay.isValid || currentInlay.offset != offset) {
             currentInlay?.let(Disposer::dispose)
             inlay = editor.insertComponentAfter(line, componentFactory(vm))
           }
@@ -188,10 +188,11 @@ private fun EditorEx.controlRenderersIconVisibilityIn(cs: CoroutineScope, render
   }
 }
 
-private fun EditorEx.repaintGutterForLine(line: Int) {
-  val gutter = gutter as JComponent
+@ApiStatus.Experimental
+fun EditorEx.repaintGutterForLine(line: Int) {
+  if (line < 0) return
   val y = logicalPositionToXY(LogicalPosition(line, 0)).y
-  gutter.repaint(0, y, gutter.width, y + lineHeight)
+  gutterComponentEx.repaint(0, y, gutterComponentEx.width, y + lineHeight)
 }
 
 private fun EditorEx.lineCountFlow(ignoreLastLf: Boolean = true): Flow<Int> =
