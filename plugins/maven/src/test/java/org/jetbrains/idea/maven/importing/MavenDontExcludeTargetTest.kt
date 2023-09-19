@@ -1,52 +1,57 @@
-package org.jetbrains.idea.maven.importing;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.roots.ProjectRootManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.junit.Test
 
-import java.io.IOException;
+class MavenDontExcludeTargetTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = false
 
-public class MavenDontExcludeTargetTest extends MavenMultiVersionImportingTestCase {
-  public void testDontExcludeTargetTest() throws IOException {
-    MavenProjectsManager.getInstance(myProject).getImportingSettings().setExcludeTargetFolder(false);
+  fun testDontExcludeTargetTest() = runBlocking {
+    MavenProjectsManager.getInstance(myProject).importingSettings.isExcludeTargetFolder = false
 
-    VirtualFile classA = createProjectSubFile("target/classes/A.class");
-    VirtualFile testClass = createProjectSubFile("target/test-classes/ATest.class");
+    val classA = createProjectSubFile("target/classes/A.class")
+    val testClass = createProjectSubFile("target/test-classes/ATest.class")
 
-    VirtualFile a = createProjectSubFile("target/a.txt");
-    VirtualFile aaa = createProjectSubFile("target/aaa/a.txt");
+    val a = createProjectSubFile("target/a.txt")
+    val aaa = createProjectSubFile("target/aaa/a.txt")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    val fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex()
 
-    assert !fileIndex.isInContent(classA);
-    assert !fileIndex.isInContent(testClass);
-    assert fileIndex.isInContent(a);
-    assert fileIndex.isInContent(aaa);
+    withContext(Dispatchers.EDT) {
+      assert(!fileIndex.isInContent(classA))
+      assert(!fileIndex.isInContent(testClass))
+      assert(fileIndex.isInContent(a))
+      assert(fileIndex.isInContent(aaa))
+    }
   }
 
   @Test
-  public void testDontExcludeTargetTest2() throws IOException {
-    MavenProjectsManager.getInstance(myProject).getImportingSettings().setExcludeTargetFolder(false);
+  fun testDontExcludeTargetTest2() = runBlocking {
+    MavenProjectsManager.getInstance(myProject).importingSettings.isExcludeTargetFolder = false
 
-    VirtualFile realClassA = createProjectSubFile("customOutput/A.class");
-    VirtualFile realTestClass = createProjectSubFile("customTestOutput/ATest.class");
+    val realClassA = createProjectSubFile("customOutput/A.class")
+    val realTestClass = createProjectSubFile("customTestOutput/ATest.class")
 
-    VirtualFile classA = createProjectSubFile("target/classes/A.class");
-    VirtualFile testClass = createProjectSubFile("target/test-classes/ATest.class");
+    val classA = createProjectSubFile("target/classes/A.class")
+    val testClass = createProjectSubFile("target/test-classes/ATest.class")
 
-    VirtualFile a = createProjectSubFile("target/a.txt");
-    VirtualFile aaa = createProjectSubFile("target/aaa/a.txt");
+    val a = createProjectSubFile("target/a.txt")
+    val aaa = createProjectSubFile("target/aaa/a.txt")
 
-    importProject(
+    importProjectAsync(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -56,15 +61,17 @@ public class MavenDontExcludeTargetTest extends MavenMultiVersionImportingTestCa
         <outputDirectory>customOutput</outputDirectory>
         <testOutputDirectory>customTestOutput</testOutputDirectory>
         </build>
-        """);
+        """.trimIndent())
 
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    val fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex()
 
-    assert fileIndex.isInContent(classA);
-    assert fileIndex.isInContent(testClass);
-    assert fileIndex.isInContent(a);
-    assert fileIndex.isInContent(aaa);
-    assert !fileIndex.isInContent(realClassA);
-    assert !fileIndex.isInContent(realTestClass);
+    withContext(Dispatchers.EDT) {
+      assert(fileIndex.isInContent(classA))
+      assert(fileIndex.isInContent(testClass))
+      assert(fileIndex.isInContent(a))
+      assert(fileIndex.isInContent(aaa))
+      assert(!fileIndex.isInContent(realClassA))
+      assert(!fileIndex.isInContent(realTestClass))
+    }
   }
 }
