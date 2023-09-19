@@ -52,7 +52,7 @@ public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
                       <version>1</version>
                       """);
     }
-    myIndicesFixture.setUpAfterImport();
+    ApplicationManager.getApplication().invokeAndWait(() -> myIndicesFixture.setUpAfterImport());
   }
 
   protected boolean importProjectOnSetup() {

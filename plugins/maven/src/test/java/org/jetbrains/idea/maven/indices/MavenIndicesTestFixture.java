@@ -67,7 +67,7 @@ public class MavenIndicesTestFixture {
     setUpAfterImport();
   }
 
-  public void setUpAfterImport() throws Exception {
+  public void setUpAfterImport() {
     MavenIndexerWrapper.setTestIndicesDir(myDir.resolve("MavenIndices"));
     getIndicesManager().scheduleUpdateIndicesList(null);
     getIndicesManager().waitForBackgroundTasksInTests();
