@@ -7,8 +7,22 @@ import org.jetbrains.annotations.ApiStatus
 @LcrDslMarker
 interface LcrInitParams {
 
+  enum class Align {
+    LEFT,
+
+    /**
+     * The cell occupies all available free space, so next cells will be near right edge
+     */
+    FILL,
+
+    /**
+     * Similar to [FILL] but additionally aligns the cell to the right
+     */
+    RIGHT
+  }
+
   /**
-   * True if the cell fills available extra horizontal space. If several cells use [grow] then extra space is distributed equally
+   * Default value is [Align.LEFT]
    */
-  var grow: Boolean
+  var align: Align
 }

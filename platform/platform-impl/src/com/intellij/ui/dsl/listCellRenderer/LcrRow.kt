@@ -11,6 +11,19 @@ import javax.swing.JList
 @LcrDslMarker
 interface LcrRow<T> {
 
+  enum class Gap {
+    /**
+     * Default gap between cells. Usages:
+     * * Gap between icon and related text
+     */
+    DEFAULT,
+
+    /**
+     * No space
+     */
+    NONE
+  }
+
   val list: JList<out T>
   val value: T
   val index: Int
@@ -18,9 +31,24 @@ interface LcrRow<T> {
   val hasFocus: Boolean
 
   /**
+   * A grey text, that is usually used for non-primary information in renderers
+   */
+  val greyForeground: Color
+
+  /**
    * Row background
    */
   var background: Color?
+
+  /**
+   * Row foreground
+   */
+  var foreground: Color
+
+  /**
+   * The gap between the previous cell and the next one. Not used for the first cell
+   */
+  fun gap(gap: Gap)
 
   /**
    * Adds a cell with an icon

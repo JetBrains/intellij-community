@@ -14,7 +14,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.codeStyle.NameUtil
-import com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
+import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.Processor
 import com.intellij.util.text.Matcher
@@ -132,7 +132,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
            is VcsCommitMetadata -> value.subject
            else -> ""
          }) {
-      grow = true
+      align = LcrInitParams.Align.FILL
     }
 
     @NlsSafe
@@ -143,7 +143,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
     }
     if (rightText != null) {
       text(rightText) {
-        style = LcrTextInitParams.Style.GRAYED
+        foreground = this@listCellRenderer.greyForeground
       }
     }
   }
