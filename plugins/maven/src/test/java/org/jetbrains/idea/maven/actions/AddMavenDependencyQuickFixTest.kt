@@ -13,34 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.actions;
+package org.jetbrains.idea.maven.actions
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiManager;
-import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase;
-import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog;
-import org.jetbrains.idea.maven.model.MavenId;
-import org.junit.Test;
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.psi.PsiManager
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase
+import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog
+import org.jetbrains.idea.maven.model.MavenId
+import org.junit.Test
 
-import java.io.IOException;
-import java.util.Collections;
+class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
+  override fun runInDispatchThread() = false
 
-public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase {
-
-  private IntentionAction findAddMavenIntention() {
-    for (IntentionAction intention : myFixture.getAvailableIntentions()) {
+  private fun findAddMavenIntention(): IntentionAction? {
+    for (intention in myFixture.getAvailableIntentions()) {
       if (intention.getText().contains("Add Maven")) {
-        return intention;
+        return intention
       }
     }
 
-    return null;
+    return null
   }
 
   @Test
-  public void testAddDependency() throws IOException {
-    VirtualFile f = createProjectSubFile("src/main/java/A.java", """
+  fun testAddDependency() = runBlocking {
+    val f = createProjectSubFile("src/main/java/A.java", """
       import org.apache.commons.io.IOUtils;
 
       public class Aaa {
@@ -49,31 +47,32 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
           IOUtil<caret>s u;
         }
 
-      }""");
+      }
+      """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(f);
+    myFixture.configureFromExistingVirtualFile(f)
 
-    IntentionAction intentionAction = findAddMavenIntention();
+    val intentionAction = findAddMavenIntention()
 
-    MavenArtifactSearchDialog.ourResultForTest = Collections.singletonList(new MavenId("commons-io", "commons-io", "2.4"));
+    MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
 
-    intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile());
-    waitForImportCompletion();
+    intentionAction!!.invoke(myProject, myFixture.getEditor(), myFixture.getFile())
+    waitForImportCompletion()
 
-    String pomText = PsiManager.getInstance(myProject).findFile(myProjectPom).getText();
+    val pomText = PsiManager.getInstance(myProject).findFile(myProjectPom)!!.getText()
     assertTrue(pomText.matches(
-      "(?s).*<dependency>\\s*<groupId>commons-io</groupId>\\s*<artifactId>commons-io</artifactId>\\s*<version>2.4</version>\\s*</dependency>.*"));
+      "(?s).*<dependency>\\s*<groupId>commons-io</groupId>\\s*<artifactId>commons-io</artifactId>\\s*<version>2.4</version>\\s*</dependency>.*".toRegex()))
   }
 
-  @Test 
-  public void testAddDependencyTwice() throws IOException {
-    VirtualFile f = createProjectSubFile("src/main/java/A.java", """
+  @Test
+  fun testAddDependencyTwice() = runBlocking {
+    val f = createProjectSubFile("src/main/java/A.java", """
       import org.apache.commons.io.IOUtils;
 
       public class Aaa {
@@ -82,26 +81,27 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
           IOUtil<caret>s u;
         }
 
-      }""");
+      }
+      """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(f);
+    myFixture.configureFromExistingVirtualFile(f)
 
-    IntentionAction intentionAction = findAddMavenIntention();
+    val intentionAction = findAddMavenIntention()
 
-    MavenArtifactSearchDialog.ourResultForTest = Collections.singletonList(new MavenId("commons-io", "commons-io", "2.4"));
-    intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile());
-    waitForImportCompletion();
-    MavenArtifactSearchDialog.ourResultForTest = Collections.singletonList(new MavenId("commons-io", "commons-io", "2.4"));
-    intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile());
+    MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
+    intentionAction!!.invoke(myProject, myFixture.getEditor(), myFixture.getFile())
+    waitForImportCompletion()
+    MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
+    intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile())
 
-    waitForImportCompletion();
-    String pomText = PsiManager.getInstance(myProject).findFile(myProjectPom).getText();
+    waitForImportCompletion()
+    val pomText = PsiManager.getInstance(myProject).findFile(myProjectPom)!!.getText()
     assertEquals("""
                     <?xml version="1.0"?><project xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">  <modelVersion>4.0.0</modelVersion><groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -113,12 +113,13 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
                                 <version>2.4</version>
                             </dependency>
                         </dependencies>
-                    </project>""", pomText);
+                    </project>
+                    """.trimIndent(), pomText)
   }
 
-  @Test 
-  public void testChangeDependencyScopeIfWasInTest() throws IOException {
-    VirtualFile f = createProjectSubFile("src/main/java/A.java", """
+  @Test
+  fun testChangeDependencyScopeIfWasInTest() = runBlocking {
+    val f = createProjectSubFile("src/main/java/A.java", """
       import org.apache.commons.io.IOUtils;
 
       public class Aaa {
@@ -127,9 +128,10 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
           IOUtil<caret>s u;
         }
 
-      }""");
+      }
+      """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                     <dependencies>
                       <dependency>
@@ -138,16 +140,17 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
                         <version>2.4</version>
                         <scope>test</scope>
                       </dependency>
-                    </dependencies>""");
+                    </dependencies>
+                    """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(f);
+    myFixture.configureFromExistingVirtualFile(f)
 
-    IntentionAction intentionAction = findAddMavenIntention();
+    val intentionAction = findAddMavenIntention()
 
-    MavenArtifactSearchDialog.ourResultForTest = Collections.singletonList(new MavenId("commons-io", "commons-io", "2.4"));
-    intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile());
-    waitForImportCompletion();
-    String pomText = PsiManager.getInstance(myProject).findFile(myProjectPom).getText();
+    MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
+    intentionAction!!.invoke(myProject, myFixture.getEditor(), myFixture.getFile())
+    waitForImportCompletion()
+    val pomText = PsiManager.getInstance(myProject).findFile(myProjectPom)!!.getText()
     assertEquals("""
                    <?xml version="1.0"?><project xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">  <modelVersion>4.0.0</modelVersion><groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                    <dependencies>
@@ -156,12 +159,13 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
                        <artifactId>commons-io</artifactId>
                        <version>2.4</version>
                      </dependency>
-                   </dependencies></project>""", pomText);
+                   </dependencies></project>
+                   """.trimIndent(), pomText)
   }
 
-  @Test 
-  public void testAddDependencyInTest() throws IOException {
-    VirtualFile f = createProjectSubFile("src/test/java/A.java", """
+  @Test
+  fun testAddDependencyInTest() = runBlocking {
+    val f = createProjectSubFile("src/test/java/A.java", """
       import org.apache.commons.io.IOUtils;
 
       public class Aaa {
@@ -170,24 +174,25 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
           IOUtil<caret>s u;
         }
 
-      }""");
+      }
+      """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
+                    """.trimIndent())
 
-    myFixture.configureFromExistingVirtualFile(f);
+    myFixture.configureFromExistingVirtualFile(f)
 
-    IntentionAction intentionAction = findAddMavenIntention();
+    val intentionAction = findAddMavenIntention()
 
-    MavenArtifactSearchDialog.ourResultForTest = Collections.singletonList(new MavenId("commons-io", "commons-io", "2.4"));
+    MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
 
-    intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile());
-    waitForImportCompletion();
-    String pomText = PsiManager.getInstance(myProject).findFile(myProjectPom).getText();
+    intentionAction!!.invoke(myProject, myFixture.getEditor(), myFixture.getFile())
+    waitForImportCompletion()
+    val pomText = PsiManager.getInstance(myProject).findFile(myProjectPom)!!.getText()
     assertTrue(pomText.matches(
-      "(?s).*<dependency>\\s*<groupId>commons-io</groupId>\\s*<artifactId>commons-io</artifactId>\\s*<version>2.4</version>\\s*<scope>test</scope>\\s*</dependency>.*"));
+      "(?s).*<dependency>\\s*<groupId>commons-io</groupId>\\s*<artifactId>commons-io</artifactId>\\s*<version>2.4</version>\\s*<scope>test</scope>\\s*</dependency>.*".toRegex()))
   }
 }
