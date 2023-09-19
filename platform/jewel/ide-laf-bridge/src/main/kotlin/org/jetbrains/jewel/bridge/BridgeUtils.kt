@@ -144,6 +144,15 @@ suspend fun retrieveTextStyle(
 val JBValue.dp
     get() = unscaled.dp
 
+internal operator fun TextUnit.minus(delta: Float) = plus(-delta)
+
+internal operator fun TextUnit.plus(delta: Float) =
+    when {
+        isSp -> TextUnit(value + delta, type)
+        isEm -> TextUnit(value + delta, type)
+        else -> this
+    }
+
 fun <T : InteractiveComponentState> retrieveStatefulIcon(
     iconPath: String,
     svgLoader: SvgLoader,

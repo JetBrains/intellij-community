@@ -26,6 +26,7 @@ internal object BridgeIconMapper : IconMapper {
             return originalPath
         }
 
+        // TODO #116 replace with public API access once it's made available (IJP 233?)
         val clazz = Class.forName("com.intellij.ui.icons.CachedImageIconKt")
         val patchIconPath = clazz.getMethod("patchIconPath", String::class.java, ClassLoader::class.java)
         patchIconPath.isAccessible = true

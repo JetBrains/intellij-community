@@ -14,14 +14,17 @@ private val classUITheme
 internal fun currentUiThemeOrNull() =
     (LafManager.getInstance().currentLookAndFeel as? UIThemeBasedLookAndFeelInfo)?.theme
 
+// TODO #116 replace with public API access once it's made available (IJP 233?)
 internal val UITheme.icons: Map<String, String>
     get() = readMapField<String>(classUITheme.getDeclaredField("icons"))
         .filterKeys { it != "ColorPalette" }
 
+// TODO #116 replace with public API access once it's made available (IJP 233?)
 internal val UITheme.iconColorPalette: Map<String, String>
     get() = readMapField<Map<String, String>>(classUITheme.getDeclaredField("icons"))
         .get("ColorPalette").orEmpty()
 
+// TODO #116 replace with public API access once it's made available (IJP 233?)
 internal val UITheme.selectedIconColorPalette: Map<String, String>
     get() = readMapField(classUITheme.getDeclaredField("iconColorsOnSelection"))
 

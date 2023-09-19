@@ -85,6 +85,7 @@ import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTextAreaStyle
 import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTextFieldColors
 import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTextFieldMetrics
 import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTextFieldStyle
+import org.jetbrains.skiko.DependsOnJBR
 import javax.swing.UIManager
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -93,6 +94,7 @@ private val logger = Logger.getInstance("JewelIntUiBridge")
 internal val uiDefaults
     get() = UIManager.getDefaults()
 
+@OptIn(DependsOnJBR::class)
 internal suspend fun createBridgeIntUiDefinition(): IntUiThemeDefinition {
     val textStyle = retrieveTextStyle("Label.font", "Label.foreground")
     return createBridgeIntUiDefinition(textStyle)
@@ -113,6 +115,7 @@ internal fun createBridgeIntUiDefinition(textStyle: TextStyle): IntUiThemeDefini
     )
 }
 
+@OptIn(DependsOnJBR::class)
 internal suspend fun createSwingIntUiComponentStyling(
     theme: IntUiThemeDefinition,
     svgLoader: SvgLoader,

@@ -1,5 +1,3 @@
-@file:Suppress("UnstableApiUsage")
-
 package org.jetbrains.jewel.bridge
 
 import com.intellij.ide.ui.LafManagerListener
