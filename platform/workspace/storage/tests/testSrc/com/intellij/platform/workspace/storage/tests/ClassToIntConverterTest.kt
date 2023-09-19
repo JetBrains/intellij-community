@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.impl.ClassToIntConverter
+import com.intellij.platform.workspace.storage.impl.ClassToIntConverterImpl
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -16,7 +17,7 @@ class ClassToIntConverterTest {
   fun `multi thread initialization`() {
     val random = Random.Default
     repeat(1_000) {
-      val converter = ClassToIntConverter.getInstance()
+      val converter = ClassToIntConverterImpl()
       val threads = List(10) {
         Callable {
           repeat(10) {
