@@ -7,6 +7,8 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.ComponentInlay
 import com.intellij.openapi.editor.event.VisibleAreaListener
+import com.intellij.openapi.editor.ex.FoldingListener
+import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -85,17 +87,33 @@ private class ComponentInlaysContainer private constructor(val editor: Editor) :
   private var visibleAreaAwareInlaysCount = 0
   private var contentSizeAwareInlayCount = 0
 
-  override val isInputFocusOwner = true
-  val inlays = mutableListOf<Inlay<ComponentInlayRenderer>>()
-  val contentResizeListener = object : ComponentAdapter() {
+  private val inlays = mutableListOf<Inlay<ComponentInlayRenderer>>()
+  private val contentResizeListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
       revalidate()
       repaint()
     }
   }
-  val visibleAreaListener = VisibleAreaListener {
+  private val visibleAreaListener = VisibleAreaListener {
     revalidate()
     repaint()
+  }
+  private val foldingListener = object : FoldingListener {
+    override fun onFoldProcessingEnd() {
+      updateFolding()
+    }
+  }
+
+  override val isInputFocusOwner = true
+
+  init {
+    (editor.foldingModel as? FoldingModelEx)?.addListener(foldingListener, this)
+  }
+
+  private fun updateFolding() {
+    for (inlay in inlays) {
+      inlay.renderer.component.isVisible = !EditorUtil.isInlayFolded(inlay)
+    }
   }
 
   private fun remove(inlay: Inlay<ComponentInlayRenderer>): Boolean {
@@ -122,6 +140,7 @@ private class ComponentInlaysContainer private constructor(val editor: Editor) :
     val renderer = inlay.renderer
     inlays.add(inlay)
     add(renderer.component)
+    renderer.component.isVisible = !EditorUtil.isInlayFolded(inlay)
     // optionally add listeners if any inlay aware of viewport or content size
     when (inlay.renderer.alignment) {
       ComponentInlayAlignment.FIT_CONTENT_WIDTH, ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH -> {
