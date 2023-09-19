@@ -1,12 +1,15 @@
-package org.jetbrains.idea.maven.importing;
+package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenDomTestCase
+import kotlinx.coroutines.runBlocking
+import org.junit.Test
 
-public class MavenBuildHelperPluginTest extends MavenDomTestCase {
+class MavenBuildHelperPluginTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = false
+  
   @Test
-  public void testCompletion() {
-    importProject(
+  fun testCompletion() = runBlocking {
+    importProjectAsync(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -47,9 +50,9 @@ public class MavenBuildHelperPluginTest extends MavenDomTestCase {
           </build>
 
           <properties>
-            <aaa>${someNew}</aaa>
+            <aaa>${'$'}{someNew}</aaa>
           </properties>
-        """);
+        """.trimIndent())
 
     createProjectPom(
       """
@@ -92,10 +95,10 @@ public class MavenBuildHelperPluginTest extends MavenDomTestCase {
           </build>
 
           <properties>
-            <aaa>${someNew<caret>}</aaa>
+            <aaa>${'$'}{someNew<caret>}</aaa>
           </properties>
-        """);
+        """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "someNewProperty1", "someNewProperty2");
+    assertCompletionVariants(myProjectPom, "someNewProperty1", "someNewProperty2")
   }
 }
