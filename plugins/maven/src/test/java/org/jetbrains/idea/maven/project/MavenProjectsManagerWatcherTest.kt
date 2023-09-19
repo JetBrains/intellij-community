@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenId
@@ -33,7 +34,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testChangeConfigInAnotherProjectShouldNotUpdateOur() {
+  fun testChangeConfigInAnotherProjectShouldNotUpdateOur() = runBlocking {
     assertNoPendingProjectForReload()
     createPomFile(createProjectSubDir("../another"), createPomContent("another", "another"))
     assertNoPendingProjectForReload()
@@ -44,7 +45,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testChangeConfigInOurProjectShouldCallUpdatePomFile() {
+  fun testChangeConfigInOurProjectShouldCallUpdatePomFile() = runBlocking {
     assertNoPendingProjectForReload()
     val mavenConfig = createProjectSubFile(".mvn/maven.config")
     importProject()
@@ -55,7 +56,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testChangeConfigInAnotherProjectShouldCallItIfItWasAdded() {
+  fun testChangeConfigInAnotherProjectShouldCallItIfItWasAdded() = runBlocking {
     assertNoPendingProjectForReload()
     val anotherPom = createPomFile(createProjectSubDir("../another"), createPomContent("another", "another"))
     val mavenConfig = createProjectSubFile("../another/.mvn/maven.config")
@@ -68,7 +69,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testSaveDocumentChangesBeforeAutoImport() {
+  fun testSaveDocumentChangesBeforeAutoImport() = runBlocking {
     assertNoPendingProjectForReload()
     assertModules("project")
     replaceContent(myProjectPom, createPomXml(
@@ -88,7 +89,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testIncrementalAutoReload() {
+  fun testIncrementalAutoReload() = runBlocking {
     assertRootProjects("project")
     assertNoPendingProjectForReload()
     val module1 = createModulePom("module1", createPomContent("test", "module1"))
@@ -121,7 +122,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testProfilesAutoReload() {
+  fun testProfilesAutoReload() = runBlocking {
     createProjectPom("""
                          <groupId>test</groupId>
                          <artifactId>project</artifactId>
@@ -175,11 +176,9 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
     Assert.assertEquals(java.util.List.of(*expectedDependencies), actualDependencies)
   }
 
-  private fun addManagedFiles(pom: VirtualFile) {
-    myProjectsManager!!.addManagedFiles(listOf(pom))
-    waitForImportCompletion()
-    if (!isNewImportingProcess) {
-      //myProjectsManager.performScheduledImportInTests();
+  private suspend fun addManagedFiles(pom: VirtualFile) {
+    waitForImportWithinTimeout {
+      myProjectsManager!!.addManagedFiles(listOf(pom))
     }
   }
 
