@@ -1,9 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project
 
-import com.intellij.util.SmartList
-import com.intellij.util.containers.toMutableSmartList
-
 interface ArtifactMappingService {
   fun getModuleMapping(artifactPath: String): ModuleMappingInfo?
 
@@ -27,22 +24,22 @@ class MapBasedArtifactMappingService() : ArtifactMappingService {
     map.forEach { (k, v) -> storeModuleId(k, v) }
   }
 
-  private val myMap: MutableMap<String, MutableList<String>> = mutableMapOf()
+  private val myMap: MutableMap<String, MutableSet<String>> = mutableMapOf()
   private val myNonModulesContent: MutableSet<String> = HashSet()
 
   override fun getModuleMapping(artifactPath: String): ModuleMappingInfo? {
-    return myMap[artifactPath]?.let { ModuleMappingData(it, myNonModulesContent.contains(artifactPath)) }
+    return myMap[artifactPath]?.let { ModuleMappingData(it.toList(), myNonModulesContent.contains(artifactPath)) }
   }
 
   override fun storeModuleId(artifactPath: String, moduleId: String) {
-    myMap.computeIfAbsent(artifactPath) { SmartList() }.add(moduleId)
+    myMap.computeIfAbsent(artifactPath) { LinkedHashSet() }.add(moduleId)
   }
 
   override val keys: Collection<String>
     get() = myMap.keys
 
   override fun putAll(artifactsMap: ArtifactMappingService) {
-    artifactsMap.keys.forEach { key -> artifactsMap.getModuleMapping(key)?.moduleIds?.let { found -> myMap[key] = found.toMutableSmartList() } }
+    artifactsMap.keys.forEach { key -> artifactsMap.getModuleMapping(key)?.moduleIds?.let { found -> myMap[key] = LinkedHashSet<String>().also { it.addAll(found) } } }
   }
 
   override fun markArtifactPath(canonicalPath: String, hasNonModulesContent: Boolean) {
