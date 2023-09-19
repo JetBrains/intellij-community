@@ -5,10 +5,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.*
-import com.intellij.openapi.editor.ComponentInlay
 import com.intellij.openapi.editor.event.VisibleAreaListener
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
-import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -16,13 +15,16 @@ import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
+import com.intellij.ui.components.JBScrollPane
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
+import javax.swing.JScrollPane
 import javax.swing.RepaintManager
 import javax.swing.SwingUtilities
+import kotlin.math.max
 
 @Experimental
 internal class ComponentInlayImpl<T : Component> private constructor(override val component: T, override val inlay: Inlay<*>) : ComponentInlay<T> {
@@ -48,8 +50,9 @@ private class ComponentInlayRenderer(val component: Component, val alignment: Co
 
   override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
     inlay.bounds?.let { inlayBounds ->
-      if (component.y != inlayBounds.y)
+      if (component.y != inlayBounds.y) {
         component.location = Point(component.x, inlayBounds.y)
+      }
     }
   }
 
@@ -58,12 +61,12 @@ private class ComponentInlayRenderer(val component: Component, val alignment: Co
   override fun getContextMenuGroupId(inlay: Inlay<*>): String? = customRenderer.getContextMenuGroupId(inlay)
 }
 
-private class ComponentInlaysContainer private constructor(val editor: Editor) : JComponent(), EditorHostedComponent, Disposable {
+private class ComponentInlaysContainer private constructor(val editor: EditorEx) : JComponent(), EditorHostedComponent, Disposable {
   companion object {
     private val INLAYS_CONTAINER = Key<ComponentInlaysContainer>("INLAYS_CONTAINER")
 
     fun addInlay(inlay: Inlay<ComponentInlayRenderer>) {
-      val editor = inlay.editor
+      val editor = inlay.editor as EditorEx
       val inlaysContainer = editor.getUserData(INLAYS_CONTAINER) ?: ComponentInlaysContainer(editor).also { container ->
         editor.putUserData(INLAYS_CONTAINER, container)
         editor.contentComponent.add(container)
@@ -107,7 +110,7 @@ private class ComponentInlaysContainer private constructor(val editor: Editor) :
   override val isInputFocusOwner = true
 
   init {
-    (editor.foldingModel as? FoldingModelEx)?.addListener(foldingListener, this)
+    editor.foldingModel.addListener(foldingListener, this)
   }
 
   private fun updateFolding() {
@@ -175,13 +178,16 @@ private class ComponentInlaysContainer private constructor(val editor: Editor) :
 
     val content = editor.contentComponent
     val initialContentWidth = content.width
+    val scrollPane = editor.scrollPane
+    val viewportReservedWidth = if (!isVerticalScrollbarFlipped(scrollPane)) editor.scrollPane.verticalScrollBar.width else 0
 
     // Step 1: Sync inlay size with preferred component size.
     // Step 1.1: Update inlay size, it may fail in batch mode so need to do it in separate loop
     for (inlay in inlays) {
       inlay.renderer.let {
         it.inlaySize = when (it.alignment) {
-          ComponentInlayAlignment.FIT_CONTENT_WIDTH, ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH -> it.component.run { Dimension(minimumSize.width, preferredSize.height) }
+          ComponentInlayAlignment.FIT_CONTENT_WIDTH -> it.component.run { Dimension(minimumSize.width, preferredSize.height) }
+          ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH -> it.component.run { Dimension(minimumSize.width + viewportReservedWidth, preferredSize.height) }
           else -> it.component.preferredSize
         }
       }
@@ -215,12 +221,23 @@ private class ComponentInlaysContainer private constructor(val editor: Editor) :
         val component = renderer.component
         when (renderer.alignment) {
           ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH, ComponentInlayAlignment.FIT_CONTENT_WIDTH -> component.size = Dimension(bounds.width, renderer.inlaySize.height)
-          ComponentInlayAlignment.FIT_VIEWPORT_WIDTH -> component.size = editor.scrollingModel.visibleArea.let { Dimension(it.width, renderer.inlaySize.height) }
-          ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> component.bounds = editor.scrollingModel.visibleArea.let { Rectangle(it.x, renderer.component.y, it.width, renderer.inlaySize.height) }
+          ComponentInlayAlignment.FIT_VIEWPORT_WIDTH -> component.bounds = fitToViewport(renderer, false, viewportReservedWidth)
+          ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> component.bounds = fitToViewport(renderer, true, viewportReservedWidth)
           else -> component.size = renderer.inlaySize
         }
       }
     }
+  }
+
+  private fun fitToViewport(renderer: ComponentInlayRenderer, shiftToViewport: Boolean, viewportReservedWidth: Int): Rectangle {
+    val visibleArea = editor.scrollingModel.visibleArea
+    val x = if (shiftToViewport) visibleArea.x else 0
+    return Rectangle(x, renderer.component.y, max(renderer.component.minimumSize.width, visibleArea.width - viewportReservedWidth), renderer.inlaySize.height)
+  }
+
+  private fun isVerticalScrollbarFlipped(scrollPane: JScrollPane): Boolean {
+    val flipProperty = scrollPane.getClientProperty(JBScrollPane.Flip::class.java)
+    return flipProperty === JBScrollPane.Flip.HORIZONTAL || flipProperty === JBScrollPane.Flip.BOTH
   }
 
   override fun dispose() {
