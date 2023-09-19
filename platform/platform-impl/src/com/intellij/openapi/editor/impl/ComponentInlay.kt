@@ -2,22 +2,21 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
 import com.intellij.ui.components.JBScrollPane
 import org.jetbrains.annotations.ApiStatus.Experimental
-import java.awt.*
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
@@ -28,45 +27,22 @@ import kotlin.math.max
 import kotlin.math.min
 
 @Experimental
-internal class ComponentInlayImpl<T : Component> private constructor(override val component: T, override val inlay: Inlay<*>) : ComponentInlay<T> {
-  companion object {
-    fun <T : Component>add(editor: Editor, offset: Int, properties: InlayProperties, component: T, alignment: ComponentInlayAlignment? = null, customRenderer: CustomComponentInlayRenderer? = null): ComponentInlay<T>? {
-      val renderer = ComponentInlayRenderer(component, alignment, customRenderer ?: DefaultCustomComponentInlayRenderer)
-
-      val inlay = editor.inlayModel.addBlockElement(offset, properties, renderer) ?: return null
-      ComponentInlaysContainer.addInlay(inlay)
-      return ComponentInlayImpl(component, inlay)
+internal object ComponentInlayManager {
+  fun <T : Component> add(editor: Editor,
+                          offset: Int,
+                          properties: InlayProperties,
+                          renderer: ComponentInlayRenderer<T>): Inlay<ComponentInlayRenderer<T>>? =
+    editor.inlayModel.addBlockElement(offset, properties, renderer)?.also {
+      @Suppress("UNCHECKED_CAST")
+      ComponentInlaysContainer.addInlay(it as Inlay<ComponentInlayRenderer<*>>)
     }
-  }
-}
-
-private object DefaultCustomComponentInlayRenderer : CustomComponentInlayRenderer()
-
-private class ComponentInlayRenderer(val component: Component, val alignment: ComponentInlayAlignment? = null, val customRenderer: CustomComponentInlayRenderer) : EditorCustomElementRenderer {
-  var inlaySize: Dimension = Dimension(0, 0)
-
-  override fun calcWidthInPixels(inlay: Inlay<*>): Int = inlaySize.width
-
-  override fun calcHeightInPixels(inlay: Inlay<*>): Int = inlaySize.height
-
-  override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
-    inlay.bounds?.let { inlayBounds ->
-      if (component.y != inlayBounds.y) {
-        component.location = Point(component.x, inlayBounds.y)
-      }
-    }
-  }
-
-  override fun calcGutterIconRenderer(inlay: Inlay<*>): GutterIconRenderer? = customRenderer.calcGutterIconRenderer(inlay)
-  override fun getContextMenuGroup(inlay: Inlay<*>): ActionGroup? = customRenderer.getContextMenuGroup(inlay)
-  override fun getContextMenuGroupId(inlay: Inlay<*>): String? = customRenderer.getContextMenuGroupId(inlay)
 }
 
 private class ComponentInlaysContainer private constructor(val editor: EditorEx) : JComponent(), EditorHostedComponent, Disposable {
   companion object {
     private val INLAYS_CONTAINER = Key<ComponentInlaysContainer>("INLAYS_CONTAINER")
 
-    fun addInlay(inlay: Inlay<ComponentInlayRenderer>) {
+    fun addInlay(inlay: Inlay<ComponentInlayRenderer<*>>) {
       val editor = inlay.editor as EditorEx
       val inlaysContainer = editor.getUserData(INLAYS_CONTAINER) ?: ComponentInlaysContainer(editor).also { container ->
         editor.putUserData(INLAYS_CONTAINER, container)
@@ -91,7 +67,7 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
   private var visibleAreaAwareInlaysCount = 0
   private var contentSizeAwareInlayCount = 0
 
-  private val inlays = mutableListOf<Inlay<ComponentInlayRenderer>>()
+  private val inlays = mutableListOf<Inlay<ComponentInlayRenderer<*>>>()
   private val contentResizeListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
       revalidate()
@@ -120,7 +96,7 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     }
   }
 
-  private fun remove(inlay: Inlay<ComponentInlayRenderer>): Boolean {
+  private fun remove(inlay: Inlay<ComponentInlayRenderer<*>>): Boolean {
     if (!inlays.remove(inlay))
       return false
 
@@ -140,7 +116,7 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     return true
   }
 
-  private fun add(inlay: Inlay<ComponentInlayRenderer>) {
+  private fun add(inlay: Inlay<ComponentInlayRenderer<*>>) {
     val renderer = inlay.renderer
     inlays.add(inlay)
     add(renderer.component)
@@ -230,7 +206,7 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     }
   }
 
-  private fun fitToViewport(renderer: ComponentInlayRenderer, visibleArea: Rectangle, alignment: ComponentInlayAlignment, viewportReservedWidth: Int): Rectangle {
+  private fun fitToViewport(renderer: ComponentInlayRenderer<*>, visibleArea: Rectangle, alignment: ComponentInlayAlignment, viewportReservedWidth: Int): Rectangle {
     val x = if (alignment == ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN) visibleArea.x else 0
     return Rectangle(x, renderer.component.y, max(renderer.component.minimumSize.width, visibleArea.width - viewportReservedWidth), renderer.inlaySize.height)
   }
