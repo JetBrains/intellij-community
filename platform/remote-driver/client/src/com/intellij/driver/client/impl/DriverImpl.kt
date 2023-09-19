@@ -27,7 +27,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
   override val isConnected: Boolean
     get() {
       try {
-        invoker.getProductVersion()
+        return invoker.isApplicationInitialized()
       }
       catch (ut: UndeclaredThrowableException) {
         if (ut.cause is InstanceNotFoundException) {
@@ -38,8 +38,6 @@ internal class DriverImpl(host: JmxHost?) : Driver {
       catch (ioe: JmxCallException) {
         return false
       }
-
-      return true
     }
 
   override fun getProductVersion(): ProductVersion {
@@ -346,6 +344,8 @@ private val NO_SESSION: Session = Session(0, OnDispatcher.DEFAULT, LockSemantics
 internal interface Invoker : AutoCloseable {
   fun getProductVersion(): ProductVersion
 
+  fun isApplicationInitialized(): Boolean
+
   fun exit()
 
   fun invoke(call: RemoteCall): RemoteCallResult
@@ -355,4 +355,4 @@ internal interface Invoker : AutoCloseable {
   fun cleanup(sessionId: Int)
 }
 
-class DriverCallException(message: String, e: Throwable): RuntimeException(message, e)
+class DriverCallException(message: String, e: Throwable) : RuntimeException(message, e)
