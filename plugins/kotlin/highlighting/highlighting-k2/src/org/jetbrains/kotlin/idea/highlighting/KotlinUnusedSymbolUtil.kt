@@ -360,13 +360,13 @@ object KotlinUnusedSymbolUtil {
               hasReferences(declaration, symbol, restrictedScope) ||
               hasOverrides(declaration, restrictedScope) ||
               hasFakeOverrides(declaration, restrictedScope, symbol) ||
-              hasPlatformImplementations(declaration, symbol)
+              hasPlatformImplementations(declaration)
   }
 
   private val KtNamedDeclaration.isObjectOrEnum: Boolean get() = this is KtObjectDeclaration || this is KtClass && isEnum()
 
   context(KtAnalysisSession)
-  private fun checkReference(ref: PsiReference, declaration: KtNamedDeclaration, symbol: KtDeclarationSymbol?): Boolean {
+  private fun checkReference(ref: PsiReference, declaration: KtNamedDeclaration, originalDeclaration: KtNamedDeclaration?): Boolean {
       if (declaration.isAncestor(ref.element)) return true // usages inside element's declaration are not counted
 
       if (ref.element.parent is KtValueArgumentName) return true // usage of parameter in form of named argument is not counted
@@ -377,7 +377,6 @@ object KotlinUnusedSymbolUtil {
               return false
           }
           // check if we import member(s) from object / nested object / enum and search for their usages
-          val originalDeclaration = (symbol as? KtTypeAliasSymbol)?.expandedType?.expandedClassSymbol?.psi as? KtNamedDeclaration
           if (declaration is KtClassOrObject || originalDeclaration is KtClassOrObject) {
               if (import.isAllUnder) {
                   val importedFrom = import.importedReference?.getQualifiedElementSelector()?.mainReference?.resolve()
@@ -423,7 +422,7 @@ object KotlinUnusedSymbolUtil {
           kotlinOptions = searchOptions
       )
       if (symbol is KtFunctionSymbol && symbol.annotationsList.hasAnnotation(ClassId.topLevel(FqName("kotlin.jvm.JvmName")))) {
-          if (runFindUsages(searchParameters, declaration, symbol)) return true
+          if (runFindUsages(searchParameters, declaration, null)) return true
       }
 
       if (declaration is KtSecondaryConstructor) {
@@ -434,11 +433,14 @@ object KotlinUnusedSymbolUtil {
               }) return true
       }
 
+      val originalDeclaration = (symbol as? KtTypeAliasSymbol)?.expandedType?.expandedClassSymbol?.psi as? KtNamedDeclaration
       if (declaration is KtCallableDeclaration && declaration.canBeHandledByLightMethods(symbol)) {
           val lightMethods = declaration.toLightMethods()
           if (lightMethods.isNotEmpty()) {
               val lightMethodsUsed = lightMethods.any { method ->
-                  !MethodReferencesSearch.search(method).forEach(Processor { checkReference(it, declaration, symbol) })
+                  !MethodReferencesSearch.search(method).forEach(Processor {
+                      checkReference(it, declaration, originalDeclaration)
+                  })
               }
               if (lightMethodsUsed) return true
               if (!declaration.hasActualModifier()) return false
@@ -450,18 +452,18 @@ object KotlinUnusedSymbolUtil {
           if (hasBuiltInEnumFunctionReference(enumClass, useScope)) return true
       }
 
-      if (runFindUsages(searchParameters, declaration, symbol)) {
-        return true
+      if (runFindUsages(searchParameters, declaration, originalDeclaration)) {
+          return true
       }
-      return checkPrivateDeclaration(declaration, symbol)
+      return checkPrivateDeclaration(declaration, symbol, originalDeclaration)
   }
 
   context(KtAnalysisSession)
   private fun runFindUsages(searchParameters: KotlinReferencesSearchParameters,
                             declaration: KtNamedDeclaration,
-                            symbol: KtDeclarationSymbol?): Boolean {
+                            originalDeclaration: KtNamedDeclaration?): Boolean {
     return !ReferencesSearch.search(searchParameters).forEach(Processor {
-      checkReference(it, declaration, symbol)
+      checkReference(it, declaration, originalDeclaration)
     })
   }
 
@@ -484,7 +486,11 @@ object KotlinUnusedSymbolUtil {
    * but `C.CC.value` is used by `fun value() = value`, so we cannot delete `import C.CC.value`, and we have to keep CC.
    */
   context(KtAnalysisSession)
-  private fun checkPrivateDeclaration(declaration: KtNamedDeclaration, symbol: KtDeclarationSymbol?): Boolean {
+  private fun checkPrivateDeclaration(
+      declaration: KtNamedDeclaration,
+      symbol: KtDeclarationSymbol?,
+      originalDeclaration: KtNamedDeclaration?
+  ): Boolean {
       if (symbol == null || !declaration.isPrivateNestedClassOrObject) return false
 
       val setOfImportedDeclarations = hashSetOf<KtSimpleNameExpression>()
@@ -494,7 +500,7 @@ object KotlinUnusedSymbolUtil {
 
       return setOfImportedDeclarations.mapNotNull { it.referenceExpression() }
           .filter { symbol in it.mainReference.resolveToSymbols() }
-          .any { !checkReference(it.mainReference, declaration, symbol) }
+          .any { !checkReference(it.mainReference, declaration, originalDeclaration) }
   }
 
   context(KtAnalysisSession)
@@ -674,8 +680,7 @@ object KotlinUnusedSymbolUtil {
       }
   }
 
-  context(KtAnalysisSession)
-  private fun hasPlatformImplementations(declaration: KtNamedDeclaration, symbol: KtDeclarationSymbol?): Boolean {
+  private fun hasPlatformImplementations(declaration: KtNamedDeclaration): Boolean {
       if (!declaration.hasExpectModifier()) return false
 
       // TODO: K2 counterpart of `hasActualsFor` is missing. Update this function after implementing it.
@@ -704,7 +709,7 @@ object KotlinUnusedSymbolUtil {
   }
 
   context(KtAnalysisSession)
-  fun isEntryPoint(declaration: KtNamedDeclaration, isCheapEnough: Lazy<PsiSearchHelper.SearchCostResult>, isJavaEntryPoint: (PsiElement)->Boolean): Boolean {
+  private fun isEntryPoint(declaration: KtNamedDeclaration, isCheapEnough: Lazy<PsiSearchHelper.SearchCostResult>, isJavaEntryPoint: (PsiElement)->Boolean): Boolean {
       if (declaration.hasKotlinAdditionalAnnotation()) return true
       val lightElement: PsiElement = when (declaration) {
           is KtClass -> {
