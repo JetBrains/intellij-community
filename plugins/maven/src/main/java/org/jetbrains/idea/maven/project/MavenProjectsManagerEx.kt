@@ -216,17 +216,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     try {
       // unit tests
       if (ApplicationManager.getApplication().isDispatchThread) {
-        if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-          MavenLog.LOG.warn("Updating maven projects under write action. " +
-                            "This should only happen in test mode. " +
-                            "Resolution and import will be skipped.")
-          readAllMavenProjects(spec)
-          return emptyList()
-        }
-        else {
-          return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
-            updateAllMavenProjects(spec)
-          }
+        return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
+          updateAllMavenProjects(spec)
         }
       }
       else {
