@@ -76,10 +76,10 @@ internal class ContentEntryBridge(internal val model: ModuleRootModelBridge,
                                                 type: JpsModuleSourceRootType<P>,
                                                 properties: P): SourceFolder = throwReadonly()
 
-  override fun <P : JpsElement?> addSourceFolder(url: String,
-                                                 type: JpsModuleSourceRootType<P>,
-                                                 properties: P,
-                                                 isAutomaticallyImported: Boolean): SourceFolder = throwReadonly()
+  override fun <P : JpsElement> addSourceFolder(url: String,
+                                                type: JpsModuleSourceRootType<P>,
+                                                properties: P,
+                                                isAutomaticallyImported: Boolean): SourceFolder = throwReadonly()
 
   override fun <P : JpsElement> addSourceFolder(url: String,
                                                 type: JpsModuleSourceRootType<P>,
