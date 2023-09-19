@@ -179,6 +179,22 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
             modifiableModel.commit()
           }
         }
+        "kotlin.base.facet" -> {
+          runWriteActionAndWait {
+            val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
+            addIntellijJavaLibrary(modifiableModel)
+            addKotlinJpsCommonJar(modifiableModel)
+            modifiableModel.commit()
+          }
+          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, false)
+          storageChanged = storageChanged || projectModelUpdateResult
+          runWriteActionAndWait {
+            val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
+            removeIntellijJavaLibrary(modifiableModel)
+            removeKotlinJpsCommonJar(modifiableModel)
+            modifiableModel.commit()
+          }
+        }
         in modulesWithUnknownFields -> {
           val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, true, false)
           storageChanged = storageChanged || projectModelUpdateResult
