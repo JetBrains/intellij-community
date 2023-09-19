@@ -5,6 +5,8 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
+import org.jetbrains.jps.dependency.java.JavaDifferentiateStrategy;
+import org.jetbrains.jps.dependency.java.SubclassesIndex;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.util.ArrayList;
@@ -14,10 +16,13 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
-  private List<DifferentiateStrategy> myDifferentiateStrategies = new ArrayList<>(); // todo: fill the list
+  private List<DifferentiateStrategy> myDifferentiateStrategies = List.of(
+    new JavaDifferentiateStrategy()
+  );
 
   public DependencyGraphImpl() {
     super(Containers.PERSISTENT_CONTAINER_FACTORY);
+    addIndex(new SubclassesIndex(Containers.PERSISTENT_CONTAINER_FACTORY));
   }
 
   @Override
@@ -90,7 +95,9 @@ public class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
         affectedSources.add(src);
       }
     }
-    for (ReferenceID dependent : Iterators.unique(Iterators.filter(Iterators.flat(Iterators.map(nodesAfter, n -> getDependingNodes(n.getReferenceID()))), id -> !dependingOnDeleted.contains(id)))) {
+    
+    Iterable<ReferenceID> changedScopeNodes = Iterators.unique(Iterators.flat(Iterators.map(nodesAfter, n -> n.getReferenceID()), Iterators.map(diffContext.affectedUsages, u -> u.getElementOwner())));
+    for (ReferenceID dependent : Iterators.unique(Iterators.filter(Iterators.flat(Iterators.map(changedScopeNodes, id -> getDependingNodes(id))), id -> !dependingOnDeleted.contains(id)))) {
       for (NodeSource depSrc : getSources(dependent)) {
         if (!affectedSources.contains(depSrc)) {
           for (var depNode : getNodes(depSrc)) {

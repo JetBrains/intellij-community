@@ -8,9 +8,10 @@ import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.javac.Iterators;
 
 public class NodeDependenciesIndex extends BackDependencyIndexImpl {
+  public static final String NAME = "nodes-backward-dependencies";
 
   public NodeDependenciesIndex(@NotNull MapletFactory cFactory) {
-    super("nodes-backward-dependencies", cFactory);
+    super(NAME, cFactory);
   }
 
   @Override

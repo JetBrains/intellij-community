@@ -3,13 +3,19 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.javac.Iterators;
 
+import java.lang.annotation.RetentionPolicy;
 import java.util.Objects;
 
-public class JvmClass extends JvmObjectType<JvmClass, JvmClass.Diff> {
+public class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
   private final String mySuperFqName;
   private final String myOuterFqName;
   private final Iterable<String> myInterfaces;
+  private final Iterable<JvmField> myFields;
+  private final Iterable<JvmMethod> myMethods;
+  private final Iterable<ElemType> myAnnotationTargets;
+  private final RetentionPolicy myRetentionPolicy;
 
   public JvmClass(
     JVMFlags flags, String signature, String fqName, String outFilePath,
@@ -19,13 +25,21 @@ public class JvmClass extends JvmObjectType<JvmClass, JvmClass.Diff> {
     Iterable<JvmField> fields,
     Iterable<JvmMethod> methods,
     Iterable<TypeRepr.ClassType> annotations,
-    Iterable<Usage> usages
+    Iterable<ElemType> annotationTargets, RetentionPolicy retentionPolicy, Iterable<Usage> usages
     ) {
     
-    super(flags, signature, fqName, outFilePath, fields, methods, annotations, usages);
+    super(flags, signature, fqName, outFilePath, annotations, usages);
     mySuperFqName = superFqName;
     myOuterFqName = outerFqName;
     myInterfaces = interfaces;
+    myFields = fields;
+    myMethods = methods;
+    myAnnotationTargets = annotationTargets;
+    myRetentionPolicy = retentionPolicy;
+  }
+
+  public final boolean isAnonymous() {
+    return getFlags().isAnonymous();
   }
 
   public String getSuperFqName() {
@@ -40,12 +54,32 @@ public class JvmClass extends JvmObjectType<JvmClass, JvmClass.Diff> {
     return myInterfaces;
   }
 
+  public Iterable<String> getSuperTypes() {
+    return Iterators.flat(Iterators.asIterable(mySuperFqName), getInterfaces());
+  }
+
+  public Iterable<JvmField> getFields() {
+    return myFields;
+  }
+
+  public Iterable<JvmMethod> getMethods() {
+    return myMethods;
+  }
+
+  public Iterable<ElemType> getAnnotationTargets() {
+    return myAnnotationTargets;
+  }
+
+  public RetentionPolicy getRetentionPolicy() {
+    return myRetentionPolicy;
+  }
+
   @Override
   public Diff difference(JvmClass past) {
     return new Diff(past);
   }
 
-  public class Diff extends JvmObjectType<JvmClass, JvmClass.Diff>.Diff<JvmClass> {
+  public class Diff extends Proto.Diff<JvmClass> {
 
     public Diff(JvmClass past) {
       super(past);
@@ -53,11 +87,27 @@ public class JvmClass extends JvmObjectType<JvmClass, JvmClass.Diff> {
 
     @Override
     public boolean unchanged() {
-      return super.unchanged() && !superClassChanged() && !outerClassChanged() && interfaces().unchanged();
+      return
+        super.unchanged() &&
+        !superClassChanged() &&
+        !outerClassChanged() &&
+        interfaces().unchanged() &&
+        methods().unchanged() &&
+        fields().unchanged() &&
+        !retentionPolicyChanged() &&
+        annotationTargets().unchanged();
     }
 
     public boolean superClassChanged() {
       return !Objects.equals(myPast.getSuperFqName(), getSuperFqName());
+    }
+
+    public boolean extendsAdded() {
+      return "java/lang/Object".equals(myPast.getSuperFqName()) && superClassChanged();
+    }
+
+    public boolean extendsRemoved() {
+      return "java/lang/Object".equals(getSuperFqName()) && superClassChanged();
     }
 
     public boolean outerClassChanged() {
@@ -68,5 +118,20 @@ public class JvmClass extends JvmObjectType<JvmClass, JvmClass.Diff> {
       return Difference.diff(myPast.getInterfaces(), getInterfaces());
     }
 
+    public Specifier<JvmMethod, JvmMethod.Diff> methods() {
+      return Difference.deepDiff(myPast.getMethods(), getMethods());
+    }
+
+    public Specifier<JvmField, JvmField.Diff> fields() {
+      return Difference.deepDiff(myPast.getFields(), getFields());
+    }
+
+    public boolean retentionPolicyChanged() {
+      return !Objects.equals(myPast.getRetentionPolicy(), getRetentionPolicy());
+    }
+
+    public Specifier<ElemType, ?> annotationTargets() {
+      return Difference.diff(myPast.getAnnotationTargets(), getAnnotationTargets());
+    }
   }
 }

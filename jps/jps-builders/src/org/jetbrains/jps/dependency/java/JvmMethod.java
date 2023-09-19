@@ -28,6 +28,11 @@ public class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, Jvm
     myArgTypes = TypeRepr.getTypes(Type.getArgumentTypes(descriptor));
   }
 
+  @Override
+  public MethodUsage createUsage(String owner) {
+    return new MethodUsage(owner, getName(), getDescr());
+  }
+  
   public Set<ParamAnnotation> getParamAnnotations() {
     return myParamAnnotations;
   }
@@ -79,4 +84,18 @@ public class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, Jvm
     }
   }
 
+  private String getDescr() {
+    final StringBuilder buf = new StringBuilder();
+
+    buf.append("(");
+
+    for (TypeRepr t : myArgTypes) {
+      buf.append(t.getDescriptor());
+    }
+
+    buf.append(")");
+    buf.append(getType().getDescriptor());
+
+    return buf.toString();
+  }
 }

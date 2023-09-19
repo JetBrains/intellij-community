@@ -18,6 +18,8 @@ public abstract class ProtoMember extends Proto {
     this.value = value;
   }
 
+  public abstract MemberUsage createUsage(String owner);
+
   public @NotNull TypeRepr getType() {
     return type;
   }

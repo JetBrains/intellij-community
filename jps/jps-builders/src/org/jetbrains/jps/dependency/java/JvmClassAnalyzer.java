@@ -358,10 +358,7 @@ final class JvmClassAnalyzer {
       if (myIsModule) {
         return new JvmModule(flags, myVersion, myFileName, myName, myModuleRequires, myModuleExports, myUsages);
       }
-      if ((myAccess & Opcodes.ACC_ANNOTATION) > 0) {
-        return new JvmAnnotation(flags, mySignature, myName, myFileName, myAnnotations, myFields, myMethods, myUsages, myTargets, myRetentionPolicy);
-      }
-      return new JvmClass(flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), Arrays.asList(myInterfaces), myFields, myMethods, myAnnotations, myUsages);
+      return new JvmClass(flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), Arrays.asList(myInterfaces), myFields, myMethods, myAnnotations, myTargets, myRetentionPolicy, myUsages);
     }
 
     @Override

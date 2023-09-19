@@ -11,6 +11,11 @@ public class JvmField extends ProtoMember implements DiffCapable<JvmField, JvmFi
   }
 
   @Override
+  public FieldUsage createUsage(String owner) {
+    return new FieldUsage(owner, getName(), getType().getDescriptor());
+  }
+
+  @Override
   public boolean isSame(DiffCapable<?, ?> other) {
     return other instanceof JvmField && getName().equals(((JvmField)other).getName());
   }

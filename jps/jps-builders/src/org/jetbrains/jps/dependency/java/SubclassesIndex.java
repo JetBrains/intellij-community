@@ -1,0 +1,29 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.jps.dependency.java;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.MapletFactory;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.ReferenceID;
+import org.jetbrains.jps.dependency.impl.BackDependencyIndexImpl;
+import org.jetbrains.jps.dependency.impl.StringReferenceID;
+import org.jetbrains.jps.javac.Iterators;
+
+import java.util.Collections;
+
+public class SubclassesIndex extends BackDependencyIndexImpl {
+  public static final String NAME = "direct-subclasses";
+
+  public SubclassesIndex(@NotNull MapletFactory cFactory) {
+    super(NAME, cFactory);
+  }
+
+  @Override
+  public Iterable<ReferenceID> getIndexedDependencies(@NotNull Node<?, ?> node) {
+    if (!(node instanceof JvmClass)) {
+      return Collections.emptyList();
+    }
+    JvmClass classNode = (JvmClass)node;
+    return Iterators.map(Iterators.flat(Iterators.asIterable(classNode.getSuperFqName()), classNode.getInterfaces()), name -> new StringReferenceID(name));
+  }
+}

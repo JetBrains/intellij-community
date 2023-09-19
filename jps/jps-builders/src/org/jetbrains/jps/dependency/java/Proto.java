@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.TypeRepr.ClassType;
 
-import java.util.Collections;
+import java.util.Objects;
 
 public class Proto {
   private final JVMFlags access;
@@ -104,7 +104,7 @@ public class Proto {
 
     @Override
     public boolean unchanged() {
-      return myPast.getFlags().equals(getFlags()) && signature().unchanged() && annotations().unchanged();
+      return myPast.getFlags().equals(getFlags()) && !signatureChanged() && annotations().unchanged();
     }
 
     public JVMFlags getAddedFlags() {
@@ -115,8 +115,8 @@ public class Proto {
       return getFlags().deriveRemoved(myPast.getFlags());
     }
 
-    public Specifier<String, ?> signature() {
-      return Difference.diff(Collections.singleton(myPast.getSignature()), Collections.singleton(getSignature()));
+    public boolean signatureChanged() {
+      return !Objects.equals(myPast.getSignature(), getSignature());
     }
 
     public Specifier<ClassType, ?> annotations() {
