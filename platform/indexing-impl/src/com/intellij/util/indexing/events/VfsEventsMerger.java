@@ -17,6 +17,7 @@ import com.intellij.util.indexing.FileBasedIndexEx;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -84,7 +85,8 @@ public final class VfsEventsMerger {
   // with the processing then set of events will be not empty
   // 3. Method regularly checks for cancellations (thus can finish with PCEs) but event processor should process the change info atomically
   // (without PCE)
-  boolean processChanges(@NotNull VfsEventProcessor eventProcessor) {
+  @VisibleForTesting
+  public boolean processChanges(@NotNull VfsEventProcessor eventProcessor) {
     if (!myChangeInfos.isEmpty()) {
       int[] fileIds = myChangeInfos.keys(); // snapshot of the keys
       for (int fileId : fileIds) {
@@ -134,7 +136,8 @@ public final class VfsEventsMerger {
   @MagicConstant(flags = {FILE_ADDED, FILE_REMOVED, FILE_CONTENT_CHANGED, FILE_TRANSIENT_STATE_CHANGED})
   @interface EventMask { }
 
-  static final class ChangeInfo {
+  @VisibleForTesting
+  public static final class ChangeInfo {
     private final VirtualFile file;
 
     @EventMask
