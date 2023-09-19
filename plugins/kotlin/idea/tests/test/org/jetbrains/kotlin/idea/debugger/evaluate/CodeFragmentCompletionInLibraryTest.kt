@@ -58,7 +58,8 @@ class CodeFragmentCompletionInLibraryTest : AbstractJvmBasicCompletionTestBase()
         setupFixtureByCodeFragment(fragmentText)
         val directives = completionDirectives.joinToString(separator = "\n") { "//$it" }
         testCompletion(directives,
-                       JvmPlatforms.unspecifiedJvmPlatform, { completionType, count -> myFixture.complete(completionType, count) })
+                       JvmPlatforms.unspecifiedJvmPlatform, { completionType, count -> myFixture.complete(completionType, count) },
+                       isK2Plugin = isFirPlugin)
     }
 
     private fun setupFixtureByCodeFragment(fragmentText: String) {

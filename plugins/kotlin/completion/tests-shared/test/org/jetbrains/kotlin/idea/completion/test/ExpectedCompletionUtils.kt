@@ -71,10 +71,6 @@ object ExpectedCompletionUtils {
             return expectedProposal.map.entries.none { expected ->
                 val actualValues = when (expected.key) {
                     in ignoreProperties -> return@none false
-                    "lookupString" -> {
-                        // FIR IDE adds `.` after package names in completion
-                        listOf(map[expected.key]?.removeSuffix("."), map[expected.key])
-                    }
                     else -> listOf(map[expected.key])
                 }
                 expected.value !in actualValues
@@ -109,12 +105,15 @@ object ExpectedCompletionUtils {
         "Only ${JvmPlatforms.unspecifiedJvmPlatform} and ${JsPlatforms.defaultJsPlatform} platforms are supported"
 
     private const val EXIST_LINE_PREFIX = "EXIST:"
+    private const val EXIST_LINE_PREFIX_K2 = "EXIST_K2:"
 
     private const val ABSENT_LINE_PREFIX = "ABSENT:"
+    private const val ABSENT_LINE_PREFIX_K2 = "ABSENT_K2:"
     private const val ABSENT_JS_LINE_PREFIX = "ABSENT_JS:"
     private const val ABSENT_JAVA_LINE_PREFIX = "ABSENT_JAVA:"
 
     private const val EXIST_JAVA_ONLY_LINE_PREFIX = "EXIST_JAVA_ONLY:"
+    private const val EXIST_JAVA_ONLY_LINE_PREFIX_K2 = "EXIST_JAVA_ONLY_K2:"
     private const val EXIST_JS_ONLY_LINE_PREFIX = "EXIST_JS_ONLY:"
 
     private const val NUMBER_LINE_PREFIX = "NUMBER:"
@@ -137,10 +136,13 @@ object ExpectedCompletionUtils {
     val KNOWN_PREFIXES: List<String> = ImmutableList.of(
         "LANGUAGE_VERSION:",
         EXIST_LINE_PREFIX,
+        EXIST_LINE_PREFIX_K2,
         ABSENT_LINE_PREFIX,
+        ABSENT_LINE_PREFIX_K2,
         ABSENT_JS_LINE_PREFIX,
         ABSENT_JAVA_LINE_PREFIX,
         EXIST_JAVA_ONLY_LINE_PREFIX,
+        EXIST_JAVA_ONLY_LINE_PREFIX_K2,
         EXIST_JS_ONLY_LINE_PREFIX,
         NUMBER_LINE_PREFIX,
         NUMBER_JS_LINE_PREFIX,
@@ -161,18 +163,26 @@ object ExpectedCompletionUtils {
         IgnoreTests.DIRECTIVES.IGNORE_K1,
     )
 
-    fun itemsShouldExist(fileText: String, platform: TargetPlatform?): Array<CompletionProposal> = when {
-        platform.isJvm() -> processProposalAssertions(fileText, EXIST_LINE_PREFIX, EXIST_JAVA_ONLY_LINE_PREFIX)
-        platform.isJs() -> processProposalAssertions(fileText, EXIST_LINE_PREFIX, EXIST_JS_ONLY_LINE_PREFIX)
-        platform == null -> processProposalAssertions(fileText, EXIST_LINE_PREFIX)
-        else -> throw IllegalArgumentException(UNSUPPORTED_PLATFORM_MESSAGE)
+    fun itemsShouldExist(fileText: String, platform: TargetPlatform?, isK2Plugin: Boolean): Array<CompletionProposal> {
+        val existLinePrefix = if (isK2Plugin && InTextDirectivesUtils.isDirectiveDefined(fileText, EXIST_LINE_PREFIX_K2)) EXIST_LINE_PREFIX_K2 else EXIST_LINE_PREFIX
+        val existJavaOnlyLinePrefix = if (isK2Plugin && InTextDirectivesUtils.isDirectiveDefined(fileText, EXIST_JAVA_ONLY_LINE_PREFIX_K2))
+            EXIST_JAVA_ONLY_LINE_PREFIX_K2 else EXIST_JAVA_ONLY_LINE_PREFIX
+        return when {
+            platform.isJvm() -> processProposalAssertions(fileText, existLinePrefix, existJavaOnlyLinePrefix)
+            platform.isJs() -> processProposalAssertions(fileText, existLinePrefix, EXIST_JS_ONLY_LINE_PREFIX)
+            platform == null -> processProposalAssertions(fileText, existLinePrefix)
+            else -> throw IllegalArgumentException(UNSUPPORTED_PLATFORM_MESSAGE)
+        }
     }
 
-    fun itemsShouldAbsent(fileText: String, platform: TargetPlatform?): Array<CompletionProposal> = when {
-        platform.isJvm() -> processProposalAssertions(fileText, ABSENT_LINE_PREFIX, ABSENT_JAVA_LINE_PREFIX, EXIST_JS_ONLY_LINE_PREFIX)
-        platform.isJs() -> processProposalAssertions(fileText, ABSENT_LINE_PREFIX, ABSENT_JS_LINE_PREFIX, EXIST_JAVA_ONLY_LINE_PREFIX)
-        platform == null -> processProposalAssertions(fileText, ABSENT_LINE_PREFIX)
-        else -> throw IllegalArgumentException(UNSUPPORTED_PLATFORM_MESSAGE)
+    fun itemsShouldAbsent(fileText: String, platform: TargetPlatform?, isK2Plugin: Boolean): Array<CompletionProposal> {
+        val absentLinePrefix = if (isK2Plugin && InTextDirectivesUtils.isDirectiveDefined(fileText, ABSENT_LINE_PREFIX_K2)) ABSENT_LINE_PREFIX_K2 else ABSENT_LINE_PREFIX
+        return when {
+            platform.isJvm() -> processProposalAssertions(fileText, absentLinePrefix, ABSENT_JAVA_LINE_PREFIX, EXIST_JS_ONLY_LINE_PREFIX)
+            platform.isJs() -> processProposalAssertions(fileText, absentLinePrefix, ABSENT_JS_LINE_PREFIX, EXIST_JAVA_ONLY_LINE_PREFIX)
+            platform == null -> processProposalAssertions(fileText, absentLinePrefix)
+            else -> throw IllegalArgumentException(UNSUPPORTED_PLATFORM_MESSAGE)
+        }
     }
 
     fun processProposalAssertions(fileText: String, vararg prefixes: String): Array<CompletionProposal> {
@@ -306,7 +316,11 @@ object ExpectedCompletionUtils {
         return InTextDirectivesUtils.getPrefixedInt(fileText, NUMBER_LINE_PREFIX)
     }
 
-    fun assertNotContainsRenderedItems(unexpected: Array<CompletionProposal>, items: Array<LookupElement>, ignoreProperties: Collection<String>) {
+    fun assertNotContainsRenderedItems(
+        unexpected: Array<CompletionProposal>,
+        items: Array<LookupElement>,
+        ignoreProperties: Collection<String>
+    ) {
         val itemsInformation = getItemsInformation(items)
         val allItemsString = listToString(itemsInformation)
 

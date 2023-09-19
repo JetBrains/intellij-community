@@ -34,6 +34,7 @@ abstract class AbstractMultiFileJvmBasicCompletionTest : KotlinCompletionTestCas
                       defaultCompletionType = CompletionType.BASIC,
                       defaultInvocationCount = 0,
                       additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES + IgnoreTests.DIRECTIVES.IGNORE_K2,
+                      isK2Plugin = false
                     )
                 }
             }

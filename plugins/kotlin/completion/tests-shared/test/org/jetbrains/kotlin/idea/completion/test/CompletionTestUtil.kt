@@ -20,7 +20,8 @@ fun testCompletion(
     defaultCompletionType: CompletionType = CompletionType.BASIC,
     defaultInvocationCount: Int = 0,
     ignoreProperties: Collection<String> = emptyList(),
-    additionalValidDirectives: Collection<String> = emptyList()
+    additionalValidDirectives: Collection<String> = emptyList(),
+    isK2Plugin: Boolean
 ) {
     testWithAutoCompleteSetting(fileText) {
         val completionType = ExpectedCompletionUtils.getCompletionType(fileText) ?: defaultCompletionType
@@ -29,8 +30,8 @@ fun testCompletion(
 
         ExpectedCompletionUtils.assertDirectivesValid(fileText, additionalValidDirectives)
 
-        val expected = ExpectedCompletionUtils.itemsShouldExist(fileText, platform)
-        val unexpected = ExpectedCompletionUtils.itemsShouldAbsent(fileText, platform)
+        val expected = ExpectedCompletionUtils.itemsShouldExist(fileText, platform, isK2Plugin)
+        val unexpected = ExpectedCompletionUtils.itemsShouldAbsent(fileText, platform, isK2Plugin)
         val itemsNumber = ExpectedCompletionUtils.getExpectedNumber(fileText, platform)
         val nothingElse = ExpectedCompletionUtils.isNothingElseExpected(fileText)
 

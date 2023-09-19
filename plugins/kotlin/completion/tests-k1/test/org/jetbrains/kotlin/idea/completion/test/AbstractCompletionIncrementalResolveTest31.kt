@@ -80,10 +80,11 @@ abstract class AbstractCompletionIncrementalResolveTest31 : KotlinLightCodeInsig
             }
 
             testCompletion(
-                FileUtil.loadFile(file, true),
-                JvmPlatforms.unspecifiedJvmPlatform,
-                { completionType, count -> myFixture.complete(completionType, count) },
-                additionalValidDirectives = listOf(TYPE_DIRECTIVE_PREFIX, BACKSPACES_DIRECTIVE_PREFIX)
+              FileUtil.loadFile(file, true),
+              JvmPlatforms.unspecifiedJvmPlatform,
+              { completionType, count -> myFixture.complete(completionType, count) },
+              additionalValidDirectives = listOf(TYPE_DIRECTIVE_PREFIX, BACKSPACES_DIRECTIVE_PREFIX),
+              isK2Plugin = isFirPlugin
             )
 
             KotlinTestUtils.assertEqualsToFile(File(file.parent, file.nameWithoutExtension + ".log"), testLog.toString())

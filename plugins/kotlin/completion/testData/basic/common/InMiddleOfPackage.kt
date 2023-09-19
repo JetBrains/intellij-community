@@ -9,4 +9,5 @@ class Test {
 }
 
 // EXIST: properties
+// EXIST_K2: properties.
 // NOTHING_ELSE
