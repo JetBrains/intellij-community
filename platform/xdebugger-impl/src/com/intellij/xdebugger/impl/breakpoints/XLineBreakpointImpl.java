@@ -430,40 +430,81 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
     for (Map.Entry<Integer, List<XLineBreakpointImpl>> entry : breakpointsByLine.entrySet()) {
       var line = entry.getKey();
-      var breakpoints = entry.getValue();
+      List<XLineBreakpointImpl> breakpoints = entry.getValue();
 
       if (line < 0) continue;
-      var codeStartOffset = DocumentUtil.getLineStartIndentedOffset(document, line);
 
       var linePosition = XSourcePositionImpl.create(file, line);
       var breakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, linePosition, null);
-      XDebuggerUtilImpl.getLineBreakpointVariants(project, breakpointTypes, linePosition).onSuccess(variants -> {
+      XDebuggerUtilImpl.getLineBreakpointVariants(project, breakpointTypes, linePosition).onProcessed(variants -> {
+        if (variants == null) {
+          variants = Collections.emptyList();
+        }
 
-        if (ContainerUtil.and(variants, v -> v.getHighlightRange() == null)) {
-          // No need to show inline variants when there is only full-line variant.
-          // FIXME[inline-bp]: check what happens if there are two variants with null range -- they should be somehow drawn.
+        var codeStartOffset = DocumentUtil.getLineStartIndentedOffset(document, line);
+
+        if (breakpoints.size() == 1 && variants.size() == 1 &&
+            areMatching(variants.get(0), breakpoints.get(0), codeStartOffset)) {
+          // No need to show inline variants when there is only one breakpoint and one matching variant.
           return;
         }
 
-        for (var editor : EditorFactory.getInstance().getEditors(document, project)) {
-          var inlayModel = editor.getInlayModel();
-          for (var variant : variants) {
-            // FIXME[inline-bp]: what about multiple variants at start? in the middle? we should review all of them to move them to distinct places
-            var varRange = variant.getHighlightRange();
-            var varStartOffset = getLineRangeStartNormalized(varRange, codeStartOffset);
-            var breakpointHere = ContainerUtil.find(breakpoints, b -> {
-              var bRange = b.myType.getHighlightRange(b);
-              var bStartOffset = getLineRangeStartNormalized(bRange, codeStartOffset);
-              return bStartOffset == varStartOffset;
+        for (var variant : variants) {
+          var breakpointsHere = ContainerUtil.findAll(breakpoints, b -> areMatching(variant, b, codeStartOffset));
+          if (!breakpointsHere.isEmpty()) {
+            for (XLineBreakpointImpl breakpointHere : breakpointsHere) {
+              breakpoints.remove(breakpointHere);
+              EditorFactory.getInstance().editors(document, project).forEach(editor -> {
+                addInlineBreakpointInlay(editor, breakpointHere, variant, codeStartOffset);
+              });
+            }
+          } else {
+            EditorFactory.getInstance().editors(document, project).forEach(editor -> {
+              addInlineBreakpointInlay(editor, variant, codeStartOffset);
             });
-
-            var renderer = new InlineBreakpointInlayRenderer(breakpointHere);
-            var inlay = inlayModel.addInlineElement(varStartOffset, renderer);
-            renderer.setInlay(inlay);
           }
+        }
+
+        for (XLineBreakpointImpl remainingBreakpoint : breakpoints) {
+          EditorFactory.getInstance().editors(document, project).forEach(editor -> {
+            addInlineBreakpointInlay(editor, remainingBreakpoint, null, codeStartOffset);
+          });
         }
       });
     }
+  }
+
+  private static void addInlineBreakpointInlay(Editor editor, @NotNull XLineBreakpointImpl<?> breakpoint, @Nullable XLineBreakpointType<?>.XLineBreakpointVariant variant, int codeStartOffset) {
+    var offset = getBreakpointRangeStartOffset(breakpoint, codeStartOffset);
+    addInlineBreakpointInlayImpl(editor, offset, breakpoint, variant);
+  }
+
+  private static void addInlineBreakpointInlay(Editor editor, @NotNull XLineBreakpointType<?>.XLineBreakpointVariant variant, int codeStartOffset) {
+    var offset = getBreakpointVariantRangeStartOffset(variant, codeStartOffset);
+    addInlineBreakpointInlayImpl(editor, offset, null, variant);
+  }
+
+  private static void addInlineBreakpointInlayImpl(Editor editor, int offset, @Nullable XLineBreakpointImpl<?> breakpoint, @Nullable XLineBreakpointType<?>.XLineBreakpointVariant variant) {
+    var inlayModel = editor.getInlayModel();
+    var renderer = new InlineBreakpointInlayRenderer(breakpoint, variant);
+    var inlay = inlayModel.addInlineElement(offset, renderer);
+    renderer.setInlay(inlay);
+  }
+
+  private static boolean areMatching(XLineBreakpointType<?>.XLineBreakpointVariant variant, XLineBreakpointImpl<?> breakpoint, int codeStartOffset) {
+    return variant.getType().equals(breakpoint.getType()) &&
+           getBreakpointVariantRangeStartOffset(variant, codeStartOffset) == getBreakpointRangeStartOffset(breakpoint, codeStartOffset);
+  }
+
+  private static int getBreakpointVariantRangeStartOffset(XLineBreakpointType<?>.XLineBreakpointVariant variant, int codeStartOffset) {
+    var variantRange = variant.getHighlightRange();
+    return getLineRangeStartNormalized(variantRange, codeStartOffset);
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static int getBreakpointRangeStartOffset(XLineBreakpointImpl<?> breakpoint, int codeStartOffset) {
+    var breakpointRange = breakpoint.getType().getHighlightRange((XLineBreakpointImpl)breakpoint);
+    return getLineRangeStartNormalized(breakpointRange, codeStartOffset);
   }
 
   private static int getLineRangeStartNormalized(TextRange range, int codeStartOffset) {
@@ -475,7 +516,12 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   // FIXME[inline-bp]: extract me somewhere
   static class InlineBreakpointInlayRenderer implements EditorCustomElementRenderer, InputHandler {
+    // There could be three states:
+    // * not-null breakpoint and not-null variant -- we have a breakpoint and a matching variant (normal case)
+    // * null breakpoint and not-null variant -- we have a variant where breakpoint could be set (normal case)
+    // * not-null breakpoint and null variant -- we have a breakpoint but no matching variant (outdated breakpoint?)
     private final @Nullable XLineBreakpointImpl<?> breakpoint;
+    private final @Nullable XLineBreakpointType<?>.XLineBreakpointVariant variant;
 
     // EditorCustomElementRenderer's methods have inlay as parameter,
     // but InputHandler's methods do not have it.
@@ -483,8 +529,12 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
     boolean hovered;
 
-    InlineBreakpointInlayRenderer(@Nullable XLineBreakpointImpl<?> breakpoint) {
+    InlineBreakpointInlayRenderer(@Nullable XLineBreakpointImpl<?> breakpoint, @Nullable XLineBreakpointType<?>.XLineBreakpointVariant variant) {
+      if (breakpoint == null && variant == null) {
+        throw new IllegalArgumentException();
+      }
       this.breakpoint = breakpoint;
+      this.variant = variant;
     }
 
     private void setInlay(Inlay<InlineBreakpointInlayRenderer> inlay) {
@@ -530,7 +580,8 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
         alpha = 1;
       }
       else {
-        baseIcon = AllIcons.Debugger.Db_set_breakpoint;
+        assert variant != null;
+        baseIcon = variant.getIcon();
         // FIXME[inline-bp]: do we need to rename the property?
         alpha = JBUI.getFloat("Breakpoint.iconHoverAlpha", 0.5f);
         alpha = Math.max(0, Math.min(alpha, 1));
@@ -574,8 +625,11 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
                    : ClickAction.REMOVE;
         }
       }
-      else if (button == MouseEvent.BUTTON1) {
-        action = ClickAction.SET;
+      else {
+        assert variant != null;
+        if (button == MouseEvent.BUTTON1) {
+          action = ClickAction.SET;
+        }
       }
 
       if (action == null) {
@@ -589,12 +643,17 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       var file = editor.getVirtualFile();
       assert file != null; // FIXME[inline-bp]: replace by if?
       var offset = inlay.getOffset();
-      var position = XSourcePositionImpl.createByOffset(file, offset);
-      var canRemove = breakpoint != null; // FIXME[inline-bp]: reconsider, I'm not sure
 
       switch (action) {
         case SET -> {
-          XBreakpointUtil.toggleLineBreakpoint(project, position, editor, false, false, false);
+          WriteAction.run(() -> {
+            // FIXME[inline-bp]: is it ok to keep variant so long or should we obtain fresh variants and find similar one?
+            var breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+            var line = editor.getDocument().getLineNumber(offset);
+            //noinspection unchecked
+            breakpointManager.addLineBreakpoint((XLineBreakpointType)variant.getType(), file.getUrl(), line, variant.createProperties(),
+                                                false);
+          });
         }
         case ENABLE_DISABLE -> {
           breakpoint.setEnabled(!breakpoint.isEnabled());
