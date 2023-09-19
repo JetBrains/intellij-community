@@ -47,7 +47,7 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
     runBlocking {
       val projectInfo = generateProject("A")
       waitForImport {
-        importProjectAsync(projectInfo.projectFile)
+        importProjectActionAsync(projectInfo.projectFile)
       }.useProjectAsync {
         assertProjectState(it, projectInfo)
 
@@ -176,7 +176,7 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
         }
         assertProjectState(it, projectInfo, linkedProjectInfo)
       }
-      importProjectAsync(projectInfo.projectFile)
+      importProjectActionAsync(projectInfo.projectFile)
         .useProjectAsync {
           assertProjectState(it, projectInfo, linkedProjectInfo)
         }

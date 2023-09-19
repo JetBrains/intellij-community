@@ -58,7 +58,7 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
     }
   }
 
-  suspend fun importProjectAsync(projectFile: VirtualFile): Project {
+  suspend fun importProjectActionAsync(projectFile: VirtualFile): Project {
     return performOpenAction(
       action = ImportProjectAction(),
       systemId = SYSTEM_ID,
