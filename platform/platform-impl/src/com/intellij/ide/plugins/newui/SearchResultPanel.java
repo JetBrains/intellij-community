@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,6 +150,7 @@ public abstract class SearchResultPanel {
             }
           }
 
+          announceSearchResults();
           myPanel.initialSelection(false);
           runPostFillGroupCallback();
           fullRepaint();
@@ -164,6 +166,7 @@ public abstract class SearchResultPanel {
         myPanel.initialSelection(false);
       }
 
+      announceSearchResults();
       runPostFillGroupCallback();
       fullRepaint();
     }
@@ -211,5 +214,14 @@ public abstract class SearchResultPanel {
     myPanel.doLayout();
     myPanel.revalidate();
     myPanel.repaint();
+  }
+
+  private void announceSearchResults() {
+    if (AccessibleAnnouncerUtil.isSafeAnnouncingAvailable()) {
+      String pluginsTabName = IdeBundle.message(isMarketplace ? "plugin.manager.tab.marketplace" : "plugin.manager.tab.installed");
+      String message = IdeBundle.message("plugins.configurable.search.result.0.plugins.found.in.1",
+                                         myGroup.descriptors.size(), pluginsTabName);
+      AccessibleAnnouncerUtil.announce(myPanel, message, false);
+    }
   }
 }
