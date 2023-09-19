@@ -61,7 +61,7 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
                           </profile>
                         </profiles>
                         """.trimIndent())
-    importProject()
+    importProjectAsync()
     val roots = projectsTree.rootProjects
     val parentNode = roots[0]
     val childNode = projectsTree.getModules(roots[0])[0]
@@ -115,7 +115,7 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
                        <artifactId>project</artifactId>
                        <version>1</version>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertUnorderedElementsAreEqual(projectsTree.getAvailableProfiles())
     waitForImportWithinTimeout {
       updateSettingsXml("""
