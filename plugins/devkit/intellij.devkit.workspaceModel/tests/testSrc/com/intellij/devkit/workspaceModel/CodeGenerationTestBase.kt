@@ -98,9 +98,17 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
   protected open val shouldAddWorkspaceJpsEntityLibrary: Boolean
     get() = true
 
-  protected fun generateAndCompare(dirWithExpectedApiFiles: Path, dirWithExpectedImplFiles: Path, keepUnknownFields: Boolean = false,
-                                   pathToPackage: String = ".") {
-    val (srcRoot, genRoot) = generateCode(".", keepUnknownFields)
+  protected fun generateAndCompare(
+    dirWithExpectedApiFiles: Path, dirWithExpectedImplFiles: Path,
+    pathToPackage: String = ".", keepUnknownFields: Boolean = false,
+    explicitApiEnabled: Boolean = false
+  ) {
+    val (srcRoot, genRoot) = generateCode(
+      relativePathToEntitiesDirectory = ".",
+      keepUnknownFields = keepUnknownFields,
+      explicitApiEnabled = explicitApiEnabled,
+    )
+
     val srcPackageDir = srcRoot.findFileByRelativePath(pathToPackage) ?: error("Cannot find $pathToPackage under $srcRoot")
     val genPackageDir = genRoot.findFileByRelativePath(pathToPackage) ?: error("Cannot find $pathToPackage under $genRoot")
 
@@ -124,13 +132,15 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
     }
   }
 
-  protected fun generateCode(relativePathToEntitiesDirectory: String, keepUnknownFields: Boolean = false): Pair<VirtualFile, VirtualFile> {
+  protected fun generateCode(
+    relativePathToEntitiesDirectory: String, keepUnknownFields: Boolean = false, explicitApiEnabled: Boolean = false
+  ): Pair<VirtualFile, VirtualFile> {
     val srcRoot = myFixture.findFileInTempDir(relativePathToEntitiesDirectory)
     val genRoot = myFixture.tempDirFixture.findOrCreateDir("gen/$relativePathToEntitiesDirectory")
     System.setProperty("workspace.model.generator.keep.unknown.fields", keepUnknownFields.toString())
     try {
       runBlocking {
-        CodeWriter.generate(project, module, srcRoot) { genRoot }
+        CodeWriter.generate(project, module, srcRoot, explicitApiEnabled = explicitApiEnabled) { genRoot }
         FileDocumentManager.getInstance().saveAllDocuments()
       }
     }

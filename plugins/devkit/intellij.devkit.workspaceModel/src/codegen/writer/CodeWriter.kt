@@ -41,6 +41,7 @@ object CodeWriter {
   suspend fun generate(project: Project,
                module: Module,
                sourceFolder: VirtualFile,
+               explicitApiEnabled: Boolean,
                targetFolderGenerator: () -> VirtualFile?) {
     val ktClasses = HashMap<String, KtClass>()
     VfsUtilCore.processFilesRecursively(sourceFolder) {
@@ -155,9 +156,18 @@ object CodeWriter {
     }
   }
 
-  private fun loadObjModules(ktClasses: HashMap<String, KtClass>, module: Module): List<CompiledObjModule> {
+  private fun loadObjModules(
+    ktClasses: HashMap<String, KtClass>,
+    module: Module,
+    explicitApiEnabled: Boolean
+  ): List<CompiledObjModule> {
     val packages = ktClasses.values.mapTo(LinkedHashSet()) { it.containingKtFile.packageFqName.asString() }
-    val metaModelProvider = WorkspaceMetaModelProvider.getInstance(module.project)
+
+    val metaModelProvider: WorkspaceMetaModelProvider = WorkspaceMetaModelProviderImpl(
+      explicitApiEnabled = explicitApiEnabled,
+      keepUnknownFields = java.lang.Boolean.getBoolean("workspace.model.generator.keep.unknown.fields"),
+      module.project
+    )
     return packages.map { metaModelProvider.getObjModule(it, module) }
   }
 

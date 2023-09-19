@@ -88,8 +88,13 @@ class EntityCodeGenTest : CodeGenerationTestBase() {
 
   }
 
-  private fun doTest(keepUnknownFields: Boolean = false) {
-    generateAndCompare(getExpectedDir(), getExpectedDir().resolve("gen"), keepUnknownFields)
+  private fun doTest(keepUnknownFields: Boolean = false, explicitApiEnabled: Boolean = false) {
+    generateAndCompare(
+      dirWithExpectedApiFiles = getExpectedDir(),
+      dirWithExpectedImplFiles = getExpectedDir().resolve("gen"),
+      keepUnknownFields = keepUnknownFields,
+      explicitApiEnabled = explicitApiEnabled
+    )
   }
 
 
