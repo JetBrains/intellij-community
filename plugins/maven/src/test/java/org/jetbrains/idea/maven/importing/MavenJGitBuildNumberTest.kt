@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.importing;
+package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenDomTestCase
+import kotlinx.coroutines.runBlocking
+import org.junit.Test
 
-import java.util.List;
-
-public class MavenJGitBuildNumberTest extends MavenDomTestCase {
-
+class MavenJGitBuildNumberTest : MavenDomTestCase() {
   @Test
-  public void testCompletion() {
-    importProject("""
+  fun testCompletion() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     <properties>
-                      <aaa>${}</aaa></properties>
+                      <aaa>${'$'}{}</aaa></properties>
                         <build>
                             <plugins>
                                 <plugin>
@@ -39,15 +36,16 @@ public class MavenJGitBuildNumberTest extends MavenDomTestCase {
                                 </plugin>
                             </plugins>
                         </build>
-                    """
-    );
+                    
+                    """.trimIndent()
+    )
 
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <properties>
-                         <aaa>${<caret>}</aaa></properties>
+                         <aaa>${'$'}{<caret>}</aaa></properties>
                            <build>
                                <plugins>
                                    <plugin>
@@ -56,16 +54,16 @@ public class MavenJGitBuildNumberTest extends MavenDomTestCase {
                                    </plugin>
                                </plugins>
                            </build>
-                       """
-    );
+                       """.trimIndent()
+    )
 
-    List<String> variants = getCompletionVariants(myProjectPom);
+    val variants = getCompletionVariants(myProjectPom)
 
-    assertContain(variants, "git.commitsCount");
+    assertContain(variants, "git.commitsCount")
   }
 
   @Test
-  public void testHighlighting() {
+  fun testHighlighting() = runBlocking {
     createModulePom("m", """
       <artifactId>m</artifactId>
       <version>1</version>
@@ -75,12 +73,12 @@ public class MavenJGitBuildNumberTest extends MavenDomTestCase {
         <version>1</version>
       </parent>
       <properties>
-        <aaa>${git.commitsCount}</aaa>
-        <bbb>${git.commitsCount__}</bbb>
+        <aaa>${'$'}{git.commitsCount}</aaa>
+        <bbb>${'$'}{git.commitsCount__}</bbb>
       </properties>
-      """);
+      """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -96,10 +94,10 @@ public class MavenJGitBuildNumberTest extends MavenDomTestCase {
                                 </plugin>
                             </plugins>
                         </build>
-                    """
-    );
+                    """.trimIndent()
+    )
 
-    VirtualFile pom = createModulePom("m", """
+    val pom = createModulePom("m", """
       <artifactId>m</artifactId>
       <version>1</version>
       <parent>
@@ -108,35 +106,33 @@ public class MavenJGitBuildNumberTest extends MavenDomTestCase {
         <version>1</version>
       </parent>
       <properties>
-        <aaa>${git.commitsCount}</aaa>
-        <bbb>${<error>git.commitsCount__</error>}</bbb>
+        <aaa>${'$'}{git.commitsCount}</aaa>
+        <bbb>${'$'}{<error>git.commitsCount__</error>}</bbb>
       </properties>
-      """);
+      """.trimIndent())
 
-    checkHighlighting(pom);
+    checkHighlighting(pom)
   }
 
   @Test
-  public void testNoPluginHighlighting() {
-    importProject("""
+  fun testNoPluginHighlighting() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     <properties>
-                      <aaa>${git.commitsCount}</aaa></properties>
-                    """
-    );
+                      <aaa>${'$'}{git.commitsCount}</aaa></properties>
+                    """.trimIndent()
+    )
 
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <properties>
-                         <aaa>${<error>git.commitsCount</error>}</aaa></properties>
-                       """);
+                         <aaa>${'$'}{<error>git.commitsCount</error>}</aaa></properties>
+                       """.trimIndent())
 
-    checkHighlighting();
+    checkHighlighting()
   }
-
-
 }
