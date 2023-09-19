@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,6 +6,8 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
 
 public abstract class EditorColorsManager {
   public static final Topic<EditorColorsListener> TOPIC = new Topic<>(EditorColorsListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
@@ -18,7 +20,7 @@ public abstract class EditorColorsManager {
     return ApplicationManager.getApplication().getService(EditorColorsManager.class);
   }
 
-  public abstract void addColorScheme(@NotNull EditorColorsScheme scheme);
+  public abstract void addColorsScheme(@NotNull EditorColorsScheme scheme);
 
   public abstract EditorColorsScheme @NotNull [] getAllSchemes();
 
@@ -39,7 +41,8 @@ public abstract class EditorColorsManager {
   }
 
   public boolean isDarkEditor() {
-    return ColorUtil.isDark(getGlobalScheme().getDefaultBackground());
+    Color bg = getGlobalScheme().getDefaultBackground();
+    return ColorUtil.isDark(bg);
   }
 
   /**
@@ -51,7 +54,7 @@ public abstract class EditorColorsManager {
   }
 
   /**
-   * Unlike {@code SchemeManager.reload()} guarantees that the currently selected color scheme remains the same unless it has been
+   * Unlike {@code SchemeManager.reload()} guarantees that the currently selected color scheme remains the same unless it is has been
    * removed as a result of reload.
    */
   public void reloadKeepingActiveScheme() {

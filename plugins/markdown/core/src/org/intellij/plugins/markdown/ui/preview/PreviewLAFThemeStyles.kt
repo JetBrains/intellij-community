@@ -21,6 +21,7 @@ internal object PreviewLAFThemeStyles {
 
    * @return String containing generated CSS rules.
    */
+  @JvmStatic
   fun createStylesheet(): String {
     val scheme = obtainColorsScheme()
     val contrastedForeground = scheme.defaultForeground.contrast(0.1)

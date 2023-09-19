@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
@@ -47,7 +47,7 @@ class EditorColorSchemeTest {
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
     val manager = EditorColorsManagerImpl(schemeManagerFactory)
 
-    val scheme = manager.getScheme("Foo")!!
+    val scheme = manager.getScheme("Foo")
     assertThat(scheme.name).isEqualTo("Foo")
 
     (scheme as AbstractColorsScheme).setSaveNeeded(true)
@@ -93,7 +93,7 @@ class EditorColorSchemeTest {
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
     val manager = EditorColorsManagerImpl(schemeManagerFactory)
 
-    val scheme = manager.getScheme("Foo")!!
+    val scheme = manager.getScheme("Foo")
     assertThat(scheme.name).isEqualTo("Foo")
 
     (scheme as AbstractColorsScheme).setSaveNeeded(true)
@@ -102,7 +102,7 @@ class EditorColorSchemeTest {
       schemeManagerFactory.save()
     }
 
-    // GO_BUILTIN_TYPE_REFERENCE should be removed as it's the same as defined in a parent scheme
+    // GO_BUILTIN_TYPE_REFERENCE should be removed as it's the same as defined in parent scheme
     assertThat(removeSchemeMetaInfo(schemeFile.readText())).isEqualTo("""
       <scheme name="Foo" version="142" parent_scheme="Darcula">
       </scheme>""".trimIndent())
@@ -130,7 +130,7 @@ class EditorColorSchemeTest {
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
     val manager = EditorColorsManagerImpl(schemeManagerFactory)
 
-    val scheme = manager.getScheme("Foo")!!
+    val scheme = manager.getScheme("Foo")
     assertThat(scheme.name).isEqualTo("Foo")
 
     (scheme as AbstractColorsScheme).setSaveNeeded(true)

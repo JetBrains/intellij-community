@@ -12,6 +12,8 @@ import com.intellij.util.ResourceUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
+import java.util.function.Function
+import java.util.function.Supplier
 
 /**
  * Extension point for adding UI themes.
@@ -56,15 +58,17 @@ class UIThemeProvider : PluginAware {
     return ResourceUtil.getResourceAsBytes((path ?: return null).removePrefix("/"), pluginDescriptor!!.getClassLoader())
   }
 
-  internal fun createTheme(parentTheme: UITheme?, defaultDarkParent: (() -> UITheme?)?, defaultLightParent: (() ->UITheme?)?): UITheme? {
+  internal fun createTheme(parentTheme: UITheme?,
+                           defaultDarkParent: Supplier<UITheme?>?,
+                           defaultLightParent: Supplier<UITheme?>?): UITheme? {
     if (defaultDarkParent != null && id == UiThemeProviderListManager.DEFAULT_DARK_PARENT_THEME) {
-      val result = defaultDarkParent()
+      val result = defaultDarkParent.get()
       if (result?.id == UiThemeProviderListManager.DEFAULT_DARK_PARENT_THEME) {
         return result
       }
     }
     if (defaultLightParent != null && id == UiThemeProviderListManager.DEFAULT_LIGHT_PARENT_THEME) {
-      val result = defaultLightParent()
+      val result = defaultLightParent.get()
       if (result?.id == UiThemeProviderListManager.DEFAULT_LIGHT_PARENT_THEME) {
         return result
       }
@@ -81,12 +85,13 @@ class UIThemeProvider : PluginAware {
         return null
       }
 
-      return UITheme.loadFromJson(parentTheme = parentTheme,
-                                  data = data,
-                                  themeId = id!!,
-                                  provider = classLoader,
-                                  defaultDarkParent = defaultDarkParent,
-                                  defaultLightParent = defaultLightParent)
+      return UITheme.loadFromJson(parentTheme,
+                                  data,
+                                  id!!,
+                                  classLoader,
+                                  Function.identity(),
+                                  defaultDarkParent,
+                                  defaultLightParent)
     }
     catch (e: Throwable) {
       thisLogger().warn(PluginException("Cannot load UI theme (path=$path, pluginDescriptor=$pluginDescriptor)",

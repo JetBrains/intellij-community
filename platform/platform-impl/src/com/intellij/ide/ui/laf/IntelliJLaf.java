@@ -13,10 +13,6 @@ import org.jetbrains.annotations.NotNull;
 public class IntelliJLaf extends DarculaLaf {
   public static final @NlsSafe String NAME = "IntelliJ";
 
-  public IntelliJLaf() {
-    super(false);
-  }
-
   @Override
   public String getName() {
     return NAME;

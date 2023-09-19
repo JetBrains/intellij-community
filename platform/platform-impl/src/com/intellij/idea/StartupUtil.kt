@@ -434,6 +434,11 @@ private suspend fun importConfig(args: List<String>,
     appStarter.beforeImportConfigs()
     val newConfigDir = customTargetDirectoryToImportConfig ?: PathManager.getConfigDir()
 
+    withContext(RawSwingDispatcher) {
+      @Suppress("DEPRECATION", "removal")
+      UIManager.setLookAndFeel(com.intellij.ide.ui.laf.IntelliJLaf())
+    }
+
     val veryFirstStartOnThisComputer = euaDocumentDeferred.await() != null
     withContext(RawSwingDispatcher) {
       ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, newConfigDir, args, log)

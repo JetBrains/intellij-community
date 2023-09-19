@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging.toolwindow
 
 import com.google.common.io.Resources
@@ -12,14 +12,15 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicInteger
 
+
 class PyPackagingJcefHtmlPanel(project: Project) : JCEFHtmlPanel(uniqueUrl) {
   private val loadedStyles: MutableMap<String, String> = mutableMapOf()
   private var myLastHtml: @NlsSafe String? = null
 
   private val cssStyleCodeToInject: String
     get() {
-      val styleKey = when (val laf = LafManager.getInstance().getCurrentUIThemeLookAndFeel()) {
-        is UIThemeLookAndFeelInfo -> when (laf.id) {
+      val styleKey = when (val laf = LafManager.getInstance().currentLookAndFeel) {
+        is UIThemeLookAndFeelInfo -> when (laf.theme.id) {
           "ExperimentalDark" -> "python_packaging_toolwindow_dark.css"
           "ExperimentalLight" -> "python_packaging_toolwindow_light.css"
           "JetBrainsHighContrastTheme" -> "python_packaging_toolwindow_high_contrast.css"

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
@@ -23,7 +23,7 @@ import javax.swing.JComponent
 import javax.swing.UIManager
 
 @ApiStatus.Internal
-val lightThemeDarkHeaderDisableFilter: () -> RGBImageFilter = { UIUtil.GrayFilter(0, 0, 30) }
+val lightThemeDarkHeaderDisableFilter: () -> RGBImageFilter =  { UIUtil.GrayFilter(0, 0, 30) }
 
 fun getHeaderBackgroundColor(component: JComponent, state: Int): Color? {
   if (ProjectWindowCustomizerService.getInstance().isActive()) {

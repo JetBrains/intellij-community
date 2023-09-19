@@ -12,7 +12,7 @@ private class ThemeListProviderImpl : ThemeListProvider {
     if (ExperimentalUI.isNewUI()) {
       result.add(uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.NEW).sortedBy { it.name }.toList())
     }
-    result.add((uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.CLASSIC).filterNot { it.id == "IntelliJ" }
+    result.add((uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.CLASSIC).filterNot { it.theme.id == "IntelliJ" }
                 + uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.UNSPECIFIED)).sortedBy { it.name }.toList())
     return result
   }

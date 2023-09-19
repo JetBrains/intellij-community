@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -89,10 +88,9 @@ public final class ColorPicker extends JPanel implements ColorListener, Document
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      UIThemeLookAndFeelInfo info = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
-      if (info != null && info.getName().contains("Windows")) {
+      UIManager.LookAndFeelInfo info = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+      if (info != null && info.getName().contains("Windows"))
         size.width += 10;
-      }
       return size;
     }
   };

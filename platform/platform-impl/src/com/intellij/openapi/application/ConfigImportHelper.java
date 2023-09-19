@@ -12,7 +12,6 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.idea.StartupErrorReporter;
 import com.intellij.openapi.application.migrations.BigDataTools232;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -355,14 +354,6 @@ public final class ConfigImportHelper {
   private static @Nullable Pair<Path, Path> showDialogAndGetOldConfigPath(List<Path> guessedOldConfigDirs) {
     String showImportDialog = System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
     if ("never".equals(showImportDialog)) {
-      return null;
-    }
-
-    try {
-      //noinspection TestOnlyProblems
-      UIManager.setLookAndFeel(new DarculaLaf());
-    }
-    catch (UnsupportedLookAndFeelException e) {
       return null;
     }
 

@@ -10,10 +10,9 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.svg.SvgKt;
 import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,51 +29,23 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implements UIThemeLookAndFeelInfo {
-  private final UITheme theme;
-  private boolean isInitialized;
+public class UIThemeLookAndFeelInfoImpl extends UIThemeLookAndFeelInfo {
+  private boolean isInitialised;
 
   public UIThemeLookAndFeelInfoImpl(@NotNull UITheme theme) {
-    super(theme.getName(),
-          // todo one one should be used in the future
-          theme.isDark() ? "com.intellij.ide.ui.laf.darcula.DarculaLaf" : "com.intellij.ide.ui.laf.IntelliJLaf");
-    this.theme = theme;
+    super(theme);
   }
 
-  @Override
-  public @NotNull String getId() {
-    return theme.getId();
-  }
-
-  @Override
-  public boolean isDark() {
-    return theme.isDark();
-  }
-
-  @Override
-  public @Nullable String getEditorSchemeName() {
-    return theme.getEditorSchemeName();
-  }
-
-  public @NotNull UITheme getTheme() {
-    return theme;
-  }
-
-  @Override
-  public @NotNull ClassLoader getProviderClassLoader() {
-    return theme.getProviderClassLoader();
-  }
-
-  @Override
   public void installTheme(UIDefaults defaults, boolean lockEditorScheme) {
+    UITheme theme = getTheme();
     defaults.put("ui.theme.is.dark", theme.isDark());
     defaults.put("ClassLoader", theme.getProviderClassLoader());
     theme.applyProperties(defaults);
-    IconPathPatcher patcher = theme.patcher;
+    IconPathPatcher patcher = theme.getPatcher();
     if (patcher != null) {
       IconLoader.installPathPatcher(patcher);
     }
-    SvgKt.setSelectionColorPatcherProvider(theme.selectionColorPatcher);
+    SVGLoader.setSelectionColorPatcherProvider(theme.getSelectionColorPatcher());
 
     SVGLoader.SvgElementColorPatcherProvider colorPatcher = theme.getColorPatcher();
     if (colorPatcher != null) {
@@ -86,12 +57,11 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
       installEditorScheme();
     }
     AppUIUtil.updateForDarcula(theme.isDark());
-    isInitialized = true;
+    isInitialised = true;
   }
 
-  @Override
-  public final boolean isInitialized() {
-    return isInitialized;
+  public final boolean isInitialised() {
+    return isInitialised;
   }
 
   protected @Nullable InputStream getResourceAsStream(@NotNull String path) {
@@ -102,7 +72,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
     EditorColorsScheme scheme = LafManager.getInstance().getPreviousSchemeForLaf(this);
     EditorColorsManager editorColorManager = EditorColorsManager.getInstance();
     if (scheme == null) {
-      String name = getEditorSchemeName();
+      String name = getTheme().getEditorSchemeName();
       if (name != null) {
         scheme = editorColorManager.getScheme(name);
       }
@@ -114,17 +84,18 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
   }
 
   private void installBackgroundImage() {
-    boolean installed = installBackgroundImage(theme.getBackground(), IdeBackgroundUtil.EDITOR_PROP);
-    installed = installBackgroundImage(theme.getEmptyFrameBackground(), IdeBackgroundUtil.FRAME_PROP) || installed;
+    boolean installed = installBackgroundImage(getTheme().getBackground(), IdeBackgroundUtil.EDITOR_PROP);
+    installed = installBackgroundImage(getTheme().getEmptyFrameBackground(), IdeBackgroundUtil.FRAME_PROP) || installed;
     if (installed) {
       IdeBackgroundUtil.repaintAllWindows();
     }
   }
 
-  private boolean installBackgroundImage(@NotNull Map<String, Object> backgroundProps,
+  private boolean installBackgroundImage(@Nullable Map<String, Object> backgroundProps,
                                          @NotNull @NonNls String bgImageProperty) {
-    Object path = backgroundProps.get("image");
-    return path instanceof String && installBackgroundImage(backgroundProps, bgImageProperty, (String)path);
+    Object path = backgroundProps == null ? null : backgroundProps.get("image");
+    return path instanceof String &&
+           installBackgroundImage(backgroundProps, bgImageProperty, (String)path);
   }
 
   private boolean installBackgroundImage(@NotNull Map<String, Object> backgroundProps,
@@ -162,20 +133,18 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
 
   private static <T extends Enum<T>> String parseEnumValue(Object value, T defaultValue) {
     if (value instanceof String) {
-      String name = Strings.toUpperCase((String)value);
-      //noinspection unchecked
+      String name = StringUtil.toUpperCase((String)value);
       for (T t : ((Class<T>)defaultValue.getClass()).getEnumConstants()) {
         if (t.name().equals(name)) {
-          return Strings.toLowerCase(value.toString());
+          return StringUtil.toLowerCase(value.toString());
         }
       }
     }
-    return Strings.toLowerCase(defaultValue.name());
+    return StringUtil.toLowerCase(defaultValue.name());
   }
 
-  @Override
   public void dispose() {
-    IconPathPatcher patcher = theme.patcher;
+    IconPathPatcher patcher = getTheme().getPatcher();
     if (patcher != null) {
       IconLoader.removePathPatcher(patcher);
     }
@@ -184,18 +153,20 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
     unsetBackgroundProperties(IdeBackgroundUtil.EDITOR_PROP);
     unsetBackgroundProperties(IdeBackgroundUtil.FRAME_PROP);
 
-    isInitialized = false;
+    isInitialised = false;
   }
 
   private void unsetBackgroundProperties(String backgroundPropertyKey) {
     PropertiesComponent propertyManager = PropertiesComponent.getInstance();
     String value = propertyManager.getValue("old." + backgroundPropertyKey);
     propertyManager.unsetValue("old." + backgroundPropertyKey);
-    if (value != null) {
-      propertyManager.setValue(backgroundPropertyKey, value);
+    if (value == null) {
+      if (getTheme().getBackground() != null) {
+        propertyManager.unsetValue(backgroundPropertyKey);
+      }
     }
-    else if (!theme.getBackground().isEmpty()) {
-      propertyManager.unsetValue(backgroundPropertyKey);
+    else {
+      propertyManager.setValue(backgroundPropertyKey, value);
     }
   }
 }

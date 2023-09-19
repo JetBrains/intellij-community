@@ -214,7 +214,7 @@
     },
 
     "FileView.fileIcon": "AllIcons.FileTypes.Unknown",
-    "Focus.color": "#ff0000",
+    "Focus.color": "ff0000",
 
     "FormattedTextField": {
       "background": "#45494A",

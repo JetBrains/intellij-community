@@ -118,7 +118,7 @@ public final class FileStatusColorsTableModel extends AbstractTableModel {
     if (myScheme instanceof AbstractColorsScheme) {
       ((AbstractColorsScheme)myScheme).setSaveNeeded(true);
     }
-    if (EditorColorsManagerImpl.Companion.isTempScheme(myScheme)) {
+    if (EditorColorsManagerImpl.isTempScheme(myScheme)) {
       ColorAndFontOptions.writeTempScheme(myScheme);
     }
   }

@@ -2,8 +2,8 @@
 package com.intellij.ide.customize.transferSettings.models
 
 import com.intellij.ide.customize.transferSettings.TransferableLafId
+import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
-import com.intellij.ide.ui.laf.UiThemeProviderListManager
 
 interface ILookAndFeel {
   val transferableId: TransferableLafId
@@ -12,7 +12,8 @@ interface ILookAndFeel {
 
 class BundledLookAndFeel(override val transferableId: TransferableLafId, val lafInfo: UIThemeLookAndFeelInfo): ILookAndFeel {
   companion object {
-    fun fromManager(transferableId: TransferableLafId, lafName: String): BundledLookAndFeel = UiThemeProviderListManager.getInstance().findThemeByName(lafName)
+    fun fromManager(transferableId: TransferableLafId, lafName: String): BundledLookAndFeel = LafManager.getInstance().installedLookAndFeels
+      .map { it as? UIThemeLookAndFeelInfo }.first { it?.name == lafName }
       ?.let { BundledLookAndFeel(transferableId, it) } ?: error("LookAndFeel $lafName not found")
   }
 

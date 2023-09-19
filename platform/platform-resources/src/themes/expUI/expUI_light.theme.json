@@ -249,8 +249,8 @@
     "DefaultTabs.hoverBackground": "Grey12",
 
     "EditorTabs": {
-      "underlineArc": 4,
-      "unselectedBlend": 0.9,
+      "underlineArc": "4",
+      "unselectedBlend": "0.9",
       "background": "Grey14",
       "hoverBackground": "#FFFFFF00",
       "hoverInactiveBackground": "#FFFFFF00",
@@ -516,7 +516,7 @@
         "hoverForeground": "Grey1",
         "hoverBackground": "Grey12",
         "floatingBackground": "Grey14",
-        "chevronInset": 0
+        "chevronInset": "0"
       }
     },
 

@@ -3,72 +3,59 @@
 
 package com.intellij.ide.ui.laf.darcula
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.bootstrap.createBaseLaF
+import com.intellij.ide.IdeEventQueue.Companion.getInstance
 import com.intellij.ide.ui.UITheme
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.ide.ui.laf.IdeaLaf
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.*
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.TableActions
+import com.intellij.util.Alarm
 import com.intellij.util.ResourceUtil
 import com.intellij.util.ui.JBDimension
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
-import org.jetbrains.annotations.TestOnly
+import com.intellij.util.ui.StartupUiUtil.initInputMapDefaults
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
-import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.io.IOException
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Function
 import javax.swing.*
 import javax.swing.UIDefaults.ActiveValue
 import javax.swing.UIDefaults.LazyInputMap
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.basic.BasicLookAndFeel
 import javax.swing.plaf.metal.MetalLookAndFeel
-import javax.swing.text.DefaultEditorKit
-import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG: Logger
   get() = logger<DarculaLaf>()
 
-private const val DESCRIPTION: @NlsSafe String = "IntelliJ Dark Look and Feel"
-
 /**
  * @author Konstantin Bulenkov
  */
-open class DarculaLaf(private val isThemeAdapter: Boolean) : BasicLookAndFeel() {
+open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
   private var base: LookAndFeel? = null
-  private val baseDefaults = UIDefaults()
+  private var disposable: Disposable? = null
+  private val userData = UserDataHolderBase()
+  protected val baseDefaults: UIDefaults = UIDefaults()
 
-  @TestOnly
-  constructor() : this(isThemeAdapter = false)
+  override fun <T> getUserData(key: Key<T>) = userData.getUserData(key)
 
-  companion object {
-    const val NAME: @NlsSafe String = "Darcula"
-
-    private val preInitializedBaseLaf = AtomicReference<LookAndFeel?>()
-
-    fun setPreInitializedBaseLaf(value: LookAndFeel): Boolean {
-      return preInitializedBaseLaf.compareAndSet(null, value)
-    }
-
-    @JvmStatic
-    var isAltPressed: Boolean = false
-      internal set
+  override fun <T> putUserData(key: Key<T>, value: T?) {
+    userData.putUserData(key, value)
   }
 
   override fun getDefaults(): UIDefaults {
     try {
+      val metalDefaults = MetalLookAndFeel().getDefaults()
       val defaults = base!!.defaults
       baseDefaults.putAll(defaults)
       if (SystemInfoRt.isLinux && listOf("CN", "JP", "KR", "TW").contains(Locale.getDefault().country)) {
@@ -81,13 +68,7 @@ open class DarculaLaf(private val isThemeAdapter: Boolean) : BasicLookAndFeel() 
       }
       initInputMapDefaults(defaults)
       initDarculaDefaults(defaults)
-
-      if (!isThemeAdapter) {
-        defaults.put("ui.theme.is.dark", true)
-      }
-
-      patchComboBox(defaults)
-
+      patchComboBox(metalDefaults, defaults)
       defaults.remove("Spinner.arrowButtonBorder")
       defaults.put("Spinner.arrowButtonSize", JBDimension(16, 5).asUIResource())
       if (SystemInfoRt.isMac) {
@@ -111,14 +92,11 @@ open class DarculaLaf(private val isThemeAdapter: Boolean) : BasicLookAndFeel() 
 
   protected open val prefix: String
     get() = "themes/darcula"
+  protected open val systemPrefix: String?
+    get() = null
 
   private fun initDarculaDefaults(defaults: UIDefaults) {
-    if (!isThemeAdapter) {
-      // it is important to use class loader of a current instance class (LaF in plugin)
-      val classLoader = javaClass.getClassLoader()
-      deprecatedLoadDefaultsFromJson(defaults = defaults, prefix = prefix, classLoader = classLoader)
-    }
-
+    loadDefaults(defaults)
     defaults.put("Table.ancestorInputMap", LazyInputMap(arrayOf<Any>(
       "ctrl C", "copy",
       "meta C", "copy",
@@ -174,6 +152,35 @@ open class DarculaLaf(private val isThemeAdapter: Boolean) : BasicLookAndFeel() 
     )))
   }
 
+  protected open fun loadDefaults(defaults: UIDefaults) {
+    loadDefaultsFromJson(defaults)
+  }
+
+  private fun loadDefaultsFromJson(defaults: UIDefaults) {
+    loadDefaultsFromJson(defaults, prefix)
+    systemPrefix?.let {
+      loadDefaultsFromJson(defaults, it)
+    }
+  }
+
+  private fun loadDefaultsFromJson(defaults: UIDefaults, prefix: String) {
+    val filename = "$prefix.theme.json"
+    try {
+      // it is important to use class loader of a current instance class (LaF in plugin)
+      val classLoader = javaClass.getClassLoader()
+      // macOS light theme uses theme file from core plugin
+      val data = ResourceUtil.getResourceAsBytes(filename, classLoader,  /* checkParents */true)
+                 ?: throw RuntimeException("Can't load $filename")
+      val theme = UITheme.loadFromJson(data, "Darcula", classLoader, Function.identity())
+      theme.applyProperties(defaults)
+    }
+    catch (e: IOException) {
+      LOG.error(e)
+    }
+  }
+
+  fun getBaseColor(key: String?): Color = baseDefaults.getColor(key)
+
   override fun getName() = NAME
 
   override fun getID() = NAME
@@ -191,16 +198,44 @@ open class DarculaLaf(private val isThemeAdapter: Boolean) : BasicLookAndFeel() 
         if (base == null) {
           base = createBaseLaF()
         }
-        else {
-          // base is already initialized
-          return
-        }
       }
       base!!.initialize()
     }
     catch (e: Throwable) {
       LOG.error(e)
     }
+    ideEventQueueInitialized(getInstance())
+  }
+
+  private fun ideEventQueueInitialized(eventQueue: IdeEventQueue) {
+    if (disposable == null) {
+      disposable = Disposer.newDisposable()
+      if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
+        Disposer.register(ApplicationManager.getApplication(), disposable!!)
+      }
+    }
+    eventQueue.addDispatcher(object : IdeEventQueue.EventDispatcher {
+      private var mnemonicAlarm: Alarm? = null
+
+      override fun dispatch(e: AWTEvent): Boolean {
+        if (e !is KeyEvent || e.keyCode != KeyEvent.VK_ALT) {
+          return false
+        }
+
+        isAltPressed = e.getID() == KeyEvent.KEY_PRESSED
+        var mnemonicAlarm = mnemonicAlarm
+        if (mnemonicAlarm == null) {
+          mnemonicAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
+          this.mnemonicAlarm = mnemonicAlarm
+        }
+        mnemonicAlarm.cancelAllRequests()
+        val focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
+        if (focusOwner != null) {
+          mnemonicAlarm.addRequest(Runnable { repaintMnemonics(focusOwner, isAltPressed) }, 10)
+        }
+        return false
+      }
+    }, disposable)
   }
 
   override fun uninitialize() {
@@ -208,6 +243,11 @@ open class DarculaLaf(private val isThemeAdapter: Boolean) : BasicLookAndFeel() 
       base?.uninitialize()
     }
     catch (ignore: Exception) {
+    }
+
+    disposable?.let {
+      disposable = null
+      Disposer.dispose(it)
     }
   }
 
@@ -229,6 +269,60 @@ open class DarculaLaf(private val isThemeAdapter: Boolean) : BasicLookAndFeel() 
   override fun getDisabledIcon(component: JComponent?, icon: Icon?): Icon? = icon?.let { IconLoader.getDisabledIcon(it) }
 
   override fun getSupportsWindowDecorations() = true
+
+  companion object {
+    const val NAME: @NlsSafe String = "Darcula"
+
+    private const val DESCRIPTION: @NlsSafe String = "IntelliJ Dark Look and Feel"
+    private val preInitializedBaseLaf = AtomicReference<LookAndFeel?>()
+
+    fun setPreInitializedBaseLaf(value: LookAndFeel): Boolean {
+      return preInitializedBaseLaf.compareAndSet(null, value)
+    }
+
+    @JvmStatic
+    var isAltPressed: Boolean = false
+      private set
+
+    // used by Rider
+    @ApiStatus.Internal
+    fun createBaseLaF(): LookAndFeel {
+      if (SystemInfoRt.isMac) {
+        val aClass = DarculaLaf::class.java.getClassLoader().loadClass(UIManager.getSystemLookAndFeelClassName())
+        return MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as BasicLookAndFeel
+      }
+      else if (!SystemInfoRt.isLinux || GraphicsEnvironment.isHeadless()) {
+        return IdeaLaf(customFontDefaults = null)
+      }
+
+      val fontDefaults = HashMap<Any, Any?>()
+      // Normally, GTK LaF is considered "system" when (1) a GNOME session is active, and (2) GTK library is available.
+      // Here, we weaken the requirements to only (2) and force GTK LaF installation to let it detect the system fonts
+      // and scale them based on Xft.dpi value.
+      try {
+        @Suppress("SpellCheckingInspection")
+        val aClass = DarculaLaf::class.java.getClassLoader().loadClass("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
+        val gtk = MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
+          .findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as LookAndFeel
+        // GTK is available
+        if (gtk.isSupportedLookAndFeel) {
+          // on JBR 11, overrides `SunGraphicsEnvironment#uiScaleEnabled` (sets `#uiScaleEnabled_overridden` to `false`)
+          gtk.initialize()
+          val gtkDefaults = gtk.defaults
+          for (key in gtkDefaults.keys) {
+            if (key.toString().endsWith(".font")) {
+              // `UIDefaults#get` unwraps lazy values
+              fontDefaults.put(key, gtkDefaults.get(key))
+            }
+          }
+        }
+      }
+      catch (e: Exception) {
+        LOG.warn(e)
+      }
+      return IdeaLaf(customFontDefaults = if (fontDefaults.isEmpty()) null else fontDefaults)
+    }
+  }
 }
 
 private fun toFont(defaults: UIDefaults, key: Any): Font {
@@ -245,119 +339,26 @@ private fun toFont(defaults: UIDefaults, key: Any): Font {
   throw UnsupportedOperationException("Unable to extract Font from \"$key\"")
 }
 
-private fun patchComboBox(defaults: UIDefaults) {
-  val metalDefaults = MetalLookAndFeel().getDefaults()
+private fun patchComboBox(metalDefaults: UIDefaults, defaults: UIDefaults) {
   defaults.remove("ComboBox.ancestorInputMap")
   defaults.remove("ComboBox.actionMap")
   defaults.put("ComboBox.ancestorInputMap", metalDefaults.get("ComboBox.ancestorInputMap"))
   defaults.put("ComboBox.actionMap", metalDefaults.get("ComboBox.actionMap"))
 }
 
-private class RepaintMnemonicRequest(@JvmField val focusOwner: Component, @JvmField val pressed: Boolean)
-
-private class LaFMnemonicDispatcher : IdeEventQueue.EventDispatcher {
-  override fun dispatch(e: AWTEvent): Boolean {
-    if (e !is KeyEvent || e.keyCode != KeyEvent.VK_ALT) {
-      return false
-    }
-
-    DarculaLaf.isAltPressed = e.getID() == KeyEvent.KEY_PRESSED
-    val focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
-    check(service<MnemonicListenerService>().repaintRequests.tryEmit(focusOwner?.let {
-      RepaintMnemonicRequest(focusOwner = focusOwner, pressed = DarculaLaf.isAltPressed)
-    }))
-    return false
-  }
-}
-
-@OptIn(FlowPreview::class)
-@Service
-private class MnemonicListenerService(coroutineScope: CoroutineScope) {
-  // null as "cancel all"
-  @JvmField
-  val repaintRequests = MutableSharedFlow<RepaintMnemonicRequest?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
-  init {
-    coroutineScope.launch(CoroutineName("LaF Mnemonic Support")) {
-      val repaintDispatcher = Dispatchers.EDT + ModalityState.any().asContextElement()
-
-      repaintRequests
-        .debounce(10.milliseconds)
-        .collectLatest {
-          it?.let {
-            withContext(repaintDispatcher) {
-              repaintMnemonics(focusOwner = it.focusOwner, pressed = it.pressed)
-            }
-          }
-        }
-    }
+private fun repaintMnemonics(focusOwner: Component, pressed: Boolean) {
+  if (pressed != DarculaLaf.isAltPressed) {
+    return
   }
 
-  private fun repaintMnemonics(focusOwner: Component, pressed: Boolean) {
-    if (pressed != DarculaLaf.isAltPressed) {
-      return
-    }
-
-    val window = SwingUtilities.windowForComponent(focusOwner) ?: return
-    for (component in window.components) {
-      if (component is JComponent) {
-        for (c in ComponentUtil.findComponentsOfType(component, JComponent::class.java)) {
-          if (c is JLabel && c.displayedMnemonicIndex != -1 || c is AbstractButton && c.displayedMnemonicIndex != -1) {
-            c.repaint()
-          }
+  val window = SwingUtilities.windowForComponent(focusOwner) ?: return
+  for (component in window.components) {
+    if (component is JComponent) {
+      for (c in ComponentUtil.findComponentsOfType(component, JComponent::class.java)) {
+        if (c is JLabel && c.displayedMnemonicIndex != -1 || c is AbstractButton && c.displayedMnemonicIndex != -1) {
+          c.repaint()
         }
       }
     }
   }
-}
-
-private fun deprecatedLoadDefaultsFromJson(defaults: UIDefaults, prefix: String, classLoader: ClassLoader) {
-  val filename = "$prefix.theme.json"
-  val data = ResourceUtil.getResourceAsBytes(filename, classLoader, /* checkParents */true)
-             ?: throw RuntimeException("Can't load $filename")
-  UITheme.loadFromJson(data = data, themeId = "Darcula", provider = classLoader).applyProperties(defaults)
-}
-
-internal fun initInputMapDefaults(defaults: UIDefaults) {
-  // Make ENTER work in JTrees
-  val treeInputMap = defaults.get("Tree.focusInputMap") as InputMap?
-  treeInputMap?.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "toggle")
-  // Cut/Copy/Paste in JTextAreas
-  val textAreaInputMap = defaults.get("TextArea.focusInputMap") as InputMap?
-  if (textAreaInputMap != null) {
-    // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
-    installCutCopyPasteShortcuts(textAreaInputMap, false)
-  }
-  // Cut/Copy/Paste in JTextFields
-  val textFieldInputMap = defaults.get("TextField.focusInputMap") as InputMap?
-  if (textFieldInputMap != null) {
-    // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
-    installCutCopyPasteShortcuts(textFieldInputMap, false)
-  }
-  // Cut/Copy/Paste in JPasswordField
-  val passwordFieldInputMap = defaults.get("PasswordField.focusInputMap") as InputMap?
-  if (passwordFieldInputMap != null) {
-    // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
-    installCutCopyPasteShortcuts(passwordFieldInputMap, false)
-  }
-  // Cut/Copy/Paste in JTables
-  val tableInputMap = defaults.get("Table.ancestorInputMap") as InputMap?
-  if (tableInputMap != null) {
-    // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
-    installCutCopyPasteShortcuts(tableInputMap, true)
-  }
-}
-
-private fun installCutCopyPasteShortcuts(inputMap: InputMap, useSimpleActionKeys: Boolean) {
-  val copyActionKey = if (useSimpleActionKeys) "copy" else DefaultEditorKit.copyAction
-  val pasteActionKey = if (useSimpleActionKeys) "paste" else DefaultEditorKit.pasteAction
-  val cutActionKey = if (useSimpleActionKeys) "cut" else DefaultEditorKit.cutAction
-  // Ctrl+Ins, Shift+Ins, Shift+Del
-  inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.CTRL_DOWN_MASK), copyActionKey)
-  inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.SHIFT_DOWN_MASK), pasteActionKey)
-  inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.SHIFT_DOWN_MASK), cutActionKey)
-  // Ctrl+C, Ctrl+V, Ctrl+X
-  inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK), copyActionKey)
-  inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK), pasteActionKey)
-  inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK), DefaultEditorKit.cutAction)
 }

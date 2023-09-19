@@ -31,8 +31,8 @@ import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextAware
 import com.intellij.ui.scale.ScaleType
-import com.intellij.ui.svg.paintIconWithSelection
 import com.intellij.util.IconUtil.ICON_FLAG_IGNORE_MASK
+import com.intellij.util.SVGLoader.paintIconWithSelection
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
@@ -337,11 +337,11 @@ object IconUtil {
         paintIconWithSelection(icon = iconUnderSelection, c = c, g = g, x = x, y = y)
       }
 
-      override fun getIconWidth() = iconUnderSelection.iconWidth
+      override fun getIconWidth(): Int = iconUnderSelection.iconWidth
 
-      override fun getIconHeight() = iconUnderSelection.iconHeight
+      override fun getIconHeight(): Int = iconUnderSelection.iconHeight
 
-      override fun toString() = "IconUtil.wrapToSelectionAwareIcon for $iconUnderSelection"
+      override fun toString(): String = "IconUtil.wrapToSelectionAwareIcon for $iconUnderSelection"
     }
   }
 
@@ -388,6 +388,7 @@ object IconUtil {
    * Returns a deep copy of the provided icon.
    * @see CopyableIcon
    */
+  @JvmStatic
   fun deepCopy(icon: Icon, ancestor: Component?): Icon = copyIcon(icon = icon, ancestor = ancestor, deepCopy = true)
 
   /**

@@ -20,14 +20,16 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.AWTEventListener
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.awt.image.BufferedImageOp
 import java.awt.image.ImageObserver
 import java.util.*
-import javax.swing.SwingUtilities
-import javax.swing.UIManager
+import javax.swing.*
 import javax.swing.plaf.FontUIResource
+import javax.swing.text.DefaultEditorKit
 import javax.swing.text.StyleContext
 import kotlin.math.abs
 import kotlin.math.max
@@ -35,6 +37,18 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 object StartupUiUtil {
+  @Internal
+  @JvmField
+  val patchableFontResources: Array<String> = arrayOf("Button.font", "ToggleButton.font", "RadioButton.font",
+                                                      "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font",
+                                                      "MenuItem.font",
+                                                      "MenuItem.acceleratorFont", "RadioButtonMenuItem.font", "CheckBoxMenuItem.font", "Menu.font",
+                                                      "PopupMenu.font", "OptionPane.font",
+                                                      "Panel.font", "ProgressBar.font", "ScrollPane.font", "Viewport.font", "TabbedPane.font",
+                                                      "Table.font", "TableHeader.font",
+                                                      "TextField.font", "FormattedTextField.font", "Spinner.font", "PasswordField.font",
+                                                      "TextArea.font", "TextPane.font", "EditorPane.font",
+                                                      "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font")
   @JvmStatic
   val isUnderDarcula: Boolean
     @Deprecated("Do not use it. Use UI theme properties.", ReplaceWith("StartupUiUtil[isDarkTheme]"))
@@ -57,19 +71,17 @@ object StartupUiUtil {
   }
 
   @JvmStatic
-  @Deprecated("Starts from NewUI default mac theme lost meaning. If you want to something based on theme please check current theme id.",
-              ReplaceWith("false"))
+  @Deprecated("Starts from NewUI default mac theme lost meaning. If you want to something based on theme please check current theme id.", ReplaceWith("false"))
   @ScheduledForRemoval
   fun isUnderDefaultMacTheme(): Boolean {
-    return false
+      return false
   }
 
   @JvmStatic
-  @Deprecated("Starts from NewUI default win10 theme lost meaning. If you want to something based on theme please check current theme id.",
-              ReplaceWith("false"))
+  @Deprecated("Starts from NewUI default win10 theme lost meaning. If you want to something based on theme please check current theme id.", ReplaceWith("false"))
   @ScheduledForRemoval
   fun isUnderWin10LookAndFeel(): Boolean {
-    return false
+      return false
   }
 
   @JvmStatic
@@ -115,6 +127,7 @@ object StartupUiUtil {
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the provided system scale context is HiDPI.
    */
+  @JvmStatic
   fun isJreHiDPI(scaleContext: ScaleContext?): Boolean {
     return isHiDPIEnabledAndApplicable(scaleContext?.getScale(ScaleType.SYS_SCALE)?.toFloat() ?: JBUIScale.sysScale())
   }
@@ -140,8 +153,14 @@ object StartupUiUtil {
   }
 
   @JvmStatic
+  fun drawImage(g: Graphics, image: Image, x: Int, y: Int, width: Int, height: Int, op: BufferedImageOp?) {
+    val srcBounds = if (width >= 0 && height >= 0) Rectangle(x, y, width, height) else null
+    drawImage(g = g, image = image, x = x, y = y, dw = width, dh = height, sourceBounds = srcBounds, op = op, observer = null)
+  }
+
+  @JvmStatic
   fun drawImage(g: Graphics, image: Image) {
-    drawImage(g = g, image = image, x = 0, y = 0, dw = -1, dh = -1, sourceBounds = null, op = null, observer = null)
+    drawImage(g = g, image = image, x = 0, y = 0, width = -1, height = -1, op = null)
   }
 
   /**
@@ -178,11 +197,72 @@ object StartupUiUtil {
   fun isDialogFont(font: Font): Boolean = Font.DIALOG == font.getFamily(Locale.US)
 
   @JvmStatic
+  fun initInputMapDefaults(defaults: UIDefaults) {
+    // Make ENTER work in JTrees
+    val treeInputMap = defaults.get("Tree.focusInputMap") as InputMap?
+    treeInputMap?.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "toggle")
+    // Cut/Copy/Paste in JTextAreas
+    val textAreaInputMap = defaults.get("TextArea.focusInputMap") as InputMap?
+    if (textAreaInputMap != null) {
+      // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
+      installCutCopyPasteShortcuts(textAreaInputMap, false)
+    }
+    // Cut/Copy/Paste in JTextFields
+    val textFieldInputMap = defaults.get("TextField.focusInputMap") as InputMap?
+    if (textFieldInputMap != null) {
+      // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
+      installCutCopyPasteShortcuts(textFieldInputMap, false)
+    }
+    // Cut/Copy/Paste in JPasswordField
+    val passwordFieldInputMap = defaults.get("PasswordField.focusInputMap") as InputMap?
+    if (passwordFieldInputMap != null) {
+      // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
+      installCutCopyPasteShortcuts(passwordFieldInputMap, false)
+    }
+    // Cut/Copy/Paste in JTables
+    val tableInputMap = defaults.get("Table.ancestorInputMap") as InputMap?
+    if (tableInputMap != null) {
+      // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
+      installCutCopyPasteShortcuts(tableInputMap, true)
+    }
+  }
+
+  private fun installCutCopyPasteShortcuts(inputMap: InputMap, useSimpleActionKeys: Boolean) {
+    val copyActionKey = if (useSimpleActionKeys) "copy" else DefaultEditorKit.copyAction
+    val pasteActionKey = if (useSimpleActionKeys) "paste" else DefaultEditorKit.pasteAction
+    val cutActionKey = if (useSimpleActionKeys) "cut" else DefaultEditorKit.cutAction
+    // Ctrl+Ins, Shift+Ins, Shift+Del
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.CTRL_DOWN_MASK), copyActionKey)
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.SHIFT_DOWN_MASK), pasteActionKey)
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.SHIFT_DOWN_MASK), cutActionKey)
+    // Ctrl+C, Ctrl+V, Ctrl+X
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK), copyActionKey)
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK), pasteActionKey)
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK), DefaultEditorKit.cutAction)
+  }
+
+  @JvmStatic
+  fun initFontDefaults(defaults: UIDefaults, uiFont: FontUIResource) {
+    defaults["Tree.ancestorInputMap"] = null
+    val textFont = FontUIResource(uiFont)
+    val monoFont = FontUIResource("Monospaced", Font.PLAIN, uiFont.size)
+    for (fontResource in patchableFontResources) {
+      defaults[fontResource] = uiFont
+    }
+    if (!SystemInfoRt.isMac) {
+      defaults["PasswordField.font"] = monoFont
+    }
+    defaults["TextArea.font"] = monoFont
+    defaults["TextPane.font"] = textFont
+    defaults["EditorPane.font"] = textFont
+  }
+
+  @JvmStatic
   fun getFontWithFallback(familyName: String?,
                           @Suppress("DEPRECATION") @org.intellij.lang.annotations.JdkConstants.FontStyle style: Int,
                           size: Float): FontUIResource {
     // On macOS font fallback is implemented in JDK by default
-    // (except for explicitly registered fonts, e.g., the fonts we bundle with IDE, for them, we don't have a solution now)
+    // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them, we don't have a solution now)
     // in headless mode just use fallback in order to avoid font loading
     val fontWithFallback = if (SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) Font(familyName, style, size.toInt()).deriveFont(
       size)

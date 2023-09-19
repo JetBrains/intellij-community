@@ -38,11 +38,6 @@ class InsecureHashBuilder {
     return addAndReset()
   }
 
-  fun update(value: Long): InsecureHashBuilder {
-    hashStream.putLong(value)
-    return addAndReset()
-  }
-
   fun stringList(list: List<String>): InsecureHashBuilder {
     hashStream.putOrderedIterable(list, HashFunnel.forString())
     return addAndReset()

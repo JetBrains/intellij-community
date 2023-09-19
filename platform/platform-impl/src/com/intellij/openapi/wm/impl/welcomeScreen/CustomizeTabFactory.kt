@@ -25,7 +25,6 @@ import com.intellij.openapi.keymap.impl.ui.KeymapSchemeManager
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.wm.WelcomeTabFactory
@@ -48,15 +47,12 @@ import javax.swing.JComponent
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.LabelUI
 
-private val settings: UISettings
-  get() = UISettings.getInstance()
-private val defaultProject: Project
-  get() = ProjectManager.getInstance().defaultProject
+private val settings get() = UISettings.getInstance()
+private val defaultProject get() = ProjectManager.getInstance().defaultProject
 
-private val laf: LafManager
-  get() = LafManager.getInstance()
-private val keymapManager: KeymapManagerImpl
-  get() = KeymapManager.getInstance() as KeymapManagerImpl
+private val laf get() = LafManager.getInstance()
+private val keymapManager get() = KeymapManager.getInstance() as KeymapManagerImpl
+private val editorColorsManager get() = EditorColorsManager.getInstance() as EditorColorsManagerImpl
 
 class CustomizeTabFactory : WelcomeTabFactory {
   override fun createWelcomeTab(parentDisposable: Disposable): CustomizeTab = CustomizeTab(parentDisposable)
@@ -89,10 +85,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   init {
     lafProperty.afterChange(parentDisposable) {
       val newLaf = laf.findLaf(it)
-      if (laf.getCurrentUIThemeLookAndFeel() == newLaf) {
-        return@afterChange
-      }
-
+      if (laf.currentLookAndFeel == newLaf) return@afterChange
       ApplicationManager.getApplication().invokeLater {
         QuickChangeLookAndFeel.switchLafAndUpdateUI(laf, newLaf, true)
         WelcomeScreenEventCollector.logLafChanged(newLaf, laf.autodetect)
@@ -101,7 +94,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
     syncThemeProperty.afterChange {
       if (laf.autodetect == it) return@afterChange
       laf.autodetect = it
-      WelcomeScreenEventCollector.logLafChanged(laf.getCurrentUIThemeLookAndFeel(), laf.autodetect)
+      WelcomeScreenEventCollector.logLafChanged(laf.currentLookAndFeel, laf.autodetect)
     }
     ideFontProperty.afterChange(parentDisposable) {
       if (settings.fontSize2D == it) return@afterChange
@@ -152,7 +145,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
     settings.colorBlindness = if (adjustColorsProperty.get()) colorBlindnessProperty.get() else null
     ApplicationManager.getApplication().invokeLater(Runnable {
       DefaultColorSchemesManager.getInstance().reload()
-      (EditorColorsManager.getInstance() as EditorColorsManagerImpl).schemeChangedOrSwitched(null)
+      editorColorsManager.schemeChangedOrSwitched(null)
     })
   }
 

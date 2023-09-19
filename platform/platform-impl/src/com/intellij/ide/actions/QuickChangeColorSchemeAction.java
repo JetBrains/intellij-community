@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.ide.ui.laf.UiThemeProviderListManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
@@ -42,7 +43,7 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (addScheme) {
-          EditorColorsManager.getInstance().addColorScheme(scheme);
+          EditorColorsManager.getInstance().addColorsScheme(scheme);
         }
         EditorColorsScheme oldScheme = EditorColorsManager.getInstance().getGlobalScheme();
         EditorColorsManager.getInstance().setGlobalScheme(scheme);
@@ -68,19 +69,19 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
     lafManager.setRememberSchemeForLaf(false);
     boolean lafChanged = false;
 
-    UIThemeLookAndFeelInfo suitableLaf = null;
+    UIManager.LookAndFeelInfo suitableLaf = null;
     String schemeName = Scheme.getBaseName(newScheme.getName());
     for (UIThemeLookAndFeelInfo laf : SequencesKt.asIterable(UiThemeProviderListManager.Companion.getInstance().getLaFs())) {
-      if (schemeName.equals(laf.getEditorSchemeName())) {
+      if (schemeName.equals(laf.getTheme().getEditorSchemeName())) {
         suitableLaf = laf;
         break;
       }
     }
 
     UIThemeLookAndFeelInfo currentLafInfo = lafManager.getCurrentUIThemeLookAndFeel();
-    Boolean isDark = currentLafInfo == null ? null : currentLafInfo.isDark();
+    UITheme theme = currentLafInfo != null ? currentLafInfo.getTheme() : null;
 
-    if (isDarkEditorTheme && (isDark != null && !isDark)) {
+    if (isDarkEditorTheme && (theme != null && !theme.isDark())) {
       if (/*applyAlways ||*/ Messages.showYesNoDialog(
         ApplicationBundle.message("color.scheme.theme.change.confirmation", "dark", productName),
         ApplicationBundle.message("color.scheme.theme.change.confirmation.title", productName),
@@ -93,7 +94,7 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
         SwingUtilities.invokeLater(DarculaInstaller::install);
       }
     }
-    else if (!isDarkEditorTheme && (isDark != null && isDark)) {
+    else if (!isDarkEditorTheme && (theme != null && theme.isDark())) {
       if (/*applyAlways ||*/Messages.showYesNoDialog(
             ApplicationBundle.message("color.scheme.theme.change.confirmation", "bright", productName),
             ApplicationBundle.message("color.scheme.theme.change.confirmation.title", productName),

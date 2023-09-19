@@ -17,7 +17,6 @@ import com.intellij.ide.ui.*
 import com.intellij.ide.ui.UISettings.Companion.getPreferredFractionalMetricsValue
 import com.intellij.ide.ui.laf.SystemDarkThemeDetector.Companion.createDetector
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
-import com.intellij.ide.ui.laf.darcula.initInputMapDefaults
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
@@ -49,7 +48,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
-import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.*
 import com.intellij.ui.components.DefaultLinkButtonUI
 import com.intellij.ui.popup.HeavyWeightPopup
@@ -57,12 +55,12 @@ import com.intellij.ui.scale.JBUIScale.getFontScale
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.scaleFontSize
 import com.intellij.ui.scale.JBUIScale.setUserScaleFactor
-import com.intellij.ui.svg.setSelectionColorPatcherProvider
 import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.util.EventDispatcher
 import com.intellij.util.FontUtil
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.SVGLoader.colorPatcherProvider
+import com.intellij.util.SVGLoader.setSelectionColorPatcherProvider
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.*
 import com.intellij.util.ui.LafIconLookup.getIcon
@@ -106,21 +104,57 @@ private const val INTER_SIZE = 13
 
 @Suppress("OVERRIDE_DEPRECATION")
 @State(name = "LafManager",
-       useLoadedStateAsExisting = false,
        storages = [Storage(value = "laf.xml", usePathMacroManager = false)],
        category = SettingsCategory.UI,
        reportStatistic = false)
 class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(), PersistentStateComponent<Element> {
   private val eventDispatcher = EventDispatcher.create(LafManagerListener::class.java)
 
+  private val defaultDarkTheme = SynchronizedClearableLazy {
+    val name = ApplicationInfoEx.getInstanceEx().defaultDarkLaf
+    if (name == null) {
+      findLafByName("Dark") ?: error("Default dark theme 'Dark' not found")
+    }
+    else {
+      findLafByName(name) ?: error("Default dark theme '$name' not found")
+    }
+  }
+
+  private val defaultClassicDarkTheme = SynchronizedClearableLazy {
+    val name = ApplicationInfoEx.getInstanceEx().defaultClassicDarkLaf
+    if (name == null) {
+      findLafByName("Darcula")?: error("Default classic dark theme 'Darcula' not found")
+    }
+    else {
+      findLafByName(name) ?: error("Default classic dark theme '$name' not found")
+    }
+  }
+
+  private val defaultLightTheme = SynchronizedClearableLazy {
+    val name = ApplicationInfoEx.getInstanceEx().defaultLightLaf
+    if (name == null) {
+      findLafByName("Light") ?: error("Default light LookAndFeel 'Light' not found")
+    }
+    else {
+      findLafByName(name) ?: error("Default light LookAndFeel '$name' not found")
+    }
+  }
+
+  private val defaultClassicLightTheme = SynchronizedClearableLazy {
+    val name = ApplicationInfoEx.getInstanceEx().defaultClassicLightLaf
+    if (name == null) {
+      UiThemeProviderListManager.getInstance().findJetBrainsLightTheme() ?: error("JetBrains light theme not found")
+    }
+    else {
+      findLafByName(name) ?: error("Default light LookAndFeel '$name' not found")
+    }
+  }
+
   private val ourDefaults: Map<Any, Any> = UIManager.getDefaults().clone() as UIDefaults
-
   private var currentTheme: UIThemeLookAndFeelInfo? = null
-
-  private var preferredLightThemeId: String? = null
-  private var preferredDarkThemeId: String? = null
-
-  private val storedDefaults = HashMap<LafReference?, MutableMap<String, Any?>>()
+  private var preferredLightTheme: UIThemeLookAndFeelInfo? = null
+  private var preferredDarkTheme: UIThemeLookAndFeelInfo? = null
+  private val myStoredDefaults = HashMap<LafReference?, MutableMap<String, Any?>>()
   private val lafComboBoxModel = SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> { LafComboBoxModel() }
   private val settingsToolbar = lazy {
     val group = DefaultActionGroup(PreferredLafAction())
@@ -136,6 +170,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private var isUpdatingPlugin = false
   private var themeIdBeforePluginUpdate: String? = null
   private var autodetect = false
+  private var defaultThemeId = ""
 
   // We remember the last used editor scheme for each laf in order to restore it after switching laf
   private var rememberSchemeForLaf = true
@@ -147,11 +182,11 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private var usedValuesOfUiOptions: List<Any?> = emptyList()
 
   override fun getDefaultLightLaf(): UIThemeLookAndFeelInfo {
-    return if (ExperimentalUI.isNewUI()) getDefaultLightTheme() else getDefaultClassicLightTheme()
+    return if (ExperimentalUI.isNewUI()) defaultLightTheme.value else defaultClassicLightTheme.value
   }
 
   override fun getDefaultDarkLaf(): UIThemeLookAndFeelInfo {
-    return if (ExperimentalUI.isNewUI()) getDefaultDarkTheme() else getDefaultClassicDarkTheme()
+    return if (ExperimentalUI.isNewUI()) defaultDarkTheme.value else defaultClassicDarkTheme.value
   }
 
   val defaultFont: Font
@@ -169,15 +204,19 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     fun installMacOSXFonts(defaults: UIDefaults) {
       val face = "Helvetica Neue"
       // ui font
-      initFontDefaults(defaults, getFont(face, 13, Font.PLAIN))
+      StartupUiUtil.initFontDefaults(defaults, getFont(face, 13, Font.PLAIN))
       for (key in java.util.List.copyOf(defaults.keys)) {
         if (key !is String || !key.endsWith("font", ignoreCase = true)) {
           continue
         }
 
         val value = defaults.get(key)
-        if (value is FontUIResource && (value.family == "Lucida Grande" || value.family == "Serif") && !key.toString().contains("Menu")) {
-          defaults.put(key, getFont(face, value.size, value.style))
+        if (value is FontUIResource) {
+          if (value.family == "Lucida Grande" || value.family == "Serif") {
+            if (!key.toString().contains("Menu")) {
+              defaults.put(key, getFont(face, value.size, value.style))
+            }
+          }
         }
       }
       defaults.put("TableHeader.font", getFont(face, 11, Font.PLAIN))
@@ -194,6 +233,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
     @OptIn(DelicateCoroutinesApi::class)
     @TestOnly
+    @JvmStatic
     fun getTestInstance(): LafManagerImpl? {
       if (ourTestInstance == null) {
         ourTestInstance = LafManagerImpl(GlobalScope)
@@ -213,29 +253,14 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun initializeComponent() {
-    // must be after updateUI
-    isFirstSetup = false
+    // we preload LafManagerImpl in EDT, no one can access LafManagerImpl early
+    EDT.assertIsEdt()
 
-    if (EDT.isCurrentThreadEdt()) {
-      initInEdt()
-      addListeners()
-    }
-    else {
-      // expected that applyInitState will be called
-    }
-  }
-
-  internal suspend fun applyInitState() {
-    span("laf initialization in EDT", RawSwingDispatcher) {
-      initInEdt()
-    }
-    addListeners()
-  }
-
-  private fun initInEdt() {
     val theme = currentTheme!!
-    if (!theme.isInitialized) {
-      doSetLaF(theme = theme, installEditorScheme = false)
+    if (theme is UIThemeLookAndFeelInfoImpl) {
+      if (!theme.isInitialised) {
+        doSetLaF(lookAndFeelInfo = theme, installEditorScheme = false)
+      }
     }
     selectComboboxModel()
 
@@ -243,8 +268,11 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       ExperimentalUI.getInstance().lookAndFeelChanged()
     }
 
-    updateUI(isFirstSetup = true)
+    updateUI()
+    // must be after updateUI
+    isFirstSetup = false
     detectAndSyncLaf()
+    addListeners()
   }
 
   private fun addListeners() {
@@ -254,7 +282,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         isUpdatingPlugin = isUpdate
         themeIdBeforePluginUpdate = if (currentTheme is UIThemeLookAndFeelInfo) {
-          (currentTheme as UIThemeLookAndFeelInfo).id
+          (currentTheme as UIThemeLookAndFeelInfo).theme.id
         }
         else {
           null
@@ -279,7 +307,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   private fun detectAndSyncLaf() {
     if (autodetect) {
-      val lafDetector = getGetOrCreateLafDetector()
+      val lafDetector = getOrCreateLafDetector
       if (lafDetector.detectionSupported) {
         lafDetector.check()
       }
@@ -291,13 +319,20 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       return
     }
 
-    val currentTheme = currentTheme
-    val currentIsDark = currentTheme == null || currentTheme.isDark
-    val expectedTheme = if (systemIsDark) {
-      preferredDarkThemeId?.let { UiThemeProviderListManager.getInstance().findThemeById(it) } ?: defaultDarkLaf
+    val currentIsDark = StartupUiUtil.isDarkTheme ||
+                        (currentTheme is UIThemeLookAndFeelInfo && (currentTheme as UIThemeLookAndFeelInfo).theme.isDark)
+    var expectedTheme: UIThemeLookAndFeelInfo?
+    if (systemIsDark) {
+      expectedTheme = preferredDarkTheme
+      if (expectedTheme == null) {
+        expectedTheme = defaultDarkLaf
+      }
     }
     else {
-      preferredLightThemeId?.let { UiThemeProviderListManager.getInstance().findThemeById(it) } ?: defaultLightLaf
+      expectedTheme = preferredLightTheme
+      if (expectedTheme == null) {
+        expectedTheme = defaultLightLaf
+      }
     }
     if (currentIsDark != systemIsDark || currentTheme !== expectedTheme) {
       QuickChangeLookAndFeel.switchLafAndUpdateUI(this, expectedTheme, true)
@@ -305,57 +340,51 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun loadState(element: Element) {
-    autodetect = element.getAttributeBooleanValue(ATTRIBUTE_AUTODETECT)
-    preferredLightThemeId = element.getChild(ELEMENT_PREFERRED_LIGHT_LAF)?.getAttributeValue(ATTRIBUTE_THEME_NAME)
-    preferredDarkThemeId = element.getChild(ELEMENT_PREFERRED_DARK_LAF)?.getAttributeValue(ATTRIBUTE_THEME_NAME)
+    val oldTheme = currentTheme
+    val newTheme = loadThemeState(element, ELEMENT_LAF) ?:
+                   // We try to read `class-name` attribute for backward compatibilities IDE's before 2023.3.
+                   // Only for Darcula theme. We could drop it in future when we will stop bundle Darcula.
+                   if (element.getChild("laf")?.getAttribute("class-name")?.value == "com.intellij.ide.ui.laf.darcula.DarculaLaf") {
+                     findLafByName("Darcula") ?: loadDefaultTheme()
+                   }
+                   else {
+                     loadDefaultTheme()
+                   }
 
-    element.getChild(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)?.let { lafToSchemeElement ->
-      for (lafToScheme in lafToSchemeElement.getChildren(ELEMENT_LAF_TO_SCHEME)) {
+    autodetect = java.lang.Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_AUTODETECT))
+    preferredLightTheme = loadThemeState(element, ELEMENT_PREFERRED_LIGHT_LAF)
+    preferredDarkTheme = loadThemeState(element, ELEMENT_PREFERRED_DARK_LAF)
+
+    val lafsToSchemesElement = element.getChild(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)
+    if (lafsToSchemesElement != null) {
+      val lafToSchemes = lafsToSchemesElement.getChildren(ELEMENT_LAF_TO_SCHEME)
+      for (lafToScheme in lafToSchemes) {
         lafToPreviousScheme.put(lafToScheme.getAttributeValue(ATTRIBUTE_LAF), lafToScheme.getAttributeValue(ATTRIBUTE_SCHEME))
       }
     }
 
     if (autodetect) {
-      // must be created as part of LafManagerImpl initialization and not on demand because system listeners are added
-      getGetOrCreateLafDetector()
+      getOrCreateLafDetector
     }
-
-    val oldTheme = currentTheme
-
-    val newThemeSupplier = loadThemeState(element)
-    val newTheme = newThemeSupplier.get()!!
-    if (isFirstSetup || newThemeSupplier == oldTheme) {
-      currentTheme = newTheme
+    if (!isFirstSetup && newTheme != oldTheme) {
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, newTheme, true, true, true)
     }
     else {
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, newTheme, true, true, true)
+      currentTheme = newTheme
     }
   }
 
-  private fun loadThemeState(element: Element): Supplier<out UIThemeLookAndFeelInfo?> {
-    val themeProviderManager = UiThemeProviderListManager.getInstance()
-
-    element.getChild(ELEMENT_LAF)?.getAttributeValue(ATTRIBUTE_THEME_NAME)?.let {
-      themeProviderManager.findThemeSupplierById(it)
-    }?.let {
-      return it
-    }
-
-    // We try to read `class-name` attribute for backward compatibilities IDE's before 2023.3.
-    // Only for Darcula theme. We could drop it in future when we will stop bundle Darcula.
-    return if (element.getChild("laf")?.getAttributeValue("class-name") == "com.intellij.ide.ui.laf.darcula.DarculaLaf") {
-      Supplier { themeProviderManager.findThemeByName("Darcula") }
-    }
-    else {
-      loadDefaultTheme()
-    }
+  private fun loadThemeState(element: Element, attributeName: @NonNls String): UIThemeLookAndFeelInfo? {
+    val id = element.getChild(attributeName)?.getAttributeValue(ATTRIBUTE_THEME_NAME) ?: return null
+    return UiThemeProviderListManager.getInstance().findThemeById(id)
   }
 
   override fun noStateLoaded() {
-    val theme = loadDefaultTheme().get()!!
+    val theme = loadDefaultTheme()
     currentTheme = theme
-    preferredLightThemeId = null
-    preferredDarkThemeId = null
+    defaultThemeId = theme.theme.id
+    preferredLightTheme = null
+    preferredDarkTheme = null
     autodetect = false
   }
 
@@ -364,24 +393,14 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     if (autodetect) {
       element.setAttribute(ATTRIBUTE_AUTODETECT, java.lang.Boolean.toString(autodetect))
     }
-    val currentTheme = currentTheme
-    if (currentTheme?.id != getDefaultThemeId()) {
-      val laf = (if (currentTheme is TempUIThemeLookAndFeelInfo) currentTheme.previousLaf else currentTheme)
-      if (laf != null) {
-        val child = Element(ELEMENT_LAF)
-        child.setAttribute(ATTRIBUTE_THEME_NAME, laf.id)
-        element.addContent(child)
-      }
+    if (currentTheme?.theme?.id != defaultThemeId) {
+      writeThemeState(element, ELEMENT_LAF, currentUIThemeLookAndFeel)
     }
-    if (preferredLightThemeId != null && preferredLightThemeId !== defaultLightLaf.id) {
-      val child = Element(ELEMENT_PREFERRED_LIGHT_LAF)
-      child.setAttribute(ATTRIBUTE_THEME_NAME, preferredLightThemeId)
-      element.addContent(child)
+    if (preferredLightTheme != null && preferredLightTheme !== defaultLightLaf) {
+      writeThemeState(element, ELEMENT_PREFERRED_LIGHT_LAF, preferredLightTheme)
     }
-    if (preferredDarkThemeId != null && preferredDarkThemeId !== defaultDarkLaf.id) {
-      val child = Element(ELEMENT_PREFERRED_DARK_LAF)
-      child.setAttribute(ATTRIBUTE_THEME_NAME, preferredDarkThemeId)
-      element.addContent(child)
+    if (preferredDarkTheme != null && preferredDarkTheme !== defaultDarkLaf) {
+      writeThemeState(element, ELEMENT_PREFERRED_DARK_LAF, preferredDarkTheme)
     }
 
     if (lafToPreviousScheme.isNotEmpty()) {
@@ -399,8 +418,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     return element
   }
 
-  override fun getInstalledLookAndFeels(): Array<UIManager.LookAndFeelInfo> {
-    return UiThemeProviderListManager.getInstance().getLaFs().map { it as UIThemeLookAndFeelInfoImpl }.toList().toTypedArray()
+  override fun getInstalledLookAndFeels(): Array<UIThemeLookAndFeelInfo> {
+    return UiThemeProviderListManager.getInstance().getLaFs().toList().toTypedArray()
   }
 
   override fun getLafComboBoxModel(): CollectionComboBoxModel<LafReference> = lafComboBoxModel.value
@@ -409,7 +428,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     get() {
       val result = ArrayList<LafReference>()
       for (group in ThemeListProvider.getInstance().getShownThemes()) {
-        if (result.isNotEmpty()) {
+        if (!result.isEmpty()) {
           result.add(SEPARATOR)
         }
         for (info in group) {
@@ -425,7 +444,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   private fun selectComboboxModel() {
     if (lafComboBoxModel.isInitialized()) {
-      lafComboBoxModel.value.selectedItem = createLafReference(currentTheme!!)
+      lafComboBoxModel.value.selectedItem = createLafReference(currentTheme)
     }
   }
 
@@ -438,41 +457,35 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   @Suppress("removal")
-  override fun getCurrentLookAndFeel(): UIManager.LookAndFeelInfo? = currentTheme as UIThemeLookAndFeelInfoImpl?
+  override fun getCurrentLookAndFeel(): UIManager.LookAndFeelInfo? = currentTheme
 
   override fun getCurrentUIThemeLookAndFeel(): UIThemeLookAndFeelInfo? = currentTheme
 
-  override fun getLookAndFeelReference(): LafReference = createLafReference(currentTheme!!)
+  override fun getLookAndFeelReference(): LafReference = createLafReference(currentUIThemeLookAndFeel)
 
   override fun getLookAndFeelCellRenderer(): ListCellRenderer<LafReference> = LafCellRenderer()
 
   override fun getSettingsToolbar(): JComponent = settingsToolbar.value.component
 
-  private fun loadDefaultTheme(): Supplier<out UIThemeLookAndFeelInfo?> {
+  private fun loadDefaultTheme(): UIThemeLookAndFeelInfo {
     // use HighContrast theme for IDE in Windows if HighContrast desktop mode is set
     if (SystemInfoRt.isWindows && Toolkit.getDefaultToolkit().getDesktopProperty("win.highContrast.on") == true) {
-      UiThemeProviderListManager.getInstance().findThemeSupplierById(HIGH_CONTRAST_THEME_ID)?.let {
+      UiThemeProviderListManager.getInstance().findThemeById(HIGH_CONTRAST_THEME_ID)?.let {
         return it
       }
     }
-    return Supplier { defaultDarkLaf }
+    return defaultDarkLaf
   }
 
-  private fun getDefaultThemeId(): String {
-    // use HighContrast theme for IDE in Windows if HighContrast desktop mode is set
-    if (SystemInfoRt.isWindows && Toolkit.getDefaultToolkit().getDesktopProperty("win.highContrast.on") == true) {
-      UiThemeProviderListManager.getInstance().findThemeSupplierById(HIGH_CONTRAST_THEME_ID)?.let {
-        return HIGH_CONTRAST_THEME_ID
-      }
-    }
-    return defaultDarkLaf.id
+  private fun findLafByName(name: String): UIThemeLookAndFeelInfo? {
+    return UiThemeProviderListManager.getInstance().findThemeByName(name)
   }
 
   /**
    * Sets current LAF. The method doesn't update component hierarchy.
    */
-  override fun setCurrentLookAndFeel(lookAndFeelInfo: UIThemeLookAndFeelInfo, lockEditorScheme: Boolean) {
-    setLookAndFeelImpl(lookAndFeelInfo = lookAndFeelInfo,
+  override fun setCurrentLookAndFeel(lookAndFeelInfo: UIManager.LookAndFeelInfo, lockEditorScheme: Boolean) {
+    setLookAndFeelImpl(lookAndFeelInfo = lookAndFeelInfo as UIThemeLookAndFeelInfo,
                        installEditorScheme = !lockEditorScheme,
                        processChangeSynchronously = true)
   }
@@ -480,9 +493,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   /**
    * Sets current LAF. The method doesn't update component hierarchy.
    */
-  private fun setLookAndFeelImpl(lookAndFeelInfo: UIThemeLookAndFeelInfo,
-                                 installEditorScheme: Boolean,
-                                 processChangeSynchronously: Boolean) {
+  private fun setLookAndFeelImpl(lookAndFeelInfo: UIThemeLookAndFeelInfo, installEditorScheme: Boolean, processChangeSynchronously: Boolean) {
     val oldLaf = currentTheme
 
     rememberSchemeForLaf(EditorColorsManager.getInstance().globalScheme)
@@ -515,11 +526,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   @Suppress("unused")
   @Internal
-  fun updateLafNoSave(lookAndFeelInfo: UIThemeLookAndFeelInfo): Boolean {
-    return doSetLaF(theme = lookAndFeelInfo as UIThemeLookAndFeelInfoImpl, installEditorScheme = false)
-  }
+  fun updateLafNoSave(lookAndFeelInfo: UIThemeLookAndFeelInfo) = doSetLaF(lookAndFeelInfo = lookAndFeelInfo, installEditorScheme = false)
 
-  private fun doSetLaF(theme: UIThemeLookAndFeelInfo, installEditorScheme: Boolean): Boolean {
+  private fun doSetLaF(lookAndFeelInfo: UIThemeLookAndFeelInfo, installEditorScheme: Boolean): Boolean {
     val defaults = UIManager.getDefaults()
     defaults.clear()
     fillFallbackDefaults(defaults)
@@ -528,20 +537,21 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       colorPatcherProvider = null
       setSelectionColorPatcherProvider(null)
     }
-    val lafAdapter = DarculaLaf(isThemeAdapter = true)
-    UIManager.setLookAndFeel(lafAdapter)
+    UIManager.setLookAndFeel(DarculaLaf())
     // set L&F
-    try {
-      theme.installTheme(UIManager.getLookAndFeelDefaults(), !installEditorScheme)
-    }
-    catch (e: Exception) {
-      LOG.error(e)
-      Messages.showMessageDialog(
-        IdeBundle.message("error.cannot.set.look.and.feel", theme.id, e.message),
-        CommonBundle.getErrorTitle(),
-        Messages.getErrorIcon()
-      )
-      return true
+    if (lookAndFeelInfo is UIThemeLookAndFeelInfoImpl) {
+      try {
+        lookAndFeelInfo.installTheme(UIManager.getLookAndFeelDefaults(), !installEditorScheme)
+      }
+      catch (e: Exception) {
+        LOG.error(e)
+        Messages.showMessageDialog(
+          IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.getName(), e.message),
+          CommonBundle.getErrorTitle(),
+          Messages.getErrorIcon()
+        )
+        return true
+      }
     }
     if (SystemInfoRt.isMac) {
       installMacOSXFonts(UIManager.getLookAndFeelDefaults())
@@ -571,7 +581,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     if (oldLaf is TempUIThemeLookAndFeelInfo || currentTheme is TempUIThemeLookAndFeelInfo) {
       return
     }
-    if (currentTheme is UIThemeLookAndFeelInfo && (currentTheme as UIThemeLookAndFeelInfo).editorSchemeName != null) {
+    if (currentTheme is UIThemeLookAndFeelInfo && (currentTheme as UIThemeLookAndFeelInfo).theme.editorSchemeName != null) {
       return
     }
 
@@ -610,16 +620,12 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
    * Updates LAF of all windows. The method also updates font of components as it's configured in `UISettings`.
    */
   override fun updateUI() {
-    updateUI(isFirstSetup = false)
-  }
-
-  private fun updateUI(isFirstSetup: Boolean) {
     val uiDefaults = UIManager.getLookAndFeelDefaults()
     uiDefaults.put("*cache", ConcurrentHashMap<String, Color>()) // for JBColor
     uiDefaults.put("LinkButtonUI", DefaultLinkButtonUI::class.java.name)
     fixPopupWeight()
     fixMenuIssues(uiDefaults)
-    initInputMapDefaults(uiDefaults)
+    StartupUiUtil.initInputMapDefaults(uiDefaults)
     uiDefaults.put("Button.defaultButtonFollowsFocus", false)
     uiDefaults.put("Balloon.error.textInsets", JBInsets(3, 8, 3, 8).asUIResource())
     patchFileChooserStrings(uiDefaults)
@@ -659,6 +665,19 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
   }
 
+  private fun computeValuesOfUsedUiOptions(): List<Any?> {
+    val instance = UISettings.getInstance()
+    return listOf(
+      instance.overrideLafFonts,
+      instance.fontFace,
+      instance.fontSize2D,
+      instance.ideAAType,
+      instance.editorAAType,
+      instance.ideScale,
+      instance.presentationModeIdeScale,
+    )
+  }
+
   private fun notifyLookAndFeelChanged() {
     val activity = StartUpMeasurer.startActivity("lookAndFeelChanged event processing")
     ApplicationManager.getApplication().messageBus.syncPublisher(LafManagerListener.TOPIC).lookAndFeelChanged(this)
@@ -673,13 +692,13 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       storeOriginalFontDefaults(uiDefaults)
       val fontFace = if (uiSettings.overrideLafFonts) uiSettings.fontFace else defaultFont.family
       val fontSize = (if (uiSettings.overrideLafFonts) uiSettings.fontSize2D else defaultFont.size2D) * currentScale
-      initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(fontFace, Font.PLAIN, fontSize))
+      StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(fontFace, Font.PLAIN, fontSize))
       val userScaleFactor = if (useInterFont()) fontSize / INTER_SIZE else getFontScale(fontSize)
       setUserScaleFactor(userScaleFactor)
     }
     else if (useInterFont()) {
       storeOriginalFontDefaults(uiDefaults)
-      initFontDefaults(uiDefaults, defaultInterFont)
+      StartupUiUtil.initFontDefaults(uiDefaults, defaultInterFont)
       setUserScaleFactor(defaultUserScaleFactor)
     }
     else {
@@ -703,15 +722,15 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private val storedLafFont: Font?
     get() {
       val lf = if (currentTheme == null) null else lookAndFeelReference
-      val lfDefaults: Map<String, Any?>? = storedDefaults[lf]
+      val lfDefaults: Map<String, Any?>? = myStoredDefaults[lf]
       return if (lfDefaults == null) null else lfDefaults["Label.font"] as Font?
     }
 
   private fun restoreOriginalFontDefaults(defaults: UIDefaults) {
     val laf = if (currentTheme == null) null else lookAndFeelReference
-    val lafDefaults = storedDefaults.get(laf)
+    val lafDefaults = myStoredDefaults.get(laf)
     if (lafDefaults != null) {
-      for (resource in patchableFontResources) {
+      for (resource in StartupUiUtil.patchableFontResources) {
         defaults.put(resource, lafDefaults.get(resource))
       }
     }
@@ -720,13 +739,13 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   private fun storeOriginalFontDefaults(defaults: UIDefaults) {
     val laf = if (currentTheme == null) null else lookAndFeelReference
-    var lafDefaults = storedDefaults.get(laf)
+    var lafDefaults = myStoredDefaults.get(laf)
     if (lafDefaults == null) {
       lafDefaults = HashMap()
-      for (resource in patchableFontResources) {
+      for (resource in StartupUiUtil.patchableFontResources) {
         lafDefaults.put(resource, defaults.get(resource))
       }
-      storedDefaults.put(laf, lafDefaults)
+      myStoredDefaults.put(laf, lafDefaults)
     }
   }
 
@@ -757,24 +776,25 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
   }
 
-  override fun getAutodetectSupported(): Boolean = getGetOrCreateLafDetector().detectionSupported
+  override fun getAutodetectSupported(): Boolean = getOrCreateLafDetector.detectionSupported
 
-  private fun getGetOrCreateLafDetector(): SystemDarkThemeDetector {
-    var result = themeDetector
-    if (result == null) {
-      result = createDetector(::syncTheme)
-      themeDetector = result
+  private val getOrCreateLafDetector: SystemDarkThemeDetector
+    get() {
+      var result = themeDetector
+      if (result == null) {
+        result = createDetector(::syncTheme)
+        themeDetector = result
+      }
+
+      return result
     }
 
-    return result
-  }
-
   override fun setPreferredDarkLaf(value: UIThemeLookAndFeelInfo) {
-    preferredDarkThemeId = value.id
+    preferredDarkTheme = value
   }
 
   override fun setPreferredLightLaf(value: UIThemeLookAndFeelInfo) {
-    preferredLightThemeId = value.id
+    preferredLightTheme = value
   }
 
   override fun getPreviousSchemeForLaf(lookAndFeelInfo: UIThemeLookAndFeelInfo): EditorColorsScheme? {
@@ -799,13 +819,13 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   private fun isSchemeDefault(lookAndFeelInfo: UIThemeLookAndFeelInfo, scheme: EditorColorsScheme): Boolean {
-    return lookAndFeelInfo.editorSchemeName == scheme.displayName
+    return lookAndFeelInfo.theme.editorSchemeName == scheme.displayName
   }
 
   private inner class UiThemeEpListener : ExtensionPointListener<UIThemeProvider> {
     override fun extensionAdded(extension: UIThemeProvider, pluginDescriptor: PluginDescriptor) {
       val uiThemeProviderListManager = UiThemeProviderListManager.getInstance()
-      val newLaF = uiThemeProviderListManager.themeProviderAdded(extension) as UIThemeLookAndFeelInfoImpl? ?: return
+      val newLaF = uiThemeProviderListManager.themeProviderAdded(extension) ?: return
       updateLafComboboxModel()
 
       // when updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
@@ -821,11 +841,11 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
     override fun extensionRemoved(extension: UIThemeProvider, pluginDescriptor: PluginDescriptor) {
-      val oldLaF = UiThemeProviderListManager.getInstance().themeProviderRemoved(extension) as UIThemeLookAndFeelInfoImpl? ?: return
+      val oldLaF = UiThemeProviderListManager.getInstance().themeProviderRemoved(extension) ?: return
       val oldTheme = oldLaF.theme
       oldTheme.setProviderClassLoader(null)
       val isDark = oldTheme.isDark
-      val defaultLaF = if (oldLaF === currentTheme) {
+      val defaultLaF = if (oldLaF === currentUIThemeLookAndFeel) {
         if (isDark) defaultDarkLaf else defaultLightLaf
       }
       else {
@@ -834,7 +854,12 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       updateLafComboboxModel()
       if (defaultLaF != null) {
         setLookAndFeelImpl(lookAndFeelInfo = defaultLaF, installEditorScheme = true, processChangeSynchronously = true)
-        JBColor.setDark(isDark)
+        if (ExperimentalUI.isNewUI()) {
+          JBColor.setDark(defaultDarkTheme.isInitialized() && isDark)
+        }
+        else {
+          JBColor.setDark(defaultClassicDarkTheme.isInitialized() && isDark)
+        }
         updateUI()
       }
     }
@@ -874,7 +899,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       val lightLaFs = ArrayList<UIThemeLookAndFeelInfo>()
       val darkLaFs = ArrayList<UIThemeLookAndFeelInfo>()
       for (lafInfo in ThemeListProvider.getInstance().getShownThemes().asSequence().flatten()) {
-        if (lafInfo.isDark) {
+        if (lafInfo.theme.isDark) {
           darkLaFs.add(lafInfo)
         }
         else {
@@ -907,22 +932,22 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
                                       private val isDark: Boolean) : ToggleAction(name) {
     override fun isSelected(e: AnActionEvent): Boolean {
       return if (isDark) {
-        (preferredDarkThemeId ?: defaultDarkLaf.id) == lafInfo.id
+        (preferredDarkTheme?.name ?: defaultDarkLaf.name) == lafInfo.name
       }
       else {
-        (preferredLightThemeId ?: defaultLightLaf.id) == lafInfo.id
+        (preferredLightTheme?.name ?: defaultLightLaf.name) == lafInfo.name
       }
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       if (isDark) {
-        if (preferredDarkThemeId != lafInfo.id) {
-          preferredDarkThemeId = if (lafInfo.id == defaultDarkLaf.id) null else lafInfo.id
+        if (preferredDarkTheme?.name != lafInfo.name) {
+          preferredDarkTheme = if (lafInfo.name == defaultDarkLaf.name) null else lafInfo
           detectAndSyncLaf()
         }
       }
-      else if (preferredLightThemeId != lafInfo.id) {
-        preferredLightThemeId = if (lafInfo.id == defaultLightLaf.id) null else lafInfo.id
+      else if (preferredLightTheme?.name != lafInfo.name) {
+        preferredLightTheme = if (lafInfo.name == defaultLightLaf.name) null else lafInfo
         detectAndSyncLaf()
       }
     }
@@ -1089,8 +1114,16 @@ private class OurPopupFactory(private val delegate: PopupFactory) : PopupFactory
   }
 }
 
-private fun createLafReference(laf: UIThemeLookAndFeelInfo): LafManager.LafReference {
-  return LafManager.LafReference(laf.name, laf.id)
+private fun writeThemeState(element: Element, attributeName: @NonNls String?, suggestedLaf: UIThemeLookAndFeelInfo?) {
+  val laf = (if (suggestedLaf is TempUIThemeLookAndFeelInfo) suggestedLaf.previousLaf else suggestedLaf) ?: return
+  val child = Element(attributeName)
+  child.setAttribute(ATTRIBUTE_THEME_NAME, laf.theme.id)
+  element.addContent(child)
+}
+
+private fun createLafReference(laf: UIThemeLookAndFeelInfo?): LafManager.LafReference {
+  val themeId = if (laf is UIThemeLookAndFeelInfo) laf.theme.id else null
+  return LafManager.LafReference(laf!!.name, themeId)
 }
 
 private fun updateColors(defaults: UIDefaults) {
@@ -1385,106 +1418,3 @@ private fun cmInsets(top: Int, left: Int, bottom: Int, right: Int): Insets = Ins
 private fun JBInsets.withTopAndBottom(topAndBottom: Int) = JBInsets(topAndBottom, unscaled.left, topAndBottom, unscaled.right)
 
 private fun defaultNonLaFSchemeName(dark: Boolean) = if (dark) DarculaLaf.NAME else EditorColorsScheme.DEFAULT_SCHEME_NAME
-
-private fun getDefaultLightTheme(): UIThemeLookAndFeelInfo {
-  val name = ApplicationInfoEx.getInstanceEx().defaultLightLaf
-  val themeListManager = UiThemeProviderListManager.getInstance()
-  if (name == null) {
-    return themeListManager.findThemeById("ExperimentalLight") ?: error("Default light LookAndFeel 'Light' not found")
-  }
-  else {
-    return themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name)
-           ?: error("Default light LookAndFeel '$name' not found")
-  }
-}
-
-private fun getDefaultDarkTheme(): UIThemeLookAndFeelInfo {
-  val name = ApplicationInfoEx.getInstanceEx().defaultDarkLaf
-  val themeListManager = UiThemeProviderListManager.getInstance()
-  if (name == null) {
-    return themeListManager.findThemeById("ExperimentalDark") ?: error("Default dark theme 'Dark' not found")
-  }
-  else {
-    return themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name) ?: error("Default dark theme '$name' not found")
-  }
-}
-
-private fun getDefaultClassicLightTheme(): UIThemeLookAndFeelInfo {
-  val name = ApplicationInfoEx.getInstanceEx().defaultClassicLightLaf
-  val themeListManager = UiThemeProviderListManager.getInstance()
-  if (name == null) {
-    return themeListManager.findThemeById("JetBrainsLightTheme") ?: error("JetBrains light theme not found")
-  }
-  else {
-    return themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name)
-           ?: error("Default light LookAndFeel '$name' not found")
-  }
-}
-
-private fun getDefaultClassicDarkTheme(): UIThemeLookAndFeelInfo {
-  val name = ApplicationInfoEx.getInstanceEx().defaultClassicDarkLaf
-  val themeListManager = UiThemeProviderListManager.getInstance()
-  if (name == null) {
-    return themeListManager.findThemeById("Darcula") ?: error("Default classic dark theme 'Darcula' not found")
-  }
-  else {
-    return themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name)
-           ?: error("Default classic dark theme '$name' not found")
-  }
-}
-
-private fun fillFallbackDefaults(defaults: UIDefaults) {
-  // These icons are only needed to prevent Swing from trying to fetch defaults with AWT ImageFetcher threads (IDEA-322089),
-  // but might as well just put something sensibly-looking there, just in case they show up due to some bug:
-  val folderIcon = UIDefaults.LazyValue { AllIcons.Nodes.Folder }
-  defaults.put("Tree.openIcon", folderIcon)
-  defaults.put("Tree.closedIcon", folderIcon)
-  defaults.put("Tree.leafIcon", UIDefaults.LazyValue { AllIcons.FileTypes.Any_type })
-  // Our themes actually set these two, so we don't want to override them here:
-  //defaults.put("Tree.expandedIcon", AllIcons.Toolbar.Expand);
-  //defaults.put("Tree.collapsedIcon", AllIcons.Actions.ArrowExpand);
-}
-
-@JvmField
-internal val patchableFontResources: Array<String> = arrayOf("Button.font", "ToggleButton.font", "RadioButton.font",
-                                                             "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font",
-                                                             "List.font", "MenuBar.font",
-                                                             "MenuItem.font",
-                                                             "MenuItem.acceleratorFont", "RadioButtonMenuItem.font",
-                                                             "CheckBoxMenuItem.font", "Menu.font",
-                                                             "PopupMenu.font", "OptionPane.font",
-                                                             "Panel.font", "ProgressBar.font", "ScrollPane.font", "Viewport.font",
-                                                             "TabbedPane.font",
-                                                             "Table.font", "TableHeader.font",
-                                                             "TextField.font", "FormattedTextField.font", "Spinner.font",
-                                                             "PasswordField.font",
-                                                             "TextArea.font", "TextPane.font", "EditorPane.font",
-                                                             "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font")
-
-internal fun initFontDefaults(defaults: UIDefaults, uiFont: FontUIResource) {
-  defaults.put("Tree.ancestorInputMap", null)
-  val textFont = FontUIResource(uiFont)
-  val monoFont = FontUIResource("Monospaced", Font.PLAIN, uiFont.size)
-  for (fontResource in patchableFontResources) {
-    defaults.put(fontResource, uiFont)
-  }
-  if (!SystemInfoRt.isMac) {
-    defaults.put("PasswordField.font", monoFont)
-  }
-  defaults.put("TextArea.font", monoFont)
-  defaults.put("TextPane.font", textFont)
-  defaults.put("EditorPane.font", textFont)
-}
-
-private fun computeValuesOfUsedUiOptions(): List<Any?> {
-  val uiSettings = UISettings.getInstance()
-  return listOf(
-    uiSettings.overrideLafFonts,
-    uiSettings.fontFace,
-    uiSettings.fontSize2D,
-    uiSettings.ideAAType,
-    uiSettings.editorAAType,
-    uiSettings.ideScale,
-    uiSettings.presentationModeIdeScale,
-  )
-}

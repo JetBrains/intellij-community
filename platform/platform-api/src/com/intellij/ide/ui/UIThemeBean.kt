@@ -1,18 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "SSBasedInspection")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ide.ui
 
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.ExperimentalUI
-import it.unimi.dsi.fastutil.Hash
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
+import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
 import java.util.*
 import java.util.function.BiFunction
-import javax.swing.plaf.ColorUIResource
 
 internal class UIThemeBean {
   companion object {
@@ -23,6 +22,22 @@ internal class UIThemeBean {
       theme.emptyFrameBackground = importMapFromParentTheme(theme.emptyFrameBackground, parentTheme.emptyFrameBackground)
       theme.colors = importMapFromParentTheme(theme.colors, parentTheme.colors)
       theme.iconColorsOnSelection = importMapFromParentTheme(theme.iconColorsOnSelection, parentTheme.iconColorsOnSelection)
+    }
+
+    private fun importMapFromParentTheme(themeMap: MutableMap<String, Any?>?,
+                                         parentThemeMap: Map<String, Any?>?): MutableMap<String, Any?>? {
+      if (parentThemeMap == null) {
+        return themeMap
+      }
+
+      val result = LinkedHashMap(parentThemeMap)
+      if (themeMap != null) {
+        for ((key, value) in themeMap) {
+          result.remove(key)
+          result.put(key, value)
+        }
+      }
+      return result
     }
 
     fun readTheme(parser: JsonParser): UIThemeBean {
@@ -39,11 +54,10 @@ internal class UIThemeBean {
               "iconColorsOnSelection" -> bean.iconColorsOnSelection = readMapFromJson(parser)
               "ui" -> {
                 // ordered map is required (not clear why)
-                val map = Object2ObjectLinkedOpenHashMap<String, Any?>(700, Hash.FAST_LOAD_FACTOR)
+                val map = LinkedHashMap<String, Any?>()
                 readFlatMapFromJson(parser, map)
                 putDefaultsIfAbsent(map)
                 bean.ui = map
-                map.trim()
               }
               "UIDesigner" -> {
                 parser.skipChildren()
@@ -69,7 +83,7 @@ internal class UIThemeBean {
 
             when (fieldName) {
               "additionalEditorSchemes" -> {
-                bean.additionalEditorSchemes = java.util.List.copyOf(list)
+                bean.additionalEditorSchemes = list
               }
               else -> {
                 logger<UIThemeBean>().warn("Unknown field: ${parser.currentName()}")
@@ -88,6 +102,7 @@ internal class UIThemeBean {
               "author" -> bean.author = parser.valueAsString
 
               "editorScheme" -> bean.editorScheme = parser.valueAsString
+              "editorSchemeName" -> bean.editorSchemeName = parser.valueAsString
             }
           }
           JsonToken.VALUE_TRUE -> readTopLevelBoolean(parser, bean, value = true)
@@ -104,7 +119,21 @@ internal class UIThemeBean {
       putDefaultsIfAbsent(bean)
       return bean
     }
+
+    private fun readTopLevelBoolean(parser: JsonParser, bean: UIThemeBean, value: Boolean) {
+      when (parser.currentName()) {
+        "dark" -> bean.dark = value
+      }
+    }
   }
+
+  @Transient
+  @JvmField
+  var providerClassLoader: ClassLoader? = null
+
+  @Transient
+  @JvmField
+  var id: String? = null
 
   @JvmField
   var name: String? = null
@@ -121,11 +150,11 @@ internal class UIThemeBean {
   @JvmField
   var author: String? = null
 
-  /**
-   * The path to editor scheme file.
-   */
   @JvmField
   var editorScheme: String? = null
+
+  @JvmField
+  var editorSchemeName: String? = null
 
   @JvmField
   var dark: Boolean = false
@@ -134,24 +163,34 @@ internal class UIThemeBean {
   var additionalEditorSchemes: List<String>? = null
 
   @JvmField
-  var ui: Map<String, Any?>? = null
+  var ui: MutableMap<String, Any?>? = null
 
   @JvmField
-  var icons: Map<String, Any?>? = null
+  var icons: MutableMap<String, Any?>? = null
 
   @JvmField
-  var background: Map<String, Any?>? = null
+  var background: MutableMap<String, Any?>? = null
 
   @JvmField
-  var emptyFrameBackground: Map<String, Any?>? = null
+  var emptyFrameBackground: MutableMap<String, Any?>? = null
 
   @JvmField
-  var colors: Map<String, Any?>? = null
+  var colors: MutableMap<String, Any?>? = null
 
   @JvmField
-  var iconColorsOnSelection: Map<String, Any?>? = null
+  var iconColorsOnSelection: MutableMap<String, Any?>? = null
 
-  override fun toString() = "UIThemeBean(name=$name, parentTheme=$parentTheme, dark=$dark)"
+  @JvmField
+  @Transient
+  var patcher: IconPathPatcher? = null
+
+  @JvmField
+  @Transient
+  var colorPatcher: SvgElementColorPatcherProvider? = null
+
+  @JvmField
+  @Transient
+  var selectionColorPatcher: SvgElementColorPatcherProvider? = null
 }
 
 /**
@@ -216,23 +255,7 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
         }
       }
       JsonToken.VALUE_STRING -> {
-        putEntry(prefix, result, parser, path) {
-          val text = parser.text
-          if (isColorLike(text)) {
-            val color = parseColorOrNull(text, null)
-            if (color == null) {
-              logger<UITheme>().warn("${(if (prefix.isEmpty()) "" else (prefix.joinToString(".") + ".")) + path}=" +
-                                     "$text has # prefix but cannot be parsed as color")
-              text
-            }
-            else {
-              ColorUIResource(color)
-            }
-          }
-          else {
-            text
-          }
-        }
+        putEntry(prefix, result, parser, path) { parser.text }
       }
       JsonToken.VALUE_NUMBER_INT -> {
         putEntry(prefix, result, parser, path) { parser.intValue }
@@ -264,9 +287,8 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
 }
 
 private fun readMapFromJson(parser: JsonParser): MutableMap<String, Any?> {
-  val m = Object2ObjectLinkedOpenHashMap<String, Any?>(Hash.DEFAULT_INITIAL_SIZE, Hash.FAST_LOAD_FACTOR)
+  val m = LinkedHashMap<String, Any?>()
   readMapFromJson(parser, m)
-  m.trim()
   return m
 }
 
@@ -274,15 +296,13 @@ private fun readMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>
   check(parser.currentToken() == JsonToken.START_OBJECT)
 
   var level = 1
-  l@
   while (true) {
     when (parser.nextToken()) {
       JsonToken.START_OBJECT -> {
         level++
-        val m = Object2ObjectLinkedOpenHashMap<String, Any?>(Hash.DEFAULT_INITIAL_SIZE, Hash.FAST_LOAD_FACTOR)
+        val m = LinkedHashMap<String, Any?>()
         result.put(parser.currentName(), m)
         readMapFromJson(parser, m)
-        m.trim()
       }
       JsonToken.END_OBJECT -> {
         level--
@@ -292,17 +312,7 @@ private fun readMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>
         }
       }
       JsonToken.VALUE_STRING -> {
-        val text = parser.text
-        val key = parser.currentName()
-        if (isColorLike(text)) {
-          val color = parseColorOrNull(text, key)
-          if (color != null) {
-            result.put(key, ColorUIResource(color))
-            continue@l
-          }
-          logger<UITheme>().warn("$key=$text has # prefix but cannot be parsed as color")
-        }
-        result.put(key, text)
+        result.put(parser.currentName(), parser.text)
       }
       JsonToken.VALUE_NUMBER_INT -> {
         result.put(parser.currentName(), parser.intValue)
@@ -412,7 +422,7 @@ private fun putDefaultsIfAbsent(theme: UIThemeBean) {
 
   var ui = theme.ui
   if (ui == null) {
-    ui = Object2ObjectLinkedOpenHashMap()
+    ui = LinkedHashMap()
     theme.ui = ui
     putDefaultsIfAbsent(ui)
   }
@@ -423,34 +433,9 @@ private fun putDefaultsIfAbsent(ui: MutableMap<String, Any?>) {
     return
   }
 
-  ui.putIfAbsent("EditorTabs.underlineArc", 4)
+  ui.putIfAbsent("EditorTabs.underlineArc", "4")
 
   // require theme to specify ToolWindow stripe button colors explicitly, without "*"
   ui.putIfAbsent("ToolWindow.Button.selectedBackground", "#3573F0")
   ui.putIfAbsent("ToolWindow.Button.selectedForeground", "#FFFFFF")
-}
-
-private fun readTopLevelBoolean(parser: JsonParser, bean: UIThemeBean, value: Boolean) {
-  when (parser.currentName()) {
-    "dark" -> bean.dark = value
-  }
-}
-
-@Suppress("SSBasedInspection")
-private fun importMapFromParentTheme(map: Map<String, Any?>?, parentMap: Map<String, Any?>?): Map<String, Any?>? {
-  if (parentMap == null) {
-    return map
-  }
-  if (map == null) {
-    return Object2ObjectLinkedOpenHashMap(parentMap, Hash.FAST_LOAD_FACTOR)
-  }
-
-  val result = Object2ObjectLinkedOpenHashMap<String, Any?>(parentMap.size + map.size, Hash.FAST_LOAD_FACTOR)
-  result.putAll(parentMap)
-  for ((key, value) in map) {
-    result.putAndMoveToLast(key, value)
-  }
-
-  result.trim()
-  return result
 }

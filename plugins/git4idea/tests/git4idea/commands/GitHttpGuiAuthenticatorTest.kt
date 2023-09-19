@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands
 
 import com.intellij.credentialStore.Credentials
@@ -6,7 +6,6 @@ import com.intellij.dvcs.DvcsRememberedInputs
 import com.intellij.externalProcessAuthHelper.AuthenticationMode
 import com.intellij.externalProcessAuthHelper.PassthroughAuthenticationGate
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.DialogWrapper
 import git4idea.commands.GitHttpGuiAuthenticator.PasswordSafeProvider.credentialAttributes
@@ -26,7 +25,7 @@ class GitHttpGuiAuthenticatorTest : GitPlatformTest() {
   override fun setUp() {
     super.setUp()
     // otherwise login dialog doesn't work (missing LaF for JBOptionButton)
-    UIManager.setLookAndFeel(DarculaLaf())
+    UIManager.setLookAndFeel("com.intellij.ide.ui.laf.darcula.DarculaLaf")
 
     rememberedInputs = service<GitRememberedInputs>()
     passwordSafe = service()

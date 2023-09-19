@@ -89,8 +89,8 @@ object IconLoader {
 
   @JvmStatic
   fun clearCache() {
-    pathTransformGlobalModCount.incrementAndGet()
-    clearCacheOnUpdateTransform()
+    // copy the transform to trigger update of cached icons
+    updateTransform(IconTransform::copy)
   }
 
   @TestOnly
@@ -461,10 +461,6 @@ private fun updateTransform(updater: (IconTransform) -> IconTransform) {
     return
   }
 
-  clearCacheOnUpdateTransform()
-}
-
-private fun clearCacheOnUpdateTransform() {
   iconToDisabledIcon.clear()
   colorPatchCache.clear()
   iconToStrokeIcon.clear()

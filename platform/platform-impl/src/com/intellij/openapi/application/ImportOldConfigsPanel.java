@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalVirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -52,8 +51,6 @@ final class ImportOldConfigsPanel extends JDialog {
 
   ImportOldConfigsPanel(List<Path> guessedOldConfigDirs, Function<? super Path, ? extends Pair<Path, Path>> validator) {
     super((Dialog)null, true);
-
-    ComponentUtil.decorateWindowHeader(rootPane);
 
     myGuessedOldConfigDirs = guessedOldConfigDirs;
     myValidator = validator;

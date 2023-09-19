@@ -3,7 +3,6 @@
 
 package com.intellij.ui.svg
 
-import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -57,7 +56,7 @@ private fun openSvgCache(dbDir: Path): PersistentHashMap<LongArray, IconValue> {
     NioFiles.deleteRecursively(dbDir)
   }
 
-  val file = dbDir.resolve("icon.db")
+  val file = dbDir.resolve("icon-v15.db")
   try {
     return createMap(file)
   }
@@ -74,13 +73,7 @@ private fun openSvgCache(dbDir: Path): PersistentHashMap<LongArray, IconValue> {
 
 private fun createMap(dbFile: Path): PersistentHashMap<LongArray, IconValue> {
   return PersistentMapBuilder.newBuilder(dbFile, object : KeyDescriptor<LongArray> {
-    override fun getHashCode(value: LongArray): Int {
-      return when (value.size) {
-        3 -> Hashing.komihash5_0().hashLongLongLongToLong(value[0], value[1], value[2]).toInt()
-        2 -> Hashing.komihash5_0().hashLongLongToLong(value[0], value[1]).toInt()
-        else -> value.contentHashCode()
-      }
-    }
+    override fun getHashCode(value: LongArray) = value.contentHashCode()
 
     override fun save(out: DataOutput, value: LongArray) {
       out.write(value.size)
@@ -109,7 +102,7 @@ private fun createMap(dbFile: Path): PersistentHashMap<LongArray, IconValue> {
       return IconValue(w, h, data)
     }
   })
-    .withVersion(0)
+    .withVersion(2)
     .build()
 }
 
@@ -204,6 +197,14 @@ fun createIconCacheKey(imageBytes: ByteArray, compoundKey: SvgCacheClassifier, t
     packTwoIntsToLong(seededHasher.hashBytesToInt(imageBytes), compoundKey.key),
     themeKey,
   )
+}
+
+internal fun themeDigestToCacheKey(themeDigest: LongArray): Long {
+  return when (themeDigest.size) {
+    0 -> 0
+    1 -> themeDigest.first()
+    else -> hasher.hashStream().putLongArray(themeDigest).asLong
+  }
 }
 
 // BGRA order

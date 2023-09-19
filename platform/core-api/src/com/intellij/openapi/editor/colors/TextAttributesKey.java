@@ -207,9 +207,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
                                                       @Nullable TextAttributesKey oldKey,
                                                       TextAttributes defaultAttributes,
                                                       TextAttributesKey fallbackAttributeKey) {
-    if (oldKey == null) {
-      return new TextAttributesKey(externalName, defaultAttributes, fallbackAttributeKey);
-    }
+    if (oldKey == null) return new TextAttributesKey(externalName, defaultAttributes, fallbackAttributeKey);
     // ouch. Someone's re-creating already existing key with different attributes.
     // Have to re-create the new one with correct attributes, re-insert to the map
 
@@ -273,7 +271,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
 
   @FunctionalInterface
   public interface TextAttributeKeyDefaultsProvider {
-    @Nullable TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key);
+    TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key);
   }
 
   /**

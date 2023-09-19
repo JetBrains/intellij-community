@@ -31,7 +31,7 @@ final class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
-  public UIManager.LookAndFeelInfo getCurrentLookAndFeel() {
+  public UIThemeLookAndFeelInfo getCurrentLookAndFeel() {
     return null;
   }
 
@@ -56,7 +56,7 @@ final class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
-  public void setCurrentLookAndFeel(@NotNull UIThemeLookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme) { }
+  public void setCurrentLookAndFeel(UIManager.@NotNull LookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme) { }
 
   @Override
   public @NotNull CollectionComboBoxModel<LafReference> getLafComboBoxModel() {

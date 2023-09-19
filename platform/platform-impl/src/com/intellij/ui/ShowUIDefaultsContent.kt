@@ -3,7 +3,7 @@ package com.intellij.ui
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafManager
-import com.intellij.ide.ui.parseUiThemeValue
+import com.intellij.ide.ui.UITheme
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.application.ApplicationManager
@@ -19,6 +19,7 @@ import java.awt.Color
 import javax.swing.UIManager
 
 internal class ShowUIDefaultsContent(@JvmField val table: JBTable) {
+
   companion object {
     const val LAST_SELECTED_KEY = "LaFDialog.lastSelectedElement"
     private const val COLORS_ONLY_KEY = "LaFDialog.ColorsOnly"
@@ -74,12 +75,11 @@ internal class ShowUIDefaultsContent(@JvmField val table: JBTable) {
     ApplicationManager.getApplication().invokeLater(
       Runnable {
         ShowUIDefaultsAddValue(table, true) { name, value ->
-          val trimmedKey = name.trim()
-          val trimmedValue = value.trim()
+          val trimmedKey = name.trim { it <= ' ' }
+          val trimmedValue = value.trim { it <= ' ' }
           if (!trimmedKey.isEmpty() && !trimmedValue.isEmpty()) {
-            UIManager.put(trimmedKey, parseUiThemeValue(key = trimmedKey,
-                                                        value = trimmedValue,
-                                                        classLoader = LafManager.getInstance().currentUIThemeLookAndFeel.providerClassLoader))
+            UIManager.put(trimmedKey, UITheme.parseValue(trimmedKey, trimmedValue,
+                                                         LafManager.getInstance().currentUIThemeLookAndFeel.theme.providerClassLoader))
             table.setModel(ShowUIDefaultsAction.createFilteringModel())
             updateFilter()
           }

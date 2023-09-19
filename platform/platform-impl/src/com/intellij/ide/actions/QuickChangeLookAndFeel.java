@@ -7,7 +7,6 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.ThemeListProvider;
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
-import com.intellij.ide.ui.laf.UiThemeProviderListManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -42,7 +41,7 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
       if (group.getChildrenCount() > 0) {
         group.addSeparator();
       }
-      for (UIThemeLookAndFeelInfo lf : list) {
+      for (UIManager.LookAndFeelInfo lf : list) {
         group.add(new LafChangeAction(lf, initialLaf == lf));
       }
     }
@@ -59,7 +58,7 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
 
   @Override
   protected void showPopup(AnActionEvent e, ListPopup popup) {
-    UIThemeLookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+    UIManager.LookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
 
     switchAlarm.cancelAllRequests();
     if (Registry.is("ide.instant.theme.switch")) {
@@ -97,12 +96,8 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
     return (a) -> (a instanceof LafChangeAction) && ((LafChangeAction)a).myLookAndFeelInfo == lafMan.getCurrentUIThemeLookAndFeel();
   }
 
-  public static void switchLafAndUpdateUI(@NotNull LafManager lafManager, @NotNull UIManager.LookAndFeelInfo laf, boolean async) {
-    switchLafAndUpdateUI(lafManager, (UIThemeLookAndFeelInfo)laf, async, false, false);
-  }
-
-  public static void switchLafAndUpdateUI(@NotNull LafManager lafManager, @NotNull UIThemeLookAndFeelInfo laf, boolean async) {
-    switchLafAndUpdateUI(lafManager, laf, async, false, false);
+  public static void switchLafAndUpdateUI(final @NotNull LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async) {
+    switchLafAndUpdateUI(lafMan, lf, async, false, false);
   }
 
   /**
@@ -113,21 +108,21 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
                                           @NotNull UIManager.LookAndFeelInfo lf,
                                           boolean async,
                                           boolean force) {
-    switchLafAndUpdateUI(lafMan, (UIThemeLookAndFeelInfo)lf, async, force, false);
+    switchLafAndUpdateUI(lafMan, lf, async, force, false);
   }
 
   @ApiStatus.Internal
-  public static void switchLafAndUpdateUI(final @NotNull LafManager lafManager,
-                                          @NotNull UIThemeLookAndFeelInfo lf,
+  public static void switchLafAndUpdateUI(final @NotNull LafManager lafMan,
+                                          @NotNull UIManager.LookAndFeelInfo lf,
                                           boolean async,
                                           boolean force,
                                           boolean lockEditorScheme) {
-    UIThemeLookAndFeelInfo cur = lafManager.getCurrentUIThemeLookAndFeel();
+    UIManager.LookAndFeelInfo cur = lafMan.getCurrentUIThemeLookAndFeel();
     if (!force && cur == lf) return;
     ChangeLAFAnimator animator = Registry.is("ide.intellij.laf.enable.animation") ? ChangeLAFAnimator.showSnapshot() : null;
 
     final boolean wasDarcula = StartupUiUtil.isUnderDarcula();
-    lafManager.setCurrentLookAndFeel(lf, lockEditorScheme);
+    lafMan.setCurrentLookAndFeel(lf, lockEditorScheme);
 
     Runnable updater = () -> {
       // a twist not to updateUI twice: here, and in DarculaInstaller
@@ -147,7 +142,7 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
       finally {
         Disposer.dispose(disposable);
         if (!updated.get()) {
-          lafManager.updateUI();
+          lafMan.updateUI();
         }
         if (animator != null) {
           animator.hideSnapshotWithAnimation();
@@ -164,15 +159,16 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
 
   @Override
   protected boolean isEnabled() {
-    return UiThemeProviderListManager.Companion.getInstance().getLaFListSize() > 1 && !LafManager.getInstance().getAutodetect();
+    LafManager lafManager = LafManager.getInstance();
+    return lafManager.getInstalledLookAndFeels().length > 1 && !lafManager.getAutodetect();
   }
 
   private static final class LafChangeAction extends DumbAwareAction {
-    private final UIThemeLookAndFeelInfo myLookAndFeelInfo;
+    private final UIManager.LookAndFeelInfo myLookAndFeelInfo;
 
-    private LafChangeAction(UIThemeLookAndFeelInfo laf, boolean currentLaf) {
-      super(laf.getName(), null, getIcon(currentLaf));
-      myLookAndFeelInfo = laf;
+    private LafChangeAction(UIManager.LookAndFeelInfo lf, boolean currentLaf) {
+      super(lf.getName(), null, getIcon(currentLaf));
+      myLookAndFeelInfo = lf;
     }
 
     @Override

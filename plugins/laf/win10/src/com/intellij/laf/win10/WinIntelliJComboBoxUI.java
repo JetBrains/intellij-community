@@ -152,6 +152,7 @@ public final class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
   @Override
   public void paintCurrentValue(Graphics g, Rectangle bounds, boolean hasFocus) {
+    @SuppressWarnings("unchecked")
     ListCellRenderer<Object> renderer = comboBox.getRenderer();
     Component c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);
 
@@ -220,10 +221,7 @@ public final class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
       @Override
       public void paint(Graphics g) {
-        // paint events may still arrive after UI switch until the entire UI is updated
-        if (!LafManager.getInstance().getCurrentUIThemeLookAndFeel().getId().equals("win10Light")) {
-          return;
-        }
+        if (!LafManager.getInstance().getCurrentUIThemeLookAndFeel().getTheme().getName().equals("Windows 10 Light")) return; // Paint events may still arrive after UI switch until entire UI is updated.
 
         Graphics2D g2 = (Graphics2D)g.create();
         try {
@@ -318,7 +316,7 @@ public final class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
   @Override
   protected ComboBoxEditor createEditor() {
-    return new BasicComboBoxEditor.UIResource() {
+    ComboBoxEditor comboBoxEditor = new BasicComboBoxEditor.UIResource() {
       @Override
       protected JTextField createEditorComponent() {
         return new JTextField() {
@@ -353,6 +351,8 @@ public final class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
         };
       }
     };
+
+    return comboBoxEditor;
   }
 
   @Override
@@ -515,7 +515,7 @@ public final class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     return new BasicComboBoxUI.ComboBoxLayoutManager() {
       @Override
       public void layoutContainer(Container parent) {
-        JComboBox<?> cb = (JComboBox<?>)parent;
+        JComboBox cb = (JComboBox)parent;
 
         if (arrowButton != null) {
           if (cb.getComponentOrientation().isLeftToRight()) {

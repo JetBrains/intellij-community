@@ -84,7 +84,8 @@ final class ApplyThemeAction extends DumbAwareAction {
       Module module = ModuleUtilCore.findModuleForFile(json, project);
       UITheme theme = TempUIThemeLookAndFeelInfo.loadTempTheme(json.getInputStream(), new IconPathPatcher() {
         @Override
-        public @NotNull String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
+        public @NotNull String patchPath(@NotNull String path,
+                                         @Nullable ClassLoader classLoader) {
           String result = module == null ? null : findAbsoluteFilePathByRelativePath(module, path);
           return result != null ? result : path;
         }
@@ -93,7 +94,7 @@ final class ApplyThemeAction extends DumbAwareAction {
       VirtualFile editorSchemeFile;
       if (module != null) {
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-        editorSchemeFile = findThemeFile(moduleRootManager, theme.getEditorSchemePath());
+        editorSchemeFile = findThemeFile(moduleRootManager, theme.getEditorScheme());
 
         patchBackgroundImagePath(moduleRootManager, theme.getBackground());
         patchBackgroundImagePath(moduleRootManager, theme.getEmptyFrameBackground());
@@ -115,8 +116,8 @@ final class ApplyThemeAction extends DumbAwareAction {
   }
 
   private static void patchBackgroundImagePath(@NotNull ModuleRootManager moduleRootManager,
-                                               @NotNull Map<String, Object> background) {
-    if (!background.isEmpty()) {
+                                               @Nullable Map<String, Object> background) {
+    if (background != null) {
       VirtualFile pathToBg = findThemeFile(moduleRootManager, background.get("image").toString());
       if (pathToBg != null) {
         background.put("image", pathToBg.getPath());
