@@ -25,7 +25,7 @@ class WebSymbolNameSegment(val start: Int,
     assert(start <= end)
   }
 
-  private val forcedSymbolTypes = symbolKinds
+  private val forcedSymbolKinds = symbolKinds
 
   val apiStatus: WebSymbolApiStatus?
     get() = explicitApiStatus
@@ -38,23 +38,23 @@ class WebSymbolNameSegment(val start: Int,
 
   val symbolKinds: Set<WebSymbolQualifiedKind>
     get() =
-      forcedSymbolTypes
+      forcedSymbolKinds
       ?: symbols.asSequence().map { WebSymbolQualifiedKind(it.namespace, it.kind) }.toSet()
 
   fun getName(symbol: WebSymbol): @NlsSafe String =
     symbol.matchedNameOrName.substring(start, end)
 
   internal fun withOffset(offset: Int): WebSymbolNameSegment =
-    WebSymbolNameSegment(start + offset, end + offset, symbols, problem, this.displayName ?: displayName,
-                         matchScore, symbolKinds, explicitApiStatus, explicitPriority, explicitProximity)
+    WebSymbolNameSegment(start + offset, end + offset, symbols, problem, displayName,
+                         matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity)
 
   internal fun withDisplayName(displayName: String?) =
     WebSymbolNameSegment(start, end, symbols, problem, this.displayName ?: displayName,
-                         matchScore, symbolKinds, explicitApiStatus, explicitPriority, explicitProximity)
+                         matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity)
 
   internal fun withRange(start: Int, end: Int) =
-    WebSymbolNameSegment(start, end, symbols, problem, this.displayName ?: displayName,
-                         matchScore, symbolKinds, explicitApiStatus, explicitPriority, explicitProximity)
+    WebSymbolNameSegment(start, end, symbols, problem, displayName,
+                         matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity)
 
   internal fun copy(
     apiStatus: WebSymbolApiStatus? = null,
@@ -64,7 +64,7 @@ class WebSymbolNameSegment(val start: Int,
     symbols: List<WebSymbol> = emptyList(),
   ): WebSymbolNameSegment =
     WebSymbolNameSegment(start, end, this.symbols + symbols, problem ?: this.problem,
-                         displayName, matchScore, symbolKinds,
+                         displayName, matchScore, forcedSymbolKinds,
                          apiStatus ?: this.explicitApiStatus, priority ?: this.explicitPriority,
                          proximity ?: this.explicitProximity)
 
