@@ -4,12 +4,11 @@
 package com.intellij.ide.ui.laf.darcula
 
 import com.intellij.ide.bootstrap.createBaseLaF
-import com.intellij.ide.ui.UITheme
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter
+import com.intellij.ide.ui.laf.createRawDarculaTheme
 import com.intellij.ide.ui.laf.initBaseLaF
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.*
-import com.intellij.util.ResourceUtil
 import kotlinx.coroutines.*
 import java.awt.*
 import java.util.*
@@ -17,6 +16,8 @@ import javax.swing.*
 import javax.swing.plaf.basic.BasicLookAndFeel
 
 /**
+ * Do not use.
+ *
  * @author Konstantin Bulenkov
  */
 open class DarculaLaf : BasicLookAndFeel() {
@@ -38,12 +39,7 @@ open class DarculaLaf : BasicLookAndFeel() {
       val defaults = base!!.defaults
       initBaseLaF(defaults)
 
-      // it is important to use class loader of a current instance class (LaF in plugin)
-      val classLoader = javaClass.getClassLoader()
-      val filename = "$prefix.theme.json"
-      val data = ResourceUtil.getResourceAsBytes(filename, classLoader, /* checkParents */true)
-                 ?: throw RuntimeException("Can't load $filename")
-      UITheme.loadFromJson(data = data, themeId = "Darcula", classLoader = classLoader).applyTheme(defaults = defaults)
+      createRawDarculaTheme().applyTheme(defaults = defaults)
 
       defaults.put("ui.theme.is.dark", true)
       return defaults
@@ -53,9 +49,6 @@ open class DarculaLaf : BasicLookAndFeel() {
     }
     return super.getDefaults()
   }
-
-  protected open val prefix: String
-    get() = "themes/darcula"
 
   override fun getName() = getID()
 

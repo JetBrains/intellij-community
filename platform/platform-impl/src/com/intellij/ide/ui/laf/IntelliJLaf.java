@@ -3,7 +3,6 @@ package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.util.NlsSafe;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Use theme instead of IntelliJLaf customization
@@ -16,10 +15,5 @@ public class IntelliJLaf extends DarculaLaf {
   @Override
   public String getName() {
     return NAME;
-  }
-
-  @Override
-  protected @NotNull String getPrefix() {
-    return "themes/intellijlaf";
   }
 }

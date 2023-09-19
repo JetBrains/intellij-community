@@ -148,13 +148,18 @@ class UITheme internal constructor(
                          classLoader = UITheme::class.java.classLoader)
     }
 
-    fun loadFromJson(data: ByteArray?,
+    fun loadFromJson(data: ByteArray,
                      themeId: @NonNls String,
                      classLoader: ClassLoader,
                      iconMapper: ((String) -> String?)? = null): UITheme {
       val theme = readTheme(JsonFactory().createParser(data))
       val parentTheme = resolveParentTheme(theme, themeId)
       return createTheme(theme = theme, parentTheme = parentTheme, classLoader = classLoader, iconMapper = iconMapper, themeId = themeId)
+    }
+
+    internal fun loadDeprecatedFromJson(data: ByteArray, themeId: @NonNls String, classLoader: ClassLoader): UITheme {
+      val theme = readTheme(JsonFactory().createParser(data))
+      return createTheme(theme = theme, parentTheme = null, classLoader = classLoader, iconMapper = null, themeId = themeId)
     }
 
     private fun resolveParentTheme(theme: UIThemeBean, themeId: @NonNls String): UIThemeBean? {

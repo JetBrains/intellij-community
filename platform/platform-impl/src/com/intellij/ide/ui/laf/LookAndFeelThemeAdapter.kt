@@ -5,13 +5,17 @@ package com.intellij.ide.ui.laf
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.bootstrap.createBaseLaF
+import com.intellij.ide.ui.UITheme
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.TableActions
+import com.intellij.util.ResourceUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Font
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -254,4 +258,23 @@ private fun toFont(defaults: UIDefaults, key: Any): Font {
     }
   }
   throw UnsupportedOperationException("Unable to extract Font from \"$key\"")
+}
+
+internal fun createRawDarculaTheme(): UITheme {
+  val classLoader = LookAndFeelThemeAdapter::class.java.getClassLoader()
+  val filename = "themes/darcula.theme.json"
+  val data = ResourceUtil.getResourceAsBytes(filename, classLoader, /* checkParents */true)
+             ?: throw RuntimeException("Can't load $filename")
+
+  val theme = UITheme.loadDeprecatedFromJson(data = data, themeId = "Darcula", classLoader = classLoader)
+  return theme
+}
+
+@Internal
+@VisibleForTesting
+fun setEarlyUiLaF() {
+  // it is important to use class loader of a current instance class (LaF in plugin)
+  val theme = createRawDarculaTheme()
+  val laf = LookAndFeelThemeAdapter(createBaseLaF(), UIThemeLookAndFeelInfoImpl(theme))
+  UIManager.setLookAndFeel(laf)
 }
