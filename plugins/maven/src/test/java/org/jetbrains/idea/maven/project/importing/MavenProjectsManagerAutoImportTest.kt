@@ -665,8 +665,9 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     scheduleProjectImportAndWaitWithoutCheckFloatingBar()
-    projectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
-    waitForImportCompletion()
+    waitForImportWithinTimeout {
+      projectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+    }
     assertEquals(0, projectsTree.getModules(projectsTree.rootProjects[0]).size)
   }
 
