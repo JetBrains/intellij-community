@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-internal fun findContext(element: PsiElement): Context {
+internal fun getContext(element: PsiElement): Context {
   val containingLambda = element.getParentOfType<KtLambdaExpression>(false)
 
   // if lambda is null, check the containing method

@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.idea.devkit.inspections.CancellationCheckProvider
-import org.jetbrains.idea.devkit.kotlin.util.findContext
+import org.jetbrains.idea.devkit.kotlin.util.getContext
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -18,7 +18,7 @@ private const val COROUTINE_CHECK_CANCELLED = "com.intellij.openapi.progress.che
 internal class KtCancellationCheckProvider : CancellationCheckProvider {
 
   override fun findCancellationCheckCall(element: PsiElement): String {
-    val context = findContext(element)
+    val context = getContext(element)
     return if (context.isSuspending()) COROUTINE_CHECK_CANCELLED else PROGRESS_MANAGER_CHECKED_CANCELED
   }
 
