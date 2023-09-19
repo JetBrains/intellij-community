@@ -8,7 +8,6 @@ import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.junit.Test
 
 class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
@@ -75,7 +74,6 @@ class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
     val resolvedProjects = mutableListOf<MavenProject>()
 
     val resolverMock: MavenProjectResolver = object : MavenProjectResolver {
-      @Throws(MavenProcessCanceledException::class)
       override suspend fun resolve(
         mavenProjects: Collection<MavenProject>,
         tree: MavenProjectsTree,

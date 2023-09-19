@@ -21,7 +21,6 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   private val httpServerFixture = MavenHttpRepositoryServerFixture()
   private lateinit var myUrl: String
 
-  @Throws(Exception::class)
   public override fun setUp() {
     super.setUp()
     httpServerFixture.setUp()
@@ -39,7 +38,6 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testDownloadedFromRepository() {
     val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")
@@ -61,7 +59,6 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testPluginDownloadedFromRepository() {
     val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")
@@ -84,7 +81,6 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
 
   @Test
-  @Throws(Exception::class)
   fun testDownloadedFromRepositoryWithAuthentification() {
     val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")
@@ -115,7 +111,6 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testDownloadedFromRepositoryWithWrongAuthentificationLeadsToError() {
     assumeTrue(isWorkspaceImport)
     val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
@@ -223,7 +218,6 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testWithDependencyLastUpdatedWithErrorNoForce() {
 
     doLastUpdatedTest(false, pom()) {
@@ -235,7 +229,6 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testWithPluginLastUpdatedWithErrorNoForce() {
 
     doLastUpdatedTest(false, pomPlugins()) {
@@ -249,7 +242,6 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
 
   @Test
-  @Throws(Exception::class)
   fun testWithDependencyLastUpdatedWithErrorForceUpdate() {
 
     doLastUpdatedTest(true, pom()) {
@@ -259,7 +251,6 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testWithPluginLastUpdatedWithErrorForceUpdate() {
     doLastUpdatedTest(true, pomPlugins()) {
       TestCase.assertEquals(1, projectsManager.rootProjects.size)

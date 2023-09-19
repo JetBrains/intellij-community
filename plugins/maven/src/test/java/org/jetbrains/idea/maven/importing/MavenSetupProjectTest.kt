@@ -132,19 +132,16 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
                          <module>dir1/m</module>
                          <module>dir2/M</module>
                        </modules>
-                       
                        """.trimIndent())
     createModulePom("project-name/dir1/m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
-      
       """.trimIndent())
     createModulePom("project-name/dir2/M", """
       <groupId>test</groupId>
       <artifactId>M</artifactId>
       <version>1</version>
-      
       """.trimIndent())
 
     runBlocking {
