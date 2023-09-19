@@ -580,7 +580,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     def outputFiles = new HashSet<File>();
     sourceSetContainer.all { SourceSet ss -> outputFiles.addAll(ss.output.files) }
     for (Object path: getArchiveTaskSourcePaths(archiveTask)) {
-      if (isSafeToResolve(path, project)) {
+      if (isSafeToResolve(path, project) || isResolvableFileCollection(path, project)) {
         def files = project.files(path).files
         files.removeAll(outputFiles)
         if (files.any { it.isDirectory() || (it.isFile() && it.name.endsWith(".class"))}) {
@@ -600,7 +600,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     try {
       Set<Object> sourcePaths = getArchiveTaskSourcePaths(archiveTask)
       for (Object path : sourcePaths) {
-        if (isSafeToResolve(path, project)) {
+        if (isSafeToResolve(path, project) || isResolvableFileCollection(path, project)) {
           def files = project.files(path).files
           outputFiles.removeAll(files)
         }
@@ -630,6 +630,20 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     }
   }
 
+
+  private static boolean isResolvableFileCollection(Object param, Project project) {
+    Object object = tryUnpackPresentProvider(param, project)
+    if (object instanceof FileCollection) {
+      try {
+        project.files(object).files
+        return true
+      } catch (Throwable ignored) {
+        return false
+      }
+    }
+    return false
+  }
+
   /**
    * Checks that object can be safely resolved using {@link Project#files(java.lang.Object...)} API.
    *
@@ -647,7 +661,6 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       || object instanceof File || object instanceof Path
       || isDirectoryOrRegularFile
       || object instanceof SourceSetOutput
-      || object instanceof FileCollection
   }
 
   /**
