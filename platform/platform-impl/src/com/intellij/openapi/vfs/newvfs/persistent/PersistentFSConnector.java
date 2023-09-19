@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecove
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.VersionUpdatedException;
 import org.jetbrains.annotations.NotNull;
@@ -240,6 +239,8 @@ final class PersistentFSConnector {
         else {
           vfsLoader.deleteEverything();
         }
+      }
+      catch (VFSInitException ignored) { // rethrown wrapped CachesWereRecoveredFromLogException
       }
       catch (IOException cleanEx) {
         e.addSuppressed(cleanEx);
