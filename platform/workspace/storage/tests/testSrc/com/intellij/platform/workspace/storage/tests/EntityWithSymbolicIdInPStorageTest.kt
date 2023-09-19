@@ -7,10 +7,12 @@ import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlready
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.*
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+@TestApplication
 class EntityWithSymbolicIdInPStorageTest {
 
   private lateinit var builder: MutableEntityStorageImpl

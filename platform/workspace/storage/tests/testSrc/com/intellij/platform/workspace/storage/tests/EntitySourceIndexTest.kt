@@ -5,11 +5,13 @@ import com.intellij.platform.workspace.storage.impl.ClassToIntConverter
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.createEntityId
 import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 
+@TestApplication
 class EntitySourceIndexTest {
   @Test
   fun `base index test`() {
@@ -123,7 +125,7 @@ class EntitySourceIndexTest {
     val builder = createEmptyBuilder()
     builder addEntity SourceEntity("hello", oldSource)
 
-    builder.indexes.entitySourceIndex.index(createEntityId(1, ClassToIntConverter.INSTANCE.getInt(SourceEntity::class.java)), oldSource)
+    builder.indexes.entitySourceIndex.index(createEntityId(1, ClassToIntConverter.getInstance().getInt(SourceEntity::class.java)), oldSource)
 
     assertThrows<AssertionError> {
       builder.assertConsistency()

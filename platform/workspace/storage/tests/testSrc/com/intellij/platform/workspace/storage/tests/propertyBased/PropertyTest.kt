@@ -14,6 +14,7 @@ import com.intellij.platform.workspace.storage.impl.exceptions.ReplaceBySourceEx
 import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.tests.createBuilderFrom
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.Test
 import kotlin.reflect.full.memberProperties
 import kotlin.test.assertEquals
 
+@TestApplication
 class PropertyTest {
 
   @Test

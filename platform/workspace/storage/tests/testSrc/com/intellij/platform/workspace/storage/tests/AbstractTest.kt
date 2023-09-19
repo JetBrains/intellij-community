@@ -6,11 +6,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ChildFirstE
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildSecondEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentAbEntity
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+@TestApplication
 class AbstractTest {
   @Test
   fun `parent with child`() {

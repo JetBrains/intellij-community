@@ -3,9 +3,11 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
+@TestApplication
 class WithNullsOppositeTest {
   @Test
   fun `add parent and child nullable`() {

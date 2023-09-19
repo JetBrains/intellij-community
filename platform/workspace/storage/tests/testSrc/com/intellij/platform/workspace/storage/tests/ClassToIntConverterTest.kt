@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.impl.ClassToIntConverter
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.junit.jupiter.api.Test
@@ -9,12 +10,13 @@ import java.util.concurrent.Callable
 import kotlin.random.Random
 import kotlin.test.assertEquals
 
+@TestApplication
 class ClassToIntConverterTest {
   @Test
   fun `multi thread initialization`() {
     val random = Random.Default
     repeat(1_000) {
-      val converter = ClassToIntConverter()
+      val converter = ClassToIntConverter.getInstance()
       val threads = List(10) {
         Callable {
           repeat(10) {

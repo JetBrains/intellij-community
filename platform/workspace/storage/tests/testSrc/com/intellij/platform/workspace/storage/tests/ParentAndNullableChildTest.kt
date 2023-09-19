@@ -5,12 +5,14 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ChildNullab
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentNullableEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+@TestApplication
 class ParentAndNullableChildTest {
   @Test
   fun `parent with child`() {

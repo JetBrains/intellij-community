@@ -6,9 +6,11 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ChildSubSub
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentSubEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
+@TestApplication
 class SubChildrenTest {
   @Test
   fun `parent with child`() {

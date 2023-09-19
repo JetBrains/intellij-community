@@ -3,9 +3,11 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.OptionalIntEntity
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertNull
 
+@TestApplication
 class EntityWithNullsTest {
   @Test
   fun `data int with null`() {

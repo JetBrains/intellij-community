@@ -7,11 +7,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntit
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
 import com.intellij.platform.workspace.storage.toBuilder
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
+@TestApplication
 class WorkspaceEntityEqualityTest {
 
   private lateinit var builderOne: MutableEntityStorage

@@ -6,10 +6,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.FinalFields
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
 import com.intellij.platform.workspace.storage.toBuilder
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+
+@TestApplication
 class FinalAndDefaultFieldsTest {
   @Test
   fun `check final and default fields initialized`() {

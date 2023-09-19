@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.metadata.utils.MetadataComparatorUtil
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import java.util.concurrent.atomic.AtomicReference
@@ -13,7 +15,22 @@ import java.util.concurrent.atomic.AtomicReference
  *
  * N.B. One of the approaches is to generate and assign ids to classes during the code generation.
  */
-internal class ClassToIntConverter {
+internal interface ClassToIntConverter {
+  fun getInt(clazz: Class<*>): Int
+
+  fun getClassOrDie(id: Int): Class<*>
+
+  fun getMap(): Map<Class<*>, Int>
+
+  fun fromMap(map: Object2IntMap<Class<*>>)
+
+  companion object {
+    fun getInstance(): ClassToIntConverter =
+      ApplicationManager.getApplication().getService(ClassToIntConverter::class.java)!!
+  }
+}
+
+internal class ClassToIntConverterImpl: ClassToIntConverter {
   private val map: AtomicReference<Entry> = AtomicReference(Entry(newMap(), emptyArray()))
 
   private class Entry(
@@ -21,7 +38,7 @@ internal class ClassToIntConverter {
     val intToClass: Array<Class<*>?>,
   )
 
-  fun getInt(clazz: Class<*>): Int {
+  override fun getInt(clazz: Class<*>): Int {
     while (true) {
       val entry = map.get()
       val result = entry.classToInt.getInt(clazz)
@@ -35,11 +52,11 @@ internal class ClassToIntConverter {
     }
   }
 
-  fun getClassOrDie(id: Int): Class<*> = map.get().intToClass[id] ?: error("Cannot find class by id: $id")
+  override fun getClassOrDie(id: Int): Class<*> = map.get().intToClass[id] ?: error("Cannot find class by id: $id")
 
-  fun getMap(): Map<Class<*>, Int> = map.get().classToInt
+  override fun getMap(): Map<Class<*>, Int> = map.get().classToInt
 
-  fun fromMap(map: Object2IntMap<Class<*>>) {
+  override fun fromMap(map: Object2IntMap<Class<*>>) {
     val entry = Entry(
       map,
       Array<Class<*>?>(map.values.maxOrNull() ?: 0) { null }.also { map.forEach { (clazz, index) -> it[index] = clazz } }
@@ -59,13 +76,9 @@ internal class ClassToIntConverter {
     res[id] = data
     return res
   }
-
-  companion object {
-    val INSTANCE = ClassToIntConverter()
-  }
 }
 
-internal fun Class<*>.toClassId(): Int = ClassToIntConverter.INSTANCE.getInt(this)
+internal fun Class<*>.toClassId(): Int = ClassToIntConverter.getInstance().getInt(this)
 @Suppress("UNCHECKED_CAST")
-internal fun Int.findWorkspaceEntity(): Class<WorkspaceEntity> = ClassToIntConverter.INSTANCE.getClassOrDie(this) as Class<WorkspaceEntity>
+internal fun Int.findWorkspaceEntity(): Class<WorkspaceEntity> = ClassToIntConverter.getInstance().getClassOrDie(this) as Class<WorkspaceEntity>
 

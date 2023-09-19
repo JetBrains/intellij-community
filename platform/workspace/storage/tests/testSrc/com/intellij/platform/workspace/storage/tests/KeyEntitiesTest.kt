@@ -7,10 +7,12 @@ import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSour
 import com.intellij.platform.workspace.storage.testEntities.entities.KeyChild
 import com.intellij.platform.workspace.storage.testEntities.entities.KeyParent
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+@TestApplication
 class KeyEntitiesTest {
   @Test
   fun rbs() {
