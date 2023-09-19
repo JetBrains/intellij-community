@@ -1,9 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.externalSystem.service.internal
+package com.intellij.openapi.externalSystem.service
 
 import com.intellij.build.events.ProgressBuildEvent
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStatusEvent
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent
@@ -14,11 +15,23 @@ import com.intellij.openapi.util.text.StringUtil.formatFileSize
 import com.intellij.openapi.util.text.StringUtil.isNotEmpty
 import java.util.function.Function
 
-class ExternalSystemTaskProgressIndicatorUpdater(private val indicator: ProgressIndicator,
-                                                 private val textWrapper: Function<String, @NlsContexts.ProgressText String>)
-  : ExternalSystemTaskNotificationListenerAdapter() {
+abstract class ExternalSystemTaskProgressIndicatorUpdater {
 
-  override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {
+  companion object {
+    val EP_NAME: ExtensionPointName<ExternalSystemTaskProgressIndicatorUpdater> = ExtensionPointName.create(
+      "com.intellij.externalSystemTaskProgressIndicatorUpdater")
+
+    @JvmStatic
+    fun getInstance(systemId: ProjectSystemId): ExternalSystemTaskProgressIndicatorUpdater? {
+      return EP_NAME.findFirstSafe { it.canUpdate(systemId) }
+    }
+  }
+
+  abstract fun canUpdate(externalSystemId: ProjectSystemId): Boolean
+
+  open fun updateIndicator(event: ExternalSystemTaskNotificationEvent,
+                           indicator: ProgressIndicator,
+                           textWrapper: Function<String, @NlsContexts.ProgressText String>) {
     val total: Long
     val progress: Long
     val unit: String
@@ -47,11 +60,15 @@ class ExternalSystemTaskProgressIndicatorUpdater(private val indicator: Progress
       indicator.setFraction(progress.toDouble() / total)
     }
     val description = event.description
-    indicator.setText(getText(description, progress, total, unit))
+    indicator.setText(getText(description, progress, total, unit, textWrapper))
   }
 
   @NlsSafe
-  private fun getText(description: String, progress: Long, total: Long, unit: String): String {
+  open fun getText(description: String,
+                   progress: Long,
+                   total: Long,
+                   unit: String,
+                   textWrapper: Function<String, @NlsContexts.ProgressText String>): String {
     val body = textWrapper.apply(description)
     val tail = getSizeInfo(progress, total, unit).let { if (isNotEmpty(it)) return@let "($it)" else "" }
     return "$body $tail"

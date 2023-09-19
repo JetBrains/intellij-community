@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.*;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
+import com.intellij.openapi.externalSystem.service.ExternalSystemTaskProgressIndicatorUpdater;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
 import com.intellij.openapi.externalSystem.service.execution.NotSupportedException;
 import com.intellij.openapi.externalSystem.service.notification.*;
@@ -112,13 +113,12 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   public void execute(@NotNull final ProgressIndicator indicator, ExternalSystemTaskNotificationListener @NotNull ... listeners) {
     indicator.setIndeterminate(true);
     final ExternalSystemTaskNotificationListener[] ls;
+    ExternalSystemTaskNotificationListener progressIndicatorListener = getProgressIndicatorListener(indicator);
     if (listeners.length > 0) {
-      ls = ArrayUtil.append(listeners, new ExternalSystemTaskProgressIndicatorUpdater(indicator, this::wrapProgressText));
+      ls = ArrayUtil.append(listeners, progressIndicatorListener);
     }
     else {
-      ls = new ExternalSystemTaskNotificationListener[]{
-        new ExternalSystemTaskProgressIndicatorUpdater(indicator, this::wrapProgressText)
-      };
+      ls = new ExternalSystemTaskNotificationListener[]{progressIndicatorListener};
     }
     execute(ls);
   }
@@ -244,6 +244,30 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
       @Override
       public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
         manager.onTaskOutput(id, text, stdOut);
+      }
+    };
+  }
+
+  private @NotNull ExternalSystemTaskNotificationListener getProgressIndicatorListener(@NotNull ProgressIndicator indicator) {
+    final ExternalSystemTaskProgressIndicatorUpdater updater = getProgressIndicatorUpdater();
+    return new ExternalSystemTaskNotificationListenerAdapter() {
+      @Override
+      public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
+        updater.updateIndicator(event, indicator, text -> wrapProgressText(text));
+      }
+    };
+  }
+
+  private @NotNull ExternalSystemTaskProgressIndicatorUpdater getProgressIndicatorUpdater() {
+    ExternalSystemTaskProgressIndicatorUpdater indicator =
+      ExternalSystemTaskProgressIndicatorUpdater.getInstance(myExternalSystemId);
+    if (indicator != null) {
+      return indicator;
+    }
+    return new ExternalSystemTaskProgressIndicatorUpdater() {
+      @Override
+      public boolean canUpdate(@NotNull ProjectSystemId externalSystemId) {
+        return true;
       }
     };
   }

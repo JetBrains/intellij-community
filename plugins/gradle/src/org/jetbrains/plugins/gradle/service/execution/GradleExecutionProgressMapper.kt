@@ -23,7 +23,10 @@ class GradleExecutionProgressMapper {
 
   private var states: ArrayDeque<State> = ArrayDeque()
 
-  fun canMap(event: ProgressEvent): Boolean = isAnyBuildProgressEvent(event)
+  fun canMap(event: ProgressEvent): Boolean = event is BuildPhaseProgressEvent ||
+                                              event is TaskProgressEvent ||
+                                              event is TransformProgressEvent ||
+                                              event is ProjectConfigurationProgressEvent
 
   fun map(taskId: ExternalSystemTaskId, event: ProgressEvent): ExternalSystemTaskNotificationEvent? {
     return when (event) {
@@ -57,26 +60,6 @@ class GradleExecutionProgressMapper {
     return GradleProgressEventConverter.legacyConvertProgressBuildEvent(taskId, taskId, eventDescription)
   }
 
-  companion object {
-    @JvmStatic
-    fun isAnyBuildProgressEvent(event: ProgressEvent): Boolean {
-      return event is BuildPhaseProgressEvent ||
-             event is TaskProgressEvent ||
-             event is TransformProgressEvent ||
-             event is ProjectConfigurationProgressEvent
-    }
-  }
-
-  private data class State(
-    var totalItems: Long,
-    var currentItem: Long = 0,
-    val phase: String,
-  ) {
-    fun increment() {
-      currentItem = currentItem.inc()
-    }
-  }
-
   private fun ProgressEvent.toEsEvent(taskId: ExternalSystemTaskId): ExternalSystemTaskNotificationEvent? {
     val description = convertBuildEventDisplayName(this)
     if (description == null) {
@@ -90,26 +73,33 @@ class GradleExecutionProgressMapper {
   @NlsSafe
   private fun convertBuildEventDisplayName(event: ProgressEvent): @NlsSafe String? {
     val description = when {
-      event is TaskProgressEvent || event is TestProgressEvent -> getTaskName(event.displayName)
+      event is TaskProgressEvent || event is TestProgressEvent -> getPenultimateStringElement(event.displayName)
       event.displayName.startsWith("Configure project ") || event.displayName.startsWith("Cross-configure project ")
-      -> getModuleName(event.displayName)
+      -> getPenultimateStringElement(event.displayName)
       else -> ""
     }
-    if (description.isNotEmpty()) {
-      return "${getPhaseName()}: $description"
+    if (description.isNullOrEmpty()) {
+      return null
     }
-    return null
+    return "${getPhaseName()}: $description"
   }
 
   private fun mapLegacyEventToEsEvent(id: ExternalSystemTaskId, eventDescription: String): ExternalSystemBuildEvent? {
     var description: String? = when {
       eventDescription.startsWith("Build model ") && eventDescription.contains(" for project ")
-      -> eventDescription.split(" ").last()
-      eventDescription.startsWith("Build model ") && eventDescription.contains(" for root project ")
-      -> eventDescription.split(" ").last()
+      -> {
+        if (eventDescription.contains(" for project ") || eventDescription.contains(" for root project ")) {
+          getLastStringElement(eventDescription)?.replace("'", "")
+        }
+        else {
+          null
+        }
+      }
       eventDescription.startsWith("Build parameterized model ") && eventDescription.contains(" for project ")
-      -> eventDescription.split(" ").last()
-      eventDescription.startsWith("Configure project ") -> eventDescription.split(" ").last()
+      -> getLastStringElement(eventDescription)
+      eventDescription.startsWith("Resolve files of") || eventDescription.startsWith("Resolve dependencies") -> getLastStringElement(
+        eventDescription)
+      eventDescription.startsWith("Configure project ") -> getLastStringElement(eventDescription)
       else -> GradleProgressEventConverter.legacyConvertBuildEventDisplayName(eventDescription)
     }
     if (description == null) {
@@ -132,23 +122,30 @@ class GradleExecutionProgressMapper {
   }
 
   @NlsSafe
-  private fun getModuleName(moduleEventDescription: String): String {
-    val particles = moduleEventDescription.split(" ")
-    return getPenultimateElement(particles)
-  }
-
-  @NlsSafe
-  private fun getTaskName(taskEventDescription: String): String {
-    val particles = taskEventDescription.split(" ")
-    return getPenultimateElement(particles)
-  }
-
-  @NlsSafe
-  private fun <T> getPenultimateElement(items: List<T>): T {
-    val size = items.size
-    if (size > 2) {
-      return items[size - 2]
+  private fun getLastStringElement(string: String): String? = string.let {
+    val words = it.split(" ")
+    if (words.size > 1) {
+      return words[words.size - 1]
     }
-    return items[size - 1]
+    return null
+  }
+
+  @NlsSafe
+  private fun getPenultimateStringElement(string: String): String? = string.let {
+    val words = it.split(" ")
+    if (words.size >= 2) {
+      return words[words.size - 2]
+    }
+    return null
+  }
+
+  private data class State(
+    var totalItems: Long,
+    var currentItem: Long = 0,
+    val phase: String,
+  ) {
+    fun increment() {
+      currentItem = currentItem.inc()
+    }
   }
 }
