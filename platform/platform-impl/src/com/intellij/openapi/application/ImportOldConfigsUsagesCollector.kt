@@ -60,7 +60,8 @@ internal class ImportOldConfigsState {
     private set
 
   companion object {
-    fun getInstance(): ImportOldConfigsState = ImportOldConfigsState()
+    private val _instance = ImportOldConfigsState()
+    fun getInstance(): ImportOldConfigsState = _instance
 
     private fun getOldImportType(previous: JRadioButton,
                                  custom: JRadioButton,
