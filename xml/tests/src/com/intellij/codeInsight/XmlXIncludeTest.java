@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
@@ -50,7 +51,6 @@ public class XmlXIncludeTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testModifyingIncludedFile() {
     myFixture.configureByText("a.xml", """
-
       <root xmlns:xi="http://www.w3.org/2001/XInclude">
         <before/>
         <xi:include href="include1.xml" xpointer="xpointer(/include1/*)"/>
@@ -67,7 +67,6 @@ public class XmlXIncludeTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testModifyingTransitivelyIncludedFile() {
     myFixture.configureByText("a.xml", """
-
       <root xmlns:xi="http://www.w3.org/2001/XInclude">
         <before/>
         <xi:include href="include1.xml" xpointer="xpointer(/include1/*)"/>
@@ -75,11 +74,10 @@ public class XmlXIncludeTest extends LightJavaCodeInsightFixtureTestCase {
       </root>
       """);
     myFixture.addFileToProject("include1.xml", """
-
       <include1 xmlns:xi="http://www.w3.org/2001/XInclude">
         <foo attr1="val1"> <fooChild/> </foo>
         <bar/>
-        <xi:include href="include2.xml""/>
+        <xi:include href="include2.xml"/>
       </include1>
       """);
     PsiFile inc2 = myFixture.addFileToProject("include2.xml", "<a/>");
