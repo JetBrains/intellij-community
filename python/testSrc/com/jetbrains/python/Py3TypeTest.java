@@ -1983,6 +1983,22 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  public void testTypeGuardBool() {
+    doTest("bool",
+           """
+             from typing import List
+             from typing import TypeGuard
+
+
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+
+
+             def func1(val: List[object]):
+                 expr = is_str_list(val)
+             """);
+  }
+
   public void testTypeGuardListInStringLiteral() {
     doTest("list[str]",
            """

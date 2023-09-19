@@ -329,6 +329,9 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull Context context) {
     if (callable instanceof PyFunction function) {
 
+      if (isTypeGuard(function, context.myContext)) {
+        return Ref.create(PyBuiltinCache.getInstance(callable).getBoolType());
+      }      
       final PyExpression returnTypeAnnotation = getReturnTypeAnnotation(function, context.myContext);
       if (returnTypeAnnotation != null) {
         final Ref<PyType> typeRef = getType(returnTypeAnnotation, context);
