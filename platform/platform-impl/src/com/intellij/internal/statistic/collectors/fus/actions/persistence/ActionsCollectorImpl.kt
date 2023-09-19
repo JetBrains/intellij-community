@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence
 
 import com.intellij.featureStatistics.FeatureUsageTracker
@@ -193,7 +193,7 @@ class ActionsCollectorImpl : ActionsCollector() {
         else {
           if (delegateInfo.isSafeToReport()) delegate.javaClass.name else DEFAULT_ID
         }
-        data.add(ActionsEventLogGroup.ACTION_CLASS.with(actionId))
+        data.add(ActionsEventLogGroup.ACTION_CLASS.with(delegate.javaClass.name))
         data.add(ActionsEventLogGroup.ACTION_PARENT.with(actionClassName))
       }
       else {
