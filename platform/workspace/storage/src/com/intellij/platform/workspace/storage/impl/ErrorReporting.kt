@@ -11,9 +11,11 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
+import java.lang.UnsupportedOperationException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -214,9 +216,10 @@ private fun serializeContentToFolder(contentFolder: Path,
 }
 
 private fun EntityStorageSerializerImpl.serializeDiffLog(file: Path, log: ChangeLog) {
-  val output = createKryoOutput(file)
+  throw UnsupportedOperationException("Function is unsupported")
+  /*val output = createKryoOutput(file)
   try {
-    val (kryo, _) = createKryo()
+    val (kryo, classCache) = createKryo()
 
     // Save version
     output.writeString(serializerDataFormatVersion)
@@ -238,11 +241,12 @@ private fun EntityStorageSerializerImpl.serializeDiffLog(file: Path, log: Change
   }
   finally {
     closeOutput(output)
-  }
+  }*/
 }
 
 private fun EntityStorageSerializerImpl.serializeClassToIntConverter(file: Path) {
-  val converterMap = ClassToIntConverter.INSTANCE.getMap().toMap()
+  throw UnsupportedOperationException("Function is unsupported")
+  /*val converterMap = ClassToIntConverter.INSTANCE.getMap().toMap()
   val output = createKryoOutput(file)
   try {
     val (kryo, _) = createKryo()
@@ -257,7 +261,7 @@ private fun EntityStorageSerializerImpl.serializeClassToIntConverter(file: Path)
   }
   finally {
     closeOutput(output)
-  }
+  }*/
 }
 
 internal fun reportConsistencyIssue(message: String,
@@ -267,7 +271,7 @@ internal fun reportConsistencyIssue(message: String,
                                     right: EntityStorage?,
                                     resulting: EntityStorage) {
   var finalMessage = "$message\n\n"
-  finalMessage += "\nVersion: ${EntityStorageSerializerImpl.SERIALIZER_VERSION}"
+  finalMessage += "\nVersion: ${EntityStorageSerializerImpl.STORAGE_SERIALIZATION_VERSION}"
 
   val zipFile = if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) {
     val dumpDirectory = getStoreDumpDirectory()
