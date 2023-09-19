@@ -38,7 +38,6 @@ import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Assume
 import org.junit.Test
-import java.util.*
 
 class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   override fun runInDispatchThread() = false
@@ -50,7 +49,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testShouldReturnNullForUnprocessedFiles() {
+  fun testShouldReturnNullForUnprocessedFiles() = runBlocking {
     // this pom file doesn't belong to any of the modules, this is won't be processed
     // by MavenProjectProjectsManager and won't occur in its projects list.
     createProjectPom("""
@@ -64,20 +63,20 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testShouldReturnNotNullForProcessedFiles() {
+  fun testShouldReturnNotNullForProcessedFiles() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     // shouldn't throw
     assertNotNull(projectsManager.findProject(myProjectPom))
   }
 
   @Test
-  fun testAddingAndRemovingManagedFiles() {
+  fun testAddingAndRemovingManagedFiles() = runBlocking {
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     val m1 = createModulePom("m1",
@@ -92,18 +91,20 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                                        <artifactId>m2</artifactId>
                                        <version>1</version>
                                        """.trimIndent())
-    importProject(m1)
+    importProjectAsync(m1)
     assertUnorderedElementsAreEqual(projectsTree.rootProjectsFiles, m1)
-    projectsManager.addManagedFiles(Arrays.asList(m2))
-    waitForReadingCompletion()
+    waitForImportWithinTimeout {
+      projectsManager.addManagedFiles(listOf(m2))
+    }
     assertUnorderedElementsAreEqual(projectsTree.rootProjectsFiles, m1, m2)
-    projectsManager.removeManagedFiles(Arrays.asList(m2))
-    waitForReadingCompletion()
+    waitForImportWithinTimeout {
+      projectsManager.removeManagedFiles(listOf(m2))
+    }
     assertUnorderedElementsAreEqual(projectsTree.rootProjectsFiles, m1)
   }
 
   @Test
-  fun testAddingAndRemovingManagedFilesAddsAndRemovesModules() {
+  fun testAddingAndRemovingManagedFilesAddsAndRemovesModules() = runBlocking {
     val m1 = createModulePom("m1",
                              """
                                        <groupId>test</groupId>
@@ -116,24 +117,26 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                                              <artifactId>m2</artifactId>
                                              <version>1</version>
                                              """.trimIndent())
-    importProject(m1)
+    importProjectAsync(m1)
     assertModules("m1")
     resolveDependenciesAndImport() // ensure no pending imports
-    projectsManager.addManagedFiles(listOf(m2))
-    waitForReadingCompletion()
+    waitForImportWithinTimeout {
+      projectsManager.addManagedFiles(listOf(m2))
+    }
     resolveDependenciesAndImport()
     assertModules("m1", "m2")
 
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
-    projectsManager.removeManagedFiles(listOf(m2))
-    waitForReadingCompletion()
+    waitForImportWithinTimeout {
+      projectsManager.removeManagedFiles(listOf(m2))
+    }
     resolveDependenciesAndImport()
     assertModules("m1")
   }
 
   @Test
-  fun testDoNotScheduleResolveOfInvalidProjectsDeleted() {
+  fun testDoNotScheduleResolveOfInvalidProjectsDeleted() = runBlocking {
     val called = BooleanArray(1)
     projectsManager.addProjectsTreeListener(object : MavenProjectsTree.Listener {
       override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
@@ -160,10 +163,10 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testUpdatingFoldersAfterFoldersResolving() {
+  fun testUpdatingFoldersAfterFoldersResolving() = runBlocking {
     createStdProjectFolders()
     createProjectSubDirs("src1", "src2", "test1", "test2", "res1", "res2", "testres1", "testres2")
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -260,7 +263,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                          </dependency>
                        </dependencies>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertModules("project")
     assertSources("project", "src/main/java")
     assertModuleLibDeps("project", "Maven: junit:junit:4.0")
@@ -279,11 +282,9 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     }
     assertSources("project")
     assertModuleLibDeps("project")
-    projectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
-    waitForReadingCompletion()
-    projectsManager.waitForReadingCompletion()
-    importMavenProjects(projectsManager)
-    //myProjectsManager.performScheduledImportInTests();
+    waitForImportWithinTimeout {
+      projectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+    }
     assertSources("project", "src/main/java")
     assertModuleLibDeps("project", "Maven: junit:junit:4.0")
   }
@@ -305,7 +306,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                                       <artifactId>m</artifactId>
                                       <version>1</version>
                                       """.trimIndent())
-    importProject()
+    importProjectAsync()
     val module = getModule("m")
     assertNotNull(module)
     assertFalse(projectsManager.isIgnored(projectsManager.findProject(m)!!))
@@ -334,7 +335,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                                       <artifactId>m</artifactId>
                                       <version>1</version>
                                       """.trimIndent())
-    importProject()
+    importProjectAsync()
     val module = getModule("m")
     assertNotNull(module)
     assertFalse(projectsManager.isIgnored(projectsManager.findProject(m)!!))
@@ -367,7 +368,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                                       <artifactId>m</artifactId>
                                       <version>1</version>
                                       """.trimIndent())
-    importProject()
+    importProjectAsync()
     val module = getModule("m")
     assertNotNull(module)
     assertFalse(projectsManager.isIgnored(projectsManager.findProject(m)!!))
@@ -412,7 +413,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                                            </dependency>
                                        </dependencies>
                                        """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertModuleModuleDeps("m2", "m1")
     val module1 = getModule("m1")
     configConfirmationForYesAnswer()
@@ -457,7 +458,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                                            </dependency>
                                        </dependencies>
                                        """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertModuleModuleDeps("m2", "m1")
     val module1 = getModule("m1")
     val module2 = getModule("m2")
@@ -475,7 +476,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoNotIgnoreProjectWhenModuleDeletedDuringImport() {
+  fun testDoNotIgnoreProjectWhenModuleDeletedDuringImport() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -491,14 +492,14 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                                       <artifactId>m</artifactId>
                                       <version>1</version>
                                       """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertModules("project", "m")
     UsefulTestCase.assertSize(1, projectsManager.getRootProjects())
     UsefulTestCase.assertEmpty(projectsManager.getIgnoredFilesPaths())
 
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -510,9 +511,9 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoNotIgnoreProjectWhenSeparateMainAndTestModulesDeletedDuringImport() {
+  fun testDoNotIgnoreProjectWhenSeparateMainAndTestModulesDeletedDuringImport() = runBlocking {
     Assume.assumeTrue(isWorkspaceImport)
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -533,7 +534,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     assertModules("project", "project.main", "project.test")
     UsefulTestCase.assertSize(1, projectsManager.getRootProjects())
     UsefulTestCase.assertEmpty(projectsManager.getIgnoredFilesPaths())
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -547,7 +548,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   fun testDoNotRemoveMavenProjectsOnReparse() = runBlocking {
     // this pom file doesn't belong to any of the modules, this is won't be processed
     // by MavenProjectProjectsManager and won't occur in its projects list.
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -603,7 +604,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
       </project>
       """.trimIndent())
     writeAction { ModuleManager.getInstance(myProject).newModule("non-maven", ModuleTypeId.JAVA_MODULE) }
-    importProject(mavenParentPom)
+    importProjectAsync(mavenParentPom)
     assertEquals(3, ModuleManager.getInstance(myProject).modules.size)
     configConfirmationForYesAnswer()
     val action = RemoveManagedFilesAction()
@@ -615,13 +616,13 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     UsefulTestCase.assertEmpty(projectsManager.getIgnoredFilesPaths())
 
     //should then import project in non-ignored state again
-    importProject(mavenParentPom)
+    importProjectAsync(mavenParentPom)
     assertEquals(3, ModuleManager.getInstance(myProject).modules.size)
     UsefulTestCase.assertEmpty(projectsManager.getIgnoredFilesPaths())
   }
 
   @Test
-  fun testSameArtifactIdDifferentTypeDependency() {
+  fun testSameArtifactIdDifferentTypeDependency() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -666,7 +667,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                                            </dependency>
                                        </dependencies>
                                        """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertModuleModuleDeps("m2", "m1")
     assertModuleModuleDeps("m3", "m1")
     val mavenProject2 = projectsManager.findProject(m2)
@@ -678,30 +679,31 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun shouldUnsetMavenizedIfManagedFilesWasRemoved() {
+  fun shouldUnsetMavenizedIfManagedFilesWasRemoved() = runBlocking {
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
     assertModules("project")
     UsefulTestCase.assertSize(1, projectsManager.getRootProjects())
-    projectsManager.removeManagedFiles(listOf(myProjectPom))
-    waitForImportCompletion()
+    waitForImportWithinTimeout {
+      projectsManager.removeManagedFiles(listOf(myProjectPom))
+    }
     UsefulTestCase.assertSize(0, projectsManager.getRootProjects())
   }
 
   @Test
-  fun testShouldKeepModuleName() {
-    importProject("""
+  fun testShouldKeepModuleName() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
     assertEquals("project", ModuleManager.getInstance(myProject).modules[0].getName())
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project1</artifactId>
                     <version>1</version>
@@ -710,8 +712,8 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testModuleNameTemplateArtifactId() {
-    importProject("""
+  fun testModuleNameTemplateArtifactId() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>artifactId</artifactId>
                     <version>1</version>
@@ -720,9 +722,9 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testModuleNameTemplateGroupIdArtifactId() {
+  fun testModuleNameTemplateGroupIdArtifactId() = runBlocking {
     Registry.get("maven.import.module.name.template").setValue("groupId.artifactId", getTestRootDisposable())
-    importProject("""
+    importProjectAsync("""
                     <groupId>myGroup</groupId>
                     <artifactId>artifactId</artifactId>
                     <version>1</version>
@@ -731,9 +733,9 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testModuleNameTemplateFolderName() {
+  fun testModuleNameTemplateFolderName() = runBlocking {
     Registry.get("maven.import.module.name.template").setValue("folderName", getTestRootDisposable())
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>ignoredArtifactId</artifactId>
                     <version>1</version>
