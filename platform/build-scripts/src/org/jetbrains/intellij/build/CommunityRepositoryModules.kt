@@ -227,10 +227,10 @@ object CommunityRepositoryModules {
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
     androidDesignPlugin(),
     plugin("intellij.completionMlRankingModels") { spec ->
-      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.EAP
+      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
     plugin("intellij.statsCollector") { spec ->
-      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.EAP
+      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
     plugin(listOf("intellij.lombok", "intellij.lombok.generated")),
     plugin(listOf(
@@ -290,7 +290,7 @@ object CommunityRepositoryModules {
     plugin(
       "intellij.turboComplete",
     ) { spec ->
-      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.EAP
+      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
       spec.withModule("intellij.turboComplete.languages.kotlin")
     }
   )

@@ -25,23 +25,23 @@ class PluginBundlingRestrictions private constructor(
 
   /**
    * Set to required [PluginDistribution] value depending on the distribution zone
-   *  - Use [PluginDistribution.Nightly] if the plugin should be included in distribution for nightly builds only (non EAP, non Release).
-   *  - Use [PluginDistribution.EAP] if the plugin should be included in distribution for EAP and Nightly builds only (non Release).
-   *  - Use [PluginDistribution.Release] if the plugin should be included all distribution for EAP, Nightly and Release.
+   *  - Use [PluginDistribution.NOT_FOR_PUBLIC_BUILDS] if the plugin should be included in distribution for nightly builds only (non EAP, non Release).
+   *  - Use [PluginDistribution.NOT_FOR_RELEASE] if the plugin should be included in distribution for EAP and Nightly builds only (non Release).
+   *  - Use [PluginDistribution.ALL] if the plugin should be included all distribution for EAP, Nightly and Release.
    */
   @JvmField
-  var includeInDistribution: PluginDistribution = PluginDistribution.Release
+  var includeInDistribution: PluginDistribution = PluginDistribution.ALL
 ) {
   companion object {
     @JvmField
-    val NONE = PluginBundlingRestrictions(OsFamily.ALL, JvmArchitecture.ALL, PluginDistribution.Release)
+    val NONE = PluginBundlingRestrictions(OsFamily.ALL, JvmArchitecture.ALL, PluginDistribution.ALL)
 
     /**
      * Use if the plugin should be included anywhere, just used to calculate searchable options index, provided module list.
      * Must be used with conjunction of other PluginLayout's which do have actual restrictions.
      */
     @JvmField
-    val EPHEMERAL = PluginBundlingRestrictions(persistentListOf(), persistentListOf(), PluginDistribution.Release)
+    val EPHEMERAL = PluginBundlingRestrictions(persistentListOf(), persistentListOf(), PluginDistribution.ALL)
 
     /**
      * Use for the plugin version which is uploaded to marketplace, since marketplace does not support per-OS/ARCH plugins.
@@ -50,7 +50,7 @@ class PluginBundlingRestrictions private constructor(
      * If plugin is identical for both bundled and marketplace-uploaded versions, use [NONE] instead.
      */
     @JvmField
-    val MARKETPLACE = PluginBundlingRestrictions(persistentListOf(), persistentListOf(), PluginDistribution.Release)
+    val MARKETPLACE = PluginBundlingRestrictions(persistentListOf(), persistentListOf(), PluginDistribution.ALL)
   }
 
   class Builder {
@@ -67,11 +67,11 @@ class PluginBundlingRestrictions private constructor(
 
     /**
      * Set to required [PluginDistribution] value depending on the distribution zone
-     *  - Use [PluginDistribution.Nightly] if the plugin should be included in distribution for nightly builds only (non EAP, non Release).
-     *  - Use [PluginDistribution.EAP] if the plugin should be included in distribution for EAP and Nightly builds only (non Release).
-     *  - Use [PluginDistribution.Release] if the plugin should be included all distribution for EAP, Nightly and Release.
+     *  - Use [PluginDistribution.NOT_FOR_PUBLIC_BUILDS] if the plugin should be included in distribution for nightly builds only (non EAP, non Release).
+     *  - Use [PluginDistribution.NOT_FOR_RELEASE] if the plugin should be included in distribution for EAP and Nightly builds only (non Release).
+     *  - Use [PluginDistribution.ALL] if the plugin should be included all distribution for EAP, Nightly and Release.
      */
-    var includeInDistribution: PluginDistribution = PluginDistribution.Release
+    var includeInDistribution: PluginDistribution = PluginDistribution.ALL
 
     var ephemeral: Boolean = false
 
@@ -81,13 +81,13 @@ class PluginBundlingRestrictions private constructor(
       if (ephemeral) {
         check(supportedOs == OsFamily.ALL)
         check(supportedArch == JvmArchitecture.ALL)
-        check(includeInDistribution == PluginDistribution.Release)
+        check(includeInDistribution == PluginDistribution.ALL)
         return EPHEMERAL
       }
       if (marketplace) {
         check(supportedOs == OsFamily.ALL)
         check(supportedArch == JvmArchitecture.ALL)
-        check(includeInDistribution == PluginDistribution.Release)
+        check(includeInDistribution == PluginDistribution.ALL)
         return MARKETPLACE
       }
       return when (val restrictions = PluginBundlingRestrictions(supportedOs, supportedArch, includeInDistribution)) {
