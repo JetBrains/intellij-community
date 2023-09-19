@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.keymap.KeymapUtil
@@ -343,8 +342,7 @@ class GitStageLineStatusTracker(
 
   private class MyLineStatusMarkerPopupRenderer(
     private val tracker: GitStageLineStatusTracker
-  ) : LineStatusTrackerMarkerRenderer(tracker) {
-    override val editorFilter: MarkupEditorFilter = MarkupEditorFilterFactory.createIsNotDiffFilter()
+  ) : LineStatusTrackerMarkerRenderer(tracker, MarkupEditorFilterFactory.createIsNotDiffFilter()) {
 
     override fun shouldPaintGutter(): Boolean {
       return tracker.mode.isVisible

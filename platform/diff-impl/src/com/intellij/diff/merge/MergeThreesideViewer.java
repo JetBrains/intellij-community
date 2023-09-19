@@ -44,7 +44,6 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -1282,14 +1281,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     private final @NotNull LineStatusTrackerBase<?> myTracker;
 
     MyLineStatusMarkerRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
-      super(tracker);
+      super(tracker, editor -> editor == getEditor());
       myTracker = tracker;
-    }
-
-    @Nullable
-    @Override
-    protected MarkupEditorFilter getEditorFilter() {
-      return editor -> editor == getEditor();
     }
 
     @Override

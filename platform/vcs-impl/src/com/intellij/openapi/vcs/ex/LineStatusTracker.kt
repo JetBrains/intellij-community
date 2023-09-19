@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -125,9 +124,7 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 
   protected open class LocalLineStatusMarkerRenderer(
     protected open val tracker: LocalLineStatusTrackerImpl<*>
-  ): LineStatusTrackerMarkerRenderer(tracker) {
-
-    override val editorFilter: MarkupEditorFilter = MarkupEditorFilterFactory.createIsNotDiffFilter()
+  ): LineStatusTrackerMarkerRenderer(tracker, MarkupEditorFilterFactory.createIsNotDiffFilter()) {
 
     override fun shouldPaintGutter(): Boolean {
       return tracker.mode.isVisible

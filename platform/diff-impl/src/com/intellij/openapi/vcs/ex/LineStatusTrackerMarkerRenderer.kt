@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -17,8 +18,9 @@ import java.awt.Point
 import javax.swing.JComponent
 
 abstract class LineStatusTrackerMarkerRenderer(
-  tracker: LineStatusTrackerI<*>
-) : LineStatusMarkerRendererWithPopup(tracker.project, tracker.document, tracker, tracker.disposable),
+  tracker: LineStatusTrackerI<*>,
+  editorFilter: MarkupEditorFilter? = null
+) : LineStatusMarkerRendererWithPopup(tracker.project, tracker.document, tracker, tracker.disposable, editorFilter),
     LineStatusMarkerRendererWithPopupController {
 
   protected val vcsDocument: Document = tracker.vcsDocument

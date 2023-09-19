@@ -32,15 +32,14 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 abstract class LineStatusMarkerRenderer internal constructor(
   protected val project: Project?,
   protected val document: Document,
-  disposable: Disposable
+  disposable: Disposable,
+  private val editorFilter: MarkupEditorFilter? = null
 ) {
   private val updateQueue = MergingUpdateQueue("LineStatusMarkerRenderer", 100, true, MergingUpdateQueue.ANY_COMPONENT, disposable)
   private var disposed = false
 
   private var gutterHighlighter: RangeHighlighter = createGutterHighlighter()
   private val errorStripeHighlighters: MutableList<RangeHighlighter> = ArrayList()
-
-  protected open val editorFilter: MarkupEditorFilter? = null
 
   protected abstract fun getRanges(): List<Range>?
 

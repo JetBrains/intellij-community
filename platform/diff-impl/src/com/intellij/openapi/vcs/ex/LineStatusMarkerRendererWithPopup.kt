@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
+import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel.showPopupAt
@@ -27,8 +28,9 @@ abstract class LineStatusMarkerRendererWithPopup(
   project: Project?,
   document: Document,
   protected val rangesSource: LineStatusMarkerRangesSource<*>,
-  disposable: Disposable
-) : LineStatusMarkerRenderer(project, document, disposable),
+  disposable: Disposable,
+  editorFilter: MarkupEditorFilter? = null
+) : LineStatusMarkerRenderer(project, document, disposable, editorFilter),
     LineStatusMarkerRendererWithPopupController {
 
   final override fun getRanges(): List<Range>? = rangesSource.getRanges()
