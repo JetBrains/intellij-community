@@ -13,114 +13,107 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.execution;
+package org.jetbrains.idea.maven.execution
 
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.maven.testFramework.MavenExecutionTestCase;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.concurrency.Semaphore;
-import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import com.intellij.execution.process.ProcessAdapter
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.runners.ProgramRunner
+import com.intellij.maven.testFramework.MavenExecutionTestCase
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.concurrency.Semaphore
+import org.junit.Test
+import java.io.File
+import java.io.IOException
+import javax.swing.SwingUtilities
 
-import javax.swing.*;
-import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-
-@SuppressWarnings({"ConstantConditions"})
-public class MavenExecutionTest extends MavenExecutionTestCase {
-
-  @Override
-  protected boolean runInDispatchThread() {
-    return false;
+class MavenExecutionTest : MavenExecutionTestCase() {
+  override fun runInDispatchThread(): Boolean {
+    return false
   }
 
   @Test
-  public void testExternalExecutor() throws Exception {
-    if (!hasMavenInstallation()) return;
+  @Throws(Exception::class)
+  fun testExternalExecutor() {
+    if (!hasMavenInstallation()) return
 
-    edt(() -> {
-      WriteAction.runAndWait(() -> VfsUtil.saveText(createProjectSubFile("src/main/java/A.java"), "public class A {}"));
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    });
+    UsefulTestCase.edt<IOException> {
+      WriteAction.runAndWait<IOException>(
+        { VfsUtil.saveText(createProjectSubFile("src/main/java/A.java"), "public class A {}") })
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments()
+    }
 
-    WriteAction.computeAndWait(()->
-        createProjectPom("""
+    WriteAction.computeAndWait<VirtualFile, RuntimeException> {
+      createProjectPom("""
                            <groupId>test</groupId>
                            <artifactId>project</artifactId>
-                           <version>1</version>""")
-    );
+                           <version>1</version>
+                           """.trimIndent())
+    }
 
-    assertFalse(new File(getProjectPath(), "target").exists());
+    assertFalse(File(projectPath, "target").exists())
 
-    execute(new MavenRunnerParameters(true, getProjectPath(), (String)null, Arrays.asList("compile"), Collections.emptyList()));
+    execute(MavenRunnerParameters(true, projectPath, null as String?, mutableListOf("compile"), emptyList()))
 
-    assertTrue(new File(getProjectPath(), "target").exists());
+    assertTrue(File(projectPath, "target").exists())
   }
 
   @Test
-  public void testUpdatingExcludedFoldersAfterExecution() throws Exception {
-    if (!hasMavenInstallation()) return;
+  @Throws(Exception::class)
+  fun testUpdatingExcludedFoldersAfterExecution() {
+    if (!hasMavenInstallation()) return
 
-    WriteAction.runAndWait(() -> {
-      createStdProjectFolders();
-
+    WriteAction.runAndWait<RuntimeException> {
+      createStdProjectFolders()
       importProject("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <version>1</version>
-                      """);
-
+                      """.trimIndent())
       createProjectSubDirs("target/generated-sources/foo",
-                           "target/bar");
-    });
+                           "target/bar")
+    }
 
-    assertModules("project");
-    assertExcludes("project", "target");
+    assertModules("project")
+    assertExcludes("project", "target")
 
-    MavenRunnerParameters params = new MavenRunnerParameters(true, getProjectPath(), (String)null, Arrays.asList("compile"), Collections.emptyList());
-    execute(params);
+    val params = MavenRunnerParameters(true, projectPath, null as String?, mutableListOf("compile"), emptyList())
+    execute(params)
 
-    SwingUtilities.invokeAndWait(() -> {
-    });
+    SwingUtilities.invokeAndWait {}
 
-    assertSources("project", "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertSources("project", "src/main/java")
+    assertResources("project", "src/main/resources")
 
-    assertExcludes("project", "target");
+    assertExcludes("project", "target")
   }
 
-  private void execute(final MavenRunnerParameters params) {
-    final Semaphore sema = new Semaphore();
-    sema.down();
-    edt(() -> MavenRunConfigurationType.runConfiguration(
-      myProject, params, getMavenGeneralSettings(),
-      new MavenRunnerSettings(),
-      new ProgramRunner.Callback() {
-        @Override
-        public void processStarted(final RunContentDescriptor descriptor) {
-          descriptor.getProcessHandler().addProcessListener(new ProcessAdapter() {
-
-            @Override
-            public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-              System.out.println(event.getText());
+  private fun execute(params: MavenRunnerParameters) {
+    val sema = Semaphore()
+    sema.down()
+    UsefulTestCase.edt<RuntimeException> {
+      MavenRunConfigurationType.runConfiguration(
+        myProject, params, mavenGeneralSettings,
+        MavenRunnerSettings(),
+        ProgramRunner.Callback { descriptor ->
+          descriptor.processHandler!!.addProcessListener(object : ProcessAdapter() {
+            override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+              println(event.text)
             }
 
-            @Override
-            public void processTerminated(@NotNull ProcessEvent event) {
-              sema.up();
-              edt(() -> Disposer.dispose(descriptor));
+            override fun processTerminated(event: ProcessEvent) {
+              sema.up()
+              UsefulTestCase.edt<RuntimeException>(
+                { Disposer.dispose(descriptor) })
             }
-          });
-        }
-      }, false));
-    sema.waitFor();
+          })
+        }, false)
+    }
+    sema.waitFor()
   }
 }
