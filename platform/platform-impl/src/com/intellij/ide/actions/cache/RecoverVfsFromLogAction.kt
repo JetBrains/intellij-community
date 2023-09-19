@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.cache
 
 import com.intellij.ide.IdeBundle
+import com.intellij.idea.ActionsBundle
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -61,7 +62,7 @@ class RecoverVfsFromLogRecoveryAction : RecoveryAction {
     get() = 3
   override val presentableName: String
     @Nls(capitalization = Nls.Capitalization.Title)
-    get() = IdeBundle.message("recover.caches.from.log.recovery.action.name")
+    get() = ActionsBundle.message("action.RecoverCachesFromLog.text")
   override val actionKey: String
     get() = "recover-from-log"
 
