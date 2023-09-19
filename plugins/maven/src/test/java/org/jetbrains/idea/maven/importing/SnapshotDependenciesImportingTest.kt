@@ -1,57 +1,42 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.jetbrains.idea.maven.importing;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.util.io.FileUtil
+import kotlinx.coroutines.runBlocking
+import org.junit.Test
+import java.io.File
 
-import java.io.File;
+class SnapshotDependenciesImportingTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = false
 
-public class SnapshotDependenciesImportingTest extends MavenMultiVersionImportingTestCase {
-  private File remoteRepoDir;
+  private var remoteRepoDir: File? = null
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  override fun setUp() {
+    super.setUp()
     // disable local mirrors
-    updateSettingsXmlFully("<settings></settings>");
+    updateSettingsXmlFully("<settings></settings>")
   }
 
-  @Override
-  protected void setUpInWriteAction() throws Exception {
-    super.setUpInWriteAction();
+  override fun setUpInWriteAction() {
+    super.setUpInWriteAction()
 
-    remoteRepoDir = new File(myDir, "remote");
-    remoteRepoDir.mkdirs();
-  }
-
-  @Test
-  public void testSnapshotVersionDependencyToModule() throws Exception {
-    performTestWithDependencyVersion("1-SNAPSHOT");
+    remoteRepoDir = File(myDir, "remote")
+    remoteRepoDir!!.mkdirs()
   }
 
   @Test
-  public void testSnapshotRangeDependencyToModule() throws Exception {
-    performTestWithDependencyVersion("SNAPSHOT");
+  fun testSnapshotVersionDependencyToModule() = runBlocking {
+    performTestWithDependencyVersion("1-SNAPSHOT")
   }
 
-  private void performTestWithDependencyVersion(String version) throws Exception {
-    if (!hasMavenInstallation()) return;
+  @Test
+  fun testSnapshotRangeDependencyToModule() = runBlocking {
+    performTestWithDependencyVersion("SNAPSHOT")
+  }
+
+  private suspend fun performTestWithDependencyVersion(version: String) {
+    if (!hasMavenInstallation()) return
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -62,73 +47,72 @@ public class SnapshotDependenciesImportingTest extends MavenMultiVersionImportin
                          <module>m1</module>
                          <module>m2</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    createModulePom("m1", "<groupId>test</groupId>\n" +
-                          "<artifactId>m1</artifactId>\n" +
-                          "<version>1</version>\n" +
+    createModulePom("m1", """<groupId>test</groupId>
+<artifactId>m1</artifactId>
+<version>1</version>
+${repositoriesSection()}<dependencies>
+  <dependency>
+    <groupId>test</groupId>
+    <artifactId>m2</artifactId>
+    <version>
+$version</version>
+  </dependency>
+</dependencies>
+""")
 
-                          repositoriesSection() +
+    createModulePom("m2", """
+   <groupId>test</groupId>
+   <artifactId>m2</artifactId>
+   <version>
+   $version</version>
+   ${distributionManagementSection()}
+   """.trimIndent())
 
-                          "<dependencies>\n" +
-                          "  <dependency>\n" +
-                          "    <groupId>test</groupId>\n" +
-                          "    <artifactId>m2</artifactId>\n" +
-                          "    <version>\n" + version + "</version>\n" +
-                          "  </dependency>\n" +
-                          "</dependencies>\n");
-
-    createModulePom("m2", "<groupId>test</groupId>\n" +
-                          "<artifactId>m2</artifactId>\n" +
-                          "<version>\n" + version + "</version>\n" +
-
-                          distributionManagementSection());
-
-    importProject();
-    assertModules("project", "m1", "m2");
-    assertModuleModuleDeps("m1", "m2");
+    importProjectAsync()
+    assertModules("project", "m1", "m2")
+    assertModuleModuleDeps("m1", "m2")
 
     // in order to force maven to resolve dependency into remote one we have to
     // clean up local repository.
-    deploy("m2");
-    removeFromLocalRepository("test");
+    deploy("m2")
+    removeFromLocalRepository("test")
 
-    importProject();
+    importProjectAsync()
 
-    assertModules("project", "m1", "m2");
-    assertModuleModuleDeps("m1", "m2");
+    assertModules("project", "m1", "m2")
+    assertModuleModuleDeps("m1", "m2")
   }
 
   @Test
-  public void testNamingLibraryTheSameWayRegardlessAvailableSnapshotVersion() throws Exception {
-    if (!hasMavenInstallation()) return;
+  fun testNamingLibraryTheSameWayRegardlessAvailableSnapshotVersion() = runBlocking {
+    if (!hasMavenInstallation()) return@runBlocking
 
-    deployArtifact("test", "foo", "1-SNAPSHOT");
+    deployArtifact("test", "foo", "1-SNAPSHOT")
 
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>1</version>\n" +
+    importProjectAsync("""<groupId>test</groupId>
+<artifactId>project</artifactId>
+<version>1</version>
+${repositoriesSection()}<dependencies>
+  <dependency>
+    <groupId>test</groupId>
+    <artifactId>foo</artifactId>
+    <version>1-SNAPSHOT</version>
+  </dependency>
+</dependencies>
+""")
+    assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT")
 
-                  repositoriesSection() +
+    removeFromLocalRepository("test")
 
-                  "<dependencies>\n" +
-                  "  <dependency>\n" +
-                  "    <groupId>test</groupId>\n" +
-                  "    <artifactId>foo</artifactId>\n" +
-                  "    <version>1-SNAPSHOT</version>\n" +
-                  "  </dependency>\n" +
-                  "</dependencies>\n");
-    assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT");
-
-    removeFromLocalRepository("test");
-
-    importProject();
-    assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT");
+    importProjectAsync()
+    assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT")
   }
 
   @Test
-  public void testAttachingCorrectJavaDocsAndSources() throws Exception {
-    if (!hasMavenInstallation()) return;
+  fun testAttachingCorrectJavaDocsAndSources() = runBlocking {
+    if (!hasMavenInstallation()) return@runBlocking
 
     deployArtifact("test", "foo", "1-SNAPSHOT",
                    """
@@ -156,42 +140,40 @@ public class SnapshotDependenciesImportingTest extends MavenMultiVersionImportin
                          </plugin>
                        </plugins>
                      </build>
-                     """);
+                     """.trimIndent())
 
-    removeFromLocalRepository("test");
+    removeFromLocalRepository("test")
 
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>1</version>\n" +
+    importProjectAsync("""<groupId>test</groupId>
+<artifactId>project</artifactId>
+<version>1</version>
+${repositoriesSection()}<dependencies>
+  <dependency>
+    <groupId>test</groupId>
+    <artifactId>foo</artifactId>
+    <version>1-SNAPSHOT</version>
+  </dependency>
+</dependencies>
+""")
+    assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT")
 
-                  repositoriesSection() +
-
-                  "<dependencies>\n" +
-                  "  <dependency>\n" +
-                  "    <groupId>test</groupId>\n" +
-                  "    <artifactId>foo</artifactId>\n" +
-                  "    <version>1-SNAPSHOT</version>\n" +
-                  "  </dependency>\n" +
-                  "</dependencies>\n");
-    assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT");
-
-    resolveDependenciesAndImport();
-    downloadArtifacts();
+    resolveDependenciesAndImport()
+    downloadArtifacts()
 
     assertModuleLibDep("project",
                        "Maven: test:foo:1-SNAPSHOT",
                        "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
                        "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
-                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/");
+                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
 
-    assertTrue(new File(getRepositoryFile(), "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar").exists());
-    assertTrue(new File(getRepositoryFile(), "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar").exists());
-    assertTrue(new File(getRepositoryFile(), "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar").exists());
+    assertTrue(File(repositoryFile, "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar").exists())
+    assertTrue(File(repositoryFile, "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar").exists())
+    assertTrue(File(repositoryFile, "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar").exists())
   }
 
   @Test
-  public void testCorrectlyUpdateRootEntriesWithActualPathForSnapshotDependencies() throws Exception {
-    if (!hasMavenInstallation()) return;
+  fun testCorrectlyUpdateRootEntriesWithActualPathForSnapshotDependencies() = runBlocking {
+    if (!hasMavenInstallation()) return@runBlocking
 
     deployArtifact("test", "foo", "1-SNAPSHOT",
                    """
@@ -219,32 +201,30 @@ public class SnapshotDependenciesImportingTest extends MavenMultiVersionImportin
                          </plugin>
                        </plugins>
                      </build>
-                     """);
-    removeFromLocalRepository("test");
+                     """.trimIndent())
+    removeFromLocalRepository("test")
 
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>1</version>\n" +
+    importProjectAsync("""<groupId>test</groupId>
+<artifactId>project</artifactId>
+<version>1</version>
+${repositoriesSection()}<dependencies>
+  <dependency>
+    <groupId>test</groupId>
+    <artifactId>foo</artifactId>
+    <version>1-SNAPSHOT</version>
+  </dependency>
+</dependencies>
+""")
+    assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT")
 
-                  repositoriesSection() +
-
-                  "<dependencies>\n" +
-                  "  <dependency>\n" +
-                  "    <groupId>test</groupId>\n" +
-                  "    <artifactId>foo</artifactId>\n" +
-                  "    <version>1-SNAPSHOT</version>\n" +
-                  "  </dependency>\n" +
-                  "</dependencies>\n");
-    assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT");
-
-    resolveDependenciesAndImport();
-    downloadArtifacts();
+    resolveDependenciesAndImport()
+    downloadArtifacts()
 
     assertModuleLibDep("project",
                        "Maven: test:foo:1-SNAPSHOT",
                        "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
                        "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
-                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/");
+                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
 
 
     deployArtifact("test", "foo", "1-SNAPSHOT",
@@ -273,68 +253,69 @@ public class SnapshotDependenciesImportingTest extends MavenMultiVersionImportin
                          </plugin>
                        </plugins>
                      </build>
-                     """);
-    removeFromLocalRepository("test");
+                     """.trimIndent())
+    removeFromLocalRepository("test")
 
-    resolveDependenciesAndImport();
+    resolveDependenciesAndImport()
 
     assertModuleLibDep("project",
                        "Maven: test:foo:1-SNAPSHOT",
                        "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
                        "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
-                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/");
+                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
   }
 
-  private void deployArtifact(String groupId, String artifactId, String version) throws Exception {
-    deployArtifact(groupId, artifactId, version, "");
-  }
+  private fun deployArtifact(groupId: String, artifactId: String, version: String, tail: String = "") {
+    val moduleName = "___$artifactId"
 
-  private void deployArtifact(String groupId, String artifactId, String version, String tail) throws Exception {
-    String moduleName = "___" + artifactId;
-
-    createProjectSubFile(moduleName + "/src/main/java/Foo.java",
+    createProjectSubFile("$moduleName/src/main/java/Foo.java",
                          """
                            /**
                             * some doc
                             */
-                           public class Foo { }""");
+                           public class Foo { }
+                           """.trimIndent())
 
-    VirtualFile m = createModulePom(moduleName,
-                                    "<groupId>\n" + groupId + "</groupId>\n" +
-                                    "<artifactId>\n" + artifactId + "</artifactId>\n" +
-                                    "<version>\n" + version + "</version>\n" +
+    val m = createModulePom(moduleName,
+                            """
+                                   <groupId>
+                                   $groupId</groupId>
+                                   <artifactId>
+                                   $artifactId</artifactId>
+                                   <version>
+                                   $version</version>
+                                   ${distributionManagementSection()}$tail
+                                   """.trimIndent())
 
-                                    distributionManagementSection() +
-
-                                    tail);
-
-    deploy(moduleName);
-    FileUtil.delete(new File(m.getParent().getPath()));
+    deploy(moduleName)
+    FileUtil.delete(File(m.getParent().getPath()))
   }
 
-  private void deploy(String modulePath) throws Exception {
-    executeGoal(modulePath, "deploy");
+  private fun deploy(modulePath: String) {
+    executeGoal(modulePath, "deploy")
   }
 
-  private String repositoriesSection() {
-    return "<repositories>\n" +
-           "  <repository>\n" +
-           "    <id>internal</id>\n" +
-           "    <url>file:///" + FileUtil.toSystemIndependentName(remoteRepoDir.getPath()) + "</url>\n" +
+  private fun repositoriesSection(): String {
+    return """<repositories>
+  <repository>
+    <id>internal</id>
+    <url>file:///""" + FileUtil.toSystemIndependentName(
+      remoteRepoDir!!.path) + "</url>\n" +
            "    <snapshots>\n" +
            "      <enabled>true</enabled>\n" +
            "      <updatePolicy>always</updatePolicy>\n" +
            "    </snapshots>\n" +
            "  </repository>\n" +
-           "</repositories>";
+           "</repositories>"
   }
 
-  private String distributionManagementSection() {
-    return "<distributionManagement>\n" +
-           "  <snapshotRepository>\n" +
-           "    <id>internal</id>\n" +
-           "    <url>file:///" + FileUtil.toSystemIndependentName(remoteRepoDir.getPath()) + "</url>\n" +
+  private fun distributionManagementSection(): String {
+    return """<distributionManagement>
+  <snapshotRepository>
+    <id>internal</id>
+    <url>file:///""" + FileUtil.toSystemIndependentName(
+      remoteRepoDir!!.path) + "</url>\n" +
            "  </snapshotRepository>\n" +
-           "</distributionManagement>";
+           "</distributionManagement>"
   }
 }
