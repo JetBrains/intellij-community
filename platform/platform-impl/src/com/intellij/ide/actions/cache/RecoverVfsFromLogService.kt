@@ -4,6 +4,7 @@ package com.intellij.ide.actions.cache
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.RecoverVfsFromOperationsLogDialog
 import com.intellij.ide.actions.SuggestAutomaticVfsRecoveryDialog
+import com.intellij.idea.hideSplash
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.EDT
@@ -185,6 +186,7 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
     fun recoverSynchronouslyFromLastRecoveryPoint(queryContext: VfsLogQueryContextEx): Boolean {
       // FIXME this modal should be at the call site, but it's java code that is not friendly to coroutines
       return invokeAndWaitIfNeeded {
+        hideSplash()
         runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.cache.recover.from.logs.title"),
                                      TaskCancellation.nonCancellable()) {
           val recoveryPoint = getRecoveryPoints(queryContext).firstOrNull() ?: return@runWithModalProgressBlocking false
