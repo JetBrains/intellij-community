@@ -252,7 +252,7 @@ public final class GradleProgressEventConverter {
     return new ExternalSystemBuildEvent(taskId, esEvent);
   }
 
-  private static @Nullable @NlsSafe String legacyConvertBuildEventDisplayName(@NotNull String eventDescription) {
+  public static @Nullable @NlsSafe String legacyConvertBuildEventDisplayName(@NotNull String eventDescription) {
     if (eventDescription.startsWith("Download ")) {
       var path = eventDescription.substring("Download ".length());
       return GradleBundle.message("progress.title.download", PathUtil.getFileName(path));

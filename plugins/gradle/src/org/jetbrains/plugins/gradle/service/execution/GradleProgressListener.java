@@ -41,7 +41,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   private static final Logger LOG = Logger.getInstance(GradleProgressListener.class);
 
   private final ExternalSystemTaskNotificationListener myListener;
-  private final GradleExecutionProgressHandler myProgressListener;
+  private final GradleExecutionProgressMapper myProgressMapper;
   private final ExternalSystemTaskId myTaskId;
   private final Map<Object, Long> myStatusEventIds = new HashMap<>();
   private final Map<Object, StatusEvent> myDownloadStatusEventIds = new HashMap<>();
@@ -64,26 +64,17 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     myListener = listener;
     myTaskId = taskId;
     myOperationId = taskId.hashCode() + ":" + FileUtil.pathHashCode(buildRootDir == null ? UUID.randomUUID().toString() : buildRootDir);
-    myProgressListener = new GradleExecutionProgressHandler();
+    myProgressMapper = new GradleExecutionProgressMapper();
   }
 
   @Override
   public void statusChanged(ProgressEvent event) {
     sendProgressToOutputIfNeeded(event);
     ExternalSystemTaskNotificationEvent progressBuildEvent = null;
-    if (myProgressListener.canHandle(event)) {
-      progressBuildEvent = myProgressListener.handle(myTaskId, event);
-      myListener.onStatusChange(progressBuildEvent);
-    }
-
-    if (progressBuildEvent == null) {
-      progressBuildEvent = GradleProgressEventConverter.convertProgressBuildEvent(myTaskId, myTaskId, event);
+    if (myProgressMapper.canMap(event)) {
+      progressBuildEvent = myProgressMapper.map(myTaskId, event);
       if (progressBuildEvent != null) {
-        if (event instanceof StatusEvent) {
-          // update IDE progress determinate indicator
-          myListener.onStatusChange(progressBuildEvent);
-        }
-        else if (!progressBuildEvent.equals(myLastStatusChange)) {
+        if (!progressBuildEvent.equals(myLastStatusChange)) {
           myListener.onStatusChange(progressBuildEvent);
           myLastStatusChange = progressBuildEvent;
         }
@@ -102,7 +93,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   public void statusChanged(org.gradle.tooling.ProgressEvent event) {
     var eventDescription = event.getDescription();
     if (!maybeReportModelBuilderMessage(eventDescription)) {
-      var progressBuildEvent = GradleProgressEventConverter.legacyConvertProgressBuildEvent(myTaskId, myTaskId, eventDescription);
+      var progressBuildEvent = myProgressMapper.mapLegacyEvent(myTaskId, eventDescription);
       if (progressBuildEvent != null && !progressBuildEvent.equals(myLastStatusChange)) {
         myListener.onStatusChange(progressBuildEvent);
         myLastStatusChange = progressBuildEvent;
