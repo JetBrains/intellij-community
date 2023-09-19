@@ -267,17 +267,31 @@ abstract class StringListEventField(override val name: String) : ListEventField<
   }
 }
 
+val classCheckAndTransform: (Class<*>) -> String = {
+  if (getPluginInfo(it).isSafeToReport()) StringUtil.substringBeforeLast(it.name, "$\$Lambda$", true) else "third.party"
+}
+
 data class ClassEventField(override val name: String) : PrimitiveEventField<Class<*>?>() {
 
   override fun addData(fuData: FeatureUsageData, value: Class<*>?) {
     if (value == null) {
       return
     }
-    val pluginInfo = getPluginInfo(value)
-    fuData.addData(name,
-                   if (pluginInfo.isSafeToReport()) StringUtil.substringBeforeLast(value.name, "$\$Lambda$", true)
-                   else "third.party"
-    )
+    fuData.addData(name, classCheckAndTransform(value))
+  }
+
+  override val validationRule: List<String>
+    get() = listOf("{util#class_name}")
+}
+
+data class ClassListEventField(override val name: String) : ListEventField<Class<*>?>() {
+
+  override fun addData(fuData: FeatureUsageData, values: List<Class<*>?>) {
+    val classList = values.filterNotNull()
+    if (classList.isEmpty()) {
+      return
+    }
+    fuData.addData(name, classList.map(classCheckAndTransform))
   }
 
   override val validationRule: List<String>

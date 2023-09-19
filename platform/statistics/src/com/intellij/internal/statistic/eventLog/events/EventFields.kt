@@ -134,6 +134,8 @@ object EventFields {
   @JvmStatic
   fun Class(@NonNls name: String): ClassEventField = ClassEventField(name)
 
+  fun ClassList(@NonNls name: String): ClassListEventField = ClassListEventField(name)
+
   val defaultEnumTransform: (Any) -> String = { it.toString() }
 
   @JvmStatic
