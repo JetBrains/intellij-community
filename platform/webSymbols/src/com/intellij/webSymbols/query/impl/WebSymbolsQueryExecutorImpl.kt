@@ -142,6 +142,7 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
           scope.getSymbols(namespace, kind, params, Stack(finalContext))
         }
         .filterIsInstance<WebSymbol>()
+        .distinct()
         .filterByQueryParams(params)
         .applyIf(params.expandPatterns) {
           flatMap {

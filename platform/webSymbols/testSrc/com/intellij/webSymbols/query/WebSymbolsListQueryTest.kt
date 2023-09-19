@@ -136,7 +136,8 @@ class WebSymbolsListQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   }
 
   fun testOptionalPatternNoRepeat1() {
-    doTest("html/elements/", null, "optional-pattern-no-repeat")
+    doTest("html/elements/", null, expandPatterns = true,
+           compareWithCompletionResults = false, webTypes = listOf("optional-pattern-no-repeat"))
   }
 
   fun testMixedFrameworkFiles() {
@@ -210,6 +211,7 @@ class WebSymbolsListQueryTest : WebSymbolsMockQueryExecutorTestBase() {
       val results = queryExecutor
         .runListSymbolsQuery(parsedPath.subList(0, parsedPath.size - 1), last.namespace, last.kind,
                              true, includeVirtual, false)
+        .filter { !it.extension }
       assertEquals(printMatches(codeCompletionResults), printMatches(results))
     }
 

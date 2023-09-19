@@ -68,7 +68,9 @@ internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPatt
                     params: ListParameters): List<ListResult> =
     symbolsResolver
       ?.listSymbols(scopeStack, params.queryExecutor, params.expandPatterns)
-      ?.let { list ->
+      ?.groupBy { it.name }
+      ?.values
+      ?.flatMap { list ->
         when {
           list.size == 1 && list[0] is WebSymbolMatch ->
             (list[0] as WebSymbolMatch).let { match ->
