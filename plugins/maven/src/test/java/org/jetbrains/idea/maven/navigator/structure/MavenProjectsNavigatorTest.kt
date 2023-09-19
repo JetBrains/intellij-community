@@ -1,63 +1,57 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.navigator.structure;
+package org.jetbrains.idea.maven.navigator.structure
 
-import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.ServiceContainerUtil;
-import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
-import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter;
-import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
-import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorState;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.importing.FilesList;
-import org.jetbrains.idea.maven.project.importing.MavenImportFlow;
-import org.jetbrains.idea.maven.project.importing.MavenInitialImportContext;
-import org.jetbrains.idea.maven.project.importing.MavenReadContext;
-import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.junit.Test;
+import com.intellij.execution.impl.RunManagerImpl.Companion.getInstanceImpl
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.replaceService
+import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
+import com.intellij.ui.treeStructure.SimpleNode
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
+import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter
+import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
+import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorState
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.importing.FilesList
+import org.jetbrains.idea.maven.project.importing.MavenImportFlow
+import org.jetbrains.idea.maven.utils.MavenUtil
+import org.junit.Test
+import java.util.concurrent.TimeUnit
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
+  private var myNavigator: MavenProjectsNavigator? = null
+  private var myStructure: MavenProjectsStructure? = null
 
-public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCase {
-  private MavenProjectsNavigator myNavigator;
-  private MavenProjectsStructure myStructure;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    ServiceContainerUtil.replaceService(myProject, ToolWindowManager.class, new ToolWindowHeadlessManagerImpl(myProject) {
-      @Override
-      public void invokeLater(@NotNull Runnable runnable) {
-        runnable.run();
+  override fun setUp() {
+    super.setUp()
+    myProject.replaceService(ToolWindowManager::class.java, object : ToolWindowHeadlessManagerImpl(myProject) {
+      override fun invokeLater(runnable: Runnable) {
+        runnable.run()
       }
-    }, getTestRootDisposable());
-    initProjectsManager(false);
+    }, testRootDisposable)
+    initProjectsManager(false)
 
-    myNavigator = MavenProjectsNavigator.getInstance(myProject);
-    myNavigator.initForTests();
-    myNavigator.setGroupModules(true);
+    myNavigator = MavenProjectsNavigator.getInstance(myProject)
+    myNavigator!!.initForTests()
+    myNavigator!!.groupModules = true
 
-    myStructure = myNavigator.getStructureForTests();
+    myStructure = myNavigator!!.structureForTests
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    myNavigator = null;
-    myStructure = null;
-    super.tearDown();
+  override fun tearDown() {
+    myNavigator = null
+    myStructure = null
+    super.tearDown()
   }
 
   @Test
-  public void testActivation() throws Exception {
+  fun testActivation() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -65,26 +59,26 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
                        <modules>
                          <module>m</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
     createModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
-      """);
+      """.trimIndent())
 
-    readFiles(myProjectPom);
+    readFiles(myProjectPom)
 
 
-    getProjectsManager().fireActivatedInTests();
-    waitForMavenUtilRunnablesComplete();
-    assertEquals(1, getRootNodes().size());
-    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
+    projectsManager.fireActivatedInTests()
+    waitForMavenUtilRunnablesComplete()
+    assertEquals(1, rootNodes.size)
+    assertEquals(1, rootNodes[0].projectNodesInTests.size)
   }
 
   @Test
-  public void testReconnectingModulesWhenModuleRead() throws Exception {
-    getProjectsManager().fireActivatedInTests();
+  fun testReconnectingModulesWhenModuleRead() = runBlocking {
+    projectsManager.fireActivatedInTests()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -93,39 +87,39 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
                        <modules>
                          <module>m</module>
                        </modules>
-                       """);
-    readFiles(myProjectPom);
+                       """.trimIndent())
+    readFiles(myProjectPom)
 
-    assertEquals(1, getRootNodes().size());
-    assertEquals(myProjectPom, getRootNodes().get(0).getVirtualFile());
-    assertEquals(0, getRootNodes().get(0).getProjectNodesInTests().size());
+    assertEquals(1, rootNodes.size)
+    assertEquals(myProjectPom, rootNodes[0].virtualFile)
+    assertEquals(0, rootNodes[0].projectNodesInTests.size)
 
-    VirtualFile m = createModulePom("m", """
+    val m = createModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
-      """);
-    readFiles(m);
+      """.trimIndent())
+    readFiles(m)
 
-    assertEquals(1, getRootNodes().size());
-    assertEquals(myProjectPom, getRootNodes().get(0).getVirtualFile());
-    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
-    assertEquals(m, getRootNodes().get(0).getProjectNodesInTests().get(0).getVirtualFile());
+    assertEquals(1, rootNodes.size)
+    assertEquals(myProjectPom, rootNodes[0].virtualFile)
+    assertEquals(1, rootNodes[0].projectNodesInTests.size)
+    assertEquals(m, rootNodes[0].projectNodesInTests[0].virtualFile)
   }
 
   @Test
-  public void testReconnectingModulesWhenParentRead() throws Exception {
-    getProjectsManager().fireActivatedInTests();
+  fun testReconnectingModulesWhenParentRead() = runBlocking {
+    projectsManager.fireActivatedInTests()
 
-    VirtualFile m = createModulePom("m", """
+    val m = createModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
-      """);
-    readFiles(m);
+      """.trimIndent())
+    readFiles(m)
 
-    assertEquals(1, getRootNodes().size());
-    assertEquals(m, getRootNodes().get(0).getVirtualFile());
+    assertEquals(1, rootNodes.size)
+    assertEquals(m, rootNodes[0].virtualFile)
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -134,33 +128,33 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
                        <modules>
                          <module>m</module>
                        </modules>
-                       """);
-    readFiles(myProjectPom);
+                       """.trimIndent())
+    readFiles(myProjectPom)
 
-    assertEquals(1, getRootNodes().size());
-    assertEquals(myProjectPom, getRootNodes().get(0).getVirtualFile());
-    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
-    assertEquals(m, getRootNodes().get(0).getProjectNodesInTests().get(0).getVirtualFile());
+    assertEquals(1, rootNodes.size)
+    assertEquals(myProjectPom, rootNodes[0].virtualFile)
+    assertEquals(1, rootNodes[0].projectNodesInTests.size)
+    assertEquals(m, rootNodes[0].projectNodesInTests[0].virtualFile)
   }
 
   @Test
-  public void testReconnectingModulesWhenProjectBecomesParent() throws Exception {
-    getProjectsManager().fireActivatedInTests();
+  fun testReconnectingModulesWhenProjectBecomesParent() = runBlocking {
+    projectsManager.fireActivatedInTests()
 
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile m = createModulePom("m", """
+    val m = createModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
-      """);
-    readFiles(myProjectPom, m);
+      """.trimIndent())
+    readFiles(myProjectPom, m)
 
-    assertEquals(2, getRootNodes().size());
+    assertEquals(2, rootNodes.size)
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -169,44 +163,44 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
                        <modules>
                          <module>m</module>
                        </modules>
-                       """);
-    readFiles(myProjectPom);
+                       """.trimIndent())
+    readFiles(myProjectPom)
 
-    assertEquals(1, getRootNodes().size());
-    assertEquals(myProjectPom, getRootNodes().get(0).getVirtualFile());
-    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
-    assertEquals(m, getRootNodes().get(0).getProjectNodesInTests().get(0).getVirtualFile());
+    assertEquals(1, rootNodes.size)
+    assertEquals(myProjectPom, rootNodes[0].virtualFile)
+    assertEquals(1, rootNodes[0].projectNodesInTests.size)
+    assertEquals(m, rootNodes[0].projectNodesInTests[0].virtualFile)
   }
 
   @Test
-  public void testUpdatingWhenManagedFilesChange() throws Exception {
-    getProjectsManager().fireActivatedInTests();
+  fun testUpdatingWhenManagedFilesChange() = runBlocking {
+    projectsManager.fireActivatedInTests()
 
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       """);
-    readFiles(myProjectPom);
-    resolveDependenciesAndImport();
-    assertEquals(1, getRootNodes().size());
-    MavenUtil.cleanAllRunnables();
+                       """.trimIndent())
+    readFiles(myProjectPom)
+    resolveDependenciesAndImport()
+    assertEquals(1, rootNodes.size)
+    MavenUtil.cleanAllRunnables()
 
     //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
 
-    getProjectsManager().removeManagedFiles(Collections.singletonList(myProjectPom));
-    waitForImportCompletion();
-    waitForMavenUtilRunnablesComplete();
-    assertEmpty(getProjectsManager().getRootProjects());
-    assertEquals(0, getRootNodes().size());
+    projectsManager.removeManagedFiles(listOf(myProjectPom))
+    waitForImportCompletion()
+    waitForMavenUtilRunnablesComplete()
+    UsefulTestCase.assertEmpty(projectsManager.getRootProjects())
+    assertEquals(0, rootNodes.size)
   }
 
   @Test
-  public void testGroupModulesAndGroupNot() throws Exception {
-    getProjectsManager().fireActivatedInTests();
+  fun testGroupModulesAndGroupNot() = runBlocking {
+    projectsManager.fireActivatedInTests()
 
-    myNavigator.setGroupModules(true);
+    myNavigator!!.groupModules = true
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -215,42 +209,42 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
                        <modules>
                          <module>m</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile m = createModulePom("m", """
+    val m = createModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
       <modules>
         <module>mm</module>
       </modules>
-      """);
+      """.trimIndent())
 
-    VirtualFile mm = createModulePom("m/mm", """
+    val mm = createModulePom("m/mm", """
       <groupId>test</groupId>
       <artifactId>mm</artifactId>
       <version>1</version>
-      """);
-    readFiles(myProjectPom, m, mm);
+      """.trimIndent())
+    readFiles(myProjectPom, m, mm)
 
-    assertEquals(1, getRootNodes().size());
-    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
-    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().get(0).getProjectNodesInTests().size());
+    assertEquals(1, rootNodes.size)
+    assertEquals(1, rootNodes[0].projectNodesInTests.size)
+    assertEquals(1, rootNodes[0].projectNodesInTests[0].projectNodesInTests.size)
 
-    myNavigator.setGroupModules(false);
-    waitForMavenUtilRunnablesComplete();
-    assertEquals(3, getRootNodes().size());
+    myNavigator!!.groupModules = false
+    waitForMavenUtilRunnablesComplete()
+    assertEquals(3, rootNodes.size)
 
-    myNavigator.setGroupModules(true);
-    waitForMavenUtilRunnablesComplete();
-    assertEquals(1, getRootNodes().size());
-    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
-    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().get(0).getProjectNodesInTests().size());
+    myNavigator!!.groupModules = true
+    waitForMavenUtilRunnablesComplete()
+    assertEquals(1, rootNodes.size)
+    assertEquals(1, rootNodes[0].projectNodesInTests.size)
+    assertEquals(1, rootNodes[0].projectNodesInTests[0].projectNodesInTests.size)
   }
 
   @Test
-  public void testIgnoringProjects() throws Exception {
-    getProjectsManager().fireActivatedInTests();
+  fun testIgnoringProjects() = runBlocking {
+    projectsManager.fireActivatedInTests()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -259,41 +253,41 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
                        <modules>
                          <module>m</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile m = createModulePom("m", """
+    val m = createModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
-      """);
-    readFiles(myProjectPom, m);
+      """.trimIndent())
+    readFiles(myProjectPom, m)
 
-    getProjectsManager().getProjectsTree().setIgnoredFilesPaths(Arrays.asList(m.getPath()));
+    projectsManager.getProjectsTree().ignoredFilesPaths = listOf(m.getPath())
 
-    myNavigator.setShowIgnored(true);
-    waitForMavenUtilRunnablesComplete();
-    assertTrue(getRootNodes().get(0).isVisible());
-    waitForPluginNodesUpdated();
-    var childNodeNamesBefore = Arrays.stream(getRootNodes().get(0).getChildren()).map(node -> node.getName()).collect(Collectors.toSet());
-    assertEquals(Set.of("Lifecycle", "Plugins", "m"), childNodeNamesBefore);
+    myNavigator!!.showIgnored = true
+    waitForMavenUtilRunnablesComplete()
+    assertTrue(rootNodes[0].isVisible())
+    waitForPluginNodesUpdated()
+    val childNodeNamesBefore = rootNodes[0].getChildren().map { node: SimpleNode -> node.getName() }.toSet()
+    assertEquals(setOf("Lifecycle", "Plugins", "m"), childNodeNamesBefore)
 
-    myNavigator.setShowIgnored(false);
-    waitForMavenUtilRunnablesComplete();
-    assertTrue(getRootNodes().get(0).isVisible());
-    waitForPluginNodesUpdated();
-    var childNodeNamesAfter = Arrays.stream(getRootNodes().get(0).getChildren()).map(node -> node.getName()).collect(Collectors.toSet());
-    assertEquals(Set.of("Lifecycle", "Plugins"), childNodeNamesAfter);
+    myNavigator!!.showIgnored = false
+    waitForMavenUtilRunnablesComplete()
+    assertTrue(rootNodes[0].isVisible())
+    waitForPluginNodesUpdated()
+    val childNodeNamesAfter = rootNodes[0].getChildren().map { node: SimpleNode -> node.getName() }.toSet()
+    assertEquals(setOf("Lifecycle", "Plugins"), childNodeNamesAfter)
   }
 
-  private void waitForPluginNodesUpdated() {
-    PluginsNode pluginsNode = getRootNodes().get(0).getPluginsNode();
-    PlatformTestUtil.waitWithEventsDispatching(() -> "Waiting for Plugins to be updated",
-                                               () ->!pluginsNode.getPluginNodes().isEmpty(), 10);
+  private fun waitForPluginNodesUpdated() = runBlocking {
+    val pluginsNode = rootNodes[0].pluginsNode
+    PlatformTestUtil.waitWithEventsDispatching({ "Waiting for Plugins to be updated" },
+                                               { !pluginsNode.pluginNodes.isEmpty() }, 10)
   }
 
   @Test
-  public void testIgnoringParentProjectWhenNeedNoReconnectModule() throws Exception {
-    getProjectsManager().fireActivatedInTests();
+  fun testIgnoringParentProjectWhenNeedNoReconnectModule() = runBlocking {
+    projectsManager.fireActivatedInTests()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -302,69 +296,69 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
                        <modules>
                          <module>m</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile m = createModulePom("m", """
+    val m = createModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
-      """);
-    readFiles(myProjectPom, m);
+      """.trimIndent())
+    readFiles(myProjectPom, m)
 
-    getProjectsTree().setIgnoredFilesPaths(Arrays.asList(myProjectPom.getPath()));
+    projectsTree.ignoredFilesPaths = listOf(myProjectPom.getPath())
 
-    myNavigator.setShowIgnored(true);
-    assertEquals(1, getRootNodes().size());
-    assertEquals(1, myStructure.getRootElement().getChildren().length);
-    ProjectNode projectNode = (ProjectNode)myStructure.getRootElement().getChildren()[0];
-    assertEquals(myProjectPom, projectNode.getVirtualFile());
-    assertEquals(1, projectNode.getProjectNodesInTests().size());
+    myNavigator!!.showIgnored = true
+    assertEquals(1, rootNodes.size)
+    assertEquals(1, myStructure!!.rootElement.getChildren().size)
+    var projectNode = myStructure!!.rootElement.getChildren()[0] as ProjectNode
+    assertEquals(myProjectPom, projectNode.virtualFile)
+    assertEquals(1, projectNode.projectNodesInTests.size)
 
-    myNavigator.setShowIgnored(false);
-    waitForMavenUtilRunnablesComplete();
-    assertEquals(2, getRootNodes().size());
-    assertEquals(1, myStructure.getRootElement().getChildren().length); // only one of them is visible
-    projectNode = (ProjectNode)myStructure.getRootElement().getChildren()[0];
-    assertEquals(m, projectNode.getVirtualFile());
-    assertEquals(0, projectNode.getProjectNodesInTests().size());
+    myNavigator!!.showIgnored = false
+    waitForMavenUtilRunnablesComplete()
+    assertEquals(2, rootNodes.size)
+    assertEquals(1, myStructure!!.rootElement.getChildren().size) // only one of them is visible
+    projectNode = myStructure!!.rootElement.getChildren()[0] as ProjectNode
+    assertEquals(m, projectNode.virtualFile)
+    assertEquals(0, projectNode.projectNodesInTests.size)
   }
 
   @Test
-  public void testReorderingProjectsWhenNameChanges() throws Exception {
-    getProjectsManager().fireActivatedInTests();
+  fun testReorderingProjectsWhenNameChanges() = runBlocking {
+    projectsManager.fireActivatedInTests()
 
-    VirtualFile m1 = createModulePom("m1", """
+    val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
-      """);
+      """.trimIndent())
 
-    VirtualFile m2 = createModulePom("m2", """
+    val m2 = createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
-      """);
-    readFiles(m1, m2);
+      """.trimIndent())
+    readFiles(m1, m2)
 
-    assertEquals(2, getRootNodes().size());
-    assertEquals(m1, getRootNodes().get(0).getVirtualFile());
-    assertEquals(m2, getRootNodes().get(1).getVirtualFile());
+    assertEquals(2, rootNodes.size)
+    assertEquals(m1, rootNodes[0].virtualFile)
+    assertEquals(m2, rootNodes[1].virtualFile)
 
     createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>am2</artifactId>
       <version>1</version>
-      """);
-    readFiles(m2);
+      """.trimIndent())
+    readFiles(m2)
 
-    assertEquals(2, getRootNodes().size());
-    assertEquals(m2, getRootNodes().get(0).getVirtualFile());
-    assertEquals(m1, getRootNodes().get(1).getVirtualFile());
+    assertEquals(2, rootNodes.size)
+    assertEquals(m2, rootNodes[0].virtualFile)
+    assertEquals(m1, rootNodes[1].virtualFile)
   }
 
   @Test
-  public void testReloadingState() throws Exception {
-    getProjectsManager().fireActivatedInTests();
+  fun testReloadingState() = runBlocking {
+    projectsManager.fireActivatedInTests()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -373,91 +367,91 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
                        <modules>
                          <module>m</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile m = createModulePom("m", """
+    val m = createModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
-      """);
-    readFiles(myProjectPom, m);
+      """.trimIndent())
+    readFiles(myProjectPom, m)
 
-    assertEquals(1, getRootNodes().size());
-    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
+    assertEquals(1, rootNodes.size)
+    assertEquals(1, rootNodes[0].projectNodesInTests.size)
 
-    MavenProjectsNavigatorState newState = new MavenProjectsNavigatorState();
-    newState.groupStructurally = false;
-    myNavigator.loadState(newState);
+    val newState = MavenProjectsNavigatorState()
+    newState.groupStructurally = false
+    myNavigator!!.loadState(newState)
 
-    waitForMavenUtilRunnablesComplete();
-    assertEquals(2, getRootNodes().size());
+    waitForMavenUtilRunnablesComplete()
+    assertEquals(2, rootNodes.size)
   }
 
   @Test
-  public void testNavigatableForProjectNode() throws Exception {
-    getProjectsManager().fireActivatedInTests();
+  fun testNavigatableForProjectNode() = runBlocking {
+    projectsManager.fireActivatedInTests()
 
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       """);
+                       """.trimIndent())
 
-    readFiles(myProjectPom);
-    assertTrue(getRootNodes().get(0).getNavigatable().canNavigateToSource());
+    readFiles(myProjectPom)
+    assertTrue(rootNodes[0].navigatable!!.canNavigateToSource())
   }
 
   @Test
-  public void testCanIterateOverRootNodeChildren() throws Exception {
-    getProjectsManager().fireActivatedInTests();
+  fun testCanIterateOverRootNodeChildren() = runBlocking {
+    projectsManager.fireActivatedInTests()
 
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       """);
+                       """.trimIndent())
 
-    readFiles(myProjectPom);
+    readFiles(myProjectPom)
 
-    var rootNode = myStructure.getRootElement();
-    var projectsManager = MavenProjectsManager.getInstance(myProject);
-    var project = projectsManager.getProjects().get(0);
-    var node = new ProjectNode(myStructure, project);
-    rootNode.add(node);
-    var children = rootNode.doGetChildren();
-    rootNode.remove(node);
-    for (var child : children) {
-      assertNotNull(child);
+    val rootNode = myStructure!!.rootElement
+    val projectsManager = MavenProjectsManager.getInstance(myProject)
+    val project = projectsManager.getProjects()[0]
+    val node = ProjectNode(myStructure, project)
+    rootNode.add(node)
+    val children = rootNode.doGetChildren()
+    rootNode.remove(node)
+    for (child in children) {
+      assertNotNull(child)
     }
   }
 
   @Test
-  public void testCanIterateOverProjectNodeChildren() throws Exception {
-    getProjectsManager().fireActivatedInTests();
+  fun testCanIterateOverProjectNodeChildren() = runBlocking {
+    projectsManager.fireActivatedInTests()
 
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       """);
+                       """.trimIndent())
 
-    readFiles(myProjectPom);
+    readFiles(myProjectPom)
 
-    var projectsManager = MavenProjectsManager.getInstance(myProject);
-    var project = projectsManager.getProjects().get(0);
-    var node = new ProjectNode(myStructure, project);
-    var projectNode = getRootNodes().get(0);
-    projectNode.add(node);
-    var children = projectNode.doGetChildren();
-    projectNode.remove(node);
-    for (var child : children) {
-      assertNotNull(child);
+    val projectsManager = MavenProjectsManager.getInstance(myProject)
+    val project = projectsManager.getProjects()[0]
+    val node = ProjectNode(myStructure, project)
+    val projectNode = rootNodes[0]
+    projectNode.add(node)
+    val children = projectNode.doGetChildren()
+    projectNode.remove(node)
+    for (child in children) {
+      assertNotNull(child)
     }
   }
 
   @Test
-  public void testAddAndRemoveMavenRunConfiguration() throws Exception {
-    getProjectsManager().fireActivatedInTests();
+  fun testAddAndRemoveMavenRunConfiguration() = runBlocking {
+    projectsManager.fireActivatedInTests()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -466,55 +460,55 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
                        <modules>
                          <module>m</module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    VirtualFile m = createModulePom("m", """
+    val m = createModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
-      """);
-    readFiles(myProjectPom, m);
+      """.trimIndent())
+    readFiles(myProjectPom, m)
 
-    assertEquals(1, getRootNodes().size());
-    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
+    assertEquals(1, rootNodes.size)
+    assertEquals(1, rootNodes[0].projectNodesInTests.size)
 
-    var runManager = RunManagerImpl.getInstanceImpl(myProject);
-    var mavenTemplateConfiguration = MavenRunConfigurationType.getInstance().getConfigurationFactories()[0].createTemplateConfiguration(myProject);
-    var mavenConfiguration = MavenRunConfigurationType.getInstance().getConfigurationFactories()[0].createConfiguration("myConfiguration", mavenTemplateConfiguration);
-    var configuration = new RunnerAndConfigurationSettingsImpl(runManager, mavenConfiguration);
-    runManager.addConfiguration(configuration);
-    runManager.removeConfiguration(configuration);
+    val runManager = getInstanceImpl(myProject)
+    val mavenTemplateConfiguration = MavenRunConfigurationType.getInstance().configurationFactories[0].createTemplateConfiguration(
+      myProject)
+    val mavenConfiguration = MavenRunConfigurationType.getInstance().configurationFactories[0].createConfiguration("myConfiguration",
+                                                                                                                   mavenTemplateConfiguration)
+    val configuration = RunnerAndConfigurationSettingsImpl(runManager, mavenConfiguration)
+    runManager.addConfiguration(configuration)
+    runManager.removeConfiguration(configuration)
   }
 
-  private void readFiles(VirtualFile... files) throws Exception {
+  private fun readFiles(vararg files: VirtualFile) {
     if (isNewImportingProcess) {
-      MavenImportFlow flow = new MavenImportFlow();
-      List<VirtualFile> allFiles = new ArrayList<>(getProjectsManager().getProjectsFiles());
-      allFiles.addAll(Arrays.asList(files));
-      MavenInitialImportContext initialImportContext =
+      val flow = MavenImportFlow()
+      val allFiles: MutableList<VirtualFile> = ArrayList(projectsManager.getProjectsFiles())
+      allFiles.addAll(listOf(*files))
+      val initialImportContext =
         flow.prepareNewImport(myProject,
-                              new FilesList(allFiles),
-                              getMavenGeneralSettings(),
-                              getMavenImporterSettings(),
-                              Collections.emptyList(), Collections.emptyList());
+                              FilesList(allFiles),
+                              mavenGeneralSettings,
+                              mavenImporterSettings,
+                              emptyList(), emptyList())
 
 
-      ApplicationManager.getApplication().executeOnPooledThread(()-> {
-        MavenReadContext readContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
-        flow.updateProjectManager(readContext);
-        myNavigator.scheduleStructureUpdate();
-      }).get(10, TimeUnit.SECONDS);
+      ApplicationManager.getApplication().executeOnPooledThread {
+        val readContext = flow.readMavenFiles(initialImportContext, mavenProgressIndicator)
+        flow.updateProjectManager(readContext)
+        myNavigator!!.scheduleStructureUpdate()
+      }[10, TimeUnit.SECONDS]
 
-      waitForMavenUtilRunnablesComplete();
+      waitForMavenUtilRunnablesComplete()
     }
     else {
-      getProjectsManager().addManagedFiles(Arrays.asList(files));
-      waitForReadingCompletion();
+      projectsManager.addManagedFiles(listOf(*files))
+      waitForReadingCompletion()
     }
   }
 
-  private List<ProjectNode> getRootNodes() {
-
-    return myStructure.getRootElement().getProjectNodesInTests();
-  }
+  private val rootNodes: List<ProjectNode>
+    get() = myStructure!!.rootElement.projectNodesInTests
 }
