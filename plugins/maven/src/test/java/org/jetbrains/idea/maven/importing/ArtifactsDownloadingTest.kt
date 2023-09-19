@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.importing;
+package org.jetbrains.idea.maven.importing
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.junit.Test;
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.server.MavenServerManager
+import org.junit.Test
+import java.io.File
+import java.util.*
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.List;
-
-public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
+class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
+  override fun runInDispatchThread() = false
+  
   @Test
-  public void JavadocsAndSources() {
-    importProject("""
+  fun JavadocsAndSources() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -42,23 +40,23 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
                         <version>4.0</version>
                       </dependency>
                     </dependencies>
-                    """);
+                    """.trimIndent())
 
-    File sources = new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar");
-    File javadoc = new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar");
+    val sources = File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar")
+    val javadoc = File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar")
 
-    assertFalse(sources.exists());
-    assertFalse(javadoc.exists());
+    assertFalse(sources.exists())
+    assertFalse(javadoc.exists())
 
-    downloadArtifacts();
+    downloadArtifacts()
 
-    assertTrue(sources.exists());
-    assertTrue(javadoc.exists());
+    assertTrue(sources.exists())
+    assertTrue(javadoc.exists())
   }
 
   @Test
-  public void IgnoringOfflineSetting() {
-    importProject("""
+  fun IgnoringOfflineSetting() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -69,36 +67,36 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
                         <version>4.0</version>
                       </dependency>
                     </dependencies>
-                    """);
+                    """.trimIndent())
 
-    File sources = new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar");
-    File javadoc = new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar");
+    val sources = File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar")
+    val javadoc = File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar")
 
-    assertFalse(sources.exists());
-    assertFalse(javadoc.exists());
+    assertFalse(sources.exists())
+    assertFalse(javadoc.exists())
 
-    getMavenGeneralSettings().setWorkOffline(false);
-    getProjectsManager().getEmbeddersManager().reset(); // to recognize change
-    downloadArtifacts();
+    mavenGeneralSettings.isWorkOffline = false
+    projectsManager.embeddersManager.reset() // to recognize change
+    downloadArtifacts()
 
-    assertTrue(sources.exists());
-    assertTrue(javadoc.exists());
+    assertTrue(sources.exists())
+    assertTrue(javadoc.exists())
 
-    FileUtil.delete(sources);
-    FileUtil.delete(javadoc);
+    FileUtil.delete(sources)
+    FileUtil.delete(javadoc)
 
-    getMavenGeneralSettings().setWorkOffline(true);
-    getProjectsManager().getEmbeddersManager().reset(); // to recognize change
+    mavenGeneralSettings.isWorkOffline = true
+    projectsManager.embeddersManager.reset() // to recognize change
 
-    downloadArtifacts();
+    downloadArtifacts()
 
-    assertTrue(sources.exists());
-    assertTrue(javadoc.exists());
+    assertTrue(sources.exists())
+    assertTrue(javadoc.exists())
   }
 
   @Test
-  public void DownloadingSpecificDependency() {
-    importProject("""
+  fun DownloadingSpecificDependency() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -114,26 +112,26 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
                         <version>4.0</version>
                       </dependency>
                     </dependencies>
-                    """);
+                    """.trimIndent())
 
-    File sources = new File(getRepositoryPath(), "/jmock/jmock/1.2.0/jmock-1.2.0-sources.jar");
-    File javadoc = new File(getRepositoryPath(), "/jmock/jmock/1.2.0/jmock-1.2.0-javadoc.jar");
-    assertFalse(sources.exists());
-    assertFalse(javadoc.exists());
+    val sources = File(getRepositoryPath(), "/jmock/jmock/1.2.0/jmock-1.2.0-sources.jar")
+    val javadoc = File(getRepositoryPath(), "/jmock/jmock/1.2.0/jmock-1.2.0-javadoc.jar")
+    assertFalse(sources.exists())
+    assertFalse(javadoc.exists())
 
-    MavenProject project = getProjectsTree().getRootProjects().get(0);
-    MavenArtifact dep = project.getDependencies().get(0);
-    downloadArtifacts(Arrays.asList(project), Arrays.asList(dep));
+    val project = projectsTree.rootProjects[0]
+    val dep = project.dependencies[0]
+    downloadArtifacts(Arrays.asList(project), Arrays.asList(dep))
 
-    assertTrue(sources.exists());
-    assertTrue(javadoc.exists());
-    assertFalse(new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar").exists());
-    assertFalse(new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar").exists());
+    assertTrue(sources.exists())
+    assertTrue(javadoc.exists())
+    assertFalse(File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar").exists())
+    assertFalse(File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar").exists())
   }
 
   @Test
-  public void ReturningNotFoundArtifacts() {
-    importProject("""
+  fun ReturningNotFoundArtifacts() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -149,19 +147,19 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
                         <version>4.0</version>
                       </dependency>
                     </dependencies>
-                    """);
+                    """.trimIndent())
 
-    MavenProject project = getProjectsTree().getRootProjects().get(0);
-    MavenArtifactDownloader.DownloadResult unresolvedArtifacts = downloadArtifacts(Arrays.asList(project), null);
-    assertUnorderedElementsAreEqual(unresolvedArtifacts.resolvedSources, new MavenId("junit", "junit", "4.0"));
-    assertUnorderedElementsAreEqual(unresolvedArtifacts.resolvedDocs, new MavenId("junit", "junit", "4.0"));
-    assertUnorderedElementsAreEqual(unresolvedArtifacts.unresolvedSources, new MavenId("lib", "xxx", "1"));
-    assertUnorderedElementsAreEqual(unresolvedArtifacts.unresolvedDocs, new MavenId("lib", "xxx", "1"));
+    val project = projectsTree.rootProjects[0]
+    val unresolvedArtifacts = downloadArtifacts(Arrays.asList(project), null)
+    assertUnorderedElementsAreEqual(unresolvedArtifacts.resolvedSources, MavenId("junit", "junit", "4.0"))
+    assertUnorderedElementsAreEqual(unresolvedArtifacts.resolvedDocs, MavenId("junit", "junit", "4.0"))
+    assertUnorderedElementsAreEqual(unresolvedArtifacts.unresolvedSources, MavenId("lib", "xxx", "1"))
+    assertUnorderedElementsAreEqual(unresolvedArtifacts.unresolvedDocs, MavenId("lib", "xxx", "1"))
   }
 
   @Test
-  public void JavadocsAndSourcesForTestDeps() {
-    importProject("""
+  fun JavadocsAndSourcesForTestDeps() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -173,46 +171,49 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
                         <scope>test</scope>
                       </dependency>
                     </dependencies>
-                    """);
+                    """.trimIndent())
 
-    File sources = new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar");
-    File javadoc = new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar");
+    val sources = File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar")
+    val javadoc = File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar")
 
-    assertFalse(sources.exists());
-    assertFalse(javadoc.exists());
+    assertFalse(sources.exists())
+    assertFalse(javadoc.exists())
 
-    downloadArtifacts();
+    downloadArtifacts()
 
-    assertTrue(sources.exists());
-    assertTrue(javadoc.exists());
+    assertTrue(sources.exists())
+    assertTrue(javadoc.exists())
   }
 
   @Test
-  public void JavadocsAndSourcesForDepsWithClassifiersAndType() throws Exception {
-    String remoteRepo = FileUtil.toSystemIndependentName(myDir.getPath() + "/repo");
-    updateSettingsXmlFully("<settings>\n" +
-                           "<mirrors>\n" +
-                           "  <mirror>\n" +
-                           "    <id>central</id>\n" +
-                           "    <url>\n" + VfsUtilCore.pathToUrl(myPathTransformer.toRemotePath(remoteRepo)) + "</url>\n" +
-                           "    <mirrorOf>*</mirrorOf>\n" +
-                           "  </mirror>\n" +
-                           "</mirrors>\n" +
-                           "</settings>\n");
+  @Throws(Exception::class)
+  fun JavadocsAndSourcesForDepsWithClassifiersAndType() = runBlocking {
+    val remoteRepo = FileUtil.toSystemIndependentName(myDir.path + "/repo")
+    updateSettingsXmlFully("""<settings>
+<mirrors>
+  <mirror>
+    <id>central</id>
+    <url>
+${VfsUtilCore.pathToUrl(myPathTransformer.toRemotePath(remoteRepo)!!)}</url>
+    <mirrorOf>*</mirrorOf>
+  </mirror>
+</mirrors>
+</settings>
+""")
 
-    createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-sources.jar");
-    createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-javadoc.jar");
+    createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-sources.jar")
+    createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-javadoc.jar")
 
-    createDummyArtifact(remoteRepo, "/xxx/yyy/1/yyy-1-test-sources.jar");
-    createDummyArtifact(remoteRepo, "/xxx/yyy/1/yyy-1-test-javadoc.jar");
+    createDummyArtifact(remoteRepo, "/xxx/yyy/1/yyy-1-test-sources.jar")
+    createDummyArtifact(remoteRepo, "/xxx/yyy/1/yyy-1-test-javadoc.jar")
 
-    createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-foo-sources.jar");
-    createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-foo-javadoc.jar");
+    createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-foo-sources.jar")
+    createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-foo-javadoc.jar")
 
-    createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-foo-sources.jar");
-    createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-foo-javadoc.jar");
+    createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-foo-sources.jar")
+    createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-foo-javadoc.jar")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -237,38 +238,38 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
                         <type>test-jar</type>
                       </dependency>
                     </dependencies>
-                    """);
+                    """.trimIndent())
 
-    List<File> files1 = Arrays.asList(new File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-sources.jar"),
-                                      new File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-javadoc.jar"),
-                                      new File(getRepositoryPath(), "/xxx/yyy/1/yyy-1-test-sources.jar"),
-                                      new File(getRepositoryPath(), "/xxx/yyy/1/yyy-1-test-javadoc.jar"));
+    val files1 = Arrays.asList(File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-sources.jar"),
+                               File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-javadoc.jar"),
+                               File(getRepositoryPath(), "/xxx/yyy/1/yyy-1-test-sources.jar"),
+                               File(getRepositoryPath(), "/xxx/yyy/1/yyy-1-test-javadoc.jar"))
 
-    List<File> files2 = Arrays.asList(new File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-foo-sources.jar"),
-                                      new File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-foo-javadoc.jar"),
-                                      new File(getRepositoryPath(), "/xxx/zzz/1/zzz-1-test-foo-sources.jar"),
-                                      new File(getRepositoryPath(), "/xxx/zzz/1/zzz-1-test-foo-javadoc.jar"));
+    val files2 = Arrays.asList(File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-foo-sources.jar"),
+                               File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-foo-javadoc.jar"),
+                               File(getRepositoryPath(), "/xxx/zzz/1/zzz-1-test-foo-sources.jar"),
+                               File(getRepositoryPath(), "/xxx/zzz/1/zzz-1-test-foo-javadoc.jar"))
 
-    for (File each : files1) {
-      assertFalse(each.toString(), each.exists());
+    for (each in files1) {
+      assertFalse(each.toString(), each.exists())
     }
-    for (File each : files2) {
-      assertFalse(each.toString(), each.exists());
+    for (each in files2) {
+      assertFalse(each.toString(), each.exists())
     }
-    downloadArtifacts();
+    downloadArtifacts()
 
-    for (File each : files1) {
-      assertTrue(each.toString(), each.exists());
+    for (each in files1) {
+      assertTrue(each.toString(), each.exists())
     }
-    for (File each : files2) {
-      assertFalse(each.toString(), each.exists());
+    for (each in files2) {
+      assertFalse(each.toString(), each.exists())
     }
   }
 
   @Test
-  public void DownloadingPlugins() {
+  fun DownloadingPlugins() = runBlocking {
     try {
-      importProject("""
+      importProjectAsync("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <version>1</version>
@@ -281,26 +282,26 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
                           </plugin>
                         </plugins>
                       </build>
-                      """);
+                      """.trimIndent())
 
-      resolvePlugins();
+      resolvePlugins()
 
-      File f = new File(getRepositoryPath(), "/org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar");
+      val f = File(getRepositoryPath(), "/org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar")
 
-      assertTrue(f.exists());
+      assertTrue(f.exists())
     }
     finally {
       // do not lock files by maven process
-      MavenServerManager.getInstance().shutdown(true);
+      MavenServerManager.getInstance().shutdown(true)
     }
   }
 
   @Test
-  public void DownloadBuildExtensionsOnResolve() {
-    File f = new File(getRepositoryPath(), "/org/apache/maven/wagon/wagon-ftp/2.10/wagon-ftp-2.10.pom");
-    assertFalse(f.exists());
+  fun DownloadBuildExtensionsOnResolve() = runBlocking {
+    val f = File(getRepositoryPath(), "/org/apache/maven/wagon/wagon-ftp/2.10/wagon-ftp-2.10.pom")
+    assertFalse(f.exists())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -313,8 +314,8 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
                         </extension>
                       </extensions>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    assertTrue(f.exists());
+    assertTrue(f.exists())
   }
 }
