@@ -1,0 +1,208 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.editor.impl
+
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.ComponentInlay
+import com.intellij.openapi.editor.event.VisibleAreaListener
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.removeUserData
+import org.jetbrains.annotations.ApiStatus.Experimental
+import java.awt.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import javax.swing.JComponent
+import javax.swing.RepaintManager
+import javax.swing.SwingUtilities
+
+@Experimental
+internal class ComponentInlayImpl<T : Component> private constructor(override val component: T, override val inlay: Inlay<*>) : ComponentInlay<T> {
+  companion object {
+    fun <T : Component>add(editor: Editor, offset: Int, properties: InlayProperties, component: T, alignment: ComponentInlayAlignment? = null, customRenderer: CustomComponentInlayRenderer? = null): ComponentInlay<T>? {
+      val renderer = ComponentInlayRenderer(component, alignment, customRenderer ?: DefaultCustomComponentInlayRenderer)
+
+      val inlay = editor.inlayModel.addBlockElement(offset, properties, renderer) ?: return null
+      ComponentInlaysContainer.addInlay(inlay)
+      return ComponentInlayImpl(component, inlay)
+    }
+  }
+}
+
+private object DefaultCustomComponentInlayRenderer : CustomComponentInlayRenderer()
+
+private class ComponentInlayRenderer(val component: Component, val alignment: ComponentInlayAlignment? = null, val customRenderer: CustomComponentInlayRenderer) : EditorCustomElementRenderer {
+  var inlaySize: Dimension = Dimension(0, 0)
+
+  override fun calcWidthInPixels(inlay: Inlay<*>): Int = inlaySize.width
+
+  override fun calcHeightInPixels(inlay: Inlay<*>): Int = inlaySize.height
+
+  override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
+    inlay.bounds?.let { inlayBounds ->
+      if (component.y != inlayBounds.y)
+        component.location = Point(component.x, inlayBounds.y)
+    }
+  }
+
+  override fun calcGutterIconRenderer(inlay: Inlay<*>): GutterIconRenderer? = customRenderer.calcGutterIconRenderer(inlay)
+  override fun getContextMenuGroup(inlay: Inlay<*>): ActionGroup? = customRenderer.getContextMenuGroup(inlay)
+  override fun getContextMenuGroupId(inlay: Inlay<*>): String? = customRenderer.getContextMenuGroupId(inlay)
+}
+
+private class ComponentInlaysContainer private constructor(val editor: Editor) : JComponent(), EditorHostedComponent, Disposable {
+  companion object {
+    private val INLAYS_CONTAINER = Key<ComponentInlaysContainer>("INLAYS_CONTAINER")
+
+    fun addInlay(inlay: Inlay<ComponentInlayRenderer>) {
+      val editor = inlay.editor
+      val inlaysContainer = editor.getUserData(INLAYS_CONTAINER) ?: ComponentInlaysContainer(editor).also { container ->
+        editor.putUserData(INLAYS_CONTAINER, container)
+        editor.contentComponent.add(container)
+        EditorUtil.disposeWithEditor(editor, container)
+        container.whenDisposed {
+          editor.contentComponent.remove(container)
+          editor.removeUserData(INLAYS_CONTAINER)
+        }
+      }
+      inlaysContainer.add(inlay)
+      Disposer.register(inlaysContainer, inlay)
+      inlay.whenDisposed {
+        // auto-dispose container when last inlay removed
+        if (inlaysContainer.remove(inlay) && inlaysContainer.inlays.isEmpty()) {
+          Disposer.dispose(inlaysContainer)
+        }
+      }
+    }
+  }
+
+  private var visibleAreaAwareInlaysCount = 0
+  private var contentSizeAwareInlayCount = 0
+
+  override val isInputFocusOwner = true
+  val inlays = mutableListOf<Inlay<ComponentInlayRenderer>>()
+  val contentResizeListener = object : ComponentAdapter() {
+    override fun componentResized(e: ComponentEvent?) {
+      revalidate()
+      repaint()
+    }
+  }
+  val visibleAreaListener = VisibleAreaListener {
+    revalidate()
+    repaint()
+  }
+
+  private fun remove(inlay: Inlay<ComponentInlayRenderer>): Boolean {
+    if (!inlays.remove(inlay))
+      return false
+
+    val renderer = inlay.renderer
+    when (renderer.alignment) {
+      ComponentInlayAlignment.FIT_CONTENT_WIDTH, ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH -> {
+        if (--contentSizeAwareInlayCount == 0)
+          editor.contentComponent.removeComponentListener(contentResizeListener)
+      }
+      ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> {
+        if (--visibleAreaAwareInlaysCount == 0)
+          editor.scrollingModel.removeVisibleAreaListener(visibleAreaListener)
+      }
+      else -> Unit
+    }
+    remove(renderer.component)
+    return true
+  }
+
+  private fun add(inlay: Inlay<ComponentInlayRenderer>) {
+    val renderer = inlay.renderer
+    inlays.add(inlay)
+    add(renderer.component)
+    // optionally add listeners if any inlay aware of viewport or content size
+    when (inlay.renderer.alignment) {
+      ComponentInlayAlignment.FIT_CONTENT_WIDTH, ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH -> {
+        if (contentSizeAwareInlayCount++ == 0)
+          editor.contentComponent.addComponentListener(contentResizeListener)
+      }
+      ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> {
+        if (visibleAreaAwareInlaysCount++ == 0)
+          editor.scrollingModel.addVisibleAreaListener(visibleAreaListener)
+      }
+      else -> Unit
+    }
+  }
+
+  override fun invalidate() {
+    if (!isValid) return
+
+    super.invalidate()
+    // Effectively revalidate InlayComponent when invalidated.
+    // Need to add to RepaintManager because otherwise component may not be validated until parent revalidate happen.
+    // The way how Swing works it always invalidates parent component, but uses first validation root in hierarchy for repaint.
+    // I.e. for editor -> scrollPane (validationRoot1) -> inlayComponent (validationRoot2) for editor.revalidate() it will mark inlayComponent as invalid,
+    // but only validate scrollPane on repaint. We then have to wait for another revalidate call in hierarchy starting from inlayComponent.
+    RepaintManager.currentManager(this).addInvalidComponent(this)
+  }
+
+  override fun isValidateRoot(): Boolean = true
+
+  override fun doLayout() {
+    val inlays = inlays
+    if (inlays.isEmpty()) return
+
+    val content = editor.contentComponent
+    val initialContentWidth = content.width
+
+    // Step 1: Sync inlay size with preferred component size.
+    // Step 1.1: Update inlay size, it may fail in batch mode so need to do it in separate loop
+    for (inlay in inlays) {
+      inlay.renderer.let {
+        it.inlaySize = when (it.alignment) {
+          ComponentInlayAlignment.FIT_CONTENT_WIDTH, ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> it.component.minimumSize
+          else -> it.component.preferredSize
+        }
+      }
+    }
+
+    // Step 1.2: Update all inlays in a single batch for performance reasons
+    // Do it as read action, because inlay callbacks may access document model
+    ReadAction.run<Throwable> {
+      editor.inlayModel.execute(true) {
+        for (inlay in inlays) {
+          inlay.renderer.let {
+            if (it.inlaySize.width != inlay.widthInPixels || it.inlaySize.height != inlay.heightInPixels)
+              inlay.update()
+          }
+        }
+      }
+    }
+
+    // Step 2: Way editor implemented now it will validate size after inlay update and set it to preferred size which may be less than viewport.
+    // We ask parent to layout editor in that case to restore it's size.
+    if (content.width < initialContentWidth) {
+      content.parent.doLayout()
+    }
+
+    // Step 3: Set bounds of container to bounds of inner area (without insets) of editor. It defines a viewport for inlay components.
+    bounds = SwingUtilities.calculateInnerArea(content, null)
+
+    // Step 4: Layout inlay components
+    for (inlay in inlays) {
+      inlay.renderer.let { renderer ->
+        val component = renderer.component
+        when (renderer.alignment) {
+          ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH, ComponentInlayAlignment.FIT_CONTENT_WIDTH -> component.size = Dimension(bounds.width, renderer.inlaySize.height)
+          ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> component.bounds = editor.scrollingModel.visibleArea.let { Rectangle(it.x, renderer.component.y, it.width, renderer.inlaySize.height) }
+          else -> component.size = renderer.inlaySize
+        }
+      }
+    }
+  }
+
+  override fun dispose() {
+  }
+}
