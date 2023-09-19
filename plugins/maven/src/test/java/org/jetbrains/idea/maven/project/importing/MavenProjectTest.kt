@@ -1,31 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.idea.maven.project.importing
 
-package org.jetbrains.idea.maven.project.importing;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.pom.java.LanguageLevel
+import org.jetbrains.idea.maven.model.MavenArtifactNode
+import org.jetbrains.idea.maven.model.MavenPlugin
+import org.jetbrains.idea.maven.model.MavenRemoteRepository
+import org.jetbrains.idea.maven.project.MavenEmbeddersManager
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil
+import org.jetbrains.idea.maven.utils.MavenUtil
+import org.junit.Assert
+import org.junit.Test
+import java.io.File
+import java.io.IOException
+import java.util.*
+import java.util.stream.Collectors
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.idea.maven.model.MavenArtifactNode;
-import org.jetbrains.idea.maven.model.MavenPlugin;
-import org.jetbrains.idea.maven.model.MavenRemoteRepository;
-import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
-import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
-
-public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
-  @Test 
-  public void testCollectingPlugins() {
+class MavenProjectTest : MavenMultiVersionImportingTestCase() {
+  @Test
+  fun testCollectingPlugins() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -47,15 +44,15 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                         </plugin>
                       </plugins>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    assertModules("project");
+    assertModules("project")
 
-    assertDeclaredPlugins(p("group1", "id1"), p("group1", "id2"), p("group2", "id1"));
+    assertDeclaredPlugins(p("group1", "id1"), p("group1", "id2"), p("group2", "id1"))
   }
 
-  @Test 
-  public void testPluginsContainDefaultPlugins() {
+  @Test
+  fun testPluginsContainDefaultPlugins() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -69,15 +66,16 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                         </plugin>
                       </plugins>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    assertModules("project");
+    assertModules("project")
 
-    assertContain(p(getMavenProject().getPlugins()), p("group1", "id1"), p("org.apache.maven.plugins", "maven-compiler-plugin"));
+    assertContain(p(
+      mavenProject.plugins), p("group1", "id1"), p("org.apache.maven.plugins", "maven-compiler-plugin"))
   }
 
-  @Test 
-  public void testDefaultPluginsAsDeclared() {
+  @Test
+  fun testDefaultPluginsAsDeclared() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -90,15 +88,15 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                         </plugin>
                       </plugins>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    assertModules("project");
+    assertModules("project")
 
-    assertDeclaredPlugins(p("org.apache.maven.plugins", "maven-compiler-plugin"));
+    assertDeclaredPlugins(p("org.apache.maven.plugins", "maven-compiler-plugin"))
   }
 
-  @Test 
-  public void testDoNotDuplicatePluginsFromBuildAndManagement() {
+  @Test
+  fun testDoNotDuplicatePluginsFromBuildAndManagement() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -119,70 +117,15 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                         </plugins>
                       </pluginManagement>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    assertModules("project");
+    assertModules("project")
 
-    assertDeclaredPlugins(p("org.apache.maven.plugins", "maven-compiler-plugin"));
-  }
-
-  @Test 
-  public void testCollectingPluginsFromProfilesAlso() {
-    importProject("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <build>
-                      <plugins>
-                        <plugin>
-                          <groupId>group</groupId>
-                          <artifactId>id</artifactId>
-                          <version>1</version>
-                        </plugin>
-                      </plugins>
-                    </build>
-                    <profiles>
-                      <profile>
-                        <id>profile1</id>
-                        <build>
-                          <plugins>
-                            <plugin>
-                              <groupId>group1</groupId>
-                              <artifactId>id1</artifactId>
-                            </plugin>
-                          </plugins>
-                        </build>
-                      </profile>
-                      <profile>
-                        <id>profile2</id>
-                        <build>
-                          <plugins>
-                            <plugin>
-                              <groupId>group2</groupId>
-                              <artifactId>id2</artifactId>
-                            </plugin>
-                          </plugins>
-                        </build>
-                      </profile>
-                    </profiles>
-                    """);
-
-    assertModules("project");
-
-    assertDeclaredPlugins(p("group", "id"));
-
-    importProjectWithProfiles("profile1");
-    assertDeclaredPlugins(p("group", "id"), p("group1", "id1"));
-
-    importProjectWithProfiles("profile2");
-    assertDeclaredPlugins(p("group", "id"), p("group2", "id2"));
-
-    importProjectWithProfiles("profile1", "profile2");
-    assertDeclaredPlugins(p("group", "id"), p("group1", "id1"), p("group2", "id2"));
+    assertDeclaredPlugins(p("org.apache.maven.plugins", "maven-compiler-plugin"))
   }
 
   @Test
-  public void testFindingPlugin() {
+  fun testCollectingPluginsFromProfilesAlso() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -220,20 +163,24 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                         </build>
                       </profile>
                     </profiles>
-                    """);
+                    """.trimIndent())
 
-    assertModules("project");
+    assertModules("project")
 
-    assertEquals(p("group", "id"), p(findPlugin("group", "id")));
-    assertNull(findPlugin("group1", "id1"));
+    assertDeclaredPlugins(p("group", "id"))
 
-    importProjectWithProfiles("profile1");
-    assertEquals(p("group1", "id1"), p(findPlugin("group1", "id1")));
-    assertNull(findPlugin("group2", "id2"));
+    importProjectWithProfiles("profile1")
+    assertDeclaredPlugins(p("group", "id"), p("group1", "id1"))
+
+    importProjectWithProfiles("profile2")
+    assertDeclaredPlugins(p("group", "id"), p("group2", "id2"))
+
+    importProjectWithProfiles("profile1", "profile2")
+    assertDeclaredPlugins(p("group", "id"), p("group1", "id1"), p("group2", "id2"))
   }
 
-  @Test 
-  public void testFindingDefaultPlugin() {
+  @Test
+  fun testFindingPlugin() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -247,16 +194,67 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                         </plugin>
                       </plugins>
                     </build>
-                    """);
+                    <profiles>
+                      <profile>
+                        <id>profile1</id>
+                        <build>
+                          <plugins>
+                            <plugin>
+                              <groupId>group1</groupId>
+                              <artifactId>id1</artifactId>
+                            </plugin>
+                          </plugins>
+                        </build>
+                      </profile>
+                      <profile>
+                        <id>profile2</id>
+                        <build>
+                          <plugins>
+                            <plugin>
+                              <groupId>group2</groupId>
+                              <artifactId>id2</artifactId>
+                            </plugin>
+                          </plugins>
+                        </build>
+                      </profile>
+                    </profiles>
+                    """.trimIndent())
 
-    assertModules("project");
+    assertModules("project")
 
-    assertNotNull(findPlugin("group", "id"));
-    assertNotNull(findPlugin("org.apache.maven.plugins", "maven-compiler-plugin"));
+    assertEquals(p("group", "id"), p(findPlugin("group", "id")))
+    assertNull(findPlugin("group1", "id1"))
+
+    importProjectWithProfiles("profile1")
+    assertEquals(p("group1", "id1"), p(findPlugin("group1", "id1")))
+    assertNull(findPlugin("group2", "id2"))
   }
 
-  @Test 
-  public void testFindingMavenGroupPluginWithDefaultPluginGroup() {
+  @Test
+  fun testFindingDefaultPlugin() {
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>group</groupId>
+                          <artifactId>id</artifactId>
+                          <version>1</version>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """.trimIndent())
+
+    assertModules("project")
+
+    assertNotNull(findPlugin("group", "id"))
+    assertNotNull(findPlugin("org.apache.maven.plugins", "maven-compiler-plugin"))
+  }
+
+  @Test
+  fun testFindingMavenGroupPluginWithDefaultPluginGroup() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -268,16 +266,16 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                         </plugin>
                       </plugins>
                     </build>
-                    """);
-    assertModules("project");
+                    """.trimIndent())
+    assertModules("project")
 
     assertEquals(p("org.apache.maven.plugins", "some.plugin.id"),
-                 p(findPlugin("org.apache.maven.plugins", "some.plugin.id")));
-    assertNull(findPlugin("some.other.group.id", "some.plugin.id"));
+                 p(findPlugin("org.apache.maven.plugins", "some.plugin.id")))
+    assertNull(findPlugin("some.other.group.id", "some.plugin.id"))
   }
 
-  @Test 
-  public void testPluginConfiguration() {
+  @Test
+  fun testPluginConfiguration() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -308,16 +306,16 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                         </plugin>
                       </plugins>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    assertNull(findPluginConfig("group", "id1", "one.two"));
-    assertNull(findPluginConfig("group", "id2", "one.two"));
-    assertEquals("foo", findPluginConfig("group", "id3", "one.two"));
-    assertNull(findPluginConfig("group", "id3", "one.two.three"));
+    assertNull(findPluginConfig("group", "id1", "one.two"))
+    assertNull(findPluginConfig("group", "id2", "one.two"))
+    assertEquals("foo", findPluginConfig("group", "id3", "one.two"))
+    assertNull(findPluginConfig("group", "id3", "one.two.three"))
   }
 
-  @Test 
-  public void testPluginGoalConfiguration() {
+  @Test
+  fun testPluginGoalConfiguration() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -355,15 +353,15 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                         </plugin>
                       </plugins>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    assertNull(findPluginGoalConfig("group", "id", "package", "one.two"));
-    assertEquals("a", findPluginGoalConfig("group", "id", "compile", "one.two"));
-    assertEquals("b", findPluginGoalConfig("group", "id", "testCompile", "one.two"));
+    assertNull(findPluginGoalConfig("group", "id", "package", "one.two"))
+    assertEquals("a", findPluginGoalConfig("group", "id", "compile", "one.two"))
+    assertEquals("b", findPluginGoalConfig("group", "id", "testCompile", "one.two"))
   }
 
-  @Test 
-  public void testPluginConfigurationHasResolvedVariables() {
+  @Test
+  fun testPluginConfigurationHasResolvedVariables() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -378,18 +376,18 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                           <artifactId>id</artifactId>
                           <version>1</version>
                           <configuration>
-                            <one>${some.path}</one>
+                            <one>${'$'}{some.path}</one>
                           </configuration>
                         </plugin>
                       </plugins>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    assertEquals("somePath", findPluginConfig("group", "id", "one"));
+    assertEquals("somePath", findPluginConfig("group", "id", "one"))
   }
 
-  @Test 
-  public void testPluginConfigurationWithStandardVariable() {
+  @Test
+  fun testPluginConfigurationWithStandardVariable() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -401,19 +399,19 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                           <artifactId>id</artifactId>
                           <version>1</version>
                           <configuration>
-                            <one>${project.build.directory}</one>
+                            <one>${'$'}{project.build.directory}</one>
                           </configuration>
                         </plugin>
                       </plugins>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    assertEquals(getProjectPath() + "/target",
-                 FileUtil.toSystemIndependentName(findPluginConfig("group", "id", "one")));
+    assertEquals("$projectPath/target",
+                 FileUtil.toSystemIndependentName(findPluginConfig("group", "id", "one")))
   }
 
-  @Test 
-  public void testPluginConfigurationWithColons() {
+  @Test
+  fun testPluginConfigurationWithColons() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -430,13 +428,13 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                         </plugin>
                       </plugins>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    assertNull(findPluginConfig("group", "id", "two:three"));
+    assertNull(findPluginConfig("group", "id", "two:three"))
   }
 
-  @Test 
-  public void testMergingPluginConfigurationFromBuildAndProfiles() {
+  @Test
+  fun testMergingPluginConfigurationFromBuildAndProfiles() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -482,47 +480,49 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                            </plugin>
                          </plugins>
                        </build>
-                       """);
-    importProjectWithProfiles("one", "two");
+                       """.trimIndent())
+    importProjectWithProfiles("one", "two")
 
-    MavenPlugin plugin = findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
-    assertEquals("1.4", plugin.getConfigurationElement().getChildText("source"));
-    assertEquals("1.4", plugin.getConfigurationElement().getChildText("target"));
-    assertEquals("true", plugin.getConfigurationElement().getChildText("debug"));
-  }
-
-  @Test 
-  public void testCompilerPluginConfigurationFromProperties() {
-    createProjectPom("""
-                       <groupId>test</groupId><artifactId>project</artifactId><version>1</version><properties>
-                               <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-                               <maven.compiler.source>1.7</maven.compiler.source>
-                               <maven.compiler.target>1.7</maven.compiler.target>
-                       </properties>""");
-
-    importProject();
-
-    assertEquals("1.7", getMavenProject().getSourceLevel());
-    assertEquals("1.7", getMavenProject().getTargetLevel());
-  }
-
-  @Test 
-  public void testCompilerPluginConfigurationFromPropertiesOverride() {
-    createProjectPom("""
-                       <groupId>test</groupId><artifactId>project</artifactId><version>1</version><properties>
-                               <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-                               <maven.compiler.source>1.7</maven.compiler.source>
-                               <maven.compiler.target>1.7</maven.compiler.target>
-                       </properties><build>  <plugins>    <plugin>      <groupId>org.apache.maven.plugins</groupId>      <artifactId>maven-compiler-plugin</artifactId>      <configuration>        <target>1.4</target>        <source>1.4</source>      </configuration>    </plugin>  </plugins></build>""");
-
-    importProject();
-
-    assertEquals("1.4", getMavenProject().getSourceLevel());
-    assertEquals("1.4", getMavenProject().getTargetLevel());
+    val plugin = findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
+    assertEquals("1.4", plugin!!.configurationElement!!.getChildText("source"))
+    assertEquals("1.4", plugin.configurationElement!!.getChildText("target"))
+    assertEquals("true", plugin.configurationElement!!.getChildText("debug"))
   }
 
   @Test
-  public void testCompilerPluginConfigurationRelease() {
+  fun testCompilerPluginConfigurationFromProperties() {
+    createProjectPom("""
+                       <groupId>test</groupId><artifactId>project</artifactId><version>1</version><properties>
+                               <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                               <maven.compiler.source>1.7</maven.compiler.source>
+                               <maven.compiler.target>1.7</maven.compiler.target>
+                       </properties>
+                       """.trimIndent())
+
+    importProject()
+
+    assertEquals("1.7", mavenProject.sourceLevel)
+    assertEquals("1.7", mavenProject.targetLevel)
+  }
+
+  @Test
+  fun testCompilerPluginConfigurationFromPropertiesOverride() {
+    createProjectPom("""
+                       <groupId>test</groupId><artifactId>project</artifactId><version>1</version><properties>
+                               <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                               <maven.compiler.source>1.7</maven.compiler.source>
+                               <maven.compiler.target>1.7</maven.compiler.target>
+                       </properties><build>  <plugins>    <plugin>      <groupId>org.apache.maven.plugins</groupId>      <artifactId>maven-compiler-plugin</artifactId>      <configuration>        <target>1.4</target>        <source>1.4</source>      </configuration>    </plugin>  </plugins></build>
+                       """.trimIndent())
+
+    importProject()
+
+    assertEquals("1.4", mavenProject.sourceLevel)
+    assertEquals("1.4", mavenProject.targetLevel)
+  }
+
+  @Test
+  fun testCompilerPluginConfigurationRelease() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -539,15 +539,16 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                            </plugin>
                          </plugins>
                        </build>
-                       """);
+                       """.trimIndent())
 
-    importProject();
+    importProject()
 
-    assertEquals(LanguageLevel.JDK_1_7, LanguageLevel.parse(getMavenProject().getReleaseLevel()));
+    assertEquals(LanguageLevel.JDK_1_7, LanguageLevel.parse(
+      mavenProject.releaseLevel))
   }
 
   @Test
-  public void testMergingPluginConfigurationFromBuildProfilesAndPluginsManagement() {
+  fun testMergingPluginConfigurationFromBuildProfilesAndPluginsManagement() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -590,17 +591,17 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                            </plugins>
                          </pluginManagement>
                        </build>
-                       """);
-    importProjectWithProfiles("one");
+                       """.trimIndent())
+    importProjectWithProfiles("one")
 
-    MavenPlugin plugin = findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
-    assertEquals("1.4", plugin.getConfigurationElement().getChildText("source"));
-    assertEquals("1.4", plugin.getConfigurationElement().getChildText("target"));
-    assertEquals("true", plugin.getConfigurationElement().getChildText("debug"));
+    val plugin = findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
+    assertEquals("1.4", plugin!!.configurationElement!!.getChildText("source"))
+    assertEquals("1.4", plugin.configurationElement!!.getChildText("target"))
+    assertEquals("true", plugin.configurationElement!!.getChildText("debug"))
   }
 
-  @Test 
-  public void testDoesNotCollectProfilesWithoutId() {
+  @Test
+  fun testDoesNotCollectProfilesWithoutId() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -612,13 +613,13 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                       <profile>
                       </profile>
                     </profiles>
-                    """);
+                    """.trimIndent())
 
-    assertUnorderedElementsAreEqual(getMavenProject().getProfilesIds(), "one", "default");
+    assertUnorderedElementsAreEqual(mavenProject.profilesIds, "one", "default")
   }
 
-  @Test 
-  public void testCollectingRepositories() {
+  @Test
+  fun testCollectingRepositories() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -633,17 +634,17 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                         <url>http://repository.two.com</url>
                       </repository>
                     </repositories>
-                    """);
+                    """.trimIndent())
 
-    List<MavenRemoteRepository> result = getMavenProject().getRemoteRepositories();
-    assertEquals(3, result.size());
-    assertEquals("one", result.get(0).getId());
-    assertEquals("two", result.get(1).getId());
-    assertEquals("central", result.get(2).getId());
+    val result = mavenProject.remoteRepositories
+    assertEquals(3, result.size)
+    assertEquals("one", result[0].id)
+    assertEquals("two", result[1].id)
+    assertEquals("central", result[2].id)
   }
 
-  @Test 
-  public void testOverridingCentralRepository() {
+  @Test
+  fun testOverridingCentralRepository() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -654,18 +655,18 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                         <url>http://my.repository.com</url>
                       </repository>
                     </repositories>
-                    """);
+                    """.trimIndent())
 
-    List<MavenRemoteRepository> result = getMavenProject().getRemoteRepositories();
-    assertEquals(1, result.size());
-    assertEquals("central", result.get(0).getId());
-    assertEquals("http://my.repository.com", result.get(0).getUrl());
+    val result = mavenProject.remoteRepositories
+    assertEquals(1, result.size)
+    assertEquals("central", result[0].id)
+    assertEquals("http://my.repository.com", result[0].url)
   }
 
-  @Test 
-  public void testCollectingRepositoriesFromParent() {
-    VirtualFile m1 = createModulePom("p1",
-                                     """
+  @Test
+  fun testCollectingRepositoriesFromParent() {
+    val m1 = createModulePom("p1",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>p1</artifactId>
                                        <version>1</version>
@@ -680,10 +681,10 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                                            <url>http://repository.two.com</url>
                                          </repository>
                                        </repositories>
-                                       """);
+                                       """.trimIndent())
 
-    VirtualFile m2 = createModulePom("p2",
-                                     """
+    val m2 = createModulePom("p2",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>p2</artifactId>
                                        <version>1</version>
@@ -692,25 +693,26 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                                          <artifactId>p1</artifactId>
                                          <version>1</version>
                                        </parent>
-                                       """);
+                                       """.trimIndent())
 
-    importProjects(m1, m2);
+    importProjects(m1, m2)
 
-    List<MavenRemoteRepository> result = getProjectsTree().getRootProjects().get(0).getRemoteRepositories();
-    assertEquals(3, result.size());
-    assertEquals("one", result.get(0).getId());
-    assertEquals("two", result.get(1).getId());
-    assertEquals("central", result.get(2).getId());
+    var result = projectsTree.rootProjects[0].remoteRepositories
+    assertEquals(3, result.size)
+    assertEquals("one", result[0].id)
+    assertEquals("two", result[1].id)
+    assertEquals("central", result[2].id)
 
-    result = getProjectsTree().getRootProjects().get(1).getRemoteRepositories();
-    assertEquals(3, result.size());
-    assertEquals("one", result.get(0).getId());
-    assertEquals("two", result.get(1).getId());
-    assertEquals("central", result.get(2).getId());
+    result = projectsTree.rootProjects[1].remoteRepositories
+    assertEquals(3, result.size)
+    assertEquals("one", result[0].id)
+    assertEquals("two", result[1].id)
+    assertEquals("central", result[2].id)
   }
 
   @Test
-  public void testResolveRemoteRepositories() throws IOException {
+  @Throws(IOException::class)
+  fun testResolveRemoteRepositories() {
     updateSettingsXml("""
                         <mirrors>
                           <mirror>
@@ -736,9 +738,10 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                         </profiles>
                         <activeProfiles>
                            <activeProfile>repo-test</activeProfile>
-                        </activeProfiles>""");
+                        </activeProfiles>
+                        """.trimIndent())
 
-    VirtualFile projectPom = createProjectPom("""
+    val projectPom = createProjectPom("""
                                                 <groupId>test</groupId>
                                                 <artifactId>test</artifactId>
                                                 <version>1</version>
@@ -755,37 +758,38 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                                                     <id>repo-http</id>
                                                     <url>http://pom/http</url>
                                                   </repository>
-                                                </repositories>""");
+                                                </repositories>
+                                                """.trimIndent())
     //Registry.get("maven.server.debug").setValue(true);
-    importProject();
+    importProject()
 
-    Set<MavenRemoteRepository> repositories = getProjectsManager().getRemoteRepositories();
-    MavenEmbeddersManager embeddersManager = getProjectsManager().getEmbeddersManager();
-    var mavenEmbedderWrapper = embeddersManager.getEmbedder(
+    val repositories = projectsManager.getRemoteRepositories()
+    val embeddersManager = projectsManager.embeddersManager
+    val mavenEmbedderWrapper = embeddersManager.getEmbedder(
       MavenEmbeddersManager.FOR_POST_PROCESSING,
-      MavenUtil.getBaseDir(projectPom).toString());
+      MavenUtil.getBaseDir(projectPom).toString())
 
-    Set<String> repoIds = mavenEmbedderWrapper.resolveRepositories(repositories).stream()
-      .map(r -> r.getId())
-      .collect(Collectors.toSet());
-    embeddersManager.release(mavenEmbedderWrapper);
+    val repoIds = mavenEmbedderWrapper.resolveRepositories(repositories).stream()
+      .map { r: MavenRemoteRepository -> r.id }
+      .collect(Collectors.toSet())
+    embeddersManager.release(mavenEmbedderWrapper)
 
-    MavenProject project = MavenProjectsManager.getInstance(myProject).findProject(projectPom);
-    Assert.assertNotNull(project);
+    val project = MavenProjectsManager.getInstance(myProject).findProject(projectPom)
+    Assert.assertNotNull(project)
 
-    Assert.assertTrue(repoIds.contains("mirror"));
-    Assert.assertTrue(repoIds.contains("repo-pom1"));
-    Assert.assertTrue(repoIds.contains("repo1"));
-    Assert.assertTrue(repoIds.contains("central"));
+    Assert.assertTrue(repoIds.contains("mirror"))
+    Assert.assertTrue(repoIds.contains("repo-pom1"))
+    Assert.assertTrue(repoIds.contains("repo1"))
+    Assert.assertTrue(repoIds.contains("central"))
+
     //    Assert.assertTrue(repoIds.contains("maven-default-http-blocker"));
-
-    Assert.assertFalse(repoIds.contains("repo-pom"));
-    Assert.assertFalse(repoIds.contains("repo"));
-    Assert.assertFalse(repoIds.contains("repo-http"));
+    Assert.assertFalse(repoIds.contains("repo-pom"))
+    Assert.assertFalse(repoIds.contains("repo"))
+    Assert.assertFalse(repoIds.contains("repo-http"))
   }
 
-  @Test 
-  public void testMavenModelMap() {
+  @Test
+  fun testMavenModelMap() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -800,22 +804,22 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                         </plugin>
                       </plugins>
                     </build>
-                    """);
+                    """.trimIndent())
 
-    MavenProject p = getMavenProject();
-    Map<String,String> map = p.getModelMap();
+    val p = mavenProject
+    val map = p.modelMap
 
-    assertEquals("test", map.get("groupId"));
-    assertEquals("foo", map.get("build.finalName"));
-    assertEquals(new File(p.getDirectory(), "target").toString(), map.get("build.directory"));
-    assertNull(map.get("build.plugins"));
-    assertNull(map.get("build.pluginMap"));
+    assertEquals("test", map["groupId"])
+    assertEquals("foo", map["build.finalName"])
+    assertEquals(File(p.directory, "target").toString(), map["build.directory"])
+    assertNull(map["build.plugins"])
+    assertNull(map["build.pluginMap"])
   }
 
-  @Test 
-  public void testDependenciesTree() {
-    VirtualFile m1 = createModulePom("p1",
-                                     """
+  @Test
+  fun testDependenciesTree() {
+    val m1 = createModulePom("p1",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>m1</artifactId>
                                        <version>1</version>
@@ -831,10 +835,10 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                                            <version>1</version>
                                          </dependency>
                                        </dependencies>
-                                       """);
+                                       """.trimIndent())
 
-    VirtualFile m2 = createModulePom("p2",
-                                     """
+    val m2 = createModulePom("p2",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>m2</artifactId>
                                        <version>1</version>
@@ -850,20 +854,20 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                                            <version>1</version>
                                          </dependency>
                                        </dependencies>
-                                       """);
+                                       """.trimIndent())
 
-    importProjects(m1, m2);
-    if(!isNewImportingProcess) {
-      resolveDependenciesAndImport();
+    importProjects(m1, m2)
+    if (!isNewImportingProcess) {
+      resolveDependenciesAndImport()
     }
-    assertDependenciesNodes(getProjectsTree().getRootProjects().get(0).getDependencyTree(),
-                            "test:m2:jar:1->(junit:junit:jar:4.0->(),test:lib2:jar:1->()),test:lib1:jar:1->()");
+    assertDependenciesNodes(projectsTree.rootProjects[0].dependencyTree,
+                            "test:m2:jar:1->(junit:junit:jar:4.0->(),test:lib2:jar:1->()),test:lib1:jar:1->()")
   }
 
-  @Test 
-  public void testDependenciesTreeWithTypesAndClassifiers() {
-    VirtualFile m1 = createModulePom("p1",
-                                     """
+  @Test
+  fun testDependenciesTreeWithTypesAndClassifiers() {
+    val m1 = createModulePom("p1",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>m1</artifactId>
                                        <version>1</version>
@@ -876,10 +880,10 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                                            <classifier>test</classifier>
                                          </dependency>
                                        </dependencies>
-                                       """);
+                                       """.trimIndent())
 
-    VirtualFile m2 = createModulePom("p2",
-                                     """
+    val m2 = createModulePom("p2",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>m2</artifactId>
                                        <version>1</version>
@@ -890,21 +894,21 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                                            <version>1</version>
                                          </dependency>
                                        </dependencies>
-                                       """);
+                                       """.trimIndent())
 
-    importProjects(m1, m2);
-    if(!isNewImportingProcess) {
-      resolveDependenciesAndImport();
+    importProjects(m1, m2)
+    if (!isNewImportingProcess) {
+      resolveDependenciesAndImport()
     }
 
-    assertDependenciesNodes(getProjectsTree().getRootProjects().get(0).getDependencyTree(),
-                            "test:m2:pom:test:1->(test:lib:jar:1->())");
+    assertDependenciesNodes(projectsTree.rootProjects[0].dependencyTree,
+                            "test:m2:pom:test:1->(test:lib:jar:1->())")
   }
 
-  @Test 
-  public void testDependenciesTreeWithConflict() {
-    VirtualFile m1 = createModulePom("p1",
-                                     """
+  @Test
+  fun testDependenciesTreeWithConflict() {
+    val m1 = createModulePom("p1",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>m1</artifactId>
                                        <version>1</version>
@@ -920,10 +924,10 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                                            <version>1</version>
                                          </dependency>
                                        </dependencies>
-                                       """);
+                                       """.trimIndent())
 
-    VirtualFile m2 = createModulePom("p2",
-                                     """
+    val m2 = createModulePom("p2",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>m2</artifactId>
                                        <version>1</version>
@@ -934,24 +938,24 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                                            <version>2</version>
                                          </dependency>
                                        </dependencies>
-                                       """);
+                                       """.trimIndent())
 
-    importProjects(m1, m2);
-    if(!isNewImportingProcess) {
-      resolveDependenciesAndImport();
+    importProjects(m1, m2)
+    if (!isNewImportingProcess) {
+      resolveDependenciesAndImport()
     }
-    List<MavenArtifactNode> nodes = getProjectsTree().getRootProjects().get(0).getDependencyTree();
+    val nodes = projectsTree.rootProjects[0].dependencyTree
     assertDependenciesNodes(nodes,
                             "test:m2:jar:1->(test:lib:jar:2[CONFLICT:test:lib:jar:1]->())," +
-                            "test:lib:jar:1->()");
-    assertSame(nodes.get(0).getDependencies().get(0).getRelatedArtifact(),
-               nodes.get(1).getArtifact());
+                            "test:lib:jar:1->()")
+    assertSame(nodes[0]!!.dependencies[0].relatedArtifact,
+               nodes[1]!!.artifact)
   }
 
-  @Test 
-  public void testDependencyTreeDuplicates() {
-    VirtualFile m1 = createModulePom("p1",
-                                     """
+  @Test
+  fun testDependencyTreeDuplicates() {
+    val m1 = createModulePom("p1",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>m1</artifactId>
                                        <version>1</version>
@@ -967,10 +971,10 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                                            <version>1</version>
                                          </dependency>
                                        </dependencies>
-                                       """);
+                                       """.trimIndent())
 
-    VirtualFile m2 = createModulePom("p2",
-                                     """
+    val m2 = createModulePom("p2",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>m2</artifactId>
                                        <version>1</version>
@@ -981,10 +985,10 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                                            <version>1</version>
                                          </dependency>
                                        </dependencies>
-                                       """);
+                                       """.trimIndent())
 
-    VirtualFile m3 = createModulePom("p3",
-                                     """
+    val m3 = createModulePom("p3",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>m3</artifactId>
                                        <version>1</version>
@@ -995,33 +999,35 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                                            <version>1</version>
                                          </dependency>
                                        </dependencies>
-                                       """);
+                                       """.trimIndent())
 
-    importProjects(m1, m2, m3);
-    if(!isNewImportingProcess) {
-      resolveDependenciesAndImport();
+    importProjects(m1, m2, m3)
+    if (!isNewImportingProcess) {
+      resolveDependenciesAndImport()
     }
-    List<MavenArtifactNode> nodes = getProjectsTree().findProject(m1).getDependencyTree();
-    assertDependenciesNodes(nodes, "test:m2:jar:1->(test:lib:jar:1->()),test:m3:jar:1->(test:lib:jar:1[DUPLICATE:test:lib:jar:1]->())");
+    val nodes = projectsTree.findProject(m1)!!.dependencyTree
+    assertDependenciesNodes(nodes, "test:m2:jar:1->(test:lib:jar:1->()),test:m3:jar:1->(test:lib:jar:1[DUPLICATE:test:lib:jar:1]->())")
 
-    assertSame(nodes.get(0).getDependencies().get(0).getArtifact(),
-               nodes.get(1).getDependencies().get(0).getRelatedArtifact());
+    assertSame(nodes[0]!!.dependencies[0].artifact,
+               nodes[1]!!.dependencies[0].relatedArtifact)
   }
 
-  protected void assertDependenciesNodes(List<MavenArtifactNode> nodes, String expected) {
-    assertEquals(expected, StringUtil.join(nodes, ","));
+  protected fun assertDependenciesNodes(nodes: List<MavenArtifactNode?>?, expected: String?) {
+    assertEquals(expected, StringUtil.join(nodes!!, ","))
   }
 
-  private String findPluginConfig(String groupId, String artifactId, String path) {
-    return MavenJDOMUtil.findChildValueByPath(getMavenProject().getPluginConfiguration(groupId, artifactId), path);
+  private fun findPluginConfig(groupId: String, artifactId: String, path: String): String {
+    return MavenJDOMUtil.findChildValueByPath(
+      mavenProject.getPluginConfiguration(groupId, artifactId), path)
   }
 
-  private String findPluginGoalConfig(String groupId, String artifactId, String goal, String path) {
-    return MavenJDOMUtil.findChildValueByPath(getMavenProject().getPluginGoalConfiguration(groupId, artifactId, goal), path);
+  private fun findPluginGoalConfig(groupId: String, artifactId: String, goal: String, path: String): String {
+    return MavenJDOMUtil.findChildValueByPath(
+      mavenProject.getPluginGoalConfiguration(groupId, artifactId, goal), path)
   }
 
-  private void assertDeclaredPlugins(PluginInfo... expected) {
-    List<PluginInfo> defaultPlugins = Arrays.asList(
+  private fun assertDeclaredPlugins(vararg expected: PluginInfo) {
+    val defaultPlugins = Arrays.asList(
       p("org.apache.maven.plugins", "maven-site-plugin"),
       p("org.apache.maven.plugins", "maven-deploy-plugin"),
       p("org.apache.maven.plugins", "maven-compiler-plugin"),
@@ -1029,74 +1035,68 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
       p("org.apache.maven.plugins", "maven-jar-plugin"),
       p("org.apache.maven.plugins", "maven-clean-plugin"),
       p("org.apache.maven.plugins", "maven-resources-plugin"),
-      p("org.apache.maven.plugins", "maven-surefire-plugin"));
-    List<PluginInfo> expectedList = new ArrayList<>();
-    expectedList.addAll(defaultPlugins);
-    if (isMaven4()) {
-      expectedList.add(p("org.apache.maven.plugins", "maven-wrapper-plugin"));
+      p("org.apache.maven.plugins", "maven-surefire-plugin"))
+    val expectedList: MutableList<PluginInfo> = ArrayList()
+    expectedList.addAll(defaultPlugins)
+    if (isMaven4) {
+      expectedList.add(p("org.apache.maven.plugins", "maven-wrapper-plugin"))
     }
-    expectedList.addAll(Arrays.asList(expected));
-    List<PluginInfo> actualList = p(getMavenProject().getDeclaredPlugins());
-    assertUnorderedElementsAreEqual(actualList, expectedList);
+    expectedList.addAll(Arrays.asList(*expected))
+    val actualList = p(
+      mavenProject.declaredPlugins)
+    assertUnorderedElementsAreEqual(actualList, expectedList)
   }
 
-  private MavenPlugin findPlugin(String groupId, String artifactId) {
-    return getMavenProject().findPlugin(groupId, artifactId);
+  private fun findPlugin(groupId: String, artifactId: String): MavenPlugin? {
+    return mavenProject.findPlugin(groupId, artifactId)
   }
 
-  private MavenProject getMavenProject() {
-    return getProjectsTree().getRootProjects().get(0);
-  }
+  private val mavenProject: MavenProject
+    get() = projectsTree.rootProjects[0]
 
-  private static PluginInfo p(String groupId, String artifactId) {
-    return new PluginInfo(groupId, artifactId);
-  }
-
-  private static PluginInfo p(MavenPlugin mavenPlugin) {
-    return new PluginInfo(mavenPlugin.getGroupId(), mavenPlugin.getArtifactId());
-  }
-
-  private List<PluginInfo> p(Collection<MavenPlugin> mavenPlugins) {
-    List<PluginInfo> res = new ArrayList<>(mavenPlugins.size());
-    for (MavenPlugin mavenPlugin : mavenPlugins) {
-      res.add(p(mavenPlugin));
+  private fun p(mavenPlugins: Collection<MavenPlugin>): List<PluginInfo> {
+    val res: MutableList<PluginInfo> = ArrayList(mavenPlugins.size)
+    for (mavenPlugin in mavenPlugins) {
+      res.add(p(mavenPlugin))
     }
 
-    return res;
+    return res
   }
 
-  private static final class PluginInfo {
-    String groupId;
-    String artifactId;
+  private class PluginInfo(groupId: String, artifactId: String) {
+    var groupId: String? = groupId
+    var artifactId: String? = artifactId
 
-    private PluginInfo(String groupId, String artifactId) {
-      this.groupId = groupId;
-      this.artifactId = artifactId;
+    override fun toString(): String {
+      return "$groupId:$artifactId"
     }
 
-    @Override
-    public String toString() {
-      return groupId + ":" + artifactId;
+    override fun equals(o: Any?): Boolean {
+      if (this === o) return true
+      if (o == null || javaClass != o.javaClass) return false
+
+      val info = o as PluginInfo
+
+      if (if (artifactId != null) artifactId != info.artifactId else info.artifactId != null) return false
+      if (if (groupId != null) groupId != info.groupId else info.groupId != null) return false
+
+      return true
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+    override fun hashCode(): Int {
+      var result = if (groupId != null) groupId.hashCode() else 0
+      result = 31 * result + if (artifactId != null) artifactId.hashCode() else 0
+      return result
+    }
+  }
 
-      PluginInfo info = (PluginInfo)o;
-
-      if (artifactId != null ? !artifactId.equals(info.artifactId) : info.artifactId != null) return false;
-      if (groupId != null ? !groupId.equals(info.groupId) : info.groupId != null) return false;
-
-      return true;
+  companion object {
+    private fun p(groupId: String, artifactId: String): PluginInfo {
+      return PluginInfo(groupId, artifactId)
     }
 
-    @Override
-    public int hashCode() {
-      int result = groupId != null ? groupId.hashCode() : 0;
-      result = 31 * result + (artifactId != null ? artifactId.hashCode() : 0);
-      return result;
+    private fun p(mavenPlugin: MavenPlugin?): PluginInfo {
+      return PluginInfo(mavenPlugin!!.groupId, mavenPlugin.artifactId)
     }
   }
 }
