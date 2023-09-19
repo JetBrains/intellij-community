@@ -2,13 +2,14 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.assertWithinTimeout
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsManagerState
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Assume
 import org.junit.Test
-import java.util.*
 
 class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
   override fun runInDispatchThread() = false
@@ -20,7 +21,7 @@ class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testSavingAndLoadingState() {
+  fun testSavingAndLoadingState() = runBlocking {
     var state = projectsManager.getState()
     assertTrue(state!!.originalFiles.isEmpty())
     assertTrue(MavenWorkspaceSettingsComponent.getInstance(myProject).settings.enabledProfiles.isEmpty())
@@ -43,7 +44,6 @@ class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
                                          <id>three</id>
                                         </profile>
                                        </profiles>
-                                       
                                        """.trimIndent())
 
     val p2 = createModulePom("project2",
@@ -55,7 +55,6 @@ class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
                                        <modules>
                                          <module>../project3</module>
                                        </modules>
-                                       
                                        """.trimIndent())
 
     val p3 = createModulePom("project3",
@@ -63,37 +62,35 @@ class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
                                        <groupId>test</groupId>
                                        <artifactId>project3</artifactId>
                                        <version>1</version>
-                                       
                                        """.trimIndent())
 
-    importProjects(p1, p2)
+    importProjectsAsync(p1, p2)
     projectsManager.explicitProfiles = MavenExplicitProfiles(mutableListOf("one", "two"))
-    setIgnoredFilesPathForNextImport(Arrays.asList(p1.getPath()))
+    setIgnoredFilesPathForNextImport(listOf(p1.getPath()))
     setIgnoredPathPatternsForNextImport(mutableListOf<String?>("*.xxx"))
 
     state = projectsManager.getState()
-    assertUnorderedPathsAreEqual(state!!.originalFiles, Arrays.asList(p1.getPath(), p2.getPath()))
+    assertUnorderedPathsAreEqual(state!!.originalFiles, listOf(p1.getPath(), p2.getPath()))
     assertUnorderedElementsAreEqual(MavenWorkspaceSettingsComponent.getInstance(myProject).getState().enabledProfiles, "one", "two")
-    assertUnorderedPathsAreEqual(state.ignoredFiles, Arrays.asList(p1.getPath()))
+    assertUnorderedPathsAreEqual(state.ignoredFiles, listOf(p1.getPath()))
     assertUnorderedElementsAreEqual(state.ignoredPathMasks, "*.xxx")
 
     val newState = MavenProjectsManagerState()
 
-    newState.originalFiles = Arrays.asList(p1.getPath(), p3.getPath())
+    newState.originalFiles = listOf(p1.getPath(), p3.getPath())
     MavenWorkspaceSettingsComponent.getInstance(myProject).settings.setEnabledProfiles(mutableListOf("three"))
     newState.ignoredFiles = setOf(p1.getPath())
     newState.ignoredPathMasks = mutableListOf("*.zzz")
 
     projectsManager.loadState(newState)
+    assertWithinTimeout {
+      assertUnorderedElementsAreEqual(projectsManager.projectsTreeForTests.rootProjectsFiles, p1, p3)
+    }
 
-    assertUnorderedPathsAreEqual(projectsManager.projectsTreeForTests.managedFilesPaths,
-                                 Arrays.asList(p1.getPath(), p3.getPath()))
+    assertUnorderedPathsAreEqual(projectsManager.projectsTreeForTests.managedFilesPaths, listOf(p1.getPath(), p3.getPath()))
     assertUnorderedElementsAreEqual(projectsManager.getExplicitProfiles().enabledProfiles, "three")
-    assertUnorderedPathsAreEqual(projectsManager.getIgnoredFilesPaths(), Arrays.asList(p1.getPath()))
+    assertUnorderedPathsAreEqual(projectsManager.getIgnoredFilesPaths(), listOf(p1.getPath()))
     assertUnorderedElementsAreEqual(projectsManager.getIgnoredFilesPatterns(), "*.zzz")
 
-    waitForReadingCompletion()
-    assertUnorderedElementsAreEqual(projectsManager.projectsTreeForTests.rootProjectsFiles,
-                                    p1, p3)
   }
 }

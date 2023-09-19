@@ -398,6 +398,10 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     importProjectsAsync(listOf(file))
   }
 
+  protected suspend fun importProjectsAsync(vararg files: VirtualFile) {
+    importProjectsAsync(listOf(*files))
+  }
+
   protected suspend fun importProjectsAsync(files: List<VirtualFile>) {
     initProjectsManager(false)
     projectsManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
@@ -413,10 +417,14 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     doImportProjects(listOf(myProjectPom), true, *profiles)
   }
 
+  @Obsolete
+  // use importProjectAsync()
   protected fun importProject(file: VirtualFile) {
     importProjects(file)
   }
 
+  @Obsolete
+  // use importProjectAsync()
   protected fun importProjects(vararg files: VirtualFile) {
     doImportProjects(listOf(*files), true)
   }
