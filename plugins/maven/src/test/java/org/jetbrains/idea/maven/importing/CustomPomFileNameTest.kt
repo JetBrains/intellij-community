@@ -1,19 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.importing;
+package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenDomTestCase;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenDomTestCase
+import kotlinx.coroutines.runBlocking
+import org.junit.Test
 
-public class CustomPomFileNameTest extends MavenDomTestCase {
-
-  @Override
-  protected boolean runInDispatchThread() {
-    return false;
-  }
+class CustomPomFileNameTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = false
 
   @Test
-  public void testCustomPomFileName() throws Exception {
+  fun testCustomPomFileName() = runBlocking {
     createProjectSubFile("m1/customName.xml", createPomXml(
       """
         <artifactId>m1</artifactId>
@@ -23,9 +19,9 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
           <artifactId>project</artifactId>
           <version>1</version>
         </parent>
-        """));
+        """.trimIndent()))
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -33,13 +29,13 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
                     <modules>
                       <module>m1/customName.xml</module>
                     </modules>
-                    """);
+                    """.trimIndent())
 
-    assertModules("project", mn("project", "m1"));
+    assertModules("project", mn("project", "m1"))
   }
 
   @Test
-  public void testFolderNameWithXmlExtension() throws Exception {
+  fun testFolderNameWithXmlExtension() = runBlocking {
     createProjectSubFile("customName.xml/pom.xml", createPomXml(
       """
         <artifactId>m1</artifactId>
@@ -49,9 +45,9 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
           <artifactId>project</artifactId>
           <version>1</version>
         </parent>
-        """));
+        """.trimIndent()))
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -59,13 +55,13 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
                     <modules>
                       <module>customName.xml</module>
                     </modules>
-                    """);
+                    """.trimIndent())
 
-    assertModules("project", mn("project", "m1"));
+    assertModules("project", mn("project", "m1"))
   }
 
   @Test
-  public void testModuleCompletion() throws Exception {
+  fun testModuleCompletion() = runBlocking {
     createProjectSubFile("m1/customPom.xml", createPomXml(
       """
         <artifactId>m1</artifactId>
@@ -75,9 +71,9 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
           <artifactId>project</artifactId>
           <version>1</version>
         </parent>
-        """));
+        """.trimIndent()))
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -85,7 +81,7 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
                     <modules>
                       <module>m1/customPom.xml</module>
                     </modules>
-                    """);
+                    """.trimIndent())
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -94,13 +90,13 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
                        <modules>
                          <module><caret></module>
                        </modules>
-                       """);
+                       """.trimIndent())
 
-    assertCompletionVariants(myProjectPom, "m1/customPom.xml");
+    assertCompletionVariants(myProjectPom, "m1/customPom.xml")
   }
 
   @Test
-  public void testParentCompletion() throws Exception {
+  fun testParentCompletion() = runBlocking {
     createProjectSubFile("m1/customPom.xml", createPomXml(
       """
         <artifactId>m1</artifactId>
@@ -114,7 +110,7 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
         <modules>
           <module>m2</module>
         </modules>
-        """));
+        """.trimIndent()))
 
     createProjectSubFile("m1/m2/pom.xml", createPomXml(
       """
@@ -126,9 +122,9 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
           <version>1</version>
           <relativePath>../customPom.xml</relativePath>
         </parent>
-        """));
+        """.trimIndent()))
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -136,9 +132,9 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
                     <modules>
                       <module>m1/customPom.xml</module>
                     </modules>
-                    """);
+                    """.trimIndent())
 
-    VirtualFile m2 = createProjectSubFile("m1/m2/pom.xml", createPomXml(
+    val m2 = createProjectSubFile("m1/m2/pom.xml", createPomXml(
       """
         <artifactId>m2</artifactId>
         <version>1</version>
@@ -148,13 +144,13 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
           <version>1</version>
           <relativePath>../<caret></relativePath>
         </parent>
-        """));
+        """.trimIndent()))
 
-    assertCompletionVariants(m2, "m2", "customPom.xml");
+    assertCompletionVariants(m2, "m2", "customPom.xml")
   }
 
   @Test
-  public void testReimport() throws Exception {
+  fun testReimport() = runBlocking {
     createProjectSubFile("m1/customName.xml", createPomXml(
       """
         <artifactId>m1</artifactId>
@@ -172,9 +168,9 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
             <scope>test</scope>
           </dependency>
         </dependencies>
-        """));
+        """.trimIndent()))
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -182,11 +178,11 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
                     <modules>
                       <module>m1/customName.xml</module>
                     </modules>
-                    """);
+                    """.trimIndent())
 
-    enableAutoReload();
+    enableAutoReload()
 
-    VirtualFile m1 = createProjectSubFile("m1/customName.xml", createPomXml(
+    val m1 = createProjectSubFile("m1/customName.xml", createPomXml(
       """
         <artifactId>m1</artifactId>
         <version>1</version>
@@ -203,15 +199,15 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
             <scope>test</scope>
           </dependency>
         </dependencies>
-        """));
-    type(m1, '1');
-    assertHasPendingProjectForReload();
+        """.trimIndent()))
+    type(m1, '1')
+    assertHasPendingProjectForReload()
 
-    scheduleProjectImportAndWait();
+    scheduleProjectImportAndWait()
   }
 
   @Test
-  public void testCustomPomFileNamePom() throws Exception {
+  fun testCustomPomFileNamePom() = runBlocking {
     createProjectSubFile("m1/customName.pom", createPomXml(
       """
         <artifactId>m1</artifactId>
@@ -221,9 +217,9 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
           <artifactId>project</artifactId>
           <version>1</version>
         </parent>
-        """));
+        """.trimIndent()))
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -231,8 +227,8 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
                     <modules>
                       <module>m1/customName.pom</module>
                     </modules>
-                    """);
+                    """.trimIndent())
 
-    assertModules("project", mn("project", "m1"));
+    assertModules("project", mn("project", "m1"))
   }
 }
