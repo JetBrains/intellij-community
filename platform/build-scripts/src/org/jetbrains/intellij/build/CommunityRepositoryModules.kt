@@ -179,6 +179,8 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.dev.psiViewer")
       spec.withModule("intellij.dev.codeInsight")
       spec.withModule("intellij.java.dev")
+      spec.withModule("intellij.groovy.dev")
+      spec.withModule("intellij.kotlin.dev")
       spec.withModule("intellij.platform.statistics.devkit")
     },
     pluginAuto(listOf("intellij.devkit")) { spec ->
@@ -191,7 +193,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.devkit.intelliLang")
       spec.withModule("intellij.devkit.uiDesigner")
       spec.withModule("intellij.devkit.workspaceModel")
-      spec.withModule("intellij.groovy.devkit")
       spec.withModule("intellij.kotlin.devkit")
       spec.withModule("intellij.devkit.jps")
       spec.withModule("intellij.devkit.runtimeModuleRepository.jps")

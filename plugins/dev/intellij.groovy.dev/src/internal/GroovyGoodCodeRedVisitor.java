@@ -1,19 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.groovy;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.dev.groovy.internal;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.dev.codeInsight.internal.GoodCodeRedVisitor;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.inspections.internal.GoodCodeRedVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrAccessibilityChecker;
 import org.jetbrains.plugins.groovy.codeInspection.type.GroovyStaticTypeCheckVisitorBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -23,14 +23,14 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
-public class GroovyGoodCodeRedVisitor implements GoodCodeRedVisitor {
+final class GroovyGoodCodeRedVisitor implements GoodCodeRedVisitor {
 
-  @NotNull
   @Override
-  public PsiElementVisitor createVisitor(ProblemsHolder holder) {
-    if (!Registry.is("groovy.good.code.is.red", false)) {
+  public @NotNull PsiElementVisitor createVisitor(@NotNull ProblemsHolder holder) {
+    if (!RegistryManager.getInstance().is("groovy.good.code.is.red")) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
+
     GroovyFileBase file = (GroovyFileBase)holder.getFile();
     Project project = holder.getProject();
     GrAccessibilityChecker accessibilityChecker = new GrAccessibilityChecker(file, project);

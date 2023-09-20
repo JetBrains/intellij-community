@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.inspections.internal;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.dev.codeInsight.internal;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.dev.codeInsight.internal.GoodCodeRedVisitor;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
@@ -15,17 +16,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class JavaGoodCodeRedVisitor implements GoodCodeRedVisitor {
-  @NotNull
+
   @Override
-  public PsiElementVisitor createVisitor(ProblemsHolder holder) {
+  public @NotNull PsiElementVisitor createVisitor(@NotNull ProblemsHolder holder) {
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(holder.getProject()).getResolveHelper();
     return new MyHighlightVisitorImpl(holder, resolveHelper);
   }
 
   private static final class MyHighlightVisitorImpl extends HighlightVisitorImpl {
-    private final PsiResolveHelper myResolveHelper;
 
-    private MyHighlightVisitorImpl(ProblemsHolder holder, PsiResolveHelper resolveHelper) {
+    private final @NotNull PsiResolveHelper myResolveHelper;
+
+    private MyHighlightVisitorImpl(@NotNull ProblemsHolder holder,
+                                   @NotNull PsiResolveHelper resolveHelper) {
+
       myResolveHelper = resolveHelper;
       prepareToRunAsInspection(new HighlightInfoHolder(holder.getFile()) {
         @Override
@@ -51,9 +55,8 @@ final class JavaGoodCodeRedVisitor implements GoodCodeRedVisitor {
       });
     }
 
-    @NotNull
     @Override
-    protected PsiResolveHelper getResolveHelper(@NotNull Project project) {
+    protected @NotNull PsiResolveHelper getResolveHelper(@NotNull Project project) {
       return myResolveHelper;
     }
   }

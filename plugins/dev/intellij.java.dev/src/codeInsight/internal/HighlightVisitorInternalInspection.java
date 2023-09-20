@@ -1,13 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.inspections.internal;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.dev.codeInsight.internal;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.dev.codeInsight.internal.GoodCodeRedVisitor;
+import com.intellij.dev.codeInsight.internal.LanguageGoodCodeRedVisitors;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class HighlightVisitorInternalInspection extends GoodCodeRedInspectionTool {
+final class HighlightVisitorInternalInspection extends GoodCodeRedInspectionTool {
+
   @Nls
   @NotNull
   @Override
@@ -15,8 +18,8 @@ public class HighlightVisitorInternalInspection extends GoodCodeRedInspectionToo
     return InspectionsBundle.message("group.names.probable.bugs");
   }
 
-  @Override
   @Nullable
+  @Override
   public GoodCodeRedVisitor getGoodCodeRedVisitor(@NotNull PsiFile file) {
     return LanguageGoodCodeRedVisitors.INSTANCE.forLanguage(file.getLanguage());
   }

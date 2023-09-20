@@ -242,12 +242,6 @@
                      enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesEqualsInspection"
                      key="inspection.use.primitive.types.equals.display.name"/>
-    <!--suppress PluginXmlCapitalization -->
-    <localInspection language="" shortName="HighlightVisitorInternal"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="false" isInternal="true"
-                     level="ERROR" implementationClass="org.jetbrains.idea.devkit.inspections.internal.HighlightVisitorInternalInspection"
-                     key="inspection.highlight.visitor.internal.display.name"/>
     <localInspection language="UAST" shortName="QuickFixGetFamilyNameViolation"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -568,7 +562,7 @@
   <extensions defaultExtensionNs="DevKit.lang">
     <goodCodeRedVisitor
       language="JAVA"
-      implementationClass="org.jetbrains.idea.devkit.inspections.internal.JavaGoodCodeRedVisitor"/>
+      implementationClass="com.intellij.java.dev.JavaGoodCodeRedVisitor"/>
     <cancellationCheckProvider
       language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.JavaCancellationCheckProvider"/>
@@ -601,11 +595,6 @@
 
 
   <extensionPoints>
-    <extensionPoint qualifiedName="DevKit.lang.goodCodeRedVisitor"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true">
-      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.internal.GoodCodeRedVisitor"/>
-    </extensionPoint>
     <extensionPoint qualifiedName="DevKit.lang.cancellationCheckProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
