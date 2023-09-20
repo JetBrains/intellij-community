@@ -9,10 +9,8 @@ import org.jetbrains.jps.dependency.java.JavaDifferentiateStrategy;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
 import org.jetbrains.jps.javac.Iterators;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 public class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
@@ -37,42 +35,53 @@ public class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
     Set<Node<?, ?>> nodesAfter = Iterators.collect(Iterators.flat(Iterators.map(delta.getSources(), s -> delta.getNodes(s))), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
 
     var diffContext = new DifferentiateContext() {
-      final Set<Usage> affectedUsages = new HashSet<>();
-      final Set<Predicate<Usage>> usageQueries = new HashSet<>();
+      private final Predicate<Node<?, ?>> ANY_CONSTRAINT = node -> true;
+
+      final Map<Usage, Predicate<Node<?, ?>>> affectedUsages = new HashMap<>();
+      final Set<BiPredicate<Node<?, ?>, Usage>> usageQueries = new HashSet<>();
       final Set<NodeSource> affectedSources = new HashSet<>();
 
       @Override
-      public Graph getGraph() {
+      public @NotNull Graph getGraph() {
         return DependencyGraphImpl.this;
       }
 
       @Override
-      public Delta getDelta() {
+      public @NotNull Delta getDelta() {
         return delta;
       }
 
       @Override
-      public void affectUsage(Usage usage) {
-        affectedUsages.add(usage);
+      public void affectUsage(@NotNull Usage usage) {
+        affectedUsages.put(usage, ANY_CONSTRAINT);
       }
 
       @Override
-      public void affectUsage(Predicate<Usage> usageQuery) {
+      public void affectUsage(@NotNull Usage usage, @NotNull Predicate<Node<?, ?>> constraint) {
+        Predicate<Node<?, ?>> prevConstraint = affectedUsages.put(usage, constraint);
+        if (prevConstraint != null) {
+          affectedUsages.put(usage, prevConstraint == ANY_CONSTRAINT? ANY_CONSTRAINT : prevConstraint.or(constraint));
+        }
+      }
+
+      @Override
+      public void affectUsage(@NotNull BiPredicate<Node<?, ?>, Usage> usageQuery) {
         usageQueries.add(usageQuery);
       }
 
       @Override
-      public void affectNodeSource(NodeSource source) {
+      public void affectNodeSource(@NotNull NodeSource source) {
         affectedSources.add(source);
       }
 
       boolean isNodeAffected(Node<?, ?> node) {
         for (Usage usage : node.getUsages()) {
-          if (affectedUsages.contains(usage)) {
+          Predicate<Node<?, ?>> constraint = affectedUsages.get(usage);
+          if (constraint != null && constraint.test(node)) {
             return true;
           }
-          for (Predicate<Usage> query : usageQueries) {
-            if (query.test(usage)) {
+          for (BiPredicate<Node<?, ?>, Usage> query : usageQueries) {
+            if (query.test(node, usage)) {
               return true;
             }
           }
@@ -80,14 +89,43 @@ public class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
         return false;
       }
     };
-    
+
+    boolean incremental = true;
     for (DifferentiateStrategy diffStrategy : myDifferentiateStrategies) {
-      diffStrategy.differentiate(diffContext, nodesBefore, nodesAfter);
+      if (!diffStrategy.differentiate(diffContext, nodesBefore, nodesAfter)) {
+        incremental = false;
+        break;
+      }
     }
 
     // do not process 'removed' per-source file. This works when a class comes from exactly one source, but might not work, if a class can be associated with several sources
     // better make a node-diff over all compiled sources => the sets of removed, added, deleted _nodes_ will be more accurate and reflecting reality
     List<Node<?, ?>> deletedNodes = Iterators.collect(Iterators.filter(nodesBefore, n -> !nodesAfter.contains(n)), new ArrayList<>());
+
+    if (!incremental) {
+      return new DifferentiateResult() {
+        @Override
+        public boolean isIncremental() {
+          return false;
+        }
+
+        @Override
+        public Delta getDelta() {
+          return delta;
+        }
+
+        @Override
+        public Iterable<Node<?, ?>> getDeletedNodes() {
+          return deletedNodes;
+        }
+
+        @Override
+        public Iterable<NodeSource> getAffectedSources() {
+          return Collections.emptyList();
+        }
+      };
+    }
+
     Set<NodeSource> affectedSources = new HashSet<>();
     Set<ReferenceID> dependingOnDeleted = Iterators.collect(Iterators.flat(Iterators.map(deletedNodes, n -> getDependingNodes(n.getReferenceID()))), new HashSet<>());
     for (ReferenceID dep : dependingOnDeleted) {
@@ -96,7 +134,7 @@ public class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
       }
     }
     
-    Iterable<ReferenceID> changedScopeNodes = Iterators.unique(Iterators.flat(Iterators.map(nodesAfter, n -> n.getReferenceID()), Iterators.map(diffContext.affectedUsages, u -> u.getElementOwner())));
+    Iterable<ReferenceID> changedScopeNodes = Iterators.unique(Iterators.flat(Iterators.map(nodesAfter, n -> n.getReferenceID()), Iterators.map(diffContext.affectedUsages.keySet(), u -> u.getElementOwner())));
     for (ReferenceID dependent : Iterators.unique(Iterators.filter(Iterators.flat(Iterators.map(changedScopeNodes, id -> getDependingNodes(id))), id -> !dependingOnDeleted.contains(id)))) {
       for (NodeSource depSrc : getSources(dependent)) {
         if (!affectedSources.contains(depSrc)) {

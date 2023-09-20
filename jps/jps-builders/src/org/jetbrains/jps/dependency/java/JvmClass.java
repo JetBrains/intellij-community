@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.javac.Iterators;
@@ -36,6 +37,13 @@ public class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     myMethods = methods;
     myAnnotationTargets = annotationTargets;
     myRetentionPolicy = retentionPolicy;
+  }
+
+  @NotNull
+  public String getPackageName() {
+    String name = getName();
+    int index = name.lastIndexOf('/');
+    return index >= 0? name.substring(0, index) : "";
   }
 
   public final boolean isAnonymous() {

@@ -17,6 +17,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class Utils {
+  public static final String OBJECT_CLASS_NAME = "java/lang/Object";
+
   @NotNull
   private final Graph myGraph;
   
@@ -87,4 +89,18 @@ public class Utils {
       }
     }.traverse(from, f);
   }
+
+  public Iterable<String> allDirectSupertypes(String className) {
+    return Iterators.unique(Iterators.flat(Iterators.map(getClassesByName(className), cl -> cl.getSuperTypes())));
+  }
+
+  public Set<String> collectAllSupertypes(String className, Set<String> acc) {
+    for (String st : allDirectSupertypes(className)) {
+      if (acc.add(st)) {
+        collectAllSupertypes(st, acc);
+      }
+    }
+    return acc;
+  }
+
 }
