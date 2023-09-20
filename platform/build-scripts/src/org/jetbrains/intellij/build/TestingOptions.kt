@@ -133,7 +133,7 @@ open class TestingOptions {
   /**
    * Run only whole classes in forked Runtime in case if [batchTestIncludes] mode enabled
    */
-  var batchOnlyClasses: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.batch.only.classes", false)
+  var isDedicatedRuntimePerClassEnabled: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.dedicated.runtime.per.class.enabled", false)
 
   var isPerformanceTestsOnly = SystemProperties.getBooleanProperty(PERFORMANCE_TESTS_ONLY_FLAG, false)
 
