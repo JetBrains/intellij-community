@@ -6,6 +6,7 @@
   <content>
     <module name="intellij.dev.psiViewer"/>
     <module name="intellij.dev.codeInsight"/>
+    <module name="intellij.java.dev"/>
     <module name="intellij.platform.statistics.devkit"/>
   </content>
 </idea-plugin>

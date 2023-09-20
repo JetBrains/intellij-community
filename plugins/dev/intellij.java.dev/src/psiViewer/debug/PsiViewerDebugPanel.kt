@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.devkit.psiViewer.debug
+package com.intellij.java.dev.psiViewer.debug
 
 import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.SuspendContextImpl
@@ -14,7 +14,7 @@ import com.intellij.dev.psiViewer.ViewerNodeDescriptor
 import com.intellij.dev.psiViewer.ViewerTreeStructure
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.treeView.IndexComparator
-import com.intellij.java.devkit.psiViewer.JavaPsiViewerBundle
+import com.intellij.java.dev.JavaDevBundle
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.notification.NotificationType
@@ -112,8 +112,8 @@ class PsiViewerDebugPanel(
   }
 
   private inner class OpenDialogAction : AnAction(
-    JavaPsiViewerBundle.message("psi.viewer.show.open.dialog.action"),
-    JavaPsiViewerBundle.message("psi.viewer.show.open.dialog.description"),
+    JavaDevBundle.message("psi.viewer.show.open.dialog.action"),
+    JavaDevBundle.message("psi.viewer.show.open.dialog.description"),
     AllIcons.ToolbarDecorator.Export
   ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -125,9 +125,9 @@ class PsiViewerDebugPanel(
   }
 
   private inner class WatchModeAction : ToggleAction(
-    JavaPsiViewerBundle.message("psi.viewer.toggle.watch.mode.action"),
-    JavaPsiViewerBundle.message("psi.viewer.toggle.watch.mode.description"),
-    AllIcons.Debugger.Watch
+    JavaDevBundle.message("psi.viewer.toggle.watch.mode.action"),
+    JavaDevBundle.message("psi.viewer.toggle.watch.mode.description"),
+    AllIcons.Debugger.Watch,
   ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -165,7 +165,8 @@ class PsiViewerDebugPanel(
         evaluator.evaluate(expression, object : XDebuggerEvaluator.XEvaluationCallback {
           override fun errorOccurred(errorMessage: String) {
             XDebuggerManagerImpl.getNotificationGroup().createNotification(
-              JavaPsiViewerBundle.message("psi.viewer.debug.evaluation.failed"), NotificationType.ERROR
+              JavaDevBundle.message("psi.viewer.debug.evaluation.failed"),
+              NotificationType.ERROR,
             )
             LOG.error("Failed to evaluate PSI expression", errorMessage)
           }
@@ -189,7 +190,8 @@ class PsiViewerDebugPanel(
             }
             catch (e: EvaluateException) {
               XDebuggerManagerImpl.getNotificationGroup().createNotification(
-                JavaPsiViewerBundle.message("psi.viewer.debug.evaluation.failed"), NotificationType.ERROR
+                JavaDevBundle.message("psi.viewer.debug.evaluation.failed"),
+                NotificationType.ERROR,
               )
               LOG.error("Failed to evaluate PSI expression", e)
             }
@@ -201,8 +203,8 @@ class PsiViewerDebugPanel(
   }
 
   private inner class ResetSelection : AnAction(
-    JavaPsiViewerBundle.message("psi.viewer.show.reset.selection.action"),
-    JavaPsiViewerBundle.message("psi.viewer.show.reset.selection.description"),
+    JavaDevBundle.message("psi.viewer.show.reset.selection.action"),
+    JavaDevBundle.message("psi.viewer.show.reset.selection.description"),
     AllIcons.General.Reset
   ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -215,8 +217,8 @@ class PsiViewerDebugPanel(
 
 
   private inner class ShowWhiteSpaceAction : ToggleAction(
-    JavaPsiViewerBundle.message("psi.viewer.show.whitespace.action"),
-    JavaPsiViewerBundle.message("psi.viewer.show.whitespace.description"),
+    JavaDevBundle.message("psi.viewer.show.whitespace.action"),
+    JavaDevBundle.message("psi.viewer.show.whitespace.description"),
     AllIcons.Diff.GutterCheckBox
   ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -232,8 +234,8 @@ class PsiViewerDebugPanel(
   }
 
   private inner class ShowTreeNodesAction : ToggleAction(
-    JavaPsiViewerBundle.message("psi.viewer.show.tree.nodes.action"),
-    JavaPsiViewerBundle.message("psi.viewer.show.tree.nodes.description"),
+    JavaDevBundle.message("psi.viewer.show.tree.nodes.action"),
+    JavaDevBundle.message("psi.viewer.show.tree.nodes.description"),
     AllIcons.Actions.PrettyPrint
   ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

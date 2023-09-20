@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.devkit.psiViewer.debug
+package com.intellij.java.dev.psiViewer.debug
 
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.JavaDebugProcess
@@ -9,7 +9,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.memory.action.DebuggerTreeAction
 import com.intellij.dev.psiViewer.PsiViewerDialog
-import com.intellij.java.devkit.psiViewer.JavaPsiViewerBundle
+import com.intellij.java.dev.JavaDevBundle
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -81,7 +81,7 @@ class PsiViewerDebugAction : DebuggerTreeAction() {
           }
         } catch (e: EvaluateException) {
           XDebuggerManagerImpl.getNotificationGroup().createNotification(
-            JavaPsiViewerBundle.message("psi.viewer.debug.evaluation.failed"), NotificationType.ERROR
+            JavaDevBundle.message("psi.viewer.debug.evaluation.failed"), NotificationType.ERROR
           )
           LOG.error("Failed to evaluate PSI expression", e)
         }

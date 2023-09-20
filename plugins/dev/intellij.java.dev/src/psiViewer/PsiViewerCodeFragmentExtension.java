@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.devkit.psiViewer;
+package com.intellij.java.dev.psiViewer;
 
+import com.intellij.java.dev.JavaDevBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.IconManager;
@@ -12,7 +13,7 @@ import javax.swing.*;
 final class PsiViewerCodeFragmentExtension extends JavaPsiViewerExtension {
   @Override
   public @NotNull String getName() {
-    return JavaPsiViewerBundle.message("java.code.block");
+    return JavaDevBundle.message("java.code.block");
   }
 
   @Override
