@@ -26,14 +26,11 @@ public class NodeKeyDescriptor<T extends SerializableGraphElement> implements Ke
 
   @Override
   public void save(final @NotNull DataOutput storage, final @NotNull T value) throws IOException {
-    //TODO
-    //IOUtil.writeUTF(storage, value);
+    SerializerRegistryImpl.getInstance().getSerializer(0).write(value, storage);
   }
 
   @Override
   public T read(final @NotNull DataInput storage) throws IOException {
-    //TODO
-    return null;
-    //return IOUtil.readUTF(storage);
+    return SerializerRegistryImpl.getInstance().getSerializer(0).read(storage);
   }
 }

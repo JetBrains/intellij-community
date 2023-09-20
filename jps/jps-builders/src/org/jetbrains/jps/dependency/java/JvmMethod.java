@@ -13,9 +13,10 @@ import java.util.Objects;
 import java.util.Set;
 
 public class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, JvmMethod.Diff> {
-  public final Iterable<TypeRepr> myArgTypes;
+  private final Iterable<TypeRepr> myArgTypes;
   private final Set<ParamAnnotation> myParamAnnotations;
   private final Set<TypeRepr.ClassType> myExceptions;
+  private final String myDescriptor;
 
   public JvmMethod(
     JVMFlags flags, String signature, String name, String descriptor,
@@ -26,11 +27,12 @@ public class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, Jvm
     myParamAnnotations = parameterAnnotations;
     myExceptions = Iterators.collect(Iterators.map(Arrays.asList(exceptions), s -> new TypeRepr.ClassType(s)), new HashSet<>());
     myArgTypes = TypeRepr.getTypes(Type.getArgumentTypes(descriptor));
+    myDescriptor = descriptor;
   }
 
   @Override
   public MethodUsage createUsage(String owner) {
-    return new MethodUsage(owner, getName(), getDescr());
+    return new MethodUsage(owner, getName(), getDescriptor());
   }
   
   public Set<ParamAnnotation> getParamAnnotations() {
@@ -40,7 +42,15 @@ public class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, Jvm
   public Set<TypeRepr.ClassType> getExceptions() {
     return myExceptions;
   }
-  
+
+  public Iterable<TypeRepr> getArgTypes() {
+    return myArgTypes;
+  }
+
+  public String getDescriptor() {
+    return myDescriptor;
+  }
+
   @Override
   public boolean isSame(DiffCapable<?, ?> other) {
     if (!(other instanceof JvmMethod)) {
@@ -82,20 +92,5 @@ public class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, Jvm
     public Specifier<TypeRepr.ClassType, ?> exceptionsChanged() {
       return Difference.diff(myPast.getExceptions(), getExceptions());
     }
-  }
-
-  private String getDescr() {
-    final StringBuilder buf = new StringBuilder();
-
-    buf.append("(");
-
-    for (TypeRepr t : myArgTypes) {
-      buf.append(t.getDescriptor());
-    }
-
-    buf.append(")");
-    buf.append(getType().getDescriptor());
-
-    return buf.toString();
   }
 }

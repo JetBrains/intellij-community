@@ -10,6 +10,7 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.dependency.MultiMaplet;
 import org.jetbrains.jps.dependency.NodeSerializerRegistry;
 import org.jetbrains.jps.dependency.SerializableGraphElement;
+import org.jetbrains.jps.javac.Iterators;
 
 import java.io.*;
 import java.util.*;
@@ -70,53 +71,18 @@ public class PersistentSetMultiMaplet<K extends SerializableGraphElement, V exte
   @Override
   public @Nullable Iterable<V> get(K key) {
     final Collection<V> collection = myCache.get(key);
-    return collection == NULL_COLLECTION? null : collection;
+    return collection == NULL_COLLECTION ? null : collection;
   }
 
   @Override
-  public void put(K key, Iterable<? extends V> values) { // TODO: ask: почему такой сранный тип?
-    //TODO
-    //try {
-    //  myCache.remove(key);
-    //  myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
-    //    @Override
-    //    public void append(@NotNull final DataOutput out) throws IOException {
-    //      ObjectIterator<V> iterator = values.iterator();
-    //      while (iterator.hasNext()) {
-    //        int value1 = iterator.nextInt();
-    //        DataInputOutputUtil.writeINT(out, value1);
-    //      }
-    //    }
-    //  });
-    //}
-    //catch (IOException e) {
-    //  throw new BuildDataCorruptedException(e);
-    //}
-
-
-    //try {
-    //  myMap.put(key, (Collection<V>)values);
-    //}
-    //catch (IOException e) {
-    //  throw new BuildDataCorruptedException(e);
-    //}
-
-
-
-    //List<String> serializedNodes = new ArrayList<>();
-    //
-    //for (V value : values) {
-    //  try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    //       DataOutputStream dataOut = new DataOutputStream(baos)) {
-    //    mySerializerRegistry.getSerializer(0).write(value, dataOut);
-    //    serializedNodes.add(baos.toString(StandardCharsets.UTF_8));
-    //  }
-    //  catch (IOException e) {
-    //    throw new RuntimeException(e);
-    //  }
-    //}
-    //
-    //myMap.put(key.hashCode(), serializedNodes);
+  public void put(K key, Iterable<? extends V> values) {
+    try {
+      myCache.remove(key);
+      myMap.put(key, Iterators.collect(values, new HashSet<>()));
+    }
+    catch (IOException e) {
+      throw new BuildDataCorruptedException(e);
+    }
   }
 
   @Override
@@ -132,32 +98,39 @@ public class PersistentSetMultiMaplet<K extends SerializableGraphElement, V exte
 
   @Override
   public void appendValue(K key, V value) {
-    //TODO
-    //try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    //     DataOutputStream dataOut = new DataOutputStream(baos)) {
-    //  mySerializerRegistry.getSerializer(0).write(value, dataOut);
-    //  myMap.put(key.hashCode(), baos.toString());
-    //}
-    //catch (IOException e) {
-    //  throw new RuntimeException(e);
-    //}
+    try {
+      myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
+        @Override
+        public void append(@NotNull final DataOutput out) throws IOException {
+          //TODO
+          //DataInputOutputUtil.write(out, value);
+        }
+      });
+    }
+    catch (IOException e) {
+      throw new BuildDataCorruptedException(e);
+    }
   }
 
   @Override
   public void removeValue(K key, V value) {
-    //TODO
-    //String serializedValueToRemove;
-    //try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    //     DataOutputStream dataOut = new DataOutputStream(baos)) {
-    //  mySerializerRegistry.getSerializer(0).write(value, dataOut);
-    //  serializedValueToRemove = baos.toString(StandardCharsets.UTF_8);
-    //}
-    //catch (IOException e) {
-    //  // Обработайте исключение или зарегистрируйте его, если это необходимо
-    //  throw new RuntimeException(e);
-    //}
-    //
-    //myMap.removeFrom(key.hashCode(), serializedValueToRemove);
+    try {
+      final Collection<V> collection = myCache.get(key);
+      if (collection != NULL_COLLECTION) {
+        if (collection.remove(value)) {
+          myCache.remove(key);
+          if (collection.isEmpty()) {
+            myMap.remove(key);
+          }
+          else {
+            myMap.put(key, collection);
+          }
+        }
+      }
+    }
+    catch (IOException e) {
+      throw new BuildDataCorruptedException(e);
+    }
   }
 
   @Override

@@ -3,7 +3,7 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.jps.dependency.impl.StringReferenceID;
 
-abstract class MemberUsage extends JvmElementUsage {
+public abstract class MemberUsage extends JvmElementUsage {
 
   private final String myName;
 
