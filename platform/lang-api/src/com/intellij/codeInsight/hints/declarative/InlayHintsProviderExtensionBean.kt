@@ -102,7 +102,7 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   }
 
   fun getProviderName() : @Nls String {
-    return getLocalizedString(bundle!!, nameKey!!)!!
+    return getLocalizedString(bundle, nameKey!!)!!
   }
 
   fun getDescription() : @Nls String? {
