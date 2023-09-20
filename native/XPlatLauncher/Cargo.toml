@@ -12,18 +12,18 @@ lto = true
 codegen-units = 1
 
 [dependencies]
-log = { version = "0.4.17", features = ["std"] }
-serde = { version = "1.0.136", features = ["derive"] }
-serde_json = "1.0.79"
+log = { version = "0.4.20", features = ["std"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 jni = "0.21.1"
 libloading = "0.8.0"
-anyhow = { version = "1.0.62", features = ["std", "backtrace"] }
+anyhow = { version = "1", features = ["std", "backtrace"] }
 
 [target.'cfg(not(all(target_os = "windows", target_arch = "aarch64")))'.dependencies]
 va_list = "0.1.4"
 
 [target.'cfg(target_os = "windows")'.dependencies.windows]
-version = "0.48.0"
+version = "0.51.1"
 features = ["Win32_Foundation", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging", "Win32_System_Environment", "Win32_System_Services", "Win32_Security"]
 
 [target.'cfg(target_family = "unix")'.dependencies]
@@ -36,8 +36,8 @@ core-foundation = "0.9.3"
 native-dialog = "0.6.3"
 
 [build-dependencies]
-cargo-deny = "0.14.1" # checks licenses / vulns
-cargo-about = "0.5.6" # generates license report
+cargo-deny = "0.14.2" # checks licenses / vulns
+cargo-about = "0.5.7" # generates license report
 
 [dev-dependencies]
 tempfile = "3"
