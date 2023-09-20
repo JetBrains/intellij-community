@@ -92,7 +92,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
       val newRequest = actualizeRequestOrNull(request)
       if (newRequest != null) {
         withContext(Dispatchers.EDT) {
-          InlineCompletionContext.getOrNull(request.editor)?.let { context ->
+          InlineCompletionContext.getOrNull(newRequest.editor)?.let { context ->
             hide(newRequest.editor, false, context)
           }
         }
@@ -250,6 +250,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     }
 
     // ML-1237, ML-1281, ML-1232
+    // TODO should not go to EDT but it helps us wait for an actual caret position
     val offsetDelta = withContext(Dispatchers.EDT) { request.editor.caretModel.offset - request.endOffset }
     if (offsetDelta == 0) {
       return null
