@@ -3,11 +3,8 @@ package com.intellij.openapi.vfs.newvfs.persistent.mapped;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.IOUtil;
-import io.opentelemetry.api.metrics.Meter;
-import io.opentelemetry.api.metrics.ObservableLongMeasurement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,10 +17,10 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.VFS;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.channels.FileChannel.MapMode.READ_WRITE;
@@ -64,37 +61,6 @@ public final class MMappedFileStorage implements Closeable {
 
   /** Log warn if > PAGES_TO_WARN_THRESHOLD pages were mapped */
   private static final int PAGES_TO_WARN_THRESHOLD = getIntProperty("vfs.memory-mapped-storage.pages-to-warn-threshold", 256);
-
-  static {
-    Meter meter = TelemetryManager.getInstance().getMeter(VFS);
-    ObservableLongMeasurement storagesCounter = meter.gaugeBuilder("MappedFileStorage.storages")
-      .setDescription("MappedFileStorage instances in operation at the moment")
-      .ofLongs()
-      .buildObserver();
-    ObservableLongMeasurement pagesCounter = meter.gaugeBuilder("MappedFileStorage.totalPagesMapped")
-      .setDescription("MappedFileStorage.Page instances in operation at the moment")
-      .ofLongs()
-      .buildObserver();
-    ObservableLongMeasurement pagesBytesCounter = meter.gaugeBuilder("MappedFileStorage.totalBytesMapped")
-      .setDescription("Total size of MappedByteBuffers in use by MappedFileStorage at the moment")
-      .setUnit("bytes")
-      .ofLongs()
-      .buildObserver();
-    ObservableLongMeasurement mappingTimeCounter = meter.gaugeBuilder("MappedFileStorage.totalTimeSpentOnMappingUs")
-      .setDescription("Total time (us) spent inside Page.map() method (file enlargement/zeroing + map)")
-      .setUnit("us")
-      .ofLongs()
-      .buildObserver();
-    meter.batchCallback(
-      () -> {
-        storagesCounter.record(storages.get());
-        pagesCounter.record(totalPagesMapped.get());
-        pagesBytesCounter.record(totalBytesMapped.get());
-        mappingTimeCounter.record(NANOSECONDS.toMicros(totalTimeForPageMapNs.get()));
-      },
-      storagesCounter, pagesCounter, pagesBytesCounter, mappingTimeCounter
-    );
-  }
 
   private final Path storagePath;
 
@@ -378,6 +344,27 @@ public final class MMappedFileStorage implements Closeable {
       return "Page[#" + pageIndex + "][offset: " + offsetInFile + ", length: " + pageBuffer.capacity() + " b)";
     }
   }
+
+  // ============ statistics accessors ======================================================================
+
+  public static int storages() {
+    return storages.get();
+  }
+
+  public static int totalPagesMapped() {
+    return totalPagesMapped.get();
+  }
+
+  public static long totalBytesMapped() {
+    return totalBytesMapped.get();
+  }
+
+  /** total time spent inside {@link Page#map(FileChannel, int)} call (including file expansion/zeroing, if needed) */
+  public static long totalTimeForPageMap(@NotNull TimeUnit unit) {
+    return unit.convert(totalTimeForPageMapNs.get(), NANOSECONDS);
+  }
+
+  // ============ statistics infra  ========================================================================
 
   private static void registerMappedPage(int pageSize) {
     int pagesMapped = totalPagesMapped.incrementAndGet();

@@ -9,6 +9,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedStorageOTelMonitor
 import com.intellij.platform.diagnostic.telemetry.Storage
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.helpers.ReentrantReadWriteLockUsageMonitor
@@ -55,8 +56,11 @@ object StorageDiagnosticData {
   @Volatile
   private var regularDumpHandle: Future<*>? = null
 
+  @Volatile
+  private var mmappedStoragesMonitoringHandle: MappedStorageOTelMonitor? = null
+
   @JvmStatic
-  fun dumpPeriodically() {
+  fun startPeriodicDumping() {
     setupReportingToOpenTelemetry()
 
     val executor = AppExecutorUtil.createBoundedScheduledExecutorService(
@@ -77,6 +81,13 @@ object StorageDiagnosticData {
       regularDumpHandleLocalCopy.cancel(false)
       regularDumpHandle = null
     }
+
+    val mmappedStoragesMonitoringHandleLocalCopy = mmappedStoragesMonitoringHandle
+    if (mmappedStoragesMonitoringHandleLocalCopy != null) {
+      mmappedStoragesMonitoringHandleLocalCopy.close()
+      mmappedStoragesMonitoringHandle = null
+    }
+
     dump(onShutdown = true)
   }
 
@@ -267,10 +278,11 @@ object StorageDiagnosticData {
       setupFilePageCacheLockFreeReporting(otelMeter)
     }
 
-
     otelMeter.counterBuilder("FileChannelInterruptsRetryer.totalRetriedAttempts").buildWithCallback {
       it.record(FileChannelInterruptsRetryer.totalRetriedAttempts())
     }
+
+    mmappedStoragesMonitoringHandle = MappedStorageOTelMonitor(otelMeter)
   }
 
   private fun setupFilePageCacheLockFreeReporting(otelMeter: Meter) {
