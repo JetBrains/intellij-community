@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.addAssertCo
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 
-@TestApplication
 class AssertConsistencyTest {
   @Test
   fun `check should pass`() {

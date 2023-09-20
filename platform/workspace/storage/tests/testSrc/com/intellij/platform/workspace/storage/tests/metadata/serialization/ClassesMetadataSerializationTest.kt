@@ -4,9 +4,7 @@ package com.intellij.platform.workspace.storage.tests.metadata.serialization
 import com.intellij.platform.workspace.storage.impl.serialization.UnsupportedEntitiesVersionException
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
-import com.intellij.platform.workspace.storage.tests.ApplicationRuleService
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.Test
 
 class ClassesMetadataSerializationTest: MetadataSerializationTest() {

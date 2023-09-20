@@ -33,7 +33,6 @@ import kotlin.test.assertTrue
  *     is not intuitive.
  */
 
-@TestApplication
 class ParentAndChildTest {
   @Test
   fun `parent with child`() {

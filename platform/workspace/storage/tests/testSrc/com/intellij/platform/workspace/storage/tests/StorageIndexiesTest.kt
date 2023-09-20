@@ -13,7 +13,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-@TestApplication
 class StorageIndexesTest {
   @Test
   fun `check entity source index`() {

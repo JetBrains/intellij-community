@@ -5,7 +5,7 @@ import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadat
 import com.intellij.platform.workspace.storage.metadata.utils.MetadataTypesFqnComparator
 import com.intellij.platform.workspace.storage.tests.metadata.serialization.replaceCacheVersion
 
-internal class TestMetadataTypesFqnComparator: MetadataTypesFqnComparator {
+internal object TestMetadataTypesFqnComparator: MetadataTypesFqnComparator {
   override fun compareFqns(cache: String, current: String): Boolean {
     return cache.replaceCacheVersion() == current
   }

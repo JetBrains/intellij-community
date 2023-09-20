@@ -21,7 +21,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
-@TestApplication
 class AddDiffTest {
   private lateinit var target: MutableEntityStorageImpl
   private var shaker = -1L

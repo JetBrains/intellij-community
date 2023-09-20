@@ -17,7 +17,6 @@ import org.junit.jupiter.api.RepetitionInfo
 import java.util.*
 import kotlin.test.*
 
-@TestApplication
 class ReplaceBySourceTest {
 
   private lateinit var builder: MutableEntityStorageImpl

@@ -9,8 +9,9 @@ import com.intellij.platform.workspace.storage.metadata.resolver.TypeMetadataRes
 import com.intellij.platform.workspace.storage.tests.metadata.serialization.deserialization
 import com.intellij.platform.workspace.storage.tests.metadata.serialization.replaceCacheVersion
 
-internal class TestTypeMetadataResolver: TypeMetadataResolver {
-  private val typeMetadataResolver = TypeMetadataResolverImpl()
+internal class TestTypeMetadataResolver(
+  private val typeMetadataResolver: TypeMetadataResolver
+): TypeMetadataResolver {
 
   override fun resolveTypeMetadataOrNull(typeFqn: String, pluginId: PluginId, typesResolver: EntityTypesResolver): StorageTypeMetadata? {
     return typeMetadataResolver.resolveTypeMetadataOrNull(processTypeFqn(typeFqn), pluginId, typesResolver)

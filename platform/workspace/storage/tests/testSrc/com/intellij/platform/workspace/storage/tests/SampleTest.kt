@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 
-@TestApplication
 class SampleTest {
   @Test
   fun `entity creation`() {

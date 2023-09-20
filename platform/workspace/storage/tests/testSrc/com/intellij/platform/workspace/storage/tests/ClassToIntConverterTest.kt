@@ -11,7 +11,6 @@ import java.util.concurrent.Callable
 import kotlin.random.Random
 import kotlin.test.assertEquals
 
-@TestApplication
 class ClassToIntConverterTest {
   @Test
   fun `multi thread initialization`() {

@@ -11,7 +11,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-@TestApplication
 class AddChildrenTest {
   @Test
   fun `child added to the store at parent modification`() {

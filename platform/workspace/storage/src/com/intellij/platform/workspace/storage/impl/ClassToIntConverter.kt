@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -24,10 +24,14 @@ internal interface ClassToIntConverter {
   fun fromMap(map: Object2IntMap<Class<*>>)
 
   companion object {
-    fun getInstance(): ClassToIntConverter =
-      ApplicationManager.getApplication()?.getService(ClassToIntConverter::class.java) ?: INSTANCE
+    fun getInstance(): ClassToIntConverter = INSTANCE
 
-    private val INSTANCE: ClassToIntConverter = ClassToIntConverterImpl()
+    @TestOnly
+    internal fun replaceClassToIntConverter(classToIntConverter: ClassToIntConverter) {
+      INSTANCE = classToIntConverter
+    }
+
+    private var INSTANCE: ClassToIntConverter = ClassToIntConverterImpl()
   }
 }
 

@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test
 import kotlin.reflect.full.memberProperties
 import kotlin.test.assertEquals
 
-@TestApplication
 class PropertyTest {
 
   @Test

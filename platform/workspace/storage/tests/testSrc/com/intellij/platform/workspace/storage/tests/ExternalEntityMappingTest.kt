@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-@TestApplication
 class ExternalEntityMappingTest {
   companion object {
     private const val INDEX_ID = "test.index.id"

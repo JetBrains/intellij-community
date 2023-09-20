@@ -16,7 +16,6 @@ import kotlin.test.assertContains
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-@TestApplication
 class GeneratedCodeVersionsTest {
   private var prev_api = 0
   private var prev_impl = 0

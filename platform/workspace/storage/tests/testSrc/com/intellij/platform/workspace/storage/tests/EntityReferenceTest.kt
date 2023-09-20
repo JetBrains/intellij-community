@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
-@TestApplication
 class EntityReferenceTest {
   private lateinit var virtualFileUrlManager: VirtualFileUrlManager
 

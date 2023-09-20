@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.metadata.utils
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import com.intellij.platform.workspace.storage.metadata.diff.MetadataComparator
+import org.jetbrains.annotations.TestOnly
 
 /**
  * Used in [MetadataComparator] to compare classes fqns and to resolve type fqn from [StorageTypeMetadata]
@@ -17,14 +17,18 @@ internal interface MetadataTypesFqnComparator {
   fun getTypeFqn(typeMetadata: StorageTypeMetadata): String
 
   companion object {
-    fun getInstance(): MetadataTypesFqnComparator =
-      ApplicationManager.getApplication()?.getService(MetadataTypesFqnComparator::class.java) ?: INSTANCE
+    internal fun getInstance(): MetadataTypesFqnComparator = INSTANCE
 
-    private val INSTANCE: MetadataTypesFqnComparator = MetadataTypesFqnComparatorImpl()
+    @TestOnly
+    internal fun replaceMetadataTypesFqnComparator(metadataTypesFqnComparator: MetadataTypesFqnComparator) {
+      INSTANCE = metadataTypesFqnComparator
+    }
+
+    private var INSTANCE: MetadataTypesFqnComparator = MetadataTypesFqnComparatorImpl
   }
 }
 
-internal class MetadataTypesFqnComparatorImpl: MetadataTypesFqnComparator {
+internal object MetadataTypesFqnComparatorImpl: MetadataTypesFqnComparator {
   override fun compareFqns(cache: String, current: String): Boolean {
     return cache == current
   }

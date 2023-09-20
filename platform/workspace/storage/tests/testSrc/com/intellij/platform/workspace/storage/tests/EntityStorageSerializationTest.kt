@@ -18,7 +18,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 
-@TestApplication
 class EntityStorageSerializationTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
 

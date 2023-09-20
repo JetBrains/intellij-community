@@ -12,7 +12,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-@TestApplication
 class ParentAndNullableChildTest {
   @Test
   fun `parent with child`() {

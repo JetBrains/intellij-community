@@ -12,7 +12,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 
-@TestApplication
 class FinalAndDefaultFieldsTest {
   @Test
   fun `check final and default fields initialized`() {

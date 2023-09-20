@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-@TestApplication
 class AbstractTest {
   @Test
   fun `parent with child`() {

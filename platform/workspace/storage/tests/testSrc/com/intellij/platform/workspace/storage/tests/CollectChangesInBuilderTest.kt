@@ -12,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
-@TestApplication
 @Suppress("UNCHECKED_CAST")
 class CollectChangesInBuilderTest {
   private lateinit var initialStorage: EntityStorageSnapshot

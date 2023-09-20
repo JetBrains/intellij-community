@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
-@TestApplication
 class RiderEntitiesTest {
   @Test
   fun `check for update the connection to rider entity via extension property `() {

@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
-@TestApplication
 class CacheApiTest {
   @Test
   fun testEntities() {

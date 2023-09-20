@@ -15,7 +15,6 @@ import kotlin.test.assertTrue
 
 internal fun EntityStorage.singleSampleEntity() = entities(SampleEntity::class.java).single()
 
-@TestApplication
 class SimplePropertiesInStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
 

@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-@TestApplication
 class CircularDependencyProhibitedTest {
   @Test
   fun `add one-to-one entity as parent to itself`() {

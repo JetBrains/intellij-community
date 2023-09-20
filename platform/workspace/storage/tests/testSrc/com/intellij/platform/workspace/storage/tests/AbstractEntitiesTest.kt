@@ -10,7 +10,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
-@TestApplication
 class AbstractEntitiesTest {
   @Test
   fun `simple adding`() {

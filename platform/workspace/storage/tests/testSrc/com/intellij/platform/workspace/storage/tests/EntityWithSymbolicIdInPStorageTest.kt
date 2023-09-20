@@ -12,7 +12,6 @@ import org.junit.jupiter.api.*
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-@TestApplication
 class EntityWithSymbolicIdInPStorageTest {
 
   private lateinit var builder: MutableEntityStorageImpl

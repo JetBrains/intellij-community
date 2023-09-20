@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test
 import java.util.*
 import kotlin.test.assertEquals
 
-@TestApplication
 class UnknownFieldTest {
   @Test
   fun `unknown date`() {

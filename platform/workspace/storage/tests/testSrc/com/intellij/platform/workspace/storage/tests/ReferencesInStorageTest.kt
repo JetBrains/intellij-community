@@ -15,7 +15,6 @@ private fun EntityStorage.singleParent() = entities(XParentEntity::class.java).s
 
 private fun EntityStorage.singleChild() = entities(XChildEntity::class.java).single()
 
-@TestApplication
 class ReferencesInStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
 

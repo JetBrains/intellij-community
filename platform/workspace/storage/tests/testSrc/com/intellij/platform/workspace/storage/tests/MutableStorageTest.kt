@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 
-@TestApplication
 class MutableStorageTest {
   @Test
   fun `simple entity mutation test`() {

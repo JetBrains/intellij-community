@@ -10,7 +10,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 
-@TestApplication
 class ExternalEntityMappingImplTest {
   @Test
   fun `mapping mutability test`() {

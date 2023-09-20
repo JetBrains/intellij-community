@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
-@TestApplication
 class WorkspaceEntityEqualityTest {
 
   private lateinit var builderOne: MutableEntityStorage

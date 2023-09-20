@@ -16,7 +16,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-@TestApplication
 class WorkspaceBuilderChangeLogTest {
   internal lateinit var builder: MutableEntityStorageImpl
   internal lateinit var another: MutableEntityStorageImpl

@@ -8,7 +8,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-@TestApplication
 class ExtensionTest {
   @Test
   fun `access by extension`() {

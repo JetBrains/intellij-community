@@ -1006,13 +1006,6 @@
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.workspaceModel.ide.impl.WorkspaceModelFusLogger"/>
 
-    <applicationService serviceInterface="com.intellij.platform.workspace.storage.impl.ClassToIntConverter"
-                        serviceImplementation="com.intellij.platform.workspace.storage.impl.ClassToIntConverterImpl"/>
-    <applicationService serviceInterface="com.intellij.platform.workspace.storage.metadata.resolver.TypeMetadataResolver"
-                        serviceImplementation="com.intellij.platform.workspace.storage.metadata.resolver.TypeMetadataResolverImpl"/>
-    <applicationService serviceInterface="com.intellij.platform.workspace.storage.metadata.utils.MetadataTypesFqnComparator"
-                        serviceImplementation="com.intellij.platform.workspace.storage.metadata.utils.MetadataTypesFqnComparatorImpl"/>
-
     <ui.suitableFontProvider implementation="com.intellij.ui.SuitableFontProviderImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.impl.FontFamilyService"
                         serviceImplementation="com.intellij.openapi.editor.impl.FontFamilyServiceImpl"

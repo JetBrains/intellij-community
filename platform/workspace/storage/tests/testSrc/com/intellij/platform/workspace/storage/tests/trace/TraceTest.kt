@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
-@TestApplication
 class TraceTest {
   lateinit var snapshot: EntityStorageSnapshot
 

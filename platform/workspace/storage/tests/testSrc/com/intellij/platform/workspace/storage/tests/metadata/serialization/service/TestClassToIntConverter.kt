@@ -12,7 +12,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import java.util.concurrent.atomic.AtomicReference
 
 internal class TestClassToIntConverter(
-  private val classToIntConverter: ClassToIntConverterImpl = ClassToIntConverterImpl()
+  private val classToIntConverter: ClassToIntConverter
 ): ClassToIntConverter by classToIntConverter {
 
   override fun getInt(clazz: Class<*>): Int {

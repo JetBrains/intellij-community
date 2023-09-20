@@ -16,7 +16,6 @@ import kotlin.test.assertTrue
  * Symbolic id via soft reference
  * Symbolic id via strong reference
  */
-@TestApplication
 class SoftLinksTest {
   @Test
   fun `test add diff with soft links`() {

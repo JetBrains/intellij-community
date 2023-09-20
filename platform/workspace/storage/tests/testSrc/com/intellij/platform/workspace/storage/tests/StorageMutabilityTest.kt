@@ -13,7 +13,6 @@ import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
-@TestApplication
 class StorageMutabilityTest {
 
   @Test
