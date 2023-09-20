@@ -12,13 +12,18 @@ internal abstract class AbstractTreeAssertion<T>(
   protected abstract val actualChildren: MutableList<Tree.Node<T>>
   protected abstract val expectedChildren: MutableList<MutableTree.Node<NodeMatcher<T>>>
 
-  override fun assertNode(name: String, assert: TreeAssertion.Node<T>.() -> Unit) =
-    assertNode(NodeMatcher.Name(name), assert)
+  override fun assertNode(name: String, flattenIf: Boolean, assert: TreeAssertion.Node<T>.() -> Unit) =
+    assertNode(NodeMatcher.Name(name), flattenIf, assert)
 
-  override fun assertNode(regex: Regex, assert: TreeAssertion.Node<T>.() -> Unit) =
-    assertNode(NodeMatcher.NameRegex(regex), assert)
+  override fun assertNode(regex: Regex, flattenIf: Boolean, assert: TreeAssertion.Node<T>.() -> Unit) =
+    assertNode(NodeMatcher.NameRegex(regex), flattenIf, assert)
 
-  protected fun assertNode(matcher: NodeMatcher<T>, assert: TreeAssertion.Node<T>.() -> Unit) {
+  protected fun assertNode(matcher: NodeMatcher<T>, flattenIf: Boolean, assert: TreeAssertion.Node<T>.() -> Unit) {
+    if (flattenIf) {
+      val assertion = FlattenedNodeAssertionImpl(this)
+      assertion.assert()
+      return
+    }
     val displayName = matcher.displayName
     val expectedChild = SimpleTree.Node(displayName, matcher)
     expectedChildren.add(expectedChild)
@@ -31,28 +36,7 @@ internal abstract class AbstractTreeAssertion<T>(
     assertion.assert()
   }
 
-  abstract class Node<T>(
-    actualTree: Tree<T>,
-    actualPath: List<String>
-  ) : AbstractTreeAssertion<T>(actualTree, actualPath), TreeAssertion.Node<T> {
-
-    override fun assertNode(name: String, flattenIf: Boolean, assert: TreeAssertion.Node<T>.() -> Unit) =
-      assertNode(NodeMatcher.Name(name), flattenIf, assert)
-
-    override fun assertNode(regex: Regex, flattenIf: Boolean, assert: TreeAssertion.Node<T>.() -> Unit) =
-      assertNode(NodeMatcher.NameRegex(regex), flattenIf, assert)
-
-    protected fun assertNode(matcher: NodeMatcher<T>, flattenIf: Boolean, assert: TreeAssertion.Node<T>.() -> Unit) {
-      if (!flattenIf) {
-        assertNode(matcher, assert)
-        return
-      }
-      val assertion = SkippedNodeAssertionImpl(this)
-      assertion.assert()
-    }
-  }
-
-  class TreeAssertionImpl<T>(
+  private class TreeAssertionImpl<T>(
     actualTree: Tree<T>,
     expectedTree: MutableTree<NodeMatcher<T>>
   ) : AbstractTreeAssertion<T>(actualTree, emptyList()) {
@@ -66,7 +50,7 @@ internal abstract class AbstractTreeAssertion<T>(
     actualPath: List<String>,
     private val node: Tree.Node<T>?,
     expectedNode: MutableTree.Node<NodeMatcher<T>>
-  ) : Node<T>(actualTree, actualPath) {
+  ) : AbstractTreeAssertion<T>(actualTree, actualPath), TreeAssertion.Node<T> {
 
     override val actualChildren = node?.children?.toMutableList() ?: ArrayList()
     override val expectedChildren = expectedNode.children
@@ -78,15 +62,15 @@ internal abstract class AbstractTreeAssertion<T>(
     }
   }
 
-  private class SkippedNodeAssertionImpl<T>(
-    parentNode: Node<T>
-  ) : Node<T>(
-    parentNode.actualTree,
-    parentNode.actualPath
-  ) {
+  private class FlattenedNodeAssertionImpl<T>(
+    parentAssertion: AbstractTreeAssertion<T>
+  ) : AbstractTreeAssertion<T>(
+    parentAssertion.actualTree,
+    parentAssertion.actualPath
+  ), TreeAssertion.Node<T> {
 
-    override val actualChildren = parentNode.actualChildren
-    override val expectedChildren = parentNode.expectedChildren
+    override val actualChildren = parentAssertion.actualChildren
+    override val expectedChildren = parentAssertion.expectedChildren
 
     override fun assertValue(assert: (T) -> Unit) {}
   }
