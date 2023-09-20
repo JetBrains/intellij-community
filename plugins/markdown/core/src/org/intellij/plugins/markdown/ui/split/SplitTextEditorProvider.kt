@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.ui.split
 
 import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -111,7 +112,9 @@ private fun getBuilderFromEditorProvider(provider: FileEditorProvider,
                                          project: Project,
                                          file: VirtualFile): AsyncFileEditorProvider.Builder {
   if (provider is AsyncFileEditorProvider) {
-    return provider.createEditorAsync(project, file)
+    return runBlockingCancellable {
+      provider.createEditorBuilder(project, file)
+    }
   }
   else {
     return object : AsyncFileEditorProvider.Builder() {
