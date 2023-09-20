@@ -92,8 +92,8 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
     }
 
     context(KtAnalysisSession)
-private fun collectEnumBranches(klass: KtNamedClassOrObjectSymbol): List<CaseBranch> {
-        val enumEntries = klass.getDeclaredMemberScope()
+    private fun collectEnumBranches(klass: KtNamedClassOrObjectSymbol): List<CaseBranch> {
+        val enumEntries = klass.getStaticDeclaredMemberScope()
             .getCallableSymbols()
             .filterIsInstance<KtEnumEntrySymbol>()
 
@@ -106,12 +106,12 @@ private fun collectEnumBranches(klass: KtNamedClassOrObjectSymbol): List<CaseBra
     }
 
     context(KtAnalysisSession)
-private fun collectSealedClassInheritors(klass: KtNamedClassOrObjectSymbol): List<CaseBranch> {
+    private fun collectSealedClassInheritors(klass: KtNamedClassOrObjectSymbol): List<CaseBranch> {
         return mutableListOf<CaseBranch>().also { processSealedClassInheritor(klass, it) }
     }
 
     context(KtAnalysisSession)
-private fun processSealedClassInheritor(klass: KtNamedClassOrObjectSymbol, consumer: MutableList<CaseBranch>): Boolean {
+    private fun processSealedClassInheritor(klass: KtNamedClassOrObjectSymbol, consumer: MutableList<CaseBranch>): Boolean {
         val classId = klass.classIdIfNonLocal ?: return false
 
         if (klass.classKind == KtClassKind.OBJECT) {
