@@ -184,7 +184,13 @@ public final class ClassUtils {
 
   @Contract("_, null -> false")
   public static boolean isInsideClassBody(@NotNull PsiElement element, @Nullable PsiClass outerClass) {
-    final PsiElement brace = outerClass != null ? outerClass.getLBrace() : null;
+    if (outerClass == null) {
+      return false;
+    }
+    if (outerClass.isRecord() && PsiTreeUtil.isAncestor(outerClass.getRecordHeader(), element, true)) {
+      return true;
+    }
+    final PsiElement brace = outerClass.getLBrace();
     return brace != null && brace.getTextOffset() < element.getTextOffset();
   }
 
