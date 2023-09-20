@@ -81,6 +81,9 @@
   <projectListeners>
     <listener class="com.jetbrains.performancePlugin.ProjectIndexingComponent"
               topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
+
+    <listener class="com.jetbrains.performancePlugin.commands.WaitForFinishedCodeAnalysisListener"
+              topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.jetbrains.performancePlugin">
