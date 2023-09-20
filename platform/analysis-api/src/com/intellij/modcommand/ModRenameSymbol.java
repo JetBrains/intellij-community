@@ -22,6 +22,6 @@ public record ModRenameSymbol(@NotNull VirtualFile file, @NotNull TextRange symb
    * @return the same command but with updated range
    */
   public @NotNull ModRenameSymbol withRange(@NotNull TextRange range) {
-    return range.equals(symbolRange) ? this : new ModRenameSymbol(file, symbolRange, nameSuggestions);
+    return range.equals(symbolRange) ? this : new ModRenameSymbol(file, range, nameSuggestions);
   }
 }

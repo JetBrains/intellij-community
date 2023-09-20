@@ -210,7 +210,7 @@ final class PsiUpdateImpl {
   }
 
   private static class ModPsiUpdaterImpl implements ModPsiUpdater, DocumentListener, Disposable {
-    private final @NotNull FileTracker myTracker;
+    private @NotNull FileTracker myTracker;
     private final @NotNull Map<PsiFile, FileTracker> myChangedFiles = new LinkedHashMap<>();
     private final @NotNull Map<VirtualFile, ModPsiUpdaterImpl.ChangedDirectoryInfo> myChangedDirectories = new LinkedHashMap<>();
     private @NotNull VirtualFile myNavigationFile;
@@ -313,6 +313,9 @@ final class PsiUpdateImpl {
           myNavigationFile = file.getOriginalFile().getVirtualFile();
         }
         // TODO: track new file
+        myTracker.myPositionDocument.removeDocumentListener(this);
+        myTracker = tracker(file.getOriginalFile());
+        myTracker.myPositionDocument.addDocumentListener(this, this);
         return element.getTextRange();
       }
       SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(element);
