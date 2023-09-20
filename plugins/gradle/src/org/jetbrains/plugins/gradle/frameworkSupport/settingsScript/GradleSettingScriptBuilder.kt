@@ -12,9 +12,9 @@ interface GradleSettingScriptBuilder<Self: GradleSettingScriptBuilder<Self>> : S
 
   fun setProjectName(projectName: String): Self
 
-  fun include(name: String): Self
+  fun include(vararg name: String): Self
 
-  fun includeFlat(name: String): Self
+  fun includeFlat(vararg name: String): Self
 
   fun includeBuild(name: String): Self
 
