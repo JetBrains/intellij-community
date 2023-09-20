@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.InspectionEP;
@@ -43,7 +44,7 @@ import java.util.List;
 
 import static com.intellij.patterns.XmlPatterns.*;
 
-public class I18nReferenceContributor extends PsiReferenceContributor {
+final class I18nReferenceContributor extends PsiReferenceContributor {
 
   @NonNls private static final String INTENTION_ACTION_TAG = "intentionAction";
   @NonNls private static final String INTENTION_ACTION_BUNDLE_TAG = "bundleName";
@@ -65,6 +66,8 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     private static final String ADVANCED_SETTINGS_EP = AdvancedSettingBean.class.getName();
 
     private static final String SPRING_TOOL_WINDOW_CONTENT = "com.intellij.spring.toolWindow.SpringToolWindowContent";
+
+    private static final String DECLARATIVE_INLAY_PROVIDER_EP = InlayHintsProviderExtensionBean.class.getName();
   }
 
   @Override
@@ -115,6 +118,19 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"displayName"},
                                                                   Holder.SPRING_TOOL_WINDOW_CONTENT),
                                         new PropertyKeyReferenceProvider(false, "displayName", "bundle"));
+
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"nameKey"},
+                                                                  Holder.DECLARATIVE_INLAY_PROVIDER_EP),
+                                        new PropertyKeyReferenceProvider(false, "nameKey", null));
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"descriptionKey"},
+                                                                  Holder.DECLARATIVE_INLAY_PROVIDER_EP),
+                                        new PropertyKeyReferenceProvider(false, "descriptionKey", null));
+    registrar.registerReferenceProvider(nestedTagExtensionAttributePattern("option", new String[]{"nameKey"},
+                                                                           Holder.DECLARATIVE_INLAY_PROVIDER_EP),
+                                        new PropertyKeyReferenceProvider(false, "nameKey", null));
+    registrar.registerReferenceProvider(nestedTagExtensionAttributePattern("option", new String[]{"descriptionKey"},
+                                                                           Holder.DECLARATIVE_INLAY_PROVIDER_EP),
+                                        new PropertyKeyReferenceProvider(false, "descriptionKey", null));
 
 
     XmlAttributeValuePattern idAttributeWithoutTitleKeyPattern =
@@ -200,10 +216,14 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                                                                   Holder.GROUP_CONFIGURABLE_EP,
                                                                   Holder.NOTIFICATION_GROUP_EP,
                                                                   Holder.SPRING_TOOL_WINDOW_CONTENT,
-                                                                  Holder.ADVANCED_SETTINGS_EP),
+                                                                  Holder.ADVANCED_SETTINGS_EP,
+                                                                  Holder.DECLARATIVE_INLAY_PROVIDER_EP),
                                         bundleReferenceProvider);
     registrar.registerReferenceProvider(nestedExtensionAttributePattern(new String[]{"bundle", "groupBundle"},
                                                                         Holder.CONFIGURABLE_EP),
+                                        bundleReferenceProvider);
+    registrar.registerReferenceProvider(nestedTagExtensionAttributePattern("option", new String[]{"bundle"},
+                                                                           Holder.DECLARATIVE_INLAY_PROVIDER_EP),
                                         bundleReferenceProvider);
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"nameBundle"},
@@ -232,6 +252,16 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                                                                           @NonNls String... extensionPointClassNames) {
     return xmlAttributeValue(attributeNames)
       .inFile(DomPatterns.inDomFile(IdeaPlugin.class))
+      .withSuperParent(3, extensionPointCapture(extensionPointClassNames));
+  }
+
+  // special case for nested tag in EPs
+  private static XmlAttributeValuePattern nestedTagExtensionAttributePattern(@NonNls String tagName,
+                                                                             @NonNls String[] attributeNames,
+                                                                             @NonNls String... extensionPointClassNames) {
+    return xmlAttributeValue(attributeNames)
+      .inFile(DomPatterns.inDomFile(IdeaPlugin.class))
+      .withSuperParent(2, xmlTag().withLocalName(tagName))
       .withSuperParent(3, extensionPointCapture(extensionPointClassNames));
   }
 

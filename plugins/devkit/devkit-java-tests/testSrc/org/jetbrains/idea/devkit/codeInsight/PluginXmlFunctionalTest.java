@@ -5,6 +5,7 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
+import com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -114,6 +115,8 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("platform-editor", platformEditorJar);
     String platformUiUtilJar = PathUtil.getJarPathForClass(AllIcons.class);
     moduleBuilder.addLibrary("platform-util-ui", platformUiUtilJar);
+    String langApiJar = PathUtil.getJarPathForClass(InlayHintsProviderExtensionBean.class);
+    moduleBuilder.addLibrary("lang-api", langApiJar);
   }
 
   // Gradle-like setup, but JBList not in Library
