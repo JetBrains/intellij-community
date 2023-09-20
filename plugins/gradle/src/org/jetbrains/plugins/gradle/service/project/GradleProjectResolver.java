@@ -68,6 +68,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmIssueChecker.Util.isJavaHomeUnsupportedByIdea;
+import static org.jetbrains.plugins.gradle.service.project.ArtifactMappingServiceKt.OWNER_BASE_GRADLE;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getDefaultModuleTypeId;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId;
 
@@ -478,7 +479,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       ExternalProject externalProject = resolverCtx.getExtraProject(ideaModule, ExternalProject.class);
       if (externalProject != null) {
         externalProject.getSourceSetModel().getAdditionalArtifacts().forEach((artifactFile) -> {
-          artifactsMap.markArtifactPath(toCanonicalPath(artifactFile.getPath()), true);
+          String path = toCanonicalPath(artifactFile.getPath());
+          ModuleMappingInfo mapping = artifactsMap.getModuleMapping(path);
+          if (mapping != null && OWNER_BASE_GRADLE.equals(mapping.getOwnerId())) {
+            artifactsMap.markArtifactPath(path, true);
+          }
         });
       }
     }
