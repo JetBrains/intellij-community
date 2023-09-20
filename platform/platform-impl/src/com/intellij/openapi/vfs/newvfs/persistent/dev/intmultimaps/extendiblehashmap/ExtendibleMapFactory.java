@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap;
 
-import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorageFactory;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.io.dev.StorageFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

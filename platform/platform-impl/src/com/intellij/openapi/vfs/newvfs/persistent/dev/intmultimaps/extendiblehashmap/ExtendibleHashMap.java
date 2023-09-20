@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
-import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
