@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.service
 import com.intellij.build.events.ProgressBuildEvent
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStatusEvent
@@ -57,7 +58,7 @@ abstract class ExternalSystemTaskProgressIndicatorUpdater {
     }
     else {
       indicator.setIndeterminate(false)
-      indicator.setFraction(progress.toDouble() / total)
+      indicator.setFraction(progress.toDouble() / total.toDouble())
     }
     val description = event.description
     indicator.setText(getText(description, progress, total, unit, textWrapper))
@@ -73,6 +74,8 @@ abstract class ExternalSystemTaskProgressIndicatorUpdater {
     val tail = getSizeInfo(progress, total, unit).let { if (isNotEmpty(it)) return@let "($it)" else "" }
     return "$body $tail"
   }
+
+  open fun onEnd(taskId: ExternalSystemTaskId): Unit = Unit
 
   @NlsSafe
   private fun getSizeInfo(progress: Long, total: Long, unit: String): String = when (unit) {

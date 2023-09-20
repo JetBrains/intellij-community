@@ -255,6 +255,11 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
       public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
         updater.updateIndicator(event, indicator, text -> wrapProgressText(text));
       }
+
+      @Override
+      public void onEnd(@NotNull ExternalSystemTaskId id) {
+          updater.onEnd(id);
+      }
     };
   }
 
