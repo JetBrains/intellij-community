@@ -52,8 +52,7 @@ internal fun ObjClass<*>.softLinksCode(context: LinesBuilder, hasSoftLinks: Bool
 }
 
 internal fun ObjClass<*>.hasSoftLinks(): Boolean {
-  val fieldsToCheck = if (openness == ObjClass.Openness.abstract) allFields else fields
-  return fieldsToCheck.noSymbolicId().noRefs().noEntitySource().any { field ->
+  return allFields.noSymbolicId().noRefs().noEntitySource().any { field ->
     field.hasSoftLinks()
   }
 }

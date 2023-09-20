@@ -15,17 +15,12 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
-import com.intellij.platform.workspace.storage.impl.ConnectionId
-import com.intellij.platform.workspace.storage.impl.EntityLink
-import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
-import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
-import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
+import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.util.descriptors.ConfigFileItem
 import org.jetbrains.kotlin.config.KotlinModuleKind
@@ -578,7 +573,7 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
     }
 }
 
-class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<KotlinSettingsEntity>() {
+class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<KotlinSettingsEntity>(), SoftLinkable {
     lateinit var name: String
     lateinit var moduleId: ModuleId
     lateinit var sourceRoots: MutableList<String>
@@ -620,6 +615,85 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
     internal fun isCompilerArgumentsInitialized(): Boolean = ::compilerArguments.isInitialized
     internal fun isCompilerSettingsInitialized(): Boolean = ::compilerSettings.isInitialized
     internal fun isTargetPlatformInitialized(): Boolean = ::targetPlatform.isInitialized
+
+    override fun getLinks(): Set<SymbolicEntityId<*>> {
+        val result = HashSet<SymbolicEntityId<*>>()
+        result.add(moduleId)
+        for (item in sourceRoots) {
+        }
+        for (item in configFileItems) {
+        }
+        for (item in implementedModuleNames) {
+        }
+        for (item in dependsOnModuleNames) {
+        }
+        for (item in additionalVisibleModuleNames) {
+        }
+        for (item in sourceSetNames) {
+        }
+        for (item in pureKotlinSourceFolders) {
+        }
+        return result
+    }
+
+    override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+        index.index(this, moduleId)
+        for (item in sourceRoots) {
+        }
+        for (item in configFileItems) {
+        }
+        for (item in implementedModuleNames) {
+        }
+        for (item in dependsOnModuleNames) {
+        }
+        for (item in additionalVisibleModuleNames) {
+        }
+        for (item in sourceSetNames) {
+        }
+        for (item in pureKotlinSourceFolders) {
+        }
+    }
+
+    override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+        // TODO verify logic
+        val mutablePreviousSet = HashSet(prev)
+        val removedItem_moduleId = mutablePreviousSet.remove(moduleId)
+        if (!removedItem_moduleId) {
+            index.index(this, moduleId)
+        }
+        for (item in sourceRoots) {
+        }
+        for (item in configFileItems) {
+        }
+        for (item in implementedModuleNames) {
+        }
+        for (item in dependsOnModuleNames) {
+        }
+        for (item in additionalVisibleModuleNames) {
+        }
+        for (item in sourceSetNames) {
+        }
+        for (item in pureKotlinSourceFolders) {
+        }
+        for (removed in mutablePreviousSet) {
+            index.remove(this, removed)
+        }
+    }
+
+    override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
+        var changed = false
+        val moduleId_data = if (moduleId == oldLink) {
+            changed = true
+            newLink as ModuleId
+        }
+        else {
+            null
+        }
+        if (moduleId_data != null) {
+            moduleId = moduleId_data
+        }
+        return changed
+    }
 
     override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<KotlinSettingsEntity> {
         val modifiable = KotlinSettingsEntityImpl.Builder(null)
