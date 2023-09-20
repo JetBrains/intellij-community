@@ -182,6 +182,8 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.groovy.dev")
       spec.withModule("intellij.kotlin.dev")
       spec.withModule("intellij.platform.statistics.devkit")
+
+      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
     },
     pluginAuto(listOf("intellij.devkit")) { spec ->
       spec.withModule("intellij.devkit.core")
