@@ -15,4 +15,3 @@ fun foo(s: String?) {
 // EXIST: { lookupString: "forAny", attributes: "grayed", icon: "Function"}
 // EXIST: { lookupString: "compareTo", attributes: "grayed", icon: "Function"}
 // EXIST: { lookupString: "length", attributes: "grayed", icon: "org/jetbrains/kotlin/idea/icons/field_value.svg"}
-// IGNORE_K2
