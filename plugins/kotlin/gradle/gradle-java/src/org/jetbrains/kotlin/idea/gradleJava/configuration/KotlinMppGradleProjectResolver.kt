@@ -11,7 +11,6 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
-import com.intellij.openapi.util.Key
 import com.intellij.util.PlatformUtils
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
@@ -31,21 +30,12 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.tooling.core.Extras
-import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.lang.reflect.Proxy
 import java.util.*
-import kotlin.collections.List
-import kotlin.collections.MutableList
-import kotlin.collections.MutableMap
-import kotlin.collections.Set
-import kotlin.collections.forEach
-import kotlin.collections.listOf
-import kotlin.collections.mutableListOf
 import kotlin.collections.set
-import kotlin.collections.setOf
 
 @Suppress("unused") // Can be removed once AS rebased on 23.1
 @Deprecated("Use KotlinMppGradleProjectResolver instead", replaceWith = ReplaceWith("KotlinMppGradleProjectResolver"))
@@ -111,12 +101,9 @@ open class KotlinMppGradleProjectResolver : AbstractProjectResolverExtension() {
         moduleDataNode: DataNode<ModuleData>,
         projectDataNode: DataNode<ProjectData>
     ) {
-        moduleDataNode.kotlinMppGradleProjectResolverContext?.populateModuleDependencies() ?: run {
-            /* Not a multiplatform project: Help non-mpp projects to resolve multiplatform dependencies */
-            resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java)
-                ?.sourceSets?.values?.forEach { sourceSet -> sourceSet.dependencies.modifyDependenciesOnMppModules(projectDataNode, resolverCtx) }
+        moduleDataNode.kotlinMppGradleProjectResolverContext?.populateModuleDependencies() ?:
             super.populateModuleDependencies(gradleModule, moduleDataNode, projectDataNode)
-        }
+
     }
 
     override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
@@ -143,8 +130,6 @@ open class KotlinMppGradleProjectResolver : AbstractProjectResolverExtension() {
     }
 
     companion object {
-        val MPP_CONFIGURATION_ARTIFACTS =
-            Key.create<MutableMap<String/* artifact path */, MutableList<String> /* module ids*/>>("gradleMPPArtifactsMap")
         val proxyObjectCloningCache = WeakHashMap<Any, Any>()
 
         internal fun getSiblingKotlinModuleData(

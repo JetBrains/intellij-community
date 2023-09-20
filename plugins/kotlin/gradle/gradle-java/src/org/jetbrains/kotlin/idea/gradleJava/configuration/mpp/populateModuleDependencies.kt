@@ -24,8 +24,6 @@ internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependencies()
 internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependenciesWithDependenciesContainer(
     dependencies: IdeaKotlinDependenciesContainer
 ) {
-    mppModel.dependencyMap.values.modifyDependenciesOnMppModules(projectDataNode, resolverCtx)
-
     val extensionInstance = KotlinMppGradleProjectResolverExtension.buildInstance()
 
     mppModel.sourceSetsByName.values.forEach { sourceSet ->
