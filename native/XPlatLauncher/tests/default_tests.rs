@@ -12,12 +12,12 @@ mod tests {
 
     #[test]
     fn correct_launcher_startup_test() {
-        run_launcher(&LauncherRunSpec::standard().assert_status());
+        run_launcher(LauncherRunSpec::standard().assert_status());
     }
 
     #[test]
     fn classpath_test() {
-        let dump = run_launcher(&LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let dump = run_launcher(LauncherRunSpec::standard().with_dump().assert_status()).dump();
         let classpath = &dump.systemProperties["java.class.path"];
 
         assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
@@ -62,7 +62,7 @@ mod tests {
             else { "xplat64.vmoptions" };
         let vm_options_file = test.dist_root.join("bin").join(vm_options_name);
 
-        let dump = run_launcher_ext(&test, &LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
 
         // `bin/*.vmoptions`
         assert_vm_option_presence(&dump, "-Xmx256m");
@@ -75,22 +75,22 @@ mod tests {
 
         // options injected by the launcher
         let vm_option = dump.vmOptions.iter().find(|s| s.starts_with("-Djb.vmOptionsFile="))
-            .expect(&format!("'-Djb.vmOptionsFile=' is not in {:?}", dump.vmOptions));
+            .unwrap_or_else(|| panic!("'-Djb.vmOptionsFile=' is not in {:?}", dump.vmOptions));
         let path = PathBuf::from(vm_option.split_once('=').unwrap().1);
         assert_eq!(vm_options_file.canonicalize().unwrap(), path.canonicalize().unwrap());
 
         dump.vmOptions.iter().find(|s| s.starts_with("-XX:ErrorFile="))
-            .expect(&format!("'-XX:ErrorFile=' is not in {:?}", dump.vmOptions));
+            .unwrap_or_else(|| panic!("'-XX:ErrorFile=' is not in {:?}", dump.vmOptions));
     }
 
     #[test]
     fn path_macro_expansion_test() {
         let test = prepare_test_env(LauncherLocation::Standard);
 
-        let dump = run_launcher_ext(&test, &LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
 
         let vm_option = dump.vmOptions.iter().find(|s| s.starts_with("-Dpath.macro.test="))
-            .expect(&format!("'-Dpath.macro.test=' is not in {:?}", dump.vmOptions));
+            .unwrap_or_else(|| panic!("'-Dpath.macro.test=' is not in {:?}", dump.vmOptions));
         let path = PathBuf::from(vm_option.split_once('=').unwrap().1);
         assert_eq!(test.dist_root.canonicalize().unwrap(), path.canonicalize().unwrap());
     }
@@ -109,7 +109,7 @@ mod tests {
             }
         }
 
-        let result = run_launcher_ext(&test, &LauncherRunSpec::standard().with_dump());
+        let result = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump());
         assert!(!result.exit_status.success(), "Expected to fail: {:?}", result);
     }
 
@@ -119,7 +119,7 @@ mod tests {
         let temp_file = test.create_temp_file("_product_env.vm_options", "-Xmx256m\n-Done.user.option=whatever\n");
         let env = HashMap::from([("XPLAT_VM_OPTIONS", temp_file.to_str().unwrap())]);
 
-        let dump = run_launcher_ext(&test, &LauncherRunSpec::standard().with_dump().with_env(&env).assert_status()).dump();
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().with_env(&env).assert_status()).dump();
 
         assert_vm_option_presence(&dump, "-Xmx256m");
         assert_vm_option_presence(&dump, "-Done.user.option=whatever");
@@ -136,7 +136,7 @@ mod tests {
         let temp_file = test.create_temp_file("_product_env.properties", "one.user.property=whatever\n");
         let env = HashMap::from([("XPLAT_PROPERTIES", temp_file.to_str().unwrap())]);
 
-        let dump = run_launcher_ext(&test, &LauncherRunSpec::standard().with_dump().with_env(&env).assert_status()).dump();
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().with_env(&env).assert_status()).dump();
 
         assert_vm_option_presence(&dump, "-Xmx256m");
         assert_vm_option_presence(&dump, "-XX:+UseG1GC");
@@ -149,7 +149,7 @@ mod tests {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         let vm_options_file = test.create_toolbox_vm_options("-Done.user.option=whatever\n");
 
-        let dump = run_launcher_ext(&test, &LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
 
         assert_vm_option_presence(&dump, "-Done.user.option=whatever");
         assert_vm_option_presence(&dump, "-Didea.vendor.name=JetBrains");
@@ -162,7 +162,7 @@ mod tests {
         let temp_file = test.create_temp_file("_product_env.vm_options", "# a comment\n \n-Xmx256m \n");
         let env = HashMap::from([("XPLAT_VM_OPTIONS", temp_file.to_str().unwrap())]);
 
-        let dump = run_launcher_ext(&test, &LauncherRunSpec::standard().with_dump().with_env(&env).assert_status()).dump();
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().with_env(&env).assert_status()).dump();
 
         assert_vm_option_presence(&dump, "-Xmx256m");
 
@@ -185,7 +185,7 @@ mod tests {
     #[test]
     fn arguments_test() {
         let args = &["arguments-test-123"];
-        let dump = run_launcher(&LauncherRunSpec::standard().with_dump().with_args(args).assert_status()).dump();
+        let dump = run_launcher(LauncherRunSpec::standard().with_dump().with_args(args).assert_status()).dump();
 
         assert_eq!(&dump.cmdArguments[0], "dump-launch-parameters");
         assert_eq!(&dump.cmdArguments[1], "--output");
@@ -287,7 +287,7 @@ mod tests {
         assert!(crash_log_path.exists(), "No crash log at {:?}: {:?}", crash_log_path, result);
 
         let marker = "# A fatal error has been detected by the Java Runtime Environment:";
-        let content = fs::read_to_string(&crash_log_path).expect(&format!("Cannot read: {:?}", crash_log_path));
+        let content = fs::read_to_string(&crash_log_path).unwrap_or_else(|_| panic!("Cannot read: {:?}", crash_log_path));
         assert!(content.contains(marker), "Marker message ('{}') is not in the crash log:\n{}", marker, content);
     }
 
@@ -302,10 +302,10 @@ mod tests {
         let stdout_path_str = stdout_path.to_str().unwrap();
         let args = vec!["-Wna", app_bundle_path_str, "--env", &debug_mode_var, "--stdout", stdout_path_str, "--args", "print-cwd"];
         let open_res = std::process::Command::new("/usr/bin/open").args(&args)
-            .output().expect(&format!("Failed: 'open {:?}'", args));
+            .output().unwrap_or_else(|_| panic!("Failed: 'open {:?}'", args));
         assert!(open_res.status.success(), "Failed: 'open {:?}':\n{:?}", args, open_res);
 
-        let stdout = fs::read_to_string(&stdout_path).expect(&format!("Cannot read: {:?}", stdout_path));
+        let stdout = fs::read_to_string(&stdout_path).unwrap_or_else(|_| panic!("Cannot read: {:?}", stdout_path));
         let expected = format!("CWD={}", env::current_dir().unwrap().display());
         assert!(stdout.contains(&expected), "'{}' is not in the output:\n{}", expected, stdout);
     }
@@ -318,7 +318,7 @@ mod tests {
 
         let run_result = std::process::Command::new(&ext_link)
             .env(xplat_launcher::DEBUG_MODE_ENV_VAR, "1")
-            .output().expect(&format!("Failed: '{}'", ext_link.display()));
+            .output().unwrap_or_else(|_| panic!("Failed: '{}'", ext_link.display()));
         assert!(run_result.status.success(), "Failed: '{}':\n{:?}", ext_link.display(), run_result);
     }
 

@@ -55,7 +55,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
         vm_options.extend_from_slice(&self.product_info.launch[0].additionalJvmArguments);
 
         for vm_option in vm_options.iter_mut() {
-            *vm_option = self.expand_path_macro(&vm_option)?;
+            *vm_option = self.expand_path_macro(vm_option)?;
         }
 
         Ok(vm_options)
@@ -76,7 +76,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 
     fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
         let jre_home = self.locate_runtime()?.strip_ns_prefix()?;
-        return Ok((jre_home, &self.product_info.launch[0].mainClass));
+        Ok((jre_home, &self.product_info.launch[0].mainClass))
     }
 }
 
@@ -116,13 +116,13 @@ impl DefaultLaunchConfiguration {
     /// and`"bin/idea64.vmoptions"` (Linux) should all return `"idea"`.
     fn get_launcher_base_name(vm_options_rel_path: &str) -> String {
         // split on the last path separator ("bin/idea64.exe.vmoptions" -> "idea64.exe.vmoptions")
-        let vm_options_filename = match vm_options_rel_path.rsplit_once("/") {
+        let vm_options_filename = match vm_options_rel_path.rsplit_once('/') {
             Some((_, suffix)) => suffix,
             None => vm_options_rel_path
         };
 
         // split on the first dot ("idea64.exe.vmoptions" -> "idea64")
-        let vm_options_filename_no_last_extension = match vm_options_filename.split_once(".") {
+        let vm_options_filename_no_last_extension = match vm_options_filename.split_once('.') {
             Some((prefix, _)) => prefix,
             None => vm_options_filename
         };
@@ -269,7 +269,7 @@ impl DefaultLaunchConfiguration {
 
         vm_options.push(jvm_property!("jb.vmOptionsFile", vm_options_path.to_string_checked()?));
 
-        return Ok(());
+        Ok(())
     }
 
     /// Looks for user-editable config files near the installation (Toolbox-style)
@@ -305,7 +305,7 @@ fn read_vm_options(path: &Path) -> Result<Vec<String>> {
     let mut vm_options = Vec::with_capacity(50);
     for line in BufReader::new(file).lines() {
         let line = line.with_context(|| format!("Cannot read: {:?}", path))?.trim().to_string();
-        if !(line.is_empty() || line.starts_with("#")) {
+        if !(line.is_empty() || line.starts_with('#')) {
             vm_options.push(line);
         }
     }
