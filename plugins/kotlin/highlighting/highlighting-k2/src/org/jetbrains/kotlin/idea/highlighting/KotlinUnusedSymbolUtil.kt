@@ -293,16 +293,16 @@ object KotlinUnusedSymbolUtil {
 
   context(KtAnalysisSession)
   private fun hasNonTrivialUsages(
-    declaration: KtNamedDeclaration,
-    enoughToSearchUsages: Lazy<PsiSearchHelper.SearchCostResult>,
-    symbol: KtDeclarationSymbol? = null
+      declaration: KtNamedDeclaration,
+      isCheapEnough: Lazy<PsiSearchHelper.SearchCostResult>,
+      symbol: KtDeclarationSymbol? = null
   ): Boolean {
       val project = declaration.project
       val psiSearchHelper = PsiSearchHelper.getInstance(project)
 
       val useScope = psiSearchHelper.getUseScope(declaration)
       val restrictedScope = if (useScope is GlobalSearchScope) {
-          val zeroOccurrences = when (enoughToSearchUsages.value) {
+          val zeroOccurrences = when (isCheapEnough.value) {
               PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES -> true
               PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES -> false
               PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES -> return true // searching usages is too expensive; behave like it is used
@@ -382,25 +382,24 @@ object KotlinUnusedSymbolUtil {
                   val importedFrom = import.importedReference?.getQualifiedElementSelector()?.mainReference?.resolve()
                           as? KtClassOrObject ?: return true
                   return importedFrom.declarations.none { it is KtNamedDeclaration && hasNonTrivialUsages(it) }
-              } else {
-                  if (import.importedFqName != declaration.fqName) {
-                      val importedDeclaration =
-                          import.importedReference?.getQualifiedElementSelector()?.mainReference?.resolve() as? KtNamedDeclaration
-                              ?: return true
+              }
+              if (import.importedFqName != declaration.fqName) {
+                  val importedDeclaration =
+                      import.importedReference?.getQualifiedElementSelector()?.mainReference?.resolve() as? KtNamedDeclaration
+                          ?: return true
 
-                      if (declaration.isObjectOrEnum || importedDeclaration.containingClassOrObject is KtObjectDeclaration) return checkDeclaration(
-                          declaration,
-                          importedDeclaration
-                      )
+                  if (declaration.isObjectOrEnum || importedDeclaration.containingClassOrObject is KtObjectDeclaration) return checkDeclaration(
+                      declaration,
+                      importedDeclaration
+                  )
 
-                      if (originalDeclaration?.isObjectOrEnum == true) return checkDeclaration(
-                          originalDeclaration,
-                          importedDeclaration
-                      )
+                  if (originalDeclaration?.isObjectOrEnum == true) return checkDeclaration(
+                      originalDeclaration,
+                      importedDeclaration
+                  )
 
-                      // check type alias
-                      if (importedDeclaration.fqName == declaration.fqName) return true
-                  }
+                  // check type alias
+                  if (importedDeclaration.fqName == declaration.fqName) return true
               }
           }
           return true
