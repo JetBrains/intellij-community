@@ -73,8 +73,8 @@ public final class FormattingServiceUtil {
     return formatElement(element, range, canChangeWhiteSpacesOnly, false);
   }
 
-  public static void asyncFormatElement(@NotNull PsiElement element, @NotNull TextRange range) {
-     formatElement(element, range, false, true);
+  public static void asyncFormatElement(@NotNull PsiElement element, @NotNull TextRange range, boolean canChangeWhitespaceOnly) {
+     formatElement(element, range, canChangeWhitespaceOnly, true);
   }
   
   private static @NotNull PsiElement formatElement(@NotNull PsiElement element,
@@ -102,7 +102,7 @@ public final class FormattingServiceUtil {
                                           boolean canChangeWhiteSpacesOnly,
                                           boolean forceAsync) {
     if (forceAsync && (service instanceof CoreFormattingService)) {
-      ((CoreFormattingService)service).asyncFormatElement(element, range);
+      ((CoreFormattingService)service).asyncFormatElement(element, range, canChangeWhiteSpacesOnly);
       return element;
     }
     else {

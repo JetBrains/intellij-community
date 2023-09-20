@@ -116,7 +116,7 @@ public class DefaultTypingActionsExtension implements TypingActionsExtension {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return;
     try {
-      FormattingServiceUtil.asyncFormatElement(file, new TextRange(startOffset, endOffset));
+      FormattingServiceUtil.asyncFormatElement(file, new TextRange(startOffset, endOffset), true);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

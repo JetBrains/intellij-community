@@ -65,9 +65,9 @@ public final class CoreFormattingService implements FormattingService {
     return CoreCodeStyleUtil.postProcessElement(file, formatted, canChangeWhiteSpacesOnly);
   }
 
-  public void asyncFormatElement(@NotNull PsiElement element, @NotNull TextRange range) {
+  public void asyncFormatElement(@NotNull PsiElement element, @NotNull TextRange range, boolean canChangeWhitespaceOnly) {
     if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      formatElement(element, range, false);
+      formatElement(element, range, canChangeWhitespaceOnly);
     }
     PsiFile file = element.getContainingFile();
     Project project = file.getProject();
@@ -78,7 +78,7 @@ public final class CoreFormattingService implements FormattingService {
       .finishOnUiThread(ModalityState.nonModal(), data -> {
         CommandProcessor.getInstance().runUndoTransparentAction(() -> {
           WriteAction.run(() -> {
-            formatElement(element, range, false);
+            formatElement(element, range, canChangeWhitespaceOnly);
           });
         });
       })
