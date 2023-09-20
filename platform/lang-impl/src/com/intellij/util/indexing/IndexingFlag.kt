@@ -48,18 +48,18 @@ object IndexingFlag {
   fun cleanProcessingFlag(file: VirtualFile) {
     file.asApplicable()?.also { entry ->
       hashes.releaseHash(entry.id)
-      entry.indexedStamp = ProjectIndexingDependenciesService.NULL_STAMP.toInt()
+      ProjectIndexingDependenciesService.NULL_STAMP.store(entry::setIndexedStamp)
     }
   }
 
   @JvmStatic
   fun setFileIndexed(file: VirtualFile, stamp: FileIndexingStamp) {
-    file.asApplicable()?.also { entry -> entry.indexedStamp = stamp.toInt() }
+    file.asApplicable()?.also { entry -> stamp.store(entry::setIndexedStamp) }
   }
 
   @JvmStatic
   fun isFileIndexed(file: VirtualFile, stamp: FileIndexingStamp): Boolean {
-    return file.asApplicable()?.let { entry -> entry.indexedStamp == stamp.toInt() } ?: false
+    return file.asApplicable()?.let { entry -> stamp.isSame(entry.indexedStamp) } ?: false
   }
 
   @JvmStatic
@@ -76,8 +76,13 @@ object IndexingFlag {
   fun setIndexedIfFileWithSameLock(file: VirtualFile, lockObject: Long, stamp: FileIndexingStamp) {
     file.asApplicable()?.also { entry ->
       val hash = hashes.releaseHash(entry.id)
-      if (entry.indexedStamp != stamp.toInt()) {
-        entry.indexedStamp = (if (hash == lockObject) stamp else ProjectIndexingDependenciesService.NULL_STAMP).toInt()
+      if (!stamp.isSame(entry.indexedStamp)) {
+        if (hash == lockObject) {
+          stamp.store(entry::setIndexedStamp)
+        }
+        else {
+          ProjectIndexingDependenciesService.NULL_STAMP.store(entry::setIndexedStamp)
+        }
       }
     }
   }

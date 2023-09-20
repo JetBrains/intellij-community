@@ -15,6 +15,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.IntConsumer
 import kotlin.io.path.deleteIfExists
 import kotlin.math.max
 
@@ -44,7 +45,13 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     private const val NULL_INDEXING_STAMP: Int = 0
 
     @JvmStatic
-    val NULL_STAMP: FileIndexingStamp = FileIndexingStampImpl(NULL_INDEXING_STAMP)
+    val NULL_STAMP: FileIndexingStamp = object : FileIndexingStamp {
+      override fun store(storage: IntConsumer) {
+        storage.accept(NULL_INDEXING_STAMP)
+      }
+
+      override fun isSame(i: Int): Boolean = false
+    }
 
     private fun requestVfsRebuildDueToError(reason: Throwable) {
       thisLogger().error(reason)
@@ -62,8 +69,15 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     }
   }
 
-  private data class FileIndexingStampImpl(val stamp: Int) : FileIndexingStamp {
-    override fun toInt(): Int = stamp
+  @VisibleForTesting
+  data class FileIndexingStampImpl(val stamp: Int) : FileIndexingStamp {
+    override fun store(storage: IntConsumer) {
+      storage.accept(stamp)
+    }
+
+    override fun isSame(i: Int): Boolean {
+      return i != NULL_INDEXING_STAMP && i == stamp
+    }
   }
 
   private data class IndexingRequestTokenImpl(val requestId: Int,
@@ -71,8 +85,8 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     private val appIndexingRequestId = appIndexingRequest.toInt()
     override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
       val fileStamp = file.modificationStamp
-      if (fileStamp == -1L || requestId == NULL_INDEXING_STAMP) {
-        return FileIndexingStampImpl(NULL_INDEXING_STAMP)
+      if (fileStamp == -1L) {
+        return NULL_STAMP
       }
       else {
         // we assume that stamp and file.modificationStamp never decrease => their sum only grow up
@@ -88,8 +102,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     }
   }
 
-  private val current = AtomicReference(IndexingRequestTokenImpl(NULL_INDEXING_STAMP,
-                                                                 appIndexingDependenciesService.getCurrent()))
+  private val current = AtomicReference(IndexingRequestTokenImpl(0, appIndexingDependenciesService.getCurrent()))
 
   private val storage: ProjectIndexingDependenciesStorage = openOrInitStorage(storagePath)
 
@@ -136,7 +149,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     val appCurrent = appIndexingDependenciesService.getCurrent()
     return current.updateAndGet { current ->
       val next = current.requestId + 1
-      IndexingRequestTokenImpl(if (next == NULL_INDEXING_STAMP) NULL_INDEXING_STAMP + 1 else next, appCurrent)
+      IndexingRequestTokenImpl(if (next + appCurrent.toInt() != NULL_INDEXING_STAMP) next else next + 1, appCurrent)
     }.also {
       // don't use `it`: current.get() will return just updated value or more up-to-date value
       storage.writeRequestId(current.get().requestId)

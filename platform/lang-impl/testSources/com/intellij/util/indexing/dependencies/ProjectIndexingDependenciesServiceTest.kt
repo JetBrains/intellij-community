@@ -3,6 +3,8 @@ package com.intellij.util.indexing.dependencies
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService.Companion.NULL_STAMP
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService.FileIndexingStampImpl
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -16,6 +18,7 @@ import kotlin.math.min
 
 @RunWith(JUnit4::class)
 class ProjectIndexingDependenciesServiceTest {
+  private val DEFAULT_VFS_INDEXING_STAMP_VALUE: Int = 0
 
   @JvmField
   @Rule
@@ -158,5 +161,53 @@ class ProjectIndexingDependenciesServiceTest {
 
     factory.newProjectIndexingDependenciesService(file)
     // should not throw
+  }
+
+  @Test
+  fun `test clean files are not marked as indexed by default (modificationStamp=0)`() {
+    val file = factory.createMockVirtualFile(modificationStamp = 0)
+    val indexingRequest = factory.newProjectIndexingDependenciesService().getLatestIndexingRequestToken()
+
+    val fileIndexingStamp = indexingRequest.getFileIndexingStamp(file)
+    assertFalse("Should not be equal to default VFS value (0): $fileIndexingStamp",
+                fileIndexingStamp.isSame(DEFAULT_VFS_INDEXING_STAMP_VALUE))
+  }
+
+  @Test
+  fun `test non-markable files are not marked as indexed by default (modificationStamp=-1)`() {
+    val file = factory.createMockVirtualFile(modificationStamp = -1)
+    val indexingRequest = factory.newProjectIndexingDependenciesService().getLatestIndexingRequestToken()
+
+    val fileIndexingStamp = indexingRequest.getFileIndexingStamp(file)
+    assertFalse("Should not be equal to default VFS value (0): $fileIndexingStamp",
+                fileIndexingStamp.isSame(DEFAULT_VFS_INDEXING_STAMP_VALUE))
+  }
+
+  @Test
+  fun `test modificationStamp change invalidates indexing flag`() {
+    val indexingRequest = factory.newProjectIndexingDependenciesService().getLatestIndexingRequestToken()
+    val fileIndexingStampBefore = indexingRequest.getFileIndexingStamp(factory.createMockVirtualFile(modificationStamp = 42))
+    val fileIndexingStampAfter = indexingRequest.getFileIndexingStamp(factory.createMockVirtualFile(modificationStamp = 43))
+    assertNotEquals(fileIndexingStampBefore, fileIndexingStampAfter)
+  }
+
+  @Test
+  fun `test NULL_STAMP is not equal to any other int, not even to NULL_INDEXING_STAMP`() {
+    assertFalse(NULL_STAMP.isSame(0))
+    assertFalse(NULL_STAMP.isSame(42))
+
+    assertFalse(FileIndexingStampImpl(0).isSame(0))
+    assertFalse(FileIndexingStampImpl(0).isSame(42))
+    assertFalse(FileIndexingStampImpl(42).isSame(0))
+    assertTrue(FileIndexingStampImpl(42).isSame(42))
+
+    assertEquals(FileIndexingStampImpl(0), FileIndexingStampImpl(0))
+    assertEquals(FileIndexingStampImpl(42), FileIndexingStampImpl(42))
+    assertNotEquals(FileIndexingStampImpl(41), FileIndexingStampImpl(42))
+
+    assertNotEquals(NULL_STAMP, FileIndexingStampImpl(0))
+    assertNotEquals(FileIndexingStampImpl(0), NULL_STAMP)
+    assertNotEquals(NULL_STAMP, FileIndexingStampImpl(42))
+    assertNotEquals(FileIndexingStampImpl(42), NULL_STAMP)
   }
 }

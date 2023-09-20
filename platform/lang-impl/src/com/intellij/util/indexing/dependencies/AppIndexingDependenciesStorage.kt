@@ -13,7 +13,7 @@ class AppIndexingDependenciesStorage(private val storage: FileChannel, storagePa
 
   companion object {
     private const val CURRENT_STORAGE_VERSION = 1
-    private const val DEFAULT_INDEXING_REQUEST: Int = 0
+    private const val DEFAULT_INDEXING_REQUEST: Int = 1 // not 0, because all the files should be scanned at least once
     private const val INDEXING_REQUEST_OFFSET = FIRST_UNUSED_OFFSET
     private const val INDEXING_REQUEST_SIZE = Int.SIZE_BYTES
     private const val APP_FINGERPRINT_OFFSET = INDEXING_REQUEST_OFFSET + INDEXING_REQUEST_SIZE
