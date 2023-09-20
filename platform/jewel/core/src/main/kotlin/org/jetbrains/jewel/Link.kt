@@ -24,6 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.semantics.Role
@@ -49,6 +51,7 @@ import org.jetbrains.jewel.styling.LocalMenuStyle
 import org.jetbrains.jewel.styling.MenuStyle
 import org.jetbrains.jewel.styling.PainterProvider
 import org.jetbrains.jewel.util.appendIf
+import java.awt.Cursor
 
 @Composable
 fun Link(
@@ -286,9 +289,12 @@ private fun LinkImpl(
         shape = RoundedCornerShape(style.metrics.focusHaloCornerSize),
     )
 
+    val pointerChangeModifier = Modifier.pointerHoverIcon(PointerIcon(Cursor(Cursor.HAND_CURSOR)))
+
     Row(
         modifier = modifier.then(clickable)
-            .appendIf(linkState.isFocused) { focusHaloModifier },
+            .appendIf(linkState.isFocused) { focusHaloModifier }
+            .appendIf(linkState.isEnabled) { pointerChangeModifier },
         horizontalArrangement = Arrangement.spacedBy(style.metrics.textIconGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
