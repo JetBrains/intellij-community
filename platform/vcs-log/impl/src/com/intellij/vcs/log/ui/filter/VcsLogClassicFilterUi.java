@@ -206,22 +206,22 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   public @NotNull ActionGroup createActionGroup() {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
 
-    FilterActionComponent branchComponent = createBranchComponent();
+    AnAction branchComponent = createBranchComponent();
     if (branchComponent != null) {
       actionGroup.add(branchComponent);
     }
 
-    FilterActionComponent userComponent = createUserComponent();
+    AnAction userComponent = createUserComponent();
     if (userComponent != null) {
       actionGroup.add(userComponent);
     }
 
-    FilterActionComponent dateComponent = createDateComponent();
+    AnAction dateComponent = createDateComponent();
     if (dateComponent != null) {
       actionGroup.add(dateComponent);
     }
 
-    FilterActionComponent structureFilterComponent = createStructureFilterComponent();
+    AnAction structureFilterComponent = createStructureFilterComponent();
     if (structureFilterComponent != null) {
       actionGroup.add(structureFilterComponent);
     }
@@ -252,22 +252,22 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     myUserFilterModel.setFilter(collection.get(USER_FILTER));
   }
 
-  protected @Nullable FilterActionComponent createBranchComponent() {
+  protected @Nullable AnAction createBranchComponent() {
     return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.branch.filter.action.text"),
                                      () -> new BranchFilterPopupComponent(myUiProperties, myBranchFilterModel).initUi());
   }
 
-  protected @Nullable FilterActionComponent createUserComponent() {
+  protected @Nullable AnAction createUserComponent() {
     return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.user.filter.action.text"),
                                      () -> new UserFilterPopupComponent(myUiProperties, myLogData, myUserFilterModel).initUi());
   }
 
-  protected @Nullable FilterActionComponent createDateComponent() {
+  protected @Nullable AnAction createDateComponent() {
     return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.date.filter.action.text"),
                                      () -> new DateFilterPopupComponent(myDateFilterModel).initUi());
   }
 
-  protected @Nullable FilterActionComponent createStructureFilterComponent() {
+  protected @Nullable AnAction createStructureFilterComponent() {
     return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.path.filter.action.text"),
                                      () -> new StructureFilterPopupComponent(myUiProperties, myStructureFilterModel,
                                                                              myColorManager).initUi());
