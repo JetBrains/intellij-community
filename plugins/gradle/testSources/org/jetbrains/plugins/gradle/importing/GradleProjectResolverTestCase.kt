@@ -22,9 +22,8 @@ import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.assertS
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdk
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
 import com.intellij.testFramework.replaceService
-import com.intellij.util.lang.JavaVersion
-import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
+import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.graldeJvm.GradleJvmResolver
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyGradleProjectReload
@@ -65,18 +64,10 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     }
   }
 
-  fun findRealTestSdk(): TestSdk? {
-    val jdkType = JavaSdk.getInstance()
-    val jdkInfo = jdkType.suggestHomePaths().asSequence()
-      .map { createSdkInfo(jdkType, it) }
-      .filter { ExternalSystemJdkUtil.isValidJdk(it.homePath) }
-      .filter { GradleJvmSupportMatrix.isSupported(currentGradleVersion, JavaVersion.parse(it.versionString)) }
-      .firstOrNull()
-    if (jdkInfo == null) {
-      LOG.warn("Cannot find test JDK for Gradle $currentGradleVersion")
-      return null
-    }
-    return TestSdkGenerator.createTestSdk(jdkInfo)
+  fun resolveRealTestSdk(): TestSdk {
+    val homePath = GradleJvmResolver.resolveGradleJvmHomePath(currentGradleVersion)
+    val sdkInfo = createSdkInfo(JavaSdk.getInstance(), homePath)
+    return TestSdkGenerator.createTestSdk(sdkInfo)
   }
 
   private fun createSdkInfo(sdkType: SdkType, homePath: String): TestSdkGenerator.SdkInfo {
