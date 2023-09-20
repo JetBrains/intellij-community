@@ -19,6 +19,7 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -152,7 +153,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
             }
           }
         }
-        setUpEmptyText(state.myHasVCSFilteredChildren, state.myHasFullyCoveredChildren);
+        ApplicationManager.getApplication().invokeLater(() -> setUpEmptyText(state.myHasVCSFilteredChildren, state.myHasFullyCoveredChildren));
         return Unit.INSTANCE;
       });
     }

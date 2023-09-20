@@ -4,6 +4,7 @@ package com.intellij.coverage.view;
 import com.intellij.coverage.CoverageEngine;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
@@ -61,15 +62,17 @@ class CoverageTableModel extends AbstractTreeModel implements TreeTableModel, So
   }
 
   public void runActionWithPathsRestore(Runnable action) {
-    final List<TreePath> selectedPaths = TreeUtil.collectSelectedPaths(myTree);
-    final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
-    action.run();
-    for (TreePath path : selectedPaths) {
-      TreeUtil.promiseSelect(myTree, path);
-    }
-    for (TreePath path : expandedPaths) {
-      TreeUtil.promiseExpand(myTree, path);
-    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final List<TreePath> selectedPaths = TreeUtil.collectSelectedPaths(myTree);
+      final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
+      action.run();
+      for (TreePath path : selectedPaths) {
+        TreeUtil.promiseSelect(myTree, path);
+      }
+      for (TreePath path : expandedPaths) {
+        TreeUtil.promiseExpand(myTree, path);
+      }
+    });
   }
 
   @Override
