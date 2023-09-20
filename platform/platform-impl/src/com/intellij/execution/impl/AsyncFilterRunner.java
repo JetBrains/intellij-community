@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Expirable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
@@ -44,12 +45,13 @@ final class AsyncFilterRunner {
   void highlightHyperlinks(@NotNull Project project,
                            @NotNull Filter customFilter,
                            int startLine,
-                           int endLine) {
+                           int endLine,
+                           @NotNull Expirable token) {
     if (endLine < 0) return;
 
     Document document = myEditor.getDocument();
     long startStamp = document.getModificationStamp();
-    myQueue.offer(new HighlighterJob(project, customFilter, startLine, endLine, document));
+    myQueue.offer(new HighlighterJob(project, customFilter, startLine, endLine, document, token));
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       runTasks();
       highlightAvailableResults();
@@ -195,13 +197,14 @@ final class AsyncFilterRunner {
                    @NotNull Filter filter,
                    int startLine,
                    int endLine,
-                   @NotNull Document document) {
+                   @NotNull Document document,
+                   @NotNull Expirable expirableToken) {
       myProject = project;
       this.startLine = new AtomicInteger(startLine);
       this.endLine = endLine;
       this.filter = filter;
 
-      delta = new DeltaTracker(document, document.getLineEndOffset(endLine));
+      delta = new DeltaTracker(document, document.getLineEndOffset(endLine), expirableToken);
 
       snapshot = ((DocumentImpl)document).freeze();
     }
@@ -231,20 +234,21 @@ final class AsyncFilterRunner {
   private static final class DeltaTracker {
     private final int initialMarkerOffset;
     private final RangeMarker endMarker;
+    private final @NotNull Expirable myExpirableToken;
 
-    DeltaTracker(Document document, int offset) {
+    DeltaTracker(Document document, int offset, @NotNull Expirable token) {
+      myExpirableToken = token;
       initialMarkerOffset = offset;
       endMarker = document.createRangeMarker(initialMarkerOffset, initialMarkerOffset);
     }
 
     boolean isOutdated() {
-      return !endMarker.isValid() || endMarker.getEndOffset() == 0;
+      return !endMarker.isValid() || endMarker.getEndOffset() == 0 || myExpirableToken.isExpired();
     }
 
     int getOffsetDelta() {
       return endMarker.getStartOffset() - initialMarkerOffset;
     }
-
   }
 
 }

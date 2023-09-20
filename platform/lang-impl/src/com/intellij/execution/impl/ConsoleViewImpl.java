@@ -53,10 +53,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.pom.Navigatable;
@@ -113,6 +110,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   @NotNull
   private final Alarm myHeavyAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private volatile int myHeavyUpdateTicket;
+  private final ExpirableTokenProvider myPredefinedFiltersUpdateExpirableTokenProvider = new ExpirableTokenProvider();
   private final Collection<ChangeListener> myListeners = new CopyOnWriteArraySet<>();
 
   private final List<AnAction> customActions = new ArrayList<>();
@@ -746,7 +744,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     int startLine = lastProcessedOutput.isValid() ? editor.getDocument().getLineNumber(lastProcessedOutput.getEndOffset()) : 0;
     lastProcessedOutput.dispose();
-    highlightHyperlinksAndFoldings(startLine);
+    highlightHyperlinksAndFoldings(startLine, myPredefinedFiltersUpdateExpirableTokenProvider.createExpirable());
 
     if (shouldStickToEnd) {
       scrollToEnd();
@@ -947,7 +945,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return new DefaultActionGroup(result);
   }
 
-  private void highlightHyperlinksAndFoldings(int startLine) {
+  private void highlightHyperlinksAndFoldings(int startLine, @NotNull Expirable expirableToken) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     CompositeFilter compositeFilter = createCompositeFilter();
     boolean canHighlightHyperlinks = !compositeFilter.isEmpty();
@@ -961,7 +959,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     int endLine = Math.max(0, document.getLineCount() - 1);
 
     if (canHighlightHyperlinks) {
-      getHyperlinks().highlightHyperlinks(compositeFilter, startLine, endLine);
+      getHyperlinks().highlightHyperlinksLater(compositeFilter, startLine, endLine, expirableToken);
     }
 
     if (myAllowHeavyFilters && compositeFilter.isAnyHeavy() && compositeFilter.shouldRunHeavy()) {
@@ -972,12 +970,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
+  public void invalidateFiltersExpirableTokens() {
+    myPredefinedFiltersUpdateExpirableTokenProvider.invalidateAll();
+  }
+
   public void rehighlightHyperlinksAndFoldings() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isDisposed()) return;
-
+    invalidateFiltersExpirableTokens();
     clearHyperlinkAndFoldings();
-    highlightHyperlinksAndFoldings(0);
+    highlightHyperlinksAndFoldings(0, myPredefinedFiltersUpdateExpirableTokenProvider.createExpirable());
   }
 
   private void runHeavyFilters(@NotNull CompositeFilter compositeFilter, int line1, int endLine) {
@@ -1623,6 +1625,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       return ActionUpdateThread.EDT;
     }
   }
+
+
 
   @NotNull
   public String getText() {

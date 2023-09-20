@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.NavigatableAdapter;
@@ -38,6 +39,7 @@ public final class EditorHyperlinkSupport {
   private static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
   private static final Key<HyperlinkInfoTextAttributes> HYPERLINK = Key.create("HYPERLINK");
   private static final Key<EditorHyperlinkSupport> EDITOR_HYPERLINK_SUPPORT_KEY = Key.create("EDITOR_HYPERLINK_SUPPORT_KEY");
+  private static final Expirable ETERNAL_TOKEN = () -> false;
 
   private final EditorEx myEditor;
   private final @NotNull Project myProject;
@@ -262,9 +264,27 @@ public final class EditorHyperlinkSupport {
     return event.isOverText() ? getHyperlinkAt(event.getOffset()) : null;
   }
 
-  public void highlightHyperlinks(@NotNull Filter customFilter, int startLine, int endLine) {
-    myFilterRunner.highlightHyperlinks(myProject, customFilter, Math.max(0, startLine), endLine);
+  /**
+   * Starts jobs for highlighting hyperlinks using a custom filter.
+   *
+   * @param customFilter   the custom filter to apply for highlighting hyperlinks
+   * @param startLine      the starting line index for highlighting hyperlinks
+   * @param endLine        the ending line index for highlighting hyperlinks
+   * @param expirableToken the token to expire the highlighting job. Expires when new re-highlighting started
+   *                       (see {@link  com.intellij.execution.impl.ConsoleViewImpl#rehighlightHyperlinksAndFoldings()})
+   */
+  public void highlightHyperlinksLater(@NotNull Filter customFilter, int startLine, int endLine, @NotNull Expirable expirableToken) {
+    myFilterRunner.highlightHyperlinks(myProject, customFilter, Math.max(0, startLine), endLine, expirableToken);
   }
+
+  /**
+   * @deprecated use {@link #highlightHyperlinksLater} instead
+   */
+  @Deprecated
+  public void highlightHyperlinks(@NotNull Filter customFilter, int startLine, int endLine) {
+    myFilterRunner.highlightHyperlinks(myProject, customFilter, Math.max(0, startLine), endLine, ETERNAL_TOKEN);
+  }
+
 
   void highlightHyperlinks(@NotNull Filter.Result result, int offsetDelta) {
     int length = myEditor.getDocument().getTextLength();
