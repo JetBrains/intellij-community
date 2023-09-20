@@ -522,16 +522,20 @@ public final class FSRecordsImpl {
       int id = ids.getInt(i);
       ids.addElements(ids.size(), listIds(id));
     }
-    // delete children first
+    PersistentFSRecordsStorage records = connection.getRecords();
+    InvertedNameIndex invertedNameIndex = invertedNameIndexLazy.getValue();
+    // delete children first:
     for (int i = ids.size() - 1; i >= 0; i--) {
       int id = ids.getInt(i);
-      int nameId = connection.getRecords().getNameId(id);
-      if (PersistentFS.isDirectory(getFlags(id))) {
+      int nameId = records.getNameId(id);
+      int flags = records.getFlags(id);
+
+      if (PersistentFS.isDirectory(flags)) {
         treeAccessor.deleteDirectoryRecord(id);
       }
       recordAccessor.markRecordAsDeleted(id);
 
-      invertedNameIndexLazy.getValue().updateFileName(id, NULL_NAME_ID, nameId);
+      invertedNameIndex.updateFileName(id, NULL_NAME_ID, nameId);
     }
     invertedNameIndexModCount.incrementAndGet();
   }
