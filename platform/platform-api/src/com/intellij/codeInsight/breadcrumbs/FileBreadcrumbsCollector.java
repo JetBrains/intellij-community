@@ -47,7 +47,6 @@ public abstract class FileBreadcrumbsCollector {
                                                                    @Nullable Boolean forcedShown);
 
   @ApiStatus.Internal
-  @RequiresBackgroundThread
   public boolean requiresProvider() { return true; }
 
   public static FileBreadcrumbsCollector findBreadcrumbsCollector(Project project, VirtualFile file) {
