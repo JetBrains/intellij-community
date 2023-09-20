@@ -9,8 +9,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.TaskCancellation
 import com.intellij.openapi.progress.withModalProgress
@@ -36,9 +36,8 @@ class IjentWslVerificationAction : DumbAwareAction() {
       e.project?.let(ModalTaskOwner::project)
       ?: PlatformDataKeys.CONTEXT_COMPONENT.getData(e.dataContext)?.let(ModalTaskOwner::component)
       ?: error("No ModalTaskOwner")
-    val logger = thisLogger()
     GlobalScope.launch {
-      logger.runAndLogException {
+      LOG.runAndLogException {
         withModalProgress(modalTaskOwner, e.presentation.text, TaskCancellation.cancellable()) {
           val wslDistribution = WslDistributionManager.getInstance().installedDistributions.first()
 
@@ -62,5 +61,9 @@ class IjentWslVerificationAction : DumbAwareAction() {
         }
       }
     }
+  }
+
+  companion object {
+    private val LOG = logger<IjentWslVerificationAction>()
   }
 }
