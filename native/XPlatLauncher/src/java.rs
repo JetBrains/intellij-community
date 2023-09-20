@@ -25,11 +25,11 @@ use {
 use std::ffi::{c_char, CStr, c_int};
 
 #[cfg(target_os = "windows")]
-const LIBJVM_REL_PATH: &str = "bin\\server\\jvm.dll";
+const JVM_LIB_REL_PATH: &str = "bin\\server\\jvm.dll";
 #[cfg(target_os = "macos")]
-const LIBJVM_REL_PATH: &str = "lib/server/libjvm.dylib";
+const JVM_LIB_REL_PATH: &str = "lib/libjli.dylib";
 #[cfg(target_os = "linux")]
-const LIBJVM_REL_PATH: &str = "lib/server/libjvm.so";
+const JVM_LIB_REL_PATH: &str = "lib/server/libjvm.so";
 
 static HOOK_NAME: &str = "vfprintf";
 static HOOK_MESSAGES: Mutex<Option<Vec<String>>> = Mutex::new(None);
@@ -150,7 +150,7 @@ fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv
     let work_dir = env::current_dir().context("Failed to get current directory")?;
     env::set_var("IDEA_INITIAL_DIRECTORY", &work_dir);
 
-    let libjvm_path = jre_home.join(LIBJVM_REL_PATH);
+    let libjvm_path = jre_home.join(JVM_LIB_REL_PATH);
     debug!("[JVM] Loading {libjvm_path:?}");
     let libjvm = load_libjvm(jre_home, &libjvm_path)?;
 
