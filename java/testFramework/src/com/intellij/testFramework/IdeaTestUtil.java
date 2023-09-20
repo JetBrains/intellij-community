@@ -158,7 +158,6 @@ public final class IdeaTestUtil {
     //};
     Sdk sdk = ProjectJdkTable.getInstance().createSdk(name, JavaSdk.getInstance());
     SdkModificator sdkModificator = sdk.getSdkModificator();
-    sdkModificator.setVersionString(name);
 
     String sdkPath;
     if (path.endsWith(".jar!/")) {
@@ -174,6 +173,7 @@ public final class IdeaTestUtil {
       }
     }
     sdkModificator.setHomePath(sdkPath);
+    sdkModificator.setVersionString(name);
 
     // only Mock JDKs 1.4/1.7 have src.zip
     if (path.endsWith("mockJDK-1.7") || path.endsWith("mockJDK-1.4")) {
