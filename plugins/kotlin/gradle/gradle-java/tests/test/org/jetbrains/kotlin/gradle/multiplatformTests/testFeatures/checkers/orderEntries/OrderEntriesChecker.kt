@@ -153,6 +153,8 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
                 ) else it
             }
             .removePrefix("${project.name}.")
+            .replace(projectRoot.path, "{{PROJECT_ROOT}}")
+            .replace(projectRoot.absolutePath, "{{PROJECT_ROOT}}")
             .removePrefix("Gradle: ")
 
     private fun PrinterContext.getModuleInfos(orderEntry: OrderEntry): Set<IdeaModuleInfo> {
