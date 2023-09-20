@@ -82,7 +82,10 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     allLibraryLicenses += AndroidStudioLibraryLicenses.LICENSES_LIST
     includeIntoSourcesArchiveFilter = BiPredicate { _, _ -> true }
     customJvmMemoryOptions = customJvmMemoryOptions.putAll(arrayOf("-Xms" to "256m", "-Xmx" to "2048m"))
-    additionalIdeJvmArguments = mutableListOf("-XX:FlightRecorderOptions=stackdepth=256", "--add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED")
+    additionalIdeJvmArguments = mutableListOf(
+      "-XX:FlightRecorderOptions=stackdepth=256", // Reduces the chance of truncated JFR stacks (ag/I16b829882).
+      "--add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED", // Required by instantapps-api.jar (ag/I55803b347).
+    )
 
     embeddedJetBrainsClientMainModule = null // Overrides org.jetbrains.intellij.build.configureJetBrainsProduct().
     productLayout.productImplementationModules =
