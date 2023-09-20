@@ -336,7 +336,6 @@ class MavenImportingManager(val project: Project) {
 
   private fun <T> withStructuredIdeActivity(f: (StructuredIdeActivity) -> T): T {
     val startedActivity = ProjectImportCollector.IMPORT_ACTIVITY.started(project, withData(MavenImportStats.ImportingTask::class.java))
-
     try {
       return f(startedActivity)
     }
