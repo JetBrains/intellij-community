@@ -3,21 +3,25 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiReference;
+import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.references.PluginConfigReference;
-import org.jetbrains.idea.devkit.util.PsiUtil;
-import org.jetbrains.uast.UastContextKt;
-import org.jetbrains.uast.expressions.UInjectionHost;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.ULiteralExpression;
+import org.jetbrains.uast.UastLiteralUtils;
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 /**
  * Highlights all unresolved {@link PluginConfigReference}s in code.
  */
 public final class UnresolvedPluginConfigReferenceInspection extends LocalInspectionTool {
+
+  @SuppressWarnings("unchecked")
+  private final Class<? extends UElement>[] HINTS = new Class[]{ULiteralExpression.class};
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -25,15 +29,21 @@ public final class UnresolvedPluginConfigReferenceInspection extends LocalInspec
       return PsiElementVisitor.EMPTY_VISITOR;
     }
 
-    return new PsiElementVisitor() {
+    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
+
       @Override
-      public void visitElement(@NotNull PsiElement element) {
-        super.visitElement(element);
+      public boolean visitLiteralExpression(@NotNull ULiteralExpression uLiteralExpression) {
+        visit(uLiteralExpression);
 
-        UInjectionHost expression = UastContextKt.toUElement(element, UInjectionHost.class);
-        if (expression == null) return;
+        return super.visitExpression(uLiteralExpression);
+      }
 
-        for (PsiReference reference : element.getReferences()) {
+      private void visit(ULiteralExpression uLiteralExpression) {
+        PsiElement element = uLiteralExpression.getSourcePsi();
+        PsiLanguageInjectionHost expression = UastLiteralUtils.getSourceInjectionHost(uLiteralExpression);
+        if (element == null || expression == null) return;
+
+        for (PsiReference reference : expression.getReferences()) {
           if (reference instanceof PluginConfigReference &&
               !reference.isSoft() &&
               reference.resolve() == null) {
@@ -41,6 +51,6 @@ public final class UnresolvedPluginConfigReferenceInspection extends LocalInspec
           }
         }
       }
-    };
+    }, HINTS);
   }
 }
