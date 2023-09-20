@@ -17,7 +17,7 @@ class KotlinMppTierZeroCasesImportingTests : AbstractKotlinMppGradleImportingTes
     }
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.8.20+")
+    @PluginTargetVersions(pluginVersion = "1.9.0+")
     fun testKmmApplication() {
         doTest()
     }
