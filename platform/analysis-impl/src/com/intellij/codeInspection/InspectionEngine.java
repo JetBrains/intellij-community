@@ -40,8 +40,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.singletonList;
-
 public final class InspectionEngine {
   private static final Logger LOG = Logger.getInstance(InspectionEngine.class);
   private static boolean createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
