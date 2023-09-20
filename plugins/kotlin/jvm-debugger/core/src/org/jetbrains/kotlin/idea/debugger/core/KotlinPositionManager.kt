@@ -38,6 +38,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.jetbrains.jdi.LocalVariableImpl
@@ -74,6 +75,7 @@ import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_A
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
+import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
@@ -521,10 +523,12 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         val psiFile = sourcePosition.file
         if (psiFile is KtFile) {
 
-            val referenceTypesInKtFile = syncNonBlockingReadAction(psiFile.project) {
+            val candidates = syncNonBlockingReadAction(psiFile.project) {
                 if (!RootKindFilter.projectAndLibrarySources.matches(psiFile)) return@syncNonBlockingReadAction null
-                getReferenceTypesForPositionInKotlinFile(sourcePosition)
+                getReferenceTypesCandidates(sourcePosition)
             } ?: return emptyList()
+
+            val referenceTypesInKtFile = candidates.ifNotEmpty { findTargetClasses(this, sourcePosition) } ?: emptyList()
 
             if (sourcePosition.isInsideProjectWithCompose()) {
                 return referenceTypesInKtFile + getComposableSingletonsClasses(debugProcess, psiFile)
@@ -545,18 +549,19 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     @RequiresReadLock
-    private fun getReferenceTypesForPositionInKotlinFile(sourcePosition: SourcePosition): List<ReferenceType> {
+    private fun getReferenceTypesCandidates(sourcePosition: SourcePosition): List<ReferenceType> {
         val classNameProvider = ClassNameProvider(debugProcess.project, debugProcess.searchScope, ClassNameProvider.Configuration.DEFAULT)
-        val lineNumber = sourcePosition.line
+        return classNameProvider.getCandidates(sourcePosition)
+            .flatMap { className -> debugProcess.virtualMachineProxy.classesByName(className) }
+    }
 
+    @RequiresReadLockAbsence
+    private fun findTargetClasses(candidates: List<ReferenceType>, sourcePosition: SourcePosition): List<ReferenceType> {
         try {
-            val allCandidates = classNameProvider.getCandidates(sourcePosition)
-                .flatMap { className -> debugProcess.virtualMachineProxy.classesByName(className) }
+            val matchingCandidates = candidates
+                .flatMap { referenceType -> debugProcess.findTargetClasses(referenceType, sourcePosition.line) }
 
-            val matchingCandidates = allCandidates
-                .flatMap { referenceType -> debugProcess.findTargetClasses(referenceType, lineNumber) }
-
-            return matchingCandidates.ifEmpty { allCandidates }
+            return matchingCandidates.ifEmpty { candidates }
         } catch (e: IncompatibleThreadStateException) {
             return emptyList()
         } catch (e: VMDisconnectedException) {
