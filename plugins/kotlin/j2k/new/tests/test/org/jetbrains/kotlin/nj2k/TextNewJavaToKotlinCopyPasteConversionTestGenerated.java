@@ -33,6 +33,11 @@ public class TextNewJavaToKotlinCopyPasteConversionTestGenerated extends Abstrac
         runTest("testData/copyPastePlainText/AsExpressionBody.txt");
     }
 
+    @TestMetadata("Comments.txt")
+    public void testComments() throws Exception {
+        runTest("testData/copyPastePlainText/Comments.txt");
+    }
+
     @TestMetadata("ImportFromTarget.txt")
     public void testImportFromTarget() throws Exception {
         runTest("testData/copyPastePlainText/ImportFromTarget.txt");
