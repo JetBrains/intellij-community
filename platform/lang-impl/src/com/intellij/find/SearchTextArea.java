@@ -356,6 +356,8 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       Dimension size = historyList.getPreferredSize();
       size.width = Math.min(size.width, getWidth() + 200);
       historyList.setPreferredSize(size);
+      historyList.getAccessibleContext()
+        .setAccessibleName(FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"));
       Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null);
     }
   }

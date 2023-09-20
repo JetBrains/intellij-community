@@ -417,6 +417,7 @@ public class SearchTextField extends JPanel {
         .setRequestFocus(true)
         .setItemChosenCallback(chooseRunnable)
         .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+        .setAccessibleName(UIBundle.message("search.text.field.history.popup.accessible.name"))
         .createPopup();
       AlignedPopup.showUnderneathWithoutAlignment(myPopup, getPopupLocationComponent());
     }
