@@ -92,7 +92,7 @@ class SemanticSearchSettingsImpl : SemanticSearchSettings, PersistentStateCompon
     state = newState
   }
 
-  override fun isEnabled() = enabledInActionsTab || enabledInFilesTab || enabledInSymbolsTab || enabledInClassesTab
+  override fun isEnabled() = enabledInFilesTab || enabledInSymbolsTab || enabledInClassesTab
 
   override fun getUseRemoteActionsServer() = Registry.`is`("search.everywhere.ml.semantic.actions.server.use")
 
