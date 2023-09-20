@@ -598,9 +598,8 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   @Override
   public void force() throws IOException {
     if (dirty.compareAndSet(true, false)) {
-      setIntHeaderField(HEADER_RECORDS_ALLOCATED, allocatedRecordsCount());
       setIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET, globalModCount.get());
-      //MAYBE RC: should we do fsync() here, or we could trust OS will flush mmapped pages to disk?
+      //MAYBE RC: should we do fsync() here -- or we could trust OS will flush mmapped pages to disk?
       storage.fsync();
     }
   }

@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap;
 
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.dev.StorageFactory;
 import org.jetbrains.annotations.ApiStatus;
