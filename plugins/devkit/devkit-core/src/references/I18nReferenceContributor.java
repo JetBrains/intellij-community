@@ -1,30 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.dom.impl;
+package org.jetbrains.idea.devkit.references;
 
-import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.ide.TypeNameEP;
-import com.intellij.lang.properties.PropertiesImplUtil;
-import com.intellij.lang.properties.PropertiesReferenceManager;
-import com.intellij.lang.properties.ResourceBundleReference;
 import com.intellij.notification.impl.NotificationGroupEP;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SchemeConvertorEPBase;
 import com.intellij.openapi.options.advanced.AdvancedSettingBean;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.patterns.DomPatterns;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.XmlAttributeValuePattern;
 import com.intellij.patterns.XmlTagPattern;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.IconDescriptionBundleEP;
@@ -33,14 +26,8 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
-import org.jetbrains.idea.devkit.references.MessageBundleReferenceContributor;
 import org.jetbrains.idea.devkit.util.PsiUtil;
-
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.intellij.patterns.XmlPatterns.*;
 
@@ -199,7 +186,7 @@ final class I18nReferenceContributor extends PsiReferenceContributor {
   }
 
   private static void registerBundleNameProviders(PsiReferenceRegistrar registrar) {
-    final PsiReferenceProvider bundleReferenceProvider = createBundleReferenceProvider();
+    final PsiReferenceProvider bundleReferenceProvider = new ResourceBundlePsiReferenceProvider();
 
     final XmlTagPattern.Capture resourceBundleTagPattern =
       xmlTag().withLocalName("resource-bundle").
@@ -300,53 +287,6 @@ final class I18nReferenceContributor extends PsiReferenceContributor {
 
 
     registrar.registerReferenceProvider(xmlAttributeValue("resource-bundle").withSuperParent(2, templateTagCapture),
-                                        createBundleReferenceProvider());
-  }
-
-  @NotNull
-  private static PsiReferenceProvider createBundleReferenceProvider() {
-    return new PsiReferenceProvider() {
-
-      @Override
-      public boolean acceptsTarget(@NotNull PsiElement target) {
-        return target instanceof PsiFile && PropertiesImplUtil.isPropertiesFile((PsiFile)target);
-      }
-
-      @Override
-      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
-                                                             @NotNull ProcessingContext context) {
-        return new PsiReference[]{new MyResourceBundleReference(element)};
-      }
-    };
-  }
-
-
-  private static final class MyResourceBundleReference extends ResourceBundleReference implements EmptyResolveMessageProvider {
-
-    private MyResourceBundleReference(PsiElement element) {
-      super(element, false);
-    }
-
-    @Override
-    public Object @NotNull [] getVariants() {
-      final Project project = myElement.getProject();
-      PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(project);
-      final List<LookupElement> variants = new ArrayList<>();
-      referenceManager.processPropertiesFiles(GlobalSearchScopesCore.projectProductionScope(project), (baseName, propertiesFile) -> {
-        final Icon icon = propertiesFile.getContainingFile().getIcon(Iconable.ICON_FLAG_READ_STATUS);
-        final String relativePath = ProjectUtil.calcRelativeToProjectPath(propertiesFile.getVirtualFile(), project);
-        variants.add(LookupElementBuilder.create(propertiesFile, baseName)
-                       .withIcon(icon)
-                       .withTailText(" (" + relativePath + ")", true));
-        return true;
-      }, this);
-      return variants.toArray(LookupElement.EMPTY_ARRAY);
-    }
-
-    @NotNull
-    @Override
-    public String getUnresolvedMessagePattern() {
-      return DevKitBundle.message("plugin.xml.convert.property.bundle.cannot.resolve");
-    }
+                                        new ResourceBundlePsiReferenceProvider());
   }
 }
