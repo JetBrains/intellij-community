@@ -8,7 +8,11 @@ class VcsContextFeatureProvider : ContextFeatureProvider {
   override fun getName(): String  = "vcs"
 
   override fun calculateFeatures(environment: @NotNull CompletionEnvironment): @NotNull Map<String, MLFeatureValue> {
-    val changeListManager = ChangeListManager.getInstance(environment.parameters.position.project)
+    val project = environment.parameters.position.project
+    if (project.isDefault) {
+      return emptyMap()
+    }
+    val changeListManager = ChangeListManager.getInstance(project)
     val changesCount = changeListManager.allChanges.size
     environment.putUserData(VcsFeatureProvider.changesCountKey, changesCount)
     return mapOf("changes_count" to MLFeatureValue.numerical(changesCount))
