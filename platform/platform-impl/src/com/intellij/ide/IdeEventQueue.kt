@@ -396,6 +396,9 @@ class IdeEventQueue private constructor() : EventQueue() {
     finally {
       Thread.interrupted()
       if (event is WindowEvent || event is FocusEvent || event is InputEvent) {
+        // Increment the activity counter right before notifying listeners
+        // so that the listeners would get data providers with fresh data
+        incrementActivityCountIfNeeded(e)
         processIdleActivityListeners(event)
       }
       performanceWatcher?.edtEventFinished()
@@ -552,8 +555,9 @@ class IdeEventQueue private constructor() : EventQueue() {
       return
     }
 
-    // increment the activity counter before performing the action so that they are called with data providers with fresh data
-    ActivityTracker.getInstance().inc()
+    // increment the activity counter before performing the action
+    // so that they are called with data providers with fresh data
+    incrementActivityCountIfNeeded(e)
     if (popupManager.isPopupActive && popupManager.dispatch(e)) {
       if (keyEventDispatcher.isWaitingForSecondKeyStroke) {
         keyEventDispatcher.state = KeyState.STATE_INIT
@@ -587,25 +591,26 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
-  private fun processIdleActivityListeners(e: AWTEvent) {
-    val isActivityInputEvent = KeyEvent.KEY_PRESSED == e.id ||
-                               KeyEvent.KEY_TYPED == e.id ||
-                               MouseEvent.MOUSE_PRESSED == e.id ||
-                               MouseEvent.MOUSE_RELEASED == e.id ||
-                               MouseEvent.MOUSE_CLICKED == e.id
-    if (isActivityInputEvent || e !is InputEvent) {
-      // Increment the activity counter right before notifying listeners so that the listeners would get data providers with fresh data
+  private fun isActivityInputEvent(e: AWTEvent): Boolean =
+    KeyEvent.KEY_PRESSED == e.id ||
+    KeyEvent.KEY_TYPED == e.id ||
+    MouseEvent.MOUSE_PRESSED == e.id ||
+    MouseEvent.MOUSE_RELEASED == e.id ||
+    MouseEvent.MOUSE_CLICKED == e.id
+
+  private fun incrementActivityCountIfNeeded(e: AWTEvent) {
+    if (isActivityInputEvent(e) || e is WindowEvent || e is FocusEvent) {
       ActivityTracker.getInstance().inc()
     }
+  }
 
+  private fun processIdleActivityListeners(e: AWTEvent) {
     idleTracker()
-
+    if (!isActivityInputEvent(e)) return
     synchronized(lock) {
-      if (isActivityInputEvent) {
-        lastActiveTime = System.nanoTime()
-        for (activityListener in activityListeners) {
-          activityListener.run()
-        }
+      lastActiveTime = System.nanoTime()
+      for (activityListener in activityListeners) {
+        activityListener.run()
       }
     }
   }
