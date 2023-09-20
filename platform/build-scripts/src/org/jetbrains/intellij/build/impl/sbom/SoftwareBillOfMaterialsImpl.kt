@@ -224,17 +224,72 @@ internal class SoftwareBillOfMaterialsImpl(
    * then should be replaced with [addRuntimeDocumentRef]
    */
   private suspend fun SpdxDocument.runtimePackage(os: OsFamily, arch: JvmArchitecture): SpdxPackage {
-    val checksums = context.bundledRuntime.findArchive(os = os, arch = arch).let(SoftwareBillOfMaterialsImpl::Checksums)
-    val runtimePackage = spdxPackage(name = context.bundledRuntime.archiveName(os = os, arch = arch),
-                                     sha256sum = checksums.sha256sum, sha1sum = checksums.sha1sum,
-                                     licenseDeclared = jetBrainsOwnLicense) {
-      setVersionInfo(context.bundledRuntime.prefix + context.bundledRuntime.build)
-        .setDownloadLocation(context.bundledRuntime.downloadUrlFor(os = os, arch = arch))
-        .setSupplier("Organization: ${Suppliers.JETBRAINS}")
+    val checksums = Checksums(context.bundledRuntime.findArchive(os = os, arch = arch))
+    val version = context.bundledRuntime.prefix + context.bundledRuntime.build
+    val supplier = "Organization: ${Suppliers.JETBRAINS}"
+    val runtimeArchivePackage = spdxPackage(
+      name = context.bundledRuntime.archiveName(os = os, arch = arch),
+      sha256sum = checksums.sha256sum, sha1sum = checksums.sha1sum,
+      licenseDeclared = jetBrainsOwnLicense
+    ) {
+      setVersionInfo(version)
+      setSupplier(supplier)
+      setDownloadLocation(context.bundledRuntime.downloadUrlFor(os = os, arch = arch))
     }
-    runtimePackage.claimContainedFiles(document = this)
-    runtimePackage.validate()
-    return runtimePackage
+    runtimeArchivePackage.claimContainedFiles(document = this)
+    /**
+     * See [BundledRuntime.extract]
+     */
+    val extractedRuntimePackage = spdxPackage(name = "./jbr/**") {
+      setVersionInfo(version)
+      setSupplier(supplier)
+      setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
+    }
+    extractedRuntimePackage.relatesTo(runtimeArchivePackage, RelationshipType.DEPENDS_ON, "repacked into")
+    addRuntimeUpstreams(runtimeArchivePackage, os, arch)
+    runtimeArchivePackage.validate()
+    return extractedRuntimePackage
+  }
+
+  private fun SpdxDocument.addRuntimeUpstreams(runtimeArchivePackage: SpdxPackage, os: OsFamily, arch: JvmArchitecture) {
+    val cefVersion = context.dependenciesProperties["cef.version"]
+    val cefSuffix = when (os) {
+      OsFamily.LINUX -> when (arch) {
+        JvmArchitecture.aarch64 -> "linuxarm64"
+        JvmArchitecture.x64 -> "linux64"
+      }
+      OsFamily.MACOS -> when (arch) {
+        JvmArchitecture.aarch64 -> "macosarm64"
+        JvmArchitecture.x64 -> "macosx64"
+      }
+      OsFamily.WINDOWS -> when (arch) {
+        JvmArchitecture.aarch64 -> "windowsarm64"
+        JvmArchitecture.x64 -> "windows64"
+      }
+    }
+    val cefArchive = "cef_binary_${cefVersion}_$cefSuffix.tar.bz2"
+    val cefPackage = spdxPackage(name = cefArchive) {
+      setVersionInfo(cefVersion)
+      setSupplier("Organization: The Chromium Embedded Framework Authors")
+      setDownloadLocation("https://cef-builds.spotifycdn.com/$cefArchive")
+    }
+    val jcefUpstream = spdxPackage("Java Chromium Embedded Framework") {
+      val revision = context.dependenciesProperties["jcef.commit"]
+      setVersionInfo(revision)
+      setSourceInfo("Revision $revision of https://github.com/chromiumembedded/java-cef")
+      setSupplier("Organization: The Chromium Embedded Framework Authors")
+      setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
+    }
+    val openJdkUpstream = spdxPackage("OpenJDK") {
+      val tag = context.dependenciesProperties["openjdk.tag"]
+      setVersionInfo(tag)
+      setSourceInfo("Tag $tag of https://github.com/openjdk/jdk17u")
+      setSupplier("Organization: Oracle Corporation and/or its affiliates")
+      setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
+    }
+    runtimeArchivePackage.relatesTo(cefPackage, RelationshipType.DEPENDS_ON, "repacked into")
+    runtimeArchivePackage.relatesTo(openJdkUpstream, RelationshipType.VARIANT_OF)
+    runtimeArchivePackage.relatesTo(jcefUpstream, RelationshipType.VARIANT_OF)
   }
 
   /**
