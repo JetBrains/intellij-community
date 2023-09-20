@@ -1,6 +1,7 @@
 package com.intellij.searchEverywhereMl.ranking.features.statistician
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.Key
 import com.intellij.psi.statistics.StatisticsManager
@@ -18,7 +19,7 @@ class SearchEverywhereStatisticianService(private val coroutineScope: CoroutineS
 
   fun increaseUseCount(element: Any) {
     coroutineScope.launch {
-      val info = getSerializedInfo(element) ?: return@launch
+      val info = readAction { getSerializedInfo(element) } ?: return@launch
       val manager = StatisticsManager.getInstance()
 
       withContext(Dispatchers.EDT) {
