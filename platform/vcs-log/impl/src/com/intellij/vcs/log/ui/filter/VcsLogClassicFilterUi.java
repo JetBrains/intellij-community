@@ -204,29 +204,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
   @Override
   public @NotNull ActionGroup createActionGroup() {
-    DefaultActionGroup actionGroup = new DefaultActionGroup();
-
-    AnAction branchComponent = createBranchComponent();
-    if (branchComponent != null) {
-      actionGroup.add(branchComponent);
-    }
-
-    AnAction userComponent = createUserComponent();
-    if (userComponent != null) {
-      actionGroup.add(userComponent);
-    }
-
-    AnAction dateComponent = createDateComponent();
-    if (dateComponent != null) {
-      actionGroup.add(dateComponent);
-    }
-
-    AnAction structureFilterComponent = createStructureFilterComponent();
-    if (structureFilterComponent != null) {
-      actionGroup.add(structureFilterComponent);
-    }
-
-    return actionGroup;
+    List<AnAction> actions = ContainerUtil.packNullables(createBranchComponent(), createUserComponent(), createDateComponent(),
+                                                         createStructureFilterComponent());
+    return new DefaultActionGroup(actions);
   }
 
   @Override
