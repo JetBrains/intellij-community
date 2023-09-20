@@ -30,6 +30,7 @@ import java.io.File;
  * @see PathListMacro
  * @see MacroWithParams
  * @see SecondQueueExpandMacro
+ * @see PromptingMacro
  */
 public abstract class Macro {
   public static final ExtensionPointName<Macro> EP_NAME = ExtensionPointName.create("com.intellij.macro");
