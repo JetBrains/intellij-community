@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom
 
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenDependencySpecialVersionsCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
@@ -32,7 +33,7 @@ class MavenDependencySpecialVersionsCompletionAndResolutionTest : MavenDomWithIn
   //  assertResolved(myProjectPom, findPsiFile(f));
   //}
   @Test
-  fun testDoNotHighlightVersionRanges() {
+  fun testDoNotHighlightVersionRanges() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -50,7 +51,7 @@ class MavenDependencySpecialVersionsCompletionAndResolutionTest : MavenDomWithIn
   }
 
   @Test
-  fun testDoNotHighlightLatestAndReleaseDependencies() {
+  fun testDoNotHighlightLatestAndReleaseDependencies() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

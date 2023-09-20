@@ -12,6 +12,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase
 import org.jetbrains.idea.maven.importing.MavenProjectModelModifier
@@ -28,7 +29,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testAddExternalLibraryDependency() {
+  fun testAddExternalLibraryDependency() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -36,7 +37,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
                     """.trimIndent())
 
     val result =
-      this.extension.addExternalLibraryDependency(listOf(getModule("project")),
+      extension.addExternalLibraryDependency(listOf(getModule("project")),
                                                   ExternalLibraryDescriptor("junit", "junit"),
                                                   DependencyScope.COMPILE)
     assertImportingIsInProgress(result)
@@ -52,7 +53,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testAddExternalLibraryDependencyWithEqualMinAndMaxVersions() {
+  fun testAddExternalLibraryDependencyWithEqualMinAndMaxVersions() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -60,7 +61,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
                     """.trimIndent())
 
     val result =
-      this.extension.addExternalLibraryDependency(listOf(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
+      extension.addExternalLibraryDependency(listOf(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
                                                   DependencyScope.COMPILE)
     assertImportingIsInProgress(result)
     assertNotNull(result)
@@ -68,7 +69,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testAddManagedLibraryDependency() {
+  fun testAddManagedLibraryDependency() = runBlocking {
     importProject("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version><dependencyManagement>
                         <dependencies>
@@ -82,7 +83,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
                     """.trimIndent())
 
     val result =
-      this.extension.addExternalLibraryDependency(listOf(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
+      extension.addExternalLibraryDependency(listOf(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
                                                   DependencyScope.COMPILE)
     assertNotNull(result)
     assertImportingIsInProgress(result)
@@ -90,7 +91,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testAddManagedLibraryDependencyWithDifferentScope() {
+  fun testAddManagedLibraryDependencyWithDifferentScope() = runBlocking {
     importProject("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version><dependencyManagement>
                         <dependencies>
@@ -105,21 +106,21 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
                     """.trimIndent())
 
     val result =
-      this.extension.addExternalLibraryDependency(listOf(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
+      extension.addExternalLibraryDependency(listOf(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
                                                   DependencyScope.COMPILE)
     assertNotNull(result)
     assertImportingIsInProgress(result)
   }
 
   @Test
-  fun testAddLibraryDependencyReleaseVersion() {
+  fun testAddLibraryDependencyReleaseVersion() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    val result = this.extension.addExternalLibraryDependency(
+    val result = extension.addExternalLibraryDependency(
       listOf(getModule("project")), ExternalLibraryDescriptor("commons-io", "commons-io", "999.999", "999.999"),
       DependencyScope.COMPILE)
     assertNotNull(result)
@@ -128,7 +129,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testAddModuleDependency() {
+  fun testAddModuleDependency() = runBlocking {
     createTwoModulesPom("m1", "m2")
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
@@ -142,14 +143,14 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
       """.trimIndent())
     importProject()
 
-    val result = this.extension.addModuleDependency(getModule("m1"), getModule("m2"), DependencyScope.COMPILE, false)
+    val result = extension.addModuleDependency(getModule("m1"), getModule("m2"), DependencyScope.COMPILE, false)
     assertNotNull(result)
     assertImportingIsInProgress(result)
     assertHasDependency(m1, "test", "m2")
   }
 
   @Test
-  fun testAddLibraryDependency() {
+  fun testAddLibraryDependency() = runBlocking {
     createTwoModulesPom("m1", "m2")
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
@@ -175,7 +176,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
     assertModuleLibDep("m2", libName)
     val library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libName)
     assertNotNull(library)
-    val result = this.extension.addLibraryDependency(getModule("m1"), library!!, DependencyScope.COMPILE, false)
+    val result = extension.addLibraryDependency(getModule("m1"), library!!, DependencyScope.COMPILE, false)
 
     assertNotNull(result)
     assertImportingIsInProgress(result)
@@ -183,7 +184,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testChangeLanguageLevel() {
+  fun testChangeLanguageLevel() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -192,7 +193,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
 
     val module = getModule("project")
     assertEquals(getDefaultLanguageLevel(), LanguageLevelUtil.getEffectiveLanguageLevel(module))
-    val result = this.extension.changeLanguageLevel(module, LanguageLevel.JDK_1_8)
+    val result = extension.changeLanguageLevel(module, LanguageLevel.JDK_1_8)
     assertNotNull(result)
     assertImportingIsInProgress(result)
     val tag = findTag("project.build.plugins.plugin")
@@ -205,7 +206,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testChangeLanguageLevelPreview() {
+  fun testChangeLanguageLevelPreview() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -213,7 +214,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
                     """.trimIndent())
     val module = getModule("project")
     assertEquals(getDefaultLanguageLevel(), LanguageLevelUtil.getEffectiveLanguageLevel(module))
-    val result = this.extension.changeLanguageLevel(module, LanguageLevel.entries[LanguageLevel.HIGHEST.ordinal + 1])
+    val result = extension.changeLanguageLevel(module, LanguageLevel.entries[LanguageLevel.HIGHEST.ordinal + 1])
     assertImportingIsInProgress(result)
     assertEquals("--enable-preview",
                  findTag("project.build.plugins.plugin")
@@ -232,13 +233,13 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
 """)
   }
 
-  private fun assertHasDependency(pom: VirtualFile, groupId: String, artifactId: String): String {
+  private fun assertHasDependency(pom: VirtualFile, groupId: String, artifactId: String) {
     val pomText = PsiManager.getInstance(myProject).findFile(pom)!!.getText()
     val pattern = Pattern.compile("(?s).*<dependency>\\s*<groupId>" + groupId + "</groupId>\\s*<artifactId>" +
                                   artifactId + "</artifactId>\\s*<version>(.*)</version>\\s*<scope>(.*)</scope>\\s*</dependency>.*")
     val matcher = pattern.matcher(pomText)
     assertTrue(matcher.matches())
-    return matcher.group(1)
+    matcher.group(1)
   }
 
   private fun assertHasDependency(pom: VirtualFile, groupId: String, artifactId: String, version: String): String {

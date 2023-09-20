@@ -10,6 +10,7 @@ import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.junit.Test
 import java.util.function.Consumer
@@ -29,7 +30,7 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testRegularProject() {
+  fun testRegularProject() = runBlocking {
     withVariantsFor("") { it: List<String> ->
       assertContain(it, "clean", "validate", "compile", "test", "package", "verify", "install", "deploy", "site")
       val options = MavenCommandLineOptions.getAllOptions()
@@ -40,7 +41,7 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testSingleMavenProject() {
+  fun testSingleMavenProject() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -86,7 +87,7 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testMavenProjectWithModules() {
+  fun testMavenProjectWithModules() = runBlocking {
     val m1 =
       createModulePom("m1", """
         <groupId>test</groupId>

@@ -2,11 +2,12 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenSuperNavigationTest : MavenDomTestCase() {
   @Test
-  fun testNavigationToManagingDependencyWithoutModules() {
+  fun testNavigationToManagingDependencyWithoutModules() = runBlocking {
     configureProjectPom(
       """
         <groupId>test</groupId>
@@ -56,7 +57,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testNavigationToManagingPluginWithoutModules() {
+  fun testNavigationToManagingPluginWithoutModules() = runBlocking {
     configureProjectPom(
       """
         <groupId>test</groupId>
@@ -110,7 +111,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testGotoToParentProject() {
+  fun testGotoToParentProject() = runBlocking {
     val parent = createProjectPom(
       """
         <groupId>test</groupId>
@@ -141,7 +142,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testNavigationToManagingDependencyWithModules() {
+  fun testNavigationToManagingDependencyWithModules() = runBlocking {
     val parent = createProjectPom(
       """
         <groupId>test</groupId>
@@ -207,7 +208,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testNavigationToManagingPluginWithModules() {
+  fun testNavigationToManagingPluginWithModules() = runBlocking {
     val parent = createProjectPom(
       """
         <groupId>test</groupId>

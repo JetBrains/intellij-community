@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 import java.nio.charset.StandardCharsets
@@ -11,7 +12,7 @@ import java.nio.charset.StandardCharsets
 class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
-  fun testShouldSetEncodingForNewProject() {
+  fun testShouldSetEncodingForNewProject() = runBlocking {
     val subFile = createProjectSubFile("src/main/java/MyClass.java")
     importProject("""<groupId>test</groupId>
                      <artifactId>project</artifactId>
@@ -24,7 +25,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
     TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(myProject).getEncoding(subFile, true))
   }
 
-  @Test fun testShouldSetDifferentEncodingForSourceAndResource() {
+  @Test fun testShouldSetDifferentEncodingForSourceAndResource() = runBlocking {
     val srcFile = createProjectSubFile("src/main/java/MyClass.java")
     val resFile = createProjectSubFile("src/main/resources/data.properties")
     importProject("""<groupId>test</groupId>
@@ -51,7 +52,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
     TestCase.assertEquals(StandardCharsets.UTF_16LE, EncodingProjectManager.getInstance(myProject).getEncoding(resFile, true))
   }
 
-  @Test fun testShouldUseSrcEncodingForResFiles() {
+  @Test fun testShouldUseSrcEncodingForResFiles() = runBlocking {
     val resFile = createProjectSubFile("src/main/resources/data.properties")
     importProject("""<groupId>test</groupId>
                      <artifactId>project</artifactId>
@@ -65,7 +66,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
     TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(myProject).getEncoding(resFile, true))
   }
 
-  @Test fun testShouldChangeEncoding() {
+  @Test fun testShouldChangeEncoding() = runBlocking {
     val subFile = createProjectSubFile("src/main/java/MyClass.java")
     importProject("""<groupId>test</groupId>
                      <artifactId>project</artifactId>
@@ -88,7 +89,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
     TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(myProject).getEncoding(subFile, true))
   }
 
-  @Test fun testShouldSetEncodingPerProject() {
+  @Test fun testShouldSetEncodingPerProject() = runBlocking {
 
     createModulePom("module1", """<parent>
                             <groupId>test</groupId>
@@ -129,7 +130,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
     TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(myProject).getEncoding(subFile2, true))
   }
 
-  @Test fun testShouldSetEncodingPerProjectInSubsequentImport() {
+  @Test fun testShouldSetEncodingPerProjectInSubsequentImport() = runBlocking {
     createModulePom("module1", """
                           <parent>
                             <groupId>test</groupId>
@@ -181,7 +182,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
     assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(myProject).getEncoding(subFile2, true))
   }
 
-  @Test fun testShouldSetEncodingToNewFiles() {
+  @Test fun testShouldSetEncodingToNewFiles() = runBlocking {
 
     createModulePom("module1", """<parent>
                             <groupId>test</groupId>
@@ -222,7 +223,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
     TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(myProject).getEncoding(subFile2, true))
   }
 
-  @Test fun testShouldSetResourceEncodingAsProperties() {
+  @Test fun testShouldSetResourceEncodingAsProperties() = runBlocking {
     importProject("""<groupId>test</groupId>
                      <artifactId>project</artifactId>
                      <version>1</version>

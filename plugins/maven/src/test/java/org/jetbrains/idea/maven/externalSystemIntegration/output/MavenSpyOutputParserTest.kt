@@ -1,12 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.externalSystemIntegration.output
 
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
 
   @Test
-  fun testSuccessfullBuildWithTwoSubmodules() {
+  fun testSuccessfullBuildWithTwoSubmodules() = runBlocking {
     failOnWarns {
       assertSameLines("" +
                       " test:project:pom:1\n" +
@@ -33,7 +34,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  @Test fun testArchetypeRun() {
+  @Test fun testArchetypeRun() = runBlocking {
     failOnWarns {
       testCase(*fromFile("org/jetbrains/maven/buildlogs/test-scala-archetype.log"))
         .withSkippedOutput()
@@ -41,7 +42,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  @Test fun testdependencyInSinleMojoFailed() {
+  @Test fun testdependencyInSinleMojoFailed() = runBlocking {
     failOnWarns {
       assertSameLines("io.testproject:web-test-example:jar:1.1\n" +
                       "  resources\n" +
@@ -62,7 +63,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  @Test fun testSuccessfullBuildWithOutputTwoSubmodules() {
+  @Test fun testSuccessfullBuildWithOutputTwoSubmodules() = runBlocking {
     failOnWarns {
       assertSameLines("test:project:pom:1\n" +
                       "  [INFO]\n" +

@@ -1,11 +1,12 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenCombineChildAttributeTest : MavenDomTestCase() {
   @Test
-  fun testCompletion() {
+  fun testCompletion() = runBlocking {
     createProjectPom(
       """
               <groupId>test</groupId>

@@ -2,11 +2,12 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.maven.testFramework.MavenDomTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPomXmlDocumentationTest : MavenDomTestCase() {
   @Test
-  fun testDocumentation() {
+  fun testDocumentation() = runBlocking {
     createProjectPom(
       """
         <groupId>test</groupId>

@@ -10,6 +10,7 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.ZipUtil
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.*
 import org.junit.Test
 import java.io.IOException
@@ -37,7 +38,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
 
   @Throws(IOException::class)
   @Test
-  fun testShouldUseEmbedMavenIfWrapperIsBad() {
+  fun testShouldUseEmbedMavenIfWrapperIsBad() = runBlocking {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>")
@@ -51,7 +52,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Throws(IOException::class)
-  @Test fun testShouldNotRestartMavenConnectorIfWrapperIsBadButNotChanged() {
+  @Test fun testShouldNotRestartMavenConnectorIfWrapperIsBadButNotChanged() = runBlocking {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>")
@@ -69,7 +70,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Throws(IOException::class)
-  @Test fun testShouldShowWarningIfWrapperDownloadedViaUnsecureProtocol() {
+  @Test fun testShouldShowWarningIfWrapperDownloadedViaUnsecureProtocol() = runBlocking {
     runWithServer { url ->
       createProjectPom("<groupId>test</groupId>" +
                        "<artifactId>project</artifactId>" +
@@ -84,7 +85,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Throws(IOException::class)
-  @Test fun testShouldNotUseWrapperIfSettingsNotSetToUseIt() {
+  @Test fun testShouldNotUseWrapperIfSettingsNotSetToUseIt() = runBlocking {
     runWithServer { url ->
       createProjectPom("<groupId>test</groupId>" +
                        "<artifactId>project</artifactId>" +
@@ -99,7 +100,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Throws(IOException::class)
-  @Test fun testShouldUseEmbeddedMavenForUnexistingHome() {
+  @Test fun testShouldUseEmbeddedMavenForUnexistingHome() = runBlocking {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>")

@@ -1,12 +1,13 @@
 package org.jetbrains.idea.maven.inspections.dom
 
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase
 import org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspection
 import org.junit.Test
 
 class MavenDuplicatedDependencyInspectionTest : MavenDomWithIndicesTestCase() {
   @Test
-  fun testDuplicatedInSameFile() {
+  fun testDuplicatedInSameFile() = runBlocking {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection::class.java)
 
     createProjectPom("""
@@ -33,7 +34,7 @@ class MavenDuplicatedDependencyInspectionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDuplicatedInSameFileDifferentVersion() {
+  fun testDuplicatedInSameFileDifferentVersion() = runBlocking {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection::class.java)
 
     createProjectPom("""
@@ -59,7 +60,7 @@ class MavenDuplicatedDependencyInspectionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDuplicatedInParentDifferentScope() {
+  fun testDuplicatedInParentDifferentScope() = runBlocking {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection::class.java)
 
     createModulePom("child", """
@@ -109,7 +110,7 @@ class MavenDuplicatedDependencyInspectionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDuplicatedInParentSameScope() {
+  fun testDuplicatedInParentSameScope() = runBlocking {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection::class.java)
 
     createModulePom("child", """
@@ -158,7 +159,7 @@ class MavenDuplicatedDependencyInspectionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDuplicatedInParentDifferentVersion() {
+  fun testDuplicatedInParentDifferentVersion() = runBlocking {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection::class.java)
 
     createModulePom("child", """
@@ -204,7 +205,7 @@ class MavenDuplicatedDependencyInspectionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDuplicatedInManagedDependencies() {
+  fun testDuplicatedInManagedDependencies() = runBlocking {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection::class.java)
 
     createProjectPom("""

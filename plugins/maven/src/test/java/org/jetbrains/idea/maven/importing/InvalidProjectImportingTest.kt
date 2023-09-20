@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.testFramework.UsefulTestCase
+import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.project.MavenProject
@@ -28,7 +29,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   override fun runInDispatchThread() = false
 
   @Test
-  fun testResetDependenciesWhenProjectContainsErrors() {
+  fun testResetDependenciesWhenProjectContainsErrors() = runBlocking {
     //Registry.get("maven.server.debug").setValue(true);
     createProjectPom("""
                        <groupId>test</groupId>
@@ -86,7 +87,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testShouldNotResetDependenciesWhenProjectContainsUnrecoverableErrors() {
+  fun testShouldNotResetDependenciesWhenProjectContainsUnrecoverableErrors() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -154,7 +155,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testUndefinedPropertyInHeader() {
+  fun testUndefinedPropertyInHeader() = runBlocking {
     importProjectWithErrors("""
                               <groupId>test</groupId>
                               <artifactId>${'$'}{undefined}</artifactId>
@@ -170,7 +171,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testRecursiveInterpolation() {
+  fun testRecursiveInterpolation() = runBlocking {
     importProjectWithErrors("""
                               <groupId>test</groupId>
                               <artifactId>project</artifactId>
@@ -193,7 +194,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testUnresolvedParent() {
+  fun testUnresolvedParent() = runBlocking {
     importProjectWithErrors("""
                               <groupId>test</groupId>
                               <artifactId>project</artifactId>
@@ -214,7 +215,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testUnresolvedParentForInvalidProject() {
+  fun testUnresolvedParentForInvalidProject() = runBlocking {
     // not of the 'pom' type
     importProjectWithErrors("""
                               <groupId>test</groupId>
@@ -258,7 +259,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testInvalidProjectModel() {
+  fun testInvalidProjectModel() = runBlocking {
     // invalid packaging
     createProjectPom("""
                        <groupId>test</groupId>
@@ -283,7 +284,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testInvalidModuleModel() {
+  fun testInvalidModuleModel() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -311,7 +312,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testSeveratInvalidModulesAndWithSameName() {
+  fun testSeveratInvalidModulesAndWithSameName() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -354,7 +355,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testInvalidProjectWithModules() {
+  fun testInvalidProjectWithModules() = runBlocking {
     // invalid tag
     createProjectPom("""
                        <groupId>test</groupId>
@@ -376,7 +377,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testNonPOMProjectWithModules() {
+  fun testNonPOMProjectWithModules() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -398,7 +399,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoNotFailIfRepositoryHasEmptyLayout() {
+  fun testDoNotFailIfRepositoryHasEmptyLayout() = runBlocking {
     importProjectWithErrors("""
                               <groupId>test</groupId>
                               <artifactId>project</artifactId>
@@ -425,7 +426,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoNotFailIfDistributionRepositoryHasEmptyValues() {
+  fun testDoNotFailIfDistributionRepositoryHasEmptyValues() = runBlocking {
     importProjectWithErrors("""
                               <groupId>test</groupId>
                               <artifactId>project</artifactId>
@@ -445,7 +446,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testUnresolvedDependencies() {
+  fun testUnresolvedDependencies() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -502,7 +503,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testUnresolvedPomTypeDependency() {
+  fun testUnresolvedPomTypeDependency() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -527,7 +528,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoesNotReportInterModuleDependenciesAsUnresolved() {
+  fun testDoesNotReportInterModuleDependenciesAsUnresolved() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -568,7 +569,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testCircularDependencies() {
+  fun testCircularDependencies() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -630,7 +631,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testUnresolvedExtensionsAfterResolve() {
+  fun testUnresolvedExtensionsAfterResolve() = runBlocking {
     importProjectWithErrors("""
                               <groupId>test</groupId>
                               <artifactId>project</artifactId>
@@ -654,7 +655,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoesNotReportExtensionsThatWereNotTriedToBeResolved() {
+  fun testDoesNotReportExtensionsThatWereNotTriedToBeResolved() = runBlocking {
     // for some reasons this plugins is not rtied to be resolved by embedder.
     // we shouldn't report it as unresolved.
     importProjectWithErrors("""
@@ -680,7 +681,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testUnresolvedBuildExtensionsInModules() {
+  fun testUnresolvedBuildExtensionsInModules() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -746,7 +747,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testUnresolvedPlugins() {
+  fun testUnresolvedPlugins() = runBlocking {
     importProjectWithErrors("""
                               <groupId>test</groupId>
                               <artifactId>project</artifactId>
@@ -795,7 +796,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testUnresolvedPluginsAsExtensions() {
+  fun testUnresolvedPluginsAsExtensions() = runBlocking {
     importProjectWithErrors("""
                               <groupId>test</groupId>
                               <artifactId>project</artifactId>
@@ -839,7 +840,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testInvalidProfilesXml() {
+  fun testInvalidProfilesXml() = runBlocking {
     createProfilesXml("<prof<<")
 
     importProjectWithErrors("""

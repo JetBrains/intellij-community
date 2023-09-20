@@ -9,6 +9,7 @@ import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.*
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.replaceService
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.concurrency.AsyncPromise
 import org.junit.Test
 import java.io.File
@@ -16,7 +17,7 @@ import java.io.File
 class StructureImportingFsRefreshTest : MavenMultiVersionImportingTestCase() {
 
   @Test
-  fun testRefreshFSAfterImport() {
+  fun testRefreshFSAfterImport() = runBlocking {
     val fm = VirtualFileManager.getInstance()
     val vfsRefreshPromise = AsyncPromise<Any?>()
     val mockFm = MockVirtualFileManager(fm, vfsRefreshPromise)

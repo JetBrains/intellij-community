@@ -17,11 +17,12 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenTypingTest : MavenDomTestCase() {
   @Test
-  fun testTypingOpenBrace() {
+  fun testTypingOpenBrace() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -39,7 +40,7 @@ class MavenTypingTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testTypingOpenBraceInsideOtherBrace() {
+  fun testTypingOpenBraceInsideOtherBrace() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -57,7 +58,7 @@ class MavenTypingTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testTypingOpenBraceWithExistingClosedBrace() {
+  fun testTypingOpenBraceWithExistingClosedBrace() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -75,7 +76,7 @@ class MavenTypingTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testTypingOpenBraceBeforeChar() {
+  fun testTypingOpenBraceBeforeChar() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -93,7 +94,7 @@ class MavenTypingTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testTypingOpenBraceBeforeWhitespace() {
+  fun testTypingOpenBraceBeforeWhitespace() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -111,7 +112,7 @@ class MavenTypingTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testTypingOpenBraceWithoutDollar() {
+  fun testTypingOpenBraceWithoutDollar() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -129,7 +130,7 @@ class MavenTypingTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testTypingOpenBraceInTheEndOfFile() {
+  fun testTypingOpenBraceInTheEndOfFile() = runBlocking {
     val f = createProjectSubFile("pom.xml",
                                  """
                                            <project>
@@ -150,7 +151,7 @@ class MavenTypingTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testTypingOpenBraceInsideTag() {
+  fun testTypingOpenBraceInsideTag() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -168,14 +169,14 @@ class MavenTypingTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDoNotHandleNonMavenFiles() {
+  fun testDoNotHandleNonMavenFiles() = runBlocking {
     val f = createProjectSubFile("foo.xml", "$<caret>")
 
     assertTypeResultInRegularFile(f, '{', "\${<caret>")
   }
 
   @Test
-  fun testWorksInFilteredResources() {
+  fun testWorksInFilteredResources() = runBlocking {
     createProjectSubDir("res")
 
     importProject("""
@@ -199,7 +200,7 @@ class MavenTypingTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDoesNotWorInNotFilteredResources() {
+  fun testDoesNotWorInNotFilteredResources() = runBlocking {
     createProjectSubDir("res")
 
     importProject("""
@@ -223,7 +224,7 @@ class MavenTypingTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDeletingOpenBrace() {
+  fun testDeletingOpenBrace() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -240,7 +241,7 @@ class MavenTypingTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDeletingOpenBraceWithTextInside() {
+  fun testDeletingOpenBraceWithTextInside() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -257,7 +258,7 @@ class MavenTypingTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDeletingOpenBraceWithoutClosed() {
+  fun testDeletingOpenBraceWithoutClosed() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -274,13 +275,13 @@ class MavenTypingTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDoNotHandleDeletionInsideRegularFile() {
+  fun testDoNotHandleDeletionInsideRegularFile() = runBlocking {
     val f = createProjectSubFile("foo.html", "\${<caret>}")
     assertBackspaceResultInRegularFile(f, "$<caret>}")
   }
 
   @Test
-  fun testDeletingInTheEndOfFile() {
+  fun testDeletingInTheEndOfFile() = runBlocking {
     val f = createProjectSubFile("pom.xml",
                                  """
                                            <project>

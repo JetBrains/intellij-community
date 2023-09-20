@@ -3,11 +3,12 @@ package org.jetbrains.idea.maven.project.actions
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.testFramework.TestActionEvent
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class RemoveManagedFilesActionTest : MavenMultiVersionImportingTestCase() {
   @Test
-  fun testUnlinkMavenProjectsOnlyVisibleForRootProjects() {
+  fun testUnlinkMavenProjectsOnlyVisibleForRootProjects() = runBlocking {
     val parentFile = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>

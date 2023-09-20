@@ -2,11 +2,12 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.testFramework.UsefulTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   @Test
-  fun testCompletion() {
+  fun testCompletion() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -22,7 +23,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testInsertDependency() {
+  fun testInsertDependency() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -56,7 +57,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testInsertManagedDependency() {
+  fun testInsertManagedDependency() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -104,7 +105,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testInsertManagedDependencyWithTypeAndClassifier() {
+  fun testInsertManagedDependencyWithTypeAndClassifier() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -169,7 +170,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCompletionArtifactIdThenVersion() {
+  fun testCompletionArtifactIdThenVersion() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -214,7 +215,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCompletionArtifactIdThenGroupIdThenInsertVersion() {
+  fun testCompletionArtifactIdThenGroupIdThenInsertVersion() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -255,7 +256,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCompletionArtifactIdNonExactmatch() {
+  fun testCompletionArtifactIdNonExactmatch() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -281,7 +282,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCompletionArtifactIdInsideManagedDependency() {
+  fun testCompletionArtifactIdInsideManagedDependency() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -328,7 +329,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCompletionArtifactIdWithManagedDependency() {
+  fun testCompletionArtifactIdWithManagedDependency() = runBlocking {
     importProject("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                       <dependencyManagement>
@@ -392,7 +393,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCompletionGroupIdWithManagedDependencyWithTypeAndClassifier() {
+  fun testCompletionGroupIdWithManagedDependencyWithTypeAndClassifier() = runBlocking {
     importProject("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                     <properties>

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.IncorrectOperationException
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.junit.Test
 
@@ -25,7 +26,7 @@ class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testReading() {
+  fun testReading() = runBlocking {
     val model = domModel
 
     assertEquals("test", model!!.getGroupId().getStringValue())
@@ -34,7 +35,7 @@ class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testWriting() {
+  fun testWriting() = runBlocking {
     CommandProcessor.getInstance().executeCommand(myProject, {
       ApplicationManager.getApplication().runWriteAction {
         val model = domModel
@@ -59,7 +60,7 @@ class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testAddingADependency() {
+  fun testAddingADependency() = runBlocking {
     CommandProcessor.getInstance().executeCommand(myProject, {
       ApplicationManager.getApplication().runWriteAction {
         val model = domModel

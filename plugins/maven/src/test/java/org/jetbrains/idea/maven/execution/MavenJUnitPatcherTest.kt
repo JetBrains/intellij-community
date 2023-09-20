@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.JavaParameters
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.project.MavenProjectSettings
 import org.junit.Test
@@ -155,7 +156,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun AddClassPath() {
+  fun AddClassPath() = runBlocking {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -189,7 +190,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ArgList() {
+  fun ArgList() = runBlocking {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -224,7 +225,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun IgnoreJaCoCoOption() {
+  fun IgnoreJaCoCoOption() = runBlocking {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><build>
         <plugins>
@@ -259,7 +260,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ImplicitArgLine() {
+  fun ImplicitArgLine() = runBlocking {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><properties>
         <argLine>-Dfoo=${'$'}{version}</argLine>
@@ -287,7 +288,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun VmPropertiesResolve() {
+  fun VmPropertiesResolve() = runBlocking {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -325,7 +326,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ArgLineLateReplacement() {
+  fun ArgLineLateReplacement() = runBlocking {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -354,7 +355,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ArgLineLateReplacementParentProperty() {
+  fun ArgLineLateReplacementParentProperty() = runBlocking {
     createProjectPom(
       """
         <groupId>test</groupId>
@@ -410,7 +411,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ArgLineRefersAnotherProperty() {
+  fun ArgLineRefersAnotherProperty() = runBlocking {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -443,7 +444,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ArgLineProperty() {
+  fun ArgLineProperty() = runBlocking {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><properties>
       <argLine>-DsomeProp=Hello</argLine>
@@ -462,7 +463,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ResolvePropertiesUsingAt() {
+  fun ResolvePropertiesUsingAt() = runBlocking {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>

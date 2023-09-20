@@ -16,11 +16,12 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
   @Test
-  fun testDoNotHighlightSourceDirectoryInParentPom() {
+  fun testDoNotHighlightSourceDirectoryInParentPom() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -37,7 +38,7 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testHighlightSourceDirectory() {
+  fun testHighlightSourceDirectory() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>

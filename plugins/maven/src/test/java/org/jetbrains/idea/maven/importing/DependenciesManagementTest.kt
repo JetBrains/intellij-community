@@ -22,8 +22,8 @@ import java.io.File
 
 class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
   @Test
-  fun testImportingDependencies() {
-    if (!hasMavenInstallation()) return
+  fun testImportingDependencies() = runBlocking {
+    if (!hasMavenInstallation()) return@runBlocking
 
     repositoryPath = File(myDir, "/repo").path
     updateSettingsXml("""

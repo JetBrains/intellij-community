@@ -7,6 +7,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.model.MavenProjectProblem
@@ -38,7 +39,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDownloadedFromRepository() {
+  fun testDownloadedFromRepository() = runBlocking {
     val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")
     val localRepoPath = helper.getTestDataPath("local1")
@@ -59,7 +60,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testPluginDownloadedFromRepository() {
+  fun testPluginDownloadedFromRepository() = runBlocking {
     val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")
     val localRepoPath = helper.getTestDataPath("local1")
@@ -81,7 +82,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
 
   @Test
-  fun testDownloadedFromRepositoryWithAuthentification() {
+  fun testDownloadedFromRepositoryWithAuthentification() = runBlocking {
     val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")
     val localRepoPath = helper.getTestDataPath("local1")
@@ -111,7 +112,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDownloadedFromRepositoryWithWrongAuthentificationLeadsToError() {
+  fun testDownloadedFromRepositoryWithWrongAuthentificationLeadsToError() = runBlocking {
     assumeTrue(isWorkspaceImport)
     val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")
@@ -218,7 +219,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testWithDependencyLastUpdatedWithErrorNoForce() {
+  fun testWithDependencyLastUpdatedWithErrorNoForce() = runBlocking {
 
     doLastUpdatedTest(false, pom()) {
 
@@ -229,7 +230,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testWithPluginLastUpdatedWithErrorNoForce() {
+  fun testWithPluginLastUpdatedWithErrorNoForce() = runBlocking {
 
     doLastUpdatedTest(false, pomPlugins()) {
       TestCase.assertEquals(1, projectsManager.rootProjects.size)
@@ -242,7 +243,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
 
   @Test
-  fun testWithDependencyLastUpdatedWithErrorForceUpdate() {
+  fun testWithDependencyLastUpdatedWithErrorForceUpdate() = runBlocking {
 
     doLastUpdatedTest(true, pom()) {
       TestCase.assertEquals(1, projectsManager.rootProjects.size)
@@ -251,7 +252,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testWithPluginLastUpdatedWithErrorForceUpdate() {
+  fun testWithPluginLastUpdatedWithErrorForceUpdate() = runBlocking {
     doLastUpdatedTest(true, pomPlugins()) {
       TestCase.assertEquals(1, projectsManager.rootProjects.size)
       TestCase.assertEquals(0, projectsManager.rootProjects[0].problems.size)

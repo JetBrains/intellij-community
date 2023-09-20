@@ -7,6 +7,7 @@ import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.text.VersionComparatorUtil
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.server.MavenServerManager
@@ -103,7 +104,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testSmokeImport() {
+  fun testSmokeImport() = runBlocking {
     assertCorrectVersion()
 
     importProject("""
@@ -169,7 +170,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testInterpolateModel() {
+  fun testInterpolateModel() = runBlocking {
     assertCorrectVersion()
 
     importProject("""
@@ -194,7 +195,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testImportProjectProperties() {
+  fun testImportProjectProperties() = runBlocking {
     assumeVersionMoreThan("3.0.3")
 
     assertCorrectVersion()
@@ -236,7 +237,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testImportAddedProjectProperties() {
+  fun testImportAddedProjectProperties() = runBlocking {
     assumeVersionMoreThan("3.0.3")
     assumeVersionNot("3.6.0")
 
@@ -314,7 +315,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testImportSubProjectWithPropertyInParent() {
+  fun testImportSubProjectWithPropertyInParent() = runBlocking {
     assumeVersionMoreThan("3.0.3")
 
     assertCorrectVersion()
@@ -346,7 +347,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testLanguageLevelWhenSourceLanguageLevelIsNotSpecified() {
+  fun testLanguageLevelWhenSourceLanguageLevelIsNotSpecified() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>

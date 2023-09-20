@@ -26,7 +26,7 @@ class IgnoresImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoNotImportIgnoredProjects() {
+  fun testDoNotImportIgnoredProjects() = runBlocking {
     val p1 = createModulePom("project1",
                              """
                                        <groupId>test</groupId>

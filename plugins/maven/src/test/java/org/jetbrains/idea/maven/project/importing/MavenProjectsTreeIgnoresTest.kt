@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.openapi.util.text.StringUtil
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.junit.Test
@@ -30,7 +31,7 @@ class MavenProjectsTreeIgnoresTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testSendingNotifications() {
+  fun testSendingNotifications() = runBlocking {
     tree.setIgnoredState(listOf(myRoots!![0]), true)
     assertEquals("ignored: m1 ", myLog)
     myLog = ""
@@ -46,7 +47,7 @@ class MavenProjectsTreeIgnoresTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testDoNotSendNotificationsIfNothingChanged() {
+  fun testDoNotSendNotificationsIfNothingChanged() = runBlocking {
     tree.setIgnoredState(listOf(myRoots!![0]), true)
     assertEquals("ignored: m1 ", myLog)
     myLog = ""

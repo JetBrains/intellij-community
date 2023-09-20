@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.impl.source.xml.XmlFileImpl
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.io.File
 
@@ -18,7 +19,7 @@ class MavenRelativePathResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testParentRelativePathOutsideProjectRoot() {
+  fun testParentRelativePathOutsideProjectRoot() = runBlocking {
     val file = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/1.0/example-1.0.pom")
 
 
@@ -48,7 +49,7 @@ $relativePathUnixSeparator<caret></relativePath>
 
 
   @Test
-  fun testParentRelativePathOutsideProjectRootWithDir() {
+  fun testParentRelativePathOutsideProjectRootWithDir() = runBlocking {
     val file = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/1.0/pom.xml")
 
     val parentFile = file.getParentFile()

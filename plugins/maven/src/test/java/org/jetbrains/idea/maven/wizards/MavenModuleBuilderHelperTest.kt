@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.wizards
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.vfs.VfsUtil
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
@@ -12,7 +13,7 @@ import org.junit.Test
 class MavenModuleBuilderHelperTest : MavenMultiVersionImportingTestCase() {
 
   @Test
-  fun testGenerateFromArchetype() {
+  fun testGenerateFromArchetype() = runBlocking {
     val modulePom = createModulePom("m1", """
       <artifactId>m1</artifactId>
       <version>1</version>

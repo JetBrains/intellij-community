@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction
@@ -23,7 +24,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
   }
 
   @Test
-  fun testGroupIdCompletion() {
+  fun testGroupIdCompletion() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -39,7 +40,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
   }
 
   @Test
-  fun testArtifactIdCompletion() {
+  fun testArtifactIdCompletion() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -56,7 +57,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
   }
 
   @Test
-  fun testDoNotCompleteArtifactIdOnUnknownGroup() {
+  fun testDoNotCompleteArtifactIdOnUnknownGroup() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -73,7 +74,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
   }
 
   @Test
-  fun testVersionCompletion() {
+  fun testVersionCompletion() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -92,7 +93,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
   }
 
   @Test
-  fun testDoNotCompleteVersionIfNoGroupIdAndArtifactId() {
+  fun testDoNotCompleteVersionIfNoGroupIdAndArtifactId() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -108,7 +109,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
   }
 
   @Test
-  fun testAddingLocalProjectsIntoCompletion() {
+  fun testAddingLocalProjectsIntoCompletion() = runBlocking {
     createProjectPom("""
                        <groupId>project-group</groupId>
                        <artifactId>project</artifactId>
@@ -153,7 +154,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
   }
 
   @Test
-  fun testResolvingPropertiesForLocalProjectsInCompletion() {
+  fun testResolvingPropertiesForLocalProjectsInCompletion() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -221,7 +222,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
   }
 
   @Test
-  fun testChangingExistingProjects() {
+  fun testChangingExistingProjects() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -294,7 +295,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
   }
 
   @Test
-  fun testChangingExistingProjectsWithArtifactIdsRemoval() {
+  fun testChangingExistingProjectsWithArtifactIdsRemoval() = runBlocking {
     val m = createModulePom("m1",
                             """
                                       <groupId>project-group</groupId>
@@ -337,7 +338,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
   }
 
   @Test
-  fun testRemovingExistingProjects() {
+  fun testRemovingExistingProjects() = runBlocking {
     val m1 = createModulePom("m1",
                              """
                                              <groupId>project-group</groupId>
@@ -378,7 +379,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
   }
 
   @Test
-  fun testResolutionOutsideTheProject() {
+  fun testResolutionOutsideTheProject() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -398,7 +399,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
   }
 
   @Test
-  fun testResolutionParentPathOutsideTheProject() {
+  fun testResolutionParentPathOutsideTheProject() = runBlocking {
     val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/org/example/1.0/example-1.0.pom")
 
     val relativePathUnixSeparator =
@@ -421,7 +422,7 @@ $relativePathUnixSeparator<caret></relativePath>
   }
 
   @Test
-  fun testResolveManagedDependency() {
+  fun testResolveManagedDependency() = runBlocking {
     configureProjectPom("""
                           <groupId>test</groupId>
                           <artifactId>project</artifactId>
@@ -450,7 +451,7 @@ $relativePathUnixSeparator<caret></relativePath>
   }
 
   @Test
-  fun testResolveLATESTDependency() {
+  fun testResolveLATESTDependency() = runBlocking {
     val helper = MavenCustomRepositoryHelper(myDir, "local1")
     val repoPath = helper.getTestDataPath("local1")
     repositoryPath = repoPath
@@ -488,7 +489,7 @@ $relativePathUnixSeparator<caret></relativePath>
   }
 
   @Test
-  fun testResolutionIsTypeBased() {
+  fun testResolutionIsTypeBased() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -509,7 +510,7 @@ $relativePathUnixSeparator<caret></relativePath>
   }
 
   @Test
-  fun testResolutionInsideTheProject() {
+  fun testResolutionInsideTheProject() = runBlocking {
     val m1 = createModulePom("m1",
                              """
                                        <groupId>test</groupId>
@@ -544,7 +545,7 @@ $relativePathUnixSeparator<caret></relativePath>
   }
 
   @Test
-  fun testResolvingSystemScopeDependencies() {
+  fun testResolvingSystemScopeDependencies() = runBlocking {
     val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
 
     createProjectPom("""<groupId>test</groupId>
@@ -567,7 +568,7 @@ $libPath</systemPath>
   }
 
   @Test
-  fun testHighlightInvalidSystemScopeDependencies() {
+  fun testHighlightInvalidSystemScopeDependencies() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -586,7 +587,7 @@ $libPath</systemPath>
   }
 
   @Test
-  fun testDoNotHighlightValidSystemScopeDependencies() {
+  fun testDoNotHighlightValidSystemScopeDependencies() = runBlocking {
     val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
 
     createProjectPom("""<groupId>test</groupId>
@@ -607,7 +608,7 @@ $libPath</systemPath>
   }
 
   @Test
-  fun testResolvingSystemScopeDependenciesWithProperties() {
+  fun testResolvingSystemScopeDependenciesWithProperties() = runBlocking {
     val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
 
     createProjectPom("""<groupId>test</groupId>
@@ -633,7 +634,7 @@ $libPath</depPath>
   }
 
   @Test
-  fun testCompletionSystemScopeDependenciesWithProperties() {
+  fun testCompletionSystemScopeDependenciesWithProperties() = runBlocking {
     val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
 
     createProjectPom("""<groupId>test</groupId>
@@ -658,7 +659,7 @@ ${File(libPath).getParent()}</depDir>
   }
 
   @Test
-  fun testResolvingSystemScopeDependenciesFromSystemPath() {
+  fun testResolvingSystemScopeDependenciesFromSystemPath() = runBlocking {
     val libPath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar")
 
     createProjectPom("""<groupId>test</groupId>
@@ -681,7 +682,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testChooseFileIntentionForSystemDependency() {
+  fun testChooseFileIntentionForSystemDependency() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -725,7 +726,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testNoChooseFileIntentionForNonSystemDependency() {
+  fun testNoChooseFileIntentionForNonSystemDependency() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -745,7 +746,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testTypeCompletion() {
+  fun testTypeCompletion() = runBlocking {
     configureProjectPom("""
                           <groupId>test</groupId>
                           <artifactId>project</artifactId>
@@ -762,7 +763,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testDoNotHighlightUnknownType() {
+  fun testDoNotHighlightUnknownType() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -781,7 +782,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testScopeCompletion() {
+  fun testScopeCompletion() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -797,7 +798,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testDoNotHighlightUnknownScopes() {
+  fun testDoNotHighlightUnknownScopes() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -816,7 +817,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testPropertiesInScopes() {
+  fun testPropertiesInScopes() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -838,7 +839,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testDoesNotHighlightCorrectValues() {
+  fun testDoesNotHighlightCorrectValues() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -856,7 +857,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testHighlightingVersionIfVersionIsWrong() {
+  fun testHighlightingVersionIfVersionIsWrong() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -875,7 +876,7 @@ $libPath<caret></systemPath>
 
 
   @Test
-  fun testHighlightingArtifactIdAndVersionIfGroupIsUnknown() {
+  fun testHighlightingArtifactIdAndVersionIfGroupIsUnknown() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -893,7 +894,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testHighlightingArtifactAndVersionIfGroupIsEmpty() {
+  fun testHighlightingArtifactAndVersionIfGroupIsEmpty() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -911,7 +912,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testHighlightingVersionAndArtifactIfArtifactTheyAreFromAnotherGroup() {
+  fun testHighlightingVersionAndArtifactIfArtifactTheyAreFromAnotherGroup() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -929,7 +930,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testHighlightingVersionIfArtifactIsEmpty() {
+  fun testHighlightingVersionIfArtifactIsEmpty() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -947,7 +948,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testHighlightingVersionIfArtifactIsUnknown() {
+  fun testHighlightingVersionIfArtifactIsUnknown() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -965,7 +966,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testHighlightingVersionItIsFromAnotherGroup() {
+  fun testHighlightingVersionItIsFromAnotherGroup() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -983,7 +984,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testHighlightingCoordinatesWithClosedTags() {
+  fun testHighlightingCoordinatesWithClosedTags() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1001,7 +1002,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testHandlingProperties() {
+  fun testHandlingProperties() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1032,7 +1033,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testHandlingPropertiesWhenProjectIsNotYetLoaded() {
+  fun testHandlingPropertiesWhenProjectIsNotYetLoaded() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1055,7 +1056,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testDontHighlightProblemsInNonManagedPom1() {
+  fun testDontHighlightProblemsInNonManagedPom1() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1088,7 +1089,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testDontHighlightProblemsInNonManagedPom2() {
+  fun testDontHighlightProblemsInNonManagedPom2() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1116,7 +1117,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testExclusionCompletion() {
+  fun testExclusionCompletion() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1140,7 +1141,7 @@ $libPath<caret></systemPath>
 
 
   @Test
-  fun testDoNotHighlightUnknownExclusions() {
+  fun testDoNotHighlightUnknownExclusions() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1163,7 +1164,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testExclusionHighlightingAbsentGroupId() {
+  fun testExclusionHighlightingAbsentGroupId() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1185,7 +1186,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testExclusionHighlightingAbsentArtifactId() {
+  fun testExclusionHighlightingAbsentArtifactId() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1207,7 +1208,7 @@ $libPath<caret></systemPath>
   }
 
   @Test
-  fun testImportDependencyChainedProperty() {
+  fun testImportDependencyChainedProperty() = runBlocking {
     Assume.assumeTrue(isWorkspaceImport)
     createProjectPom("""
                        <groupId>test</groupId>

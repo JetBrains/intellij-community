@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.UsefulTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
@@ -16,7 +17,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCompletionRelativePath() {
+  fun testCompletionRelativePath() = runBlocking {
     createProjectSubDir("src")
     createProjectSubFile("a.txt", "")
 
@@ -34,7 +35,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testRelativePathDefaultValue() {
+  fun testRelativePathDefaultValue() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -59,7 +60,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testUnderstandingProjectSchemaWithoutNamespace() {
+  fun testUnderstandingProjectSchemaWithoutNamespace() = runBlocking {
     myFixture.saveText(myProjectPom,
                        """
                          <project>
@@ -71,7 +72,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testUnderstandingProfilesSchemaWithoutNamespace() {
+  fun testUnderstandingProfilesSchemaWithoutNamespace() = runBlocking {
     val profiles = createProfilesXml("""
                                                <profile>
                                                  <<caret>
@@ -82,7 +83,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testUnderstandingSettingsSchemaWithoutNamespace() {
+  fun testUnderstandingSettingsSchemaWithoutNamespace() = runBlocking {
     val settings = updateSettingsXml("""
                                                <profiles>
                                                  <profile>
@@ -95,7 +96,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testAbsentModelVersion() {
+  fun testAbsentModelVersion() = runBlocking {
     myFixture.saveText(myProjectPom,
                        """
                          <<error descr="'modelVersion' child tag should be defined">project</error> xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -106,7 +107,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testAbsentArtifactId() {
+  fun testAbsentArtifactId() = runBlocking {
     myFixture.saveText(myProjectPom,
                        """
                          <<error descr="'artifactId' child tag should be defined">project</error> xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -117,7 +118,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testUnknownModelVersion() {
+  fun testUnknownModelVersion() = runBlocking {
     myFixture.saveText(myProjectPom,
                        """
                          <project xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -129,7 +130,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testEmptyValues() {
+  fun testEmptyValues() = runBlocking {
     createProjectPom("""
                        <<error>groupId</error>></groupId>
                        <<error>artifactId</error>></artifactId>
@@ -139,7 +140,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testAddingSettingsXmlReadingProblemsToProjectTag() {
+  fun testAddingSettingsXmlReadingProblemsToProjectTag() = runBlocking {
     myFixture.saveText(myProjectPom,
                        """
                          <project>
@@ -166,7 +167,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testAddingProfilesXmlReadingProblemsToProjectTag() {
+  fun testAddingProfilesXmlReadingProblemsToProjectTag() = runBlocking {
     myFixture.saveText(myProjectPom,
                        """
                          <project>
@@ -193,7 +194,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testAddingStructureReadingProblemsToParentTag() {
+  fun testAddingStructureReadingProblemsToParentTag() = runBlocking {
     myFixture.saveText(myProjectPom,
                        """
                          <project>
@@ -230,7 +231,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testAddingParentReadingProblemsToParentTag() {
+  fun testAddingParentReadingProblemsToParentTag() = runBlocking {
     createModulePom("parent",
                     """
                       <groupId>test</groupId>
@@ -275,7 +276,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDoNotAddReadingSyntaxProblemsToProjectTag() {
+  fun testDoNotAddReadingSyntaxProblemsToProjectTag() = runBlocking {
     myFixture.saveText(myProjectPom,
                        """
                          <project>
@@ -301,7 +302,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDoNotAddDependencyAndModuleProblemsToProjectTag() {
+  fun testDoNotAddDependencyAndModuleProblemsToProjectTag() = runBlocking {
     myFixture.saveText(myProjectPom,
                        """
                          <project>

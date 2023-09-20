@@ -3,12 +3,13 @@ package org.jetbrains.idea.maven.project.actions
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.testFramework.TestActionEvent
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenProject
 import org.junit.Test
 
 class ReimportProjectActionTest : MavenMultiVersionImportingTestCase() {
   @Test
-  fun testReloadOnlyVisibleForNonIgnoredProjects() {
+  fun testReloadOnlyVisibleForNonIgnoredProjects() = runBlocking {
     val parentFile = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
