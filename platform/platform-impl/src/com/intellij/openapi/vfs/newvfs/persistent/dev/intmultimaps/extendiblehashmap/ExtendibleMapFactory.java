@@ -1,8 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap;
 
-import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
-import com.intellij.util.io.IOUtil;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorageFactory;
 import com.intellij.util.io.dev.StorageFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -56,9 +55,11 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
   @Override
   public @NotNull ExtendibleHashMap open(@NotNull Path storagePath) throws IOException {
     //int maxFileSize = segmentSize / 2 * segmentSize;
-    return IOUtil.wrapSafely(
-      new MMappedFileStorage(storagePath, pageSize),
-      storage -> new ExtendibleHashMap(storage, segmentSize)
-    );
+    return MMappedFileStorageFactory.DEFAULT
+      .pageSize(pageSize)
+      .wrapStorageSafely(
+        storagePath,
+        storage -> new ExtendibleHashMap(storage, segmentSize)
+      );
   }
 }

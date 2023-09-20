@@ -116,9 +116,9 @@ public final class MMappedFileStorage implements Closeable {
     this(path, pageSize, 0);
   }
 
-  public MMappedFileStorage(Path path,
-                            int pageSize,
-                            int pagesCountToMapInitially) throws IOException {
+  private MMappedFileStorage(Path path,
+                             int pageSize,
+                             int pagesCountToMapInitially) throws IOException {
     if (pageSize <= 0) {
       throw new IllegalArgumentException("pageSize(=" + pageSize + ") must be >0");
     }
@@ -136,18 +136,6 @@ public final class MMappedFileStorage implements Closeable {
     this.maxFileSize = pagesCountToMapInitially;
 
     this.storagePath = path;
-
-    //final long length = Files.exists(path) ? Files.size(path) : 0;
-    //
-    //final int pagesToMapExistingFileContent = (int)((length % pageSize == 0) ?
-    //                                                (length / pageSize) :
-    //                                                ((length / pageSize) + 1));
-    //if (pagesToMapExistingFileContent > initialPagesCount) {
-    //  throw new IllegalStateException(
-    //    "Storage size(" + length + " b) > maxFileSize(" + initialPagesToMap + " b): " +
-    //    "file [" + path + "] is corrupted?");
-    //}
-
 
     channel = FileChannel.open(storagePath, READ, WRITE, CREATE);
 

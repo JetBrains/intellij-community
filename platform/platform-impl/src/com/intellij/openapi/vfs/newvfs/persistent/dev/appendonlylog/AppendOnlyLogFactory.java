@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog;
 
-import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorageFactory;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.VersionUpdatedException;
 import com.intellij.util.io.dev.StorageFactory;
@@ -64,31 +64,33 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
 
   @Override
   public @NotNull AppendOnlyLogOverMMappedFile open(@NotNull Path storagePath) throws IOException {
-    return wrapSafely(
-      new MMappedFileStorage(storagePath, pageSize),
-      storage -> {
-        AppendOnlyLogOverMMappedFile appendOnlyLog = new AppendOnlyLogOverMMappedFile(storage);
+    return MMappedFileStorageFactory.DEFAULT
+      .pageSize(pageSize)
+      .wrapStorageSafely(
+        storagePath,
+        storage -> {
+          AppendOnlyLogOverMMappedFile appendOnlyLog = new AppendOnlyLogOverMMappedFile(storage);
 
-        if (prohibitRecovery) {
-          if (appendOnlyLog.wasRecoveryNeeded()) {
-            throw new CorruptedException("Log[" + storagePath.toAbsolutePath() + "] wasn't properly closed, " +
-                                         "and recovery is prohibited -> fail");
+          if (prohibitRecovery) {
+            if (appendOnlyLog.wasRecoveryNeeded()) {
+              throw new CorruptedException("Log[" + storagePath.toAbsolutePath() + "] wasn't properly closed, " +
+                                           "and recovery is prohibited -> fail");
+            }
           }
+
+          if (ensureDataVersion) {
+            int dataFormatVersion = appendOnlyLog.getDataVersion();
+            if (dataFormatVersion == 0 && appendOnlyLog.isEmpty()) {
+              appendOnlyLog.setDataVersion(expectedDataVersion);
+            }
+            else if (dataFormatVersion != expectedDataVersion) {
+              throw new VersionUpdatedException(storagePath, expectedDataVersion, dataFormatVersion);
+            }
+          }
+
+          return appendOnlyLog;
         }
-
-        if (ensureDataVersion) {
-          int dataFormatVersion = appendOnlyLog.getDataVersion();
-          if (dataFormatVersion == 0 && appendOnlyLog.isEmpty()) {
-            appendOnlyLog.setDataVersion(expectedDataVersion);
-          }
-          else if (dataFormatVersion != expectedDataVersion) {
-            throw new VersionUpdatedException(storagePath, expectedDataVersion, dataFormatVersion);
-          }
-        }
-
-        return appendOnlyLog;
-      }
-    );
+      );
   }
 
   @Override

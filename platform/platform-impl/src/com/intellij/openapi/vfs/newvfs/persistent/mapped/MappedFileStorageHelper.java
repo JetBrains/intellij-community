@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage.Page;
-import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -87,19 +86,20 @@ public final class MappedFileStorageHelper implements Closeable {
         return alreadyExistingHelper;
       }
 
-      return IOUtil.wrapSafely(
-        new MMappedFileStorage(storagePath, DEFAULT_PAGE_SIZE),
-        mappedFileStorage -> {
-          MappedFileStorageHelper storageHelper = new MappedFileStorageHelper(
-            mappedFileStorage,
-            bytesPerRow,
-            recordsStorage::maxAllocatedID,
-            checkFileIdsBelowMax
-          );
-          storagesRegistry.put(storagePath, storageHelper);
-          return storageHelper;
-        }
-      );
+      return MMappedFileStorageFactory.withPageSize(DEFAULT_PAGE_SIZE)
+        .wrapStorageSafely(
+          storagePath,
+          mappedFileStorage -> {
+            MappedFileStorageHelper storageHelper = new MappedFileStorageHelper(
+              mappedFileStorage,
+              bytesPerRow,
+              recordsStorage::maxAllocatedID,
+              checkFileIdsBelowMax
+            );
+            storagesRegistry.put(storagePath, storageHelper);
+            return storageHelper;
+          }
+        );
     }
   }
 
