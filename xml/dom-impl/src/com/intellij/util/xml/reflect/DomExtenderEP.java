@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.reflect;
 
 import com.intellij.diagnostic.PluginException;
@@ -48,10 +48,9 @@ public final class DomExtenderEP implements PluginAware {
   private volatile Class<?> myDomClass;
   private volatile DomExtender<?> myExtender;
 
-  @Nullable
-  public DomExtensionsRegistrarImpl extend(@NotNull Project project,
-                                           @NotNull DomInvocationHandler handler,
-                                           @Nullable DomExtensionsRegistrarImpl registrar) {
+  public @Nullable DomExtensionsRegistrarImpl extend(@NotNull Project project,
+                                                     @NotNull DomInvocationHandler handler,
+                                                     @Nullable DomExtensionsRegistrarImpl registrar) {
     if (myDomClass == null) {
       try {
         myDomClass = Class.forName(domClassName, true, pluginDescriptor.getPluginClassLoader());

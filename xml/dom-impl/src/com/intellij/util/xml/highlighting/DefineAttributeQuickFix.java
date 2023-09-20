@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -20,30 +20,28 @@ public class DefineAttributeQuickFix implements LocalQuickFix {
     this(attrName, "", "");
   }
 
-  public DefineAttributeQuickFix(@NotNull final String attrName, @NotNull String namespace) {
+  public DefineAttributeQuickFix(final @NotNull String attrName, @NotNull String namespace) {
     this(attrName, namespace, "");
   }
 
-  public DefineAttributeQuickFix(@NotNull final String attrName, @NotNull String namespace, @NotNull String attrValue) {
+  public DefineAttributeQuickFix(final @NotNull String attrName, @NotNull String namespace, @NotNull String attrValue) {
     myAttrName = attrName;
     myNamespace = namespace;
     myAttrValue = attrValue;
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return XmlDomBundle.message("dom.quickfix.define.attribute.text", myAttrName);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return XmlDomBundle.message("dom.quickfix.define.attribute.family");
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     XmlTag tag = (XmlTag)descriptor.getPsiElement();
     XmlAttribute attribute = tag.setAttribute(myAttrName, myNamespace.equals(tag.getNamespace()) ? "" : myNamespace, myAttrValue);
     VirtualFile virtualFile = tag.getContainingFile().getVirtualFile();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
@@ -40,9 +40,8 @@ public final class XIncludeStub extends ObjectStubBase<ElementStub> {
     parent.addChild(this);
   }
 
-  @NotNull
   @Override
-  public List<? extends Stub> getChildrenStubs() {
+  public @NotNull List<? extends Stub> getChildrenStubs() {
     return Collections.emptyList();
   }
 
@@ -75,8 +74,7 @@ public final class XIncludeStub extends ObjectStubBase<ElementStub> {
     });
   }
 
-  @Nullable
-  private DomElement computeValue(DomInvocationHandler parent) {
+  private @Nullable DomElement computeValue(DomInvocationHandler parent) {
     if (StringUtil.isEmpty(myHref) || StringUtil.isEmpty(myXpointer)) {
       return null;
     }
@@ -119,9 +117,8 @@ public final class XIncludeStub extends ObjectStubBase<ElementStub> {
 
   static class XIncludeStubSerializer implements ObjectStubSerializer<XIncludeStub, ElementStub> {
 
-    @NotNull
     @Override
-    public String getExternalId() {
+    public @NotNull String getExternalId() {
       return "xml.XIncludeStub";
     }
 
@@ -131,9 +128,8 @@ public final class XIncludeStub extends ObjectStubBase<ElementStub> {
       dataStream.writeUTFFast(StringUtil.notNullize(stub.myXpointer));
     }
 
-    @NotNull
     @Override
-    public XIncludeStub deserialize(@NotNull StubInputStream dataStream, ElementStub parentStub) throws IOException {
+    public @NotNull XIncludeStub deserialize(@NotNull StubInputStream dataStream, ElementStub parentStub) throws IOException {
       return new XIncludeStub(parentStub, dataStream.readUTFFast(), dataStream.readUTFFast());
     }
 

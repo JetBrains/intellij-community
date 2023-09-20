@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -41,8 +41,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   }
 
   @Override
-  @Nullable
-  public <T extends Annotation> T getAnnotation(int index, Class<? extends T> annotationClass) {
+  public @Nullable <T extends Annotation> T getAnnotation(int index, Class<? extends T> annotationClass) {
     final JavaMethod method = getGetterMethod(index);
     if (method != null) {
       final T annotation = method.getAnnotation(annotationClass);
@@ -64,8 +63,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   }
 
   @Override
-  @NotNull
-  public List<? extends DomElement> getValues(@NotNull final DomElement element) {
+  public @NotNull List<? extends DomElement> getValues(final @NotNull DomElement element) {
     final List<DomElement> result = new SmartList<>();
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
     if (handler != null) {
@@ -84,15 +82,12 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   }
 
   @Override
-  @NotNull
-  @NlsSafe
-  public String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
+  public @NotNull @NlsSafe String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
     return StringUtil.capitalizeWords(strategy.splitIntoWords(getXmlElementName()), true);
   }
 
   @Override
-  @Nullable
-  public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+  public final @Nullable <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     return getAnnotation(0, annotationClass);
   }
 

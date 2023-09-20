@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlElement;
@@ -39,13 +39,12 @@ public final class EnumConverter<T extends Enum> extends ResolvingConverter<T>{
   }
 
   @Override
-  public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
+  public String getErrorMessage(final @Nullable String s, final ConvertContext context) {
     return XmlDomBundle.message("dom.converter.unknown.enum.value", s);
   }
 
   @Override
-  @NotNull
-  public Collection<? extends T> getVariants(final ConvertContext context) {
+  public @NotNull Collection<? extends T> getVariants(final ConvertContext context) {
     final XmlElement element = context.getXmlElement();
     if (element instanceof XmlTag) {
       final XmlTag simpleContent = XmlUtil.getSchemaSimpleContent((XmlTag)element);
