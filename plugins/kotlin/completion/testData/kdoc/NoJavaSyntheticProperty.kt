@@ -7,7 +7,6 @@ import java.io.File
  */
 fun test(f: File) {}
 
-// EXIST: {"lookupString":"getParent","tailText":"()","typeText":"String!","icon":"fileTypes/javaClass.svg","attributes":""}
+// EXIST: {"lookupString":"getParent","tailText":"()","typeText":"String!","icon":"fileTypes/javaClass.svg","attributes":"bold"}
 // ABSENT: parent
 // ABSENT: getPath
-// IGNORE_K2
