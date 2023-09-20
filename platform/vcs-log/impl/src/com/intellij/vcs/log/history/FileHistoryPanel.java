@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history;
 
 import com.intellij.diff.impl.DiffEditorViewer;
@@ -16,7 +16,9 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.JBSplitter;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.switcher.QuickActionProvider;
@@ -104,7 +106,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
         }
       }
     };
-    myGraphTable.setBorder(myGraphTable.createTopBottomBorder(1, 0));
     mySpeedSearch = new FileHistorySpeedSearch(myProject, logData.getIndex(), logData.getStorage(), myGraphTable);
     mySpeedSearch.setupListeners();
 
@@ -120,8 +121,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
                                                     VcsLogColorManagerFactory.create(Collections.singleton(myRoot)));
 
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);
-    JComponent tableWithProgress = VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.NONE),
-                                                                logData, logUi.getId(), this);
+    JComponent tableWithProgress = VcsLogUiUtil.installScrollingAndProgress(myGraphTable, this);
     myDetailsSplitter.setFirstComponent(tableWithProgress);
     myDetailsSplitter.setSecondComponent(myProperties.get(CommonUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
 
@@ -129,7 +129,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     Disposer.register(this, myEditorDiffPreview);
 
     JComponent actionsToolbar = createActionsToolbar();
-    actionsToolbar.setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
     JBPanel tablePanel = new JBPanel(new BorderLayout()) {
       @Override
       public Dimension getMinimumSize() {
@@ -137,7 +136,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       }
     };
     tablePanel.add(myDetailsSplitter, BorderLayout.CENTER);
-    tablePanel.add(actionsToolbar, BorderLayout.WEST);
+    tablePanel.add(actionsToolbar, BorderLayout.NORTH);
 
     setLayout(new BorderLayout());
     FrameDiffPreview frameDiffPreview = new FrameDiffPreview(myProperties, tablePanel, "vcs.history.diff.splitter.proportion",
@@ -145,7 +144,9 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       @NotNull
       @Override
       protected DiffEditorViewer createViewer() {
-        return createDiffPreview(false);
+        FileHistoryDiffProcessor processor = createDiffPreview(false);
+        processor.setToolbarVerticalSizeReferent(actionsToolbar);
+        return processor;
       }
     };
     add(frameDiffPreview.getMainComponent(), BorderLayout.CENTER);
@@ -177,7 +178,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     toolbarGroup.add(Objects.requireNonNull(toolbarActions));
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.VCS_HISTORY_TOOLBAR_PLACE,
-                                                                            toolbarGroup, false);
+                                                                            toolbarGroup, true);
     toolbar.setTargetComponent(myGraphTable);
     return toolbar.getComponent();
   }

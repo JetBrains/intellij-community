@@ -28,7 +28,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
@@ -58,7 +57,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.*;
@@ -748,11 +746,11 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
 
   @Override
   protected void paintFooter(@NotNull Graphics g, int x, int y, int width, int height) {
-    paintTopBottomBorder(g, x, y, width, height, false);
+    paintTopBottomBorder(g, x, y, width, height);
   }
 
-  private void paintTopBottomBorder(@NotNull Graphics g, int x, int y, int width, int height, boolean isTopBorder) {
-    int targetRow = isTopBorder ? 0 : getRowCount() - 1;
+  private void paintTopBottomBorder(@NotNull Graphics g, int x, int y, int width, int height) {
+    int targetRow = getRowCount() - 1;
     if (targetRow >= 0 && targetRow < getRowCount()) {
       g.setColor(getStyle(targetRow, getColumnViewIndex(Commit.INSTANCE), hasFocus(), false, false).getBackground());
     }
@@ -760,10 +758,6 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
       g.setColor(getBaseStyle(targetRow, getColumnViewIndex(Commit.INSTANCE), hasFocus(), false).getBackground());
     }
     g.fillRect(x, y, width, height);
-  }
-
-  public @NotNull Border createTopBottomBorder(int top, int bottom) {
-    return new MyTopBottomBorder(top, bottom);
   }
 
   public boolean isResizingColumns() {
@@ -1028,30 +1022,6 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
       }
       super.moveColumn(columnIndex, newIndex);
       VcsLogColumnUtilKt.moveColumn(myProperties, column, newIndex);
-    }
-  }
-
-  private final class MyTopBottomBorder implements Border {
-    private final @NotNull JBInsets myInsets;
-
-    private MyTopBottomBorder(int top, int bottom) {
-      myInsets = JBUI.insets(top, 0, bottom, 0);
-    }
-
-    @Override
-    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-      if (myInsets.top > 0) paintTopBottomBorder(g, x, y, width, myInsets.top, true);
-      if (myInsets.bottom > 0) paintTopBottomBorder(g, x, y + height - myInsets.bottom, width, myInsets.bottom, false);
-    }
-
-    @Override
-    public Insets getBorderInsets(Component c) {
-      return myInsets;
-    }
-
-    @Override
-    public boolean isBorderOpaque() {
-      return true;
     }
   }
 

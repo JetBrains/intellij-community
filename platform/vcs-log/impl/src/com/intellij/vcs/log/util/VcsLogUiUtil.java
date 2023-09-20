@@ -94,6 +94,14 @@ public final class VcsLogUiUtil {
     return scrollPane;
   }
 
+  @NotNull
+  public static JComponent installScrollingAndProgress(@NotNull VcsLogGraphTable table, @NotNull Disposable disposableParent) {
+    JScrollPane scrollPane = setupScrolledGraph(table, SideBorder.NONE);
+    JComponent tableWithProgress = installProgress(scrollPane, table.getLogData(), table.getId(), disposableParent);
+    ScrollableContentBorder.setup(scrollPane, Side.TOP, tableWithProgress);
+    return tableWithProgress;
+  }
+
   public static void showTooltip(@NotNull JComponent component,
                                  @NotNull Point point,
                                  @NotNull Balloon.Position position,
