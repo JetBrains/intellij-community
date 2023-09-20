@@ -1,13 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -17,7 +15,7 @@ internal class ScreenReaderStateManager(coroutineScope: CoroutineScope) {
     coroutineScope.launch {
       apply()
 
-      ApplicationManager.getApplication().serviceAsync<GeneralSettings>().propertyChangedFlow.collect {
+      serviceAsync<GeneralSettings>().propertyChangedFlow.collect {
         if (it == GeneralSettings.PropertyNames.supportScreenReaders) {
           apply()
         }
@@ -26,7 +24,8 @@ internal class ScreenReaderStateManager(coroutineScope: CoroutineScope) {
   }
 
   suspend fun apply() {
-    withContext(Dispatchers.EDT) {
+    // https://youtrack.jetbrains.com/issue/IDEA-332882 - use RawSwingDispatcher
+    withContext(RawSwingDispatcher) {
       ScreenReader.setActive(GeneralSettings.getInstance().isSupportScreenReaders)
     }
   }
