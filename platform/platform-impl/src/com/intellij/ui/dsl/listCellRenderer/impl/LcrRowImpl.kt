@@ -99,13 +99,25 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
     get() = listCellRendererParams!!.hasFocus
 
   override var background: Color?
-    get() = if (ExperimentalUI.isNewUI()) selectablePanel.selectionColor else selectablePanel.background
+    get() = if (ExperimentalUI.isNewUI() || !selected) selectablePanel.background else null
     set(value) {
-      if (ExperimentalUI.isNewUI()) {
-        selectablePanel.selectionColor = value
-      }
-      else {
-        selectablePanel.background = value
+      if (ExperimentalUI.isNewUI() || !selected) selectablePanel.background = value
+    }
+
+  override var selectionColor: Color?
+    get() = if (selected) {
+      if (ExperimentalUI.isNewUI()) selectablePanel.selectionColor else selectablePanel.background
+    } else {
+      null
+    }
+    set(value) {
+      if (selected) {
+        if (ExperimentalUI.isNewUI()) {
+          selectablePanel.selectionColor = value
+        }
+        else {
+          selectablePanel.background = value
+        }
       }
     }
 
@@ -155,7 +167,7 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
     lcrCellCache.release()
     gap = LcrRow.Gap.DEFAULT
 
-    val bg = if (isSelected) RenderingUtil.getSelectionBackground(list) else list.background
+    val selectionBg = if (isSelected) RenderingUtil.getSelectionBackground(list) else null
     val isComboBox = isComboBox(list)
     if (ExperimentalUI.isNewUI()) {
       // Update height/insets every time, so IDE scaling is applied
@@ -186,13 +198,13 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
           preferredHeight = JBUI.CurrentTheme.List.rowHeight()
 
           background = list.background
-          selectionColor = bg
+          selectionColor = selectionBg
         }
       }
     }
     else {
       selectablePanel.apply {
-        background = bg
+        background = selectionBg ?: list.background
         border = JBUI.Borders.empty(UIUtil.getListCellVPadding(), UIUtil.getListCellHPadding())
       }
     }
@@ -247,8 +259,8 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
   @Nls
   private fun getAccessibleName(): String {
     val names = cells
-      .map { it.lcrCell.component.accessibleContext.accessibleName.trim() }
-      .filter { it.isNotEmpty() }
+      .map { it.lcrCell.component.accessibleContext.accessibleName?.trim() }
+      .filter { !it.isNullOrEmpty() }
 
     // Comma gives a good pause between unrelated text for readers on Windows and macOS
     return names.joinToString(", ")

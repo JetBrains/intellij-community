@@ -10,6 +10,7 @@ import com.intellij.util.ui.UIUtil
 import java.util.function.Function
 import javax.swing.JList
 
+@Deprecated("Use GotoTargetRendererNew.createTargetPresentationRenderer instead")
 internal class TargetPresentationMainRenderer<T>(
   private val presentationProvider: Function<in T, out TargetPresentation>
 ) : ColoredListCellRenderer<T>() {

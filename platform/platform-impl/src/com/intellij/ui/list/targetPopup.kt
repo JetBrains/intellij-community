@@ -74,6 +74,7 @@ fun <T> buildTargetPopupWithMultiSelect(
     }.setItemsChosenCallback { set -> set.all { predicate.test(it) } }
 }
 
+@Deprecated("Use GotoTargetRendererNew instead")
 fun <T> createTargetPresentationRenderer(presentationProvider: Function<in T, out TargetPresentation>): ListCellRenderer<T> {
   return if (UISettings.getInstance().showIconInQuickNavigation) {
     TargetPresentationRenderer(presentationProvider)

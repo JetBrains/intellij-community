@@ -9,6 +9,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.function.Function;
 
+/**
+ * @deprecated Use GotoTargetRendererNew instead
+ */
+@Deprecated
 final class GotoTargetRenderer implements ListCellRenderer<ItemWithPresentation> {
 
   private final ListCellRenderer<Object> myNullRenderer = new DefaultListCellRenderer();
