@@ -37,6 +37,7 @@ import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import java.util.Locale
 import javax.swing.JComponent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -156,7 +157,7 @@ class DependencyAnalyzerViewImpl(
       .filter { it.isSelected }
       .map { it.scope }
     val showDependencyWarnings = showDependencyWarnings
-    return filter { dependency -> dependencyDataFilter in dependency.data.getDisplayText(showDependencyGroupId) }
+    return filter { dependency -> dependencyDataFilter.lowercase(Locale.ENGLISH) in dependency.data.getDisplayText(showDependencyGroupId).lowercase(Locale.ENGLISH) }
       .filter { dependency -> dependency.scope in dependencyScopeFilter }
       .filter { dependency -> if (showDependencyWarnings) dependency.hasWarnings else true }
   }
