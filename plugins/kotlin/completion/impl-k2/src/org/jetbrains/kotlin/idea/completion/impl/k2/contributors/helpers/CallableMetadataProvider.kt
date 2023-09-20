@@ -169,7 +169,9 @@ internal object CallableMetadataProvider {
             listOf(actualExplicitReceiverType)
         } else {
             context.implicitReceiver.map { it.type }
-        }.map { it.flatten() }
+        }
+            .filterNot { it is KtErrorType }
+            .map { it.flatten() }
     }
 
     context(KtAnalysisSession)

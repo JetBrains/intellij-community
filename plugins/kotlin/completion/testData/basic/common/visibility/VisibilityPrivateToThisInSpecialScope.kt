@@ -15,4 +15,3 @@ class A<in I> {
 
 // INVOCATION_COUNT: 1
 // EXIST: bar, foo
-// IGNORE_K2

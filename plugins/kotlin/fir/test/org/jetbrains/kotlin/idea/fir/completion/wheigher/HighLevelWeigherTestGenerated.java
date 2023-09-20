@@ -425,6 +425,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../completion/testData/weighers/basic/DslMemberCalls.kt");
         }
 
+        @TestMetadata("ErrorImplicitReceiverType.kt")
+        public void testErrorImplicitReceiverType() throws Exception {
+            runTest("../completion/testData/weighers/basic/ErrorImplicitReceiverType.kt");
+        }
+
         @TestMetadata("ExactMatchForKeyword.kt")
         public void testExactMatchForKeyword() throws Exception {
             runTest("../completion/testData/weighers/basic/ExactMatchForKeyword.kt");
