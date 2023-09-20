@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,17 @@ public class MavenIndexHolder {
 
   public @NotNull List<MavenIndex> getRemoteIndices() {
     return myRemoteIndices;
+  }
+
+  public List<MavenGAVIndex> getGAVIndices() {
+    if (myLocalIndex == null) {
+      return ContainerUtil.filter(myRemoteIndices, idx -> idx != null);
+    }
+    else {
+      ArrayList<MavenGAVIndex> result = new ArrayList<>(getRemoteIndices());
+      result.add(myLocalIndex);
+      return result;
+    }
   }
 
   public @NotNull List<MavenIndex> getIndices() {

@@ -26,10 +26,6 @@ import java.io.File;
 
 public interface MavenSearchIndex {
 
-  enum Kind {
-    LOCAL, REMOTE, ONLINE
-  }
-
   void close(boolean releaseIndexContext);
 
   @NlsSafe
@@ -43,7 +39,7 @@ public interface MavenSearchIndex {
   @NlsSafe
   String getRepositoryPathOrUrl();
 
-  Kind getKind();
+  IndexKind getKind();
 
   long getUpdateTimestamp();
 
