@@ -2,46 +2,47 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicLong
 
 internal class SafeInlineCompletionExecutor(private val scope: CoroutineScope) {
-  private val job = AtomicReference<Job?>(null)
-  private val jobsCounter = AtomicInteger(0)
-  private val isCancelled = AtomicBoolean(false)
 
-  fun switchJobSafely(block: (suspend CoroutineScope.() -> Unit)?) {
+  // Timestamps of jobs are required to understand whether we waited for all requests by some moment
+  private val lastRequestedJobTimestamp = AtomicLong(0)
+  private val lastExecutedJobTimestamp = AtomicLong(0)
+
+  private val nextTask = Channel<JobWithTimestamp>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  init {
+    scope.launch {
+      var currentJob: Job? = null
+      while (isActive) {
+        val (nextJob, nextTimestamp) = nextTask.receive()
+        currentJob?.cancelAndJoin()
+        ensureActive()
+        currentJob = nextJob
+        currentJob.invokeOnCompletion { lastExecutedJobTimestamp.set(nextTimestamp) }
+        currentJob.start()
+      }
+    }
+  }
+
+  @RequiresEdt
+  fun switchJobSafely(block: suspend CoroutineScope.() -> Unit) {
     if (checkNotCancelled()) {
       return
     }
 
-    jobsCounter.incrementAndGet()
-
     // create a new lazy job
-    val nextJob = block?.let { scope.launch(start = CoroutineStart.LAZY, block = block) }
-    scope.launch {
-      try {
-        while (true) {
-          val currentJob = job.get()
-          currentJob?.cancelAndJoin()
-          // if still have this canceled job, let's switch it to a new one
-          if (job.compareAndSet(currentJob, nextJob)) {
-            LOG.trace("Change inline completion job")
-            break
-          }
-        }
-        // start a new actual job if not yet, it may be nextJob OR some even newer job
-        job.get()?.let {
-          jobsCounter.incrementAndGet()
-          it.invokeOnCompletion { jobsCounter.decrementAndGet() }
-          it.start()
-        }
-      } finally {
-        jobsCounter.decrementAndGet()
-      }
+    val nextJob = scope.launch(start = CoroutineStart.LAZY, block = block)
+    val jobWithTimestamp = JobWithTimestamp(nextJob, lastRequestedJobTimestamp.incrementAndGet())
+    val sendResult = nextTask.trySend(jobWithTimestamp)
+    if (!sendResult.isSuccess) {
+      LOG.error("Cannot schedule a request.")
     }
   }
 
@@ -49,25 +50,28 @@ internal class SafeInlineCompletionExecutor(private val scope: CoroutineScope) {
     if (checkNotCancelled()) {
       return
     }
-    isCancelled.set(true)
-    job.set(null)
+    nextTask.cancel()
     scope.cancel()
   }
 
   @TestOnly
   suspend fun awaitAll() {
-    while (jobsCounter.get() > 0) {
+    val currentTimestamp = lastRequestedJobTimestamp.get()
+    while (lastExecutedJobTimestamp.get() < currentTimestamp) {
       yield()
+      assert(scope.isActive) { "Do not call awaitAll when finishing executor." }
     }
   }
 
   private fun checkNotCancelled(): Boolean {
-    val isCancelled = isCancelled.get()
+    val isCancelled = !scope.isActive
     if (isCancelled) {
       LOG.error("Inline completion executor is cancelled.")
     }
     return isCancelled
   }
+
+  private data class JobWithTimestamp(val job: Job, val timestamp: Long)
 
   companion object {
     private val LOG = thisLogger()
