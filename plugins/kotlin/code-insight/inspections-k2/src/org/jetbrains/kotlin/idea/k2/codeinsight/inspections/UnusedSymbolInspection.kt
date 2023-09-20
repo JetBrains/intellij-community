@@ -31,7 +31,7 @@ class UnusedSymbolInspection : LocalInspectionTool(), UnfairLocalInspectionTool 
                 val psiToReportProblem = analyze(element) { KotlinUnusedSymbolUtil.getPsiToReportProblem(element) {
                     javaInspection.isEntryPoint(it)
                 } } ?: return
-                holder.registerProblem(psiToReportProblem, message, *KotlinUnusedSymbolUtil.createQuickFixes(element).toTypedArray())
+                holder.registerProblem(psiToReportProblem, message, *KotlinUnusedSymbolUtil.createQuickFixes(element))
             }
         }
     }

@@ -697,10 +697,16 @@ object KotlinUnusedSymbolUtil {
       return hasTextUsages
   }
 
-  fun createQuickFixes(element: KtNamedDeclaration): List<LocalQuickFixAndIntentionActionOnPsiElement> {
-      // TODO: Implement K2 counterpart of `createAddToDependencyInjectionAnnotationsFix` and use it for `element` with annotations here.
-      return listOf(SafeDeleteFix(element))
-  }
+    fun createQuickFixes(declaration: KtNamedDeclaration): Array<LocalQuickFixAndIntentionActionOnPsiElement> {
+        if (declaration is KtParameter && declaration.isLoopParameter) {
+            return emptyArray()
+        }
+        if (declaration is KtParameter && declaration.isCatchParameter) {
+            return arrayOf(com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix(declaration, "_"))
+        }
+        // TODO: Implement K2 counterpart of `createAddToDependencyInjectionAnnotationsFix` and use it for `element` with annotations here.
+        return arrayOf(SafeDeleteFix(declaration))
+    }
 
   context(KtAnalysisSession)
   private fun isEntryPoint(declaration: KtNamedDeclaration, isCheapEnough: Lazy<PsiSearchHelper.SearchCostResult>, isJavaEntryPoint: (PsiElement)->Boolean): Boolean {

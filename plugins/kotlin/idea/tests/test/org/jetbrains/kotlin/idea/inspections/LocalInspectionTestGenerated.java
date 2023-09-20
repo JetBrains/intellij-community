@@ -16936,6 +16936,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/callableReference.kt");
         }
 
+        @TestMetadata("catchParameter.kt")
+        public void testCatchParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/catchParameter.kt");
+        }
+
         @TestMetadata("classByPrimaryConstructor.kt")
         public void testClassByPrimaryConstructor() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/classByPrimaryConstructor.kt");
@@ -17074,6 +17079,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("lastPropertyInPrimaryConstructorWithComments.kt")
         public void testLastPropertyInPrimaryConstructorWithComments() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/lastPropertyInPrimaryConstructorWithComments.kt");
+        }
+
+        @TestMetadata("loopParameter.kt")
+        public void testLoopParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/loopParameter.kt");
         }
 
         @TestMetadata("namedFunctionalParameter.kt")
