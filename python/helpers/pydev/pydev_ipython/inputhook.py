@@ -144,7 +144,13 @@ class InputHookManager(object):
             app = wx.App(redirect=False, clearSigInt=False)
         """
         import wx
-        from distutils.version import LooseVersion as V
+        try:
+            from distutils.version import LooseVersion as V
+        except ImportError:
+            if sys.version_info[:2] >= (3, 12):
+                V = lambda v: v.split('.')
+            else:
+                raise
         wx_version = V(wx.__version__).version  # @UndefinedVariable
 
         if wx_version < [2, 8]:
