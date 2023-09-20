@@ -76,6 +76,11 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
   fun withJUnit5(): BSB
   fun targetCompatibility(level: String): BSB
   fun sourceCompatibility(level: String): BSB
+
+  // Note: These are Element building functions
+  fun project(name: String): Expression
+  fun project(name: String, configuration: String): Expression
+
   companion object {
 
     @JvmStatic

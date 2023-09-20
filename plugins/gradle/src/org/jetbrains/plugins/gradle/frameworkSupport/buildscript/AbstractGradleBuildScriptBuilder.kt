@@ -215,4 +215,10 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
       }
     }
   }
+
+  override fun project(name: String): Expression =
+    call("project", name)
+
+  override fun project(name: String, configuration: String): Expression =
+    call("project", "path" to name, "configuration" to configuration)
 }

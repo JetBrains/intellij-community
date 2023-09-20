@@ -46,10 +46,6 @@ open class TestGradleBuildScriptBuilder(
     }
   }
 
-  // Note: These are Element building functions
-  fun project(name: String) = call("project", name)
-  fun project(name: String, configuration: String) = call("project", "path" to name, "configuration" to configuration)
-
   fun project(name: String, configure: Consumer<TestGradleBuildScriptBuilder>) = project(name) { configure.accept(this) }
   fun project(name: String, configure: TestGradleBuildScriptBuilder.() -> Unit) =
     withPrefix {
