@@ -36,7 +36,7 @@ public abstract class CopyPasteManagerWithHistory implements ClientCopyPasteMana
   private static final Logger LOG = Logger.getInstance(CopyPasteManagerWithHistory.class);
 
   private final EventDispatcher<ContentChangedListener> myDispatcher = EventDispatcher.create(ContentChangedListener.class);
-  private final LinkedListWithSum<Transferable> myData = new LinkedListWithSum<>(CopyPasteManagerWithHistory::getSize);
+  protected final LinkedListWithSum<Transferable> myData = new LinkedListWithSum<>(CopyPasteManagerWithHistory::getSize);
   private boolean myOwnContent;
 
   @Override
