@@ -7,7 +7,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -24,7 +25,6 @@ import com.intellij.searchEverywhereMl.semantics.utils.ScoredText
 import com.intellij.searchEverywhereMl.semantics.utils.generateEmbedding
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.io.File
-import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
 /**

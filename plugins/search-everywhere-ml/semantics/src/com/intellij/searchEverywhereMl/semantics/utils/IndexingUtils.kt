@@ -58,7 +58,3 @@ fun FloatTextEmbedding.normalized(): FloatTextEmbedding {
   val norm = sqrt(this * this)
   return FloatTextEmbedding(this.values.map { it / norm }.toFloatArray())
 }
-
-fun checkIntegrationTestMode(): Boolean {
-  return System.getProperty("idea.is.integration.test") == "true"
-}
