@@ -16,9 +16,7 @@ class ProjectIndexingDependenciesStorage(private val storage: FileChannel, stora
 
     @Throws(IOException::class)
     fun openOrInit(path: Path): ProjectIndexingDependenciesStorage {
-      return openOrInit(path, ::ProjectIndexingDependenciesStorage) { actualVersion ->
-        throw IOException("Incompatible version change in ProjectIndexingDependenciesStorage: $actualVersion > ${CURRENT_STORAGE_VERSION}")
-      }
+      return openOrInit(path, ::ProjectIndexingDependenciesStorage)
     }
   }
 

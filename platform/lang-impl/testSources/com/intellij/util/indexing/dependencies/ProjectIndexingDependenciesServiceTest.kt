@@ -132,4 +132,25 @@ class ProjectIndexingDependenciesServiceTest {
 
     assertEquals(oldStamp, newStamp)
   }
+
+  @Test
+  fun `test recovery after incompatible version change`() {
+    val file = factory.nonExistingFile()
+    FileOutputStream(file).use {
+      it.write(ByteArray(4) { -1 })
+    }
+
+    try {
+      factory.newProjectIndexingDependenciesService(file)
+      fail("Should log.error and reset the storage")
+    }
+    catch (e: AssertionError) {
+      val expected = "Incompatible version change"
+      val actual = e.message!!.substring(0, expected.length)
+      assertEquals(expected, actual)
+    }
+
+    factory.newProjectIndexingDependenciesService(file)
+    // should not throw
+  }
 }

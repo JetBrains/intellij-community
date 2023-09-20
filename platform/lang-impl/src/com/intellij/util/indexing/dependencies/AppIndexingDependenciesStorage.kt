@@ -16,9 +16,7 @@ class AppIndexingDependenciesStorage(private val storage: FileChannel, storagePa
 
     @Throws(IOException::class)
     fun openOrInit(path: Path): AppIndexingDependenciesStorage {
-      return openOrInit(path, ::AppIndexingDependenciesStorage) { actualVersion ->
-        throw IOException("Incompatible version change in AppIndexingDependenciesStorage: $actualVersion > ${CURRENT_STORAGE_VERSION}")
-      }
+      return openOrInit(path, ::AppIndexingDependenciesStorage)
     }
   }
 

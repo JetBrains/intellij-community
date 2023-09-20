@@ -15,6 +15,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.deleteIfExists
 import kotlin.math.max
 
 /**
@@ -55,6 +56,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
         return ProjectIndexingDependenciesStorage.openOrInit(storagePath)
       } catch (e: IOException) {
         requestVfsRebuildDueToError(e)
+        storagePath.deleteIfExists()
         throw e
       }
     }
@@ -96,11 +98,25 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
 
   init {
     try {
+      storage.checkVersion { expectedVersion, actualVersion ->
+        requestVfsRebuildAndResetStorage(IOException("Incompatible version change in ProjectIndexingDependenciesService: " +
+                                                     "$actualVersion to $expectedVersion"))
+      }
+
       val requestId = storage.readRequestId()
       current.set(IndexingRequestTokenImpl(requestId, appIndexingDependenciesService.getCurrent()))
     }
     catch (e: IOException) {
-      requestVfsRebuildDueToError(e)
+      requestVfsRebuildAndResetStorage(e)
+      // we don't rethrow exception, because this will put IDE in unusable state.
+    }
+  }
+
+  private fun requestVfsRebuildAndResetStorage(reason: IOException) {
+    try {
+      requestVfsRebuildDueToError(reason)
+    }
+    finally {
       storage.resetStorage()
     }
   }

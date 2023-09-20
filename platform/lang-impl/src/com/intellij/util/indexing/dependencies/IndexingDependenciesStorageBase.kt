@@ -20,14 +20,12 @@ abstract class IndexingDependenciesStorageBase(private val storage: FileChannel,
 
     @Throws(IOException::class)
     fun <T> openOrInit(path: Path,
-                       storageFactory: (storage: FileChannel, path: Path) -> T,
-                       onVersionMismatch: (actualVersion: Int) -> Nothing): T where T : IndexingDependenciesStorageBase {
+                       storageFactory: (storage: FileChannel, path: Path) -> T): T where T : IndexingDependenciesStorageBase {
       path.createParentDirectories()
       val channel = ResilientFileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE)
       val storage = storageFactory(channel, path)
 
       storage.initIfNotInitialized()
-      storage.checkVersion(onVersionMismatch)
 
       return storage
     }
@@ -56,10 +54,10 @@ abstract class IndexingDependenciesStorageBase(private val storage: FileChannel,
   }
 
   @Throws(IOException::class)
-  fun checkVersion(onVersionMismatch: (actualVersion: Int) -> Nothing) {
+  fun checkVersion(onVersionMismatch: (expectedVersion: Int, actualVersion: Int) -> Unit) {
     val actualVersion = readVersion()
     if (actualVersion != storageVersion) {
-      onVersionMismatch(actualVersion)
+      onVersionMismatch(storageVersion, actualVersion)
     }
   }
 
