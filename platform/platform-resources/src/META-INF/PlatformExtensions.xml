@@ -1572,7 +1572,6 @@
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.ProfilerQuickAction" listGroupID="MainToolbarQuickActions.Run" />
 
     <notificationRouter implementation="com.intellij.notification.impl.LocalNotificationRouter" order="last"/>
-    <uiDslRendererProvider implementation="com.intellij.ui.dsl.listCellRenderer.impl.DefaultDslRendererProvider" order="last"/>
     <applicationInitializedListener implementation="com.intellij.ide.ui.IconDbMaintainer"/>
     <ideEventQueueDispatcher implementation="com.intellij.ide.ui.laf.LaFMnemonicDispatcher"/>
   </extensions>

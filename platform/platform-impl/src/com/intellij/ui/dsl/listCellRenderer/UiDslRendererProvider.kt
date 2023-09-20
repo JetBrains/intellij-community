@@ -2,12 +2,14 @@
 package com.intellij.ui.dsl.listCellRenderer
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.ui.dsl.listCellRenderer.impl.LcrRowImpl
 import javax.swing.ListCellRenderer
 
 interface UiDslRendererProvider {
   companion object {
     fun <T> getRenderer(renderContent: LcrRow<T>.() -> Unit): ListCellRenderer<T> {
-      return EP.extensions.first { it.isApplicable() }.getRenderer(renderContent)
+      val renderer = EP.findFirstSafe { it.isApplicable() }?.getRenderer(renderContent)
+      return renderer ?: LcrRowImpl(renderContent)
     }
 
     @JvmStatic
