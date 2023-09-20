@@ -15,5 +15,6 @@ internal class LcrTextImpl : LcrCellBaseImpl() {
     component.text = text
     component.font = initParams.font
     component.foreground = if (selected) rowForeground else initParams.foreground
+    component.accessibleContext.accessibleName = initParams.accessibleName
   }
 }

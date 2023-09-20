@@ -3,6 +3,7 @@ package com.intellij.ui.dsl.listCellRenderer.impl
 
 import com.intellij.ui.dsl.listCellRenderer.LcrIconInitParams
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-internal class LcrIconInitParamsImpl: LcrInitParamsImpl(), LcrIconInitParams
+internal class LcrIconInitParamsImpl(accessibleName: @Nls String?) : LcrInitParamsImpl(accessibleName), LcrIconInitParams

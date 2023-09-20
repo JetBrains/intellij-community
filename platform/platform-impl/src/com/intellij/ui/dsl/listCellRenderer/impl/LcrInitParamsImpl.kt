@@ -3,9 +3,10 @@ package com.intellij.ui.dsl.listCellRenderer.impl
 
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-internal sealed class LcrInitParamsImpl : LcrInitParams {
+internal sealed class LcrInitParamsImpl(override var accessibleName: @Nls String?) : LcrInitParams {
 
   override var align: LcrInitParams.Align = LcrInitParams.Align.LEFT
 }

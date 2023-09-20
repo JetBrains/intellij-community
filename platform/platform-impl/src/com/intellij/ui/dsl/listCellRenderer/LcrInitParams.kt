@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.listCellRenderer
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Experimental
 @LcrDslMarker
@@ -25,4 +26,6 @@ interface LcrInitParams {
    * Default value is [Align.LEFT]
    */
   var align: Align
+
+  var accessibleName: @Nls String?
 }

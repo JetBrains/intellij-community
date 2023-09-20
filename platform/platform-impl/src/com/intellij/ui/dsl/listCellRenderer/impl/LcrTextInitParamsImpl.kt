@@ -4,12 +4,14 @@ package com.intellij.ui.dsl.listCellRenderer.impl
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Font
 import javax.swing.UIManager
 
 @ApiStatus.Internal
-internal class LcrTextInitParamsImpl(override var foreground: Color): LcrInitParamsImpl(), LcrTextInitParams {
+internal class LcrTextInitParamsImpl(accessibleName: @Nls String?, override var foreground: Color) :
+  LcrInitParamsImpl(accessibleName), LcrTextInitParams {
 
   override var attributes: SimpleTextAttributes? = null
 

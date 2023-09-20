@@ -19,6 +19,7 @@ import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
 import java.util.function.Supplier
+import javax.accessibility.Accessible
 import javax.swing.*
 import javax.swing.plaf.basic.BasicComboPopup
 import kotlin.math.max
@@ -115,18 +116,19 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
   }
 
   override fun icon(icon: Icon, init: (LcrIconInitParams.() -> Unit)?) {
-    val initParams = LcrIconInitParamsImpl()
+    val accessibleName = (icon as? Accessible)?.accessibleContext?.accessibleName
+    val initParams = LcrIconInitParamsImpl(accessibleName)
     if (init != null) {
       initParams.init()
     }
 
     val result = lcrCellCache.occupyIcon()
-    result.init(icon)
+    result.init(icon, initParams)
     add(result, initParams, false)
   }
 
   override fun text(text: @Nls String, init: (LcrTextInitParams.() -> Unit)?) {
-    val initParams = LcrTextInitParamsImpl(foreground)
+    val initParams = LcrTextInitParamsImpl(text, foreground)
     if (init != null) {
       initParams.init()
     }

@@ -22,5 +22,6 @@ internal class LcrSimpleColoredTextImpl : LcrCellBaseImpl() {
     component.font = initParams.font
     val attributes = if (selected) SimpleTextAttributes(initParams.attributes!!.style, rowForeground) else initParams.attributes!!
     component.append(text, attributes)
+    component.accessibleContext.accessibleName = initParams.accessibleName
   }
 }
