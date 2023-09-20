@@ -110,7 +110,14 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     internal val REPORT_NEXT_START_AS_RERUN = Key.create<Boolean>("REPORT_NEXT_START_AS_RERUN")
 
     @JvmStatic
-    fun getInstance(project: Project) = project.service<ExecutionManager>() as ExecutionManagerImpl
+    fun getInstance(project: Project): ExecutionManagerImpl {
+      return project.service<ExecutionManager>() as ExecutionManagerImpl
+    }
+
+    @JvmStatic
+    fun getInstanceIfCreated(project: Project): ExecutionManagerImpl? {
+      return project.serviceIfCreated<ExecutionManager>() as? ExecutionManagerImpl
+    }
 
     @JvmStatic
     fun isProcessRunning(descriptor: RunContentDescriptor?): Boolean {

@@ -1160,7 +1160,9 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
     }
     var icon = iconAndInvalidCache.get(uniqueId, settings, project)
     if (withLiveIndicator) {
-      val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors(Condition { it === settings })
+      val runningDescriptors = ExecutionManagerImpl.getInstanceIfCreated(project)
+                                 ?.getRunningDescriptors(Condition { it === settings })
+                               ?: emptyList()
       when {
         runningDescriptors.size == 1 -> icon =
           if (ExperimentalUI.isNewUI()) newUiRunningIcon(icon) else ExecutionUtil.getLiveIndicator(icon)

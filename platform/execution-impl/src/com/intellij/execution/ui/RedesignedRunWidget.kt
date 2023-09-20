@@ -96,10 +96,12 @@ class RunWidgetResumeManager(private val project: Project)  {
   }
 
   private fun isDebugStarted(): Boolean {
-    val executionManager = ExecutionManagerImpl.getInstance(project)
-    return ExecutionManagerImpl.getAllDescriptors(project).filter { isActive(it) == true }.firstOrNull {
-      executionManager.getExecutors(it).firstOrNull { executor -> executor.id == ToolWindowId.DEBUG } != null
-    } != null
+    val executionManager = ExecutionManagerImpl.getInstanceIfCreated(project) ?: return false
+
+    return ExecutionManagerImpl.getAllDescriptors(project).asSequence()
+      .filter { isActive(it) == true }
+      .flatMap { executionManager.getExecutors(it) }
+      .firstOrNull { executor -> executor.id == ToolWindowId.DEBUG } != null
   }
 
   private fun isActive(processDescriptor: RunContentDescriptor): Boolean? {
@@ -107,7 +109,6 @@ class RunWidgetResumeManager(private val project: Project)  {
       !it.isProcessTerminating && !it.isProcessTerminated
     }
   }
-
 
   private fun getStarted(configuration: RunnerAndConfigurationSettings, executorId: String): RunContentDescriptor? {
     val executionManager = ExecutionManagerImpl.getInstance(project)
@@ -179,7 +180,8 @@ private class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
       return !runningDescriptors.isEmpty()
     }
     else {
-      val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { it.isOfSameType(selectedConfiguration) }
+      val executionManager = ExecutionManagerImpl.getInstanceIfCreated(project) ?: return false
+      val runningDescriptors = executionManager.getRunningDescriptors { it.isOfSameType(selectedConfiguration) }
       return !runningDescriptors.isEmpty()
     }
   }

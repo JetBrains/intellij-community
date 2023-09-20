@@ -61,6 +61,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static java.util.Collections.emptyList;
+
 public final class ExecutorRegistryImpl extends ExecutorRegistry {
   private static final Logger LOG = Logger.getInstance(ExecutorRegistryImpl.class);
 
@@ -509,7 +511,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         List<RunnerAndConfigurationSettings> runConfigs =
           configurationsFromContext != null
           ? ContainerUtil.map(configurationsFromContext, ConfigurationFromContext::getConfigurationSettings)
-          : Collections.emptyList();
+          : emptyList();
 
         VirtualFile vFile = psiFile.getVirtualFile();
         String filePath = vFile != null ? vFile.getPath() : null;
@@ -573,7 +575,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     private @NotNull List<RunContentDescriptor> getRunningDescriptors(@NotNull Project project,
                                                                       @NotNull RunnerAndConfigurationSettings selectedConfiguration) {
-      ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
+      ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstanceIfCreated(project);
+      if (executionManager == null) return emptyList();
+
       List<RunContentDescriptor> runningDescriptors =
         executionManager.getRunningDescriptors(s -> ExecutionManagerImplKt.isOfSameType(s, selectedConfiguration));
       runningDescriptors = ContainerUtil.filter(runningDescriptors, descriptor -> executionManager.getExecutors(descriptor).contains(myExecutor));
@@ -914,7 +918,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     private final @NotNull List<RunnerAndConfigurationSettings> myRunConfigs;
 
     private static RunCurrentFileActionStatus createDisabled(@Nls @NotNull String tooltip, @NotNull Icon icon) {
-      return new RunCurrentFileActionStatus(false, tooltip, icon, Collections.emptyList());
+      return new RunCurrentFileActionStatus(false, tooltip, icon, emptyList());
     }
 
     private static RunCurrentFileActionStatus createEnabled(@Nls @NotNull String tooltip,
