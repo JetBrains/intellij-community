@@ -142,7 +142,8 @@ internal object CallableMetadataProvider {
         val expectedExtensionReceiverType = if (isFunctionalVariableCall) {
             (signature.returnType as? KtFunctionalType)?.receiverType
         } else {
-            signature.receiverType
+            // if extension has type parameters, `KtExtensionApplicabilityResult.substitutor` may contain captured types
+            signature.receiverType?.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = false)
         } ?: return null
 
         // If a symbol expects an extension receiver, then either

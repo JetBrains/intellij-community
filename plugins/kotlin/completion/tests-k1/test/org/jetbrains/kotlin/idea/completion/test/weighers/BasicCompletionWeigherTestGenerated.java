@@ -380,6 +380,16 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/Callables.kt");
         }
 
+        @TestMetadata("ContravariantType.kt")
+        public void testContravariantType() throws Exception {
+            runTest("../testData/weighers/basic/ContravariantType.kt");
+        }
+
+        @TestMetadata("CovariantType.kt")
+        public void testCovariantType() throws Exception {
+            runTest("../testData/weighers/basic/CovariantType.kt");
+        }
+
         @TestMetadata("DelegateToOtherObject.kt")
         public void testDelegateToOtherObject() throws Exception {
             runTest("../testData/weighers/basic/DelegateToOtherObject.kt");
@@ -613,6 +623,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @TestMetadata("RecursiveCall.kt")
         public void testRecursiveCall() throws Exception {
             runTest("../testData/weighers/basic/RecursiveCall.kt");
+        }
+
+        @TestMetadata("StarProjection.kt")
+        public void testStarProjection() throws Exception {
+            runTest("../testData/weighers/basic/StarProjection.kt");
         }
 
         @TestMetadata("StaticMembers.kt")
