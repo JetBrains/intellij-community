@@ -12,7 +12,7 @@ fun Finder.editor(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[
                                                                 JEditorUiComponent::class.java)
 
 class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
-  private val editor by lazy { driver.cast(component, EditorComponentImpl::class).getEditor() }
+  val editor by lazy { driver.cast(component, EditorComponentImpl::class).getEditor() }
   private val document by lazy { editor.getDocument() }
   var text: String
     get() = document.getText()
@@ -21,6 +21,12 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
         document.setText(value)
       }
     }
+
+  fun interact(block: Editor.() -> Unit) {
+    driver.withContext(OnDispatcher.EDT) {
+      block.invoke(editor)
+    }
+  }
 }
 
 @Remote("com.intellij.openapi.editor.impl.EditorComponentImpl")
