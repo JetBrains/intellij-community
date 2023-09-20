@@ -2373,9 +2373,12 @@ public class Mappings {
       for (IntIterator dependants = state.myDependants.iterator(); dependants.hasNext(); ) {
         int depName = dependants.nextInt();
         Iterable<Pair<ClassFileRepr, File>> dependentReprs = Iterators.filter(Iterators.map(Iterators.map(myClassToRelativeSourceFilePath.get(depName), src -> Pair.create(myRelativeSourceFilePathToClasses.get(src), toFull(src))), p -> {
-          for (ClassFileRepr repr : p.getFirst()) {
-            if (repr.name == depName) {
-              return Pair.create(repr, p.getSecond());
+          Collection<ClassFileRepr> reprs = p.getFirst();
+          if (reprs != null) {
+            for (ClassFileRepr repr : reprs) {
+              if (repr.name == depName) {
+                return Pair.create(repr, p.getSecond());
+              }
             }
           }
           return null;
