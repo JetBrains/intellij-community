@@ -12,7 +12,7 @@ import com.intellij.lang.Language
 private class InlayHintsSettingsSearchableContributor : SearchableOptionContributor() {
   override fun processOptions(processor: SearchableOptionProcessor) {
     for (inlayGroup in InlayGroup.values()) {
-      addOption(processor, inlayGroup.toString(), null)
+      addOption(processor, inlayGroup.title(), null)
     }
     for (settingsProvider in CodeVisionGroupSettingProvider.EP.EXTENSION_POINT_NAME.extensionList) {
       addOption(processor, settingsProvider.description, null)

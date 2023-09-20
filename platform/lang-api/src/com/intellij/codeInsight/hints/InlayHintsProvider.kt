@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
@@ -19,7 +18,8 @@ import kotlin.reflect.KMutableProperty0
 
 
 enum class InlayGroup(val key: String, @Nls val description: String? = null) {
-  CODE_VISION_GROUP_NEW("settings.hints.new.group.code.vision", ApplicationBundle.message("settings.hints.new.group.code.vision.description")),
+  CODE_VISION_GROUP_NEW("settings.hints.new.group.code.vision",
+                        ApplicationBundle.message("settings.hints.new.group.code.vision.description")),
   CODE_VISION_GROUP("settings.hints.group.code.vision", ApplicationBundle.message("settings.hints.new.group.code.vision.description")),
   PARAMETERS_GROUP("settings.hints.group.parameters", ApplicationBundle.message("settings.hints.group.parameters.description")),
   TYPES_GROUP("settings.hints.group.types", ApplicationBundle.message("settings.hints.group.types.description")),
@@ -31,9 +31,10 @@ enum class InlayGroup(val key: String, @Nls val description: String? = null) {
   URL_PATH_GROUP("settings.hints.group.url.path", ApplicationBundle.message("settings.hints.group.url.path.description")),
   OTHER_GROUP("settings.hints.group.other");
 
-  override fun toString(): @Nls String {
+  fun title(): @Nls String {
     return ApplicationBundle.message(key)
-  }}
+  }
+}
 
 /**
  * ATTENTION! Consider using [com.intellij.codeInsight.hints.declarative.InlayHintsProvider] whenever possible!
