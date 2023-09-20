@@ -591,7 +591,8 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       }
       else {
         assert variant != null;
-        baseIcon = variant.getIcon();
+        baseIcon = variant.getType().getEnabledIcon();
+
         // FIXME[inline-bp]: do we need to rename the property?
         alpha = JBUI.getFloat("Breakpoint.iconHoverAlpha", 0.5f);
         alpha = Math.max(0, Math.min(alpha, 1));
