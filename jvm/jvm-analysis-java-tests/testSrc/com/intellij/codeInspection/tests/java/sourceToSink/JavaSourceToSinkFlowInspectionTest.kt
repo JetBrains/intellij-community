@@ -167,4 +167,12 @@ class JavaSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase() 
 
     myFixture.testHighlighting("FromMethod.java")
   }
+
+  fun `test custom inheritance`() {
+    prepareCheckFramework()
+    inspection.setTaintedMethod("com.test.Random", "nextInt")
+    inspection.setUntaintedMethod("com.test.SecureRandom", "nextInt")
+
+    myFixture.testHighlighting("SecureCustomInheritance.java")
+  }
 }

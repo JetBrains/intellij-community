@@ -249,9 +249,9 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
 
     val factory = TaintValueFactory(configuration).also {
 
-      it.add(TaintValueFactory.fromMethodResult(methodNames = myTaintedMethodMatcher.methodNamePatterns,
-                                                methodClass = myTaintedMethodMatcher.classNames,
-                                                targetValue = TaintValue.TAINTED))
+      it.addReturnFactory(TaintValueFactory.fromMethodResult(methodNames = myTaintedMethodMatcher.methodNamePatterns,
+                                                             methodClass = myTaintedMethodMatcher.classNames,
+                                                             targetValue = TaintValue.TAINTED))
 
       it.add(TaintValueFactory.fromParameters(methodNames = untaintedParameterMethodName,
                                               methodClass = untaintedParameterMethodClass,

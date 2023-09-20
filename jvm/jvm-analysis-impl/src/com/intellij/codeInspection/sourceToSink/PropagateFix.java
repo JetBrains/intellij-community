@@ -135,7 +135,7 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     if (taintNode.myTaintValue == TaintValue.TAINTED) return false;
     PsiElement psiElement = taintNode.getPsiElement();
     if (psiElement == null) return true;
-    return myTaintValueFactory.fromElement(psiElement) != TaintValue.UNTAINTED;
+    return myTaintValueFactory.fromElement(psiElement, null) != TaintValue.UNTAINTED;
   }
 
   private static @Nullable Set<@NotNull PsiElement> getPsiElements(@NotNull Collection<TaintNode> toAnnotate) {
