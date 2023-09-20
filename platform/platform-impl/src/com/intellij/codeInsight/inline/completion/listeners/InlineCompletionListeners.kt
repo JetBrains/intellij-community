@@ -21,7 +21,13 @@ import java.awt.event.KeyEvent
 class InlineCompletionDocumentListener(private val editor: EditorImpl) : BulkAwareDocumentListener {
   override fun documentChangedNonBulk(event: DocumentEvent) {
     val handler = InlineCompletionHandler.getOrNull(editor)
-    if (!isEnabled(event) || !(ClientEditorManager.getClientId(editor) ?: ClientId.localId).isCurrent()) {
+
+    if (!(ClientEditorManager.getClientId(editor) ?: ClientId.localId).isCurrent()) {
+      handler?.hide()
+      return
+    }
+
+    if (!isEnabled(event) ) {
       // ML-1168
       handler?.hide()
     }
