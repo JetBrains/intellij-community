@@ -1,0 +1,44 @@
+<component name="libraryTable">
+  <library name="jetbrains.jewel" type="repository">
+    <properties jar-repository-id="kpm" maven-id="org.jetbrains.jewel:jewel-ide-laf-bridge:0.7.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge/0.7.1/jewel-ide-laf-bridge-0.7.1.jar">
+          <sha256sum>23608f4374bfb8b1da4a0c90d756a56e0b283762cfba718e3cf6dba51b011ee9</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-int-ui-standalone/0.7.1/jewel-int-ui-standalone-0.7.1.jar">
+          <sha256sum>af916bfb4616ddc9e9f1e2c1792b35688c169ccefb5cce3c8ae95f5c8ebb4249</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-int-ui-core/0.7.1/jewel-int-ui-core-0.7.1.jar">
+          <sha256sum>78ca1ecfb4255419582dee8a5b547d96bdcc7e41447ae5d6b54113bb30598382</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-core/0.7.1/jewel-core-0.7.1.jar">
+          <sha256sum>19894212cd7bbaa859bc1d7247caaf9f03406a8099efb15e6da56190afe198c3</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.jetbrains:annotations" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+        <dependency maven-id="org.jetbrains.kotlinx:atomicfu-jvm" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
+        <dependency maven-id="org.jetbrains.compose.desktop:desktop" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge/0.7.1/jewel-ide-laf-bridge-0.7.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-int-ui-standalone/0.7.1/jewel-int-ui-standalone-0.7.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-int-ui-core/0.7.1/jewel-int-ui-core-0.7.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-core/0.7.1/jewel-core-0.7.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge/0.7.1/jewel-ide-laf-bridge-0.7.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-int-ui-standalone/0.7.1/jewel-int-ui-standalone-0.7.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-int-ui-core/0.7.1/jewel-int-ui-core-0.7.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-core/0.7.1/jewel-core-0.7.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

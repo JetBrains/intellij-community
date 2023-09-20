@@ -52,25 +52,19 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
       val path = pathWithPackage.substring(packagePrefix.length)
       val fileName = path.substring(path.lastIndexOf('/') + 1)
 
-      val os = when {
-        osNameStartsWith(path, "darwin") || osNameStartsWith(path, "mac") || osNameStartsWith(path, "macos") -> OsFamily.MACOS
-        path.startsWith("win32-") || osNameStartsWith(path, "win") || osNameStartsWith(path, "windows") -> OsFamily.WINDOWS
-        path.startsWith("Linux-Android/") || path.startsWith("Linux-Musl/") -> continue
-        osNameStartsWith(path, "linux") -> OsFamily.LINUX
-        else -> continue
-      }
+      val os = determineOsFamily(path, fileName) ?: continue
 
       if (!allPlatformsRequired && !context.options.targetOs.contains(os) && signTool.signNativeFileMode != SignNativeFileMode.PREPARE) {
         continue
       }
 
-      val osAndArch = path.substring(0, path.indexOf('/'))
+      val osAndArch = path.indexOf('/').takeIf { it != -1 }?. let { path.substring(0, it) }
       val arch: JvmArchitecture? = when {
-        osAndArch.endsWith("-aarch64") || path.contains("/aarch64/") -> JvmArchitecture.aarch64
-        path.contains("x86-64") || path.contains("x86_64") -> JvmArchitecture.x64
+        (osAndArch != null && osAndArch.endsWith("-aarch64")) || path.contains("/aarch64/") || fileName.contains("arm64") -> JvmArchitecture.aarch64
+        path.contains("x86-64") || path.contains("x86_64") || fileName.contains("x64") -> JvmArchitecture.x64
         // universal library
-        os == OsFamily.MACOS && path.count { it == '/' } == 1 -> null
-        !osAndArch.contains('-') && path.count { it == '/' } == 1 -> JvmArchitecture.x64
+        fileName == "icudtl.dat" || (os == OsFamily.MACOS && path.count { it == '/' } == 1) -> null
+        (osAndArch != null && !osAndArch.contains('-')) && path.count { it == '/' } == 1 -> JvmArchitecture.x64
         else -> {
           continue
         }
@@ -139,6 +133,32 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
       }
     }
   }
+}
+
+private fun determineOsFamily(path: String, fileName: String): OsFamily? {
+  val osFromPath = when {
+    osNameStartsWith(path, "darwin") || osNameStartsWith(path, "mac") || osNameStartsWith(path, "macos") -> OsFamily.MACOS
+    path.startsWith("win32-") || osNameStartsWith(path, "win") || osNameStartsWith(path, "windows") -> OsFamily.WINDOWS
+    path.startsWith("Linux-Android/") || path.startsWith("Linux-Musl/") -> {
+      return null
+    }
+    osNameStartsWith(path, "linux") -> OsFamily.LINUX
+    else -> null
+  }
+
+  if (osFromPath != null) {
+    return osFromPath
+  }
+
+  val osFromFileName = when {
+    fileName == "icudtl.dat" -> OsFamily.WINDOWS
+    fileName.contains("macos") -> OsFamily.MACOS
+    fileName.contains("windows") -> OsFamily.WINDOWS
+    fileName.contains("linux") -> OsFamily.LINUX
+    else -> null
+  }
+
+  return osFromFileName
 }
 
 // each library has own implementation of handling path property

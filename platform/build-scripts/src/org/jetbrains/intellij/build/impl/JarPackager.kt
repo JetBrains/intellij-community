@@ -70,7 +70,7 @@ private val libsThatUsedInJps = java.util.Set.of(
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val presignedLibNames = java.util.Set.of(
-  "pty4j", "jna", "sqlite-native", "async-profiler"
+  "pty4j", "jna", "sqlite-native", "async-profiler", "jetbrains.skiko.awt.runtime.all"
 )
 
 private val notImportantKotlinLibs = persistentSetOf(
