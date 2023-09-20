@@ -189,7 +189,7 @@ public final class IndexUpdateRunner {
     this.indexingRequest = indexingRequest;
     myIndexingExecutor = GLOBAL_INDEXING_EXECUTOR;
     if (numberOfIndexingThreads > INDEXING_THREADS_NUMBER) {
-      LOG.warn("Got request to index using " + numberOfIndexingThreads + " when pool has only " + INDEXING_THREADS_NUMBER +
+      LOG.debug("Got request to index using " + numberOfIndexingThreads + " when pool has only " + INDEXING_THREADS_NUMBER +
                " falling back to max available");
       numberOfIndexingThreads = INDEXING_THREADS_NUMBER;
     }
