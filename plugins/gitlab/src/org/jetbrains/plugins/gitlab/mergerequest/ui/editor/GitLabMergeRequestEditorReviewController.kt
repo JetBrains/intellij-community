@@ -5,12 +5,13 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.editor.EditorMapped
 import com.intellij.collaboration.ui.codereview.editor.controlInlaysIn
+import com.intellij.collaboration.ui.codereview.editor.repaintGutterForLine
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
-import com.intellij.diff.util.DiffUtil
-import com.intellij.diff.util.LineRange
-import com.intellij.diff.util.Side
+import com.intellij.diff.comparison.iterables.DiffIterableUtil
+import com.intellij.diff.util.*
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
@@ -22,11 +23,10 @@ import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.event.EditorFactoryEvent
-import com.intellij.openapi.editor.event.EditorFactoryListener
+import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -53,6 +53,8 @@ import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Point
+import java.awt.Rectangle
+import java.awt.event.MouseEvent
 import com.intellij.openapi.vcs.ex.Range as LstRange
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -87,6 +89,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
             if (it != null) {
               supervisorScope {
                 showGutterMarkers(it, editor, lst)
+                showGutterControls(it, editor, lst)
                 showInlays(it, editor, lst)
               }
             }
@@ -172,6 +175,26 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
 
     awaitCancellationAndInvoke {
       Disposer.dispose(disposable)
+    }
+  }
+
+  private fun CoroutineScope.showGutterControls(fileVm: GitLabMergeRequestChangeViewModel,
+                                                editor: Editor,
+                                                lst: LineStatusTrackerBase<*>) {
+    editor as EditorEx
+
+    val renderer = ReviewControlsGutterRenderer(editor, fileVm, lst)
+
+    val highlighter = editor.markupModel.addRangeHighlighter(null, 0, editor.document.textLength,
+                                                             DiffDrawUtil.LST_LINE_MARKER_LAYER,
+                                                             HighlighterTargetArea.LINES_IN_RANGE).apply {
+      setGreedyToLeft(true)
+      setGreedyToRight(true)
+      setLineMarkerRenderer(renderer)
+    }
+    awaitCancellationAndInvoke {
+      Disposer.dispose(renderer)
+      highlighter.dispose()
     }
   }
 }
@@ -289,6 +312,126 @@ private class ReviewChangesGutterRenderer(private val fileVm: GitLabMergeRequest
     if (lineDiff == null) return
     LineStatusMarkerPopupPanel.installMasterEditorWordHighlighters(editor, range.line1, range.line2, lineDiff, disposable)
     LineStatusMarkerPopupPanel.installEditorDiffHighlighters(popupEditor, lineDiff)
+  }
+}
+
+/**
+ * Draws and handles review controls in gutter
+ */
+private class ReviewControlsGutterRenderer(private val editor: EditorEx,
+                                           private val vm: GitLabMergeRequestChangeViewModel,
+                                           lst: LineStatusTrackerBase<*>)
+  : LineMarkerRenderer, LineMarkerRendererEx, ActiveGutterRenderer, Disposable {
+
+  private var targetRanges: List<Range> = emptyList()
+
+  init {
+    LineStatusTrackerRangesHandler.install(this, lst) { lstRanges ->
+      targetRanges = DiffIterableUtil.create(lstRanges.map { Range(it.vcsLine1, it.vcsLine2, it.line1, it.line2) },
+                                             DiffUtil.getLineCount(lst.vcsDocument), DiffUtil.getLineCount(lst.document))
+        .iterateUnchanged().toList()
+      hoveredLineInRangeIdx = -1
+      iconHovered = false
+
+      val xRange = getIconColumnXRange(editor)
+      with(editor.gutterComponentEx) {
+        repaint(xRange.first, 0, xRange.last - xRange.first, height)
+      }
+    }
+  }
+
+  private var hoveredLineInRangeIdx: Int = -1
+  private var iconHovered: Boolean = false
+
+  private val mouseListener = object : EditorMouseListener, EditorMouseMotionListener {
+    override fun mouseMoved(e: EditorMouseEvent) {
+      editor.repaintGutterForLine(hoveredLineInRangeIdx)
+      val line = e.logicalPosition.line
+      if (targetRanges.any { line in it.start2 until it.end2 }) {
+        hoveredLineInRangeIdx = line
+        iconHovered = isIconColumnHovered(editor, e.mouseEvent)
+        editor.repaintGutterForLine(e.logicalPosition.line)
+      }
+      else {
+        // no need to re-calc column
+        hoveredLineInRangeIdx = -1
+      }
+    }
+
+    override fun mouseExited(e: EditorMouseEvent) {
+      editor.repaintGutterForLine(hoveredLineInRangeIdx)
+      hoveredLineInRangeIdx = -1
+      iconHovered = false
+    }
+  }
+
+  init {
+    editor.gutterComponentEx.reserveLeftFreePaintersAreaWidth(this, WIDTH)
+    editor.addEditorMouseListener(mouseListener)
+    editor.addEditorMouseMotionListener(mouseListener)
+  }
+
+  override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
+    val hoveredLineIdx = hoveredLineInRangeIdx
+    val iconHovered = iconHovered
+    // do not paint invalid range
+    if (hoveredLineIdx < 0 || hoveredLineIdx > editor.document.lineCount) return
+    val yRange = EditorUtil.logicalLineToYRange(editor, hoveredLineIdx).second ?: return
+
+    val icon = if (iconHovered) AllIcons.General.InlineAddHover else AllIcons.General.InlineAdd
+    val intervalCenter = yRange.intervalStart() + (yRange.intervalEnd() - yRange.intervalStart()) / 2
+    val y = intervalCenter - icon.iconWidth / 2
+    icon.paintIcon(null, g, r.x, y)
+  }
+
+  override fun canDoAction(editor: Editor, e: MouseEvent): Boolean {
+    val hoveredLineIdx = hoveredLineInRangeIdx
+    val iconHovered = iconHovered
+    // do not paint invalid range
+    if (hoveredLineIdx < 0 || hoveredLineIdx > editor.document.lineCount || !iconHovered) return false
+    val yRange = EditorUtil.logicalLineToYRange(editor, hoveredLineIdx).second ?: return false
+
+    val icon = AllIcons.General.InlineAddHover
+    if (yRange.intervalEnd() - yRange.intervalStart() <= icon.iconWidth) return true
+    val intervalCenter = yRange.intervalStart() + (yRange.intervalEnd() - yRange.intervalStart()) / 2
+    val iconStartY = intervalCenter - icon.iconWidth / 2
+    val iconEndY = intervalCenter + icon.iconWidth / 2
+    return e.y in iconStartY until iconEndY
+  }
+
+  override fun doAction(editor: Editor, e: MouseEvent) {
+    val hoveredLineIdx = hoveredLineInRangeIdx
+    if (hoveredLineIdx < 0 || !iconHovered) return
+    vm.requestNewDiscussion(DiffLineLocation(Side.RIGHT, hoveredLineIdx), true)
+    e.consume()
+  }
+
+  override fun getPosition(): LineMarkerRendererEx.Position = LineMarkerRendererEx.Position.LEFT
+
+  override fun dispose() {
+    editor.removeEditorMouseListener(mouseListener)
+    editor.removeEditorMouseMotionListener(mouseListener)
+  }
+
+  companion object {
+    private val WIDTH: Int = AllIcons.General.InlineAdd.iconWidth
+
+    private fun isIconColumnHovered(editor: EditorEx, e: MouseEvent): Boolean {
+      if (e.component !== editor.gutter) return false
+      val x = convertX(editor, e.x)
+      return x in getIconColumnXRange(editor)
+    }
+
+    private fun getIconColumnXRange(editor: EditorEx): IntRange {
+      val iconStart = editor.gutterComponentEx.lineMarkerAreaOffset
+      val iconEnd = iconStart + WIDTH
+      return iconStart until iconEnd
+    }
+
+    private fun convertX(editor: EditorEx, x: Int): Int {
+      if (editor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT) return x
+      return editor.gutterComponentEx.width - x
+    }
   }
 }
 
