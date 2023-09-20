@@ -612,6 +612,32 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       GraphicsUtil.paintWithAlpha(g, alpha, () -> scaledIcon.paintIcon(component, g, x, y));
     }
 
+    @Override
+    public void mousePressed(@NotNull MouseEvent event, @NotNull Point translated) {
+      invokePopupIfNeeded(event);
+    }
+
+    @Override
+    public void mouseReleased(@NotNull MouseEvent event, @NotNull Point translated) {
+      invokePopupIfNeeded(event);
+    }
+
+    private void invokePopupIfNeeded(@NotNull MouseEvent event) {
+      if (event.isPopupTrigger()) {
+        if (breakpoint != null) {
+          var bounds = inlay.getBounds();
+          if (bounds == null) return;
+          Point center = new Point((int)bounds.getCenterX(), (int)bounds.getCenterY());
+          DebuggerUIUtil.showXBreakpointEditorBalloon(breakpoint.getProject(), center, inlay.getEditor().getContentComponent(), false,
+                                                      breakpoint);
+        } else {
+          // FIXME[inline-bp]: show context like in gutter (XDebugger.Hover.Breakpoint.Context.Menu),
+          //                   but actions should be adapted for inline breakpoints.
+        }
+        event.consume();
+      }
+    }
+
     private enum ClickAction {
       SET, ENABLE_DISABLE, REMOVE
     }
@@ -707,16 +733,5 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       }
     }
 
-    @Override
-    public void mousePressed(@NotNull MouseEvent event, @NotNull Point translated) {
-      if (event.isPopupTrigger() && breakpoint != null) {
-        var bounds = inlay.getBounds();
-        if (bounds == null) return;
-        Point center = new Point((int)bounds.getCenterX(), (int)bounds.getCenterY());
-        DebuggerUIUtil.showXBreakpointEditorBalloon(breakpoint.getProject(), center, inlay.getEditor().getContentComponent(), false,
-                                                    breakpoint);
-        event.consume();
-      }
-    }
   }
 }
