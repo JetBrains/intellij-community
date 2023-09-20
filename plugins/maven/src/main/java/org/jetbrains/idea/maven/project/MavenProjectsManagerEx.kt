@@ -112,7 +112,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   private suspend fun doImportMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>,
                                             optionalModelsProvider: IdeModifiableModelsProvider?,
                                             parentActivity: StructuredIdeActivity
-                                            ): List<Module> {
+  ): List<Module> {
     if (projectsToImport.any { it.key == null }) {
       throw IllegalArgumentException("Null key in projectsToImport")
     }
@@ -143,17 +143,23 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   private fun runImportProjectActivity(projectsToImport: Map<MavenProject, MavenProjectChanges>,
                                        modelsProvider: IdeModifiableModelsProvider,
                                        parentActivity: StructuredIdeActivity): ImportResult {
-      val projectImporter = MavenProjectImporter.createImporter(
-        project, projectsTree, projectsToImport,
-        modelsProvider, importingSettings, myPreviewModule, parentActivity
-      )
-      val postTasks = projectImporter.importProject()
-      return ImportResult(projectImporter.createdModules(), postTasks ?: emptyList())
+    val projectImporter = MavenProjectImporter.createImporter(
+      project, projectsTree, projectsToImport,
+      modelsProvider, importingSettings, myPreviewModule, parentActivity
+    )
+    val postTasks = projectImporter.importProject()
+    return ImportResult(projectImporter.createdModules(), postTasks ?: emptyList())
   }
 
-  private inline fun <T> reapplyModelStructureOnly(action: (StructuredIdeActivity) -> T): T {
+  private inline fun <T> reapplyModelStructureOnly(action: (StructuredIdeActivity) -> T): T =
+    runDedicatedActivity(action, MavenImportStats.MavenReapplyModelOnlyProjectTask::class.java)
+
+  private inline fun <T> backgroundImportActivities(action: (StructuredIdeActivity) -> T) =
+    runDedicatedActivity(action, MavenImportStats.MavenBackgroundActivities::class.java)
+
+  private inline fun <T> runDedicatedActivity(action: (StructuredIdeActivity) -> T, klass: Class<*>): T {
     val syncActivity = importActivityStarted(project, MavenUtil.SYSTEM_ID) {
-      listOf(ProjectImportCollector.TASK_CLASS.with(MavenImportStats.MavenReapplyModelOnlyProjectTask::class.java))
+      listOf(ProjectImportCollector.TASK_CLASS.with(klass))
     }
     try {
       return action(syncActivity)
@@ -211,9 +217,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                            filesToUpdate: List<VirtualFile>,
                                            filesToDelete: List<VirtualFile>): List<Module> {
     importMutex.withLock {
-      MavenLog.LOG.warn("updateMavenProjects started: ${spec.isForceReading} ${spec.isForceResolve} ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
+      MavenLog.LOG.warn(
+        "updateMavenProjects started: ${spec.isForceReading} ${spec.isForceResolve} ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
       val result = doUpdateMavenProjects(spec, filesToUpdate, filesToDelete)
-      MavenLog.LOG.warn("updateMavenProjects finished: ${spec.isForceReading} ${spec.isForceResolve} ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
+      MavenLog.LOG.warn(
+        "updateMavenProjects finished: ${spec.isForceReading} ${spec.isForceResolve} ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
       return result
     }
   }
@@ -321,14 +329,17 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
             val pluginResolver = MavenPluginResolver(projectsTree)
             withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
               withRawProgressReporter {
-                runMavenImportActivity(project, syncActivity, MavenImportStats.PluginsResolvingTask::class.java) {
-                  for (mavenProjects in resolutionResult.mavenProjectMap) {
-                    try {
-                      pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, mavenConsole, rawProgressReporter!!, syncConsole,
-                                                    true)
-                    }
-                    catch (e: Exception) {
-                      MavenLog.LOG.warn("Plugin resolution error", e)
+                backgroundImportActivities {
+                  runMavenImportActivity(project, it, MavenImportStats.PluginsResolvingTask::class.java) {
+                    for (mavenProjects in resolutionResult.mavenProjectMap) {
+                      try {
+                        pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, mavenConsole, rawProgressReporter!!,
+                                                      syncConsole,
+                                                      true)
+                      }
+                      catch (e: Exception) {
+                        MavenLog.LOG.warn("Plugin resolution error", e)
+                      }
                     }
                   }
                 }

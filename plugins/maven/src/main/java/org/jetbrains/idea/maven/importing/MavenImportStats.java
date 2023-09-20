@@ -51,4 +51,7 @@ public final class MavenImportStats {
 
   public static class MavenReapplyModelOnlyProjectTask {
   }
+
+  public static class MavenBackgroundActivities {
+  }
 }
