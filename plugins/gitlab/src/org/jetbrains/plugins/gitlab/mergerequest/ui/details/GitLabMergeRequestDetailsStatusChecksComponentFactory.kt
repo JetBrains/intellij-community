@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRemoveReviewerAction
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JScrollPane
 
@@ -25,7 +26,7 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
     val statuses = VerticalListPanel().apply {
       add(CodeReviewDetailsStatusComponentFactory.createCiComponent(scope, statusVm))
       add(CodeReviewDetailsStatusComponentFactory.createConflictsComponent(scope, statusVm.hasConflicts))
-      add(CodeReviewDetailsStatusComponentFactory.createConversationsComponent(scope, statusVm.requiredConversationsResolved))
+      add(CodeReviewDetailsStatusComponentFactory.createConversationsComponent(scope, statusVm.requiredConversationsResolved,GitLabBundle.message("merge.request.details.status.unresolved.discussions")))
       add(CodeReviewDetailsStatusComponentFactory.createNeedReviewerComponent(scope, reviewFlowVm.reviewerReviews))
       add(CodeReviewDetailsStatusComponentFactory.createReviewersReviewStateComponent(
         scope, reviewFlowVm.reviewerReviews,

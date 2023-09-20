@@ -135,12 +135,12 @@ object CodeReviewDetailsStatusComponentFactory {
     }
   }
 
-  fun createConversationsComponent(scope: CoroutineScope, requiredConversationsResolved: Flow<Boolean>): JComponent {
+  fun createConversationsComponent(scope: CoroutineScope, requiredConversationsResolved: Flow<Boolean>,textMessage: String): JComponent {
 
     return ReviewDetailsStatusLabel("Code review status: unresolved conversation").apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Error else AllIcons.RunConfigurations.TestError
-      text = CollaborationToolsBundle.message("review.details.status.unresolved.conversation")
+      text = textMessage
       bindVisibilityIn(scope, requiredConversationsResolved)
     }
   }
