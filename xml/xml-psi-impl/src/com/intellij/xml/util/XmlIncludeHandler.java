@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.psi.PsiElement;
@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class XmlIncludeHandler {
-  @NonNls private static final String INCLUDE_TAG_NAME = "include";
+  private static final @NonNls String INCLUDE_TAG_NAME = "include";
   public static boolean isXInclude(PsiElement element) {
     if (element instanceof XmlTag xmlTag) {
 
@@ -27,8 +27,7 @@ public final class XmlIncludeHandler {
     return false;
   }
 
-  @Nullable
-  public static XmlFile resolveXIncludeFile(XmlTag xincludeTag) {
+  public static @Nullable XmlFile resolveXIncludeFile(XmlTag xincludeTag) {
     final XmlAttribute hrefAttribute = xincludeTag.getAttribute("href", null);
     if (hrefAttribute == null) return null;
 

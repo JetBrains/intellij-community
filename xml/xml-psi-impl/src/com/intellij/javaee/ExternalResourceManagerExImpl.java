@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javaee;
 
 import com.intellij.application.options.PathMacrosImpl;
@@ -41,12 +41,12 @@ import java.util.*;
 public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ExternalResourceManagerExImpl.class);
 
-  @NonNls public static final String J2EE_1_3 = "http://java.sun.com/dtd/";
-  @NonNls public static final String J2EE_1_2 = "http://java.sun.com/j2ee/dtds/";
-  @NonNls public static final String J2EE_NS = "http://java.sun.com/xml/ns/j2ee/";
-  @NonNls public static final String JAVAEE_NS = "http://java.sun.com/xml/ns/javaee/";
-  @NonNls public static final String JCP_NS = "http://xmlns.jcp.org/xml/ns/javaee/";
-  @NonNls public static final String JAKARTA_NS = "https://jakarta.ee/xml/ns/jakartaee/";
+  public static final @NonNls String J2EE_1_3 = "http://java.sun.com/dtd/";
+  public static final @NonNls String J2EE_1_2 = "http://java.sun.com/j2ee/dtds/";
+  public static final @NonNls String J2EE_NS = "http://java.sun.com/xml/ns/j2ee/";
+  public static final @NonNls String JAVAEE_NS = "http://java.sun.com/xml/ns/javaee/";
+  public static final @NonNls String JCP_NS = "http://xmlns.jcp.org/xml/ns/javaee/";
+  public static final @NonNls String JAKARTA_NS = "https://jakarta.ee/xml/ns/jakartaee/";
 
   private static final String CATALOG_PROPERTIES_ELEMENT = "CATALOG_PROPERTIES";
   private static final String XSD_1_1 = new Resource("/standardSchemas/XMLSchema-1_1/XMLSchema.xsd", ExternalResourceManagerExImpl.class, null).getResourceUrl();
@@ -101,12 +101,12 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     return registrar.getResources();
   }
 
-  @NonNls private static final String RESOURCE_ELEMENT = "resource";
-  @NonNls private static final String URL_ATTR = "url";
-  @NonNls private static final String LOCATION_ATTR = "location";
-  @NonNls private static final String IGNORED_RESOURCE_ELEMENT = "ignored-resource";
-  @NonNls private static final String HTML_DEFAULT_DOCTYPE_ELEMENT = "default-html-doctype";
-  @NonNls private static final String XML_SCHEMA_VERSION = "xml-schema-version";
+  private static final @NonNls String RESOURCE_ELEMENT = "resource";
+  private static final @NonNls String URL_ATTR = "url";
+  private static final @NonNls String LOCATION_ATTR = "location";
+  private static final @NonNls String IGNORED_RESOURCE_ELEMENT = "ignored-resource";
+  private static final @NonNls String HTML_DEFAULT_DOCTYPE_ELEMENT = "default-html-doctype";
+  private static final @NonNls String XML_SCHEMA_VERSION = "xml-schema-version";
 
   private static final String DEFAULT_VERSION = "";
 
@@ -167,15 +167,13 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   }
 
   @Override
-  @Nullable
-  public String getUserResource(Project project, String url, String version) {
+  public @Nullable String getUserResource(Project project, String url, String version) {
     String resource = getProjectResources(project).getUserResource(url, version);
     return resource == null ? getUserResource(url, version) : resource;
   }
 
   @Override
-  @Nullable
-  public String getStdResource(@NotNull String url, @Nullable String version) {
+  public @Nullable String getStdResource(@NotNull String url, @Nullable String version) {
     Map<String, Resource> map = getMap(myStandardResources.getValue(), version);
     if (map != null) {
       Resource resource = map.get(url);
@@ -186,8 +184,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     }
   }
 
-  @Nullable
-  private String getUserResource(@NotNull String url, @Nullable String version) {
+  private @Nullable String getUserResource(@NotNull String url, @Nullable String version) {
     Map<String, String> map = getMap(myResources, version);
     return map != null ? map.get(url) : null;
   }
@@ -213,8 +210,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   }
 
   @Override
-  @Nullable
-  public PsiFile getResourceLocation(@NotNull @NonNls final String url, @NotNull final PsiFile baseFile, final String version) {
+  public @Nullable PsiFile getResourceLocation(final @NotNull @NonNls String url, final @NotNull PsiFile baseFile, final String version) {
     final XmlFile schema = XmlSchemaProvider.findSchema(url, baseFile);
     if (schema != null) {
       return schema;
@@ -425,9 +421,8 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     return getProjectResources(project).getModificationCount();
   }
 
-  @Nullable
   @Override
-  public Element getState() {
+  public @Nullable Element getState() {
     Element element = new Element("state");
 
     Set<String> urls = new TreeSet<>();
@@ -532,8 +527,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   }
 
   @Override
-  @NotNull
-  public String getDefaultHtmlDoctype(@NotNull Project project) {
+  public @NotNull String getDefaultHtmlDoctype(@NotNull Project project) {
     final String doctype = getProjectResources(project).myDefaultHtmlDoctype;
     if (XmlUtil.XHTML_URI.equals(doctype)) {
       return XmlUtil.XHTML4_SCHEMA_LOCATION;
@@ -579,8 +573,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     return CachedValuesManager.getManager(project).getCachedValue(project, myUrlByNamespaceProvider);
   }
 
-  @Nullable
-  private XMLCatalogManager getCatalogManager() {
+  private @Nullable XMLCatalogManager getCatalogManager() {
     if (myCatalogManager == null && myCatalogPropertiesFile != null) {
       myCatalogManager = new XMLCatalogManager(myCatalogPropertiesFile);
     }

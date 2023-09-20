@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl;
 
 import com.intellij.model.Symbol;
@@ -23,8 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 final class NamedReferenceProviders {
   private static final ExtensionPointName<XmlNamedReferenceProviderBean> EP_NAME = new ExtensionPointName<>("com.intellij.xml.namedReferenceProvider");
 
-  @NotNull
-  static NamedReferenceProviders getInstance() {
+  static @NotNull NamedReferenceProviders getInstance() {
     return ApplicationManager.getApplication().getService(NamedReferenceProviders.class);
   }
 
@@ -47,13 +46,11 @@ final class NamedReferenceProviders {
     return byHostClass(element).byHostName(hostName);
   }
 
-  @NotNull
-  private ByHostClass byHostClass(@NotNull XmlNamedReferenceHost element) {
+  private @NotNull ByHostClass byHostClass(@NotNull XmlNamedReferenceHost element) {
     return myByHostClass.computeIfAbsent(element.getClass(), NamedReferenceProviders::byHostClassInner);
   }
 
-  @NotNull
-  private static ByHostClass byHostClassInner(@NotNull Class<?> hostClass) {
+  private static @NotNull ByHostClass byHostClassInner(@NotNull Class<?> hostClass) {
     List<XmlNamedReferenceProviderBean> result = new SmartList<>();
     for (XmlNamedReferenceProviderBean bean : EP_NAME.getExtensionList()) {
       if (bean.getHostElementClass().isAssignableFrom(hostClass)) {

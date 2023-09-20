@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.html;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
@@ -126,8 +126,7 @@ public class HtmlParsing {
   protected void parseCustomTagHeaderContent() {
   }
 
-  @Nullable
-  protected static PsiBuilder.Marker flushError(PsiBuilder.Marker error) {
+  protected static @Nullable PsiBuilder.Marker flushError(PsiBuilder.Marker error) {
     if (error != null) {
       error.error(XmlPsiBundle.message("xml.parsing.unexpected.tokens"));
     }
@@ -304,14 +303,12 @@ public class HtmlParsing {
     terminateText(xmlText);
   }
 
-  @NotNull
-  protected HtmlTagInfo createHtmlTagInfo(@NotNull String originalTagName, @NotNull PsiBuilder.Marker startMarker) {
+  protected @NotNull HtmlTagInfo createHtmlTagInfo(@NotNull String originalTagName, @NotNull PsiBuilder.Marker startMarker) {
     String normalizedTagName = normalizeTagName(originalTagName);
     return new HtmlTagInfoImpl(normalizedTagName, originalTagName, startMarker);
   }
 
-  @NotNull
-  protected String parseOpenTagName() {
+  protected @NotNull String parseOpenTagName() {
     String originalTagName;
     if (token() != XmlTokenType.XML_NAME) {
       error(XmlPsiBundle.message("xml.parsing.tag.name.expected"));
@@ -324,8 +321,7 @@ public class HtmlParsing {
     return originalTagName;
   }
 
-  @Nullable
-  protected String parseEndTagName() {
+  protected @Nullable String parseEndTagName() {
     String endName;
     if (token() == XmlTokenType.XML_NAME) {
       endName = Objects.requireNonNull(myBuilder.getTokenText());
@@ -499,8 +495,7 @@ public class HtmlParsing {
     return xmlText;
   }
 
-  @Nullable
-  protected static PsiBuilder.Marker terminateText(@Nullable PsiBuilder.Marker xmlText) {
+  protected static @Nullable PsiBuilder.Marker terminateText(@Nullable PsiBuilder.Marker xmlText) {
     if (xmlText != null) {
       xmlText.done(XmlElementType.XML_TEXT);
     }

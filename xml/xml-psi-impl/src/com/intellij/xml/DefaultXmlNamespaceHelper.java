@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,11 +32,11 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
   }
 
   @Override
-  public void insertNamespaceDeclaration(@NotNull final XmlFile file,
-                                         @Nullable final Editor editor,
-                                         @NotNull final Set<String> possibleNamespaces,
+  public void insertNamespaceDeclaration(final @NotNull XmlFile file,
+                                         final @Nullable Editor editor,
+                                         final @NotNull Set<String> possibleNamespaces,
                                          @Nullable String nsPrefix,
-                                         @Nullable final Runner<String, IncorrectOperationException> runAfter) throws IncorrectOperationException {
+                                         final @Nullable Runner<String, IncorrectOperationException> runAfter) throws IncorrectOperationException {
 
     final String namespace = possibleNamespaces.iterator().next();
 
@@ -59,7 +59,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
       }
     }
 
-    @NonNls final String qname = "xmlns" + (prefix.length() > 0 ? ":"+ prefix :"");
+    final @NonNls String qname = "xmlns" + (prefix.length() > 0 ? ":" + prefix : "");
     final XmlAttribute attribute = elementFactory.createXmlAttribute(qname, namespace);
     if (anchor == null) {
       rootTag.add(attribute);
@@ -147,8 +147,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
   }
 
   @Override
-  @NotNull
-  public Set<String> guessUnboundNamespaces(@NotNull final PsiElement element, @NotNull XmlFile file) {
+  public @NotNull Set<String> guessUnboundNamespaces(final @NotNull PsiElement element, @NotNull XmlFile file) {
     if (!(element instanceof XmlTag tag)) {
       return Collections.emptySet();
     }

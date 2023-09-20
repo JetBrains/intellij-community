@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
@@ -18,9 +18,8 @@ public class XmlStubBasedAttribute extends XmlStubBasedAttributeBase<XmlAttribut
     super(node);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     XmlAttributeStubImpl stub = getGreenStub();
     if (stub != null) {
       return stub.getName();
@@ -28,9 +27,8 @@ public class XmlStubBasedAttribute extends XmlStubBasedAttributeBase<XmlAttribut
     return super.getName();
   }
 
-  @Nullable
   @Override
-  public String getValue() {
+  public @Nullable String getValue() {
     XmlAttributeStubImpl stub = getGreenStub();
     if (stub != null) {
       return stub.getValue();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
@@ -14,8 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 
 public final class DtdResolveUtil {
-  @Nullable
-  static XmlNSDescriptor getNsDescriptor(XmlElement element) {
+  static @Nullable XmlNSDescriptor getNsDescriptor(XmlElement element) {
     final XmlElement parentThatProvidesMetaData = PsiTreeUtil
       .getParentOfType(CompletionUtilCoreImpl.getOriginalElement(element), XmlDocument.class, XmlMarkupDecl.class);
 
@@ -34,8 +33,7 @@ public final class DtdResolveUtil {
     return null;
   }
 
-  @Nullable
-  public static XmlElementDescriptor resolveElementReference(String name, XmlElement context) {
+  public static @Nullable XmlElementDescriptor resolveElementReference(String name, XmlElement context) {
     XmlNSDescriptor rootTagNSDescriptor = getNsDescriptor(context);
 
     if (rootTagNSDescriptor instanceof XmlNSDescriptorImpl) {

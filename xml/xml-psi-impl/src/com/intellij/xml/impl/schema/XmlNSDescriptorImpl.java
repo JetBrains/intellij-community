@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.codeInsight.daemon.Validator;
@@ -38,19 +38,18 @@ import java.util.*;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocument>, DumbAware, XsdNsDescriptor {
-  @NonNls
-  public static final String XSD_PREFIX = "xsd";
-  @NonNls public static final String SCHEMA_TAG_NAME = "schema";
-  @NonNls public static final String IMPORT_TAG_NAME = "import";
-  @NonNls static final String ELEMENT_TAG_NAME = "element";
-  @NonNls static final String ATTRIBUTE_TAG_NAME = "attribute";
-  @NonNls static final String COMPLEX_TYPE_TAG_NAME = "complexType";
-  @NonNls static final String SEQUENCE_TAG_NAME = "sequence";
+  public static final @NonNls String XSD_PREFIX = "xsd";
+  public static final @NonNls String SCHEMA_TAG_NAME = "schema";
+  public static final @NonNls String IMPORT_TAG_NAME = "import";
+  static final @NonNls String ELEMENT_TAG_NAME = "element";
+  static final @NonNls String ATTRIBUTE_TAG_NAME = "attribute";
+  static final @NonNls String COMPLEX_TYPE_TAG_NAME = "complexType";
+  static final @NonNls String SEQUENCE_TAG_NAME = "sequence";
   private static final Logger LOG = Logger.getInstance(XmlNSDescriptorImpl.class);
-  @NonNls private static final Set<String> STD_TYPES = new HashSet<>();
+  private static final @NonNls Set<String> STD_TYPES = new HashSet<>();
   private static final Set<String> UNDECLARED_STD_TYPES = new HashSet<>();
-  @NonNls private static final String INCLUDE_TAG_NAME = "include";
-  @NonNls private static final String REDEFINE_TAG_NAME = "redefine";
+  private static final @NonNls String INCLUDE_TAG_NAME = "include";
+  private static final @NonNls String REDEFINE_TAG_NAME = "redefine";
   private final Map<QNameKey, CachedValue<XmlElementDescriptor>> myDescriptorsMap = Collections.synchronizedMap(new HashMap<>());
   private final Map<Pair<QNameKey, XmlTag>, CachedValue<TypeDescriptor>> myTypesMap = Collections.synchronizedMap(new HashMap<>());
   private XmlFile myFile;
@@ -154,8 +153,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return defaultNSDescriptor;
   }
 
-  @Nullable
-  private static XmlElementDescriptor getDescriptorFromParent(final XmlTag tag, XmlElementDescriptor elementDescriptor) {
+  private static @Nullable XmlElementDescriptor getDescriptorFromParent(final XmlTag tag, XmlElementDescriptor elementDescriptor) {
     final PsiElement parent = tag.getParent();
     if (parent instanceof XmlTag) {
       final XmlElementDescriptor descriptor = ((XmlTag)parent).getDescriptor();
@@ -169,7 +167,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return processTagsInNamespaceInner(myTag, tagNames, processor, null);
   }
 
-  private static boolean processTagsInNamespaceInner(@NotNull final XmlTag rootTag, final String[] tagNames,
+  private static boolean processTagsInNamespaceInner(final @NotNull XmlTag rootTag, final String[] tagNames,
                                                      final PsiElementProcessor<? super XmlTag> processor, Set<? super XmlTag> visitedTags) {
     if (visitedTags == null) visitedTags = new HashSet<>(3);
     else if (visitedTags.contains(rootTag)) return true;
@@ -326,14 +324,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   @Override
-  @Nullable
-  public XmlElementDescriptor getElementDescriptor(String localName, String namespace) {
+  public @Nullable XmlElementDescriptor getElementDescriptor(String localName, String namespace) {
     return getElementDescriptor(localName, namespace, new HashSet<>(), false);
   }
 
   @Override
-  @Nullable
-  public XmlElementDescriptor getElementDescriptor(String localName, String namespace, Set<? super XmlNSDescriptorImpl> visited, boolean reference) {
+  public @Nullable XmlElementDescriptor getElementDescriptor(String localName, String namespace, Set<? super XmlNSDescriptorImpl> visited, boolean reference) {
     if(visited.contains(this)) return null;
 
     final QNameKey pair = new QNameKey(namespace, localName);
@@ -431,13 +427,11 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   @Override
-  @Nullable
-  public XmlAttributeDescriptor getAttribute(String localName, String namespace, final XmlTag context) {
+  public @Nullable XmlAttributeDescriptor getAttribute(String localName, String namespace, final XmlTag context) {
     return getAttributeImpl(localName, namespace, null);
   }
 
-  @Nullable
-  private XmlAttributeDescriptor getAttributeImpl(String localName, String namespace, @Nullable Set<XmlTag> visited) {
+  private @Nullable XmlAttributeDescriptor getAttributeImpl(String localName, String namespace, @Nullable Set<XmlTag> visited) {
     if (myTag == null) return null;
 
     XmlNSDescriptor nsDescriptor = myTag.getNSDescriptor(namespace, true);
@@ -533,34 +527,29 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return findTypeDescriptor(name, context);
   }
 
-  @Nullable
-  public XmlElementDescriptor getDescriptorByType(String qName, XmlTag instanceTag){
+  public @Nullable XmlElementDescriptor getDescriptorByType(String qName, XmlTag instanceTag){
     if(myTag == null) return null;
     final TypeDescriptor typeDescriptor = findTypeDescriptor(qName, instanceTag);
     if(!(typeDescriptor instanceof ComplexTypeDescriptor)) return null;
     return new XmlElementDescriptorByType(instanceTag, (ComplexTypeDescriptor)typeDescriptor);
   }
 
-  @Nullable
-  protected TypeDescriptor findTypeDescriptor(final String qname) {
+  protected @Nullable TypeDescriptor findTypeDescriptor(final String qname) {
     return findTypeDescriptor(qname, myTag);
   }
 
-  @Nullable
-  private TypeDescriptor findTypeDescriptor(final String qname, @NotNull XmlTag context) {
+  private @Nullable TypeDescriptor findTypeDescriptor(final String qname, @NotNull XmlTag context) {
     String namespace = context.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(qname));
     String localName = XmlUtil.findLocalNameByQualifiedName(qname);
     return findTypeDescriptorImpl(myTag, localName, namespace.isEmpty() ? getDefaultNamespace() : namespace);
   }
 
   @Override
-  @Nullable
-  public TypeDescriptor findTypeDescriptor(String localName, String namespace) {
+  public @Nullable TypeDescriptor findTypeDescriptor(String localName, String namespace) {
     return findTypeDescriptorImpl(myTag, localName, namespace);
   }
 
-  @Nullable
-  private TypeDescriptor findTypeDescriptorImpl(@Nullable XmlTag rootTag, final String name, String namespace) {
+  private @Nullable TypeDescriptor findTypeDescriptorImpl(@Nullable XmlTag rootTag, final String name, String namespace) {
     if (rootTag == null) return null;
     return RecursionManager.doPreventingRecursion(Trinity.create(rootTag, name, namespace), true, () -> {
       XmlNSDescriptorImpl responsibleDescriptor = this;
@@ -791,12 +780,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   @Override
-  public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(@Nullable final XmlDocument doc) {
+  public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(final @Nullable XmlDocument doc) {
     class CollectElementsProcessor implements PsiElementProcessor<XmlTag> {
       final List<XmlElementDescriptor> result = new ArrayList<>();
 
       @Override
-      public boolean execute(@NotNull final XmlTag element) {
+      public boolean execute(final @NotNull XmlTag element) {
         ContainerUtil.addIfNotNull(result, getElementDescriptor(element.getAttributeValue("name"), getDefaultNamespace()));
         return true;
       }
@@ -804,7 +793,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
     CollectElementsProcessor processor = new CollectElementsProcessor() {
       @Override
-      public boolean execute(@NotNull final XmlTag element) {
+      public boolean execute(final @NotNull XmlTag element) {
         if (!XmlElementDescriptorImpl.isAbstractDeclaration(element)) return super.execute(element);
         return true;
       }
@@ -829,14 +818,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   @Override
-  @Nullable
-  public XmlTag findGroup(String name) {
+  public @Nullable XmlTag findGroup(String name) {
     return findSpecialTag(name,"group",myTag, this, null);
   }
 
   @Override
-  @Nullable
-  public XmlTag findAttributeGroup(String name) {
+  public @Nullable XmlTag findAttributeGroup(String name) {
     return findSpecialTag(name, "attributeGroup", myTag, this, null);
   }
 

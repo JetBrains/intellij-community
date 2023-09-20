@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.dtd;
 
 import com.intellij.codeInsight.daemon.Validator;
@@ -50,19 +50,17 @@ public final class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<Xm
   private volatile CachedValue<Map<String, XmlElementDescriptor>> myCachedDecls;
   private static final XmlUtil.DuplicationInfoProvider<XmlElementDecl> XML_ELEMENT_DECL_PROVIDER = new XmlUtil.DuplicationInfoProvider<>() {
     @Override
-    public String getName(@NotNull final XmlElementDecl psiElement) {
+    public String getName(final @NotNull XmlElementDecl psiElement) {
       return psiElement.getName();
     }
 
     @Override
-    @NotNull
-    public String getNameKey(@NotNull final XmlElementDecl psiElement, @NotNull final String name) {
+    public @NotNull String getNameKey(final @NotNull XmlElementDecl psiElement, final @NotNull String name) {
       return name;
     }
 
     @Override
-    @NotNull
-    public PsiElement getNodeForMessage(@NotNull final XmlElementDecl psiElement) {
+    public @NotNull PsiElement getNodeForMessage(final @NotNull XmlElementDecl psiElement) {
       return psiElement.getNameElement();
     }
   };
@@ -117,7 +115,7 @@ public final class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<Xm
   }
 
   @Override
-  public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(@Nullable final XmlDocument document) {
+  public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(final @Nullable XmlDocument document) {
     // Suggest more appropriate variant if DOCTYPE <element_name> exists
     final XmlProlog prolog = document != null ? document.getProlog():null;
 
@@ -179,7 +177,7 @@ public final class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<Xm
 
       XmlUtil.processXmlElements(document, new PsiElementProcessor() {
         @Override
-        public boolean execute(@NotNull final PsiElement element) {
+        public boolean execute(final @NotNull PsiElement element) {
           if (element instanceof XmlElementDecl) decls.add((XmlElementDecl)element);
           return true;
         }

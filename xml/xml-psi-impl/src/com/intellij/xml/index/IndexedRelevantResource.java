@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.index;
 
 import com.intellij.openapi.module.Module;
@@ -40,9 +26,9 @@ public class IndexedRelevantResource<K, V extends Comparable> implements Compara
 
   public static <K, V extends Comparable> List<IndexedRelevantResource<K, V>> getResources(ID<K, V> indexId,
                                                                                            final K key,
-                                                                                           @Nullable final Module module,
+                                                                                           final @Nullable Module module,
                                                                                            @NotNull Project project,
-                                                                                           @Nullable final GlobalSearchScope additionalScope) {
+                                                                                           final @Nullable GlobalSearchScope additionalScope) {
 
     if (project.isDefault()) return Collections.emptyList();
     final ArrayList<IndexedRelevantResource<K, V>> resources = new ArrayList<>();
@@ -56,7 +42,7 @@ public class IndexedRelevantResource<K, V extends Comparable> implements Compara
   }
 
   public static <K, V extends Comparable> List<IndexedRelevantResource<K, V>> getAllResources(ID<K, V> indexId,
-                                                                                              @Nullable final Module module,
+                                                                                              final @Nullable Module module,
                                                                                               @NotNull Project project,
                                                                                               @Nullable NullableFunction<? super List<IndexedRelevantResource<K, V>>, ? extends IndexedRelevantResource<K, V>> chooser) {
     ArrayList<IndexedRelevantResource<K, V>> all = new ArrayList<>();

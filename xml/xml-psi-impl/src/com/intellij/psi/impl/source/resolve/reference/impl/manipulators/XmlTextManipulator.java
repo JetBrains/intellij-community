@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
@@ -6,8 +6,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * @author Gregory.Shrago
@@ -44,8 +45,7 @@ public class XmlTextManipulator extends AbstractElementManipulator<XmlText> {
   }
 
   @Override
-  @NotNull
-  public TextRange getRangeInElement(@NotNull final XmlText text) {
+  public @NotNull TextRange getRangeInElement(final @NotNull XmlText text) {
     return getValueRange(text);
   }
 

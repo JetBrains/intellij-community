@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.util.TextRange;
@@ -20,8 +20,7 @@ public abstract class BasicAttributeValueReference implements PsiReference {
     this (element, createTextRange(element, offset));
   }
 
-  @NotNull
-  private static TextRange createTextRange(PsiElement element, int offset) {
+  private static @NotNull TextRange createTextRange(PsiElement element, int offset) {
     int valueEndOffset = element.getTextLength() - offset;
     // in case of not closed quote
     return new TextRange(offset, Math.max(offset, valueEndOffset));
@@ -33,20 +32,17 @@ public abstract class BasicAttributeValueReference implements PsiReference {
   }
 
   @Override
-  @NotNull
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myElement;
   }
 
   @Override
-  @NotNull
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return myRange;
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     final String s = myElement.getText();
     if (myRange.getStartOffset() < s.length() && myRange.getEndOffset() <= s.length()) {
       return myRange.substring(s);

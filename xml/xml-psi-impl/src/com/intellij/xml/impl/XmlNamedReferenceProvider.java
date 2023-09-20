@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl;
 
 import com.intellij.model.Symbol;
@@ -22,10 +22,9 @@ import java.util.List;
 @Internal
 public final class XmlNamedReferenceProvider implements PsiSymbolReferenceProvider {
 
-  @NotNull
   @Override
-  public Collection<? extends PsiSymbolReference> getReferences(@NotNull PsiExternalReferenceHost element,
-                                                                @NotNull PsiSymbolReferenceHints hints) {
+  public @NotNull Collection<? extends PsiSymbolReference> getReferences(@NotNull PsiExternalReferenceHost element,
+                                                                         @NotNull PsiSymbolReferenceHints hints) {
     if (!(element instanceof XmlNamedReferenceHost host)) {
       return Collections.emptyList();
     }

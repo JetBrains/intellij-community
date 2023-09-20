@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
@@ -48,8 +48,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   }
 
   @Override
-  @Nullable
-  public String getDtdUri() {
+  public @Nullable String getDtdUri() {
     final PsiElement dtdUrlElement = getDtdUrlElement();
     if (dtdUrlElement == null || dtdUrlElement.getTextLength() == 0) return null;
     return extractValue(dtdUrlElement);
@@ -87,8 +86,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   }
 
   @Override
-  @Nullable
-  public PsiElement getDtdUrlElement() {
+  public @Nullable PsiElement getDtdUrlElement() {
     ASTNode child = getNode().findChildByType(XmlTokenType.XML_DOCTYPE_PUBLIC);
     PsiElement docTypePublic = child != null ? child.getPsi() : null;
 
@@ -139,8 +137,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   }
 
   @Override
-  @Nullable
-  public String getPublicId() {
+  public @Nullable String getPublicId() {
     return getSomeId(XmlTokenType.XML_DOCTYPE_PUBLIC);
   }
 
@@ -208,13 +205,11 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   protected PsiReference createUrlReference(final PsiElement dtdUrlElement) {
     return new URLReference(XmlDoctypeImpl.this) {
       @Override
-      @NotNull
-      public String getCanonicalText() {
+      public @NotNull String getCanonicalText() {
         return extractValue(dtdUrlElement);
       }
-      @NotNull
       @Override
-      public TextRange getRangeInElement() {
+      public @NotNull TextRange getRangeInElement() {
         return TextRange.from(dtdUrlElement.getTextRange().getStartOffset() - getTextRange().getStartOffset() + 1, Math.max(dtdUrlElement.getTextRange().getLength() - 2, 0));
       }
     };

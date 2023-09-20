@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
@@ -63,8 +49,7 @@ public class XmlTagValueImpl implements XmlTagValue{
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     String text = myText;
     if (text == null) {
       final StringBuilder consolidatedText = new StringBuilder();
@@ -77,8 +62,7 @@ public class XmlTagValueImpl implements XmlTagValue{
   }
 
   @Override
-  @NotNull
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     if(myElements.length == 0){
       final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(myTag.getNode());
       if(child != null)
@@ -89,8 +73,7 @@ public class XmlTagValueImpl implements XmlTagValue{
   }
 
   @Override
-  @NotNull
-  public String getTrimmedText() {
+  public @NotNull String getTrimmedText() {
     String trimmedText = myTrimmedText;
     if (trimmedText == null) {
       final StringBuilder consolidatedText = new StringBuilder();

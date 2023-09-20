@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -54,8 +54,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
   private final Project myProject;
   private final Map<String,String> myExternalResourcesMap = new HashMap<>(1);
   private boolean myStopOnUnDeclaredResource;
-  @NonNls
-  public static final String HONOUR_ALL_SCHEMA_LOCATIONS_PROPERTY_KEY = "idea.xml.honour.all.schema.locations";
+  public static final @NonNls String HONOUR_ALL_SCHEMA_LOCATIONS_PROPERTY_KEY = "idea.xml.honour.all.schema.locations";
   private final ErrorReporter myErrorReporter;
 
   public XmlResourceResolver(XmlFile _xmlFile, Project _project, final ErrorReporter errorReporter) {
@@ -72,8 +71,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
     return ArrayUtilRt.toStringArray(myExternalResourcesMap.values());
   }
 
-  @Nullable
-  public PsiFile resolve(@Nullable final String baseSystemId, final String _systemId) {
+  public @Nullable PsiFile resolve(final @Nullable String baseSystemId, final String _systemId) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: resolveEntity(baseSystemId='" + baseSystemId + "' systemId='" + _systemId + "," + this + "')");
     }
@@ -233,8 +231,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
   }
 
   @Override
-  @Nullable
-  public XMLInputSource resolveEntity(XMLResourceIdentifier xmlResourceIdentifier) throws XNIException {
+  public @Nullable XMLInputSource resolveEntity(XMLResourceIdentifier xmlResourceIdentifier) throws XNIException {
     String publicId  = xmlResourceIdentifier.getLiteralSystemId() != null ?
                   xmlResourceIdentifier.getLiteralSystemId():
                   xmlResourceIdentifier.getNamespace();
@@ -283,8 +280,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
     return source;
   }
 
-  @NotNull
-  private XMLInputSource reportUnresolvedUrl(XMLResourceIdentifier xmlResourceIdentifier, String publicId, String defaultText) {
+  private @NotNull XMLInputSource reportUnresolvedUrl(XMLResourceIdentifier xmlResourceIdentifier, String publicId, String defaultText) {
     try {
       myErrorReporter.processError(
         new SAXParseException(XmlPsiBundle.message("xml.inspections.validate.external.resource.is.not.registered", publicId), publicId, null, 0, 0), ValidateXmlActionHandler.ProblemType.ERROR);

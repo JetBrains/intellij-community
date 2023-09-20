@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.embedding;
 
 import com.intellij.lexer.DelegateLexer;
@@ -32,11 +18,9 @@ public abstract class MasqueradingLexer extends DelegateLexer {
     super(delegate);
   }
 
-  @Nullable
-  public abstract IElementType getMasqueTokenType();
+  public abstract @Nullable IElementType getMasqueTokenType();
 
-  @Nullable
-  public abstract String getMasqueTokenText();
+  public abstract @Nullable String getMasqueTokenText();
 
   public static class SmartDelegate extends MasqueradingLexer {
 
@@ -45,8 +29,7 @@ public abstract class MasqueradingLexer extends DelegateLexer {
     }
 
     @Override
-    @Nullable
-    public IElementType getMasqueTokenType() {
+    public @Nullable IElementType getMasqueTokenType() {
       if (myDelegate instanceof MasqueradingLexer) {
         return ((MasqueradingLexer)myDelegate).getMasqueTokenType();
       }
@@ -55,8 +38,7 @@ public abstract class MasqueradingLexer extends DelegateLexer {
     }
 
     @Override
-    @Nullable
-    public String getMasqueTokenText() {
+    public @Nullable String getMasqueTokenText() {
       if (myDelegate instanceof MasqueradingLexer) {
         return ((MasqueradingLexer)myDelegate).getMasqueTokenText();
       }

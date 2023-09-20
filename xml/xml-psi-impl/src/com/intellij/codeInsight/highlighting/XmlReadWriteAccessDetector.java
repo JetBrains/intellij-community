@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.psi.PsiElement;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class XmlReadWriteAccessDetector extends ReadWriteAccessDetector {
   @Override
-  public boolean isReadWriteAccessible(@NotNull final PsiElement element) {
+  public boolean isReadWriteAccessible(final @NotNull PsiElement element) {
     return element instanceof XmlAttributeValue ||
         element instanceof XmlTag ||
         element instanceof XmlElementDecl ||
@@ -20,13 +20,12 @@ public class XmlReadWriteAccessDetector extends ReadWriteAccessDetector {
   }
 
   @Override
-  public boolean isDeclarationWriteAccess(@NotNull final PsiElement element) {
+  public boolean isDeclarationWriteAccess(final @NotNull PsiElement element) {
     return false;
   }
 
-  @NotNull
   @Override
-  public Access getReferenceAccess(@NotNull final PsiElement referencedElement, @NotNull final PsiReference reference) {
+  public @NotNull Access getReferenceAccess(final @NotNull PsiElement referencedElement, final @NotNull PsiReference reference) {
     PsiElement refElement = reference.getElement();
     return refElement instanceof XmlAttributeValue &&
            (!(referencedElement instanceof XmlTag) || refElement.getParent().getParent() == referencedElement) ||
@@ -36,9 +35,8 @@ public class XmlReadWriteAccessDetector extends ReadWriteAccessDetector {
 
   }
 
-  @NotNull
   @Override
-  public Access getExpressionAccess(@NotNull final PsiElement expression) {
+  public @NotNull Access getExpressionAccess(final @NotNull PsiElement expression) {
     return expression instanceof XmlAttributeValue ? Access.Write : Access.Read;
   }
 }

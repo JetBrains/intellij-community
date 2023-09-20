@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.index;
 
 import com.intellij.openapi.project.Project;
@@ -40,18 +40,15 @@ public final class XmlTagNamesIndex extends XmlIndex<Void> {
   static final ID<String, Void> NAME = ID.create("XmlTagNames");
 
   @Override
-  @NotNull
-  public ID<String, Void> getName() {
+  public @NotNull ID<String, Void> getName() {
     return NAME;
   }
 
   @Override
-  @NotNull
-  public DataIndexer<String, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, Void, FileContent> getIndexer() {
     return new DataIndexer<>() {
       @Override
-      @NotNull
-      public Map<String, Void> map(@NotNull FileContent inputData) {
+      public @NotNull Map<String, Void> map(@NotNull FileContent inputData) {
         CharSequence text = inputData.getContentAsText();
         if (Strings.indexOf(text, XmlUtil.XML_SCHEMA_URI) == -1) {
           return Collections.emptyMap();
@@ -64,9 +61,8 @@ public final class XmlTagNamesIndex extends XmlIndex<Void> {
     };
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<Void> getValueExternalizer() {
+  public @NotNull DataExternalizer<Void> getValueExternalizer() {
     return VoidDataExternalizer.INSTANCE;
   }
 
