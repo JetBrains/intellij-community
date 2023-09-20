@@ -27,8 +27,6 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.dependencies.IndexingRequestToken;
-import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -230,8 +228,6 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
 
   public void processFilesToUpdateInReadAction() {
     processFilesInReadAction(new VfsEventsMerger.VfsEventProcessor() {
-      private final IndexingRequestToken indexingRequest =
-        ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
       private final StubIndexImpl.FileUpdateProcessor perFileElementTypeUpdateProcessor =
         ((StubIndexImpl)StubIndex.getInstance()).getPerFileElementTypeModificationTrackerUpdateProcessor();
       @Override
@@ -239,9 +235,9 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         int fileId = info.getFileId();
         VirtualFile file = info.getFile();
         if (info.isTransientStateChanged()) myFileBasedIndex.doTransientStateChangeForFile(fileId, file);
-        if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true, indexingRequest);
+        if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true);
         if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file);
-        if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false, indexingRequest);
+        if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false);
         if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
             StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
           perFileElementTypeUpdateProcessor.processUpdate(file);

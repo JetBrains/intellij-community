@@ -2,17 +2,18 @@
 package com.intellij.util.indexing.dependencies
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.serviceContainer.NonInjectable
+import com.intellij.util.application
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardOpenOption.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 
@@ -35,12 +36,11 @@ import kotlin.math.max
  * but persistence should not be dropped in other cases, because IndexingStamp is actually stored in VFS.
  *
  */
-@Service(Service.Level.APP) // TODO: project
-class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting constructor(private val storagePath: Path) : Disposable {
+@Service(Service.Level.PROJECT)
+class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting constructor(storagePath: Path,
+                                                                                       private val appIndexingDependenciesService: AppIndexingDependenciesService) : Disposable {
   companion object {
     private const val NULL_INDEXING_STAMP: Int = 0
-
-    private val defaultStoragePath = Paths.get(PathManager.getSystemPath(), "caches/indexingStamp.dat")
 
     @JvmStatic
     val NULL_STAMP: FileIndexingStamp = FileIndexingStampImpl(NULL_INDEXING_STAMP)
@@ -64,7 +64,9 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     override fun toInt(): Int = stamp
   }
 
-  private data class IndexingRequestTokenImpl(val requestId: Int) : IndexingRequestToken {
+  private data class IndexingRequestTokenImpl(val requestId: Int,
+                                              val appIndexingRequest: AppIndexingDependenciesToken) : IndexingRequestToken {
+    private val appIndexingRequestId = appIndexingRequest.toInt()
     override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
       val fileStamp = file.modificationStamp
       if (fileStamp == -1L || requestId == NULL_INDEXING_STAMP) {
@@ -74,43 +76,51 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
         // we assume that stamp and file.modificationStamp never decrease => their sum only grow up
         // in the case of overflow we hope that new value does not match any previously used value
         // (which is hopefully true in most cases, because (new value)==(old value) was used veeeery long time ago)
-        return FileIndexingStampImpl(fileStamp.toInt() + requestId)
+        return FileIndexingStampImpl(fileStamp.toInt() + requestId + appIndexingRequestId)
       }
     }
 
     override fun mergeWith(other: IndexingRequestToken): IndexingRequestToken {
-      return IndexingRequestTokenImpl(max(requestId, (other as IndexingRequestTokenImpl).requestId))
+      return IndexingRequestTokenImpl(max(requestId, (other as IndexingRequestTokenImpl).requestId),
+                                      appIndexingRequest.mergeWith(other.appIndexingRequest))
     }
   }
 
-  // Monotonically increasing. You should not compare this number to other stamps other than for equality (because of possible overflows).
-  // Monotonic property is to make sure that value is unique, and it will produce unique value after sum with any other
-  // monotonically growing number.
-  private val current = AtomicReference(IndexingRequestTokenImpl(NULL_INDEXING_STAMP))
+  private val current = AtomicReference(IndexingRequestTokenImpl(NULL_INDEXING_STAMP,
+                                                                 appIndexingDependenciesService.getCurrent()))
 
   private val storage: ProjectIndexingDependenciesStorage = openOrInitStorage(storagePath)
 
-  constructor() : this(defaultStoragePath)
+  constructor(project: Project) : this(project.getProjectDataPath("indexingStamp").resolve("indexingStamp.dat"),
+                                       application.service<AppIndexingDependenciesService>())
 
   init {
     try {
       val requestId = storage.readRequestId()
-      current.set(IndexingRequestTokenImpl(requestId))
+      current.set(IndexingRequestTokenImpl(requestId, appIndexingDependenciesService.getCurrent()))
     }
-    catch (ioException: IOException) {
-      requestVfsRebuildDueToError(ioException)
+    catch (e: IOException) {
+      requestVfsRebuildDueToError(e)
       storage.resetStorage()
     }
   }
 
   fun getLatestIndexingRequestToken(): IndexingRequestToken {
-    return current.get()
+    val projectCurrent = current.get()
+    val appCurrent = appIndexingDependenciesService.getCurrent()
+    return if (appCurrent == projectCurrent.appIndexingRequest) {
+      projectCurrent
+    }
+    else {
+      current.updateAndGet { IndexingRequestTokenImpl(it.requestId, appCurrent) }
+    }
   }
 
   fun invalidateAllStamps(): IndexingRequestToken {
+    val appCurrent = appIndexingDependenciesService.getCurrent()
     return current.updateAndGet { current ->
       val next = current.requestId + 1
-      IndexingRequestTokenImpl(if (next == NULL_INDEXING_STAMP) NULL_INDEXING_STAMP + 1 else next)
+      IndexingRequestTokenImpl(if (next == NULL_INDEXING_STAMP) NULL_INDEXING_STAMP + 1 else next, appCurrent)
     }.also {
       // don't use `it`: current.get() will return just updated value or more up-to-date value
       storage.writeRequestId(current.get().requestId)

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.FilesScanningTaskAsDumbModeTaskWrapper;
 import com.intellij.openapi.project.Project;
@@ -57,7 +56,7 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     map2.put(iter2, f2);
     map2.put(iterShared, fShared.subList(1, 3));
 
-    IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
+    IndexingRequestToken indexingRequest = getProject().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
     task1 = new UnindexedFilesIndexer(getProject(), map1, "test task1", LongSet.of(), indexingRequest);
     task2 = new UnindexedFilesIndexer(getProject(), map2, "test task2", LongSet.of(), indexingRequest);
   }
@@ -119,7 +118,7 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
 
 
     for (String[] situation : situations) {
-      IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
+      IndexingRequestToken indexingRequest = getProject().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
       UnindexedFilesIndexer t1 = new UnindexedFilesIndexer(getProject(), situation[0], indexingRequest);
       UnindexedFilesIndexer t2 = new UnindexedFilesIndexer(getProject(), situation[1], indexingRequest);
       UnindexedFilesIndexer merged = t1.tryMergeWith(t2);
@@ -155,7 +154,7 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
   @NotNull
   private UnindexedFilesScanner createScanningTask(IndexableFilesIterator iter, String reason, ScanningType type) {
     List<IndexableFilesIterator> iterators = iter == null ? null : Collections.singletonList(iter);
-    IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
+    IndexingRequestToken indexingRequest = getProject().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
     return new UnindexedFilesScanner(getProject(), false, false, iterators, null, reason, type, indexingRequest);
   }
 

@@ -16,7 +16,6 @@ import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.application
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexingFlag
@@ -64,7 +63,7 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
     }
 
     Files.newBufferedWriter(fullLogPath).use { writer ->
-      val indexingRequest = application.service<ProjectIndexingDependenciesService>().getLatestIndexingRequestToken()
+      val indexingRequest = project.service<ProjectIndexingDependenciesService>().getLatestIndexingRequestToken()
       val iterator = object : ContentIterator {
         var number = 0
 

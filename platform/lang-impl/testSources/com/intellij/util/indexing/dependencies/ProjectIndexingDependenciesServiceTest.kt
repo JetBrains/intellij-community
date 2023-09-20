@@ -4,6 +4,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.rules.TempDirectory
 import org.junit.After
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -13,12 +14,20 @@ import java.io.FileOutputStream
 import kotlin.math.min
 
 @RunWith(JUnit4::class)
-class FileIndexingStampServiceTest {
+class ProjectIndexingDependenciesServiceTest {
   @Rule
   @JvmField
   val temp = TempDirectory()
 
   private val testDisposable = Disposer.newDisposable()
+  private lateinit var appService: AppIndexingDependenciesService
+  private lateinit var tmpDir: File
+
+  @Before
+  fun setup() {
+    tmpDir = temp.newDirectory("fileIndexingStamp")
+    appService = newAppIndexingDependenciesService(nonExistingFile("app"))
+  }
 
   @After
   fun tearDown() {
@@ -28,7 +37,7 @@ class FileIndexingStampServiceTest {
   @Test
   fun `test no previous file`() {
     val file = nonExistingFile("nonExistingFile")
-    newFileIndexingStampService(file)
+    newProjectIndexingDependenciesService(file)
     assertTrue(file.exists())
   }
 
@@ -40,7 +49,7 @@ class FileIndexingStampServiceTest {
     }
 
     try {
-      newFileIndexingStampService(file)
+      newProjectIndexingDependenciesService(file)
       fail("Should throw exception, because 3 bytes is too few to read file version")
     }
     catch (ae: AssertionError) {
@@ -51,14 +60,14 @@ class FileIndexingStampServiceTest {
   }
 
   @Test
-  fun `test corrupted fileIndexingStamp`() {
+  fun `test corrupted indexingRequestId`() {
     val file = nonExistingFile()
     FileOutputStream(file).use {
       it.write(ByteArray(7)) // 4 bytes for file version + 3 bytes
     }
 
     try {
-      newFileIndexingStampService(file)
+      newProjectIndexingDependenciesService(file)
       fail("Should throw exception, because 3 bytes is too few to read indexing stamp")
     }
     catch (ae: AssertionError) {
@@ -69,9 +78,9 @@ class FileIndexingStampServiceTest {
   }
 
   @Test
-  fun `test invalidateAllStamps`() {
+  fun `test invalidateAllStamps in project`() {
     val file = nonExistingFile()
-    val inst = newFileIndexingStampService(file)
+    val inst = newProjectIndexingDependenciesService(file)
     val oldStamp = inst.getLatestIndexingRequestToken()
     inst.invalidateAllStamps()
     val newStamp = inst.getLatestIndexingRequestToken()
@@ -80,28 +89,70 @@ class FileIndexingStampServiceTest {
   }
 
   @Test
+  fun `test invalidateAllStamps in project invalidates only that project`() {
+    val file1 = nonExistingFile("storage1")
+    val file2 = nonExistingFile("storage2")
+
+    val inst1 = newProjectIndexingDependenciesService(file1)
+    val inst2 = newProjectIndexingDependenciesService(file2)
+
+    val oldStamp1 = inst1.getLatestIndexingRequestToken()
+    val oldStamp2 = inst2.getLatestIndexingRequestToken()
+
+    inst1.invalidateAllStamps()
+
+    val newStamp1 = inst1.getLatestIndexingRequestToken()
+    val newStamp2 = inst2.getLatestIndexingRequestToken()
+
+    assertNotEquals(oldStamp1, newStamp1)
+    assertEquals(oldStamp2, newStamp2)
+  }
+
+  @Test
+  fun `test invalidateAllStamps in app`() {
+    val file = nonExistingFile()
+    val inst = newProjectIndexingDependenciesService(file)
+    val oldStamp = inst.getLatestIndexingRequestToken()
+    appService.invalidateAllStamps()
+    val newStamp = inst.getLatestIndexingRequestToken()
+
+    assertNotEquals(oldStamp, newStamp)
+  }
+
+  @Test
   fun `test service reload keeps state`() {
     val file = nonExistingFile()
-    val inst1 = newFileIndexingStampService(file)
+    val inst1 = newProjectIndexingDependenciesService(file)
 
     inst1.invalidateAllStamps() // make some non-default sate
     val oldStamp = inst1.getLatestIndexingRequestToken()
 
-    val inst2 = newFileIndexingStampService(file)
+    val inst2 = newProjectIndexingDependenciesService(file)
     val newStamp = inst2.getLatestIndexingRequestToken()
 
     assertEquals(oldStamp, newStamp)
   }
 
   private fun nonExistingFile(s: String = "storage"): File {
-    val tmp = temp.newDirectory("fileIndexingStamp")
-    val file = tmp.resolve(s)
+    val file = tmpDir.resolve(s)
     assertFalse(file.exists())
     return file
   }
 
-  private fun newFileIndexingStampService(file: File): ProjectIndexingDependenciesService {
-    return ProjectIndexingDependenciesService(file.toPath()).also {
+  private fun newAppIndexingDependenciesService(file: File): AppIndexingDependenciesService {
+    return AppIndexingDependenciesService(file.toPath()).also {
+      Disposer.register(testDisposable, it)
+      assertTrue(file.exists())
+    }
+  }
+
+  private fun newProjectIndexingDependenciesService(file: File): ProjectIndexingDependenciesService {
+    return newProjectIndexingDependenciesService(file, appService)
+  }
+
+  private fun newProjectIndexingDependenciesService(file: File,
+                                                    appService: AppIndexingDependenciesService): ProjectIndexingDependenciesService {
+    return ProjectIndexingDependenciesService(file.toPath(), appService).also {
       Disposer.register(testDisposable, it)
       assertTrue(file.exists())
     }

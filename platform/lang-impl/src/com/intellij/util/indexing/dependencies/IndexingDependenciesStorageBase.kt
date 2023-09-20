@@ -1,11 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependencies
 
+import com.intellij.util.io.ResilientFileChannel
+import com.intellij.util.io.createParentDirectories
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 
 abstract class IndexingDependenciesStorageBase(private val storage: FileChannel,
                                                protected val storagePath: Path,
@@ -14,6 +17,20 @@ abstract class IndexingDependenciesStorageBase(private val storage: FileChannel,
   companion object {
     private const val STORAGE_VERSION_OFFSET = 0L
     const val FIRST_UNUSED_OFFSET = STORAGE_VERSION_OFFSET + Int.SIZE_BYTES
+
+    @Throws(IOException::class)
+    fun <T> openOrInit(path: Path,
+                       storageFactory: (storage: FileChannel, path: Path) -> T,
+                       onVersionMismatch: (actualVersion: Int) -> Nothing): T where T : IndexingDependenciesStorageBase {
+      path.createParentDirectories()
+      val channel = ResilientFileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE)
+      val storage = storageFactory(channel, path)
+
+      storage.initIfNotInitialized()
+      storage.checkVersion(onVersionMismatch)
+
+      return storage
+    }
   }
 
   @Throws(IOException::class)

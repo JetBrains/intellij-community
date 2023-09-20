@@ -1686,7 +1686,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     @Override
     void doProcess(VirtualFile item, Project project) {
       // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
-      IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
+      IndexingRequestToken indexingRequest = project.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
       var stamp = indexingRequest.getFileIndexingStamp(item);
       processRefreshedFile(project, new CachedFileContent(item), stamp);
     }
@@ -1800,14 +1800,21 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean contentChange,
-                                      IndexingRequestToken indexingRequest) {
-    // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
-    FileIndexingStamp indexingStamp = indexingRequest.getFileIndexingStamp(file);
+  public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean contentChange) {
     if (ensureFileBelongsToIndexableFilter(fileId, file) == FileAddStatus.SKIPPED) {
       doInvalidateIndicesForFile(fileId, file);
       return;
     }
+
+    Project projectForFile = findProjectForFileId(fileId);
+    if (projectForFile == null) {
+      LOG.error("ensureFileBelongsToIndexableFilter returned ADDED or PRESENT, but findProjectForFileId returned null for file: " + file);
+      doInvalidateIndicesForFile(fileId, file);
+      return;
+    }
+
+    var indexingRequest = projectForFile.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
+    var indexingStamp = indexingRequest.getFileIndexingStamp(file);
 
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
@@ -1816,7 +1823,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     removeTransientFileDataFromIndices(nontrivialFileIndexedStates, fileId, file);
 
     boolean isRegularFile = !file.isDirectory();
-    IndexedFileImpl indexedFile = new IndexedFileImpl(file, findProjectForFileId(fileId));
+    IndexedFileImpl indexedFile = new IndexedFileImpl(file, projectForFile);
 
     // Apply index contentless indexes in-place
     // For 'normal indices' schedule the file for update and reset stamps for all affected indices (there

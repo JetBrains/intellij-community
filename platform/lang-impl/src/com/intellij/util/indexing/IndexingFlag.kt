@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsData
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.util.application
 import com.intellij.util.asSafely
+import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
 import com.intellij.util.indexing.dependencies.FileIndexingStamp
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import org.jetbrains.annotations.ApiStatus
@@ -24,7 +25,7 @@ object IndexingFlag {
 
   @JvmStatic
   fun cleanupProcessedFlag() {
-    application.service<ProjectIndexingDependenciesService>().invalidateAllStamps()
+    application.service<AppIndexingDependenciesService>().invalidateAllStamps()
   }
 
   private fun VirtualFile.asApplicable(): VirtualFileSystemEntry? {
