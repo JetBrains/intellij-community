@@ -226,11 +226,11 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
 
   private fun collectNavigationActions(): List<AnAction> {
     return listOfNotNull(
-      CombinedPrevDifferenceAction(context),
-      CombinedNextDifferenceAction(context),
       CombinedPrevBlockAction(context),
-      CombinedNextBlockAction(context),
+      CombinedPrevDifferenceAction(context),
       differencesLabel,
+      CombinedNextDifferenceAction(context),
+      CombinedNextBlockAction(context),
       openInEditorAction,
     )
   }

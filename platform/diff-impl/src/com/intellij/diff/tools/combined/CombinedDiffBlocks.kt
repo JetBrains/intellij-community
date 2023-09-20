@@ -148,14 +148,14 @@ internal class CombinedSimpleDiffBlock(project: Project,
                                        initialContent: JComponent,
                                        isPathOnlyHeader: Boolean
 ) : CombinedDiffBlock<CombinedPathBlockId>,
-    RoundedPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true), CombinedDiffUI.BLOCK_ARC) {
+    CombinedDiffRoundedPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true), CombinedDiffUI.BLOCK_ARC) {
 
   private val pathOnlyHeader: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, true)
   private val headerWithToolbar: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, false)
 
   override val header: Wrapper = Wrapper(if (isPathOnlyHeader) pathOnlyHeader else headerWithToolbar)
 
-  override val stickyHeader: JComponent  = RoundedPanel(BorderLayout(0, 0), CombinedDiffUI.BLOCK_ARC, true)
+  override val stickyHeader: JComponent  = CombinedDiffRoundedPanel(BorderLayout(0, 0), CombinedDiffUI.BLOCK_ARC, true)
   .apply {
     add(CombinedSimpleDiffHeader(project, id, false), BorderLayout.CENTER)
   }

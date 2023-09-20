@@ -8,6 +8,7 @@ import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.tools.util.text.SmartTextDiffProvider
 import com.intellij.diff.util.DiffUtil
+import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -28,6 +29,7 @@ internal class CombinedNextBlockAction(private val context: DiffContext) : NextC
       return
     }
 
+    e.presentation.icon = AllIcons.Actions.Play_last
     e.presentation.isVisible = true
     e.presentation.isEnabled = context.getCombinedDiffNavigation()?.canGoNextBlock() ?: false
   }
@@ -49,6 +51,7 @@ internal class CombinedPrevBlockAction(private val context: DiffContext) : PrevC
       return
     }
 
+    e.presentation.icon = AllIcons.Actions.Play_first
     e.presentation.isVisible = true
     e.presentation.isEnabled = context.getCombinedDiffNavigation()?.canGoPrevBlock() ?: false
   }
@@ -70,6 +73,7 @@ internal class CombinedNextDifferenceAction(private val context: DiffContext) : 
       return
     }
 
+    e.presentation.icon = AllIcons.Actions.Play_forward
     e.presentation.isVisible = true
     e.presentation.isEnabled = context.getCombinedDiffNavigation()?.canGoNextDiff() ?: false
   }
@@ -92,6 +96,7 @@ internal class CombinedPrevDifferenceAction(private val context: DiffContext) : 
     }
 
     val navigation = context.getCombinedDiffNavigation()
+    e.presentation.icon = AllIcons.Actions.Play_back
     e.presentation.isVisible = true
     e.presentation.isEnabled = navigation?.canGoPrevDiff() ?: false
   }

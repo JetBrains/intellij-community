@@ -11,9 +11,9 @@ import javax.swing.JPanel
 import javax.swing.border.LineBorder
 
 @ApiStatus.Internal
-internal open class RoundedPanel(layout: LayoutManager?,
-                                 private val arc: Int = 8,
-                                 private val roundOnlyTopCorners: Boolean = false) : JPanelWithBackground(layout) {
+internal open class CombinedDiffRoundedPanel(layout: LayoutManager?,
+                                             private val arc: Int = 8,
+                                             private val roundOnlyTopCorners: Boolean = false) : JPanel(layout) {
 
   init {
     isOpaque = false
@@ -40,7 +40,11 @@ internal open class RoundedPanel(layout: LayoutManager?,
     try {
       GraphicsUtil.setupRoundedBorderAntialiasing(g2)
       g2.clip(getShape())
-      super.paintComponent(g2)
+      if (!isOpaque && isBackgroundSet) {
+        g.color = background
+        g.fillRect(0, 0, width, height)
+      }
+      super.paintComponent(g)
     }
     finally {
       g2.dispose()
@@ -56,48 +60,24 @@ internal open class RoundedPanel(layout: LayoutManager?,
                                   arc.toFloat(), arc.toFloat())
 
   }
-}
 
+  private class MyShiftedBorder(
+    color: Color,
+    private val arc: Int,
+  ) : LineBorder(color, 1) {
+    override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+      val g2 = g as Graphics2D
 
-open class JPanelWithBackground : JPanel {
-  @Suppress("unused")
-  constructor() : super()
+      val oldAntialiasing = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING)
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+      val oldColor = g2.color
+      g2.color = lineColor
 
-  @Suppress("unused")
-  constructor(layout: LayoutManager?, isDoubleBuffered: Boolean) : super(layout, isDoubleBuffered)
+      g2.drawRoundRect(x, y, width - 1, height + arc, arc, arc)
+      g2.drawLine(x, height, width, height)
 
-  @Suppress("unused")
-  constructor(layout: LayoutManager?) : super(layout)
-
-  @Suppress("unused")
-  constructor(isDoubleBuffered: Boolean) : super(isDoubleBuffered)
-
-  override fun paintComponent(g: Graphics) {
-    // opaque background is painted in javax.swing.plaf.ComponentUI.update
-    if (!isOpaque && isBackgroundSet) {
-      g.color = background
-      g.fillRect(0, 0, width, height)
+      g2.color = oldColor
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAntialiasing)
     }
-    super.paintComponent(g)
-  }
-}
-
-private class MyShiftedBorder(
-  color: Color,
-  private val arc: Int,
-) : LineBorder(color, 1) {
-  override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-    val g2 = g as Graphics2D
-
-    val oldAntialiasing = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING)
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    val oldColor = g2.color
-    g2.color = lineColor
-
-    g2.drawRoundRect(x, y, width - 1, height + arc, arc, arc)
-    g2.drawLine(x, height, width, height)
-
-    g2.color = oldColor
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAntialiasing)
   }
 }
