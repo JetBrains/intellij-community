@@ -82,11 +82,14 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
       return;
     }
 
-    final PyPackage installedSetuptools = refreshAndCheckForSetuptools();
-    final PyPackage installedPip = PyPsiPackageUtil.findPackage(refreshAndGetPackages(false), PyPackageUtil.PIP);
-    if (installedSetuptools == null || VERSION_COMPARATOR.compare(installedSetuptools.getVersion(), SETUPTOOLS_VERSION) < 0) {
-      installManagement(Objects.requireNonNull(getHelperPath(SETUPTOOLS_WHEEL_NAME)));
+    if (languageLevel.isOlderThan(LanguageLevel.PYTHON312)) { // Python 3.12 doesn't require setuptools to list packages anymore
+      final PyPackage installedSetuptools = refreshAndCheckForSetuptools();
+      if (installedSetuptools == null || VERSION_COMPARATOR.compare(installedSetuptools.getVersion(), SETUPTOOLS_VERSION) < 0) {
+        installManagement(Objects.requireNonNull(getHelperPath(SETUPTOOLS_WHEEL_NAME)));
+      }
     }
+
+    final PyPackage installedPip = PyPsiPackageUtil.findPackage(refreshAndGetPackages(false), PyPackageUtil.PIP);
     if (installedPip == null || VERSION_COMPARATOR.compare(installedPip.getVersion(), PIP_VERSION) < 0) {
       installManagement(Objects.requireNonNull(getHelperPath(PIP_WHEEL_NAME)));
     }
