@@ -26,7 +26,6 @@ project.consumer.commonMain
 project.consumer.commonTest
     consumer.commonMain (friend, TEST)
     consumer.jvmAndAndroidMain (friend, TEST)
-    consumer.jvmMain (RUNTIME)
     consumer.jvmMain (TEST)
     org.jetbrains.kotlin.mpp.tests:producer-jvm:1.0 (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
@@ -58,7 +57,6 @@ project.consumer.jvmTest
     consumer.commonMain (friend, TEST)
     consumer.commonTest (refines, TEST)
     consumer.jvmAndAndroidMain (friend, TEST)
-    consumer.jvmMain (friend, RUNTIME)
     consumer.jvmMain (friend, TEST)
     org.jetbrains.kotlin.mpp.tests:producer-jvm:1.0 (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
@@ -114,7 +112,6 @@ project.producer.commonTest
     org.jetbrains:annotations:13.0 (TEST)
     producer.commonMain (friend, TEST)
     producer.jvmAndAndroidMain (friend, TEST)
-    producer.jvmMain (RUNTIME)
     producer.jvmMain (TEST)
 
 project.producer.jvmAndAndroidMain
@@ -140,7 +137,6 @@ project.producer.jvmTest
     producer.commonMain (friend, TEST)
     producer.commonTest (refines, TEST)
     producer.jvmAndAndroidMain (friend, TEST)
-    producer.jvmMain (friend, RUNTIME)
     producer.jvmMain (friend, TEST)
 
 project.producer.main
