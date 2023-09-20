@@ -7,13 +7,14 @@ import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleCodeInsightTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
+import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.graldeJvm.GradleJvmTestFixture
 
 internal class GradleTestFixtureFactoryImpl : GradleTestFixtureFactory {
 
   override fun createGradleJvmTestFixture(
     gradleVersion: GradleVersion
   ): SdkTestFixture {
-    return GradleJvmTestFixtureImpl(gradleVersion)
+    return GradleJvmTestFixture(gradleVersion)
   }
 
   override fun createFileTestFixture(
