@@ -12,8 +12,14 @@ interface TreeAssertion<T> {
    * @param assert builds a list of child assertions
    * @param flattenIf skips this node assertion (name and value),
    * but it applies child assertions as if they are on the same level with this node assertion.
+   * @param skipIf skips this node assertion with them child assertions.
    */
-  fun assertNode(name: String, flattenIf: Boolean = false, assert: Node<T>.() -> Unit = {})
+  fun assertNode(
+    name: String,
+    flattenIf: Boolean = false,
+    skipIf: Boolean = false,
+    assert: Node<T>.() -> Unit = {}
+  )
 
   /**
    * Defines assertion for next child node.
@@ -22,8 +28,14 @@ interface TreeAssertion<T> {
    * @param assert builds a list of child assertions
    * @param flattenIf skips this node assertion (name and value),
    * but it applies child assertions as if they are on the same level with this node assertion.
+   * @param skipIf skips this node assertion with them child assertions.
    */
-  fun assertNode(regex: Regex, flattenIf: Boolean = false, assert: Node<T>.() -> Unit = {})
+  fun assertNode(
+    regex: Regex,
+    flattenIf: Boolean = false,
+    skipIf: Boolean = false,
+    assert: Node<T>.() -> Unit = {}
+  )
 
   interface Node<T> : TreeAssertion<T> {
 

@@ -110,7 +110,7 @@ class GradleExecutionViewFixture(
 
   fun assertRunTreeView(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
     TreeAssertion.assertTree(getSimplifiedRunTreeView()) {
-      assertNode("", assert)
+      assertNode("", assert = assert)
     }
   }
 

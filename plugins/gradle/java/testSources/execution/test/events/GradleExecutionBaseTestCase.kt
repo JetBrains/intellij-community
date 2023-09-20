@@ -123,7 +123,7 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     buildViewFixture.assertBuildViewTreeEquals { treeString ->
       val actualTree = buildTree(treeString!!)
       TreeAssertion.assertTree(actualTree) {
-        assertNode("", assert)
+        assertNode("", assert = assert)
       }
     }
   }
