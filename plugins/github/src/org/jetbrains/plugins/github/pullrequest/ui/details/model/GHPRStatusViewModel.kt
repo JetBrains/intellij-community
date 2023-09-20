@@ -3,12 +3,9 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.modelFlow
-import com.intellij.collaboration.ui.SingleValueModel
-import com.intellij.collaboration.ui.asStateFlow
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -51,6 +48,11 @@ class GHPRStatusViewModelImpl(
   override val ciJobs: SharedFlow<List<CodeReviewCIJob>> =
     mergeabilityState.map { it?.ciJobs ?: emptyList() }
       .modelFlow(cs, LOG)
+
+
+  override val requiredConversationsResolved: SharedFlow<Boolean> = mergeabilityState.map { mergeability ->
+    mergeability?.requiredConversationsResolved ?: false
+  }.modelFlow(cs, LOG)
 
   override val isRestricted: Flow<Boolean> = mergeabilityState.map { mergeability ->
     mergeability?.isRestricted ?: false

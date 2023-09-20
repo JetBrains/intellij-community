@@ -6,5 +6,6 @@ import com.intellij.openapi.util.NlsSafe
 data class CodeReviewCIJob(
   val name: @NlsSafe String,
   val status: CodeReviewCIJobState,
+  val required: Boolean,
   val detailsUrl: @NlsSafe String?
 )

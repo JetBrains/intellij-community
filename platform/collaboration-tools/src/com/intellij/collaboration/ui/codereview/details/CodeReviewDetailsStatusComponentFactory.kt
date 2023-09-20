@@ -135,6 +135,16 @@ object CodeReviewDetailsStatusComponentFactory {
     }
   }
 
+  fun createConversationsComponent(scope: CoroutineScope, requiredConversationsResolved: Flow<Boolean>): JComponent {
+
+    return ReviewDetailsStatusLabel("Code review status: unresolved conversation").apply {
+      border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
+      icon = if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Error else AllIcons.RunConfigurations.TestError
+      text = CollaborationToolsBundle.message("review.details.status.unresolved.conversation")
+      bindVisibilityIn(scope, requiredConversationsResolved)
+    }
+  }
+
   fun <Reviewer, IconKey> createReviewersReviewStateComponent(
     scope: CoroutineScope,
     reviewersReview: Flow<Map<Reviewer, ReviewState>>,
@@ -163,6 +173,7 @@ object CodeReviewDetailsStatusComponentFactory {
 
     return panel
   }
+
 
   private fun <Reviewer, IconKey> createReviewerReviewStatus(
     reviewer: Reviewer,
@@ -212,7 +223,7 @@ object CodeReviewDetailsStatusComponentFactory {
     val failed = jobs.count { it.status == CodeReviewCIJobState.FAILED }
     val pending = jobs.count { it.status == CodeReviewCIJobState.PENDING }
     return when {
-      jobs.all { it.status == CodeReviewCIJobState.SUCCESS } -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Success else AllIcons.RunConfigurations.TestPassed
+      jobs.filter { it.required }.all { it.status == CodeReviewCIJobState.SUCCESS } -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Success else AllIcons.RunConfigurations.TestPassed
       pending != 0 && failed != 0 -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.FailedInProgress else AllIcons.Status.FailedInProgress
       pending != 0 -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Run.TestNotRunYet else AllIcons.RunConfigurations.TestNotRan
       else -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Error else AllIcons.RunConfigurations.TestError
@@ -230,6 +241,7 @@ object CodeReviewDetailsStatusComponentFactory {
     }
   }
 
+
   private class CodeReviewCIJobRenderer : ClickableCellRenderer<CodeReviewCIJob> {
     private val component = SimpleColoredComponent().apply {
       iconTextGap = JBUI.scale(4)
@@ -246,7 +258,8 @@ object CodeReviewDetailsStatusComponentFactory {
 
         if (value.detailsUrl != null) {
           append(value.name, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, SimpleColoredComponent.BrowserLauncherTag(value.detailsUrl))
-        } else {
+        }
+        else {
           append(value.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
         }
       }

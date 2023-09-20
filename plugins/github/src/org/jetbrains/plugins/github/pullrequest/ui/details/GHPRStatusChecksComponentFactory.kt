@@ -43,6 +43,7 @@ internal object GHPRStatusChecksComponentFactory {
       add(createAccessDeniedLabel(scope, reviewStatusVm, securityService))
       add(CodeReviewDetailsStatusComponentFactory.createCiComponent(scope, reviewStatusVm))
       add(CodeReviewDetailsStatusComponentFactory.createConflictsComponent(scope, reviewStatusVm.hasConflicts))
+      add(CodeReviewDetailsStatusComponentFactory.createConversationsComponent(scope, reviewStatusVm.requiredConversationsResolved))
       add(CodeReviewDetailsStatusComponentFactory.createRequiredReviewsComponent(scope,
                                                                                  reviewStatusVm.requiredApprovingReviewsCount,
                                                                                  reviewStatusVm.isDraft))

@@ -27,6 +27,9 @@ data class GitLabMergeRequestFullDetails(
   val targetBranch: String,
   val sourceBranch: String,
   val isApproved: Boolean,
+  val onlyAllowMergeIfAllDiscussionsAreResolved: Boolean,
+  val allowMergeOnSkippedPipeline: Boolean,
+  val onlyAllowMergeIfPipelineSucceeds: Boolean,
   val conflicts: Boolean,
   val commits: List<GitLabCommit>,
   val diffRefs: GitLabDiffRefs,
@@ -60,6 +63,10 @@ data class GitLabMergeRequestFullDetails(
       targetBranch = dto.targetBranch,
       sourceBranch = dto.sourceBranch,
       isApproved = dto.approved ?: true,
+      onlyAllowMergeIfAllDiscussionsAreResolved = dto.targetProject.onlyAllowMergeIfAllDiscussionsAreResolved,
+      /*"If `only_allow_merge_if_pipeline_succeeds` is true, indicates if merge requests of the project can also be merged with skipped jobs."*/
+      allowMergeOnSkippedPipeline = dto.targetProject.onlyAllowMergeIfPipelineSucceeds && dto.targetProject.allowMergeOnSkippedPipeline,
+      onlyAllowMergeIfPipelineSucceeds = dto.targetProject.onlyAllowMergeIfPipelineSucceeds,
       conflicts = dto.conflicts,
       commits = dto.commits?.map(GitLabCommit.Companion::fromGraphQLDTO)
                 ?: backupCommits.map(GitLabCommit.Companion::fromRestDTO),

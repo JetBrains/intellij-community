@@ -158,11 +158,12 @@ object GHGQLRequests {
         acceptMimeType = GHSchemaPreview.PR_DRAFT.mimeType
       }
 
-    fun mergeabilityData(repository: GHRepositoryCoordinates, number: Long): GQLQuery<GHPullRequestMergeabilityData?> =
+    fun mergeabilityData(repository: GHRepositoryCoordinates, pullRequestId: String,number: Long): GQLQuery<GHPullRequestMergeabilityData?> =
       GQLQuery.OptionalTraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.pullRequestMergeabilityData,
                                        mapOf("repoOwner" to repository.repositoryPath.owner,
                                              "repoName" to repository.repositoryPath.repository,
-                                             "number" to number),
+                                             "number" to number,
+                                             "pullRequestId" to pullRequestId),
                                        GHPullRequestMergeabilityData::class.java,
                                        "repository", "pullRequest").apply {
         acceptMimeType = "${GHSchemaPreview.CHECKS.mimeType},${GHSchemaPreview.PR_MERGE_INFO.mimeType}"

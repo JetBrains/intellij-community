@@ -14,7 +14,8 @@ class GHPRMergeabilityState(val headRefOid: String,
                             val canBeRebased: Boolean,
 
                             val isRestricted: Boolean,
-                            val requiredApprovingReviewsCount: Int) {
+                            val requiredApprovingReviewsCount: Int,
+                            val requiredConversationsResolved: Boolean) {
 
   enum class ChecksState {
     BLOCKING_BEHIND, BLOCKING_FAILING, FAILING, PENDING, SUCCESSFUL, NONE

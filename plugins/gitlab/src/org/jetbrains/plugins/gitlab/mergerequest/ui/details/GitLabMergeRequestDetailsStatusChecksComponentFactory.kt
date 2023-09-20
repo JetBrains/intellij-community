@@ -25,6 +25,7 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
     val statuses = VerticalListPanel().apply {
       add(CodeReviewDetailsStatusComponentFactory.createCiComponent(scope, statusVm))
       add(CodeReviewDetailsStatusComponentFactory.createConflictsComponent(scope, statusVm.hasConflicts))
+      add(CodeReviewDetailsStatusComponentFactory.createConversationsComponent(scope, statusVm.requiredConversationsResolved))
       add(CodeReviewDetailsStatusComponentFactory.createNeedReviewerComponent(scope, reviewFlowVm.reviewerReviews))
       add(CodeReviewDetailsStatusComponentFactory.createReviewersReviewStateComponent(
         scope, reviewFlowVm.reviewerReviews,

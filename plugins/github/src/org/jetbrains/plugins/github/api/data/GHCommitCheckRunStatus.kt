@@ -7,5 +7,6 @@ import com.intellij.collaboration.api.dto.GraphQLFragment
 class GHCommitCheckRunStatus(
   val name: String,
   val conclusion: GHCommitCheckSuiteConclusion?,
+  val isRequired: Boolean,
   val url: String
 )
