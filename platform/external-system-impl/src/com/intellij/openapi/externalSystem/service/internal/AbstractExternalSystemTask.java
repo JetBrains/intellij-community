@@ -249,7 +249,8 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   }
 
   private @NotNull ExternalSystemTaskNotificationListener getProgressIndicatorListener(@NotNull ProgressIndicator indicator) {
-    final ExternalSystemTaskProgressIndicatorUpdater updater = getProgressIndicatorUpdater();
+    final ExternalSystemTaskProgressIndicatorUpdater updater =
+      ExternalSystemTaskProgressIndicatorUpdater.getInstanceOrDefault(myExternalSystemId);
     return new ExternalSystemTaskNotificationListenerAdapter() {
       @Override
       public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
@@ -258,21 +259,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
 
       @Override
       public void onEnd(@NotNull ExternalSystemTaskId id) {
-          updater.onEnd(id);
-      }
-    };
-  }
-
-  private @NotNull ExternalSystemTaskProgressIndicatorUpdater getProgressIndicatorUpdater() {
-    ExternalSystemTaskProgressIndicatorUpdater indicator =
-      ExternalSystemTaskProgressIndicatorUpdater.getInstance(myExternalSystemId);
-    if (indicator != null) {
-      return indicator;
-    }
-    return new ExternalSystemTaskProgressIndicatorUpdater() {
-      @Override
-      public boolean canUpdate(@NotNull ProjectSystemId externalSystemId) {
-        return true;
+          updater.onTaskEnd(id);
       }
     };
   }

@@ -23,8 +23,16 @@ abstract class ExternalSystemTaskProgressIndicatorUpdater {
       "com.intellij.externalSystemTaskProgressIndicatorUpdater")
 
     @JvmStatic
-    fun getInstance(systemId: ProjectSystemId): ExternalSystemTaskProgressIndicatorUpdater? {
-      return EP_NAME.findFirstSafe { it.canUpdate(systemId) }
+    fun getInstance(systemId: ProjectSystemId): ExternalSystemTaskProgressIndicatorUpdater? = EP_NAME.findFirstSafe {
+      it.canUpdate(systemId)
+    }
+
+    @JvmStatic
+    fun getInstanceOrDefault(systemId: ProjectSystemId): ExternalSystemTaskProgressIndicatorUpdater {
+      return getInstance(systemId)
+             ?: object : ExternalSystemTaskProgressIndicatorUpdater() {
+               override fun canUpdate(externalSystemId: ProjectSystemId): Boolean = true
+             }
     }
   }
 
@@ -49,9 +57,7 @@ abstract class ExternalSystemTaskProgressIndicatorUpdater {
         progress = progressEvent.getProgress()
         unit = progressEvent.getUnit()
       }
-      else -> {
-        return
-      }
+      else -> return
     }
     if (total <= 0) {
       indicator.setIndeterminate(true)
@@ -75,7 +81,7 @@ abstract class ExternalSystemTaskProgressIndicatorUpdater {
     return "$body $tail"
   }
 
-  open fun onEnd(taskId: ExternalSystemTaskId): Unit = Unit
+  open fun onTaskEnd(taskId: ExternalSystemTaskId): Unit = Unit
 
   @NlsSafe
   private fun getSizeInfo(progress: Long, total: Long, unit: String): String = when (unit) {

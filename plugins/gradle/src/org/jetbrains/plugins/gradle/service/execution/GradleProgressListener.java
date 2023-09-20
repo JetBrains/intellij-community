@@ -77,21 +77,16 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
         return;
       }
     }
-    ExternalSystemTaskNotificationEvent progressBuildEvent = null;
-    if (myProgressMapper.canMap(event)) {
-      progressBuildEvent = myProgressMapper.map(myTaskId, event);
-      if (progressBuildEvent != null) {
-        if (!progressBuildEvent.equals(myLastStatusChange)) {
-          myListener.onStatusChange(progressBuildEvent);
-          myLastStatusChange = progressBuildEvent;
-        }
+    ExternalSystemTaskNotificationEvent progressBuildEvent = myProgressMapper.map(myTaskId, event);
+    if (progressBuildEvent != null) {
+      if (!progressBuildEvent.equals(myLastStatusChange)) {
+        myListener.onStatusChange(progressBuildEvent);
+        myLastStatusChange = progressBuildEvent;
       }
     }
-    if (progressBuildEvent == null) {
-      var taskNotificationEvent = GradleProgressEventConverter.createTaskNotificationEvent(myTaskId, myOperationId, event);
-      if (taskNotificationEvent != null) {
-        myListener.onStatusChange(taskNotificationEvent);
-      }
+    var taskNotificationEvent = GradleProgressEventConverter.createTaskNotificationEvent(myTaskId, myOperationId, event);
+    if (taskNotificationEvent != null) {
+      myListener.onStatusChange(taskNotificationEvent);
     }
   }
 
