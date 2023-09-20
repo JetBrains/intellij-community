@@ -8,15 +8,16 @@ import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
+import org.jetbrains.plugins.gitlab.api.GitLabGraphQLMutationException
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.api.request.createAllProjectLabelsFlow
-import org.jetbrains.plugins.gitlab.api.request.getProjectUsers
-import org.jetbrains.plugins.gitlab.api.request.getProjectUsersURI
+import org.jetbrains.plugins.gitlab.api.getResultOrThrow
+import org.jetbrains.plugins.gitlab.api.request.*
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 private val LOG = logger<GitLabProject>()
@@ -28,6 +29,9 @@ interface GitLabProject {
 
   val labels: Flow<Result<List<GitLabLabelDTO>>>
   val members: Flow<Result<List<GitLabUserDTO>>>
+  val defaultBranch: Deferred<String>
+
+  suspend fun createMergeRequest(sourceBranch: String, targetBranch: String, title: String): GitLabMergeRequestDTO
 }
 
 class GitLabLazyProject(
@@ -40,6 +44,8 @@ class GitLabLazyProject(
 
   private val cs = parentCs.childScope()
 
+  private val projectCoordinates: GitLabProjectCoordinates = projectMapping.repository
+
   override val mergeRequests by lazy {
     CachingGitLabProjectMergeRequestsStore(project, cs, api, projectMapping, tokenRefreshFlow)
   }
@@ -49,6 +55,7 @@ class GitLabLazyProject(
       .collectBatches()
       .asResultFlow()
       .modelFlow(parentCs, LOG)
+
   override val members: Flow<Result<List<GitLabUserDTO>>> =
     ApiPageUtil.createPagesFlowByLinkHeader(getProjectUsersURI(projectMapping.repository)) {
       api.rest.getProjectUsers(it)
@@ -57,4 +64,16 @@ class GitLabLazyProject(
       .collectBatches()
       .asResultFlow()
       .modelFlow(parentCs, LOG)
+
+  override val defaultBranch: Deferred<String> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+    val projectRepository = api.graphQL.getProjectRepository(projectCoordinates).body()
+    projectRepository.rootRef
+  }
+
+  @Throws(GitLabGraphQLMutationException::class)
+  override suspend fun createMergeRequest(sourceBranch: String, targetBranch: String, title: String): GitLabMergeRequestDTO {
+    return withContext(cs.coroutineContext + Dispatchers.IO) {
+      api.graphQL.createMergeRequest(projectCoordinates, sourceBranch, targetBranch, title).getResultOrThrow()
+    }
+  }
 }
