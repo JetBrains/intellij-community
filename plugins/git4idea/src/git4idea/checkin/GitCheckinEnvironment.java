@@ -17,10 +17,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.IssueNavigationConfiguration.LinkMatch;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -564,6 +562,8 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
 
     List<VcsException> exceptions = new ArrayList<>();
     VirtualFile root = repository.getRoot();
+    String newMessage = message;
+    String issueLinks = getIssueLinks(newMessage);
 
     List<FilePath> beforePaths = mapNotNull(changes, it -> it.beforePath);
     List<FilePath> afterPaths = mapNotNull(changes, it -> it.afterPath);
@@ -572,9 +572,13 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     for (GitCheckinExplicitMovementProvider provider : providers) {
       Collection<Movement> providerMovements = provider.collectExplicitMovements(myProject, beforePaths, afterPaths);
       if (!providerMovements.isEmpty()) {
-        message = provider.getCommitMessage(myProject, message);
+        newMessage = provider.getCommitMessage(newMessage);
         movedPaths.addAll(providerMovements);
       }
+    }
+
+    if (!issueLinks.isBlank()) {
+      newMessage += "\n\n" + issueLinks;
     }
 
     try {
@@ -584,7 +588,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       List<CommitChange> movedChanges = committedAndNewChanges.first;
       Collection<CommitChange> newRootChanges = committedAndNewChanges.second;
 
-      runWithMessageFile(myProject, root, message, moveMessageFile -> exceptions.addAll(
+      runWithMessageFile(myProject, root, newMessage, moveMessageFile -> exceptions.addAll(
         commitUsingIndex(myProject, repository, movedChanges, new HashSet<>(movedChanges), moveMessageFile, createCommitOptions())));
 
       List<Couple<FilePath>> committedMovements = mapNotNull(movedChanges, it -> Couple.of(it.beforePath, it.afterPath));
@@ -598,6 +602,16 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       exceptions.add(e);
       return Pair.create(changes, exceptions);
     }
+  }
+
+  private String getIssueLinks(String message) {
+    List<LinkMatch> matches = IssueNavigationConfiguration.getInstance(myProject).findIssueLinks(message);
+    StringBuilder builder = new StringBuilder();
+    for (LinkMatch match : matches) {
+      String issueId = match.getRange().substring(message);
+      builder.append(issueId).append("\n");
+    }
+    return builder.toString();
   }
 
   private @Nullable Pair<List<CommitChange>, List<CommitChange>> addExplicitMovementsToIndex(@NotNull GitRepository repository,

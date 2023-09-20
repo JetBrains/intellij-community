@@ -35,7 +35,7 @@ public abstract class GitCheckinExplicitMovementProvider {
    * @return commit message for the commit with movements
    */
   @NotNull
-  public abstract String getCommitMessage(@NotNull Project project, @NotNull String originalCommitMessage);
+  public abstract String getCommitMessage(@NotNull String originalCommitMessage);
 
   /**
    * This method could be called several times per commit operation. For instance, to update commit options UI so that it reflects current
