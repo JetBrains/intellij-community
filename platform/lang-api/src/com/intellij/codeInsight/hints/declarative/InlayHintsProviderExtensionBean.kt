@@ -72,12 +72,14 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
    */
   @RequiredElement
   @Attribute
+  @Nls(capitalization = Nls.Capitalization.Title)
   var nameKey: String? = null
 
   /**
    * Description, which will be seen in the settings
    */
   @Attribute
+  @Nls
   var descriptionKey: String? = null
 
   override fun getImplementationClassName(): String? {
