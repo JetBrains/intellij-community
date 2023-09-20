@@ -198,6 +198,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private @Nullable DataProvider myAdditionalDataProvider = null;
 
+  private boolean myNeedCheckHoverOnLayout = false;
+
   public ActionToolbarImpl(@NotNull String place, @NotNull ActionGroup actionGroup, boolean horizontal) {
     this(place, actionGroup, horizontal, false, true);
   }
@@ -648,6 +650,17 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     for (int i = componentCount - 1; i >= 0; i--) {
       final Component component = getComponent(i);
       component.setBounds(myComponentBounds.get(i));
+    }
+
+    if (myNeedCheckHoverOnLayout) {
+      Point location = MouseInfo.getPointerInfo().getLocation();
+      SwingUtilities.convertPointFromScreen(location, this);
+      for (int i = componentCount - 1; i >= 0; i--) {
+        final Component component = getComponent(i);
+        if (component instanceof ActionButton actionButton && component.getBounds().contains(location)) {
+          actionButton.myRollover = true;
+        }
+      }
     }
   }
 
@@ -1942,6 +1955,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @ApiStatus.Internal
   public void setAdditionalDataProvider(@Nullable DataProvider additionalDataProvider) {
     myAdditionalDataProvider = additionalDataProvider;
+  }
+
+  @ApiStatus.Internal
+  public void setNeedCheckHoverOnLayout(boolean needCheckHoverOnLayout) {
+    myNeedCheckHoverOnLayout = needCheckHoverOnLayout;
   }
 
   private final class AccessibleActionToolbar extends AccessibleJPanel {

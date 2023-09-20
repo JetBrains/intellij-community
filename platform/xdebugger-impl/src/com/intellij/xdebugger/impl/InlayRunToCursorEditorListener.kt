@@ -94,15 +94,20 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
     if (currentEditor.get() === editor && currentLineNumber == lineNumber) {
       return false
     }
+    scheduleInlayRunToCursor(editor, lineNumber, session)
+    return true
+  }
+
+  fun scheduleInlayRunToCursor(editor: Editor, lineNumber: Int, session: XDebugSessionImpl) {
     var firstNonSpaceSymbol = editor.getDocument().getLineStartOffset(lineNumber)
     val charsSequence = editor.getDocument().charsSequence
     while (true) {
       if (firstNonSpaceSymbol >= charsSequence.length) {
-        return true //end of file
+        return //end of file
       }
       val c = charsSequence[firstNonSpaceSymbol]
       if (c == '\n') {
-        return true // empty line
+        return // empty line
       }
       if (!Character.isWhitespace(c)) {
         break
@@ -111,7 +116,7 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
     }
     val firstNonSpacePos = editor.offsetToXY(firstNonSpaceSymbol)
     if (firstNonSpacePos.x < JBUI.scale(MINIMAL_TEXT_OFFSET)) {
-      return true
+      return
     }
     val lineY = editor.logicalPositionToXY(LogicalPosition(lineNumber, 0)).y
 
@@ -141,7 +146,6 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
         showHint(editor, lineNumber, firstNonSpacePos, group, lineY)
       }
     }
-    return true
   }
 
   @RequiresEdt
@@ -164,6 +168,7 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
     val toolbarImpl = createImmediatelyUpdatedToolbar(group, ActionPlaces.EDITOR_HINT, editor.getComponent(), true) {} as ActionToolbarImpl
     toolbarImpl.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY)
     toolbarImpl.setActionButtonBorder(JBUI.Borders.empty(0, ACTION_BUTTON_GAP))
+    toolbarImpl.setNeedCheckHoverOnLayout(true)
     toolbarImpl.setBorder(null)
     toolbarImpl.setOpaque(false)
     toolbarImpl.setAdditionalDataProvider { dataId: String? ->
