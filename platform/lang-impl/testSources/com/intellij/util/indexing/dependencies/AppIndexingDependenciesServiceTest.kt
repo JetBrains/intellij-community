@@ -1,6 +1,7 @@
 package com.intellij.util.indexing.dependencies
 
 import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.TempDirectory
 import org.junit.After
 import org.junit.Assert.*
@@ -14,6 +15,11 @@ import kotlin.math.min
 
 @RunWith(JUnit4::class)
 class AppIndexingDependenciesServiceTest {
+
+  @JvmField
+  @Rule
+  val appRule = ApplicationRule()
+
   @Rule
   @JvmField
   val temp = TempDirectory()
@@ -61,7 +67,9 @@ class AppIndexingDependenciesServiceTest {
   fun `test corrupted fileIndexingStamp`() {
     val file = factory.nonExistingFile()
     FileOutputStream(file).use {
-      it.write(ByteArray(7)) // 4 bytes for file version + 3 bytes
+      // 4 bytes for file version + 3 bytes
+      val bytes = byteArrayOf(0, 0, 0, 1) + byteArrayOf(0, 0, 0)
+      it.write(bytes)
     }
 
     try {

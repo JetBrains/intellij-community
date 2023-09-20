@@ -4,9 +4,12 @@ package com.intellij.util.indexing.dependencies
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.serviceContainer.NonInjectable
+import com.intellij.util.application
+import com.intellij.util.indexing.dependencies.IndexingDependenciesFingerprint.Companion.NULL_FINGERPRINT
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
@@ -49,6 +52,7 @@ class AppIndexingDependenciesService @NonInjectable @VisibleForTesting construct
   }
 
   private val current = AtomicReference(AppIndexingDependenciesTokenImpl(0))
+  private val latestFingerprint = AtomicReference(NULL_FINGERPRINT)
 
   private val storage: AppIndexingDependenciesStorage = openOrInitStorage(storagePath)
 
@@ -76,7 +80,21 @@ class AppIndexingDependenciesService @NonInjectable @VisibleForTesting construct
     }
   }
 
-  internal fun getCurrent(): AppIndexingDependenciesToken = current.get()
+  internal fun getCurrent(): AppIndexingDependenciesToken {
+    val fingerprint = application.service<IndexingDependenciesFingerprint>().getFingerprint()
+    if (latestFingerprint.get() == NULL_FINGERPRINT) {
+      latestFingerprint.compareAndSet(NULL_FINGERPRINT, storage.readAppFingerprint())
+    }
+
+    val latestFingerprintValue = latestFingerprint.get()
+    if (latestFingerprintValue != fingerprint) {
+      invalidateAllStamps()
+      storage.writeAppFingerprint(fingerprint)
+      latestFingerprint.compareAndSet(latestFingerprintValue, fingerprint)
+    }
+
+    return current.get()
+  }
 
   fun invalidateAllStamps() {
     current.updateAndGet {
