@@ -486,11 +486,17 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
 
   @Override
   public boolean isDirty() {
-    //TODO RC: as always, with mapped storage it is hard to say when it is 'dirty' -- 'cos almost all writes
+    if (closed.get()) {
+      return false;
+    }
+    //RC: as always, with mapped storage it is tricky to say when it is 'dirty' -- 'cos almost all writes
     // go directly to the mapped buffer, and mapped buffer dirty/flush management is up to OS. We can manage
-    // .dirty flag ourself, but it seems an overhead for (almost) nothing.
-    // So I just define: 'storage is always dirty if not closed'
-    return !closed.get();
+    // .dirty flag ourself, but it seems an overhead for (almost) nothing -- there is not so many realy usages
+    // for .isDirty() in mmapped storages. I just define some heuristics: storage is dirty if there are new
+    // records allocated since last .force() call -- which is not precise, but kind of good enough.
+    //TODO: Ideally, we should just replace all class fields (nextRecordId, recordsAllocated, etc) with direct
+    // header fields access -- this way we could always safely 'return false' from this method.
+    return readHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET) < nextRecordId;
   }
 
   @Override
