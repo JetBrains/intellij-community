@@ -439,6 +439,9 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       XDebuggerUtilImpl.getLineBreakpointVariants(project, breakpointTypes, linePosition).onProcessed(variants -> {
         if (variants == null) {
           variants = Collections.emptyList();
+        } else if (ContainerUtil.exists(variants, XLineBreakpointImpl::isAllVariant)) {
+          // No need to show "all" variant in case of the inline breakpoints approach, it's useful only for the popup based one.
+          variants = variants.stream().filter(v -> !isAllVariant(v)).toList();
         }
 
         var codeStartOffset = DocumentUtil.getLineStartIndentedOffset(document, line);
@@ -472,6 +475,13 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
         }
       });
     }
+  }
+
+  private static boolean isAllVariant(XLineBreakpointType<?>.XLineBreakpointVariant variant) {
+    // Currently, it's the easiest way to check that it's really multi-location variant.
+    // Don't try to check whether the variant is an instance of XLineBreakpointAllVariant, they all are.
+    // FIXME[inline-bp]: introduce better way for this or completely get rid of multi-location variants
+    return variant.getIcon() == AllIcons.Debugger.MultipleBreakpoints;
   }
 
   private static void addInlineBreakpointInlay(Editor editor, @NotNull XLineBreakpointImpl<?> breakpoint, @Nullable XLineBreakpointType<?>.XLineBreakpointVariant variant, int codeStartOffset) {
