@@ -732,8 +732,8 @@ fun <T : CommandChain> T.selectAll(): T {
   return this
 }
 
-fun <T : CommandChain> T.checkoutBranch(branch: String): T {
-  this.addCommand("${CMD_PREFIX}gitCheckout $branch")
+fun <T : CommandChain> T.checkoutBranch(branch: String, newBranchName: String = branch): T {
+  this.addCommand("${CMD_PREFIX}gitCheckout $branch $newBranchName")
   return this
 }
 
