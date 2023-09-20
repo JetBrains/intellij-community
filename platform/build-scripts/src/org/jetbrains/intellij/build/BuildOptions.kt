@@ -218,6 +218,11 @@ class BuildOptions(
      */
     const val INTELLIJ_BUILD_IS_NIGHTLY = "intellij.build.is.nightly"
 
+    /**
+     * IJPL-176 Download pre-compiled IJent executables.
+     */
+    const val IJENT_EXECUTABLE_DOWNLOADING = "ijent.executable.downloading"
+
     private val currentBuildTimeInSeconds = System.currentTimeMillis() / 1000
   }
 

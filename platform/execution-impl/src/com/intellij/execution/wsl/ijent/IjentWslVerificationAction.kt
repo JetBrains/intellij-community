@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.withModalProgress
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.platform.ijent.IjentApi
+import com.intellij.platform.ijent.IjentMissingBinary
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
@@ -38,25 +39,32 @@ class IjentWslVerificationAction : DumbAwareAction() {
       ?: error("No ModalTaskOwner")
     GlobalScope.launch {
       LOG.runAndLogException {
-        withModalProgress(modalTaskOwner, e.presentation.text, TaskCancellation.cancellable()) {
-          val wslDistribution = WslDistributionManager.getInstance().installedDistributions.first()
+        try {
+          withModalProgress(modalTaskOwner, e.presentation.text, TaskCancellation.cancellable()) {
+            val wslDistribution = WslDistributionManager.getInstance().installedDistributions.first()
 
-          coroutineScope {
-            val ijent = deployAndLaunchIjent(
-              ijentCoroutineScope = childScope(),
-              project = null,
-              wslDistribution = wslDistribution,
-            )
-            val process = when (val p = ijent.executeProcess("uname", "-a")) {
-              is IjentApi.ExecuteProcessResult.Failure -> error(p)
-              is IjentApi.ExecuteProcessResult.Success -> p.process
+            coroutineScope {
+              val ijent = deployAndLaunchIjent(
+                ijentCoroutineScope = childScope(),
+                project = null,
+                wslDistribution = wslDistribution,
+              )
+              val process = when (val p = ijent.executeProcess("uname", "-a")) {
+                is IjentApi.ExecuteProcessResult.Failure -> error(p)
+                is IjentApi.ExecuteProcessResult.Success -> p.process
+              }
+              val stdout = ByteArrayOutputStream()
+              process.stdout.consumeEach(stdout::write)
+              withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+                Messages.showInfoMessage(stdout.toString(), "IJent on $wslDistribution: uname -a")
+              }
+              coroutineContext.cancelChildren()
             }
-            val stdout = ByteArrayOutputStream()
-            process.stdout.consumeEach(stdout::write)
-            withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-              Messages.showInfoMessage(stdout.toString(), "IJent on $wslDistribution: uname -a")
-            }
-            coroutineContext.cancelChildren()
+          }
+        }
+        catch (err: IjentMissingBinary) {
+          GlobalScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            Messages.showErrorDialog(err.localizedMessage, "IJent error")
           }
         }
       }
