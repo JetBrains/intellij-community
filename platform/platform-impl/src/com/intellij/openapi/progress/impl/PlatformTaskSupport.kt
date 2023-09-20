@@ -335,7 +335,9 @@ private suspend fun doShowModalIndicator(
       focusComponent.requestFocusInWindow()
       if (previousFocusOwner != null) {
         awaitCancellationAndInvoke {
-          previousFocusOwner.requestFocusInWindow()
+          // TODO: don't move focus back if the focus owner was changed
+          //if (focusComponent.isFocusOwner)
+            previousFocusOwner.requestFocusInWindow()
         }
       }
 
