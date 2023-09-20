@@ -475,6 +475,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("CompanionObjectMember.kt")
+            public void testCompanionObjectMember() throws Exception {
+                runTest("../completion/testData/basic/common/callableReference/CompanionObjectMember.kt");
+            }
+
             @TestMetadata("EmptyQualifier.kt")
             public void testEmptyQualifier() throws Exception {
                 runTest("../completion/testData/basic/common/callableReference/EmptyQualifier.kt");

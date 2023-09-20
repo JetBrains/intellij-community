@@ -475,6 +475,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("CompanionObjectMember.kt")
+            public void testCompanionObjectMember() throws Exception {
+                runTest("../testData/basic/common/callableReference/CompanionObjectMember.kt");
+            }
+
             @TestMetadata("EmptyQualifier.kt")
             public void testEmptyQualifier() throws Exception {
                 runTest("../testData/basic/common/callableReference/EmptyQualifier.kt");

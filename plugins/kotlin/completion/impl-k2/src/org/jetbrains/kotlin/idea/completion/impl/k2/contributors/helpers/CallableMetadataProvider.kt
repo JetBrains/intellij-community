@@ -160,20 +160,21 @@ internal object CallableMetadataProvider {
 
     context(KtAnalysisSession)
     private fun getFlattenedActualReceiverTypes(context: WeighingContext): List<List<KtType>> {
-        val actualExplicitReceiverType = context.explicitReceiver?.let { receiver ->
-            getReferencedClassTypeInCallableReferenceExpression(receiver)
-                ?: getQualifierClassTypeInKDocName(receiver)
-                ?: (receiver as? KtExpression)?.getTypeWithCorrectedNullability()
+        val actualExplicitReceiverTypes = context.explicitReceiver?.let { receiver ->
+            val referencedClass = getReferencedClassInCallableReferenceExpression(receiver) ?: getQualifierClassInKDocName(receiver)
+            val typesFromClass = referencedClass?.let { listOfNotNull(it, it.companionObject).map { buildClassType(it) } }
+
+            typesFromClass ?: (receiver as? KtExpression)?.getTypeWithCorrectedNullability()?.let { listOf(it) }
         }
 
-        return if (actualExplicitReceiverType != null) {
-            listOf(actualExplicitReceiverType)
-        } else {
-            context.implicitReceiver.map { it.type }
-        }
+        val actualImplicitReceiverTypes = context.implicitReceiver.map { it.type }
+        return (actualExplicitReceiverTypes ?: actualImplicitReceiverTypes)
             .filterNot { it is KtErrorType }
             .map { it.flatten() }
     }
+
+    private val KtClassLikeSymbol.companionObject: KtNamedClassOrObjectSymbol?
+        get() = (this as? KtNamedClassOrObjectSymbol)?.companionObject
 
     context(KtAnalysisSession)
     private fun KtType.flatten(): List<KtType> = when (this) {
@@ -196,14 +197,14 @@ internal object CallableMetadataProvider {
         }
 
     /**
-     * Return the type from the referenced class if this explicit receiver is a receiver in a callable reference expression. For example,
-     * in the following code, `String` is such a receiver. And this method should return the `String` type in this case.
+     * Returns referenced class if this explicit receiver is a receiver in a callable reference expression. For example,
+     * in the following code, `String` is such a receiver. And this method should return the `String` class in this case.
      * ```
      * val l = String::length
      * ```
      */
     context(KtAnalysisSession)
-    private fun getReferencedClassTypeInCallableReferenceExpression(explicitReceiver: KtElement): KtType? {
+    private fun getReferencedClassInCallableReferenceExpression(explicitReceiver: KtElement): KtClassLikeSymbol? {
         val callableReferenceExpression = explicitReceiver.getParentOfType<KtCallableReferenceExpression>(strict = true) ?: return null
         if (callableReferenceExpression.lhs != explicitReceiver) return null
         val symbol = when (explicitReceiver) {
@@ -211,16 +212,14 @@ internal object CallableMetadataProvider {
             is KtNameReferenceExpression -> explicitReceiver.mainReference.resolveToExpandedSymbol()
             else -> return null
         }
-        if (symbol !is KtClassLikeSymbol) return null
-        return buildClassType(symbol)
+        return symbol as? KtClassLikeSymbol
     }
 
     context(KtAnalysisSession)
-    private fun getQualifierClassTypeInKDocName(explicitReceiver: KtElement): KtType? {
+    private fun getQualifierClassInKDocName(explicitReceiver: KtElement): KtClassLikeSymbol? {
         if (explicitReceiver !is KDocName) return null
 
-        val symbol = explicitReceiver.mainReference.resolveToSymbol() as? KtClassLikeSymbol ?: return null
-        return buildClassType(symbol)
+        return explicitReceiver.mainReference.resolveToSymbol() as? KtClassLikeSymbol
     }
 
     context(KtAnalysisSession)
