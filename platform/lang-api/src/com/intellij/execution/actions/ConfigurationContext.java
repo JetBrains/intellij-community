@@ -58,8 +58,8 @@ public class ConfigurationContext {
   private final DataContext myDataContext;
   private final String myPlace;
 
-  private List<RuntimeConfigurationProducer> myPreferredProducers;
-  private List<ConfigurationFromContext> myConfigurationsFromContext;
+  private volatile List<RuntimeConfigurationProducer> myPreferredProducers;
+  private volatile List<ConfigurationFromContext> myConfigurationsFromContext;
 
 
   /**
@@ -68,6 +68,16 @@ public class ConfigurationContext {
   @Deprecated
   public static @NotNull ConfigurationContext getFromContext(DataContext dataContext) {
     return getFromContext(dataContext, ActionPlaces.UNKNOWN);
+  }
+
+  public static @NotNull ConfigurationContext getFromEvent(AnActionEvent event) {
+    return event.getUpdateSession().sharedData(SHARED_CONTEXT, () -> {
+      ConfigurationContext context = getFromContext(event.getDataContext(), event.getPlace());
+      context.findExisting(); // precache
+      context.getConfigurationsFromContext(); // precache
+      DataManager.getInstance().saveInDataContext(event.getDataContext(), SHARED_CONTEXT, context);
+      return context;
+    });
   }
 
   public static @NotNull ConfigurationContext getFromContext(DataContext dataContext, String place) {

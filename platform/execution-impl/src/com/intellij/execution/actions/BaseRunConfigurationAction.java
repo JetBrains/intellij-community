@@ -210,9 +210,9 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   protected void fullUpdate(@NotNull AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, event.getPlace());
-    final Presentation presentation = event.getPresentation();
-    final RunnerAndConfigurationSettings existing = findExisting(context);
+    ConfigurationContext context = ConfigurationContext.getFromEvent(event);
+    Presentation presentation = event.getPresentation();
+    RunnerAndConfigurationSettings existing = findExisting(context);
     RunnerAndConfigurationSettings configuration = existing;
     if (configuration == null) {
       configuration = context.getConfiguration();
