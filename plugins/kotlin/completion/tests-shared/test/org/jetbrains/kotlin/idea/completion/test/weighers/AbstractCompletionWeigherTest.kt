@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.completion.test.testWithAutoCompleteSetting
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.Assert
 
 abstract class AbstractCompletionWeigherTest(val completionType: CompletionType, val relativeTestDataPath: String) :
@@ -33,7 +34,9 @@ abstract class AbstractCompletionWeigherTest(val completionType: CompletionType,
     }
 
     open fun executeTest(test: () -> Unit) {
-        test()
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_K1, ".after") {
+            test()
+        }
     }
 }
 
