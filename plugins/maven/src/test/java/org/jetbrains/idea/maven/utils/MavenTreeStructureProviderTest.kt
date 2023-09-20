@@ -53,7 +53,7 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
                           "  <version>1</version>" +
                           "</parent>")
 
-    importProject()
+    importProjectAsync()
 
     val projectTree = myStructure.createPane().tree
     expand(projectTree)
@@ -85,7 +85,7 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
                                           "  <version>1</version>" +
                                           "</parent>")
 
-    importProject()
+    importProjectAsync()
 
     projectsManager.setIgnoredState(listOf(projectsManager.findProject (modulePom)), true)
     val projectTree = myStructure.createPane().tree

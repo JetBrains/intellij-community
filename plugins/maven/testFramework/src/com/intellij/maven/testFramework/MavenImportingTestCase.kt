@@ -796,7 +796,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   @RequiresBackgroundThread
-  protected suspend fun waitForImportWithinTimeout(action: suspend () -> Any) {
+  protected suspend fun waitForImportWithinTimeout(action: suspend () -> Any?) {
     val importStarted = AtomicBoolean(false)
     val importFinished = AtomicBoolean(false)
     myProject.messageBus.connect(testRootDisposable)

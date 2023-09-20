@@ -28,7 +28,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 </build>
 """)
 
-    importProject("""
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -77,7 +77,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 </dependencies>
 """)
 
-    importProject("""
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -129,7 +129,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 </dependencies>
 """)
 
-    importProject("""
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>

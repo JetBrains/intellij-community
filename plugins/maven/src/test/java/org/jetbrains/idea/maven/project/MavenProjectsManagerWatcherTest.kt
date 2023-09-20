@@ -22,14 +22,14 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
 
   override fun runInDispatchThread() = false
 
-  override fun setUp() {
+  override fun setUp() = runBlocking {
     super.setUp()
     myProjectsManager = MavenProjectsManager.getInstance(myProject)
     myProjectsTreeTracker = MavenProjectTreeTracker()
     myProjectsManager!!.addProjectsTreeListener(myProjectsTreeTracker!!, getTestRootDisposable())
     initProjectsManager(true)
     createProjectPom(createPomContent("test", "project"))
-    importProject()
+    importProjectAsync()
     //addManagedFiles(myProjectPom);
   }
 
@@ -48,7 +48,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
   fun testChangeConfigInOurProjectShouldCallUpdatePomFile() = runBlocking {
     assertNoPendingProjectForReload()
     val mavenConfig = createProjectSubFile(".mvn/maven.config")
-    importProject()
+    importProjectAsync()
     assertNoPendingProjectForReload()
     replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true")
     assertHasPendingProjectForReload()

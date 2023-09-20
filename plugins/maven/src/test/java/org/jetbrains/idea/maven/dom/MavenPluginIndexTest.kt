@@ -14,7 +14,7 @@ class MavenPluginIndexTest : MavenDomWithIndicesTestCase() {
   fun testDefaultPluginsDownloadedAndIndexed() = runBlocking {
     runAndExpectPluginIndexEvents(DEFAULT_PLUGIN_ARTIFACT_IDS) {
       runAndExpectArtifactDownloadEvents(DEFAULT_PLUGIN_GROUP_ID, DEFAULT_PLUGIN_ARTIFACT_IDS) {
-        importProject("""
+        importProjectAsync("""
                         <groupId>test</groupId>
                         <artifactId>project</artifactId>
                         <version>1</version>

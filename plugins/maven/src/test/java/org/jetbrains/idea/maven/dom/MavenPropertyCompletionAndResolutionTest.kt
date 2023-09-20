@@ -29,10 +29,10 @@ import java.util.concurrent.TimeUnit
 class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
   override fun runInDispatchThread() = false
 
-  override fun setUp() {
+  override fun setUp() = runBlocking {
     super.setUp()
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -143,7 +143,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                        </parent>
                                        <artifactId>m1</artifactId>
                                        """.trimIndent())
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

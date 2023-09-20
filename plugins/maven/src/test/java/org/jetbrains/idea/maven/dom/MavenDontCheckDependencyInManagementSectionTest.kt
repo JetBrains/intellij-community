@@ -7,7 +7,7 @@ import org.junit.Test
 class MavenDontCheckDependencyInManagementSectionTest : MavenDomTestCase() {
   @Test
   fun testHighlighting() = runBlocking {
-    importProject(
+    importProjectAsync(
       """
         <groupId>test</groupId>
         <artifactId>m1</artifactId>

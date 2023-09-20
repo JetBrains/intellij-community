@@ -171,7 +171,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testCompletionArtifactIdThenVersion() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -216,7 +216,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testCompletionArtifactIdThenGroupIdThenInsertVersion() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -257,7 +257,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testCompletionArtifactIdNonExactmatch() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -283,7 +283,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testCompletionArtifactIdInsideManagedDependency() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -330,7 +330,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testCompletionArtifactIdWithManagedDependency() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                       <dependencyManagement>
                         <dependencies>
@@ -394,7 +394,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testCompletionGroupIdWithManagedDependencyWithTypeAndClassifier() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                     <properties>
                       <ioClassifier>ccc</ioClassifier>  <ioType>ttt</ioType></properties>

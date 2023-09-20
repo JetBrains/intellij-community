@@ -398,7 +398,7 @@ org.jetbrains:annotations
           </build>
           """.trimIndent())
 
-    importProject()
+    importProjectAsync()
     val module = getModule(mn("project", "m1"))
 
     val mavenJUnitPatcher = MavenJUnitPatcher()

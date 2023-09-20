@@ -6,10 +6,10 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPropertyFindUsagesTest : MavenDomTestCase() {
-  override fun setUp() {
+  override fun setUp() = runBlocking {
     super.setUp()
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>module1</artifactId>
                     <version>1</version>
@@ -118,7 +118,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   fun testFindUsagesForSystemPropertyInFilteredResources() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>module1</artifactId>
                     <version>1</version>

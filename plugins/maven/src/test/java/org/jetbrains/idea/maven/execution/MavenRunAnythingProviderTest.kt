@@ -42,7 +42,7 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testSingleMavenProject() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

@@ -22,7 +22,7 @@ import org.junit.Test
 class MavenPackagingCompletionTest : MavenDomTestCase() {
   @Test
   fun testVariants() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -40,7 +40,7 @@ class MavenPackagingCompletionTest : MavenDomTestCase() {
 
   @Test
   fun testDoNotHighlightUnknownPackagingTypes() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

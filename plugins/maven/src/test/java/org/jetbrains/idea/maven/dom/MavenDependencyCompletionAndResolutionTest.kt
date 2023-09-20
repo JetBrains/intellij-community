@@ -135,7 +135,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
                                       <version>2</version>
                                       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     createModulePom("m2", """
       <groupId>project-group</groupId>
@@ -187,7 +187,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
                                       <version>1</version>
                                       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
     assertModules("project", mn("project", "module1"), "module2")
 
     createModulePom("m2", """
@@ -247,7 +247,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
                       <artifactId>m2</artifactId>
                       <version>1</version>
                       """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createModulePom("m1", """
       <groupId>test</groupId>
@@ -276,7 +276,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
       <version>1</version>
       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     createModulePom("m1", """
       <groupId>test</groupId>
@@ -443,7 +443,7 @@ $relativePathUnixSeparator<caret></relativePath>
                             </dependency>
                           </dependencies>
                           """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
@@ -456,7 +456,7 @@ $relativePathUnixSeparator<caret></relativePath>
     val repoPath = helper.getTestDataPath("local1")
     repositoryPath = repoPath
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1013,7 +1013,7 @@ $libPath<caret></systemPath>
                          <dep.version>4.0</dep.version>
                        </properties>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     // properties are taken from loaded project
     createProjectPom("""
@@ -1083,7 +1083,7 @@ $libPath<caret></systemPath>
                                       </dependencies>
                                       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     checkHighlighting(m)
   }
@@ -1112,7 +1112,7 @@ $libPath<caret></systemPath>
                                       </properties>
                                       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
     checkHighlighting(m)
   }
 

@@ -73,7 +73,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun `test maven server not started - bad vm config`() {
+  fun `test maven server not started - bad vm config`() = runBlocking {
     LoggedErrorProcessor.executeWith<RuntimeException>(loggedErrorProcessor("java.util.concurrent.ExecutionException:")) {
       createProjectSubFile(".mvn/jvm.config", "-Xms100m -Xmx10m")
       createAndImportProject()
@@ -82,7 +82,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun `test maven import - bad maven config`() {
+  fun `test maven import - bad maven config`() = runBlocking {
     assumeVersionMoreThan("3.3.1")
     createProjectSubFile(".mvn/maven.config", "-aaaaT1")
     createAndImportProject()

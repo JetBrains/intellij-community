@@ -32,7 +32,7 @@ class MavenSurefirePluginTest : MavenDomWithIndicesTestCase() {
             </plugins>
           </build>
         """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectSubFile("src/main/A.txt", "")
     createProjectSubFile("src/test/A.txt", "")
@@ -63,7 +63,7 @@ class MavenSurefirePluginTest : MavenDomWithIndicesTestCase() {
             </plugins>
           </build>
         """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     assertCompletionVariants(myProjectPom, "surefire.forkNumber", "surefire.threadNumber")
   }
@@ -91,14 +91,14 @@ class MavenSurefirePluginTest : MavenDomWithIndicesTestCase() {
             </plugins>
           </build>
         """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     assertCompletionVariants(myProjectPom)
   }
 
   @Test
   fun testSurefirePropertiesHighlighting() = runBlocking {
-    importProject(
+    importProjectAsync(
       """
           <groupId>simpleMaven</groupId>
           <artifactId>simpleMaven</artifactId>

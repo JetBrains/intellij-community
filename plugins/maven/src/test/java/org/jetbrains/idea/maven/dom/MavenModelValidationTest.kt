@@ -7,9 +7,9 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
-  override fun setUp() {
+  override fun setUp() = runBlocking {
     super.setUp()
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

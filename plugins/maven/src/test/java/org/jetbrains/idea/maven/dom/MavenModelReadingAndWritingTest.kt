@@ -15,10 +15,10 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.junit.Test
 
 class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
-  override fun setUp() {
+  override fun setUp() = runBlocking {
     super.setUp()
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

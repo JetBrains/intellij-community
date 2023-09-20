@@ -28,7 +28,7 @@ import java.io.File
 class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testResolvingProjectAttributes() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -51,7 +51,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                             <version>parent.1</version>
                           </parent>
                           """.trimIndent())
-    importProject("""
+    importProjectAsync("""
                       <groupId>parent.test</groupId>
                       <artifactId>parent.project</artifactId>
                       <version>parent.1</version>
@@ -67,7 +67,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testResolvingAbsentProperties() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -78,7 +78,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testResolvingProjectDirectories() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -120,7 +120,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                                       </parent>
                                       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     assertEquals("parent.value", resolve("\${parentProp}", f))
     assertEquals("module.value", resolve("\${moduleProp}", f))
@@ -144,7 +144,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                        </properties>
                        """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     assertEquals("value", resolve("\${prop1}", myProjectPom))
     assertEquals("value-2", resolve("\${prop2}", myProjectPom))
@@ -176,7 +176,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testSophisticatedPropertyNameDoesNotBreakResolver() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -211,7 +211,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                        </profiles>
                        """.trimIndent())
 
-    importProject()
+    importProjectAsync()
     assertEquals("value1", resolve("\${prop}", myProjectPom))
 
     importProjectWithProfiles("one")
@@ -223,7 +223,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testResolvingBasedirProperties() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -239,7 +239,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
     val javaHome = System.getProperty("java.home")
     val tempDir = System.getenv(getEnvVar())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -251,7 +251,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testAllProperties() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -263,7 +263,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testIncompleteProperties() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -276,7 +276,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testUncomittedProperties() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -318,7 +318,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                                               </project>
                                               """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

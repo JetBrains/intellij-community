@@ -18,18 +18,17 @@ package org.jetbrains.idea.maven.execution
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.roots.ProjectRootManager
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 import java.io.BufferedInputStream
 import java.io.FileInputStream
-import java.io.IOException
 import java.util.*
 
 abstract class MavenResolveToWorkspaceTest : MavenMultiVersionImportingTestCase() {
   @Test
-  @Throws(Exception::class)
-  fun testIgnoredProject() {
+  fun testIgnoredProject() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -74,7 +73,7 @@ abstract class MavenResolveToWorkspaceTest : MavenMultiVersionImportingTestCase(
 
     setIgnoredFilesPathForNextImport(listOf(moduleIgnored.getPath()))
 
-    importProject()
+    importProjectAsync()
 
     setIgnoredFilesPathForNextImport(listOf(moduleIgnored.getPath()))
 
@@ -115,7 +114,6 @@ abstract class MavenResolveToWorkspaceTest : MavenMultiVersionImportingTestCase(
   }
 
   companion object {
-    @Throws(IOException::class)
     private fun readProperties(filePath: String?): Properties {
       BufferedInputStream(FileInputStream(filePath)).use { `is` ->
         val properties = Properties()

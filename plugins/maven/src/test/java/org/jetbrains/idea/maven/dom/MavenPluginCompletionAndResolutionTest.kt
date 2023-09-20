@@ -16,10 +16,10 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   override fun createIndicesFixture(): MavenIndicesTestFixture {
     return MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins")
   }
-  override fun setUp() {
+  override fun setUp() = runBlocking {
     super.setUp()
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1133,7 +1133,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                          <plugin.version>2.0.2</plugin.version>
                        </properties>
                        """.trimIndent())
-    importProject() // let us recognize the properties first
+    importProjectAsync() // let us recognize the properties first
 
     createProjectPom("""
                        <groupId>test</groupId>

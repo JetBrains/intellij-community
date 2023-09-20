@@ -3,15 +3,15 @@ package org.jetbrains.idea.maven.intentions
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.util.PsiTreeUtil
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.intentions.AddMavenDependencyQuickFix
 import org.junit.Test
 import java.io.IOException
 
 class MavenAddDependencyIntentionTest : MavenDomTestCase() {
-  @Throws(Exception::class)
-  override fun setUp() {
+  override fun setUp() = runBlocking {
     super.setUp()
-    importProject("<groupId>test</groupId>" +
+    importProjectAsync("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>")
   }

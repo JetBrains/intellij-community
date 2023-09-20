@@ -32,7 +32,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   fun testBasic() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -56,7 +56,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   fun testTestResourceProperties() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -80,7 +80,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   fun testBasicAt() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -104,7 +104,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   fun testCorrectlyCalculatingBaseDir() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -160,7 +160,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                                            </properties>
                                            """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=\${parentProp<caret>}")
@@ -206,7 +206,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   fun testDoNotResolveOutsideResources() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -229,7 +229,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   fun testDoNotResolveNonFilteredResources() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -252,7 +252,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   fun testUsingFilters() = runBlocking {
     val filter = createProjectSubFile("filters/filter.properties", "xxx=1")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -284,7 +284,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
     createProjectSubFile("filters/filter1.properties", "xxx=1")
     createProjectSubFile("filters/filter2.properties", "yyy=1")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -313,7 +313,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   fun testSearchingFromFilters() = runBlocking {
     createProjectSubFile("filters/filter.properties", "xxx=1")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -345,7 +345,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   fun testCompletionAfterOpenBrace() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -369,7 +369,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   fun testCompletionAfterOpenBraceInTheBeginningOfFile() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -395,7 +395,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
 
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -419,7 +419,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   fun testCompletionInEmptyFile() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -443,7 +443,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   fun testRenaming() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -493,7 +493,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
     val filter = createProjectSubFile("filters/filter.properties", "xxx=1")
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -655,7 +655,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   fun testReferencesInXml() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -691,9 +691,9 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   private fun importProjectAndExpectResourcePluginIndexed(@Language(value = "XML", prefix = "<project>",
-                                                                    suffix = "</project>") xml: String) {
+                                                                    suffix = "</project>") xml: String) = runBlocking {
     runAndExpectPluginIndexEvents(setOf("maven-resources-plugin")) {
-      importProject(xml)
+      importProjectAsync(xml)
     }
   }
 }

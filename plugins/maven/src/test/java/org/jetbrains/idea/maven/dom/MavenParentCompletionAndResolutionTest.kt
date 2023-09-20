@@ -27,7 +27,7 @@ import org.junit.Test
 class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   @Test
   fun testVariants() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -102,7 +102,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testResolutionOutsideOfTheProject() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -126,7 +126,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testResolvingByRelativePath() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -156,7 +156,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testResolvingByRelativePathWithProperties() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -196,7 +196,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                          <version>1</version>
                                          """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -232,7 +232,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                                 <version>1</version>
                                                 """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     setPomContent(projectPom,
                   """
@@ -290,7 +290,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                        <artifactId>m1</artifactId>
                                        """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     m2 = createModulePom("m2",
                          """
@@ -345,7 +345,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                       <artifactId>m1</artifactId>
                       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     val m2 = createModulePom("m2",
                              """
@@ -363,7 +363,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testRelativePathCompletion() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -400,7 +400,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testRelativePathCompletion_2() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -440,7 +440,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testHighlightingUnknownValues() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -509,7 +509,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testHighlightingInvalidRelativePath() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

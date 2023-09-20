@@ -44,7 +44,7 @@ class MavenArtifactCoordinatesHelperTest : MavenDomTestCase() {
                   </plugins>
                 </build>
                 """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val pluginVersion = "1.0.0"
 

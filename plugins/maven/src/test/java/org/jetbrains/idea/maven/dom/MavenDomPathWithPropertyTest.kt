@@ -8,7 +8,7 @@ import org.junit.Test
 class MavenDomPathWithPropertyTest : MavenDomTestCase() {
   @Test
   fun testRename() = runBlocking {
-    importProject(
+    importProjectAsync(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>

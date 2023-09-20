@@ -28,7 +28,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testConfiguringFacetWithoutLibrary() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -49,7 +49,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testConfiguringFacetWithLibrary() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -88,7 +88,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                            "src/test/groovy")
     }
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -122,7 +122,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                            "src/test/groovy")
     }
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -156,7 +156,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                            "src/test/groovy")
     }
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -197,7 +197,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                            "src/test/groovy")
     }
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version><dependencies>
                       <dependency>
                         <groupId>org.codehaus.groovy</groupId>
@@ -269,7 +269,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
     batchJar.createNewFile()
 
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version><build>
                       <pluginManagement>
                         <plugins>
@@ -333,7 +333,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                            "src/test-foo2")
     }
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -407,7 +407,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                            "src/test-foo2")
     }
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -476,7 +476,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                            "src/test-foo")
     }
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -539,7 +539,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                          "target/generated-sources/groovy-stubs/main/foo",
                          "target/generated-sources/groovy-stubs/test/bar")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -594,7 +594,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                          "target/generated-sources/foo/aaa",
                          "target/generated-sources/bar/bbb")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -656,7 +656,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                          "target/generated-sources/foo/aaa",
                          "target/generated-sources/bar/bbb")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -713,7 +713,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testUpdatingGroovySpecificGeneratedSourcesOnFoldersUpdate() = runBlocking {
     try {
-      importProject("""
+      importProjectAsync("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <version>1</version>
@@ -801,7 +801,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                          "target/generated-sources/groovy-stubs/main/foo",
                          "target/generated-sources/groovy-stubs/test/bar")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

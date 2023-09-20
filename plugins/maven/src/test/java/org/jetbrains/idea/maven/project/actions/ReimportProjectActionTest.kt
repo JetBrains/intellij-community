@@ -27,7 +27,7 @@ class ReimportProjectActionTest : MavenMultiVersionImportingTestCase() {
                     <artifactId>parent</artifactId>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val action = ReimportProjectAction()
     val parentActionVisible = action.isVisible(TestActionEvent.createTestEvent(action, createTestDataContext(parentFile)))

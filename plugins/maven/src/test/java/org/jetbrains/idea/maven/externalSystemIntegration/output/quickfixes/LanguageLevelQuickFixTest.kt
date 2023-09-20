@@ -26,7 +26,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
 
   @Test
   fun `test property empty quick fix`() = runBlocking {
-    importProject("""<groupId>test</groupId>
+    importProjectAsync("""<groupId>test</groupId>
                     <artifactId>p1</artifactId>
                     <packaging>pom</packaging>
                     <version>1</version>"""
@@ -48,7 +48,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
 
   @Test
   fun `test property old value quick fix`() = runBlocking {
-    importProject("""<groupId>test</groupId>
+    importProjectAsync("""<groupId>test</groupId>
                     <artifactId>p1</artifactId>
                     <packaging>pom</packaging>
                     <version>1</version>
@@ -73,7 +73,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
 
   @Test
   fun `test plugin configuration empty value quick fix`() = runBlocking {
-    importProject("""<groupId>test</groupId>
+    importProjectAsync("""<groupId>test</groupId>
                     <artifactId>p1</artifactId>
                     <packaging>pom</packaging>
                     <version>1</version>
@@ -104,7 +104,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
 
   @Test
   fun `test plugin configuration old value quick fix`() = runBlocking {
-    importProject("""<groupId>test</groupId>
+    importProjectAsync("""<groupId>test</groupId>
                     <artifactId>p1</artifactId>
                     <packaging>pom</packaging>
                     <version>1</version>
@@ -153,7 +153,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                       <groupId>test</groupId>
                       <artifactId>p2</artifactId>
                       <version>1</version>""")
-    importProject()
+    importProjectAsync()
     val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
@@ -192,7 +192,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                                  <maven.compiler.source>5</maven.compiler.source>
                                  <maven.compiler.target>5</maven.compiler.target>
                                </properties>"""))
-    importProject()
+    importProjectAsync()
     val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
@@ -239,7 +239,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                                    </plugin>
                                  </plugins>
                                </build>"""))
-    importProject()
+    importProjectAsync()
     val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
@@ -257,7 +257,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
 
   @Test
   fun `test target property empty quick fix`() = runBlocking {
-    importProject("<groupId>test</groupId>" +
+    importProjectAsync("<groupId>test</groupId>" +
                   "<artifactId>p1</artifactId>" +
                   "<packaging>pom</packaging>" +
                   "<version>1</version>" +
@@ -281,7 +281,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
 
   @Test
   fun `test target property bad value quick fix`() = runBlocking {
-    importProject("<groupId>test</groupId>" +
+    importProjectAsync("<groupId>test</groupId>" +
                   "<artifactId>p1</artifactId>" +
                   "<packaging>pom</packaging>" +
                   "<version>1</version>" +
@@ -306,7 +306,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
 
   @Test
   fun `test plugin target property empty quick fix`() = runBlocking {
-    importProject("<groupId>test</groupId>" +
+    importProjectAsync("<groupId>test</groupId>" +
                   "<artifactId>p1</artifactId>" +
                   "<packaging>pom</packaging>" +
                   "<version>1</version>" +
@@ -338,7 +338,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
 
   @Test
   fun `test plugin target property bad value quick fix`() = runBlocking {
-    importProject("<groupId>test</groupId>" +
+    importProjectAsync("<groupId>test</groupId>" +
                   "<artifactId>p1</artifactId>" +
                   "<packaging>pom</packaging>" +
                   "<version>1</version>" +
@@ -391,7 +391,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                              "        <maven.compiler.source>11</maven.compiler.source>" +
                              "        <maven.compiler.target>5</maven.compiler.target>" +
                              "</properties>")
-    importProject()
+    importProjectAsync()
     val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
@@ -430,7 +430,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                      "<artifactId>p2</artifactId>" +
                      "<version>1</version>")
     )
-    importProject()
+    importProjectAsync()
     val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
@@ -476,7 +476,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                               "            </plugin>" +
                               "        </plugins>" +
                               "    </build>"))
-    importProject()
+    importProjectAsync()
     val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
@@ -523,7 +523,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
                      "<artifactId>p2</artifactId>" +
                      "<version>1</version>")
     )
-    importProject()
+    importProjectAsync()
     val mavenProject = MavenProjectsManager.getInstance(myProject).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {

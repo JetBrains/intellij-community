@@ -31,7 +31,7 @@ class MavenModuleBuilderHelperTest : MavenMultiVersionImportingTestCase() {
     <modules>
         <module>m1/customName.xml</module>
     </modules>""")
-    importProject()
+    importProjectAsync()
 
     val generatedPom = createProjectSubFile("generated/m1/pom.xml",
       ("""<project

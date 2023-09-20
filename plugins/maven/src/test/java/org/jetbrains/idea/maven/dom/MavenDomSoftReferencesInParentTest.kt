@@ -22,7 +22,7 @@ import org.junit.Test
 class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
   @Test
   fun testDoNotHighlightSourceDirectoryInParentPom() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -39,7 +39,7 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
 
   @Test
   fun testHighlightSourceDirectory() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

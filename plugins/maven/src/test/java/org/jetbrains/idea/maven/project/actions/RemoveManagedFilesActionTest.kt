@@ -26,7 +26,7 @@ class RemoveManagedFilesActionTest : MavenMultiVersionImportingTestCase() {
                     <artifactId>parent</artifactId>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val action = RemoveManagedFilesAction()
     val parentActionVisible = action.isVisible(TestActionEvent.createTestEvent(action, createTestDataContext(parentFile)))

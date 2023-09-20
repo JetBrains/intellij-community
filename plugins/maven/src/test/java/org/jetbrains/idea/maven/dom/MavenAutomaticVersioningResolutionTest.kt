@@ -29,7 +29,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                       </parent>
                                        <artifactId>m</artifactId>
                                       """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertEquals("1.1", projectsManager.findProject(m)!!.mavenId.version)
 
     createModulePom("m",
@@ -66,7 +66,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                       </parent>
                                        <artifactId>m</artifactId>
                                       """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createModulePom("m",
                     """
@@ -116,7 +116,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                           </dependency>
                                         </dependencies>
                                        """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertEquals("1.1", projectsManager.findProject(m1)!!.mavenId.version)
     assertEquals("1.1", projectsManager.findProject(m2)!!.mavenId.version)
     assertModuleModuleDeps("m2", "m1")
@@ -161,7 +161,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                        </parent>
                                         <artifactId>m1</artifactId>
                                        """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertEquals("1.1", projectsManager.findProject(m1)!!.mavenId.version)
 
     createModulePom("m/m1",

@@ -34,7 +34,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   <version>1</version>
   """.trimIndent())
     projectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom), MavenExplicitProfiles.NONE)
-    importProject()
+    importProjectAsync()
     projectsManager.fireActivatedInTests()
 
     val runConfiguration = createRunConfiguration(projectPom, "validate")
@@ -50,7 +50,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   <version>1</version>
   """.trimIndent())
     projectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom), MavenExplicitProfiles.NONE)
-    importProject()
+    importProjectAsync()
     projectsManager.fireActivatedInTests()
 
     val psiFile = PsiManager.getInstance(myProject).findFile(projectPom)
@@ -90,7 +90,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
                           </parent>
                           <artifactId>m2</artifactId>""")
     projectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom, m2, m2), MavenExplicitProfiles.NONE)
-    importProject()
+    importProjectAsync()
     projectsManager.fireActivatedInTests()
 
     val psiFile = PsiManager.getInstance(myProject).findFile(m1)
@@ -145,7 +145,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
                           </parent>
                           <artifactId>m2</artifactId>""")
     projectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom, m2, m2), MavenExplicitProfiles.NONE)
-    importProject()
+    importProjectAsync()
     projectsManager.fireActivatedInTests()
 
     val runConfiguration1 = createRunConfiguration(m1, "validate")

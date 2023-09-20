@@ -6,9 +6,9 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPropertyRenameTest : MavenDomTestCase() {
-  override fun setUp() {
+  override fun setUp() = runBlocking {
     super.setUp()
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>module1</artifactId>
                     <version>1</version>

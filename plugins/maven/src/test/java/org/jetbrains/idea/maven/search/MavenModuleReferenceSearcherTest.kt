@@ -34,7 +34,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <version>1</version>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val newModulePath = "m1new"
 
@@ -67,7 +67,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <version>1</version>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val newDirectoryName = "mNew"
     val newModulePath = "mNew/m1"
@@ -101,7 +101,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <version>1</version>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val newDirectoryName = "m1new"
     val newModulePath = "./m1new"
@@ -145,7 +145,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <relativePath>../parent2/pom.xml</relativePath>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val newDirectoryName = "m1new"
     val newModulePath = "../m1new"
@@ -179,7 +179,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <version>1</version>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val newDirectoryName = "module-new"
     val newModulePath = "module/module-new"
@@ -213,7 +213,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <version>1</version>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val newDirectoryName = "module-new"
     val newModulePath = "module-new/module"
@@ -248,7 +248,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <artifactId>parent</artifactId>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val newModulePath = "m1new"
 

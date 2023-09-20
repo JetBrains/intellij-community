@@ -50,7 +50,7 @@ class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
 
     executeGoal("__temp", "install")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

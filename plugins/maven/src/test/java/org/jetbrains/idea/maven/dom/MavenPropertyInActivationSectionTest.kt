@@ -7,7 +7,7 @@ import org.junit.Test
 class MavenPropertyInActivationSectionTest : MavenDomTestCase() {
   @Test
   fun testResolvePropertyFromActivationSection() = runBlocking {
-    importProject(
+    importProjectAsync(
       """
           <groupId>example</groupId>
           <artifactId>parent</artifactId>

@@ -24,7 +24,7 @@ class StructureImportingFsRefreshTest : MavenMultiVersionImportingTestCase() {
     withMockVirtualFileManager(mockFm) {
       myProjectRoot.children // make sure fs is cached
       File(myProjectRoot.path, "foo").mkdirs()
-      importProject("""
+      importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -39,7 +39,7 @@ class StructureImportingFsRefreshTest : MavenMultiVersionImportingTestCase() {
     }
   }
 
-  private fun <R> withMockVirtualFileManager(mockFm: MockVirtualFileManager, action: () -> R): R {
+  private suspend fun <R> withMockVirtualFileManager(mockFm: MockVirtualFileManager, action: suspend () -> R): R {
     Disposer.newDisposable().use { disposable ->
       ApplicationManager.getApplication().replaceService(VirtualFileManager::class.java, mockFm, disposable)
       return action()

@@ -60,7 +60,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                       <version>1</version>
                       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
     assertModules("project", "m1", "m2", "m3")
 
     createProjectPom("""
@@ -99,7 +99,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -122,7 +122,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createModulePom("subDir1",
                     """
@@ -178,7 +178,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                        <version>1</version>
                                        """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -238,7 +238,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                       <version>1</version>
                                       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -287,7 +287,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                       <version>1</version>
                                       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -328,7 +328,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -371,7 +371,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -414,7 +414,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -458,7 +458,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <artifactId>project</artifactId>
@@ -504,7 +504,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -535,7 +535,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <artifactId>project</artifactId>
@@ -575,7 +575,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -623,7 +623,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -674,7 +674,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                               <packaging>pom</packaging>
                                               """.trimIndent())
 
-    importProject(parentPom)
+    importProjectAsync(parentPom)
 
     myFixture.saveText(parentPom, createPomXml(
       """
@@ -724,7 +724,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -757,7 +757,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                       <artifactId>module</artifactId>
                       <version>1</version>
                       """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>

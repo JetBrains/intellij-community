@@ -25,13 +25,13 @@ import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
+import kotlinx.coroutines.runBlocking
 import org.junit.Assume
 import org.junit.Test
 import java.io.File
 import java.io.IOException
 
 class ResourceCopyingTest : MavenCompilingTestCase() {
-  @Throws(Exception::class)
   override fun setUpInWriteAction() {
     super.setUpInWriteAction()
 
@@ -41,11 +41,10 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testBasic() {
+  fun testBasic() = runBlocking {
     createProjectSubFile("src/main/resources/dir/file.properties")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -56,12 +55,11 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testCustomResources() {
+  fun testCustomResources() = runBlocking {
     createProjectSubFile("res/dir1/file1.properties")
     createProjectSubFile("testRes/dir2/file2.properties")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -82,12 +80,11 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testCopyWithFilteringIntoReadonlyTarget() {
+  fun testCopyWithFilteringIntoReadonlyTarget() = runBlocking {
     val f = createProjectSubFile("res/dir1/file.properties",  /*"Hello world"*/"Hello \${name}")
     val srcFile = File(f.getPath())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -119,11 +116,10 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testCustomTargetPath() {
+  fun testCustomTargetPath() = runBlocking {
     createProjectSubFile("res/dir/file.properties")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -142,11 +138,10 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testResourcesPluginCustomTargetPath() {
+  fun testResourcesPluginCustomTargetPath() = runBlocking {
     createProjectSubFile("res/dir/file.properties")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -174,11 +169,10 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testResourcesPluginGoalAbsoluteCustomTargetPath() {
+  fun testResourcesPluginGoalAbsoluteCustomTargetPath() = runBlocking {
     createProjectSubFile("src/test/resources/dir/file.properties")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -209,11 +203,10 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testResourcesPluginGoalRelativeCustomTargetPath() {
+  fun testResourcesPluginGoalRelativeCustomTargetPath() = runBlocking {
     createProjectSubFile("src/test/resources/dir/file.properties")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -244,11 +237,10 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testAbsoluteCustomTargetPath() {
+  fun testAbsoluteCustomTargetPath() = runBlocking {
     createProjectSubFile("res/foo/file.properties")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -267,12 +259,11 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testMavenSpecifiedPattern() {
+  fun testMavenSpecifiedPattern() = runBlocking {
     createProjectSubFile("res/subdir/a.txt")
     createProjectSubFile("res/b.txt")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -295,12 +286,11 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testMavenSpecifiedPatternEndSlash() {
+  fun testMavenSpecifiedPatternEndSlash() = runBlocking {
     createProjectSubFile("res/subdir/a.txt")
     createProjectSubFile("res/b.txt")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -323,15 +313,14 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testIncludesAndExcludes() {
+  fun testIncludesAndExcludes() = runBlocking {
     createProjectSubFile("res/dir/file.xxx")
     createProjectSubFile("res/dir/file.yyy")
     createProjectSubFile("res/file.xxx")
     createProjectSubFile("res/file.yyy")
     createProjectSubFile("res/file.zzz")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -362,13 +351,12 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testDoNotCopyIgnoredFiles() {
+  fun testDoNotCopyIgnoredFiles() = runBlocking {
     createProjectSubFile("res/CVS/file.properties")
     createProjectSubFile("res/.svn/file.properties")
     createProjectSubFile("res/zzz/file.properties")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -392,11 +380,10 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testDeletingFilesThatWasCopiedAndThenDeleted() {
+  fun testDeletingFilesThatWasCopiedAndThenDeleted() = runBlocking {
     val file = createProjectSubFile("res/file.properties")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -419,11 +406,10 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testDeletingFilesThatWasCopiedAndThenExcluded() {
+  fun testDeletingFilesThatWasCopiedAndThenExcluded() = runBlocking {
     createProjectSubFile("res/file.properties")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -454,22 +440,21 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
                          </resources>
                        </build>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     compileModules("project")
     assertNotCopied("target/classes/file.properties")
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testDoNotCopyExcludedStandardResources() {
+  fun testDoNotCopyExcludedStandardResources() = runBlocking {
     val configuration = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     configuration.addResourceFilePattern("*.zzz")
 
     createProjectSubFile("res/file.xxx")
     createProjectSubFile("res/file.zzz")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -494,8 +479,7 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testDoNotDeleteFilesFromOtherModulesOutput() {
+  fun testDoNotDeleteFilesFromOtherModulesOutput() = runBlocking {
     createProjectSubFile("m1/resources/file.xxx")
     createProjectSubFile("m2/resources/file.yyy")
 
@@ -537,7 +521,7 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
                         </resources>
                       </build>
                       """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     compileModules("project", "m1", "m2")
     assertCopied("m1/target/classes/file.xxx")
@@ -557,8 +541,7 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testDoNotDeleteFilesFromOtherModulesOutputWhenOutputIsTheSame() {
+  fun testDoNotDeleteFilesFromOtherModulesOutputWhenOutputIsTheSame() = runBlocking {
     createProjectSubFile("resources/file.xxx")
 
     createProjectPom("""
@@ -599,7 +582,7 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
                         </resources>
                       </build>
                       """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     WriteCommandAction.writeCommandAction(myProject)
       .run<IOException> { setModulesOutput(myProjectRoot.createChildDirectory(this, "output"), "project", "m1", "m2") }
@@ -628,9 +611,8 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testCopingNonMavenResources() {
-    if (ignore()) return
+  fun testCopingNonMavenResources() = runBlocking {
+    if (ignore()) return@runBlocking
 
     createProjectSubFile("src/main/resources/a.txt", "a")
 
@@ -642,7 +624,7 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
     val excludedDir = createProjectSubDir("src/excluded")
     createProjectSubFile("src/excluded/c.txt", "c")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version><properties>
                             <maven.compiler.source>11</maven.compiler.source>
                             <maven.compiler.target>11</maven.compiler.target>
@@ -670,13 +652,12 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testCopyTestResourceWhenBuildingTestModule() {
+  fun testCopyTestResourceWhenBuildingTestModule() = runBlocking {
     Assume.assumeTrue(isWorkspaceImport)
 
     createProjectSubFile("src/test/resources/file.properties")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -701,14 +682,13 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testAnnotationPathsInCompoundModules() {
+  fun testAnnotationPathsInCompoundModules() = runBlocking {
     Assume.assumeTrue(isWorkspaceImport)
 
     createProjectSubFile("src/main/java/Main.java", "class Main {}")
     createProjectSubFile("src/test/java/Test.java", "class Test {}")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -736,8 +716,7 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
 
 
   @Test
-  @Throws(Exception::class)
-  fun testFileResourceRebuildShouldNotTouchOtherFiles() {
+  fun testFileResourceRebuildShouldNotTouchOtherFiles() = runBlocking {
     val cssContent = """
       body {
           color: red;
@@ -746,7 +725,7 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
     val css = createProjectSubFile("src/main/resources/text.css", cssContent)
     val txt = createProjectSubFile("src/main/resources/text.txt", "hello 1")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

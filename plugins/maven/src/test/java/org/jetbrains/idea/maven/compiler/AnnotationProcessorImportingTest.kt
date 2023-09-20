@@ -114,7 +114,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   </build>
 """)
 
-    importProject("""
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -152,7 +152,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testOverrideGeneratedOutputDir() = runBlocking {
-    importProject("""
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -182,7 +182,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testImportAnnotationProcessorOptions() = runBlocking {
-    importProject("""
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -219,7 +219,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testMavenProcessorPlugin() = runBlocking {
-    importProject("""
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -283,7 +283,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testMavenProcessorPluginDefault() = runBlocking {
-    importProject("""
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -344,7 +344,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testProcessorsViaBscMavenPlugin() = runBlocking {
-    importProject("""
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -392,7 +392,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testExternalDependencyPath() = runBlocking {
-    importProject("""<groupId>test</groupId>
+    importProjectAsync("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
 <build>
@@ -431,7 +431,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testExternalDependencyAnnotationPath() = runBlocking {
-    importProject("""<groupId>test</groupId>
+    importProjectAsync("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
 <build>
@@ -512,7 +512,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   </plugins>
 </build>""")
     createProjectSubFile("m1/src/main/java/A.java", "public class A{}")
-    importProject()
+    importProjectAsync()
 
     val module = getModule("m2")
     assertNotNull(module)
@@ -541,7 +541,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDisabledAnnotationProcessor() = runBlocking {
-    importProject("""
+    importProjectAsync("""
   <groupId>test</groupId>
   <artifactId>project</artifactId>
   <version>1</version>
@@ -563,7 +563,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     Assert.assertNotNull(profile)
     Assert.assertFalse(profile!!.isEnabled)
 
-    importProject()
+    importProjectAsync()
     profile = compilerConfiguration.findModuleProcessorProfile(
       MavenAnnotationProcessorConfigurator.MAVEN_DEFAULT_ANNOTATION_PROFILE)
     Assert.assertNotNull(profile)
@@ -580,7 +580,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     }
     Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile("test-profile"))
 
-    importProject("<groupId>test</groupId>" +
+    importProjectAsync("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<packaging>pom</packaging>" +
                   "<version>1</version>")
@@ -599,7 +599,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     }
     Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile(profileName))
 
-    importProject("<groupId>test</groupId>" +
+    importProjectAsync("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<packaging>pom</packaging>" +
                   "<version>1</version>")

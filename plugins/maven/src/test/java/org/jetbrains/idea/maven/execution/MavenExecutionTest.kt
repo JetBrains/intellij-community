@@ -20,6 +20,7 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.maven.testFramework.MavenExecutionTestCase
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
@@ -27,24 +28,21 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.concurrency.Semaphore
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.io.File
 import java.io.IOException
 import javax.swing.SwingUtilities
 
 class MavenExecutionTest : MavenExecutionTestCase() {
-  override fun runInDispatchThread(): Boolean {
-    return false
-  }
+  override fun runInDispatchThread() = false
 
   @Test
-  @Throws(Exception::class)
-  fun testExternalExecutor() {
-    if (!hasMavenInstallation()) return
+  fun testExternalExecutor() = runBlocking {
+    if (!hasMavenInstallation()) return@runBlocking
 
     UsefulTestCase.edt<IOException> {
-      WriteAction.runAndWait<IOException>(
-        { VfsUtil.saveText(createProjectSubFile("src/main/java/A.java"), "public class A {}") })
+      WriteAction.runAndWait<IOException> { VfsUtil.saveText(createProjectSubFile("src/main/java/A.java"), "public class A {}") }
       PsiDocumentManager.getInstance(myProject).commitAllDocuments()
     }
 
@@ -64,19 +62,19 @@ class MavenExecutionTest : MavenExecutionTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun testUpdatingExcludedFoldersAfterExecution() {
-    if (!hasMavenInstallation()) return
+  fun testUpdatingExcludedFoldersAfterExecution() = runBlocking {
+    if (!hasMavenInstallation()) return@runBlocking
 
-    WriteAction.runAndWait<RuntimeException> {
+    writeAction {
       createStdProjectFolders()
-      importProject("""
+    }
+    importProjectAsync("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <version>1</version>
                       """.trimIndent())
-      createProjectSubDirs("target/generated-sources/foo",
-                           "target/bar")
+    writeAction {
+      createProjectSubDirs("target/generated-sources/foo", "target/bar")
     }
 
     assertModules("project")

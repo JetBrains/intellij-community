@@ -196,7 +196,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  @Test fun `test parse build log with -q failed`() {
+  @Test fun `test parse build log with -q failed`() = runBlocking {
     failOnWarns {
       assertSameLines("error:Maven Run\n" +
                       " org.example:demo-old-version:pom:1.0-SNAPSHOT\n" +
@@ -209,7 +209,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  @Test fun `test parse build log with -q`() {
+  @Test fun `test parse build log with -q`() = runBlocking {
     failOnWarns {
       assertSameLines("org.example:demo-old-version:pom:1.0-SNAPSHOT\n" +
                       " org.example:child1:jar:1.0-SNAPSHOT\n" +
@@ -225,7 +225,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  @Test fun `test parse build log no goal failed`() {
+  @Test fun `test parse build log no goal failed`() = runBlocking {
     failOnWarns {
       assertSameLines("error:",
         testCase(*fromFile("org/jetbrains/maven/buildlogs/build-no-goal-failed.log"))
@@ -234,7 +234,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  @Test fun `test parse build log no pom failed`() {
+  @Test fun `test parse build log no pom failed`() = runBlocking {
     failOnWarns {
       assertSameLines("error:",
         testCase(*fromFile("org/jetbrains/maven/buildlogs/build-no-pom-failed.log"))

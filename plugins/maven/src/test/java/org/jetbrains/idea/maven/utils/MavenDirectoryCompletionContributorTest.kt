@@ -37,7 +37,7 @@ class MavenDirectoryCompletionContributorTest : MavenMultiVersionImportingTestCa
                                   <artifactId>module</artifactId>
                                   <version>1</version>""")
 
-    importProject()
+    importProjectAsync()
 
     fun check(dir: VirtualFile, vararg expected: Pair<String, JpsModuleSourceRootType<*>>) {
       val psiDir = ApplicationManager.getApplication().runReadAction<PsiDirectory> {

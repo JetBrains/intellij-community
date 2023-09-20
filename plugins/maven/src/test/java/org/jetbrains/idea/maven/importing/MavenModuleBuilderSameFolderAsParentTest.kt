@@ -68,7 +68,7 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
         <artifactId>project</artifactId>
         <version>1</version>
         """.trimIndent()))
-    importProject(customPomXml)
+    importProjectAsync(customPomXml)
     assertModules("project")
     setModuleNameAndRoot("module", projectPath)
     setParentProject(customPomXml)
