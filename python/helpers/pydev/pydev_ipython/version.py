@@ -16,7 +16,14 @@ It is a bit ridiculous that we need these.
 # Imports
 #-----------------------------------------------------------------------------
 
-from distutils.version import LooseVersion
+try:
+    from distutils.version import LooseVersion
+except ImportError:
+    import sys
+    if sys.version_info[:2] >= (3, 12):
+        LooseVersion = lambda v: v.split('.')
+    else:
+        raise
 
 #-----------------------------------------------------------------------------
 # Code
