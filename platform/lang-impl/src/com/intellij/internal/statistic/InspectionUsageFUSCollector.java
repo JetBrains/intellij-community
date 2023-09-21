@@ -4,9 +4,12 @@ package com.intellij.internal.statistic;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionUsageFUSStorage;
+import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule;
@@ -18,9 +21,9 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
-import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.impl.OpenFilesScope;
 import com.intellij.openapi.project.Project;
@@ -40,6 +43,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
+
+import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoByDescriptor;
 
 final class InspectionUsageFUSCollector extends ProjectUsagesCollector {
   private static final Predicate<ScopeToolState> ENABLED = state -> !state.getTool().isEnabledByDefault() && state.isEnabled();
@@ -265,7 +270,7 @@ final class InspectionUsageFUSCollector extends ProjectUsagesCollector {
   private static PluginInfo getInfo(InspectionToolWrapper<?, ?> tool) {
     InspectionEP extension = tool.getExtension();
     PluginDescriptor pluginDescriptor = extension == null ? null : extension.getPluginDescriptor();
-    return pluginDescriptor != null ? PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor) : null;
+    return pluginDescriptor != null ? getPluginInfoByDescriptor(pluginDescriptor) : null;
   }
 
   private static Map<String, Attribute> getOptions(InspectionProfileEntry entry) {
@@ -316,7 +321,67 @@ final class InspectionUsageFUSCollector extends ProjectUsagesCollector {
     return null;
   }
 
+  public static final class InspectionIdsPluginListener implements DynamicPluginListener {
+    @Override
+    public void beforePluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+      InspectionToolValidator.dropKnownInspectionIdCache();
+    }
+
+    @Override
+    public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+      InspectionToolValidator.dropKnownInspectionIdCache();
+    }
+  }
+
   public static final class InspectionToolValidator extends CustomValidationRule {
+    private static volatile HashSet<String> knownInspectionIds = null;
+    private static volatile boolean listenerSetUp = false;
+
+    private static void dropKnownInspectionIdCache() {
+      knownInspectionIds = null;
+    }
+
+    // strictly speaking, it may return not the very fresh inspectionIds, e.g., after dropping caches (it is not race free)
+    // That's fine in case of inspection ids
+    @NotNull
+    private static HashSet<String> getKnownInspectionIds() {
+      HashSet<String> ids = knownInspectionIds;
+      if (ids != null) {
+        return ids;
+      }
+      // slow path
+      if (!listenerSetUp) {
+        synchronized (InspectionToolValidator.class) {
+          if (!listenerSetUp) {
+            ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new InspectionIdsPluginListener());
+            listenerSetUp = true;
+          }
+        }
+      }
+      HashSet<String> computed = collectKnownInspectionIds();
+      knownInspectionIds = computed;
+      return computed;
+    }
+
+
+    private static HashSet<String> collectKnownInspectionIds() {
+      HashSet<String> inspectionIds = new HashSet<>();
+      for (InspectionEP ep : InspectionEP.GLOBAL_INSPECTION.getExtensionList()) {
+        if (getPluginInfoByDescriptor(ep.getPluginDescriptor()).isDevelopedByJetBrains()) {
+          inspectionIds.add(ep.getShortName());
+        }
+      }
+
+      for (LocalInspectionEP ep : LocalInspectionEP.LOCAL_INSPECTION.getExtensionList()) {
+        if (getPluginInfoByDescriptor(ep.getPluginDescriptor()).isDevelopedByJetBrains()) {
+          String epId = ep.id;
+          String id = epId == null ? ep.getShortName() : epId;
+          inspectionIds.add(id);
+        }
+      }
+      return inspectionIds;
+    }
+
     @NotNull
     @Override
     public String getRuleId() {
@@ -326,8 +391,10 @@ final class InspectionUsageFUSCollector extends ProjectUsagesCollector {
     @NotNull
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-      if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
-      return acceptWhenReportedByPluginFromPluginRepository(context);
+      if (getKnownInspectionIds().contains(data)) {
+        return ValidationResultType.ACCEPTED;
+      }
+      return ValidationResultType.REJECTED;
     }
   }
 }
