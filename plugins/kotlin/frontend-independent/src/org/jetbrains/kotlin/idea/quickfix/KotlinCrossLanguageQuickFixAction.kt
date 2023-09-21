@@ -15,7 +15,8 @@ abstract class KotlinCrossLanguageQuickFixAction<out T : PsiElement>(element: T)
 
     final override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
         val element = element
-        if (element != null && IntentionPreviewUtils.prepareElementForWrite(element)) {
+        if (element != null && 
+            (startInWriteAction() && getElementToMakeWritable(file) == file || IntentionPreviewUtils.prepareElementForWrite(element))) {
             invokeImpl(project, editor, file)
         }
     }

@@ -37,6 +37,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
   @PsiModifier.ModifierConstant private final String myModifier;
   private final boolean myShouldHave;
   private final boolean myShowContainingClass;
+  private final boolean myProcessHierarchy;
   private volatile @IntentionName String myName;
   private final boolean myStartInWriteAction;
 
@@ -49,6 +50,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
     myShouldHave = shouldHave;
     myShowContainingClass = showContainingClass;
     myName = format(null, modifierList, myShowContainingClass);
+    myProcessHierarchy = true;
     myStartInWriteAction = !(modifierList.getParent() instanceof PsiMethod) || AccessModifier.fromPsiModifier(modifier) == null;
   }
 
@@ -56,13 +58,21 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
                      @PsiModifier.ModifierConstant @NotNull String modifier,
                      boolean shouldHave,
                      boolean showContainingClass) {
+    this(owner, modifier, shouldHave, showContainingClass, true);
+  }
+
+  public ModifierFix(@NotNull PsiModifierListOwner owner,
+                     @PsiModifier.ModifierConstant @NotNull String modifier,
+                     boolean shouldHave,
+                     boolean showContainingClass, boolean processHierarchy) {
     super(owner);
     myModifier = modifier;
     myShouldHave = shouldHave;
     myShowContainingClass = showContainingClass;
+    myProcessHierarchy = processHierarchy;
     PsiVariable variable = owner instanceof PsiVariable ? (PsiVariable)owner : null;
     myName = format(variable, owner.getModifierList(), myShowContainingClass);
-    myStartInWriteAction = !(owner instanceof PsiMethod) || AccessModifier.fromPsiModifier(modifier) == null;
+    myStartInWriteAction = !myProcessHierarchy || !(owner instanceof PsiMethod) || AccessModifier.fromPsiModifier(modifier) == null;
   }
 
   private @IntentionName @NotNull String format(PsiVariable variable, PsiModifierList modifierList, boolean showContainingClass) {

@@ -8,10 +8,9 @@ import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.options.JavaClassValidator
 import com.intellij.codeInspection.*
-import com.intellij.codeInspection.fix.CompositeIntentionQuickFix
+import com.intellij.codeInspection.fix.CompositeModCommandQuickFix
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.options.OptPane.stringList
@@ -24,6 +23,7 @@ import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.lang.jvm.types.JvmType
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
@@ -333,8 +333,8 @@ private class JUnitMalformedSignatureVisitor(
   ) {
     override fun getName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.class.signature.multi")
 
-    override fun getActions(project: Project, descriptor: ProblemDescriptor): List<(JvmModifiersOwner) -> List<IntentionAction>> {
-      val list = super.getActions(project, descriptor).toMutableList()
+    override fun getActions(project: Project): List<(JvmModifiersOwner) -> List<IntentionAction>> {
+      val list = super.getActions(project).toMutableList()
       list.add { owner ->
         val outerClass = owner.sourceElement?.toUElementOfType<UClass>()?.nestedClassHierarchy()?.last()!!
         val request = annotationRequest(ORG_JUNIT_RUNNER_RUN_WITH, classAttribute("value", ORG_JUNIT_EXPERIMENTAL_RUNNERS_ENCLOSED))
@@ -345,9 +345,10 @@ private class JUnitMalformedSignatureVisitor(
 
     override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.class.signature.multi")
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val uClass = getUParentForIdentifier(descriptor.psiElement)?.asSafely<UClass>() ?: return
-      applyFixes(project, descriptor, uClass.javaPsi.asSafely<PsiClass>() ?: return)
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+      val uClass = getUParentForIdentifier(element)?.asSafely<UClass>() ?: return
+      applyFixes(project, uClass.javaPsi.asSafely<PsiClass>() ?: return,
+                 element.containingFile ?: return)
     }
   }
 
@@ -1118,22 +1119,18 @@ private class JUnitMalformedSignatureVisitor(
     private val makeStatic: Boolean? = null,
     private val makePublic: Boolean? = null,
     private val annotation: String? = null
-  ) : CompositeIntentionQuickFix() {
+  ) : CompositeModCommandQuickFix() {
     override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.class.signature")
 
     override fun getName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.class.signature.descriptor", name)
 
-    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
-      val javaDeclaration = getUParentForIdentifier(previewDescriptor.psiElement)?.asSafely<UClass>() ?: return IntentionPreviewInfo.EMPTY
-      return generatePreviews(project, previewDescriptor, javaDeclaration.javaPsi.asSafely<PsiClass>() ?: return IntentionPreviewInfo.EMPTY)
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+      val javaDeclaration = getUParentForIdentifier(element)?.asSafely<UClass>() ?: return
+      applyFixes(project, javaDeclaration.javaPsi.asSafely<PsiClass>() ?: return,
+                 element.containingFile ?: return)
     }
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val javaDeclaration = getUParentForIdentifier(descriptor.psiElement)?.asSafely<UClass>() ?: return
-      applyFixes(project, descriptor, javaDeclaration.javaPsi.asSafely<PsiClass>() ?: return)
-    }
-
-    override fun getActions(project: Project, descriptor: ProblemDescriptor): List<(JvmModifiersOwner) -> List<IntentionAction>> {
+    override fun getActions(project: Project): List<(JvmModifiersOwner) -> List<IntentionAction>> {
       val actions = mutableListOf<(JvmModifiersOwner) -> List<IntentionAction>>()
       if (makeStatic != null) {
         actions.add { jvmClass -> createModifierActions(jvmClass, modifierRequest(JvmModifier.STATIC, makeStatic)) }
@@ -1152,22 +1149,17 @@ private class JUnitMalformedSignatureVisitor(
     private val name: @NlsSafe String,
     private val makeStatic: Boolean?,
     private val newVisibility: JvmModifier? = null
-  ) : CompositeIntentionQuickFix() {
+  ) : CompositeModCommandQuickFix() {
     override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.field.signature")
 
     override fun getName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.field.signature.descriptor", name)
 
-    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
-      val javaDeclaration = getUParentForIdentifier(previewDescriptor.psiElement)?.asSafely<UField>() ?: return IntentionPreviewInfo.EMPTY
-      return generatePreviews(project, previewDescriptor, javaDeclaration.javaPsi ?: return IntentionPreviewInfo.EMPTY)
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+      val javaDeclaration = getUParentForIdentifier(element)?.asSafely<UField>() ?: return
+      applyFixes(project, javaDeclaration.javaPsi ?: return, element.containingFile ?: return)
     }
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val javaDeclaration = getUParentForIdentifier(descriptor.psiElement)?.asSafely<UField>() ?: return
-      applyFixes(project, descriptor, javaDeclaration.javaPsi ?: return)
-    }
-
-    override fun getActions(project: Project, descriptor: ProblemDescriptor): List<(JvmModifiersOwner) -> List<IntentionAction>> {
+    override fun getActions(project: Project): List<(JvmModifiersOwner) -> List<IntentionAction>> {
       val actions = mutableListOf<(JvmModifiersOwner) -> List<IntentionAction>>()
       if (newVisibility != null) {
         actions.add { jvmField -> createModifierActions(jvmField, modifierRequest(newVisibility, true)) }
@@ -1185,22 +1177,17 @@ private class JUnitMalformedSignatureVisitor(
     private val shouldBeVoidType: Boolean? = null,
     private val newVisibility: JvmModifier? = null,
     @SafeFieldForPreview private val inCorrectParams: Map<String, JvmType>? = null
-  ) : CompositeIntentionQuickFix() {
+  ) : CompositeModCommandQuickFix() {
     override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.method.signature")
 
     override fun getName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.method.signature.descriptor", name)
 
-    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
-      val javaDeclaration = getUParentForIdentifier(previewDescriptor.psiElement)?.asSafely<UMethod>() ?: return IntentionPreviewInfo.EMPTY
-      return generatePreviews(project, previewDescriptor, javaDeclaration.javaPsi)
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+      val javaDeclaration = getUParentForIdentifier(element)?.asSafely<UMethod>() ?: return
+      applyFixes(project, javaDeclaration.javaPsi, element.containingFile ?: return)
     }
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val javaDeclaration = getUParentForIdentifier(descriptor.psiElement)?.asSafely<UMethod>() ?: return
-      applyFixes(project, descriptor, javaDeclaration.javaPsi)
-    }
-
-    override fun getActions(project: Project, descriptor: ProblemDescriptor): List<(JvmModifiersOwner) -> List<IntentionAction>> {
+    override fun getActions(project: Project): List<(JvmModifiersOwner) -> List<IntentionAction>> {
       val actions = mutableListOf<(JvmModifiersOwner) -> List<IntentionAction>>()
       if (shouldBeVoidType == true) {
         actions.add { jvmMethod -> createChangeTypeActions(
@@ -1209,7 +1196,7 @@ private class JUnitMalformedSignatureVisitor(
         ) }
       }
       if (newVisibility != null) {
-        actions.add { jvmMethod -> createModifierActions(jvmMethod, modifierRequest(newVisibility, true)) }
+        actions.add { jvmMethod -> createModifierActions(jvmMethod, modifierRequest(newVisibility, true, false)) }
       }
       if (inCorrectParams != null) {
         actions.add { jvmMethod -> createChangeParametersActions(
@@ -1218,7 +1205,7 @@ private class JUnitMalformedSignatureVisitor(
         ) }
       }
       if (makeStatic != null) {
-        actions.add { jvmMethod -> createModifierActions(jvmMethod, modifierRequest(JvmModifier.STATIC, makeStatic)) }
+        actions.add { jvmMethod -> createModifierActions(jvmMethod, modifierRequest(JvmModifier.STATIC, makeStatic, false)) }
       }
       return actions
     }

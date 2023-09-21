@@ -84,7 +84,7 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
 
   internal class ChangeModifierFix(declaration: PsiModifierListOwner,
                                    @FileModifier.SafeFieldForPreview val request: ChangeModifierRequest) :
-    ModifierFix(declaration, request.modifier.toPsiModifier(), request.shouldBePresent(), true) {
+    ModifierFix(declaration, request.modifier.toPsiModifier(), request.shouldBePresent(), true, request.processHierarchy()) {
     override fun isAvailable(): Boolean = request.isValid && super.isAvailable()
 
     override fun isAvailable(project: Project,
