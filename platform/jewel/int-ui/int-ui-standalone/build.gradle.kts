@@ -1,8 +1,9 @@
 plugins {
     jewel
+    `jewel-publish`
     alias(libs.plugins.composeDesktop)
 }
 
 dependencies {
-    api(projects.core)
+    api(projects.intUi.intUiCore)
 }

@@ -1,6 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
 plugins {
+    jewel
     `jewel-publish`
     alias(libs.plugins.composeDesktop)
     `intellij-theme-generator`
@@ -8,7 +9,6 @@ plugins {
 
 dependencies {
     api(projects.core)
-    api(projects.composeUtils)
 }
 
 intelliJThemeGenerator {
@@ -35,4 +35,3 @@ tasks {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 }
-

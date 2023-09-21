@@ -8,7 +8,7 @@ plugins {
 }
 
 dependencies {
-    implementation(projects.themes.intUi.intUiStandalone)
+    implementation(projects.intUi.intUiStandalone)
 }
 
 compose.desktop {

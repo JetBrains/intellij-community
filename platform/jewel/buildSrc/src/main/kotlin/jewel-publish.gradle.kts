@@ -1,9 +1,9 @@
 @file:Suppress("UnstableApiUsage")
 
 plugins {
+    kotlin("jvm")
     `maven-publish`
     id("org.jetbrains.dokka")
-    id("jewel")
 }
 
 val sourcesJar by tasks.registering(Jar::class) {

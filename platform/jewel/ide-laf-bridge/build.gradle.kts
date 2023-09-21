@@ -1,11 +1,11 @@
 plugins {
-    alias(libs.plugins.composeDesktop)
     jewel
     `jewel-publish`
+    alias(libs.plugins.composeDesktop)
 }
 
 dependencies {
-    api(projects.themes.intUi.intUiStandalone)
+    api(projects.intUi.intUiStandalone)
     compileOnly(libs.bundles.idea)
 
     testImplementation(compose.desktop.uiTestJUnit4)
