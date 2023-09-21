@@ -20,6 +20,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
@@ -42,6 +44,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.awt.event.MouseEvent
 import javax.accessibility.AccessibleContext
@@ -202,15 +205,6 @@ class MainToolbar(
     if (!isToolbarInHeader()) {
       ProjectWindowCustomizerService.getInstance().paint(frame, this, g as Graphics2D)
     }
-  }
-
-  private fun schemaChanged() {
-    CustomActionsSchema.getInstance().initActionIcons()
-    CustomActionsSchema.setCustomizationSchemaForCurrentProjects()
-    if (SystemInfoRt.isMac) {
-      TouchbarSupport.reloadAllActions()
-    }
-    CustomActionsListener.fireSchemaChanged()
   }
 
   private fun installClickListener(popupHandler: PopupHandler, customTitleBar: WindowDecorations.CustomTitleBar?) {
@@ -473,3 +467,41 @@ private class HeaderIconUpdater {
 }
 
 private data class GroupInfo(@JvmField val id: String, @JvmField val name: String, @JvmField val align: HorizontalLayout.Group)
+
+@Internal
+@Suppress("HardCodedStringLiteral")
+class RemoveMainToolbarActionsAction private constructor() : DumbAwareAction("Remove Actions From Main Toolbar") {
+  override fun actionPerformed(e: AnActionEvent) {
+    runBlockingCancellable {
+      val schema = CustomActionsSchema.getInstanceAsync()
+      val groups = computeMainActionGroups(schema)
+
+      val mainToolbarName = schema.getDisplayName(MAIN_TOOLBAR_ID)!!
+      val mainToolbarPath = listOf("root", mainToolbarName)
+
+      for (group in groups) {
+        val actionsToRemove = group.first.getChildren(null)
+        val fromPath = ArrayList(mainToolbarPath + group.first.templatePresentation.text)
+        for (action in actionsToRemove) {
+          val actionId = ActionManager.getInstance().getId(action)
+          schema.addAction(ActionUrl(fromPath, actionId, ActionUrl.DELETED, 0))
+        }
+      }
+    }
+
+    schemaChanged()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+}
+
+private fun schemaChanged() {
+  CustomActionsSchema.getInstance().initActionIcons()
+  CustomActionsSchema.setCustomizationSchemaForCurrentProjects()
+  if (SystemInfoRt.isMac) {
+    TouchbarSupport.reloadAllActions()
+  }
+  CustomActionsListener.fireSchemaChanged()
+}
