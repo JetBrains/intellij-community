@@ -5,13 +5,11 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.askPassword
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ssh.SSHUtil
 import com.intellij.util.PathUtil
@@ -19,17 +17,18 @@ import externalApp.nativessh.NativeSshAskPassAppHandler
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
-class NativeSshGuiAuthenticator(private val myProject: Project,
-                                private val myAuthenticationGate: AuthenticationGate,
-                                private val myAuthenticationMode: AuthenticationMode,
-                                private val myDoNotRememberPasswords: Boolean) : NativeSshAskPassAppHandler {
-  private var myLastAskedKeyPath: String? = null
-  private var myLastAskedUserName: String? = null
-  private var myLastAskedConfirmationInput: String? = null
+class NativeSshGuiAuthenticator(private val project: Project,
+                                private val authenticationGate: AuthenticationGate,
+                                private val authenticationMode: AuthenticationMode,
+                                private val doNotRememberPasswords: Boolean) : NativeSshAskPassAppHandler {
+
+  private var lastAskedKeyPath: String? = null
+  private var lastAskedUserName: String? = null
+  private var lastAskedConfirmationInput: String? = null
 
   override fun handleInput(description: @NlsSafe String): String? {
-    if (myAuthenticationMode == AuthenticationMode.NONE) return null
-    return myAuthenticationGate.waitAndCompute {
+    if (authenticationMode == AuthenticationMode.NONE) return null
+    return authenticationGate.waitAndCompute {
       when {
         isKeyPassphrase(description) -> askKeyPassphraseInput(description)
         isSshPassword(description) -> askSshPasswordInput(description)
@@ -43,18 +42,18 @@ class NativeSshGuiAuthenticator(private val myProject: Project,
     val matcher = SSHUtil.PASSPHRASE_PROMPT.matcher(description)
     check(matcher.matches()) { description }
     val keyPath = SSHUtil.extractKeyPath(matcher)
-    val resetPassword = keyPath == myLastAskedKeyPath
-    myLastAskedKeyPath = keyPath
+    val resetPassword = keyPath == lastAskedKeyPath
+    lastAskedKeyPath = keyPath
 
-    if (myDoNotRememberPasswords) {
-      return askUser {
+    if (doNotRememberPasswords) {
+      return askUserOnEdt {
         val message = ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath))
-        Messages.showPasswordDialog(myProject, message,
+        Messages.showPasswordDialog(project, message,
                                     ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.title"), null)
       }
     }
     else {
-      return askPassphrase(myProject, keyPath, resetPassword, myAuthenticationMode)
+      return askPassphrase(project, keyPath, resetPassword, authenticationMode)
     }
   }
 
@@ -62,59 +61,57 @@ class NativeSshGuiAuthenticator(private val myProject: Project,
     val matcher = SSHUtil.PASSWORD_PROMPT.matcher(description)
     check(matcher.matches()) { description }
     val username = SSHUtil.extractUsername(matcher)
-    val resetPassword = username == myLastAskedUserName
-    myLastAskedUserName = username
+    val resetPassword = username == lastAskedUserName
+    lastAskedUserName = username
 
-    if (myDoNotRememberPasswords) {
-      return askUser {
+    if (doNotRememberPasswords) {
+      return askUserOnEdt {
         val message = ExternalProcessAuthHelperBundle.message("ssh.password.message", username)
-        Messages.showPasswordDialog(myProject, message,
+        Messages.showPasswordDialog(project, message,
                                     ExternalProcessAuthHelperBundle.message("ssh.password.title"), null)
       }
     }
     else {
-      return askPassword(myProject, username, resetPassword, myAuthenticationMode)
+      return askPassword(project, username, resetPassword, authenticationMode)
     }
   }
 
   private fun askConfirmationInput(description: @NlsSafe String): String? {
-    return askUser {
+    return askUserOnEdt {
       val message: @NlsSafe String = StringUtil.replace(description,
                                                         SSHUtil.CONFIRM_CONNECTION_PROMPT + " (yes/no)?",
                                                         SSHUtil.CONFIRM_CONNECTION_PROMPT + "?")
 
-      val knownAnswer = myAuthenticationGate.getSavedInput(message)
-      if (knownAnswer != null && myLastAskedConfirmationInput == null) {
-        myLastAskedConfirmationInput = knownAnswer
-        return@askUser knownAnswer
+      val knownAnswer = authenticationGate.getSavedInput(message)
+      if (knownAnswer != null && lastAskedConfirmationInput == null) {
+        lastAskedConfirmationInput = knownAnswer
+        return@askUserOnEdt knownAnswer
       }
 
-      val answer = Messages.showYesNoDialog(myProject, message, ExternalProcessAuthHelperBundle.message("title.ssh.confirmation"), null)
+      val answer = Messages.showYesNoDialog(project, message, ExternalProcessAuthHelperBundle.message("title.ssh.confirmation"), null)
       val textAnswer = when (answer) {
         Messages.YES -> "yes"
         Messages.NO -> "no"
         else -> throw AssertionError(answer)
       }
 
-      myAuthenticationGate.saveInput(message, textAnswer)
-      return@askUser textAnswer
+      authenticationGate.saveInput(message, textAnswer)
+      return@askUserOnEdt textAnswer
     }
   }
 
   private fun askGenericInput(description: @Nls String): String? {
-    return askUser {
-      Messages.showPasswordDialog(myProject, description,
+    return askUserOnEdt {
+      Messages.showPasswordDialog(project, description,
                                   ExternalProcessAuthHelperBundle.message("ssh.keyboard.interactive.title"),
                                   null)
     }
   }
 
-  private fun askUser(query: Computable<String?>): String? {
-    if (myAuthenticationMode != AuthenticationMode.FULL) return null
+  private fun askUserOnEdt(query: () -> String?): String? {
+    if (authenticationMode != AuthenticationMode.FULL) return null
 
-    val answerRef = Ref<String>()
-    ApplicationManager.getApplication().invokeAndWait({ answerRef.set(query.compute()) }, ModalityState.any())
-    return answerRef.get()
+    return invokeAndWaitIfNeeded(ModalityState.any(), query)
   }
 
   companion object {
