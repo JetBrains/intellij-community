@@ -69,7 +69,7 @@ class WorkspaceModelTestReportParser(private val lines: List<String>) {
     }
 
     private fun consumeAllCommentsAndNonMeaningfulLines(): List<String> =
-        consumeMeaningfulLinesWhile { it.startsWith(LINE_COMMENT_START_SEPARATOR) }
+        consumeMeaningfulLinesWhile { it.trimStart().startsWith(LINE_COMMENT_START_SEPARATOR) }
 
     private fun consumeMeaningfulLinesWhile(condition: (String) -> Boolean): List<String> {
         val result = mutableListOf<String>()
