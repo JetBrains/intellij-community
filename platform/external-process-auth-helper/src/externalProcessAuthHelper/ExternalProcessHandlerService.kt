@@ -145,7 +145,7 @@ abstract class ExternalProcessRest<T : ExternalAppHandler>(
           channel.close()
         }
         else {
-          LOG.warn(err)
+          LOG.warn(Throwable(err))
           sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, false, channel)
         }
       }
