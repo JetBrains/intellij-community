@@ -17,7 +17,6 @@ import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.startup.StartupManager;
@@ -642,17 +641,18 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     Icon icon = NotificationsUtil.getIcon(notification);
+    int iconOffset = icon.getIconWidth() > 16 ? 5 : layoutData.configuration.iconOffset.width;
     JComponent iconComponent = new JComponent() {
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        icon.paintIcon(this, g, layoutData.configuration.iconOffset.width, layoutData.configuration.iconOffset.height);
+        icon.paintIcon(this, g, iconOffset, layoutData.configuration.iconOffset.height);
       }
     };
     iconComponent.setOpaque(false);
 
     Runnable iconSizeRunnable = () -> iconComponent.setPreferredSize(
-      new Dimension(layoutData.configuration.iconPanelWidth, 2 * layoutData.configuration.iconOffset.height + icon.getIconHeight()));
+      new Dimension(Math.max(layoutData.configuration.iconPanelWidth, icon.getIconWidth() + iconOffset * 2), 2 * layoutData.configuration.iconOffset.height + icon.getIconHeight()));
     iconSizeRunnable.run();
 
     content.add(iconComponent, BorderLayout.WEST);
