@@ -13,11 +13,13 @@ interface TreeAssertion<T> {
    * @param flattenIf skips this node assertion (name and value),
    * but it applies child assertions as if they are on the same level with this node assertion.
    * @param skipIf skips this node assertion with them child assertions.
+   * @param isUnordered finds node for assertion out of sibling definition order.
    */
   fun assertNode(
     name: String,
     flattenIf: Boolean = false,
     skipIf: Boolean = false,
+    isUnordered: Boolean = false,
     assert: Node<T>.() -> Unit = {}
   )
 
@@ -29,11 +31,13 @@ interface TreeAssertion<T> {
    * @param flattenIf skips this node assertion (name and value),
    * but it applies child assertions as if they are on the same level with this node assertion.
    * @param skipIf skips this node assertion with them child assertions.
+   * @param isUnordered finds node for assertion out of sibling definition order.
    */
   fun assertNode(
     regex: Regex,
     flattenIf: Boolean = false,
     skipIf: Boolean = false,
+    isUnordered: Boolean = false,
     assert: Node<T>.() -> Unit = {}
   )
 

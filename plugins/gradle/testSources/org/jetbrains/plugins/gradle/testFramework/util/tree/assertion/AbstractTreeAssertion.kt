@@ -13,10 +13,10 @@ internal abstract class AbstractTreeAssertion<T>(
   protected abstract val expectedChildren: MutableList<MutableTree.Node<NodeAssertionOptions<T>>>
 
   // @formatter:off
-  override fun assertNode(name: String, flattenIf: Boolean, skipIf: Boolean, assert: TreeAssertion.Node<T>.() -> Unit) =
-    assertNode(NodeAssertionOptions(NodeMatcher.Name(name), flattenIf, skipIf), assert)
-  override fun assertNode(regex: Regex, flattenIf: Boolean, skipIf: Boolean, assert: TreeAssertion.Node<T>.() -> Unit) =
-    assertNode(NodeAssertionOptions(NodeMatcher.NameRegex(regex), flattenIf, skipIf), assert)
+  override fun assertNode(name: String, flattenIf: Boolean, skipIf: Boolean, isUnordered: Boolean, assert: TreeAssertion.Node<T>.() -> Unit) =
+    assertNode(NodeAssertionOptions(NodeMatcher.Name(name), flattenIf, skipIf, isUnordered), assert)
+  override fun assertNode(regex: Regex, flattenIf: Boolean, skipIf: Boolean, isUnordered: Boolean, assert: TreeAssertion.Node<T>.() -> Unit) =
+    assertNode(NodeAssertionOptions(NodeMatcher.NameRegex(regex), flattenIf, skipIf, isUnordered), assert)
   // @formatter:on
 
   private fun assertNode(options: NodeAssertionOptions<T>, assert: TreeAssertion.Node<T>.() -> Unit) {
@@ -82,19 +82,19 @@ internal abstract class AbstractTreeAssertion<T>(
   protected data class NodeAssertionOptions<T>(
     val matcher: NodeMatcher<T>,
     val flattenIf: Boolean,
-    val skipIf: Boolean
+    val skipIf: Boolean,
+    val isUnordered: Boolean
   )
 
   companion object {
 
     fun <T> assertTree(actualTree: Tree<T>, isUnordered: Boolean, assert: TreeAssertion<T>.() -> Unit) {
-      val expectedTree = SimpleTree<NodeAssertionOptions<T>>()
-      val assertion = TreeAssertionImpl(actualTree, expectedTree)
+      val actualMutableTree = actualTree.toMutableTree()
+      val expectedMutableTree = SimpleTree<NodeAssertionOptions<T>>()
+      val assertion = TreeAssertionImpl(actualMutableTree, expectedMutableTree)
       assertion.assert()
-      when (isUnordered) {
-        true -> assertTree(expectedTree.sortTree(), actualTree.sortedTree())
-        else -> assertTree(expectedTree, actualTree)
-      }
+      sortTree(expectedMutableTree, actualMutableTree, isUnordered)
+      assertTree(expectedMutableTree, actualMutableTree)
     }
 
     private fun <T> assertTree(expectedTree: Tree<NodeAssertionOptions<T>>, actualTree: Tree<T>) {
@@ -119,6 +119,48 @@ internal abstract class AbstractTreeAssertion<T>(
         .expected(expectedTree.getTreeString())
         .actual(actualTree.getTreeString())
         .build()
+    }
+
+    private fun <T> sortTree(
+      expectedTree: MutableTree<NodeAssertionOptions<T>>,
+      actualTree: MutableTree<T>,
+      isUnordered: Boolean
+    ) {
+      val queue = ArrayDeque<Pair<
+        MutableList<MutableTree.Node<NodeAssertionOptions<T>>>,
+        MutableList<MutableTree.Node<T>>
+        >>()
+      queue.add(expectedTree.roots to actualTree.roots)
+      while (queue.isNotEmpty()) {
+        val (expectedNodes, actualNodes) = queue.removeFirst()
+
+        // Partition expected nodes
+        val (expectedUnorderedNodes, expectedOrderedNodes) =
+          expectedNodes.partition { isUnordered || it.value.isUnordered }
+
+        // Partition actual nodes in order of expected nodes
+        val actualUnorderedNodes = ArrayList<MutableTree.Node<T>>()
+        val actualOrderedNodes = ArrayList(actualNodes)
+        for (expectedUnorderedNode in expectedUnorderedNodes) {
+          val index = actualOrderedNodes.indexOfFirst { expectedUnorderedNode.value.matcher.matches(it) }
+          if (index >= 0) {
+            val actualUnorderedNode = actualOrderedNodes.removeAt(index)
+            actualUnorderedNodes.add(actualUnorderedNode)
+          }
+        }
+
+        // Sort origin expected and actual trees by ordering options from an expected tree
+        expectedNodes.clear()
+        expectedNodes.addAll(expectedOrderedNodes)
+        expectedNodes.addAll(expectedUnorderedNodes)
+        actualNodes.clear()
+        actualNodes.addAll(actualOrderedNodes)
+        actualNodes.addAll(actualUnorderedNodes)
+
+        for ((expectedNode, actualNode) in expectedNodes.zip(actualNodes)) {
+          queue.add(expectedNode.children to actualNode.children)
+        }
+      }
     }
   }
 }
