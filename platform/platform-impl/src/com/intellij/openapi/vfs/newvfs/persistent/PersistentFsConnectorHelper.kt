@@ -13,9 +13,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import java.util.concurrent.Callable
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutorService
 
 /** Abstracts out specific way to run async tasks during VFS initialization */
-internal interface VFSAsyncTaskExecutor {
+interface VFSAsyncTaskExecutor {
   fun <T> async(task: Callable<T>): CompletableFuture<T>
 }
 
@@ -31,10 +32,9 @@ internal class ExecuteOnCoroutine(private val coroutineScope: CoroutineScope) : 
   }
 }
 
-internal object ExecuteOnAppThreadPool : VFSAsyncTaskExecutor {
+class ExecuteOnThreadPool(private val pool: ExecutorService) : VFSAsyncTaskExecutor {
   override fun <T> async(task: Callable<T>): CompletableFuture<T> {
     //MAYBE RC: use Dispatchers.IO-kind pool, with many threads (appExecutor has 1 core thread, so needs time to inflate)
-    val pool = AppExecutorUtil.getAppExecutorService()
     return CompletableFuture.supplyAsync(
       { task.call() },
       pool
@@ -71,7 +71,8 @@ internal object PersistentFsConnectorHelper {
       }
     }
     else {
-      return ExecuteOnAppThreadPool
+      val pool = AppExecutorUtil.getAppExecutorService()
+      return ExecuteOnThreadPool(pool)
     }
   }
 }
