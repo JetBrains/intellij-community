@@ -47,7 +47,12 @@ class PluginHasher {
           // if path is a directory, all the regular files will be visited
           // note, that symlinks are not followed
           path.walk().sorted().forEach { f ->
-            hasher.putBytes("${f.toAbsolutePath()}:${f.fileSize()}:${f.getLastModifiedTime()}".toByteArray(charset))
+            // /tmp/byteBuddyAgent12978532094762450051.jar:1261:2023-09-21T12:46:17.196727952Z <= this file is always different :(
+            // see also https://youtrack.jetbrains.com/issue/IJPL-166
+            val absolutePathString = f.toAbsolutePath().toString()
+            if (!absolutePathString.startsWith("/tmp/byteBuddyAgent")) {
+              hasher.putBytes("$absolutePathString:${f.fileSize()}:${f.getLastModifiedTime()}".toByteArray(charset))
+            }
           }
         }
       hasher.hash().toString()
