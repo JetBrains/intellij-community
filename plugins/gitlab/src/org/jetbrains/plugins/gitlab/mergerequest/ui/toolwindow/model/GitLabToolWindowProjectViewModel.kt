@@ -125,6 +125,7 @@ private constructor(parentCs: CoroutineScope,
     is GitLabReviewTab.ReviewSelected -> GitLabReviewTabViewModel.Details(project, cs, connection.currentUser, connection.projectData,
                                                                           tab.mrIid,
                                                                           getDiffBridge(tab.mrIid), filesController)
+    GitLabReviewTab.NewMergeRequest -> TODO("implement")
   }
 
   override fun selectTab(tab: GitLabReviewTab?) {
@@ -152,6 +153,12 @@ private constructor(parentCs: CoroutineScope,
 
   fun showTimeline(mrIid: String, focus: Boolean) {
     filesController.openTimeline(mrIid, focus)
+  }
+
+  fun createMergeRequest() {
+    cs.launch {
+      showTab(GitLabReviewTab.NewMergeRequest)
+    }
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)

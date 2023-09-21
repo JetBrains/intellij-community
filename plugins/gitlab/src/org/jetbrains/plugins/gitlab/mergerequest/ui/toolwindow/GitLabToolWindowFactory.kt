@@ -4,7 +4,9 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.toolwindow.dontHideOnEmptyContent
 import com.intellij.collaboration.ui.toolwindow.manageReviewToolwindowTabs
+import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.EmptyAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -69,6 +71,9 @@ private class GitLabMergeRequestsToolWindowController(private val project: Proje
 
       manageReviewToolwindowTabs(cs, toolWindow, vm, componentFactory, GitLabBundle.message("merge.request.toolwindow.tab.title"))
 
+      toolWindow.setTitleActions(listOf(
+        EmptyAction.registerWithShortcutSet("GitLab.Merge.Request.Create", CommonShortcuts.getNew(), toolWindow.component),
+      ))
       toolWindow.setAdditionalGearActions(DefaultActionGroup(GitLabSwitchProjectAndAccountAction()))
       awaitCancellation()
     }.cancelOnDispose(toolWindow.contentManager)

@@ -93,4 +93,11 @@ internal class GitLabToolWindowViewModel(
   fun activate() {
     _activationRequests.tryEmit(Unit)
   }
+
+  fun activateAndAwaitProject(action: GitLabToolWindowProjectViewModel.() -> Unit) {
+    cs.launch {
+      _activationRequests.emit(Unit)
+      projectVm.filterNotNull().first().action()
+    }
+  }
 }
