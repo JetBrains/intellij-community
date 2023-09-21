@@ -76,12 +76,15 @@ public final class History {
 
   private int findValid(int increment) {
     List<Place> places = new ArrayList<>();
+    int first;
     synchronized (this) {
-      for (int idx = myCurrentPos + increment; idx >= 0 && idx < myHistory.size(); idx += increment) {
+      first = myCurrentPos + increment;
+      for (int idx = first; idx >= 0 && idx < myHistory.size(); idx += increment) {
         places.add(myHistory.get(idx));
       }
     }
-    return ContainerUtil.indexOf(places, place -> myRoot.isValid(place));
+    int index = ContainerUtil.indexOf(places, place -> myRoot.isValid(place));
+    return index == -1 ? -1 : index + first;
   }
 
   private void goThere(final int nextPos) {
