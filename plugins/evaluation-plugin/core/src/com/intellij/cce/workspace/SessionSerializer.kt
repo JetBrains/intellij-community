@@ -9,7 +9,6 @@ import com.intellij.cce.core.Session
 import com.intellij.cce.core.Suggestion
 import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.workspace.info.FileSessionsInfo
-import org.apache.commons.lang3.StringEscapeUtils
 import java.lang.reflect.Type
 
 class SessionSerializer {
@@ -24,22 +23,12 @@ class SessionSerializer {
       .registerTypeAdapter(Suggestion::class.java, object : JsonSerializer<Suggestion> {
         override fun serialize(src: Suggestion, typeOfSrc: Type, context: JsonSerializationContext): JsonObject {
           val jsonObject = JsonObject()
-          jsonObject.addProperty("text", escapeHtml(src.text))
-          jsonObject.addProperty("presentationText", escapeHtml(src.presentationText))
+          jsonObject.addProperty("text", src.text)
+          jsonObject.addProperty("presentationText", src.presentationText)
           return jsonObject
         }
       })
       .create()
-
-    private fun escapeHtml(value: String): String {
-      return StringEscapeUtils.escapeHtml4(value)
-        .replace("&lt;", "<")
-        .replace("&gt;", ">")
-        .replace("([\r\n\t])".toRegex(), "")
-        .replace("""(\\r|\\n|\\t)""".toRegex(), "")
-        .replace("\\", "&#92;")
-        .replace("★", "*")
-    }
   }
 
   fun serialize(sessions: FileSessionsInfo): String = gson.toJson(sessions)
