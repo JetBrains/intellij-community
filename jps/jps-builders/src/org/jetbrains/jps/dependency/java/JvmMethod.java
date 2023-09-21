@@ -16,7 +16,6 @@ public class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, Jvm
   private final Iterable<TypeRepr> myArgTypes;
   private final Set<ParamAnnotation> myParamAnnotations;
   private final Set<TypeRepr.ClassType> myExceptions;
-  private final String myDescriptor;
 
   public JvmMethod(
     JVMFlags flags, String signature, String name, String descriptor,
@@ -27,7 +26,6 @@ public class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, Jvm
     myParamAnnotations = parameterAnnotations;
     myExceptions = Iterators.collect(Iterators.map(Arrays.asList(exceptions), s -> new TypeRepr.ClassType(s)), new HashSet<>());
     myArgTypes = TypeRepr.getTypes(Type.getArgumentTypes(descriptor));
-    myDescriptor = descriptor;
   }
 
   @Override
@@ -45,10 +43,6 @@ public class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, Jvm
 
   public Iterable<TypeRepr> getArgTypes() {
     return myArgTypes;
-  }
-
-  public String getDescriptor() {
-    return myDescriptor;
   }
 
   @Override
@@ -92,5 +86,20 @@ public class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, Jvm
     public Specifier<TypeRepr.ClassType, ?> exceptionsChanged() {
       return Difference.diff(myPast.getExceptions(), getExceptions());
     }
+  }
+
+  public String getDescriptor() {
+    final StringBuilder buf = new StringBuilder();
+
+    buf.append("(");
+
+    for (TypeRepr t : myArgTypes) {
+      buf.append(t.getDescriptor());
+    }
+
+    buf.append(")");
+    buf.append(getType().getDescriptor());
+
+    return buf.toString();
   }
 }

@@ -8,6 +8,7 @@ import org.jetbrains.jps.dependency.NodeSerializerRegistry;
 import org.jetbrains.jps.dependency.SerializableGraphElement;
 import org.jetbrains.jps.dependency.impl.serializer.FileSourceNodeSerializerImpl;
 import org.jetbrains.jps.dependency.impl.serializer.JvmClassNodeSerializerImpl;
+import org.jetbrains.jps.dependency.impl.serializer.JvmModuleNodeSerializerImpl;
 import org.jetbrains.jps.dependency.impl.serializer.StringReferenceIDNodeSerializerImpl;
 
 import java.util.*;
@@ -19,7 +20,7 @@ public class SerializerRegistryImpl implements NodeSerializerRegistry {
 
   private static final NodeSerializerRegistry INSTANCE =
     new SerializerRegistryImpl(
-      Arrays.asList(new FileSourceNodeSerializerImpl(), new StringReferenceIDNodeSerializerImpl(), new JvmClassNodeSerializerImpl()));
+      Arrays.asList(new FileSourceNodeSerializerImpl(), new StringReferenceIDNodeSerializerImpl(), new JvmClassNodeSerializerImpl(), new JvmModuleNodeSerializerImpl()));
 
   public static NodeSerializerRegistry getInstance() {
     return INSTANCE;

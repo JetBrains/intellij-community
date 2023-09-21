@@ -776,4 +776,79 @@ public final class SerializerUtil {
         throw new SerializationException("Unknown Usage class: " + usageClassName);
     }
   }
+
+  static void writeJvmModule(JvmModule jvmModule, DataOutput out) throws IOException {
+    writeJVMClassNode(jvmModule, out);
+    out.writeUTF(jvmModule.getVersion());
+
+    // Write Requires
+    int requiresCount = 0;
+    for (ModuleRequires moduleRequires : jvmModule.getRequires()) {
+      requiresCount++;
+    }
+    DataInputOutputUtil.writeINT(out, requiresCount);
+    for (ModuleRequires moduleRequires : jvmModule.getRequires()) {
+      writeProto(moduleRequires, out);
+      out.writeUTF(moduleRequires.getVersion());
+    }
+
+    // Write exports
+    int exportsCount = 0;
+    for (ModulePackage export : jvmModule.getExports()) {
+      exportsCount++;
+    }
+    DataInputOutputUtil.writeINT(out, exportsCount);
+    for (ModulePackage export : jvmModule.getExports()) {
+      writeProto(export, out);
+
+      // Write modules
+      int modulesCount = 0;
+      for (String module : export.getModules()) {
+        modulesCount++;
+      }
+      DataInputOutputUtil.writeINT(out, modulesCount);
+      for (String module : export.getModules()) {
+        out.writeUTF(module);
+      }
+    }
+  }
+
+  static JvmModule readJvmModule(DataInput in) throws IOException {
+    JVMClassNode jvmClassNode = readJvmClassNode(in);
+    String version = in.readUTF();
+
+    // Read Requires
+    int requiresCount = DataInputOutputUtil.readINT(in);
+    List<ModuleRequires> requiresList = new ArrayList<>();
+    for (int i = 0; i < requiresCount; i++) {
+      Proto proto = readProto(in);
+      String moduleVersion = in.readUTF();
+      requiresList.add(new ModuleRequires(proto.getFlags(), proto.getName(), moduleVersion));
+    }
+
+    // Read exports
+    int exportsCount = DataInputOutputUtil.readINT(in);
+    List<ModulePackage> exportsList = new ArrayList<>();
+    for (int i = 0; i < exportsCount; i++) {
+      Proto proto = readProto(in);
+
+      // Read modules
+      int modulesCount = DataInputOutputUtil.readINT(in);
+      List<String> modulesList = new ArrayList<>();
+      for (int j = 0; j < modulesCount; j++) {
+        String module = in.readUTF();
+        modulesList.add(module);
+      }
+
+      exportsList.add(new ModulePackage(proto.getName(), modulesList));
+    }
+
+    return new JvmModule(jvmClassNode.getFlags(),
+                     jvmClassNode.getName(),
+                     jvmClassNode.getOutFilePath(),
+                     version,
+                     requiresList,
+                     exportsList,
+                     jvmClassNode.getUsages());
+  }
 }
