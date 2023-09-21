@@ -11,7 +11,7 @@ import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerfor
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.atomic.AtomicBoolean
 
-private class IdeStartUpPerformanceService(coroutineScope: CoroutineScope) : StartUpPerformanceReporter(coroutineScope) {
+internal class IdeStartUpPerformanceService(coroutineScope: CoroutineScope) : StartUpPerformanceReporter(coroutineScope) {
   @Volatile
   private var editorRestoringTillHighlighted = false
 
