@@ -610,6 +610,13 @@ public final class ExceptionUtil {
     return ex;
   }
 
+  /**
+   * Returns all checked exceptions that are thrown by the specified {@code templateExpression}
+   * and not handled inside the specified {@code topElement}.
+   *
+   * @param templateExpression  the template expression to check
+   * @param topElement ancestor element which may handle exceptions in e.g. try-catch statements.
+   */
   @NotNull
   public static List<PsiClassType> getUnhandledProcessorExceptions(@NotNull PsiTemplateExpression templateExpression,
                                                                    @Nullable PsiElement topElement) {
