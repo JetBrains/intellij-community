@@ -97,12 +97,25 @@ public interface SyntaxTreeBuilder {
   String getTokenText();
 
   /**
-   * Advance lexer by {@code steps} tokens ahead of current position without whitespace/comment tokens filtering.
+   * Advance lexer by {@code steps} tokens (including whitespace or comments tokens) ahead of current position.
+   * Afterward, any whitespace or comment tokens will be skipped. This method used together with {@link #rawLookup(int)} may
+   * bring performance benefits when collapsing large code blocks with
+   * {@link com.intellij.psi.tree.IReparseableElementType} tokens.
+   * <br/><br/>
+   * The default implementation does not bring any performance benefits over {@link #advanceLexer()} method and should be overridden.
    *
-   * @param steps must be a positive number
+   * @param steps a positive integer
    */
   default void rawAdvanceLexer(int steps) {
-    throw new UnsupportedOperationException("not implemented");
+    if (steps < 0) {
+      throw new IllegalArgumentException("Steps must be a positive integer - lexer can only be advanced. " +
+                                         "Use Marker.rollbackTo if you want to rollback PSI building.");
+    }
+    if (steps == 0) return;
+    int offset = rawTokenTypeStart(steps);
+    while (!eof() && getCurrentOffset() < offset) {
+      advanceLexer();
+    }
   }
 
   /**
