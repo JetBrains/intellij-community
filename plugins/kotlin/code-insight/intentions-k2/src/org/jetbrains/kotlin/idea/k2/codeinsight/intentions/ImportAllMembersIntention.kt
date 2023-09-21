@@ -43,7 +43,8 @@ internal class ImportAllMembersIntention :
     override fun getActionName(element: KtExpression, context: Context): String =
         KotlinBundle.message("import.members.from.0", context.fqName.asString())
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = ApplicabilityRanges.SELF
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> =
+        ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtExpression): Boolean =
         element.isOnTheLeftOfQualificationDot && !element.isInImportDirective()

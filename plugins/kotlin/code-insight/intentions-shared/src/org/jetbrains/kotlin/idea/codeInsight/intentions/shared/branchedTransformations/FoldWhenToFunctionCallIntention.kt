@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.FoldIfOrWhenToFunctionCallUtils.Context
 import org.jetbrains.kotlin.idea.codeinsight.utils.FoldIfOrWhenToFunctionCallUtils.getFoldingContext
@@ -19,7 +20,7 @@ internal class FoldWhenToFunctionCallIntention : AbstractKotlinApplicableIntenti
 
     override fun getActionName(element: KtWhenExpression, context: Context): String = familyName
 
-    override fun getApplicabilityRange() = applicabilityRange<KtWhenExpression> {
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtWhenExpression> = applicabilityRange {
         it.whenKeyword.textRange.shiftLeft(it.startOffset)
     }
 

@@ -3,8 +3,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.psi.PsiExpression
-import com.siyeh.ig.psiutils.CommentTracker
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle

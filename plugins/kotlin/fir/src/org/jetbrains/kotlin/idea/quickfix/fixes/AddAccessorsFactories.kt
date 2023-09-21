@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlin
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactories
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils.addAccessors
+import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtProperty
 
@@ -33,7 +34,9 @@ object AddAccessorsFactories {
         private val addSetter: Boolean,
     ) : AbstractKotlinApplicableQuickFix<KtProperty>(target) {
         override fun getFamilyName(): String = AddAccessorUtils.familyAndActionName(addGetter, addSetter)
-        override fun apply(element: KtProperty, project: Project, editor: Editor?, file: KtFile) =
-            addAccessors(element, addGetter, addSetter, editor)
+
+        override fun apply(element: KtProperty, project: Project, editor: Editor?, file: KtFile) {
+            addAccessors(element, addGetter, addSetter) { editor?.moveCaret(it) }
+        }
     }
 }
