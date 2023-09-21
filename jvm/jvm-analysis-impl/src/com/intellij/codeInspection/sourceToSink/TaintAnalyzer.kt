@@ -763,12 +763,33 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       val flow = VariableFlow()
 
       override fun visitIfExpression(node: UIfExpression): Boolean {
-        val flowIf = FlowVisitor()
-        val flowElse = FlowVisitor()
-        node.thenExpression?.accept(flowIf)
-        node.elseExpression?.accept(flowElse)
-        flow.addSplit(listOf(flowIf.flow, flowElse.flow), node.thenExpression != null && node.elseExpression != null)
+        val condition = node.condition
+        condition.accept(this)
+        val value: Any? = getConstant(node.condition)
+        when (value) {
+          true -> {
+            node.thenExpression?.accept(this)
+          }
+          false -> {
+            node.elseExpression?.accept(this)
+          }
+          else -> {
+            val flowIf = FlowVisitor()
+            val flowElse = FlowVisitor()
+            node.thenExpression?.accept(flowIf)
+            node.elseExpression?.accept(flowElse)
+            flow.addSplit(listOf(flowIf.flow, flowElse.flow), node.thenExpression != null && node.elseExpression != null)
+          }
+        }
         return true
+      }
+
+      private fun getConstant(condition: UExpression): Any? {
+        val sourcePsi = condition.sourcePsi
+        if (sourcePsi == null) return null
+        val sourceToSinkProvider = SourceToSinkProvider.sourceToSinkLanguageProvider.forLanguage(sourcePsi.getLanguage())
+        if(sourceToSinkProvider==null) return null
+        return sourceToSinkProvider.computeConstant(sourcePsi)
       }
 
       override fun visitSwitchExpression(node: USwitchExpression): Boolean {
@@ -1053,7 +1074,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
             }
             val fastExit = flowResults.firstOrNull { it.fast }
             if (fastExit != null) {
-              processValue = fastExit.taintValue
+              return FlowResult(fastExit.taintValue, true) //fast exit
             }
             else {
               flowResults.forEach { flowResult ->

@@ -19,7 +19,7 @@ class A {
     } else {
       dirtyFromIf = dirty;
     }
-    sink(<warning descr="Unknown string is used as safe parameter">dirtyFromIf</warning>); //warn
+    sink(dirtyFromIf);
     sink(<warning descr="Unknown string is used as safe parameter">1 == 1 ? dirty : clean</warning>); //warn
     String cleanFromSwitch = switch (dirty) {
       default -> "1";

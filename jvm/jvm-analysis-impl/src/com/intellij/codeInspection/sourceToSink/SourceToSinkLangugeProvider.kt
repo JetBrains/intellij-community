@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink
 
+import com.intellij.codeInspection.dataFlow.CommonDataflow
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
 import com.intellij.psi.impl.light.LightRecordMember
 
 private val EP_NAME: ExtensionPointName<SourceToSinkProvider> = create("com.intellij.codeInspection.sourceToSinkProvider")
@@ -26,11 +28,18 @@ interface SourceToSinkProvider {
    * @return physical element corresponding to the light element, null if no physical element exists.
    */
   fun getPhysicalForLightElement(element: PsiElement?): PsiElement?
+
+  fun computeConstant(element: PsiElement?): Any?
 }
 
 class JavaSourceToSinkProvider : SourceToSinkProvider {
   override fun getPhysicalForLightElement(element: PsiElement?): PsiElement? {
     //only records now
     return (element as? LightRecordMember)?.recordComponent
+  }
+
+  override fun computeConstant(element: PsiElement?): Any? {
+    if (element is PsiExpression) return CommonDataflow.computeValue(element)
+    return null
   }
 }
