@@ -23,14 +23,18 @@ class CaretBasedCellSelectionModel(private val editor: Editor) : NotebookCellSel
   override val selectedCells: List<NotebookCellLines.Interval>
     get() {
       val notebookCellLines = NotebookCellLines.get(editor)
-      return editor.caretModel.allCarets.flatMap { caret ->
-        notebookCellLines.getCells(editor.document.getSelectionLines(caret))
-      }.distinct()
+      return ReadAction.compute<List<NotebookCellLines.Interval>, Throwable> {
+        editor.caretModel.allCarets.flatMap { caret ->
+          notebookCellLines.getCells(editor.document.getSelectionLines(caret))
+        }.distinct()
+      }
     }
 
   override fun isSelectedCell(cell: NotebookCellLines.Interval): Boolean =
-    editor.caretModel.allCarets.any { caret ->
-      editor.document.getSelectionLines(caret).hasIntersectionWith(cell.lines)
+    ReadAction.compute<Boolean, Throwable> {
+      editor.caretModel.allCarets.any { caret ->
+        editor.document.getSelectionLines(caret).hasIntersectionWith(cell.lines)
+      }
     }
 
   override fun selectCell(cell: NotebookCellLines.Interval, makePrimary: Boolean) {
@@ -61,28 +65,26 @@ class CaretBasedCellSelectionModel(private val editor: Editor) : NotebookCellSel
 }
 
 private fun Document.getSelectionLines(caret: Caret): IntRange {
-  return ReadAction.compute<IntRange, Throwable> {
-    val selectionStart = caret.selectionStart
-    val selectionEnd = caret.selectionEnd
-    val lastLine = getLineNumber(selectionEnd)
+  val selectionStart = caret.selectionStart
+  val selectionEnd = caret.selectionEnd
+  val lastLine = getLineNumber(selectionEnd)
 
-    // See: DS-3659 Context menu action "Delete cell" deletes wrong cell
-    if (caret.offset < selectionStart || caret.offset > selectionEnd) {
-      val caretLine = getLineNumber(caret.offset)
-      return@compute IntRange(caretLine, caretLine)
-    }
-
-    if (caret.offset < selectionEnd && getLineStartOffset(lastLine) == selectionEnd) {
-      // for example, after triple click on line1
-      // #%%
-      // <selection><caret>line1
-      // </selection>#%%
-      // line2
-      return@compute IntRange(getLineNumber(caret.selectionStart), lastLine - 1)
-    }
-
-    return@compute IntRange(getLineNumber(caret.selectionStart), lastLine)
+  // See: DS-3659 Context menu action "Delete cell" deletes wrong cell
+  if (caret.offset < selectionStart || caret.offset > selectionEnd) {
+    val caretLine = getLineNumber(caret.offset)
+    return IntRange(caretLine, caretLine)
   }
+
+  if (caret.offset < selectionEnd && getLineStartOffset(lastLine) == selectionEnd) {
+    // for example, after triple click on line1
+    // #%%
+    // <selection><caret>line1
+    // </selection>#%%
+    // line2
+    return IntRange(getLineNumber(caret.selectionStart), lastLine - 1)
+  }
+
+  return IntRange(getLineNumber(caret.selectionStart), lastLine)
 }
 
 private val NotebookCellLines.Interval.startLogicalPosition: LogicalPosition
