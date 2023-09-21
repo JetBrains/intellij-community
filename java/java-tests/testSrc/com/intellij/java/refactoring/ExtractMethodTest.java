@@ -262,8 +262,12 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
     doTestWithJava17();
   }
 
-  public void testStringTemplate() throws Exception {
-    doTestWithLanguageLevel(LanguageLevel.JDK_21_PREVIEW);
+  public void testStringTemplateJava21Preview() throws Exception {
+    doTest();
+  }
+
+  public void testStringTemplateExceptionJava21Preview() throws Exception {
+    doTest();
   }
 
   private void doTestWithJava17() throws Exception {
