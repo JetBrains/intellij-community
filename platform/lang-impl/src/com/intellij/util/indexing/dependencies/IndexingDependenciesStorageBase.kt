@@ -68,6 +68,13 @@ abstract class IndexingDependenciesStorageBase(private val storage: FileChannel,
     }
   }
 
+  @Throws(IOException::class)
+  private fun writeVersion() {
+    writeIntOrExecute(STORAGE_VERSION_OFFSET, storageVersion) { bytesWritten ->
+      throw IOException(tooFewBytesWrittenMsg(bytesWritten, "storage version"))
+    }
+  }
+
   fun initIfNotInitialized() {
     val storageNotInitialized = !Files.exists(storagePath) || Files.size(storagePath) == 0L
     if (storageNotInitialized) {
@@ -77,9 +84,11 @@ abstract class IndexingDependenciesStorageBase(private val storage: FileChannel,
 
   @Throws(IOException::class)
   open fun resetStorage() {
-    writeIntOrExecute(STORAGE_VERSION_OFFSET, storageVersion) { bytesWritten ->
-      throw IOException(tooFewBytesWrittenMsg(bytesWritten, "storage version"))
-    }
+    writeVersion()
+  }
+
+  fun completeMigration() {
+    writeVersion()
   }
 
   @Throws(IOException::class)

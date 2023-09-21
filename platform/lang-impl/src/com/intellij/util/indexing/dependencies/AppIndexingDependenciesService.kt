@@ -58,9 +58,17 @@ class AppIndexingDependenciesService @NonInjectable @VisibleForTesting construct
 
   init {
     try {
+      var shouldMigrateV0toV1 = false
       storage.checkVersion { expectedVersion, actualVersion ->
-        requestVfsRebuildAndResetStorage(IOException("Incompatible version change in AppIndexingDependenciesStorage: " +
-                                                     "$actualVersion to $expectedVersion"))
+        if (actualVersion == 0 && expectedVersion == 1) {
+          shouldMigrateV0toV1 = true
+        } else {
+          requestVfsRebuildAndResetStorage(IOException("Incompatible version change in AppIndexingDependenciesStorage: " +
+                                                       "$actualVersion to $expectedVersion"))
+        }
+      }
+      if (shouldMigrateV0toV1) {
+        migrateV0toV1()
       }
       val appIndexingRequestId = storage.readRequestId()
       current.set(AppIndexingDependenciesTokenImpl(appIndexingRequestId))
@@ -69,6 +77,11 @@ class AppIndexingDependenciesService @NonInjectable @VisibleForTesting construct
       requestVfsRebuildAndResetStorage(e)
       // we don't rethrow exception, because this will put IDE in unusable state.
     }
+  }
+
+  private fun migrateV0toV1() {
+    storage.writeAppFingerprint(NULL_FINGERPRINT);
+    storage.completeMigration()
   }
 
   private fun requestVfsRebuildAndResetStorage(reason: IOException) {
