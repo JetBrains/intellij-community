@@ -7,4 +7,3 @@ fun some() {
 }
 
 // EXIST: internal
-// EXIST_K2: internal.

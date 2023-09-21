@@ -7,4 +7,3 @@ fun test() {
 }
 
 // EXIST: MyTest
-// EXIST_K2: MyTest.

@@ -9,4 +9,3 @@ class TestSample() {
 }
 
 // EXIST: kotlin
-// EXIST_K2: kotlin.
