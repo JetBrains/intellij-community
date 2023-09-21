@@ -5,8 +5,10 @@ import com.intellij.ide.feedback.FeedbackForm
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.feedback.evaluation.dialog.EvaluationFeedbackDialog
 import com.intellij.platform.ide.customization.FeedbackReporter
 import com.intellij.ui.LicensingFacade
+import com.intellij.util.PlatformUtils.isIntelliJ
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import org.jetbrains.annotations.ApiStatus
@@ -31,10 +33,20 @@ class JetBrainsFeedbackReporter(private val productName: String,
   }
 
   override fun showFeedbackForm(project: Project?, requestedForEvaluation: Boolean): Boolean {
-    if (Registry.`is`("ide.in.product.feedback") && zenDeskFormData != null) {
+    if (!Registry.`is`("ide.in.product.feedback")) {
+      return false
+    }
+
+    if (requestedForEvaluation && isIntelliJ()) {
+      EvaluationFeedbackDialog(project, false).show()
+      return true
+    }
+
+    if (zenDeskFormData != null) {
       FeedbackForm(project, zenDeskFormData, requestedForEvaluation).show()
       return true
     }
+
     return false
   }
 }
