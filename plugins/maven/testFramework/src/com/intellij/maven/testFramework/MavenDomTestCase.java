@@ -244,7 +244,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
     assertNotNull("expected reference is null", expected);
 
     PsiReference ref = getReferenceAtCaret(file);
-    assertNotNull(ref);
+    assertNotNull("reference at caret is null", ref);
     PsiElement resolved = ref.resolve();
     if (resolved instanceof MavenPsiElementWrapper) {
       resolved = ((MavenPsiElementWrapper)resolved).getWrappee();
