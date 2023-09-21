@@ -138,14 +138,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
    */
   private var usedValuesOfUiOptions: List<Any?> = emptyList()
 
-  override fun getDefaultLightLaf(): UIThemeLookAndFeelInfo {
-    return if (ExperimentalUI.isNewUI()) getDefaultLightTheme() else getDefaultClassicLightTheme()
-  }
-
-  override fun getDefaultDarkLaf(): UIThemeLookAndFeelInfo {
-    return if (ExperimentalUI.isNewUI()) getDefaultDarkTheme() else getDefaultClassicDarkTheme()
-  }
-
   val defaultFont: Font
     get() {
       return when {
@@ -167,6 +159,10 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       return ourTestInstance
     }
   }
+
+  override fun getDefaultLightLaf(): UIThemeLookAndFeelInfo = getDefaultLaf(isDark = false)
+
+  override fun getDefaultDarkLaf() = getDefaultLaf(isDark = true)
 
   @Suppress("removal")
   override fun addLafManagerListener(listener: LafManagerListener) {
@@ -266,7 +262,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       preferredLightThemeId?.let { UiThemeProviderListManager.getInstance().findThemeById(it) } ?: defaultLightLaf
     }
     if (currentIsDark != systemIsDark || currentTheme !== expectedTheme) {
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, expectedTheme, true)
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(/* lafManager = */ this, /* laf = */ expectedTheme, /* async = */ true)
     }
   }
 
@@ -1264,53 +1260,6 @@ private fun JBInsets.withTopAndBottom(topAndBottom: Int) = JBInsets(topAndBottom
 
 private fun defaultNonLaFSchemeName(dark: Boolean) = if (dark) DarculaLaf.NAME else EditorColorsScheme.DEFAULT_SCHEME_NAME
 
-private fun getDefaultLightTheme(): UIThemeLookAndFeelInfo {
-  val name = ApplicationInfoEx.getInstanceEx().defaultLightLaf
-  val themeListManager = UiThemeProviderListManager.getInstance()
-  if (name == null) {
-    return themeListManager.findThemeById("ExperimentalLight") ?: error("Default light LookAndFeel 'Light' not found")
-  }
-  else {
-    return themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name)
-           ?: error("Default light LookAndFeel '$name' not found")
-  }
-}
-
-private fun getDefaultDarkTheme(): UIThemeLookAndFeelInfo {
-  val name = ApplicationInfoEx.getInstanceEx().defaultDarkLaf
-  val themeListManager = UiThemeProviderListManager.getInstance()
-  if (name == null) {
-    return themeListManager.findThemeById("ExperimentalDark") ?: error("Default dark theme 'Dark' not found")
-  }
-  else {
-    return themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name) ?: error("Default dark theme '$name' not found")
-  }
-}
-
-private fun getDefaultClassicLightTheme(): UIThemeLookAndFeelInfo {
-  val name = ApplicationInfoEx.getInstanceEx().defaultClassicLightLaf
-  val themeListManager = UiThemeProviderListManager.getInstance()
-  if (name == null) {
-    return themeListManager.findThemeById("JetBrainsLightTheme") ?: error("JetBrains light theme not found")
-  }
-  else {
-    return themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name)
-           ?: error("Default light LookAndFeel '$name' not found")
-  }
-}
-
-private fun getDefaultClassicDarkTheme(): UIThemeLookAndFeelInfo {
-  val name = ApplicationInfoEx.getInstanceEx().defaultClassicDarkLaf
-  val themeListManager = UiThemeProviderListManager.getInstance()
-  if (name == null) {
-    return themeListManager.findThemeById("Darcula") ?: error("Default classic dark theme 'Darcula' not found")
-  }
-  else {
-    return themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name)
-           ?: error("Default classic dark theme '$name' not found")
-  }
-}
-
 @JvmField
 internal val patchableFontResources: Array<String> = arrayOf("Button.font", "ToggleButton.font", "RadioButton.font",
                                                              "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font",
@@ -1376,4 +1325,46 @@ private fun installMacosXFonts(defaults: UIDefaults) {
   defaults.put("MenuItem.font", menuFont)
   defaults.put("MenuItem.acceleratorFont", menuFont)
   defaults.put("PasswordField.font", defaults.getFont("TextField.font"))
+}
+
+private sealed interface DefaultThemeStrategy {
+  fun getPlatformDefaultId(isDark: Boolean): String
+
+  fun getProductDefaultId(isDark: Boolean, appInfo: ApplicationInfoEx): String?
+}
+
+private data object DefaultNewUiThemeStrategy : DefaultThemeStrategy {
+  override fun getPlatformDefaultId(isDark: Boolean) = if (isDark) "ExperimentalDark" else "ExperimentalLight"
+
+  override fun getProductDefaultId(isDark: Boolean, appInfo: ApplicationInfoEx): String? {
+    return if (isDark) appInfo.defaultDarkLaf else appInfo.defaultLightLaf
+  }
+}
+
+private data object DefaultClassicThemeStrategy : DefaultThemeStrategy {
+  override fun getPlatformDefaultId(isDark: Boolean) = if (isDark) "Darcula" else "JetBrainsLightTheme"
+
+  override fun getProductDefaultId(isDark: Boolean, appInfo: ApplicationInfoEx): String? {
+    return if (isDark) appInfo.defaultClassicDarkLaf else appInfo.defaultClassicLightLaf
+  }
+}
+
+private fun getDefaultLaf(isDark: Boolean): UIThemeLookAndFeelInfo {
+  val appInfo = ApplicationInfoEx.getInstanceEx()
+  val themeListManager = UiThemeProviderListManager.getInstance()
+
+  val strategy = if (ExperimentalUI.isNewUI()) DefaultNewUiThemeStrategy else DefaultClassicThemeStrategy
+  var id = strategy.getProductDefaultId(isDark, appInfo)
+  if (id != null) {
+    val theme = themeListManager.findThemeById(id) ?: themeListManager.findThemeByName(id)
+    if (theme == null) {
+      LOG.error("Default theme not found(id=$id, isDark=$isDark, isNewUI=${ExperimentalUI.isNewUI()})")
+    }
+    else {
+      return theme
+    }
+  }
+
+  id = strategy.getPlatformDefaultId(isDark)
+  return themeListManager.findThemeById(id) ?: error("Default theme not found(id=$id, isDark=$isDark, isNewUI=${ExperimentalUI.isNewUI()})")
 }
