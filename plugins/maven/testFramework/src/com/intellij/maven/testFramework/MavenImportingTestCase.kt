@@ -407,6 +407,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   protected suspend fun importProjectsAsync(files: List<VirtualFile>) {
     initProjectsManager(false)
     projectsManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
+    projectsManager.waitForPluginResolution()
   }
 
   protected fun importProjectWithErrors() {
