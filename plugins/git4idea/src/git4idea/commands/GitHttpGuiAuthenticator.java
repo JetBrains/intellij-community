@@ -144,24 +144,29 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   private ProviderAndData acquireData(@NotNull String unifiedUrl,
                                       @NotNull Function<? super AuthDataProvider, ? extends AuthData> dataAcquirer) {
     return myAuthenticationGate.waitAndCompute(() -> {
-      try {
-        for (AuthDataProvider provider : getProviders(unifiedUrl)) {
+      for (AuthDataProvider provider : getProviders(unifiedUrl)) {
+        try {
           AuthData data = dataAcquirer.apply(provider);
           if (data != null && data.getPassword() != null) {
             return new ProviderAndData(provider, data.getLogin(), data.getPassword());
           }
         }
-        return null;
+        catch (ProcessCanceledException pce) {
+          LOG.debug("Auth process cancelled by" + provider);
+          myAuthenticationGate.cancel();
+          return new ProviderAndData(new CancelledProvider(unifiedUrl), "", "");
+        }
+        catch (CredentialHelperShouldBeUsedException e) {
+          LOG.debug("Auth switched to credential helper");
+          myAuthenticationGate.cancel();
+          myCredentialHelperShouldBeUsed = true;
+          return null;
+        }
+        catch (Throwable e) {
+          LOG.error("Can't get password from " + provider, e);
+        }
       }
-      catch (ProcessCanceledException pce) {
-        myAuthenticationGate.cancel();
-        return new ProviderAndData(new CancelledProvider(unifiedUrl), "", "");
-      }
-      catch (CredentialHelperShouldBeUsedException e) {
-        myAuthenticationGate.cancel();
-        myCredentialHelperShouldBeUsed = true;
-        return null;
-      }
+      return null;
     });
   }
 
@@ -321,6 +326,11 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     @Override
     public void onAuthFailure() {
       if (myData != null) myDelegate.forgetPassword(myProject, myUrl, myData);
+    }
+
+    @Override
+    public String toString() {
+      return "ExtensionAdapterProvider(" + myDelegate + ")";
     }
   }
 
