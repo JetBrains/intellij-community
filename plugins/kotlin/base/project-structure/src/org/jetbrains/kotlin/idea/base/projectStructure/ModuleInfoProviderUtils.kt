@@ -39,8 +39,8 @@ private fun cachedModuleInfo(
     )
 }
 
-fun ModuleInfoProvider.firstOrNull(element: PsiElement, config: Configuration = Configuration.Default): IdeaModuleInfo? =
-    collect(element, config).unwrap(ModuleInfoProvider.LOG::warn).firstOrNull()
+fun ModuleInfoProvider.firstOrNull(element: PsiElement, config: Configuration = Configuration.Default, scriptFile: VirtualFile? = null): IdeaModuleInfo? =
+    collect(element, config, scriptFile).unwrap(ModuleInfoProvider.LOG::warn).firstOrNull()
 
 fun ModuleInfoProvider.firstOrNull(virtualFile: VirtualFile): IdeaModuleInfo? =
     collect(virtualFile).unwrap(ModuleInfoProvider.LOG::warn).firstOrNull()

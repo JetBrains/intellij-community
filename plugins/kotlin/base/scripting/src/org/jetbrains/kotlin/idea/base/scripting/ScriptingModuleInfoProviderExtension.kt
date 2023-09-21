@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
+import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 
 internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtension {
     override fun SeqScope<Result<IdeaModuleInfo>>.collectByElement(
@@ -42,7 +43,7 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
         project: Project,
         virtualFile: VirtualFile,
         isLibrarySource: Boolean,
-        existingInfos: Collection<IdeaModuleInfo>?
+        scriptFile: VirtualFile?
     ) {
         val isBinary = virtualFile.fileType.isKotlinBinary
 
@@ -50,8 +51,17 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
             if (isLibrarySource) {
                 register(ScriptDependenciesSourceInfo.ForProject(project))
             } else {
-                val existing = existingInfos?.find { it is ScriptDependenciesInfo.ForFile }
-                register(existing ?: ScriptDependenciesInfo.ForProject(project))
+                if (scriptFile != null) {
+                    register {
+                        ScriptDependenciesInfo.ForFile(
+                            project,
+                            scriptFile,
+                            findScriptDefinition(project, VirtualFileScriptSource(scriptFile))
+                        )
+                    }
+                } else {
+                    register(ScriptDependenciesInfo.ForProject(project))
+                }
             }
         }
 
