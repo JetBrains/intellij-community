@@ -12,13 +12,13 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parents
 import com.intellij.util.Consumer
 import com.intellij.util.containers.sequenceOfNotNull
+import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
 import org.jetbrains.kotlin.idea.caches.resolve.variableCallOrThis
-import org.jetbrains.kotlin.idea.core.compareDescriptors
 import org.jetbrains.kotlin.idea.util.getReceiverTargetDescriptor
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -203,7 +203,7 @@ private class ReceiverUsageCollector(
     ) {
         if (expression.parent !is KtThisExpression) return
 
-        if (receiverDescriptor === callableDescriptor.extensionReceiverParameter) {
+        if (checkIfTheSame(receiverDescriptor, callableDescriptor.extensionReceiverParameter)) {
             consumer(expression.textRange)
         }
     }
@@ -213,14 +213,13 @@ private class ReceiverUsageCollector(
         implicitReceiver: ImplicitReceiver
     ) {
         val targetDescriptor = implicitReceiver.declarationDescriptor
-        if (compareDescriptors(callElement.project, targetDescriptor, callableDescriptor)) {
+        if (!checkIfTheSame(targetDescriptor, callableDescriptor)) return
 
-            val textRange = when (callElement) {
-                is KtCallExpression -> (callElement.calleeExpression ?: callElement).textRange
-                else -> callElement.textRange
-            }
-            consumer(textRange)
+        val textRange = when (callElement) {
+            is KtCallExpression -> (callElement.calleeExpression ?: callElement).textRange
+            else -> callElement.textRange
         }
+        consumer(textRange)
     }
 
     private fun processThisCall(
@@ -230,9 +229,11 @@ private class ReceiverUsageCollector(
         dispatchReceiver: ReceiverValue?
     ) {
         if ((expression.parent as? KtThisExpression)?.parent !is KtCallExpression) return
-        when (callableDescriptor) {
-            extensionReceiver.getReceiverTargetDescriptor(expressionBindingContext) -> consumer(expression.textRange)
-            dispatchReceiver.getReceiverTargetDescriptor(expressionBindingContext) -> consumer(expression.textRange)
+
+        if (checkIfTheSame(callableDescriptor, extensionReceiver.getReceiverTargetDescriptor(expressionBindingContext)) ||
+            checkIfTheSame(callableDescriptor, dispatchReceiver.getReceiverTargetDescriptor(expressionBindingContext))
+        ) {
+            consumer(expression.textRange)
         }
     }
 
@@ -259,5 +260,24 @@ private class ReceiverUsageCollector(
         }
 
         return null
+    }
+
+    private fun checkIfTheSame(one: ReceiverParameterDescriptor?, two: ReceiverParameterDescriptor?): Boolean {
+        if (one === two) return true
+        if (one == null || two == null) return false
+
+        return checkIfTheSame(one.containingDeclaration, two.containingDeclaration)
+    }
+
+    private fun checkIfTheSame(one: DeclarationDescriptor?, two: DeclarationDescriptor?): Boolean {
+        if (one === two) return true
+
+        if (one == null || two == null) return false
+        if (one !is CallableDescriptor) return false
+        if (two !is CallableDescriptor) return false
+        if (one.name != two.name) return false
+        if (one.javaClass != two.javaClass) return false
+
+        return one.psiElement == two.psiElement
     }
 }
