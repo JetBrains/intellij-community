@@ -3,6 +3,7 @@ package org.jetbrains.jps.dependency.impl;
 
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.NodeSerializer;
 import org.jetbrains.jps.dependency.SerializableGraphElement;
 
 import java.io.*;
@@ -26,11 +27,14 @@ public class NodeKeyDescriptor<T extends SerializableGraphElement> implements Ke
 
   @Override
   public void save(final @NotNull DataOutput storage, final @NotNull T value) throws IOException {
-    SerializerRegistryImpl.getInstance().getSerializer(0).write(value, storage);
+    NodeSerializer serializer = SerializerRegistryImpl.getInstance().getSerializer(value);
+    storage.writeInt(serializer.getId());
+    serializer.write(value, storage);
   }
 
   @Override
   public T read(final @NotNull DataInput storage) throws IOException {
-    return SerializerRegistryImpl.getInstance().getSerializer(0).read(storage);
+    int serializerId = storage.readInt();
+    return SerializerRegistryImpl.getInstance().getSerializer(serializerId).read(storage);
   }
 }
