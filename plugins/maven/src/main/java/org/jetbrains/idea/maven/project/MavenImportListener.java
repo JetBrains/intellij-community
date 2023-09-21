@@ -17,5 +17,17 @@ public interface MavenImportListener {
 
   default void importStarted() { }
 
-  void importFinished(@NotNull Collection<MavenProject> importedProjects, @NotNull List<Module> newModules);
+  void importFinished(@NotNull Collection<MavenProject> importedProjects, @NotNull List<@NotNull Module> newModules);
+
+  default void pomReadingStarted() { }
+
+  default void pomReadingFinished() { }
+
+  default void pluginResolutionStarted() { }
+
+  default void pluginResolutionFinished() { }
+
+  default void artifactDownloadingStarted() { }
+
+  default void artifactDownloadingFinished() { }
 }

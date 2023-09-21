@@ -85,7 +85,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
       .subscribe(MavenImportListener.TOPIC, new MavenImportListener() {
 
         @Override
-        public void importFinished(@NotNull Collection<MavenProject> importedProjects, @NotNull List<Module> newModules) {
+        public void importFinished(@NotNull Collection<MavenProject> importedProjects, @NotNull List<@NotNull Module> newModules) {
           scheduleStructureUpdate();
         }
       });

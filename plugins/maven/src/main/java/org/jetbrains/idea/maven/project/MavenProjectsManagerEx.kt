@@ -330,10 +330,14 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
             withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
               withRawProgressReporter {
                 backgroundImportActivities {
+                  project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).pluginResolutionStarted()
                   runMavenImportActivity(project, it, MavenImportStats.PluginsResolvingTask::class.java) {
                     for (mavenProjects in resolutionResult.mavenProjectMap) {
                       try {
-                        pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, mavenConsole, rawProgressReporter!!,
+                        pluginResolver.resolvePlugins(mavenProjects.value,
+                                                      embeddersManager,
+                                                      mavenConsole,
+                                                      rawProgressReporter!!,
                                                       syncConsole,
                                                       true)
                       }
@@ -341,6 +345,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                         MavenLog.LOG.warn("Plugin resolution error", e)
                       }
                     }
+                    project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).pluginResolutionFinished()
                   }
                 }
               }
@@ -390,7 +395,10 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       runMavenImportActivity(project, parentActivity, MavenProjectsProcessorReadingTask::class.java) {
         withRawProgressReporter {
           coroutineToIndicator {
-            read()
+            project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).pomReadingStarted()
+            val result = read()
+            project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).pomReadingFinished()
+            result
           }
         }
       }
@@ -503,6 +511,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                   artifacts: Collection<MavenArtifact>?,
                                   sources: Boolean,
                                   docs: Boolean): MavenArtifactDownloader.DownloadResult {
+    project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).artifactDownloadingStarted()
     val indicator = ProgressManager.getGlobalProgressIndicator()
     val progressListener = project.getService(SyncViewManager::class.java)
     val downloadConsole = MavenDownloadConsole(project)
@@ -520,6 +529,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
     finally {
       downloadConsole.finishDownload()
+      project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).artifactDownloadingFinished()
     }
   }
 
