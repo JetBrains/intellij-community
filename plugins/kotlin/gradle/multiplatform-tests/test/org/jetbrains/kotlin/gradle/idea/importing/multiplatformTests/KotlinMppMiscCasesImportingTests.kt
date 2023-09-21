@@ -154,6 +154,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
         }
     }
 
+    @PluginTargetVersions(pluginVersion = "1.9.20-Beta+") // -Xexpect-actual-classes cannot be easily passed before
     @Test
     fun testTransitiveKmmLibraryThroughJava() {
         doTest {
