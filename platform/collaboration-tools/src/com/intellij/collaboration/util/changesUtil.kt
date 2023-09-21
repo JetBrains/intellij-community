@@ -6,7 +6,6 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
@@ -95,7 +94,7 @@ fun ChangesSelection?.equalChanges(other: Any?): Boolean {
 @ApiStatus.Experimental
 @ApiStatus.Internal
 fun Collection<Change>?.isEqual(other: Collection<Change>?, ordered: Boolean = false): Boolean =
-  equalsVia(other, REVISION_COMPARISON_CHANGE_HASHING_STRATEGY, ordered)
+  equalsVia(other, CODE_REVIEW_CHANGE_HASHING_STRATEGY, ordered)
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
@@ -130,8 +129,7 @@ fun <E> Collection<E>?.equalsVia(other: Collection<E>?, strategy: HashingStrateg
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-fun Change.isEqual(other: Change?): Boolean =
-  REVISION_COMPARISON_CHANGE_HASHING_STRATEGY.equals(this, other)
+fun Change.isEqual(other: Change?): Boolean = CODE_REVIEW_CHANGE_HASHING_STRATEGY.equals(this, other)
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
@@ -144,17 +142,8 @@ fun List<Change>.calcHashCode(): Int {
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-fun Change.calcHashCode(): Int =
-  REVISION_COMPARISON_CHANGE_HASHING_STRATEGY.hashCode(this)
+fun Change.calcHashCode(): Int = CODE_REVIEW_CHANGE_HASHING_STRATEGY.hashCode(this)
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-val REVISION_COMPARISON_CHANGE_HASHING_STRATEGY: HashingStrategy<Change> = object : HashingStrategy<Change> {
-  override fun equals(o1: Change?, o2: Change?): Boolean {
-    return o1 == o2 &&
-           o1?.beforeRevision == o2?.beforeRevision &&
-           o1?.afterRevision == o2?.afterRevision
-  }
-
-  override fun hashCode(change: Change?) = Objects.hash(change, change?.beforeRevision, change?.afterRevision)
-}
+val CODE_REVIEW_CHANGE_HASHING_STRATEGY: HashingStrategy<Change> = HashingStrategy.identity()
