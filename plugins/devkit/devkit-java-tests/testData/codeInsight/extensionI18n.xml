@@ -165,7 +165,7 @@
 
       language="<error descr="Cannot resolve language with id ''LANGUAGE_ID''">LANGUAGE_ID</error>"
       providerId="test.providerId"
-      group="ANNOTATIONS_GROUP"
+      group="<error descr="Cannot resolve 'INVALID_INLAY_GROUP' in com.intellij.codeInsight.hints.InlayGroup">INVALID_INLAY_GROUP</error>"
       isEnabledByDefault="true"
       implementationClass="com.intellij.codeInsight.hints.declarative.InlayHintsProvider">
       <option

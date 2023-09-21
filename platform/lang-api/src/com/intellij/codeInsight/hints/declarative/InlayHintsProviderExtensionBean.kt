@@ -43,11 +43,12 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   var isEnabledByDefault: Boolean = true
 
   /**
-   * key of the group, one of [com.intellij.codeInsight.hints.InlayGroup] values
+   * Key of the group, one of [com.intellij.codeInsight.hints.InlayGroup] values
    */
   @RequiredElement
   @Attribute
-  var group: String? = null
+  @JvmField
+  var group: InlayGroup? = null
 
   /**
    * Provider id, which must uniquely identify the pair (provider, language),
@@ -91,7 +92,7 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   }
 
   fun requiredGroup() : InlayGroup {
-    return InlayGroup.valueOf(group!!)
+    return group!!
   }
 
   /**
