@@ -2,8 +2,6 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +9,7 @@ public class DataFlowInspection16Test extends DataFlowInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST_WITH_LATEST_JDK;
+    return JAVA_16;
   }
 
   @Override
@@ -19,9 +17,7 @@ public class DataFlowInspection16Test extends DataFlowInspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
   }
 
-  public void testInstanceOfPattern() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20, () -> doTest());
-  }
+  public void testInstanceOfPattern() { doTest(); }
   public void testSwitchStatements() { doTest(); }
   public void testSwitchStatementUnreachableBranches() { doTest(); }
   public void testSwitchExpressions() { doTest(); }
@@ -32,8 +28,6 @@ public class DataFlowInspection16Test extends DataFlowInspectionTestCase {
   }
   public void testSwitchExpressionAndLambdaInlining() { doTest(); }
   public void testRecordAccessorStability() { doTest(); }
-  public void testSealedClassCast() { doTest(); }
-  public void testCastToSealedInterface() { doTest(); }
   public void testRecordAccessorContainerAnnotation() {
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     myFixture.addClass("package foo;" +
