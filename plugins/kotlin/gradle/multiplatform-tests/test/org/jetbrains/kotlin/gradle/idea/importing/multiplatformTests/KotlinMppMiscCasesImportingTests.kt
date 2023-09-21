@@ -190,23 +190,10 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
 
     @Test
     @TestMetadata("projectDependenciesToMppProjectWithAdditionalCompilations")
-    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
-    fun `testProjectDependenciesToMppProjectWithAdditionalCompilations - KGP dependency resolution disabled`() {
-        doTest {
-            testClassifier = "old-import"
-            onlyCheckers(OrderEntriesChecker)
-            onlyDependencies(from = ".*client.*", to = ".*libMpp.*")
-            addCustomGradleProperty("kotlin.mpp.import.enableKgpDependencyResolution", "false")
-        }
-    }
-
-    @Test
-    @TestMetadata("projectDependenciesToMppProjectWithAdditionalCompilations")
-    fun `testProjectDependenciesToMppProjectWithAdditionalCompilations - KGP dependency resolution enabled`() {
+    fun testProjectDependenciesToMppProjectWithAdditionalCompilations() {
         doTest {
             onlyCheckers(OrderEntriesChecker)
             onlyDependencies(from = ".*client.*", to = ".*libMpp.*")
-            addCustomGradleProperty("kotlin.mpp.import.enableKgpDependencyResolution", "true")
         }
     }
 }
