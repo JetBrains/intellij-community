@@ -13,6 +13,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
@@ -352,7 +353,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   private void blockSwingThread() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     SwingUtilities.invokeLater(new Lock(this));
   }
 

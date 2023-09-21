@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.toBuilder
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.xmlb.annotations.XCollection
@@ -176,7 +177,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     }.asCompletableFuture()
 
     if (application.isUnitTestMode) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
       operationsStates.removeIf { it.isDone }
       operationsStates.add(future)
     }
@@ -320,7 +321,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   @TestOnly
   @Throws(Exception::class)
   fun consumeBulkOperationsState(stateConsumer: (Future<*>) -> Unit) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     assert(ApplicationManager.getApplication().isUnitTestMode)
     for (operationsState in operationsStates) {
       stateConsumer.invoke(operationsState)

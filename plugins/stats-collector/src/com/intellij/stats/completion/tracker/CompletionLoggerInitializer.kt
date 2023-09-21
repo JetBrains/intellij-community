@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.stats.completion.CompletionStatsPolicy
 import com.intellij.stats.completion.sender.isCompletionLogsSendAllowed
 import com.intellij.util.PlatformUtils
+import com.intellij.util.concurrency.ThreadingAssertions
 import kotlin.random.Random
 
 class CompletionLoggerInitializer : LookupTracker() {
@@ -56,13 +57,13 @@ class CompletionLoggerInitializer : LookupTracker() {
   private val actionListener: LookupActionsListener by lazy { LookupActionsListener.getInstance() }
 
   override fun lookupClosed() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     actionListener.listener = CompletionPopupListener.DISABLED
   }
 
   override fun lookupCreated(lookup: LookupImpl,
                              storage: MutableLookupStorage) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (!shouldInitialize()) return
 
     val experimentInfo = ExperimentStatus.getInstance().forLanguage(storage.language)

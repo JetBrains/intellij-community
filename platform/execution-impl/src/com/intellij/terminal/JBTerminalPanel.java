@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.actions.TerminalActionWrapper;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
@@ -396,7 +397,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     }
 
     void register() {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       if (LOG.isDebugEnabled()) {
         LOG.debug("Register terminal event dispatcher for " + getDebugTerminalPanelName());
       }
@@ -415,7 +416,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     }
 
     void unregister() {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       if (LOG.isDebugEnabled()) {
         LOG.debug("Unregister terminal event dispatcher for " + getDebugTerminalPanelName());
       }

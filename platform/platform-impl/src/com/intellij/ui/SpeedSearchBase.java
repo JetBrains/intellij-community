@@ -26,7 +26,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.text.NameUtilCore;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -45,8 +45,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.Comparator;
-import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
@@ -204,7 +202,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   @Override
   public boolean isPopupActive() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return mySearchPopup != null && mySearchPopup.isVisible() ||
            isStickySearch() &&
            Strings.isNotEmpty(myComponent == null ? null : ClientProperty.get(myComponent, SEARCH_TEXT_KEY));

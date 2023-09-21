@@ -3,9 +3,9 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +109,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   }
 
   public void reload(@NotNull Expander expander, boolean removeCurrentChildren) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (removeCurrentChildren || NodeLoadState.EMPTY.equals(myChildrenLoadState)) {
       initChildren();
@@ -125,7 +125,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   }
 
   private List getChildren() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (NodeLoadState.EMPTY.equals(myChildrenLoadState)) {
       initChildren();

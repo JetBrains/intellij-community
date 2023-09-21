@@ -9,9 +9,8 @@ import com.intellij.ide.customize.transferSettings.providers.vscode.VSCodeTransf
 import com.intellij.ide.customize.transferSettings.ui.TransferSettingsProgressIndicatorBase
 import com.intellij.ide.customize.transferSettings.ui.TransferSettingsView
 import com.intellij.openapi.project.Project
-import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions
 import javax.swing.JButton
-import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JProgressBar
 
@@ -30,7 +29,7 @@ class TransferSettingsFacade(private val project: Project?) {
   val view by lazy { initView() }
 
   private fun initView(): TransferSettingsView {
-    application.assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     val view = TransferSettingsView(config, model)
 

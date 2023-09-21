@@ -40,6 +40,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -191,7 +192,7 @@ public class JobUtilTest extends LightPlatformTestCase {
       ThrowableRunnable<RuntimeException> runnable = () -> {
           try {
             if (objects.size() <= 1 || JobSchedulerImpl.getJobPoolParallelism() <= JobLauncherImpl.CORES_FORK_THRESHOLD) {
-              ApplicationManager.getApplication().assertIsDispatchThread();
+              ThreadingAssertions.assertEventDispatchThread();
             }
             else {
               // generally, we know nothing about the current thread since FJP can help other tasks to execute while in the current context

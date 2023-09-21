@@ -38,6 +38,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -908,7 +909,7 @@ public final class EditorUtil {
   }
 
   public static void disposeWithEditor(@NotNull Editor editor, @NotNull Disposable disposable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (editor.isDisposed()) {
       Disposer.dispose(disposable);
       return;

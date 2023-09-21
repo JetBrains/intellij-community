@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ public abstract class LongRunningReadTask<RequestInfo, ResultData> {
 
     /** Should be executed in GUI thread */
     public boolean shouldStart(@Nullable LongRunningReadTask<RequestInfo, ResultData> previousTask) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
+        ThreadingAssertions.assertEventDispatchThread();
 
         if (currentState != State.INITIALIZED) {
             throw new IllegalStateException("Task should be initialized state. Call init() method.");
@@ -72,7 +73,7 @@ public abstract class LongRunningReadTask<RequestInfo, ResultData> {
 
     /** Should be executed in GUI thread */
     public final void run() {
-        ApplicationManager.getApplication().assertIsDispatchThread();
+        ThreadingAssertions.assertEventDispatchThread();
 
         if (currentState != State.INITIALIZED) {
             throw new IllegalStateException("Task should be initialized with init() method");
@@ -111,7 +112,7 @@ public abstract class LongRunningReadTask<RequestInfo, ResultData> {
      * @return true if new request was successfully created, false if request is invalid and shouldn't be started
      */
     public final boolean init() {
-        ApplicationManager.getApplication().assertIsDispatchThread();
+        ThreadingAssertions.assertEventDispatchThread();
 
         requestInfo = prepareRequestInfo();
         currentState = State.INITIALIZED;
@@ -120,7 +121,7 @@ public abstract class LongRunningReadTask<RequestInfo, ResultData> {
     }
 
     private void resultReady(ResultData resultData) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
+        ThreadingAssertions.assertEventDispatchThread();
 
         currentState = State.FINISHED;
 

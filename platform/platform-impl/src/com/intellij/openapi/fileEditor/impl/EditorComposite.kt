@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -33,6 +32,7 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -313,7 +313,7 @@ open class EditorComposite internal constructor(
   }
 
   private fun manageTopOrBottomComponent(editor: FileEditor, component: JComponent, top: Boolean, remove: Boolean) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val container = (if (top) topComponents.get(editor) else bottomComponents.get(editor))!!
     selfBorder = false
     if (remove) {
@@ -426,7 +426,7 @@ open class EditorComposite internal constructor(
   }
 
   fun addEditor(editor: FileEditor, provider: FileEditorProvider) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val editorWithProvider = FileEditorWithProvider(editor, provider)
     editorsWithProviders.add(editorWithProvider)
     FileEditor.FILE_KEY.set(editor, file)

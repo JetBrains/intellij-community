@@ -49,6 +49,7 @@ import com.intellij.tracing.Tracer;
 import com.intellij.util.Chunk;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -386,7 +387,7 @@ public final class CompileDriver {
                        final boolean withModalProgress,
                        final CompileStatusNotification callback,
                        final CompilerMessage message) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ModalityState modalityState = ModalityState.current();
 
     final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();

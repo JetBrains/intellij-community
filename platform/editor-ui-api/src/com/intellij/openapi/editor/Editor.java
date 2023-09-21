@@ -3,7 +3,6 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
@@ -16,6 +15,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -421,7 +421,7 @@ public interface Editor extends UserDataHolder {
    * Can only be called from the EDT.
    */
   default @NotNull ProperTextRange calculateVisibleRange() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Rectangle rect = getScrollingModel().getVisibleArea();
     LogicalPosition startPosition = xyToLogicalPosition(new Point(rect.x, rect.y));
     int visibleStart = logicalPositionToOffset(startPosition);

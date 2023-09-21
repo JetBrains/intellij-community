@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.dsl
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import training.learn.LearnBundle
 import training.statistic.LearningInternalProblems
@@ -214,7 +213,7 @@ abstract class TaskContext : LearningDslBase {
 
   class DoneStepContext(private val future: CompletableFuture<Boolean>, rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
     fun completeStep() {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
       if (!future.isDone && !future.isCancelled) {
         future.complete(true)
       }

@@ -30,6 +30,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.WeakList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +96,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
 
   @Override
   public void releaseFoldings(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     EditorFoldingInfo.disposeForEditor(editor);
   }
 
@@ -138,7 +139,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, true);
 
     return editor -> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       if (myProject.isDisposed() || editor.isDisposed()) return;
       final FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
       if (!foldingModel.isFoldingEnabled()) return;
@@ -233,7 +234,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
 
   @Override
   public CodeFoldingState saveFoldingState(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     DocumentFoldingInfo info = getDocumentFoldingInfo(editor.getDocument());
     if (isFoldingsInitializedInEditor(editor)) {
       info.loadFromEditor(editor);
@@ -243,7 +244,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
 
   @Override
   public void restoreFoldingState(@NotNull Editor editor, @NotNull CodeFoldingState state) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (isFoldingsInitializedInEditor(editor)) {
       state.setToEditor(editor);
     }

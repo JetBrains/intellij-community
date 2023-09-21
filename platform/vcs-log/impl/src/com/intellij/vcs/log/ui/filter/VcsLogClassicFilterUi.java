@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.FieldInplaceActionButtonLook;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -26,6 +25,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.SearchFieldWithExtension;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
@@ -211,7 +211,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
   @Override
   public @NotNull VcsLogFilterCollection getFilters() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return VcsLogFilterObject.collection(myBranchFilterModel.getBranchFilter(), myBranchFilterModel.getRevisionFilter(),
                                          myBranchFilterModel.getRangeFilter(),
                                          myTextFilterModel.getFilter1(), myTextFilterModel.getFilter2(),
@@ -221,7 +221,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
   @Override
   public void setFilters(@NotNull VcsLogFilterCollection collection) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myBranchFilterModel.setFilter(new BranchFilters(collection.get(BRANCH_FILTER),
                                                     collection.get(REVISION_FILTER),
                                                     collection.get(RANGE_FILTER)));

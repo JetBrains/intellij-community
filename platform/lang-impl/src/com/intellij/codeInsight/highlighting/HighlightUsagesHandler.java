@@ -11,7 +11,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
@@ -33,6 +32,7 @@ import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.PsiDeclaredTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +92,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
 
   @Nullable
   public static <T extends PsiElement> HighlightUsagesHandlerBase<T> createCustomHandler(@NotNull Editor editor, @NotNull PsiFile file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ProperTextRange visibleRange = editor.calculateVisibleRange();
     return createCustomHandler(editor, file, visibleRange);
   }

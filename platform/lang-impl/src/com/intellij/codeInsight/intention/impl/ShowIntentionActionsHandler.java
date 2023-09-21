@@ -59,6 +59,7 @@ import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -145,7 +146,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   public static @NotNull ShowIntentionsPass.IntentionsInfo calcIntentions(@NotNull Project project,
                                                                           @NotNull Editor editor,
                                                                           @NotNull PsiFile file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       throw new IllegalStateException("must not wait for intentions inside write action");
     }

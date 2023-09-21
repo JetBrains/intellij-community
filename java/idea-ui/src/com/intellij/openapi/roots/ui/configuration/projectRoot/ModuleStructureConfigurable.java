@@ -17,7 +17,6 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
@@ -48,6 +47,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -194,7 +194,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @Override
   protected void updateSelection(@Nullable NamedConfigurable configurable) {
     myProjectStructureConfigurable.getFacetStructureConfigurable().disposeMultipleSettingsEditor();
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     super.updateSelection(configurable);
     if (configurable != null) {
       updateModuleEditorSelection(configurable);

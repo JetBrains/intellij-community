@@ -41,6 +41,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.AbstractDebuggerSession;
@@ -158,7 +159,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
                          final State state,
                          final Event event,
                          final @NlsContexts.Label String description) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       final DebuggerSession session = context.getDebuggerSession();
       LOG.assertTrue(session == DebuggerSession.this || session == null);
       final Runnable setStateRunnable = () -> {
@@ -418,7 +419,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   }
 
   private SuspendContextImpl getSuspendContext() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return getContextManager().getContext().getSuspendContext();
   }
 

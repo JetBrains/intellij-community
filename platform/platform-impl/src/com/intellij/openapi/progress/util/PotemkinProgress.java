@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.DialogWrapperPeerFactory;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +48,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
                           @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText) {
     super(cancelText != null,false, project, parentComponent, cancelText);
     setTitle(title);
-    myApp.assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myApp.getService(DialogWrapperPeerFactory.class); // make sure the service is created
     myEventStealer = startStealingInputEvents(this::dispatchInputEvent, this);
   }
@@ -142,7 +143,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
 
   /** Executes the action in EDT, paints itself inside checkCanceled calls. */
   public void runInSwingThread(@NotNull Runnable action) {
-    myApp.assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     try {
       ProgressManager.getInstance().runProcess(action, this);
     }
@@ -155,7 +156,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
 
   /** Executes the action in a background thread, block Swing thread, handles selected input events and paints itself periodically. */
   public void runInBackground(@NotNull Runnable action) {
-    myApp.assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     try {
       executeInModalContext(() -> {

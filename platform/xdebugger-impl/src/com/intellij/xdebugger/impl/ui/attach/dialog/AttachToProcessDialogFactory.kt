@@ -4,7 +4,7 @@ package com.intellij.xdebugger.impl.ui.attach.dialog
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
-import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.attach.XAttachDebuggerProvider
 import com.intellij.xdebugger.attach.XAttachHost
@@ -26,7 +26,7 @@ class AttachToProcessDialogFactory(private val project: Project) {
   fun showDialog(attachDebuggerProviders: List<XAttachDebuggerProvider>,
                  attachHosts: List<XAttachHostProvider<XAttachHost>>,
                  context: DataContext) {
-    application.assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val defaultViewHostType = getDefaultViewHostType(context)
 
     val currentDialogInstance = getOpenDialog()

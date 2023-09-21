@@ -1048,13 +1048,13 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     }
 
     if (Boolean.TRUE.equals(component.getClientProperty(WAS_EVER_SHOWN))) {
-      assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
     }
     else {
       JRootPane root = component.getRootPane();
       if (root != null) {
         component.putClientProperty(WAS_EVER_SHOWN, Boolean.TRUE);
-        assertIsDispatchThread();
+        ThreadingAssertions.assertEventDispatchThread();
       }
     }
   }

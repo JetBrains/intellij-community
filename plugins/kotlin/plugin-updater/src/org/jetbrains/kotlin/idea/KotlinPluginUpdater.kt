@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea
 
@@ -11,6 +11,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.update.verify
@@ -43,7 +44,7 @@ class KotlinPluginUpdater : StandalonePluginUpdateChecker(
     }
 
     fun runCachedUpdate(callback: (PluginUpdateStatus) -> Boolean) {
-        ApplicationManager.getApplication().assertIsDispatchThread()
+        ThreadingAssertions.assertEventDispatchThread()
         val cachedStatus = lastUpdateStatus
         if (cachedStatus != null && System.currentTimeMillis() - cachedStatus.timestamp < CACHED_REQUEST_DELAY) {
             if (cachedStatus !is PluginUpdateStatus.CheckFailed) {

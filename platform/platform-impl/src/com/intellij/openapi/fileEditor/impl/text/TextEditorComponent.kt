@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFileEvent
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent
 import com.intellij.util.FileContentUtilCore
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBSwingUtilities
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -248,7 +249,7 @@ open class TextEditorComponent(
     override fun contentsChanged(event: VirtualFileEvent) {
       // commit
       if (event.isFromSave) {
-        ApplicationManager.getApplication().assertIsDispatchThread()
+        ThreadingAssertions.assertEventDispatchThread()
         val file = event.file
         LOG.assertTrue(file.isValid)
         if (file == this@TextEditorComponent.file) {

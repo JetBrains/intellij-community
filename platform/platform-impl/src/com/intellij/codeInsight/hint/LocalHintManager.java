@@ -29,6 +29,7 @@ import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EDT;
@@ -62,7 +63,7 @@ public final class LocalHintManager implements ClientHintManager {
 
   @Override
   public boolean canShowQuestionAction(QuestionAction action) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return myQuestionAction == null || HintManagerImpl.getPriority(myQuestionAction) <= HintManagerImpl.getPriority(action);
   }
 
@@ -144,7 +145,7 @@ public final class LocalHintManager implements ClientHintManager {
 
   @Override
   public boolean performCurrentQuestionAction() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myQuestionAction != null && myQuestionHint != null) {
       if (myQuestionHint.isVisible()) {
         if (LOG.isDebugEnabled()) {
@@ -407,7 +408,7 @@ public final class LocalHintManager implements ClientHintManager {
                                int flags,
                                final @NotNull QuestionAction action,
                                @HintManager.PositionFlags short constraint) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     hideQuestionHint();
     RangeHighlighter highlighter;
     if (offset1 != offset2) {
@@ -443,7 +444,7 @@ public final class LocalHintManager implements ClientHintManager {
   }
 
   private void hideQuestionHint() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myQuestionHint != null) {
       myQuestionHint.hide();
       myQuestionHint = null;

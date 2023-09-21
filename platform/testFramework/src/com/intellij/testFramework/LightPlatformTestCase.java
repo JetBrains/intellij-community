@@ -67,6 +67,7 @@ import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.messages.MessageBusConnection;
@@ -250,7 +251,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     Ref<Boolean> reusedProject = new Ref<>(true);
     app.invokeAndWait(() -> {
       IdeaLogger.ourErrorsOccurred = null;
-      app.assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
 
       myOldSdks = new SdkLeakTracker();
 

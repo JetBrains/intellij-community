@@ -55,6 +55,7 @@ import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.Alarm;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBUI;
@@ -644,7 +645,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, D
   }
 
   public void update() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Collection<Tools> tools = new ArrayList<>(myGlobalInspectionContext.getTools().values());
     updateTree(() -> updateResults(tools));
   }

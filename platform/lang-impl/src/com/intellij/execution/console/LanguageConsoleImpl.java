@@ -12,7 +12,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.EmptyAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.*;
@@ -53,6 +52,7 @@ import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.FileContentUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -283,7 +283,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   protected @NotNull String addToHistoryInner(final @NotNull TextRange textRange, final @NotNull EditorEx editor, boolean erase, final boolean preserveMarkup) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     String result = addTextRangeToHistory(textRange, editor, preserveMarkup);
     if (erase) {

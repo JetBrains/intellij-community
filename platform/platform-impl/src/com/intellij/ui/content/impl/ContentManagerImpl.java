@@ -19,6 +19,7 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -171,7 +172,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   private void doAddContent(final @NotNull Content content, final int index) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myContents.contains(content)) {
       myContents.remove(content);
       myContents.add(index < 0 ? myContents.size() : index, content);
@@ -239,7 +240,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   private @NotNull ActionCallback doRemoveContent(@NotNull Content content, boolean dispose) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     int indexToBeRemoved = getIndexOfContent(content);
     if (indexToBeRemoved == -1) {
       return ActionCallback.REJECTED;

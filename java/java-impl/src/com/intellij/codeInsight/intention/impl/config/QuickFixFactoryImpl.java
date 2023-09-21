@@ -54,6 +54,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.siyeh.ig.controlflow.UnnecessaryDefaultInspection;
 import com.siyeh.ig.fixes.*;
 import com.siyeh.ipp.modifiers.ChangeModifierIntention;
@@ -866,7 +867,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   private static boolean timeToOptimizeImports(@NotNull PsiFile file, boolean isInContent, @NotNull ThreeState extensionsAllowToChangeFileSilently) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (!CodeInsightWorkspaceSettings.getInstance(file.getProject()).isOptimizeImportsOnTheFly()) {
       return false;
     }

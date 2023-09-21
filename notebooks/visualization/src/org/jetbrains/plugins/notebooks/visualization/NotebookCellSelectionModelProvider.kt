@@ -1,9 +1,9 @@
 package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.lang.LanguageExtension
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 interface NotebookCellSelectionModelProvider {
@@ -14,7 +14,7 @@ interface NotebookCellSelectionModelProvider {
 
 val Editor.cellSelectionModel: NotebookCellSelectionModel?
   @RequiresEdt get() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     return key.get(this) ?: install(this)
   }
 

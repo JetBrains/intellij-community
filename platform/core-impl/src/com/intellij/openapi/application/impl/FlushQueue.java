@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.*;
@@ -29,12 +30,11 @@ final class FlushQueue {
   private final BulkArrayQueue<RunnableInfo> myQueue = new BulkArrayQueue<>();  //guarded by getQueueLock()
 
   private void flushNow() {
-    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    app.assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     synchronized (getQueueLock()) {
       FLUSHER_SCHEDULED = false;
     }
-
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     long startTime = System.currentTimeMillis();
     while (true) {
       RunnableInfo info = pollNextEvent();
@@ -165,7 +165,7 @@ final class FlushQueue {
   }
 
   void reincludeSkippedItems() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     synchronized (getQueueLock()) {
       int size = mySkippedItems.size();
       if (size != 0) {
@@ -183,7 +183,7 @@ final class FlushQueue {
   }
 
   void purgeExpiredItems() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     synchronized (getQueueLock()) {
       reincludeSkippedItems();
       myQueue.removeAll(info -> info.expired.value(null));

@@ -2,9 +2,10 @@
 package com.intellij.find.actions;
 
 import com.intellij.ide.util.gotoByName.ModelDiff;
-import com.intellij.internal.statistic.eventLog.events.EventPair;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
@@ -21,6 +22,7 @@ import com.intellij.usages.UsageToPsiElementProvider;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
@@ -220,7 +222,7 @@ public final class ShowUsagesTable extends JBTable implements DataProvider {
 
   @NotNull
   MyModel setTableModel(@NotNull final List<UsageNode> data) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     final int columnCount = calcColumnCount(data);
     MyModel model = getModel() instanceof MyModel ? (MyModel)getModel() : null;
     if (model == null || model.getColumnCount() != columnCount) {

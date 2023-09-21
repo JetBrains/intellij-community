@@ -3,7 +3,6 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -17,6 +16,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -147,7 +147,7 @@ public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChange
   }
 
   protected final void contentLoaded() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     Navigatable navigatable = myPendingNavigatable;
     if (navigatable != null) {

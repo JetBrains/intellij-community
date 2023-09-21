@@ -10,7 +10,6 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.Dumb
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.DumbModeBalloonShown
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.DumbModeBalloonWasNotNeeded
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
@@ -22,6 +21,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBInsets
 
 class DumbServiceBalloon(private val myProject: Project,
@@ -44,7 +44,7 @@ class DumbServiceBalloon(private val myProject: Project,
                                 runWhenSmartAndBalloonStillShowing: Runnable,
                                 runWhenCancelled: Runnable) {
     if (LightEdit.owns(myProject)) return
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (!myService.isDumb) {
       DumbModeBalloonWasNotNeeded.log(myProject)
       runWhenSmartAndBalloonStillShowing.run()

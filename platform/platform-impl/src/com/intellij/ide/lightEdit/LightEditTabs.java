@@ -32,6 +32,7 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.BitUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -308,7 +309,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   private void asyncUpdateTab(@NotNull TabInfo tabInfo) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     LightEditorInfo editorInfo = getEditorInfo(tabInfo);
     if (editorInfo == null) return;
     EditorNotifications.getInstance(myProject).updateNotifications(editorInfo.getFile());

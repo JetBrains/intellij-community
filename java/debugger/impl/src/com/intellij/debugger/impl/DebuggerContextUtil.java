@@ -9,7 +9,6 @@ import com.intellij.debugger.engine.SuspendManagerUtil;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -19,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ import java.util.Collection;
 
 public final class DebuggerContextUtil {
   public static void setStackFrame(final DebuggerStateManager manager, final StackFrameProxyImpl stackFrame) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     final DebuggerContextImpl context = manager.getContext();
 
     final DebuggerSession session = context.getDebuggerSession();
@@ -53,7 +53,7 @@ public final class DebuggerContextUtil {
   }
 
   public static void setThread(DebuggerStateManager contextManager, ThreadDescriptorImpl item) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     final DebuggerSession session = contextManager.getContext().getDebuggerSession();
     final DebuggerContextImpl newContext =

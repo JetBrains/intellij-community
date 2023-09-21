@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.codeVision
 
 import com.intellij.codeInsight.codeVision.ui.CodeVisionView
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -13,6 +12,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.rd.util.first
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
@@ -52,7 +52,7 @@ open class EditorCodeVisionContext(
 
   @RequiresEdt
   fun notifyPendingLenses() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (!hasPendingLenses) {
       LOG.trace("Have pending lenses")
     }
@@ -66,7 +66,7 @@ open class EditorCodeVisionContext(
 
   @RequiresEdt
   fun setResults(lenses: List<Pair<TextRange, CodeVisionEntry>>) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     LOG.trace("Have new frontend lenses ${lenses.size}")
     frontendResults.forEach { it.dispose() }
     frontendResults = lenses.mapNotNull { (range, entry) ->

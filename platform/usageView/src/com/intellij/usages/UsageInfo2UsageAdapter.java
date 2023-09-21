@@ -30,6 +30,7 @@ import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.rules.*;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -432,7 +433,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   @Override
   public void reset() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myMergedUsageInfos = myUsageInfo;
     resetCachedPresentation();
   }

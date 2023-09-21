@@ -31,6 +31,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.ApiStatus;
@@ -226,7 +227,7 @@ public final class EditorFactoryImpl extends EditorFactory {
 
   @Override
   public void releaseEditor(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     try {
       EditorFactoryEvent event = new EditorFactoryEvent(this, editor);
       myEditorFactoryEventDispatcher.getMulticaster().editorReleased(event);

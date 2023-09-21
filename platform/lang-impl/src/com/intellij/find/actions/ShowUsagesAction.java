@@ -78,6 +78,7 @@ import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
@@ -430,7 +431,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
   static Future<Collection<Usage>> showElementUsagesWithResult(@NotNull ShowUsagesParameters parameters,
                                                                @NotNull ShowUsagesActionHandler actionHandler) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     Span findUsageSpan = myFindUsagesTracer.spanBuilder("findUsages").startSpan();
     Scope opentelemetryScope = findUsageSpan.makeCurrent();
@@ -778,7 +779,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                                                          @NotNull ShowUsagesPopupData showUsagesPopupData,
                                                          @NotNull Runnable itemChoseCallback,
                                                          @NotNull Consumer<? super AbstractPopup> tableResizer) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     @NotNull JTable table = showUsagesPopupData.table;
     @NotNull AtomicReference<AbstractPopup> popupRef = showUsagesPopupData.popupRef;
@@ -1213,7 +1214,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                                    @NotNull RelativePoint popupPosition,
                                    @NotNull IntRef minWidth,
                                    @NotNull AtomicBoolean manuallyResized) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     ShowUsagesTable.MyModel tableModel = table.setTableModel(data);
     List<UsageNode> existingData = tableModel.getItems();

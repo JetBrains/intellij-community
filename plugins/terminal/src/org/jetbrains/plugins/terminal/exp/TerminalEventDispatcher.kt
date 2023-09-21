@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.KeyboardShortcut
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
@@ -22,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
@@ -56,7 +56,7 @@ internal abstract class TerminalEventDispatcher(private val parentDisposable: Di
   protected abstract fun handleKeyEvent(e: KeyEvent)
 
   fun register(actionsToSkip: List<AnAction>) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     this.actionsToSkip = actionsToSkip
     if (!myRegistered) {
       IdeEventQueue.getInstance().addDispatcher(this, parentDisposable)
@@ -65,7 +65,7 @@ internal abstract class TerminalEventDispatcher(private val parentDisposable: Di
   }
 
   fun unregister() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (myRegistered) {
       IdeEventQueue.getInstance().removeDispatcher(this)
       actionsToSkip = emptyList()

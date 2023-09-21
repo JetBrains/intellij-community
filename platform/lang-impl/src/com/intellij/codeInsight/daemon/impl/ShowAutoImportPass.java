@@ -31,6 +31,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -119,7 +120,7 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   private void importUnambiguousImports() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (!mayAutoImportNow(myFile, true, ThreeState.UNSURE)) return;
     for (BooleanSupplier autoImportAction : autoImportActions) {
       autoImportAction.getAsBoolean();

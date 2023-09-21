@@ -42,6 +42,7 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -371,7 +372,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
   public @NotNull NewErrorTreeViewPanel prepareMessagesView(final @NotNull ProjectSystemId externalSystemId,
                                                             final @NotNull NotificationSource notificationSource,
                                                             boolean activateView) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     final NewErrorTreeViewPanel errorTreeView;
     final String contentDisplayName = getContentDisplayName(notificationSource, externalSystemId);

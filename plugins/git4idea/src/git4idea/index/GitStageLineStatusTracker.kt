@@ -45,6 +45,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
 import com.intellij.util.ui.JBUI
@@ -101,7 +102,7 @@ class GitStageLineStatusTracker(
 
   @RequiresEdt
   fun setBaseRevision(vcsContent: CharSequence, newStagedDocument: Document) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (isReleased) return
 
     if (stagedDocument != newStagedDocument) {
@@ -124,7 +125,7 @@ class GitStageLineStatusTracker(
 
   @RequiresEdt
   fun dropBaseRevision() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (isReleased) return
 
     isInitialized = false

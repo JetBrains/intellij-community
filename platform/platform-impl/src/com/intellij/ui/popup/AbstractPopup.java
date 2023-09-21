@@ -49,6 +49,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
@@ -972,7 +973,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       throw new IllegalStateException("Popup was already disposed. Recreate a new instance to show again");
     }
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assert myState == State.INIT : "Popup was already shown. Recreate a new instance to show again.";
 
     debugState("show popup", State.INIT);
@@ -1681,7 +1682,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myState == State.SHOWN) {
       LOG.debug("shown popup must be cancelled");
       cancel();

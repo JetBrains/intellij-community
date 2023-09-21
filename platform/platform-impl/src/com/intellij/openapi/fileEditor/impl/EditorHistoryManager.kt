@@ -6,7 +6,6 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.ide.ui.UISettings.Companion.getInstance
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -21,6 +20,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -89,7 +89,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
    * Makes file most recent one
    */
   private fun fileOpenedImpl(file: VirtualFile, fallbackEditor: FileEditor?, fallbackProvider: FileEditorProvider?) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     // don't add files that cannot be found via VFM (light & etc.)
     if (file !is IncludeInEditorHistoryFile && VirtualFileManager.getInstance().findFileByUrl(file.url) == null) {
       return

@@ -49,6 +49,7 @@ import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBSwingUtilities;
@@ -1195,7 +1196,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       int dot = caret.getOffset();
       int mark = caret.getLeadSelectionOffset();
       if (myCaretPos != dot) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
+        ThreadingAssertions.assertEventDispatchThread();
         firePropertyChange(ACCESSIBLE_CARET_PROPERTY,
                            Integer.valueOf(myCaretPos), Integer.valueOf(dot));
 
@@ -1203,7 +1204,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       }
 
       if (mark != dot) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
+        ThreadingAssertions.assertEventDispatchThread();
         firePropertyChange(ACCESSIBLE_SELECTION_PROPERTY, null,
                            getSelectedText());
       }

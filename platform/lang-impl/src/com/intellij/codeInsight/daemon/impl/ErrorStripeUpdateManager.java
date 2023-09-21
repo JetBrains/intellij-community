@@ -22,6 +22,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
   }
 
   public void repaintErrorStripePanel(@NotNull Editor editor, @Nullable PsiFile psiFile) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (!myProject.isInitialized()) return;
 
     EditorMarkupModel markup = (EditorMarkupModel) editor.getMarkupModel();
@@ -67,7 +68,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
   }
 
   void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, @NotNull PsiFile file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (!editorMarkupModel.isErrorStripeVisible()) {
       return;
     }

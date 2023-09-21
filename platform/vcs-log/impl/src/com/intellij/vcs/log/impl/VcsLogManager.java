@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.MultiMap;
@@ -157,7 +158,7 @@ public class VcsLogManager implements Disposable {
   private @NotNull <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory,
                                                         @NotNull VcsLogTabLocation location,
                                                         boolean isClosedOnDispose) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (isDisposed()) {
       LOG.error("Trying to create new VcsLogUi on a disposed VcsLogManager instance");
       throw new ProcessCanceledException();
@@ -232,7 +233,7 @@ public class VcsLogManager implements Disposable {
   @RequiresEdt
   void disposeUi() {
     myDisposed = true;
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myTabsLogRefresher != null) Disposer.dispose(myTabsLogRefresher);
     Disposer.dispose(myStatusBarProgress);
   }

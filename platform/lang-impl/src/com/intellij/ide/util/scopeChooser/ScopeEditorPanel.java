@@ -32,6 +32,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -448,7 +449,7 @@ public final class ScopeEditorPanel implements Disposable {
   }
   
   private void rebuild(final boolean updateText, @Nullable final Runnable runnable, final boolean requestFocus, final int delayMillis) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myRebuildRequired = false;
     cancelCurrentProgress();
     PanelProgressIndicator progress = createProgressIndicator(requestFocus);
@@ -570,7 +571,7 @@ public final class ScopeEditorPanel implements Disposable {
   }
 
   public void cancelCurrentProgress(){
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myUpdateAlarm.cancel(false);
     if (myCurrentProgress != null) {
       myCurrentProgress.cancel();

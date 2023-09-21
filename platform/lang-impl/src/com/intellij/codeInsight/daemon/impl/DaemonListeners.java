@@ -75,6 +75,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
@@ -505,7 +506,7 @@ public final class DaemonListeners implements Disposable {
    */
   public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file, boolean isInContent,
                                               @NotNull ThreeState extensionsAllowToChangeFileSilently) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Project project = file.getProject();
     DaemonListeners listeners = getInstance(project);
     if (listeners == null) {

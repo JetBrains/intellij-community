@@ -46,6 +46,7 @@ import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.XmlCharsetDetector;
 import com.intellij.util.ui.UIUtil;
@@ -1074,7 +1075,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     UIUtil.dispatchAllInvocationEvents();
 
     FileEditorManager.getInstance(getProject()).closeFile(file);
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (exception.get() != null) {
       throw exception.get();

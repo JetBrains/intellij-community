@@ -37,10 +37,8 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.RunnableCallable;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.ChildContext;
-import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import io.opentelemetry.api.metrics.Meter;
@@ -745,7 +743,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
    */
   @TestOnly
   public static void waitForAsyncTaskCompletion() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     for (Submission<?> task : ourTasks) {
       waitForTask(task);
@@ -754,7 +752,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   @TestOnly
   private static void waitForTask(@NotNull Submission<?> task) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     for (ContextConstraint constraint : task.builder.myConstraints) {
       if (constraint instanceof InSmartMode && !constraint.isCorrectContext()) {
         return;

@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -55,7 +56,7 @@ public final class EditorMouseHoverPopupControl {
   }
 
   private static void setTrackingDisabled(@NotNull UserDataHolder holder, boolean value) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Integer userData = holder.getUserData(MOUSE_TRACKING_DISABLED_COUNT);
     int count = (userData == null ? 0 : userData) + (value ? 1 : -1);
     if (count < 0) {
@@ -72,7 +73,7 @@ public final class EditorMouseHoverPopupControl {
   }
 
   public static boolean arePopupsDisabled(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Project project = editor.getProject();
     return editor.getUserData(MOUSE_TRACKING_DISABLED_COUNT) != null ||
            editor.getDocument().getUserData(MOUSE_TRACKING_DISABLED_COUNT) != null ||

@@ -34,6 +34,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -349,7 +350,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   @NotNull
   public Result doFix(@NotNull Editor editor, boolean allowPopup, boolean allowCaretNearRef, boolean mayAddUnambiguousImportsSilently) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     List<? extends PsiClass> result = getClassesToImport();
     PsiClass[] classes = result.toArray(PsiClass.EMPTY_ARRAY);
     if (classes.length == 0) return Result.POPUP_NOT_SHOWN;

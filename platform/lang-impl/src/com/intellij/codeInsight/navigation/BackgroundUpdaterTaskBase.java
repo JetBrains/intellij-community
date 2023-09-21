@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -17,6 +16,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,7 +129,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   }
 
   private void refreshModelImmediately() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myCanceled) return;
     if (myPopup.isDisposed()) return;
     List<T> data;

@@ -69,6 +69,7 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.lang.JavaVersion;
@@ -302,7 +303,7 @@ public final class PlatformTestUtil {
     }
     else {
       assert !application.isWriteAccessAllowed() : "do not wait under write action to avoid possible deadlock";
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
     }
   }
 

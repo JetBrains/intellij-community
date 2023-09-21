@@ -59,6 +59,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ChildContext
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.createChildContext
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
@@ -1214,7 +1215,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                             contextComponent: Component?,
                             place: String?,
                             now: Boolean): ActionCallback {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val result = ActionCallback()
     val doRunnable = {
       tryToExecuteNow(action = action, inputEvent = inputEvent, contextComponent = contextComponent, place = place, result = result)

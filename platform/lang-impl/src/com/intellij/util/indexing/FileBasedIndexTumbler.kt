@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.stubs.StubIndexExtension
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.indexing.IndexingFlag.cleanupProcessedFlag
 import org.jetbrains.annotations.NonNls
 import java.util.*
@@ -31,7 +32,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
 
   fun turnOff() {
     val app = ApplicationManager.getApplication()
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     LOG.assertTrue(!app.isWriteAccessAllowed)
     try {
       if (nestedLevelCount == 0) {

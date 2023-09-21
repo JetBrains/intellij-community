@@ -37,6 +37,7 @@ import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.TreeTraversal;
@@ -335,7 +336,7 @@ public final class InspectionTree extends Tree {
                                                                     boolean allowResolved,
                                                                     TreePath[] paths) {
     if (paths == null) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       paths = getSelectionPaths();
     }
     if (paths == null) return Collections.emptyList();
@@ -387,7 +388,7 @@ public final class InspectionTree extends Tree {
 
   @Override
   public TreePath @Nullable [] getSelectionPaths() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return super.getSelectionPaths();
   }
 
@@ -463,7 +464,7 @@ public final class InspectionTree extends Tree {
   }
 
   public void removeSelectedProblems() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     TreePath[] selected = getSelectionPaths();
     if (selected == null) return;
     if (!getContext().getUIOptions().FILTER_RESOLVED_ITEMS) {

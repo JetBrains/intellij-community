@@ -49,6 +49,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -456,7 +457,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
     };
     Function<TreePath, Promise<TreePath>> action = path -> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
 
       if (select) {
         TreeUtil.selectPath(myTree, path);
@@ -567,7 +568,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   private void scrollToSelectedElementLater() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     cancelScrollToSelectedElement();
     if (isDisposed()) return;
@@ -618,7 +619,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   @Override
   public void setActionActive(String name, boolean state) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     storeState();
     StructureViewFactoryEx.getInstanceEx(myProject).setActiveAction(name, state);
     ourSettingsModificationCount.incrementAndGet();

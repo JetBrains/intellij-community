@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -225,7 +226,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public boolean isSoftWrappingEnabled() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return myUseSoftWraps && !myEditor.isPurePaintingMode();
   }
 

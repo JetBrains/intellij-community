@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesListener;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -145,7 +146,7 @@ public final class LoadedRevisionsCache implements Disposable {
     }
 
     private void checkValidity() {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
 
       if (myCreationTime <= getRefreshTime()) {
         throw new SwitchRevisionsProviderException();

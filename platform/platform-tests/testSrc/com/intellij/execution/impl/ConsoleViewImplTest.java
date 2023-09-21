@@ -37,6 +37,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -141,7 +142,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   public void testClearAndPrintWhileAnotherClearExecution() throws Exception {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ConsoleViewImpl console = myConsole;
     for (int i = 0; i < 100; i++) {
       // To speed up test execution, set -Dconsole.flush.delay.ms=5 to reduce ConsoleViewImpl.DEFAULT_FLUSH_DELAY

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IntPair;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -197,7 +198,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   private static void assertIsDispatchThreadForEditor() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
   }
   private static void assertReadAccess() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -381,7 +382,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   void removeRegionFromTree(@NotNull FoldRegionImpl region) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (!myEditor.getFoldingModel().isInBatchFoldingOperation()) {
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
     }

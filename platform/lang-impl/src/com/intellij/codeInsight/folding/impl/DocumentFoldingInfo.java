@@ -26,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.xml.util.XmlStringUtil;
@@ -58,7 +59,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
   }
 
   void loadFromEditor(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(!editor.isDisposed());
     clear();
 
@@ -86,7 +87,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
 
   @Override
   public void setToEditor(@NotNull final Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     if (psiManager.isDisposed()) return;
 

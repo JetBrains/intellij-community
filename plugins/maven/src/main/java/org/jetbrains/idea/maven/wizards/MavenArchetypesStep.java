@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -216,7 +217,7 @@ public final class MavenArchetypesStep extends ModuleWizardStep implements Dispo
   }
 
   public void updateArchetypesList(final MavenArchetype selected) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     myLoadingIcon.setBackground(RenderingUtil.getBackground(myArchetypesTree));
 

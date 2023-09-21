@@ -30,6 +30,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -586,7 +587,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public void selectFileType(@NotNull FileType fileType) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myRecognizedFileType == null) {
       myFileTypeToPreselect = fileType;
     }

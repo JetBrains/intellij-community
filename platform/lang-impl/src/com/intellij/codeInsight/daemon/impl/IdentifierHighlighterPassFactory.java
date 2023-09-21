@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestModeFlags;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -39,7 +40,7 @@ public final class IdentifierHighlighterPassFactory {
 
   @TestOnly
   public static void doWithHighlightingEnabled(@NotNull Project project, @NotNull Disposable parentDisposable, @NotNull Runnable r) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     BackgroundHighlightingUtil.enableListenersInTest(project, parentDisposable);
     TestModeFlags.set(ourTestingIdentifierHighlighting, true);
     try {

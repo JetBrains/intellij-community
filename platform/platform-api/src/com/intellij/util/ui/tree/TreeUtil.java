@@ -912,7 +912,7 @@ public final class TreeUtil {
   }
 
   public static @NotNull List<TreeNode> listChildren(final @NotNull TreeNode node) {
-    //ApplicationManager.getApplication().assertIsDispatchThread();
+    //ThreadingAssertions.assertEventDispatchThread();
     int size = node.getChildCount();
     ArrayList<TreeNode> result = new ArrayList<>(size);
     for(int i = 0; i < size; i++){

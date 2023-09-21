@@ -100,6 +100,7 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ref.GCWatcher;
@@ -2208,7 +2209,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   private void waitForDaemon() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     long start = System.currentTimeMillis();
     long deadline = start + 60_000;
     while (!daemonIsWorkingOrPending()) {
@@ -2930,7 +2931,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
   
   public void testUncommittedByAccidentNonPhysicalDocumentMustNotHangDaemon() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
     assertEmpty(highlightErrors());
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());

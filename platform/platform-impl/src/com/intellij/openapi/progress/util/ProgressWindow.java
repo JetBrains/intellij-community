@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -97,7 +98,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
 
     myDialogInitialization = () -> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       Window parentWindow = calcParentWindow(parentComponent, myProject);
       myDialog = new ProgressDialog(this, shouldShowBackground, cancelText, parentWindow);
       Disposer.register(this, myDialog);
@@ -110,12 +111,12 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   protected void initializeOnEdtIfNeeded() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     initializeDialog();
   }
 
   private void initializeDialog() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Runnable initialization = myDialogInitialization;
     if (initialization == null) return;
     myDialogInitialization = null;
@@ -200,7 +201,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   @Override
   public void startBlocking(@NotNull Runnable init, @NotNull CompletableFuture<?> stopCondition) {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    app.assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     synchronized (getLock()) {
       LOG.assertTrue(!isRunning());
       LOG.assertTrue(!myStoppedAlready);
@@ -241,7 +242,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   protected void showDialog() {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    app.assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (!isRunning() || isCanceled()) {
       return;
     }
@@ -287,12 +288,12 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   @Nullable ProgressDialog getDialog() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return myDialog;
   }
 
   public void background() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myDialog != null) {
       myBackgrounded = true;
       myDialog.background();
@@ -357,7 +358,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myDialogInitialization = null;
     stopSystemActivity();
     if (isRunning()) {
@@ -367,7 +368,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Override
   public boolean isPopupWasShown() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return myDialog != null && myDialog.getPopup() != null && myDialog.getPopup().isShowing();
   }
 

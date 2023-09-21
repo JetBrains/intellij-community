@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.CommonBundle;
@@ -26,6 +26,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -372,7 +373,7 @@ public final class XFramesView extends XDebugView {
     XSuspendContext suspendContext = session.getSuspendContext();
 
     if (event == SessionEvent.FRAME_CHANGED && Objects.equals(mySelectedStack, currentExecutionStack)) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       if (currentStackFrame != null) {
         myFramesList.setSelectedValue(currentStackFrame, true);
         mySelectedFrameIndex = myFramesList.getSelectedIndex();

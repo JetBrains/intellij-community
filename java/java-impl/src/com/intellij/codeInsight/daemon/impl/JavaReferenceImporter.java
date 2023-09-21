@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -24,7 +25,7 @@ public class JavaReferenceImporter implements ReferenceImporter {
    */
   @Deprecated(forRemoval = true)
   public static boolean autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file, boolean allowCaretNearRef) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return new JavaReferenceImporter().autoImportReferenceAtCursor(editor, file);
   }
 

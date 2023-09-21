@@ -22,6 +22,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner
@@ -242,7 +243,7 @@ class DumbServiceImplTest {
 
         runInEdtAndWait {
           dumbService.runWhenSmart {
-            application.assertIsDispatchThread()
+            ThreadingAssertions.assertEventDispatchThread()
             assertFalse(application.isWriteAccessAllowed)
             invocations++
             phaser.arriveAndDeregister() //3

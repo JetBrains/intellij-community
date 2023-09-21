@@ -36,6 +36,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -158,7 +159,7 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
   }
 
   private void updateHighlighted(@NotNull Project project, @NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (editor.getDocument().isInBulkUpdate()) {
       return;
     }

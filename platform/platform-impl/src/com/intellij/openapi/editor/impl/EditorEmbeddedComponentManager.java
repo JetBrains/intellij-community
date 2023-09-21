@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ public final class EditorEmbeddedComponentManager {
   }
 
   public @Nullable Inlay<?> addComponent(@NotNull EditorEx editor, @NotNull JComponent component, @NotNull Properties properties) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     ComponentInlays inlays = getComponentInlaysFor(editor);
     return inlays.add(component, properties.resizePolicy, properties.rendererFactory,

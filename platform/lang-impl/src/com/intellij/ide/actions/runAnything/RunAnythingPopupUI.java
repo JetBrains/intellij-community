@@ -54,6 +54,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
@@ -343,7 +344,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
   }
 
   private void rebuildList() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     myListRenderingAlarm.cancelAllRequests();
     myResultsList.getEmptyText().setText(FindBundle.message("empty.text.searching"));

@@ -2,8 +2,8 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.util.treeView.TreeAnchorizer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
@@ -40,7 +40,7 @@ final class SmartPointerListModel<T> extends AbstractListModel<T> implements Mod
 
   @Override
   public T getElementAt(int index) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return unwrap(myDelegate.getElementAt(index));
   }
 
@@ -55,19 +55,19 @@ final class SmartPointerListModel<T> extends AbstractListModel<T> implements Mod
 
   @Override
   public void addToModel(int idx, T element) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myDelegate.add(Math.min(idx, getSize()), wrap(element));
   }
 
   @Override
   public void addAllToModel(int index, List<? extends T> elements) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myDelegate.addAll(Math.min(index, getSize()), ContainerUtil.map(elements, this::wrap));
   }
 
   @Override
   public void removeRangeFromModel(int start, int end) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (start < getSize() && !isEmpty()) {
       myDelegate.removeRange(start, Math.min(end, getSize() - 1));
     }

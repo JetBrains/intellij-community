@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.suggested
 
 import com.intellij.codeInsight.daemon.GutterMark
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import javax.swing.Icon
@@ -72,7 +73,7 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
     refactoringEnabled: Boolean,
     @NlsContexts.Tooltip tooltip: String
   ) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     val newData = Data(
       document,
@@ -91,7 +92,7 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
   }
 
   fun clear() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (data == null) return
 
     data = null
@@ -103,7 +104,7 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
   }
 
   fun disable() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val data = data ?: return
     if (data.refactoringEnabled) {
       show(
@@ -128,7 +129,7 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
   }
 
   private fun updateHighlighter(editor: Editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     val prevHighlighter = editorsAndHighlighters[editor]
     if (prevHighlighter != null) {

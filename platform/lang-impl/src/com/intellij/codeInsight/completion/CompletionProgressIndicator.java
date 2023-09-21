@@ -58,6 +58,7 @@ import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -162,7 +163,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
     myQueue = new MergingUpdateQueue("completion lookup progress", ourShowPopupAfterFirstItemGroupingTime, true, myEditor.getContentComponent());
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (hasModifiers && !ApplicationManager.getApplication().isUnitTestMode()) {
       trackModifiers();
@@ -370,7 +371,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   private void updateLookup() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (isOutdated() || !shouldShowLookup()) return;
 
     while (true) {
@@ -505,7 +506,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   private void finishCompletionProcess(boolean disposeOffsetMap) {
     cancel();
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Disposer.dispose(myQueue);
     LookupManager.getInstance(getProject()).removePropertyChangeListener(myLookupManagerListener);
 
@@ -747,7 +748,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   @Override
   public void scheduleRestart() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myHandler.isTestingMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       closeAndFinish(false);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();

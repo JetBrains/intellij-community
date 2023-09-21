@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
@@ -83,7 +84,7 @@ class MavenImportingManager(val project: Project) {
 
   @RequiresEdt
   fun linkAndImportFile(pom: VirtualFile): MavenImportingResult {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val manager = MavenProjectsManager.getInstance(project)
     val importPath = if (pom.isDirectory) RootPath(pom) else FilesList(pom)
     return openProjectAndImport(importPath, manager.importingSettings, manager.generalSettings, MavenImportSpec.EXPLICIT_IMPORT)
@@ -118,7 +119,7 @@ class MavenImportingManager(val project: Project) {
                            importingSettings: MavenImportingSettings,
                            generalSettings: MavenGeneralSettings,
                            spec: MavenImportSpec): MavenImportingResult {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (isImportingInProgress()) {
       return MavenImportingResult(waitingPromise, null, null)
     }
@@ -268,7 +269,7 @@ class MavenImportingManager(val project: Project) {
     if (isRecursiveImportCalledFromMavenProjectsManagerWatcher()) {
       return MavenImportingResult(getWaitingPromise(), null, null)
     }
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val manager = MavenProjectsManager.getInstance(project)
     if (isImportingInProgress()) {
       return MavenImportingResult(getWaitingPromise(), null, null)
@@ -286,7 +287,7 @@ class MavenImportingManager(val project: Project) {
       return MavenImportingResult(getWaitingPromise(), null, null)
     }
 
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val manager = MavenProjectsManager.getInstance(project)
     val settings = MavenWorkspaceSettingsComponent.getInstance(project)
     manager.projectsTree.removeManagedFiles(filesToDelete)

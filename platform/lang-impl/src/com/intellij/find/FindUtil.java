@@ -47,6 +47,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -218,7 +219,7 @@ public final class FindUtil {
   }
 
   public static void find(@NotNull final Project project, @NotNull final Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     PsiUtilBase.assertEditorAndProjectConsistent(project, editor);
     final FindManager findManager = FindManager.getInstance(project);
     String s = getSelectedText(editor);

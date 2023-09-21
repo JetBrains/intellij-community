@@ -79,6 +79,7 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -1683,7 +1684,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void beforeChangedUpdate(@NotNull DocumentEvent e) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     myDocumentChangeInProgress = true;
     if (isStickySelection()) {
@@ -3445,7 +3446,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   static void assertIsDispatchThread() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
   }
 
   private static void assertReadAccess() {
