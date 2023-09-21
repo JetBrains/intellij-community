@@ -323,7 +323,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
 
     companion object {
       val <T: Any> RecordsOperation<T>.fileId: Int? get() = when (this) {
-        is AllocateRecord -> if (result.hasValue) result.value else null
+        is AllocateRecord -> if (result.isSuccess) result.value else null
         is CleanRecord -> fileId
         is FillRecord -> fileId
         is MarkRecordAsModified -> fileId
@@ -638,7 +638,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
 
     companion object {
       val <T: Any> ContentsOperation<T>.contentRecordId: Int? get() = when (this) {
-        is AcquireNewRecord -> if (result.hasValue) result.value else null
+        is AcquireNewRecord -> if (result.isSuccess) result.value else null
         is AcquireRecord -> recordId
         is AppendStream -> recordId
         is ReleaseRecord -> recordId

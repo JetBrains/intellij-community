@@ -12,16 +12,16 @@ class OperationResult<out T : Any> private constructor(
   private val valueNullable: T?,
   val exceptionClass: String
 ) {
-  val hasValue: Boolean get() = valueNullable != null
+  val isSuccess: Boolean get() = valueNullable != null
   val value: T get() = valueNullable!!
 
   infix fun <R : Any> fmap(action: (T) -> R): OperationResult<R> {
-    if (hasValue) return fromValue(action(value))
+    if (isSuccess) return fromValue(action(value))
     return fromException(exceptionClass)
   }
 
   override fun toString(): String {
-    return if (hasValue) "OperationResult(value=$value)"
+    return if (isSuccess) "OperationResult(value=$value)"
     else "OperationResult(exception=$exceptionClass)"
   }
 
@@ -41,7 +41,7 @@ class OperationResult<out T : Any> private constructor(
     const val SIZE_BYTES: Int = Int.SIZE_BYTES
 
     inline fun <reified T : Any> OperationResult<T>.serialize(enumerator: (String) -> Int): Int {
-      if (!hasValue) {
+      if (!isSuccess) {
         val enum = enumerator(exceptionClass)
         assert(enum >= 0)
         return -enum - 1

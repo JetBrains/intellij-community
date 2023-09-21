@@ -165,7 +165,7 @@ object VfsChronicle {
     ) {
       when (it) {
         is RecordsOperation.AllocateRecord -> {
-          if (it.result.hasValue) {
+          if (it.result.isSuccess) {
             val id = it.result.value
             if (fileId == id) return RecoveredChildrenIds.of(childrenIds.toList(), true)
             seenDifferentSetParent.add(id)
@@ -267,7 +267,7 @@ object VfsChronicle {
         is OperationReadResult.Invalid -> onInvalid(read.cause)
         is OperationReadResult.Incomplete -> onIncomplete(read.tag)
         is OperationReadResult.Complete -> {
-          if (read.operation.result.hasValue) onComplete(read.operation)
+          if (read.operation.result.isSuccess) onComplete(read.operation)
           else onCompleteExceptional(read.operation)
         }
       }
