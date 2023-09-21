@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-private class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager {
+internal class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager {
   @RequiresEdt
   override fun scheduleScrollToSource(handler: AutoScrollToSourceHandler, dataContext: DataContext) {
     val asyncDataContext = wrapToAsyncDataContext(dataContext)
