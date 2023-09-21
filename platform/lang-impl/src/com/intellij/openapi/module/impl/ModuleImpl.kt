@@ -45,8 +45,14 @@ private val moduleMethodType = MethodType.methodType(Void.TYPE, Module::class.ja
 private val LOG: Logger
   get() = logger<ModuleImpl>()
 
-open class ModuleImpl @ApiStatus.Internal constructor(name: String, project: Project) :
-  ComponentManagerImpl(parent = project as ComponentManagerImpl, coroutineScope = null), ModuleEx, Queryable {
+open class ModuleImpl @ApiStatus.Internal constructor(
+  name: String,
+  project: Project,
+) : ComponentManagerImpl(
+  parent = project as ComponentManagerImpl,
+  coroutineScope = null,
+), ModuleEx, Queryable {
+
   private val project: Project
   protected var imlFilePointer: VirtualFilePointer? = null
 
