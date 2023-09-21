@@ -35,7 +35,7 @@ import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxPropertyReference;
 
 import java.util.*;
 
-public class JavaFxPropertyRenameHandler implements RenameHandler {
+public final class JavaFxPropertyRenameHandler implements RenameHandler {
   @Override
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     final PsiReference reference = getKnownReference(getReferences(dataContext));
@@ -198,14 +198,14 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     return null;
   }
 
-  private static class PropertyRenameDialog extends RenameDialog {
+  private static final class PropertyRenameDialog extends RenameDialog {
 
     private final JavaFxPropertyReference myPropertyReference;
 
-    protected PropertyRenameDialog(@NotNull JavaFxPropertyReference propertyReference,
-                                   @NotNull PsiElement psiElement,
-                                   @NotNull Project project,
-                                   Editor editor) {
+    private PropertyRenameDialog(@NotNull JavaFxPropertyReference propertyReference,
+                                 @NotNull PsiElement psiElement,
+                                 @NotNull Project project,
+                                 Editor editor) {
       super(project, psiElement, null, editor);
       myPropertyReference = propertyReference;
     }
@@ -219,7 +219,7 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     }
   }
 
-  private static class RenameFxIdDialog extends RenameDialog {
+  private static final class RenameFxIdDialog extends RenameDialog {
     RenameFxIdDialog(@NotNull XmlAttributeValue fxIdValueElement, Editor editor) {
       super(fxIdValueElement.getProject(), fxIdValueElement, null, editor);
     }

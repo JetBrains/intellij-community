@@ -19,7 +19,7 @@ import org.jetbrains.plugins.javaFX.indexing.JavaFxControllerClassIndex;
 
 import java.util.List;
 
-public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters>{
+public final class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters>{
   @Override
   public boolean execute(final @NotNull ReferencesSearch.SearchParameters queryParameters, final @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement elementToSearch = queryParameters.getElementToSearch();

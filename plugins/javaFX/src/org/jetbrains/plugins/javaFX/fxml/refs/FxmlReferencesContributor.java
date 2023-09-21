@@ -23,7 +23,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import static com.intellij.patterns.PlatformPatterns.virtualFile;
 import static com.intellij.patterns.StandardPatterns.string;
 
-public class FxmlReferencesContributor extends PsiReferenceContributor {
+public final class FxmlReferencesContributor extends PsiReferenceContributor {
   public static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider() {
     {
       setOption(ALLOW_DOLLAR_NAMES, false);
@@ -120,7 +120,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                         new JavaFxStaticPropertyReferenceProvider());
   }
 
-  private static class MyJavaClassReferenceProvider extends JavaClassReferenceProvider {
+  private static final class MyJavaClassReferenceProvider extends JavaClassReferenceProvider {
     @Override
     public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element) {
       String name = element instanceof XmlAttributeValue ? ((XmlAttributeValue)element).getValue()
@@ -143,7 +143,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
       return results;
     }
 
-    private static class JavaClassReferenceWrapper implements PsiReference {
+    private static final class JavaClassReferenceWrapper implements PsiReference {
       private final PsiReference myReference;
       private final PsiElement myPosition;
 

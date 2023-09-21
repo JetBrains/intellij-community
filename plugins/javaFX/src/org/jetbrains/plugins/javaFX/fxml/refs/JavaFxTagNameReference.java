@@ -14,7 +14,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaFxTagNameReference extends TagNameReference{
+public final class JavaFxTagNameReference extends TagNameReference{
   private static final Logger LOGGER = Logger.getInstance(JavaFxTagNameReference.class);
 
   public JavaFxTagNameReference(ASTNode element, boolean startTagFlag) {
@@ -56,7 +56,7 @@ public class JavaFxTagNameReference extends TagNameReference{
     return super.bindToElement(element);
   }
 
-  public static class JavaFxUnresolvedTagRefsProvider extends UnresolvedReferenceQuickFixProvider<JavaFxTagNameReference> {
+  public static final class JavaFxUnresolvedTagRefsProvider extends UnresolvedReferenceQuickFixProvider<JavaFxTagNameReference> {
     @Override
     public void registerFixes(@NotNull JavaFxTagNameReference ref, @NotNull QuickFixActionRegistrar registrar) {
       XmlTag element = ref.getTagElement();

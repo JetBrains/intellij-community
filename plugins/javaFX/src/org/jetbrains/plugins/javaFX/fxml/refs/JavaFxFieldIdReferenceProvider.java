@@ -18,7 +18,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferenceProvider {
+public final class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferenceProvider {
   @Override
   protected PsiReference[] getReferencesByElement(final @NotNull PsiClass aClass,
                                                   final XmlAttributeValue xmlAttributeValue,
@@ -39,7 +39,7 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
       new AttributeValueSelfReference(xmlAttributeValue)};
   }
 
-  public static class JavaFxControllerFieldRef extends PsiReferenceBase<XmlAttributeValue> {
+  public static final class JavaFxControllerFieldRef extends PsiReferenceBase<XmlAttributeValue> {
     private final XmlAttributeValue myXmlAttributeValue;
     private final PsiMember myFieldOrMethod;
     private final PsiClass myAClass;

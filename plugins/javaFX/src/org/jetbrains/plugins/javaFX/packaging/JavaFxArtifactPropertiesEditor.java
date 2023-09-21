@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
+public final class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private final JavaFxArtifactProperties myProperties;
 
   private JPanel myWholePanel;
@@ -250,11 +250,11 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     withBrowseButton.setText(path != null ? FileUtil.toSystemDependentName(path.trim()) : "");
   }
 
-  private static class CustomManifestAttributesDialog extends DialogWrapper {
+  private static final class CustomManifestAttributesDialog extends DialogWrapper {
     private final JPanel myWholePanel = new JPanel(new BorderLayout());
     private final AttributesTable myTable;
 
-    protected CustomManifestAttributesDialog(JPanel panel, List<JavaFxManifestAttribute> attrs) {
+    private CustomManifestAttributesDialog(JPanel panel, List<JavaFxManifestAttribute> attrs) {
       super(panel, true);
       myTable = new AttributesTable();
       myTable.setValues(attrs);
@@ -278,7 +278,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       return myTable.getAttrs();
     }
 
-    private static class AttributesTable extends ListTableWithButtons<JavaFxManifestAttribute> {
+    private static final class AttributesTable extends ListTableWithButtons<JavaFxManifestAttribute> {
       @Override
       protected ListTableModel createListModel() {
         final ColumnInfo name = new ElementsColumnInfoBase<JavaFxManifestAttribute>(JavaFXBundle.message(

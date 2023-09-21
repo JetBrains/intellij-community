@@ -18,7 +18,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
+public final class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
   private final XmlTag myXmlTag;
 
   public JavaFxRootTagDescriptor(XmlTag xmlTag) {
@@ -74,7 +74,7 @@ public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
     return psiClass != null ? psiClass : myXmlTag;
   }
 
-  public static class RootTagTypeAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
+  public static final class RootTagTypeAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
     public RootTagTypeAttributeDescriptor() {
       super(FxmlConstants.TYPE, null);
     }

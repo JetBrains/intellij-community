@@ -72,7 +72,7 @@ public final class JavaFxSettingsConfigurable implements SearchableConfigurable,
     return descriptor;
   }
 
-  public static class JavaFxConfigurablePanel {
+  public static final class JavaFxConfigurablePanel {
     private TextFieldWithBrowseButton myPathField;
     private JPanel myWholePanel;
 

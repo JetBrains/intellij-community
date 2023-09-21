@@ -37,7 +37,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInspectionTool {
+public final class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
                                                  final boolean isOnTheFly,
@@ -95,7 +95,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
     return IntentionWrapper.wrapToQuickFixes(JvmElementActionFactories.createAddFieldActions(reference.getAClass(), request), file).toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  protected static PsiClass checkContext(final XmlAttributeValue attributeValue) {
+  private static PsiClass checkContext(final XmlAttributeValue attributeValue) {
     if (attributeValue == null) return null;
     final PsiElement parent = attributeValue.getParent();
     if (parent instanceof XmlAttribute) {

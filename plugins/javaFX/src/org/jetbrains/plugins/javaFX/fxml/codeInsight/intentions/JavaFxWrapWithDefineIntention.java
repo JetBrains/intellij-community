@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 
-public class JavaFxWrapWithDefineIntention extends PsiElementBaseIntentionAction {
+public final class JavaFxWrapWithDefineIntention extends PsiElementBaseIntentionAction {
   private final XmlTag myTag;
   private final String myId;
 

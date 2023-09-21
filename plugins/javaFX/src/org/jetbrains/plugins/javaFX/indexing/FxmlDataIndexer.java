@@ -49,5 +49,5 @@ public class FxmlDataIndexer implements DataIndexer<String, Void, FileContent> {
     };
   }
 
-  protected static class StopException extends RuntimeException {}
+  protected static final class StopException extends RuntimeException {}
 }

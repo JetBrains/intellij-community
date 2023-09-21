@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
 
-public class JavaFxSchemaProvider extends XmlSchemaProvider {
+public final class JavaFxSchemaProvider extends XmlSchemaProvider {
   private static final Logger LOG = Logger.getInstance(JavaFxSchemaProvider.class);
 
   @Override

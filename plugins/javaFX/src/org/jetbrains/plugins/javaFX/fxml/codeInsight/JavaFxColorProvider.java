@@ -22,7 +22,7 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.IntFunction;
 
-public class JavaFxColorProvider implements ElementColorProvider {
+public final class JavaFxColorProvider implements ElementColorProvider {
   private static final String COLOR = "color";
   private static final String RGB = "rgb";
   private static final String GRAY = "gray";

@@ -13,7 +13,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-class JavaFxFactoryReferenceProvider extends PsiReferenceProvider {
+final class JavaFxFactoryReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
                                                          @NotNull ProcessingContext context) {
@@ -21,7 +21,7 @@ class JavaFxFactoryReferenceProvider extends PsiReferenceProvider {
     return new PsiReference[] {new JavaFXFactoryReference(attributeValue)};
   }
 
-  private static class JavaFXFactoryReference extends PsiReferenceBase<XmlAttributeValue> {
+  private static final class JavaFXFactoryReference extends PsiReferenceBase<XmlAttributeValue> {
     JavaFXFactoryReference(XmlAttributeValue attributeValue) {
       super(attributeValue);
     }

@@ -50,7 +50,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor, EditorCallback {
+public final class SceneBuilderEditor extends UserDataHolderBase implements FileEditor, EditorCallback {
   private static final Logger LOG = Logger.getInstance(SceneBuilderEditor.class);
 
   private static final String SCENE_CARD = "scene_builder";
@@ -341,7 +341,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
   }
 
-  private class ExternalChangeListener implements DocumentListener {
+  private final class ExternalChangeListener implements DocumentListener {
     private volatile boolean myRunState;
 
     ExternalChangeListener() {

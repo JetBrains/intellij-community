@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypeProvider {
+public final class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypeProvider {
   private static final Logger LOG = Logger.getInstance(JavaFxGetterSetterPrototypeProvider.class);
 
   @Override

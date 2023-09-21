@@ -12,7 +12,7 @@ import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationClassBrowser;
 
 import javax.swing.*;
 
-public class JavaFxPreloaderArtifactPropertiesEditor extends ArtifactPropertiesEditor {
+public final class JavaFxPreloaderArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private final JavaFxPreloaderArtifactProperties myProperties;
   private JPanel myPanel;
   private TextFieldWithBrowseButton myPreloaderTf;

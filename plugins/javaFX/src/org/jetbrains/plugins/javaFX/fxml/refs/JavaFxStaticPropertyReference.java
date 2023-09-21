@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-public class JavaFxStaticPropertyReference extends JavaFxPropertyReference<XmlAttribute> {
+public final class JavaFxStaticPropertyReference extends JavaFxPropertyReference<XmlAttribute> {
   private final String myPropertyName;
   private final PsiMethod myStaticMethod;
 

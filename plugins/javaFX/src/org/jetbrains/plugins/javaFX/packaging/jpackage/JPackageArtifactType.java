@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  * @author Bas Leijdekkers
  */
-public class JPackageArtifactType extends ArtifactType {
+public final class JPackageArtifactType extends ArtifactType {
 
   private JPackageArtifactType() {
     super("jpackage", () -> JavaFXBundle.message("platform.specific.package"));
@@ -97,7 +97,7 @@ public class JPackageArtifactType extends ArtifactType {
     return Collections.singletonList(new JPackageArtifactType.JPackageArtifactTemplate(modules));
   }
 
-  private class JPackageArtifactTemplate extends ArtifactTemplate {
+  private final class JPackageArtifactTemplate extends ArtifactTemplate {
     private final List<Module> myModules;
 
     JPackageArtifactTemplate(List<Module> modules) {

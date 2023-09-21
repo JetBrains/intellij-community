@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-public class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor {
+public final class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     final NestedControllerCandidate nestedControllerCandidate = findNestedControllerCandidate(element);

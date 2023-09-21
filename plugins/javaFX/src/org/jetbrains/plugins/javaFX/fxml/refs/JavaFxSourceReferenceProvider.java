@@ -9,7 +9,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-class JavaFxSourceReferenceProvider extends PsiReferenceProvider {
+final class JavaFxSourceReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference @NotNull [] getReferencesByElement(final @NotNull PsiElement element,
                                                          @NotNull ProcessingContext context) {

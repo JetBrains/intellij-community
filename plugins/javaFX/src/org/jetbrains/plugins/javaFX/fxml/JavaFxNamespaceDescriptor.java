@@ -20,7 +20,7 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxRootTagDescriptor;
 
 import java.util.ArrayList;
 
-public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<XmlDocument> {
+public final class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<XmlDocument> {
   private XmlFile myFile;
 
   @Override

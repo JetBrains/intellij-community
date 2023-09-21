@@ -18,7 +18,7 @@ import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import javax.swing.*;
 import java.io.File;
 
-public class JavaFxApplicationIconsDialog extends DialogWrapper {
+public final class JavaFxApplicationIconsDialog extends DialogWrapper {
   private Panel myPanel;
   private final Project myProject;
 
@@ -85,7 +85,7 @@ public class JavaFxApplicationIconsDialog extends DialogWrapper {
                                                .withFileFilter(file -> extension.equalsIgnoreCase(file.getExtension())));
   }
 
-  protected static class Panel {
+  protected static final class Panel {
     JPanel myWholePanel;
     private TextFieldWithBrowseButton myLinuxIconPath;
     private TextFieldWithBrowseButton myMacIconPath;

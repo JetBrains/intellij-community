@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.refactoring.JavaFxPropertyElement;
 
-public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
+public final class JavaFxMethodSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
   public boolean execute(final @NotNull ReferencesSearch.SearchParameters queryParameters,
                          final @NotNull Processor<? super PsiReference> consumer) {

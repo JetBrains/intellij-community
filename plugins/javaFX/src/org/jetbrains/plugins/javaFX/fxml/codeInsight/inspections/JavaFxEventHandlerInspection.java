@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool {
+public final class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool {
   public boolean myDetectNonVoidReturnType;
 
   @Override
@@ -164,7 +164,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
     }
   }
 
-  private static class ChangeParameterTypeQuickFix extends LocalQuickFixOnPsiElement {
+  private static final class ChangeParameterTypeQuickFix extends LocalQuickFixOnPsiElement {
     final @IntentionName String myText;
 
     ChangeParameterTypeQuickFix(@NotNull XmlAttribute attribute, @NotNull PsiMethod method,

@@ -8,7 +8,7 @@ import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
 import java.net.URL;
 
-public class JavaFx9Migration implements PredefinedMigrationProvider {
+public final class JavaFx9Migration implements PredefinedMigrationProvider {
   @Override
   public @NotNull URL getMigrationMap() {
     return JavaFx9Migration.class.getResource("JavaFx8__9.xml");

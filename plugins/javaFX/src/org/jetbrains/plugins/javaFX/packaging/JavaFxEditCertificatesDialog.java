@@ -18,11 +18,11 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-public class JavaFxEditCertificatesDialog extends DialogWrapper {
+public final class JavaFxEditCertificatesDialog extends DialogWrapper {
 
   Panel myPanel;
 
-  protected JavaFxEditCertificatesDialog(JComponent parent, JavaFxArtifactProperties properties, Project project) {
+  JavaFxEditCertificatesDialog(JComponent parent, JavaFxArtifactProperties properties, Project project) {
     super(parent, true);
     setTitle(JavaFXBundle.message("javafx.certificates.dialog.choose.certificate.title"));
     init();
@@ -79,7 +79,7 @@ public class JavaFxEditCertificatesDialog extends DialogWrapper {
     return myPanel.myWholePanel;
   }
 
-  protected static class Panel {
+  protected static final class Panel {
     JRadioButton mySelfSignedRadioButton;
     JRadioButton mySignedByKeyRadioButton;
     JPasswordField myStorePassTF;

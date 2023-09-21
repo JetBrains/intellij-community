@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 
-public class JavaFxMainMethodRunConfigurationProvider implements JavaMainMethodProvider {
+public final class JavaFxMainMethodRunConfigurationProvider implements JavaMainMethodProvider {
   public static final @NonNls String LAUNCH_MAIN = "launch";
 
   @Override

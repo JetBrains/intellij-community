@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
+final class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
   private final boolean mySupportCommaInValue;
   private final Set<String> myAcceptedFileTypes;
 

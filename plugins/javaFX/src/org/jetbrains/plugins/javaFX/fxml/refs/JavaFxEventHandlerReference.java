@@ -15,7 +15,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeValue> {
+public final class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeValue> {
   final PsiMethod myEventHandler;
   final PsiClass myController;
 

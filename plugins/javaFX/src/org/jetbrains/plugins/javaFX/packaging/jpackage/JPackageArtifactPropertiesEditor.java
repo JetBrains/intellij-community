@@ -26,7 +26,7 @@ import java.awt.*;
 /**
  * @author Bas Leijdekkers
  */
-public class JPackageArtifactPropertiesEditor extends ArtifactPropertiesEditor {
+public final class JPackageArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
   private final JPackageArtifactProperties myProperties;
   private final Project myProject;

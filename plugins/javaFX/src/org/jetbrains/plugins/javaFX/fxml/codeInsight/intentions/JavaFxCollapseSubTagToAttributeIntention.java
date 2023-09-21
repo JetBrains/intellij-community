@@ -18,7 +18,7 @@ import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassTagDescriptorBase;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
 
-public class JavaFxCollapseSubTagToAttributeIntention extends PsiElementBaseIntentionAction{
+public final class JavaFxCollapseSubTagToAttributeIntention extends PsiElementBaseIntentionAction{
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final XmlTag tag = (XmlTag)element.getParent();

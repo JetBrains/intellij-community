@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
-public class UnwrapTagFix implements LocalQuickFix {
+public final class UnwrapTagFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(UnwrapTagFix.class);
   private final String myTagName;
 

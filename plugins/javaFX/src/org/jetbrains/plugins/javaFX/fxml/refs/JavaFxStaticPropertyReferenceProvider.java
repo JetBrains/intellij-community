@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-public class JavaFxStaticPropertyReferenceProvider extends PsiReferenceProvider {
+public final class JavaFxStaticPropertyReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     if (!(element instanceof XmlAttribute xmlAttribute) || !JavaFxFileTypeFactory.isFxml(element.getContainingFile())) return PsiReference.EMPTY_ARRAY;
@@ -32,7 +32,7 @@ public class JavaFxStaticPropertyReferenceProvider extends PsiReferenceProvider 
     return new PsiReference[]{classReference, methodReference};
   }
 
-  private static class JavaFxStaticPropertyClassReference extends PsiReferenceBase<XmlAttribute> {
+  private static final class JavaFxStaticPropertyClassReference extends PsiReferenceBase<XmlAttribute> {
     private final PsiClass myPsiClass;
 
     JavaFxStaticPropertyClassReference(@NotNull XmlAttribute xmlAttribute, @NotNull String className) {

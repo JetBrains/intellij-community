@@ -20,7 +20,7 @@ import org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxImportsOptimizer;
 
 import java.util.*;
 
-public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool {
+public final class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool {
   @Override
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, final boolean isOnTheFly) {
     if (!JavaFxFileTypeFactory.isFxml(file)) return null;
@@ -71,7 +71,7 @@ public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool
     return problems.isEmpty() ? null : problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  private static class JavaFxOptimizeImportsFix implements LocalQuickFix {
+  private static final class JavaFxOptimizeImportsFix implements LocalQuickFix {
 
     @Override
     public @NotNull String getFamilyName() {

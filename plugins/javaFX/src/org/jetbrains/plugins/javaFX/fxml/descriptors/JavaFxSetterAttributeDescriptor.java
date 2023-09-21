@@ -8,7 +8,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaFxSetterAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
+public final class JavaFxSetterAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
   private final PsiMethod myPsiMethod;
 
   public JavaFxSetterAttributeDescriptor(PsiMethod psiMethod, PsiClass psiClass) {

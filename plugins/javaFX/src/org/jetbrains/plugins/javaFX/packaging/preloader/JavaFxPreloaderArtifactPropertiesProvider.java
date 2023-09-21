@@ -6,8 +6,8 @@ import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
 import com.intellij.packaging.artifacts.ArtifactType;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaFxPreloaderArtifactPropertiesProvider extends ArtifactPropertiesProvider {
-  protected JavaFxPreloaderArtifactPropertiesProvider() {
+public final class JavaFxPreloaderArtifactPropertiesProvider extends ArtifactPropertiesProvider {
+  private JavaFxPreloaderArtifactPropertiesProvider() {
     super("javafx-preloader-properties");
   }
 

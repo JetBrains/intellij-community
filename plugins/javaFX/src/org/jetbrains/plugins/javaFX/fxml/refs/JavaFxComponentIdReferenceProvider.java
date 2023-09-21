@@ -27,7 +27,7 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDesc
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
+public final class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
 
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
@@ -170,7 +170,7 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     }
   }
 
-  public static class JavaFxIdReferenceBase extends PsiReferenceBase<XmlAttributeValue> {
+  public static final class JavaFxIdReferenceBase extends PsiReferenceBase<XmlAttributeValue> {
     private final Map<String, XmlAttributeValue> myFileIds;
     private final Set<String> myAcceptableIds;
     private final Map<String, TypeMatch> myTypeMatches;
@@ -215,7 +215,7 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     }
   }
 
-  private static class JavaFxExpressionReferenceBase extends JavaFxPropertyReference<XmlAttributeValue> {
+  private static final class JavaFxExpressionReferenceBase extends JavaFxPropertyReference<XmlAttributeValue> {
     private final String myFieldName;
 
     JavaFxExpressionReferenceBase(@NotNull XmlAttributeValue xmlAttributeValue, PsiClass tagClass, @NotNull String fieldName) {

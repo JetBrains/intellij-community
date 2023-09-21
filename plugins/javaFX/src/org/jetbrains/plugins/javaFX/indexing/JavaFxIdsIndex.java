@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class JavaFxIdsIndex extends ScalarIndexExtension<String> {
+public final class JavaFxIdsIndex extends ScalarIndexExtension<String> {
 
   public static final @NonNls ID<String, Void> KEY = ID.create("javafx.id.name");
 

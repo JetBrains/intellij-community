@@ -25,12 +25,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class JavaFxApplicationArtifactType extends ArtifactType {
+public final class JavaFxApplicationArtifactType extends ArtifactType {
   public static JavaFxApplicationArtifactType getInstance() {
     return EP_NAME.findExtension(JavaFxApplicationArtifactType.class);
   }
   
-  protected JavaFxApplicationArtifactType() {
+  private JavaFxApplicationArtifactType() {
     super("javafx", JavaFXBundle.messagePointer("javafx.application.title"));
   }
 
@@ -74,7 +74,7 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
     return Collections.singletonList(new JavaFxArtifactTemplate(modules));
   }
 
-  private class JavaFxArtifactTemplate extends ArtifactTemplate {
+  private final class JavaFxArtifactTemplate extends ArtifactTemplate {
     private final List<Module> myModules;
 
     JavaFxArtifactTemplate(List<Module> modules) {

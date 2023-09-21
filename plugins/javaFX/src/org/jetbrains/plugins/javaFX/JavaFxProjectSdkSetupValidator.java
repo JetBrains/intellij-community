@@ -25,7 +25,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
 import javax.swing.event.HyperlinkEvent;
 
-public class JavaFxProjectSdkSetupValidator implements ProjectSdkSetupValidator {
+public final class JavaFxProjectSdkSetupValidator implements ProjectSdkSetupValidator {
 
   @Override
   public boolean isApplicableFor(@NotNull Project project, @NotNull VirtualFile file) {

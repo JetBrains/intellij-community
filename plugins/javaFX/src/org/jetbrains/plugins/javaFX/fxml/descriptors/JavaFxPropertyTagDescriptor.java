@@ -25,7 +25,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
+public final class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
   private final PsiClass myPsiClass;
   private final String myName;
   private final boolean myStatic;

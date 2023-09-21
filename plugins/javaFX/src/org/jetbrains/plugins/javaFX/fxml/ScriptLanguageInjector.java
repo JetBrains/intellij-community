@@ -17,8 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class ScriptLanguageInjector implements MultiHostInjector {
-  private static class Holder {
+public final class ScriptLanguageInjector implements MultiHostInjector {
+  private static final class Holder {
     private static final XmlElementPattern.XmlTextPattern SCRIPT_PATTERN = XmlPatterns.xmlText().withParent(
       XmlPatterns.xmlTag().withName(FxmlConstants.FX_SCRIPT));
   }

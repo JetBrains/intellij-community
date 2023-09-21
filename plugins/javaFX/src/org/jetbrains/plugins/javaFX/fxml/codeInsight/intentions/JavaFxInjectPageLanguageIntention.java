@@ -33,7 +33,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 
-public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAction {
+public final class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAction {
   public static final Logger LOG = Logger.getInstance(JavaFxInjectPageLanguageIntention.class);
 
   public static Set<String> getAvailableLanguages(Project project) {

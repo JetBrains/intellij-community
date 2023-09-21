@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
   storages = {
     @Storage("other.xml")}
 )
-public class JavaFxSettings implements PersistentStateComponent<JavaFxSettings> {
+public final class JavaFxSettings implements PersistentStateComponent<JavaFxSettings> {
   public String myPathToSceneBuilder = null;
 
   public static JavaFxSettings getInstance() {

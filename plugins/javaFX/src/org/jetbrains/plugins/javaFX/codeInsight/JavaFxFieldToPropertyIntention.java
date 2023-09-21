@@ -41,7 +41,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionAction implements LowPriorityAction {
+public final class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionAction implements LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(JavaFxFieldToPropertyIntention.class);
 
   @Override
@@ -81,7 +81,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
     return IntentionPreviewInfo.EMPTY;
   }
 
-  private static class SearchUsagesTask extends Task.Modal {
+  private static final class SearchUsagesTask extends Task.Modal {
     private final PropertyInfo myProperty;
     private Collection<PsiReference> myReferences;
     private Set<PsiFile> myFiles;
@@ -318,7 +318,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
     }
   }
 
-  static class ObservablePrimitive extends ObservableType {
+  static final class ObservablePrimitive extends ObservableType {
     final PsiPrimitiveType myType;
 
     ObservablePrimitive(@NotNull String text, @NotNull PsiPrimitiveType type) {
@@ -355,7 +355,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
     }
   }
 
-  static class ObservableString extends ObservableType {
+  static final class ObservableString extends ObservableType {
     ObservableString() {
       super(JavaFxCommonNames.JAVAFX_BEANS_PROPERTY_SIMPLE_STRING_PROPERTY);
     }
@@ -372,7 +372,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
     }
   }
 
-  static class ObservableList extends ObservableType {
+  static final class ObservableList extends ObservableType {
     final PsiType myOriginalType;
     final PsiType myItemType;
     final Project myProject;
@@ -441,7 +441,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
     }
   }
 
-  static class ObservableObject extends ObservableType {
+  static final class ObservableObject extends ObservableType {
     final PsiType myType;
 
     ObservableObject(@NotNull PsiType type) {

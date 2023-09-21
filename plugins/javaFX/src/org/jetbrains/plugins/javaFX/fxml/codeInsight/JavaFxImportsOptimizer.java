@@ -29,7 +29,7 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticSetterAttribute
 
 import java.util.*;
 
-public class JavaFxImportsOptimizer implements ImportOptimizer {
+public final class JavaFxImportsOptimizer implements ImportOptimizer {
   @Override
   public boolean supports(@NotNull PsiFile file) {
     return JavaFxFileTypeFactory.isFxml(file);

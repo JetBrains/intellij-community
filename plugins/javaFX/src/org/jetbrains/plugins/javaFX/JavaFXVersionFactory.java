@@ -17,7 +17,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
 
-public class JavaFXVersionFactory extends ProjectTemplateParameterFactory {
+public final class JavaFXVersionFactory extends ProjectTemplateParameterFactory {
   @Override
   public String getParameterId() {
     return "IJ_JAVAFX_VERSION";

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 
-public class JavaFxColorReference extends PsiReferenceBase<XmlAttributeValue> {
+public final class JavaFxColorReference extends PsiReferenceBase<XmlAttributeValue> {
   public JavaFxColorReference(XmlAttributeValue value) {
     super(value);
   }

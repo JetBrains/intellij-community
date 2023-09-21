@@ -37,7 +37,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class JavaFxAnnotator implements Annotator {
+public final class JavaFxAnnotator implements Annotator {
   @Override
   public void annotate(final @NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     final PsiFile containingFile = holder.getCurrentAnnotationSession().getFile();
@@ -132,7 +132,7 @@ public class JavaFxAnnotator implements Annotator {
     }
   }
 
-  private static class ColorIconRenderer extends GutterIconRenderer implements DumbAware {
+  private static final class ColorIconRenderer extends GutterIconRenderer implements DumbAware {
     private final ColorIcon myIcon;
     private final PsiElement myElement;
 

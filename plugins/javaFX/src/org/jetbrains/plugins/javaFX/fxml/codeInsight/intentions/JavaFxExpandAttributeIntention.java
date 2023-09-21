@@ -22,7 +22,7 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxBuiltInAttributeDescr
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticSetterAttributeDescriptor;
 
-public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionAction{
+public final class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionAction{
   private static final Logger LOG = Logger.getInstance(JavaFxExpandAttributeIntention.class);
 
   @Override

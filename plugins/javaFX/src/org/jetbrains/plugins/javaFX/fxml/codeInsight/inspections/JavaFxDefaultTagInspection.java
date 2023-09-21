@@ -17,7 +17,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
 
-public class JavaFxDefaultTagInspection extends XmlSuppressableInspectionTool{
+public final class JavaFxDefaultTagInspection extends XmlSuppressableInspectionTool{
   @Override
   public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,

@@ -35,7 +35,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactProperties> {
+public final class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactProperties> {
 
   private String myTitle;
   private String myVendor;

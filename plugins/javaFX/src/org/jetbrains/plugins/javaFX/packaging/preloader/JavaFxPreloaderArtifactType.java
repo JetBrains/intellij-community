@@ -12,12 +12,12 @@ import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
 import javax.swing.*;
 
-public class JavaFxPreloaderArtifactType extends ArtifactType {
+public final class JavaFxPreloaderArtifactType extends ArtifactType {
   public static JavaFxPreloaderArtifactType getInstance() {
     return EP_NAME.findExtension(JavaFxPreloaderArtifactType.class);
   }
   
-  protected JavaFxPreloaderArtifactType() {
+  private JavaFxPreloaderArtifactType() {
     super("javafx-preloader", JavaFXBundle.messagePointer("javafx.preloader.title"));
   }
 

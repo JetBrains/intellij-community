@@ -16,7 +16,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-public class JavaFxScopeEnlarger extends UseScopeEnlarger {
+public final class JavaFxScopeEnlarger extends UseScopeEnlarger {
   @Override
   public @Nullable SearchScope getAdditionalUseScope(@NotNull PsiElement element) {
     PsiClass containingClass = null;
@@ -61,7 +61,7 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
            AnnotationUtil.isAnnotated(method, JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, 0);
   }
 
-  public static class GlobalFxmlSearchScope extends DelegatingGlobalSearchScope {
+  public static final class GlobalFxmlSearchScope extends DelegatingGlobalSearchScope {
     public GlobalFxmlSearchScope(GlobalSearchScope baseScope) {
       super(baseScope);
     }
