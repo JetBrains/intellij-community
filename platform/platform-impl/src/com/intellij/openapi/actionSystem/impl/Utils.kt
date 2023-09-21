@@ -60,6 +60,7 @@ import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.concurrency.asCancellablePromise
 import java.awt.*
@@ -103,6 +104,30 @@ private val toolbarDispatcher = Dispatchers.Default.limitedParallelism(2)
 private var lastFailedFastTrackFinishNanos = 0L
 private var lastFailedFastTrackCount = 0
 
+/**
+ * The main utility to expand action groups asynchronously (without blocking EDT).
+ *
+ * Action update session is always run in BGT.
+ *
+ * There are three ways to deal with EDT during that:
+ *
+ * 1. Suspending approach via [Utils.expandActionGroupSuspend].
+ *    The call is non-blocking but can optionally block EDT for a short period of time (50 ms).
+ *    It is used by **toolbars**, and they often expand on [JComponent.addNotify].
+ *    If their action groups are fast to expand, then the UI will appear instantly.
+ *    Otherwise, a progress icon is shown while expecting the results.
+ *
+ * 2. Blocking without blocking the UI approach via [Utils.expandActionGroup].
+ *    The call blocks the caller but keeps the UI running using secondary EDT loop inside.
+ *    It is used by **menus**, **submenus**, and **popups**, because Swing menus expect synchronous code.
+ *    A progress icon is shown while expecting the results.
+ *
+ * 3. Blocking with the ability to unblock via [Utils.runUpdateSessionForInputEvent].
+ *    It is only used in **keyborard, mouse, and gesture shortcuts** processing.
+ *    It fully blocks the UI while it chooses the action to invoke because the user expects actions
+ *    to perform on the exact UI state at the time shortcut is pressed.
+ *    In case of a long wait, [PotemkinOverlayProgress] is shown with the ability to cancel the shortcut.
+ */
 @ApiStatus.Internal
 object Utils {
   @JvmField
@@ -120,19 +145,20 @@ object Utils {
   }
 
   @JvmStatic
-  fun wrapToAsyncDataContext(dataContext: DataContext): DataContext = when {
+  fun createAsyncDataContext(dataContext: DataContext): DataContext = when {
     isAsyncDataContext(dataContext) -> dataContext
     dataContext is EdtDataContext -> newPreCachedDataContext(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
     dataContext is CustomizedDataContext ->
-      when (val delegate = wrapToAsyncDataContext(dataContext.getParent())) {
+      when (val delegate = createAsyncDataContext(dataContext.getParent())) {
         DataContext.EMPTY_CONTEXT -> PreCachedDataContext(null)
           .prependProvider(dataContext.customDataProvider)
         is PreCachedDataContext -> delegate
           .prependProvider(dataContext.customDataProvider)
         else -> dataContext
       }
-    !ApplicationManager.getApplication().isUnitTestMode() -> { // see `HeadlessContext`
-      LOG.warn(Throwable("Unable to wrap '" + dataContext.javaClass.getName() + "'. Use CustomizedDataContext or EdtDataContext"))
+    !ApplicationManager.getApplication().isUnitTestMode() -> {
+      LOG.warn(Throwable("Unknown data context kind '${dataContext.javaClass.getName()}'. " +
+                         "Use CustomizedDataContext or EdtDataContext"))
       dataContext
     }
     else -> dataContext
@@ -141,9 +167,12 @@ object Utils {
   private fun newPreCachedDataContext(component: Component?): DataContext = PreCachedDataContext(component)
 
   @JvmStatic
-  fun wrapDataContext(dataContext: DataContext): DataContext {
-    return wrapToAsyncDataContext(dataContext)
-  }
+  @Deprecated("Use `createAsyncDataContext` instead")
+  fun wrapDataContext(dataContext: DataContext): DataContext = createAsyncDataContext(dataContext)
+
+  @JvmStatic
+  @Deprecated("Use `createAsyncDataContext` instead")
+  fun wrapToAsyncDataContext(dataContext: DataContext): DataContext = createAsyncDataContext(dataContext)
 
   @JvmStatic
   fun freezeDataContext(dataContext: DataContext, missedKeys: Consumer<in String?>?): DataContext {
@@ -174,6 +203,10 @@ object Utils {
     PreCachedDataContext.clearAllCaches()
   }
 
+  /**
+   * The deprecated way to asynchronously expand a group using Promise API
+   */
+  @Obsolete
   @JvmStatic
   fun expandActionGroupAsync(group: ActionGroup,
                              presentationFactory: PresentationFactory,
@@ -182,6 +215,10 @@ object Utils {
     return expandActionGroupAsync(group, presentationFactory, context, place, false, true)
   }
 
+  /**
+   * The deprecated way to asynchronously expand a group using Promise API
+   */
+  @Obsolete
   @JvmStatic
   fun expandActionGroupAsync(group: ActionGroup,
                              presentationFactory: PresentationFactory,
@@ -195,6 +232,9 @@ object Utils {
     }.asCompletableFuture().asCancellablePromise()
   }
 
+  /**
+   * The preferred way to asynchronously expand a group in a coroutine
+   */
   @JvmStatic
   suspend fun expandActionGroupSuspend(group: ActionGroup,
                                        presentationFactory: PresentationFactory,
@@ -221,6 +261,10 @@ object Utils {
     deferred.await()
   }
 
+  /**
+   * The deprecated way to synchronously expand a group blocking EDT
+   */
+  @Deprecated("Will cause EDT freezes. Use other expandActionGroupXXX methods.")
   @JvmStatic
   fun expandActionGroupWithTimeout(group: ActionGroup,
                                    presentationFactory: PresentationFactory,
@@ -233,6 +277,9 @@ object Utils {
     updater.expandActionGroupWithTimeout(group, group is CompactActionGroup, timeoutMs)
   }
 
+  /**
+   * The preferred way to synchronously expand a group while pumping EDT intended for synchronous clients
+   */
   @JvmStatic
   fun expandActionGroup(group: ActionGroup,
                         presentationFactory: PresentationFactory,
@@ -270,7 +317,7 @@ object Utils {
                                     menuItem: Component?): List<AnAction> = runBlockingForActionExpand(
     CoroutineName("expandActionGroupImpl ($place)")) {
     val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode()
-    val wrapped = wrapDataContext(context)
+    val wrapped = createAsyncDataContext(context)
     val hideDisabled = group is CompactActionGroup
     val async = isAsyncDataContext(wrapped) && !isUnitTestMode
     if (!async && !isUnitTestMode) {
@@ -319,7 +366,8 @@ object Utils {
     }
   }
 
-  fun fillPopUpMenu(group: ActionGroup,
+  @JvmStatic
+  fun fillPopupMenu(group: ActionGroup,
                     component: JComponent,
                     presentationFactory: PresentationFactory,
                     context: DataContext,
@@ -543,7 +591,7 @@ object Utils {
   }
 
   private fun reportInvisibleMenuItem(action: AnAction, place: String) {
-    val operationName = operationName(action = action, op = null, place = place)
+    val operationName = operationName(action, null, place)
     LOG.error("Invisible menu item for $operationName")
   }
 
@@ -619,15 +667,11 @@ object Utils {
                       place: String,
                       presentationFactory: PresentationFactory) {
     val items = popupMenu.components.filterIsInstance<ActionMenuItem>()
-    updateComponentActions(component = popupMenu,
-                           actions = items.map { it.anAction },
-                           dataContext = dataContext,
-                           place = place,
-                           presentationFactory = presentationFactory, onUpdate = {
+    updateComponentActions(popupMenu, items.map { it.anAction }, dataContext, place, presentationFactory) {
       for (item in items) {
         item.updateFromPresentation(presentationFactory.getPresentation(item.anAction))
       }
-    })
+    }
   }
 
   @JvmStatic

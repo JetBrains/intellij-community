@@ -135,7 +135,7 @@ public final class PopupMenuPreloader implements HierarchyListener {
       actionGroup, new PresentationFactory(), dataContext, myPlace, false, false);
     promise.onSuccess(__ -> dispose(TimeoutUtil.getDurationMillis(start)));
     promise.onError(__ -> {
-      int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
+      int retries = 3;
       if (myRetries > retries) {
         UIUtil.invokeLaterIfNeeded(() -> dispose(-1));
       }

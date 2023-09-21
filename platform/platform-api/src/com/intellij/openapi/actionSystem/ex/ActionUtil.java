@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.ClientProperty;
@@ -187,7 +186,7 @@ public final class ActionUtil {
           assertDeprecatedActionGroupFlagsNotChanged((ActionGroup)action, e, wasPopup, wasHideIfEmpty, wasDisableIfEmpty);
         }
       };
-      boolean isLikeUpdate = !beforeActionPerformed && Registry.is("actionSystem.update.actions.async");
+      boolean isLikeUpdate = !beforeActionPerformed;
       try (AccessToken ignore = SlowOperations.startSection(isLikeUpdate ? SlowOperations.ACTION_UPDATE
                                                                          : SlowOperations.ACTION_PERFORM)) {
         long startTime = System.nanoTime();
