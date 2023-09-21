@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,7 +47,10 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugProcessStarter;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -174,6 +176,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       myNewRunToCursorListener = new InlayRunToCursorEditorListener(myProject, coroutineScope);
       eventMulticaster.addEditorMouseMotionListener(myNewRunToCursorListener, this);
       eventMulticaster.addEditorMouseListener(myNewRunToCursorListener, this);
+
+      myNewRunToCursorListener.installScrollListeners(this);
     }
   }
 
@@ -278,29 +282,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     }
 
     session.init(process, contentToReuse);
-
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      session.addSessionListener(new XDebugSessionListener() {
-        @Override
-        public void sessionPaused() {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-            if (editor == null) {
-              return;
-            }
-
-            Point location = MouseInfo.getPointerInfo().getLocation();
-            SwingUtilities.convertPointFromScreen(location, editor.getContentComponent());
-
-            LogicalPosition logicalPosition = editor.xyToLogicalPosition(location);
-            if (logicalPosition.line >= ((EditorImpl)editor).getDocument().getLineCount()) {
-              return;
-            }
-            myNewRunToCursorListener.scheduleInlayRunToCursor(editor, logicalPosition.line, session);
-          });
-        }
-      });
-    }
 
     mySessions.put(session.getDebugProcess().getProcessHandler(), session);
 
