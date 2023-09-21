@@ -8,7 +8,7 @@ class LocalSemanticActionsProvider(model: GotoActionModel) : SemanticActionsProv
   override fun search(pattern: String, similarityThreshold: Double?): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
     if (pattern.isBlank()) return emptyList()
     return ActionEmbeddingsStorage.getInstance()
-      .searchNeighbours(pattern, ITEMS_LIMIT, similarityThreshold)
+      .searchNeighboursIfEnabled(pattern, ITEMS_LIMIT, similarityThreshold)
       .mapNotNull { createItemDescriptor(it.text, it.similarity, pattern) }
   }
 

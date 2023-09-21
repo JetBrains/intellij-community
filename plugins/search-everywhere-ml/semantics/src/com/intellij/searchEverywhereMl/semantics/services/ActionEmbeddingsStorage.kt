@@ -70,13 +70,13 @@ class ActionEmbeddingsStorage : AbstractEmbeddingsStorage() {
   }
 
   @RequiresBackgroundThread
-  override fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
+  override fun searchNeighboursIfEnabled(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
     if (!checkSearchEnabled()) return emptyList()
-    return searchNeighboursForce(text, topK, similarityThreshold)
+    return searchNeighbours(text, topK, similarityThreshold)
   }
 
   @RequiresBackgroundThread
-  override fun searchNeighboursForce(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
+  override fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
     val embedding = generateEmbedding(text) ?: return emptyList()
     return index.findClosest(embedding, topK, similarityThreshold)
   }
