@@ -28,10 +28,14 @@ root.clientMpp.iosArm64Test
     libMpp.iosArm64Main (TEST)
 
 root.clientMpp.jvmMain
+    libMpp.commonMain (COMPILE)
     libMpp.jvmAdditionalNonTest (COMPILE)
+    libMpp.jvmMain (COMPILE)
 
 root.clientMpp.jvmTest
+    libMpp.commonMain (TEST)
     libMpp.jvmAdditionalNonTest (TEST)
+    libMpp.jvmMain (TEST)
 
 
 Test configuration:
