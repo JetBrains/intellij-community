@@ -5,11 +5,9 @@ import com.intellij.CommonBundle
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.icons.AllIcons
-import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.InlineIconButton
@@ -59,15 +57,15 @@ object CodeReviewCommentUIUtil {
   }
 
   fun createDeleteCommentIconButton(actionListener: (ActionEvent) -> Unit): JComponent {
-    val icon = if (ExperimentalUI.isNewUI()) ExpUiIcons.General.Delete else CollaborationToolsIcons.Delete
-    val button = InlineIconButton(icon, tooltip = CommonBundle.message("button.delete"))
+    val icon = CollaborationToolsIcons.Delete
+    val hoverIcon = CollaborationToolsIcons.DeleteHovered
+    val button = InlineIconButton(icon, hoverIcon, tooltip = CommonBundle.message("button.delete"))
     button.actionListener = ActionListener {
       if (MessageDialogBuilder.yesNo(CollaborationToolsBundle.message("review.comments.delete.confirmation.title"),
                                      CollaborationToolsBundle.message("review.comments.delete.confirmation")).ask(button)) {
         actionListener(it)
       }
     }
-    button.withBackgroundHover = true
     return button
   }
 
@@ -78,7 +76,6 @@ object CodeReviewCommentUIUtil {
       this.actionListener = ActionListener {
         actionListener(it)
       }
-      withBackgroundHover = true
     }
   }
 
