@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.icons.AllIcons;
@@ -34,21 +34,18 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
     super("javafx", JavaFXBundle.messagePointer("javafx.application.title"));
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.Nodes.Artifact;
   }
 
-  @Nullable
   @Override
-  public String getDefaultPathFor(@NotNull PackagingElementOutputKind kind) {
+  public @Nullable String getDefaultPathFor(@NotNull PackagingElementOutputKind kind) {
     return "/";
   }
 
-  @NotNull
   @Override
-  public CompositePackagingElement<?> createRootElement(@NotNull String artifactName) {
+  public @NotNull CompositePackagingElement<?> createRootElement(@NotNull String artifactName) {
     return PackagingElementFactory.getInstance().createArtifactRootElement();
   }
 
@@ -63,9 +60,8 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
     }
   }
 
-  @NotNull
   @Override
-  public List<? extends ArtifactTemplate> getNewArtifactTemplates(@NotNull PackagingElementResolvingContext context) {
+  public @NotNull List<? extends ArtifactTemplate> getNewArtifactTemplates(@NotNull PackagingElementResolvingContext context) {
     final List<Module> modules = new ArrayList<>();
     for (Module module : context.getModulesProvider().getModules()) {
       if (ModuleType.get(module) instanceof JavaModuleType) {

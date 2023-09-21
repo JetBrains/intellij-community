@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.codeInsight;
 
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -45,15 +44,13 @@ import java.util.Set;
 public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionAction implements LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(JavaFxFieldToPropertyIntention.class);
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaFXBundle.message("intention.family.name.convert.to.javafx.property");
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return JavaFXBundle.message("intention.family.name.convert.to.javafx.property");
   }
 
@@ -147,8 +144,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
     }
   }
 
-  @Nullable
-  private static PsiField getField(@NotNull PsiElement element) {
+  private static @Nullable PsiField getField(@NotNull PsiElement element) {
     if (!(element instanceof PsiIdentifier)) return null;
     final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
     if (field == null) return null;
@@ -227,8 +223,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
       this.myText = text;
     }
 
-    @Nullable
-    static ObservableType createObservableType(@NotNull PsiField field, @NotNull Project project) {
+    static @Nullable ObservableType createObservableType(@NotNull PsiField field, @NotNull Project project) {
       final PsiType type = field.getType();
       if (type instanceof PsiPrimitiveType) {
         final String text = JavaFxCommonNames.ourObservablePrimitiveWrappers.get(type);
@@ -389,8 +384,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
       myProject = project;
     }
 
-    @Nullable
-    private static ObservableType createObservableList(@NotNull PsiType type, @NotNull Project project) {
+    private static @Nullable ObservableType createObservableList(@NotNull PsiType type, @NotNull Project project) {
       final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);
       final PsiClass fieldClass = resolveResult.getElement();
       if (fieldClass != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.refactoring;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -119,8 +119,7 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
   }
 
 
-  @Nullable
-  private static PsiReference getKnownReference(PsiReference[] references) {
+  private static @Nullable PsiReference getKnownReference(PsiReference[] references) {
     return ContainerUtil.find(references, JavaFxPropertyRenameHandler::isKnown);
   }
 
@@ -158,8 +157,7 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     return false;
   }
 
-  @NotNull
-  private static Map<PsiElement, String> getElementsToRename(@NotNull JavaFxPropertyReference reference, @NotNull String newPropertyName) {
+  private static @NotNull Map<PsiElement, String> getElementsToRename(@NotNull JavaFxPropertyReference reference, @NotNull String newPropertyName) {
     final Map<PsiElement, String> rename = new HashMap<>();
     putIfKeyNotNull(rename, reference.getGetter(), PropertyUtilBase.suggestGetterName(newPropertyName, reference.getType()));
     putIfKeyNotNull(rename, reference.getField(), newPropertyName);
@@ -186,8 +184,7 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     rename.run();
   }
 
-  @Nullable
-  private static PsiField getNestedControllerField(@NotNull XmlAttributeValue fxIdValueElement) {
+  private static @Nullable PsiField getNestedControllerField(@NotNull XmlAttributeValue fxIdValueElement) {
     final String fxId = fxIdValueElement.getValue();
     if (!StringUtil.isEmpty(fxId)) {
       final XmlTag tag = PsiTreeUtil.getParentOfType(fxIdValueElement, XmlTag.class);

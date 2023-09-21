@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -39,9 +39,8 @@ public class JavaFxApplicationIconsDialog extends DialogWrapper {
     addBrowseListener(myPanel.myWindowsIconPath, "ico", project);
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     myPanel = new Panel();
     return myPanel.myWholePanel;
   }
@@ -56,8 +55,7 @@ public class JavaFxApplicationIconsDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  @NotNull
-  public JavaFxApplicationIcons getIcons() {
+  public @NotNull JavaFxApplicationIcons getIcons() {
     JavaFxApplicationIcons icons = new JavaFxApplicationIcons();
     icons.setLinuxIcon(JavaFxArtifactPropertiesEditor.getSystemIndependentPath(myPanel.myLinuxIconPath));
     icons.setMacIcon(JavaFxArtifactPropertiesEditor.getSystemIndependentPath(myPanel.myMacIconPath));

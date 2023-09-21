@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.psi.*;
@@ -26,9 +26,8 @@ class JavaFxFactoryReferenceProvider extends PsiReferenceProvider {
       super(attributeValue);
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       final PsiClass psiClass = JavaFxPsiUtil.getTagClass(getElement());
       if (psiClass != null) {
         final PsiMethod[] psiMethods = psiClass.findMethodsByName(getElement().getValue(), false);

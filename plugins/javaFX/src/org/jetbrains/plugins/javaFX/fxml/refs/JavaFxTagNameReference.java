@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -21,9 +21,8 @@ public class JavaFxTagNameReference extends TagNameReference{
     super(element, startTagFlag);
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     final TextRange rangeInElement = super.getRangeInElement();
     final XmlTag tagElement = getTagElement();
     if (tagElement != null) {
@@ -71,9 +70,8 @@ public class JavaFxTagNameReference extends TagNameReference{
       }
     }
 
-    @NotNull
     @Override
-    public Class<JavaFxTagNameReference> getReferenceClass() {
+    public @NotNull Class<JavaFxTagNameReference> getReferenceClass() {
       return JavaFxTagNameReference.class;
     }
   }

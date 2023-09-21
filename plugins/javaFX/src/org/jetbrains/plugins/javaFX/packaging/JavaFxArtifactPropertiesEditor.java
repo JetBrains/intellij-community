@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.execution.util.ListTableWithButtons;
@@ -109,9 +109,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     return JavaFXBundle.message("java.fx.artifacts.tab.name");
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     return myWholePanel;
   }
 
@@ -194,9 +193,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myProperties.setMsgOutputLevel((String)myMsgOutputLevel.getSelectedItem());
   }
 
-  @Nullable
   @Override
-  public String getHelpId() {
+  public @Nullable String getHelpId() {
     return "Project_Structure_Artifacts_Java_FX_tab";
   }
 
@@ -266,8 +264,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     }
 
     @Override
-    @Nullable
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       return myWholePanel;
     }
 
@@ -286,9 +283,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       protected ListTableModel createListModel() {
         final ColumnInfo name = new ElementsColumnInfoBase<JavaFxManifestAttribute>(JavaFXBundle.message(
           "column.name.artifact.manifest.property.name")) {
-          @Nullable
           @Override
-          public String valueOf(JavaFxManifestAttribute attribute) {
+          public @Nullable String valueOf(JavaFxManifestAttribute attribute) {
             return attribute.getName();
           }
 
@@ -302,9 +298,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
             attr.setName(value);
           }
 
-          @Nullable
           @Override
-          protected String getDescription(JavaFxManifestAttribute element) {
+          protected @Nullable String getDescription(JavaFxManifestAttribute element) {
             return element.getName();
           }
         };
@@ -325,9 +320,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
             attr.setValue(s);
           }
 
-          @Nullable
           @Override
-          protected String getDescription(JavaFxManifestAttribute attr) {
+          protected @Nullable String getDescription(JavaFxManifestAttribute attr) {
             return attr.getValue();
           }
         };
