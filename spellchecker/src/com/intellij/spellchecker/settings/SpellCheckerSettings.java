@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,10 +9,10 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.spellchecker.DictionaryLevel;
 import com.intellij.spellchecker.util.SPFileUtil;
+import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Paths;
 import java.util.*;
 
 @State(name = "SpellCheckerSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -117,7 +117,8 @@ public final class SpellCheckerSettings implements PersistentStateComponent<Elem
     // save custom dictionaries parents because of back compatibility
     element.setAttribute(FOLDERS_ATTR_NAME, String.valueOf(myCustomDictionariesPaths.size()));
     for (int j = 0; j < myCustomDictionariesPaths.size(); j++) {
-      element.setAttribute(FOLDER_ATTR_NAME + j, Paths.get(myCustomDictionariesPaths.get(j)).getParent().toString());
+      final var parentPath = PathUtil.getParentPath(myCustomDictionariesPaths.get(j));
+      element.setAttribute(FOLDER_ATTR_NAME + j, parentPath);
     }
     // store new dictionaries settings
     element.setAttribute(CUSTOM_DICTIONARIES_ATTR_NAME, String.valueOf(myCustomDictionariesPaths.size()));
