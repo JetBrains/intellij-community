@@ -24,16 +24,16 @@ my-app.consumer.jvmTest
     lib1.commonMain (TEST)
 
 my-app.consumer.linuxX64Main
-    lib1.linuxX64Main (COMPILE)
-    lib2.linuxX64Main (COMPILE)
     lib2.commonMain (COMPILE)
+    lib2.linuxX64Main (COMPILE)
     lib1.commonMain (COMPILE)
+    lib1.linuxX64Main (COMPILE)
 
 my-app.consumer.linuxX64Test
-    lib1.linuxX64Main (TEST)
-    lib2.linuxX64Main (TEST)
     lib2.commonMain (TEST)
+    lib2.linuxX64Main (TEST)
     lib1.commonMain (TEST)
+    lib1.linuxX64Main (TEST)
 
 
 Test configuration:
