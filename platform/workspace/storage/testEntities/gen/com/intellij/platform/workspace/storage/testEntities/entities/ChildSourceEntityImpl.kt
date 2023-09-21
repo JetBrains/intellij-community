@@ -27,7 +27,7 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class ChildSourceEntityImpl(private val dataSource: ChildSourceEntityData) : ChildSourceEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {

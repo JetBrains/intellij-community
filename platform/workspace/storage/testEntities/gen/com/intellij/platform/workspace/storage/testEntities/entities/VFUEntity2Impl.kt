@@ -22,7 +22,7 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class VFUEntity2Impl(private val dataSource: VFUEntity2Data) : VFUEntity2, WorkspaceEntityBase(dataSource) {
 
   private companion object {

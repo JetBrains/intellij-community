@@ -23,7 +23,7 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class AttachedEntityListImpl(private val dataSource: AttachedEntityListData) : AttachedEntityList, WorkspaceEntityBase(dataSource) {
 
   private companion object {

@@ -24,7 +24,7 @@ import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class ChainedEntityImpl(private val dataSource: ChainedEntityData) : ChainedEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {

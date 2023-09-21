@@ -20,7 +20,7 @@ import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class ChildWithNullsOppositeMultipleImpl(private val dataSource: ChildWithNullsOppositeMultipleData) : ChildWithNullsOppositeMultiple, WorkspaceEntityBase(
   dataSource) {
 

@@ -26,7 +26,7 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class ChildWpidSampleEntityImpl(private val dataSource: ChildWpidSampleEntityData) : ChildWpidSampleEntity, WorkspaceEntityBase(
   dataSource) {
 

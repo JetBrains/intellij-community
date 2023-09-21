@@ -17,7 +17,7 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class SimpleSealedClassEntityImpl(private val dataSource: SimpleSealedClassEntityData) : SimpleSealedClassEntity, WorkspaceEntityBase(
   dataSource) {
 

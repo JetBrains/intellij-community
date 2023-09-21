@@ -21,7 +21,7 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class SampleEntity2Impl(private val dataSource: SampleEntity2Data) : SampleEntity2, WorkspaceEntityBase(dataSource) {
 
   private companion object {

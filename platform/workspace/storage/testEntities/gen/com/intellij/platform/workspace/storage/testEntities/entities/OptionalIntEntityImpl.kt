@@ -20,7 +20,7 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class OptionalIntEntityImpl(private val dataSource: OptionalIntEntityData) : OptionalIntEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {

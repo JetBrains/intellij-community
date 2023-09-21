@@ -22,7 +22,7 @@ import com.intellij.platform.workspace.storage.impl.updateOneToAbstractManyParen
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class MiddleEntityImpl(private val dataSource: MiddleEntityData) : MiddleEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {

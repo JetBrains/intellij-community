@@ -28,7 +28,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class DirectoryCopyPackagingElementEntityImpl(private val dataSource: DirectoryCopyPackagingElementEntityData) : DirectoryCopyPackagingElementEntity, WorkspaceEntityBase(
   dataSource) {
 

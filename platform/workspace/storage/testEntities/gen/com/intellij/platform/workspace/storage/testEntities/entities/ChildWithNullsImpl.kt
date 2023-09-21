@@ -20,7 +20,7 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class ChildWithNullsImpl(private val dataSource: ChildWithNullsData) : ChildWithNulls, WorkspaceEntityBase(dataSource) {
 
   private companion object {

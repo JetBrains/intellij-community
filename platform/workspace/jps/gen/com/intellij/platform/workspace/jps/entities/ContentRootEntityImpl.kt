@@ -30,7 +30,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class ContentRootEntityImpl(private val dataSource: ContentRootEntityData) : ContentRootEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {

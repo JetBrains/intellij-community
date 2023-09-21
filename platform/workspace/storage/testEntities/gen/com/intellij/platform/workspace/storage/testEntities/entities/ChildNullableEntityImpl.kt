@@ -23,7 +23,7 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class ChildNullableEntityImpl(private val dataSource: ChildNullableEntityData) : ChildNullableEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {

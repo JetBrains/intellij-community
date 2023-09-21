@@ -21,7 +21,7 @@ import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class SpecificParentImpl(private val dataSource: SpecificParentData) : SpecificParent, WorkspaceEntityBase(dataSource) {
 
   private companion object {

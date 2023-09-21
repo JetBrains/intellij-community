@@ -26,7 +26,7 @@ import java.io.Serializable
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class LibraryPropertiesEntityImpl(private val dataSource: LibraryPropertiesEntityData) : LibraryPropertiesEntity, WorkspaceEntityBase(
   dataSource) {
 

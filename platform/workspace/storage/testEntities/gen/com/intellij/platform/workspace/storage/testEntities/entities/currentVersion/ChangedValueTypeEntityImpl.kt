@@ -18,7 +18,7 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTypeEntityData) : ChangedValueTypeEntity, WorkspaceEntityBase(
   dataSource) {
 

@@ -21,7 +21,7 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class SecondEntityWithPIdImpl(private val dataSource: SecondEntityWithPIdData) : SecondEntityWithPId, WorkspaceEntityBase(dataSource) {
 
   private companion object {

@@ -27,7 +27,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class TestModulePropertiesEntityImpl(private val dataSource: TestModulePropertiesEntityData) : TestModulePropertiesEntity, WorkspaceEntityBase(
   dataSource) {
 

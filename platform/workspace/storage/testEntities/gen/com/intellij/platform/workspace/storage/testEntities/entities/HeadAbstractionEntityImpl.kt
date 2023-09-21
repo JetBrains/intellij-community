@@ -23,7 +23,7 @@ import com.intellij.platform.workspace.storage.impl.updateOneToAbstractOneChildO
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
+@GeneratedCodeImplVersion(3)
 open class HeadAbstractionEntityImpl(private val dataSource: HeadAbstractionEntityData) : HeadAbstractionEntity, WorkspaceEntityBase(
   dataSource) {
 
