@@ -817,6 +817,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertWithinTimeout {
       assertTrue(importStarted.get() && importFinished.get())
     }
+    projectsManager.waitForPluginResolution()
   }
 
   companion object {
