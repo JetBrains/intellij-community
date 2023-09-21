@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -102,12 +103,16 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   }
 
   private suspend fun invokeRequest(request: InlineCompletionRequest, provider: InlineCompletionProvider) {
+
+    suspend fun currentEditorOffset() = readAction { request.editor.caretModel.offset }
+
     currentCoroutineContext().ensureActive()
 
     val editor = request.editor
     val offset = request.endOffset
 
     val modificationStamp = request.document.modificationStamp
+    val initialEditorOffset = currentEditorOffset()
     val resultFlow = request(provider, request) // .flowOn(Dispatchers.IO)
 
     val context = InlineCompletionSession.getOrInit(editor, provider).context
@@ -125,7 +130,8 @@ class InlineCompletionHandler(scope: CoroutineScope) {
         .collectIndexed { index, it ->
           ensureActive()
 
-          if (modificationStamp != request.document.modificationStamp) {
+          if (modificationStamp != request.document.modificationStamp || initialEditorOffset != currentEditorOffset()) {
+            hide(editor, false, context)
             cancel()
             return@collectIndexed
           }
