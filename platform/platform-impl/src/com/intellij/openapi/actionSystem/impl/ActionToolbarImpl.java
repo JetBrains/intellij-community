@@ -1350,6 +1350,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       boolean firstTimeFastTrack = !hasVisibleActions() &&
                                    getComponentCount() == 1 &&
                                    getClientProperty(SUPPRESS_FAST_TRACK) == null;
+      if (firstTimeFastTrack) {
+        putClientProperty(SUPPRESS_FAST_TRACK, true);
+      }
       CancellablePromise<List<AnAction>> promise = myLastUpdate =
         Utils.expandActionGroupAsync(adjustedGroup, myPresentationFactory, dataContext, myPlace, true, firstTimeFastTrack);
       if (promise.isSucceeded()) {
@@ -1364,9 +1367,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         actionsUpdated(true, fastActions);
       }
       else {
-        if (firstTimeFastTrack) {
-          putClientProperty(SUPPRESS_FAST_TRACK, true);
-        }
         boolean forcedActual = forced || myForcedUpdateRequested;
         promise
           .onSuccess(actions -> {
