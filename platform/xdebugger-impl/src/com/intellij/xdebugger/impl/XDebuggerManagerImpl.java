@@ -181,6 +181,17 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     }
   }
 
+  void reshowInlayToolbar(@NotNull Editor editor) {
+    if (myNewRunToCursorListener == null) {
+      return;
+    }
+    XDebugSessionImpl session = getCurrentSession();
+    if (session == null) {
+      return;
+    }
+    myNewRunToCursorListener.scheduleInlayRunToCursor(editor, session);
+  }
+
   @Override
   public void dispose() {
   }

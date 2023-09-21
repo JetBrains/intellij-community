@@ -30,5 +30,6 @@ class RemoveBreakpointGutterIconAction extends DumbAwareAction {
     if (!(event instanceof MouseEvent) || event.getModifiersEx() == 0 || SwingUtilities.isMiddleMouseButton((MouseEvent)event)) {
       XDebuggerUtilImpl.removeBreakpointWithConfirmation(myBreakpoint);
     }
+    XDebuggerUtilImpl.reshowInlayRunToCursor(e);
   }
 }
