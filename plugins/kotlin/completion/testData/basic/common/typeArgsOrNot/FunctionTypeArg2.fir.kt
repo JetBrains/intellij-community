@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 fun <T> genericFoo(p: Int){}
 fun <T> genericFoo(c: Char){}
 
@@ -7,6 +6,6 @@ fun foo() {
 }
 
 // EXIST: String
-// EXIST: kotlin
+// EXIST: kotlin.
 // ABSENT: defaultBufferSize
 // ABSENT: readLine

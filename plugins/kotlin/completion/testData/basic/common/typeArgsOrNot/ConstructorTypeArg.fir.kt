@@ -1,9 +1,10 @@
-// FIR_COMPARISON
+import java.util.HashMap
+
 fun foo() {
-    val v = listOf<<caret>
+    val v = HashMap<<caret>
 }
 
 // EXIST: String
-// EXIST: kotlin
+// EXIST: kotlin.
 // ABSENT: defaultBufferSize
 // ABSENT: readLine

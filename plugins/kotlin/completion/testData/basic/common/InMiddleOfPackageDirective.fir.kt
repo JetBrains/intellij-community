@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 package testdata.kotlin.data
 
 class TestSample() {
@@ -7,4 +6,4 @@ class TestSample() {
     }
 }
 
-// EXIST: kotlin
+// EXIST: kotlin.

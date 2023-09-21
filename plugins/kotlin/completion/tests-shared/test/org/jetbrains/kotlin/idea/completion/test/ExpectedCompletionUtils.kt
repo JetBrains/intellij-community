@@ -71,10 +71,6 @@ object ExpectedCompletionUtils {
             return expectedProposal.map.entries.none { expected ->
                 val actualValues = when (expected.key) {
                     in ignoreProperties -> return@none false
-                    "lookupString" -> {
-                        // FIR IDE adds `.` after package names in completion
-                        listOf(map[expected.key]?.removeSuffix("."), map[expected.key])
-                    }
                     else -> listOf(map[expected.key])
                 }
                 expected.value !in actualValues
