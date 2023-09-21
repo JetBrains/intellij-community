@@ -104,9 +104,13 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
   }
 
   protected void configTest(VirtualFile f) {
-    if (Comparing.equal(myConfigTimestamps.get(f), f.getTimeStamp())) return;
+    if (Comparing.equal(myConfigTimestamps.get(f), f.getTimeStamp())) {
+      MavenLog.LOG.warn("MavenDomTestCase configTest skipped");
+      return;
+    }
     myFixture.configureFromExistingVirtualFile(f);
     myConfigTimestamps.put(f, f.getTimeStamp());
+    MavenLog.LOG.warn("MavenDomTestCase configTest performed");
   }
 
   protected void type(VirtualFile f, char c) {
@@ -116,7 +120,9 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
 
   protected PsiReference getReferenceAtCaret(VirtualFile f) {
     configTest(f);
-    return findPsiFile(f).findReferenceAt(getEditorOffset(f));
+    int editorOffset = getEditorOffset(f);
+    MavenLog.LOG.warn("MavenDomTestCase getReferenceAtCaret offset " + editorOffset);
+    return findPsiFile(f).findReferenceAt(editorOffset);
   }
 
   protected PsiReference getReferenceAt(VirtualFile f, int offset) {
