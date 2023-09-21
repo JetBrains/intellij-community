@@ -15,7 +15,7 @@ class OtherOptions(val callback: (Int) -> Unit) : ProductChooserAction(), LinkAc
 
   private var jb: List<AnAction>? = null
   private var sync: List<AnAction>? = null
-  private val config = ConfigAction()
+  private val config = ConfigAction(callback)
 
   override fun displayTextInToolbar(): Boolean {
     return true

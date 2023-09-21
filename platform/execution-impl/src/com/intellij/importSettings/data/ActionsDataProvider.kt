@@ -29,11 +29,13 @@ interface ActionsDataProvider {
   }
   val settingsService
     get() = SettingsService.getInstance()
+
+  val productService: BaseService
   fun getProductIcon(productId: String, size: IconProductSize = IconProductSize.SMALL): Icon?
-  fun getText(product: Product): String
+  fun getText(importItem: ImportItem): String
   val title: String
 
-  fun getAdditionText(product: Product): String?
+  fun getAdditionText(importItem: ImportItem): String?
   val main: List<Product>?
   val other: List<Product>?
 }
@@ -44,7 +46,7 @@ class JBrActionsDataProvider private constructor(): ActionsDataProvider {
     fun getInstance() = provider
   }
 
-  private val service = settingsService.getJbService()
+  override val productService = settingsService.getJbService()
   private var map: Map<ActionsDataProvider.popUpPlace, List<Product>?>? = null
 
   init {
@@ -53,17 +55,23 @@ class JBrActionsDataProvider private constructor(): ActionsDataProvider {
   }
 
   override fun getProductIcon(productId: String, size: IconProductSize): Icon? {
-    return service.getProductIcon(productId, size)
+    return productService.getProductIcon(productId, size)
   }
 
-  override fun getText(product: Product): String {
-    return product.name
+  override fun getText(importItem: ImportItem): String {
+    return importItem.name
   }
 
   override val title: String
     get() = "JetBrains IDEs"
 
-  override fun getAdditionText(product: Product): String? {
+  override fun getAdditionText(importItem: ImportItem): String? {
+    if(importItem is Config) {
+      return importItem.path
+    }
+    if(importItem is Product) {
+      return importItem.lastUsage.toString()
+    }
     return null
   }
 
@@ -80,7 +88,7 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider {
     fun getInstance() = provider
   }
 
-  private val service = settingsService.getSyncService()
+  override val productService = settingsService.getSyncService()
   private var map: Map<ActionsDataProvider.popUpPlace, List<Product>?>? = null
 
   init {
@@ -109,15 +117,18 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider {
     map = ActionsDataProvider.prepareMap(service)
   }
 
-  override fun getProductIcon(productId: String, size: IconProductSize): Icon? {
-    return service.getProductIcon(productId, size)
+  override fun getProductIcon(importItem: String, size: IconProductSize): Icon? {
+    return productService.getProductIcon(importItem, size)
   }
 
-  override fun getText(product: Product): String {
-    return "${product.name} Setting Sync"
+  override fun getText(importItem: ImportItem): String {
+    return "${importItem.name} Setting Sync"
   }
 
-  override fun getAdditionText(product: Product): String? {
+  override fun getAdditionText(importItem: ImportItem): String? {
+    if(importItem is Product) {
+      return importItem.lastUsage.toString()
+    }
     return null
   }
 
@@ -146,24 +157,24 @@ class ExtActionsDataProvider private constructor() : ActionsDataProvider {
     private val provider = ExtActionsDataProvider()
     fun getInstance() = provider
   }
-  private val service = settingsService.getExternalService()
+  override val productService = settingsService.getExternalService()
 
   override fun getProductIcon(productId: String, size: IconProductSize): Icon? {
-    return service.getProductIcon(productId, size)
+    return productService.getProductIcon(productId, size)
   }
 
-  override fun getText(product: Product): String {
-    return product.name
+  override fun getText(importItem: ImportItem): String {
+    return importItem.name
   }
 
-  override fun getAdditionText(product: Product): String? {
+  override fun getAdditionText(importItem: ImportItem): String? {
     return null
   }
 
   override val title: String
     get() = ""
   override val main: List<Product>?
-    get() = service.products()
+    get() = productService.products()
   override val other: List<Product>?
     get() = null
 
