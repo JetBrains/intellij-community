@@ -50,7 +50,8 @@ public abstract class GitHandler {
 
   protected static final Logger LOG = Logger.getInstance(GitHandler.class);
   protected static final Logger OUTPUT_LOG = Logger.getInstance("#output." + GitHandler.class.getName());
-  private static final Logger TIME_LOG = Logger.getInstance("#time." + GitHandler.class.getName());
+  protected static final Logger TIME_LOG = Logger.getInstance("#time." + GitHandler.class.getName());
+  protected static final Logger CALL_TRACE_LOG = Logger.getInstance("#call_trace." + GitHandler.class.getName());
 
   private final Project myProject;
   @NotNull protected final GitExecutable myExecutable;
@@ -458,6 +459,9 @@ public abstract class GitHandler {
       }
       else {
         LOG.debug("[" + logDirectoryPath + "] " + printableCommandLine());
+      }
+      if (CALL_TRACE_LOG.isDebugEnabled()) {
+        CALL_TRACE_LOG.debug(new Throwable("[" + logDirectoryPath + "] " + printableCommandLine()));
       }
 
       prepareEnvironment();
