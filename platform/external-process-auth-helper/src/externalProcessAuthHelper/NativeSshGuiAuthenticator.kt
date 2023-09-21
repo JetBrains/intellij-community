@@ -1,214 +1,180 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.externalProcessAuthHelper;
+package com.intellij.externalProcessAuthHelper
 
-import com.intellij.credentialStore.CredentialAttributes;
-import com.intellij.credentialStore.CredentialPromptDialog;
-import com.intellij.credentialStore.Credentials;
-import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ssh.SSHUtil;
-import com.intellij.util.PathUtil;
-import externalApp.nativessh.NativeSshAskPassAppHandler;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.askPassword
+import com.intellij.credentialStore.generateServiceName
+import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ssh.SSHUtil
+import com.intellij.util.PathUtil
+import externalApp.nativessh.NativeSshAskPassAppHandler
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 
-import java.util.regex.Matcher;
+class NativeSshGuiAuthenticator(private val myProject: Project,
+                                private val myAuthenticationGate: AuthenticationGate,
+                                private val myAuthenticationMode: AuthenticationMode,
+                                private val myDoNotRememberPasswords: Boolean) : NativeSshAskPassAppHandler {
+  private var myLastAskedKeyPath: String? = null
+  private var myLastAskedUserName: String? = null
+  private var myLastAskedConfirmationInput: String? = null
 
-import static com.intellij.credentialStore.CredentialAttributesKt.generateServiceName;
-import static com.intellij.externalProcessAuthHelper.AuthenticationMode.FULL;
-
-public class NativeSshGuiAuthenticator implements NativeSshAskPassAppHandler {
-  @NotNull private final Project myProject;
-  @NotNull private final AuthenticationGate myAuthenticationGate;
-  @NotNull private final AuthenticationMode myAuthenticationMode;
-  private final boolean myDoNotRememberPasswords;
-
-  @Nullable private String myLastAskedKeyPath = null;
-  @Nullable private String myLastAskedUserName = null;
-  @Nullable private String myLastAskedConfirmationInput = null;
-
-  public NativeSshGuiAuthenticator(@NotNull Project project,
-                                   @NotNull AuthenticationGate authenticationGate,
-                                   @NotNull AuthenticationMode authenticationMode,
-                                   boolean doNotRememberPasswords) {
-    myProject = project;
-    myAuthenticationGate = authenticationGate;
-    myAuthenticationMode = authenticationMode;
-    myDoNotRememberPasswords = doNotRememberPasswords;
+  override fun handleInput(description: @NlsSafe String): String? {
+    if (myAuthenticationMode == AuthenticationMode.NONE) return null
+    return myAuthenticationGate.waitAndCompute {
+      when {
+        isKeyPassphrase(description) -> askKeyPassphraseInput(description)
+        isSshPassword(description) -> askSshPasswordInput(description)
+        isConfirmation(description) -> askConfirmationInput(description)
+        else -> askGenericInput(description)
+      }
+    }
   }
 
-  @Nullable
-  @Override
-  public String handleInput(@NotNull @NlsSafe String description) {
-    if (myAuthenticationMode == AuthenticationMode.NONE) return null;
-    return myAuthenticationGate.waitAndCompute(() -> {
-      if (isKeyPassphrase(description)) return askKeyPassphraseInput(description);
-      if (isSshPassword(description)) return askSshPasswordInput(description);
-      if (isConfirmation(description)) return askConfirmationInput(description);
-
-      return askGenericInput(description);
-    });
-  }
-
-
-  private static boolean isKeyPassphrase(@NotNull String description) {
-    return SSHUtil.PASSPHRASE_PROMPT.matcher(description).matches();
-  }
-
-  @Nullable
-  private String askKeyPassphraseInput(@NotNull String description) {
-    Matcher matcher = SSHUtil.PASSPHRASE_PROMPT.matcher(description);
-    if (!matcher.matches()) throw new IllegalStateException(description);
-    String keyPath = SSHUtil.extractKeyPath(matcher);
-
-    boolean resetPassword = keyPath.equals(myLastAskedKeyPath);
-    myLastAskedKeyPath = keyPath;
+  private fun askKeyPassphraseInput(description: String): String? {
+    val matcher = SSHUtil.PASSPHRASE_PROMPT.matcher(description)
+    check(matcher.matches()) { description }
+    val keyPath = SSHUtil.extractKeyPath(matcher)
+    val resetPassword = keyPath == myLastAskedKeyPath
+    myLastAskedKeyPath = keyPath
 
     if (myDoNotRememberPasswords) {
-      return askUser(() -> {
-        String message = ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath));
-        return Messages.showPasswordDialog(myProject, message, ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.title"), null);
-      });
+      return askUser {
+        val message = ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath))
+        Messages.showPasswordDialog(myProject, message,
+                                    ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.title"), null)
+      }
     }
     else {
-      return askPassphrase(myProject, keyPath, resetPassword, myAuthenticationMode);
+      return askPassphrase(myProject, keyPath, resetPassword, myAuthenticationMode)
     }
   }
 
-  private static boolean isSshPassword(@NotNull String description) {
-    return SSHUtil.PASSWORD_PROMPT.matcher(description).matches();
-  }
-
-  @Nullable
-  private String askSshPasswordInput(@NotNull String description) {
-    Matcher matcher = SSHUtil.PASSWORD_PROMPT.matcher(description);
-    if (!matcher.matches()) throw new IllegalStateException(description);
-    String username = SSHUtil.extractUsername(matcher);
-
-    boolean resetPassword = username.equals(myLastAskedUserName);
-    myLastAskedUserName = username;
+  private fun askSshPasswordInput(description: String): String? {
+    val matcher = SSHUtil.PASSWORD_PROMPT.matcher(description)
+    check(matcher.matches()) { description }
+    val username = SSHUtil.extractUsername(matcher)
+    val resetPassword = username == myLastAskedUserName
+    myLastAskedUserName = username
 
     if (myDoNotRememberPasswords) {
-      return askUser(() -> {
-        String message = ExternalProcessAuthHelperBundle.message("ssh.password.message", username);
-        return Messages.showPasswordDialog(myProject, message, ExternalProcessAuthHelperBundle.message("ssh.password.title"), null);
-      });
+      return askUser {
+        val message = ExternalProcessAuthHelperBundle.message("ssh.password.message", username)
+        Messages.showPasswordDialog(myProject, message,
+                                    ExternalProcessAuthHelperBundle.message("ssh.password.title"), null)
+      }
     }
     else {
-      return askPassword(myProject, username, resetPassword, myAuthenticationMode);
+      return askPassword(myProject, username, resetPassword, myAuthenticationMode)
     }
   }
 
-  private static boolean isConfirmation(@NotNull @NlsSafe String description) {
-    return description.contains(SSHUtil.CONFIRM_CONNECTION_PROMPT);
-  }
+  private fun askConfirmationInput(description: @NlsSafe String): String? {
+    return askUser {
+      val message: @NlsSafe String = StringUtil.replace(description,
+                                                        SSHUtil.CONFIRM_CONNECTION_PROMPT + " (yes/no)?",
+                                                        SSHUtil.CONFIRM_CONNECTION_PROMPT + "?")
 
-  @Nullable
-  private String askConfirmationInput(@NotNull @NlsSafe String description) {
-    return askUser(() -> {
-      @NlsSafe String message = StringUtil.replace(description,
-                                                   SSHUtil.CONFIRM_CONNECTION_PROMPT + " (yes/no)?",
-                                                   SSHUtil.CONFIRM_CONNECTION_PROMPT + "?");
-
-      String knownAnswer = myAuthenticationGate.getSavedInput(message);
+      val knownAnswer = myAuthenticationGate.getSavedInput(message)
       if (knownAnswer != null && myLastAskedConfirmationInput == null) {
-        myLastAskedConfirmationInput = knownAnswer;
-        return knownAnswer;
+        myLastAskedConfirmationInput = knownAnswer
+        return@askUser knownAnswer
       }
 
-      int answer = Messages.showYesNoDialog(myProject, message, ExternalProcessAuthHelperBundle.message("title.ssh.confirmation"), null);
-      String textAnswer;
-      if (answer == Messages.YES) {
-        textAnswer = "yes";
+      val answer = Messages.showYesNoDialog(myProject, message, ExternalProcessAuthHelperBundle.message("title.ssh.confirmation"), null)
+      val textAnswer = when (answer) {
+        Messages.YES -> "yes"
+        Messages.NO -> "no"
+        else -> throw AssertionError(answer)
       }
-      else if (answer == Messages.NO) {
-        textAnswer = "no";
-      }
-      else {
-        throw new AssertionError(answer);
-      }
-      myAuthenticationGate.saveInput(message, textAnswer);
-      return textAnswer;
-    });
-  }
 
-  @Nullable
-  private String askGenericInput(@NotNull @Nls String description) {
-    return askUser(() -> {
-      return Messages.showPasswordDialog(myProject, description,
-                                         ExternalProcessAuthHelperBundle.message("ssh.keyboard.interactive.title"),
-                                         null);
-    });
-  }
-
-  @Nullable
-  private String askUser(@NotNull Computable<String> query) {
-    if (myAuthenticationMode != FULL) return null;
-
-    Ref<String> answerRef = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> answerRef.set(query.compute()), ModalityState.any());
-    return answerRef.get();
-  }
-
-  @NonNls
-  @Nullable
-  private static String askPassphrase(@Nullable Project project,
-                                      @NotNull @NlsSafe String keyPath,
-                                      boolean resetPassword,
-                                      @NotNull AuthenticationMode authenticationMode) {
-    if (authenticationMode == AuthenticationMode.NONE) return null;
-    CredentialAttributes newAttributes = passphraseCredentialAttributes(keyPath);
-    Credentials credentials = PasswordSafe.getInstance().get(newAttributes);
-    if (credentials != null && !resetPassword) {
-      String password = credentials.getPasswordAsString();
-      if (password != null && !password.isEmpty()) return password;
+      myAuthenticationGate.saveInput(message, textAnswer)
+      return@askUser textAnswer
     }
-    if (authenticationMode == AuthenticationMode.SILENT) return null;
-    return CredentialPromptDialog.askPassword(project,
-                                              ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.title"),
-                                              ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.message",
-                                                                                      PathUtil.getFileName(keyPath)),
-                                              newAttributes, true);
   }
 
-  @NonNls
-  @Nullable
-  private static String askPassword(@Nullable Project project,
-                                    @NotNull @NlsSafe String username,
-                                    boolean resetPassword,
-                                    @NotNull AuthenticationMode authenticationMode) {
-    if (authenticationMode == AuthenticationMode.NONE) return null;
-    CredentialAttributes newAttributes = passwordCredentialAttributes(username);
-    Credentials credentials = PasswordSafe.getInstance().get(newAttributes);
-    if (credentials != null && !resetPassword) {
-      String password = credentials.getPasswordAsString();
-      if (password != null) return password;
+  private fun askGenericInput(description: @Nls String): String? {
+    return askUser {
+      Messages.showPasswordDialog(myProject, description,
+                                  ExternalProcessAuthHelperBundle.message("ssh.keyboard.interactive.title"),
+                                  null)
     }
-    if (authenticationMode == AuthenticationMode.SILENT) return null;
-    return CredentialPromptDialog.askPassword(project,
-                                              ExternalProcessAuthHelperBundle.message("ssh.password.title"),
-                                              ExternalProcessAuthHelperBundle.message("ssh.password.message", username),
-                                              newAttributes, true);
   }
 
-  @NotNull
-  private static CredentialAttributes passphraseCredentialAttributes(@NotNull @Nls String key) {
-    String serviceName = generateServiceName(ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.passphrase"), key);
-    return new CredentialAttributes(serviceName, key);
+  private fun askUser(query: Computable<String?>): String? {
+    if (myAuthenticationMode != AuthenticationMode.FULL) return null
+
+    val answerRef = Ref<String>()
+    ApplicationManager.getApplication().invokeAndWait({ answerRef.set(query.compute()) }, ModalityState.any())
+    return answerRef.get()
   }
 
-  @NotNull
-  private static CredentialAttributes passwordCredentialAttributes(@NotNull @Nls String key) {
-    String serviceName = generateServiceName(ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.password"), key);
-    return new CredentialAttributes(serviceName, key);
+  companion object {
+    private fun isKeyPassphrase(description: String): Boolean {
+      return SSHUtil.PASSPHRASE_PROMPT.matcher(description).matches()
+    }
+
+    private fun isSshPassword(description: String): Boolean {
+      return SSHUtil.PASSWORD_PROMPT.matcher(description).matches()
+    }
+
+    private fun isConfirmation(description: @NlsSafe String): Boolean {
+      return description.contains(SSHUtil.CONFIRM_CONNECTION_PROMPT)
+    }
+
+    private fun askPassphrase(project: Project?,
+                              keyPath: @NlsSafe String,
+                              resetPassword: Boolean,
+                              authenticationMode: AuthenticationMode): @NonNls String? {
+      if (authenticationMode == AuthenticationMode.NONE) return null
+      val newAttributes = passphraseCredentialAttributes(keyPath)
+      val credentials = PasswordSafe.instance.get(newAttributes)
+      if (credentials != null && !resetPassword) {
+        val password = credentials.getPasswordAsString()
+        if (!password.isNullOrEmpty()) return password
+      }
+      if (authenticationMode == AuthenticationMode.SILENT) return null
+      return askPassword(project,
+                         ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.title"),
+                         ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.message",
+                                                                 PathUtil.getFileName(keyPath)),
+                         newAttributes, true)
+    }
+
+    private fun askPassword(project: Project?,
+                            username: @NlsSafe String,
+                            resetPassword: Boolean,
+                            authenticationMode: AuthenticationMode): @NonNls String? {
+      if (authenticationMode == AuthenticationMode.NONE) return null
+      val newAttributes = passwordCredentialAttributes(username)
+      val credentials = PasswordSafe.instance.get(newAttributes)
+      if (credentials != null && !resetPassword) {
+        val password = credentials.getPasswordAsString()
+        if (password != null) return password
+      }
+      if (authenticationMode == AuthenticationMode.SILENT) return null
+      return askPassword(project,
+                         ExternalProcessAuthHelperBundle.message("ssh.password.title"),
+                         ExternalProcessAuthHelperBundle.message("ssh.password.message", username),
+                         newAttributes, true)
+    }
+
+    private fun passphraseCredentialAttributes(key: @Nls String): CredentialAttributes {
+      val serviceName = generateServiceName(ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.passphrase"), key)
+      return CredentialAttributes(serviceName, key)
+    }
+
+    private fun passwordCredentialAttributes(key: @Nls String): CredentialAttributes {
+      val serviceName = generateServiceName(ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.password"), key)
+      return CredentialAttributes(serviceName, key)
+    }
   }
 }
