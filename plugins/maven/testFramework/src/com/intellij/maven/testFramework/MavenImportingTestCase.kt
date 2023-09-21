@@ -802,8 +802,11 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   @RequiresBackgroundThread
   protected suspend fun waitForImportWithinTimeout(action: suspend () -> Any?) {
+    MavenLog.LOG.warn("waitForImportWithinTimeout started")
     val importStarted = AtomicBoolean(false)
     val importFinished = AtomicBoolean(false)
+    val pluginResolutionFinished = AtomicBoolean(true)
+    val artifactDownloadingFinished = AtomicBoolean(true)
     myProject.messageBus.connect(testRootDisposable)
       .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
         override fun importStarted() {
@@ -814,14 +817,34 @@ abstract class MavenImportingTestCase : MavenTestCase() {
             importFinished.set(true)
           }
         }
+        override fun pluginResolutionStarted() {
+          pluginResolutionFinished.set(false)
+        }
+
+        override fun pluginResolutionFinished() {
+          pluginResolutionFinished.set(true)
+        }
+
+        override fun artifactDownloadingStarted() {
+          artifactDownloadingFinished.set(false)
+        }
+
+        override fun artifactDownloadingFinished() {
+          artifactDownloadingFinished.set(true)
+        }
       })
 
     action()
 
     assertWithinTimeout {
-      assertTrue(importStarted.get() && importFinished.get())
+      assertTrue(
+        importStarted.get()
+        && importFinished.get()
+        && pluginResolutionFinished.get()
+        && artifactDownloadingFinished.get()
+      )
+      MavenLog.LOG.warn("waitForImportWithinTimeout finished")
     }
-    projectsManager.waitForPluginResolution()
   }
 
   private class MavenImportLoggingListener : MavenImportListener {
