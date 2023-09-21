@@ -279,26 +279,28 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
     session.init(process, contentToReuse);
 
-    session.addSessionListener(new XDebugSessionListener() {
-      @Override
-      public void sessionPaused() {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-          if (editor == null) {
-            return;
-          }
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      session.addSessionListener(new XDebugSessionListener() {
+        @Override
+        public void sessionPaused() {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+            if (editor == null) {
+              return;
+            }
 
-          Point location = MouseInfo.getPointerInfo().getLocation();
-          SwingUtilities.convertPointFromScreen(location, editor.getContentComponent());
+            Point location = MouseInfo.getPointerInfo().getLocation();
+            SwingUtilities.convertPointFromScreen(location, editor.getContentComponent());
 
-          LogicalPosition logicalPosition = editor.xyToLogicalPosition(location);
-          if (logicalPosition.line >= ((EditorImpl)editor).getDocument().getLineCount()) {
-            return;
-          }
-          myNewRunToCursorListener.scheduleInlayRunToCursor(editor, logicalPosition.line, session);
-        });
-      }
-    });
+            LogicalPosition logicalPosition = editor.xyToLogicalPosition(location);
+            if (logicalPosition.line >= ((EditorImpl)editor).getDocument().getLineCount()) {
+              return;
+            }
+            myNewRunToCursorListener.scheduleInlayRunToCursor(editor, logicalPosition.line, session);
+          });
+        }
+      });
+    }
 
     mySessions.put(session.getDebugProcess().getProcessHandler(), session);
 
