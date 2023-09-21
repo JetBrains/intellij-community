@@ -265,27 +265,27 @@ final class PsiUpdateImpl {
     }
 
     @Override
-    public <E extends PsiElement> E getWritable(E e) {
-      if (e == null) return null;
-      if (e instanceof PsiDirectory dir) {
+    public <E extends PsiElement> E getWritable(E element) {
+      if (element == null) return null;
+      if (element instanceof PsiDirectory dir) {
         VirtualFile file = dir.getVirtualFile();
-        if (file instanceof ChangedVirtualDirectory) return e;
+        if (file instanceof ChangedVirtualDirectory) return element;
         ChangedDirectoryInfo directory = myChangedDirectories.computeIfAbsent(file, f -> ChangedDirectoryInfo.create(dir));
         @SuppressWarnings("unchecked") E result = (E)directory.psiDirectory;
         return result;
       }
-      PsiFile file = e.getContainingFile();
+      PsiFile file = element.getContainingFile();
       if (file.getViewProvider().getVirtualFile() instanceof ChangedVirtualDirectory.AddedVirtualFile) {
-        return e;
+        return element;
       }
       PsiFile originalFile = file.getOriginalFile();
       if (originalFile != file) {
         FileTracker tracker = tracker(originalFile);
         if (tracker.myCopyFile == file) {
-          return e;
+          return element;
         }
       }
-      return tracker(file).getCopy(e);
+      return tracker(file).getCopy(element);
     }
 
     @Override

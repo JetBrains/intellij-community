@@ -14,26 +14,39 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
- * A helper to perform editor command when building the {@link ModCommand}
+ * A helper to perform editor command when building the {@link ModCommand}. This helper is available inside the consumer provided by
+ * {@link ModCommand#psiUpdate} overloads. It allows you to retrieve writable copies of physical files,
+ * and record various navigation and template operations that will appear in the final command. It also has a concept of 'current file',
+ * which is the file to perform any interactive operations in. By default, the current file is a file where starting element
+ * is located, or which action context points at, depending on the used {@code psiUpdate} overload.
  * 
  * @see ModCommand#psiUpdate(PsiElement, BiConsumer)
+ * @see ModCommand#psiUpdate(ActionContext, Consumer) 
  */
 @ApiStatus.Experimental
 public interface ModPsiUpdater extends ModPsiNavigator {
   /**
-   * @param e element to update
-   * @return a copy of this element inside a writable non-physical file, whose changes are tracked and will be added to the final command.
-   * If {@code e} is a {@link PsiDirectory}, a non-physical copy is returned, which allows you to create new files inside that directory.
+   * Returns a copy of this element inside a writable non-physical file, whose changes are tracked and will be added to the final command.
+   * If {@code element} is a {@link PsiDirectory}, a non-physical copy is returned, which allows you to create new files inside that directory.
    * Other write operations on the directory may not work.
+   * <p>
+   * This method must be called before any writes to the returned non-physical file are performed. Otherwise, 
+   * the copy of original element may not exist anymore. It's better to get all the writable copies before doing any writes.  
+   * 
+   * @param element element to update
    * @param <E> type of the element
+   * @return a copy of this element inside a writable non-physical file.
+   * @throws IllegalStateException if the element is located inside the file, whose copy was already modified.
    */
   @Contract("null -> null; !null -> !null")
-  <E extends PsiElement> E getWritable(E e);
+  <E extends PsiElement> E getWritable(E element) throws IllegalStateException;
   
   /**
-   * Highlight given element as a search result
+   * Highlights given element as a search result. Does nothing when executed non-interactively.
+   * The current file may be changed if the element is located in the different file.
    * 
    * @param element element to select
    */
@@ -42,7 +55,8 @@ public interface ModPsiUpdater extends ModPsiNavigator {
   }
   
   /**
-   * Highlight given element
+   * Highlights given element. Does nothing when executed non-interactively.
+   * The current file may be changed if the element is located in the different file.
    * 
    * @param element element to select
    * @param attributesKey attributes to use for highlighting
@@ -50,7 +64,7 @@ public interface ModPsiUpdater extends ModPsiNavigator {
   void highlight(@NotNull PsiElement element, @NotNull TextAttributesKey attributesKey);
 
   /**
-   * Selects given range
+   * Highlights given range inside the current file. Does nothing when executed non-interactively.
    * 
    * @param range range to select
    * @param attributesKey attributes to use for highlighting
@@ -58,7 +72,8 @@ public interface ModPsiUpdater extends ModPsiNavigator {
   void highlight(@NotNull TextRange range, @NotNull TextAttributesKey attributesKey);
 
   /**
-   * Suggest to rename a given element
+   * Displays the UI to rename a given element. Does nothing when executed non-interactively. 
+   * The current file may be changed if the element is located in the different file.
    * 
    * @param element element to rename
    * @param suggestedNames names to suggest (user is free to type any other name as well)
@@ -66,7 +81,7 @@ public interface ModPsiUpdater extends ModPsiNavigator {
   void rename(@NotNull PsiNameIdentifierOwner element, @NotNull List<@NotNull String> suggestedNames);
 
   /**
-   * @return a builder that allows you to create a template
+   * @return a builder that allows you to create a template.
    */
   @NotNull ModTemplateBuilder templateBuilder();
   
@@ -84,4 +99,55 @@ public interface ModPsiUpdater extends ModPsiNavigator {
    * @param message message to display
    */
   void message(@NotNull @NlsContexts.Tooltip String message);
+
+  /**
+   * Selects given element. Does nothing when executed non-interactively.
+   * The current file may be changed if the element is located in the different file.
+   *
+   * @param element element to select
+   */
+  @Override
+  void select(@NotNull PsiElement element);
+
+  /**
+   * Selects given range in the current file. Does nothing when executed non-interactively.
+   *
+   * @param range range to select
+   */
+  @Override
+  void select(@NotNull TextRange range);
+
+  /**
+   * Navigates to a given offset in the current file. Does nothing when executed non-interactively.
+   *
+   * @param offset offset to move to
+   */
+  @Override
+  void moveTo(int offset);
+
+  /**
+   * Navigates to a given element. Does nothing when executed non-interactively.
+   * The current file may be changed if the element is located in the different file.
+   *
+   * @param element element to navigate to
+   */
+  @Override
+  void moveTo(@NotNull PsiElement element);
+
+  /**
+   * Moves caret to a previous occurrence of character ch in the current file. Do nothing if no such occurrence is found,
+   * or when executed non-interactively.
+   *
+   * @param ch character to find
+   */
+  @Override
+  void moveToPrevious(char ch);
+
+  /**
+   * @return current caret offset inside the current file. It may be based on the previous result of {@link #moveTo(int)} 
+   * or similar methods. The initial caret offset is taken from {@link ActionContext} 
+   * if {@link ModCommand#psiUpdate(ActionContext, Consumer)} was used. Otherwise, it's zero. 
+   */
+  @Override
+  int getCaretOffset();
 }
