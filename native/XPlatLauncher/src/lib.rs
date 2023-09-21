@@ -266,11 +266,11 @@ fn win_user_profile_dir() -> Result<String> {
     let mut buf: [u16; Foundation::MAX_PATH as usize] = unsafe { std::mem::zeroed() };
     let mut size = buf.len() as u32;
     debug!("Calling GetUserProfileDirectoryW({:?})", token);
-    let result: Foundation::BOOL = unsafe {
+    let result = unsafe {
         Shell::GetUserProfileDirectoryW(token, PWSTR::from_raw(buf.as_mut_ptr()), std::ptr::addr_of_mut!(size))
     };
     debug!("  result: {:?}, size: {}", result, size);
-    if result == Foundation::TRUE {
+    if result.is_ok() {
         Ok(String::from_utf16(&buf[0..(size - 1) as usize])?)
     } else {
         bail!("GetUserProfileDirectoryW(): {:?}", unsafe { Foundation::GetLastError() })
