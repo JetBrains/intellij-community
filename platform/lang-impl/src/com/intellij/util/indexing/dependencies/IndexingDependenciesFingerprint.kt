@@ -4,6 +4,7 @@ package com.intellij.util.indexing.dependencies
 import com.google.common.hash.HashCode
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.thisLogger
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
@@ -40,6 +41,7 @@ class IndexingDependenciesFingerprint {
   private var debugHelperToken: Int = 0
 
   private fun calculateFingerprint(): FingerprintImpl {
+    val startTime = System.currentTimeMillis()
     val hasher = PluginHasher()
     PluginManager.getLoadedPlugins()
       .sortedBy { plugin -> plugin.pluginId.idString } // this will produce a copy of the list
@@ -48,7 +50,10 @@ class IndexingDependenciesFingerprint {
       }
 
     hasher.mixInInt(debugHelperToken)
-    return FingerprintImpl(hasher.getFingerprint())
+    val fingerprint = hasher.getFingerprint()
+    val durationMs = System.currentTimeMillis() - startTime
+    thisLogger().info("Calculated dependencies fingerprint in ${durationMs} ms ($fingerprint)")
+    return FingerprintImpl(fingerprint)
   }
 
   fun getFingerprint(): FingerprintImpl {
