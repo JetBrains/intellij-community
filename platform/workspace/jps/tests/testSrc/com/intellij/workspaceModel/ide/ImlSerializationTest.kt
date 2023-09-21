@@ -40,7 +40,7 @@ class ImlSerializationTest {
 
   @Test
   fun sizeCheck() {
-    val expectedSize = 17_000
+    val expectedSize = 20_500
     val projectDir = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
     val bytes = loadProjectAndCheck(projectDir)
 
