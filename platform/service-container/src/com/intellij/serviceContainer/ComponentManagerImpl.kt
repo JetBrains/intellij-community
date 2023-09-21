@@ -81,7 +81,7 @@ fun MethodHandles.Lookup.findConstructorOrNull(clazz: Class<*>, type: MethodType
 @Internal
 abstract class ComponentManagerImpl(
   internal val parent: ComponentManagerImpl?,
-  private val coroutineScope: CoroutineScope?,
+  private val coroutineScope: CoroutineScope,
   setExtensionsRootArea: Boolean = parent == null,
 ) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), ComponentManagerEx, ComponentStoreOwner {
   protected enum class ContainerState {
@@ -160,7 +160,14 @@ abstract class ComponentManagerImpl(
   internal var componentContainerIsReadonly: String? = null
 
   @Suppress("MemberVisibilityCanBePrivate")
-  fun getCoroutineScope(): CoroutineScope = coroutineScope ?: throw RuntimeException("Module doesn't have coroutineScope")
+  fun getCoroutineScope(): CoroutineScope {
+    return if (parent?.parent == null) {
+      coroutineScope
+    }
+    else {
+      throw RuntimeException("Module doesn't have coroutineScope")
+    }
+  }
 
   override val componentStore: IComponentStore
     get() = getService(IComponentStore::class.java)!!
@@ -1143,7 +1150,7 @@ abstract class ComponentManagerImpl(
       throw IllegalStateException("Expected current state is DISPOSE_IN_PROGRESS, but actual state is ${containerState.get()} ($this)")
     }
 
-    coroutineScope?.cancel("ComponentManagerImpl.dispose is called")
+    coroutineScope.cancel("ComponentManagerImpl.dispose is called")
 
     // dispose components and services
     Disposer.dispose(serviceParentDisposable)

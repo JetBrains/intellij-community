@@ -33,6 +33,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.emptyConstructorMethodType
 import com.intellij.serviceContainer.findConstructorOrNull
+import com.intellij.util.namedChildScope
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
@@ -50,7 +51,7 @@ open class ModuleImpl @ApiStatus.Internal constructor(
   project: Project,
 ) : ComponentManagerImpl(
   parent = project as ComponentManagerImpl,
-  coroutineScope = null,
+  coroutineScope = project.getCoroutineScope().namedChildScope("ModuleImpl@${System.identityHashCode(this)}"),
 ), ModuleEx, Queryable {
 
   private val project: Project
