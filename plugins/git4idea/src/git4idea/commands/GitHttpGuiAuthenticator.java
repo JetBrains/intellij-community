@@ -86,11 +86,16 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
    * At this point either {@link #myProviderAndData} is filled in {@link #askUsername(String)} or username is contained in url
    */
   @Override
-  @NotNull
+  @Nullable
   public String askPassword(@NotNull String url) {
     myWasRequested = true;
 
     ProviderAndData providerAndData = myProviderAndData;
+    if (providerAndData != null && providerAndData.myProvider instanceof CancelledProvider) {
+      LOG.debug("askPassword. Auth was cancelled.");
+      return null;
+    }
+
     if (providerAndData != null) {
       LOG.debug("askPassword. Data already filled in askUsername.");
       return providerAndData.getPassword();
@@ -107,8 +112,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     LOG.debug("askPassword. gitUrl=" + url + ", unifiedUrl=" + unifiedUrl);
 
     ProviderAndData newData = acquireData(unifiedUrl, provider -> provider.getDataForKnownLogin(login));
-
     myProviderAndData = newData;
+
     if (newData != null) {
       LOG.debug("askPassword. " + newData.toString());
       return newData.getPassword();
@@ -120,7 +125,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public String askUsername(@NotNull String url) {
     myWasRequested = true;
 
@@ -129,6 +134,11 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     ProviderAndData providerAndData = acquireData(unifiedUrl, AuthDataProvider::getData);
     myProviderAndData = providerAndData;
+
+    if (providerAndData != null && providerAndData.myProvider instanceof CancelledProvider) {
+      LOG.debug("askUsername. Auth was cancelled.");
+      return null;
+    }
 
     if (providerAndData != null) {
       LOG.debug("askUsername. " + providerAndData.toString());
