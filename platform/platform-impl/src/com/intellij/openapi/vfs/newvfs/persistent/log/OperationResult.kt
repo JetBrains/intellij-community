@@ -56,7 +56,7 @@ class OperationResult<out T : Any> private constructor(
      */
     const val SIZE_BYTES: Int = Int.SIZE_BYTES
 
-    inline fun <reified T : Any> OperationResult<T>.serialize(enumerator: (String) -> Int): Int {
+    inline fun <reified T : Any> OperationResult<T>.serialize(): Int {
       if (!isSuccess) {
         val evidence = exceptionEvidence
         assert(evidence < 0)
@@ -78,7 +78,7 @@ class OperationResult<out T : Any> private constructor(
     }
 
     @Suppress("UNCHECKED_CAST")
-    inline fun <reified T : Any> deserialize(data: Int, deenumerator: (Int) -> String): OperationResult<T> {
+    inline fun <reified T : Any> deserialize(data: Int): OperationResult<T> {
       if (data < 0) {
         return fromException(data)
       }
