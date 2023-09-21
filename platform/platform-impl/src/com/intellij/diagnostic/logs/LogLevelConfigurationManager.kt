@@ -67,7 +67,7 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
       val found = currentCategories.find { curCat ->
         if (curCat.category == newCat.category) {
           val verbose = maxOf(curCat.level.ordinal, newCat.level.ordinal)
-          curCat.level = DebugLogLevel.values()[verbose]
+          curCat.level = DebugLogLevel.entries.toTypedArray()[verbose]
           return@find true
         }
         else false

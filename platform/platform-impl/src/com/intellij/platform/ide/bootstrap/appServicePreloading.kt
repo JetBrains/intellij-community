@@ -74,15 +74,15 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl,
                         managingFsJob = managingFsJob,
                         initAwtToolkitAndEventQueueJob = initAwtToolkitAndEventQueueJob)
     }
-
-    asyncScope.launch {
-      app.serviceAsync<LogLevelConfigurationManager>()
-    }
   }
 
   asyncScope.launch {
     launch {
       app.serviceAsync<RegistryManager>()
+    }
+
+    launch {
+      app.serviceAsync<LogLevelConfigurationManager>()
     }
 
     pathMacroJob.join()
