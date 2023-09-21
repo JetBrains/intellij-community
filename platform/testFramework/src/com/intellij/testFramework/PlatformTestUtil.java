@@ -1122,33 +1122,43 @@ public final class PlatformTestUtil {
     }
     Ref<RunContentDescriptor> refRunContentDescriptor = new Ref<>();
     ExecutionEnvironment executionEnvironment = new ExecutionEnvironment(executor, runner, runnerAndConfigurationSettings, project);
-    ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, descriptor -> {
-      LOG.debug("Process started");
-      if (descriptorProcessor != null) {
-        descriptorProcessor.accept(descriptor);
+    boolean[] failure = {false};
+    ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, new ProgramRunner.Callback() {
+      @Override
+      public void processNotStarted() {
+        failure[0] = true;
       }
-      ProcessHandler processHandler = descriptor.getProcessHandler();
-      assertNotNull(processHandler);
-      processHandler.addProcessListener(new ProcessAdapter() {
-        @Override
-        public void startNotified(@NotNull ProcessEvent event) {
-          LOG.debug("Process notified");
-        }
 
-        @Override
-        public void processTerminated(@NotNull ProcessEvent event) {
-          LOG.debug("Process terminated: exitCode: " + event.getExitCode() + "; text: " + event.getText());
+      @Override
+      public void processStarted(RunContentDescriptor descriptor) {
+        LOG.debug("Process started");
+        if (descriptorProcessor != null) {
+          descriptorProcessor.accept(descriptor);
         }
+        ProcessHandler processHandler = descriptor.getProcessHandler();
+        assertNotNull(processHandler);
+        processHandler.addProcessListener(new ProcessAdapter() {
+          @Override
+          public void startNotified(@NotNull ProcessEvent event) {
+            LOG.debug("Process notified");
+          }
 
-        @Override
-        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-          LOG.debug(outputType + ": " + event.getText());
-        }
-      });
-      refRunContentDescriptor.set(descriptor);
+          @Override
+          public void processTerminated(@NotNull ProcessEvent event) {
+            LOG.debug("Process terminated: exitCode: " + event.getExitCode() + "; text: " + event.getText());
+          }
+
+          @Override
+          public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+            LOG.debug(outputType + ": " + event.getText());
+          }
+        });
+        refRunContentDescriptor.set(descriptor);
+      }
     });
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    waitWithEventsDispatching("Process failed to start in 60 seconds", () -> !refRunContentDescriptor.isNull(), 60);
+    waitWithEventsDispatching("Process failed to start in 60 seconds", () -> !refRunContentDescriptor.isNull() || failure[0], 60);
+    assertFalse("Process could not start for configuration: " + runConfiguration, failure[0]);
     return Pair.create(executionEnvironment, refRunContentDescriptor.get());
   }
 
