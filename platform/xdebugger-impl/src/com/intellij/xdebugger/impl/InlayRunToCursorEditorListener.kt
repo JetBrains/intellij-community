@@ -213,7 +213,6 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
     justPanel.preferredSize = JBDimension((2 * ACTION_BUTTON_GAP + ACTION_BUTTON_SIZE) * group.childrenCount, ACTION_BUTTON_SIZE)
     justPanel.add(toolbarImpl.component)
     val hint = RunToCursorHint(justPanel, this)
-    currentHint = WeakReference(hint)
     val questionAction: QuestionAction = object : PriorityQuestionAction {
       override fun execute(): Boolean {
         return true
@@ -229,6 +228,7 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
 
   private class RunToCursorHint(component: JComponent, private val listener: InlayRunToCursorEditorListener) : LightweightHint(component) {
     override fun show(parentComponent: JComponent, x: Int, y: Int, focusBackComponent: JComponent, hintHint: HintHint) {
+      listener.currentHint = WeakReference(this)
       super.show(parentComponent, x, y, focusBackComponent, HintHint(parentComponent, Point(x, y)))
     }
 
