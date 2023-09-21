@@ -59,7 +59,6 @@ class EvaluationFeedbackDialog(project: Project?,
 
   init {
     init()
-    setTitle()
     logEvaluationFeedbackDialogShown()
   }
 
