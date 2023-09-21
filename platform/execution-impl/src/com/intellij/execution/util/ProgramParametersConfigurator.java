@@ -156,8 +156,9 @@ public class ProgramParametersConfigurator {
     DataContext envContext = ExecutionManagerImpl.getEnvironmentDataContext();
     if (fallbackDataContext == DataContext.EMPTY_CONTEXT && envContext != null) {
       Project project = CommonDataKeys.PROJECT.getData(envContext);
+      Module module = PlatformCoreDataKeys.MODULE.getData(envContext);
       if (project != null) {
-        fallbackDataContext = projectContext(project, null, null);
+        fallbackDataContext = projectContext(project, module, null);
       }
     }
 

@@ -2,15 +2,15 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.target.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -262,7 +262,17 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
   }
 
   void setDataContext(@NotNull DataContext dataContext) {
-    myDataContext = IdeUiService.getInstance().createAsyncDataContext(dataContext);
+    myDataContext = CustomizedDataContext.create(IdeUiService.getInstance().createAsyncDataContext(dataContext), dataId -> {
+      if (PlatformCoreDataKeys.MODULE.is(dataId)) {
+        Module module = null;
+        if (myRunnerAndConfigurationSettings != null &&
+            myRunnerAndConfigurationSettings.getConfiguration() instanceof ModuleBasedConfiguration<?, ?>) {
+          module = ((ModuleBasedConfiguration<?, ?>)myRunnerAndConfigurationSettings.getConfiguration()).getConfigurationModule().getModule();
+        }
+        return module == null ? CustomizedDataContext.EXPLICIT_NULL : module;
+      }
+      return null;
+    });
   }
 
   @Nullable
