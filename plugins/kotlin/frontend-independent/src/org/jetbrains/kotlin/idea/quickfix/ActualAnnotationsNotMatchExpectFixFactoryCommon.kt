@@ -94,7 +94,7 @@ object ActualAnnotationsNotMatchExpectFixFactoryCommon {
                 notEqual(expectDeclaration.callableIdIfNotLocal, actualDeclaration.callableIdIfNotLocal)
             }
 
-            else -> error("Unexpected types: $expectDeclaration $actualDeclaration")
+            else -> false
         }
     }
 }

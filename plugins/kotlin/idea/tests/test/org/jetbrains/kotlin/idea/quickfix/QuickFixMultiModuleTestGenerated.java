@@ -189,6 +189,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualFakeOverride/");
         }
 
+        @TestMetadata("removeFromExpectSuggestedWhenActualHasDefaultEmptyConstructor")
+        public void testRemoveFromExpectSuggestedWhenActualHasDefaultEmptyConstructor() throws Exception {
+            runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualHasDefaultEmptyConstructor/");
+        }
+
         @TestMetadata("removeFromExpectSuggestedWhenActualHasNoSource")
         public void testRemoveFromExpectSuggestedWhenActualHasNoSource() throws Exception {
             runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualHasNoSource/");
