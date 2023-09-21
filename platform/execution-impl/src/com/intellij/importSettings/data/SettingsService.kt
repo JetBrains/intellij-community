@@ -10,8 +10,8 @@ interface SettingsService {
     fun getInstance(): SettingsService = service()
   }
   fun getSyncService(): SyncService
-  fun getJbService(): ImportService
-  fun getExternalService(): ImportExternalService
+  fun getJbService(): JbService
+  fun getExternalService(): ExternalService
 
   fun skipImport()
 }
@@ -38,12 +38,14 @@ interface SyncService : BaseJbService {
   fun generalSync()
 }
 
-interface ImportExternalService : BaseService {
+interface ExternalService : BaseService {
   fun importSettings(productId: String)
 }
 
-interface ImportService: BaseJbService {
+interface JbService: BaseJbService {
   fun importSettings(productId: String, ids: DataForSave)
+
+  fun getConfig(): Config
 }
 
 interface BaseJbService : BaseService {
@@ -52,9 +54,9 @@ interface BaseJbService : BaseService {
 
 interface BaseService {
   fun products(): List<Product>
-  fun getSettings(productId: String): List<BaseSetting>
+  fun getSettings(itemId: String): List<BaseSetting>
 
-  fun getProductIcon(productId: String, size: IconProductSize = IconProductSize.SMALL): Icon?
+  fun getProductIcon(itemId: String, size: IconProductSize = IconProductSize.SMALL): Icon?
 }
 
 enum class IconProductSize(val int: Int) {
@@ -64,15 +66,20 @@ enum class IconProductSize(val int: Int) {
 }
 
 
-interface Product {
-  val id: String /**/
-  val name: String
-
+interface Product : ImportItem {
   val version: String /*опять не знаю как мы храним версию, пока написала стринг*/
   val lastUsage: Date /* для сеттинг синга дата последнего синка, для локальных версий дата последнего использования
                       нужны понятия типа вчера, сегодня, неделю назад, месяц наза, много мессяцев назад.
                       Есть у нас где-то такое? */
+}
 
+interface Config : ImportItem {
+  val path: String /* /IntelliJ IDEA Ultimate 2023.2.1 */
+}
+
+interface ImportItem {
+  val id: String
+  val name: String
 }
 
 
@@ -81,7 +88,7 @@ interface BaseSetting {
 
   val icon: Icon
   val name: String
-  val additionText: String
+  val additionText: String?
 }
 
 interface Configurable : Multiple {
@@ -95,13 +102,13 @@ interface Multiple : BaseSetting {
   например ImportService позвозяет выбирать\редактировать, SettingsService - нет. в случае если редактирование невозможно Configurable -ы
   в диалоге будут выглядеть как Multiple
    https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=961%3A169735&mode=dev */
-  val list: List<ChildSetting>
+  val list: List<List<ChildSetting>>
 }
 
 interface ChildSetting {
   val id: String
   val name: String
-  val marker: String /* built-in скетч: https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=961%3A169853&mode=dev */
+  val additionText: String? /* built-in скетч: https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=961%3A169853&mode=dev */
   val value: String /* hotkey скетч https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=961%3A169735&mode=dev*/
 }
 

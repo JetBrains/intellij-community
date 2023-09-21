@@ -1,47 +1,82 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.importSettings.importer
 
-import com.intellij.icons.AllIcons
-import com.intellij.importSettings.data.ActionsDataProvider
-import com.intellij.importSettings.data.BaseService
-import com.intellij.importSettings.data.Product
+import com.intellij.importSettings.chooser.ui.ConfigurableSettingPane
+import com.intellij.importSettings.data.*
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.util.width
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Dimension
 import javax.swing.*
+import javax.swing.border.LineBorder
 
-class SettingSyncDialog(val service: ActionsDataProvider, val product: Product) : DialogWrapper(null) {
+class SettingSyncDialog(val service: ActionsDataProvider, val product: ImportItem) : DialogWrapper(null) {
 
-  private val pane = JPanel(BorderLayout()).apply {
-    preferredSize = JBDimension(640, 410)
+  private val pane = JPanel(HorizontalLayout(0)).apply {
+    add( panel {
+      row {
+        text("Import<br>Settings From").apply {
+          this.component.font = JBFont.h1()
+        }.align(AlignY.TOP).customize(UnscaledGaps(20, 0, 17, 0))
+      }
+      panel {
+        service.getProductIcon(product.id, IconProductSize.MIDDLE)?.let { icn ->
+          row {
+            icon(icn).align(AlignY.TOP).customize(UnscaledGaps(0, 0, 0, 8))
+            panel {
+              row {
+                text(service.getText(product)).customize(UnscaledGaps(0, 0, 2,0))
+              }
+
+              service.getAdditionText(product)?.let { addTxt ->
+                row {
+                  comment(addTxt).customize(UnscaledGaps(0))
+                }
+              }
+            }
+          }
+        }
+      }.align(AlignY.TOP)
+    }.apply {
+      preferredSize = JBDimension(200, 110)
+      border = JBUI.Borders.empty(0, 5, 0, 0)
+    })
+
+    add(
+      panel {
+        row {
+          cell(ConfigurableSettingPane(TestJbService.testChildConfig, true).component())
+        }
+
+      }.apply {
+        isOpaque = false
+        preferredSize = JBDimension(420, 374)
+        background = Color.RED
+        border = LineBorder(Color.BLACK)
+      }
+    )
+  }.apply {
+   // preferredSize = JBDimension(640, 410)
   }
+
+
 
   init {
-    pane.add(JPanel(VerticalLayout(16)).apply {
-      isOpaque = false
-
-      add(JLabel("<html>Import<br>Settings From</html>").apply {
-        font = JBFont.h1()
-      })
-
-      add(ItemPane(SettingSyncLabelInfo("IntelliJ IDEA Setting Sync",
-                                        AllIcons.Actions.Refresh, "Synced yesterday")))
-    }, BorderLayout.WEST)
-
-    pane.add(JPanel().apply {
-      border = JBUI.Borders.empty(16, 0)
-      background = JBColor.BLACK
-      preferredSize = JBDimension(420, 374)
-    }, BorderLayout.EAST)
-
     init()
   }
+
 
   override fun createCenterPanel(): JComponent? {
     return pane
@@ -57,42 +92,5 @@ class SettingSyncDialog(val service: ActionsDataProvider, val product: Product) 
     return super.getCancelAction().apply {
       putValue(Action.NAME, "Back")
     }
-  }
-}
-
-data class SettingSyncLabelInfo(val text: String, val icon: Icon?, val description: String?)
-
-class ItemPane(info: SettingSyncLabelInfo) : JPanel(HorizontalLayout(8)) {
-
-  var info = info
-    set(value) {
-      if(field == value) return
-
-      field = value
-      update()
-    }
-
-  private val icon = JLabel(info.icon).apply {
-    font = JBFont.h1()
-  }
-  private val text = JLabel(info.text)
-  private val description = JLabel(info.description).apply {
-    foreground = UIUtil.getLabelInfoForeground()
-  }
-
-  init {
-    isOpaque = false
-    add(icon)
-    add(JPanel(VerticalLayout(0)).apply {
-      isOpaque = false
-      add(text)
-      add(description)
-    })
-  }
-
-  private fun update() {
-    icon.icon = info.icon
-    icon.text = info.text
-    icon.text = info.description
   }
 }

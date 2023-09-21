@@ -31,6 +31,10 @@ open class ProductChooserAction() : DefaultActionGroup() {
 
 
   private fun createPopup(step: ListPopupStep<Any>): ListPopup {
+
+   /* JBPopupFactory.getInstance().createListPopup(step)*/
+
+
     val result = object : ListPopupImpl(null, step) {
       override fun getListElementRenderer(): ListCellRenderer<*> {
         return renderer

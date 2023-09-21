@@ -41,13 +41,15 @@ class ProductChooserRenderer : ListCellRenderer<PopupFactoryImpl.ActionItem> {
     val hasSeparator = model?.isSeparatorAboveOf(value) ?: false
 
     if(value.action is ConfigAction) {
-      val config = value.action as ConfigAction
+      val action = (value.action as ConfigAction)
+      val config = action.config
+      val icon = action.service.getProductIcon(config.id)
 
       return if(hasSeparator) {
-        oneLineComponentWithSeparator.rendererComponent.update(ConfigAction.name, ConfigAction.icon, isSelected)
+        oneLineComponentWithSeparator.rendererComponent.update(config.name, icon, isSelected)
         oneLineComponentWithSeparator.component
       } else {
-        oneLineComponent.update(ConfigAction.name, ConfigAction.icon, isSelected)
+        oneLineComponent.update(config.name, icon, isSelected)
         oneLineComponent.component
       }
     }
@@ -108,7 +110,7 @@ class ProductChooserOneLineComponent : RendererComponent {
     content.size = JBDimension(UiUtils.DEFAULT_BUTTON_WIDTH, content.size.height)
   }
 
-  fun update(txt: String, icn: Icon, selected: Boolean) {
+  fun update(txt: String, icn: Icon?, selected: Boolean) {
     icon.icon = icn
     mainText.text = txt
     isSelected = selected

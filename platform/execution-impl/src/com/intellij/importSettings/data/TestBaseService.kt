@@ -20,49 +20,172 @@ class TestBaseService : SettingsService {
     return TestSyncService()
   }
 
-  override fun getJbService(): ImportService {
-    return TestImportService()
+  override fun getJbService(): JbService {
+    return TestJbService()
   }
 
-  override fun getExternalService(): ImportExternalService {
-    return TestImportExternalService()
+  override fun getExternalService(): ExternalService {
+    return TestExternalService()
   }
 
   override fun skipImport() {
-    if(LOG.isTraceEnabled) {
+    if (LOG.isTraceEnabled) {
       LOG.trace("$IMPORT_SERVICE skipImport")
     }
   }
 }
 
-class TestImportService : ImportService {
+class TestJbService : JbService {
   companion object {
 
-    private val LOG = logger<TestImportService>()
+    private val LOG = logger<TestJbService>()
 
-    val main = TestProduct("main1", "IdeaMain1", "версия", Date())
-    val main2 = TestProduct("main2", "IdeaMain1", "версия", Date())
-    val enemy = TestProduct("main2", "IdeaMain1", "версия", Date())
+    val main = TestProduct("IdeaMain1", "версия", Date())
+    val main2 = TestProduct("IdeaMain1", "версия", Date())
+    val enemy = TestProduct("IdeaMain1", "версия", Date())
 
-    val fresh = listOf(TestProduct("1", "Idea111", "версия", Date()),
-                             TestProduct("2", "Idea222", "версия", Date()),
-                             TestProduct("3", "Idea333", "версия", Date()),
-                             TestProduct("4","Idea444", "версия", Date()),
-                             TestProduct("5", "Idea555", "версия", Date()),
-                             TestProduct("6", "Idea666", "версия", Date()))
+    val fresh = listOf(TestProduct("Idea111", "версия", Date()),
+                       TestProduct("Idea222", "версия", Date()),
+                       TestProduct("Idea333", "версия", Date()),
+                       TestProduct("Idea444", "версия", Date()),
+                       TestProduct("Idea555", "версия", Date()),
+                       TestProduct("Idea666", "версия", Date()))
 
-    val old = listOf(TestProduct("7", "Idea111", "версия", Date()),
-                             TestProduct("8", "Idea222", "версия", Date()),
-                             TestProduct("9", "Idea333", "версия", Date()),
-                             TestProduct("10", "Idea444", "версия", Date()),
-                             TestProduct("11", "Idea555", "версия", Date()),
-                             TestProduct("12", "Idea666", "версия", Date()))
+    val old = listOf(TestProduct("Idea111", "версия", Date()),
+                     TestProduct("Idea222", "версия", Date()),
+                     TestProduct("Idea333", "версия", Date()),
+                     TestProduct("Idea444", "версия", Date()),
+                     TestProduct("Idea555", "версия", Date()),
+                     TestProduct("Idea666", "версия", Date()))
 
-    val productList3 = listOf(TestProduct("13",  "Idea111", "версия", Date()),
-                              TestProduct("14", "Idea222", "версия", Date()))
+    val productList3 = listOf(TestProduct("Idea111", "версия", Date()),
+                              TestProduct("Idea222", "версия", Date()))
+
+    val children = listOf(
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
+             TestChildrenSettings("Find Usages", null, "⇧F12"),
+             TestChildrenSettings("Build Solution", null, "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
+             TestChildrenSettings("Find Usages", null, "⇧F12"),
+             TestChildrenSettings("Build Solution", null, "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
+             TestChildrenSettings("Find Usages", null, "⇧F12"),
+             TestChildrenSettings("Build Solution", null, "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
+             TestChildrenSettings("Find Usages", null, "⇧F12"),
+             TestChildrenSettings("Build Solution", null, "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
+             TestChildrenSettings("Find Usages", null, "⇧F12"),
+             TestChildrenSettings("Build Solution", null, "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
+             TestChildrenSettings("Find Usages", null, "⇧F12"),
+             TestChildrenSettings("Build Solution", null, "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
+             TestChildrenSettings("Find Usages", null, "⇧F12"),
+             TestChildrenSettings("Build Solution", null, "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
+             TestChildrenSettings("Find Usages", null, "⇧F12"),
+             TestChildrenSettings("Build Solution", null, "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
+             TestChildrenSettings("Find Usages", null, "⇧F12"),
+             TestChildrenSettings("Build Solution", null, "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
+             TestChildrenSettings("Find Usages", null, "⇧F12"),
+             TestChildrenSettings("Build Solution", null, "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
+             TestChildrenSettings("Find Usages", null, "⇧F12"),
+             TestChildrenSettings("Build Solution", null, "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
+             TestChildrenSettings("Find Usages", null, "⇧F12"),
+             TestChildrenSettings("Build Solution", null, "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+    )
+
+    val settings = listOf(
+      TestBaseSetting(AllIcons.General.ExternalTools, "UI Theme", "Light Theme"),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
+      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins",
+                              "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", children),
+      TestBaseSetting(AllIcons.General.ExternalTools, "Code settings", "Сode style, file types, live templates"),
+      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins",
+                              "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", children),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
+      TestBaseSetting(AllIcons.General.ExternalTools, "Code settings", "Сode style, file types, live templates"),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Plugins",
+                          "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", children),
+
+      )
+
+    val testChildConfig = TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins",
+                                                  "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more",
+                                                  children)
 
     fun getProductIcon(size: IconProductSize): Icon {
-      return when(size) {
+      return when (size) {
         IconProductSize.SMALL -> AllIcons.TransferSettings.Resharper
         IconProductSize.MIDDLE -> AllIcons.General.NotificationInfo
         IconProductSize.LARGE -> AllIcons.General.SuccessLogin
@@ -72,7 +195,7 @@ class TestImportService : ImportService {
   }
 
   override fun importSettings(productId: String, ids: DataForSave) {
-    if(LOG.isTraceEnabled) {
+    if (LOG.isTraceEnabled) {
       LOG.trace("${TestBaseService.IMPORT_SERVICE} importSettings")
     }
   }
@@ -86,37 +209,44 @@ class TestImportService : ImportService {
   }
 
   override fun getSettings(productId: String): List<BaseSetting> {
-    return emptyList()
+    return settings
   }
 
-  override fun getProductIcon(productId: String, size: IconProductSize): Icon {
+  override fun getProductIcon(itemId: String, size: IconProductSize): Icon {
     return Companion.getProductIcon(size)
   }
 
+  override fun getConfig(): Config {
+    return object : Config {
+      override val path: String = "/IntelliJ IDEA Ultimate 2023.2.1"
 
+      override val id: String = "Config"
+      override val name: String = "Config or Installation Directory"
+    }
+  }
 }
 
-class TestImportExternalService : ImportExternalService {
+class TestExternalService : ExternalService {
   companion object {
-    private val LOG = logger<TestImportExternalService>()
+    private val LOG = logger<TestExternalService>()
   }
 
   override fun products(): List<Product> {
-    return listOf(TestImportService.main2)
+    return listOf(TestJbService.main2)
   }
 
   override fun importSettings(productId: String) {
-    if(LOG.isTraceEnabled) {
+    if (LOG.isTraceEnabled) {
       LOG.trace("${TestBaseService.IMPORT_SERVICE} importSettings")
     }
   }
 
-  override fun getProductIcon(productId: String, size: IconProductSize): Icon {
-    return TestImportService.getProductIcon(size)
+  override fun getProductIcon(itemId: String, size: IconProductSize): Icon {
+    return TestJbService.getProductIcon(size)
   }
 
-  override fun getSettings(productId: String): List<BaseSetting> {
-    return emptyList()
+  override fun getSettings(itemId: String): List<BaseSetting> {
+    return TestJbService.settings
   }
 
 }
@@ -131,55 +261,79 @@ class TestSyncService : SyncService {
 
 
   override fun tryToLogin(): String? {
-    if(LOG.isTraceEnabled) {
+    if (LOG.isTraceEnabled) {
       LOG.trace("${TestBaseService.IMPORT_SERVICE} tryToLogin")
     }
     return null
   }
 
   override fun syncSettings(productId: String) {
-    if(LOG.isTraceEnabled) {
+    if (LOG.isTraceEnabled) {
       LOG.trace("${TestBaseService.IMPORT_SERVICE} syncSettings id: '$productId' ")
     }
   }
 
   override fun importSettings(productId: String) {
-    if(LOG.isTraceEnabled) {
+    if (LOG.isTraceEnabled) {
       LOG.trace("${TestBaseService.IMPORT_SERVICE} importSettings id: '$productId' ")
     }
   }
 
   override fun generalSync() {
-    if(LOG.isTraceEnabled) {
+    if (LOG.isTraceEnabled) {
       LOG.trace("${TestBaseService.IMPORT_SERVICE} generalSync")
     }
   }
 
   override fun getMainProduct(): Product? {
-    return TestImportService.main2
+    return TestJbService.main2
   }
 
   override fun products(): List<Product> {
-    return TestImportService.fresh
+    return TestJbService.fresh
   }
 
   override fun getOldProducts(): List<Product> {
-    return TestImportService.old
+    return TestJbService.old
   }
 
-  override fun getSettings(productId: String): List<BaseSetting> {
-    return emptyList()
+  override fun getSettings(itemId: String): List<BaseSetting> {
+    return TestJbService.settings
   }
 
-  override fun getProductIcon(productId: String, size: IconProductSize): Icon {
+  override fun getProductIcon(itemId: String, size: IconProductSize): Icon {
     return AllIcons.Actions.Refresh
   }
 
 }
 
-class TestProduct(override val id: String,
-                  override val name: String,
-                  override val version: String,
-                  override val lastUsage: Date) : Product {
+class TestProduct(
+  override val name: String,
+  override val version: String,
+  override val lastUsage: Date,
+  override val id: String = UUID.randomUUID().toString()) : Product {
 
 }
+
+
+class TestBaseSetting(override val icon: Icon,
+                      override val name: String,
+                      override val additionText: String?,
+                      override val id: String = UUID.randomUUID().toString()) : BaseSetting
+
+class TestMultipleSetting(override val icon: Icon,
+                          override val name: String,
+                          override val additionText: String?,
+                          override val list: List<List<ChildSetting>>,
+                          override val id: String = UUID.randomUUID().toString()) : Multiple
+
+class TestConfigurableSetting(override val icon: Icon,
+                              override val name: String,
+                              override val additionText: String?,
+                              override val list: List<List<ChildSetting>>,
+                              override val id: String = UUID.randomUUID().toString()) : Configurable
+
+class TestChildrenSettings(override val name: String,
+                           override val additionText: String?,
+                           override val value: String,
+                           override val id: String = UUID.randomUUID().toString()) : ChildSetting
