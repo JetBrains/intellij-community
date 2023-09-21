@@ -2,17 +2,24 @@
 package com.intellij.codeInsight.inline.completion.listeners
 
 import com.intellij.codeInsight.completion.CompletionUtil
+import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
+import com.intellij.codeInsight.inline.completion.SimpleTypingEvent
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.isCurrent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyAdapter
@@ -28,19 +35,7 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl) : BulkAwa
       return
     }
 
-    if (!isEnabled(event) ) {
-      // ML-1168
-      handler?.hide()
-    }
-
-    // ML-1109 ML-1131 ML-1226
-    if (event.newLength == 1 || event.newLength != 0 && event.newFragment.isBlank()) {
-      LOG.trace("Valuable document event $event")
-      handler?.invoke(InlineCompletionEvent.DocumentChange(event, editor))
-    }
-    else {
-      handler?.hide()
-    }
+    handler?.invoke(InlineCompletionEvent.DocumentChange(event, editor))
   }
 
   fun isEnabled(event: DocumentEvent): Boolean {
@@ -49,10 +44,6 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl) : BulkAwa
 
   private fun InlineCompletionHandler.hide() {
     InlineCompletionContext.getOrNull(editor)?.let { hide(editor, false, it) }
-  }
-
-  companion object {
-    private val LOG = thisLogger()
   }
 }
 
@@ -137,5 +128,33 @@ class InlineSessionWiseCaretListener(
     if (newOffset != expectedOffset()) {
       return cancel()
     }
+  }
+}
+
+@ApiStatus.Experimental
+class InlineCompletionTypedHandlerDelegate : TypedHandlerDelegate() {
+
+  override fun beforeClosingParenInserted(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
+    allowDocumentChange(editor, c.toString())
+    return super.beforeClosingParenInserted(c, project, editor, file)
+  }
+
+  override fun beforeClosingQuoteInserted(quote: CharSequence, project: Project, editor: Editor, file: PsiFile): Result {
+    allowDocumentChange(editor, quote.toString())
+    return super.beforeClosingQuoteInserted(quote, project, editor, file)
+  }
+
+  private fun allowDocumentChange(editor: Editor, typed: String) {
+    val handler = InlineCompletionHandler.getOrNull(editor)
+    handler?.allowDocumentChange(SimpleTypingEvent(typed, false))
+  }
+}
+
+@ApiStatus.Experimental
+class InlineCompletionAnActionListener : AnActionListener {
+  override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
+    val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: return
+    val handler = InlineCompletionHandler.getOrNull(editor) ?: return
+    handler.allowDocumentChange(SimpleTypingEvent(c.toString(), true))
   }
 }

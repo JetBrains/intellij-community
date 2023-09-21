@@ -789,6 +789,8 @@
       id="EditorDeleteLine.checkHandler"
     />
 
+    <typedHandler implementation="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionTypedHandlerDelegate"/>
+
     <registryKey key="editor.action.caretMovement.UpDownIgnoreSelectionBoundaries" defaultValue="false"
                  description="Allows to restore the legacy behavior of Up/Down w.r.t. selection boundaries.\n\
                               When true, moves the caret up or down as if there were no selection.\n\
@@ -1745,6 +1747,9 @@
 
     <listener class="com.intellij.ide.ui.laf.LafAndEditorColorSchemeDynamicPluginListener"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+
+    <listener class="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionAnActionListener"
+              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
 
   <projectListeners>

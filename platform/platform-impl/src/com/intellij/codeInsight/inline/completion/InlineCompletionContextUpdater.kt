@@ -5,17 +5,17 @@ package com.intellij.codeInsight.inline.completion
 internal sealed interface UpdateContextResult {
   class Changed(val newElements: List<InlineCompletionElement>, val truncateTyping: Int) : UpdateContextResult
 
-  object Same : UpdateContextResult
+  data object Same : UpdateContextResult
 
-  object Invalidated : UpdateContextResult
+  data object Invalidated : UpdateContextResult
 }
 
 internal fun updateContext(context: InlineCompletionContext, event: InlineCompletionEvent): UpdateContextResult {
   return when (event) {
     is InlineCompletionEvent.DocumentChange -> {
-      val fragment = event.getFragmentToAppendPrefix()
-      val (newElements, truncateTyping) = fragment?.let { applyPrefixAppend(context, it) }
-                                          ?: return UpdateContextResult.Invalidated
+      assert(event.event.oldLength == 0)
+      val fragment = event.event.newFragment
+      val (newElements, truncateTyping) = applyPrefixAppend(context, fragment) ?: return UpdateContextResult.Invalidated
       UpdateContextResult.Changed(newElements, truncateTyping)
     }
     is InlineCompletionEvent.LookupChange -> {
@@ -32,12 +32,6 @@ private fun applyPrefixAppend(context: InlineCompletionContext, fragment: CharSe
   }
   val truncateTyping = fragment.length
   return truncateElementsPrefix(context.state.elements, truncateTyping) to truncateTyping
-}
-
-private fun InlineCompletionEvent.DocumentChange.getFragmentToAppendPrefix(): String? {
-  val newFragment = event.newFragment
-  val oldFragment = event.oldFragment
-  return newFragment.takeIf { it.isNotEmpty() && oldFragment.isEmpty() }?.toString()
 }
 
 private fun truncateElementsPrefix(elements: List<InlineCompletionElement>, length: Int): List<InlineCompletionElement> {

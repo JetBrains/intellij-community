@@ -33,6 +33,7 @@ import org.jetbrains.annotations.TestOnly
 class InlineCompletionHandler(scope: CoroutineScope) {
   private val executor = SafeInlineCompletionExecutor(scope)
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
+  private val requestManager = InlineCompletionRequestManager()
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener())
@@ -74,6 +75,11 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   fun invoke(event: InlineCompletionEvent.DirectCall) = invokeEvent(event)
 
   @RequiresEdt
+  internal fun allowDocumentChange(event: SimpleTypingEvent) {
+    requestManager.allowDocumentChange(event)
+  }
+
+  @RequiresEdt
   private fun invokeEvent(event: InlineCompletionEvent) {
     if (!application.isDispatchThread) {
       LOG.error("Cannot run inline completion handler outside of EDT.")
@@ -83,8 +89,10 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     LOG.trace("Start processing inline event $event")
 
     val provider = getProvider(event)
-    val request = event.toRequest() ?: return
-    if (updateContextOrInvalidate(request, provider) || provider == null) {
+
+    val (request, invalidate) = requestManager.getRequest(event)
+    invalidate.invalidateIfRequired()
+    if (request == null || updateContextOrInvalidate(request, provider) || provider == null) {
       return
     }
 
@@ -92,14 +100,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     val newSession = InlineCompletionSession.init(request.editor, provider)
     newSession.guardCaretModifications(request)
     executor.switchJobSafely(newSession::assignJob) {
-      val newRequest = actualizeRequestOrNull(request)
-      if (newRequest != null) {
-        LOG.assertTrue(newRequest.editor === request.editor)
-        withContext(Dispatchers.EDT) {
-          newSession.guardCaretModifications(newRequest)
-        }
-      }
-      invokeRequest(newRequest ?: request, newSession)
+      invokeRequest(request, newSession)
     }
   }
 
@@ -259,28 +260,12 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     hide(context.editor, false, context)
   }
 
-  /**
-   * IDE inserts a paired quote/bracket and moves a caret without any event. It requires us to update request.
-   *
-   * It cannot be invoked when a request is constructed. It must be called after, in order to get
-   * actualized information about offset from EDT.
-   */
-  private suspend fun actualizeRequestOrNull(request: InlineCompletionRequest): InlineCompletionRequest? {
-    if (request.event !is InlineCompletionEvent.DocumentChange) {
-      return null
+  @RequiresEdt
+  private fun InlineCompletionRequestManager.InvalidateRequest.invalidateIfRequired() {
+    when (this) {
+      is InlineCompletionRequestManager.InvalidateRequest.Invalidate -> InlineCompletionSession.getOrNull(editor)?.invalidate()
+      is InlineCompletionRequestManager.InvalidateRequest.Ignore -> Unit
     }
-
-    // ML-1237, ML-1281, ML-1232
-    // TODO should not go to EDT but it helps us wait for an actual caret position
-    val offsetDelta = withContext(Dispatchers.EDT) { request.editor.caretModel.offset - request.endOffset }
-    if (offsetDelta == 0) {
-      return null
-    }
-
-    return request.copy(
-      startOffset = request.startOffset + offsetDelta,
-      endOffset = request.endOffset + offsetDelta
-    )
   }
 
   @RequiresEdt
