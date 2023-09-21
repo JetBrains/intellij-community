@@ -211,7 +211,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
 
   @NotNull
   protected @NlsContexts.ProgressText String wrapProgressText(@NotNull String text) {
-    return ExternalSystemBundle.message("progress.update.text", getExternalSystemId(), text);
+    return ExternalSystemBundle.message("progress.update.text", getExternalSystemId().getReadableName(), text);
   }
 
   @Override
