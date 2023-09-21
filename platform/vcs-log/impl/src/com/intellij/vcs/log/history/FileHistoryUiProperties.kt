@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.Disposable
@@ -10,7 +10,6 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
-import com.intellij.vcs.log.impl.isColumnVisible
 import com.intellij.vcs.log.ui.table.column.*
 import kotlin.collections.set
 
@@ -40,7 +39,6 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
       is TableColumnVisibilityProperty -> isColumnVisible(_state.columnIdVisibility, property)
       CommonUiProperties.COLUMN_ID_ORDER -> getColumnOrder()
       CommonUiProperties.SHOW_DETAILS -> _state.isShowDetails
-      SHOW_ALL_BRANCHES -> _state.isShowOtherBranches
       CommonUiProperties.SHOW_DIFF_PREVIEW -> _state.isShowDiffPreview
       MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT -> _state.isDiffPreviewVerticalSplit
       CommonUiProperties.SHOW_ROOT_NAMES -> _state.isShowRootNames
@@ -72,7 +70,6 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
     @Suppress("UNCHECKED_CAST")
     when (property) {
       CommonUiProperties.SHOW_DETAILS -> _state.isShowDetails = value as Boolean
-      SHOW_ALL_BRANCHES -> _state.isShowOtherBranches = value as Boolean
       CommonUiProperties.COLUMN_ID_ORDER -> _state.columnIdOrder = value as List<String>
       is TableColumnWidthProperty -> _state.columnIdWidth[property.name] = value as Int
       is TableColumnVisibilityProperty -> _state.columnIdVisibility[property.name] = value as Boolean
@@ -86,7 +83,6 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
 
   override fun <T> exists(property: VcsLogUiProperty<T>): Boolean {
     return CommonUiProperties.SHOW_DETAILS == property ||
-           SHOW_ALL_BRANCHES == property ||
            CommonUiProperties.COLUMN_ID_ORDER == property ||
            CommonUiProperties.SHOW_DIFF_PREVIEW == property ||
            MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT == property ||
@@ -94,6 +90,14 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
            applicationLevelProperties.contains(property) ||
            property is TableColumnWidthProperty ||
            property is TableColumnVisibilityProperty
+  }
+
+  internal fun addRecentlyFilteredGroup(filterName: String, values: Collection<String>) {
+    VcsLogProjectTabsProperties.addRecentGroup(_state.recentFilters, filterName, values)
+  }
+
+  internal fun getRecentlyFilteredGroups(filterName: String): List<List<String>> {
+    return VcsLogProjectTabsProperties.getRecentGroup(_state.recentFilters, filterName)
   }
 
   override fun getState(): State = _state
@@ -152,10 +156,8 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
 
     @get:OptionTag("SHOW_ROOT_NAMES")
     var isShowRootNames = false
-  }
 
-  companion object {
-    @JvmField
-    val SHOW_ALL_BRANCHES = VcsLogUiProperty<Boolean>("Table.ShowOtherBranches")
+    @get:OptionTag("RECENT_FILTERS")
+    var recentFilters: MutableMap<String, MutableList<VcsLogProjectTabsProperties.RecentGroup>> = HashMap()
   }
 }

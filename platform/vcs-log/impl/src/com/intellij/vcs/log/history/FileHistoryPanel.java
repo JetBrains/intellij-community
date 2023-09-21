@@ -74,12 +74,14 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
   private final @NotNull CommitDetailsListPanel myDetailsPanel;
   private final @NotNull JBSplitter myDetailsSplitter;
+  private final @NotNull JComponent myToolbar;
 
   private final @NotNull FileHistoryEditorDiffPreview myEditorDiffPreview;
 
   private final @NotNull History myHistory;
 
-  public FileHistoryPanel(@NotNull AbstractVcsLogUi logUi, @NotNull FileHistoryModel fileHistoryModel, @NotNull VcsLogData logData,
+  public FileHistoryPanel(@NotNull AbstractVcsLogUi logUi, @NotNull FileHistoryModel fileHistoryModel,
+                          @NotNull FileHistoryFilterUi filterUi, @NotNull VcsLogData logData,
                           @NotNull FilePath filePath, @NotNull VirtualFile root,
                           @NotNull VcsLogColorManager colorManager,
                           @NotNull Disposable disposable) {
@@ -128,15 +130,15 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myEditorDiffPreview = new FileHistoryEditorDiffPreview(myProject, this);
     Disposer.register(this, myEditorDiffPreview);
 
-    JComponent actionsToolbar = createActionsToolbar();
+    myToolbar = createActionsToolbar(filterUi);
     JBPanel tablePanel = new JBPanel(new BorderLayout()) {
       @Override
       public Dimension getMinimumSize() {
-        return VcsLogUiUtil.expandToFitToolbar(super.getMinimumSize(), actionsToolbar);
+        return VcsLogUiUtil.expandToFitToolbar(super.getMinimumSize(), myToolbar);
       }
     };
     tablePanel.add(myDetailsSplitter, BorderLayout.CENTER);
-    tablePanel.add(actionsToolbar, BorderLayout.NORTH);
+    tablePanel.add(myToolbar, BorderLayout.NORTH);
 
     setLayout(new BorderLayout());
     FrameDiffPreview frameDiffPreview = new FrameDiffPreview(myProperties, tablePanel, "vcs.history.diff.splitter.proportion",
@@ -145,7 +147,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       @Override
       protected DiffEditorViewer createViewer() {
         FileHistoryDiffProcessor processor = createDiffPreview(false);
-        processor.setToolbarVerticalSizeReferent(actionsToolbar);
+        processor.setToolbarVerticalSizeReferent(myToolbar);
         return processor;
       }
     };
@@ -172,8 +174,10 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     }.registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, component);
   }
 
-  private @NotNull JComponent createActionsToolbar() {
+  private @NotNull JComponent createActionsToolbar(@NotNull FileHistoryFilterUi filterUi) {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
+    toolbarGroup.add(filterUi.createActionGroup());
+    toolbarGroup.addSeparator();
     AnAction toolbarActions = CustomActionsSchema.getInstance().getCorrectedAction(VcsLogActionIds.FILE_HISTORY_TOOLBAR_ACTION_GROUP);
     toolbarGroup.add(Objects.requireNonNull(toolbarActions));
 
@@ -185,6 +189,10 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
   public @NotNull VcsLogGraphTable getGraphTable() {
     return myGraphTable;
+  }
+
+  public @NotNull JComponent getToolbar() {
+    return myToolbar;
   }
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permanentGraphChanged) {

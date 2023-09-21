@@ -143,7 +143,6 @@
       <action class="com.intellij.vcs.log.ui.actions.EnableMatchCaseAction"
               id="Vcs.Log.MatchCaseAction"
               icon="AllIcons.Actions.MatchCase"/>
-      <action class="com.intellij.vcs.log.ui.actions.ShowOtherBranchesAction" id="Vcs.Log.ShowOtherBranches"/>
       <action class="com.intellij.vcs.log.ui.actions.history.OpenRepositoryVersionFromHistoryAction" id="Vcs.Log.OpenRepositoryVersion"
               use-shortcut-of="Vcs.OpenRepositoryVersion"/>
       <action class="com.intellij.vcs.log.ui.actions.history.AnnotateRevisionFromHistoryAction" id="Vcs.Log.AnnotateRevisionAction"
@@ -257,7 +256,6 @@
       <reference id="Diff.ShowDiff"/>
       <reference id="Vcs.Log.ShowAllAffected"/>
       <separator/>
-      <reference id="Vcs.Log.ShowOtherBranches"/>
       <reference id="Vcs.FileHistory.PresentationSettings"/>
       <separator/>
       <reference id="VcsHistoryActionsGroup.Toolbar"/>
@@ -307,7 +305,6 @@
       <reference id="Vcs.Log.ShowAllAffected"/>
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <separator/>
-      <reference id="Vcs.Log.ShowOtherBranches"/>
       <reference id="Vcs.Log.Refresh"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="Vcs.Log.ShowDiffPreview"/>

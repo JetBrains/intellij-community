@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -54,6 +54,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                        @Nullable Hash revision,
                        @NotNull VirtualFile root,
                        @NotNull String logId,
+                       @NotNull VcsLogFilterCollection initialFilters,
                        @NotNull VcsLogDiffHandler vcsLogDiffHandler) {
     super(logId, logData, new FileHistoryColorManager(root, path), refresher);
 
@@ -71,8 +72,10 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       }
     };
 
-    myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties);
-    myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, logData, path, root, myColorManager, this);
+    myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties, logData, initialFilters, filters -> {
+      refresher.onFiltersChange(filters);
+    });
+    myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, myFilterUi, logData, path, root, myColorManager, this);
 
     getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(MyCommitsHighlighter.Factory.class).createHighlighter(getLogData(), this));
     if (myRevision != null) {
@@ -92,6 +95,8 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @Override
   public void setVisiblePack(@NotNull VisiblePack pack) {
     super.setVisiblePack(pack);
+
+    myFilterUi.setVisiblePack(pack);
 
     if (pack.canRequestMore()) {
       requestMore(EmptyRunnable.INSTANCE);
@@ -114,16 +119,17 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       return;
     }
 
-    boolean hasBranchFilter = getFilterUi().getFilters().get(VcsLogFilterCollection.BRANCH_FILTER) != null;
+    boolean hasBranchFilter = getFilterUi().hasBranchFilter();
     String text = VcsLogBundle.message(hasBranchFilter ? "file.history.commit.not.found.in.branch" : "file.history.commit.not.found",
                                        getCommitPresentation(commitId), myPath.getName());
 
     List<NotificationAction> actions = new ArrayList<>();
-    if (hasBranchFilter) {
-      actions.add(NotificationAction.createSimple(VcsLogBundle.message("file.history.commit.not.found.view.and.show.all.branches.link"), () -> {
-        myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
-        VcsLogUtil.invokeOnChange(this, () -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true));
-      }));
+    if (hasBranchFilter && getFilterUi().isBranchFilterEnabled()) {
+      actions.add(
+        NotificationAction.createSimple(VcsLogBundle.message("file.history.commit.not.found.view.and.show.all.branches.link"), () -> {
+          getFilterUi().clearFilters();
+          VcsLogUtil.invokeOnChange(this, () -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true));
+        }));
     }
     actions.add(NotificationAction.createSimple(VcsLogBundle.message("file.history.commit.not.found.view.in.log.link"), () -> {
       VcsLogContentUtil.runInMainLog(myProject, ui -> {
@@ -139,7 +145,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   @Override
-  public @NotNull VcsLogFilterUi getFilterUi() {
+  public @NotNull FileHistoryFilterUi getFilterUi() {
     return myFilterUi;
   }
 
@@ -160,6 +166,10 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return myFileHistoryPanel;
   }
 
+  public @NotNull JComponent getToolbar() {
+    return myFileHistoryPanel.getToolbar();
+  }
+
   @Override
   public @NotNull FileHistoryUiProperties getProperties() {
     return myUiProperties;
@@ -170,9 +180,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
       if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
         myFileHistoryPanel.showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
-      }
-      else if (FileHistoryUiProperties.SHOW_ALL_BRANCHES.equals(property)) {
-        myRefresher.onFiltersChange(myFilterUi.getFilters());
       }
       else if (CommonUiProperties.COLUMN_ID_ORDER.equals(property)) {
         getTable().onColumnOrderSettingChanged();

@@ -5,16 +5,13 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.FieldInplaceActionButtonLook
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.ClientProperty
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.SearchFieldWithExtension
@@ -22,7 +19,6 @@ import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogDataPack
 import com.intellij.vcs.log.VcsLogFilterCollection
@@ -37,7 +33,6 @@ import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx.VcsLogFilterListener
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.xml.util.XmlStringUtil
-import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.util.function.Consumer
@@ -157,25 +152,25 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
   }
 
   protected open fun createBranchComponent(): AnAction? {
-    return FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.branch.filter.action.text")) {
+    return MainUiActionComponent(VcsLogBundle.messagePointer("vcs.log.branch.filter.action.text")) {
       BranchFilterPopupComponent(uiProperties, branchFilterModel).initUi()
     }
   }
 
   protected fun createUserComponent(): AnAction? {
-    return FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.user.filter.action.text")) {
+    return MainUiActionComponent(VcsLogBundle.messagePointer("vcs.log.user.filter.action.text")) {
       UserFilterPopupComponent(uiProperties, logData, userFilterModel).initUi()
     }
   }
 
   protected fun createDateComponent(): AnAction? {
-    return FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.date.filter.action.text")) {
+    return MainUiActionComponent(VcsLogBundle.messagePointer("vcs.log.date.filter.action.text")) {
       DateFilterPopupComponent(dateFilterModel).initUi()
     }
   }
 
   protected fun createStructureFilterComponent(): AnAction? {
-    return FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.path.filter.action.text")) {
+    return MainUiActionComponent(VcsLogBundle.messagePointer("vcs.log.path.filter.action.text")) {
       StructureFilterPopupComponent(uiProperties, structureFilterModel, colorManager).initUi()
     }
   }
@@ -184,26 +179,10 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
     filterListenerDispatcher.addListener(listener)
   }
 
-  protected class FilterActionComponent(dynamicText: Supplier<String?>, private val componentCreator: Supplier<out JComponent>) :
-    DumbAwareAction(dynamicText), CustomComponentAction {
-
+  protected class MainUiActionComponent(dynamicText: Supplier<String>, private val componentCreator: Supplier<out JComponent>) :
+    VcsLogPopupComponentAction(dynamicText) {
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent = componentCreator.get()
-
-    override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-      component.isEnabled = presentation.isEnabled
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      val vcsLogUi = e.getData(VcsLogInternalDataKeys.MAIN_UI)
-      if (vcsLogUi == null) return
-
-      val actionComponent = UIUtil.uiTraverser(vcsLogUi.toolbar).traverse().find { component: Component? ->
-        ClientProperty.get(component, CustomComponentAction.ACTION_KEY) === this
-      }
-      if (actionComponent is VcsLogPopupComponent) {
-        actionComponent.showPopupMenu()
-      }
-    }
+    override fun getTargetComponent(e: AnActionEvent) = e.getData(VcsLogInternalDataKeys.MAIN_UI)?.toolbar
   }
 
   private inner class UserFilterModel(uiProperties: MainVcsLogUiProperties, filters: VcsLogFilterCollection?) :

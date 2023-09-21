@@ -21,6 +21,7 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.*
 import com.intellij.vcs.log.data.index.IndexDataGetter
+import com.intellij.vcs.log.data.index.VcsLogIndex
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.graph.VisibleGraph
@@ -118,10 +119,9 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
         scope.setAttribute(VcsTelemetrySpanAttribute.FILE_HISTORY_IS_INITIAL.key, isInitial)
         scope.setAttribute(VcsTelemetrySpanAttribute.VCS_NAME.key, VcsLogRepoSizeCollector.getVcsKeySafe(vcsKey))
 
-        val indexDataGetter = index.dataGetter
-        if (indexDataGetter != null && index.isIndexed(root) && dataPack.isFull && Registry.`is`("vcs.history.use.index")) {
+        if (canFilterWithIndex(index, root, dataPack)) {
           cancelLastTask(false)
-          val visiblePack = filterWithIndex(indexDataGetter, dataPack, oldVisiblePack, sortType, filters, isInitial)
+          val visiblePack = filterWithIndex(index.dataGetter!!, dataPack, oldVisiblePack, sortType, filters, isInitial)
 
           LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
           scope.setAttribute(VcsTelemetrySpanAttribute.FILE_HISTORY_TYPE.key, "index")
@@ -318,17 +318,10 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
     }
 
     @JvmStatic
-    fun createFilters(path: FilePath,
-                      revision: Hash?,
-                      root: VirtualFile,
-                      showAllBranches: Boolean): VcsLogFilterCollection {
+    fun createFilters(path: FilePath, revision: Hash?, root: VirtualFile): VcsLogFilterCollection {
       val fileFilter = VcsLogFileHistoryFilter(path, revision)
-
-      val revisionFilter = when {
-        showAllBranches -> null
-        revision != null -> VcsLogFilterObject.fromCommit(CommitId(revision, root))
-        else -> VcsLogFilterObject.fromBranch(VcsLogUtil.HEAD)
-      }
+      val revisionFilter = revision?.let { VcsLogFilterObject.fromCommit(CommitId(it, root)) }
+                           ?: VcsLogFilterObject.fromBranch(VcsLogUtil.HEAD)
       return VcsLogFilterObject.collection(fileFilter, revisionFilter)
     }
 
@@ -340,6 +333,10 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
         return EmptyVisibleGraph.getInstance()
       }
       return dataPack.permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits)
+    }
+
+    internal fun canFilterWithIndex(index: VcsLogIndex, root: VirtualFile, dataPack: DataPackBase): Boolean {
+      return index.dataGetter != null && index.isIndexed(root) && dataPack.isFull && Registry.`is`("vcs.history.use.index")
     }
   }
 }

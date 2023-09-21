@@ -32,12 +32,11 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
   public FileHistoryUi createLogUi(@NotNull Project project, @NotNull VcsLogData logData) {
     FileHistoryUiProperties properties = project.getService(FileHistoryUiProperties.class);
 
-    VcsLogFilterCollection filters = FileHistoryFilterer.createFilters(myFilePath, myHash, myRoot,
-                                                                       properties.get(FileHistoryUiProperties.SHOW_ALL_BRANCHES));
+    VcsLogFilterCollection filters = FileHistoryFilterer.createFilters(myFilePath, myHash, myRoot);
     String logId = FileHistoryUi.getFileHistoryLogId(myFilePath, myHash);
     VisiblePackRefresherImpl visiblePackRefresher = new VisiblePackRefresherImpl(project, logData, filters, PermanentGraph.SortType.Normal,
                                                                                  new FileHistoryFilterer(logData, logId), logId);
-    FileHistoryUi ui = new FileHistoryUi(logData, properties, visiblePackRefresher, myFilePath, myHash, myRoot, logId,
+    FileHistoryUi ui = new FileHistoryUi(logData, properties, visiblePackRefresher, myFilePath, myHash, myRoot, logId, filters,
                                          Objects.requireNonNull(logData.getLogProvider(myRoot).getDiffHandler()));
 
     RegistryValueListener registryValueListener = new RegistryValueListener() {
