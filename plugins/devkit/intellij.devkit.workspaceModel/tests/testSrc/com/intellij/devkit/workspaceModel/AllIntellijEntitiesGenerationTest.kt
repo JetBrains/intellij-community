@@ -89,9 +89,9 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
       // Regex for searching regular entities in modules
       "interface [a-zA-Z0-9]+\\s*:\\s*WorkspaceEntity[a-zA-Z0-9]*",
       // Regex for searching entity source implementations in modules
-      "class [a-zA-Z0-9]+\\s*(\\(.*\\))?\\s*:\\s*EntitySource",
+      "(class|object) [a-zA-Z0-9]+\\s*(\\(.*\\))?\\s*:\\s*EntitySource",
       // Regex for searching symbolic id implementations in modules
-      "class [a-zA-Z0-9]+\\s*(\\(.*\\))?\\s*:\\s*SymbolicEntityId<[a-zA-Z0-9]*>"
+      "(class|object) [a-zA-Z0-9]+\\s*(\\(.*\\))?\\s*:\\s*SymbolicEntityId<[a-zA-Z0-9]*>"
     ))
 
     val regexToDetectOutdatedGeneratedFiles = Regex(
