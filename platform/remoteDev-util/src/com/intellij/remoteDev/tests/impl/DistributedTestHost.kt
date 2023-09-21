@@ -2,9 +2,11 @@ package com.intellij.remoteDev.tests.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
-import com.intellij.diagnostic.DebugLogManager
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.enableCoroutineDump
+import com.intellij.diagnostic.logs.LogCategory
+import com.intellij.diagnostic.logs.DebugLogLevel
+import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -237,10 +239,9 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         }
 
         // Initialize loggers
-        DebugLogManager.getInstance().applyCategories(
-          session.traceCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.TRACE) } +
-          session.debugCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.DEBUG) }
-        )
+        LogLevelConfigurationManager.getInstance().addCategories(session.traceCategories.map { LogCategory(it, DebugLogLevel.TRACE) } +
+                                                                 session.debugCategories.map { LogCategory(it, DebugLogLevel.DEBUG) })
+
         LOG.info("Test session ready!")
         session.ready.value = true
       }

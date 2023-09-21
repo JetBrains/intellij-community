@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bootstrap
 
-import com.intellij.diagnostic.DebugLogManager
+import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.PluginException
 import com.intellij.history.LocalHistory
@@ -75,8 +75,7 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl,
     }
 
     asyncScope.launch {
-      // wants PropertiesComponent
-      app.serviceAsync<DebugLogManager>()
+      app.serviceAsync<LogLevelConfigurationManager>()
     }
   }
 

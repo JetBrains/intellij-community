@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
+import com.intellij.diagnostic.logs.LogCategory
+import com.intellij.diagnostic.logs.DebugLogLevel
+import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.testFramework.ApplicationRule
 import org.junit.Rule
 import org.junit.Test
@@ -9,7 +12,7 @@ import java.util.logging.Logger
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
-class DebugLogManagerTest {
+class LogsPersStateManagerTest {
   @get:Rule
   val applicationRule: ApplicationRule = ApplicationRule()
 
@@ -27,12 +30,15 @@ class DebugLogManagerTest {
       assertNotEquals(Level.FINER, Logger.getLogger(category).level)
     }
 
-    DebugLogManager.getInstance().applyCategories(listOf(
-      DebugLogManager.Category("###$randomPackageName1", DebugLogManager.DebugLogLevel.TRACE),
-      DebugLogManager.Category(randomPackageName2, DebugLogManager.DebugLogLevel.TRACE)))
+    LogLevelConfigurationManager.getInstance().addCategories(listOf(
+      LogCategory("###$randomPackageName1", DebugLogLevel.TRACE),
+      LogCategory(randomPackageName2, DebugLogLevel.TRACE)))
 
-    for (category in affectedLogCategories) {
-      assertEquals(Level.FINER, Logger.getLogger(category).level)
+    val filteredCategories = listOf(LogCategory(randomPackageName1, DebugLogLevel.TRACE),
+                                    LogCategory(randomPackageName2, DebugLogLevel.TRACE))
+
+    for (category in filteredCategories) {
+      assertEquals(Level.FINER, Logger.getLogger(category.category).level)
     }
   }
 }
