@@ -37,6 +37,10 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
 
   @Override
   public boolean isSame(DiffCapable<?, ?> other) {
+    if (!(other instanceof JVMClassNode)) {
+      return false;
+    }
+
     if (!this.getClass().equals(other.getClass())) {
       return false;
     }
