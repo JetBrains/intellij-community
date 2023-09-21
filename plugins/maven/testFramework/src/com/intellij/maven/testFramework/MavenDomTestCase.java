@@ -48,6 +48,7 @@ import org.jetbrains.idea.maven.dom.inspections.MavenModelInspection;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
+import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.IOException;
 import java.util.*;
@@ -353,13 +354,22 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
   }
 
   protected void checkHighlighting(VirtualFile f) {
+    MavenLog.LOG.warn("checkHighlighting started");
+
     VirtualFileManager.getInstance().syncRefresh();
+    MavenLog.LOG.warn("checkHighlighting: VFS refreshed");
+
     configTest(myProjectPom);
+    MavenLog.LOG.warn("checkHighlighting: test configured");
+
     try {
       myFixture.testHighlighting(true, false, true, f);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);
+    }
+    finally {
+      MavenLog.LOG.warn("checkHighlighting finished");
     }
   }
 
