@@ -35,6 +35,8 @@ import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative
 import org.jetbrains.kotlin.storage.CancellableSimpleLock
 import org.jetbrains.kotlin.storage.guarded
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 
@@ -158,7 +160,9 @@ internal class ProjectResolutionFacade(
     internal fun resolverForElement(element: PsiElement): ResolverForModule {
         val moduleInfos = mutableSetOf<IdeaModuleInfo>()
 
-        val elementModuleInfos = ModuleInfoProvider.getInstance(element.project).collect(element, existingInfos = allModules)
+        val scriptFile = allModules?.firstIsInstanceOrNull<ScriptDependenciesInfo.ForFile>()?.scriptFile
+
+        val elementModuleInfos = ModuleInfoProvider.getInstance(element.project).collect(element, scriptFile = scriptFile)
         for (result in elementModuleInfos) {
             val moduleInfo = result.getOrNull()
             if (moduleInfo != null) {

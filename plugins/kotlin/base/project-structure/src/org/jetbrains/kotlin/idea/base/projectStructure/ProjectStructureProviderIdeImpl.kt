@@ -6,12 +6,15 @@ import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptDependencyModule
+import org.jetbrains.kotlin.analysis.project.structure.KtScriptModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analysis.project.structure.impl.KtCodeFragmentModuleImpl
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
@@ -52,10 +55,12 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
         }
 
         val anchorElement = ModuleInfoProvider.findAnchorElement(element)
+        val scriptFile = (contextualModule as? KtScriptModule)?.file?.virtualFile
+
         return if (anchorElement != null) {
-            cachedKtModule(anchorElement)
+            cachedKtModule(anchorElement, scriptFile)
         } else {
-            calculateKtModule(element)
+            calculateKtModule(element, scriptFile)
         }
     }
 
@@ -65,14 +70,22 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
     }
 }
 
-private fun cachedKtModule(anchorElement: PsiElement): KtModule = CachedValuesManager.getCachedValue<KtModule>(anchorElement) {
-    val project = anchorElement.project
-    CachedValueProvider.Result.create(
-        calculateKtModule(anchorElement),
-        ProjectRootModificationTracker.getInstance(project),
-        JavaLibraryModificationTracker.getInstance(project),
-        KotlinModificationTrackerFactory.getInstance(project).createProjectWideOutOfBlockModificationTracker(),
-    )
+private fun cachedKtModule(
+    anchorElement: PsiElement,
+    scriptFile: VirtualFile?
+): KtModule {
+    val fileToKtModule = CachedValuesManager.getCachedValue(anchorElement) {
+        val project = anchorElement.project
+        CachedValueProvider.Result.create(
+            ConcurrentFactoryMap.createMap<VirtualFile?, KtModule> { file -> calculateKtModule(anchorElement, file) },
+            ProjectRootModificationTracker.getInstance(project),
+            JavaLibraryModificationTracker.getInstance(project),
+            KotlinModificationTrackerFactory.getInstance(project).createProjectWideOutOfBlockModificationTracker(),
+        )
+    }
+
+    return fileToKtModule[scriptFile]
+        ?: error("No KtModule found for element=${anchorElement} and scriptFile=$scriptFile")
 }
 
 private inline fun forEachModuleFactory(action: KtModuleFactory.() -> Unit) {
@@ -96,16 +109,16 @@ private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
     }
 }
 
-private fun calculateKtModule(psiElement: PsiElement): KtModule {
+private fun calculateKtModule(psiElement: PsiElement, scriptFile: VirtualFile? = null): KtModule {
     val containingFile = psiElement.containingFile
     val virtualFile = containingFile?.virtualFile
     val project = psiElement.project
     val config = ModuleInfoProvider.Configuration(
         createSourceLibraryInfoForLibraryBinaries = false,
-        preferModulesFromExtensions = virtualFile?.nameSequence?.endsWith(".kts") == true
+        preferModulesFromExtensions =  (scriptFile != null) || (virtualFile?.nameSequence?.endsWith(".kts") == true)
     )
 
-    val moduleInfo = ModuleInfoProvider.getInstance(project).firstOrNull(psiElement, config)
+    val moduleInfo = ModuleInfoProvider.getInstance(project).firstOrNull(psiElement, config, scriptFile)
         ?: NotUnderContentRootModuleInfo(project, psiElement.containingFile as? KtFile)
 
     if (virtualFile != null && isOutsiderFile(virtualFile) && moduleInfo is ModuleSourceInfo) {
