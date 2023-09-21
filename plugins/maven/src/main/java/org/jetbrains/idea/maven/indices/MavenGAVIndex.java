@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.indices;
 
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.IndexKind;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 
 import java.util.Collection;

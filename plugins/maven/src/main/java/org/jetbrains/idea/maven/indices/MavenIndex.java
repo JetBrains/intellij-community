@@ -17,10 +17,7 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.model.MavenArchetype;
-import org.jetbrains.idea.maven.model.MavenArtifactInfo;
-import org.jetbrains.idea.maven.model.MavenIndexId;
-import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
+import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -203,7 +200,7 @@ public final class MavenIndex implements MavenSearchIndex, MavenGAVIndex {
   @Override
   public MavenRepositoryInfo getRepository() {
     if (myKind == IndexKind.ONLINE) return null;
-    return new MavenRepositoryInfo(getRepositoryId(), getRepositoryId(), myRepositoryPathOrUrl);
+    return new MavenRepositoryInfo(getRepositoryId(), getRepositoryId(), myRepositoryPathOrUrl, myKind);
   }
 
   @Override
@@ -511,6 +508,7 @@ public final class MavenIndex implements MavenSearchIndex, MavenGAVIndex {
     return doIndexTask(() -> notNullize(indexData.groupWithArtifactToVersionMap.get(groupWithArtifact)).contains(version), false);
   }
 
+  @Override
   public Set<MavenArtifactInfo> search(final String pattern, final int maxResult) {
     return doIndexAndRecoveryTask(() -> myData.search(pattern, maxResult), Collections.emptySet());
   }

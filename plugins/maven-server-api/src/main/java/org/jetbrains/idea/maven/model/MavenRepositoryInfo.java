@@ -22,7 +22,7 @@ public class MavenRepositoryInfo implements Serializable {
   private final String myName;
   private final String myUrl;
 
-  public MavenRepositoryInfo(String id, String name, String url) {
+  public MavenRepositoryInfo(String id, String name, String url, IndexKind kind) {
     myId = id;
     myName = name;
     myUrl = url;
