@@ -19,13 +19,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
 class OperationLogStorageImpl(
   storagePath: Path,
   private val stringEnumerator: DataEnumerator<String>,
   private val scope: CoroutineScope,
-  writerJobsCount: Int,
+  private val maxWorkers: Int,
   trackJobStatistics: Boolean = true
 ) : OperationLogStorage {
   private val appendLogStorage: AppendLogStorage = AppendLogStorage(storagePath, Mode.ReadWrite, PAGE_SIZE)
@@ -37,6 +38,7 @@ class OperationLogStorageImpl(
   private val telemetry = object : AutoCloseable {
     val jobsOffloadedToWorkers: AtomicLong = AtomicLong(0)
     val jobsPerformedOnMainThread: AtomicLong = AtomicLong(0)
+    val workersLaunched: AtomicInteger = AtomicInteger(0)
 
     @Volatile
     private var batchCallback: AutoCloseable? = null
@@ -44,15 +46,17 @@ class OperationLogStorageImpl(
     fun setupTelemetry() {
       val meter = getMeter(VFS)
 
-      val jobsOffloadedToWorkersGauge = meter.counterBuilder("VfsLog.OperationsLogStorage.jobsOffloadedToWorkers").buildObserver()
-      val jobsPerformedOnMainThreadGauge = meter.counterBuilder("VfsLog.OperationsLogStorage.jobsPerformedOnMainThread").buildObserver()
+      val jobsOffloadedToWorkersCounter = meter.counterBuilder("VfsLog.OperationsLogStorage.jobsOffloadedToWorkers").buildObserver()
+      val jobsPerformedOnMainThreadCounter = meter.counterBuilder("VfsLog.OperationsLogStorage.jobsPerformedOnMainThread").buildObserver()
+      val workersLaunchedGauge = meter.gaugeBuilder("VfsLog.OperationsLogStorage.workersLaunched").ofLongs().buildObserver()
 
       batchCallback = meter.batchCallback(
         {
-          jobsOffloadedToWorkersGauge.record(jobsOffloadedToWorkers.get())
-          jobsPerformedOnMainThreadGauge.record(jobsPerformedOnMainThread.get())
+          jobsOffloadedToWorkersCounter.record(jobsOffloadedToWorkers.get())
+          jobsPerformedOnMainThreadCounter.record(jobsPerformedOnMainThread.get())
+          workersLaunchedGauge.record(workersLaunched.get().toLong())
         },
-        jobsOffloadedToWorkersGauge, jobsPerformedOnMainThreadGauge
+        jobsOffloadedToWorkersCounter, jobsPerformedOnMainThreadCounter, workersLaunchedGauge
       )
     }
 
@@ -61,8 +65,18 @@ class OperationLogStorageImpl(
     }
   }
 
+  private fun launchWorker(workersBefore: Int): Boolean { // can be invoked concurrently
+    if (telemetry.workersLaunched.compareAndSet(workersBefore, workersBefore + 1)) {
+      scope.launch { writeWorker() }
+      return true
+    }
+    return false
+  }
+
   init {
-    repeat(writerJobsCount) { scope.launch { writeWorker() } }
+    check(launchWorker(0))
+    if (maxWorkers > 1) check(launchWorker(1))
+
     if (trackJobStatistics) telemetry.setupTelemetry()
   }
 
@@ -94,9 +108,23 @@ class OperationLogStorageImpl(
       telemetry.jobsOffloadedToWorkers.incrementAndGet()
     }
     else {
-      telemetry.jobsPerformedOnMainThread.incrementAndGet()
+      val missedJobCount = telemetry.jobsPerformedOnMainThread.incrementAndGet()
       performWriteJob(job)
+      launchMoreWorkers(missedJobCount)
     }
+  }
+
+  private fun launchMoreWorkers(missedJobCount: Long) {
+    val currentWorkers = telemetry.workersLaunched.get()
+    if (missedJobCount <= 0 || currentWorkers >= maxWorkers) return
+    // large number of workers increase contention on the job channel, so let's tolerate missed jobs if there aren't many of them
+    val shouldLaunch: Boolean = when (currentWorkers) {
+      1 -> missedJobCount >= 1000
+      2 -> missedJobCount >= 5000
+      3 -> missedJobCount >= 10000
+      else -> missedJobCount >= currentWorkers * 10000L
+    }
+    if (shouldLaunch) launchWorker(currentWorkers)
   }
 
   private inner class TrackContext(val tag: VfsOperationTag, val appendLogEntry: AppendContext): OperationTracker {

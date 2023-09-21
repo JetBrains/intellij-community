@@ -32,7 +32,6 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.*
-import kotlin.math.max
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -83,12 +82,12 @@ class VfsLogImpl private constructor(
   @ApiStatus.Internal
   inner class ContextImpl internal constructor() : VfsLogBaseContext {
     @OptIn(ExperimentalCoroutinesApi::class)
-    val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(WORKER_THREADS_COUNT))
+    val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(MAX_WORKER_THREADS_COUNT))
 
     // todo: probably need to propagate readOnly to storages to ensure safety
     override val stringEnumerator = SimpleStringPersistentEnumerator(storagePath / "stringsEnum")
     val operationLogStorage = OperationLogStorageImpl(storagePath / "operations", stringEnumerator,
-                                                      coroutineScope, WORKER_THREADS_COUNT)
+                                                      coroutineScope, MAX_WORKER_THREADS_COUNT)
     val payloadStorage = PayloadStorageImpl(storagePath / "data")
     val compactionController = VfsLogCompactionController(
       storagePath / "compacted",
@@ -422,9 +421,9 @@ class VfsLogImpl private constructor(
 
     const val VERSION = 5
 
-    private val WORKER_THREADS_COUNT = SystemProperties.getIntProperty(
-      "idea.vfs.log-vfs-operations.workers",
-      max(4, Runtime.getRuntime().availableProcessors() / 2)
+    private val MAX_WORKER_THREADS_COUNT = SystemProperties.getIntProperty(
+      "idea.vfs.log-vfs-operations.max-workers",
+      (Runtime.getRuntime().availableProcessors() / 10).coerceAtLeast(2)
     )
 
     // compaction options
