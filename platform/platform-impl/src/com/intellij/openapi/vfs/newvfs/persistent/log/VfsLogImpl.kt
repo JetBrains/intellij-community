@@ -419,7 +419,7 @@ class VfsLogImpl private constructor(
   companion object {
     private val LOG = Logger.getInstance(VfsLogImpl::class.java)
 
-    const val VERSION = 5
+    const val VERSION = 6
 
     private val MAX_WORKER_THREADS_COUNT = SystemProperties.getIntProperty(
       "idea.vfs.log-vfs-operations.max-workers",
