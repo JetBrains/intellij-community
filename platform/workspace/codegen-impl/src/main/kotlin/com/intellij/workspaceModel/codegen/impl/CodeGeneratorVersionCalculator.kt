@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.codegen.impl
 
 object CodeGeneratorVersionCalculator {
   val implementationMajorVersion: String
-    get() = "2"
+    get() = "3"
 
   val apiVersion: String
     get() = "2"
