@@ -16,6 +16,7 @@
 package com.jetbrains.python.run;
 
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,4 +25,6 @@ import org.jetbrains.annotations.Nullable;
 public interface AbstractPythonRunConfigurationParams extends PythonRunParams {
   @Nullable
   Module getModule();
+
+  void copyEnvFiles(@NotNull AbstractPythonRunConfigurationParams configurationParams);
 }
