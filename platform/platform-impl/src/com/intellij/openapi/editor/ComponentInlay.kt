@@ -5,6 +5,11 @@ import com.intellij.openapi.editor.impl.ComponentInlayManager
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Component
 
+/**
+ * Adds block inlay for [component].
+ * The component embeds into editor content and syncs it position with inlay.
+ * [alignment] works as a constraint for container.
+ */
 @Experimental
 fun <T : Component> Editor.addComponentInlay(offset: Int,
                                              properties: InlayProperties,
@@ -12,6 +17,10 @@ fun <T : Component> Editor.addComponentInlay(offset: Int,
                                              alignment: ComponentInlayAlignment? = null): Inlay<ComponentInlayRenderer<T>>? =
   addComponentInlay(offset, properties, ComponentInlayRenderer(component, alignment))
 
+/**
+ * Adds block inlay for custom [renderer].
+ * @see [Editor.addComponentInlay]
+ */
 @Experimental
 fun <T : Component> Editor.addComponentInlay(offset: Int,
                                              properties: InlayProperties,

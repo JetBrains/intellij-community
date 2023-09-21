@@ -5,6 +5,11 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.*
 
+/**
+ * Open implementation of [EditorCustomElementRenderer] for component-based inlays.
+ * Can be extended to add context menu and/or gutter associated with inlay.
+ * Use [Editor.addComponentInlay] to create and component inlay with the renderer.
+ */
 @Experimental
 open class ComponentInlayRenderer<out T : Component>(val component: T,
                                                      val alignment: ComponentInlayAlignment? = null) : EditorCustomElementRenderer {

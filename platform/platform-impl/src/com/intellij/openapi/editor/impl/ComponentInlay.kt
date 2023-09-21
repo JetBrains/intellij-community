@@ -26,6 +26,9 @@ import javax.swing.SwingUtilities
 import kotlin.math.max
 import kotlin.math.min
 
+/**
+ * Manager for component inlays. Joins a component and a block inlay together with synced positions and lifetimes.
+ */
 @Experimental
 internal object ComponentInlayManager {
   fun <T : Component> add(editor: Editor,
@@ -38,6 +41,20 @@ internal object ComponentInlayManager {
     }
 }
 
+/**
+ * Container for component inlays. Has one instance of the container per editor.
+ * Conducting all synchronization between components and associated inlays, for components works as a regular AWT container.
+ * For components supports different alignment modes:
+ * - null - uses preferred width as an inlay width
+ * - [ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH] - uses preferred width as an inlay width, sets component width to editor content width during layout
+ * - [ComponentInlayAlignment.FIT_CONTENT_WIDTH] - uses min width as an inlay width, sets component width to editor content width during layout
+ * - [ComponentInlayAlignment.FIT_VIEWPORT_WIDTH] and [ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN] - uses min width as an inlay width, sets component width to viewport width. For X Span shifts component to viewport.
+ * Inlay width incorporated during content preferred width calculation and for that reason we can't sync inlay width with component actual width when alignment used,
+ * otherwise editor content won't shrink when text changed or viewport changed.
+ * I.e. we have component preferred width 10 and editor content width 100 (because of viewport) and FIT_CONTENT_WIDTH alignment,
+ * after layout component's with will be 100 and if inlay width also 100 then after shrinking viewport to 80 the content width still will be 100 (because of inlay).
+ * But if we set inlay width to preferred component width 10 then it will adjust to viewport size and resize component to width 80.
+ */
 private class ComponentInlaysContainer private constructor(val editor: EditorEx) : JComponent(), EditorHostedComponent, Disposable {
   companion object {
     private val INLAYS_CONTAINER = Key<ComponentInlaysContainer>("INLAYS_CONTAINER")
