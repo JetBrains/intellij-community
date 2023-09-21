@@ -32,6 +32,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   private final CoverageEngine myCoverageEngine;
   private String @Nullable [] myIncludeFilters;
   private String @Nullable [] myExcludePatterns;
+  private boolean mySkipUnloadedClassesAnalysis;
 
   //read external only
   public JavaCoverageSuite(@NotNull final CoverageEngine coverageEngine) {
@@ -57,6 +58,10 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     myCoverageEngine = coverageEngine;
     myIncludeFilters = includeFilters;
     myExcludePatterns = excludePatterns;
+
+    if (coverageRunner instanceof JaCoCoCoverageRunner) {
+      setSkipUnloadedClassesAnalysis(true);
+    }
   }
 
   public final String @NotNull [] getFilteredPackageNames() {
@@ -81,6 +86,14 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
 
   final void setExcludePatterns(String @Nullable [] patterns) {
     myExcludePatterns = patterns;
+  }
+
+  public boolean isSkipUnloadedClassesAnalysis() {
+    return mySkipUnloadedClassesAnalysis;
+  }
+
+  public void setSkipUnloadedClassesAnalysis(boolean skipUnloadedClassesAnalysis) {
+    mySkipUnloadedClassesAnalysis = skipUnloadedClassesAnalysis;
   }
 
   private static String[] getPackageNames(String[] filters) {

@@ -4,6 +4,7 @@ package com.intellij.coverage;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.coverage.analysis.Annotator;
 import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator;
+import com.intellij.coverage.analysis.JavaCoverageReportEnumerator;
 import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.openapi.application.PluginPathManager;
@@ -40,17 +41,22 @@ public class CoverageIntegrationTest extends JavaModuleTestCase {
     CoverageSuitesBundle bundle = loadCoverageSuite(IDEACoverageRunner.class, "simple$foo_in_simple.coverage", null);
     PackageAnnotationConsumer consumer = new PackageAnnotationConsumer();
     new JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitSuite();
-    PackageAnnotator.ClassCoverageInfo barClassCoverage = consumer.myClassCoverageInfo.get("foo.bar.BarClass");
-    assertEquals(3, barClassCoverage.totalMethodCount);
-    assertEquals(1, barClassCoverage.coveredMethodCount);
-    PackageAnnotator.PackageCoverageInfo barPackageCoverage = consumer.myPackageCoverage.get("foo.bar");
-    assertEquals(2, barPackageCoverage.coveredLineCount);
-    assertEquals(8, barPackageCoverage.totalLineCount);
-    assertEquals(1, barPackageCoverage.coveredMethodCount);
-    assertEquals(7, barPackageCoverage.totalMethodCount);
-    PackageAnnotator.ClassCoverageInfo uncoveredClassInfo = consumer.myClassCoverageInfo.get("foo.bar.UncoveredClass");
-    assertEquals(4, uncoveredClassInfo.totalMethodCount);
-    assertEquals(0, uncoveredClassInfo.coveredMethodCount);
+
+    assertEquals(3, consumer.myClassCoverageInfo.size());
+    assertEquals(2, consumer.myFlatPackageCoverage.size());
+    assertEquals(3, consumer.myPackageCoverage.size());
+    assertEquals(3, consumer.myDirectoryCoverage.size());
+
+    assertHits(consumer.myClassCoverageInfo.get("foo.bar.BarClass"), new int[]{1, 1, 3, 1, 4, 2, 0, 0});
+    assertHits(consumer.myClassCoverageInfo.get("foo.bar.UncoveredClass"), new int[]{1, 0, 4, 0, 4, 0, 0, 0});
+    assertHits(consumer.myClassCoverageInfo.get("foo.FooClass"), new int[]{1, 1, 2, 2, 3, 3, 0, 0});
+
+    assertHits(consumer.myFlatPackageCoverage.get("foo.bar"), new int[]{2, 1, 7, 1, 8, 2, 0, 0});
+    assertHits(consumer.myFlatPackageCoverage.get("foo"), new int[]{1, 1, 2, 2, 3, 3, 0, 0});
+
+    assertHits(consumer.myPackageCoverage.get("foo.bar"), new int[]{2, 1, 7, 1, 8, 2, 0, 0});
+    assertHits(consumer.myPackageCoverage.get("foo"), new int[]{3, 2, 9, 3, 11, 5, 0, 0});
+    assertHits(consumer.myPackageCoverage.get(""), new int[]{3, 2, 9, 3, 11, 5, 0, 0});
   }
 
   public void testSingleClassFilter() {
@@ -60,16 +66,53 @@ public class CoverageIntegrationTest extends JavaModuleTestCase {
     new JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitSuite();
 
     assertEquals(1, consumer.myClassCoverageInfo.size());
-    PackageAnnotator.ClassCoverageInfo barClassCoverage = consumer.myClassCoverageInfo.get("foo.bar.BarClass");
-    assertEquals(3, barClassCoverage.totalMethodCount);
-    assertEquals(1, barClassCoverage.coveredMethodCount);
+    assertEquals(1, consumer.myFlatPackageCoverage.size());
+    assertEquals(3, consumer.myPackageCoverage.size());
+    assertEquals(1, consumer.myDirectoryCoverage.size());
+    assertHits(consumer.myClassCoverageInfo.get("foo.bar.BarClass"), new int[]{1, 1, 3, 1, 4, 2, 0, 0});
+    assertHits(consumer.myFlatPackageCoverage.get("foo.bar"), new int[]{1, 1, 3, 1, 4, 2, 0, 0});
+    assertHits(consumer.myPackageCoverage.get("foo.bar"), new int[]{1, 1, 3, 1, 4, 2, 0, 0});
+    assertHits(consumer.myPackageCoverage.get("foo"), new int[]{1, 1, 3, 1, 4, 2, 0, 0});
+    assertHits(consumer.myPackageCoverage.get(""), new int[]{1, 1, 3, 1, 4, 2, 0, 0});
   }
 
-  public void testJaCoCo() {
+  public void testJaCoCoProjectData() {
     CoverageSuitesBundle bundle = loadCoverageSuite(JaCoCoCoverageRunner.class, "simple$foo_in_simple.jacoco.coverage", null);
     ClassData classData = bundle.getCoverageData().getClassData("foo.FooClass");
     // getStatus() never returns full coverage; it can only distinguish between none and partial
     assertEquals(LineCoverage.PARTIAL, classData.getStatus("method1()I").intValue());
+  }
+
+  public void testJaCoCo() {
+    CoverageSuitesBundle bundle = loadCoverageSuite(JaCoCoCoverageRunner.class, "simple$foo_in_simple.jacoco.coverage", null);
+    PackageAnnotationConsumer consumer = new PackageAnnotationConsumer();
+    new JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitSuite();
+    assertJaCoCoHits(consumer);
+  }
+
+  public void testJaCoCoWithoutUnloaded() {
+    CoverageSuitesBundle bundle = loadCoverageSuite(JaCoCoCoverageRunner.class, "simple$foo_in_simple.jacoco.coverage", null);
+    PackageAnnotationConsumer consumer = new PackageAnnotationConsumer();
+    JavaCoverageReportEnumerator.collectSummaryInReport(bundle, myProject, consumer);
+    assertJaCoCoHits(consumer);
+  }
+
+  private static void assertJaCoCoHits(PackageAnnotationConsumer consumer) {
+    assertEquals(3, consumer.myClassCoverageInfo.size());
+    assertEquals(2, consumer.myFlatPackageCoverage.size());
+    assertEquals(3, consumer.myPackageCoverage.size());
+    assertEquals(3, consumer.myDirectoryCoverage.size());
+
+    assertHits(consumer.myClassCoverageInfo.get("foo.bar.BarClass"), new int[]{1, 1, 3, 1, 4, 2, 0, 0});
+    assertHits(consumer.myClassCoverageInfo.get("foo.bar.UncoveredClass"), new int[]{1, 0, 4, 0, 4, 0, 0, 0});
+    assertHits(consumer.myClassCoverageInfo.get("foo.FooClass"), new int[]{1, 1, 2, 2, 3, 3, 2, 1});
+
+    assertHits(consumer.myFlatPackageCoverage.get("foo.bar"), new int[]{2, 1, 7, 1, 8, 2, 0, 0});
+    assertHits(consumer.myFlatPackageCoverage.get("foo"), new int[]{1, 1, 2, 2, 3, 3, 2, 1});
+
+    assertHits(consumer.myPackageCoverage.get("foo.bar"), new int[]{2, 1, 7, 1, 8, 2, 0, 0});
+    assertHits(consumer.myPackageCoverage.get("foo"), new int[]{3, 2, 9, 3, 11, 5, 2, 1});
+    assertHits(consumer.myPackageCoverage.get(""), new int[]{3, 2, 9, 3, 11, 5, 2, 1});
   }
 
   public void testHTMLReport() throws IOException {
@@ -122,6 +165,17 @@ public class CoverageIntegrationTest extends JavaModuleTestCase {
     public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
       myClassCoverageInfo.put(classQualifiedName, classCoverageInfo);
     }
+  }
+
+  private static void assertHits(PackageAnnotator.SummaryCoverageInfo barClassCoverage, int[] hits) {
+    assertEquals(hits[0], barClassCoverage.totalClassCount);
+    assertEquals(hits[1], barClassCoverage.coveredClassCount);
+    assertEquals(hits[2], barClassCoverage.totalMethodCount);
+    assertEquals(hits[3], barClassCoverage.coveredMethodCount);
+    assertEquals(hits[4], barClassCoverage.totalLineCount);
+    assertEquals(hits[5], barClassCoverage.getCoveredLineCount());
+    assertEquals(hits[6], barClassCoverage.totalBranchCount);
+    assertEquals(hits[7], barClassCoverage.coveredBranchCount);
   }
 }
 

@@ -56,11 +56,27 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
   }
 
   private void collectPackageCoverage() {
-    final Map<String, PackageAnnotator.PackageCoverageInfo> packages = new HashMap<>();
-    for (Map.Entry<String, PackageAnnotator.AtomicPackageCoverageInfo> entry : myFlattenPackages.entrySet()) {
+    Map<String, PackageAnnotator.PackageCoverageInfo> flattenPackages = new HashMap<>();
+    for (var entry : myFlattenPackages.entrySet()) {
       String packageFQName = AnalysisUtils.internalNameToFqn(entry.getKey());
-      final PackageAnnotator.PackageCoverageInfo info = entry.getValue().toPackageCoverageInfo();
-      myAnnotator.annotatePackage(packageFQName, info, true);
+      var info = entry.getValue().toPackageCoverageInfo();
+      flattenPackages.put(packageFQName, info);
+    }
+    myFlattenPackages.clear();
+
+    annotatePackages(flattenPackages, myAnnotator);
+  }
+
+  /**
+   * Collect coverage stats for all packages, based on flatten packages coverage
+   * @param flattenPackages fqn to package coverage mapping
+   */
+  static void annotatePackages(Map<String, PackageAnnotator.PackageCoverageInfo> flattenPackages, Annotator annotator) {
+    Map<String, PackageAnnotator.PackageCoverageInfo> packages = new HashMap<>();
+    for (var entry : flattenPackages.entrySet()) {
+      String packageFQName = entry.getKey();
+      var info = entry.getValue();
+      annotator.annotatePackage(packageFQName, info, true);
 
       while (!packageFQName.isEmpty()) {
         packages.computeIfAbsent(packageFQName, k -> new PackageAnnotator.PackageCoverageInfo()).append(info);
@@ -70,9 +86,8 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
       }
       packages.computeIfAbsent("", k -> new PackageAnnotator.PackageCoverageInfo()).append(info);
     }
-    myFlattenPackages.clear();
     for (Map.Entry<String, PackageAnnotator.PackageCoverageInfo> entry : packages.entrySet()) {
-      myAnnotator.annotatePackage(entry.getKey(), entry.getValue());
+      annotator.annotatePackage(entry.getKey(), entry.getValue());
     }
   }
 
@@ -89,10 +104,25 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
   }
 
   private void collectDirectoryCoverage(Module module, String packageVMName) {
-    Set<VirtualFile> sourceRoots = prepareRoots(module, packageVMName);
-    final Map<VirtualFile, PackageAnnotator.DirCoverageInfo> directories = new HashMap<>();
-    for (Map.Entry<VirtualFile, PackageAnnotator.AtomicPackageCoverageInfo> entry : myFlattenDirectories.entrySet()) {
-      final PackageAnnotator.PackageCoverageInfo info = entry.getValue().toPackageCoverageInfo();
+    Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> flattenDirectories = new HashMap<>();
+    for (var entry : myFlattenDirectories.entrySet()) {
+      flattenDirectories.put(entry.getKey(), entry.getValue().toPackageCoverageInfo());
+    }
+    myFlattenDirectories.clear();
+
+    annotateDirectories(flattenDirectories, myAnnotator, prepareRoots(module, packageVMName));
+  }
+
+  /**
+   * Collect coverage stats for all directories, based on flatten directories coverage
+   * @param sourceRoots Set of root directories, where the calculation should stop
+   */
+  static void annotateDirectories(Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> flattenDirectories,
+                                  Annotator annotator,
+                                  Set<VirtualFile> sourceRoots) {
+    Map<VirtualFile, PackageAnnotator.DirCoverageInfo> directories = new HashMap<>();
+    for (var entry : flattenDirectories.entrySet()) {
+      var info = entry.getValue();
       VirtualFile dir = entry.getKey();
       while (dir != null) {
         directories.computeIfAbsent(dir, PackageAnnotator.DirCoverageInfo::new).append(info);
@@ -100,10 +130,9 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
         dir = dir.getParent();
       }
     }
-    myFlattenDirectories.clear();
 
     for (PackageAnnotator.DirCoverageInfo dir : directories.values()) {
-      myAnnotator.annotateSourceDirectory(dir.sourceRoot, dir);
+      annotator.annotateSourceDirectory(dir.sourceRoot, dir);
     }
   }
 
