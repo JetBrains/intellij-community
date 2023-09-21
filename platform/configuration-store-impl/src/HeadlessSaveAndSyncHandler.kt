@@ -6,7 +6,7 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.runWithModalProgressBlocking
 
-private class HeadlessSaveAndSyncHandler : NoOpSaveAndSyncHandler() {
+internal class HeadlessSaveAndSyncHandler : NoOpSaveAndSyncHandler() {
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean {
     runInAutoSaveDisabledMode {
       runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
