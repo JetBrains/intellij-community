@@ -189,6 +189,10 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
 
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent = componentCreator.get()
 
+    override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+      component.isEnabled = presentation.isEnabled
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
       val vcsLogUi = e.getData(VcsLogInternalDataKeys.MAIN_UI)
       if (vcsLogUi == null) return

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
@@ -67,6 +67,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     add(myFilterActionButton);
 
     myFilterActionButton.setActionListener(e -> {
+      if (!isEnabled()) return;
       if (isValueSelected()) {
         resetFilter();
       }
@@ -97,10 +98,18 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
   }
 
   private void updateFilterButton() {
-    boolean selected = isValueSelected();
+    boolean selected = isValueSelected() && isEnabled();
+    myFilterActionButton.setEnabled(isEnabled());
     myFilterActionButton.setIcon(selected ? AllIcons.Actions.Close : AllIcons.General.ArrowDown);
     myFilterActionButton.setHoveredIcon(selected ? AllIcons.Actions.CloseHovered : AllIcons.General.ArrowDown);
     myFilterActionButton.setFocusable(selected);
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    super.setEnabled(enabled);
+    setDefaultForeground();
+    updateFilterButton();
   }
 
   public abstract @NotNull @Nls String getCurrentText();
@@ -134,6 +143,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(@NotNull FocusEvent e) {
+        if (!isEnabled()) return;
         setBorder(wrapBorder(createFocusedBorder()));
       }
 
@@ -148,6 +158,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(@NotNull KeyEvent e) {
+        if (!isEnabled()) return;
         if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_DOWN) {
           showPopup();
         }
@@ -159,6 +170,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     ClickListener clickListener = new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+        if (!isEnabled()) return false;
         if (UIUtil.isCloseClick(event, MouseEvent.MOUSE_RELEASED)) {
           resetFilter();
         }
@@ -188,17 +200,27 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
   }
 
   private void setDefaultForeground() {
-    if (myNameLabel != null) {
-      myNameLabel.setForeground(UIUtil.getLabelInfoForeground());
-    }
-    myValueLabel.setForeground(UIUtil.getLabelForeground());
+    setForeground(false);
   }
 
   private void setOnHoverForeground() {
-    if (myNameLabel != null) {
-      myNameLabel.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getTextAreaForeground());
+    setForeground(true);
+  }
+
+  private void setForeground(boolean isHovered) {
+    boolean isEnabled = isEnabled();
+    if (isEnabled && isHovered) {
+      if (myNameLabel != null) {
+        myNameLabel.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getTextAreaForeground());
+      }
+      myValueLabel.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getTextFieldForeground());
     }
-    myValueLabel.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getTextFieldForeground());
+    else {
+      if (myNameLabel != null) {
+        myNameLabel.setForeground(isEnabled ? UIUtil.getLabelInfoForeground() : UIUtil.getLabelDisabledForeground());
+      }
+      myValueLabel.setForeground(isEnabled ? UIUtil.getLabelForeground() : UIUtil.getLabelDisabledForeground());
+    }
   }
 
   private void resetFilter() {
