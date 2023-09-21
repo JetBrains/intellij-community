@@ -53,7 +53,7 @@ internal class AnnotationsPreloader(private val project: Project) {
 
           annotationProvider.populateCache(file)
           val durationMs = System.currentTimeMillis() - start
-          //CodeVisionFusCollector.ANNOTATION_LOADED.log(project, durationMs)
+          CodeVisionFusCollector.ANNOTATION_LOADED.log(project, durationMs)
           LOG.debug { "Preloaded VCS annotations for ${file.name} in $durationMs ms" }
 
           runInEdt {
