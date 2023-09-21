@@ -154,7 +154,8 @@ object CommunityLibraryLicenses {
       .apache("https://gitbox.apache.org/repos/asf?p=commons-collections.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
     LibraryLicense(name = "Apache Commons Compress", libraryName = "commons-compress",
                    url = "https://commons.apache.org/proper/commons-compress/")
-      .apache("https://gitbox.apache.org/repos/asf?p=commons-compress.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
+      .apache("https://gitbox.apache.org/repos/asf?p=commons-compress.git;a=blob_plain;f=LICENSE.txt;hb=HEAD")
+      .suppliedByOrganizations(Suppliers.APACHE),
     LibraryLicense(name = "Apache Commons Discovery", libraryName = "commons-discovery",
                    url = "https://commons.apache.org/dormant/commons-discovery/")
       .apache("https://commons.apache.org/dormant/commons-discovery/license.html")
@@ -698,7 +699,8 @@ object CommunityLibraryLicenses {
                      "kinference.serializer.tiled.jvm",
                      "kinference.core.jvm",
                      "kinference.utils",
-                   )).apache("https://github.com/JetBrains-Research/kinference/blob/master/LICENSE.txt"),
+                   )).apache("https://github.com/JetBrains-Research/kinference/blob/master/LICENSE.txt")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
     LibraryLicense(name = "Kodein-DI", libraryName = "kodein-di-jvm", url = "https://github.com/kosi-libs/Kodein")
       .mit("https://github.com/kosi-libs/Kodein/blob/master/LICENSE.txt"),
     LibraryLicense(name = "Kotlin Coroutines for Guava", libraryName = "kotlinx-coroutines-guava",
