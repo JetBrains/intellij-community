@@ -643,6 +643,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   protected suspend fun updateAllProjects() {
     projectsManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
+    projectsManager.waitForPluginResolution()
   }
 
   protected fun waitForReadingCompletion() {
