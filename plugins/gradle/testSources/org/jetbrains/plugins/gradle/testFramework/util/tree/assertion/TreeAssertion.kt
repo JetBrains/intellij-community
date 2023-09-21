@@ -53,6 +53,6 @@ interface TreeAssertion<T> {
   companion object {
 
     fun <T> assertTree(actualTree: Tree<T>, isUnordered: Boolean = false, assert: TreeAssertion<T>.() -> Unit) =
-      AbstractTreeAssertion.assertTree(actualTree, isUnordered, assert)
+      TreeAssertionImpl.assertTree(actualTree, isUnordered, assert)
   }
 }

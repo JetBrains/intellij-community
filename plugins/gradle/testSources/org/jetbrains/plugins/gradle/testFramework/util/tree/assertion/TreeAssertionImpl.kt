@@ -4,9 +4,15 @@ package org.jetbrains.plugins.gradle.testFramework.util.tree.assertion
 import org.jetbrains.plugins.gradle.testFramework.util.tree.*
 import org.junit.jupiter.api.AssertionFailureBuilder
 
-internal abstract class AbstractTreeAssertion<T> private constructor(
+internal class TreeAssertionImpl<T> private constructor(
   private val expectedChildren: MutableList<MutableTree.Node<NodeAssertionOptions<T>>>
-) : TreeAssertion<T> {
+) : TreeAssertion.Node<T> {
+
+  private var valueAssertion: (T) -> Unit = {}
+
+  override fun assertValue(assert: (T) -> Unit) {
+    valueAssertion = assert
+  }
 
   // @formatter:off
   override fun assertNode(name: String, flattenIf: Boolean, skipIf: Boolean, isUnordered: Boolean, assert: TreeAssertion.Node<T>.() -> Unit) =
@@ -20,35 +26,13 @@ internal abstract class AbstractTreeAssertion<T> private constructor(
       return
     }
     if (options.flattenIf) {
-      val assertion = FlattenedNodeAssertionImpl(this)
-      assertion.assert()
+      addAssertionNodes(expectedChildren, assert)
       return
     }
     val displayName = options.matcher.displayName
     val expectedChild = SimpleTree.Node(displayName, options)
+    addAssertionNodes(expectedChild.children, assert)
     expectedChildren.add(expectedChild)
-    val assertion = NodeAssertionImpl(expectedChild)
-    assertion.assert()
-  }
-
-  private class TreeAssertionImpl<T>(
-    expectedTree: MutableTree<NodeAssertionOptions<T>>
-  ) : AbstractTreeAssertion<T>(expectedTree.roots)
-
-  private class NodeAssertionImpl<T>(
-    private val expectedNode: MutableTree.Node<NodeAssertionOptions<T>>
-  ) : AbstractTreeAssertion<T>(expectedNode.children), TreeAssertion.Node<T> {
-
-    override fun assertValue(assert: (T) -> Unit) {
-      expectedNode.value.valueAssertion = assert
-    }
-  }
-
-  private class FlattenedNodeAssertionImpl<T>(
-    parentAssertion: AbstractTreeAssertion<T>
-  ) : AbstractTreeAssertion<T>(parentAssertion.expectedChildren), TreeAssertion.Node<T> {
-
-    override fun assertValue(assert: (T) -> Unit) {}
   }
 
   private class NodeAssertionOptions<T>(
@@ -64,10 +48,17 @@ internal abstract class AbstractTreeAssertion<T> private constructor(
     fun <T> assertTree(actualTree: Tree<T>, isUnordered: Boolean, assert: TreeAssertion<T>.() -> Unit) {
       val actualMutableTree = actualTree.toMutableTree()
       val expectedMutableTree = SimpleTree<NodeAssertionOptions<T>>()
-      val assertion = TreeAssertionImpl(expectedMutableTree)
-      assertion.assert()
+      addAssertionNodes(expectedMutableTree.roots, assert)
       sortTree(expectedMutableTree, actualMutableTree, isUnordered)
       assertTree(expectedMutableTree, actualMutableTree)
+    }
+
+    private fun <T> addAssertionNodes(
+      assertionNodes: MutableList<MutableTree.Node<NodeAssertionOptions<T>>>,
+      assert: TreeAssertion.Node<T>.() -> Unit
+    ) {
+      val assertion = TreeAssertionImpl(assertionNodes)
+      assertion.assert()
     }
 
     private fun <T> assertTree(expectedTree: Tree<NodeAssertionOptions<T>>, actualTree: Tree<T>) {
