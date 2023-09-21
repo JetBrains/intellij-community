@@ -812,7 +812,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): EventEnd =
           DataInputStream(this).run {
             val tag = readByte()
-            return EventEnd(VfsOperationTag.VALUES[tag.toInt()].also {
+            return EventEnd(VfsOperationTag.entries[tag.toInt()].also {
               if (!it.isVFileEventStartOperation) {
                 throw IllegalStateException("unexpected EventEnd tag: $it")
               }

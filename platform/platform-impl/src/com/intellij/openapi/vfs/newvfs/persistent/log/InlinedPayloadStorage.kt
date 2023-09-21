@@ -48,7 +48,7 @@ object InlinedPayloadStorage : PayloadStorageIO {
         packedOffset = packedOffset.setInt(byte.toUByte().toInt(), index * Byte.SIZE_BITS, Byte.SIZE_BITS)
       }
     }
-    return PayloadRef(packedOffset.toLong(), PayloadSource.VALUES[data.size])
+    return PayloadRef(packedOffset.toLong(), PayloadSource.entries[data.size])
   }
 
   private fun PayloadRef.unInlineData(): ByteArray {

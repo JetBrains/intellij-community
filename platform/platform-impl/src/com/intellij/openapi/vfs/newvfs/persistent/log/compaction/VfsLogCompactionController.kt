@@ -346,11 +346,7 @@ class VfsLogCompactionController(
       CompactData,
 
       /** was CompactData, but an error happened, operationally equal to DropData */
-      Corrupted;
-
-      internal companion object {
-        val VALUES = OperationMode.values()
-      }
+      Corrupted
     }
 
     private interface ControllerState {
@@ -361,7 +357,7 @@ class VfsLogCompactionController(
       object : ControllerState { // 32 bytes
         override var operationMode: OperationMode by custom(4, defaultOperationMode,
                                                             serialize = { it.putInt(this.ordinal) },
-                                                            deserialize = { OperationMode.VALUES[it.getInt()] })
+                                                            deserialize = { OperationMode.entries[it.getInt()] })
         private val reserved_ by bytearray(28)
       }
     }
