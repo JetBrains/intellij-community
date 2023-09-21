@@ -22,6 +22,11 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
+import org.jetbrains.jewel.CommonStateBitMask.Active
+import org.jetbrains.jewel.CommonStateBitMask.Enabled
+import org.jetbrains.jewel.CommonStateBitMask.Focused
+import org.jetbrains.jewel.CommonStateBitMask.Hovered
+import org.jetbrains.jewel.CommonStateBitMask.Pressed
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.border
 import org.jetbrains.jewel.styling.InputFieldStyle
@@ -88,7 +93,7 @@ internal fun InputField(
         value = value,
         modifier = modifier.then(backgroundModifier)
             .then(borderModifier)
-            .focusOutline(inputState, shape)
+            .appendIf(!undecorated) { focusOutline(inputState, shape) }
             .outline(inputState, outline, shape),
         onValueChange = onValueChange,
         enabled = enabled,
@@ -114,23 +119,23 @@ value class InputFieldState(val state: ULong) : FocusableComponentState {
 
     @Stable
     override val isActive: Boolean
-        get() = state and CommonStateBitMask.Active != 0UL
+        get() = state and Active != 0UL
 
     @Stable
     override val isEnabled: Boolean
-        get() = state and CommonStateBitMask.Enabled != 0UL
+        get() = state and Enabled != 0UL
 
     @Stable
     override val isFocused: Boolean
-        get() = state and CommonStateBitMask.Focused != 0UL
+        get() = state and Focused != 0UL
 
     @Stable
     override val isHovered: Boolean
-        get() = state and CommonStateBitMask.Hovered != 0UL
+        get() = state and Hovered != 0UL
 
     @Stable
     override val isPressed: Boolean
-        get() = state and CommonStateBitMask.Pressed != 0UL
+        get() = state and Pressed != 0UL
 
     fun copy(
         enabled: Boolean = isEnabled,
@@ -159,11 +164,11 @@ value class InputFieldState(val state: ULong) : FocusableComponentState {
             hovered: Boolean = false,
             active: Boolean = false,
         ) = InputFieldState(
-            state = (if (enabled) CommonStateBitMask.Enabled else 0UL) or
-                (if (focused) CommonStateBitMask.Focused else 0UL) or
-                (if (hovered) CommonStateBitMask.Hovered else 0UL) or
-                (if (pressed) CommonStateBitMask.Pressed else 0UL) or
-                (if (active) CommonStateBitMask.Active else 0UL),
+            state = (if (enabled) Enabled else 0UL) or
+                (if (focused) Focused else 0UL) or
+                (if (hovered) Hovered else 0UL) or
+                (if (pressed) Pressed else 0UL) or
+                (if (active) Active else 0UL),
         )
     }
 }

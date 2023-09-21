@@ -1,6 +1,5 @@
 package org.jetbrains.jewel
 
-import androidx.compose.foundation.Indication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.HoverInteraction
@@ -42,8 +41,6 @@ import org.jetbrains.jewel.CommonStateBitMask.Focused
 import org.jetbrains.jewel.CommonStateBitMask.Hovered
 import org.jetbrains.jewel.CommonStateBitMask.Pressed
 import org.jetbrains.jewel.IntelliJTheme.Companion.isSwingCompatMode
-import org.jetbrains.jewel.foundation.Stroke
-import org.jetbrains.jewel.foundation.border
 import org.jetbrains.jewel.foundation.onHover
 import org.jetbrains.jewel.styling.LinkStyle
 import org.jetbrains.jewel.styling.LocalLinkStyle
@@ -69,7 +66,6 @@ fun Link(
     overflow: TextOverflow = TextOverflow.Clip,
     lineHeight: TextUnit = TextUnit.Unspecified,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    indication: Indication? = null,
     style: LinkStyle = LocalLinkStyle.current,
 ) {
     LinkImpl(
@@ -86,7 +82,6 @@ fun Link(
         overflow = overflow,
         lineHeight = lineHeight,
         interactionSource = interactionSource,
-        indication = indication,
         style = style,
         resourceLoader = resourceLoader,
         icon = null,
@@ -109,7 +104,6 @@ fun ExternalLink(
     overflow: TextOverflow = TextOverflow.Clip,
     lineHeight: TextUnit = TextUnit.Unspecified,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    indication: Indication? = null,
     style: LinkStyle = LocalLinkStyle.current,
 ) {
     LinkImpl(
@@ -126,7 +120,6 @@ fun ExternalLink(
         overflow = overflow,
         lineHeight = lineHeight,
         interactionSource = interactionSource,
-        indication = indication,
         style = style,
         resourceLoader = resourceLoader,
         icon = style.icons.externalLink,
@@ -148,7 +141,6 @@ fun DropdownLink(
     overflow: TextOverflow = TextOverflow.Clip,
     lineHeight: TextUnit = TextUnit.Unspecified,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    indication: Indication? = null,
     style: LinkStyle = LocalLinkStyle.current,
     menuModifier: Modifier = Modifier,
     menuStyle: MenuStyle = LocalMenuStyle.current,
@@ -157,11 +149,8 @@ fun DropdownLink(
     var expanded by remember { mutableStateOf(false) }
     var hovered by remember { mutableStateOf(false) }
     var skipNextClick by remember { mutableStateOf(false) }
-    Box(
-        Modifier.onHover {
-            hovered = it
-        },
-    ) {
+
+    Box(Modifier.onHover { hovered = it }) {
         LinkImpl(
             text = text,
             onClick = {
@@ -181,7 +170,6 @@ fun DropdownLink(
             overflow = overflow,
             lineHeight = lineHeight,
             interactionSource = interactionSource,
-            indication = indication,
             style = style,
             icon = style.icons.dropdownChevron,
             resourceLoader = resourceLoader,
@@ -198,7 +186,7 @@ fun DropdownLink(
                 },
                 modifier = menuModifier,
                 style = menuStyle,
-                horizontalAlignment = Alignment.Start, // TODO no idea what goes here
+                horizontalAlignment = Alignment.Start,
                 content = menuContent,
                 resourceLoader = resourceLoader,
             )
@@ -223,10 +211,9 @@ private fun LinkImpl(
     overflow: TextOverflow,
     lineHeight: TextUnit,
     interactionSource: MutableInteractionSource,
-    indication: Indication?,
     icon: PainterProvider<LinkState>?,
 ) {
-    var linkState by remember(interactionSource) {
+    var linkState by remember(interactionSource, enabled) {
         mutableStateOf(LinkState.of(enabled = enabled))
     }
     remember(enabled) {
@@ -248,9 +235,7 @@ private fun LinkImpl(
                     }
                 }
 
-                is FocusInteraction.Unfocus -> {
-                    linkState = linkState.copy(focused = false, pressed = false)
-                }
+                is FocusInteraction.Unfocus -> linkState = linkState.copy(focused = false, pressed = false)
             }
         }
     }
@@ -271,30 +256,23 @@ private fun LinkImpl(
             ),
         )
 
-    val clickable = Modifier.clickable(
-        onClick = {
-            linkState = linkState.copy(visited = true)
-            onClick()
-        },
-        enabled = enabled,
-        role = Role.Button,
-        interactionSource = interactionSource,
-        indication = indication,
-    )
-
-    val focusHaloModifier = Modifier.border(
-        alignment = Stroke.Alignment.Outside,
-        width = LocalGlobalMetrics.current.outlineWidth,
-        color = LocalGlobalColors.current.outlines.focused,
-        shape = RoundedCornerShape(style.metrics.focusHaloCornerSize),
-    )
-
     val pointerChangeModifier = Modifier.pointerHoverIcon(PointerIcon(Cursor(Cursor.HAND_CURSOR)))
 
     Row(
-        modifier = modifier.then(clickable)
-            .appendIf(linkState.isFocused) { focusHaloModifier }
-            .appendIf(linkState.isEnabled) { pointerChangeModifier },
+        modifier = modifier
+            .appendIf(linkState.isEnabled) { pointerChangeModifier }
+            .clickable(
+                onClick = {
+                    linkState = linkState.copy(visited = true)
+                    println("clicked Link")
+                    onClick()
+                },
+                enabled = enabled,
+                role = Role.Button,
+                interactionSource = interactionSource,
+                indication = null,
+            )
+            .focusOutline(linkState, RoundedCornerShape(style.metrics.focusHaloCornerSize)),
         horizontalArrangement = Arrangement.spacedBy(style.metrics.textIconGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {

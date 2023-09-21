@@ -262,7 +262,8 @@ private fun readCheckboxStyle(iconData: IntelliJThemeIconData, svgLoader: SvgLoa
         metrics = IntUiCheckboxMetrics(
             checkboxSize = DarculaCheckBoxUI().defaultIcon.let { DpSize(it.iconWidth.dp, it.iconHeight.dp) },
             checkboxCornerSize = CornerSize(3.dp), // See DarculaCheckBoxUI#drawCheckIcon
-            outlineWidth = 3.dp, // See DarculaCheckBoxUI#drawCheckIcon
+            outlineSize = DpSize(15.dp, 15.dp), // Extrapolated from SVG
+            outlineOffset = DpOffset(2.5.dp, 1.5.dp), // Extrapolated from SVG
             iconContentGap = 5.dp, // See DarculaCheckBoxUI#textIconGap
         ),
         icons = IntUiCheckboxIcons(

@@ -8,13 +8,12 @@ import androidx.compose.ui.graphics.ColorMatrix
 private val disabledColorMatrixGammaEncoded = ColorMatrix().apply {
     val saturation = .5f
 
-    // We use NTSC luminance weights like Swing does as it's gamma-encoded RGB
-    val redFactor = .299f * saturation
-    val greenFactor = .587f * saturation
-    val blueFactor = .114f * saturation
-
-    // TODO we should also be scaling the brightness but it's not possible
-    //  with a matrix transformation as far as I can tell
+    // We use NTSC luminance weights like Swing does as it's gamma-encoded RGB,
+    // and add some brightness to emulate Swing's "brighter" approach, which is
+    // not representable with a ColorMatrix alone as it's a non-linear op.
+    val redFactor = .299f * saturation + .25f
+    val greenFactor = .587f * saturation + .25f
+    val blueFactor = .114f * saturation + .25f
     this[0, 0] = redFactor
     this[0, 1] = greenFactor
     this[0, 2] = blueFactor

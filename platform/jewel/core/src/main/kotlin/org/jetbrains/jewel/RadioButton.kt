@@ -34,6 +34,7 @@ import org.jetbrains.jewel.CommonStateBitMask.Enabled
 import org.jetbrains.jewel.CommonStateBitMask.Focused
 import org.jetbrains.jewel.CommonStateBitMask.Hovered
 import org.jetbrains.jewel.CommonStateBitMask.Pressed
+import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.styling.RadioButtonStyle
 
 @Composable
@@ -164,8 +165,9 @@ private fun RadioButtonImpl(
 
     val colors = style.colors
     val metrics = style.metrics
-    val radioButtonModifier = Modifier.size(metrics.radioButtonSize)
-        .outline(radioButtonState, outline, outlineShape = CircleShape)
+    val radioButtonModifier = Modifier
+        .size(metrics.radioButtonSize)
+        .outline(radioButtonState, outline, outlineShape = CircleShape, alignment = Stroke.Alignment.Inside)
     val radioButtonPainter by style.icons.radioButton.getPainter(resourceLoader, radioButtonState)
 
     if (content == null) {

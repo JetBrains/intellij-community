@@ -6,6 +6,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.CheckboxState
@@ -97,10 +98,11 @@ data class IntUiCheckboxColors(
 
 @Immutable
 data class IntUiCheckboxMetrics(
-    override val checkboxSize: DpSize = DpSize(20.dp, 20.dp),
+    override val checkboxSize: DpSize = DpSize(19.dp, 19.dp),
     override val checkboxCornerSize: CornerSize = CornerSize(3.dp),
-    override val outlineWidth: Dp = 3.dp,
-    override val iconContentGap: Dp = 4.dp,
+    override val outlineSize: DpSize = DpSize(15.dp, 15.dp),
+    override val outlineOffset: DpOffset = DpOffset(2.5.dp, 1.5.dp),
+    override val iconContentGap: Dp = 5.dp,
 ) : CheckboxMetrics
 
 @Immutable

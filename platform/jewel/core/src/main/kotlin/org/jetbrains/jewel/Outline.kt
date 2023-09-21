@@ -29,13 +29,14 @@ enum class Outline {
 fun Modifier.focusOutline(
     state: FocusableComponentState,
     outlineShape: Shape,
+    alignment: Stroke.Alignment = Stroke.Alignment.Outside,
     outlineWidth: Dp = IntelliJTheme.globalMetrics.outlineWidth,
 ): Modifier {
     val outlineColors = IntelliJTheme.globalColors.outlines
 
     return thenIf(state.isFocused) {
         val outlineColor = outlineColors.focused
-        border(Stroke.Alignment.Outside, outlineWidth, outlineColor, outlineShape)
+        border(alignment, outlineWidth, outlineColor, outlineShape)
     }
 }
 

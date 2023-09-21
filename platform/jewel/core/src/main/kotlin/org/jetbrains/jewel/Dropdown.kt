@@ -45,6 +45,7 @@ import org.jetbrains.jewel.foundation.border
 import org.jetbrains.jewel.styling.DropdownStyle
 import org.jetbrains.jewel.styling.LocalMenuStyle
 import org.jetbrains.jewel.styling.MenuStyle
+import org.jetbrains.jewel.util.appendIf
 
 @Composable
 fun Dropdown(
@@ -93,6 +94,10 @@ fun Dropdown(
         val arrowMinSize = style.metrics.arrowMinSize
         val borderColor by colors.borderFor(dropdownState)
 
+        val outlineState = remember(dropdownState, expanded) {
+            dropdownState.copy(focused = dropdownState.isFocused || expanded)
+        }
+
         Box(
             modifier.clickable(
                 onClick = {
@@ -109,7 +114,8 @@ fun Dropdown(
             )
                 .background(colors.backgroundFor(dropdownState).value, shape)
                 .border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape)
-                .outline(dropdownState, outline, shape)
+                .appendIf(outline == Outline.None) { focusOutline(outlineState, shape) }
+                .outline(outlineState, outline, shape)
                 .defaultMinSize(minSize.width, minSize.height.coerceAtLeast(arrowMinSize.height)),
             contentAlignment = Alignment.CenterStart,
         ) {
@@ -262,15 +268,11 @@ value class DropdownState(val state: ULong) : FocusableComponentState {
             hovered: Boolean = false,
             active: Boolean = false,
         ) = DropdownState(
-            if (enabled) {
-                Enabled
-            } else {
-                0UL or
-                    (if (focused) Focused else 0UL) or
-                    (if (pressed) Pressed else 0UL) or
-                    (if (hovered) Hovered else 0UL) or
-                    (if (active) Active else 0UL)
-            },
+            (if (enabled) Enabled else 0UL) or
+                (if (focused) Focused else 0UL) or
+                (if (hovered) Hovered else 0UL) or
+                (if (pressed) Pressed else 0UL) or
+                (if (active) Active else 0UL),
         )
     }
 }

@@ -176,10 +176,10 @@ data class IntUiDropdownColors(
 
 @Stable
 data class IntUiDropdownMetrics(
-    override val arrowMinSize: DpSize = DpSize((23 + 3).dp, (24 + 6).dp),
-    override val minSize: DpSize = DpSize((49 + 23 + 6).dp, (24 + 6).dp),
+    override val arrowMinSize: DpSize = DpSize((23 + 3).dp, 24.dp),
+    override val minSize: DpSize = DpSize((49 + 23 + 6).dp, 24.dp),
     override val cornerSize: CornerSize = CornerSize(4.dp),
-    override val contentPadding: PaddingValues = PaddingValues(3.dp),
+    override val contentPadding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 3.dp),
     override val borderWidth: Dp = 1.dp,
 ) : DropdownMetrics
 

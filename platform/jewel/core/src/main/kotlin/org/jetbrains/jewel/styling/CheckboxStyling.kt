@@ -8,6 +8,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.CheckboxState
 
@@ -55,7 +56,8 @@ interface CheckboxMetrics {
 
     val checkboxSize: DpSize
     val checkboxCornerSize: CornerSize
-    val outlineWidth: Dp
+    val outlineSize: DpSize
+    val outlineOffset: DpOffset
     val iconContentGap: Dp
 }
 

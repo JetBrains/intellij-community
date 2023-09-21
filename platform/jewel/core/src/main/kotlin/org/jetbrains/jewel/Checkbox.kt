@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.triStateToggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -284,25 +285,32 @@ private fun CheckboxImpl(
     )
 
     val checkBoxImageModifier = Modifier.size(metrics.checkboxSize)
+    val outlineModifier = Modifier.size(metrics.outlineSize)
+        .offset(metrics.outlineOffset.x, metrics.outlineOffset.y)
         .outline(
             state = checkboxState,
             outline = outline,
             outlineShape = RoundedCornerShape(metrics.checkboxCornerSize),
             alignment = Stroke.Alignment.Center,
-            outlineWidth = metrics.outlineWidth,
         )
 
     val checkboxPainter by icons.checkbox.getPainter(resourceLoader, checkboxState)
 
     if (content == null) {
-        CheckBoxImage(wrapperModifier, checkboxPainter, checkBoxImageModifier)
+        Box(contentAlignment = Alignment.TopStart) {
+            CheckBoxImage(wrapperModifier, checkboxPainter, checkBoxImageModifier)
+            Box(outlineModifier)
+        }
     } else {
         Row(
             wrapperModifier,
             horizontalArrangement = Arrangement.spacedBy(metrics.iconContentGap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            CheckBoxImage(Modifier, checkboxPainter, checkBoxImageModifier)
+            Box(contentAlignment = Alignment.TopStart) {
+                CheckBoxImage(Modifier, checkboxPainter, checkBoxImageModifier)
+                Box(outlineModifier)
+            }
 
             val contentColor by colors.contentFor(checkboxState)
             CompositionLocalProvider(
