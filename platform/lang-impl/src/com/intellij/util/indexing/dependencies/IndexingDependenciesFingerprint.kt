@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference
  * 1. VFS. VFS has its own means to track changed files. VFS is not in the scope of the fingerprint. // TODO
  * 1. Project model. TODO
  * 1. Shared indexes TODO
+ * 1. JVM options and registry. They are kind of settings, but they do not trigger any rescanning - they usually require APP restart. TODO
  * 1. Did I miss something? Please contact me (e.g. by filing a YouTrack ticket).
  */
 
