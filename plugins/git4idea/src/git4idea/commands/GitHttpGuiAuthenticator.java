@@ -141,7 +141,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   }
 
   @Nullable
-  private ProviderAndData acquireData(@NotNull String unifiedUrl, @NotNull Function<? super AuthDataProvider, ? extends AuthData> dataAcquirer) {
+  private ProviderAndData acquireData(@NotNull String unifiedUrl,
+                                      @NotNull Function<? super AuthDataProvider, ? extends AuthData> dataAcquirer) {
     return myAuthenticationGate.waitAndCompute(() -> {
       try {
         for (AuthDataProvider provider : getProviders(unifiedUrl)) {
@@ -174,7 +175,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     PasswordSafeProvider passwordSafeProvider =
       new PasswordSafeProvider(unifiedUrl, GitRememberedInputs.getInstance(), PasswordSafe.getInstance());
 
-    boolean showActionForGitHelper =  GitConfigUtil.isCredentialHelperUsed(myProject, myWorkingDirectory);
+    boolean showActionForGitHelper = GitConfigUtil.isCredentialHelperUsed(myProject, myWorkingDirectory);
 
     DialogProvider dialogProvider = new DialogProvider(unifiedUrl, myProject, passwordSafeProvider, showActionForGitHelper);
 
@@ -315,7 +316,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
 
     @Override
-    public void onAuthSuccess() {}
+    public void onAuthSuccess() { }
 
     @Override
     public void onAuthFailure() {
@@ -553,10 +554,10 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
 
     @Override
-    void onAuthSuccess() {}
+    void onAuthSuccess() { }
 
     @Override
-    void onAuthFailure() {}
+    void onAuthFailure() { }
   }
 
   private static final class ProviderAndData {
