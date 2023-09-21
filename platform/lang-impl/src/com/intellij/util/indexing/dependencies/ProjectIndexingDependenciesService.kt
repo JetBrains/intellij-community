@@ -8,7 +8,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.application
 import org.jetbrains.annotations.VisibleForTesting
@@ -84,16 +86,14 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
                                               val appIndexingRequest: AppIndexingDependenciesToken) : IndexingRequestToken {
     private val appIndexingRequestId = appIndexingRequest.toInt()
     override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
-      val fileStamp = file.modificationStamp
-      if (fileStamp == -1L) {
-        return NULL_STAMP
-      }
-      else {
-        // we assume that stamp and file.modificationStamp never decrease => their sum only grow up
-        // in the case of overflow we hope that new value does not match any previously used value
-        // (which is hopefully true in most cases, because (new value)==(old value) was used veeeery long time ago)
-        return FileIndexingStampImpl(fileStamp.toInt() + requestId + appIndexingRequestId)
-      }
+      if (file !is VirtualFileWithId) return NULL_STAMP
+
+      val fileStamp = PersistentFS.getInstance().getModificationCount(file)
+
+      // we assume that stamp and file.modificationStamp never decrease => their sum only grow up
+      // in the case of overflow we hope that new value does not match any previously used value
+      // (which is hopefully true in most cases, because (new value)==(old value) was used veeeery long time ago)
+      return FileIndexingStampImpl(fileStamp + requestId + appIndexingRequestId)
     }
 
     override fun mergeWith(other: IndexingRequestToken): IndexingRequestToken {
