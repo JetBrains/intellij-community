@@ -102,8 +102,7 @@ public class PersistentSetMultiMaplet<K extends SerializableGraphElement, V exte
       myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
         public void append(@NotNull final DataOutput out) throws IOException {
-          //TODO
-          //DataInputOutputUtil.write(out, value);
+          NodeKeyDescriptorImpl.getInstance().save(out, value);
         }
       });
     }
