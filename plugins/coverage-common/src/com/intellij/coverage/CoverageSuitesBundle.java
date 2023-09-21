@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
  * Contains array of suites which should have the same {@link CoverageEngine}.
  */
 public class CoverageSuitesBundle {
+  private static final Logger LOG = Logger.getInstance(CoverageSuitesBundle.class);
   private final CoverageSuite[] mySuites;
   private final CoverageEngine myEngine;
 
@@ -39,7 +40,7 @@ public class CoverageSuitesBundle {
   private CachedValue<GlobalSearchScope> myCachedValue;
 
   private SoftReference<ProjectData> myData = new SoftReference<>(null);
-  private static final Logger LOG = Logger.getInstance(CoverageSuitesBundle.class);
+  private boolean myShouldActivateToolWindow = true;
 
   public CoverageSuitesBundle(CoverageSuite suite) {
     this(new CoverageSuite[]{suite});
@@ -216,6 +217,14 @@ public class CoverageSuitesBundle {
     }
 
     return GlobalSearchScope.union(Arrays.stream(modules).map(module -> GlobalSearchScope.moduleRuntimeScope(module, isTrackTestFolders())).toArray(GlobalSearchScope[]::new));
+  }
+
+  public boolean shouldActivateToolWindow() {
+    return myShouldActivateToolWindow;
+  }
+
+  public void setShouldActivateToolWindow(boolean shouldActivateToolWindow) {
+    myShouldActivateToolWindow = shouldActivateToolWindow;
   }
 
   /**

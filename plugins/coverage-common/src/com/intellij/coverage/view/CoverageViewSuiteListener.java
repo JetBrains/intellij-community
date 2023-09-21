@@ -52,6 +52,7 @@ public class CoverageViewSuiteListener implements CoverageSuiteListener {
   }
 
   private static boolean shouldActivate(CoverageSuitesBundle suitesBundle) {
+    if (!suitesBundle.shouldActivateToolWindow()) return false;
     final CoverageSuite[] suites = suitesBundle.getSuites();
     for (CoverageSuite suite : suites) {
       if (!(suite.getCoverageDataFileProvider() instanceof DefaultCoverageFileProvider)) return false;
