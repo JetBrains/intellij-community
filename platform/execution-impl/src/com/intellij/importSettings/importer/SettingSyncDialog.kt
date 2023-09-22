@@ -1,24 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.importSettings.importer
 
-import com.intellij.importSettings.chooser.ui.ConfigurableSettingPane
+import com.intellij.importSettings.chooser.ui.MultipleSettingPane
 import com.intellij.importSettings.data.*
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.dsl.builder.AlignY
-import com.intellij.ui.dsl.builder.LabelPosition
-import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.ui.util.width
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
-import java.awt.BorderLayout
 import java.awt.Color
-import java.awt.Dimension
 import javax.swing.*
 import javax.swing.border.LineBorder
 
@@ -51,13 +44,13 @@ class SettingSyncDialog(val service: ActionsDataProvider, val product: ImportIte
       }.align(AlignY.TOP)
     }.apply {
       preferredSize = JBDimension(200, 110)
-      border = JBUI.Borders.empty(0, 5, 0, 0)
+      border = JBUI.Borders.emptyLeft(5)
     })
 
     add(
       panel {
         row {
-          cell(ConfigurableSettingPane(TestJbService.testChildConfig, true).component())
+          cell(MultipleSettingPane(TestJbService.testChildConfig, false).component())
         }
 
       }.apply {
@@ -78,7 +71,7 @@ class SettingSyncDialog(val service: ActionsDataProvider, val product: ImportIte
   }
 
 
-  override fun createCenterPanel(): JComponent? {
+  override fun createCenterPanel(): JComponent {
     return pane
   }
 
