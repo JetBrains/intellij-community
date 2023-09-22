@@ -25,9 +25,7 @@
  *
  *  3. This notice may not be removed or altered from any source distribution.
  */
-
 package net.n3.nanoxml;
-
 
 /**
  * Creates an XML parser.
@@ -36,67 +34,9 @@ package net.n3.nanoxml;
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.3 $
  */
 public final class XMLParserFactory {
-
-  /**
-   * The class name of the default XML parser.
-   */
-  public static final String DEFAULT_CLASS = "net.n3.nanoxml.StdXMLParser";
-
-
-  /**
-   * The Java properties key of the XML parser class name.
-   */
-  public static final String CLASS_KEY = "net.n3.nanoxml.XMLParser";
-
-
-  /**
-   * Creates a default parser.
-   *
-   * @return the non-null parser.
-   * @throws ClassNotFoundException if the class of the parser or validator could not be found.
-   * @throws InstantiationException if the parser could not be created
-   * @throws IllegalAccessException if the parser could not be created
-   * @see #DEFAULT_CLASS
-   * @see #CLASS_KEY
-   */
-  public static IXMLParser createDefaultXMLParser() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-    String className = System.getProperty(CLASS_KEY, DEFAULT_CLASS);
-    return createXMLParser(className, new StdXMLBuilder());
-  }
-
-
-  /**
-   * Creates a default parser.
-   *
-   * @param builder the XML builder.
-   * @return the non-null parser.
-   * @throws ClassNotFoundException if the class of the parser could not be found.
-   * @throws InstantiationException if the parser could not be created
-   * @throws IllegalAccessException if the parser could not be created
-   * @see #DEFAULT_CLASS
-   * @see #CLASS_KEY
-   */
-  public static IXMLParser createDefaultXMLParser(IXMLBuilder builder)
-    throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-    String className = System.getProperty(CLASS_KEY, DEFAULT_CLASS);
-    return createXMLParser(className, builder);
-  }
-
-
-  /**
-   * Creates a parser.
-   *
-   * @param className the name of the class of the XML parser
-   * @param builder   the XML builder.
-   * @return the non-null parser.
-   * @throws ClassNotFoundException if the class of the parser could not be found.
-   * @throws InstantiationException if the parser could not be created
-   * @throws IllegalAccessException if the parser could not be created
-   */
-  public static IXMLParser createXMLParser(String className, IXMLBuilder builder)
-    throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-    Class cls = Class.forName(className);
-    IXMLParser parser = (IXMLParser)cls.newInstance();
+  public static StdXMLParser createDefaultXMLParser() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+    IXMLBuilder builder = new StdXMLBuilder();
+    StdXMLParser parser = new StdXMLParser();
     parser.setBuilder(builder);
     parser.setValidator(new NonValidator());
     return parser;

@@ -58,7 +58,7 @@ public final class NanoXmlUtil {
 
   public static void parse(@NotNull IXMLReader r, @NotNull IXMLBuilder builder, @Nullable IXMLValidator validator) {
     try {
-      final IXMLParser parser = XMLParserFactory.createDefaultXMLParser();
+      final StdXMLParser parser = XMLParserFactory.createDefaultXMLParser();
       parser.setReader(r);
       parser.setBuilder(builder);
       parser.setValidator(validator == null ? new EmptyValidator() : validator);

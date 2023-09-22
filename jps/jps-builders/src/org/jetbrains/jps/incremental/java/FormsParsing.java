@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -80,7 +80,7 @@ public final class FormsParsing {
 
   public static void parse(final IXMLReader r, final IXMLBuilder builder) {
     try {
-      final IXMLParser parser = XMLParserFactory.createDefaultXMLParser();
+      final StdXMLParser parser = XMLParserFactory.createDefaultXMLParser();
       parser.setReader(r);
       parser.setBuilder(builder);
       parser.setValidator(new EmptyValidator());
