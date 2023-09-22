@@ -16,6 +16,8 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.ide.bootstrap.AppStarter
+import com.intellij.platform.ide.bootstrap.startApplication
 import com.intellij.platform.impl.toolkit.IdeFontManager
 import com.intellij.platform.impl.toolkit.IdeGraphicsEnvironment
 import com.intellij.platform.impl.toolkit.IdeToolkit

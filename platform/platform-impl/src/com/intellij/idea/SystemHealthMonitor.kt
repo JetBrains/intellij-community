@@ -31,6 +31,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.bootstrap.shellEnvDeferred
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.util.SystemProperties
 import com.intellij.util.lang.JavaVersion

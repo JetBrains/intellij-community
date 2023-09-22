@@ -16,7 +16,6 @@ import com.intellij.ide.dnd.DnDManager
 import com.intellij.ide.dnd.DnDManagerImpl
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.ui.UISettings
-import com.intellij.idea.isImplicitReadOnEDTDisabled
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
@@ -41,6 +40,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FocusManagerImpl
+import com.intellij.platform.ide.bootstrap.isImplicitReadOnEDTDisabled
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil

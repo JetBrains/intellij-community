@@ -2,7 +2,7 @@
 @file:JvmName("StartupUtil")
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
-package com.intellij.idea
+package com.intellij.platform.ide.bootstrap
 
 import com.intellij.BundleBase
 import com.intellij.accessibility.AccessibilityUtils
@@ -13,7 +13,7 @@ import com.intellij.ide.bootstrap.*
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.idea.DirectoryLock.CannotActivateException
+import com.intellij.idea.*
 import com.intellij.jna.JnaLoader
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -45,8 +45,6 @@ import com.jetbrains.JBR
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.ide.BuiltInServerManager
-import org.jetbrains.io.BuiltInServer
 import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -112,11 +110,11 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
-    launch() {
+    launch {
       span("coroutine debug probes init") {
         enableCoroutineDump()
       }
-      launch(CoroutineName("coroutine jstack configuration")) {
+      span("coroutine jstack configuration") {
         JBR.getJstack()?.includeInfoFrom {
           """
   $COROUTINE_DUMP_HEADER
@@ -583,7 +581,7 @@ private suspend fun lockSystemDirs(args: List<String>) {
       exitProcess(result.exitCode)
     }
   }
-  catch (e: CannotActivateException) {
+  catch (e: DirectoryLock.CannotActivateException) {
     if (args.isEmpty()) {
       StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), e.message, true)
     }
@@ -648,6 +646,7 @@ fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<S
   logEnvVar(log, "_JAVA_OPTIONS")
   logEnvVar(log, "JDK_JAVA_OPTIONS")
   logEnvVar(log, "JAVA_TOOL_OPTIONS")
+  @Suppress("SystemGetProperty")
   log.info(
     """locale=${Locale.getDefault()} JNU=${System.getProperty("sun.jnu.encoding")} file.encoding=${System.getProperty("file.encoding")}
     ${PathManager.PROPERTY_CONFIG_PATH}=${logPath(PathManager.getConfigPath())}
@@ -703,22 +702,3 @@ class Java11ShimImpl : Java11Shim {
 
   override fun <E> setOf(collection: Array<E>): Set<E> = java.util.Set.of(*collection)
 }
-
-//<editor-fold desc="Deprecated stuff.">
-@Deprecated("Please use BuiltInServerManager instead")
-fun getServer(): BuiltInServer? {
-  val instance = BuiltInServerManager.getInstance()
-  instance.waitForStart()
-  val candidate = instance.serverDisposable
-  return if (candidate is BuiltInServer) candidate else null
-}
-
-@Deprecated("Use 'startApplication' with 'mainClassLoaderDeferred' parameter instead",
-            ReplaceWith(
-              "startApplication(args, CompletableDeferred(AppStarter::class.java.classLoader), appStarterDeferred, mainScope, busyThread)",
-              "kotlinx.coroutines.CompletableDeferred"))
-fun CoroutineScope.startApplication(args: List<String>, appStarterDeferred: Deferred<AppStarter>, mainScope: CoroutineScope,
-                                    busyThread: Thread) {
-  startApplication(args, CompletableDeferred(AppStarter::class.java.classLoader), appStarterDeferred, mainScope, busyThread)
-}
-//</editor-fold>

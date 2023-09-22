@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.bootstrap.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR

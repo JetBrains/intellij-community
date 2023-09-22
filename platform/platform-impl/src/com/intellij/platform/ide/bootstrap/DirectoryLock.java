@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.idea;
+package com.intellij.platform.ide.bootstrap;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.CliResult;
 import com.intellij.ide.SpecialConfigFiles;
+import com.intellij.idea.AppExitCodes;
+import com.intellij.idea.LoggerFactory;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.LogLevel;

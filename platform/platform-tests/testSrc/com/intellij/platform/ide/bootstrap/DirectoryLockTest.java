@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.idea;
+package com.intellij.platform.ide.bootstrap;
 
 import com.intellij.ide.CliResult;
 import com.intellij.ide.SpecialConfigFiles;
-import com.intellij.idea.DirectoryLock.CannotActivateException;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.platform.ide.bootstrap.DirectoryLock.CannotActivateException;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.rules.InMemoryFsRule;
 import com.intellij.testFramework.rules.TempDirectory;

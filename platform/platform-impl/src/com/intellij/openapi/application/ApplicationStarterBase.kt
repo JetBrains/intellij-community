@@ -3,11 +3,11 @@ package com.intellij.openapi.application
 
 import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.CliResult
-import com.intellij.idea.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.bootstrap.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -55,7 +55,7 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
       throw e
     }
     catch (e: Exception) {
-      e.printStackTrace() // The dialog may sometimes not be shown, e.g. in remote dev scenarios.
+      e.printStackTrace() // The dialog may sometimes not be shown, e.g., in remote dev scenarios.
       val title = ApplicationBundle.message("app.command.exec.error.title", commandName)
       val message = ApplicationBundle.message("app.command.exec.error", commandName, e.message)
       withContext(Dispatchers.EDT) {

@@ -13,7 +13,6 @@ import com.intellij.ide.ui.html.GlobalStyleSheetHolder
 import com.intellij.ide.ui.laf.IdeaLaf
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter
 import com.intellij.idea.AppExitCodes
-import com.intellij.idea.AppStarter
 import com.intellij.idea.StartupErrorReporter
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.RawSwingDispatcher
