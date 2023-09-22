@@ -87,7 +87,7 @@ public final class History {
       }
     }
     int index = ContainerUtil.indexOf(places, place -> myRoot.isValid(place));
-    return index == -1 ? -1 : index + first;
+    return index == -1 ? -1 : first + index * increment;
   }
 
   private void goThere(final int nextPos) {
