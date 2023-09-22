@@ -188,7 +188,7 @@ public final class IndexVersion {
     }
 
     //noinspection SynchronizeOnThis
-    synchronized (IndexingStamp.class) {
+    synchronized (IndexVersion.class) {
       version = ourIndexIdToCreationStamp.get(indexName.getUniqueId());
       if (version != null) return version;
 
