@@ -240,7 +240,8 @@ final class PersistentFSConnector {
           vfsLoader.deleteEverything();
         }
       }
-      catch (VFSInitException ignored) { // rethrown wrapped CachesWereRecoveredFromLogException
+      catch (VFSInitException recoveredFromLogException) {
+        throw recoveredFromLogException;
       }
       catch (IOException cleanEx) {
         e.addSuppressed(cleanEx);
