@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.themes.intui.standalone
+package org.jetbrains.jewel.intui.standalone
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -24,6 +24,28 @@ import org.jetbrains.jewel.LocalResourceLoader
 import org.jetbrains.jewel.LocalTextStyle
 import org.jetbrains.jewel.SimpleResourceLoader
 import org.jetbrains.jewel.SvgLoader
+import org.jetbrains.jewel.intui.core.BaseIntUiTheme
+import org.jetbrains.jewel.intui.core.IntUiThemeColorPalette
+import org.jetbrains.jewel.intui.core.IntUiThemeDefinition
+import org.jetbrains.jewel.intui.core.IntelliJSvgPatcher
+import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
+import org.jetbrains.jewel.intui.standalone.IntUiTheme.defaultComponentStyling
+import org.jetbrains.jewel.intui.standalone.styling.IntUiButtonStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiCheckboxStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiChipStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiDropdownStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiGroupHeaderStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiHorizontalProgressBarStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiLabelledTextFieldStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiLazyTreeStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiLinkStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiMenuStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiRadioButtonStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiScrollbarStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiTabStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiTextAreaStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiTextFieldStyle
 import org.jetbrains.jewel.styling.ButtonStyle
 import org.jetbrains.jewel.styling.CheckboxStyle
 import org.jetbrains.jewel.styling.ChipStyle
@@ -39,28 +61,6 @@ import org.jetbrains.jewel.styling.ScrollbarStyle
 import org.jetbrains.jewel.styling.TabStyle
 import org.jetbrains.jewel.styling.TextFieldStyle
 import org.jetbrains.jewel.themes.StandalonePaletteMapperFactory
-import org.jetbrains.jewel.themes.intui.core.BaseIntUiTheme
-import org.jetbrains.jewel.themes.intui.core.IntUiThemeColorPalette
-import org.jetbrains.jewel.themes.intui.core.IntUiThemeDefinition
-import org.jetbrains.jewel.themes.intui.core.IntelliJSvgPatcher
-import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
-import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme.defaultComponentStyling
-import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiButtonStyle
-import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiCheckboxStyle
-import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiChipStyle
-import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiDropdownStyle
-import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiGroupHeaderStyle
-import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiHorizontalProgressBarStyle
-import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiLabelledTextFieldStyle
-import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiLazyTreeStyle
-import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiLinkStyle
-import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiMenuStyle
-import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiRadioButtonStyle
-import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiScrollbarStyle
-import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTabStyle
-import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTextAreaStyle
-import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTextFieldStyle
 
 object IntUiTheme : BaseIntUiTheme {
 

@@ -105,8 +105,6 @@ open class IntelliJThemeGeneratorTask : DefaultTask() {
             .use { json.decodeFromStream<IntellijThemeDescriptor>(it) }
 
         val className = ClassName.bestGuess(themeClassName.get())
-
-        // TODO handle non-Int UI themes, too
         val file = IntUiThemeDescriptorReader.readThemeFrom(themeDescriptor, className, ideaVersion.get(), url)
 
         val outputFile = outputFile.get().asFile

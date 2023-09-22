@@ -31,6 +31,7 @@ import org.jetbrains.jewel.CheckboxRow
 import org.jetbrains.jewel.Divider
 import org.jetbrains.jewel.LocalResourceLoader
 import org.jetbrains.jewel.VerticalScrollbar
+import org.jetbrains.jewel.intui.standalone.IntUiTheme
 import org.jetbrains.jewel.samples.standalone.components.Borders
 import org.jetbrains.jewel.samples.standalone.components.Buttons
 import org.jetbrains.jewel.samples.standalone.components.Checkboxes
@@ -42,7 +43,6 @@ import org.jetbrains.jewel.samples.standalone.components.RadioButtons
 import org.jetbrains.jewel.samples.standalone.components.Tabs
 import org.jetbrains.jewel.samples.standalone.components.TextAreas
 import org.jetbrains.jewel.samples.standalone.components.TextFields
-import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
 import java.io.InputStream
 
 fun main() {

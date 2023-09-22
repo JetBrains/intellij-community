@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.themes.intui.standalone.styling
+package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize

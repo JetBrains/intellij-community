@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.themes.intui.standalone
+package org.jetbrains.jewel.intui.standalone
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.Dp

@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.themes.intui.standalone.styling
+package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
@@ -10,40 +10,54 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.styling.InputFieldMetrics
-import org.jetbrains.jewel.styling.TextFieldColors
-import org.jetbrains.jewel.styling.TextFieldStyle
-import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
-import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
+import org.jetbrains.jewel.DropdownState
+import org.jetbrains.jewel.SvgLoader
+import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
+import org.jetbrains.jewel.intui.standalone.IntUiTheme
+import org.jetbrains.jewel.styling.DropdownColors
+import org.jetbrains.jewel.styling.DropdownIcons
+import org.jetbrains.jewel.styling.DropdownMetrics
+import org.jetbrains.jewel.styling.DropdownStyle
+import org.jetbrains.jewel.styling.MenuStyle
+import org.jetbrains.jewel.styling.PainterProvider
+import org.jetbrains.jewel.styling.ResourcePainterProvider
 
 @Stable
-data class IntUiTextFieldStyle(
-    override val colors: IntUiTextFieldColors,
-    override val metrics: IntUiTextFieldMetrics,
+data class IntUiDropdownStyle(
+    override val colors: IntUiDropdownColors,
+    override val metrics: IntUiDropdownMetrics,
+    override val icons: IntUiDropdownIcons,
     override val textStyle: TextStyle,
-) : TextFieldStyle {
+    override val menuStyle: MenuStyle,
+) : DropdownStyle {
 
     companion object {
 
         @Composable
         fun light(
-            colors: IntUiTextFieldColors = IntUiTextFieldColors.light(),
-            metrics: IntUiTextFieldMetrics = IntUiTextFieldMetrics(),
+            svgLoader: SvgLoader,
+            colors: IntUiDropdownColors = IntUiDropdownColors.light(),
+            metrics: IntUiDropdownMetrics = IntUiDropdownMetrics(),
+            icons: IntUiDropdownIcons = intUiDropdownIcons(svgLoader),
             textStyle: TextStyle = IntUiTheme.defaultLightTextStyle,
-        ) = IntUiTextFieldStyle(colors, metrics, textStyle)
+            menuStyle: MenuStyle = IntUiMenuStyle.light(svgLoader),
+        ) = IntUiDropdownStyle(colors, metrics, icons, textStyle, menuStyle)
 
         @Composable
         fun dark(
-            colors: IntUiTextFieldColors = IntUiTextFieldColors.dark(),
-            metrics: IntUiTextFieldMetrics = IntUiTextFieldMetrics(),
+            svgLoader: SvgLoader,
+            colors: IntUiDropdownColors = IntUiDropdownColors.dark(),
+            metrics: IntUiDropdownMetrics = IntUiDropdownMetrics(),
+            icons: IntUiDropdownIcons = intUiDropdownIcons(svgLoader),
             textStyle: TextStyle = IntUiTheme.defaultDarkTextStyle,
-        ) = IntUiTextFieldStyle(colors, metrics, textStyle)
+            menuStyle: MenuStyle = IntUiMenuStyle.dark(svgLoader),
+        ) = IntUiDropdownStyle(colors, metrics, icons, textStyle, menuStyle)
     }
 }
 
 @Immutable
-data class IntUiTextFieldColors(
+data class IntUiDropdownColors(
     override val background: Color,
     override val backgroundDisabled: Color,
     override val backgroundFocused: Color,
@@ -59,13 +73,12 @@ data class IntUiTextFieldColors(
     override val borderFocused: Color,
     override val borderPressed: Color,
     override val borderHovered: Color,
-    override val caret: Color,
-    override val caretDisabled: Color,
-    override val caretFocused: Color,
-    override val caretPressed: Color,
-    override val caretHovered: Color,
-    override val placeholder: Color,
-) : TextFieldColors {
+    override val iconTint: Color,
+    override val iconTintDisabled: Color,
+    override val iconTintFocused: Color,
+    override val iconTintPressed: Color,
+    override val iconTintHovered: Color,
+) : DropdownColors {
 
     companion object {
 
@@ -86,13 +99,12 @@ data class IntUiTextFieldColors(
             borderFocused: Color = IntUiLightTheme.colors.blue(4),
             borderPressed: Color = border,
             borderHovered: Color = border,
-            caret: Color = IntUiLightTheme.colors.grey(1),
-            caretDisabled: Color = caret,
-            caretFocused: Color = caret,
-            caretPressed: Color = caret,
-            caretHovered: Color = caret,
-            placeholder: Color = IntUiLightTheme.colors.grey(8),
-        ) = IntUiTextFieldColors(
+            iconTint: Color = IntUiLightTheme.colors.grey(7),
+            iconTintDisabled: Color = IntUiLightTheme.colors.grey(9),
+            iconTintFocused: Color = iconTint,
+            iconTintPressed: Color = iconTint,
+            iconTintHovered: Color = iconTint,
+        ) = IntUiDropdownColors(
             background,
             backgroundDisabled,
             backgroundFocused,
@@ -108,12 +120,11 @@ data class IntUiTextFieldColors(
             borderFocused,
             borderPressed,
             borderHovered,
-            caret,
-            caretDisabled,
-            caretFocused,
-            caretPressed,
-            caretHovered,
-            placeholder,
+            iconTint,
+            iconTintDisabled,
+            iconTintFocused,
+            iconTintPressed,
+            iconTintHovered,
         )
 
         @Composable
@@ -129,17 +140,16 @@ data class IntUiTextFieldColors(
             contentPressed: Color = content,
             contentHovered: Color = content,
             border: Color = IntUiDarkTheme.colors.grey(5),
-            borderDisabled: Color = border,
+            borderDisabled: Color = IntUiDarkTheme.colors.grey(11),
             borderFocused: Color = IntUiDarkTheme.colors.blue(6),
             borderPressed: Color = border,
             borderHovered: Color = border,
-            caret: Color = IntUiDarkTheme.colors.grey(12),
-            caretDisabled: Color = caret,
-            caretFocused: Color = caret,
-            caretPressed: Color = caret,
-            caretHovered: Color = caret,
-            placeholder: Color = IntUiDarkTheme.colors.grey(7),
-        ) = IntUiTextFieldColors(
+            iconTint: Color = IntUiDarkTheme.colors.grey(10),
+            iconTintDisabled: Color = IntUiDarkTheme.colors.grey(6),
+            iconTintFocused: Color = iconTint,
+            iconTintPressed: Color = iconTint,
+            iconTintHovered: Color = iconTint,
+        ) = IntUiDropdownColors(
             background,
             backgroundDisabled,
             backgroundFocused,
@@ -155,20 +165,43 @@ data class IntUiTextFieldColors(
             borderFocused,
             borderPressed,
             borderHovered,
-            caret,
-            caretDisabled,
-            caretFocused,
-            caretPressed,
-            caretHovered,
-            placeholder,
+            iconTint,
+            iconTintDisabled,
+            iconTintFocused,
+            iconTintPressed,
+            iconTintHovered,
         )
     }
 }
 
 @Stable
-data class IntUiTextFieldMetrics(
+data class IntUiDropdownMetrics(
+    override val arrowMinSize: DpSize = DpSize((23 + 3).dp, 24.dp),
+    override val minSize: DpSize = DpSize((49 + 23 + 6).dp, 24.dp),
     override val cornerSize: CornerSize = CornerSize(4.dp),
-    override val contentPadding: PaddingValues = PaddingValues(horizontal = 9.dp, vertical = 6.dp),
-    override val minSize: DpSize = DpSize(144.dp, 28.dp),
+    override val contentPadding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 3.dp),
     override val borderWidth: Dp = 1.dp,
-) : InputFieldMetrics
+) : DropdownMetrics
+
+@Immutable
+data class IntUiDropdownIcons(
+    override val chevronDown: PainterProvider<DropdownState>,
+) : DropdownIcons {
+
+    companion object {
+
+        @Composable
+        fun chevronDown(
+            svgLoader: SvgLoader,
+            basePath: String = "icons/intui/chevronDown.svg",
+        ): PainterProvider<DropdownState> =
+            ResourcePainterProvider.stateful(basePath, svgLoader)
+    }
+}
+
+@Composable
+fun intUiDropdownIcons(
+    svgLoader: SvgLoader,
+    chevronDown: PainterProvider<DropdownState> = IntUiDropdownIcons.chevronDown(svgLoader),
+) =
+    IntUiDropdownIcons(chevronDown)

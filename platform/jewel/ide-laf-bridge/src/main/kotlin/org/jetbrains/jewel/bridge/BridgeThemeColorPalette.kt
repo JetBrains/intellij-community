@@ -4,7 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
 import com.intellij.openapi.diagnostic.Logger
-import org.jetbrains.jewel.themes.intui.core.IntUiThemeColorPalette
+import org.jetbrains.jewel.intui.core.IntUiThemeColorPalette
 import java.util.TreeMap
 
 private val logger = Logger.getInstance("BridgeThemeColorPalette")

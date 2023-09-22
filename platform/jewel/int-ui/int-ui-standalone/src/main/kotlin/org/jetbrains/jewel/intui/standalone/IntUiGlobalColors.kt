@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.themes.intui.standalone
+package org.jetbrains.jewel.intui.standalone
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -6,8 +6,8 @@ import androidx.compose.ui.graphics.Color
 import org.jetbrains.jewel.BorderColors
 import org.jetbrains.jewel.GlobalColors
 import org.jetbrains.jewel.OutlineColors
-import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
-import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
+import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 
 @Immutable
 class IntUiGlobalColors(

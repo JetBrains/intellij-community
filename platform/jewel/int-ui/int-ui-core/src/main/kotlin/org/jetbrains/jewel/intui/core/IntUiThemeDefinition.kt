@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.themes.intui.core
+package org.jetbrains.jewel.intui.core
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.TextStyle

@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.themes.intui.standalone.styling
+package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
@@ -11,6 +11,8 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.MenuItemState
 import org.jetbrains.jewel.SvgLoader
+import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.styling.MenuColors
 import org.jetbrains.jewel.styling.MenuIcons
 import org.jetbrains.jewel.styling.MenuItemColors
@@ -20,8 +22,6 @@ import org.jetbrains.jewel.styling.MenuStyle
 import org.jetbrains.jewel.styling.PainterProvider
 import org.jetbrains.jewel.styling.ResourcePainterProvider
 import org.jetbrains.jewel.styling.SubmenuMetrics
-import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
-import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 
 @Stable
 data class IntUiMenuStyle(

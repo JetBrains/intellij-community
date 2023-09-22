@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.themes.intui.standalone
+package org.jetbrains.jewel.intui.standalone
 
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight

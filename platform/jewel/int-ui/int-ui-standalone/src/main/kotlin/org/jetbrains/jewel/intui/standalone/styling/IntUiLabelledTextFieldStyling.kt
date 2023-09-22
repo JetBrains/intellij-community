@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.themes.intui.standalone.styling
+package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
@@ -10,40 +10,45 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.styling.InputFieldMetrics
-import org.jetbrains.jewel.styling.TextAreaColors
-import org.jetbrains.jewel.styling.TextAreaStyle
-import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
-import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
+import androidx.compose.ui.unit.sp
+import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
+import org.jetbrains.jewel.intui.standalone.IntUiTheme
+import org.jetbrains.jewel.styling.LabelledTextFieldColors
+import org.jetbrains.jewel.styling.LabelledTextFieldMetrics
+import org.jetbrains.jewel.styling.LabelledTextFieldStyle
+import org.jetbrains.jewel.styling.LabelledTextFieldTextStyles
 
 @Stable
-data class IntUiTextAreaStyle(
-    override val colors: IntUiTextAreaColors,
-    override val metrics: IntUiTextAreaMetrics,
+data class IntUiLabelledTextFieldStyle(
+    override val colors: IntUiLabelledTextFieldColors,
+    override val metrics: IntUiLabelledTextFieldMetrics,
     override val textStyle: TextStyle,
-) : TextAreaStyle {
+    override val textStyles: IntUiLabelledTextFieldTextStyles,
+) : LabelledTextFieldStyle {
 
     companion object {
 
         @Composable
         fun light(
-            colors: IntUiTextAreaColors = IntUiTextAreaColors.light(),
-            metrics: IntUiTextAreaMetrics = IntUiTextAreaMetrics(),
+            colors: IntUiLabelledTextFieldColors = IntUiLabelledTextFieldColors.light(),
+            metrics: IntUiLabelledTextFieldMetrics = IntUiLabelledTextFieldMetrics(),
             textStyle: TextStyle = IntUiTheme.defaultLightTextStyle,
-        ) = IntUiTextAreaStyle(colors, metrics, textStyle)
+            textStyles: IntUiLabelledTextFieldTextStyles = IntUiLabelledTextFieldTextStyles.light(),
+        ) = IntUiLabelledTextFieldStyle(colors, metrics, textStyle, textStyles)
 
         @Composable
         fun dark(
-            colors: IntUiTextAreaColors = IntUiTextAreaColors.dark(),
-            metrics: IntUiTextAreaMetrics = IntUiTextAreaMetrics(),
+            colors: IntUiLabelledTextFieldColors = IntUiLabelledTextFieldColors.dark(),
+            metrics: IntUiLabelledTextFieldMetrics = IntUiLabelledTextFieldMetrics(),
             textStyle: TextStyle = IntUiTheme.defaultDarkTextStyle,
-        ) = IntUiTextAreaStyle(colors, metrics, textStyle)
+            textStyles: IntUiLabelledTextFieldTextStyles = IntUiLabelledTextFieldTextStyles.dark(),
+        ) = IntUiLabelledTextFieldStyle(colors, metrics, textStyle, textStyles)
     }
 }
 
 @Immutable
-data class IntUiTextAreaColors(
+data class IntUiLabelledTextFieldColors(
     override val background: Color,
     override val backgroundDisabled: Color,
     override val backgroundFocused: Color,
@@ -65,7 +70,9 @@ data class IntUiTextAreaColors(
     override val caretPressed: Color,
     override val caretHovered: Color,
     override val placeholder: Color,
-) : TextAreaColors {
+    override val label: Color,
+    override val hint: Color,
+) : LabelledTextFieldColors {
 
     companion object {
 
@@ -92,7 +99,9 @@ data class IntUiTextAreaColors(
             caretPressed: Color = caret,
             caretHovered: Color = caret,
             placeholder: Color = IntUiLightTheme.colors.grey(8),
-        ) = IntUiTextAreaColors(
+            label: Color = IntUiLightTheme.colors.grey(1),
+            hint: Color = IntUiLightTheme.colors.grey(6),
+        ) = IntUiLabelledTextFieldColors(
             background,
             backgroundDisabled,
             backgroundFocused,
@@ -114,6 +123,8 @@ data class IntUiTextAreaColors(
             caretPressed,
             caretHovered,
             placeholder,
+            label,
+            hint,
         )
 
         @Composable
@@ -139,7 +150,9 @@ data class IntUiTextAreaColors(
             caretPressed: Color = caret,
             caretHovered: Color = caret,
             placeholder: Color = IntUiDarkTheme.colors.grey(7),
-        ) = IntUiTextAreaColors(
+            label: Color = IntUiDarkTheme.colors.grey(12),
+            hint: Color = IntUiDarkTheme.colors.grey(7),
+        ) = IntUiLabelledTextFieldColors(
             background,
             backgroundDisabled,
             backgroundFocused,
@@ -161,14 +174,46 @@ data class IntUiTextAreaColors(
             caretPressed,
             caretHovered,
             placeholder,
+            label,
+            hint,
         )
     }
 }
 
 @Stable
-data class IntUiTextAreaMetrics(
+data class IntUiLabelledTextFieldMetrics(
     override val cornerSize: CornerSize = CornerSize(4.dp),
-    override val contentPadding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
-    override val minSize: DpSize = DpSize(144.dp, 28.dp),
+    override val contentPadding: PaddingValues = PaddingValues(horizontal = 9.dp, vertical = 6.dp),
+    override val minSize: DpSize = DpSize(49.dp, 24.dp),
     override val borderWidth: Dp = 1.dp,
-) : InputFieldMetrics
+    override val labelSpacing: Dp = 6.dp,
+    override val hintSpacing: Dp = 6.dp,
+) : LabelledTextFieldMetrics
+
+@Immutable
+data class IntUiLabelledTextFieldTextStyles(
+    override val label: TextStyle,
+    override val hint: TextStyle,
+) : LabelledTextFieldTextStyles {
+
+    companion object {
+
+        @Composable
+        fun light(
+            label: TextStyle = IntUiTheme.defaultLightTextStyle,
+            hint: TextStyle = IntUiTheme.defaultLightTextStyle.copy(
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+            ),
+        ) = IntUiLabelledTextFieldTextStyles(label, hint)
+
+        @Composable
+        fun dark(
+            label: TextStyle = IntUiTheme.defaultDarkTextStyle,
+            hint: TextStyle = IntUiTheme.defaultDarkTextStyle.copy(
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+            ),
+        ) = IntUiLabelledTextFieldTextStyles(label, hint)
+    }
+}

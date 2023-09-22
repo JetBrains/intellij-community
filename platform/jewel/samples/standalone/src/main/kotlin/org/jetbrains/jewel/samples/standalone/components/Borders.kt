@@ -22,7 +22,7 @@ import org.jetbrains.jewel.RadioButtonRow
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.border
-import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
+import org.jetbrains.jewel.intui.standalone.IntUiTheme
 
 @Composable
 internal fun Borders() {

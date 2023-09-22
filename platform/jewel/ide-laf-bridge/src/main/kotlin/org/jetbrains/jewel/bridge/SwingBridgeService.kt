@@ -21,8 +21,8 @@ import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.jewel.IntelliJComponentStyling
 import org.jetbrains.jewel.JewelSvgLoader
 import org.jetbrains.jewel.SvgLoader
-import org.jetbrains.jewel.themes.intui.core.IntUiThemeDefinition
-import org.jetbrains.jewel.themes.intui.core.IntelliJSvgPatcher
+import org.jetbrains.jewel.intui.core.IntUiThemeDefinition
+import org.jetbrains.jewel.intui.core.IntelliJSvgPatcher
 import kotlin.time.Duration.Companion.milliseconds
 
 @Service(Level.APP)

@@ -31,7 +31,7 @@ import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.ToggleableChip
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
 import org.jetbrains.jewel.foundation.tree.buildTree
-import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
+import org.jetbrains.jewel.intui.standalone.IntUiTheme
 
 @Composable
 fun ChipsAndTree() {

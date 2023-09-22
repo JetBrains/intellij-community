@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.themes.intui.standalone.styling
+package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
@@ -11,6 +11,9 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.LinkState
 import org.jetbrains.jewel.SvgLoader
+import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
+import org.jetbrains.jewel.intui.standalone.IntUiTheme
 import org.jetbrains.jewel.styling.LinkColors
 import org.jetbrains.jewel.styling.LinkIcons
 import org.jetbrains.jewel.styling.LinkMetrics
@@ -18,9 +21,6 @@ import org.jetbrains.jewel.styling.LinkStyle
 import org.jetbrains.jewel.styling.LinkTextStyles
 import org.jetbrains.jewel.styling.PainterProvider
 import org.jetbrains.jewel.styling.ResourcePainterProvider
-import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
-import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
 
 @Immutable
 data class IntUiLinkStyle(

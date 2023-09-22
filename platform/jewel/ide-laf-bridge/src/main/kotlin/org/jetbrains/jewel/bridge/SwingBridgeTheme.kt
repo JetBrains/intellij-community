@@ -7,7 +7,7 @@ import androidx.compose.runtime.getValue
 import com.intellij.openapi.components.service
 import org.jetbrains.jewel.ExperimentalJewelApi
 import org.jetbrains.jewel.LocalResourceLoader
-import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
+import org.jetbrains.jewel.intui.standalone.IntUiTheme
 
 private val bridgeService = service<SwingBridgeService>()
 

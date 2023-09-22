@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.themes.intui.standalone.styling
+package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
@@ -8,6 +8,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.ButtonState
 import org.jetbrains.jewel.SvgLoader
+import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.styling.PainterProvider
 import org.jetbrains.jewel.styling.ResourcePainterProvider
 import org.jetbrains.jewel.styling.TabColors
@@ -15,8 +17,6 @@ import org.jetbrains.jewel.styling.TabContentAlpha
 import org.jetbrains.jewel.styling.TabIcons
 import org.jetbrains.jewel.styling.TabMetrics
 import org.jetbrains.jewel.styling.TabStyle
-import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
-import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 
 data class IntUiTabStyle(
     override val colors: TabColors,

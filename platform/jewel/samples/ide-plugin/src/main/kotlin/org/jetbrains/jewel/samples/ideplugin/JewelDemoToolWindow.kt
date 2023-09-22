@@ -47,7 +47,7 @@ import org.jetbrains.jewel.bridge.addComposeTab
 import org.jetbrains.jewel.bridge.retrieveStatelessIcon
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.tree.buildTree
-import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
+import org.jetbrains.jewel.intui.standalone.IntUiTheme
 
 @ExperimentalCoroutinesApi
 internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {

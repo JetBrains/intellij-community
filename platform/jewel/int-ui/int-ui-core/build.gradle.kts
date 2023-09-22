@@ -12,15 +12,16 @@ dependencies {
 }
 
 intelliJThemeGenerator {
+    val targetIdeaVersion = "232.9960"
     register("intUiLight") {
-        themeClassName = "org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme"
+        themeClassName = "org.jetbrains.jewel.intui.core.theme.IntUiLightTheme"
         themeFile = "platform/platform-resources/src/themes/expUI/expUI_light.theme.json"
-        ideaVersion = "232.6734"
+        ideaVersion = targetIdeaVersion
     }
     register("intUiDark") {
-        themeClassName = "org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme"
+        themeClassName = "org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme"
         themeFile = "platform/platform-resources/src/themes/expUI/expUI_dark.theme.json"
-        ideaVersion = "232.6734"
+        ideaVersion = targetIdeaVersion
     }
 }
 

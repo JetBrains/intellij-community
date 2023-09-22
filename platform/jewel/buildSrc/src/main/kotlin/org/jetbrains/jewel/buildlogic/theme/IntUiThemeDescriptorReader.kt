@@ -55,7 +55,7 @@ internal object IntUiThemeDescriptorReader {
         }.build()
 
     private val colorPaletteClassName =
-        ClassName.bestGuess("org.jetbrains.jewel.themes.intui.core.IntUiThemeColorPalette")
+        ClassName.bestGuess("org.jetbrains.jewel.intui.core.IntUiThemeColorPalette")
     private val iconDataClassName =
         ClassName.bestGuess("org.jetbrains.jewel.IntelliJThemeIconData")
 
