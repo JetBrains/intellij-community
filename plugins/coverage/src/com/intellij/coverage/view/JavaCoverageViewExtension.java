@@ -109,7 +109,9 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   @Override
   public List<AbstractTreeNode<?>> getChildrenNodes(final AbstractTreeNode node) {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
-    List<CoverageNodeInfo> infos = myAnnotator.getStructure().getChildrenInfo(getNodeId(node));
+    CoverageClassStructure structure = myAnnotator.getStructure();
+    if (structure == null) return children;
+    List<CoverageNodeInfo> infos = structure.getChildrenInfo(getNodeId(node));
     for (CoverageNodeInfo info : infos) {
       children.add(new JavaCoverageNode(myProject, info.getValue(), mySuitesBundle, myStateBean, info.getName()));
     }

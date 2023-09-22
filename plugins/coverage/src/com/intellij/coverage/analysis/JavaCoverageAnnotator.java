@@ -39,6 +39,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     super(project);
   }
 
+  @Nullable
   public CoverageClassStructure getStructure() {
     return myStructure;
   }
