@@ -475,12 +475,11 @@ public final class DiffUtil {
     Color commentFg = JBColor.lazy(() -> {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       TextAttributes commentAttributes = scheme.getAttributes(DefaultLanguageHighlighterColors.LINE_COMMENT);
-      if (commentAttributes.getForegroundColor() != null && commentAttributes.getBackgroundColor() == null) {
-        return commentAttributes.getForegroundColor();
+      Color commentAttributesForegroundColor = commentAttributes.getForegroundColor();
+      if (commentAttributesForegroundColor != null && commentAttributes.getBackgroundColor() == null) {
+        return commentAttributesForegroundColor;
       }
-      else {
-        return scheme.getDefaultForeground();
-      }
+      return scheme.getDefaultForeground();
     });
     label.setForeground(commentFg);
 

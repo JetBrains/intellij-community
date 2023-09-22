@@ -44,6 +44,7 @@ import com.intellij.util.LazyInitializer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageDocument.ScaledImageProvider;
@@ -72,6 +73,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Objects;
 
 /**
  * Image editor UI
@@ -156,7 +158,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       actionToolbar.setTargetComponent(this);
 
       toolbarPanel = actionToolbar.getComponent();
-      toolbarPanel.setBackground(JBColor.lazy(() -> getBackground()));
+      toolbarPanel.setBackground(JBColor.lazy(() -> Objects.requireNonNullElse(getBackground(), UIUtil.getPanelBackground())));
       toolbarPanel.addMouseListener(new FocusRequester());
     }
 

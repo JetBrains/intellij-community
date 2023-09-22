@@ -51,7 +51,7 @@ public class JBColor extends Color {
   }
 
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
-  protected JBColor(@NotNull Supplier<? extends Color> function) {
+  protected JBColor(@NotNull Supplier<? extends @NotNull Color> function) {
     super(0);
     name = null;
     defaultColor = null;
@@ -80,7 +80,8 @@ public class JBColor extends Color {
     func = null;
   }
 
-  public static JBColor lazy(@NotNull Supplier<? extends Color> supplier) {
+  @NotNull
+  public static JBColor lazy(@NotNull Supplier<? extends @NotNull Color> supplier) {
     return new JBColor(supplier);
   }
 

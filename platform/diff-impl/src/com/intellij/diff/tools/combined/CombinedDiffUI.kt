@@ -11,7 +11,7 @@ import java.awt.Insets
 
 internal object CombinedDiffUI {
   val MAIN_HEADER_BACKGROUND: Color = JBColor.lazy {
-    return@lazy if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.EditorTabs.background() else UIUtil.getPanelBackground()
+    if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.EditorTabs.background() else UIUtil.getPanelBackground()
   }
 
   val MAIN_HEADER_INSETS: Insets

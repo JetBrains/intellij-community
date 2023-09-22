@@ -391,7 +391,7 @@ private fun addPattern(key: String?, value: Any?, defaults: UIDefaults) {
   }
 }
 
-internal class IJColorUIResource(color: Color?, private val name: String) : JBColor(Supplier { color }), UIResource {
+internal class IJColorUIResource(color: Color, private val name: String) : JBColor(Supplier { color }), UIResource {
   override fun getName(): String = name
 
   override fun toString(): String = "IJColorUIResource(color=${super.toString()}, name=$name)"

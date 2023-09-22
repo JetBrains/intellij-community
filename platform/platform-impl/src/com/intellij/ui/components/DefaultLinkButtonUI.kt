@@ -190,7 +190,7 @@ private fun getTextColor(button: AbstractButton) = when {
   else -> button.foreground ?: getLinkColor(button)
 }
 
-private fun getLinkColor(button: AbstractButton) = when {
+private fun getLinkColor(button: AbstractButton): Color = when {
   isPressed(button) -> Link.Foreground.PRESSED
   isHovered(button) -> Link.Foreground.HOVERED
   isVisited(button) -> Link.Foreground.VISITED
