@@ -12,12 +12,15 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesController
+import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabMergeRequestCreateViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModelImpl
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 internal sealed interface GitLabReviewTabViewModel : ReviewTabViewModel {
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -87,6 +90,23 @@ internal sealed interface GitLabReviewTabViewModel : ReviewTabViewModel {
       }
     }
 
+
+    override suspend fun destroy() = cs.cancelAndJoinSilently()
+  }
+
+  class CreateMergeRequest(
+    project: Project,
+    parentCs: CoroutineScope,
+    projectsManager: GitLabProjectsManager,
+    projectData: GitLabProject,
+    onMergeRequestCreated: suspend (mrIid: String) -> Unit
+  ) : GitLabReviewTabViewModel {
+    private val cs = parentCs.childScope()
+
+    private val projectPath = projectData.projectMapping.repository.projectPath.fullPath()
+    override val displayName: String = GitLabBundle.message("merge.request.create.tab.title", projectPath)
+
+    val createVm = GitLabMergeRequestCreateViewModelImpl(project, cs, projectsManager, projectData, onMergeRequestCreated)
 
     override suspend fun destroy() = cs.cancelAndJoinSilently()
   }

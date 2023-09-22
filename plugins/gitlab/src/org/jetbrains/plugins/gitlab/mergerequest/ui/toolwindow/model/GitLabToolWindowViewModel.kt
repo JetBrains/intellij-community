@@ -41,7 +41,7 @@ internal class GitLabToolWindowViewModel(
 
   override val projectVm: StateFlow<GitLabToolWindowProjectViewModel?> =
     connectionManager.connectionState.mapScoped { connection ->
-      connection?.let { GitLabToolWindowProjectViewModel(project, accountManager, it, this@GitLabToolWindowViewModel) }
+      connection?.let { GitLabToolWindowProjectViewModel(project, accountManager, projectsManager, it, this@GitLabToolWindowViewModel) }
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
   val selectorVm: StateFlow<GitLabRepositoryAndAccountSelectorViewModel?> = isAvailable.mapScoped {

@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
@@ -49,6 +50,7 @@ internal class GitLabToolWindowProjectViewModel
 private constructor(parentCs: CoroutineScope,
                     private val project: Project,
                     accountManager: GitLabAccountManager,
+                    private val projectsManager: GitLabProjectsManager,
                     private val connection: GitLabProjectConnection,
                     val twVm: GitLabToolWindowViewModel)
   : ReviewToolwindowProjectViewModel<GitLabReviewTab, GitLabReviewTabViewModel> {
@@ -125,7 +127,12 @@ private constructor(parentCs: CoroutineScope,
     is GitLabReviewTab.ReviewSelected -> GitLabReviewTabViewModel.Details(project, cs, connection.currentUser, connection.projectData,
                                                                           tab.mrIid,
                                                                           getDiffBridge(tab.mrIid), filesController)
-    GitLabReviewTab.NewMergeRequest -> TODO("implement")
+    GitLabReviewTab.NewMergeRequest -> GitLabReviewTabViewModel.CreateMergeRequest(
+      project, cs, projectsManager, connection.projectData
+    ) { mrIid ->
+      closeTabAsync(GitLabReviewTab.NewMergeRequest)
+      showTab(GitLabReviewTab.ReviewSelected(mrIid))
+    }
   }
 
   override fun selectTab(tab: GitLabReviewTab?) {
@@ -140,13 +147,17 @@ private constructor(parentCs: CoroutineScope,
 
   override fun closeTab(tab: GitLabReviewTab) {
     cs.launch {
-      tabsGuard.withLock {
-        val current = _tabs.value
-        val currentVm = current.tabs[tab]
-        if (currentVm != null) {
-          currentVm.destroy()
-          _tabs.value = current.copy(current.tabs - tab, null)
-        }
+      closeTabAsync(tab)
+    }
+  }
+
+  private suspend fun closeTabAsync(tab: GitLabReviewTab) {
+    tabsGuard.withLock {
+      val current = _tabs.value
+      val currentVm = current.tabs[tab]
+      if (currentVm != null) {
+        currentVm.destroy()
+        _tabs.value = current.copy(current.tabs - tab, null)
       }
     }
   }
@@ -244,8 +255,9 @@ private constructor(parentCs: CoroutineScope,
   companion object {
     internal fun CoroutineScope.GitLabToolWindowProjectViewModel(project: Project,
                                                                  accountManager: GitLabAccountManager,
+                                                                 projectsManager: GitLabProjectsManager,
                                                                  connection: GitLabProjectConnection,
                                                                  twVm: GitLabToolWindowViewModel) =
-      GitLabToolWindowProjectViewModel(this, project, accountManager, connection, twVm)
+      GitLabToolWindowProjectViewModel(this, project, accountManager, projectsManager, connection, twVm)
   }
 }
