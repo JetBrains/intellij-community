@@ -635,10 +635,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
         myProjectTracker!!.scheduleProjectRefresh()
       }
     }
-    waitForImportCompletion()
-    if (!isNewImportingProcess) {
-      MavenUtil.invokeAndWait(myProject) {}
-    }
 
     // otherwise project settings was modified while importing
     assertNoPendingProjectForReload()

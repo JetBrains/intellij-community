@@ -53,16 +53,15 @@ class MavenProjectAware(
       submitSettingsFilesPartition(settingsFilesContext) { (filesToUpdate, filesToDelete) ->
         val updated = settingsFilesContext.created + settingsFilesContext.updated
         val deleted = settingsFilesContext.deleted
-        val spec = MavenImportSpec(false, true, context.isExplicitReload)
         if (updated.size == filesToUpdate.size && deleted.size == filesToDelete.size) {
           cs.launch {
-            manager.updateMavenProjects(spec, filesToUpdate, filesToDelete)
+            manager.updateMavenProjects(MavenImportSpec(true, true, context.isExplicitReload), filesToUpdate, filesToDelete)
           }
         }
         else {
           cs.launch {
             manager.findAllAvailablePomFilesIfNotMavenized()
-            manager.updateAllMavenProjects(spec)
+            manager.updateAllMavenProjects(MavenImportSpec(false, true, context.isExplicitReload))
           }
         }
       }
