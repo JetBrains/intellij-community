@@ -20,8 +20,8 @@ private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.VcsLogRangeF
 
 internal sealed class RangeFilterResult {
   class Commits(val commits: IntSet) : RangeFilterResult()
-  object InvalidRange : RangeFilterResult()
-  object Error : RangeFilterResult()
+  data object InvalidRange : RangeFilterResult()
+  data object Error : RangeFilterResult()
 }
 
 internal fun filterByRange(storage: VcsLogStorage,
