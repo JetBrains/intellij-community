@@ -235,7 +235,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     Class.forName(OpenTelemetrySdkBuilder::class.java.name, true, classLoader)
   }
 
-  val appLoaded = launch {
+  val appLoaded = async {
     checkSystemDirJob.join()
 
     val classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY)
@@ -259,6 +259,12 @@ fun CoroutineScope.startApplication(args: List<String>,
             logDeferred = logDeferred,
             appRegisteredJob = appRegisteredJob,
             args = args.filterNot { CommandLineArgs.isKnownArgument(it) })
+  }
+
+  launch {
+    val starter = appLoaded.await()
+    runStartupWizard()
+    executeApplicationStarter(starter, args)
   }
 
   launch {

@@ -78,8 +78,8 @@ internal suspend fun loadApp(app: ApplicationImpl,
                              logDeferred: Deferred<Logger>,
                              appRegisteredJob: CompletableDeferred<Unit>,
                              args: List<String>,
-                             initAwtToolkitAndEventQueueJob: Job) {
-  val starter = span("app initialization") {
+                             initAwtToolkitAndEventQueueJob: Job): ApplicationStarter {
+  return span("app initialization") {
     val initServiceContainerJob = launch {
       initServiceContainer(app = app, pluginSetDeferred = pluginSetDeferred)
       // ApplicationManager.getApplication may be used in ApplicationInitializedListener constructor
@@ -184,8 +184,6 @@ internal suspend fun loadApp(app: ApplicationImpl,
 
     deferredStarter.await()
   }
-  runStartupWizard()
-  executeApplicationStarter(starter, args)
 }
 
 private suspend fun initServiceContainer(app: ApplicationImpl, pluginSetDeferred: Deferred<Deferred<PluginSet>>) {
@@ -270,7 +268,7 @@ suspend fun initConfigurationStore(app: ApplicationImpl) {
   }
 }
 
-private suspend fun executeApplicationStarter(starter: ApplicationStarter, args: List<String>) {
+internal suspend fun executeApplicationStarter(starter: ApplicationStarter, args: List<String>) {
   if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
     if (starter is ModernApplicationStarter) {
       span("${starter.javaClass.simpleName}.start") {
