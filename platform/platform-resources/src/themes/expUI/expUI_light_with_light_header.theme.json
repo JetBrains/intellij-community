@@ -197,6 +197,8 @@
           "End": "#3D968B"
         }
       }
-    }
+    },
+
+    "DataSummary.Chart.background": "Blue4"
   }
 }
