@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecove
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.VersionUpdatedException;
 import org.jetbrains.annotations.NotNull;
@@ -29,11 +30,18 @@ import static com.intellij.util.ExceptionUtil.findCauseAndSuppressed;
 final class PersistentFSConnector {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnector.class);
 
-  //TODO RC: lower down to 3 -- really, never seen even >2 attempts in FUS data for months
-  private static final int MAX_INITIALIZATION_ATTEMPTS = 10;
+  /**
+   * FUS data shows no successful initialization takes >2 attempts -- 1st one fails by
+   * some reason, and the 2nd one rebuilds VFS from 0.
+   * The only scenario with >2 attempts is there something goes completely wrong, and
+   * initialization finally fails even after 10 attempts. But in such a scenario, more
+   * attempts do no good, but plague the logs with more exception traces, making it
+   * harder to spot the root cause.
+   * Hence, max=3 attempts is our smart, data-informed choice:
+   */
+  private static final int MAX_INITIALIZATION_ATTEMPTS = SystemProperties.getIntProperty("vfs.max-initialization-attempts", 3);
 
   public static final List<VFSRecoverer> RECOVERERS = List.of(
-    //new NotClosedProperlyRecoverer(),
     new ContentStoragesRecoverer()
   );
 
@@ -46,7 +54,7 @@ final class PersistentFSConnector {
   public static @NotNull VFSInitializationResult connect(@NotNull Path cachesDir,
                                                          int version,
                                                          boolean enableVfsLog,
-                                                         List<ConnectionInterceptor> interceptors) {
+                                                         @NotNull List<ConnectionInterceptor> interceptors) {
     return init(cachesDir, version, enableVfsLog, interceptors);
   }
 
