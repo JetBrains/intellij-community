@@ -95,7 +95,7 @@ class VfsLogImpl private constructor(
       { tryAcquireCompactionContext() },
       COMPACTION_DELAY_MS,
       COMPACTION_INTERVAL_MS,
-      if (COMPACTION_MODE == -1) DEFAULT_COMPACTION_MODE else OperationMode.values()[COMPACTION_MODE],
+      if (COMPACTION_MODE == -1) DEFAULT_COMPACTION_MODE else OperationMode.entries[COMPACTION_MODE],
       COMPACTION_MODE != -1
     )
 
