@@ -157,20 +157,20 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
             .getNames(namespace, kind, it.name, WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE).firstOrNull()
           ?: it.name
         }
-        .mapNotNull { (name, list) ->
+        .flatMap { (name, list) ->
           ProgressManager.checkCanceled()
           list
             .customizeMatches(params.strictScope, namespace, kind, name)
             .selectBest(WebSymbol::nameSegments, WebSymbol::priority, WebSymbol::extension)
-            .asSingleSymbol()
-            ?.let {
-              if (params.expandPatterns)
-                params.queryExecutor.namesProvider
-                  .getNames(it.namespace, it.kind, it.name, WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
-                  .firstOrNull()
-                  ?.let { name -> it.withMatchedName(name) }
-              else
-                it
+            .applyIf(params.expandPatterns) {
+              asSingleSymbol()
+                ?.let { symbol ->
+                  params.queryExecutor.namesProvider
+                    .getNames(symbol.namespace, symbol.kind, symbol.name, WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
+                    .firstOrNull()
+                    ?.let { name -> listOf(symbol.withMatchedName(name)) }
+                }
+              ?: emptyList()
             }
         }
       result
