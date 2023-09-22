@@ -715,14 +715,15 @@ public class MavenUtil {
       return;
     }
     String listenerPath = MavenServerManager.getInstance().getMavenEventListener().getAbsolutePath();
-    String userExtClassPath = StringUtils.stripToEmpty(params.getVMParametersList().getPropertyValue(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH));
+    String userExtClassPath =
+      StringUtils.stripToEmpty(params.getVMParametersList().getPropertyValue(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH));
     String vmParameter = "-D" + MavenServerEmbedder.MAVEN_EXT_CLASS_PATH + "=";
     String[] userListeners = userExtClassPath.split(File.pathSeparator);
     CompositeParameterTargetedValue targetedValue = new CompositeParameterTargetedValue(vmParameter)
       .addPathPart(listenerPath);
 
     for (String path : userListeners) {
-      if(StringUtil.isEmptyOrSpaces(path)) continue;
+      if (StringUtil.isEmptyOrSpaces(path)) continue;
       targetedValue = targetedValue.addPathSeparator().addPathPart(path);
     }
     params.getVMParametersList().add(targetedValue);
@@ -803,7 +804,6 @@ public class MavenUtil {
     }
     return null;
   }
-
 
 
   @Nullable
@@ -913,7 +913,21 @@ public class MavenUtil {
 
   @NotNull
   public static File resolveDefaultLocalRepository() {
-    return resolveLocalRepository(null, BundledMaven3.INSTANCE, null);
+    String forcedM2Home = System.getProperty(PROP_FORCED_M2_HOME);
+    if (forcedM2Home != null) {
+      return new File(forcedM2Home);
+    }
+    File result = doResolveLocalRepository(resolveUserSettingsFile(null), null);
+    if (result == null) {
+      result = new File(resolveM2Dir(), REPOSITORY_DIR);
+    }
+
+    try {
+      return result.getCanonicalFile();
+    }
+    catch (IOException e) {
+      return result;
+    }
   }
 
   @NotNull
@@ -956,9 +970,9 @@ public class MavenUtil {
 
   @NotNull
   public static File makeLocalRepositoryFile(MavenId id,
-                                              File localRepository,
-                                              @NotNull String extension,
-                                              @Nullable String classifier) {
+                                             File localRepository,
+                                             @NotNull String extension,
+                                             @Nullable String classifier) {
     String relPath = id.getGroupId().replace(".", "/");
 
     relPath += "/" + id.getArtifactId();
@@ -1210,9 +1224,8 @@ public class MavenUtil {
   }
 
   /**
-   *
-   * @param project Project required to restart connectors
-   * @param wait if true, then maven server(s) restarted synchronously
+   * @param project   Project required to restart connectors
+   * @param wait      if true, then maven server(s) restarted synchronously
    * @param condition only connectors satisfied for this predicate will be restarted
    */
   public static void restartMavenConnectors(@NotNull Project project, boolean wait, Predicate<MavenServerConnector> condition) {
@@ -1676,7 +1689,8 @@ public class MavenUtil {
   public static boolean isMavenizedModule(@NotNull Module m) {
     try {
       return !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized();
-    } catch (AlreadyDisposedException e) {
+    }
+    catch (AlreadyDisposedException e) {
       return false;
     }
   }
