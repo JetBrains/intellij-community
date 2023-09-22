@@ -15,11 +15,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumerator.fillValueHashToIdMap;
+import static com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP;
 import static com.intellij.util.io.IOUtil.MiB;
 
-/**
- *
- */
 @ApiStatus.Internal
 public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumerator<V>> {
   public static final int DEFAULT_PAGE_SIZE = 8 * MiB;
@@ -31,7 +29,8 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
     .withPageSize(DEFAULT_PAGE_SIZE)
     .failIfDataFormatVersionNotMatch(DurableEnumerator.DATA_FORMAT_VERSION);
 
-  public static final StorageFactory<? extends DurableIntToMultiIntMap> DEFAULT_DURABLE_MAP_FACTORY = ExtendibleMapFactory.defaults();
+  public static final StorageFactory<? extends DurableIntToMultiIntMap> DEFAULT_DURABLE_MAP_FACTORY = ExtendibleMapFactory.defaults()
+    .ifNotClosedProperly(DROP_AND_CREATE_EMPTY_MAP);
 
   public static final String MAP_FILE_SUFFIX = ".hashToId";
 
@@ -103,22 +102,21 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
       valuesLog -> valueHashToIdFactory.wrapStorageSafely(
         hashToIdPath,
         valueHashToId -> {
-          //TODO RC: We could recover the map from valuesLog -- but we need valueHashToIdFactory.clean() to remove
-          //         the files, and reopen from 0
-
           if (rebuildMapFromLogIfInconsistent) {
+            //If hashToId map is durable, but its factory configured to 'create an empty map if (corrupted, inconsistent,
+            // wasn't properly closed...)' -- then this branch rebuilds such a map, hence provides a recovery even for
+            // durable maps
             if (!valuesLog.isEmpty() && valueHashToId.isEmpty()) {
+              //TODO RC: valueHashToId could be loaded async -- to not delay initialization (see DurableStringEnumerator)
               fillValueHashToIdMap(valuesLog, valueDescriptor, valueHashToId);
             }
             //TODO RC: check other (potential) inconsistencies:
             //         log was recovered,
-            //         valueHashToIdMap has 'not closed properly' marker, etc
-            //         ...but to rebuild map in those cases we need .clean() or .createFromScratch() method for map!
             //MAYBE separate 'always rebuild map' and 'rebuild map if inconsistent'
             //      (both requires .open(path,CREATE_NEW) method)
           }
 
-          //TODO RC: valueHashToId could be loaded async -- to not delay initialization (see DurableStringEnumerator)
+
 
           return new DurableEnumerator<>(
             valueDescriptor,

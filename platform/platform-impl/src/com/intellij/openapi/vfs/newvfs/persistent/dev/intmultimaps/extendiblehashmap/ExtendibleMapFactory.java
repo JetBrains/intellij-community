@@ -89,7 +89,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
         );
     }
     catch (CorruptedException e) {
-      if (notClosedProperlyAction == NotClosedProperlyAction.CREATE_EMPTY_MAP) {
+      if (notClosedProperlyAction == NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP) {
         //TODO RC: removing of mmapped file is tricky on Windows, hence it is better to implement MMappedFileStorage.truncate(),
         //         and reuse already opened and truncated mapped storage for the new EHMap
         FileUtil.delete(storagePath);
@@ -107,6 +107,6 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
   public enum NotClosedProperlyAction {
     IGNORE_AND_HOPE_FOR_THE_BEST,
     FAIL_SPECTACULARLY,
-    CREATE_EMPTY_MAP
+    DROP_AND_CREATE_EMPTY_MAP
   }
 }
