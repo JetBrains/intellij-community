@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,7 @@ public final class History {
     myRoot = root;
   }
 
+  @RequiresEdt
   public void pushQueryPlace() {
     if (isNavigatingNow()) return;
 
@@ -34,7 +36,7 @@ public final class History {
     pushPlace(place);
   }
 
-  public synchronized void pushPlace(@NotNull Place place) {
+  private synchronized void pushPlace(@NotNull Place place) {
     while (myCurrentPos >= 0 && myCurrentPos < myHistory.size() - 1) {
       myHistory.remove(myHistory.size() - 1);
     }
@@ -68,6 +70,7 @@ public final class History {
     myRoot.navigateTo(place, false);
   }
 
+  @RequiresEdt
   public void back() {
     int next = findValid(-1);
     assert next != -1;
@@ -118,6 +121,7 @@ public final class History {
     return findValid(-1) != -1;
   }
 
+  @RequiresEdt
   public void forward() {
     int next = findValid(1);
     assert next != -1;
@@ -128,6 +132,7 @@ public final class History {
     return findValid(1) != -1;
   }
 
+  @RequiresEdt
   public synchronized void clear() {
     myHistory.clear();
     myCurrentPos = -1;
