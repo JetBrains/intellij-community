@@ -127,6 +127,9 @@ class InlineCompletionHandler(scope: CoroutineScope) {
         }
         .collectIndexed { index, it ->
           ensureActive()
+          if (context.isInvalidated) {
+            return@collectIndexed
+          }
           showInlineElement(it, index, offset, context)
         }
     }
@@ -161,12 +164,12 @@ class InlineCompletionHandler(scope: CoroutineScope) {
 
     val offset = context.lastOffset ?: return
     val currentCompletion = context.lineToInsert
+    hide(editor, false, context)
 
     editor.document.insertString(offset, currentCompletion)
     editor.caretModel.moveToOffset(offset + currentCompletion.length)
 
     LookupManager.getActiveLookup(editor)?.hideLookup(false) //TODO: remove this
-    hide(editor, false, context)
   }
 
   @RequiresEdt

@@ -7,7 +7,20 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 class InlineCompletionContext internal constructor(val editor: Editor) {
-  val state = InlineState()
+
+  /**
+   * @see invalidate
+   */
+  var isInvalidated = false
+    @RequiresEdt
+    get
+    private set
+
+  private val myState = InlineState()
+
+  val state: InlineState
+    @RequiresEdt
+    get() = assureNotInvalidated { myState }
 
   val isCurrentlyDisplayingInlays: Boolean
     @RequiresEdt
@@ -27,7 +40,25 @@ class InlineCompletionContext internal constructor(val editor: Editor) {
 
   @RequiresEdt
   fun clear() {
-    state.clear()
+    assureNotInvalidated { state.clear() }
+  }
+
+  /**
+   * Indicates that this context cannot be used anymore, meaning that this context cannot be used to access any elements.
+   * Any such operation with context after invalidation results into throwing [InlineCompletionContextInvalidatedException].
+   *
+   * * The only operation you can safely use is [isInvalidated]. Always check it before accessing any elements.
+   * * If this context was already invalidated, this method does nothing.
+   * * Invalidation of a context guarantees that all elements were cleared.
+   */
+  @RequiresEdt
+  internal fun invalidate() {
+    isInvalidated = true
+  }
+
+  private inline fun <T> assureNotInvalidated(block: () -> T): T {
+    check(!isInvalidated) { "Context is invalidated. Cannot access elements." }
+    return block()
   }
 
   companion object {

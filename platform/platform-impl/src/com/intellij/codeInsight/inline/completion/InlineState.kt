@@ -28,7 +28,7 @@ data class InlineState internal constructor(
   }
 
   @RequiresEdt
-  fun clear() {
+  internal fun clear() {
     val disposer = CompositeDisposable()
     val renderWatcher = InlineCompletionRenderWatcher.getInstance()
     _elements.forEach {

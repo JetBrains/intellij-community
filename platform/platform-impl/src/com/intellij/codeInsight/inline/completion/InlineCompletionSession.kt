@@ -24,7 +24,10 @@ internal data class InlineCompletionSession(val context: InlineCompletionContext
     }
 
     internal fun remove(editor: Editor) {
-      getOrNull(editor)?.context?.clear()
+      getOrNull(editor)?.context?.let {
+        it.clear()
+        it.invalidate()
+      }
       editor.putUserData(INLINE_COMPLETION_SESSION, null)
       LOG.trace("Remove inline completion session")
     }
