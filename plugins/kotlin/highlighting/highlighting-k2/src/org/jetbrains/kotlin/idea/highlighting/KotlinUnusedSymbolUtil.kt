@@ -390,9 +390,9 @@ object KotlinUnusedSymbolUtil {
       if (import.isAllUnder) {
           val importedFrom = import.importedReference?.getQualifiedElementSelector()?.mainReference?.resolve()
                   as? KtClassOrObject ?: return true
-          return importedFrom.declarations.none { it is KtNamedDeclaration && hasNonTrivialUsages(
-              it, declarationContainingClass = it.containingClass()
-          ) }
+          return importedFrom.declarations.none {
+              it is KtNamedDeclaration && hasNonTrivialUsages(it, declarationContainingClass = it.containingClass())
+          }
       }
       if (import.importedFqName == declaration.fqName) return true
       val importedDeclaration =
@@ -427,10 +427,12 @@ object KotlinUnusedSymbolUtil {
       if (symbol !is KtFunctionSymbol || !symbol.annotationsList.hasAnnotation(ClassId.topLevel(FqName("kotlin.jvm.JvmName")))) {
           if (declaration is KtSecondaryConstructor &&
               declarationContainingClass != null &&
+              // when too many occurrences of this class, consider it used
+              (isCheapEnoughToSearchUsages(declarationContainingClass) == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES ||
               ReferencesSearch.search(KotlinReferencesSearchParameters(declarationContainingClass, useScope)).any {
                   it.element.getStrictParentOfType<KtTypeAlias>() != null || it.element.getStrictParentOfType<KtCallExpression>()
                       ?.resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbol
-              }
+              })
           ) {
               return true
           }
