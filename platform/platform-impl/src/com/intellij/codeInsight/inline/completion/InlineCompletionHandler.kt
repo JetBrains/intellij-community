@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -23,10 +24,7 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectIndexed
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onEmpty
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -113,7 +111,12 @@ class InlineCompletionHandler(scope: CoroutineScope) {
 
     val modificationStamp = request.document.modificationStamp
     val initialEditorOffset = currentEditorOffset()
-    val resultFlow = request(provider, request) // .flowOn(Dispatchers.IO)
+    val resultFlow = try {
+      request(provider, request) // .flowOn(Dispatchers.IO)
+    } catch (e: Throwable) {
+      LOG.errorIfNotCancellation(e)
+      emptyFlow()
+    }
 
     val context = InlineCompletionSession.getOrInit(editor, provider).context
 
@@ -126,6 +129,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
         }
         .onCompletion {
           complete(currentCoroutineContext().isActive, editor, it, context)
+          LOG.errorIfNotCancellation(it)
         }
         .collectIndexed { index, it ->
           ensureActive()
@@ -318,6 +322,12 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     val KEY = Key.create<InlineCompletionHandler>("inline.completion.handler")
 
     fun getOrNull(editor: Editor) = editor.getUserData(KEY)
+
+    private fun Logger.errorIfNotCancellation(e: Throwable?) {
+      if (e != null && e !is CancellationException) {
+        error(e)
+      }
+    }
 
     private var testProvider: InlineCompletionProvider? = null
 

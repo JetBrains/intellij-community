@@ -47,7 +47,7 @@ internal class SafeInlineCompletionExecutor(private val scope: CoroutineScope) {
   }
 
   fun cancel() {
-    if (checkNotCancelled()) {
+    if (!scope.isActive) {
       return
     }
     nextTask.cancel()
@@ -59,7 +59,6 @@ internal class SafeInlineCompletionExecutor(private val scope: CoroutineScope) {
     val currentTimestamp = lastRequestedJobTimestamp.get()
     while (lastExecutedJobTimestamp.get() < currentTimestamp) {
       yield()
-      assert(scope.isActive) { "Do not call awaitAll when finishing executor." }
     }
   }
 

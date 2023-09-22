@@ -30,7 +30,7 @@ class InlineCompletionEditorListener(private val scope: CoroutineScope) : Editor
       EditorUtil.disposeWithEditor(editor, it)
     }
 
-    val handler = InlineCompletionHandler(scope.childScope())
+    val handler = InlineCompletionHandler(scope.childScope(supervisor = !application.isUnitTestMode)) // Completely fail only in tests
     editor.putUserData(InlineCompletionHandler.KEY, handler)
     val docListener = InlineCompletionDocumentListener(editor)
     val caretListener = InlineCaretListener()
