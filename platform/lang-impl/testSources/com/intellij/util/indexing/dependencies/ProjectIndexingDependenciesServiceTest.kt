@@ -1,10 +1,12 @@
 package com.intellij.util.indexing.dependencies
 
+import com.intellij.mock.MockVirtualFile
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService.Companion.NULL_STAMP
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService.FileIndexingStampImpl
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService.IndexingRequestTokenImpl
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -165,17 +167,16 @@ class ProjectIndexingDependenciesServiceTest {
 
   @Test
   fun `test clean files are not marked as indexed by default (modificationStamp=0)`() {
-    val file = factory.createMockVirtualFile(modificationStamp = 0)
-    val indexingRequest = factory.newProjectIndexingDependenciesService().getLatestIndexingRequestToken()
+    val indexingRequest = factory.newProjectIndexingDependenciesService().getLatestIndexingRequestToken() as IndexingRequestTokenImpl
 
-    val fileIndexingStamp = indexingRequest.getFileIndexingStamp(file)
+    val fileIndexingStamp = indexingRequest.getFileIndexingStamp(0)
     assertFalse("Should not be equal to default VFS value (0): $fileIndexingStamp",
                 fileIndexingStamp.isSame(DEFAULT_VFS_INDEXING_STAMP_VALUE))
   }
 
   @Test
   fun `test non-markable files are not marked as indexed by default (modificationStamp=-1)`() {
-    val file = factory.createMockVirtualFile(modificationStamp = -1)
+    val file = MockVirtualFile("test")
     val indexingRequest = factory.newProjectIndexingDependenciesService().getLatestIndexingRequestToken()
 
     val fileIndexingStamp = indexingRequest.getFileIndexingStamp(file)
@@ -185,9 +186,9 @@ class ProjectIndexingDependenciesServiceTest {
 
   @Test
   fun `test modificationStamp change invalidates indexing flag`() {
-    val indexingRequest = factory.newProjectIndexingDependenciesService().getLatestIndexingRequestToken()
-    val fileIndexingStampBefore = indexingRequest.getFileIndexingStamp(factory.createMockVirtualFile(modificationStamp = 42))
-    val fileIndexingStampAfter = indexingRequest.getFileIndexingStamp(factory.createMockVirtualFile(modificationStamp = 43))
+    val indexingRequest = factory.newProjectIndexingDependenciesService().getLatestIndexingRequestToken() as IndexingRequestTokenImpl
+    val fileIndexingStampBefore = indexingRequest.getFileIndexingStamp(42)
+    val fileIndexingStampAfter = indexingRequest.getFileIndexingStamp(43)
     assertNotEquals(fileIndexingStampBefore, fileIndexingStampAfter)
   }
 

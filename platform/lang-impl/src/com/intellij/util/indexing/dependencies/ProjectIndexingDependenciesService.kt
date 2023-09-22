@@ -82,23 +82,27 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     }
   }
 
-  private data class IndexingRequestTokenImpl(val requestId: Int,
+  @VisibleForTesting
+  data class IndexingRequestTokenImpl(val requestId: Int,
                                               val appIndexingRequest: AppIndexingDependenciesToken) : IndexingRequestToken {
     private val appIndexingRequestId = appIndexingRequest.toInt()
     override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
       if (file !is VirtualFileWithId) return NULL_STAMP
-
       val fileStamp = PersistentFS.getInstance().getModificationCount(file)
-
-      // we assume that stamp and file.modificationStamp never decrease => their sum only grow up
-      // in the case of overflow we hope that new value does not match any previously used value
-      // (which is hopefully true in most cases, because (new value)==(old value) was used veeeery long time ago)
-      return FileIndexingStampImpl(fileStamp + requestId + appIndexingRequestId)
+      return getFileIndexingStamp(fileStamp)
     }
 
     override fun mergeWith(other: IndexingRequestToken): IndexingRequestToken {
       return IndexingRequestTokenImpl(max(requestId, (other as IndexingRequestTokenImpl).requestId),
                                       appIndexingRequest.mergeWith(other.appIndexingRequest))
+    }
+
+    @VisibleForTesting
+    fun getFileIndexingStamp(fileStamp: Int): FileIndexingStamp {
+      // we assume that stamp and file.modificationStamp never decrease => their sum only grow up
+      // in the case of overflow we hope that new value does not match any previously used value
+      // (which is hopefully true in most cases, because (new value)==(old value) was used veeeery long time ago)
+      return FileIndexingStampImpl(fileStamp + requestId + appIndexingRequestId)
     }
   }
 
