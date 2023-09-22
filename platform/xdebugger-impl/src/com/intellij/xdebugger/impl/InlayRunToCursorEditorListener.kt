@@ -173,6 +173,12 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
 
   @RequiresEdt
   private fun showHint(editor: Editor, lineNumber: Int, firstNonSpacePos: Point, group: DefaultActionGroup, lineY: Int) {
+    val rootPane = editor.getComponent().rootPane
+    if (rootPane == null) {
+      currentEditor.clear()
+      currentLineNumber = -1
+      return
+    }
     currentEditor = WeakReference(editor)
     currentLineNumber = lineNumber
     val caretLine = editor.getCaretModel().logicalPosition.line
@@ -185,7 +191,7 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
     val position = SwingUtilities.convertPoint(
       editor.getContentComponent(),
       Point(JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT)/* - (group.childrenCount - 1) * JBUI.scale(ACTION_BUTTON_SIZE)*/, lineY + (editor.lineHeight - JBUI.scale(ACTION_BUTTON_SIZE))/2),
-      editor.getComponent().rootPane.layeredPane
+      rootPane.layeredPane
     )
 
     val toolbarImpl = createImmediatelyUpdatedToolbar(group, ActionPlaces.EDITOR_HINT, editor.getComponent(), true) {} as ActionToolbarImpl
