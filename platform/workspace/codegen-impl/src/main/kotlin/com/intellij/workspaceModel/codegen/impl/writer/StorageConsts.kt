@@ -116,6 +116,8 @@ internal val EntityReference = fqn(workspaceStorageMetamodelPackageName, "ValueT
 // Entity
 internal val LibraryEntity = fqn(workspaceEntitiesPackageName, "LibraryEntity")
 internal val LibraryRoot = fqn(workspaceEntitiesPackageName, "LibraryRoot")
+internal val SdkMainEntity = fqn(workspaceEntitiesPackageName, "SdkMainEntity")
+internal val SdkRoot = fqn(workspaceEntitiesPackageName, "SdkRoot")
 
 
 // Annotations
