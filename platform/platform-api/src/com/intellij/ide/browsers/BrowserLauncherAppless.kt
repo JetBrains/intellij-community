@@ -2,7 +2,6 @@
 package com.intellij.ide.browsers
 
 import com.intellij.CommonBundle
-import com.intellij.Patches
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
@@ -23,9 +22,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
-import com.intellij.util.ui.GraphicsUtil
 import java.awt.Desktop
-import java.awt.GraphicsEnvironment
 import java.io.File
 import java.io.IOException
 import java.net.URI
@@ -40,10 +37,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       isDesktopActionSupported(Desktop.Action.BROWSE) || SystemInfo.isMac || SystemInfo.isWindows || SystemInfo.hasXdgOpen()
 
     private fun isDesktopActionSupported(action: Desktop.Action): Boolean =
-      !isAffectedByDesktopBug() && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
-
-    private fun isAffectedByDesktopBug(): Boolean =
-      Patches.SUN_BUG_ID_6486393 && (GraphicsEnvironment.isHeadless() || !GraphicsUtil.isRemoteEnvironment())
+      Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
   }
 
   override fun open(url: String): Unit = openOrBrowse(url, false)
