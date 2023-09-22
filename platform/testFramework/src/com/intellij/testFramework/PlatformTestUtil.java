@@ -1132,21 +1132,21 @@ public final class PlatformTestUtil {
 
       @Override
       public void processStarted(RunContentDescriptor descriptor) {
-        LOG.debug("Process started");
+        ProcessHandler processHandler = descriptor.getProcessHandler();
+        LOG.debug("Process started: ", processHandler);
         if (descriptorProcessor != null) {
           descriptorProcessor.accept(descriptor);
         }
-        ProcessHandler processHandler = descriptor.getProcessHandler();
         assertNotNull(processHandler);
         processHandler.addProcessListener(new ProcessAdapter() {
           @Override
           public void startNotified(@NotNull ProcessEvent event) {
-            LOG.debug("Process notified");
+            LOG.debug("Process notified: ", processHandler);
           }
 
           @Override
           public void processTerminated(@NotNull ProcessEvent event) {
-            LOG.debug("Process terminated: exitCode: " + event.getExitCode() + "; text: " + event.getText());
+            LOG.debug("Process terminated: exitCode: ", event.getExitCode(), "; text: ", event.getText(), "; process: ", processHandler);
           }
 
           @Override
