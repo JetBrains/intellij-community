@@ -35,6 +35,8 @@ public final class ClassPath {
   static final boolean recordLoadingTime = recordLoadingInfo || Boolean.getBoolean("idea.record.classloading.stats");
   static final boolean logLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
 
+  private static final boolean enableCoroutineDump = Boolean.parseBoolean(System.getProperty("idea.enable.coroutine.dump", "true"));
+
   // DCEVM support
   private static final boolean isNewClassLoadingEnabled = false;
 
@@ -178,6 +180,20 @@ public final class ClassPath {
                                       String fileName,
                                       long packageNameHash,
                                       ClassDataConsumer classDataConsumer) throws IOException {
+    if (packageNameHash == -3930079881136890558L &&
+        enableCoroutineDump &&
+        className.equals("kotlin.coroutines.jvm.internal.DebugProbesKt")) {
+      String resourceName = "DebugProbesKt.bin";
+      Resource resource = findResource(resourceName);
+      if (resource == null) {
+        //noinspection UseOfSystemOutOrSystemErr
+        System.err.println("Cannot find " + resourceName);
+      }
+      else {
+        return classDataConsumer.consumeClassData(className, resource.getByteBuffer());
+      }
+    }
+
     long start = classLoading.startTiming();
     try {
       int i;

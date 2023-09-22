@@ -25,7 +25,7 @@ import java.util.*
 private const val jarSuffix = ".jar"
 private const val metaSuffix = ".json"
 
-private const val cacheVersion: Byte = 3
+private const val cacheVersion: Byte = 4
 
 internal sealed interface JarCacheManager {
   suspend fun computeIfAbsent(item: JarDescriptor,

@@ -95,7 +95,7 @@ private val commandProcessor: AtomicReference<(List<String>) -> Deferred<CliResu
 internal var shellEnvDeferred: Deferred<Boolean?>? = null
   private set
 
-  // the main thread's dispatcher is sequential - use it with care
+// the main thread's dispatcher is sequential - use it with care
 fun CoroutineScope.startApplication(args: List<String>,
                                     mainClassLoaderDeferred: Deferred<ClassLoader>,
                                     appStarterDeferred: Deferred<AppStarter>,
@@ -107,6 +107,22 @@ fun CoroutineScope.startApplication(args: List<String>,
 
     override suspend fun <T> span(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T {
       return com.intellij.platform.diagnostic.telemetry.impl.span(name = name, context = context, action = action)
+    }
+  }
+
+  if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
+    launch() {
+      span("coroutine debug probes init") {
+        enableCoroutineDump()
+      }
+      launch(CoroutineName("coroutine jstack configuration")) {
+        JBR.getJstack()?.includeInfoFrom {
+          """
+  $COROUTINE_DUMP_HEADER
+  ${dumpCoroutines(stripDump = false)}
+  """
+        }
+      }
     }
   }
 
@@ -398,7 +414,7 @@ val isImplicitReadOnEDTDisabled: Boolean
   get() = "false" != System.getProperty(DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY)
 
 internal val isAutomaticIWLOnDirtyUIDisabled: Boolean
-  get() = "false" !=  System.getProperty(DISABLE_AUTOMATIC_WIL_ON_DIRTY_UI_PROPERTY)
+  get() = "false" != System.getProperty(DISABLE_AUTOMATIC_WIL_ON_DIRTY_UI_PROPERTY)
 
 @Internal
 // called by the app after startup
@@ -532,8 +548,11 @@ private fun checkDirectory(directory: Path, kind: String, property: String, chec
     return false
   }
   finally {
-    try { tempFile?.deleteIfExists() }
-    catch (_: Exception) { }
+    try {
+      tempFile?.deleteIfExists()
+    }
+    catch (_: Exception) {
+    }
   }
 }
 

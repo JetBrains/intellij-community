@@ -5,10 +5,7 @@
 
 package com.intellij.ide.bootstrap
 
-import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
-import com.intellij.diagnostic.dumpCoroutines
-import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.ide.*
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.plugins.PluginManagerCore
@@ -47,7 +44,6 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.lang.ZipFilePool
-import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -157,19 +153,6 @@ internal suspend fun loadApp(app: ApplicationImpl,
 
     val appInitListeners = async(CoroutineName("app init listener preload")) {
       getAppInitializedListeners(app)
-    }
-
-    // only here as the last - it is a heavy-weight (~350ms) activity, let's first schedule more important tasks
-    if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
-      launch(CoroutineName("coroutine debug probes init")) {
-        enableCoroutineDump()
-        JBR.getJstack()?.includeInfoFrom {
-          """
-      $COROUTINE_DUMP_HEADER
-      ${dumpCoroutines(stripDump = false)}
-      """
-        }
-      }
     }
 
     appRegisteredJob.join()
