@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -24,7 +23,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ThreeState;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -200,16 +198,26 @@ public class LegacyProjectJdkTableDelegate implements SdkTableImplementationDele
       throw new IllegalStateException("Sdk " + jdk + " is already registered.");
     }
     mySdks.add(jdk);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(JDK_TABLE_TOPIC).jdkAdded(jdk);
   }
 
   @Override
   public void removeSdk(@NotNull Sdk sdk) {
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(JDK_TABLE_TOPIC).jdkRemoved(sdk);
     mySdks.remove(sdk);
   }
 
   @Override
   public void updateSdk(@NotNull Sdk originalSdk, @NotNull Sdk modifiedSdk) {
+    String previousName = originalSdk.getName();
+    String newName = modifiedSdk.getName();
+
     ((ProjectJdkImpl)modifiedSdk).copyTo((ProjectJdkImpl)originalSdk);
+
+    if (!previousName.equals(newName)) {
+      // fire changes because after renaming JDK its name may match the associated jdk name of modules/project
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(JDK_TABLE_TOPIC).jdkNameChanged(originalSdk, previousName);
+    }
   }
 
   @NotNull

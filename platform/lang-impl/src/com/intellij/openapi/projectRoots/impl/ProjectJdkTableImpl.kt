@@ -63,12 +63,10 @@ open class ProjectJdkTableImpl: ProjectJdkTable() {
   override fun addJdk(sdk: Sdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     delegate.addNewSdk(sdk)
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(JDK_TABLE_TOPIC).jdkAdded(sdk)
   }
 
   override fun removeJdk(sdk: Sdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(JDK_TABLE_TOPIC).jdkRemoved(sdk)
     delegate.removeSdk(sdk)
     if (sdk is Disposable) {
       Disposer.dispose(sdk)
@@ -77,16 +75,7 @@ open class ProjectJdkTableImpl: ProjectJdkTable() {
 
   override fun updateJdk(originalSdk: Sdk, modifiedSdk: Sdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-
-    val previousName: String = originalSdk.getName()
-    val newName: String = modifiedSdk.getName()
-
     delegate.updateSdk(originalSdk, modifiedSdk)
-
-    if (previousName != newName) {
-      // fire changes because after renaming JDK its name may match the associated jdk name of modules/project
-      ApplicationManager.getApplication().getMessageBus().syncPublisher<Listener>(JDK_TABLE_TOPIC).jdkNameChanged(originalSdk, previousName)
-    }
   }
 
   override fun createSdk(name: String, sdkType: SdkTypeId): Sdk = delegate.createSdk(name, sdkType, null)

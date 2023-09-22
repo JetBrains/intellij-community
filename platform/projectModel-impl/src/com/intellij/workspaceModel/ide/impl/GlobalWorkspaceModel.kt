@@ -154,6 +154,7 @@ class GlobalWorkspaceModel : Disposable {
   private fun onBeforeChanged(change: VersionedStorageChange) {
     ThreadingAssertions.assertWriteAccess()
 
+    GlobalSdkTableBridge.getInstance().handleBeforeChangeEvents(change)
     GlobalLibraryTableBridge.getInstance().handleBeforeChangeEvents(change)
   }
 
@@ -161,7 +162,9 @@ class GlobalWorkspaceModel : Disposable {
   private fun onChanged(change: VersionedStorageChange) {
     ThreadingAssertions.assertWriteAccess()
 
+    GlobalSdkTableBridge.getInstance().handleChangedEvents(change)
     GlobalLibraryTableBridge.getInstance().handleChangedEvents(change)
+
     globalWorkspaceModelCache?.scheduleCacheSave()
     isFromGlobalWorkspaceModel = true
     ProjectManager.getInstance().openProjects.forEach { project ->

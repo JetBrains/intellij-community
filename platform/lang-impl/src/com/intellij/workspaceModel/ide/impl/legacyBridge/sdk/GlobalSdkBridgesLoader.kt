@@ -1,13 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.platform.backend.workspace.BridgeInitializer
 import com.intellij.platform.workspace.jps.entities.SdkMainEntity
-import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl.Companion.mutableSdkMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
@@ -61,5 +63,52 @@ class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
         SdkBridgeImpl(sdkEntityCopy)
       }
     }
+  }
+
+  override fun handleBeforeChangeEvents(event: VersionedStorageChange) {
+    val removeChanges = event.getChanges(SdkMainEntity::class.java).filterIsInstance<EntityChange.Removed<SdkMainEntity>>()
+
+    if (removeChanges.isEmpty()) return
+    for (change in removeChanges) {
+      val sdkBridge = event.storageBefore.sdkMap.getDataByEntity(change.entity)
+      LOG.debug { "Fire 'jdkRemoved' event for ${change.entity.name}, sdk = $sdkBridge" }
+      if (sdkBridge != null) {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectJdkTable.JDK_TABLE_TOPIC).jdkRemoved(sdkBridge)
+      }
+    }
+  }
+
+  override fun handleChangedEvents(event: VersionedStorageChange) {
+    // Since the listener is not deprecated, it will be better to keep the order of events as remove -> replace -> add
+    val changes = event.getChanges(SdkMainEntity::class.java).orderToRemoveReplaceAdd()
+    if (changes.isEmpty()) return
+
+    for (change in changes) {
+      LOG.debug { "Process sdk change $change" }
+      when (change) {
+        is EntityChange.Added -> {
+          val createdSdkBridge = event.storageAfter.sdkMap.getDataByEntity(change.entity)
+                                      ?: error("Sdk bridge should be created before in `GlobalWorkspaceModel.initializeBridges`")
+          ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectJdkTable.JDK_TABLE_TOPIC).jdkAdded(createdSdkBridge)
+        }
+        is EntityChange.Replaced -> {
+          val previousName = change.oldEntity.name
+          val newName = change.newEntity.name
+
+          if (previousName != newName) {
+            event.storageBefore.sdkMap.getDataByEntity(change.oldEntity)?.let { sdkBridge ->
+              // fire changes because after renaming JDK its name may match the associated jdk name of modules/project
+              ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectJdkTable.JDK_TABLE_TOPIC).jdkNameChanged(sdkBridge, previousName)
+            }
+          }
+        }
+        is EntityChange.Removed -> { }
+      }
+    }
+  }
+
+
+  companion object {
+    private val LOG = logger<GlobalSdkBridgesLoader>()
   }
 }
