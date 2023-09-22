@@ -83,6 +83,7 @@ open class SdkMainEntityImpl(val dataSource: SdkMainEntityData) : SdkMainEntity,
       this.currentEntityData = null
 
       index(this, "homePath", this.homePath)
+      indexSdkRoots(roots)
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
@@ -134,6 +135,11 @@ open class SdkMainEntityImpl(val dataSource: SdkMainEntityData) : SdkMainEntity,
       updateChildToParentReferences(parents)
     }
 
+    private fun indexSdkRoots(sdkRoots: List<SdkRoot>) {
+      val sdkRootList = sdkRoots.map { it.url }.toHashSet()
+      index(this, "roots", sdkRootList)
+    }
+
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -179,6 +185,11 @@ open class SdkMainEntityImpl(val dataSource: SdkMainEntityData) : SdkMainEntity,
       }
 
     private val rootsUpdater: (value: List<SdkRoot>) -> Unit = { value ->
+
+      val _diff = diff
+      if (_diff != null) {
+        indexSdkRoots(value)
+      }
 
       changedProperty.add("roots")
     }
