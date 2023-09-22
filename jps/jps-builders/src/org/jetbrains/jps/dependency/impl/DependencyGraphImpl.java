@@ -31,7 +31,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
   @Override
   public DifferentiateResult differentiate(Delta delta) {
 
-    Set<Node<?, ?>> nodesBefore = Iterators.collect(Iterators.flat(Iterators.map(Iterators.flat(delta.getBaseSources(), delta.getDeletedSources()), s -> getNodes(s))), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
+    Set<Node<?, ?>> nodesBefore = Iterators.collect(Iterators.flat(Iterators.map(Iterators.unique(Iterators.flat(Arrays.asList(delta.getBaseSources(), delta.getSources(), delta.getDeletedSources()))), s -> getNodes(s))), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
     Set<Node<?, ?>> nodesAfter = Iterators.collect(Iterators.flat(Iterators.map(delta.getSources(), s -> delta.getNodes(s))), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
 
     var diffContext = new DifferentiateContext() {
