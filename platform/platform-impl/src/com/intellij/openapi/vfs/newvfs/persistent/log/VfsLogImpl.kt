@@ -423,7 +423,7 @@ class VfsLogImpl private constructor(
 
     private val MAX_WORKER_THREADS_COUNT = SystemProperties.getIntProperty(
       "idea.vfs.log-vfs-operations.max-workers",
-      (Runtime.getRuntime().availableProcessors() / 10).coerceAtLeast(2)
+      (Runtime.getRuntime().availableProcessors() / 5).coerceAtLeast(2)
     )
 
     // compaction options

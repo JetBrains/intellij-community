@@ -65,17 +65,22 @@ class OperationLogStorageImpl(
     }
   }
 
-  private fun launchWorker(workersBefore: Int): Boolean { // can be invoked concurrently
-    if (telemetry.workersLaunched.compareAndSet(workersBefore, workersBefore + 1)) {
-      scope.launch { writeWorker() }
-      return true
+  private fun launchAuxWorker(workersBefore: Int): Boolean { // can be invoked concurrently
+    if (!telemetry.workersLaunched.compareAndSet(workersBefore, workersBefore + 1)) {
+      // can also fail in case if some worker has finished -- but then the queue must be empty (or almost empty)
+      return false
     }
-    return false
+    scope
+      .launch { auxWorker() }
+      .invokeOnCompletion { telemetry.workersLaunched.decrementAndGet() }
+    return true
   }
 
   init {
-    check(launchWorker(0))
-    if (maxWorkers > 1) check(launchWorker(1))
+    scope.launch {
+      telemetry.workersLaunched.incrementAndGet()
+      mainWorker()
+    }.invokeOnCompletion { telemetry.workersLaunched.decrementAndGet() }
 
     if (trackJobStatistics) telemetry.setupTelemetry()
   }
@@ -85,11 +90,20 @@ class OperationLogStorageImpl(
 
   private fun sizeOfValueInDescriptor(size: Int) = size - VfsOperationTag.SIZE_BYTES * 2
 
-  private suspend fun writeWorker() {
+  private suspend fun mainWorker() {
     withContext(NonCancellable) {
       for (job in writeQueue) {
         performWriteJob(job)
       }
+    }
+  }
+
+  private fun auxWorker() {
+    while (true) {
+      val elem = writeQueue.tryReceive()
+      if (elem.isClosed) return
+      val job = elem.getOrNull() ?: return
+      performWriteJob(job)
     }
   }
 
@@ -115,29 +129,25 @@ class OperationLogStorageImpl(
   }
 
   private fun launchMoreWorkers(missedJobCount: Long) {
+    if (missedJobCount % 128 != 0L) return
     val currentWorkers = telemetry.workersLaunched.get()
     if (missedJobCount <= 0 || currentWorkers >= maxWorkers) return
-    // large number of workers increase contention on the job channel, so let's tolerate missed jobs if there aren't many of them
-    val shouldLaunch: Boolean = when (currentWorkers) {
-      1 -> missedJobCount >= 1000
-      2 -> missedJobCount >= 5000
-      3 -> missedJobCount >= 10000
-      else -> missedJobCount >= currentWorkers * 10000L
-    }
-    if (shouldLaunch) launchWorker(currentWorkers)
+    launchAuxWorker(currentWorkers)
   }
 
-  private inner class TrackContext(val tag: VfsOperationTag, val appendLogEntry: AppendContext): OperationTracker {
+  private inner class TrackContext(val tag: VfsOperationTag, val appendLogEntry: AppendContext) : OperationTracker {
     override fun completeTracking(trackingCompletedCallback: (() -> Unit)?, composeOperation: () -> VfsOperation<*>) {
       if (trackingCompletedCallback == null) {
         enqueueWriteJob {
           writeJobImpl(tag, composeOperation, appendLogEntry)
         }
-      } else {
+      }
+      else {
         enqueueWriteJob {
           try {
             writeJobImpl(tag, composeOperation, appendLogEntry)
-          } finally {
+          }
+          finally {
             trackingCompletedCallback()
           }
         }
