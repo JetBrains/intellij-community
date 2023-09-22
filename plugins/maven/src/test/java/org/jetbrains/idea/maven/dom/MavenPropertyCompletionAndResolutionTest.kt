@@ -367,7 +367,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                           </parent>
                                           <name>${'$'}{project.build.directory}</name>
                                           """.trimIndent())
-    importProjects(myProjectPom, child)
+    importProjectsAsync(myProjectPom, child)
 
     createModulePom("child",
                     """
