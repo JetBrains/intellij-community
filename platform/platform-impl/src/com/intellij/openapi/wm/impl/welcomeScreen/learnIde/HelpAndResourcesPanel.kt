@@ -20,7 +20,12 @@ import javax.swing.plaf.ComponentUI
 
 class HelpAndResourcesPanel : JPanel() {
   private val helpAndResourcesHeader: JTextPane = createTitlePanel(IdeBundle.message("welcome.screen.learnIde.help.and.resources.text"))
+
   init {
+    initPanel()
+  }
+
+  fun initPanel() {
     layout = BoxLayout(this, BoxLayout.PAGE_AXIS)
     isOpaque = false
     add(helpAndResourcesHeader)
