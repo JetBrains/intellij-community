@@ -25,14 +25,12 @@
  *
  *  3. This notice may not be removed or altered from any source distribution.
  */
-
 package net.n3.nanoxml;
-
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Stack;
-
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 /**
  * StdXMLBuilder is a concrete implementation of IXMLBuilder which creates a
@@ -43,20 +41,20 @@ import java.util.Stack;
  * @see XMLElement
  */
 public final class StdXMLBuilder implements IXMLBuilder {
-
   /**
    * Prototype element for creating the tree.
    */
   private final IXMLElement prototype;
+
   /**
    * This stack contains the current element and its parents.
    */
-  private Stack stack;
+  private Deque<IXMLElement> stack;
+
   /**
    * The root element of the parsed XML tree.
    */
   private IXMLElement root;
-
 
   /**
    * Creates the builder.
@@ -65,15 +63,12 @@ public final class StdXMLBuilder implements IXMLBuilder {
     this(new XMLElement());
   }
 
-
   /**
    * Creates the builder.
    *
    * @param prototype the prototype to use when building the tree.
    */
   public StdXMLBuilder(IXMLElement prototype) {
-    stack = null;
-    root = null;
     this.prototype = prototype;
   }
 
@@ -85,10 +80,8 @@ public final class StdXMLBuilder implements IXMLBuilder {
    */
   @Override
   public void startBuilding(String systemID, int lineNr) {
-    stack = new Stack();
-    root = null;
+    stack = new ArrayDeque<>();
   }
-
 
   /**
    * This method is called when a processing instruction is encountered.
@@ -101,7 +94,6 @@ public final class StdXMLBuilder implements IXMLBuilder {
   public void newProcessingInstruction(String target, Reader reader) {
     // nothing to do
   }
-
 
   /**
    * This method is called when a new XML element is encountered.
@@ -119,24 +111,19 @@ public final class StdXMLBuilder implements IXMLBuilder {
   @Override
   public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) {
     String fullName = name;
-
     if (nsPrefix != null) {
       fullName = nsPrefix + ':' + name;
     }
-
     IXMLElement elt = prototype.createElement(fullName, nsURI, systemID, lineNr);
-
-    if (stack.empty()) {
+    if (stack.isEmpty()) {
       root = elt;
     }
     else {
-      IXMLElement top = (IXMLElement)stack.peek();
+      IXMLElement top = stack.peek();
       top.addChild(elt);
     }
-
     stack.push(elt);
   }
-
 
   /**
    * This method is called when the attributes of an XML element have been
@@ -156,7 +143,6 @@ public final class StdXMLBuilder implements IXMLBuilder {
     // nothing to do
   }
 
-
   /**
    * This method is called when the end of an XML elemnt is encountered.
    *
@@ -170,18 +156,16 @@ public final class StdXMLBuilder implements IXMLBuilder {
    */
   @Override
   public void endElement(String name, String nsPrefix, String nsURI) {
-    IXMLElement elt = (IXMLElement)stack.pop();
+    IXMLElement elt = stack.pop();
 
     if (elt.getChildrenCount() == 1) {
       IXMLElement child = elt.getChildAtIndex(0);
-
       if (child.getName() == null) {
         elt.setContent(child.getContent());
         elt.removeChildAtIndex(0);
       }
     }
   }
-
 
   /**
    * This method is called when a new attribute of an XML element is
@@ -201,17 +185,13 @@ public final class StdXMLBuilder implements IXMLBuilder {
   @Override
   public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
     String fullName = key;
-
     if (nsPrefix != null) {
       fullName = nsPrefix + ':' + key;
     }
-
-    IXMLElement top = (IXMLElement)stack.peek();
-
+    IXMLElement top = stack.peek();
     if (top.hasAttribute(fullName)) {
       throw new XMLParseException(top.getSystemID(), top.getLineNr(), "Duplicate attribute: " + key);
     }
-
     if (nsPrefix != null) {
       top.setAttribute(fullName, nsURI, value);
     }
@@ -219,7 +199,6 @@ public final class StdXMLBuilder implements IXMLBuilder {
       top.setAttribute(fullName, value);
     }
   }
-
 
   /**
    * This method is called when a PCDATA element is encountered. A Java
@@ -237,41 +216,33 @@ public final class StdXMLBuilder implements IXMLBuilder {
   public void addPCData(Reader reader, String systemID, int lineNr) {
     int bufSize = 2048;
     int sizeRead = 0;
-    StringBuffer str = new StringBuffer(bufSize);
+    StringBuilder str = new StringBuilder(bufSize);
     char[] buf = new char[bufSize];
-
     for (; ; ) {
       if (sizeRead >= bufSize) {
         bufSize *= 2;
         str.ensureCapacity(bufSize);
       }
-
       int size;
-
       try {
         size = reader.read(buf);
       }
       catch (IOException e) {
         break;
       }
-
       if (size < 0) {
         break;
       }
-
       str.append(buf, 0, size);
       sizeRead += size;
     }
-
     IXMLElement elt = prototype.createElement(null, systemID, lineNr);
     elt.setContent(str.toString());
-
-    if (!stack.empty()) {
-      IXMLElement top = (IXMLElement)stack.peek();
+    if (!stack.isEmpty()) {
+      IXMLElement top = stack.peek();
       top.addChild(elt);
     }
   }
-
 
   /**
    * Returns the result of the building process. This method is called just

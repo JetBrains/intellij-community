@@ -104,7 +104,7 @@ final class XMLUtil {
    * @return the system ID
    * @throws IOException if an error occurred reading the data
    */
-  static String scanPublicID(StringBuffer publicID, StdXMLReader reader) throws IOException, XMLParseException {
+  static String scanPublicID(StringBuilder publicID, StdXMLReader reader) throws IOException, XMLParseException {
     if (!checkLiteral(reader, "UBLIC")) {
       return null;
     }
@@ -140,7 +140,7 @@ final class XMLUtil {
    * @throws IOException if an error occurred reading the data
    */
   static String scanIdentifier(StdXMLReader reader) throws IOException {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
 
     for (; ; ) {
       char ch = reader.read();
@@ -174,7 +174,7 @@ final class XMLUtil {
    * @throws IOException if an error occurred reading the data
    */
   static String scanString(StdXMLReader reader, char entityChar, IXMLEntityResolver entityResolver) throws IOException, XMLParseException {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     int startingLevel = reader.getStreamLevel();
     char delim = reader.read();
 
@@ -269,7 +269,7 @@ final class XMLUtil {
    *               whitespace does not have to be stored.
    * @throws IOException if an error occurred reading the data
    */
-  static void skipWhitespace(StdXMLReader reader, StringBuffer buffer) throws IOException {
+  static void skipWhitespace(StdXMLReader reader, StringBuilder buffer) throws IOException {
     char ch;
 
     if (buffer == null) {
@@ -310,7 +310,7 @@ final class XMLUtil {
    */
   static String read(StdXMLReader reader, char entityChar) throws IOException {
     char ch = reader.read();
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     buf.append(ch);
 
     if (ch == entityChar) {

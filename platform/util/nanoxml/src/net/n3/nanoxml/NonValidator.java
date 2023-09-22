@@ -214,7 +214,7 @@ public class NonValidator implements IXMLValidator {
     }
 
     Reader subreader = new CDATAReader(reader);
-    StringBuffer buf = new StringBuffer(1024);
+    StringBuilder buf = new StringBuilder(1024);
 
     for (; ; ) {
       int ch2 = subreader.read();

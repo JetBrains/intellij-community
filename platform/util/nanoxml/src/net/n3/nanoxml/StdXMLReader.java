@@ -114,7 +114,7 @@ public class StdXMLReader {
    */
   public StdXMLReader(InputStream stream) throws IOException {
     PushbackInputStream pbstream = new PushbackInputStream(stream);
-    StringBuffer charsRead = new StringBuffer();
+    StringBuilder charsRead = new StringBuilder();
     Reader reader = stream2reader(stream, charsRead);
     currentReader = new StackedReader();
     readers = new Stack();
@@ -146,7 +146,7 @@ public class StdXMLReader {
     int index = 5;
 
     while (index < str.length()) {
-      StringBuffer key = new StringBuffer();
+      StringBuilder key = new StringBuilder();
 
       while ((index < str.length()) && (str.charAt(index) <= ' ')) {
         index++;
@@ -198,7 +198,7 @@ public class StdXMLReader {
    * @param charsRead buffer where to put characters that have been read
    * @throws IOException if an I/O error occurred
    */
-  protected Reader stream2reader(InputStream stream, StringBuffer charsRead) throws IOException {
+  protected Reader stream2reader(InputStream stream, StringBuilder charsRead) throws IOException {
     PushbackInputStream pbstream = new PushbackInputStream(stream);
     int b = pbstream.read();
 
@@ -330,7 +330,7 @@ public class StdXMLReader {
 
     currentReader.publicId = publicID;
     currentReader.systemId = url;
-    StringBuffer charsRead = new StringBuffer();
+    StringBuilder charsRead = new StringBuilder();
     Reader reader = stream2reader(url.openStream(), charsRead);
 
     if (charsRead.length() == 0) {

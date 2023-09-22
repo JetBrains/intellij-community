@@ -322,7 +322,7 @@ public final class StdXMLParser {
 
     XMLUtil.skipWhitespace(reader, null);
     String systemID = null;
-    StringBuffer publicID = new StringBuffer();
+    StringBuilder publicID = new StringBuilder();
     String rootElement = XMLUtil.scanIdentifier(reader);
     XMLUtil.skipWhitespace(reader, null);
     char ch = reader.read();
@@ -473,7 +473,7 @@ public final class StdXMLParser {
       return;
     }
 
-    StringBuffer buffer = new StringBuffer(16);
+    StringBuilder buffer = new StringBuilder(16);
 
     for (; ; ) {
       buffer.setLength(0);
