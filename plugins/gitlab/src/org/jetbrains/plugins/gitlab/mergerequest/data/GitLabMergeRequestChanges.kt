@@ -127,10 +127,10 @@ class GitLabMergeRequestChangesImpl(
 }
 
 private fun GitLabDiffDTO.toPatch(): TextFilePatch {
-  val beforeFilePath = oldPath.takeIf { !newFile } ?: "/dev/null"
-  val afterFilePath = newPath.takeIf { !deletedFile } ?: "/dev/null"
-  val header = """--- a/$beforeFilePath
-+++ b/$afterFilePath
+  val beforeFilePath = oldPath.takeIf { !newFile }
+  val afterFilePath = newPath.takeIf { !deletedFile }
+  val header = """--- a/${beforeFilePath ?: "/dev/null"}
++++ b/${afterFilePath ?: "/dev/null"}
 """
 
   val patchReader = PatchReader(header + diff)
