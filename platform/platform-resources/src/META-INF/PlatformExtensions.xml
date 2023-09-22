@@ -1324,8 +1324,7 @@
 
     <applicationService serviceImplementation="com.intellij.usages.impl.UsageFilteringRuleStateService" client="all"/>
 
-    <notificationGroup id="IDE-errors" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.ide.errors"
-                       isLogByDefault="false"/>
+    <notificationGroup id="IDE-errors" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.ide.errors" isLogByDefault="false"/>
     <notificationGroup id="System Clipboard" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.system.clipboard"/>
     <notificationGroup id="Project Startup Tasks Messages" displayType="NONE" bundle="messages.ExecutionBundle"
                        key="notification.group.startup.task"/>
@@ -1384,6 +1383,7 @@
     <notificationGroup id="feedback.form" displayType="BALLOON" bundle="messages.ApplicationBundle" key="feedback.form.notification.group"/>
     <notificationGroup id="PerformanceWatcher" displayType="STICKY_BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.performance.watcher"/>
     <notificationGroup id="WindowsDefender" displayType="BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.defender.config"/>
+    <notificationGroup id="BrowserCfgProblems" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.browser.config.problems"/>
 
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
     <registryKey key="html.editor.timeout" defaultValue="15000" description="HTML editor content loading timeout, ms"/>
@@ -1574,10 +1574,6 @@
     <notificationRouter implementation="com.intellij.notification.impl.LocalNotificationRouter" order="last"/>
     <applicationInitializedListener implementation="com.intellij.ide.ui.IconDbMaintainer"/>
     <ideEventQueueDispatcher implementation="com.intellij.ide.ui.laf.LaFMnemonicDispatcher"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains">
-    <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
   </extensions>
 
   <applicationListeners>
