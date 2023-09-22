@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Set;
 
 public abstract class DefaultVcsRootPolicy {
   @NotNull protected final Project myProject;
@@ -45,5 +46,9 @@ public abstract class DefaultVcsRootPolicy {
     if (StringUtil.isNotEmpty(vcsManager.haveDefaultMapping())) {
       vcsManager.scheduleMappedRootsUpdate();
     }
+  }
+
+  protected void scheduleRootsChangeProcessing(Set<VirtualFile> removed, Set<VirtualFile> added) {
+    myProject.getService(ModuleVcsDetector.class).scheduleScanForNewContentRoots(removed, added);
   }
 }
