@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -17,7 +18,8 @@ import java.util.Collections;
  *
  * @author Plushnikov Michail
  */
-public class JacksonizedProcessor extends AbstractProcessor {
+@Service
+public final class JacksonizedProcessor extends AbstractProcessor {
 
   public JacksonizedProcessor() {
     super(PsiElement.class, LombokClassNames.JACKSONIZED);

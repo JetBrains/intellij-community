@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -23,7 +24,8 @@ import java.util.List;
  * @author Tomasz Kalkosiński
  * @author Michail Plushnikov
  */
-public class BuilderProcessor extends AbstractClassProcessor {
+@Service
+public final class BuilderProcessor extends AbstractClassProcessor {
 
   static final String SINGULAR_CLASS = LombokClassNames.SINGULAR;
   static final String BUILDER_DEFAULT_CLASS = LombokClassNames.BUILDER_DEFAULT;

@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
@@ -14,7 +15,8 @@ import java.util.List;
 /**
  * @author Florian Böhm
  */
-public class UtilityClassProcessor extends AbstractClassProcessor {
+@Service
+public final class UtilityClassProcessor extends AbstractClassProcessor {
 
   public UtilityClassProcessor() {
     super(PsiMethod.class, LombokClassNames.UTILITY_CLASS);

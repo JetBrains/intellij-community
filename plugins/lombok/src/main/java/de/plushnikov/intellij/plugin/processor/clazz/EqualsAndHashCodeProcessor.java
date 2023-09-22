@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -35,6 +36,7 @@ import static de.plushnikov.intellij.plugin.LombokClassNames.EQUALS_AND_HASHCODE
  *
  * @author Plushnikov Michail
  */
+@Service
 public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private static final String EQUALS_METHOD_NAME = "equals";
   private static final String HASH_CODE_METHOD_NAME = "hashCode";

@@ -1,11 +1,13 @@
 package de.plushnikov.intellij.plugin.processor.clazz.log;
 
+import com.intellij.openapi.components.Service;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 
 /**
  * @author Plushnikov Michail
  */
-public class Log4j2Processor extends AbstractTopicSupportingSimpleLogProcessor {
+@Service
+public final class Log4j2Processor extends AbstractTopicSupportingSimpleLogProcessor {
 
   private static final String LOGGER_TYPE = "org.apache.logging.log4j.Logger";
   private static final String LOGGER_INITIALIZER = "org.apache.logging.log4j.LogManager.getLogger(%s)";

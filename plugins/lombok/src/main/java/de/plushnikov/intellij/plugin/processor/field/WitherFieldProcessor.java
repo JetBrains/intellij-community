@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
@@ -25,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@Service
 public final class WitherFieldProcessor extends AbstractFieldProcessor {
   public WitherFieldProcessor() {
     super(PsiMethod.class, LombokClassNames.WITHER, LombokClassNames.WITH);
