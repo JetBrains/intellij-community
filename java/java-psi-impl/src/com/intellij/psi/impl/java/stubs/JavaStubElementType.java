@@ -32,7 +32,7 @@ public abstract class JavaStubElementType<StubT extends StubElement<?>, PsiT ext
   }
 
   @Override
-  public Set<IElementType> getParents() {
+  public @NotNull Set<IElementType> getParents() {
     return myParentElementTypes;
   }
 

@@ -68,7 +68,7 @@ public interface BasicJavaDocElementType {
     }
 
     @Override
-    public Set<IElementType> getParents() {
+    public @NotNull Set<IElementType> getParents() {
       return myParentElementTypes;
     }
   }
@@ -87,7 +87,7 @@ public interface BasicJavaDocElementType {
     }
 
     @Override
-    public Set<IElementType> getParents() {
+    public @NotNull Set<IElementType> getParents() {
       return myParentElementTypes;
     }
   }
@@ -185,7 +185,7 @@ public interface BasicJavaDocElementType {
     }
 
     @Override
-    public Set<IElementType> getParents() {
+    public @NotNull Set<IElementType> getParents() {
       return myParentElementTypes;
     }
   }
