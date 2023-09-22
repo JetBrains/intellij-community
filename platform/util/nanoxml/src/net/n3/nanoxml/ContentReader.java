@@ -40,173 +40,171 @@ import java.io.Reader;
  * @author Marc De Scheemaecker
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.4 $
  */
-class ContentReader
-   extends Reader
-{
+final class ContentReader
+  extends Reader {
 
-   /**
-    * The encapsulated reader.
-    */
-   private IXMLReader reader;
-
-
-   /**
-    * Buffer.
-    */
-   private String buffer;
+  /**
+   * The encapsulated reader.
+   */
+  private IXMLReader reader;
 
 
-   /**
-    * Pointer into the buffer.
-    */
-   private int bufferIndex;
+  /**
+   * Buffer.
+   */
+  private String buffer;
 
 
-   /**
-    * The entity resolver.
-    */
-   private IXMLEntityResolver resolver;
-    
-
-   /**
-    * Creates the reader.
-    *
-    * @param reader the encapsulated reader
-    * @param resolver the entity resolver
-    * @param buffer data that has already been read from <code>reader</code>
-    */
-   ContentReader(IXMLReader         reader,
-                 IXMLEntityResolver resolver,
-                 String             buffer)
-   {
-      this.reader = reader;
-      this.resolver = resolver;
-      this.buffer = buffer;
-      this.bufferIndex = 0;
-   }
+  /**
+   * Pointer into the buffer.
+   */
+  private int bufferIndex;
 
 
-   /**
-    * Cleans up the object when it's destroyed.
-    */
-   protected void finalize()
-      throws Throwable
-   {
-      this.reader = null;
-      this.resolver = null;
-      this.buffer = null;
-      super.finalize();
-   }
+  /**
+   * The entity resolver.
+   */
+  private IXMLEntityResolver resolver;
 
 
-   /**
-    * Reads a block of data.
-    *
-    * @param outputBuffer where to put the read data
-    * @param offset first position in buffer to put the data
-    * @param size maximum number of chars to read
-    *
-    * @return the number of chars read, or -1 if at EOF
-    *
-    * @throws java.io.IOException
-    *		if an error occurred reading the data
-    */
-   public int read(char[] outputBuffer,
-                   int    offset,
-                   int    size)
-      throws IOException
-   {
-      try {
-         int charsRead = 0;
-         int bufferLength = this.buffer.length();
+  /**
+   * Creates the reader.
+   *
+   * @param reader   the encapsulated reader
+   * @param resolver the entity resolver
+   * @param buffer   data that has already been read from <code>reader</code>
+   */
+  ContentReader(IXMLReader reader,
+                IXMLEntityResolver resolver,
+                String buffer) {
+    this.reader = reader;
+    this.resolver = resolver;
+    this.buffer = buffer;
+    this.bufferIndex = 0;
+  }
 
-         if ((offset + size) > outputBuffer.length) {
-            size = outputBuffer.length - offset;
-         }
 
-         while (charsRead < size) {
-            String str = "";
-            char ch;
+  /**
+   * Cleans up the object when it's destroyed.
+   */
+  @Override
+  protected void finalize()
+    throws Throwable {
+    this.reader = null;
+    this.resolver = null;
+    this.buffer = null;
+    super.finalize();
+  }
 
-            if (this.bufferIndex >= bufferLength) {
-               str = XMLUtil.read(this.reader, '&');
-               ch = str.charAt(0);
-            } else {
-               ch = this.buffer.charAt(this.bufferIndex);
-               this.bufferIndex++;
-               outputBuffer[charsRead] = ch;
-               charsRead++;
-               continue; // don't interprete chars in the buffer
-            }
 
-            if (ch == '<') {
-               this.reader.unread(ch);
-               break;
-            }
+  /**
+   * Reads a block of data.
+   *
+   * @param outputBuffer where to put the read data
+   * @param offset       first position in buffer to put the data
+   * @param size         maximum number of chars to read
+   * @return the number of chars read, or -1 if at EOF
+   * @throws IOException if an error occurred reading the data
+   */
+  @Override
+  public int read(char[] outputBuffer,
+                  int offset,
+                  int size)
+    throws IOException {
+    try {
+      int charsRead = 0;
+      int bufferLength = this.buffer.length();
 
-            if ((ch == '&') && (str.length() > 1)) {
-               if (str.charAt(1) == '#') {
-                  ch = XMLUtil.processCharLiteral(str);
-               } else {
-                  XMLUtil.processEntity(str, this.reader, this.resolver);
-                  continue;
-               }
-            }
-
-            outputBuffer[charsRead] = ch;
-            charsRead++;
-         }
-
-         if (charsRead == 0) {
-            charsRead = -1;
-         }
-
-         return charsRead;
-      } catch (XMLParseException e) {
-         throw new IOException(e.getMessage());
+      if ((offset + size) > outputBuffer.length) {
+        size = outputBuffer.length - offset;
       }
-   }
 
+      while (charsRead < size) {
+        String str = "";
+        char ch;
 
-   /**
-    * Skips remaining data and closes the stream.
-    *
-    * @throws java.io.IOException
-    *		if an error occurred reading the data
-    */
-   public void close()
-      throws IOException
-   {
-      try {
-         int bufferLength = this.buffer.length();
+        if (this.bufferIndex >= bufferLength) {
+          str = XMLUtil.read(this.reader, '&');
+          ch = str.charAt(0);
+        }
+        else {
+          ch = this.buffer.charAt(this.bufferIndex);
+          this.bufferIndex++;
+          outputBuffer[charsRead] = ch;
+          charsRead++;
+          continue; // don't interprete chars in the buffer
+        }
 
-         for (;;) {
-            String str = "";
-            char ch;
+        if (ch == '<') {
+          this.reader.unread(ch);
+          break;
+        }
 
-            if (this.bufferIndex >= bufferLength) {
-               str = XMLUtil.read(this.reader, '&');
-               ch = str.charAt(0);
-            } else {
-               ch = this.buffer.charAt(this.bufferIndex);
-               this.bufferIndex++;
-               continue; // don't interprete chars in the buffer
-            }
+        if ((ch == '&') && (str.length() > 1)) {
+          if (str.charAt(1) == '#') {
+            ch = XMLUtil.processCharLiteral(str);
+          }
+          else {
+            XMLUtil.processEntity(str, this.reader, this.resolver);
+            continue;
+          }
+        }
 
-            if (ch == '<') {
-               this.reader.unread(ch);
-               break;
-            }
-
-            if ((ch == '&') && (str.length() > 1)) {
-               if (str.charAt(1) != '#') {
-                  XMLUtil.processEntity(str, this.reader, this.resolver);
-               }
-            }
-         }
-      } catch (XMLParseException e) {
-         throw new IOException(e.getMessage());
+        outputBuffer[charsRead] = ch;
+        charsRead++;
       }
-   }
 
+      if (charsRead == 0) {
+        charsRead = -1;
+      }
+
+      return charsRead;
+    }
+    catch (XMLParseException e) {
+      throw new IOException(e.getMessage());
+    }
+  }
+
+
+  /**
+   * Skips remaining data and closes the stream.
+   *
+   * @throws IOException if an error occurred reading the data
+   */
+  @Override
+  public void close()
+    throws IOException {
+    try {
+      int bufferLength = this.buffer.length();
+
+      for (; ; ) {
+        String str = "";
+        char ch;
+
+        if (this.bufferIndex >= bufferLength) {
+          str = XMLUtil.read(this.reader, '&');
+          ch = str.charAt(0);
+        }
+        else {
+          ch = this.buffer.charAt(this.bufferIndex);
+          this.bufferIndex++;
+          continue; // don't interprete chars in the buffer
+        }
+
+        if (ch == '<') {
+          this.reader.unread(ch);
+          break;
+        }
+
+        if ((ch == '&') && (str.length() > 1)) {
+          if (str.charAt(1) != '#') {
+            XMLUtil.processEntity(str, this.reader, this.resolver);
+          }
+        }
+      }
+    }
+    catch (XMLParseException e) {
+      throw new IOException(e.getMessage());
+    }
+  }
 }

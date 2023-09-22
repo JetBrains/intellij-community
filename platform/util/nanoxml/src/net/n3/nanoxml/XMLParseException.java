@@ -36,34 +36,30 @@ package net.n3.nanoxml;
  * @author Marc De Scheemaecker
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.3 $
  */
-public class XMLParseException
-   extends XMLException
-{
+public final class XMLParseException
+  extends XMLException {
 
-   /**
-    * Creates a new exception.
-    *
-    * @param msg the message of the exception.
-    */
-   public XMLParseException(String msg)
-   {
-      super(msg);
-   }
+  /**
+   * Creates a new exception.
+   *
+   * @param msg the message of the exception.
+   */
+  public XMLParseException(String msg) {
+    super(msg);
+  }
 
 
-   /**
-    * Creates a new exception.
-    *
-    * @param systemID the system ID from where the data came
-    * @param lineNr   the line number in the XML data where the exception
-    *                 occurred.
-    * @param msg      the message of the exception.
-    */
-   public XMLParseException(String systemID,
-                            int    lineNr,
-                            String msg)
-   {
-      super(systemID, lineNr, null, msg, true);
-   }
-
+  /**
+   * Creates a new exception.
+   *
+   * @param systemID the system ID from where the data came
+   * @param lineNr   the line number in the XML data where the exception
+   *                 occurred.
+   * @param msg      the message of the exception.
+   */
+  public XMLParseException(String systemID,
+                           int lineNr,
+                           String msg) {
+    super(systemID, lineNr, null, msg, true);
+  }
 }

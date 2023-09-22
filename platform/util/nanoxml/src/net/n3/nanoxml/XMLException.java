@@ -40,247 +40,226 @@ import java.io.PrintWriter;
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.4 $
  */
 public class XMLException
-   extends Exception
-{
+  extends Exception {
 
-   /**
-    * The message of the exception.
-    */
-   private String msg;
-
-
-   /**
-    * The system ID of the XML data where the exception occurred.
-    */
-   private String systemID;
+  /**
+   * The message of the exception.
+   */
+  private final String msg;
 
 
-   /**
-    * The line number in the XML data where the exception occurred.
-    */
-   private int lineNr;
+  /**
+   * The system ID of the XML data where the exception occurred.
+   */
+  private String systemID;
 
 
-   /**
-    * Encapsulated exception.
-    */
-   private Exception encapsulatedException;
+  /**
+   * The line number in the XML data where the exception occurred.
+   */
+  private final int lineNr;
 
 
-   /**
-    * Creates a new exception.
-    *
-    * @param msg the message of the exception.
-    */
-   public XMLException(String msg)
-   {
-      this(null, -1, null, msg, false);
-   }
+  /**
+   * Encapsulated exception.
+   */
+  private Exception encapsulatedException;
 
 
-   /**
-    * Creates a new exception.
-    *
-    * @param e the encapsulated exception.
-    */
-   public XMLException(Exception e)
-   {
-      this(null, -1, e, "Nested Exception", false);
-   }
+  /**
+   * Creates a new exception.
+   *
+   * @param msg the message of the exception.
+   */
+  public XMLException(String msg) {
+    this(null, -1, null, msg, false);
+  }
 
 
-   /**
-    * Creates a new exception.
-    *
-    * @param systemID the system ID of the XML data where the exception
-    *                 occurred
-    * @param lineNr   the line number in the XML data where the exception
-    *                 occurred.
-    * @param e        the encapsulated exception.
-    */
-   public XMLException(String systemID,
-                       int    lineNr,
-                       Exception e)
-   {
-      this(systemID, lineNr, e, "Nested Exception", true);
-   }
+  /**
+   * Creates a new exception.
+   *
+   * @param e the encapsulated exception.
+   */
+  public XMLException(Exception e) {
+    this(null, -1, e, "Nested Exception", false);
+  }
 
 
-   /**
-    * Creates a new exception.
-    *
-    * @param systemID the system ID of the XML data where the exception
-    *                 occurred
-    * @param lineNr   the line number in the XML data where the exception
-    *                 occurred.
-    * @param msg      the message of the exception.
-    */
-   public XMLException(String systemID,
-                       int    lineNr,
-                       String msg)
-   {
-      this(systemID, lineNr, null, msg, true);
-   }
+  /**
+   * Creates a new exception.
+   *
+   * @param systemID the system ID of the XML data where the exception
+   *                 occurred
+   * @param lineNr   the line number in the XML data where the exception
+   *                 occurred.
+   * @param e        the encapsulated exception.
+   */
+  public XMLException(String systemID,
+                      int lineNr,
+                      Exception e) {
+    this(systemID, lineNr, e, "Nested Exception", true);
+  }
 
 
-   /**
-    * Creates a new exception.
-    *
-    * @param systemID     the system ID from where the data came
-    * @param lineNr       the line number in the XML data where the exception
-    *                     occurred.
-    * @param e            the encapsulated exception.
-    * @param msg          the message of the exception.
-    * @param reportParams true if the systemID, lineNr and e params need to be
-    *                     appended to the message
-    */
-   public XMLException(String    systemID,
-                       int       lineNr,
-                       Exception e,
-                       String    msg,
-                       boolean   reportParams)
-   {
-      super(XMLException.buildMessage(systemID, lineNr, e, msg,
-                                      reportParams));
-      this.systemID = systemID;
-      this.lineNr = lineNr;
-      this.encapsulatedException = e;
-      this.msg = XMLException.buildMessage(systemID, lineNr, e, msg,
-                                           reportParams);
-   }
+  /**
+   * Creates a new exception.
+   *
+   * @param systemID the system ID of the XML data where the exception
+   *                 occurred
+   * @param lineNr   the line number in the XML data where the exception
+   *                 occurred.
+   * @param msg      the message of the exception.
+   */
+  public XMLException(String systemID,
+                      int lineNr,
+                      String msg) {
+    this(systemID, lineNr, null, msg, true);
+  }
 
 
-   /**
-    * Builds the exception message
-    *
-    * @param systemID     the system ID from where the data came
-    * @param lineNr       the line number in the XML data where the exception
-    *                     occurred.
-    * @param e            the encapsulated exception.
-    * @param msg          the message of the exception.
-    * @param reportParams true if the systemID, lineNr and e params need to be
-    *                     appended to the message
-    */
-   private static String buildMessage(String    systemID,
-                                      int       lineNr,
-                                      Exception e,
-                                      String    msg,
-                                      boolean   reportParams)
-   {
-      String str = msg;
+  /**
+   * Creates a new exception.
+   *
+   * @param systemID     the system ID from where the data came
+   * @param lineNr       the line number in the XML data where the exception
+   *                     occurred.
+   * @param e            the encapsulated exception.
+   * @param msg          the message of the exception.
+   * @param reportParams true if the systemID, lineNr and e params need to be
+   *                     appended to the message
+   */
+  public XMLException(String systemID,
+                      int lineNr,
+                      Exception e,
+                      String msg,
+                      boolean reportParams) {
+    super(buildMessage(systemID, lineNr, e, msg,
+                       reportParams));
+    this.systemID = systemID;
+    this.lineNr = lineNr;
+    this.encapsulatedException = e;
+    this.msg = buildMessage(systemID, lineNr, e, msg,
+                            reportParams);
+  }
 
-      if (reportParams) {
-         if (systemID != null) {
-            str += ", SystemID='" + systemID + "'";
-         }
+  /**
+   * Cleans up the object when it's destroyed.
+   */
+  @Override
+  protected void finalize()
+    throws Throwable {
+    this.systemID = null;
+    this.encapsulatedException = null;
+    super.finalize();
+  }
 
-         if (lineNr >= 0) {
-            str += ", Line=" + lineNr;
-         }
+  /**
+   * Returns the system ID of the XML data where the exception occurred.
+   * If there is no system ID known, null is returned.
+   */
+  public String getSystemID() {
+    return this.systemID;
+  }
 
-         if (e != null) {
-            str += ", Exception: " + e;
-         }
+  /**
+   * Returns the line number in the XML data where the exception occurred.
+   * If there is no line number known, -1 is returned.
+   */
+  public int getLineNr() {
+    return this.lineNr;
+  }
+
+  /**
+   * Returns the encapsulated exception, or null if no exception is
+   * encapsulated.
+   */
+  public Exception getException() {
+    return this.encapsulatedException;
+  }
+
+  /**
+   * Dumps the exception stack to a print writer.
+   *
+   * @param writer the print writer
+   */
+  @Override
+  public void printStackTrace(PrintWriter writer) {
+    super.printStackTrace(writer);
+
+    if (this.encapsulatedException != null) {
+      writer.println("*** Nested Exception:");
+      this.encapsulatedException.printStackTrace(writer);
+    }
+  }
+
+  /**
+   * Dumps the exception stack to an output stream.
+   *
+   * @param stream the output stream
+   */
+  @Override
+  public void printStackTrace(PrintStream stream) {
+    super.printStackTrace(stream);
+
+    if (this.encapsulatedException != null) {
+      stream.println("*** Nested Exception:");
+      this.encapsulatedException.printStackTrace(stream);
+    }
+  }
+
+  /**
+   * Dumps the exception stack to System.err.
+   */
+  @Override
+  public void printStackTrace() {
+    super.printStackTrace();
+
+    if (this.encapsulatedException != null) {
+      System.err.println("*** Nested Exception:");
+      this.encapsulatedException.printStackTrace();
+    }
+  }
+
+  /**
+   * Returns a string representation of the exception.
+   */
+  public String toString() {
+    return this.msg;
+  }
+
+  /**
+   * Builds the exception message
+   *
+   * @param systemID     the system ID from where the data came
+   * @param lineNr       the line number in the XML data where the exception
+   *                     occurred.
+   * @param e            the encapsulated exception.
+   * @param msg          the message of the exception.
+   * @param reportParams true if the systemID, lineNr and e params need to be
+   *                     appended to the message
+   */
+  private static String buildMessage(String systemID,
+                                     int lineNr,
+                                     Exception e,
+                                     String msg,
+                                     boolean reportParams) {
+    String str = msg;
+
+    if (reportParams) {
+      if (systemID != null) {
+        str += ", SystemID='" + systemID + "'";
       }
 
-      return str;
-   }
-
-
-   /**
-    * Cleans up the object when it's destroyed.
-    */
-   protected void finalize()
-      throws Throwable
-   {
-      this.systemID = null;
-      this.encapsulatedException = null;
-      super.finalize();
-   }
-
-
-   /**
-    * Returns the system ID of the XML data where the exception occurred.
-    * If there is no system ID known, null is returned.
-    */
-   public String getSystemID()
-   {
-      return this.systemID;
-   }
-
-
-   /**
-    * Returns the line number in the XML data where the exception occurred.
-    * If there is no line number known, -1 is returned.
-    */
-   public int getLineNr()
-   {
-      return this.lineNr;
-   }
-
-
-   /**
-    * Returns the encapsulated exception, or null if no exception is
-    * encapsulated.
-    */
-   public Exception getException()
-   {
-      return this.encapsulatedException;
-   }
-
-
-   /**
-    * Dumps the exception stack to a print writer.
-    *
-    * @param writer the print writer
-    */
-   public void printStackTrace(PrintWriter writer)
-   {
-      super.printStackTrace(writer);
-
-      if (this.encapsulatedException != null) {
-         writer.println("*** Nested Exception:");
-         this.encapsulatedException.printStackTrace(writer);
+      if (lineNr >= 0) {
+        str += ", Line=" + lineNr;
       }
-   }
 
-
-   /**
-    * Dumps the exception stack to an output stream.
-    *
-    * @param stream the output stream
-    */
-   public void printStackTrace(PrintStream stream)
-   {
-      super.printStackTrace(stream);
-
-      if (this.encapsulatedException != null) {
-         stream.println("*** Nested Exception:");
-         this.encapsulatedException.printStackTrace(stream);
+      if (e != null) {
+        str += ", Exception: " + e;
       }
-   }
+    }
 
-
-   /**
-    * Dumps the exception stack to System.err.
-    */
-   public void printStackTrace()
-   {
-      super.printStackTrace();
-
-      if (this.encapsulatedException != null) {
-         System.err.println("*** Nested Exception:");
-         this.encapsulatedException.printStackTrace();
-      }
-   }
-
-
-   /**
-    * Returns a string representation of the exception.
-    */
-   public String toString()
-   {
-      return this.msg;
-   }
-
+    return str;
+  }
 }

@@ -38,298 +38,290 @@ import java.util.Stack;
  * StdXMLBuilder is a concrete implementation of IXMLBuilder which creates a
  * tree of IXMLElement from an XML data source.
  *
- * @see net.n3.nanoxml.XMLElement
- *
  * @author Marc De Scheemaecker
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.3 $
+ * @see XMLElement
  */
-public class StdXMLBuilder
-   implements IXMLBuilder
-{
+public final class StdXMLBuilder
+  implements IXMLBuilder {
 
-   /**
-    * This stack contains the current element and its parents.
-    */
-   private Stack stack;
-
-
-   /**
-    * The root element of the parsed XML tree.
-    */
-   private IXMLElement root;
+  /**
+   * This stack contains the current element and its parents.
+   */
+  private Stack stack;
 
 
-   /**
-    * Prototype element for creating the tree.
-    */
-   private IXMLElement prototype;
+  /**
+   * The root element of the parsed XML tree.
+   */
+  private IXMLElement root;
 
 
-   /**
-    * Creates the builder.
-    */
-   public StdXMLBuilder()
-   {
-      this(new XMLElement());
-   }
+  /**
+   * Prototype element for creating the tree.
+   */
+  private IXMLElement prototype;
 
 
-   /**
-    * Creates the builder.
-    *
-    * @param prototype the prototype to use when building the tree.
-    */
-   public StdXMLBuilder(IXMLElement prototype)
-   {
-      this.stack = null;
-      this.root = null;
-      this.prototype = prototype;
-   }
+  /**
+   * Creates the builder.
+   */
+  public StdXMLBuilder() {
+    this(new XMLElement());
+  }
 
 
-   /**
-    * Cleans up the object when it's destroyed.
-    */
-   protected void finalize()
-      throws Throwable
-   {
-      this.prototype = null;
-      this.root = null;
-      this.stack.clear();
-      this.stack = null;
-      super.finalize();
-   }
+  /**
+   * Creates the builder.
+   *
+   * @param prototype the prototype to use when building the tree.
+   */
+  public StdXMLBuilder(IXMLElement prototype) {
+    this.stack = null;
+    this.root = null;
+    this.prototype = prototype;
+  }
 
 
-   /**
-    * This method is called before the parser starts processing its input.
-    *
-    * @param systemID the system ID of the XML data source.
-    * @param lineNr   the line on which the parsing starts.
-    */
-   public void startBuilding(String systemID,
-                             int    lineNr)
-   {
-      this.stack = new Stack();
-      this.root = null;
-   }
+  /**
+   * Cleans up the object when it's destroyed.
+   */
+  @Override
+  protected void finalize()
+    throws Throwable {
+    this.prototype = null;
+    this.root = null;
+    this.stack.clear();
+    this.stack = null;
+    super.finalize();
+  }
 
 
-   /**
-    * This method is called when a processing instruction is encountered.
-    * PIs with target "xml" are handled by the parser.
-    *
-    * @param target the PI target.
-    * @param reader to read the data from the PI.
-    */
-   public void newProcessingInstruction(String target,
-                                        Reader reader)
-   {
-      // nothing to do
-   }
+  /**
+   * This method is called before the parser starts processing its input.
+   *
+   * @param systemID the system ID of the XML data source.
+   * @param lineNr   the line on which the parsing starts.
+   */
+  @Override
+  public void startBuilding(String systemID,
+                            int lineNr) {
+    this.stack = new Stack();
+    this.root = null;
+  }
 
 
-   /**
-    * This method is called when a new XML element is encountered.
-    *
-    * @see #endElement
-    *
-    * @param name       the name of the element.
-    * @param nsPrefix   the prefix used to identify the namespace. If no
-    *                   namespace has been specified, this parameter is null.
-    * @param nsURI      the URI associated with the namespace. If no
-    *                   namespace has been specified, or no URI is
-    *                   associated with nsPrefix, this parameter is null.
-    * @param systemID   the system ID of the XML data source.
-    * @param lineNr     the line in the source where the element starts.
-    */
-   public void startElement(String name,
-                            String nsPrefix,
-                            String nsURI,
-                            String systemID,
-                            int    lineNr)
-   {
-      String fullName = name;
+  /**
+   * This method is called when a processing instruction is encountered.
+   * PIs with target "xml" are handled by the parser.
+   *
+   * @param target the PI target.
+   * @param reader to read the data from the PI.
+   */
+  @Override
+  public void newProcessingInstruction(String target,
+                                       Reader reader) {
+    // nothing to do
+  }
 
-      if (nsPrefix != null) {
-         fullName = nsPrefix + ':' + name;
+
+  /**
+   * This method is called when a new XML element is encountered.
+   *
+   * @param name     the name of the element.
+   * @param nsPrefix the prefix used to identify the namespace. If no
+   *                 namespace has been specified, this parameter is null.
+   * @param nsURI    the URI associated with the namespace. If no
+   *                 namespace has been specified, or no URI is
+   *                 associated with nsPrefix, this parameter is null.
+   * @param systemID the system ID of the XML data source.
+   * @param lineNr   the line in the source where the element starts.
+   * @see #endElement
+   */
+  @Override
+  public void startElement(String name,
+                           String nsPrefix,
+                           String nsURI,
+                           String systemID,
+                           int lineNr) {
+    String fullName = name;
+
+    if (nsPrefix != null) {
+      fullName = nsPrefix + ':' + name;
+    }
+
+    IXMLElement elt = this.prototype.createElement(fullName, nsURI,
+                                                   systemID, lineNr);
+
+    if (this.stack.empty()) {
+      this.root = elt;
+    }
+    else {
+      IXMLElement top = (IXMLElement)this.stack.peek();
+      top.addChild(elt);
+    }
+
+    this.stack.push(elt);
+  }
+
+
+  /**
+   * This method is called when the attributes of an XML element have been
+   * processed.
+   *
+   * @param name     the name of the element.
+   * @param nsPrefix the prefix used to identify the namespace. If no
+   *                 namespace has been specified, this parameter is null.
+   * @param nsURI    the URI associated with the namespace. If no
+   *                 namespace has been specified, or no URI is
+   *                 associated with nsPrefix, this parameter is null.
+   * @see #startElement
+   * @see #addAttribute
+   */
+  @Override
+  public void elementAttributesProcessed(String name,
+                                         String nsPrefix,
+                                         String nsURI) {
+    // nothing to do
+  }
+
+
+  /**
+   * This method is called when the end of an XML elemnt is encountered.
+   *
+   * @param name     the name of the element.
+   * @param nsPrefix the prefix used to identify the namespace. If no
+   *                 namespace has been specified, this parameter is null.
+   * @param nsURI    the URI associated with the namespace. If no
+   *                 namespace has been specified, or no URI is
+   *                 associated with nsPrefix, this parameter is null.
+   * @see #startElement
+   */
+  @Override
+  public void endElement(String name,
+                         String nsPrefix,
+                         String nsURI) {
+    IXMLElement elt = (IXMLElement)this.stack.pop();
+
+    if (elt.getChildrenCount() == 1) {
+      IXMLElement child = elt.getChildAtIndex(0);
+
+      if (child.getName() == null) {
+        elt.setContent(child.getContent());
+        elt.removeChildAtIndex(0);
+      }
+    }
+  }
+
+
+  /**
+   * This method is called when a new attribute of an XML element is
+   * encountered.
+   *
+   * @param key      the key (name) of the attribute.
+   * @param nsPrefix the prefix used to identify the namespace. If no
+   *                 namespace has been specified, this parameter is null.
+   * @param nsURI    the URI associated with the namespace. If no
+   *                 namespace has been specified, or no URI is
+   *                 associated with nsPrefix, this parameter is null.
+   * @param value    the value of the attribute.
+   * @param type     the type of the attribute. If no type is known,
+   *                 "CDATA" is returned.
+   * @throws Exception If an exception occurred while processing the event.
+   */
+  @Override
+  public void addAttribute(String key,
+                           String nsPrefix,
+                           String nsURI,
+                           String value,
+                           String type)
+    throws Exception {
+    String fullName = key;
+
+    if (nsPrefix != null) {
+      fullName = nsPrefix + ':' + key;
+    }
+
+    IXMLElement top = (IXMLElement)this.stack.peek();
+
+    if (top.hasAttribute(fullName)) {
+      throw new XMLParseException(top.getSystemID(),
+                                  top.getLineNr(),
+                                  "Duplicate attribute: " + key);
+    }
+
+    if (nsPrefix != null) {
+      top.setAttribute(fullName, nsURI, value);
+    }
+    else {
+      top.setAttribute(fullName, value);
+    }
+  }
+
+
+  /**
+   * This method is called when a PCDATA element is encountered. A Java
+   * reader is supplied from which you can read the data. The reader will
+   * only read the data of the element. You don't need to check for
+   * boundaries. If you don't read the full element, the rest of the data
+   * is skipped. You also don't have to care about entities; they are
+   * resolved by the parser.
+   *
+   * @param reader   the Java reader from which you can retrieve the data.
+   * @param systemID the system ID of the XML data source.
+   * @param lineNr   the line in the source where the element starts.
+   */
+  @Override
+  public void addPCData(Reader reader,
+                        String systemID,
+                        int lineNr) {
+    int bufSize = 2048;
+    int sizeRead = 0;
+    StringBuffer str = new StringBuffer(bufSize);
+    char[] buf = new char[bufSize];
+
+    for (; ; ) {
+      if (sizeRead >= bufSize) {
+        bufSize *= 2;
+        str.ensureCapacity(bufSize);
       }
 
-      IXMLElement elt = this.prototype.createElement(fullName, nsURI,
-                                                     systemID, lineNr);
+      int size;
 
-      if (this.stack.empty()) {
-         this.root = elt;
-      } else {
-         IXMLElement top = (IXMLElement) this.stack.peek();
-         top.addChild(elt);
+      try {
+        size = reader.read(buf);
+      }
+      catch (IOException e) {
+        break;
       }
 
-      this.stack.push(elt);
-   }
-
-
-   /**
-    * This method is called when the attributes of an XML element have been
-    * processed.
-    *
-    * @see #startElement
-    * @see #addAttribute
-    *
-    * @param name       the name of the element.
-    * @param nsPrefix   the prefix used to identify the namespace. If no
-    *                   namespace has been specified, this parameter is null.
-    * @param nsURI      the URI associated with the namespace. If no
-    *                   namespace has been specified, or no URI is
-    *                   associated with nsPrefix, this parameter is null.
-    */
-   public void elementAttributesProcessed(String name,
-                                          String nsPrefix,
-                                          String nsURI)
-   {
-      // nothing to do
-   }
-
-
-   /**
-    * This method is called when the end of an XML elemnt is encountered.
-    *
-    * @see #startElement
-    *
-    * @param name       the name of the element.
-    * @param nsPrefix   the prefix used to identify the namespace. If no
-    *                   namespace has been specified, this parameter is null.
-    * @param nsURI      the URI associated with the namespace. If no
-    *                   namespace has been specified, or no URI is
-    *                   associated with nsPrefix, this parameter is null.
-    */
-   public void endElement(String name,
-                          String nsPrefix,
-                          String nsURI)
-   {
-      IXMLElement elt = (IXMLElement) this.stack.pop();
-
-      if (elt.getChildrenCount() == 1) {
-         IXMLElement child = elt.getChildAtIndex(0);
-
-         if (child.getName() == null) {
-            elt.setContent(child.getContent());
-            elt.removeChildAtIndex(0);
-         }
-      }
-   }
-
-
-   /**
-    * This method is called when a new attribute of an XML element is
-    * encountered.
-    *
-    * @param key        the key (name) of the attribute.
-    * @param nsPrefix   the prefix used to identify the namespace. If no
-    *                   namespace has been specified, this parameter is null.
-    * @param nsURI      the URI associated with the namespace. If no
-    *                   namespace has been specified, or no URI is
-    *                   associated with nsPrefix, this parameter is null.
-    * @param value      the value of the attribute.
-    * @param type       the type of the attribute. If no type is known,
-    *                   "CDATA" is returned.
-    *
-    * @throws java.lang.Exception
-    *     If an exception occurred while processing the event.
-    */
-   public void addAttribute(String key,
-                            String nsPrefix,
-                            String nsURI,
-                            String value,
-                            String type)
-      throws Exception
-   {
-      String fullName = key;
-
-      if (nsPrefix != null) {
-         fullName = nsPrefix + ':' + key;
+      if (size < 0) {
+        break;
       }
 
-      IXMLElement top = (IXMLElement) this.stack.peek();
+      str.append(buf, 0, size);
+      sizeRead += size;
+    }
 
-      if (top.hasAttribute(fullName)) {
-         throw new XMLParseException(top.getSystemID(),
-                                     top.getLineNr(),
-                                     "Duplicate attribute: " + key);
-      }
+    IXMLElement elt = this.prototype.createElement(null, systemID, lineNr);
+    elt.setContent(str.toString());
 
-      if (nsPrefix != null) {
-         top.setAttribute(fullName, nsURI, value);
-      } else {
-         top.setAttribute(fullName, value);
-      }
-   }
+    if (!this.stack.empty()) {
+      IXMLElement top = (IXMLElement)this.stack.peek();
+      top.addChild(elt);
+    }
+  }
 
 
-   /**
-    * This method is called when a PCDATA element is encountered. A Java
-    * reader is supplied from which you can read the data. The reader will
-    * only read the data of the element. You don't need to check for
-    * boundaries. If you don't read the full element, the rest of the data
-    * is skipped. You also don't have to care about entities; they are
-    * resolved by the parser.
-    *
-    * @param reader   the Java reader from which you can retrieve the data.
-    * @param systemID the system ID of the XML data source.
-    * @param lineNr   the line in the source where the element starts.
-    */
-   public void addPCData(Reader reader,
-                         String systemID,
-                         int    lineNr)
-   {
-      int bufSize = 2048;
-      int sizeRead = 0;
-      StringBuffer str = new StringBuffer(bufSize);
-      char[] buf = new char[bufSize];
-
-      for (;;) {
-         if (sizeRead >= bufSize) {
-            bufSize *= 2;
-            str.ensureCapacity(bufSize);
-         }
-
-         int size;
-
-         try {
-            size = reader.read(buf);
-         } catch (IOException e) {
-            break;
-         }
-
-         if (size < 0) {
-            break;
-         }
-
-         str.append(buf, 0, size);
-         sizeRead += size;
-      }
-
-      IXMLElement elt = this.prototype.createElement(null, systemID, lineNr);
-      elt.setContent(str.toString());
-
-      if (! this.stack.empty()) {
-         IXMLElement top = (IXMLElement) this.stack.peek();
-         top.addChild(elt);
-      }
-   }
-
-
-   /**
-    * Returns the result of the building process. This method is called just
-    * before the <I>parse</I> method of IXMLParser returns.
-    *
-    * @see net.n3.nanoxml.IXMLParser#parse
-    *
-    * @return the result of the building process.
-    */
-   public Object getResult()
-   {
-      return this.root;
-   }
-
+  /**
+   * Returns the result of the building process. This method is called just
+   * before the <I>parse</I> method of IXMLParser returns.
+   *
+   * @return the result of the building process.
+   * @see IXMLParser#parse
+   */
+  @Override
+  public Object getResult() {
+    return this.root;
+  }
 }

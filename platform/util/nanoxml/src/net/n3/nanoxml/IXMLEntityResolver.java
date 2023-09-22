@@ -38,52 +38,47 @@ import java.io.Reader;
  * @author Marc De Scheemaecker
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.4 $
  */
-public interface IXMLEntityResolver
-{
+public interface IXMLEntityResolver {
 
-   /**
-    * Adds an internal entity.
-    *
-    * @param name  the name of the entity.
-    * @param value the value of the entity.
-    */
-   public void addInternalEntity(String name,
-                                 String value);
-
-
-   /**
-    * Adds an external entity.
-    *
-    * @param name     the name of the entity.
-    * @param publicID the public ID of the entity, which may be null.
-    * @param systemID the system ID of the entity.
-    */
-   public void addExternalEntity(String name,
-                                 String publicID,
-                                 String systemID);
+  /**
+   * Adds an internal entity.
+   *
+   * @param name  the name of the entity.
+   * @param value the value of the entity.
+   */
+  void addInternalEntity(String name,
+                         String value);
 
 
-   /**
-    * Returns a Java reader containing the value of an entity.
-    *
-    * @param xmlReader the current NanoXML reader.
-    * @param name      the name of the entity.
-    *
-    * @return the reader, or null if the entity could not be resolved.
-    *
-    * @throws net.n3.nanoxml.XMLParseException
-    *     If an exception occurred while resolving the entity.
-    */
-   public Reader getEntity(IXMLReader xmlReader,
-                           String     name)
-      throws XMLParseException;
+  /**
+   * Adds an external entity.
+   *
+   * @param name     the name of the entity.
+   * @param publicID the public ID of the entity, which may be null.
+   * @param systemID the system ID of the entity.
+   */
+  void addExternalEntity(String name,
+                         String publicID,
+                         String systemID);
 
 
-   /**
-    * Returns true if an entity is external.
-    *
-    * @param name the name of the entity.
-    */
-   public boolean isExternalEntity(String name);
+  /**
+   * Returns a Java reader containing the value of an entity.
+   *
+   * @param xmlReader the current NanoXML reader.
+   * @param name      the name of the entity.
+   * @return the reader, or null if the entity could not be resolved.
+   * @throws XMLParseException If an exception occurred while resolving the entity.
+   */
+  Reader getEntity(IXMLReader xmlReader,
+                   String name)
+    throws XMLParseException;
 
+
+  /**
+   * Returns true if an entity is external.
+   *
+   * @param name the name of the entity.
+   */
+  boolean isExternalEntity(String name);
 }

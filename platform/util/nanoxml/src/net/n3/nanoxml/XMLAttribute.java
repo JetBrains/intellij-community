@@ -32,122 +32,112 @@ package net.n3.nanoxml;
 /**
  * An attribute in an XML element. This is an internal class.
  *
- * @see net.n3.nanoxml.XMLElement
- *
  * @author Marc De Scheemaecker
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.4 $
+ * @see XMLElement
  */
-class XMLAttribute
-{
+final class XMLAttribute {
 
-   /**
-    * The full name of the attribute.
-    */
-   private String fullName;
-
-
-   /**
-    * The short name of the attribute.
-    */
-   private String name;
+  /**
+   * The full name of the attribute.
+   */
+  private final String fullName;
 
 
-   /**
-    * The namespace URI of the attribute.
-    */
-   private String namespace;
+  /**
+   * The short name of the attribute.
+   */
+  private final String name;
 
 
-   /**
-    * The value of the attribute.
-    */
-   private String value;
+  /**
+   * The namespace URI of the attribute.
+   */
+  private final String namespace;
 
 
-   /**
-    * The type of the attribute.
-    */
-   private String type;
+  /**
+   * The value of the attribute.
+   */
+  private String value;
 
 
-   /**
-    * Creates a new attribute.
-    *
-    * @param fullName  the non-null full name
-    * @param name      the non-null short name
-    * @param namespace the namespace URI, which may be null
-    * @param value     the value of the attribute
-    * @param type      the type of the attribute
-    */
-   XMLAttribute(String fullName,
-                String name,
-                String namespace,
-                String value,
-                String type)
-   {
-      this.fullName = fullName;
-      this.name = name;
-      this.namespace = namespace;
-      this.value = value;
-      this.type = type;
-   }
+  /**
+   * The type of the attribute.
+   */
+  private final String type;
 
 
-   /**
-    * Returns the full name of the attribute.
-    */
-   String getFullName()
-   {
-      return this.fullName;
-   }
+  /**
+   * Creates a new attribute.
+   *
+   * @param fullName  the non-null full name
+   * @param name      the non-null short name
+   * @param namespace the namespace URI, which may be null
+   * @param value     the value of the attribute
+   * @param type      the type of the attribute
+   */
+  XMLAttribute(String fullName,
+               String name,
+               String namespace,
+               String value,
+               String type) {
+    this.fullName = fullName;
+    this.name = name;
+    this.namespace = namespace;
+    this.value = value;
+    this.type = type;
+  }
 
 
-   /**
-    * Returns the short name of the attribute.
-    */
-   String getName()
-   {
-      return this.name;
-   }
+  /**
+   * Returns the full name of the attribute.
+   */
+  String getFullName() {
+    return this.fullName;
+  }
 
 
-   /**
-    * Returns the namespace of the attribute.
-    */
-   String getNamespace()
-   {
-      return this.namespace;
-   }
+  /**
+   * Returns the short name of the attribute.
+   */
+  String getName() {
+    return this.name;
+  }
 
 
-   /**
-    * Returns the value of the attribute.
-    */
-   String getValue()
-   {
-      return this.value;
-   }
+  /**
+   * Returns the namespace of the attribute.
+   */
+  String getNamespace() {
+    return this.namespace;
+  }
 
 
-   /**
-    * Sets the value of the attribute.
-    *
-    * @param value the new value.
-    */
-   void setValue(String value)
-   {
-      this.value = value;
-   }
+  /**
+   * Returns the value of the attribute.
+   */
+  String getValue() {
+    return this.value;
+  }
 
 
-   /**
-    * Returns the type of the attribute.
-    *
-    * @param type the new type.
-    */
-   String getType()
-   {
-      return this.type;
-   }
+  /**
+   * Sets the value of the attribute.
+   *
+   * @param value the new value.
+   */
+  void setValue(String value) {
+    this.value = value;
+  }
 
+
+  /**
+   * Returns the type of the attribute.
+   *
+   * @param type the new type.
+   */
+  String getType() {
+    return this.type;
+  }
 }
