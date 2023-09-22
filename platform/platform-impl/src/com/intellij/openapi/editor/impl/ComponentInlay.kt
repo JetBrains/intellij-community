@@ -120,12 +120,14 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     val renderer = inlay.renderer
     when (renderer.alignment) {
       ComponentInlayAlignment.FIT_CONTENT_WIDTH, ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH -> {
-        if (--contentSizeAwareInlayCount == 0)
+        if (--contentSizeAwareInlayCount == 0) {
           editor.contentComponent.removeComponentListener(contentResizeListener)
+        }
       }
       ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH -> {
-        if (--visibleAreaAwareInlaysCount == 0)
+        if (--visibleAreaAwareInlaysCount == 0) {
           editor.scrollingModel.removeVisibleAreaListener(visibleAreaListener)
+        }
       }
       else -> Unit
     }
@@ -141,12 +143,14 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     // optionally add listeners if any inlay aware of viewport or content size
     when (inlay.renderer.alignment) {
       ComponentInlayAlignment.FIT_CONTENT_WIDTH, ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH -> {
-        if (contentSizeAwareInlayCount++ == 0)
+        if (contentSizeAwareInlayCount++ == 0) {
           editor.contentComponent.addComponentListener(contentResizeListener)
+        }
       }
       ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH -> {
-        if (visibleAreaAwareInlaysCount++ == 0)
+        if (visibleAreaAwareInlaysCount++ == 0) {
           editor.scrollingModel.addVisibleAreaListener(visibleAreaListener)
+        }
       }
       else -> Unit
     }
@@ -173,7 +177,8 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     val content = editor.contentComponent
     val initialContentWidth = content.width
     val scrollPane = editor.scrollPane
-    val viewportReservedWidth = if (!isVerticalScrollbarFlipped(scrollPane)) editor.scrollPane.verticalScrollBar.width + content.insets.left else content.insets.left
+    val viewportReservedWidth = if (!isVerticalScrollbarFlipped(scrollPane)) editor.scrollPane.verticalScrollBar.width + content.insets.left
+    else content.insets.left
     val visibleArea = scrollPane.viewport.visibleRect
 
     // Step 1: Sync inlay size with preferred component size.
@@ -181,9 +186,15 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     for (inlay in inlays) {
       inlay.renderer.let {
         it.inlaySize = when (it.alignment) {
-          ComponentInlayAlignment.FIT_CONTENT_WIDTH -> it.component.run { Dimension(minimumSize.width, preferredSize.height) }
-          ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH -> it.component.run { Dimension(minimumSize.width + viewportReservedWidth, preferredSize.height) }
-          else -> it.component.preferredSize
+          ComponentInlayAlignment.FIT_CONTENT_WIDTH -> {
+            it.component.run { Dimension(minimumSize.width, preferredSize.height) }
+          }
+          ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH -> {
+            it.component.run { Dimension(minimumSize.width + viewportReservedWidth, preferredSize.height) }
+          }
+          else -> {
+            it.component.preferredSize
+          }
         }
       }
     }
@@ -194,8 +205,9 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
       editor.inlayModel.execute(true) {
         for (inlay in inlays) {
           inlay.renderer.let {
-            if (it.inlaySize.width != inlay.widthInPixels || it.inlaySize.height != inlay.heightInPixels)
+            if (it.inlaySize.width != inlay.widthInPixels || it.inlaySize.height != inlay.heightInPixels) {
               inlay.update()
+            }
           }
         }
       }
@@ -215,17 +227,28 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
       inlay.renderer.let { renderer ->
         val component = renderer.component
         when (renderer.alignment) {
-          ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH, ComponentInlayAlignment.FIT_CONTENT_WIDTH -> component.size = Dimension(bounds.width, renderer.inlaySize.height)
-          ComponentInlayAlignment.FIT_VIEWPORT_WIDTH, ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> component.bounds = fitToViewport(renderer, visibleArea, renderer.alignment, viewportReservedWidth)
-          else -> component.size = renderer.inlaySize
+          ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH, ComponentInlayAlignment.FIT_CONTENT_WIDTH -> {
+            component.size = Dimension(bounds.width, renderer.inlaySize.height)
+          }
+          ComponentInlayAlignment.FIT_VIEWPORT_WIDTH, ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> {
+            component.bounds = fitToViewport(renderer, visibleArea, renderer.alignment, viewportReservedWidth)
+          }
+          else -> {
+            component.size = renderer.inlaySize
+          }
         }
       }
     }
   }
 
-  private fun fitToViewport(renderer: ComponentInlayRenderer<*>, visibleArea: Rectangle, alignment: ComponentInlayAlignment, viewportReservedWidth: Int): Rectangle {
+  private fun fitToViewport(renderer: ComponentInlayRenderer<*>,
+                            visibleArea: Rectangle,
+                            alignment: ComponentInlayAlignment,
+                            viewportReservedWidth: Int): Rectangle {
     val x = if (alignment == ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN) visibleArea.x else 0
-    return Rectangle(x, renderer.component.y, max(renderer.component.minimumSize.width, visibleArea.width - viewportReservedWidth), renderer.inlaySize.height)
+    val width = max(renderer.component.minimumSize.width, visibleArea.width - viewportReservedWidth)
+    val height = renderer.inlaySize.height
+    return Rectangle(x, renderer.component.y, width, height)
   }
 
   private fun isVerticalScrollbarFlipped(scrollPane: JScrollPane): Boolean {
@@ -233,6 +256,5 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     return flipProperty === JBScrollPane.Flip.HORIZONTAL || flipProperty === JBScrollPane.Flip.BOTH
   }
 
-  override fun dispose() {
-  }
+  override fun dispose() = Unit
 }
