@@ -159,7 +159,7 @@ public final class JavaLibraryUtil {
   public static @Nullable String getLibraryVersion(@NotNull Module module, @NotNull String mavenCoords,
                                                    @Nullable Attributes.Name versionAttribute) {
     String externalSystemId = ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId();
-    if (externalSystemId == null) {
+    if (isUnsupportedBuildSystem(externalSystemId)) {
       return getJpsLibraryVersion(module, mavenCoords, versionAttribute);
     }
     else {
@@ -167,7 +167,8 @@ public final class JavaLibraryUtil {
     }
   }
 
-  private static @Nullable String getJpsLibraryVersion(@NotNull Module module, @NotNull String mavenCoords,
+  private static @Nullable String getJpsLibraryVersion(@NotNull Module module,
+                                                       @NotNull String mavenCoords,
                                                        @Nullable Attributes.Name versionAttribute) {
     String name = StringUtil.substringAfter(mavenCoords, ":");
     if (name == null) return null;
@@ -177,7 +178,7 @@ public final class JavaLibraryUtil {
       .forEachLibrary(library -> {
         VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
         for (VirtualFile libraryFile : libraryFiles) {
-          if (matchLibraryName(libraryFile.getNameWithoutExtension(), name)) {
+          if (matchLibraryName(sanitizeLibraryName(libraryFile.getNameWithoutExtension()), name)) {
             VirtualFile jarFile = JarFileSystem.getInstance().getVirtualFileForJar(libraryFile);
             if (jarFile == null) continue;
 
@@ -223,9 +224,14 @@ public final class JavaLibraryUtil {
   private static @NotNull Libraries getModuleLibraries(@NotNull Module module) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, MAVEN_LIBRARY_PRESENCE_KEY, () -> {
       String externalSystemId = ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId();
-      return Result.create(fillLibraries(OrderEnumerator.orderEntries(module), externalSystemId == null),
-                           ProjectRootManager.getInstance(module.getProject()));
+      Libraries libraries = fillLibraries(OrderEnumerator.orderEntries(module),
+                                          isUnsupportedBuildSystem(externalSystemId));
+      return Result.create(libraries, ProjectRootManager.getInstance(module.getProject()));
     }, false);
+  }
+
+  private static boolean isUnsupportedBuildSystem(@Nullable String externalSystemId) {
+    return externalSystemId == null || "Blaze".equals(externalSystemId);
   }
 
   private static @NotNull Libraries fillLibraries(OrderEnumerator orderEnumerator, boolean collectFiles) {
@@ -265,7 +271,7 @@ public final class JavaLibraryUtil {
         String nameWithoutExtension = libraryFile.getNameWithoutExtension();
 
         // Drop prefix of Bazel processed libraries IDEA-324807
-        nameWithoutExtension = StringsKt.removePrefix(nameWithoutExtension, "processed_");
+        nameWithoutExtension = sanitizeLibraryName(nameWithoutExtension);
 
         jarLibrariesIndex.put(nameWithoutExtension, nameWithoutExtension);
 
@@ -290,6 +296,10 @@ public final class JavaLibraryUtil {
         }
       }
     }
+  }
+
+  private static @NotNull String sanitizeLibraryName(@NotNull String nameWithoutExtension) {
+    return StringsKt.removePrefix(nameWithoutExtension, "processed_"); // omit this prefix for Bazel
   }
 
   private record Libraries(Set<String> mavenLibraries,
