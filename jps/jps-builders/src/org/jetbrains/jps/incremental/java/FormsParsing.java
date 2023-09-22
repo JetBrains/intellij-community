@@ -29,7 +29,7 @@ public final class FormsParsing {
       final Ref<Boolean> isAlien = new Ref<>(Boolean.FALSE);
       parse(in, new IXMLBuilderAdapter() {
         @Override
-        public void startElement(final String elemName, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) throws Exception {
+        public void startElement(final String elemName, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) {
           if (!FORM_TAG.equalsIgnoreCase(elemName)) {
             stop();
           }
@@ -41,7 +41,7 @@ public final class FormsParsing {
         }
 
         @Override
-        public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type) throws Exception {
+        public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type) {
           if (UIFormXmlConstants.ATTRIBUTE_BIND_TO_CLASS.equals(key)) {
             result.set(value);
             stop();
@@ -49,7 +49,7 @@ public final class FormsParsing {
         }
 
         @Override
-        public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) throws Exception {
+        public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) {
           stop();
         }
       });
@@ -167,7 +167,7 @@ public final class FormsParsing {
     }
 
     @Override
-    public Reader getEntity(IXMLReader xmlReader, String name) throws XMLParseException {
+    public Reader getEntity(IXMLReader xmlReader, String name) {
       return new StringReader("");
     }
 
@@ -190,7 +190,7 @@ public final class FormsParsing {
     }
 
     @Override
-    public Reader openStream(String publicId, String systemId) throws IOException {
+    public Reader openStream(String publicId, String systemId) {
       this.publicId = StringUtil.isEmpty(publicId) ? null : publicId;
       this.systemId = StringUtil.isEmpty(systemId) ? null : systemId;
 
@@ -201,39 +201,37 @@ public final class FormsParsing {
   public static class IXMLBuilderAdapter implements IXMLBuilder {
 
     @Override
-    public void startBuilding(final String systemID, final int lineNr) throws Exception {
+    public void startBuilding(final String systemID, final int lineNr) {
     }
 
     @Override
-    public void newProcessingInstruction(final String target, final Reader reader) throws Exception {
+    public void newProcessingInstruction(final String target, final Reader reader) {
 
     }
 
     @Override
-    public void startElement(final String name, final String nsPrefix, final String nsURI, final String systemID, final int lineNr)
-        throws Exception {
+    public void startElement(final String name, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) {
     }
 
     @Override
-    public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type)
-        throws Exception {
+    public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type) {
     }
 
     @Override
-    public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) throws Exception {
+    public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) {
     }
 
     @Override
-    public void endElement(final String name, final String nsPrefix, final String nsURI) throws Exception {
+    public void endElement(final String name, final String nsPrefix, final String nsURI) {
     }
 
     @Override
-    public void addPCData(final Reader reader, final String systemID, final int lineNr) throws Exception {
+    public void addPCData(final Reader reader, final String systemID, final int lineNr) {
     }
 
     @Override
     @Nullable
-    public Object getResult() throws Exception {
+    public Object getResult() {
       return null;
     }
 

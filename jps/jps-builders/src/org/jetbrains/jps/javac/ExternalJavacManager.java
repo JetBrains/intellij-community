@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.execution.process.*;
@@ -32,7 +32,7 @@ import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.GlobalContextKey;
 
-import javax.tools.Diagnostic;
+import javax.tools.*;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -89,7 +89,7 @@ public class ExternalJavacManager extends ProcessAdapter {
       .childOption(ChannelOption.SO_KEEPALIVE, true)
       .childHandler(new ChannelInitializer() {
         @Override
-        protected void initChannel(Channel channel) throws Exception {
+        protected void initChannel(Channel channel) {
           channel.pipeline().addLast(myChannelRegistrar,
                                      new ProtobufVarint32FrameDecoder(),
                                      new ProtobufDecoder(JavacRemoteProto.Message.getDefaultInstance()),
@@ -545,7 +545,7 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
 
     @Override
-    public void channelRead0(final ChannelHandlerContext context, JavacRemoteProto.Message message) throws Exception {
+    public void channelRead0(final ChannelHandlerContext context, JavacRemoteProto.Message message) {
       // in case of REQUEST_ACK this is a process ID, otherwise this is a sessionId
       final UUID msgUuid = JavacProtoUtil.fromProtoUUID(message.getSessionId());
 

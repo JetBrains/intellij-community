@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.packaging.jlink;
 
 import com.intellij.execution.CommandLineUtil;
@@ -20,7 +20,6 @@ import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider;
 import org.jetbrains.jps.incremental.BuildTask;
 import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsElement;
@@ -62,7 +61,7 @@ public final class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvi
     }
 
     @Override
-    public void build(@NotNull CompileContext context) throws ProjectBuildException {
+    public void build(@NotNull CompileContext context) {
       LOG.info("jlink task was started");
 
       JpsSdk<?> javaSdk = findValidSdk(context);

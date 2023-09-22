@@ -250,7 +250,7 @@ public final class TypeRepr {
   static <T extends AbstractType> DataExternalizer<T> externalizer(final DependencyContext context) {
     return new DataExternalizer<>() {
       @Override
-      public void save(@NotNull final DataOutput out, final T value) throws IOException {
+      public void save(@NotNull final DataOutput out, final T value) {
         value.save(out);
       }
 

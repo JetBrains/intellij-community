@@ -353,12 +353,12 @@ public final class ClassRepr extends ClassFileRepr {
   public static DataExternalizer<ClassRepr> externalizer(final DependencyContext context) {
     return new DataExternalizer<>() {
       @Override
-      public void save(@NotNull final DataOutput out, final ClassRepr value) throws IOException {
+      public void save(@NotNull final DataOutput out, final ClassRepr value) {
         value.save(out);
       }
 
       @Override
-      public ClassRepr read(@NotNull final DataInput in) throws IOException {
+      public ClassRepr read(@NotNull final DataInput in) {
         return new ClassRepr(context, in);
       }
     };

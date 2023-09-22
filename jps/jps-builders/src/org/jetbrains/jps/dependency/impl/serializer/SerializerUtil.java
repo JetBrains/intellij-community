@@ -132,7 +132,7 @@ public final class SerializerUtil {
     }
   }
 
-  static void writeValueObject(Object obj, DataOutput out) throws IOException {
+  static void writeValueObject(Object obj, DataOutput out) {
     try {
       final Class valueType = obj != null ? obj.getClass() : null;
       if (valueType != null && valueType.isArray()) {
@@ -174,7 +174,7 @@ public final class SerializerUtil {
       }
 
       @Override
-      public void save(DataOutput out, Object value) throws IOException {
+      public void save(DataOutput out, Object value) {
       }
     };
     public static final DataDescriptor<String>
@@ -666,7 +666,7 @@ public final class SerializerUtil {
     }
   }
 
-  static Object readValueObject(DataInput in) throws IOException {
+  static Object readValueObject(DataInput in) {
     try {
       final byte tag = in.readByte();
       if (tag < 0) {

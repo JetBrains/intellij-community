@@ -37,7 +37,7 @@ public final class FSOperations {
   /**
    * @return true if file is marked as "dirty" in the specified compilation round
    */
-  public static boolean isMarkedDirty(CompileContext context, final CompilationRound round, final File file) throws IOException {
+  public static boolean isMarkedDirty(CompileContext context, final CompilationRound round, final File file) {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
