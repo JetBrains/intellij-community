@@ -5,6 +5,10 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 
 public final class PathJavaTestUtil {
   public static String getCommunityJavaTestDataPath() {
-    return PathManagerEx.getTestDataPath();
+    PathManagerEx.TestDataLookupStrategy strategy = PathManagerEx.guessTestDataLookupStrategy();
+    if (strategy == PathManagerEx.TestDataLookupStrategy.ULTIMATE) {
+      strategy = PathManagerEx.TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE;
+    }
+    return PathManagerEx.getTestDataPath(strategy);
   }
 }

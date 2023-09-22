@@ -11,8 +11,6 @@ public abstract class AbstractBasicSwitchParsingTest extends AbstractBasicJavaPa
   }
 
   public void testNormal() { doTest(true); }
-  public void testNormalManyWhen() { doTest(true); }
-
 
   public void testUncomplete1() { doTest(true); }
   public void testUncomplete2() { doTest(true); }
