@@ -12,16 +12,14 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GIT_PROPERTY_NAME
+import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GROUP_ID_PROPERTY_NAME
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.util.bindBooleanStorage
-import com.intellij.openapi.observable.util.joinSystemDependentPath
-import com.intellij.openapi.observable.util.transform
-import com.intellij.openapi.observable.util.trim
+import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
@@ -53,7 +51,10 @@ abstract class CommonStarterInitialStep(
   protected val entityNameProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestName)
   private val locationProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestLocationByName)
   private val canonicalPathProperty = locationProperty.joinSystemDependentPath(entityNameProperty)
+
   protected val groupIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { starterContext.group }
+    .bindStorage(GROUP_ID_PROPERTY_NAME)
+
   protected val artifactIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { entityName }
   protected val sdkProperty: GraphProperty<Sdk?> = propertyGraph.lazyProperty { null }
 
