@@ -3,7 +3,6 @@ package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -61,20 +60,11 @@ public final class FormsParsing {
   }
 
   public static void parse(final InputStream is, final IXMLBuilder builder) {
-    try {
+    try (is) {
       parse(new MyXMLReader(is), builder);
     }
-    catch(IOException e) {
+    catch (IOException e) {
       LOG.error(e);
-    }
-    finally {
-
-      try {
-        is.close();
-      }
-      catch (IOException ignore) {
-
-      }
     }
   }
 
@@ -141,19 +131,11 @@ public final class FormsParsing {
     }
 
     @Override
-    public void elementEnded(String name, String systemId, int lineNr) {
-    }
-
-    @Override
     public void attributeAdded(String key, String value, String systemId, int lineNr) {
     }
 
     @Override
     public void elementAttributesProcessed(String name, Properties extraAttributes, String systemId, int lineNr) {
-    }
-
-    @Override
-    public void PCDataAdded(String systemId, int lineNr)  {
     }
   }
 
@@ -178,22 +160,12 @@ public final class FormsParsing {
   }
 
   private static final class MyXMLReader extends StdXMLReader {
-    private String publicId;
-    private String systemId;
-
-    MyXMLReader(final Reader documentReader) {
-      super(documentReader);
-    }
-
     MyXMLReader(InputStream stream) throws IOException {
       super(stream);
     }
 
     @Override
     public Reader openStream(String publicId, String systemId) {
-      this.publicId = StringUtil.isEmpty(publicId) ? null : publicId;
-      this.systemId = StringUtil.isEmpty(systemId) ? null : systemId;
-
       return new StringReader(" ");
     }
   }
