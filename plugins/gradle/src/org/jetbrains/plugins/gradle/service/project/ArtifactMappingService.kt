@@ -5,15 +5,62 @@ import com.intellij.openapi.diagnostic.thisLogger
 
 const val OWNER_BASE_GRADLE: String = "base-gradle"
 
+/**
+ * A service for managing artifact mappings.
+ *
+ * The service manages relation of artifacts (e.g., jar files) and modules
+ *
+ * For each artifact path, the service can store and provide:
+ *  * list of modules that contribute to the content of this artifact (e.g., compilation output)
+ *  * artifact owner identification for complex build setups (Android, KMP, Kotlin)
+ *  * a property to notify the platform that artifact has non-module entries inside (e.g., relocated transitive dependencies)
+ *
+ * Ownership information is set with first [storeModuleId] call and is **not** updated.
+ */
 interface ArtifactMappingService {
+  /**
+   * Get available mapping information.
+   *
+   * @param artifactPath - artifact canonical path
+   */
   fun getModuleMapping(artifactPath: String): ModuleMappingInfo?
 
+
+  /**
+   * Stores the given module ID for the specified artifact path.
+   *
+   * The ownership will be set to [OWNER_BASE_GRADLE]
+   * @param artifactPath - artifact canonical path
+   * @param moduleId - module ID of corresponding [com.intellij.openapi.externalSystem.model.project.ModuleData]
+   */
   fun storeModuleId(artifactPath: String, moduleId: String)
+
+  /**
+   * Stores the given module ID for the specified artifact path and sets an owner to the specified ownerId.
+   *
+   * Owner is only set when the artifact path is stored for the first time
+   * @param artifactPath - artifact canonical path
+   * @param moduleId - module ID of corresponding [com.intellij.openapi.externalSystem.model.project.ModuleData]
+   */
   fun storeModuleId(artifactPath: String, moduleId: String, ownerId: String)
 
+  /**
+   * List all available artifact paths
+   */
   val keys: Collection<String>
 
+  /**
+   * Store all mapping information from another service instance
+   *
+   * @param artifactsMap information to import
+   */
   fun putAll(artifactsMap: ArtifactMappingService)
+
+  /**
+   * Mark given artifact as having not only modules, but something else that can potentially contribute to classpath
+   *
+   * For example, relocated (Shadow Jar) or repackaged (Fat Jar) dependencies
+   */
   fun markArtifactPath(canonicalPath: String, hasNonModulesContent: Boolean)
 }
 
