@@ -1,18 +1,18 @@
 package de.plushnikov.intellij.plugin.activity;
 
-import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.Version;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
@@ -28,9 +28,6 @@ final class LombokProjectValidatorActivity implements StartupActivity.DumbAware 
   @Override
   public void runActivity(@NotNull Project project) {
     // enable annotationProcessing check
-    final MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(BuildManagerListener.TOPIC, new LombokBuildManagerListener());
-
     if (ProjectSettings.isEnabled(project, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false)) {
       ReadAction.nonBlocking(() -> {
           if (project.isDisposed()) return null;
@@ -64,4 +61,14 @@ final class LombokProjectValidatorActivity implements StartupActivity.DumbAware 
   private static NotificationGroup getNotificationGroup() {
     return NotificationGroupManager.getInstance().getNotificationGroup(Version.PLUGIN_NAME);
   }
+}
+
+@Service(Service.Level.PROJECT)
+final class LombokPluginDisposable implements Disposable {
+  public static Disposable getInstance(@NotNull Project project) {
+    return project.getService(LombokPluginDisposable.class);
+  }
+
+  @Override
+  public void dispose() { }
 }

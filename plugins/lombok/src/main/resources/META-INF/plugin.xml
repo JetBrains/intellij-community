@@ -49,7 +49,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="de.plushnikov.intellij.plugin.activity.LombokProjectValidatorActivity"/>
-    <projectService serviceImplementation="de.plushnikov.intellij.plugin.activity.LombokPluginDisposable"/>
 
     <!-- Start of lombok Processors-->
     <applicationService
@@ -304,6 +303,12 @@
 
     <dependencySupport coordinate="org.projectlombok:lombok" kind="java" displayName="Lombok"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="de.plushnikov.intellij.plugin.activity.LombokBuildManagerListener"
+              topic="com.intellij.compiler.server.BuildManagerListener"/>
+  </projectListeners>
+
   <applicationListeners>
     <listener class="de.plushnikov.intellij.plugin.lombokconfig.LombokConfigChangeListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
