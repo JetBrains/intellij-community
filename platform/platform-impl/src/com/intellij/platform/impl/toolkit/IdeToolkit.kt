@@ -34,7 +34,7 @@ class IdeToolkit : SunToolkit() {
     Disposer.register(disposable) { targetDisposedPeer(target, peer) }
   }
 
-  fun createPanelWindow(panel: JComponent, target: Window, realParent: JComponent?): WindowPeer = clientInstance().createPanelWindow(panel, target, realParent)
+  fun createPanelWindow(panel: Component, target: Window, realParent: Container?): WindowPeer = clientInstance().createPanelWindow(panel, target, realParent)
   override fun createWindow(target: Window): WindowPeer = clientInstance().createWindow(target)
   override fun createDialog(target: Dialog): DialogPeer = clientInstance().createDialog(target)
   override fun createFrame(target: Frame): FramePeer = clientInstance().createFrame(target)
