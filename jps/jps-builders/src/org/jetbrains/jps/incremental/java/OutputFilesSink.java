@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
@@ -21,7 +21,7 @@ import org.jetbrains.jps.javac.OutputFileConsumer;
 import org.jetbrains.jps.javac.OutputFileObject;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -125,10 +125,10 @@ final class OutputFilesSink implements OutputFileConsumer {
     return Collections.unmodifiableSet(mySuccessfullyCompiled);
   }
 
-  public void markError(@NotNull final File sourceFile) {
+  public void markError(final @NotNull File sourceFile) {
     mySuccessfullyCompiled.remove(sourceFile);
   }
-  public void markError(@NotNull final Set<File> problematic) {
+  public void markError(final @NotNull Set<File> problematic) {
     mySuccessfullyCompiled.removeAll(problematic);
   }
 }

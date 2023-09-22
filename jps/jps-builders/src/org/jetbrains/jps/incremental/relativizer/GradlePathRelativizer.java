@@ -15,8 +15,7 @@ final class GradlePathRelativizer extends SubPathRelativizer {
     super(initializeGradleRepositoryPath(), IDENTIFIER);
   }
 
-  @Nullable
-  private static String initializeGradleRepositoryPath() {
+  private static @Nullable String initializeGradleRepositoryPath() {
     String gradleUserHomePath = System.getenv(GRADLE_USER_HOME);
     String gradleUserHome = gradleUserHomePath == null ? SystemProperties.getUserHome() + File.separator + ".gradle" : gradleUserHomePath;
 

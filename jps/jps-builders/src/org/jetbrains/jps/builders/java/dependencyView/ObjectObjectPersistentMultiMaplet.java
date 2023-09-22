@@ -32,9 +32,8 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
     myValueExternalizer = valueExternalizer;
     myMap = new PersistentHashMap<>(file, keyExternalizer, new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
     myCache = new SLRUCache<>(CACHE_SIZE, CACHE_SIZE * 3, keyExternalizer) {
-      @NotNull
       @Override
-      public Collection<V> createValue(K key) {
+      public @NotNull Collection<V> createValue(K key) {
         try {
           final Collection<V> collection = myMap.get(key);
           //noinspection unchecked
@@ -224,14 +223,14 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
     }
 
     @Override
-    public void save(@NotNull final DataOutput out, final Collection<V> value) throws IOException {
+    public void save(final @NotNull DataOutput out, final Collection<V> value) throws IOException {
       for (V x : value) {
         myElementExternalizer.save(out, x);
       }
     }
 
     @Override
-    public Collection<V> read(@NotNull final DataInput in) throws IOException {
+    public Collection<V> read(final @NotNull DataInput in) throws IOException {
       final Collection<V> result = myCollectionFactory.get();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {

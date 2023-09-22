@@ -32,8 +32,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
     super(ResourcesTargetType.ALL_TYPES);
   }
 
-  @NotNull
-  private static @Nls String getBuilderName() {
+  private static @NotNull @Nls String getBuilderName() {
     return JpsBuildBundle.message("builder.name.resource.compiler");
   }
 
@@ -121,8 +120,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
   }
 
   @Override
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return getBuilderName();
   }
 }

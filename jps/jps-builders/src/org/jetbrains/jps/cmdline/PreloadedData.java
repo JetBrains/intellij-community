@@ -12,18 +12,15 @@ import java.util.List;
  * @author Eugene Zhuravlev
  */
 public final class PreloadedData extends UserDataHolderBase {
-  @Nullable 
-  private BuildRunner runner;
-  @Nullable
-  private ProjectDescriptor projectDescriptor;
+  private @Nullable BuildRunner runner;
+  private @Nullable ProjectDescriptor projectDescriptor;
   
   private final List<BuildMessage> loadMessages = new ArrayList<>();
   
   private long fsEventOrdinal;
   private boolean hasWorkFlag = true;
 
-  @Nullable
-  public BuildRunner getRunner() {
+  public @Nullable BuildRunner getRunner() {
     return runner;
   }
 
@@ -31,8 +28,7 @@ public final class PreloadedData extends UserDataHolderBase {
     this.runner = runner;
   }
 
-  @Nullable
-  public ProjectDescriptor getProjectDescriptor() {
+  public @Nullable ProjectDescriptor getProjectDescriptor() {
     return projectDescriptor;
   }
 

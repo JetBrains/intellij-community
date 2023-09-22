@@ -23,8 +23,7 @@ public abstract class TypeRepr {
 
   public static final class PrimitiveType extends TypeRepr {
 
-    @NotNull
-    private final String myDescriptor;
+    private final @NotNull String myDescriptor;
 
     public PrimitiveType(String descriptor) {
       myDescriptor = descriptor;
@@ -106,8 +105,7 @@ public abstract class TypeRepr {
   }
 
   public static final class ArrayType extends TypeRepr {
-    @NotNull
-    private final TypeRepr myElementType;
+    private final @NotNull TypeRepr myElementType;
 
     public ArrayType(@NotNull TypeRepr elementType) {
       myElementType = elementType;

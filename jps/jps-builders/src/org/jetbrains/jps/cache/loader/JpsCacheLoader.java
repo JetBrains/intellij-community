@@ -34,9 +34,8 @@ final class JpsCacheLoader implements JpsOutputLoader<File> {
     isCleanupAsynchronously = cleanupAsynchronously;
   }
 
-  @Nullable
   @Override
-  public File load() {
+  public @Nullable File load() {
     LOG.info("Loading JPS caches for commit: " + myContext.getCommitId());
     myTmpCacheFolder = null;
 

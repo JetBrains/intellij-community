@@ -45,9 +45,8 @@ public final class ArtifactOutputToSourceMapping extends AbstractStateStorage<St
     super.remove(normalizePath(path));
   }
 
-  @Nullable
   @Override
-  public List<SourcePathAndRootIndex> getState(String path) throws IOException {
+  public @Nullable List<SourcePathAndRootIndex> getState(String path) throws IOException {
     List<SourcePathAndRootIndex> list = super.getState(normalizePath(path));
     return list != null ? ContainerUtil.map(list, it -> new SourcePathAndRootIndex(myRelativizer.toFull(it.myPath), it.myRootIndex)) : null;
   }

@@ -48,15 +48,13 @@ public final class BuildDataManager {
   private final PathRelativizerService myRelativizer;
 
   private final StorageProvider<SourceToOutputMappingImpl> SRC_TO_OUT_MAPPING_PROVIDER = new StorageProvider<>() {
-    @NotNull
     @Override
-    public SourceToOutputMappingImpl createStorage(File targetDataDir) throws IOException {
+    public @NotNull SourceToOutputMappingImpl createStorage(File targetDataDir) throws IOException {
       return createStorage(targetDataDir, myRelativizer);
     }
 
-    @NotNull
     @Override
-    public SourceToOutputMappingImpl createStorage(File targetDataDir, PathRelativizerService relativizer) throws IOException {
+    public @NotNull SourceToOutputMappingImpl createStorage(File targetDataDir, PathRelativizerService relativizer) throws IOException {
       return new SourceToOutputMappingImpl(new File(new File(targetDataDir, SRC_TO_OUTPUT_STORAGE), SRC_TO_OUTPUT_FILE_NAME), relativizer);
     }
   };
@@ -88,8 +86,7 @@ public final class BuildDataManager {
     return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(targetType, targetId), SRC_TO_OUTPUT_FILE_NAME), myRelativizer);
   }
 
-  @NotNull
-  public <S extends StorageOwner> S getStorage(@NotNull BuildTarget<?> target, @NotNull StorageProvider<S> provider) throws IOException {
+  public @NotNull <S extends StorageOwner> S getStorage(@NotNull BuildTarget<?> target, @NotNull StorageProvider<S> provider) throws IOException {
     final BuildTargetStorages targetStorages = myTargetStorages.computeIfAbsent(target, t -> new BuildTargetStorages(t, myDataPaths));
     return targetStorages.getOrCreateStorage(provider, myRelativizer);
   }
@@ -360,14 +357,12 @@ public final class BuildDataManager {
     }
 
     @Override
-    @NotNull
-    public Collection<String> getSources() throws IOException {
+    public @NotNull Collection<String> getSources() throws IOException {
       return myDelegate.getSources();
     }
 
     @Override
-    @Nullable
-    public Collection<String> getOutputs(@NotNull String srcPath) throws IOException {
+    public @Nullable Collection<String> getOutputs(@NotNull String srcPath) throws IOException {
       return myDelegate.getOutputs(srcPath);
     }
 
@@ -377,14 +372,12 @@ public final class BuildDataManager {
     }
 
     @Override
-    @NotNull
-    public Iterator<String> getSourcesIterator() throws IOException {
+    public @NotNull Iterator<String> getSourcesIterator() throws IOException {
       return myDelegate.getSourcesIterator();
     }
   }
 
-  @NotNull
-  private StorageOwner allTargetStorages() {
+  private @NotNull StorageOwner allTargetStorages() {
     return allTargetStorages(f -> {});
   }
   

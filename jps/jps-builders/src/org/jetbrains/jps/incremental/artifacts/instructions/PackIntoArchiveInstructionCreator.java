@@ -20,9 +20,8 @@ public final class PackIntoArchiveInstructionCreator extends ArtifactCompilerIns
     myJarDestination = jarDestination;
   }
 
-  @Nullable
   @Override
-  protected DestinationInfo createDirectoryDestination() {
+  protected @Nullable DestinationInfo createDirectoryDestination() {
     return new JarDestinationInfo(myPathInJar, myJarInfo, myJarDestination);
   }
 
@@ -57,9 +56,8 @@ public final class PackIntoArchiveInstructionCreator extends ArtifactCompilerIns
     return new PackIntoArchiveInstructionCreator(myInstructionsBuilder, jarInfo, "", destination);
   }
 
-  @Nullable
   @Override
-  public File getTargetDirectory() {
+  public @Nullable File getTargetDirectory() {
     return null;
   }
 }

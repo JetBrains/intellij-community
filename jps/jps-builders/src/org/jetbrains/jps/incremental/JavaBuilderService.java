@@ -19,9 +19,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class JavaBuilderService extends BuilderService {
-  @NotNull
   @Override
-  public List<? extends BuildTargetType<?>> getTargetTypes() {
+  public @NotNull List<? extends BuildTargetType<?>> getTargetTypes() {
     List<BuildTargetType<?>> types = new ArrayList<>();
     types.addAll(JavaModuleBuildTargetType.ALL_TYPES);
     types.addAll(ResourcesTargetType.ALL_TYPES);
@@ -29,9 +28,8 @@ public final class JavaBuilderService extends BuilderService {
     return types;
   }
 
-  @NotNull
   @Override
-  public List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
+  public @NotNull List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
     return Arrays.asList(
       new JavaBuilder(SharedThreadPool.getInstance()),
       new NotNullInstrumentingBuilder(),
@@ -41,9 +39,8 @@ public final class JavaBuilderService extends BuilderService {
     );
   }
 
-  @NotNull
   @Override
-  public List<? extends TargetBuilder<?, ?>> createBuilders() {
+  public @NotNull List<? extends TargetBuilder<?, ?>> createBuilders() {
     return Arrays.asList(new ResourcesBuilder(), new ProjectDependenciesResolver());
   }
 }

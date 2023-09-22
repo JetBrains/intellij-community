@@ -16,9 +16,8 @@ public abstract class ArtifactBasedBuildTargetType<T extends ArtifactBasedBuildT
     super(typeId, fileBased);
   }
 
-  @NotNull
   @Override
-  public List<T> computeAllTargets(@NotNull JpsModel model) {
+  public @NotNull List<T> computeAllTargets(@NotNull JpsModel model) {
     Collection<JpsArtifact> artifacts = JpsBuilderArtifactService.getInstance().getArtifacts(model, true);
     List<T> targets = new ArrayList<>(artifacts.size());
     for (JpsArtifact artifact : artifacts) {
@@ -29,9 +28,8 @@ public abstract class ArtifactBasedBuildTargetType<T extends ArtifactBasedBuildT
     return targets;
   }
 
-  @NotNull
   @Override
-  public BuildTargetLoader<T> createLoader(@NotNull JpsModel model) {
+  public @NotNull BuildTargetLoader<T> createLoader(@NotNull JpsModel model) {
     return new Loader(model);
   }
 
@@ -47,9 +45,8 @@ public abstract class ArtifactBasedBuildTargetType<T extends ArtifactBasedBuildT
       }
     }
 
-    @Nullable
     @Override
-    public T createTarget(@NotNull String targetId) {
+    public @Nullable T createTarget(@NotNull String targetId) {
       JpsArtifact artifact = myArtifacts.get(targetId);
       return artifact != null ? createArtifactBasedTarget(artifact) : null;
     }

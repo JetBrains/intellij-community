@@ -44,7 +44,7 @@ public final class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescript
   @Override
   public void build(@NotNull ArtifactBuildTarget target,
                     @NotNull DirtyFilesHolder<ArtifactRootDescriptor, ArtifactBuildTarget> holder,
-                    @NotNull BuildOutputConsumer outputConsumer, @NotNull final CompileContext context) throws ProjectBuildException {
+                    @NotNull BuildOutputConsumer outputConsumer, final @NotNull CompileContext context) throws ProjectBuildException {
     try {
       new IncArtifactBuilderHelper(target, outputConsumer, context).build(holder);
     } catch (IOException e) {
@@ -52,9 +52,8 @@ public final class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescript
     }
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return getBuilderName();
   }
 

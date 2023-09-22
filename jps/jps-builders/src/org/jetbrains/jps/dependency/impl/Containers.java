@@ -44,8 +44,7 @@ public final class Containers {
     return new ObjectOpenCustomHashSet<>(col, asStrategy(equalsImpl, hashCodeImpl));
   }
 
-  @NotNull
-  private static <T> Hash.Strategy<T> asStrategy(BiFunction<? super T, ? super T, Boolean> equalsImpl, Function<? super T, Integer> hashCodeImpl) {
+  private static @NotNull <T> Hash.Strategy<T> asStrategy(BiFunction<? super T, ? super T, Boolean> equalsImpl, Function<? super T, Integer> hashCodeImpl) {
     return new Hash.Strategy<>() {
       @Override
       public int hashCode(@Nullable T o) {

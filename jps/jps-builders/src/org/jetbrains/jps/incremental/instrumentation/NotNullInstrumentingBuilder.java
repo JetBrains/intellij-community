@@ -41,9 +41,8 @@ public final class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
     myNotNulls = ArrayUtilRt.toStringArray(config.getNotNullAnnotations());
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return JpsBuildBundle.message("builder.name.notnull.instrumentation");
   }
 
@@ -63,12 +62,11 @@ public final class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
   }
 
   @Override
-  @Nullable
-  protected BinaryContent instrument(CompileContext context,
-                                     CompiledClass compiledClass,
-                                     ClassReader reader,
-                                     ClassWriter writer,
-                                     InstrumentationClassFinder finder) {
+  protected @Nullable BinaryContent instrument(CompileContext context,
+                                               CompiledClass compiledClass,
+                                               ClassReader reader,
+                                               ClassWriter writer,
+                                               InstrumentationClassFinder finder) {
     try {
       if (NotNullVerifyingInstrumenter.processClassFile(reader, writer, myNotNulls)) {
         return new BinaryContent(writer.toByteArray());

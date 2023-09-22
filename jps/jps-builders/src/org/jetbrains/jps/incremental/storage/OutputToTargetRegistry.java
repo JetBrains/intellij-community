@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -24,7 +24,7 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
 
   private static final DataExternalizer<IntSet> DATA_EXTERNALIZER = new DataExternalizer<IntSet>() {
     @Override
-    public void save(@NotNull final DataOutput out, IntSet value) throws IOException {
+    public void save(final @NotNull DataOutput out, IntSet value) throws IOException {
       IntIterator iterator = value.iterator();
       while (iterator.hasNext()) {
         out.writeInt(iterator.nextInt());

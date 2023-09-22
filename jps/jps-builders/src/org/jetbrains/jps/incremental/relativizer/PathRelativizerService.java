@@ -68,8 +68,7 @@ public final class PathRelativizerService {
    *             so there is no need to convert it before passing to the method
    * @return system-independent relative path
    */
-  @NotNull
-  public String toRelative(@NotNull String path) {
+  public @NotNull String toRelative(@NotNull String path) {
     String systemIndependentPath = toSystemIndependentName(path);
     String relativePath;
     for (PathRelativizer relativizer : myRelativizers) {
@@ -87,8 +86,7 @@ public final class PathRelativizerService {
    *             so there is no need to convert it before passing to the method
    * @return system-independent absolute path
    */
-  @NotNull
-  public String toFull(@NotNull String path) {
+  public @NotNull String toFull(@NotNull String path) {
     String systemIndependentPath = toSystemIndependentName(path);
     String fullPath;
     for (PathRelativizer relativizer : myRelativizers) {
@@ -107,13 +105,11 @@ public final class PathRelativizerService {
     }
   }
 
-  @NotNull
-  static String normalizePath(@NotNull String path) {
+  static @NotNull String normalizePath(@NotNull String path) {
     return StringUtil.trimTrailing(toSystemIndependentName(path), '/');
   }
 
-  @Nullable
-  private static String getBuildDirPath(@NotNull JpsProject project) {
+  private static @Nullable String getBuildDirPath(@NotNull JpsProject project) {
     JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(project);
     if (projectExtension == null) return null;
     String url = projectExtension.getOutputUrl();

@@ -105,8 +105,7 @@ public final class CompilerEncodingConfiguration {
     return map;
   }
 
-  @Nullable
-  public String getEncoding(@Nullable File file) {
+  public @Nullable String getEncoding(@Nullable File file) {
     while (file != null) {
       final String charset = lookupCharsetMap(file);
       if (charset != null) {
@@ -117,8 +116,7 @@ public final class CompilerEncodingConfiguration {
     return myProjectCharset;
   }
 
-  @Nullable
-  private String lookupCharsetMap(File file) {
+  private @Nullable String lookupCharsetMap(File file) {
     return myUrlToCharset.get(JpsPathUtil.pathToUrl(FileUtilRt.toSystemIndependentName(file.getAbsolutePath())));
   }
 
@@ -131,8 +129,7 @@ public final class CompilerEncodingConfiguration {
     return false;
   }
 
-  @Nullable
-  public String getPreferredModuleChunkEncoding(@NotNull ModuleChunk moduleChunk) {
+  public @Nullable String getPreferredModuleChunkEncoding(@NotNull ModuleChunk moduleChunk) {
     for (JpsModule module : moduleChunk.getModules()) {
       final String encoding = getPreferredModuleEncoding(module);
       if (encoding != null) {
@@ -147,8 +144,7 @@ public final class CompilerEncodingConfiguration {
     return ContainerUtil.getFirstItem(encodings, null);
   }
 
-  @NotNull
-  public Set<String> getAllModuleChunkEncodings(@NotNull ModuleChunk moduleChunk) {
+  public @NotNull Set<String> getAllModuleChunkEncodings(@NotNull ModuleChunk moduleChunk) {
     final Map<JpsModule, Set<String>> map = getModuleCharsetMap();
     Set<String> encodings = new HashSet<>();
     for (JpsModule module : moduleChunk.getModules()) {

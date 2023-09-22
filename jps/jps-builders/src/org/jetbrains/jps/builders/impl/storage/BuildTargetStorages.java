@@ -28,8 +28,7 @@ public final class BuildTargetStorages extends CompositeStorageOwner {
     myPaths = paths;
   }
 
-  @NotNull 
-  public <S extends StorageOwner> S getOrCreateStorage(@NotNull final StorageProvider<S> provider, PathRelativizerService relativizer) throws IOException {
+  public @NotNull <S extends StorageOwner> S getOrCreateStorage(final @NotNull StorageProvider<S> provider, PathRelativizerService relativizer) throws IOException {
     try {
       return (S)myStorages.computeIfAbsent(provider, _provider -> {
         try {
@@ -46,7 +45,7 @@ public final class BuildTargetStorages extends CompositeStorageOwner {
     }
   } 
 
-  public void close(@NotNull final StorageProvider<? extends StorageOwner> provider) throws IOException {
+  public void close(final @NotNull StorageProvider<? extends StorageOwner> provider) throws IOException {
     final StorageOwner storage = myStorages.remove(provider);
     if (storage != null) {
       storage.close();

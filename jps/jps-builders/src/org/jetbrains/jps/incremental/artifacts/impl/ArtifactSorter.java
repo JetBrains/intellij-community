@@ -84,8 +84,7 @@ public final class ArtifactSorter {
     return result;
   }
 
-  @NotNull
-  public static Set<JpsArtifact> addIncludedArtifacts(@NotNull Collection<? extends JpsArtifact> artifacts) {
+  public static @NotNull Set<JpsArtifact> addIncludedArtifacts(@NotNull Collection<? extends JpsArtifact> artifacts) {
     Set<JpsArtifact> result = new HashSet<>();
     for (JpsArtifact artifact : artifacts) {
       collectIncludedArtifacts(artifact, new HashSet<>(), result, true);
@@ -131,15 +130,13 @@ public final class ArtifactSorter {
       myArtifactNodes = new LinkedHashSet<>(JpsBuilderArtifactService.getInstance().getArtifacts(model, true));
     }
 
-    @NotNull
     @Override
-    public Collection<JpsArtifact> getNodes() {
+    public @NotNull Collection<JpsArtifact> getNodes() {
       return myArtifactNodes;
     }
 
-    @NotNull
     @Override
-    public Iterator<JpsArtifact> getIn(JpsArtifact artifact) {
+    public @NotNull Iterator<JpsArtifact> getIn(JpsArtifact artifact) {
       final Set<JpsArtifact> included = new LinkedHashSet<>();
       processIncludedArtifacts(artifact, includedArtifact -> {
         if (myArtifactNodes.contains(includedArtifact)) {

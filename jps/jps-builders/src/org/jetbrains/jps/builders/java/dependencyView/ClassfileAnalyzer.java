@@ -16,7 +16,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
 final class ClassfileAnalyzer {
-  private final static Logger LOG = Logger.getInstance(ClassfileAnalyzer.class);
+  private static final Logger LOG = Logger.getInstance(ClassfileAnalyzer.class);
   public static final String LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";
   private static final String KOTLIN_LAMBDA_USAGE_CLASS_MARKER = "$sam$";
   private static final int ASM_API_VERSION = Opcodes.API_VERSION;
@@ -147,8 +147,7 @@ final class ClassfileAnalyzer {
         return descriptor.toString();
       }
 
-      @Nullable
-      private String myArrayName;
+      private @Nullable String myArrayName;
 
       @Override
       public void visit(String name, Object value) {

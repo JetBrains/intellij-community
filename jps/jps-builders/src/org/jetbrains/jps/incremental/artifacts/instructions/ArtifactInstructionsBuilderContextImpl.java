@@ -36,8 +36,7 @@ public final class ArtifactInstructionsBuilderContextImpl implements ArtifactIns
   }
 
   @Override
-  @NotNull
-  public Set<JpsArtifact> getParentArtifacts() {
+  public @NotNull Set<JpsArtifact> getParentArtifacts() {
     return myParentArtifacts;
   }
 

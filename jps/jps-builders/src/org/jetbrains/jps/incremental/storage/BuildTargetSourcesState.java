@@ -259,8 +259,7 @@ public final class BuildTargetSourcesState implements BuildListener {
     }
   }
 
-  @NotNull
-  private Optional<Long> getBuildTargetHash(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
+  private @NotNull Optional<Long> getBuildTargetHash(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
     long[] longs = Stream.concat(target.getOutputRoots(context).stream().map(it -> compilationOutputHash(it, target)),
                                  myBuildRootIndex.getTargetRoots(target, context).stream().map(it -> sourceRootHash(it, target)))
       .filter(it -> !ContainerUtil.isEmpty(it))
@@ -271,8 +270,7 @@ public final class BuildTargetSourcesState implements BuildListener {
     return Optional.of(Xxh3HashingService.getLongsHash(longs));
   }
 
-  @NotNull
-  private Optional<Long> getFileHash(@NotNull BuildTarget<?> target, @NotNull File file, @NotNull File rootPath) throws IOException {
+  private @NotNull Optional<Long> getFileHash(@NotNull BuildTarget<?> target, @NotNull File file, @NotNull File rootPath) throws IOException {
     StampsStorage<? extends StampsStorage.Stamp> storage = myProjectStamps.getStampStorage();
     assert storage instanceof FileStampStorage;
     FileStampStorage fileStampStorage = (FileStampStorage)storage;
@@ -293,8 +291,7 @@ public final class BuildTargetSourcesState implements BuildListener {
     return Xxh3HashingService.getLongsHash(stringHash, fileHash);
   }
 
-  @NotNull
-  private Map<String, Map<String, BuildTargetState>> loadCurrentTargetState() {
+  private @NotNull Map<String, Map<String, BuildTargetState>> loadCurrentTargetState() {
     if (!myTargetStateStorage.exists()) return new HashMap<>();
     try (BufferedReader bufferedReader = new BufferedReader(new FileReader(myTargetStateStorage, StandardCharsets.UTF_8))) {
       Map<String, Map<String, BuildTargetState>> result = gson.fromJson(bufferedReader, myTokenType);
@@ -310,13 +307,11 @@ public final class BuildTargetSourcesState implements BuildListener {
     return !PORTABLE_CACHES || myProjectStamps == null;
   }
 
-  @NotNull
-  private static String toRelative(@NotNull File target, @NotNull File rootPath) {
+  private static @NotNull String toRelative(@NotNull File target, @NotNull File rootPath) {
     return FileUtilRt.toSystemIndependentName(Paths.get(rootPath.getPath()).relativize(Paths.get(target.getPath())).toString());
   }
 
-  @NotNull
-  private static String getOutputFolderPath(JpsProject project) {
+  private static @NotNull String getOutputFolderPath(JpsProject project) {
     JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(project);
     if (projectExtension == null) return "";
     String url = projectExtension.getOutputUrl();

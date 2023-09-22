@@ -86,8 +86,7 @@ public final class CompileContextImpl extends UserDataHolderBase implements Comp
   }
 
   @Override
-  @Nullable
-  public String getBuilderParameter(String paramName) {
+  public @Nullable String getBuilderParameter(String paramName) {
     return myBuilderParams.get(paramName);
   }
 

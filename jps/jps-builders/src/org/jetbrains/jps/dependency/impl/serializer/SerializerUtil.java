@@ -165,7 +165,7 @@ public final class SerializerUtil {
   }
 
   // copy-pasted from org.jetbrains.jps.builders.java.dependencyView.ProtoMember.DataDescriptor
-  private static abstract class DataDescriptor<T> {
+  private abstract static class DataDescriptor<T> {
     public static final DataDescriptor
       NONE = new DataDescriptor(0, null) {
       @Override
@@ -251,8 +251,7 @@ public final class SerializerUtil {
     };
 
     private final byte myId;
-    @Nullable
-    private final Class<T> myDataType;
+    private final @Nullable Class<T> myDataType;
 
     private DataDescriptor(int id, Class<T> dataType) {
       myId = (byte)id;
@@ -263,8 +262,7 @@ public final class SerializerUtil {
       return myId;
     }
 
-    @Nullable
-    public Class<T> getDataType() {
+    public @Nullable Class<T> getDataType() {
       return myDataType;
     }
 
@@ -272,8 +270,7 @@ public final class SerializerUtil {
 
     public abstract T load(DataInput in) throws IOException;
 
-    @NotNull
-    public static DataDescriptor findById(byte tag) {
+    public static @NotNull DataDescriptor findById(byte tag) {
       if (STRING.getId() == tag) {
         return STRING;
       }

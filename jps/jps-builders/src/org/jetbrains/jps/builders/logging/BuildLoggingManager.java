@@ -12,8 +12,7 @@ public final class BuildLoggingManager {
     myProjectLogger = projectLogger;
   }
 
-  @NotNull
-  public ProjectBuilderLogger getProjectBuilderLogger() {
+  public @NotNull ProjectBuilderLogger getProjectBuilderLogger() {
     return myProjectLogger;
   }
 }

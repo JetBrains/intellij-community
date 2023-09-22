@@ -46,27 +46,23 @@ public final class SourceToOutputMappingImpl implements SourceToOutputMapping, S
     myMapping.removeData(srcPath, outputPath);
   }
 
-  @NotNull
   @Override
-  public Collection<String> getSources() throws IOException {
+  public @NotNull Collection<String> getSources() throws IOException {
     return myMapping.getKeys();
   }
 
-  @Nullable
   @Override
-  public Collection<String> getOutputs(@NotNull String srcPath) throws IOException {
+  public @Nullable Collection<String> getOutputs(@NotNull String srcPath) throws IOException {
     return myMapping.getState(srcPath);
   }
 
   @Override
-  @NotNull
-  public Iterator<String> getOutputsIterator(@NotNull String srcPath) throws IOException {
+  public @NotNull Iterator<String> getOutputsIterator(@NotNull String srcPath) throws IOException {
     return myMapping.getStateIterator(srcPath);
   }
 
-  @NotNull
   @Override
-  public Iterator<String> getSourcesIterator() throws IOException {
+  public @NotNull Iterator<String> getSourcesIterator() throws IOException {
     return myMapping.getKeysIterator();
   }
 

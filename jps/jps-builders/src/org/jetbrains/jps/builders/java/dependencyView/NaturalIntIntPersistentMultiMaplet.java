@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.containers.SLRUCache;
@@ -20,7 +20,7 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   private final SLRUCache<Integer, IntSet> myCache;
   private static final DataExternalizer<IntSet> EXTERNALIZER = new DataExternalizer<>() {
     @Override
-    public void save(@NotNull final DataOutput out, final IntSet value) throws IOException {
+    public void save(final @NotNull DataOutput out, final IntSet value) throws IOException {
       IntIterator iterator = value.iterator();
       while (iterator.hasNext()) {
         int elem = iterator.nextInt();
@@ -32,7 +32,7 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
     }
 
     @Override
-    public IntSet read(@NotNull final DataInput in) throws IOException {
+    public IntSet read(final @NotNull DataInput in) throws IOException {
       final IntSet result = new IntOpenHashSet();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {
@@ -58,9 +58,8 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
       PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(prevValue);
     }
     myCache = new SLRUCache<>(CACHE_SIZE, 2 * CACHE_SIZE) {
-      @NotNull
       @Override
-      public IntSet createValue(Integer key) {
+      public @NotNull IntSet createValue(Integer key) {
         try {
           final IntSet collection = myMap.get(key);
           if (collection == null) {
@@ -231,31 +230,26 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
     }
   }
 
-  @NotNull
-  private static AppendablePersistentMap.ValueDataAppender getAddAppender(int value) {
+  private static @NotNull AppendablePersistentMap.ValueDataAppender getAddAppender(int value) {
     return out -> DataInputOutputUtil.writeINT(out, value);
   }
 
-  @NotNull
-  private static AppendablePersistentMap.ValueDataAppender getRemoveAppender(int value) {
+  private static @NotNull AppendablePersistentMap.ValueDataAppender getRemoveAppender(int value) {
     return out -> DataInputOutputUtil.writeINT(out, -value);
   }
 
-  @NotNull
-  private static AppendablePersistentMap.ValueDataAppender getAddAppender(final IntSet set) {
+  private static @NotNull AppendablePersistentMap.ValueDataAppender getAddAppender(final IntSet set) {
     return getAppender(set, value -> value);
   }
 
-  @NotNull
-  private static AppendablePersistentMap.ValueDataAppender getRemoveAppender(final IntSet set) {
+  private static @NotNull AppendablePersistentMap.ValueDataAppender getRemoveAppender(final IntSet set) {
     return getAppender(set, value -> -value);
   }
 
-  @NotNull
-  private static AppendablePersistentMap.ValueDataAppender getAppender(final IntSet set, final IntUnaryOperator converter) {
+  private static @NotNull AppendablePersistentMap.ValueDataAppender getAppender(final IntSet set, final IntUnaryOperator converter) {
     return new AppendablePersistentMap.ValueDataAppender() {
       @Override
-      public void append(@NotNull final DataOutput out) throws IOException {
+      public void append(final @NotNull DataOutput out) throws IOException {
         IntIterator iterator = set.iterator();
         while (iterator.hasNext()) {
           int v = iterator.nextInt();

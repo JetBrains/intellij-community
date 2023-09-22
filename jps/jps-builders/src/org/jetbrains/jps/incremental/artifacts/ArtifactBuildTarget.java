@@ -73,12 +73,11 @@ public final class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
     }
   }
 
-  @NotNull
   @Override
-  public List<ArtifactRootDescriptor> computeRootDescriptors(@NotNull JpsModel model,
-                                                             @NotNull ModuleExcludeIndex index,
-                                                             @NotNull IgnoredFileIndex ignoredFileIndex,
-                                                             @NotNull BuildDataPaths dataPaths) {
+  public @NotNull List<ArtifactRootDescriptor> computeRootDescriptors(@NotNull JpsModel model,
+                                                                      @NotNull ModuleExcludeIndex index,
+                                                                      @NotNull IgnoredFileIndex ignoredFileIndex,
+                                                                      @NotNull BuildDataPaths dataPaths) {
     ArtifactInstructionsBuilderImpl builder = new ArtifactInstructionsBuilderImpl(index, ignoredFileIndex, this, model, dataPaths);
     ArtifactInstructionsBuilderContext context = new ArtifactInstructionsBuilderContextImpl(model, dataPaths);
     final JpsArtifact artifact = getArtifact();
@@ -94,15 +93,13 @@ public final class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
     return rootIndex.getTargetRoots(this, null).get(Integer.parseInt(rootId));
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return "Artifact '" + getArtifact().getName() + "'";
   }
 
-  @NotNull
   @Override
-  public Collection<File> getOutputRoots(@NotNull CompileContext context) {
+  public @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context) {
     String outputFilePath = getArtifact().getOutputFilePath();
     return outputFilePath != null && !StringUtil.isEmpty(outputFilePath) ? Collections.singleton(new File(FileUtil.toSystemDependentName(outputFilePath))) : Collections.emptyList();
   }

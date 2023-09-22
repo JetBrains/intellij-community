@@ -90,8 +90,7 @@ public final class JavaBuilderUtil {
     filters.add(filter);
   }
 
-  @NotNull
-  public static Callbacks.Backend getDependenciesRegistrar(CompileContext context) {
+  public static @NotNull Callbacks.Backend getDependenciesRegistrar(CompileContext context) {
     Pair<Mappings, Callbacks.Backend> pair = MAPPINGS_DELTA_KEY.get(context);
     if (pair == null) {
       final Mappings delta = context.getProjectDescriptor().dataManager.getMappings().createDelta();
@@ -339,8 +338,7 @@ public final class JavaBuilderUtil {
     }
   }
 
-  @Nullable
-  public static File findModuleInfoFile(CompileContext context, ModuleBuildTarget target) {
+  public static @Nullable File findModuleInfoFile(CompileContext context, ModuleBuildTarget target) {
     return getJavaModuleIndex(context).getModuleInfoFile(target.getModule(), target.isTests());
   }
 
@@ -400,8 +398,7 @@ public final class JavaBuilderUtil {
     return result;
   }
 
-  @NotNull
-  private static Set<File> getFilesContainer(CompileContext context, final Key<Set<File>> dataKey) {
+  private static @NotNull Set<File> getFilesContainer(CompileContext context, final Key<Set<File>> dataKey) {
     Set<File> files = dataKey.get(context);
     if (files == null) {
       files = FileCollectionFactory.createCanonicalFileSet();
@@ -437,8 +434,7 @@ public final class JavaBuilderUtil {
     ALL_COMPILED_FILES_KEY.set(context, null);
   }
 
-  @NotNull
-  public static JpsSdk<JpsDummyElement> ensureModuleHasJdk(JpsModule module, CompileContext context, final @Nls String compilerName) throws ProjectBuildException {
+  public static @NotNull JpsSdk<JpsDummyElement> ensureModuleHasJdk(JpsModule module, CompileContext context, final @Nls String compilerName) throws ProjectBuildException {
     JpsSdkReference<JpsDummyElement> reference = module.getSdkReference(JpsJavaSdkType.INSTANCE);
     if (reference == null) {
       context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR,
@@ -464,8 +460,7 @@ public final class JavaBuilderUtil {
     return sdkLibrary.getProperties();
   }
 
-  @Nullable
-  public static JavaCompilingTool findCompilingTool(@NotNull String compilerId) {
+  public static @Nullable JavaCompilingTool findCompilingTool(@NotNull String compilerId) {
     for (JavaCompilingTool tool : JpsServiceManager.getInstance().getExtensions(JavaCompilingTool.class)) {
       if (compilerId.equals(tool.getId()) || compilerId.equals(tool.getAlternativeId())) {
         return tool;

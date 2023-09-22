@@ -15,15 +15,13 @@ public final class ArtifactOutToSourceStorageProvider extends StorageProvider<Ar
   private ArtifactOutToSourceStorageProvider() {
   }
 
-  @NotNull
   @Override
-  public ArtifactOutputToSourceMapping createStorage(File targetDataDir) {
+  public @NotNull ArtifactOutputToSourceMapping createStorage(File targetDataDir) {
     throw new UnsupportedOperationException("Unsupported creation type of ArtifactOutputToSourceMapping");
   }
 
-  @NotNull
   @Override
-  public ArtifactOutputToSourceMapping createStorage(File targetDataDir, PathRelativizerService relativizer) throws IOException {
+  public @NotNull ArtifactOutputToSourceMapping createStorage(File targetDataDir, PathRelativizerService relativizer) throws IOException {
     return new ArtifactOutputToSourceMapping(new File(targetDataDir, "out-src" + File.separator + "data"), relativizer);
   }
 }

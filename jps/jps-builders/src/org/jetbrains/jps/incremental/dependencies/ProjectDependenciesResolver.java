@@ -46,9 +46,8 @@ public final class ProjectDependenciesResolver extends TargetBuilder<BuildRootDe
     }
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return JpsBuildBundle.message("builder.name.project.dependencies.resolver");
   }
 
@@ -67,30 +66,26 @@ public final class ProjectDependenciesResolver extends TargetBuilder<BuildRootDe
       return Collections.emptyList();
     }
 
-    @NotNull
     @Override
-    public List<BuildRootDescriptor> computeRootDescriptors(@NotNull JpsModel model,
-                                                            @NotNull ModuleExcludeIndex index,
-                                                            @NotNull IgnoredFileIndex ignoredFileIndex,
-                                                            @NotNull BuildDataPaths dataPaths) {
+    public @NotNull List<BuildRootDescriptor> computeRootDescriptors(@NotNull JpsModel model,
+                                                                     @NotNull ModuleExcludeIndex index,
+                                                                     @NotNull IgnoredFileIndex ignoredFileIndex,
+                                                                     @NotNull BuildDataPaths dataPaths) {
       return Collections.emptyList();
     }
 
-    @Nullable
     @Override
-    public BuildRootDescriptor findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex) {
+    public @Nullable BuildRootDescriptor findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex) {
       return null;
     }
 
-    @NotNull
     @Override
-    public String getPresentableName() {
+    public @NotNull String getPresentableName() {
       return "Project Dependencies Resolving";
     }
 
-    @NotNull
     @Override
-    public Collection<File> getOutputRoots(@NotNull CompileContext context) {
+    public @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context) {
       return Collections.emptyList();
     }
   }
@@ -102,15 +97,13 @@ public final class ProjectDependenciesResolver extends TargetBuilder<BuildRootDe
       super(TARGET_TYPE_ID);
     }
 
-    @NotNull
     @Override
-    public List<ProjectDependenciesResolvingTarget> computeAllTargets(@NotNull JpsModel model) {
+    public @NotNull List<ProjectDependenciesResolvingTarget> computeAllTargets(@NotNull JpsModel model) {
       return Collections.singletonList(new ProjectDependenciesResolvingTarget());
     }
 
-    @NotNull
     @Override
-    public BuildTargetLoader<ProjectDependenciesResolvingTarget> createLoader(@NotNull JpsModel model) {
+    public @NotNull BuildTargetLoader<ProjectDependenciesResolvingTarget> createLoader(@NotNull JpsModel model) {
       return new BuildTargetLoader<ProjectDependenciesResolvingTarget>() {
         @Override
         public ProjectDependenciesResolvingTarget createTarget(@NotNull String targetId) {

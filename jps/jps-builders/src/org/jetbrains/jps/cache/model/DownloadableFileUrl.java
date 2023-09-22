@@ -19,28 +19,23 @@ public final class DownloadableFileUrl {
     myDownloadUrl = downloadUrl;
   }
 
-  @NotNull
-  public String getDownloadUrl() {
+  public @NotNull String getDownloadUrl() {
     return myDownloadUrl;
   }
 
-  @NotNull
-  public String getPresentableFileName() {
+  public @NotNull String getPresentableFileName() {
     return myFileName + myFileExtension;
   }
 
-  @NotNull
-  public String getPresentableDownloadUrl() {
+  public @NotNull String getPresentableDownloadUrl() {
     return myDownloadUrl;
   }
 
-  @NotNull
-  public String getDefaultFileName() {
+  public @NotNull String getDefaultFileName() {
     return generateFileName(Conditions.alwaysTrue());
   }
 
-  @NotNull
-  public String generateFileName(@NotNull Condition<? super String> validator) {
+  public @NotNull String generateFileName(@NotNull Condition<? super String> validator) {
     return UniqueNameGenerator.generateUniqueName("", myFileName, myFileExtension, "_", "", validator);
   }
 

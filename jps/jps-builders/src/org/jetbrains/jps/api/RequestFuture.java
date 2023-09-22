@@ -12,7 +12,7 @@ import java.util.UUID;
 public final class RequestFuture<T> extends BasicFuture<T> {
   private final T myHandler;
   private final UUID myRequestID;
-  @Nullable private final CancelAction<T> myCancelAction;
+  private final @Nullable CancelAction<T> myCancelAction;
 
   public interface CancelAction<T> {
     void cancel(RequestFuture<T> future) throws Exception;
@@ -25,8 +25,7 @@ public final class RequestFuture<T> extends BasicFuture<T> {
     myRequestID = requestID;
   }
 
-  @NotNull
-  public UUID getRequestID() {
+  public @NotNull UUID getRequestID() {
     return myRequestID;
   }
 

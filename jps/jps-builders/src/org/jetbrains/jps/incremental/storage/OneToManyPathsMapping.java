@@ -43,15 +43,13 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
     super.appendData(normalizePath(keyPath), normalizePaths(boundPaths));
   }
 
-  @Nullable
   @Override
-  public Collection<String> getState(@NotNull String keyPath) throws IOException {
+  public @Nullable Collection<String> getState(@NotNull String keyPath) throws IOException {
     Collection<String> collection = super.getState(normalizePath(keyPath));
     return collection != null ? ContainerUtil.map(collection, toFull()) : null;
   }
 
-  @NotNull
-  public Iterator<String> getStateIterator(@NotNull String keyPath) throws IOException {
+  public @NotNull Iterator<String> getStateIterator(@NotNull String keyPath) throws IOException {
     Collection<String> collection = super.getState(normalizePath(keyPath));
     return collection == null ? Collections.emptyIterator() : Iterators.map(collection.iterator(), myRelativizer::toFull);
   }
@@ -108,8 +106,7 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
     }
   }
 
-  @NotNull
-  private Function<String, String> toFull() {
+  private @NotNull Function<String, String> toFull() {
     return s -> myRelativizer.toFull(s);
   }
 

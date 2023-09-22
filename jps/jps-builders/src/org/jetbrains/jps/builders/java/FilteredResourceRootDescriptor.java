@@ -16,9 +16,8 @@ public final class FilteredResourceRootDescriptor extends ResourceRootDescriptor
     super(root, target, packagePrefix, excludes, filterForExcludedPatterns);
   }
 
-  @NotNull
   @Override
-  public FileFilter createFileFilter() {
+  public @NotNull FileFilter createFileFilter() {
     FileFilter baseFilter = super.createFileFilter();
     final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(getTarget().getModule().getProject());
     final JavadocSnippetsSkipFilter snippetsSkipFilter = new JavadocSnippetsSkipFilter(getRootFile());

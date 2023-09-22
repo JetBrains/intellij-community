@@ -16,9 +16,8 @@ public final class JavaBuilderExtensionImpl extends JavaBuilderExtension {
     return JavaBuilder.JAVA_SOURCES_FILTER.accept(file);
   }
 
-  @NotNull
   @Override
-  public Set<? extends JpsModuleType<?>> getCompilableModuleTypes() {
+  public @NotNull Set<? extends JpsModuleType<?>> getCompilableModuleTypes() {
     return Collections.singleton(JpsJavaModuleType.INSTANCE);
   }
 }

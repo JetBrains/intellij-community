@@ -39,8 +39,7 @@ public final class BuildDataPathsImpl implements BuildDataPaths {
   }
 
   @Override
-  @NotNull
-  public File getTargetDataRoot(@NotNull BuildTargetType<?> targetType, @NotNull String targetId) {
+  public @NotNull File getTargetDataRoot(@NotNull BuildTargetType<?> targetType, @NotNull String targetId) {
     // targetId may diff from another targetId only in case
     // when used as a file name in case-insensitive file systems, both paths for different targets will point to the same dir
     return new File(getTargetTypeDataRoot(targetType), PathUtilRt.suggestFileName(targetId + "_" + Integer.toHexString(targetId.hashCode()), true, false));

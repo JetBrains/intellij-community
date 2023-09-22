@@ -10,15 +10,13 @@ import java.util.Collections;
 import java.util.List;
 
 public final class ArtifactBuilderService extends BuilderService {
-  @NotNull
   @Override
-  public List<? extends BuildTargetType<?>> getTargetTypes() {
+  public @NotNull List<? extends BuildTargetType<?>> getTargetTypes() {
     return Collections.singletonList(ArtifactBuildTargetType.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public List<? extends TargetBuilder<?,?>> createBuilders() {
+  public @NotNull List<? extends TargetBuilder<?,?>> createBuilders() {
     return Collections.singletonList(new IncArtifactBuilder());
   }
 }

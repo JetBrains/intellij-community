@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -60,14 +60,12 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     myTargetType = targetType;
   }
 
-  @Nullable
-  public File getOutputDir() {
+  public @Nullable File getOutputDir() {
     return JpsJavaExtensionService.getInstance().getOutputDirectory(myModule, myTargetType.isTests());
   }
 
-  @NotNull
   @Override
-  public Collection<File> getOutputRoots(@NotNull CompileContext context) {
+  public @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context) {
     Collection<File> result = new SmartList<>();
     final File outputDir = getOutputDir();
     if (outputDir != null) {
@@ -128,9 +126,8 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     return dependencies;
   }
 
-  @NotNull
   @Override
-  public List<JavaSourceRootDescriptor> computeRootDescriptors(@NotNull JpsModel model, @NotNull ModuleExcludeIndex index, @NotNull IgnoredFileIndex ignoredFileIndex, @NotNull BuildDataPaths dataPaths) {
+  public @NotNull List<JavaSourceRootDescriptor> computeRootDescriptors(@NotNull JpsModel model, @NotNull ModuleExcludeIndex index, @NotNull IgnoredFileIndex ignoredFileIndex, @NotNull BuildDataPaths dataPaths) {
     List<JavaSourceRootDescriptor> roots = new ArrayList<>();
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
@@ -164,9 +161,8 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     return roots;
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return "Module '" + getModule().getName() + "' " + (myTargetType.isTests() ? "tests" : "production");
   }
 

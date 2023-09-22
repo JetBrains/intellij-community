@@ -9,7 +9,7 @@ import java.util.concurrent.*;
  * Makes TaskFuture from the supplied Future
  */
 public final class TaskFutureAdapter<T> implements TaskFuture<T> {
-  @NotNull private final Future<? extends T> myFuture;
+  private final @NotNull Future<? extends T> myFuture;
 
   public TaskFutureAdapter(@NotNull Future<? extends T> future) {
     myFuture = future;

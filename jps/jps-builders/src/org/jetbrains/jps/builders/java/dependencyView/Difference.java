@@ -49,7 +49,7 @@ public abstract class Difference {
     boolean unchanged();
   }
 
-  public static <T, D extends Difference> Specifier<T, D> make(@Nullable final Set<T> past, @Nullable final Set<T> now) {
+  public static <T, D extends Difference> Specifier<T, D> make(final @Nullable Set<T> past, final @Nullable Set<T> now) {
     boolean pastEmpty = past == null || past.isEmpty();
     boolean nowEmpty = now == null || now.isEmpty();
     if (pastEmpty && nowEmpty) {

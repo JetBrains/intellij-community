@@ -157,10 +157,9 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
     myContext = context;
   }
 
-  @NotNull
-  private List<AffectedModule> calculateAffectedModules(@Nullable Map<String, Map<String, BuildTargetState>> currentModulesState,
-                                                        @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState,
-                                                        boolean checkExistance) {
+  private @NotNull List<AffectedModule> calculateAffectedModules(@Nullable Map<String, Map<String, BuildTargetState>> currentModulesState,
+                                                                 @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState,
+                                                                 boolean checkExistance) {
     long start = System.currentTimeMillis();
 
     List<AffectedModule> affectedModules = new ArrayList<>();
@@ -250,9 +249,8 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
     return result;
   }
 
-  @NotNull
-  private static List<AffectedModule> mergeAffectedModules(List<AffectedModule> affectedModules,
-                                                           @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState) {
+  private static @NotNull List<AffectedModule> mergeAffectedModules(List<AffectedModule> affectedModules,
+                                                                    @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState) {
     Set<AffectedModule> result = new HashSet<>();
     affectedModules.forEach(affectedModule -> {
       if (affectedModule.getType().equals(JAVA_PRODUCTION)) {

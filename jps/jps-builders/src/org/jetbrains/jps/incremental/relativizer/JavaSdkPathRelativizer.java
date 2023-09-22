@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * {@link PathRelativizerService#toRelative} or {@link PathRelativizerService#toFull} with any path.
  */
 final class JavaSdkPathRelativizer implements PathRelativizer {
-  @Nullable private Map<String, String> myJavaSdkPathMap;
+  private @Nullable Map<String, String> myJavaSdkPathMap;
 
   JavaSdkPathRelativizer(@Nullable Set<? extends JpsSdk<?>> javaSdks) {
     if (javaSdks != null) {
@@ -31,9 +31,8 @@ final class JavaSdkPathRelativizer implements PathRelativizer {
     }
   }
 
-  @Nullable
   @Override
-  public String toRelativePath(@NotNull String path) {
+  public @Nullable String toRelativePath(@NotNull String path) {
     if (myJavaSdkPathMap == null || myJavaSdkPathMap.isEmpty()) return null;
     Optional<Map.Entry<String, String>> optionalEntry = myJavaSdkPathMap.entrySet().stream()
       .filter(entry -> FileUtil.startsWith(path, entry.getValue())).findFirst();
@@ -43,9 +42,8 @@ final class JavaSdkPathRelativizer implements PathRelativizer {
     return javaSdkEntry.getKey() + path.substring(javaSdkEntry.getValue().length());
   }
 
-  @Nullable
   @Override
-  public String toAbsolutePath(@NotNull String path) {
+  public @Nullable String toAbsolutePath(@NotNull String path) {
     if (myJavaSdkPathMap == null || myJavaSdkPathMap.isEmpty()) return null;
     Optional<Map.Entry<String, String>> optionalEntry = myJavaSdkPathMap.entrySet().stream()
       .filter(it -> path.startsWith(it.getKey())).findFirst();

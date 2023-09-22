@@ -72,7 +72,7 @@ public final class BuildOutputConsumerImpl implements BuildOutputConsumer {
   }
 
   @Override
-  public void registerOutputFile(@NotNull final File outputFile, @NotNull Collection<String> sourcePaths) throws IOException {
+  public void registerOutputFile(final @NotNull File outputFile, @NotNull Collection<String> sourcePaths) throws IOException {
     registerOutput(outputFile, false, sourcePaths);
   }
 

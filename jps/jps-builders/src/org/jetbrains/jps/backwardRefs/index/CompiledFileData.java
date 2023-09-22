@@ -30,33 +30,27 @@ public final class CompiledFileData {
     myImplicitToString = implicitToString;
   }
 
-  @NotNull
-  public Map<CompilerRef, Collection<CompilerRef>> getBackwardHierarchy() {
+  public @NotNull Map<CompilerRef, Collection<CompilerRef>> getBackwardHierarchy() {
     return myBackwardHierarchyMap;
   }
 
-  @NotNull
-  public Map<CompilerRef, Integer> getReferences() {
+  public @NotNull Map<CompilerRef, Integer> getReferences() {
     return myReferences;
   }
 
-  @NotNull
-  public Map<CompilerRef, Void> getDefinitions() {
+  public @NotNull Map<CompilerRef, Void> getDefinitions() {
     return myDefinitions;
   }
 
-  @NotNull
-  public Map<SignatureData, Collection<CompilerRef>> getSignatureData() {
+  public @NotNull Map<SignatureData, Collection<CompilerRef>> getSignatureData() {
     return mySignatureData;
   }
 
-  @NotNull
-  public Map<CompilerRef, Collection<CompilerRef>> getCasts() {
+  public @NotNull Map<CompilerRef, Collection<CompilerRef>> getCasts() {
     return myCasts;
   }
 
-  @NotNull
-  public Map<CompilerRef, Void> getImplicitToString() {
+  public @NotNull Map<CompilerRef, Void> getImplicitToString() {
     return myImplicitToString;
   }
 }

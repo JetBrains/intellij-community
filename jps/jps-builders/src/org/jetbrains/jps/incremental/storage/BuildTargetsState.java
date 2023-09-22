@@ -81,8 +81,7 @@ public final class BuildTargetsState {
     myLastSuccessfulRebuildDuration = duration;
   }
 
-  @NotNull
-  public BuildTargetConfiguration getTargetConfiguration(@NotNull BuildTarget<?> target) {
+  public @NotNull BuildTargetConfiguration getTargetConfiguration(@NotNull BuildTarget<?> target) {
     return getTypeState(target.getTargetType()).getConfiguration(target);
   }
 

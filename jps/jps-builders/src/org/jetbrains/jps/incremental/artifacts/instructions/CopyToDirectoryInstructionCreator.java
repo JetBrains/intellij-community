@@ -44,9 +44,8 @@ public final class CopyToDirectoryInstructionCreator extends ArtifactCompilerIns
     return new PackIntoArchiveInstructionCreator(myInstructionsBuilder, jarInfo, "", destination);
   }
 
-  @Nullable
   @Override
-  public File getTargetDirectory() {
+  public @Nullable File getTargetDirectory() {
     return new File(myOutputPath);
   }
 }

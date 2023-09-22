@@ -154,12 +154,12 @@ public final class ModuleRepr extends ClassFileRepr {
   public static DataExternalizer<ModuleRepr> externalizer(final DependencyContext context) {
     return new DataExternalizer<ModuleRepr>() {
       @Override
-      public void save(@NotNull final DataOutput out, final ModuleRepr value) {
+      public void save(final @NotNull DataOutput out, final ModuleRepr value) {
         value.save(out);
       }
 
       @Override
-      public ModuleRepr read(@NotNull final DataInput in) {
+      public ModuleRepr read(final @NotNull DataInput in) {
         return new ModuleRepr(context, in);
       }
     };

@@ -38,16 +38,16 @@ import java.util.function.Supplier;
 
 // not final - used by Gosu plugin
 public final class Mappings {
-  private final static Logger LOG = Logger.getInstance(Mappings.class);
+  private static final Logger LOG = Logger.getInstance(Mappings.class);
   public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
   private boolean myProcessConstantsIncrementally = !Boolean.parseBoolean(System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false"));
   private static final boolean USE_NATURAL_INT_MULTIMAP_IMPLEMENTATION = Boolean.parseBoolean(System.getProperty("jps.mappings.natural.int.multimap.impl", "true"));
 
-  private final static String CLASS_TO_SUBCLASSES = "classToSubclasses.tab";
-  private final static String CLASS_TO_CLASS = "classToClass.tab";
-  private final static String SHORT_NAMES = "shortNames.tab";
-  private final static String SOURCE_TO_CLASS = "sourceToClass.tab";
-  private final static String CLASS_TO_SOURCE = "classToSource.tab";
+  private static final String CLASS_TO_SUBCLASSES = "classToSubclasses.tab";
+  private static final String CLASS_TO_CLASS = "classToClass.tab";
+  private static final String SHORT_NAMES = "shortNames.tab";
+  private static final String SOURCE_TO_CLASS = "sourceToClass.tab";
+  private static final String CLASS_TO_SOURCE = "classToSource.tab";
   private static final int DEFAULT_SET_CAPACITY = 32;
   private static final float DEFAULT_SET_LOAD_FACTOR = 0.98f;
   private static final String IMPORT_WILDCARD_SUFFIX = ".*";
@@ -86,8 +86,7 @@ public final class Mappings {
   private IntIntTransientMultiMaplet myRemovedSuperClasses;
   private IntIntTransientMultiMaplet myAddedSuperClasses;
 
-  @Nullable
-  private Collection<String> myRemovedFiles;
+  private @Nullable Collection<String> myRemovedFiles;
 
   public PathRelativizerService getRelativizer() {
     return myRelativizer;
@@ -168,9 +167,8 @@ public final class Mappings {
           DependencyContext.getTableFile(myRootDir, SOURCE_TO_CLASS), PathStringDescriptor.INSTANCE, new ClassFileReprExternalizer(myContext),
           () -> new HashSet<>(5, DEFAULT_SET_LOAD_FACTOR)
         ) {
-          @NotNull
           @Override
-          protected String debugString(String path) {
+          protected @NotNull String debugString(String path) {
             // on case-insensitive file systems save paths in normalized (lowercase) format in order to make tests run deterministically
             return SystemInfo.isFileSystemCaseSensitive ? path : path.toLowerCase(Locale.US);
           }
@@ -225,8 +223,7 @@ public final class Mappings {
     }
   }
 
-  @NotNull
-   private <T extends ClassFileRepr> Iterable<T> getReprsByName(int qName, Class<T> selector) {
+  private @NotNull <T extends ClassFileRepr> Iterable<T> getReprsByName(int qName, Class<T> selector) {
     return Iterators.unique(Iterators.filter(
       Iterators.map(
         Iterators.flat(Iterators.map(myClassToRelativeSourceFilePath.get(qName), src -> myRelativeSourceFilePathToClasses.get(src))),
@@ -239,19 +236,16 @@ public final class Mappings {
     return myRelativeSourceFilePathToClasses.get(toRelative(unchangedSource));
   }
 
-  @NotNull
-  private String toRelative(File file) {
+  private @NotNull String toRelative(File file) {
     return myRelativizer.toRelative(file.getAbsolutePath());
   }
 
-  @Nullable
-  private Iterable<File> classToSourceFileGet(int qName) {
+  private @Nullable Iterable<File> classToSourceFileGet(int qName) {
     Collection<String> get = myClassToRelativeSourceFilePath.get(qName);
     return get == null ? null : Iterators.map(get, s -> toFull(s));
   }
 
-  @NotNull
-  private File toFull(String relativePath) {
+  private @NotNull File toFull(String relativePath) {
     return new File(myRelativizer.toFull(relativePath));
   }
 
@@ -295,8 +289,7 @@ public final class Mappings {
   private static final MethodRepr MOCK_METHOD = null;
 
   private final class Util {
-    @Nullable
-    private final Mappings myMappings;
+    private final @Nullable Mappings myMappings;
 
     private Util() {
       myMappings = null;
@@ -630,8 +623,7 @@ public final class Mappings {
       return getReprsByName(name, selector);
     }
 
-    @Nullable
-    private Boolean isInheritorOf(final int who, final int whom, IntSet visitedClasses) {
+    private @Nullable Boolean isInheritorOf(final int who, final int whom, IntSet visitedClasses) {
       if (who == whom) {
         return Boolean.TRUE;
       }
@@ -705,7 +697,7 @@ public final class Mappings {
       return false;
     }
 
-    void collectSupersRecursively(final int className, @NotNull final IntSet container) {
+    void collectSupersRecursively(final int className, final @NotNull IntSet container) {
       for (ClassRepr classRepr : reprsByName(className, ClassRepr.class)) {
         final Iterable<TypeRepr.ClassType> supers = classRepr.getSuperTypes();
         boolean added = false;
@@ -887,8 +879,7 @@ public final class Mappings {
     }
 
     public final class FileFilterConstraint implements UsageConstraint {
-      @NotNull
-      private final DependentFilesFilter myFilter;
+      private final @NotNull DependentFilesFilter myFilter;
 
       public FileFilterConstraint(@NotNull DependentFilesFilter filter) {
         myFilter = filter;
@@ -940,10 +931,10 @@ public final class Mappings {
   }
 
   void affectAll(final int className,
-                 @NotNull final File sourceFile,
+                 final @NotNull File sourceFile,
                  final Collection<? super File> affectedFiles,
                  final Collection<? extends File> alreadyCompiledFiles,
-                 @Nullable final DependentFilesFilter filter) {
+                 final @Nullable DependentFilesFilter filter) {
     final IntSet dependants = myClassToClassDependency.get(className);
     if (dependants != null) {
       dependants.forEach(depClass -> {
@@ -985,8 +976,7 @@ public final class Mappings {
     return s == myEmptyName;
   }
 
-  @NotNull
-  private IntSet getAllSubclasses(final int root) {
+  private @NotNull IntSet getAllSubclasses(final int root) {
     return addAllSubclasses(root, new IntOpenHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR));
   }
 
@@ -1006,7 +996,7 @@ public final class Mappings {
                                       final Proto member,
                                       final Collection<? super File> affectedFiles,
                                       final Collection<? extends File> currentlyCompiled,
-                                      @Nullable final DependentFilesFilter filter) {
+                                      final @Nullable DependentFilesFilter filter) {
     final boolean isField = member instanceof FieldRepr;
     final Util self = new Util();
 
@@ -1087,8 +1077,7 @@ public final class Mappings {
     final Collection<? extends File> myCompiledFiles;
     final Collection<? extends File> myCompiledWithErrors;
     final Collection<? super File> myAffectedFiles;
-    @Nullable
-    final DependentFilesFilter myFilter;
+    final @Nullable DependentFilesFilter myFilter;
 
     final Util myFuture;
     final Util myPresent;
@@ -1117,11 +1106,11 @@ public final class Mappings {
     }
 
     private final class DiffState {
-      final public IntSet myDependants = new IntOpenHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
+      public final IntSet myDependants = new IntOpenHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
 
-      final public Set<UsageRepr.Usage> myAffectedUsages = new HashSet<>();
-      final public Set<UsageRepr.AnnotationUsage> myAnnotationQuery = new HashSet<>();
-      final public Map<UsageRepr.Usage, UsageConstraint> myUsageConstraints = new HashMap<>();
+      public final Set<UsageRepr.Usage> myAffectedUsages = new HashSet<>();
+      public final Set<UsageRepr.AnnotationUsage> myAnnotationQuery = new HashSet<>();
+      public final Map<UsageRepr.Usage, UsageConstraint> myUsageConstraints = new HashMap<>();
 
       final Difference.Specifier<ClassRepr, ClassRepr.Diff> myClassDiff;
       final Difference.Specifier<ModuleRepr, ModuleRepr.Diff> myModulesDiff;
@@ -1164,7 +1153,7 @@ public final class Mappings {
                          final Collection<? extends File> compiledWithErrors,
                          final Collection<? extends File> compiledFiles,
                          final Collection<? super File> affectedFiles,
-                         @NotNull final DependentFilesFilter filter) {
+                         final @NotNull DependentFilesFilter filter) {
       delta.myRemovedFiles = removed;
 
       this.myDelta = delta;
@@ -2640,7 +2629,7 @@ public final class Mappings {
      final Collection<? extends File> compiledWithErrors,
      final Collection<? extends File> compiledFiles,
      final Collection<? super File> affectedFiles,
-     @NotNull final DependentFilesFilter filter) {
+     final @NotNull DependentFilesFilter filter) {
     return new Differential(delta, removed, filesToCompile, compiledWithErrors, compiledFiles, affectedFiles, filter).differentiate();
   }
 
@@ -2655,7 +2644,7 @@ public final class Mappings {
     }
   }
 
-  private void cleanupRemovedClass(final Mappings delta, @NotNull final ClassFileRepr cr, File sourceFile, final Set<? extends UsageRepr.Usage> usages, final IntIntMultiMaplet dependenciesTrashBin) {
+  private void cleanupRemovedClass(final Mappings delta, final @NotNull ClassFileRepr cr, File sourceFile, final Set<? extends UsageRepr.Usage> usages, final IntIntMultiMaplet dependenciesTrashBin) {
     final int className = cr.name;
 
     // it is safe to cleanup class information if it is mapped to non-existing files only
@@ -2994,8 +2983,7 @@ public final class Mappings {
     };
   }
 
-  @Nullable
-  public Set<ClassRepr> getClasses(final String sourceFileName) {
+  public @Nullable Set<ClassRepr> getClasses(final String sourceFileName) {
     final File f = new File(sourceFileName);
     synchronized (myLock) {
       final Collection<ClassFileRepr> reprs = sourceFileToClassesGet(f);
@@ -3126,13 +3114,11 @@ public final class Mappings {
     }
   }
 
-  @NotNull
-  private Set<Pair<ClassFileRepr, File>> getDeletedClasses() {
+  private @NotNull Set<Pair<ClassFileRepr, File>> getDeletedClasses() {
     return myDeletedClasses == null ? Collections.emptySet() : Collections.unmodifiableSet(myDeletedClasses);
   }
 
-  @NotNull
-  private Set<ClassRepr> getAddedClasses() {
+  private @NotNull Set<ClassRepr> getAddedClasses() {
     return myAddedClasses == null ? Collections.emptySet() : Collections.unmodifiableSet(myAddedClasses);
   }
 

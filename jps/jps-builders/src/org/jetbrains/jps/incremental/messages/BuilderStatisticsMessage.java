@@ -18,8 +18,7 @@ public final class BuilderStatisticsMessage extends BuildMessage {
     myElapsedTimeMs = elapsedTimeMs;
   }
 
-  @NotNull
-  private static String createText(String builderName, int srcCount, long time) {
+  private static @NotNull String createText(String builderName, int srcCount, long time) {
     return "Build duration: Builder '" + StringUtil.capitalize(builderName) + "' took " + Utils.formatDuration(time) + "; " +
            srcCount + " sources processed" +
            (srcCount == 0 ? "" : " (" + time / srcCount + " ms per file)");

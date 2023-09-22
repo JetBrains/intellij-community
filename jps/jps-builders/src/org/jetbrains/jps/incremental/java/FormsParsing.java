@@ -230,8 +230,7 @@ public final class FormsParsing {
     }
 
     @Override
-    @Nullable
-    public Object getResult() {
+    public @Nullable Object getResult() {
       return null;
     }
 

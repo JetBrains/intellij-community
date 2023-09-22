@@ -742,8 +742,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
    * @param mavenSettingsXmlAuth Settings obtained from {@link JpsMavenSettings#loadAuthenticationSettings(File, File)}
    * @return Authentication data or null, if no suitable authentication is found.
    */
-  @Nullable
-  private static ArtifactAuthenticationData obtainRemoteRepositoryAuthenticationData(
+  private static @Nullable ArtifactAuthenticationData obtainRemoteRepositoryAuthenticationData(
     @NotNull JpsRemoteRepositoryDescription description,
     @NotNull Map<String, JpsMavenSettings.RemoteRepositoryAuthentication> mavenSettingsXmlAuth
   ) {
@@ -768,8 +767,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     return null;
   }
 
-  @Nullable
-  private static ArtifactAuthenticationData loadRemoteRepositoryAuthenticationFromSystemProperty(
+  private static @Nullable ArtifactAuthenticationData loadRemoteRepositoryAuthenticationFromSystemProperty(
     @NotNull JpsRemoteRepositoryDescription description
   ) {
     String propertyName = REMOTE_REPOSITORY_AUTH_PROPERTY_PREFIX + description.getId();
@@ -802,8 +800,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     return root != null ? new File(root, DEFAULT_MAVEN_REPOSITORY_PATH) : new File(DEFAULT_MAVEN_REPOSITORY_PATH);
   }
 
-  @NotNull
-  private static @Nls String getBuilderName() {
+  private static @NotNull @Nls String getBuilderName() {
     return JpsBuildBundle.message("builder.name.maven.dependency.resolver");
   }
 

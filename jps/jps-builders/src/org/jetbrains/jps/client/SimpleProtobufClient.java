@@ -122,7 +122,7 @@ public final class SimpleProtobufClient<T extends ProtobufResponseHandler> {
     return myState.get() == State.CONNECTED;
   }
 
-  public final RequestFuture<T> sendMessage(final UUID messageId, MessageLite message, @Nullable final T responseHandler, @Nullable final RequestFuture.CancelAction<T> cancelAction) {
+  public final RequestFuture<T> sendMessage(final UUID messageId, MessageLite message, final @Nullable T responseHandler, final @Nullable RequestFuture.CancelAction<T> cancelAction) {
     final RequestFuture<T> requestFuture = new RequestFuture<>(responseHandler, messageId, cancelAction);
     myMessageHandler.registerFuture(messageId, requestFuture);
     final ChannelFuture connectFuture = myConnectFuture;

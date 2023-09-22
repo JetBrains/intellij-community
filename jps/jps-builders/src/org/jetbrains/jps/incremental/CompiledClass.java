@@ -22,16 +22,12 @@ import java.util.List;
  * @author Eugene Zhuravlev
  */
 public class CompiledClass extends UserDataHolderBase{
-  private final static Logger LOG = Logger.getInstance(CompiledClass.class);
+  private static final Logger LOG = Logger.getInstance(CompiledClass.class);
 
-  @NotNull
-  private final File myOutputFile;
-  @NotNull
-  private final Collection<File> mySourceFiles;
-  @Nullable
-  private final String myClassName;
-  @NotNull
-  private BinaryContent myContent;
+  private final @NotNull File myOutputFile;
+  private final @NotNull Collection<File> mySourceFiles;
+  private final @Nullable String myClassName;
+  private @NotNull BinaryContent myContent;
 
   private boolean myIsDirty = false;
 
@@ -58,28 +54,23 @@ public class CompiledClass extends UserDataHolderBase{
     myIsDirty = false;
   }
 
-  @NotNull
-  public File getOutputFile() {
+  public @NotNull File getOutputFile() {
     return myOutputFile;
   }
 
-  @NotNull
-  public Collection<File> getSourceFiles() {
+  public @NotNull Collection<File> getSourceFiles() {
     return mySourceFiles;
   }
 
-  @NotNull
-  public List<String> getSourceFilesPaths() {
+  public @NotNull List<String> getSourceFilesPaths() {
     return ContainerUtil.map(mySourceFiles, file -> file.getPath());
   }
 
-  @Nullable
-  public String getClassName() {
+  public @Nullable String getClassName() {
     return myClassName;
   }
 
-  @NotNull
-  public BinaryContent getContent() {
+  public @NotNull BinaryContent getContent() {
     return myContent;
   }
 

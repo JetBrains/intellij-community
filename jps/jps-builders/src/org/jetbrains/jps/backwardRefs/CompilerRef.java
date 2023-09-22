@@ -69,8 +69,7 @@ public interface CompilerRef extends RW.Savable {
     }
 
     @Override
-    @NotNull
-    public CompilerClassHierarchyElementDef getOwner() {
+    public @NotNull CompilerClassHierarchyElementDef getOwner() {
       return new JavaCompilerClassRef(myOwner);
     }
 
@@ -129,9 +128,8 @@ public interface CompilerRef extends RW.Savable {
       return new JavaCompilerFieldRef(newOwner, myName);
     }
 
-    @NotNull
     @Override
-    public CompilerClassHierarchyElementDef getOwner() {
+    public @NotNull CompilerClassHierarchyElementDef getOwner() {
       return new JavaCompilerClassRef(myOwner);
     }
 

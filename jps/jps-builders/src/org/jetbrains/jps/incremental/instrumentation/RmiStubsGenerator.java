@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.instrumentation;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
@@ -274,8 +274,7 @@ public final class RmiStubsGenerator extends ClassProcessingBuilder {
     return false;
   }
 
-  @Nullable
-  private static RmicCompilerOptions getOptions(CompileContext context) {
+  private static @Nullable RmicCompilerOptions getOptions(CompileContext context) {
     final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.getProjectDescriptor().getProject());
     final JpsJavaCompilerOptions options = config.getCompilerOptions("Rmic");
     return ObjectUtils.tryCast(options, RmicCompilerOptions.class);
@@ -294,8 +293,7 @@ public final class RmiStubsGenerator extends ClassProcessingBuilder {
       baseName = StringUtil.trimEnd(outputFile.getName(), ".class");
     }
 
-    @NotNull
-    public Collection<File> selectGeneratedFiles(File[] candidates) {
+    public @NotNull Collection<File> selectGeneratedFiles(File[] candidates) {
       if (candidates == null || candidates.length == 0) {
         return Collections.emptyList();
       }

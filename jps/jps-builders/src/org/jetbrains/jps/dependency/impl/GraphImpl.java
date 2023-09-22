@@ -42,8 +42,7 @@ abstract class GraphImpl implements Graph {
   }
 
   @Override
-  @Nullable
-  public final BackDependencyIndex getIndex(String name) {
+  public final @Nullable BackDependencyIndex getIndex(String name) {
     for (BackDependencyIndex index : myIndices) {
       if (index.getName().equals(name)) {
         return index;

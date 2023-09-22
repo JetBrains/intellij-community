@@ -362,8 +362,7 @@ public final class LayoutElementBuildersRegistry {
       }
     }
 
-    @Nullable
-    private List<JpsPackagingElement> getCustomArtifactLayout(@NotNull JpsArtifact artifact, @NotNull Set<JpsArtifact> parentArtifacts) {
+    private @Nullable List<JpsPackagingElement> getCustomArtifactLayout(@NotNull JpsArtifact artifact, @NotNull Set<JpsArtifact> parentArtifacts) {
       for (ArtifactLayoutCustomizationService service : JpsServiceManager.getInstance().getExtensions(ArtifactLayoutCustomizationService.class)) {
         List<JpsPackagingElement> elements = service.getCustomizedLayout(artifact, parentArtifacts);
         if (elements != null) {

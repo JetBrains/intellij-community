@@ -26,9 +26,8 @@ public final class ResourcesTargetType extends ModuleBasedBuildTargetType<Resour
     myTests = tests;
   }
 
-  @NotNull
   @Override
-  public List<ResourcesTarget> computeAllTargets(@NotNull JpsModel model) {
+  public @NotNull List<ResourcesTarget> computeAllTargets(@NotNull JpsModel model) {
     List<JpsModule> modules = model.getProject().getModules();
     List<ResourcesTarget> targets = new ArrayList<>(modules.size());
     for (JpsModule module : modules) {
@@ -37,9 +36,8 @@ public final class ResourcesTargetType extends ModuleBasedBuildTargetType<Resour
     return targets;
   }
 
-  @NotNull
   @Override
-  public Loader createLoader(@NotNull JpsModel model) {
+  public @NotNull Loader createLoader(@NotNull JpsModel model) {
     return new Loader(model);
   }
 
@@ -61,9 +59,8 @@ public final class ResourcesTargetType extends ModuleBasedBuildTargetType<Resour
       }
     }
 
-    @Nullable
     @Override
-    public ResourcesTarget createTarget(@NotNull String targetId) {
+    public @Nullable ResourcesTarget createTarget(@NotNull String targetId) {
       JpsModule module = myModules.get(targetId);
       return module != null ? new ResourcesTarget(module, ResourcesTargetType.this) : null;
     }

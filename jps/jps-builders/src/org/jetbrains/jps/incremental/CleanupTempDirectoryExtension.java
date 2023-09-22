@@ -21,8 +21,7 @@ public final class CleanupTempDirectoryExtension implements PreloadedDataExtensi
     }
   }
 
-  @Nullable
-  public static CleanupTempDirectoryExtension getInstance() {
+  public static @Nullable CleanupTempDirectoryExtension getInstance() {
     for (PreloadedDataExtension extension : JpsServiceManager.getInstance().getExtensions(PreloadedDataExtension.class)) {
       if (extension instanceof CleanupTempDirectoryExtension) {
         return (CleanupTempDirectoryExtension)extension;
@@ -31,8 +30,7 @@ public final class CleanupTempDirectoryExtension implements PreloadedDataExtensi
     return null;
   }
   
-  @Nullable
-  public Future<Void> getCleanupTask() {
+  public @Nullable Future<Void> getCleanupTask() {
     return myTask;
   }
 

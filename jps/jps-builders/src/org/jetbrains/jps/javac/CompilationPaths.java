@@ -25,28 +25,23 @@ public final class CompilationPaths {
     mySourcePath = sourcePath;
   }
 
-  @NotNull
-  public Iterable<? extends File> getPlatformClasspath() {
+  public @NotNull Iterable<? extends File> getPlatformClasspath() {
     return myPlatformClasspath;
   }
 
-  @NotNull
-  public Iterable<? extends File> getClasspath() {
+  public @NotNull Iterable<? extends File> getClasspath() {
     return myClasspath;
   }
 
-  @NotNull
-  public Iterable<? extends File> getUpgradeModulePath() {
+  public @NotNull Iterable<? extends File> getUpgradeModulePath() {
     return myUpgradeModulePath;
   }
 
-  @NotNull
-  public ModulePath getModulePath() {
+  public @NotNull ModulePath getModulePath() {
     return myModulePath;
   }
 
-  @NotNull
-  public Iterable<? extends File> getSourcePath() {
+  public @NotNull Iterable<? extends File> getSourcePath() {
     return mySourcePath;
   }
 

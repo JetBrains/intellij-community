@@ -7,8 +7,7 @@ import org.jetbrains.jps.dependency.Usage;
 
 abstract class JvmElementUsage implements Usage {
 
-  @NotNull
-  private final ReferenceID myOwner;
+  private final @NotNull ReferenceID myOwner;
 
   JvmElementUsage(@NotNull ReferenceID owner) {
     myOwner = owner;

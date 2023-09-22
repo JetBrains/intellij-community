@@ -29,8 +29,7 @@ public final class FileTimestampStorage extends AbstractStateStorage<File, Times
     myTargetsState = targetsState;
   }
 
-  @NotNull
-  private static File calcStorageRoot(File dataStorageRoot) {
+  private static @NotNull File calcStorageRoot(File dataStorageRoot) {
     return new File(dataStorageRoot, "timestamps");
   }
 

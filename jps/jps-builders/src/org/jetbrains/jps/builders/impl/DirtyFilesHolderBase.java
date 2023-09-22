@@ -42,9 +42,8 @@ public abstract class DirtyFilesHolderBase<R extends BuildRootDescriptor, T exte
     return map != null && !map.isEmpty();
   }
 
-  @NotNull
   @Override
-  public Collection<String> getRemovedFiles(@NotNull T target) {
+  public @NotNull Collection<String> getRemovedFiles(@NotNull T target) {
     Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(myContext);
     if (map != null) {
       Collection<String> paths = map.get(target);

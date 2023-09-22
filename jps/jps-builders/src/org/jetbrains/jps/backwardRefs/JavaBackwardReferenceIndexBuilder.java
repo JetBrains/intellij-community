@@ -30,9 +30,8 @@ public final class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder 
     super(BuilderCategory.CLASS_POST_PROCESSOR);
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return JpsBuildBundle.message("builder.name.backward.references.indexer");
   }
 
@@ -62,9 +61,8 @@ public final class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder 
     JavaBackwardReferenceIndexWriter.closeIfNeeded(false);
   }
 
-  @NotNull
   @Override
-  public List<String> getCompilableFileExtensions() {
+  public @NotNull List<String> getCompilableFileExtensions() {
     return Collections.emptyList();
   }
 

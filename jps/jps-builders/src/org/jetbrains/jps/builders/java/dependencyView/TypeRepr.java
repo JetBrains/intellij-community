@@ -250,12 +250,12 @@ public final class TypeRepr {
   static <T extends AbstractType> DataExternalizer<T> externalizer(final DependencyContext context) {
     return new DataExternalizer<>() {
       @Override
-      public void save(@NotNull final DataOutput out, final T value) {
+      public void save(final @NotNull DataOutput out, final T value) {
         value.save(out);
       }
 
       @Override
-      public T read(@NotNull final DataInput in) throws IOException {
+      public T read(final @NotNull DataInput in) throws IOException {
         AbstractType elementType;
         int level = 0;
 

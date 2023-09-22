@@ -250,8 +250,7 @@ public final class JpsOutputLoaderManager {
     }
   }
 
-  @Nullable
-  private static String getBuildDirPath(@NotNull JpsProject project) {
+  private static @Nullable String getBuildDirPath(@NotNull JpsProject project) {
     JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(project);
     if (projectExtension == null) return null;
     String url = projectExtension.getOutputUrl();

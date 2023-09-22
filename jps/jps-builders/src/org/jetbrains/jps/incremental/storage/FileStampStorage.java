@@ -32,13 +32,11 @@ public final class FileStampStorage extends AbstractStateStorage<String, HashSta
     myTargetsState = targetsState;
   }
 
-  @NotNull
-  private String relativePath(@NotNull File file) {
+  private @NotNull String relativePath(@NotNull File file) {
     return myRelativizer.toRelative(file.getAbsolutePath());
   }
 
-  @NotNull
-  private static File calcStorageRoot(File dataStorageRoot) {
+  private static @NotNull File calcStorageRoot(File dataStorageRoot) {
     return new File(dataStorageRoot, "hashes");
   }
 

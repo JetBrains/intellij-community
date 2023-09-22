@@ -39,8 +39,7 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     myRetentionPolicy = retentionPolicy;
   }
 
-  @NotNull
-  public String getPackageName() {
+  public @NotNull String getPackageName() {
     String name = getName();
     int index = name.lastIndexOf('/');
     return index >= 0? name.substring(0, index) : "";

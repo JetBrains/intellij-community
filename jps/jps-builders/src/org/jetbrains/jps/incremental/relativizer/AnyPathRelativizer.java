@@ -21,9 +21,8 @@ final class AnyPathRelativizer implements PathRelativizer {
     myIdentifier = identifier;
   }
 
-  @Nullable
   @Override
-  public String toRelativePath(@NotNull String path) {
+  public @Nullable String toRelativePath(@NotNull String path) {
     if (myPath == null) return null;
 
     Path rel;
@@ -37,9 +36,8 @@ final class AnyPathRelativizer implements PathRelativizer {
     return FileUtil.toSystemIndependentName(myIdentifier + '/' + rel);
   }
 
-  @Nullable
   @Override
-  public String toAbsolutePath(@NotNull String path) {
+  public @Nullable String toAbsolutePath(@NotNull String path) {
     if (myPath == null || !path.startsWith(myIdentifier)) return null;
     var abs = Paths.get(myPath + path.substring(myIdentifier.length())).normalize();
     return FileUtil.toSystemIndependentName(abs.toString());

@@ -26,9 +26,8 @@ public final class JavaModuleBuildTargetType extends ModuleBasedBuildTargetType<
     myTests = tests;
   }
 
-  @NotNull
   @Override
-  public List<ModuleBuildTarget> computeAllTargets(@NotNull JpsModel model) {
+  public @NotNull List<ModuleBuildTarget> computeAllTargets(@NotNull JpsModel model) {
     List<JpsModule> modules = model.getProject().getModules();
     List<ModuleBuildTarget> targets = new ArrayList<>(modules.size());
     for (JpsModule module : modules) {
@@ -37,9 +36,8 @@ public final class JavaModuleBuildTargetType extends ModuleBasedBuildTargetType<
     return targets;
   }
 
-  @NotNull
   @Override
-  public Loader createLoader(@NotNull JpsModel model) {
+  public @NotNull Loader createLoader(@NotNull JpsModel model) {
     return new Loader(model);
   }
 
@@ -61,9 +59,8 @@ public final class JavaModuleBuildTargetType extends ModuleBasedBuildTargetType<
       }
     }
 
-    @Nullable
     @Override
-    public ModuleBuildTarget createTarget(@NotNull String targetId) {
+    public @Nullable ModuleBuildTarget createTarget(@NotNull String targetId) {
       JpsModule module = myModules.get(targetId);
       return module != null ? new ModuleBuildTarget(module, JavaModuleBuildTargetType.this) : null;
     }

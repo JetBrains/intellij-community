@@ -18,8 +18,7 @@ public final class ClassFileDependenciesAnalyzer {
     myContext = new DependencyContext(dependenciesDataDir, relativizer);
   }
 
-  @NotNull
-  public Set<String> collectDependencies(String className, ClassReader classReader) {
+  public @NotNull Set<String> collectDependencies(String className, ClassReader classReader) {
     ClassFileRepr classFileRepr = new ClassfileAnalyzer(myContext).analyze(myContext.get(className), classReader, false);
     if (classFileRepr == null) return Collections.emptySet();
     final int classNameId = classFileRepr.name;

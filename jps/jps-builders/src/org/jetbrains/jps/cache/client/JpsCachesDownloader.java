@@ -155,8 +155,7 @@ final class JpsCachesDownloader {
     }
   }
 
-  @NotNull
-  private File downloadFile(@NotNull final DownloadableFileUrl description, @NotNull final File existingFile, int expectedDownloads) throws IOException {
+  private @NotNull File downloadFile(final @NotNull DownloadableFileUrl description, final @NotNull File existingFile, int expectedDownloads) throws IOException {
     final String presentableUrl = description.getPresentableDownloadUrl();
     Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders();
 

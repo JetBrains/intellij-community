@@ -11,8 +11,7 @@ public class Proto {
   private final JVMFlags access;
   private final String signature;
   private final String name;
-  @NotNull
-  private final Iterable<ClassType> annotations;
+  private final @NotNull Iterable<ClassType> annotations;
 
   public Proto(JVMFlags flags, String signature, String name, @NotNull Iterable<ClassType> annotations) {
     this.access = flags;

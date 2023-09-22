@@ -25,8 +25,7 @@ public final class FileGeneratedEvent extends BuildMessage {
     mySourceTarget = sourceTarget;
   }
 
-  @NotNull
-  public BuildTarget<?> getSourceTarget() {
+  public @NotNull BuildTarget<?> getSourceTarget() {
     return mySourceTarget;
   }
 
@@ -44,8 +43,7 @@ public final class FileGeneratedEvent extends BuildMessage {
    * (one of {@link BuildTarget#getOutputRoots}) and {@code relativePath} is a relative path from the output root to the file created or
    * modified by the build process.
    */
-  @NotNull
-  public Collection<Pair<String, String>> getPaths() {
+  public @NotNull Collection<Pair<String, String>> getPaths() {
     return Collections.unmodifiableCollection(myPaths);
   }
 }

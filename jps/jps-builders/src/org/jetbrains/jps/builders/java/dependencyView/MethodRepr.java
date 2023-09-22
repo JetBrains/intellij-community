@@ -19,7 +19,7 @@ final class MethodRepr extends ProtoMember implements ProtoMethodEntity {
   public final TypeRepr.AbstractType[] myArgumentTypes;
   public final Set<TypeRepr.ClassType> myExceptions;
 
-  public static abstract class Diff extends DifferenceImpl {
+  public abstract static class Diff extends DifferenceImpl {
 
     Diff(@NotNull Difference delegate) {
       super(delegate);
@@ -143,7 +143,7 @@ final class MethodRepr extends ProtoMember implements ProtoMethodEntity {
   public static DataExternalizer<MethodRepr> externalizer(final DependencyContext context) {
     return new DataExternalizer<>() {
       @Override
-      public void save(@NotNull final DataOutput out, final MethodRepr value) {
+      public void save(final @NotNull DataOutput out, final MethodRepr value) {
         value.save(out);
       }
 
