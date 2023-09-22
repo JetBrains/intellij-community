@@ -9,13 +9,11 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
@@ -91,26 +89,22 @@ class InlineCompletionHandler(scope: CoroutineScope) {
       val newRequest = actualizeRequestOrNull(request)
       if (newRequest != null) {
         withContext(Dispatchers.EDT) {
-          InlineCompletionContext.getOrNull(newRequest.editor)?.let { context ->
-            hide(newRequest.editor, false, context)
-          }
+          hide(newRequest.editor, false)
         }
       }
-      invokeRequest(newRequest ?: request, provider)
+      val actualRequest = newRequest ?: request
+      forbidModifications(this@switchJobSafely, actualRequest) {
+        invokeRequest(actualRequest, provider)
+      }
     }
   }
 
   private suspend fun invokeRequest(request: InlineCompletionRequest, provider: InlineCompletionProvider) {
-
-    suspend fun currentEditorOffset() = readAction { request.editor.caretModel.offset }
-
     currentCoroutineContext().ensureActive()
 
     val editor = request.editor
     val offset = request.endOffset
 
-    val modificationStamp = request.document.modificationStamp
-    val initialEditorOffset = currentEditorOffset()
     val resultFlow = try {
       request(provider, request) // .flowOn(Dispatchers.IO)
     } catch (e: Throwable) {
@@ -133,13 +127,6 @@ class InlineCompletionHandler(scope: CoroutineScope) {
         }
         .collectIndexed { index, it ->
           ensureActive()
-
-          if (modificationStamp != request.document.modificationStamp || initialEditorOffset != currentEditorOffset()) {
-            hide(editor, false, context)
-            cancel()
-            return@collectIndexed
-          }
-
           showInlineElement(it, index, offset, context)
         }
     }
@@ -194,9 +181,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   fun cancel(editor: Editor) {
     executor.cancel()
     application.invokeAndWait {
-      InlineCompletionContext.getOrNull(editor)?.let { context ->
-        hide(editor, false, context)
-      }
+      hide(editor, false)
     }
   }
 
@@ -204,6 +189,13 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     trace(InlineCompletionEventType.Completion(cause, isActive))
     if (cause != null) {
       hide(editor, false, context)
+    }
+  }
+
+  @RequiresEdt
+  private fun hide(editor: Editor, explicit: Boolean) {
+    InlineCompletionContext.getOrNull(editor)?.let {
+      hide(editor, explicit, it)
     }
   }
 
@@ -270,6 +262,36 @@ class InlineCompletionHandler(scope: CoroutineScope) {
       startOffset = request.startOffset + offsetDelta,
       endOffset = request.endOffset + offsetDelta
     )
+  }
+
+  private suspend fun forbidModifications(scope: CoroutineScope, request: InlineCompletionRequest, block: suspend () -> Unit) {
+    fun cancelExecution() {
+      hide(request.editor, false)
+      scope.cancel()
+    }
+
+    val documentListener = object : DocumentListener {
+      override fun beforeDocumentChange(event: DocumentEvent) = cancelExecution()
+    }
+    val caretListener = object : CaretListener {
+      override fun caretPositionChanged(event: CaretEvent) {
+        val newOffset = request.editor.logicalPositionToOffset(event.newPosition)
+        // After document event a caret may move to the new position
+        if (newOffset != request.endOffset) {
+          cancelExecution()
+        }
+      }
+      override fun caretAdded(event: CaretEvent) = cancelExecution()
+      override fun caretRemoved(event: CaretEvent) = cancelExecution()
+    }
+    try {
+      request.document.addDocumentListener(documentListener)
+      request.editor.caretModel.addCaretListener(caretListener)
+      block()
+    } finally {
+      request.document.removeDocumentListener(documentListener)
+      request.editor.caretModel.removeCaretListener(caretListener)
+    }
   }
 
   private fun trace(event: InlineCompletionEventType) {
