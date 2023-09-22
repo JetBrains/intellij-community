@@ -88,7 +88,7 @@ class ActionEmbeddingsStorage {
 
     fun getInstance() = service<ActionEmbeddingsStorage>()
 
-    private fun checkSearchEnabled() = false
+    private fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInActionsTab
 
     private fun shouldIndexAction(action: AnAction?): Boolean {
       return action != null && !(action is ActionGroup && !action.isSearchable) && action.templateText != null
@@ -106,8 +106,17 @@ class ActionSemanticSearchServiceInitializer : ProjectActivity {
   override suspend fun execute(project: Project) {
     // Instantiate service for the first time with state loading if available.
     // Whether the state exists or not, we generate the missing embeddings:
-    if (false) {
+    if (SemanticSearchSettings.getInstance().enabledInActionsTab) {
       ActionEmbeddingsStorage.getInstance().prepareForSearch(project)
+    }
+    else if ((ApplicationManager.getApplication().isInternal
+              || (ApplicationManager.getApplication().isEAP &&
+                  SearchEverywhereSemanticExperiments.getInstance().getSemanticFeatureForTab(
+                    ActionSearchEverywhereContributor::class.java.simpleName) == SemanticSearchFeature.ENABLED))
+             && !SemanticSearchSettings.getInstance().manuallyDisabledInActionsTab
+    ) {
+      // Manually enable search in the corresponding experiment groups
+      SemanticSearchSettings.getInstance().enabledInActionsTab = true
     }
   }
 }
