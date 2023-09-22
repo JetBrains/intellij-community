@@ -8,7 +8,6 @@ import com.intellij.util.containers.HashingStrategy
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-@ApiStatus.Internal
 sealed class ChangesSelection(
   val changes: List<Change>,
   val selectedIdx: Int
@@ -92,12 +91,10 @@ fun ChangesSelection?.equalChanges(other: Any?): Boolean {
 }
 
 @ApiStatus.Experimental
-@ApiStatus.Internal
 fun Collection<Change>?.isEqual(other: Collection<Change>?, ordered: Boolean = false): Boolean =
   equalsVia(other, CODE_REVIEW_CHANGE_HASHING_STRATEGY, ordered)
 
 @ApiStatus.Experimental
-@ApiStatus.Internal
 fun <E> Collection<E>?.equalsVia(other: Collection<E>?, strategy: HashingStrategy<E>, ordered: Boolean = false): Boolean {
   if (this == null && other != null) return false
   if (this != null && other == null) return false
@@ -128,11 +125,9 @@ fun <E> Collection<E>?.equalsVia(other: Collection<E>?, strategy: HashingStrateg
 }
 
 @ApiStatus.Experimental
-@ApiStatus.Internal
 fun Change.isEqual(other: Change?): Boolean = CODE_REVIEW_CHANGE_HASHING_STRATEGY.equals(this, other)
 
 @ApiStatus.Experimental
-@ApiStatus.Internal
 //java.util.List.hashCode
 fun List<Change>.calcHashCode(): Int {
   var hashCode = 1
@@ -141,9 +136,7 @@ fun List<Change>.calcHashCode(): Int {
 }
 
 @ApiStatus.Experimental
-@ApiStatus.Internal
 fun Change.calcHashCode(): Int = CODE_REVIEW_CHANGE_HASHING_STRATEGY.hashCode(this)
 
 @ApiStatus.Experimental
-@ApiStatus.Internal
 val CODE_REVIEW_CHANGE_HASHING_STRATEGY: HashingStrategy<Change> = HashingStrategy.identity()
