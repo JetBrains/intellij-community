@@ -68,3 +68,8 @@ as easy as using the `retrieveStatefulIcon()` and `retrieveStatelessIcon()`:
 val svgLoader = service<SwingBridgeService>().svgLoader
 val painterProvider = retrieveStatelessIcon("icons/bot-toolwindow.svg", svgLoader, iconData)
 ```
+
+### Need help?
+You can find help on the [`#jewel`](https://app.slack.com/client/T09229ZC6/C05T8U2C31T) channel on the Kotlin Slack.
+If you don't already have access to the Kotlin Slack, you can request it
+[here](https://surveys.jetbrains.com/s3/kotlin-slack-sign-up).
