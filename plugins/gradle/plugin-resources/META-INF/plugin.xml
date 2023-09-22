@@ -187,8 +187,6 @@
                  description="Enable running gradle tooling api out of IDE process"/>
     <registryKey key="gradle.testLauncherAPI.enabled" defaultValue="true"
                  description="Allow to use Test Launcher API to run tests when applicable"/>
-    <registryKey key="gradle.parallelModelFetch.enabled" defaultValue="false"
-                 description="Allow to collect Gradle models in parallel during reload. Parallel model fetch can be disabled by org.gradle.parallel property in gradle.properties."/>
     <registryKey key="gradle.tooling.adjust.user.dir" defaultValue="true"
                  description="Change IDE user.dir system property during the Gradle tooling API call to have expected Gradle daemon CWD."/>
     <registryKey key="gradle.improved.hotswap.detection" defaultValue="false"

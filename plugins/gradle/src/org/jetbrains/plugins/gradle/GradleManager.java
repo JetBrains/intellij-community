@@ -145,6 +145,7 @@ public final class GradleManager
       }
       result.setJavaHome(javaHome);
       result.setDownloadSources(settings.isDownloadSources());
+      result.setParallelModelFetch(settings.isParallelModelFetch());
       String ideProjectPath;
       if (project.getBasePath() == null ||
           (project.getProjectFilePath() != null && StringUtil.endsWith(project.getProjectFilePath(), ".ipr"))) {

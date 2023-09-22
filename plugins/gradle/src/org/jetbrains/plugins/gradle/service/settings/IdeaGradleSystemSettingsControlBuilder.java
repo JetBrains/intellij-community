@@ -16,6 +16,9 @@ import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.panels.ListLayout;
+import com.intellij.ui.components.panels.ListLayout.Alignment;
+import com.intellij.ui.components.panels.ListLayout.GrowPolicy;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -56,6 +59,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   private boolean dropStoreExternallyCheckBox;
   private boolean dropDefaultProjectSettings;
   private boolean dropDownloadSourcesCheckBox;
+  private boolean dropParallelModelFetchCheckBox;
 
   @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
   private @Nullable JBLabel myServiceDirectoryLabel;
@@ -72,6 +76,14 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   private @Nullable JBLabel myGenerateImlFilesHint;
 
   private @Nullable JBCheckBox myDownloadSourcesCheckBox;
+
+  private @Nullable JBCheckBox myParallelModelFetchCheckBox;
+  @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
+  private @Nullable JPanel myParallelModelFetchPanel;
+  @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
+  private @Nullable JBLabel myParallelModelFetchWarning;
+  @SuppressWarnings({"FieldCanBeLocal", "unused"}) // Used by reflection at showUi() and disposeUiResources()
+  private @Nullable JBLabel myParallelModelFetchHint;
 
   private final @NotNull GradleSettingsControl myDefaultProjectSettingsControl = new IdeaGradleDefaultProjectSettingsControl();
 
@@ -99,6 +111,11 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     return this;
   }
 
+  public IdeaGradleSystemSettingsControlBuilder dropParallelModelFetchCheckBox() {
+    dropParallelModelFetchCheckBox = true;
+    return this;
+  }
+
   @Override
   public void fillUi(@NotNull PaintAwarePanel canvas, int indentLevel) {
     addServiceDirectoryControl(canvas, indentLevel);
@@ -110,6 +127,9 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     }
     if (!dropDownloadSourcesCheckBox) {
       addDownloadSourcesCheckBox(canvas, indentLevel);
+    }
+    if (!dropParallelModelFetchCheckBox) {
+      addParallelModelFetchCheckBox(canvas, indentLevel);
     }
     if (!dropDefaultProjectSettings) {
       myDefaultProjectSettingsControl.fillUi(canvas, indentLevel);
@@ -148,6 +168,10 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
       myDownloadSourcesCheckBox.setSelected(myInitialSettings.isDownloadSources());
     }
 
+    if (myParallelModelFetchCheckBox != null) {
+      myParallelModelFetchCheckBox.setSelected(myInitialSettings.isParallelModelFetch());
+    }
+
     myDefaultProjectSettingsControl.reset();
   }
 
@@ -174,6 +198,11 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
       return true;
     }
 
+    if (myParallelModelFetchCheckBox != null &&
+        myParallelModelFetchCheckBox.isSelected() != myInitialSettings.isParallelModelFetch()) {
+      return true;
+    }
+
     if (myDefaultProjectSettingsControl.isModified()) {
       return true;
     }
@@ -195,6 +224,9 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     }
     if (myDownloadSourcesCheckBox != null) {
       settings.setDownloadSources(myDownloadSourcesCheckBox.isSelected());
+    }
+    if (myParallelModelFetchCheckBox != null) {
+      settings.setParallelModelFetch(myParallelModelFetchCheckBox.isSelected());
     }
     myDefaultProjectSettingsControl.apply();
   }
@@ -295,6 +327,24 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   private void addDownloadSourcesCheckBox(@NotNull PaintAwarePanel canvas, int indentLevel) {
     myDownloadSourcesCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.download.sources"));
     canvas.add(myDownloadSourcesCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+  }
+
+  private void addParallelModelFetchCheckBox(@NotNull PaintAwarePanel canvas, int indentLevel) {
+    myParallelModelFetchCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.parallelModelFetch"));
+
+    myParallelModelFetchWarning = new JBLabel(AllIcons.General.Warning);
+    myParallelModelFetchWarning.setToolTipText(GradleBundle.message("gradle.settings.text.parallelModelFetch.warning"));
+
+    myParallelModelFetchPanel = new JPanel(ListLayout.horizontal(ExternalSystemUiUtil.INSETS, Alignment.CENTER, GrowPolicy.NO_GROW));
+    myParallelModelFetchPanel.add(myParallelModelFetchCheckBox);
+    myParallelModelFetchPanel.add(myParallelModelFetchWarning);
+    canvas.add(myParallelModelFetchPanel, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+
+    myParallelModelFetchHint = addComment(
+      canvas,
+      GradleBundle.message("gradle.settings.text.parallelModelFetch.hint"),
+      ExternalSystemUiUtil.getCheckBoxCommentConstraints(indentLevel, myParallelModelFetchCheckBox)
+    );
   }
 
   private static @NotNull JBLabel addComment(
