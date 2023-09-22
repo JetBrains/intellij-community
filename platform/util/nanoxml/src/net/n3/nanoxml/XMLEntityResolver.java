@@ -25,14 +25,12 @@
  *
  *  3. This notice may not be removed or altered from any source distribution.
  */
-
 package net.n3.nanoxml;
-
 
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.Hashtable;
-
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * An XMLEntityResolver resolves entities.
@@ -40,19 +38,17 @@ import java.util.Hashtable;
  * @author Marc De Scheemaecker
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.4 $
  */
-public final class XMLEntityResolver implements IXMLEntityResolver {
-
+final class XMLEntityResolver implements IXMLEntityResolver {
   /**
    * The entities.
    */
-  private final Hashtable entities;
-
+  private final Map<String, Object> entities;
 
   /**
    * Initializes the resolver.
    */
-  public XMLEntityResolver() {
-    entities = new Hashtable();
+  XMLEntityResolver() {
+    entities = new HashMap<>();
     entities.put("amp", "&#38;");
     entities.put("quot", "&#34;");
     entities.put("apos", "&#39;");
@@ -133,7 +129,7 @@ public final class XMLEntityResolver implements IXMLEntityResolver {
    * @param systemID  the system ID
    * @return the reader, or null if the reader could not be created/opened
    */
-  private Reader openExternalEntity(StdXMLReader xmlReader, String publicID, String systemID) throws XMLParseException {
+  private static Reader openExternalEntity(StdXMLReader xmlReader, String publicID, String systemID) throws XMLParseException {
     String parentSystemID = xmlReader.getSystemID();
 
     try {
