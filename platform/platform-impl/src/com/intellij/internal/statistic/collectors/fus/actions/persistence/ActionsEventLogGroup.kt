@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.NonNls
 
 object ActionsEventLogGroup : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
@@ -17,8 +18,16 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
   val GROUP: EventLogGroup = EventLogGroup("actions", 74)
 
   @JvmField
-  val ACTION_ID = object: PrimitiveEventField<String?>() {
-    override val name = "action_id"
+  val ACTION_ID: PrimitiveEventField<String?> = ActioIdEventField("action_id")
+
+  @Deprecated("Introduced only for MLSE. Do not use.",
+              ReplaceWith("com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup.ACTION_ID"))
+  @Suppress("FunctionName")
+  @JvmStatic
+  fun ActioID(@NonNls name: String): PrimitiveEventField<String?> = ActioIdEventField(name)
+
+  private data class ActioIdEventField(override val name: String) : PrimitiveEventField<String?>() {
+
     override fun addData(fuData: FeatureUsageData, value: String?) {
       if (value == null) {
         return

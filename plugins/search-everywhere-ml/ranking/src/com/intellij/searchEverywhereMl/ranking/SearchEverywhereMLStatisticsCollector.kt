@@ -3,7 +3,7 @@ package com.intellij.searchEverywhereMl.ranking
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionRuleValidator
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -269,7 +269,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 74, MLSE_RECORDER_ID)
+    private val GROUP = EventLogGroup("mlse.log", 75, MLSE_RECORDER_ID)
     private const val REPORTED_ITEMS_LIMIT = 50
 
     private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")
@@ -304,7 +304,8 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
 
     @VisibleForTesting
     val ID_KEY = EventFields.Int("id")
-    internal val ACTION_ID_KEY = EventFields.StringValidatedByCustomRule("actionId", ActionRuleValidator::class.java)
+    @Suppress("DEPRECATION")
+    internal val ACTION_ID_KEY = ActionsEventLogGroup.ActioID("actionId")
 
     @VisibleForTesting
     val FEATURES_DATA_KEY = createFeaturesEventObject()
