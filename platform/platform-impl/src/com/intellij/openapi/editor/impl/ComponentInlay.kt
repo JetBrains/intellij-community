@@ -16,7 +16,6 @@ import com.intellij.ui.components.JBScrollPane
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Component
 import java.awt.Dimension
-import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
@@ -223,32 +222,34 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     bounds = SwingUtilities.calculateInnerArea(content, null)
 
     // Step 4: Layout inlay components
-    for (inlay in inlays) {
-      inlay.renderer.let { renderer ->
-        val component = renderer.component
-        when (renderer.alignment) {
-          ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH, ComponentInlayAlignment.FIT_CONTENT_WIDTH -> {
-            component.size = Dimension(bounds.width, renderer.inlaySize.height)
+    // Do as read action, because com.intellij.openapi.editor.Inlay.getBounds requires it
+    ReadAction.run<Throwable> {
+      for (inlay in inlays) {
+        val component = inlay.renderer.component
+        val componentBounds = inlay.bounds
+
+        if (componentBounds == null) {
+          component.isVisible = false
+          // component.bounds = Rectangle(0, 0, 0, 0)
+        }
+        else {
+          component.isVisible = true
+          val alignment = inlay.renderer.alignment
+
+          // x in inlay bounds contains left gap of content, which we do not need
+          componentBounds.x = if (alignment == ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN) visibleArea.x else 0
+
+          if (alignment == ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH || alignment == ComponentInlayAlignment.FIT_CONTENT_WIDTH) {
+            componentBounds.width = bounds.width
           }
-          ComponentInlayAlignment.FIT_VIEWPORT_WIDTH, ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> {
-            component.bounds = fitToViewport(renderer, visibleArea, renderer.alignment, viewportReservedWidth)
+          else if (alignment == ComponentInlayAlignment.FIT_VIEWPORT_WIDTH || alignment == ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN) {
+            componentBounds.width = max(component.minimumSize.width, visibleArea.width - viewportReservedWidth)
           }
-          else -> {
-            component.size = renderer.inlaySize
-          }
+
+          component.bounds = componentBounds
         }
       }
     }
-  }
-
-  private fun fitToViewport(renderer: ComponentInlayRenderer<*>,
-                            visibleArea: Rectangle,
-                            alignment: ComponentInlayAlignment,
-                            viewportReservedWidth: Int): Rectangle {
-    val x = if (alignment == ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN) visibleArea.x else 0
-    val width = max(renderer.component.minimumSize.width, visibleArea.width - viewportReservedWidth)
-    val height = renderer.inlaySize.height
-    return Rectangle(x, renderer.component.y, width, height)
   }
 
   private fun isVerticalScrollbarFlipped(scrollPane: JScrollPane): Boolean {
