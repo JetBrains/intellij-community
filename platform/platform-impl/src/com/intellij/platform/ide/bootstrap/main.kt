@@ -249,22 +249,28 @@ fun CoroutineScope.startApplication(args: List<String>,
       ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job).namedChildScope("Application"), isInternal)
     }
 
-    loadApp(app = app,
-            initAwtToolkitAndEventQueueJob = initEventQueueJob,
-            pluginSetDeferred = pluginSetDeferred,
+    val starter = loadApp(app = app,
+                          initAwtToolkitAndEventQueueJob = initEventQueueJob,
+                          pluginSetDeferred = pluginSetDeferred,
             appInfoDeferred = appInfoDeferred,
-            euaDocumentDeferred = euaDocumentDeferred,
-            asyncScope = this@startApplication,
-            initLafJob = initLafJob,
-            logDeferred = logDeferred,
-            appRegisteredJob = appRegisteredJob,
-            args = args.filterNot { CommandLineArgs.isKnownArgument(it) })
+                          euaDocumentDeferred = euaDocumentDeferred,
+                          asyncScope = this@startApplication,
+                          initLafJob = initLafJob,
+                          logDeferred = logDeferred,
+                          appRegisteredJob = appRegisteredJob,
+                          args = args.filterNot { CommandLineArgs.isKnownArgument(it) })
+    if (!isStartupWizardEnabled) {
+      executeApplicationStarter(starter, args)
+    }
+    return@async starter
   }
 
-  launch {
-    val starter = appLoaded.await()
-    runStartupWizard()
-    executeApplicationStarter(starter, args)
+  if (isStartupWizardEnabled) {
+    launch {
+      val starter = appLoaded.await()
+      runStartupWizard()
+      executeApplicationStarter(starter, args)
+    }
   }
 
   launch {
