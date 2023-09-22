@@ -40,12 +40,14 @@ import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.plaf.ButtonUI;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -1493,6 +1495,77 @@ public final class ListPluginComponent extends JPanel {
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibilityUtils.GROUPED_ELEMENTS;
+    }
+
+    @Override
+    public String getAccessibleDescription() {
+      @Nls StringJoiner description = new StringJoiner(", ");
+
+      if (isNotNullAndVisible(myRestartButton)) {
+        description.add(IdeBundle.message("plugins.configurable.list.component.accessible.description.restart.pending"));
+      }
+
+      if (isNotNullAndVisible(myUpdateButton)) {
+        if (myUpdateButton.isEnabled()) {
+          description.add(IdeBundle.message("plugins.configurable.list.component.accessible.description.update.available"));
+        }
+        else {
+          // Disabled but visible Update button contains update result text.
+          description.add(myUpdateButton.getText());
+        }
+      }
+
+      if (isNotNullAndVisible(myEnableDisableButton) && myEnableDisableButton instanceof JCheckBox) {
+        String key = ((JCheckBox)myEnableDisableButton).isSelected() ? "plugins.configurable.enabled" : "plugins.configurable.disabled";
+        description.add(IdeBundle.message(key));
+      }
+
+      if (isNotNullAndVisible(myInstallButton)) {
+        boolean isDefaultText = IdeBundle.message("action.AnActionButton.text.install").equals(myInstallButton.getText());
+        if (myInstallButton.isEnabled() && isDefaultText) {
+          description.add(IdeBundle.message("plugins.configurable.list.component.accessible.description.install.available"));
+        }
+        else if (!myInstallButton.isEnabled() && !isDefaultText) {
+          // Install button contains status text when it's disabled and its text is not default.
+          // Disabled buttons are not focusable, so this information can be missed by screen reader users.
+          description.add(myInstallButton.getText());
+        }
+      }
+
+      if (isNotNullAndVisible(myLayout.myTagComponent) && myLayout.myTagComponent instanceof TagComponent) {
+        description.add(((TagComponent)myLayout.myTagComponent).getText());
+      }
+
+      if (isNotNullAndVisible(myDownloads)) {
+        description.add(IdeBundle.message("plugins.configurable.list.component.accessible.description.0.downloads", myDownloads.getText()));
+      }
+
+      if (isNotNullAndVisible(myRating)) {
+        description.add(IdeBundle.message("plugins.configurable.list.component.accessible.description.0.stars", myRating.getText()));
+      }
+
+      if (isNotNullAndVisible(myVersion)) {
+        description.add(myVersion.getText());
+      }
+
+      if (isNotNullAndVisible(myVendor)) {
+        description.add(myVendor.getText());
+      }
+
+      if (isNotNullAndVisible(myErrorComponent)) {
+        try {
+          description.add(myErrorComponent.getDocument().getText(0, myErrorComponent.getDocument().getLength()));
+        }
+        catch (BadLocationException ignored) {
+        }
+      }
+
+      //noinspection HardCodedStringLiteral
+      return description.toString();
+    }
+
+    private static boolean isNotNullAndVisible(JComponent component) {
+      return component != null && component.isVisible();
     }
   }
 }
