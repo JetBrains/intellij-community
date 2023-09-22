@@ -88,12 +88,18 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     }
 
     if (vmParameters.getPropertyValue("idea.dev.skip.build").toBoolean()) {
-      try {
-        vmParameters.addProperty(PathManager.PROPERTY_HOME_PATH, runDir.invariantSeparatorsPathString)
-        javaParameters.classPath.addAll(Files.readAllLines(runDir.resolve("core-classpath.txt")))
-        javaParameters.mainClass = "com.intellij.idea.Main"
+      vmParameters.addProperty(PathManager.PROPERTY_HOME_PATH, runDir.invariantSeparatorsPathString)
+      val files = try {
+        Files.readAllLines(runDir.resolve("core-classpath.txt"))
       }
       catch (ignore: NoSuchFileException) {
+        null
+      }
+
+      if (files != null) {
+        javaParameters.classPath.clear()
+        javaParameters.classPath.addAll(files)
+        javaParameters.mainClass = "com.intellij.idea.Main"
       }
     }
 
