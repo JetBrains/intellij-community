@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.psi.impl.source.BasicElementTypes.JAVA_COMMENT_BIT_SET;
+import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_BIT_SET;
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
 public abstract class AbstractBasicJavaSmartEnterProcessor extends SmartEnterProcessor {
@@ -300,7 +300,7 @@ public abstract class AbstractBasicJavaSmartEnterProcessor extends SmartEnterPro
         return each.getPsi();
       }
       if (BasicJavaAstTreeUtil.is(each, BASIC_CODE_BLOCK) ||
-          BasicJavaAstTreeUtil.is(each, JAVA_COMMENT_BIT_SET)) {
+          BasicJavaAstTreeUtil.is(each, BASIC_JAVA_COMMENT_BIT_SET)) {
         return null;
       }
       if (BasicJavaAstTreeUtil.is(each, STATEMENT_SET)) {

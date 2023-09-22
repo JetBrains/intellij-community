@@ -25,7 +25,7 @@ class JavaStringLiteralLexer extends StringLiteralLexer {
     IElementType tokenType = super.getTokenType();
     if (tokenType == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN) {
       char c = myBuffer.charAt(myStart + 1);
-      if (c == '{' && BasicElementTypes.STRING_TEMPLATE_FRAGMENTS.contains(myOriginalLiteralToken)) {
+      if (c == '{' && BasicElementTypes.BASIC_STRING_TEMPLATE_FRAGMENTS.contains(myOriginalLiteralToken)) {
         // don't highlight \{ in template fragment as bad escape
         return myOriginalLiteralToken;
       }

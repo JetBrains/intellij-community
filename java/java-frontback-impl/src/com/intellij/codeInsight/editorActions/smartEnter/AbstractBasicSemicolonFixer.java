@@ -17,7 +17,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.impl.source.BasicElementTypes.JAVA_COMMENT_OR_WHITESPACE_BIT_SET;
+import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET;
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
 public abstract class AbstractBasicSemicolonFixer implements Fixer {
@@ -93,7 +93,7 @@ public abstract class AbstractBasicSemicolonFixer implements Fixer {
 
       int tailLength = 0;
       ASTNode leaf = TreeUtil.findLastLeaf(astNode);
-      while (leaf != null && JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(leaf.getElementType())) {
+      while (leaf != null && BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(leaf.getElementType())) {
         tailLength += leaf.getTextLength();
         leaf = TreeUtil.prevLeaf(leaf);
       }

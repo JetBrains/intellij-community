@@ -35,7 +35,7 @@ public class BasicPrattExpressionParser {
     JavaTokenType.IDENTIFIER, TokenType.BAD_CHARACTER, JavaTokenType.COMMA, JavaTokenType.INTEGER_LITERAL, JavaTokenType.STRING_LITERAL);
   private static final TokenSet ARGS_LIST_END = TokenSet.create(JavaTokenType.RPARENTH, JavaTokenType.RBRACE, JavaTokenType.RBRACKET);
 
-  private final TokenSet TYPE_START = TokenSet.orSet(PRIMITIVE_TYPE_BIT_SET.toTokenSet(), TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT));
+  private final TokenSet TYPE_START = TokenSet.orSet(BASIC_PRIMITIVE_TYPE_BIT_SET.toTokenSet(), TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT));
   private static final TokenSet POSTFIX_OPS = TokenSet.create(JavaTokenType.PLUSPLUS, JavaTokenType.MINUSMINUS);
   private static final TokenSet PREF_ARITHMETIC_OPS = TokenSet.orSet(POSTFIX_OPS, TokenSet.create(JavaTokenType.PLUS, JavaTokenType.MINUS));
   private static final TokenSet PREFIX_OPS = TokenSet.orSet(PREF_ARITHMETIC_OPS, TokenSet.create(JavaTokenType.TILDE, JavaTokenType.EXCL));
@@ -383,7 +383,7 @@ public class BasicPrattExpressionParser {
   private PsiBuilder.Marker parsePrimaryExpressionStart(final PsiBuilder builder, final int mode) {
     IElementType tokenType = builder.getTokenType();
 
-    if (ALL_LITERALS.contains(tokenType)) {
+    if (BASIC_ALL_LITERALS.contains(tokenType)) {
       final PsiBuilder.Marker literal = builder.mark();
       builder.advanceLexer();
       literal.done(myJavaElementTypeContainer.LITERAL_EXPRESSION);
@@ -513,7 +513,7 @@ public class BasicPrattExpressionParser {
   private PsiBuilder.Marker parseClassAccessOrMethodReference(PsiBuilder builder) {
     PsiBuilder.Marker expr = builder.mark();
 
-    boolean primitive = PRIMITIVE_TYPE_BIT_SET.contains(builder.getTokenType());
+    boolean primitive = BASIC_PRIMITIVE_TYPE_BIT_SET.contains(builder.getTokenType());
     if (myParser.getReferenceParser().parseType(builder, 0) == null) {
       expr.drop();
       return null;
@@ -570,7 +570,7 @@ public class BasicPrattExpressionParser {
         return newExpr;
       }
     }
-    else if (PRIMITIVE_TYPE_BIT_SET.contains(tokenType)) {
+    else if (BASIC_PRIMITIVE_TYPE_BIT_SET.contains(tokenType)) {
       refOrType = null;
       builder.advanceLexer();
     }
@@ -757,8 +757,8 @@ public class BasicPrattExpressionParser {
       isTyped = false;
     }
     else if (nextToken1 == JavaTokenType.AT ||
-             MODIFIER_BIT_SET.contains(nextToken1) ||
-             PRIMITIVE_TYPE_BIT_SET.contains(nextToken1)) {
+             BASIC_MODIFIER_BIT_SET.contains(nextToken1) ||
+             BASIC_PRIMITIVE_TYPE_BIT_SET.contains(nextToken1)) {
       isLambda = true;
       isTyped = true;
     }

@@ -14,7 +14,7 @@ public class JavaPairedBraceMatcher extends PairedBraceAndAnglesMatcher {
   private static class Holder {
     private static final BasicJavaTokenSet TYPE_TOKENS =
       BasicJavaTokenSet.orSet(BaseJavaJspElementType.WHITE_SPACE_BIT_SET,
-                              BasicElementTypes.JAVA_COMMENT_BIT_SET,
+                              BasicElementTypes.BASIC_JAVA_COMMENT_BIT_SET,
                               BasicJavaTokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.COMMA,
                                                        JavaTokenType.AT,//anno
                                                        JavaTokenType.RBRACKET, JavaTokenType.LBRACKET, //arrays

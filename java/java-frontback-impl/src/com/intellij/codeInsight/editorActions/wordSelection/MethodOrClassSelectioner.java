@@ -14,8 +14,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.psi.impl.source.BasicElementTypes.JAVA_COMMENT_BIT_SET;
-import static com.intellij.psi.impl.source.BasicElementTypes.JAVA_COMMENT_OR_WHITESPACE_BIT_SET;
+import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_BIT_SET;
+import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET;
 import static com.intellij.psi.impl.source.BasicJavaDocElementType.DOC_COMMENT;
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
@@ -57,8 +57,8 @@ public class MethodOrClassSelectioner extends AbstractBasicBackBasicSelectioner 
 
       firstChild = children.get(i++);
     }
-    if (BasicJavaAstTreeUtil.is(firstChild, JAVA_COMMENT_BIT_SET)) {
-      while (BasicJavaAstTreeUtil.is(children.get(i), JAVA_COMMENT_OR_WHITESPACE_BIT_SET)) {
+    if (BasicJavaAstTreeUtil.is(firstChild, BASIC_JAVA_COMMENT_BIT_SET)) {
+      while (BasicJavaAstTreeUtil.is(children.get(i), BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET)) {
         i++;
       }
       ASTNode last = BasicJavaAstTreeUtil.isWhiteSpace(children.get(i - 1)) ? children.get(i - 2) : children.get(i - 1);

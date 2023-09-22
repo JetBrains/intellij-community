@@ -51,7 +51,7 @@ public class BasicDeclarationParser {
     myParser = javaParser;
     myJavaElementTypeContainer = javaParser.getJavaElementTypeFactory().getContainer();
     TYPE_START = TokenSet.orSet(
-      PRIMITIVE_TYPE_BIT_SET.toTokenSet(),
+      BASIC_PRIMITIVE_TYPE_BIT_SET.toTokenSet(),
       TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT, JavaTokenType.VAR_KEYWORD));
     RESOURCE_EXPRESSIONS = TokenSet.create(
       myJavaElementTypeContainer.REFERENCE_EXPRESSION, myJavaElementTypeContainer.THIS_EXPRESSION,
@@ -96,7 +96,7 @@ public class BasicDeclarationParser {
       builder.remapCurrentToken(JavaTokenType.RECORD_KEYWORD);
       keywordTokenType = JavaTokenType.RECORD_KEYWORD;
     }
-    assert CLASS_KEYWORD_BIT_SET.contains(keywordTokenType) : keywordTokenType;
+    assert BASIC_CLASS_KEYWORD_BIT_SET.contains(keywordTokenType) : keywordTokenType;
     builder.advanceLexer();
     final boolean isEnum = (keywordTokenType == JavaTokenType.ENUM_KEYWORD);
 
@@ -264,8 +264,8 @@ public class BasicDeclarationParser {
           builder.advanceLexer();
           return null;
         }
-        else if (!MODIFIER_BIT_SET.contains(tokenType) &&
-                 !CLASS_KEYWORD_BIT_SET.contains(tokenType) &&
+        else if (!BASIC_MODIFIER_BIT_SET.contains(tokenType) &&
+                 !BASIC_CLASS_KEYWORD_BIT_SET.contains(tokenType) &&
                  tokenType != JavaTokenType.AT &&
                  (context == BaseContext.CODE_BLOCK || tokenType != JavaTokenType.LT)) {
           return null;
@@ -289,7 +289,7 @@ public class BasicDeclarationParser {
         return null;
       }
     }
-    if (CLASS_KEYWORD_BIT_SET.contains(builder.getTokenType()) || isRecordToken(builder, builder.getTokenType())) {
+    if (BASIC_CLASS_KEYWORD_BIT_SET.contains(builder.getTokenType()) || isRecordToken(builder, builder.getTokenType())) {
       final PsiBuilder.Marker result = parseClassFromKeyword(builder, declaration, false, context);
       return result != null ? result : modList;
     }
@@ -437,7 +437,7 @@ public class BasicDeclarationParser {
 
   @NotNull
   public Pair<PsiBuilder.Marker, Boolean> parseModifierList(final PsiBuilder builder) {
-    return parseModifierList(builder, MODIFIER_BIT_SET.toTokenSet());
+    return parseModifierList(builder, BASIC_MODIFIER_BIT_SET.toTokenSet());
   }
 
   @NotNull
@@ -463,7 +463,7 @@ public class BasicDeclarationParser {
         isEmpty = false;
       }
       else if (tokenType == JavaTokenType.AT) {
-        if (KEYWORD_BIT_SET.contains(builder.lookAhead(1))) {
+        if (BASIC_KEYWORD_BIT_SET.contains(builder.lookAhead(1))) {
           break;
         }
         parseAnnotation(builder);

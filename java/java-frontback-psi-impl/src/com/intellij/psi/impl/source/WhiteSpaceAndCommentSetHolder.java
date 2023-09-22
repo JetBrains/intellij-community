@@ -8,7 +8,7 @@ import com.intellij.psi.tree.TokenSet;
 
 import java.util.List;
 
-import static com.intellij.psi.impl.source.BasicElementTypes.JAVA_PLAIN_COMMENT_BIT_SET;
+import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_PLAIN_COMMENT_BIT_SET;
 import static com.intellij.psi.impl.source.BasicJavaDocElementType.DOC_COMMENT;
 import static com.intellij.psi.impl.source.BasicJavaTokenSet.create;
 import static com.intellij.psi.impl.source.BasicJavaTokenSet.orSet;
@@ -16,11 +16,11 @@ import static com.intellij.psi.impl.source.BasicJavaTokenSet.orSet;
 public class WhiteSpaceAndCommentSetHolder {
   public static final WhiteSpaceAndCommentSetHolder INSTANCE = new WhiteSpaceAndCommentSetHolder();
   private static final BasicJavaTokenSet PRECEDING_COMMENT_SET =
-    orSet(create(BasicJavaElementType.BASIC_MODULE), BasicElementTypes.FULL_MEMBER_BIT_SET);
+    orSet(create(BasicJavaElementType.BASIC_MODULE), BasicElementTypes.BASIC_FULL_MEMBER_BIT_SET);
 
   private static final BasicJavaTokenSet TRAILING_COMMENT_SET =
-    orSet(create(BasicJavaElementType.BASIC_PACKAGE_STATEMENT), BasicElementTypes.IMPORT_STATEMENT_BASE_BIT_SET,
-          BasicElementTypes.FULL_MEMBER_BIT_SET, BasicElementTypes.JAVA_STATEMENT_BIT_SET);
+    orSet(create(BasicJavaElementType.BASIC_PACKAGE_STATEMENT), BasicElementTypes.BASIC_IMPORT_STATEMENT_BASE_BIT_SET,
+          BasicElementTypes.BASIC_FULL_MEMBER_BIT_SET, BasicElementTypes.BASIC_JAVA_STATEMENT_BIT_SET);
 
   private WhiteSpaceAndCommentSetHolder() {
   }
@@ -74,7 +74,7 @@ public class WhiteSpaceAndCommentSetHolder {
         if (TokenSet.WHITE_SPACE.contains(tokenType)) {
           if (StringUtil.getLineBreakCount(getter.get(idx)) > 1) break;
         }
-        else if (JAVA_PLAIN_COMMENT_BIT_SET.contains(tokenType)) {
+        else if (BASIC_JAVA_PLAIN_COMMENT_BIT_SET.contains(tokenType)) {
           if (atStreamEdge ||
               (idx == 0 && myAfterEmptyImport) ||
               (idx > 0 && TokenSet.WHITE_SPACE.contains(tokens.get(idx - 1)) && StringUtil.containsLineBreak(getter.get(idx - 1)))) {
@@ -102,7 +102,7 @@ public class WhiteSpaceAndCommentSetHolder {
         if (TokenSet.WHITE_SPACE.contains(tokenType)) {
           if (StringUtil.containsLineBreak(getter.get(idx))) break;
         }
-        else if (JAVA_PLAIN_COMMENT_BIT_SET.contains(tokenType)) {
+        else if (BASIC_JAVA_PLAIN_COMMENT_BIT_SET.contains(tokenType)) {
           result = idx + 1;
         }
         else {

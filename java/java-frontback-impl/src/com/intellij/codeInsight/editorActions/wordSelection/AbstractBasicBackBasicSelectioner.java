@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
-import static com.intellij.psi.impl.source.BasicElementTypes.JAVA_COMMENT_BIT_SET;
+import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_BIT_SET;
 import static com.intellij.psi.impl.source.BasicJavaDocElementType.*;
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
@@ -30,7 +30,7 @@ public abstract class AbstractBasicBackBasicSelectioner extends ExtendWordSelect
     ASTNode node = BasicJavaAstTreeUtil.toNode(e);
     return
       !BasicJavaAstTreeUtil.is(node, TokenType.WHITE_SPACE) &&
-      !BasicJavaAstTreeUtil.is(node, JAVA_COMMENT_BIT_SET) &&
+      !BasicJavaAstTreeUtil.is(node, BASIC_JAVA_COMMENT_BIT_SET) &&
       !BasicJavaAstTreeUtil.is(node, BASIC_CODE_BLOCK) &&
       !BasicJavaAstTreeUtil.is(node, BASIC_ARRAY_INITIALIZER_EXPRESSION) &&
       !BasicJavaAstTreeUtil.is(node, BASIC_PARAMETER_LIST) &&
