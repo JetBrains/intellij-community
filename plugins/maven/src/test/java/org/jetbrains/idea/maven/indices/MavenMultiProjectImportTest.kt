@@ -4,26 +4,29 @@ package org.jetbrains.idea.maven.indices
 import com.intellij.ide.projectWizard.ProjectWizardTestCase
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
 import com.intellij.maven.testFramework.MavenTestCase
-import com.intellij.maven.testFramework.utils.importMavenProjects
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.write
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions
 import org.intellij.lang.annotations.Language
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.isImportToWorkspaceModelEnabled
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.wizards.MavenProjectImportProvider
 import org.junit.Assume
 import java.nio.file.Path
-import java.util.List
 
 class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?>() {
+  override fun runInDispatchThread() = false
+
   private var myDir: Path? = null
 
   private val isWorkspaceImport: Boolean
@@ -38,7 +41,7 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
     ).run()
   }
 
-  fun testIndicesForDifferentProjectsShouldBeSameInstance() {
+  fun testIndicesForDifferentProjectsShouldBeSameInstance() = runBlocking {
     Assume.assumeTrue(isWorkspaceImport)
     myDir = tempDir.newPath("", true)
     val pom1 = createPomXml("projectDir1", """
@@ -52,10 +55,12 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
       <groupId>test</groupId>
       <artifactId>project2</artifactId>
       <version>1</version>
-      """.trimIndent())
+      """.trimIndent())!!
 
     val provider = MavenProjectImportProvider()
-    val module = importProjectFrom(pom2!!.getPath(), null, provider)
+    val module = withContext(Dispatchers.EDT) {
+      importProjectFrom(pom2.getPath(), null, provider)
+    }
     val project2 = module.getProject()
     importMaven(project2, pom2)
     MavenIndicesManager.getInstance(project2).updateIndicesListSync()
@@ -69,23 +74,18 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
     assertSame(firstIndices.remoteIndices[0], secondIndices.remoteIndices[0])
   }
 
-  private fun createPomXml(dir: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") pomxml: String): VirtualFile? {
+  private fun createPomXml(dir: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile? {
     val projectDir = myDir!!.resolve(dir)
     projectDir.toFile().mkdirs()
     val pom = projectDir.resolve("pom.xml")
-    pom.write(MavenTestCase.createPomXml(pomxml))
+    pom.write(MavenTestCase.createPomXml(xml))
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pom)
   }
 
-
-  private fun importMaven(project: Project, file: VirtualFile) {
+  private suspend fun importMaven(project: Project, file: VirtualFile) {
     val manager = MavenProjectsManager.getInstance(project)
     manager.initForTests()
-    manager.waitForImportCompletion()
-    manager.resetManagedFilesAndProfilesInTests(listOf(file), MavenExplicitProfiles.NONE)
-    importMavenProjects(manager, List.of(file))
-
-    val promise = manager.waitForImportCompletion()
-    PlatformTestUtil.waitForPromise(promise)
+    manager.addManagedFiles(listOf(file))
+    manager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
   }
 }
