@@ -3,16 +3,18 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.tree.TokenSet;
 
 public interface BasicElementTypes extends JavaTokenType, JavaDocTokenType, BasicJavaElementType, BasicJavaDocElementType {
 
-  BasicJavaTokenSet BASIC_JAVA_PLAIN_COMMENT_BIT_SET = BasicJavaTokenSet.create(END_OF_LINE_COMMENT, C_STYLE_COMMENT);
+  TokenSet BASIC_JAVA_PLAIN_COMMENT_BIT_SET = TokenSet.create(END_OF_LINE_COMMENT, C_STYLE_COMMENT);
   BasicJavaTokenSet BASIC_JAVA_COMMENT_BIT_SET =
-    BasicJavaTokenSet.orSet(BASIC_JAVA_PLAIN_COMMENT_BIT_SET, BasicJavaTokenSet.create(DOC_COMMENT));
+    BasicJavaTokenSet.orSet(BasicJavaTokenSet.create(BASIC_JAVA_PLAIN_COMMENT_BIT_SET), BasicJavaTokenSet.create(DOC_COMMENT));
   BasicJavaTokenSet BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET =
     BasicJavaTokenSet.orSet(BasicJavaTokenSet.create(WHITE_SPACE), BASIC_JAVA_COMMENT_BIT_SET);
 
-  BasicJavaTokenSet BASIC_KEYWORD_BIT_SET = BasicJavaTokenSet.create(
+  //token set, because it is keywords
+  TokenSet BASIC_KEYWORD_BIT_SET = TokenSet.create(
     ABSTRACT_KEYWORD, ASSERT_KEYWORD, BOOLEAN_KEYWORD, BREAK_KEYWORD, BYTE_KEYWORD, CASE_KEYWORD, CATCH_KEYWORD, CHAR_KEYWORD,
     CLASS_KEYWORD, CONST_KEYWORD, CONTINUE_KEYWORD, DEFAULT_KEYWORD, DO_KEYWORD, DOUBLE_KEYWORD, ELSE_KEYWORD, ENUM_KEYWORD,
     EXTENDS_KEYWORD, FINAL_KEYWORD, FINALLY_KEYWORD, FLOAT_KEYWORD, FOR_KEYWORD, GOTO_KEYWORD, IF_KEYWORD, IMPLEMENTS_KEYWORD,
@@ -25,9 +27,11 @@ public interface BasicElementTypes extends JavaTokenType, JavaDocTokenType, Basi
     NON_SEALED_KEYWORD, WHEN_KEYWORD
   );
 
-  BasicJavaTokenSet BASIC_LITERAL_BIT_SET = BasicJavaTokenSet.create(TRUE_KEYWORD, FALSE_KEYWORD, NULL_KEYWORD);
+  //token set, because it is keywords
+  TokenSet BASIC_LITERAL_BIT_SET = TokenSet.create(TRUE_KEYWORD, FALSE_KEYWORD, NULL_KEYWORD);
 
-  BasicJavaTokenSet BASIC_OPERATION_BIT_SET = BasicJavaTokenSet.create(
+  //token set, because it is keywords
+  TokenSet BASIC_OPERATION_BIT_SET = TokenSet.create(
     EQ, GT, LT, EXCL, TILDE, QUEST, COLON, PLUS, MINUS, ASTERISK, DIV, AND, OR, XOR,
     PERC, EQEQ, LE, GE, NE, ANDAND, OROR, PLUSPLUS, MINUSMINUS, LTLT, GTGT, GTGTGT,
     PLUSEQ, MINUSEQ, ASTERISKEQ, DIVEQ, ANDEQ, OREQ, XOREQ, PERCEQ, LTLTEQ, GTGTEQ, GTGTGTEQ);
@@ -92,15 +96,21 @@ public interface BasicElementTypes extends JavaTokenType, JavaDocTokenType, Basi
   BasicJavaTokenSet BASIC_FULL_MEMBER_BIT_SET = BasicJavaTokenSet.orSet(BASIC_MEMBER_BIT_SET, BasicJavaTokenSet.create(
     BASIC_CLASS_INITIALIZER));
 
-  BasicJavaTokenSet BASIC_INTEGER_LITERALS = BasicJavaTokenSet.create(INTEGER_LITERAL, LONG_LITERAL);
-  BasicJavaTokenSet BASIC_REAL_LITERALS = BasicJavaTokenSet.create(FLOAT_LITERAL, DOUBLE_LITERAL);
-  BasicJavaTokenSet BASIC_STRING_LITERALS = BasicJavaTokenSet.create(STRING_LITERAL, TEXT_BLOCK_LITERAL);
-  BasicJavaTokenSet BASIC_TEXT_LITERALS = BasicJavaTokenSet.create(STRING_LITERAL, TEXT_BLOCK_LITERAL, CHARACTER_LITERAL);
+  //token set, because it is literals
+  TokenSet BASIC_INTEGER_LITERALS = TokenSet.create(INTEGER_LITERAL, LONG_LITERAL);
+  //token set, because it is literals
+  TokenSet BASIC_REAL_LITERALS = TokenSet.create(FLOAT_LITERAL, DOUBLE_LITERAL);
+  //token set, because it is literals
+  TokenSet BASIC_STRING_LITERALS = TokenSet.create(STRING_LITERAL, TEXT_BLOCK_LITERAL);
+  //token set, because it is literals
+  TokenSet BASIC_TEXT_LITERALS = TokenSet.create(STRING_LITERAL, TEXT_BLOCK_LITERAL, CHARACTER_LITERAL);
 
-  BasicJavaTokenSet BASIC_STRING_TEMPLATE_FRAGMENTS =
-    BasicJavaTokenSet.create(STRING_TEMPLATE_BEGIN, STRING_TEMPLATE_MID, STRING_TEMPLATE_END,
+  //token set, because it is literals
+  TokenSet BASIC_STRING_TEMPLATE_FRAGMENTS =
+    TokenSet.create(STRING_TEMPLATE_BEGIN, STRING_TEMPLATE_MID, STRING_TEMPLATE_END,
                              TEXT_BLOCK_TEMPLATE_BEGIN, TEXT_BLOCK_TEMPLATE_MID, TEXT_BLOCK_TEMPLATE_END);
 
-  BasicJavaTokenSet BASIC_ALL_LITERALS =
-    BasicJavaTokenSet.orSet(BASIC_INTEGER_LITERALS, BASIC_REAL_LITERALS, BASIC_TEXT_LITERALS, BASIC_LITERAL_BIT_SET);
+  //token set, because it is literals
+  TokenSet BASIC_ALL_LITERALS =
+    TokenSet.orSet(BASIC_INTEGER_LITERALS, BASIC_REAL_LITERALS, BASIC_TEXT_LITERALS, BASIC_LITERAL_BIT_SET);
 }

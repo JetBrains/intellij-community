@@ -26,12 +26,12 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   private final BasicJavaTokenSet myConcatenableStrings = BasicJavaTokenSet.create(JavaTokenType.STRING_LITERAL);
   private final BasicJavaTokenSet myAppropriateElementTypeForLiteral = BasicJavaTokenSet.orSet(
     BasicJavaTokenSet.create(JavaDocTokenType.ALL_JAVADOC_TOKENS),
-    BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET, BASIC_TEXT_LITERALS,
+    BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET, BasicJavaTokenSet.create(BASIC_TEXT_LITERALS),
     BasicJavaTokenSet.create(JavaTokenType.SEMICOLON, JavaTokenType.COMMA, JavaTokenType.RPARENTH, JavaTokenType.RBRACKET,
                              JavaTokenType.RBRACE));
 
   public JavaQuoteHandler() {
-    super(BasicJavaTokenSet.orSet(BASIC_TEXT_LITERALS, BasicJavaTokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_QUOTE)).toTokenSet());
+    super(BasicJavaTokenSet.orSet(BasicJavaTokenSet.create(BASIC_TEXT_LITERALS), BasicJavaTokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_QUOTE)).toTokenSet());
   }
 
   @Override

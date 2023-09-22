@@ -7,15 +7,15 @@ import com.intellij.psi.impl.source.BasicElementTypes;
 import com.intellij.psi.tree.TokenSet;
 
 public interface ElementType extends JavaTokenType, JavaDocTokenType, JavaElementType, JavaDocElementType {
-  TokenSet JAVA_PLAIN_COMMENT_BIT_SET = BasicElementTypes.BASIC_JAVA_PLAIN_COMMENT_BIT_SET.toTokenSet();
+  TokenSet JAVA_PLAIN_COMMENT_BIT_SET = BasicElementTypes.BASIC_JAVA_PLAIN_COMMENT_BIT_SET;
   TokenSet JAVA_COMMENT_BIT_SET = BasicElementTypes.BASIC_JAVA_COMMENT_BIT_SET.toTokenSet();
   TokenSet JAVA_COMMENT_OR_WHITESPACE_BIT_SET = BasicElementTypes.BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET.toTokenSet();
 
-  TokenSet KEYWORD_BIT_SET = BasicElementTypes.BASIC_KEYWORD_BIT_SET.toTokenSet();
+  TokenSet KEYWORD_BIT_SET = BasicElementTypes.BASIC_KEYWORD_BIT_SET;
 
-  TokenSet LITERAL_BIT_SET = BasicElementTypes.BASIC_LITERAL_BIT_SET.toTokenSet();
+  TokenSet LITERAL_BIT_SET = BasicElementTypes.BASIC_LITERAL_BIT_SET;
 
-  TokenSet OPERATION_BIT_SET = BasicElementTypes.BASIC_OPERATION_BIT_SET.toTokenSet();
+  TokenSet OPERATION_BIT_SET = BasicElementTypes.BASIC_OPERATION_BIT_SET;
 
   TokenSet MODIFIER_BIT_SET = BasicElementTypes.BASIC_MODIFIER_BIT_SET.toTokenSet();
 
@@ -39,12 +39,12 @@ public interface ElementType extends JavaTokenType, JavaDocTokenType, JavaElemen
   TokenSet MEMBER_BIT_SET = BasicElementTypes.BASIC_MEMBER_BIT_SET.toTokenSet();
   TokenSet FULL_MEMBER_BIT_SET = BasicElementTypes.BASIC_FULL_MEMBER_BIT_SET.toTokenSet();
 
-  TokenSet INTEGER_LITERALS = BasicElementTypes.BASIC_INTEGER_LITERALS.toTokenSet();
-  TokenSet REAL_LITERALS = BasicElementTypes.BASIC_REAL_LITERALS.toTokenSet();
-  TokenSet STRING_LITERALS = BasicElementTypes.BASIC_STRING_LITERALS.toTokenSet();
-  TokenSet TEXT_LITERALS = BasicElementTypes.BASIC_TEXT_LITERALS.toTokenSet();
+  TokenSet INTEGER_LITERALS = BasicElementTypes.BASIC_INTEGER_LITERALS;
+  TokenSet REAL_LITERALS = BasicElementTypes.BASIC_REAL_LITERALS;
+  TokenSet STRING_LITERALS = BasicElementTypes.BASIC_STRING_LITERALS;
+  TokenSet TEXT_LITERALS = BasicElementTypes.BASIC_TEXT_LITERALS;
 
-  TokenSet STRING_TEMPLATE_FRAGMENTS = BasicElementTypes.BASIC_STRING_TEMPLATE_FRAGMENTS.toTokenSet();
+  TokenSet STRING_TEMPLATE_FRAGMENTS = BasicElementTypes.BASIC_STRING_TEMPLATE_FRAGMENTS;
 
-  TokenSet ALL_LITERALS = BasicElementTypes.BASIC_ALL_LITERALS.toTokenSet();
+  TokenSet ALL_LITERALS = BasicElementTypes.BASIC_ALL_LITERALS;
 }

@@ -47,7 +47,7 @@ public final class BasicJavaAstTreeUtil {
     }
     if (source instanceof ParentProviderElementType) {
       Set<IElementType> parents = ((ParentProviderElementType)source).getParents();
-      return ContainerUtil.exists(parents, parent -> is(parent, target));
+      return ContainerUtil.exists(parents, parent -> parent != null && is(parent, target));
     }
     return false;
   }
@@ -85,7 +85,7 @@ public final class BasicJavaAstTreeUtil {
     }
     if (source instanceof ParentProviderElementType) {
       Set<IElementType> parents = ((ParentProviderElementType)source).getParents();
-      return ContainerUtil.exists(parents, parent -> is(parent, tokenSet));
+      return ContainerUtil.exists(parents, parent -> parent != null && is(parent, tokenSet));
     }
     return false;
   }
@@ -104,7 +104,7 @@ public final class BasicJavaAstTreeUtil {
     }
     if (source instanceof ParentProviderElementType) {
       Set<IElementType> parents = ((ParentProviderElementType)source).getParents();
-      return ContainerUtil.exists(parents, parent -> is(parent, tokenSet));
+      return ContainerUtil.exists(parents, parent -> parent != null && is(parent, tokenSet));
     }
     return false;
   }
