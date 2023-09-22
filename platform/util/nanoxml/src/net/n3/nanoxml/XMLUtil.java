@@ -44,7 +44,7 @@ final class XMLUtil {
    * @param reader the reader
    * @throws IOException if an error occurred reading the data
    */
-  static void skipComment(IXMLReader reader) throws IOException, XMLParseException {
+  static void skipComment(StdXMLReader reader) throws IOException, XMLParseException {
     if (reader.read() != '-') {
       errorExpectedInput(reader.getSystemID(), reader.getLineNr(), "<!--");
     }
@@ -77,7 +77,7 @@ final class XMLUtil {
    * @param reader the reader
    * @throws IOException if an error occurred reading the data
    */
-  static void skipTag(IXMLReader reader) throws IOException {
+  static void skipTag(StdXMLReader reader) throws IOException {
     int level = 1;
 
     while (level > 0) {
@@ -104,7 +104,7 @@ final class XMLUtil {
    * @return the system ID
    * @throws IOException if an error occurred reading the data
    */
-  static String scanPublicID(StringBuffer publicID, IXMLReader reader) throws IOException, XMLParseException {
+  static String scanPublicID(StringBuffer publicID, StdXMLReader reader) throws IOException, XMLParseException {
     if (!checkLiteral(reader, "UBLIC")) {
       return null;
     }
@@ -123,7 +123,7 @@ final class XMLUtil {
    * @return the system ID
    * @throws IOException if an error occurred reading the data
    */
-  static String scanSystemID(IXMLReader reader) throws IOException, XMLParseException {
+  static String scanSystemID(StdXMLReader reader) throws IOException, XMLParseException {
     if (!checkLiteral(reader, "YSTEM")) {
       return null;
     }
@@ -139,7 +139,7 @@ final class XMLUtil {
    * @param reader the reader
    * @throws IOException if an error occurred reading the data
    */
-  static String scanIdentifier(IXMLReader reader) throws IOException {
+  static String scanIdentifier(StdXMLReader reader) throws IOException {
     StringBuffer result = new StringBuffer();
 
     for (; ; ) {
@@ -173,7 +173,7 @@ final class XMLUtil {
    * @param entityResolver the entity resolver
    * @throws IOException if an error occurred reading the data
    */
-  static String scanString(IXMLReader reader, char entityChar, IXMLEntityResolver entityResolver) throws IOException, XMLParseException {
+  static String scanString(StdXMLReader reader, char entityChar, IXMLEntityResolver entityResolver) throws IOException, XMLParseException {
     StringBuffer result = new StringBuffer();
     int startingLevel = reader.getStreamLevel();
     char delim = reader.read();
@@ -231,7 +231,7 @@ final class XMLUtil {
    * @param reader         the reader
    * @param entityResolver the entity resolver
    */
-  static void processEntity(String entity, IXMLReader reader, IXMLEntityResolver entityResolver) throws XMLParseException {
+  static void processEntity(String entity, StdXMLReader reader, IXMLEntityResolver entityResolver) throws XMLParseException {
     entity = entity.substring(1, entity.length() - 1);
     Reader entityReader = entityResolver.getEntity(reader, entity);
 
@@ -269,7 +269,7 @@ final class XMLUtil {
    *               whitespace does not have to be stored.
    * @throws IOException if an error occurred reading the data
    */
-  static void skipWhitespace(IXMLReader reader, StringBuffer buffer) throws IOException {
+  static void skipWhitespace(StdXMLReader reader, StringBuffer buffer) throws IOException {
     char ch;
 
     if (buffer == null) {
@@ -308,7 +308,7 @@ final class XMLUtil {
    * @return the character, or an entity expression (like e.g. &amp;lt;)
    * @throws IOException if an error occurred reading the data
    */
-  static String read(IXMLReader reader, char entityChar) throws IOException {
+  static String read(StdXMLReader reader, char entityChar) throws IOException {
     char ch = reader.read();
     StringBuffer buf = new StringBuffer();
     buf.append(ch);
@@ -331,7 +331,7 @@ final class XMLUtil {
    * @param entityChar the escape character (&amp; or %) used to indicate
    *                   an entity
    */
-  static char readChar(IXMLReader reader, char entityChar) throws IOException, XMLParseException {
+  static char readChar(StdXMLReader reader, char entityChar) throws IOException, XMLParseException {
     String str = read(reader, entityChar);
     char ch = str.charAt(0);
 
@@ -351,7 +351,7 @@ final class XMLUtil {
    * @param literal the literal to check
    * @throws IOException if an error occurred reading the data
    */
-  static boolean checkLiteral(IXMLReader reader, String literal) throws IOException {
+  static boolean checkLiteral(StdXMLReader reader, String literal) throws IOException {
     for (int i = 0; i < literal.length(); i++) {
       if (reader.read() != literal.charAt(i)) {
         return false;

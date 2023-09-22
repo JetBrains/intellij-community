@@ -25,13 +25,10 @@
  *
  *  3. This notice may not be removed or altered from any source distribution.
  */
-
 package net.n3.nanoxml;
-
 
 import java.io.IOException;
 import java.io.Reader;
-
 
 /**
  * This reader reads data from another reader until the end of a processing
@@ -45,7 +42,7 @@ final class PIReader extends Reader {
   /**
    * The encapsulated reader.
    */
-  private final IXMLReader reader;
+  private final StdXMLReader reader;
 
 
   /**
@@ -59,7 +56,7 @@ final class PIReader extends Reader {
    *
    * @param reader the encapsulated reader
    */
-  PIReader(IXMLReader reader) {
+  PIReader(StdXMLReader reader) {
     this.reader = reader;
     atEndOfData = false;
   }
@@ -112,7 +109,7 @@ final class PIReader extends Reader {
 
 
   /**
-   * Skips remaining data and closes the stream.
+   * Skips the remaining data and closes the stream.
    *
    * @throws IOException if an error occurred reading the data
    */

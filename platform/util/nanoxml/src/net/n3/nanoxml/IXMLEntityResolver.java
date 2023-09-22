@@ -46,8 +46,7 @@ public interface IXMLEntityResolver {
    * @param name  the name of the entity.
    * @param value the value of the entity.
    */
-  void addInternalEntity(String name,
-                         String value);
+  void addInternalEntity(String name, String value);
 
 
   /**
@@ -57,9 +56,7 @@ public interface IXMLEntityResolver {
    * @param publicID the public ID of the entity, which may be null.
    * @param systemID the system ID of the entity.
    */
-  void addExternalEntity(String name,
-                         String publicID,
-                         String systemID);
+  void addExternalEntity(String name, String publicID, String systemID);
 
 
   /**
@@ -70,9 +67,7 @@ public interface IXMLEntityResolver {
    * @return the reader, or null if the entity could not be resolved.
    * @throws XMLParseException If an exception occurred while resolving the entity.
    */
-  Reader getEntity(IXMLReader xmlReader,
-                   String name)
-    throws XMLParseException;
+  Reader getEntity(StdXMLReader xmlReader, String name) throws XMLParseException;
 
 
   /**

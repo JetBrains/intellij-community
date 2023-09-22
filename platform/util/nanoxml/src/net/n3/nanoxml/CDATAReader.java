@@ -46,7 +46,7 @@ final class CDATAReader
   /**
    * The encapsulated reader.
    */
-  private IXMLReader reader;
+  private StdXMLReader reader;
 
 
   /**
@@ -66,7 +66,7 @@ final class CDATAReader
    *
    * @param reader the encapsulated reader
    */
-  CDATAReader(IXMLReader reader) {
+  CDATAReader(StdXMLReader reader) {
     this.reader = reader;
     savedChar = 0;
     atEndOfData = false;

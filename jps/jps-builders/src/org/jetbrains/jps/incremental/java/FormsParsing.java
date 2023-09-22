@@ -68,7 +68,7 @@ public final class FormsParsing {
     }
   }
 
-  public static void parse(final IXMLReader r, final IXMLBuilder builder) {
+  public static void parse(final StdXMLReader r, final IXMLBuilder builder) {
     final StdXMLParser parser = XMLParserFactory.createDefaultXMLParser();
     parser.setReader(r);
     parser.setBuilder(builder);
@@ -99,7 +99,7 @@ public final class FormsParsing {
     }
 
     @Override
-    public void parseDTD(String publicID, IXMLReader reader, IXMLEntityResolver entityResolver, boolean external) throws Exception {
+    public void parseDTD(String publicID, StdXMLReader reader, IXMLEntityResolver entityResolver, boolean external) throws Exception {
       if (!external) {
         //super.parseDTD(publicID, reader, entityResolver, external);
         int cnt = 1;
@@ -144,7 +144,7 @@ public final class FormsParsing {
     }
 
     @Override
-    public Reader getEntity(IXMLReader xmlReader, String name) {
+    public Reader getEntity(StdXMLReader xmlReader, String name) {
       return new StringReader("");
     }
 

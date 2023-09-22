@@ -65,7 +65,7 @@ public interface IXMLValidator {
    * @throws Exception If something went wrong.
    */
   void parseDTD(String publicID,
-                IXMLReader reader,
+                StdXMLReader reader,
                 IXMLEntityResolver entityResolver,
                 boolean external)
     throws Exception;

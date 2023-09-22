@@ -46,7 +46,7 @@ final class ContentReader
   /**
    * The encapsulated reader.
    */
-  private final IXMLReader reader;
+  private final StdXMLReader reader;
 
 
   /**
@@ -74,7 +74,7 @@ final class ContentReader
    * @param resolver the entity resolver
    * @param buffer   data that has already been read from <code>reader</code>
    */
-  ContentReader(IXMLReader reader,
+  ContentReader(StdXMLReader reader,
                 IXMLEntityResolver resolver,
                 String buffer) {
     this.reader = reader;
@@ -107,7 +107,7 @@ final class ContentReader
       }
 
       while (charsRead < size) {
-        String str = "";
+        String str;
         char ch;
 
         if (bufferIndex >= bufferLength) {
@@ -165,7 +165,7 @@ final class ContentReader
       int bufferLength = buffer.length();
 
       for (; ; ) {
-        String str = "";
+        String str;
         char ch;
 
         if (bufferIndex >= bufferLength) {
@@ -173,7 +173,6 @@ final class ContentReader
           ch = str.charAt(0);
         }
         else {
-          ch = buffer.charAt(bufferIndex);
           bufferIndex++;
           continue; // don't interprete chars in the buffer
         }

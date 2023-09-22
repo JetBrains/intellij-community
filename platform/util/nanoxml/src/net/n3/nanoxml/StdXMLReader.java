@@ -25,9 +25,7 @@
  *
  *  3. This notice may not be removed or altered from any source distribution.
  */
-
 package net.n3.nanoxml;
-
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -35,14 +33,13 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Stack;
 
-
 /**
  * StdXMLReader reads the data to be parsed.
  *
  * @author Marc De Scheemaecker
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.4 $
  */
-public class StdXMLReader implements IXMLReader {
+public class StdXMLReader {
 
   /**
    * The stack of readers.
@@ -64,7 +61,7 @@ public class StdXMLReader implements IXMLReader {
    * @throws IOException           if an error occurred opening the stream
    */
   public StdXMLReader(String publicID, String systemID) throws MalformedURLException, FileNotFoundException, IOException {
-    URL systemIDasURL = null;
+    URL systemIDasURL;
 
     try {
       systemIDasURL = new URL(systemID);
@@ -259,7 +256,6 @@ public class StdXMLReader implements IXMLReader {
    * @return the character
    * @throws IOException if no character could be read
    */
-  @Override
   public char read() throws IOException {
     int ch = currentReader.pbReader.read();
 
@@ -282,7 +278,6 @@ public class StdXMLReader implements IXMLReader {
    *
    * @throws IOException if an I/O error occurred
    */
-  @Override
   public boolean atEOFOfCurrentStream() throws IOException {
     int ch = currentReader.pbReader.read();
 
@@ -300,7 +295,6 @@ public class StdXMLReader implements IXMLReader {
    *
    * @throws IOException if an I/O error occurred
    */
-  @Override
   public boolean atEOF() throws IOException {
     int ch = currentReader.pbReader.read();
 
@@ -324,7 +318,6 @@ public class StdXMLReader implements IXMLReader {
    * @param ch the character to push back.
    * @throws IOException if an I/O error occurred
    */
-  @Override
   public void unread(char ch) throws IOException {
     currentReader.pbReader.unread(ch);
   }
@@ -338,7 +331,6 @@ public class StdXMLReader implements IXMLReader {
    * @throws FileNotFoundException if the system ID refers to a local file which does not exist
    * @throws IOException           if an error occurred opening the stream
    */
-  @Override
   public Reader openStream(String publicID, String systemID) throws MalformedURLException, FileNotFoundException, IOException {
     URL url = new URL(currentReader.systemId, systemID);
 
@@ -380,7 +372,6 @@ public class StdXMLReader implements IXMLReader {
    *
    * @param reader the non-null reader to read the new data from
    */
-  @Override
   public void startNewStream(Reader reader) {
     startNewStream(reader, false);
   }
@@ -394,7 +385,6 @@ public class StdXMLReader implements IXMLReader {
    * @param isInternalEntity true if the reader is produced by resolving
    *                         an internal entity
    */
-  @Override
   public void startNewStream(Reader reader, boolean isInternalEntity) {
     StackedReader oldReader = currentReader;
     readers.push(currentReader);
@@ -416,7 +406,6 @@ public class StdXMLReader implements IXMLReader {
   /**
    * Returns the current "level" of the stream on the stack of streams.
    */
-  @Override
   public int getStreamLevel() {
     return readers.size();
   }
@@ -424,7 +413,6 @@ public class StdXMLReader implements IXMLReader {
   /**
    * Returns the line number of the data in the current stream.
    */
-  @Override
   public int getLineNr() {
     if (currentReader.lineReader == null) {
       StackedReader sr = (StackedReader)readers.peek();
@@ -443,7 +431,6 @@ public class StdXMLReader implements IXMLReader {
   /**
    * Returns the current system ID.
    */
-  @Override
   public String getSystemID() {
     return currentReader.systemId.toString();
   }
@@ -454,7 +441,6 @@ public class StdXMLReader implements IXMLReader {
    * @param systemID the system ID
    * @throws MalformedURLException if the system ID does not contain a valid URL
    */
-  @Override
   public void setSystemID(String systemID) throws MalformedURLException {
     currentReader.systemId = new URL(currentReader.systemId, systemID);
   }
@@ -462,7 +448,6 @@ public class StdXMLReader implements IXMLReader {
   /**
    * Returns the current public ID.
    */
-  @Override
   public String getPublicID() {
     return currentReader.publicId;
   }
@@ -472,7 +457,6 @@ public class StdXMLReader implements IXMLReader {
    *
    * @param publicID the public ID
    */
-  @Override
   public void setPublicID(String publicID) {
     currentReader.publicId = publicID;
   }
@@ -482,7 +466,7 @@ public class StdXMLReader implements IXMLReader {
    *
    * @param str the string containing the XML data
    */
-  public static IXMLReader stringReader(String str) {
+  public static StdXMLReader stringReader(String str) {
     return new StdXMLReader(new StringReader(str));
   }
 
@@ -493,7 +477,7 @@ public class StdXMLReader implements IXMLReader {
    * @throws FileNotFoundException if the file could not be found
    * @throws IOException           if an I/O error occurred
    */
-  public static IXMLReader fileReader(String filename) throws FileNotFoundException, IOException {
+  public static StdXMLReader fileReader(String filename) throws FileNotFoundException, IOException {
     StdXMLReader r = new StdXMLReader(new FileInputStream(filename));
     r.setSystemID(filename);
 

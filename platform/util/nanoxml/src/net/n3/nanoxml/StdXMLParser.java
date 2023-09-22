@@ -52,7 +52,7 @@ public final class StdXMLParser {
   /**
    * The reader from which the parser retrieves its data.
    */
-  private IXMLReader reader;
+  private StdXMLReader reader;
 
 
   /**
@@ -137,7 +137,7 @@ public final class StdXMLParser {
    *
    * @return the reader
    */
-  public IXMLReader getReader() {
+  public StdXMLReader getReader() {
     return reader;
   }
 
@@ -146,7 +146,7 @@ public final class StdXMLParser {
    *
    * @param reader the reader
    */
-  public void setReader(IXMLReader reader) {
+  public void setReader(StdXMLReader reader) {
     this.reader = reader;
   }
 

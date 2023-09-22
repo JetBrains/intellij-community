@@ -54,18 +54,14 @@ final class XMLAttribute {
    * The namespace URI of the attribute.
    */
   private final String namespace;
-
-
-  /**
-   * The value of the attribute.
-   */
-  private String value;
-
-
   /**
    * The type of the attribute.
    */
   private final String type;
+  /**
+   * The value of the attribute.
+   */
+  private String value;
 
 
   /**
@@ -77,11 +73,7 @@ final class XMLAttribute {
    * @param value     the value of the attribute
    * @param type      the type of the attribute
    */
-  XMLAttribute(String fullName,
-               String name,
-               String namespace,
-               String value,
-               String type) {
+  XMLAttribute(String fullName, String name, String namespace, String value, String type) {
     this.fullName = fullName;
     this.name = name;
     this.namespace = namespace;

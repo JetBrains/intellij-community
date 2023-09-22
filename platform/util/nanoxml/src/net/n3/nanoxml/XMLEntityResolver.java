@@ -97,7 +97,7 @@ public final class XMLEntityResolver implements IXMLEntityResolver {
    * @return the reader, or null if the entity could not be resolved.
    */
   @Override
-  public Reader getEntity(IXMLReader xmlReader, String name) throws XMLParseException {
+  public Reader getEntity(StdXMLReader xmlReader, String name) throws XMLParseException {
     Object obj = entities.get(name);
 
     if (obj == null) {
@@ -133,7 +133,7 @@ public final class XMLEntityResolver implements IXMLEntityResolver {
    * @param systemID  the system ID
    * @return the reader, or null if the reader could not be created/opened
    */
-  private Reader openExternalEntity(IXMLReader xmlReader, String publicID, String systemID) throws XMLParseException {
+  private Reader openExternalEntity(StdXMLReader xmlReader, String publicID, String systemID) throws XMLParseException {
     String parentSystemID = xmlReader.getSystemID();
 
     try {
