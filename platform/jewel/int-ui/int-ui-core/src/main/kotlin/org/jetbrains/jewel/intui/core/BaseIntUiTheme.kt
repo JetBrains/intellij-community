@@ -1,10 +1,15 @@
 package org.jetbrains.jewel.intui.core
 
+import androidx.compose.foundation.Indication
+import androidx.compose.foundation.IndicationInstance
 import androidx.compose.foundation.LocalContextMenuRepresentation
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.text.TextStyle
 import org.jetbrains.jewel.GlobalColors
 import org.jetbrains.jewel.GlobalMetrics
@@ -215,7 +220,22 @@ fun BaseIntUiTheme(
         LocalTextFieldStyle provides componentStyling.textFieldStyle,
         LocalDefaultTabStyle provides componentStyling.defaultTabStyle,
         LocalEditorTabStyle provides componentStyling.editorTabStyle,
+        LocalIndication provides NoIndication,
     ) {
         IntelliJTheme(theme, swingCompatMode, content)
     }
+}
+
+private object NoIndication : Indication {
+
+    private object NoIndicationInstance : IndicationInstance {
+
+        override fun ContentDrawScope.drawIndication() {
+            drawContent()
+        }
+    }
+
+    @Composable
+    override fun rememberUpdatedInstance(interactionSource: InteractionSource): IndicationInstance =
+        NoIndicationInstance
 }
