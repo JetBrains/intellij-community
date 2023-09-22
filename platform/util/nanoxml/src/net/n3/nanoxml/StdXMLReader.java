@@ -273,24 +273,6 @@ public class StdXMLReader {
   }
 
   /**
-   * Returns true if the current stream has no more characters left to be
-   * read.
-   *
-   * @throws IOException if an I/O error occurred
-   */
-  public boolean atEOFOfCurrentStream() throws IOException {
-    int ch = currentReader.pbReader.read();
-
-    if (ch < 0) {
-      return true;
-    }
-    else {
-      currentReader.pbReader.unread(ch);
-      return false;
-    }
-  }
-
-  /**
    * Returns true if there are no more characters left to be read.
    *
    * @throws IOException if an I/O error occurred
@@ -337,7 +319,7 @@ public class StdXMLReader {
     if (url.getRef() != null) {
       String ref = url.getRef();
 
-      if (url.getFile().length() > 0) {
+      if (!url.getFile().isEmpty()) {
         url = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile());
         url = new URL("jar:" + url + '!' + ref);
       }

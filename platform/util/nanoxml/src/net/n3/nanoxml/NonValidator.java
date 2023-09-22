@@ -148,7 +148,7 @@ public class NonValidator implements IXMLValidator {
         break;
 
       case '[':
-        processConditionalSection(reader, entityResolver);
+        processConditionalSection(reader);
         break;
 
       case 'E':
@@ -156,7 +156,7 @@ public class NonValidator implements IXMLValidator {
         break;
 
       case 'A':
-        processAttList(reader, entityResolver);
+        processAttList(reader);
         break;
 
       default:
@@ -169,10 +169,9 @@ public class NonValidator implements IXMLValidator {
    * Processes a conditional section.
    *
    * @param reader         the reader to read data from.
-   * @param entityResolver the entity resolver.
    * @throws Exception If something went wrong.
    */
-  protected void processConditionalSection(StdXMLReader reader, IXMLEntityResolver entityResolver) throws Exception {
+  protected void processConditionalSection(StdXMLReader reader) throws Exception {
     XMLUtil.skipWhitespace(reader, null);
 
     String str = XMLUtil.read(reader, '%');
@@ -188,7 +187,7 @@ public class NonValidator implements IXMLValidator {
 
     switch (ch) {
       case 'G':
-        processIgnoreSection(reader, entityResolver);
+        processIgnoreSection(reader);
         return;
 
       case 'N':
@@ -236,10 +235,9 @@ public class NonValidator implements IXMLValidator {
    * Processes an ignore section.
    *
    * @param reader         the reader to read data from.
-   * @param entityResolver the entity resolver.
    * @throws Exception If something went wrong.
    */
-  protected void processIgnoreSection(StdXMLReader reader, IXMLEntityResolver entityResolver) throws Exception {
+  protected void processIgnoreSection(StdXMLReader reader) throws Exception {
     if (!XMLUtil.checkLiteral(reader, "NORE")) {
       XMLUtil.skipTag(reader);
       return;
@@ -264,10 +262,9 @@ public class NonValidator implements IXMLValidator {
    * Processes an ATTLIST element.
    *
    * @param reader         the reader to read data from.
-   * @param entityResolver the entity resolver.
    * @throws Exception If something went wrong.
    */
-  protected void processAttList(StdXMLReader reader, IXMLEntityResolver entityResolver) throws Exception {
+  protected void processAttList(StdXMLReader reader) throws Exception {
     if (!XMLUtil.checkLiteral(reader, "TTLIST")) {
       XMLUtil.skipTag(reader);
       return;

@@ -109,7 +109,7 @@ final class ContentReader extends Reader {
           bufferIndex++;
           outputBuffer[charsRead] = ch;
           charsRead++;
-          continue; // don't interprete chars in the buffer
+          continue; // don't interpret chars in the buffer
         }
 
         if (ch == '<') {

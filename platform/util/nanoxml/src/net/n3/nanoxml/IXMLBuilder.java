@@ -34,17 +34,13 @@ import java.io.Reader;
 
 /**
  * NanoXML uses IXMLBuilder to construct the XML data structure it retrieved
- * from its data source. You can supply your own builder or you can use the
+ * from its data source.
+ * You can supply your own builder, or you can use the
  * default builder of NanoXML.
  * <p>
- * If a method of the builder throws an exception, the parsing is aborted and
- * {@link IXMLParser#parse} throws an
- * {@link XMLException} which encasulates the original
- * exception.
  *
  * @author Marc De Scheemaecker
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.3 $
- * @see IXMLParser
  */
 public interface IXMLBuilder {
 
@@ -65,7 +61,7 @@ public interface IXMLBuilder {
    * @param target the processing instruction target.
    * @param reader the method can retrieve the parameter of the PI from this
    *               reader. You may close the reader before reading all its
-   *               data and you cannot read too much data.
+   *               data, and you cannot read too much data.
    * @throws Exception If an exception occurred while processing the event.
    */
   void newProcessingInstruction(String target, Reader reader) throws Exception;
@@ -124,7 +120,7 @@ public interface IXMLBuilder {
 
 
   /**
-   * This method is called when the end of an XML elemnt is encountered.
+   * This method is called when the end of an XML element is encountered.
    *
    * @param name     the name of the element.
    * @param nsPrefix the prefix used to identify the namespace. If no
@@ -139,15 +135,20 @@ public interface IXMLBuilder {
 
 
   /**
-   * This method is called when a PCDATA element is encountered. A Java
-   * reader is supplied from which you can read the data. The reader will
-   * only read the data of the element. You don't need to check for
-   * boundaries. If you don't read the full element, the rest of the data
-   * is skipped. You also don't have to care about entities: they are
+   * This method is called when a CDATA element is encountered.
+   * A Java
+   * reader is supplied from which you can read the data.
+   * The reader will
+   * only read the data of the element.
+   * You don't need to check for
+   * boundaries.
+   * If you don't read the full element, the rest of the data
+   * is skipped.
+   * You also don't have to care about entities: they are
    * resolved by the parser.
    *
    * @param reader   the method can retrieve the data from this reader. You
-   *                 may close the reader before reading all its data and you
+   *                 may close the reader before reading all its data, and you
    *                 cannot read too much data.
    * @param systemID the system ID of the XML data source.
    * @param lineNr   the line in the source where the element starts.

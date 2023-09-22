@@ -278,7 +278,6 @@ public final class StdXMLBuilder implements IXMLBuilder {
    * before the <I>parse</I> method of IXMLParser returns.
    *
    * @return the result of the building process.
-   * @see IXMLParser#parse
    */
   @Override
   public Object getResult() {

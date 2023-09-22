@@ -392,8 +392,6 @@ public interface IXMLElement {
 
   /**
    * Returns true if the element equals another element.
-   *
-   * @param rawElement the element to compare to
    */
   boolean equalsXMLElement(IXMLElement elt);
 }
