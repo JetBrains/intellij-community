@@ -23,7 +23,7 @@ class GitLabMergeRequestDTO(
   val createdAt: Date,
   val targetBranch: String,
   val sourceBranch: String,
-  @SinceGitLab("12.1") val diffRefs: GitLabDiffRefs,
+  @SinceGitLab("12.1") val diffRefs: GitLabDiffRefs?,
   @SinceGitLab("14.3", editions = [Enterprise]) val approved: Boolean?,
   @SinceGitLab("13.4") val conflicts: Boolean,
   val headPipeline: GitLabPipelineDTO?,
