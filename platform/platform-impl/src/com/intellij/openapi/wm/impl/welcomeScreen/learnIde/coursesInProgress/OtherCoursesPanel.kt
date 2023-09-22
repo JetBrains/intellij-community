@@ -6,12 +6,9 @@ import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.InteractiveCoursePane
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy.JBAcademyWelcomeScreenBundle
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.dsl.builder.HyperlinkEventAction
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBUI
 import java.awt.Font
-import javax.swing.Box
-import javax.swing.BoxLayout
 import javax.swing.JButton
 import javax.swing.JPanel
 
@@ -23,6 +20,7 @@ class OtherCoursesPanel(private val courseFactory: InteractiveCourseFactory) : W
         label(JBAcademyWelcomeScreenBundle.message("welcome.tab.learn.other.courses")).apply {
           component.font = component.font.deriveFont(Font.BOLD, 16.0f)
         }
+        bottomGap(BottomGap.SMALL)
       }
       row {
         cell(createMainPanel(courseFactory))
@@ -39,22 +37,20 @@ class OtherCoursesPanel(private val courseFactory: InteractiveCourseFactory) : W
   }
 
   private fun createMainPanel(courseFactory: InteractiveCourseFactory): JPanel {
-    val mainPanel = JPanel()
-    mainPanel.layout = BoxLayout(mainPanel, BoxLayout.X_AXIS)
-    mainPanel.alignmentY = CENTER_ALIGNMENT
-    mainPanel.add(OtherCoursePanel())
+    return panel {
+      row {
+        cell(OtherCoursePanel()).align(Align.FILL).gap(RightGap.COLUMNS).resizableColumn()
 
-    val buttonPanel = JPanel()
-    buttonPanel.layout = BoxLayout(buttonPanel, BoxLayout.Y_AXIS)
-    buttonPanel.add(Box.createVerticalGlue())
-    buttonPanel.add(JButton(JBAcademyWelcomeScreenBundle.message("welcome.tab.learn.start.learning")).apply {
-      action = courseFactory.getCourseData().getAction()
-      isEnabled = courseFactory.isEnabled
-    })
-    buttonPanel.add(Box.createVerticalGlue())
+        val button = JButton(JBAcademyWelcomeScreenBundle.message("welcome.tab.learn.start.learning")).apply {
+          action = courseFactory.getCourseData().getAction()
+          isEnabled = courseFactory.isEnabled
+        }
 
-    mainPanel.add(buttonPanel)
-    return mainPanel
+        cell(button).align(AlignY.TOP).apply {
+          border = JBUI.Borders.empty(6, 0)
+        }
+      }
+    }
   }
 
   private inner class OtherCoursePanel : InteractiveCoursePanel(courseFactory.getCourseData(), courseFactory.isEnabled) {
