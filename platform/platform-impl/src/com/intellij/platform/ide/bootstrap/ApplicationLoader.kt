@@ -184,6 +184,7 @@ internal suspend fun loadApp(app: ApplicationImpl,
 
     deferredStarter.await()
   }
+  runStartupWizard()
   executeApplicationStarter(starter, args)
 }
 

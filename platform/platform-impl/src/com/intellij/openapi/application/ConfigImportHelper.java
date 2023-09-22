@@ -14,7 +14,6 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.idea.StartupErrorReporter;
-import com.intellij.openapi.application.impl.ExternalSettingsImportSupport;
 import com.intellij.openapi.application.migrations.BigDataTools232;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
@@ -151,10 +150,8 @@ public final class ConfigImportHelper {
         oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
         importScenarioStatistics = SHOW_DIALOG_REQUESTED_BY_PROPERTY;
       }
-      else if (guessedOldConfigDirs.isEmpty()) {
-        if (shouldRunExternalImporter()) {
-          importScenarioStatistics = ExternalSettingsImportSupport.importSettings();
-        } else {
+      else if (!IdeStartupWizardKt.isStartupWizardEnabled()) {
+        if (guessedOldConfigDirs.isEmpty()) {
           boolean importedFromCloud = false;
           CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
           if (configProvider != null) {
@@ -169,11 +166,7 @@ public final class ConfigImportHelper {
             importScenarioStatistics = SHOW_DIALOG_NO_CONFIGS_FOUND;
           }
         }
-      }
-      else {
-        if (shouldRunExternalImporter()) {
-          importScenarioStatistics = ExternalSettingsImportSupport.importSettings();
-        } else {
+        else {
           Pair<Path, FileTime> bestConfigGuess = guessedOldConfigDirs.getFirstItem();
           if (isConfigOld(bestConfigGuess.second)) {
             log.info("The best config guess [" + bestConfigGuess.first + "] is too old, it won't be used for importing.");
@@ -353,20 +346,12 @@ public final class ConfigImportHelper {
 
   private static boolean shouldAskForConfig() {
     String showImportDialog = System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
-    if ("default-production".equals(showImportDialog) || "never".equals(showImportDialog)) {
-      return false;
-    }
-    if (shouldRunExternalImporter()) {
+    if ("default-production".equals(showImportDialog) || "never".equals(showImportDialog) || IdeStartupWizardKt.isStartupWizardEnabled()) {
       return false;
     }
     return PluginManagerCore.isRunningFromSources() ||
            System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null ||
            "true".equals(showImportDialog);
-  }
-
-  private static boolean shouldRunExternalImporter() {
-    String customImporterProperty = System.getProperty(ExternalSettingsImportSupport.CUSTOM_IMPORT_CLASS);
-    return customImporterProperty != null && !customImporterProperty.equals("");
   }
 
   private static @Nullable Pair<Path, Path> showDialogAndGetOldConfigPath(List<Path> guessedOldConfigDirs) {
