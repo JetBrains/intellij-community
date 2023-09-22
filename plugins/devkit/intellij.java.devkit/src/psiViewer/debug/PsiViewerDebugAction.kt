@@ -30,6 +30,7 @@ private const val GET_CONTAINING_FILE = "getContainingFile"
 private const val GET_TEXT = "getText"
 private const val GET_LANGUAGE = "getLanguage"
 private const val GET_ID = "getID"
+private const val GET_NAME = "getName"
 
 class PsiViewerDebugAction : DebuggerTreeAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -72,6 +73,7 @@ class PsiViewerDebugAction : DebuggerTreeAction() {
           val psiFileObj = psiElemObj.invokeMethod(GET_CONTAINING_FILE) ?: return
           val psiText = psiElemObj.getText() ?: return
           val fileText = psiFileObj.getText() ?: return
+          val fileName = DebuggerUtils.getValueAsString(evalContext, psiFileObj.invokeMethod(GET_NAME))
           val psiRangeInFile = fileText.findTextRange(psiText)
           val languageId = psiFileObj.getLanguageId()
           val language = Language.findLanguageByID(languageId) ?: return
@@ -89,7 +91,7 @@ class PsiViewerDebugAction : DebuggerTreeAction() {
 
             fun showDebugTab() {
               val runnerLayoutUi = debugProcess.session?.xDebugSession?.ui ?: return
-              val psiViewerPanel = PsiViewerDebugPanel(project, editor, language)
+              val psiViewerPanel = PsiViewerDebugPanel(project, editor, language, fileName)
               val id = "${node.name} ${DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis())}"
               val content = runnerLayoutUi.createContent(id, psiViewerPanel, id, null, null)
               runnerLayoutUi.addContent(content)

@@ -41,7 +41,8 @@ import javax.swing.tree.DefaultMutableTreeNode
 class PsiViewerDebugPanel(
   private val project: Project,
   private val editor: EditorEx,
-  private val language: Language
+  private val language: Language,
+  private val fileName: String? = null
 ) : JPanel(BorderLayout()), Disposable {
   private val treeStructure = ViewerTreeStructure(project).apply {
     val settings = PsiViewerSettings.getSettings()
@@ -141,9 +142,8 @@ class PsiViewerDebugPanel(
     psiTree.setModel(asyncTreeModel)
 
     val fileType = language.associatedFileType ?: return null
-    treeStructure.rootPsiElement = PsiFileFactory.getInstance(project).createFileFromText(
-      "Dummy." + fileType.defaultExtension, fileType, editor.document.text
-    )
+    val fileName = fileName ?: "Dummy.${fileType.defaultExtension}"
+    treeStructure.rootPsiElement = PsiFileFactory.getInstance(project).createFileFromText(fileName, fileType, editor.document.text)
 
     psiTree.addTreeSelectionListener(PsiTreeSelectionListener())
 
