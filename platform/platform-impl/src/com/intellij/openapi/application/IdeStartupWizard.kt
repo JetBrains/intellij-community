@@ -1,9 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.withContext
 
 private const val INTELLIJ_STARTUP_WIZARD_CLASS_PROPERTY = "intellij.startup-wizard.class"
 
@@ -18,13 +22,23 @@ internal suspend fun runStartupWizard() {
   if (!ConfigImportHelper.isNewUser()) return
 
   LOG.runAndLogException {
+    waitForAppManagerInitialState()
+
     val className = System.getProperty(INTELLIJ_STARTUP_WIZARD_CLASS_PROPERTY)
-    val wizardClass = Class.forName(className) ?: run {
-      LOG.error("Could not find class $className")
-      return
-    }
+    val wizardClass = Class.forName(className)
     val instance = wizardClass.getDeclaredConstructor().newInstance() as IdeStartupWizard
     instance.run()
+  }
+}
+
+private suspend fun waitForAppManagerInitialState() {
+  ApplicationManagerEx.setInitialStart()
+  val latch = ApplicationManagerEx.getInitialStartState()
+  if (latch == null) error("Cannot get initial startup state")
+  withContext(Dispatchers.IO) {
+    runInterruptible {
+      latch.await()
+    }
   }
 }
 
