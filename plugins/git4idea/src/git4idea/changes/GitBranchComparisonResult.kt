@@ -5,6 +5,7 @@ import com.intellij.diff.comparison.ComparisonManagerImpl.getInstanceImpl
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.ex.isValidRanges
@@ -41,7 +42,11 @@ fun GitBranchComparisonResult.findCumulativeChange(commitSha: String, filePath: 
   return null
 }
 
-fun GitTextFilePatchWithHistory.getDiffComputer(): DiffUserDataKeysEx.DiffComputer {
+fun GitTextFilePatchWithHistory.getDiffComputer(): DiffUserDataKeysEx.DiffComputer? {
+  if (patch.hunks.isEmpty()) {
+    logger<GitBranchComparisonResult>().info("Empty diff in patch $patch")
+    return null
+  }
   val diffRanges = patch.hunks.map(PatchHunkUtil::getChangeOnlyRanges).flatten()
   return DiffUserDataKeysEx.DiffComputer { text1, text2, policy, innerChanges, indicator ->
     val comparisonManager = getInstanceImpl()
