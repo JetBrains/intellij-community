@@ -96,7 +96,8 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
   }
   private val foldingListener = object : FoldingListener {
     override fun onFoldProcessingEnd() {
-      updateFolding()
+      revalidate()
+      repaint()
     }
   }
 
@@ -104,12 +105,6 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
 
   init {
     editor.foldingModel.addListener(foldingListener, this)
-  }
-
-  private fun updateFolding() {
-    for (inlay in inlays) {
-      inlay.renderer.component.isVisible = !EditorUtil.isInlayFolded(inlay)
-    }
   }
 
   private fun remove(inlay: Inlay<ComponentInlayRenderer<*>>): Boolean {
