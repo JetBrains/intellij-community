@@ -46,6 +46,15 @@ interface WebSymbolHtmlAttributeValue {
   val langType: Any?
     get() = null
 
+  fun copy(kind: Kind? = null,
+           type: Type? = null,
+           required: Boolean? = null,
+           default: String? = null,
+           langType: Any? = null): WebSymbolHtmlAttributeValue =
+    create(kind ?: this.kind, type ?: this.type,
+           required ?: this.required, default ?: this.default,
+           langType ?: this.langType)
+
   enum class Kind {
     /** Attribute value should be regarded as a plain string */
     PLAIN,
