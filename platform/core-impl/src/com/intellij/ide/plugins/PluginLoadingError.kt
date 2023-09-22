@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
 
 class PluginLoadingError internal constructor(val plugin: IdeaPluginDescriptor,
-                                              private val detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>?,
+                                              val detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>?,
                                               private val shortMessageSupplier: Supplier<@NlsContexts.Label String>,
                                               val isNotifyUser: Boolean,
                                               @JvmField val disabledDependency: PluginId? = null) {
