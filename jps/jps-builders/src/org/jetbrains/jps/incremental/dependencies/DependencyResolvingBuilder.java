@@ -453,17 +453,30 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
                                         @NotNull String sha256sum,
                                         @NotNull String problemKind) {
     Path reportsDir = createVerificationProblemReport(context, libraryName, descriptor, problemKind,
-                                                      metadata -> metadata.setProperty("sha256", sha256sum));
+                                                      metadata -> {
+                                                        metadata.setProperty("sha256", sha256sum);
+                                                        metadata.setProperty("filename", artifactFile.getFileName().toString());
+                                                      });
     if (reportsDir == null) {
       return;
     }
 
-    try {
-      Path artifactCopy = reportsDir.resolve(artifactFile.getFileName());
-      Files.copy(artifactFile, artifactCopy, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+    // Dump all artifacts in artifact's parent directory
+    try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(artifactFile.getParent())) {
+      for (Path sourcePath : directoryStream) {
+        if (!Files.isRegularFile(sourcePath)) continue;
+
+        Path targetPath = reportsDir.resolve(sourcePath.getFileName());
+        try {
+          Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+        }
+        catch (IOException e) {
+          LOG.error("Unable to copy bad artifact " + sourcePath, e);
+        }
+      }
     }
     catch (IOException e) {
-      LOG.error("Unable to copy bad artifact " + artifactFile, e);
+      LOG.error("Failed to open directory stream for " + artifactFile.getParent(), e);
     }
   }
 
