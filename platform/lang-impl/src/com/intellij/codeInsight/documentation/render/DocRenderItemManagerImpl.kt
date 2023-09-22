@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.util.messages.Topic
@@ -79,7 +80,10 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
       }
       val newRenderItems: MutableCollection<DocRenderItemImpl> = ArrayList()
       for (item in itemsToSet) {
-        val newItem = DocRenderItemImpl(editor, item.textRange, if (collapseNewItems) null else item.textToRender)
+        val newItem = DocRenderItemImpl(
+          editor, item.textRange, if (collapseNewItems) null else item.textToRender,
+          DocRendererProvider.getInstance()::provideDocRenderer, InlineDocumentationFinder.getInstance(editor.project)
+        )
         newRenderItems.add(newItem)
         if (collapseNewItems) {
           updated = updated or newItem.toggle(foldingTasks)

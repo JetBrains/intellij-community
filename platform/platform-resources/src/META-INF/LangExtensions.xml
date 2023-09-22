@@ -1032,7 +1032,11 @@
                     serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutUiFactoryImpl"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.documentation.render.DocRenderItemManager"
-                    serviceImplementation="com.intellij.codeInsight.documentation.render.DocRenderItemManagerImpl" />
+                        serviceImplementation="com.intellij.codeInsight.documentation.render.DocRenderItemManagerImpl" />
+    <applicationService serviceInterface="com.intellij.codeInsight.documentation.render.DocRendererProvider"
+                        serviceImplementation="com.intellij.codeInsight.documentation.render.DocRendererProviderImpl" />
+    <projectService serviceInterface="com.intellij.codeInsight.documentation.render.InlineDocumentationFinder"
+                    serviceImplementation="com.intellij.codeInsight.documentation.render.InlineDocumentationFinderImpl" />
 
     <http.fileEditorActionProvider implementation="com.intellij.openapi.fileEditor.impl.http.LangRemoteFileEditorActionProvider"/>
 

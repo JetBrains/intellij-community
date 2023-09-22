@@ -22,6 +22,8 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.InlineDocumentation
@@ -33,9 +35,22 @@ import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 import javax.swing.JComponent
 
+
+private val IS_DOC_RENDER_ITEM_IMPL_FOLDING = Key.create<Boolean>("is.doc.render.item.impl.folding")
+/**
+ * Is used to indicate whether the custom folding region was produced by a [DocRenderItemImpl] instance or not.
+ *
+ * It is useful in Rider, when trying to merge the render documentation foldings from the backend into the frontend folding model.
+ */
+var CustomFoldRegion.isDocRenderImplFolding
+  get() = this.getUserData(IS_DOC_RENDER_ITEM_IMPL_FOLDING)
+  set(value) = this.putUserData(IS_DOC_RENDER_ITEM_IMPL_FOLDING, value)
+
 internal class DocRenderItemImpl(override val editor: Editor,
                                  textRange: TextRange,
-                                 override var textToRender: @Nls String?) : DocRenderItem {
+                                 override var textToRender: @Nls String?,
+                                 private val docRendererFactory: (DocRenderItem) -> DocRenderer,
+                                 private val inlineDocumentationFinder: InlineDocumentationFinder?) : DocRenderItem {
   override val highlighter: RangeHighlighter
   override var foldRegion: CustomFoldRegion? = null
     private set
@@ -83,7 +98,8 @@ internal class DocRenderItemImpl(override val editor: Editor,
       }
       val offsets = ItemLocation(highlighter)
       val foldingTask = Runnable {
-        foldRegion = foldingModel.addCustomLinesFolding(offsets.foldStartLine, offsets.foldEndLine, DocRenderer(this))
+        foldRegion = foldingModel.addCustomLinesFolding(offsets.foldStartLine, offsets.foldEndLine, docRendererFactory(this))
+        foldRegion?.isDocRenderImplFolding = true
       }
       foldingTasks?.add(foldingTask) ?: foldingModel.runBatchFoldingOperation(foldingTask, true, false)
     }
@@ -118,19 +134,9 @@ internal class DocRenderItemImpl(override val editor: Editor,
       }.submit(AppExecutorUtil.getAppExecutorService())
   }
 
-  override fun getInlineDocumentation(): InlineDocumentation? {
-    if (highlighter.isValid) {
-      val psiDocumentManager = PsiDocumentManager.getInstance(editor.project ?: return null)
-      val file = psiDocumentManager.getPsiFile(editor.document) ?: return null
-      return findInlineDocumentation(file, highlighter.textRange)
-    }
-    return null
-  }
+  override fun getInlineDocumentation() = inlineDocumentationFinder?.getInlineDocumentation(this)
 
-  override fun getInlineDocumentationTarget(): DocumentationTarget? {
-    val documentation = getInlineDocumentation()
-    return documentation?.ownerTarget
-  }
+  override fun getInlineDocumentationTarget() = inlineDocumentationFinder?.getInlineDocumentationTarget(this)
 
   fun updateIcon(foldingTasks: List<Runnable>?) {
     val iconEnabled = DocRenderDummyLineMarkerProvider.isGutterIconEnabled()
@@ -234,7 +240,8 @@ internal class DocRenderItemImpl(override val editor: Editor,
     @JvmStatic
     fun createDemoRenderer(editor: Editor): CustomFoldRegionRenderer {
       val item = DocRenderItemImpl(editor, TextRange(0, 0), CodeInsightBundle.message(
-        "documentation.rendered.documentation.with.href.link"))
+        "documentation.rendered.documentation.with.href.link"), { DocRenderer(it) },
+                                   InlineDocumentationFinder.getInstance(editor.project ?: ProjectManager.getInstance().defaultProject))
       return DocRenderer(item, DocRenderDefaultLinkActivationHandler)
     }
   }
