@@ -33,40 +33,27 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
     val trustLabel = IdeBundle.message("external.link.confirmation.trust.label")
     val noLabel = CommonBundle.getCancelButtonText()
     val answer = MessageDialogBuilder
-      .Message(
-        title = IdeBundle.message("external.link.confirmation.title"),
-        message = IdeBundle.message("external.link.confirmation.message.0", uri),
-      )
+      .Message(title = IdeBundle.message("external.link.confirmation.title"), message = IdeBundle.message("external.link.confirmation.message.0", uri))
       .asWarning()
       .buttons(yesLabel, trustLabel, noLabel)
       .defaultButton(yesLabel)
       .focusedButton(trustLabel)
       .show(project)
     when (answer) {
-      yesLabel -> {
-        return true
-      }
-      trustLabel -> {
-        project.setTrusted(true)
-        return true
-      }
-      else -> {
-        return false
-      }
+      yesLabel -> return true
+      trustLabel -> { project.setTrusted(true); return true }
+      else -> return false
     }
   }
 
   override fun signUrl(url: String): String {
-    @Suppress("NAME_SHADOWING")
-    var url = url
-    val serverManager = BuiltInServerManager.getInstance()
     val parsedUrl = Urls.parse(url, false)
+    val serverManager = BuiltInServerManager.getInstance()
     if (parsedUrl != null && serverManager.isOnBuiltInWebServer(parsedUrl)) {
       if (Registry.`is`("ide.built.in.web.server.activatable", false)) {
         PropertiesComponent.getInstance().setValue("ide.built.in.web.server.active", true)
       }
-
-      url = serverManager.addAuthToken(parsedUrl).toExternalForm()
+      return serverManager.addAuthToken(parsedUrl).toExternalForm()
     }
     return url
   }
