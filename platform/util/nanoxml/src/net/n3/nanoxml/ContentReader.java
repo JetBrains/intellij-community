@@ -40,8 +40,7 @@ import java.io.Reader;
  * @author Marc De Scheemaecker
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.4 $
  */
-final class ContentReader
-  extends Reader {
+final class ContentReader extends Reader {
 
   /**
    * The encapsulated reader.
@@ -53,18 +52,14 @@ final class ContentReader
    * Buffer.
    */
   private final String buffer;
-
-
-  /**
-   * Pointer into the buffer.
-   */
-  private int bufferIndex;
-
-
   /**
    * The entity resolver.
    */
   private final IXMLEntityResolver resolver;
+  /**
+   * Pointer into the buffer.
+   */
+  private int bufferIndex;
 
 
   /**
@@ -74,9 +69,7 @@ final class ContentReader
    * @param resolver the entity resolver
    * @param buffer   data that has already been read from <code>reader</code>
    */
-  ContentReader(StdXMLReader reader,
-                IXMLEntityResolver resolver,
-                String buffer) {
+  ContentReader(StdXMLReader reader, IXMLEntityResolver resolver, String buffer) {
     this.reader = reader;
     this.resolver = resolver;
     this.buffer = buffer;
@@ -94,10 +87,7 @@ final class ContentReader
    * @throws IOException if an error occurred reading the data
    */
   @Override
-  public int read(char[] outputBuffer,
-                  int offset,
-                  int size)
-    throws IOException {
+  public int read(char[] outputBuffer, int offset, int size) throws IOException {
     try {
       int charsRead = 0;
       int bufferLength = buffer.length();
@@ -154,13 +144,12 @@ final class ContentReader
 
 
   /**
-   * Skips remaining data and closes the stream.
+   * Skips the remaining data and closes the stream.
    *
    * @throws IOException if an error occurred reading the data
    */
   @Override
-  public void close()
-    throws IOException {
+  public void close() throws IOException {
     try {
       int bufferLength = buffer.length();
 
@@ -174,7 +163,7 @@ final class ContentReader
         }
         else {
           bufferIndex++;
-          continue; // don't interprete chars in the buffer
+          continue; // don't interpret chars in the buffer
         }
 
         if (ch == '<') {

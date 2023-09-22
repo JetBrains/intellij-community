@@ -76,26 +76,6 @@ public class NonValidator implements IXMLValidator {
   }
 
   /**
-   * Returns the parameter entity resolver.
-   *
-   * @return the entity resolver.
-   */
-  @Override
-  public IXMLEntityResolver getParameterEntityResolver() {
-    return parameterEntityResolver;
-  }
-
-  /**
-   * Sets the parameter entity resolver.
-   *
-   * @param resolver the entity resolver.
-   */
-  @Override
-  public void setParameterEntityResolver(IXMLEntityResolver resolver) {
-    parameterEntityResolver = resolver;
-  }
-
-  /**
    * Parses the DTD. The validator object is responsible for reading the
    * full DTD.
    *

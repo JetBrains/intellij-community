@@ -40,13 +40,12 @@ import java.io.Reader;
  * @author Marc De Scheemaecker
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.3 $
  */
-final class CDATAReader
-  extends Reader {
+final class CDATAReader extends Reader {
 
   /**
    * The encapsulated reader.
    */
-  private StdXMLReader reader;
+  private final StdXMLReader reader;
 
 
   /**
@@ -74,17 +73,6 @@ final class CDATAReader
 
 
   /**
-   * Cleans up the object when it's destroyed.
-   */
-  @Override
-  protected void finalize()
-    throws Throwable {
-    reader = null;
-    super.finalize();
-  }
-
-
-  /**
    * Reads a block of data.
    *
    * @param buffer where to put the read data
@@ -94,10 +82,7 @@ final class CDATAReader
    * @throws IOException if an error occurred reading the data
    */
   @Override
-  public int read(char[] buffer,
-                  int offset,
-                  int size)
-    throws IOException {
+  public int read(char[] buffer, int offset, int size) throws IOException {
     int charsRead = 0;
 
     if (atEndOfData) {
@@ -154,8 +139,7 @@ final class CDATAReader
    * @throws IOException if an error occurred reading the data
    */
   @Override
-  public void close()
-    throws IOException {
+  public void close() throws IOException {
     while (!atEndOfData) {
       char ch = savedChar;
 

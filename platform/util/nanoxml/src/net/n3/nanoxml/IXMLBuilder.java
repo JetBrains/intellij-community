@@ -55,9 +55,7 @@ public interface IXMLBuilder {
    * @param lineNr   the line on which the parsing starts.
    * @throws Exception If an exception occurred while processing the event.
    */
-  void startBuilding(String systemID,
-                     int lineNr)
-    throws Exception;
+  void startBuilding(String systemID, int lineNr) throws Exception;
 
 
   /**
@@ -70,9 +68,7 @@ public interface IXMLBuilder {
    *               data and you cannot read too much data.
    * @throws Exception If an exception occurred while processing the event.
    */
-  void newProcessingInstruction(String target,
-                                Reader reader)
-    throws Exception;
+  void newProcessingInstruction(String target, Reader reader) throws Exception;
 
 
   /**
@@ -89,12 +85,7 @@ public interface IXMLBuilder {
    * @throws Exception If an exception occurred while processing the event.
    * @see #endElement
    */
-  void startElement(String name,
-                    String nsPrefix,
-                    String nsURI,
-                    String systemID,
-                    int lineNr)
-    throws Exception;
+  void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception;
 
 
   /**
@@ -112,12 +103,7 @@ public interface IXMLBuilder {
    *                 "CDATA" is returned.
    * @throws Exception If an exception occurred while processing the event.
    */
-  void addAttribute(String key,
-                    String nsPrefix,
-                    String nsURI,
-                    String value,
-                    String type)
-    throws Exception;
+  void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception;
 
 
   /**
@@ -134,10 +120,7 @@ public interface IXMLBuilder {
    * @see #startElement
    * @see #addAttribute
    */
-  void elementAttributesProcessed(String name,
-                                  String nsPrefix,
-                                  String nsURI)
-    throws Exception;
+  void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception;
 
 
   /**
@@ -152,10 +135,7 @@ public interface IXMLBuilder {
    * @throws Exception If an exception occurred while processing the event.
    * @see #startElement
    */
-  void endElement(String name,
-                  String nsPrefix,
-                  String nsURI)
-    throws Exception;
+  void endElement(String name, String nsPrefix, String nsURI) throws Exception;
 
 
   /**
@@ -173,10 +153,7 @@ public interface IXMLBuilder {
    * @param lineNr   the line in the source where the element starts.
    * @throws Exception If an exception occurred while processing the event.
    */
-  void addPCData(Reader reader,
-                 String systemID,
-                 int lineNr)
-    throws Exception;
+  void addPCData(Reader reader, String systemID, int lineNr) throws Exception;
 
 
   /**
@@ -185,8 +162,6 @@ public interface IXMLBuilder {
    *
    * @return the result of the building process.
    * @throws Exception If an exception occurred while processing the event.
-   * @see IXMLParser#parse
    */
-  Object getResult()
-    throws Exception;
+  Object getResult() throws Exception;
 }

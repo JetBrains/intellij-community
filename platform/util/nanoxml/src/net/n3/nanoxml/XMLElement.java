@@ -165,15 +165,6 @@ public final class XMLElement implements IXMLElement, Serializable {
 
 
   /**
-   * Creates an element to be used for #PCDATA content.
-   */
-  @Override
-  public IXMLElement createPCDataElement() {
-    return new XMLElement();
-  }
-
-
-  /**
    * Creates an empty element.
    *
    * @param fullName the name of the element.
@@ -369,17 +360,6 @@ public final class XMLElement implements IXMLElement, Serializable {
 
 
   /**
-   * Returns an enumeration of all child elements.
-   *
-   * @return the non-null enumeration
-   */
-  @Override
-  public Enumeration enumerateChildren() {
-    return children.elements();
-  }
-
-
-  /**
    * Returns whether the element is a leaf element.
    *
    * @return true if the element has no children.
@@ -433,107 +413,6 @@ public final class XMLElement implements IXMLElement, Serializable {
   @Override
   public IXMLElement getChildAtIndex(int index) throws ArrayIndexOutOfBoundsException {
     return (IXMLElement)children.elementAt(index);
-  }
-
-
-  /**
-   * Searches a child element.
-   *
-   * @param name the full name of the child to search for.
-   * @return the child element, or null if no such child was found.
-   */
-  @Override
-  public IXMLElement getFirstChildNamed(String name) {
-    Enumeration enumeration = children.elements();
-    while (enumeration.hasMoreElements()) {
-      IXMLElement child = (IXMLElement)enumeration.nextElement();
-      String childName = child.getFullName();
-      if ((childName != null) && childName.equals(name)) {
-        return child;
-      }
-    }
-    return null;
-  }
-
-
-  /**
-   * Searches a child element.
-   *
-   * @param name      the name of the child to search for.
-   * @param namespace the namespace, which may be null.
-   * @return the child element, or null if no such child was found.
-   */
-  @Override
-  public IXMLElement getFirstChildNamed(String name, String namespace) {
-    Enumeration enumeration = children.elements();
-    while (enumeration.hasMoreElements()) {
-      IXMLElement child = (IXMLElement)enumeration.nextElement();
-      String str = child.getName();
-      boolean found = (str != null) && (str.equals(name));
-      str = child.getNamespace();
-      if (str == null) {
-        found &= (name == null);
-      }
-      else {
-        found &= str.equals(namespace);
-      }
-      if (found) {
-        return child;
-      }
-    }
-    return null;
-  }
-
-
-  /**
-   * Returns a vector of all child elements named <I>name</I>.
-   *
-   * @param name the full name of the children to search for.
-   * @return the non-null vector of child elements.
-   */
-  @Override
-  public Vector getChildrenNamed(String name) {
-    Vector result = new Vector(children.size());
-    Enumeration enumeration = children.elements();
-    while (enumeration.hasMoreElements()) {
-      IXMLElement child = (IXMLElement)enumeration.nextElement();
-      String childName = child.getFullName();
-      if ((childName != null) && childName.equals(name)) {
-        result.addElement(child);
-      }
-    }
-    return result;
-  }
-
-
-  /**
-   * Returns a vector of all child elements named <I>name</I>.
-   *
-   * @param name      the name of the children to search for.
-   * @param namespace the namespace, which may be null.
-   * @return the non-null vector of child elements.
-   */
-  @Override
-  public Vector getChildrenNamed(String name, String namespace) {
-    Vector result = new Vector(children.size());
-    Enumeration enumeration = children.elements();
-    while (enumeration.hasMoreElements()) {
-      IXMLElement child = (IXMLElement)enumeration.nextElement();
-      String str = child.getName();
-      boolean found = (str != null) && (str.equals(name));
-      str = child.getNamespace();
-      if (str == null) {
-        found &= (name == null);
-      }
-      else {
-        found &= str.equals(namespace);
-      }
-
-      if (found) {
-        result.addElement(child);
-      }
-    }
-    return result;
   }
 
 
@@ -692,24 +571,6 @@ public final class XMLElement implements IXMLElement, Serializable {
 
 
   /**
-   * Returns the namespace of an attribute.
-   *
-   * @param name the non-null full name of the attribute.
-   * @return the namespace, or null if there is none associated.
-   */
-  @Override
-  public String getAttributeNamespace(String name) {
-    XMLAttribute attr = findAttribute(name);
-    if (attr == null) {
-      return null;
-    }
-    else {
-      return attr.getNamespace();
-    }
-  }
-
-
-  /**
    * Returns the type of an attribute.
    *
    * @param name      the non-null name of the attribute.
@@ -813,23 +674,6 @@ public final class XMLElement implements IXMLElement, Serializable {
 
 
   /**
-   * Returns an enumeration of all attribute names.
-   *
-   * @return the non-null enumeration.
-   */
-  @Override
-  public Enumeration enumerateAttributeNames() {
-    Vector result = new Vector();
-    Enumeration enumeration = attributes.elements();
-    while (enumeration.hasMoreElements()) {
-      XMLAttribute attr = (XMLAttribute)enumeration.nextElement();
-      result.addElement(attr.getFullName());
-    }
-    return result.elements();
-  }
-
-
-  /**
    * Returns whether an attribute exists.
    *
    * @return true if the attribute exists.
@@ -863,33 +707,6 @@ public final class XMLElement implements IXMLElement, Serializable {
     while (enumeration.hasMoreElements()) {
       XMLAttribute attr = (XMLAttribute)enumeration.nextElement();
       result.setProperty(attr.getFullName(), attr.getValue());
-    }
-    return result;
-  }
-
-
-  /**
-   * Returns all attributes in a specific namespace as a Properties object.
-   *
-   * @param namespace the namespace URI of the attributes, which may be null.
-   * @return the non-null set.
-   */
-  @Override
-  public Properties getAttributesInNamespace(String namespace) {
-    Properties result = new Properties();
-    Enumeration enumeration = attributes.elements();
-    while (enumeration.hasMoreElements()) {
-      XMLAttribute attr = (XMLAttribute)enumeration.nextElement();
-      if (namespace == null) {
-        if (attr.getNamespace() == null) {
-          result.setProperty(attr.getName(), attr.getValue());
-        }
-      }
-      else {
-        if (namespace.equals(attr.getNamespace())) {
-          result.setProperty(attr.getName(), attr.getValue());
-        }
-      }
     }
     return result;
   }

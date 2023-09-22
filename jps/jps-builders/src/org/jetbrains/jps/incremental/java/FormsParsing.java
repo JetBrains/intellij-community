@@ -89,16 +89,6 @@ public final class FormsParsing {
     private IXMLEntityResolver myParameterEntityResolver;
 
     @Override
-    public void setParameterEntityResolver(IXMLEntityResolver resolver) {
-      myParameterEntityResolver = resolver;
-    }
-
-    @Override
-    public IXMLEntityResolver getParameterEntityResolver() {
-      return myParameterEntityResolver;
-    }
-
-    @Override
     public void parseDTD(String publicID, StdXMLReader reader, IXMLEntityResolver entityResolver, boolean external) throws Exception {
       if (!external) {
         //super.parseDTD(publicID, reader, entityResolver, external);

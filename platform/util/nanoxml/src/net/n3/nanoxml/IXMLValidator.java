@@ -25,12 +25,9 @@
  *
  *  3. This notice may not be removed or altered from any source distribution.
  */
-
 package net.n3.nanoxml;
 
-
 import java.util.Properties;
-
 
 /**
  * IXMLValidator processes the DTD and handles entity references.
@@ -39,21 +36,6 @@ import java.util.Properties;
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.3 $
  */
 public interface IXMLValidator {
-
-  /**
-   * Returns the parameter entity resolver.
-   *
-   * @return the entity resolver.
-   */
-  IXMLEntityResolver getParameterEntityResolver();
-
-  /**
-   * Sets the parameter entity resolver.
-   *
-   * @param resolver the entity resolver.
-   */
-  void setParameterEntityResolver(IXMLEntityResolver resolver);
-
   /**
    * Parses the DTD. The validator object is responsible for reading the
    * full DTD.
@@ -64,11 +46,7 @@ public interface IXMLValidator {
    * @param external       true if the DTD is external.
    * @throws Exception If something went wrong.
    */
-  void parseDTD(String publicID,
-                StdXMLReader reader,
-                IXMLEntityResolver entityResolver,
-                boolean external)
-    throws Exception;
+  void parseDTD(String publicID, StdXMLReader reader, IXMLEntityResolver entityResolver, boolean external) throws Exception;
 
 
   /**
@@ -79,10 +57,7 @@ public interface IXMLValidator {
    * @param lineNr   the line number in the XML data of the element.
    * @throws Exception If the element could not be validated.
    */
-  void elementStarted(String name,
-                      String systemId,
-                      int lineNr)
-    throws Exception;
+  void elementStarted(String name, String systemId, int lineNr) throws Exception;
 
 
   /**
@@ -93,10 +68,7 @@ public interface IXMLValidator {
    * @param lineNr   the line number in the XML data of the element.
    * @throws Exception If the element could not be validated.
    */
-  void elementEnded(String name,
-                    String systemId,
-                    int lineNr)
-    throws Exception;
+  void elementEnded(String name, String systemId, int lineNr) throws Exception;
 
 
   /**
@@ -108,11 +80,7 @@ public interface IXMLValidator {
    * @param lineNr   the line number in the XML data of the element.
    * @throws Exception If the attribute could not be validated.
    */
-  void attributeAdded(String key,
-                      String value,
-                      String systemId,
-                      int lineNr)
-    throws Exception;
+  void attributeAdded(String key, String value, String systemId, int lineNr) throws Exception;
 
 
   /**
@@ -127,11 +95,7 @@ public interface IXMLValidator {
    * @param lineNr          the line number in the XML data of the element.
    * @throws Exception if the element could not be validated.
    */
-  void elementAttributesProcessed(String name,
-                                  Properties extraAttributes,
-                                  String systemId,
-                                  int lineNr)
-    throws Exception;
+  void elementAttributesProcessed(String name, Properties extraAttributes, String systemId, int lineNr) throws Exception;
 
 
   /**
@@ -141,7 +105,5 @@ public interface IXMLValidator {
    * @param lineNr   the line number in the XML data of the element.
    * @throws Exception if the element could not be validated.
    */
-  void PCDataAdded(String systemId,
-                   int lineNr)
-    throws Exception;
+  void PCDataAdded(String systemId, int lineNr) throws Exception;
 }
