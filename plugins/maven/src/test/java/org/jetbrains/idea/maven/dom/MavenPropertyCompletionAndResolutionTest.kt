@@ -13,7 +13,6 @@ import com.intellij.psi.xml.XmlTag
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.dom.model.MavenDomProfiles
 import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel
@@ -1209,7 +1208,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
     }
     else {
       projectsManager.explicitProfiles = MavenExplicitProfiles(listOf(*profiles))
-      projectsManager.updateAllMavenProjects(MavenImportSpec(false, true, false))
+      updateAllProjects()
     }
   }
 
