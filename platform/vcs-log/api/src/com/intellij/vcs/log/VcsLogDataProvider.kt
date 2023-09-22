@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log;
+package com.intellij.vcs.log
 
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vfs.VirtualFile
 
 /**
  */
-public interface VcsLogDataProvider {
-
-  @Nullable
-  CommitId getCommitId(int commitIndex);
-
-  int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root);
+interface VcsLogDataProvider {
+  fun getCommitId(commitIndex: Int): CommitId?
+  fun getCommitIndex(hash: Hash, root: VirtualFile): Int
 }
