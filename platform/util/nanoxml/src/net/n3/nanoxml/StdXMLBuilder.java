@@ -72,8 +72,8 @@ public final class StdXMLBuilder implements IXMLBuilder {
    * @param prototype the prototype to use when building the tree.
    */
   public StdXMLBuilder(IXMLElement prototype) {
-    this.stack = null;
-    this.root = null;
+    stack = null;
+    root = null;
     this.prototype = prototype;
   }
 
@@ -85,8 +85,8 @@ public final class StdXMLBuilder implements IXMLBuilder {
    */
   @Override
   public void startBuilding(String systemID, int lineNr) {
-    this.stack = new Stack();
-    this.root = null;
+    stack = new Stack();
+    root = null;
   }
 
 
@@ -124,17 +124,17 @@ public final class StdXMLBuilder implements IXMLBuilder {
       fullName = nsPrefix + ':' + name;
     }
 
-    IXMLElement elt = this.prototype.createElement(fullName, nsURI, systemID, lineNr);
+    IXMLElement elt = prototype.createElement(fullName, nsURI, systemID, lineNr);
 
-    if (this.stack.empty()) {
-      this.root = elt;
+    if (stack.empty()) {
+      root = elt;
     }
     else {
-      IXMLElement top = (IXMLElement)this.stack.peek();
+      IXMLElement top = (IXMLElement)stack.peek();
       top.addChild(elt);
     }
 
-    this.stack.push(elt);
+    stack.push(elt);
   }
 
 
@@ -170,7 +170,7 @@ public final class StdXMLBuilder implements IXMLBuilder {
    */
   @Override
   public void endElement(String name, String nsPrefix, String nsURI) {
-    IXMLElement elt = (IXMLElement)this.stack.pop();
+    IXMLElement elt = (IXMLElement)stack.pop();
 
     if (elt.getChildrenCount() == 1) {
       IXMLElement child = elt.getChildAtIndex(0);
@@ -206,7 +206,7 @@ public final class StdXMLBuilder implements IXMLBuilder {
       fullName = nsPrefix + ':' + key;
     }
 
-    IXMLElement top = (IXMLElement)this.stack.peek();
+    IXMLElement top = (IXMLElement)stack.peek();
 
     if (top.hasAttribute(fullName)) {
       throw new XMLParseException(top.getSystemID(), top.getLineNr(), "Duplicate attribute: " + key);
@@ -263,11 +263,11 @@ public final class StdXMLBuilder implements IXMLBuilder {
       sizeRead += size;
     }
 
-    IXMLElement elt = this.prototype.createElement(null, systemID, lineNr);
+    IXMLElement elt = prototype.createElement(null, systemID, lineNr);
     elt.setContent(str.toString());
 
-    if (!this.stack.empty()) {
-      IXMLElement top = (IXMLElement)this.stack.peek();
+    if (!stack.empty()) {
+      IXMLElement top = (IXMLElement)stack.peek();
       top.addChild(elt);
     }
   }
@@ -282,6 +282,6 @@ public final class StdXMLBuilder implements IXMLBuilder {
    */
   @Override
   public Object getResult() {
-    return this.root;
+    return root;
   }
 }

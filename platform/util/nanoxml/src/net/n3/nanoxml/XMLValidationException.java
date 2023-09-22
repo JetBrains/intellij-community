@@ -137,7 +137,7 @@ public final class XMLValidationException extends XMLException {
    * If there is no current element, null is returned.
    */
   public String getElementName() {
-    return this.elementName;
+    return elementName;
   }
 
 
@@ -146,7 +146,7 @@ public final class XMLValidationException extends XMLException {
    * If there is no current attribute, null is returned.
    */
   public String getAttributeName() {
-    return this.attributeName;
+    return attributeName;
   }
 
 
@@ -155,6 +155,6 @@ public final class XMLValidationException extends XMLException {
    * If there is no current attribute, null is returned.
    */
   public String getAttributeValue() {
-    return this.attributeValue;
+    return attributeValue;
   }
 }

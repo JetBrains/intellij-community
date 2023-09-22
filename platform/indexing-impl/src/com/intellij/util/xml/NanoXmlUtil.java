@@ -57,26 +57,21 @@ public final class NanoXmlUtil {
   }
 
   public static void parse(@NotNull IXMLReader r, @NotNull IXMLBuilder builder, @Nullable IXMLValidator validator) {
+    final StdXMLParser parser = XMLParserFactory.createDefaultXMLParser();
+    parser.setReader(r);
+    parser.setBuilder(builder);
+    parser.setValidator(validator == null ? new EmptyValidator() : validator);
+    parser.setResolver(new EmptyEntityResolver());
     try {
-      final StdXMLParser parser = XMLParserFactory.createDefaultXMLParser();
-      parser.setReader(r);
-      parser.setBuilder(builder);
-      parser.setValidator(validator == null ? new EmptyValidator() : validator);
-      parser.setResolver(new EmptyEntityResolver());
-      try {
-        parser.parse();
-      }
-      catch (ParserStoppedXmlException ignore) {
-      }
-      catch (XMLException e) {
-        if (e.getException() instanceof ProcessCanceledException) {
-          throw new ProcessCanceledException(e);
-        }
-        LOG.debug(e);
-      }
+      parser.parse();
     }
-    catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
-      LOG.error(e);
+    catch (ParserStoppedXmlException ignore) {
+    }
+    catch (XMLException e) {
+      if (e.getException() instanceof ProcessCanceledException) {
+        throw new ProcessCanceledException(e);
+      }
+      LOG.debug(e);
     }
   }
 

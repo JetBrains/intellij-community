@@ -34,7 +34,7 @@ package net.n3.nanoxml;
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.3 $
  */
 public final class XMLParserFactory {
-  public static StdXMLParser createDefaultXMLParser() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+  public static StdXMLParser createDefaultXMLParser() {
     IXMLBuilder builder = new StdXMLBuilder();
     StdXMLParser parser = new StdXMLParser();
     parser.setBuilder(builder);

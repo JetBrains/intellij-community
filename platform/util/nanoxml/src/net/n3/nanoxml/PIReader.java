@@ -40,8 +40,7 @@ import java.io.Reader;
  * @author Marc De Scheemaecker
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.3 $
  */
-final class PIReader
-  extends Reader {
+final class PIReader extends Reader {
 
   /**
    * The encapsulated reader.
@@ -62,7 +61,7 @@ final class PIReader
    */
   PIReader(IXMLReader reader) {
     this.reader = reader;
-    this.atEndOfData = false;
+    atEndOfData = false;
   }
 
   /**
@@ -75,11 +74,8 @@ final class PIReader
    * @throws IOException if an error occurred reading the data
    */
   @Override
-  public int read(char[] buffer,
-                  int offset,
-                  int size)
-    throws IOException {
-    if (this.atEndOfData) {
+  public int read(char[] buffer, int offset, int size) throws IOException {
+    if (atEndOfData) {
       return -1;
     }
 
@@ -90,17 +86,17 @@ final class PIReader
     }
 
     while (charsRead < size) {
-      char ch = this.reader.read();
+      char ch = reader.read();
 
       if (ch == '?') {
-        char ch2 = this.reader.read();
+        char ch2 = reader.read();
 
         if (ch2 == '>') {
-          this.atEndOfData = true;
+          atEndOfData = true;
           break;
         }
 
-        this.reader.unread(ch2);
+        reader.unread(ch2);
       }
 
       buffer[charsRead] = ch;
@@ -121,16 +117,15 @@ final class PIReader
    * @throws IOException if an error occurred reading the data
    */
   @Override
-  public void close()
-    throws IOException {
-    while (!this.atEndOfData) {
-      char ch = this.reader.read();
+  public void close() throws IOException {
+    while (!atEndOfData) {
+      char ch = reader.read();
 
       if (ch == '?') {
-        char ch2 = this.reader.read();
+        char ch2 = reader.read();
 
         if (ch2 == '>') {
-          this.atEndOfData = true;
+          atEndOfData = true;
         }
       }
     }

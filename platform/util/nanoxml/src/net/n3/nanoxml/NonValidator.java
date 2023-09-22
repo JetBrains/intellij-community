@@ -70,9 +70,9 @@ public class NonValidator implements IXMLValidator {
    * Creates the &quot;validator&quot;.
    */
   public NonValidator() {
-    this.attributeDefaultValues = new Hashtable();
-    this.currentElements = new Stack();
-    this.parameterEntityResolver = new XMLEntityResolver();
+    attributeDefaultValues = new Hashtable();
+    currentElements = new Stack();
+    parameterEntityResolver = new XMLEntityResolver();
   }
 
   /**
@@ -82,7 +82,7 @@ public class NonValidator implements IXMLValidator {
    */
   @Override
   public IXMLEntityResolver getParameterEntityResolver() {
-    return this.parameterEntityResolver;
+    return parameterEntityResolver;
   }
 
   /**
@@ -92,7 +92,7 @@ public class NonValidator implements IXMLValidator {
    */
   @Override
   public void setParameterEntityResolver(IXMLEntityResolver resolver) {
-    this.parameterEntityResolver = resolver;
+    parameterEntityResolver = resolver;
   }
 
   /**
@@ -115,11 +115,11 @@ public class NonValidator implements IXMLValidator {
       char ch = str.charAt(0);
 
       if (ch == '%') {
-        XMLUtil.processEntity(str, reader, this.parameterEntityResolver);
+        XMLUtil.processEntity(str, reader, parameterEntityResolver);
         continue;
       }
       else if (ch == '<') {
-        this.processElement(reader, entityResolver);
+        processElement(reader, entityResolver);
       }
       else if (ch == ']') {
         return; // end internal DTD
@@ -168,15 +168,15 @@ public class NonValidator implements IXMLValidator {
         break;
 
       case '[':
-        this.processConditionalSection(reader, entityResolver);
+        processConditionalSection(reader, entityResolver);
         break;
 
       case 'E':
-        this.processEntity(reader, entityResolver);
+        processEntity(reader, entityResolver);
         break;
 
       case 'A':
-        this.processAttList(reader, entityResolver);
+        processAttList(reader, entityResolver);
         break;
 
       default:
@@ -208,7 +208,7 @@ public class NonValidator implements IXMLValidator {
 
     switch (ch) {
       case 'G':
-        this.processIgnoreSection(reader, entityResolver);
+        processIgnoreSection(reader, entityResolver);
         return;
 
       case 'N':
@@ -297,7 +297,7 @@ public class NonValidator implements IXMLValidator {
     String str = XMLUtil.read(reader, '%');
     char ch = str.charAt(0);
     while (ch == '%') {
-      XMLUtil.processEntity(str, reader, this.parameterEntityResolver);
+      XMLUtil.processEntity(str, reader, parameterEntityResolver);
       str = XMLUtil.read(reader, '%');
       ch = str.charAt(0);
     }
@@ -308,7 +308,7 @@ public class NonValidator implements IXMLValidator {
     str = XMLUtil.read(reader, '%');
     ch = str.charAt(0);
     while (ch == '%') {
-      XMLUtil.processEntity(str, reader, this.parameterEntityResolver);
+      XMLUtil.processEntity(str, reader, parameterEntityResolver);
       str = XMLUtil.read(reader, '%');
       ch = str.charAt(0);
     }
@@ -322,7 +322,7 @@ public class NonValidator implements IXMLValidator {
       str = XMLUtil.read(reader, '%');
       ch = str.charAt(0);
       while (ch == '%') {
-        XMLUtil.processEntity(str, reader, this.parameterEntityResolver);
+        XMLUtil.processEntity(str, reader, parameterEntityResolver);
         str = XMLUtil.read(reader, '%');
         ch = str.charAt(0);
       }
@@ -332,7 +332,7 @@ public class NonValidator implements IXMLValidator {
           str = XMLUtil.read(reader, '%');
           ch = str.charAt(0);
           while (ch == '%') {
-            XMLUtil.processEntity(str, reader, this.parameterEntityResolver);
+            XMLUtil.processEntity(str, reader, parameterEntityResolver);
             str = XMLUtil.read(reader, '%');
             ch = str.charAt(0);
           }
@@ -347,7 +347,7 @@ public class NonValidator implements IXMLValidator {
       str = XMLUtil.read(reader, '%');
       ch = str.charAt(0);
       while (ch == '%') {
-        XMLUtil.processEntity(str, reader, this.parameterEntityResolver);
+        XMLUtil.processEntity(str, reader, parameterEntityResolver);
         str = XMLUtil.read(reader, '%');
         ch = str.charAt(0);
       }
@@ -362,7 +362,7 @@ public class NonValidator implements IXMLValidator {
           str = XMLUtil.read(reader, '%');
           ch = str.charAt(0);
           while (ch == '%') {
-            XMLUtil.processEntity(str, reader, this.parameterEntityResolver);
+            XMLUtil.processEntity(str, reader, parameterEntityResolver);
             str = XMLUtil.read(reader, '%');
             ch = str.charAt(0);
           }
@@ -374,21 +374,21 @@ public class NonValidator implements IXMLValidator {
         reader.unread(ch);
       }
 
-      String value = XMLUtil.scanString(reader, '%', this.parameterEntityResolver);
+      String value = XMLUtil.scanString(reader, '%', parameterEntityResolver);
       props.setProperty(attName, value);
       XMLUtil.skipWhitespace(reader, null);
 
       str = XMLUtil.read(reader, '%');
       ch = str.charAt(0);
       while (ch == '%') {
-        XMLUtil.processEntity(str, reader, this.parameterEntityResolver);
+        XMLUtil.processEntity(str, reader, parameterEntityResolver);
         str = XMLUtil.read(reader, '%');
         ch = str.charAt(0);
       }
     }
 
     if (!props.isEmpty()) {
-      this.attributeDefaultValues.put(elementName, props);
+      attributeDefaultValues.put(elementName, props);
     }
   }
 
@@ -411,7 +411,7 @@ public class NonValidator implements IXMLValidator {
 
     if (ch == '%') {
       XMLUtil.skipWhitespace(reader, null);
-      entityResolver = this.parameterEntityResolver;
+      entityResolver = parameterEntityResolver;
     }
     else {
       reader.unread(ch);
@@ -431,9 +431,9 @@ public class NonValidator implements IXMLValidator {
         }
 
         XMLUtil.skipWhitespace(reader, null);
-        publicID = XMLUtil.scanString(reader, '%', this.parameterEntityResolver);
+        publicID = XMLUtil.scanString(reader, '%', parameterEntityResolver);
         XMLUtil.skipWhitespace(reader, null);
-        systemID = XMLUtil.scanString(reader, '%', this.parameterEntityResolver);
+        systemID = XMLUtil.scanString(reader, '%', parameterEntityResolver);
         XMLUtil.skipWhitespace(reader, null);
         XMLUtil.readChar(reader, '%');
         break;
@@ -445,7 +445,7 @@ public class NonValidator implements IXMLValidator {
         }
 
         XMLUtil.skipWhitespace(reader, null);
-        systemID = XMLUtil.scanString(reader, '%', this.parameterEntityResolver);
+        systemID = XMLUtil.scanString(reader, '%', parameterEntityResolver);
         XMLUtil.skipWhitespace(reader, null);
         XMLUtil.readChar(reader, '%');
         break;
@@ -453,7 +453,7 @@ public class NonValidator implements IXMLValidator {
       case '"':
       case '\'':
         reader.unread(ch);
-        String value = XMLUtil.scanString(reader, '%', this.parameterEntityResolver);
+        String value = XMLUtil.scanString(reader, '%', parameterEntityResolver);
         entityResolver.addInternalEntity(key, value);
         XMLUtil.skipWhitespace(reader, null);
         XMLUtil.readChar(reader, '%');
@@ -478,7 +478,7 @@ public class NonValidator implements IXMLValidator {
    */
   @Override
   public void elementStarted(String name, String systemId, int lineNr) {
-    Properties attribs = (Properties)this.attributeDefaultValues.get(name);
+    Properties attribs = (Properties)attributeDefaultValues.get(name);
 
     if (attribs == null) {
       attribs = new Properties();
@@ -487,7 +487,7 @@ public class NonValidator implements IXMLValidator {
       attribs = (Properties)attribs.clone();
     }
 
-    this.currentElements.push(attribs);
+    currentElements.push(attribs);
   }
 
 
@@ -517,7 +517,7 @@ public class NonValidator implements IXMLValidator {
    */
   @Override
   public void elementAttributesProcessed(String name, Properties extraAttributes, String systemId, int lineNr) {
-    Properties props = (Properties)this.currentElements.pop();
+    Properties props = (Properties)currentElements.pop();
     Enumeration enumeration = props.keys();
 
     while (enumeration.hasMoreElements()) {
@@ -537,7 +537,7 @@ public class NonValidator implements IXMLValidator {
    */
   @Override
   public void attributeAdded(String key, String value, String systemId, int lineNr) {
-    Properties props = (Properties)this.currentElements.peek();
+    Properties props = (Properties)currentElements.peek();
 
     props.remove(key);
   }

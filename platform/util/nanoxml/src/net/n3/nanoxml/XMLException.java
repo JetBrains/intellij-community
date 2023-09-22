@@ -128,7 +128,7 @@ public class XMLException extends Exception {
     super(buildMessage(systemID, lineNr, e, msg, reportParams));
     this.systemID = systemID;
     this.lineNr = lineNr;
-    this.encapsulatedException = e;
+    encapsulatedException = e;
     this.msg = buildMessage(systemID, lineNr, e, msg, reportParams);
   }
 
@@ -137,7 +137,7 @@ public class XMLException extends Exception {
    * If there is no system ID known, null is returned.
    */
   public String getSystemID() {
-    return this.systemID;
+    return systemID;
   }
 
   /**
@@ -145,7 +145,7 @@ public class XMLException extends Exception {
    * If there is no line number known, -1 is returned.
    */
   public int getLineNr() {
-    return this.lineNr;
+    return lineNr;
   }
 
   /**
@@ -153,7 +153,7 @@ public class XMLException extends Exception {
    * encapsulated.
    */
   public Exception getException() {
-    return this.encapsulatedException;
+    return encapsulatedException;
   }
 
   /**
@@ -165,9 +165,9 @@ public class XMLException extends Exception {
   public void printStackTrace(PrintWriter writer) {
     super.printStackTrace(writer);
 
-    if (this.encapsulatedException != null) {
+    if (encapsulatedException != null) {
       writer.println("*** Nested Exception:");
-      this.encapsulatedException.printStackTrace(writer);
+      encapsulatedException.printStackTrace(writer);
     }
   }
 
@@ -180,9 +180,9 @@ public class XMLException extends Exception {
   public void printStackTrace(PrintStream stream) {
     super.printStackTrace(stream);
 
-    if (this.encapsulatedException != null) {
+    if (encapsulatedException != null) {
       stream.println("*** Nested Exception:");
-      this.encapsulatedException.printStackTrace(stream);
+      encapsulatedException.printStackTrace(stream);
     }
   }
 
@@ -193,9 +193,9 @@ public class XMLException extends Exception {
   public void printStackTrace() {
     super.printStackTrace();
 
-    if (this.encapsulatedException != null) {
+    if (encapsulatedException != null) {
       System.err.println("*** Nested Exception:");
-      this.encapsulatedException.printStackTrace();
+      encapsulatedException.printStackTrace();
     }
   }
 
@@ -203,7 +203,7 @@ public class XMLException extends Exception {
    * Returns a string representation of the exception.
    */
   public String toString() {
-    return this.msg;
+    return msg;
   }
 
   /**

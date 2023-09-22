@@ -80,11 +80,11 @@ public class StdXMLReader implements IXMLReader {
       }
     }
 
-    this.currentReader = new StackedReader();
-    this.readers = new Stack();
-    Reader reader = this.openStream(publicID, systemIDasURL.toString());
-    this.currentReader.lineReader = new LineNumberReader(reader);
-    this.currentReader.pbReader = new PushbackReader(this.currentReader.lineReader, 2);
+    currentReader = new StackedReader();
+    readers = new Stack();
+    Reader reader = openStream(publicID, systemIDasURL.toString());
+    currentReader.lineReader = new LineNumberReader(reader);
+    currentReader.pbReader = new PushbackReader(currentReader.lineReader, 2);
   }
 
 
@@ -94,14 +94,14 @@ public class StdXMLReader implements IXMLReader {
    * @param reader the input for the XML data.
    */
   public StdXMLReader(Reader reader) {
-    this.currentReader = new StackedReader();
-    this.readers = new Stack();
-    this.currentReader.lineReader = new LineNumberReader(reader);
-    this.currentReader.pbReader = new PushbackReader(this.currentReader.lineReader, 2);
-    this.currentReader.publicId = "";
+    currentReader = new StackedReader();
+    readers = new Stack();
+    currentReader.lineReader = new LineNumberReader(reader);
+    currentReader.pbReader = new PushbackReader(currentReader.lineReader, 2);
+    currentReader.publicId = "";
 
     try {
-      this.currentReader.systemId = new URL("file:.");
+      currentReader.systemId = new URL("file:.");
     }
     catch (MalformedURLException e) {
       // never happens
@@ -118,21 +118,21 @@ public class StdXMLReader implements IXMLReader {
   public StdXMLReader(InputStream stream) throws IOException {
     PushbackInputStream pbstream = new PushbackInputStream(stream);
     StringBuffer charsRead = new StringBuffer();
-    Reader reader = this.stream2reader(stream, charsRead);
-    this.currentReader = new StackedReader();
-    this.readers = new Stack();
-    this.currentReader.lineReader = new LineNumberReader(reader);
-    this.currentReader.pbReader = new PushbackReader(this.currentReader.lineReader, 2);
-    this.currentReader.publicId = "";
+    Reader reader = stream2reader(stream, charsRead);
+    currentReader = new StackedReader();
+    readers = new Stack();
+    currentReader.lineReader = new LineNumberReader(reader);
+    currentReader.pbReader = new PushbackReader(currentReader.lineReader, 2);
+    currentReader.publicId = "";
 
     try {
-      this.currentReader.systemId = new URL("file:.");
+      currentReader.systemId = new URL("file:.");
     }
     catch (MalformedURLException e) {
       // never happens
     }
 
-    this.startNewStream(new StringReader(charsRead.toString()));
+    startNewStream(new StringReader(charsRead.toString()));
   }
 
   /**
@@ -232,7 +232,7 @@ public class StdXMLReader implements IXMLReader {
           charsRead.append((char)b);
         }
 
-        String encoding = this.getEncoding(charsRead.toString());
+        String encoding = getEncoding(charsRead.toString());
 
         if (encoding == null) {
           return new InputStreamReader(pbstream, StandardCharsets.UTF_8);
@@ -261,16 +261,16 @@ public class StdXMLReader implements IXMLReader {
    */
   @Override
   public char read() throws IOException {
-    int ch = this.currentReader.pbReader.read();
+    int ch = currentReader.pbReader.read();
 
     while (ch < 0) {
-      if (this.readers.empty()) {
+      if (readers.empty()) {
         throw new IOException("Unexpected EOF");
       }
 
-      this.currentReader.pbReader.close();
-      this.currentReader = (StackedReader)this.readers.pop();
-      ch = this.currentReader.pbReader.read();
+      currentReader.pbReader.close();
+      currentReader = (StackedReader)readers.pop();
+      ch = currentReader.pbReader.read();
     }
 
     return (char)ch;
@@ -284,13 +284,13 @@ public class StdXMLReader implements IXMLReader {
    */
   @Override
   public boolean atEOFOfCurrentStream() throws IOException {
-    int ch = this.currentReader.pbReader.read();
+    int ch = currentReader.pbReader.read();
 
     if (ch < 0) {
       return true;
     }
     else {
-      this.currentReader.pbReader.unread(ch);
+      currentReader.pbReader.unread(ch);
       return false;
     }
   }
@@ -302,19 +302,19 @@ public class StdXMLReader implements IXMLReader {
    */
   @Override
   public boolean atEOF() throws IOException {
-    int ch = this.currentReader.pbReader.read();
+    int ch = currentReader.pbReader.read();
 
     while (ch < 0) {
-      if (this.readers.empty()) {
+      if (readers.empty()) {
         return true;
       }
 
-      this.currentReader.pbReader.close();
-      this.currentReader = (StackedReader)this.readers.pop();
-      ch = this.currentReader.pbReader.read();
+      currentReader.pbReader.close();
+      currentReader = (StackedReader)readers.pop();
+      ch = currentReader.pbReader.read();
     }
 
-    this.currentReader.pbReader.unread(ch);
+    currentReader.pbReader.unread(ch);
     return false;
   }
 
@@ -326,7 +326,7 @@ public class StdXMLReader implements IXMLReader {
    */
   @Override
   public void unread(char ch) throws IOException {
-    this.currentReader.pbReader.unread(ch);
+    currentReader.pbReader.unread(ch);
   }
 
   /**
@@ -340,7 +340,7 @@ public class StdXMLReader implements IXMLReader {
    */
   @Override
   public Reader openStream(String publicID, String systemID) throws MalformedURLException, FileNotFoundException, IOException {
-    URL url = new URL(this.currentReader.systemId, systemID);
+    URL url = new URL(currentReader.systemId, systemID);
 
     if (url.getRef() != null) {
       String ref = url.getRef();
@@ -354,10 +354,10 @@ public class StdXMLReader implements IXMLReader {
       }
     }
 
-    this.currentReader.publicId = publicID;
-    this.currentReader.systemId = url;
+    currentReader.publicId = publicID;
+    currentReader.systemId = url;
     StringBuffer charsRead = new StringBuffer();
-    Reader reader = this.stream2reader(url.openStream(), charsRead);
+    Reader reader = stream2reader(url.openStream(), charsRead);
 
     if (charsRead.length() == 0) {
       return reader;
@@ -382,7 +382,7 @@ public class StdXMLReader implements IXMLReader {
    */
   @Override
   public void startNewStream(Reader reader) {
-    this.startNewStream(reader, false);
+    startNewStream(reader, false);
   }
 
   /**
@@ -396,21 +396,21 @@ public class StdXMLReader implements IXMLReader {
    */
   @Override
   public void startNewStream(Reader reader, boolean isInternalEntity) {
-    StackedReader oldReader = this.currentReader;
-    this.readers.push(this.currentReader);
-    this.currentReader = new StackedReader();
+    StackedReader oldReader = currentReader;
+    readers.push(currentReader);
+    currentReader = new StackedReader();
 
     if (isInternalEntity) {
-      this.currentReader.lineReader = null;
-      this.currentReader.pbReader = new PushbackReader(reader, 2);
+      currentReader.lineReader = null;
+      currentReader.pbReader = new PushbackReader(reader, 2);
     }
     else {
-      this.currentReader.lineReader = new LineNumberReader(reader);
-      this.currentReader.pbReader = new PushbackReader(this.currentReader.lineReader, 2);
+      currentReader.lineReader = new LineNumberReader(reader);
+      currentReader.pbReader = new PushbackReader(currentReader.lineReader, 2);
     }
 
-    this.currentReader.systemId = oldReader.systemId;
-    this.currentReader.publicId = oldReader.publicId;
+    currentReader.systemId = oldReader.systemId;
+    currentReader.publicId = oldReader.publicId;
   }
 
   /**
@@ -418,7 +418,7 @@ public class StdXMLReader implements IXMLReader {
    */
   @Override
   public int getStreamLevel() {
-    return this.readers.size();
+    return readers.size();
   }
 
   /**
@@ -426,8 +426,8 @@ public class StdXMLReader implements IXMLReader {
    */
   @Override
   public int getLineNr() {
-    if (this.currentReader.lineReader == null) {
-      StackedReader sr = (StackedReader)this.readers.peek();
+    if (currentReader.lineReader == null) {
+      StackedReader sr = (StackedReader)readers.peek();
 
       if (sr.lineReader == null) {
         return 0;
@@ -437,7 +437,7 @@ public class StdXMLReader implements IXMLReader {
       }
     }
 
-    return this.currentReader.lineReader.getLineNumber() + 1;
+    return currentReader.lineReader.getLineNumber() + 1;
   }
 
   /**
@@ -445,7 +445,7 @@ public class StdXMLReader implements IXMLReader {
    */
   @Override
   public String getSystemID() {
-    return this.currentReader.systemId.toString();
+    return currentReader.systemId.toString();
   }
 
   /**
@@ -456,7 +456,7 @@ public class StdXMLReader implements IXMLReader {
    */
   @Override
   public void setSystemID(String systemID) throws MalformedURLException {
-    this.currentReader.systemId = new URL(this.currentReader.systemId, systemID);
+    currentReader.systemId = new URL(currentReader.systemId, systemID);
   }
 
   /**
@@ -464,7 +464,7 @@ public class StdXMLReader implements IXMLReader {
    */
   @Override
   public String getPublicID() {
-    return this.currentReader.publicId;
+    return currentReader.publicId;
   }
 
   /**
@@ -474,7 +474,7 @@ public class StdXMLReader implements IXMLReader {
    */
   @Override
   public void setPublicID(String publicID) {
-    this.currentReader.publicId = publicID;
+    currentReader.publicId = publicID;
   }
 
   /**

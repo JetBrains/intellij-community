@@ -68,8 +68,8 @@ final class CDATAReader
    */
   CDATAReader(IXMLReader reader) {
     this.reader = reader;
-    this.savedChar = 0;
-    this.atEndOfData = false;
+    savedChar = 0;
+    atEndOfData = false;
   }
 
 
@@ -79,7 +79,7 @@ final class CDATAReader
   @Override
   protected void finalize()
     throws Throwable {
-    this.reader = null;
+    reader = null;
     super.finalize();
   }
 
@@ -100,7 +100,7 @@ final class CDATAReader
     throws IOException {
     int charsRead = 0;
 
-    if (this.atEndOfData) {
+    if (atEndOfData) {
       return -1;
     }
 
@@ -109,31 +109,31 @@ final class CDATAReader
     }
 
     while (charsRead < size) {
-      char ch = this.savedChar;
+      char ch = savedChar;
 
       if (ch == 0) {
-        ch = this.reader.read();
+        ch = reader.read();
       }
       else {
-        this.savedChar = 0;
+        savedChar = 0;
       }
 
       if (ch == ']') {
-        char ch2 = this.reader.read();
+        char ch2 = reader.read();
 
         if (ch2 == ']') {
-          char ch3 = this.reader.read();
+          char ch3 = reader.read();
 
           if (ch3 == '>') {
-            this.atEndOfData = true;
+            atEndOfData = true;
             break;
           }
 
-          this.savedChar = ch2;
-          this.reader.unread(ch3);
+          savedChar = ch2;
+          reader.unread(ch3);
         }
         else {
-          this.reader.unread(ch2);
+          reader.unread(ch2);
         }
       }
       buffer[charsRead] = ch;
@@ -156,35 +156,35 @@ final class CDATAReader
   @Override
   public void close()
     throws IOException {
-    while (!this.atEndOfData) {
-      char ch = this.savedChar;
+    while (!atEndOfData) {
+      char ch = savedChar;
 
       if (ch == 0) {
-        ch = this.reader.read();
+        ch = reader.read();
       }
       else {
-        this.savedChar = 0;
+        savedChar = 0;
       }
 
       if (ch == ']') {
-        char ch2 = this.reader.read();
+        char ch2 = reader.read();
 
         if (ch2 == ']') {
-          char ch3 = this.reader.read();
+          char ch3 = reader.read();
 
           if (ch3 == '>') {
             break;
           }
 
-          this.savedChar = ch2;
-          this.reader.unread(ch3);
+          savedChar = ch2;
+          reader.unread(ch3);
         }
         else {
-          this.reader.unread(ch2);
+          reader.unread(ch2);
         }
       }
     }
 
-    this.atEndOfData = true;
+    atEndOfData = true;
   }
 }

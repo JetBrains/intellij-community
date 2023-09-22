@@ -25,13 +25,10 @@
  *
  *  3. This notice may not be removed or altered from any source distribution.
  */
-
 package net.n3.nanoxml;
-
 
 import java.io.IOException;
 import java.io.Reader;
-
 
 /**
  * Utility methods for NanoXML.
@@ -40,7 +37,6 @@ import java.io.Reader;
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.5 $
  */
 final class XMLUtil {
-
   /**
    * Skips the remainder of a comment.
    * It is assumed that &lt;!- is already read.
@@ -48,13 +44,9 @@ final class XMLUtil {
    * @param reader the reader
    * @throws IOException if an error occurred reading the data
    */
-  static void skipComment(IXMLReader reader)
-    throws IOException,
-           XMLParseException {
+  static void skipComment(IXMLReader reader) throws IOException, XMLParseException {
     if (reader.read() != '-') {
-      errorExpectedInput(reader.getSystemID(),
-                         reader.getLineNr(),
-                         "<!--");
+      errorExpectedInput(reader.getSystemID(), reader.getLineNr(), "<!--");
     }
 
     int dashesRead = 0;
@@ -85,9 +77,7 @@ final class XMLUtil {
    * @param reader the reader
    * @throws IOException if an error occurred reading the data
    */
-  static void skipTag(IXMLReader reader)
-    throws IOException,
-           XMLParseException {
+  static void skipTag(IXMLReader reader) throws IOException {
     int level = 1;
 
     while (level > 0) {
@@ -114,10 +104,7 @@ final class XMLUtil {
    * @return the system ID
    * @throws IOException if an error occurred reading the data
    */
-  static String scanPublicID(StringBuffer publicID,
-                             IXMLReader reader)
-    throws IOException,
-           XMLParseException {
+  static String scanPublicID(StringBuffer publicID, IXMLReader reader) throws IOException, XMLParseException {
     if (!checkLiteral(reader, "UBLIC")) {
       return null;
     }
@@ -136,9 +123,7 @@ final class XMLUtil {
    * @return the system ID
    * @throws IOException if an error occurred reading the data
    */
-  static String scanSystemID(IXMLReader reader)
-    throws IOException,
-           XMLParseException {
+  static String scanSystemID(IXMLReader reader) throws IOException, XMLParseException {
     if (!checkLiteral(reader, "YSTEM")) {
       return null;
     }
@@ -154,18 +139,20 @@ final class XMLUtil {
    * @param reader the reader
    * @throws IOException if an error occurred reading the data
    */
-  static String scanIdentifier(IXMLReader reader)
-    throws IOException,
-           XMLParseException {
+  static String scanIdentifier(IXMLReader reader) throws IOException {
     StringBuffer result = new StringBuffer();
 
     for (; ; ) {
       char ch = reader.read();
 
-      if ((ch == '_') || (ch == ':') || (ch == '-') || (ch == '.')
-          || ((ch >= 'a') && (ch <= 'z'))
-          || ((ch >= 'A') && (ch <= 'Z'))
-          || ((ch >= '0') && (ch <= '9')) || (ch > '\u007E')) {
+      if ((ch == '_') ||
+          (ch == ':') ||
+          (ch == '-') ||
+          (ch == '.') ||
+          ((ch >= 'a') && (ch <= 'z')) ||
+          ((ch >= 'A') && (ch <= 'Z')) ||
+          ((ch >= '0') && (ch <= '9')) ||
+          (ch > '\u007E')) {
         result.append(ch);
       }
       else {
@@ -186,19 +173,13 @@ final class XMLUtil {
    * @param entityResolver the entity resolver
    * @throws IOException if an error occurred reading the data
    */
-  static String scanString(IXMLReader reader,
-                           char entityChar,
-                           IXMLEntityResolver entityResolver)
-    throws IOException,
-           XMLParseException {
+  static String scanString(IXMLReader reader, char entityChar, IXMLEntityResolver entityResolver) throws IOException, XMLParseException {
     StringBuffer result = new StringBuffer();
     int startingLevel = reader.getStreamLevel();
     char delim = reader.read();
 
     if ((delim != '\'') && (delim != '"')) {
-      errorExpectedInput(reader.getSystemID(),
-                         reader.getLineNr(),
-                         "delimited string");
+      errorExpectedInput(reader.getSystemID(), reader.getLineNr(), "delimited string");
     }
 
     for (; ; ) {
@@ -249,20 +230,13 @@ final class XMLUtil {
    * @param entity         the entity
    * @param reader         the reader
    * @param entityResolver the entity resolver
-   * @throws IOException if an error occurred reading the data
    */
-  static void processEntity(String entity,
-                            IXMLReader reader,
-                            IXMLEntityResolver entityResolver)
-    throws IOException,
-           XMLParseException {
+  static void processEntity(String entity, IXMLReader reader, IXMLEntityResolver entityResolver) throws XMLParseException {
     entity = entity.substring(1, entity.length() - 1);
     Reader entityReader = entityResolver.getEntity(reader, entity);
 
     if (entityReader == null) {
-      errorInvalidEntity(reader.getSystemID(),
-                         reader.getLineNr(),
-                         entity);
+      errorInvalidEntity(reader.getSystemID(), reader.getLineNr(), entity);
     }
 
     boolean externalEntity = entityResolver.isExternalEntity(entity);
@@ -274,11 +248,8 @@ final class XMLUtil {
    * Processes a character literal.
    *
    * @param entity the entity
-   * @throws IOException if an error occurred reading the data
    */
-  static char processCharLiteral(String entity)
-    throws IOException,
-           XMLParseException {
+  static char processCharLiteral(String entity) {
     if (entity.charAt(2) == 'x') {
       entity = entity.substring(3, entity.length() - 1);
       return (char)Integer.parseInt(entity, 16);
@@ -298,9 +269,7 @@ final class XMLUtil {
    *               whitespace does not have to be stored.
    * @throws IOException if an error occurred reading the data
    */
-  static void skipWhitespace(IXMLReader reader,
-                             StringBuffer buffer)
-    throws IOException {
+  static void skipWhitespace(IXMLReader reader, StringBuffer buffer) throws IOException {
     char ch;
 
     if (buffer == null) {
@@ -339,10 +308,7 @@ final class XMLUtil {
    * @return the character, or an entity expression (like e.g. &amp;lt;)
    * @throws IOException if an error occurred reading the data
    */
-  static String read(IXMLReader reader,
-                     char entityChar)
-    throws IOException,
-           XMLParseException {
+  static String read(IXMLReader reader, char entityChar) throws IOException {
     char ch = reader.read();
     StringBuffer buf = new StringBuffer();
     buf.append(ch);
@@ -365,17 +331,12 @@ final class XMLUtil {
    * @param entityChar the escape character (&amp; or %) used to indicate
    *                   an entity
    */
-  static char readChar(IXMLReader reader,
-                       char entityChar)
-    throws IOException,
-           XMLParseException {
+  static char readChar(IXMLReader reader, char entityChar) throws IOException, XMLParseException {
     String str = read(reader, entityChar);
     char ch = str.charAt(0);
 
     if (ch == entityChar) {
-      errorUnexpectedEntity(reader.getSystemID(),
-                            reader.getLineNr(),
-                            str);
+      errorUnexpectedEntity(reader.getSystemID(), reader.getLineNr(), str);
     }
 
     return ch;
@@ -390,10 +351,7 @@ final class XMLUtil {
    * @param literal the literal to check
    * @throws IOException if an error occurred reading the data
    */
-  static boolean checkLiteral(IXMLReader reader,
-                              String literal)
-    throws IOException,
-           XMLParseException {
+  static boolean checkLiteral(IXMLReader reader, String literal) throws IOException {
     for (int i = 0; i < literal.length(); i++) {
       if (reader.read() != literal.charAt(i)) {
         return false;
@@ -412,12 +370,8 @@ final class XMLUtil {
    * @param lineNr         the line number in the data source
    * @param expectedString the string that is expected
    */
-  static void errorExpectedInput(String systemID,
-                                 int lineNr,
-                                 String expectedString)
-    throws XMLParseException {
-    throw new XMLParseException(systemID, lineNr,
-                                "Expected: " + expectedString);
+  static void errorExpectedInput(String systemID, int lineNr, String expectedString) throws XMLParseException {
+    throw new XMLParseException(systemID, lineNr, "Expected: " + expectedString);
   }
 
 
@@ -429,12 +383,8 @@ final class XMLUtil {
    * @param lineNr   the line number in the data source
    * @param entity   the name of the entity
    */
-  static void errorInvalidEntity(String systemID,
-                                 int lineNr,
-                                 String entity)
-    throws XMLParseException {
-    throw new XMLParseException(systemID, lineNr,
-                                "Invalid entity: `&" + entity + ";'");
+  static void errorInvalidEntity(String systemID, int lineNr, String entity) throws XMLParseException {
+    throw new XMLParseException(systemID, lineNr, "Invalid entity: `&" + entity + ";'");
   }
 
 
@@ -446,13 +396,8 @@ final class XMLUtil {
    * @param lineNr   the line number in the data source
    * @param entity   the name of the entity
    */
-  static void errorUnexpectedEntity(String systemID,
-                                    int lineNr,
-                                    String entity)
-    throws XMLParseException {
-    throw new XMLParseException(systemID, lineNr,
-                                "No entity reference is expected here ("
-                                + entity + ")");
+  static void errorUnexpectedEntity(String systemID, int lineNr, String entity) throws XMLParseException {
+    throw new XMLParseException(systemID, lineNr, "No entity reference is expected here (" + entity + ")");
   }
 
 
@@ -463,11 +408,8 @@ final class XMLUtil {
    * @param systemID the system ID of the data source
    * @param lineNr   the line number in the data source
    */
-  static void errorUnexpectedCDATA(String systemID,
-                                   int lineNr)
-    throws XMLParseException {
-    throw new XMLParseException(systemID, lineNr,
-                                "No CDATA section is expected here");
+  static void errorUnexpectedCDATA(String systemID, int lineNr) throws XMLParseException {
+    throw new XMLParseException(systemID, lineNr, "No CDATA section is expected here");
   }
 
 
@@ -479,12 +421,8 @@ final class XMLUtil {
    * @param lineNr           the line number in the data source
    * @param unexpectedString the string that is unexpected
    */
-  static void errorInvalidInput(String systemID,
-                                int lineNr,
-                                String unexpectedString)
-    throws XMLParseException {
-    throw new XMLParseException(systemID, lineNr,
-                                "Invalid input: " + unexpectedString);
+  static void errorInvalidInput(String systemID, int lineNr, String unexpectedString) throws XMLParseException {
+    throw new XMLParseException(systemID, lineNr, "Invalid input: " + unexpectedString);
   }
 
 
@@ -497,15 +435,8 @@ final class XMLUtil {
    * @param expectedName the name of the opening tag
    * @param wrongName    the name of the closing tag
    */
-  static void errorWrongClosingTag(String systemID,
-                                   int lineNr,
-                                   String expectedName,
-                                   String wrongName)
-    throws XMLParseException {
-    throw new XMLParseException(systemID, lineNr,
-                                "Closing tag does not match opening tag: `"
-                                + wrongName + "' != `" + expectedName
-                                + "'");
+  static void errorWrongClosingTag(String systemID, int lineNr, String expectedName, String wrongName) throws XMLParseException {
+    throw new XMLParseException(systemID, lineNr, "Closing tag does not match opening tag: `" + wrongName + "' != `" + expectedName + "'");
   }
 
 
@@ -516,205 +447,7 @@ final class XMLUtil {
    * @param systemID the system ID of the data source
    * @param lineNr   the line number in the data source
    */
-  static void errorClosingTagNotEmpty(String systemID,
-                                      int lineNr)
-    throws XMLParseException {
-    throw new XMLParseException(systemID, lineNr,
-                                "Closing tag must be empty");
-  }
-
-
-  /**
-   * Throws an XMLValidationException to indicate that an element is missing.
-   *
-   * @param systemID           the system ID of the data source
-   * @param lineNr             the line number in the data source
-   * @param parentElementName  the name of the parent element
-   * @param missingElementName the name of the missing element
-   */
-  static void errorMissingElement(String systemID,
-                                  int lineNr,
-                                  String parentElementName,
-                                  String missingElementName)
-    throws XMLValidationException {
-    throw new XMLValidationException(
-      XMLValidationException.MISSING_ELEMENT,
-      systemID, lineNr,
-      missingElementName,
-      /*attributeName*/ null,
-      /*attributeValue*/ null,
-      "Element " + parentElementName
-      + " expects to have a " + missingElementName);
-  }
-
-
-  /**
-   * Throws an XMLValidationException to indicate that an element is
-   * unexpected.
-   *
-   * @param systemID              the system ID of the data source
-   * @param lineNr                the line number in the data source
-   * @param parentElementName     the name of the parent element
-   * @param unexpectedElementName the name of the unexpected element
-   */
-  static void errorUnexpectedElement(String systemID,
-                                     int lineNr,
-                                     String parentElementName,
-                                     String unexpectedElementName)
-    throws XMLValidationException {
-    throw new XMLValidationException(
-      XMLValidationException.UNEXPECTED_ELEMENT,
-      systemID, lineNr,
-      unexpectedElementName,
-      /*attributeName*/ null,
-      /*attributeValue*/ null,
-      "Unexpected " + unexpectedElementName + " in a "
-      + parentElementName);
-  }
-
-
-  /**
-   * Throws an XMLValidationException to indicate that an attribute is
-   * missing.
-   *
-   * @param systemID      the system ID of the data source
-   * @param lineNr        the line number in the data source
-   * @param elementName   the name of the element
-   * @param attributeName the name of the missing attribute
-   */
-  static void errorMissingAttribute(String systemID,
-                                    int lineNr,
-                                    String elementName,
-                                    String attributeName)
-    throws XMLValidationException {
-    throw new XMLValidationException(
-      XMLValidationException.MISSING_ATTRIBUTE,
-      systemID, lineNr,
-      elementName,
-      attributeName,
-      /*attributeValue*/ null,
-      "Element " + elementName + " expects an attribute named "
-      + attributeName);
-  }
-
-
-  /**
-   * Throws an XMLValidationException to indicate that an attribute is
-   * unexpected.
-   *
-   * @param systemID      the system ID of the data source
-   * @param lineNr        the line number in the data source
-   * @param elementName   the name of the element
-   * @param attributeName the name of the unexpected attribute
-   */
-  static void errorUnexpectedAttribute(String systemID,
-                                       int lineNr,
-                                       String elementName,
-                                       String attributeName)
-    throws XMLValidationException {
-    throw new XMLValidationException(
-      XMLValidationException.UNEXPECTED_ATTRIBUTE,
-      systemID, lineNr,
-      elementName,
-      attributeName,
-      /*attributeValue*/ null,
-      "Element " + elementName + " did not expect an attribute "
-      + "named " + attributeName);
-  }
-
-
-  /**
-   * Throws an XMLValidationException to indicate that an attribute has an
-   * invalid value.
-   *
-   * @param systemID       the system ID of the data source
-   * @param lineNr         the line number in the data source
-   * @param elementName    the name of the element
-   * @param attributeName  the name of the attribute
-   * @param attributeValue the value of that attribute
-   */
-  static void errorInvalidAttributeValue(String systemID,
-                                         int lineNr,
-                                         String elementName,
-                                         String attributeName,
-                                         String attributeValue)
-    throws XMLValidationException {
-    throw new XMLValidationException(
-      XMLValidationException.ATTRIBUTE_WITH_INVALID_VALUE,
-      systemID, lineNr,
-      elementName,
-      attributeName,
-      attributeValue,
-      "Invalid value for attribute " + attributeName);
-  }
-
-
-  /**
-   * Throws an XMLValidationException to indicate that a #PCDATA element was
-   * missing.
-   *
-   * @param systemID          the system ID of the data source
-   * @param lineNr            the line number in the data source
-   * @param parentElementName the name of the parent element
-   */
-  static void errorMissingPCData(String systemID,
-                                 int lineNr,
-                                 String parentElementName)
-    throws XMLValidationException {
-    throw new XMLValidationException(
-      XMLValidationException.MISSING_PCDATA,
-      systemID, lineNr,
-      /*elementName*/ null,
-      /*attributeName*/ null,
-      /*attributeValue*/ null,
-      "Missing #PCDATA in element " + parentElementName);
-  }
-
-
-  /**
-   * Throws an XMLValidationException to indicate that a #PCDATA element was
-   * unexpected.
-   *
-   * @param systemID          the system ID of the data source
-   * @param lineNr            the line number in the data source
-   * @param parentElementName the name of the parent element
-   */
-  static void errorUnexpectedPCData(String systemID,
-                                    int lineNr,
-                                    String parentElementName)
-    throws XMLValidationException {
-    throw new XMLValidationException(
-      XMLValidationException.UNEXPECTED_PCDATA,
-      systemID, lineNr,
-      /*elementName*/ null,
-      /*attributeName*/ null,
-      /*attributeValue*/ null,
-      "Unexpected #PCDATA in element " + parentElementName);
-  }
-
-
-  /**
-   * Throws an XMLValidationException.
-   *
-   * @param systemID       the system ID of the data source
-   * @param lineNr         the line number in the data source
-   * @param message        the error message
-   * @param elementName    the name of the element
-   * @param attributeName  the name of the attribute
-   * @param attributeValue the value of that attribute
-   */
-  static void validationError(String systemID,
-                              int lineNr,
-                              String message,
-                              String elementName,
-                              String attributeName,
-                              String attributeValue)
-    throws XMLValidationException {
-    throw new XMLValidationException(XMLValidationException.MISC_ERROR,
-                                     systemID, lineNr,
-                                     elementName,
-                                     attributeName,
-                                     attributeValue,
-                                     message);
+  static void errorClosingTagNotEmpty(String systemID, int lineNr) throws XMLParseException {
+    throw new XMLParseException(systemID, lineNr, "Closing tag must be empty");
   }
 }

@@ -52,12 +52,12 @@ public final class XMLEntityResolver implements IXMLEntityResolver {
    * Initializes the resolver.
    */
   public XMLEntityResolver() {
-    this.entities = new Hashtable();
-    this.entities.put("amp", "&#38;");
-    this.entities.put("quot", "&#34;");
-    this.entities.put("apos", "&#39;");
-    this.entities.put("lt", "&#60;");
-    this.entities.put("gt", "&#62;");
+    entities = new Hashtable();
+    entities.put("amp", "&#38;");
+    entities.put("quot", "&#34;");
+    entities.put("apos", "&#39;");
+    entities.put("lt", "&#60;");
+    entities.put("gt", "&#62;");
   }
 
   /**
@@ -68,8 +68,8 @@ public final class XMLEntityResolver implements IXMLEntityResolver {
    */
   @Override
   public void addInternalEntity(String name, String value) {
-    if (!this.entities.containsKey(name)) {
-      this.entities.put(name, value);
+    if (!entities.containsKey(name)) {
+      entities.put(name, value);
     }
   }
 
@@ -83,8 +83,8 @@ public final class XMLEntityResolver implements IXMLEntityResolver {
    */
   @Override
   public void addExternalEntity(String name, String publicID, String systemID) {
-    if (!this.entities.containsKey(name)) {
-      this.entities.put(name, new String[]{publicID, systemID});
+    if (!entities.containsKey(name)) {
+      entities.put(name, new String[]{publicID, systemID});
     }
   }
 
@@ -98,7 +98,7 @@ public final class XMLEntityResolver implements IXMLEntityResolver {
    */
   @Override
   public Reader getEntity(IXMLReader xmlReader, String name) throws XMLParseException {
-    Object obj = this.entities.get(name);
+    Object obj = entities.get(name);
 
     if (obj == null) {
       return null;
@@ -108,7 +108,7 @@ public final class XMLEntityResolver implements IXMLEntityResolver {
     }
     else {
       String[] id = (String[])obj;
-      return this.openExternalEntity(xmlReader, id[0], id[1]);
+      return openExternalEntity(xmlReader, id[0], id[1]);
     }
   }
 
@@ -120,7 +120,7 @@ public final class XMLEntityResolver implements IXMLEntityResolver {
    */
   @Override
   public boolean isExternalEntity(String name) {
-    Object obj = this.entities.get(name);
+    Object obj = entities.get(name);
     return !(obj instanceof String);
   }
 

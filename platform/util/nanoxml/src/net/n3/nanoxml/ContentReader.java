@@ -80,7 +80,7 @@ final class ContentReader
     this.reader = reader;
     this.resolver = resolver;
     this.buffer = buffer;
-    this.bufferIndex = 0;
+    bufferIndex = 0;
   }
 
 
@@ -100,7 +100,7 @@ final class ContentReader
     throws IOException {
     try {
       int charsRead = 0;
-      int bufferLength = this.buffer.length();
+      int bufferLength = buffer.length();
 
       if ((offset + size) > outputBuffer.length) {
         size = outputBuffer.length - offset;
@@ -110,20 +110,20 @@ final class ContentReader
         String str = "";
         char ch;
 
-        if (this.bufferIndex >= bufferLength) {
-          str = XMLUtil.read(this.reader, '&');
+        if (bufferIndex >= bufferLength) {
+          str = XMLUtil.read(reader, '&');
           ch = str.charAt(0);
         }
         else {
-          ch = this.buffer.charAt(this.bufferIndex);
-          this.bufferIndex++;
+          ch = buffer.charAt(bufferIndex);
+          bufferIndex++;
           outputBuffer[charsRead] = ch;
           charsRead++;
           continue; // don't interprete chars in the buffer
         }
 
         if (ch == '<') {
-          this.reader.unread(ch);
+          reader.unread(ch);
           break;
         }
 
@@ -132,7 +132,7 @@ final class ContentReader
             ch = XMLUtil.processCharLiteral(str);
           }
           else {
-            XMLUtil.processEntity(str, this.reader, this.resolver);
+            XMLUtil.processEntity(str, reader, resolver);
             continue;
           }
         }
@@ -162,30 +162,30 @@ final class ContentReader
   public void close()
     throws IOException {
     try {
-      int bufferLength = this.buffer.length();
+      int bufferLength = buffer.length();
 
       for (; ; ) {
         String str = "";
         char ch;
 
-        if (this.bufferIndex >= bufferLength) {
-          str = XMLUtil.read(this.reader, '&');
+        if (bufferIndex >= bufferLength) {
+          str = XMLUtil.read(reader, '&');
           ch = str.charAt(0);
         }
         else {
-          ch = this.buffer.charAt(this.bufferIndex);
-          this.bufferIndex++;
+          ch = buffer.charAt(bufferIndex);
+          bufferIndex++;
           continue; // don't interprete chars in the buffer
         }
 
         if (ch == '<') {
-          this.reader.unread(ch);
+          reader.unread(ch);
           break;
         }
 
         if ((ch == '&') && (str.length() > 1)) {
           if (str.charAt(1) != '#') {
-            XMLUtil.processEntity(str, this.reader, this.resolver);
+            XMLUtil.processEntity(str, reader, resolver);
           }
         }
       }

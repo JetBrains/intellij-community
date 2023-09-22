@@ -94,7 +94,7 @@ final class XMLAttribute {
    * Returns the full name of the attribute.
    */
   String getFullName() {
-    return this.fullName;
+    return fullName;
   }
 
 
@@ -102,7 +102,7 @@ final class XMLAttribute {
    * Returns the short name of the attribute.
    */
   String getName() {
-    return this.name;
+    return name;
   }
 
 
@@ -110,7 +110,7 @@ final class XMLAttribute {
    * Returns the namespace of the attribute.
    */
   String getNamespace() {
-    return this.namespace;
+    return namespace;
   }
 
 
@@ -118,7 +118,7 @@ final class XMLAttribute {
    * Returns the value of the attribute.
    */
   String getValue() {
-    return this.value;
+    return value;
   }
 
 
@@ -138,6 +138,6 @@ final class XMLAttribute {
    * @param type the new type.
    */
   String getType() {
-    return this.type;
+    return type;
   }
 }

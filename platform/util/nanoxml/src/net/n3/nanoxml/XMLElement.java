@@ -141,26 +141,26 @@ public final class XMLElement implements IXMLElement, Serializable {
    * @param lineNr    the line in the XML data where the element starts.
    */
   public XMLElement(String fullName, String namespace, String systemID, int lineNr) {
-    this.attributes = new Vector();
-    this.children = new Vector(8);
+    attributes = new Vector();
+    children = new Vector(8);
     this.fullName = fullName;
     if (namespace == null) {
-      this.name = fullName;
+      name = fullName;
     }
     else {
       int index = fullName.indexOf(':');
       if (index >= 0) {
-        this.name = fullName.substring(index + 1);
+        name = fullName.substring(index + 1);
       }
       else {
-        this.name = fullName;
+        name = fullName;
       }
     }
     this.namespace = namespace;
-    this.content = null;
+    content = null;
     this.lineNr = lineNr;
     this.systemID = systemID;
-    this.parent = null;
+    parent = null;
   }
 
 
@@ -228,7 +228,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public IXMLElement getParent() {
-    return this.parent;
+    return parent;
   }
 
 
@@ -240,7 +240,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public String getFullName() {
-    return this.fullName;
+    return fullName;
   }
 
 
@@ -251,7 +251,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public String getName() {
-    return this.name;
+    return name;
   }
 
   /**
@@ -263,8 +263,8 @@ public final class XMLElement implements IXMLElement, Serializable {
   @Override
   public void setName(String name) {
     this.name = name;
-    this.fullName = name;
-    this.namespace = null;
+    fullName = name;
+    namespace = null;
   }
 
   /**
@@ -275,7 +275,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public String getNamespace() {
-    return this.namespace;
+    return namespace;
   }
 
   /**
@@ -288,10 +288,10 @@ public final class XMLElement implements IXMLElement, Serializable {
   public void setName(String fullName, String namespace) {
     int index = fullName.indexOf(':');
     if ((namespace == null) || (index < 0)) {
-      this.name = fullName;
+      name = fullName;
     }
     else {
-      this.name = fullName.substring(index + 1);
+      name = fullName.substring(index + 1);
     }
     this.fullName = fullName;
     this.namespace = namespace;
@@ -308,8 +308,8 @@ public final class XMLElement implements IXMLElement, Serializable {
     if (child == null) {
       throw new IllegalArgumentException("child must not be null");
     }
-    if ((child.getName() == null) && (!this.children.isEmpty())) {
-      IXMLElement lastChild = (IXMLElement)this.children.lastElement();
+    if ((child.getName() == null) && (!children.isEmpty())) {
+      IXMLElement lastChild = (IXMLElement)children.lastElement();
 
       if (lastChild.getName() == null) {
         lastChild.setContent(lastChild.getContent() + child.getContent());
@@ -317,7 +317,7 @@ public final class XMLElement implements IXMLElement, Serializable {
       }
     }
     ((XMLElement)child).parent = this;
-    this.children.addElement(child);
+    children.addElement(child);
   }
 
 
@@ -331,15 +331,15 @@ public final class XMLElement implements IXMLElement, Serializable {
     if (child == null) {
       throw new IllegalArgumentException("child must not be null");
     }
-    if ((child.getName() == null) && (!this.children.isEmpty())) {
-      IXMLElement lastChild = (IXMLElement)this.children.lastElement();
+    if ((child.getName() == null) && (!children.isEmpty())) {
+      IXMLElement lastChild = (IXMLElement)children.lastElement();
       if (lastChild.getName() == null) {
         lastChild.setContent(lastChild.getContent() + child.getContent());
         return;
       }
     }
     ((XMLElement)child).parent = this;
-    this.children.insertElementAt(child, index);
+    children.insertElementAt(child, index);
   }
 
 
@@ -353,7 +353,7 @@ public final class XMLElement implements IXMLElement, Serializable {
     if (child == null) {
       throw new IllegalArgumentException("child must not be null");
     }
-    this.children.removeElement(child);
+    children.removeElement(child);
   }
 
 
@@ -364,7 +364,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public void removeChildAtIndex(int index) {
-    this.children.removeElementAt(index);
+    children.removeElementAt(index);
   }
 
 
@@ -375,7 +375,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public Enumeration enumerateChildren() {
-    return this.children.elements();
+    return children.elements();
   }
 
 
@@ -386,7 +386,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public boolean isLeaf() {
-    return this.children.isEmpty();
+    return children.isEmpty();
   }
 
 
@@ -397,7 +397,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public boolean hasChildren() {
-    return (!this.children.isEmpty());
+    return (!children.isEmpty());
   }
 
 
@@ -408,7 +408,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public int getChildrenCount() {
-    return this.children.size();
+    return children.size();
   }
 
 
@@ -419,7 +419,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public Vector getChildren() {
-    return this.children;
+    return children;
   }
 
 
@@ -432,7 +432,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public IXMLElement getChildAtIndex(int index) throws ArrayIndexOutOfBoundsException {
-    return (IXMLElement)this.children.elementAt(index);
+    return (IXMLElement)children.elementAt(index);
   }
 
 
@@ -444,7 +444,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public IXMLElement getFirstChildNamed(String name) {
-    Enumeration enumeration = this.children.elements();
+    Enumeration enumeration = children.elements();
     while (enumeration.hasMoreElements()) {
       IXMLElement child = (IXMLElement)enumeration.nextElement();
       String childName = child.getFullName();
@@ -465,7 +465,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public IXMLElement getFirstChildNamed(String name, String namespace) {
-    Enumeration enumeration = this.children.elements();
+    Enumeration enumeration = children.elements();
     while (enumeration.hasMoreElements()) {
       IXMLElement child = (IXMLElement)enumeration.nextElement();
       String str = child.getName();
@@ -493,8 +493,8 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public Vector getChildrenNamed(String name) {
-    Vector result = new Vector(this.children.size());
-    Enumeration enumeration = this.children.elements();
+    Vector result = new Vector(children.size());
+    Enumeration enumeration = children.elements();
     while (enumeration.hasMoreElements()) {
       IXMLElement child = (IXMLElement)enumeration.nextElement();
       String childName = child.getFullName();
@@ -515,8 +515,8 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public Vector getChildrenNamed(String name, String namespace) {
-    Vector result = new Vector(this.children.size());
-    Enumeration enumeration = this.children.elements();
+    Vector result = new Vector(children.size());
+    Enumeration enumeration = children.elements();
     while (enumeration.hasMoreElements()) {
       IXMLElement child = (IXMLElement)enumeration.nextElement();
       String str = child.getName();
@@ -544,7 +544,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    * @return the attribute, or null if the attribute does not exist.
    */
   private XMLAttribute findAttribute(String fullName) {
-    Enumeration enumeration = this.attributes.elements();
+    Enumeration enumeration = attributes.elements();
     while (enumeration.hasMoreElements()) {
       XMLAttribute attr = (XMLAttribute)enumeration.nextElement();
       if (attr.getFullName().equals(fullName)) {
@@ -563,7 +563,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    * @return the attribute, or null if the attribute does not exist.
    */
   private XMLAttribute findAttribute(String name, String namespace) {
-    Enumeration enumeration = this.attributes.elements();
+    Enumeration enumeration = attributes.elements();
     while (enumeration.hasMoreElements()) {
       XMLAttribute attr = (XMLAttribute)enumeration.nextElement();
       boolean found = attr.getName().equals(name);
@@ -587,7 +587,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public int getAttributeCount() {
-    return this.attributes.size();
+    return attributes.size();
   }
 
 
@@ -601,7 +601,7 @@ public final class XMLElement implements IXMLElement, Serializable {
   @Override
   @Deprecated
   public String getAttribute(String name) {
-    return this.getAttribute(name, null);
+    return getAttribute(name, null);
   }
 
 
@@ -614,7 +614,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public String getAttribute(String name, String defaultValue) {
-    XMLAttribute attr = this.findAttribute(name);
+    XMLAttribute attr = findAttribute(name);
     if (attr == null) {
       return defaultValue;
     }
@@ -634,7 +634,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public String getAttribute(String name, String namespace, String defaultValue) {
-    XMLAttribute attr = this.findAttribute(name, namespace);
+    XMLAttribute attr = findAttribute(name, namespace);
     if (attr == null) {
       return defaultValue;
     }
@@ -653,7 +653,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public int getAttribute(String name, int defaultValue) {
-    String value = this.getAttribute(name, Integer.toString(defaultValue));
+    String value = getAttribute(name, Integer.toString(defaultValue));
     return Integer.parseInt(value);
   }
 
@@ -668,7 +668,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public int getAttribute(String name, String namespace, int defaultValue) {
-    String value = this.getAttribute(name, namespace, Integer.toString(defaultValue));
+    String value = getAttribute(name, namespace, Integer.toString(defaultValue));
     return Integer.parseInt(value);
   }
 
@@ -681,7 +681,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public String getAttributeType(String name) {
-    XMLAttribute attr = this.findAttribute(name);
+    XMLAttribute attr = findAttribute(name);
     if (attr == null) {
       return null;
     }
@@ -699,7 +699,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public String getAttributeNamespace(String name) {
-    XMLAttribute attr = this.findAttribute(name);
+    XMLAttribute attr = findAttribute(name);
     if (attr == null) {
       return null;
     }
@@ -718,7 +718,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public String getAttributeType(String name, String namespace) {
-    XMLAttribute attr = this.findAttribute(name, namespace);
+    XMLAttribute attr = findAttribute(name, namespace);
     if (attr == null) {
       return null;
     }
@@ -736,10 +736,10 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public void setAttribute(String name, String value) {
-    XMLAttribute attr = this.findAttribute(name);
+    XMLAttribute attr = findAttribute(name);
     if (attr == null) {
       attr = new XMLAttribute(name, name, null, value, "CDATA");
-      this.attributes.addElement(attr);
+      attributes.addElement(attr);
     }
     else {
       attr.setValue(value);
@@ -758,10 +758,10 @@ public final class XMLElement implements IXMLElement, Serializable {
   public void setAttribute(String fullName, String namespace, String value) {
     int index = fullName.indexOf(':');
     String name = fullName.substring(index + 1);
-    XMLAttribute attr = this.findAttribute(name, namespace);
+    XMLAttribute attr = findAttribute(name, namespace);
     if (attr == null) {
       attr = new XMLAttribute(fullName, name, namespace, value, "CDATA");
-      this.attributes.addElement(attr);
+      attributes.addElement(attr);
     }
     else {
       attr.setValue(value);
@@ -776,10 +776,10 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public void removeAttribute(String name) {
-    for (int i = 0; i < this.attributes.size(); i++) {
-      XMLAttribute attr = (XMLAttribute)this.attributes.elementAt(i);
+    for (int i = 0; i < attributes.size(); i++) {
+      XMLAttribute attr = (XMLAttribute)attributes.elementAt(i);
       if (attr.getFullName().equals(name)) {
-        this.attributes.removeElementAt(i);
+        attributes.removeElementAt(i);
         return;
       }
     }
@@ -794,8 +794,8 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public void removeAttribute(String name, String namespace) {
-    for (int i = 0; i < this.attributes.size(); i++) {
-      XMLAttribute attr = (XMLAttribute)this.attributes.elementAt(i);
+    for (int i = 0; i < attributes.size(); i++) {
+      XMLAttribute attr = (XMLAttribute)attributes.elementAt(i);
       boolean found = attr.getName().equals(name);
       if (namespace == null) {
         found &= (attr.getNamespace() == null);
@@ -805,7 +805,7 @@ public final class XMLElement implements IXMLElement, Serializable {
       }
 
       if (found) {
-        this.attributes.removeElementAt(i);
+        attributes.removeElementAt(i);
         return;
       }
     }
@@ -820,7 +820,7 @@ public final class XMLElement implements IXMLElement, Serializable {
   @Override
   public Enumeration enumerateAttributeNames() {
     Vector result = new Vector();
-    Enumeration enumeration = this.attributes.elements();
+    Enumeration enumeration = attributes.elements();
     while (enumeration.hasMoreElements()) {
       XMLAttribute attr = (XMLAttribute)enumeration.nextElement();
       result.addElement(attr.getFullName());
@@ -836,7 +836,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public boolean hasAttribute(String name) {
-    return this.findAttribute(name) != null;
+    return findAttribute(name) != null;
   }
 
 
@@ -847,7 +847,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public boolean hasAttribute(String name, String namespace) {
-    return this.findAttribute(name, namespace) != null;
+    return findAttribute(name, namespace) != null;
   }
 
 
@@ -859,7 +859,7 @@ public final class XMLElement implements IXMLElement, Serializable {
   @Override
   public Properties getAttributes() {
     Properties result = new Properties();
-    Enumeration enumeration = this.attributes.elements();
+    Enumeration enumeration = attributes.elements();
     while (enumeration.hasMoreElements()) {
       XMLAttribute attr = (XMLAttribute)enumeration.nextElement();
       result.setProperty(attr.getFullName(), attr.getValue());
@@ -877,7 +877,7 @@ public final class XMLElement implements IXMLElement, Serializable {
   @Override
   public Properties getAttributesInNamespace(String namespace) {
     Properties result = new Properties();
-    Enumeration enumeration = this.attributes.elements();
+    Enumeration enumeration = attributes.elements();
     while (enumeration.hasMoreElements()) {
       XMLAttribute attr = (XMLAttribute)enumeration.nextElement();
       if (namespace == null) {
@@ -903,7 +903,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public String getSystemID() {
-    return this.systemID;
+    return systemID;
   }
 
 
@@ -916,7 +916,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public int getLineNr() {
-    return this.lineNr;
+    return lineNr;
   }
 
 
@@ -930,7 +930,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public String getContent() {
-    return this.content;
+    return content;
   }
 
 
@@ -953,7 +953,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   public boolean equals(Object rawElement) {
     try {
-      return this.equalsXMLElement((IXMLElement)rawElement);
+      return equalsXMLElement((IXMLElement)rawElement);
     }
     catch (ClassCastException e) {
       return false;
@@ -968,13 +968,13 @@ public final class XMLElement implements IXMLElement, Serializable {
    */
   @Override
   public boolean equalsXMLElement(IXMLElement elt) {
-    if (!this.name.equals(elt.getName())) {
+    if (!name.equals(elt.getName())) {
       return false;
     }
-    if (this.attributes.size() != elt.getAttributeCount()) {
+    if (attributes.size() != elt.getAttributeCount()) {
       return false;
     }
-    Enumeration enumeration = this.attributes.elements();
+    Enumeration enumeration = attributes.elements();
     while (enumeration.hasMoreElements()) {
       XMLAttribute attr = (XMLAttribute)enumeration.nextElement();
       if (!elt.hasAttribute(attr.getName(), attr.getNamespace())) {
@@ -989,11 +989,11 @@ public final class XMLElement implements IXMLElement, Serializable {
         return false;
       }
     }
-    if (this.children.size() != elt.getChildrenCount()) {
+    if (children.size() != elt.getChildrenCount()) {
       return false;
     }
-    for (int i = 0; i < this.children.size(); i++) {
-      IXMLElement child1 = this.getChildAtIndex(i);
+    for (int i = 0; i < children.size(); i++) {
+      IXMLElement child1 = getChildAtIndex(i);
       IXMLElement child2 = elt.getChildAtIndex(i);
 
       if (!child1.equalsXMLElement(child2)) {

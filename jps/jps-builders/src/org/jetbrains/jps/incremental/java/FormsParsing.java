@@ -69,24 +69,19 @@ public final class FormsParsing {
   }
 
   public static void parse(final IXMLReader r, final IXMLBuilder builder) {
+    final StdXMLParser parser = XMLParserFactory.createDefaultXMLParser();
+    parser.setReader(r);
+    parser.setBuilder(builder);
+    parser.setValidator(new EmptyValidator());
+    parser.setResolver(new EmptyEntityResolver());
     try {
-      final StdXMLParser parser = XMLParserFactory.createDefaultXMLParser();
-      parser.setReader(r);
-      parser.setBuilder(builder);
-      parser.setValidator(new EmptyValidator());
-      parser.setResolver(new EmptyEntityResolver());
-      try {
-        parser.parse();
-      }
-      catch (XMLException e) {
-        if (e.getException() instanceof ParserStoppedException) {
-          return;
-        }
-        LOG.debug(e);
-      }
+      parser.parse();
     }
-    catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
-      LOG.error(e);
+    catch (XMLException e) {
+      if (e.getException() instanceof ParserStoppedException) {
+        return;
+      }
+      LOG.debug(e);
     }
   }
 
