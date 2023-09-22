@@ -175,6 +175,7 @@ final class UnindexedFilesFinder {
       //  all the files indexed by shared indexes will be considered as indexed, but there will be no actual data for them.
       //  Other possible corner cases should also be analyzed.
       if (IndexingFlag.isFileIndexed(file, indexingStamp)) {
+        myIndexableFilesFilterHolder.addFileId(FileBasedIndex.getFileId(file), myProject);
         return new UnindexedFileStatusBuilder(applicationMode).build();
       }
     }
