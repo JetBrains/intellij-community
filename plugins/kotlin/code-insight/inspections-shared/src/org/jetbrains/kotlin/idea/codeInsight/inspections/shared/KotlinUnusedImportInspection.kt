@@ -33,20 +33,12 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettings
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.ImportPath
 
 class KotlinUnusedImportInspection : AbstractKotlinInspection() {
-    companion object {
-        fun analyzeImports(file: KtFile): KotlinOptimizeImportsFacility.ImportData? {
-            if (file is KtCodeFragment) return null
-            if (!RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(file)) return null
-
-            return KotlinOptimizeImportsFacility.getInstance().analyzeImports(file)
-        }
-    }
-
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<out ProblemDescriptor>? {
         if (file !is KtFile) return null
         val data = analyzeImports(file) ?: return null
@@ -72,6 +64,12 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
         }
 
         return problems.toTypedArray()
+    }
+    private fun analyzeImports(file: KtFile): KotlinOptimizeImportsFacility.ImportData? {
+        if (file is KtCodeFragment) return null
+        if (!RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(file)) return null
+
+        return KotlinOptimizeImportsFacility.getInstance().analyzeImports(file)
     }
 
     private fun scheduleOptimizeImportsOnTheFly(file: KtFile, data: KotlinOptimizeImportsFacility.ImportData) {
@@ -99,6 +97,9 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
             .subscribe<DaemonCodeAnalyzer.DaemonListener>(
                 DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
                 object : DaemonCodeAnalyzer.DaemonListener {
+                    override fun daemonCancelEventOccurred(reason: String) {
+                        Disposer.dispose(daemonDisposable)
+                    }
                     override fun daemonFinished(incomingFileEditors: Collection<FileEditor>) {
                         Disposer.dispose(daemonDisposable)
                         if ((DaemonCodeAnalyzer.getInstance(myProject) as DaemonCodeAnalyzerEx).isErrorAnalyzingFinished(file)) {
