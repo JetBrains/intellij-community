@@ -13,6 +13,7 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -364,6 +365,21 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
 
     VirtualFileManager.getInstance().syncRefresh();
     MavenLog.LOG.warn("checkHighlighting: VFS refreshed");
+
+    var psiFile = findPsiFile(f);
+    if (null == psiFile) {
+      MavenLog.LOG.warn("checkHighlighting: psi file is null");
+    }
+    else {
+      var document = myFixture.getDocument(psiFile);
+      if (null == document) {
+        MavenLog.LOG.warn("checkHighlighting: document is null");
+      }
+      else {
+        FileDocumentManager.getInstance().reloadFromDisk(document);
+        MavenLog.LOG.warn("checkHighlighting: document reloaded from disk");
+      }
+    }
 
     configTest(myProjectPom);
     MavenLog.LOG.warn("checkHighlighting: test configured");
