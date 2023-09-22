@@ -242,7 +242,7 @@
     <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.K1HighlightExitPointsHandlerFactory"/>
     <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightImplicitItHandlerFactory"/>
     <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightReceiverUsagesHandlerFactory"/>
-    <registryKey defaultValue="true" description="Enables highlighting for receiver usages" key="kotlin.receiver.usage.highlighting"/>
+    <registryKey defaultValue="false" description="Enables highlighting for receiver usages" key="kotlin.receiver.usage.highlighting"/>
 
     <overridingMethodsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinOverridingMethodsWithGenericsSearcher"/>
 
