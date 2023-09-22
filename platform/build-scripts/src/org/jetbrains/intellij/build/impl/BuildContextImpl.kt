@@ -269,7 +269,7 @@ class BuildContextImpl(
     jvmArgs.add("-Djna.noclasspath=true")
 
     if (useModularLoader || generateRuntimeModuleRepository) {
-      jvmArgs.add("-Dintellij.platform.runtime.repository.path=$macroName/${MODULE_DESCRIPTORS_JAR_PATH}")
+      jvmArgs.add("-Dintellij.platform.runtime.repository.path=${macroName}/${MODULE_DESCRIPTORS_JAR_PATH}".let { if (isScript) '"' + it + '"' else it })
     }
     if (useModularLoader) {
       jvmArgs.add("-Dintellij.platform.root.module=${productProperties.applicationInfoModule}")
