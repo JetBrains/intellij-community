@@ -5,5 +5,10 @@ package com.intellij.vcs.log.ui.table
 
 import com.intellij.vcs.log.VcsLogCommitSelection
 
+/**
+ * Selection size.
+ */
+val VcsLogCommitSelection.size: Int get() = rows.size
+
 fun VcsLogCommitSelection.isEmpty() = size == 0
 fun VcsLogCommitSelection.isNotEmpty() = size != 0

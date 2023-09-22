@@ -9,10 +9,6 @@ import java.util.function.Consumer
  * @see VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION
  */
 interface VcsLogCommitSelection {
-  /**
-   * Selection size.
-   */
-  val size: Int get() = rows.size
 
   /**
    * Selected rows.

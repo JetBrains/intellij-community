@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.applyIf
+import com.intellij.vcs.log.ui.table.size
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.i18n.GitBundle
 import git4idea.rebase.log.*

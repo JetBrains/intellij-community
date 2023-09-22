@@ -11,6 +11,7 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.ui.table.isEmpty
+import com.intellij.vcs.log.ui.table.size
 import git4idea.GitRemoteBranch
 import git4idea.GitUtil.HEAD
 import git4idea.GitUtil.getRepositoryManager

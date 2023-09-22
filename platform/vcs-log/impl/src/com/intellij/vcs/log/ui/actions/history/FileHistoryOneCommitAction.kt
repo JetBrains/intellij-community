@@ -15,6 +15,7 @@ import com.intellij.vcs.log.data.DataGetter
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.history.FileHistoryModel
+import com.intellij.vcs.log.ui.table.size
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder

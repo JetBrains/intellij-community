@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.ui.table.size
 import git4idea.i18n.GitBundle
 import git4idea.rebase.log.*
 

@@ -10,13 +10,11 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
-import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.VcsLogCommitSelection;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogDiffHandler;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.history.FileHistoryModel;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.table.VcsLogCommitSelectionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -47,7 +45,7 @@ public class ShowDiffAfterWithLocalFromFileHistoryActionProvider implements AnAc
 
     e.getPresentation().setVisible(true);
 
-    if (selection.getSize() != 1) {
+    if (VcsLogCommitSelectionUtils.getSize(selection) != 1) {
       e.getPresentation().setEnabled(false);
       return;
     }

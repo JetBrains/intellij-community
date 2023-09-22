@@ -17,6 +17,7 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import com.intellij.vcs.log.ui.table.size
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitUtil
 import git4idea.findProtectedRemoteBranch
