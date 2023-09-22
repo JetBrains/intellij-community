@@ -39,4 +39,40 @@ class MapBasedArtifactMappingServiceTest {
     assertThat(moduleMapping?.moduleIds).containsExactly(moduleId1, moduleId2)
     assertThat(moduleMapping?.ownerId).isEqualTo(ownerId)
   }
+
+  @Test
+  fun `check module id ownership is preserved when importing the mapping`() {
+    val service = MapBasedArtifactMappingService()
+    val path = "/my/path"
+    val ownerId = "test-owner"
+    val moduleId1 = "module-id-1"
+    val moduleId2 = "module-id-2"
+
+    service.storeModuleId(path, moduleId1, ownerId)
+    service.storeModuleId(path, moduleId2, "some-other-owner")
+
+    val copy = MapBasedArtifactMappingService()
+    copy.putAll(service)
+    val moduleMapping = copy.getModuleMapping(path)
+
+    assertThat(moduleMapping?.moduleIds).containsExactly(moduleId1, moduleId2)
+    assertThat(moduleMapping?.ownerId).isEqualTo(ownerId)
+  }
+
+  @Test
+  fun `check Non-Modules-Content flag is preserved when importing the mapping`() {
+    val service = MapBasedArtifactMappingService()
+    val path = "/my/path"
+    val moduleId1 = "module-id-1"
+
+    service.storeModuleId(path, moduleId1)
+    service.markArtifactPath(path, true)
+
+    val copy = MapBasedArtifactMappingService()
+    copy.putAll(service)
+    val moduleMapping = copy.getModuleMapping(path)
+
+    assertThat(moduleMapping?.moduleIds).containsExactly(moduleId1)
+    assertThat(moduleMapping?.hasNonModulesContent).isTrue()
+  }
 }

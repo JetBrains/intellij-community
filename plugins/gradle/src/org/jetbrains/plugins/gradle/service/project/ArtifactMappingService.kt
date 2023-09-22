@@ -103,7 +103,15 @@ class MapBasedArtifactMappingService() : ArtifactMappingService {
     get() = myMap.keys
 
   override fun putAll(artifactsMap: ArtifactMappingService) {
-    artifactsMap.keys.forEach { key -> artifactsMap.getModuleMapping(key)?.moduleIds?.let { found -> myMap[key] = LinkedHashSet<String>().also { it.addAll(found) } } }
+    artifactsMap.keys.forEach { key ->
+      artifactsMap.getModuleMapping(key)?.let { mapping ->
+        myMap[key] = LinkedHashSet<String>().also { it.addAll(mapping.moduleIds) }
+        myOwnersMap[key] = mapping.ownerId
+        if (mapping.hasNonModulesContent) {
+          myNonModulesContent.add(key)
+        }
+      }
+    }
   }
 
   override fun markArtifactPath(canonicalPath: String, hasNonModulesContent: Boolean) {
