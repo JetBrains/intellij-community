@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starters.shared
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.starters.JavaStartersBundle
@@ -12,6 +13,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GIT_PROPERTY_NAME
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -31,6 +33,7 @@ import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.UIBundle
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
 import org.jetbrains.annotations.Nls
 import java.io.File
@@ -137,8 +140,14 @@ abstract class CommonStarterInitialStep(
   }
 
   protected fun Panel.addGroupArtifactUi() {
-    row(JavaStartersBundle.message("title.project.group.label")) {
+    row {
       groupRow = this
+
+      layout(RowLayout.LABEL_ALIGNED)
+      label(JavaStartersBundle.message("title.project.group.label"))
+        .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
+        .applyToComponent { icon = AllIcons.General.ContextHelp }
+        .applyToComponent { toolTipText = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.help") }
 
       textField()
         .bindText(groupIdProperty)
@@ -147,8 +156,15 @@ abstract class CommonStarterInitialStep(
                                *getCustomValidationRules(GROUP_ID_PROPERTY))
     }.bottomGap(BottomGap.SMALL)
 
-    row(JavaStartersBundle.message("title.project.artifact.label")) {
+    row {
       artifactRow = this
+
+      layout(RowLayout.LABEL_ALIGNED)
+      label(JavaStartersBundle.message("title.project.artifact.label"))
+        .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
+        .applyToComponent { icon = AllIcons.General.ContextHelp }
+        .applyToComponent { toolTipText = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.help",
+                                                                       wizardContext.presentationName) }
 
       textField()
         .bindText(artifactIdProperty)
