@@ -13,13 +13,13 @@ class A {
       cleanFromIf = "1";
     }
     sink(cleanFromIf);
-    String dirtyFromIf;
+    String cleanAfterIf;
     if (1 == 1) {
-      dirtyFromIf = clean;
+      cleanAfterIf = clean;
     } else {
-      dirtyFromIf = dirty;
+      cleanAfterIf = dirty;
     }
-    sink(dirtyFromIf);
+    sink(cleanAfterIf);
     sink(<warning descr="Unknown string is used as safe parameter">1 == 1 ? dirty : clean</warning>); //warn
     String cleanFromSwitch = switch (dirty) {
       default -> "1";
