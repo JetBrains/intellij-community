@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import com.intellij.refactoring.suggested.startOffset
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
@@ -27,7 +28,7 @@ import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl
 import java.util.concurrent.CompletableFuture
 import javax.swing.tree.TreeNode
 
-data class PyQualifiedExpressionItem(val pyQualifiedName: String, val delimiter: IElementType)
+data class PyQualifiedExpressionItem(val pyQualifiedName: String, val delimiter: IElementType?)
 
 /**
  * This data class stores information about a possible python object.
@@ -158,10 +159,20 @@ private fun getPossibleObjectsDataFrame(parameters: CompletionParameters,
   parseMethodsWithArguments(callExpression)?.let {
     return it
   }
-  return setOfNotNull(callInnerReferenceExpression?.text,
-                      getSliceSubscriptionReferenceExpression(parameters)?.text,
-                      getAttributeReferenceExpression(parameters)?.text).map {
-    PyObjectCandidate(PyQualifiedExpressionItem(it, PyTokenTypes.LBRACKET), emptyList())
+
+  return setOfNotNull(
+    parameters.position,
+    callInnerReferenceExpression,
+    getSliceSubscriptionReferenceExpression(parameters),
+    getAttributeReferenceExpression(parameters)
+  ).map {
+    if (it.elementType == PyTokenTypes.IDENTIFIER) {
+      PyObjectCandidate(
+        PyQualifiedExpressionItem(it.text.substring(0, parameters.offset - it.startOffset), null), emptyList())
+    }
+    else {
+      PyObjectCandidate(PyQualifiedExpressionItem(it.text, PyTokenTypes.LBRACKET), emptyList())
+    }
   }
 }
 
@@ -195,9 +206,9 @@ private data class RuntimeCompletionMethods(val requiredTypes: List<String>?, va
 
 private val moduleToMethods = mapOf(
   "polars" to RuntimeCompletionMethods(listOf("polars.dataframe.frame.DataFrame", "polars.internals.dataframe.frame.DataFrame"),
-                                       listOf("any", "approx_unique", "avg", "arg_sort_by", "by_name", "col", "count", "cumsum", "exclude", "first",
-                                     "from_epoch", "groups", "head", "implode", "last", "mean", "median", "min", "max", "n_unique",
-                                     "quantile", "std", "tail", "sum")),
+                                       listOf("any", "approx_unique", "avg", "arg_sort_by", "by_name", "col", "count", "cumsum", "exclude",
+                                              "first", "from_epoch", "groups", "head", "implode", "last", "mean", "median", "min", "max",
+                                              "n_unique", "quantile", "std", "tail", "sum")),
 )
 
 fun parseMethodsWithArguments(callExpression: PyCallExpression?): List<PyObjectCandidate>? {
@@ -343,14 +354,12 @@ internal fun getParentNodeByName(children: List<TreeNode>, psiName: String, comp
    * Firstly, looking through loaded variables and if not found - load values inside the group (make a request to jupyter server).
    */
   val globalVariables = children.filterIsInstance<XValueNodeImpl>()
-  globalVariables.forEach { node ->
-    if (node.name == psiName) {
-      return node
-    }
-  }
+  globalVariables.firstOrNull { it.name == psiName }?.let { return it }
+
   if (completionType == CompletionType.BASIC) return null
-  val specialVariables = children.filterIsInstance<XValueGroupNodeImpl>()
-    .filter { node -> (node.valueContainer as PyXValueGroup).groupType == ProcessDebugger.GROUP_TYPE.SPECIAL }
+  val specialVariables = children.filterIsInstance<XValueGroupNodeImpl>().filter { node ->
+    (node.valueContainer as PyXValueGroup).groupType == ProcessDebugger.GROUP_TYPE.SPECIAL
+  }
   specialVariables.forEach { node ->
     computeChildrenIfNeeded(node)
     extractChildByName(node, node.loadedChildren, psiName)?.let {
@@ -360,6 +369,28 @@ internal fun getParentNodeByName(children: List<TreeNode>, psiName: String, comp
   return null
 }
 
+private fun prefixMatch(node: TreeNode, result: MutableList<String>, prefix: String) {
+  (node as? XValueNodeImpl)?.name?.let {
+    if (it.startsWith(prefix)) {
+      result.add(it)
+    }
+  }
+}
+
+internal fun getNodesByPrefix(children: List<TreeNode>, prefix: String, completionType: CompletionType): List<String> {
+  val result = mutableListOf<String>()
+  children.forEach { prefixMatch(it, result, prefix) }
+
+  if (completionType == CompletionType.BASIC) return result
+  children.forEach { node ->
+    if (node is XValueGroupNodeImpl && (node.valueContainer as PyXValueGroup).groupType == ProcessDebugger.GROUP_TYPE.SPECIAL) {
+      computeChildrenIfNeeded(node)
+      node.children.forEach { prefixMatch(it, result, prefix) }
+    }
+  }
+  return result
+}
+
 internal val typeToDelimiter = mapOf(
   "polars.internals.dataframe.frame.DataFrame" to setOf(PyTokenTypes.LBRACKET),
   "polars.dataframe.frame.DataFrame" to setOf(PyTokenTypes.LBRACKET),
@@ -367,7 +398,8 @@ internal val typeToDelimiter = mapOf(
   "builtins.dict" to setOf(PyTokenTypes.LBRACKET)
 )
 
-internal fun checkDelimiterByType(qualifiedType: String?, delimiter: IElementType): Boolean {
+internal fun checkDelimiterByType(qualifiedType: String?, delimiter: IElementType?): Boolean {
+  delimiter ?: return false
   qualifiedType ?: return false
   val delimiters = typeToDelimiter[qualifiedType]
   return delimiters != null && delimiter !in delimiters
