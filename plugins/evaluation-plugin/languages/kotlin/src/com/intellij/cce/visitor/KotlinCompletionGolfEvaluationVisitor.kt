@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.psi.*
 class KotlinCompletionGolfVisitorFactory : CompletionGolfVisitorFactory {
   override val language: Language = Language.KOTLIN
   override fun createVisitor(featureName: String, mode: CompletionGolfMode): CompletionGolfEvaluationVisitor {
-    if (featureName == "multi-line-completion") return KotlinMultiLineEvaluationVisitor()
     when (mode) {
       CompletionGolfMode.ALL -> return AllVisitor(featureName)
       CompletionGolfMode.TOKENS -> return TokensVisitor(featureName)

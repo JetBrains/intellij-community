@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.visitor
 
-import com.intellij.cce.core.CodeFragment
-import com.intellij.cce.core.CodeToken
-import com.intellij.cce.core.Language
+import com.intellij.cce.core.*
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -13,7 +11,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 
-class KotlinMultiLineEvaluationVisitor : CompletionGolfEvaluationVisitor, KtTreeVisitorVoid() {
+class KotlinMultiLineEvaluationVisitor : EvaluationVisitor, KtTreeVisitorVoid() {
   private var codeFragment: CodeFragment? = null
 
   override val language: Language = Language.KOTLIN
@@ -36,10 +34,12 @@ class KotlinMultiLineEvaluationVisitor : CompletionGolfEvaluationVisitor, KtTree
         val startOffset = body.children.first().startOffset
         val endOffset = body.children.last().endOffset
         val text = file.text.substring(startOffset, endOffset)
-        file.addChild(CodeToken(text, startOffset))
+        file.addChild(CodeToken(text, startOffset, METHOD_PROPERTIES))
       } else {
-        file.addChild(CodeToken(body.text, body.textOffset))
+        file.addChild(CodeToken(body.text, body.textOffset, METHOD_PROPERTIES))
       }
     }
   }
 }
+
+private val METHOD_PROPERTIES = SimpleTokenProperties.create(TypeProperty.METHOD, SymbolLocation.UNKNOWN) {}
