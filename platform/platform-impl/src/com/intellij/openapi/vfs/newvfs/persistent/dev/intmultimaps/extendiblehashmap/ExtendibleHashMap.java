@@ -6,6 +6,7 @@ import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -69,11 +70,18 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
   public static final int DEFAULT_STORAGE_PAGE_SIZE = DEFAULT_SEGMENT_SIZE * DEFAULT_SEGMENTS_PER_PAGE;
 
 
-  //TODO RC: 'safelyClosed' marker in a header, to detect crashes/incorrect usages
   //TODO RC: pruning of tombstones (see comment in a .split() method for details)
 
   private final MMappedFileStorage storage;
   private transient BufferSource bufferSource;
+
+  /**
+   * Modified flag is used avoid updating header.fileState on each modification -- instead we update it only once,
+   * on the first modification, and skip the update afterward relying on this flag.
+   */
+  private boolean storageModifiedSinceOpened = false;
+
+  private final boolean wasProperlyClosed;
 
   private transient HeaderLayout header;
 
@@ -108,8 +116,12 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
         header.magicWord(MAGIC_WORD);
         header.version(VERSION);
         header.segmentSize(segmentSize);
+        header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
+        wasProperlyClosed = true;//new storage is by definition 'correct'
+
         header.globalHashSuffixDepth(0);
         header.actualSegmentsCount(0);
+
         HashMapSegmentLayout segment = allocateSegment(0, header.globalHashSuffixDepth());
         header.updateSegmentIndex(0, segment.segmentIndex());
       }
@@ -125,23 +137,46 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
           throw new IOException(
             "[" + storage.storagePath() + "]: version(=" + header.version() + ") != current impl version(=" + VERSION + ")");
         }
-        
+
         if (header.segmentSize() != segmentSize) {
           throw new IOException(
             "[" + storage.storagePath() + "]: segmentSize(=" + segmentSize + ") != segmentSize(=" + header.segmentSize() + ")" +
             " storage was initialized with");
         }
+
+        wasProperlyClosed = (header.fileStatus() == HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
+        //and reset the file status to default 'properly closed'
+        header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
       }
     }
+  }
+
+  /**
+   * Was storage properly closed in a previous session?
+   * <p/>
+   * Just created storage is defined as 'properly closed', existing storage is 'properly closed'  if {@link #close()}
+   * method was called in a previous session. This flag could be used to detect potential data corruptions -- so
+   * storage must be thoroughly checked -- or re-created.
+   * <p/>
+   * 'Properly closed' status is only about previous session. I.e., consider a scenario:
+   * <pre>
+   * storage opened
+   * -> not closed properly
+   * -> re-opened: wasProperlyClose=false
+   * -> closed properly
+   * -> re-opened: wasProperlyClosed=true
+   * </pre>
+   * So on 2nd re-open storage is 'properly closed', even though it could be still corrupted because of the absence
+   * of proper close after the first session. 
+   */
+  public synchronized boolean wasProperlyClosed() {
+    return wasProperlyClosed;
   }
 
   @Override
   public synchronized boolean put(int key,
                                   int value) throws IOException {
-    checkNotClosed();
-    int hash = hash(key);
-    int segmentIndex = header.segmentIndexByHash(hash);
-    HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, header.segmentSize());
+    HashMapSegmentLayout segment = segmentForKey(key);
 
     return putAndSplitSegmentIfNeeded(segment, key, value);
   }
@@ -149,12 +184,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
   @Override
   public synchronized boolean has(int key,
                                   int value) throws IOException {
-    checkNotClosed();
-    int hash = hash(key);
-    int hashSuffixDepth = header.globalHashSuffixDepth();
-    int segmentSlotIndex = segmentSlotIndex(hash, hashSuffixDepth);
-    int segmentIndex = header.segmentIndex(segmentSlotIndex);
-    HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, header.segmentSize());
+    HashMapSegmentLayout segment = segmentForKey(key);
 
     return hashMapAlgo.has(segment, key, value);
   }
@@ -162,12 +192,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
   @Override
   public synchronized int lookup(int key,
                                  @NotNull ValueAcceptor valuesAcceptor) throws IOException {
-    checkNotClosed();
-    int hash = hash(key);
-    int hashSuffixDepth = header.globalHashSuffixDepth();
-    int segmentSlotIndex = segmentSlotIndex(hash, hashSuffixDepth);
-    int segmentIndex = header.segmentIndex(segmentSlotIndex);
-    HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, header.segmentSize());
+    HashMapSegmentLayout segment = segmentForKey(key);
 
     return hashMapAlgo.lookup(segment, key, valuesAcceptor);
   }
@@ -176,12 +201,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
   public synchronized int lookupOrInsert(int key,
                                          @NotNull ValueAcceptor valuesAcceptor,
                                          @NotNull ValueCreator valueCreator) throws IOException {
-    checkNotClosed();
-    int hash = hash(key);
-    int hashSuffixDepth = header.globalHashSuffixDepth();
-    int segmentSlotIndex = segmentSlotIndex(hash, hashSuffixDepth);
-    int segmentIndex = header.segmentIndex(segmentSlotIndex);
-    HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, header.segmentSize());
+    HashMapSegmentLayout segment = segmentForKey(key);
 
     int valueFound = hashMapAlgo.lookup(segment, key, valuesAcceptor);
     if (valueFound != NO_VALUE) {
@@ -229,11 +249,16 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
 
   @Override
   public synchronized void close() throws IOException {
+    if (storageModifiedSinceOpened) {
+      header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
+    }
     storage.close();
-    //clean all references to mapped ByteBuffers:
+    //clean all references to mapped ByteBuffers, so it's easier for GC to unmap them:
     header = null;
     bufferSource = null;
   }
+
+  //=============== implementation ============================================================
 
   //@GuardedBy(this)
   private void checkNotClosed() throws IOException {
@@ -242,8 +267,24 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
     }
   }
 
-  //=============== implementation ============================================================
+  //@GuardedBy(this)
+  private void markModified() {
+    if (!storageModifiedSinceOpened) {
+      storageModifiedSinceOpened = true;
+      header.fileStatus(HeaderLayout.FILE_STATUS_OPENED);
+    }
+  }
 
+  //@GuardedBy(this)
+  private HashMapSegmentLayout segmentForKey(int key) throws IOException {
+    checkNotClosed();
+
+    int hash = hash(key);
+    int segmentIndex = header.segmentIndexByHash(hash);
+    return new HashMapSegmentLayout(bufferSource, segmentIndex, header.segmentSize());
+  }
+
+  //@GuardedBy(this)
   private void splitAndRearrangeEntries(HashMapSegmentLayout segment) throws IOException {
     int hashSuffixDepth = header.globalHashSuffixDepth();
     int segmentHashDepth = segment.hashSuffixDepth();
@@ -299,10 +340,15 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
     return slotIndexes;
   }
 
+  //@GuardedBy(this)
   private boolean putAndSplitSegmentIfNeeded(HashMapSegmentLayout segment,
                                              int key,
                                              int value) throws IOException {
     boolean wasReallyPut = hashMapAlgo.put(segment, key, value);
+
+    if (wasReallyPut) {
+      markModified();
+    }
 
     if (hashMapAlgo.needsSplit(segment)) {
       splitAndRearrangeEntries(segment);
@@ -442,11 +488,18 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
     private static final int SEGMENT_SIZE_OFFSET             = 8;   //int32
     private static final int ACTUAL_SEGMENTS_COUNT_OFFSET    = 12;  //int32
     private static final int GLOBAL_HASH_SUFFIX_DEPTH_OFFSET = 16;  //int8
-    // region [17..79] is reserved for the generations to come
+
+    private static final int FILE_STATUS_OFFSET              = 17;  //int8
+
+    private static final int FIRST_FREE_OFFSET               = 18;
+    // region [18..79] is reserved for the generations to come
     private static final int STATIC_HEADER_SIZE              = 80;
 
     private static final int SEGMENTS_TABLE_OFFSET = STATIC_HEADER_SIZE; //int16[N]
     //@formatter:on
+
+    private static final byte FILE_STATUS_PROPERLY_CLOSED = 1;
+    private static final byte FILE_STATUS_OPENED = 0;
 
     //TODO RC: segmentSize is 2^N, and segmentsTable also must have 2^M entries -- but since we use few bytes
     // for static header, this means M <= N-1 -- i.e. we waste _almost half_ of header segment space because
@@ -454,19 +507,28 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
     // win just 80 bytes out of 32-64k, it seems quite doable, and we could cache uncompressed segmentsTable
     // in memory -- 32-64k heap usage is OK given it makes hashtable almost 2x larger for same segmentSize,
     // and likely also speeds up segmentTable lookup a bit.
+    // Alternative solution would be to break (headerSegment.size == dataSegment.size) constraint: i.e. allow
+    // header to be (80 + dataSegment.size) bytes. Such change of layout means we can't align segments to the
+    // first page anymore -- so there will be (dataSegment.size-80) wasted bytes at the end of the first page.
+    // But this seems a better tradeoff than the first option. And even better: since OS virtual memory page
+    // size (4k-16k) usually smaller than segmentSize (32k-64k) - only a part (< 50%) of those 32k-64k of wasted
+    // space will really waste _RAM_.
 
-    private final int headerSize;
     private final ByteBuffer headerBuffer;
 
-    HeaderLayout(@NotNull BufferSource bufferSource,
-                 int headerSize) throws IOException {
-      if (headerSize <= STATIC_HEADER_SIZE) {
-        throw new IllegalArgumentException("headerSize(=" + headerSize + ") must be > STATIC_HEADER_SIZE(=" + STATIC_HEADER_SIZE + ")");
-      }
-      this.headerSize = headerSize;//must be ==segmentSize
-      headerBuffer = bufferSource.slice(0, headerSize);
-    }
+    /** headerSegmentSize == {@link #segmentSize()} (we check that in ctor), but we cache it in field since it is frequently used */
+    private final transient int headerSegmentSize;
 
+    HeaderLayout(@NotNull BufferSource bufferSource,
+                 int headerSegmentSize) throws IOException {
+      if (headerSegmentSize <= STATIC_HEADER_SIZE) {
+        throw new IllegalArgumentException("headerSize(=" +
+                                           headerSegmentSize + ") must be > STATIC_HEADER_SIZE(=" + STATIC_HEADER_SIZE + ")");
+      }
+
+      this.headerSegmentSize = headerSegmentSize;
+      headerBuffer = bufferSource.slice(0, headerSegmentSize);
+    }
     public int magicWord() {
       return headerBuffer.getInt(MAGIC_WORD_OFFSET);
     }
@@ -483,8 +545,6 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
       headerBuffer.putInt(VERSION_OFFSET, version);
     }
 
-    public int headerSize() { return headerSize; }
-
     public int segmentSize() {
       return headerBuffer.getInt(SEGMENT_SIZE_OFFSET);
     }
@@ -493,6 +553,14 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
       headerBuffer.putInt(SEGMENT_SIZE_OFFSET, size);
     }
 
+    public byte fileStatus() {
+      return headerBuffer.get(FILE_STATUS_OFFSET);
+    }
+
+    public void fileStatus(@MagicConstant(intValues = {FILE_STATUS_PROPERLY_CLOSED, FILE_STATUS_OPENED})
+                           byte connectionStatus) {
+      headerBuffer.put(FILE_STATUS_OFFSET, connectionStatus);
+    }
 
     public int actualSegmentsCount() {
       return headerBuffer.getInt(ACTUAL_SEGMENTS_COUNT_OFFSET);
@@ -540,17 +608,17 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
     }
 
     public int maxSegmentTableSize() {
-      return (headerSize - STATIC_HEADER_SIZE) / Short.BYTES;
+      return (headerSegmentSize - STATIC_HEADER_SIZE) / Short.BYTES;
     }
 
     @Override
     public String toString() {
-      return "HeaderLayout[headerSize=" + headerSize + ']';
+      return "HeaderLayout[headerSize=" + headerSegmentSize + ']';
     }
 
     public String dump() throws IOException {
       StringBuilder sb =
-        new StringBuilder("HeaderLayout[size: " + headerSize + "b, globalHashSuffixSize: " + globalHashSuffixDepth() + "]");
+        new StringBuilder("HeaderLayout[size: " + headerSegmentSize + "b, globalHashSuffixSize: " + globalHashSuffixDepth() + "]");
       sb.append("[tableSize: " + segmentTableSize() + ", actualSegments: " + actualSegmentsCount() + "]\n");
       for (int i = 0; i < segmentTableSize(); i++) {
         sb.append("\t[" + i + "]=" + segmentIndex(i) + "\n");
@@ -748,9 +816,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
       this.loadFactor = loadFactor;
     }
 
-    /**
-     * @return value for which valuesAcceptor returns true, else NO_VALUE
-     */
+    /** @return value for which valuesAcceptor returns true, else NO_VALUE */
     public int lookup(@NotNull HashTableData table,
                       int key,
                       ValueAcceptor valuesAcceptor) throws IOException {
@@ -911,6 +977,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
       decrementAliveValues(table);
     }
 
+    // =========================== implementation: ======================================================
+
     private static int aliveValues(@NotNull HashTableData table) {
       return table.aliveEntriesCount();
     }
@@ -923,17 +991,17 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
       table.updateAliveEntriesCount(table.aliveEntriesCount() - 1);
     }
 
-    @FunctionalInterface
-    public interface KeyValueProcessor {
-      boolean process(final int key,
-                      final int value);
-    }
-
     private static void checkNotNoValue(final String paramName,
                                         final int value) {
       if (value == NO_VALUE) {
         throw new IllegalArgumentException(paramName + " can't be = " + NO_VALUE + " -- it is special value used as NO_VALUE");
       }
     }
+  }
+
+  @FunctionalInterface
+  public interface KeyValueProcessor {
+    boolean process(final int key,
+                    final int value);
   }
 }

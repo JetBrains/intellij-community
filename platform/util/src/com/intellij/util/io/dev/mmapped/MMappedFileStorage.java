@@ -75,8 +75,6 @@ public final class MMappedFileStorage implements Closeable {
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private Page[] pages;
 
-  private final long maxFileSize;
-
   public MMappedFileStorage(Path path,
                             int pageSize) throws IOException {
     this(path, pageSize, 0);
@@ -95,11 +93,9 @@ public final class MMappedFileStorage implements Closeable {
       throw new IllegalArgumentException("pagesCountToMapInitially(=" + pagesCountToMapInitially + ") must be >= 0");
     }
 
-
     pageSizeBits = Integer.numberOfTrailingZeros(pageSize);
     pageSizeMask = pageSize - 1;
     this.pageSize = pageSize;
-    this.maxFileSize = pagesCountToMapInitially;
 
     this.storagePath = path;
 
@@ -156,6 +152,14 @@ public final class MMappedFileStorage implements Closeable {
       return page;
     }
   }
+
+  //TODO RC:
+  //public void trancate() throws IOException {
+  //  synchronized (pagesLock) {
+  //    channel.truncate(0L);
+  //    pages = new Page[0];
+  //  }
+  //}
 
 
   private static @Nullable Page pageOrNull(Page[] pages,
@@ -287,7 +291,6 @@ public final class MMappedFileStorage implements Closeable {
   public String toString() {
     return "MMappedFileStorage[" + storagePath + "]" +
            "[pageSize: " + pageSize +
-           ", maxFileSize: " + maxFileSize +
            ", pages: " + pages.length +
            ']';
   }
