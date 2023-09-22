@@ -88,7 +88,7 @@ interface BaseSetting {
 
   val icon: Icon
   val name: String
-  val additionText: String?
+  val comment: String?
 }
 
 interface Configurable : Multiple {
@@ -108,8 +108,8 @@ interface Multiple : BaseSetting {
 interface ChildSetting {
   val id: String
   val name: String
-  val additionText: String? /* built-in скетч: https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=961%3A169853&mode=dev */
-  val value: String? /* hotkey скетч https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=961%3A169735&mode=dev*/
+  val leftComment: String? /* built-in скетч: https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=961%3A169853&mode=dev */
+  val rightComment: String? /* hotkey скетч https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=961%3A169735&mode=dev*/
 }
 
 data class DataForSave(val id: String, val childIds: List<String>?)
