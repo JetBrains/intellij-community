@@ -3,19 +3,19 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.IdeCoreBundle
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.ide.plugins.newui.PluginLogo
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.io.IOException
 import java.util.*
@@ -32,18 +32,17 @@ private class LanguagePluginDetectionStartupActivity : ProjectActivity {
       return
     }
 
-    val pluginNode = findLanguagePluginToInstall() ?: return
-    val icon = PluginLogo.getIcon(pluginNode, false, false, false)
+    val pluginId = findLanguagePluginToInstall() ?: return
+
     NotificationGroupManager.getInstance()
       .getNotificationGroup("Language Plugins Notifications")
       .createNotification(
-        ApplicationBundle.message("notification.content.available", pluginNode.name),
+        ApplicationBundle.message("notification.title.language.plugin.enable", ApplicationInfo.getInstance().fullApplicationName),
         NotificationType.INFORMATION,
       ).setSuggestionType(true)
-      .setIcon(IconUtil.scale(icon, null, 32f/icon.iconWidth))
       .addAction(
-        NotificationAction.create(ApplicationBundle.message("notification.content.install.restart")) { _, notification ->
-          installAndEnable(project, setOf(pluginNode.pluginId)) {
+        NotificationAction.create(ApplicationBundle.message("notification.action.language.plugin.install.and.enable")) { _, notification ->
+          installAndEnable(project, setOf(pluginId)) {
             notification.expire()
             ApplicationManagerEx.getApplicationEx().restart(true)
           }
@@ -62,7 +61,7 @@ private var PropertiesComponent.ignoreLanguageDetector: Boolean
   set(value) = setValue(IGNORE_LANGUAGE_DETECTOR_PROPERTY_NAME, value)
 
 @RequiresBackgroundThread
-private fun findLanguagePluginToInstall(): PluginNode? {
+private fun findLanguagePluginToInstall(): PluginId? {
   try {
     val locale = Locale.getDefault()
     if (locale == Locale.ENGLISH
@@ -98,9 +97,11 @@ private fun findLanguagePluginToInstall(): PluginNode? {
     return requests.searchPlugins(
       query = "tags=Language%20Pack",
       count = 10,
-    ).firstOrNull { node ->
-      matchedLanguagePlugins.any { it.pluginId == node.pluginId.idString }
-      && !PluginManagerCore.isPluginInstalled(node.pluginId)
+    ).map {
+      it.pluginId
+    }.firstOrNull { pluginId ->
+      matchedLanguagePlugins.any { it.pluginId == pluginId.idString }
+      && !PluginManagerCore.isPluginInstalled(pluginId)
     }
   }
   catch (e: IOException) {
