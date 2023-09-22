@@ -46,7 +46,7 @@ internal fun VcsLogModifiableIndex.toggleIndexing() {
     for (root in indexingRoots.filter { isIndexingPausedFor(it) }) {
       resumed = resumed or VcsLogBigRepositoriesList.getInstance().removeRepository(root)
     }
-    if (resumed) scheduleIndex(false)
+    if (resumed) scheduleIndex(true)
   }
 }
 
