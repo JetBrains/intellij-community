@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.backwardRefs.index;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -274,7 +274,7 @@ public class CompilerReferenceIndex<Input> {
     }
   }
 
-  class CompilerMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Value, Input> {
+  final class CompilerMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Value, Input> {
     CompilerMapReduceIndex(@NotNull final IndexExtension<Key, Value, Input> extension,
                            @NotNull final File indexDir,
                            boolean readOnly)

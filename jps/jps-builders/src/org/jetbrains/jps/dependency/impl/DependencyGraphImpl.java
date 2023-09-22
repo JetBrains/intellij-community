@@ -13,7 +13,7 @@ import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
-public class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
+public final class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
   private List<DifferentiateStrategy> myDifferentiateStrategies = List.of(
     new JavaDifferentiateStrategy()
   );

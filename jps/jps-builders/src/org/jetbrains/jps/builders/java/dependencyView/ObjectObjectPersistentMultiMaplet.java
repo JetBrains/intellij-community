@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.PairProcessor;
@@ -214,7 +214,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
     }
   }
 
-  private static class CollectionDataExternalizer<V> implements DataExternalizer<Collection<V>> {
+  private static final class CollectionDataExternalizer<V> implements DataExternalizer<Collection<V>> {
     private final DataExternalizer<V> myElementExternalizer;
     private final Supplier<? extends Collection<V>> myCollectionFactory;
 

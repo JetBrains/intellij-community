@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -21,7 +21,7 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.io.File;
 import java.util.*;
 
-public class CompilerEncodingConfiguration {
+public final class CompilerEncodingConfiguration {
   private final JpsModel myJpsModel;
   private final Map<String, String> myUrlToCharset;
   private final String myProjectCharset;

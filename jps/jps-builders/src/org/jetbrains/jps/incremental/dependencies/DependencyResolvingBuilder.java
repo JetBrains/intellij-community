@@ -807,13 +807,13 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     return JpsBuildBundle.message("builder.name.maven.dependency.resolver");
   }
 
-  private static class ArtifactVerificationException extends ProjectBuildException {
+  private static final class ArtifactVerificationException extends ProjectBuildException {
     ArtifactVerificationException(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message) {
       super(message);
     }
   }
 
-  private static class RemoteRepositoryNotFoundException extends ProjectBuildException {
+  private static final class RemoteRepositoryNotFoundException extends ProjectBuildException {
     RemoteRepositoryNotFoundException(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message) {
       super(message);
     }

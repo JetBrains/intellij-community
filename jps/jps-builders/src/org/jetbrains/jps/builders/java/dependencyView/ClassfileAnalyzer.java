@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +27,7 @@ final class ClassfileAnalyzer {
     this.myContext = context;
   }
 
-  private class ClassCrawler extends ClassVisitor {
+  private final class ClassCrawler extends ClassVisitor {
     private final class AnnotationRetentionPolicyCrawler extends AnnotationVisitor {
       private AnnotationRetentionPolicyCrawler() {
         super(ASM_API_VERSION);
@@ -221,7 +221,7 @@ final class ClassfileAnalyzer {
       }
     }
 
-    private class ModuleCrawler extends ModuleVisitor {
+    private final class ModuleCrawler extends ModuleVisitor {
       ModuleCrawler() {
         super(ASM_API_VERSION);
       }

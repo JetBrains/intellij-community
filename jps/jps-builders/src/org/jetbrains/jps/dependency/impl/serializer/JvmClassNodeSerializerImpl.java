@@ -3,11 +3,13 @@ package org.jetbrains.jps.dependency.impl.serializer;
 
 import com.intellij.serialization.SerializationException;
 import org.jetbrains.jps.dependency.SerializableGraphElement;
-import org.jetbrains.jps.dependency.java.*;
+import org.jetbrains.jps.dependency.java.JvmClass;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
-public class JvmClassNodeSerializerImpl extends NodeSerializerImpl<JvmClass> {
+public final class JvmClassNodeSerializerImpl extends NodeSerializerImpl<JvmClass> {
   public JvmClassNodeSerializerImpl() {
     super(JvmClass.class);
   }

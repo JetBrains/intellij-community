@@ -6,7 +6,7 @@ import org.jetbrains.jps.dependency.diff.DiffCapable;
 import java.util.Collections;
 import java.util.Objects;
 
-public class ModuleRequires extends Proto implements DiffCapable<ModuleRequires, ModuleRequires.Diff> {
+public final class ModuleRequires extends Proto implements DiffCapable<ModuleRequires, ModuleRequires.Diff> {
 
   private final String myVersion;
 
@@ -34,7 +34,7 @@ public class ModuleRequires extends Proto implements DiffCapable<ModuleRequires,
     return new Diff(past);
   }
 
-  public class Diff extends Proto.Diff<ModuleRequires> {
+  public final class Diff extends Proto.Diff<ModuleRequires> {
 
     public Diff(ModuleRequires past) {
       super(past);

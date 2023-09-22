@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.backwardRefs.index;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
@@ -140,7 +140,7 @@ public final class JavaCompilerIndices {
     };
   }
 
-  private static class UnsignedByteExternalizer implements DataExternalizer<Integer> {
+  private static final class UnsignedByteExternalizer implements DataExternalizer<Integer> {
     @Override
     public void save(@NotNull DataOutput out, Integer value) throws IOException {
       int v = value;

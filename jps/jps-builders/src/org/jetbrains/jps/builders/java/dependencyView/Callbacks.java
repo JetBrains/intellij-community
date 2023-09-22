@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.SmartList;
@@ -48,7 +48,7 @@ public final class Callbacks {
     };
   }
 
-  public static class ConstantAffection {
+  public static final class ConstantAffection {
     public static final ConstantAffection EMPTY = new ConstantAffection();
     private final boolean myKnown;
     private final Collection<File> myAffectedFiles;

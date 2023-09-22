@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.relativizer;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -12,7 +12,7 @@ import java.nio.file.Paths;
  * Unlike {@link SubPathRelativizer} which masks only subdirectories or subfiles, this one {@link AnyPathRelativizer} can handle relative
  * paths containing '/../' components as well.
  */
-class AnyPathRelativizer implements PathRelativizer {
+final class AnyPathRelativizer implements PathRelativizer {
   private final Path myPath;
   private final String myIdentifier;
 

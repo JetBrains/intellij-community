@@ -8,7 +8,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class StringReferenceIDNodeSerializerImpl extends NodeSerializerImpl<StringReferenceID>{
+public final class StringReferenceIDNodeSerializerImpl extends NodeSerializerImpl<StringReferenceID>{
   public StringReferenceIDNodeSerializerImpl() {
     super(StringReferenceID.class);
   }

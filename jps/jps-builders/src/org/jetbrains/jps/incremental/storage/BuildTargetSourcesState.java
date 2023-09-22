@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.google.gson.Gson;
@@ -11,7 +11,10 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetIndex;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -44,8 +47,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jetbrains.jps.incremental.IncProjectBuilder.MAX_BUILDER_THREADS;
-import static org.jetbrains.jps.incremental.storage.Xxh3HashingService.getStringHash;
 import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHES;
+import static org.jetbrains.jps.incremental.storage.Xxh3HashingService.getStringHash;
 
 /**
  * Report the state of module sources from which this build was created. <b>This class created as experimental for
@@ -61,7 +64,7 @@ import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHE
  * <b>This is class can be changed or removed in future</b>
  */
 @ApiStatus.Experimental
-public class BuildTargetSourcesState implements BuildListener {
+public final class BuildTargetSourcesState implements BuildListener {
   private static final Logger LOG = Logger.getInstance(BuildTargetSourcesState.class);
   private static final String TARGET_SOURCES_STATE_FILE_NAME = "target_sources_state.json";
   private final ExecutorService myParallelBuildExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(

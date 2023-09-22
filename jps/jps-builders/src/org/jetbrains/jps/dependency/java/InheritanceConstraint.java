@@ -5,7 +5,7 @@ import org.jetbrains.jps.dependency.Node;
 
 import java.util.HashSet;
 
-public class InheritanceConstraint extends PackageConstraint{
+public final class InheritanceConstraint extends PackageConstraint{
   private final Utils myUtils;
   private final String myRootClass;
 

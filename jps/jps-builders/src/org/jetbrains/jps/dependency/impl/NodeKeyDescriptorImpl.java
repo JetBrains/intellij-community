@@ -3,7 +3,7 @@ package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.jps.dependency.SerializableGraphElement;
 
-public class NodeKeyDescriptorImpl<T extends SerializableGraphElement> extends NodeKeyDescriptor<T> {
+public final class NodeKeyDescriptorImpl<T extends SerializableGraphElement> extends NodeKeyDescriptor<T> {
   public static final NodeKeyDescriptorImpl<?> INSTANCE = new NodeKeyDescriptorImpl<>();
   public static <T extends SerializableGraphElement> NodeKeyDescriptorImpl<T> getInstance() {
     @SuppressWarnings("unchecked")

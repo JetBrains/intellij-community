@@ -37,7 +37,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 // not final - used by Gosu plugin
-public class Mappings {
+public final class Mappings {
   private final static Logger LOG = Logger.getInstance(Mappings.class);
   public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
   private boolean myProcessConstantsIncrementally = !Boolean.parseBoolean(System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false"));
@@ -886,7 +886,7 @@ public class Mappings {
       });
     }
 
-    public class FileFilterConstraint implements UsageConstraint {
+    public final class FileFilterConstraint implements UsageConstraint {
       @NotNull
       private final DependentFilesFilter myFilter;
 
@@ -923,7 +923,7 @@ public class Mappings {
       }
     }
 
-    public class InheritanceConstraint extends PackageConstraint {
+    public final class InheritanceConstraint extends PackageConstraint {
       public final int rootClass;
 
       public InheritanceConstraint(ClassRepr rootClass) {
@@ -1098,7 +1098,7 @@ public class Mappings {
     private final Iterable<AnnotationsChangeTracker> myAnnotationChangeTracker =
       JpsServiceManager.getInstance().getExtensions(AnnotationsChangeTracker.class);
 
-    private class FileClasses {
+    private final class FileClasses {
       final File myFileName;
       final Set<ClassRepr> myFileClasses = new HashSet<>();
       final Set<ModuleRepr> myFileModules = new HashSet<>();
@@ -3144,7 +3144,7 @@ public class Mappings {
     return myChangedFiles;
   }
 
-  private static class OverloadDescriptor {
+  private static final class OverloadDescriptor {
     final int accessScope;
     final MethodRepr overloadMethod;
     final ClassRepr overloadMethodOwner;

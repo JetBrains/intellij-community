@@ -11,7 +11,7 @@ import org.jetbrains.jps.javac.Iterators;
 
 import java.util.Collections;
 
-public class SubclassesIndex extends BackDependencyIndexImpl {
+public final class SubclassesIndex extends BackDependencyIndexImpl {
   public static final String NAME = "direct-subclasses";
 
   public SubclassesIndex(@NotNull MapletFactory cFactory) {

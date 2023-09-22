@@ -9,7 +9,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class JvmModuleNodeSerializerImpl extends NodeSerializerImpl<JvmModule> {
+public final class JvmModuleNodeSerializerImpl extends NodeSerializerImpl<JvmModule> {
   public JvmModuleNodeSerializerImpl() {
     super(JvmModule.class);
   }

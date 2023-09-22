@@ -25,7 +25,7 @@ final class JvmClassAnalyzer {
   JvmClassAnalyzer() {
   }
 
-  private static class ClassCrawler extends ClassVisitor {
+  private static final class ClassCrawler extends ClassVisitor {
     private final class AnnotationRetentionPolicyCrawler extends AnnotationVisitor {
       private AnnotationRetentionPolicyCrawler() {
         super(ASM_API_VERSION);
@@ -220,7 +220,7 @@ final class JvmClassAnalyzer {
       }
     }
 
-    private class ModuleCrawler extends ModuleVisitor {
+    private final class ModuleCrawler extends ModuleVisitor {
       ModuleCrawler() {
         super(ASM_API_VERSION);
       }

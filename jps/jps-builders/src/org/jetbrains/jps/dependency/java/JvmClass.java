@@ -9,7 +9,7 @@ import org.jetbrains.jps.javac.Iterators;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Objects;
 
-public class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
+public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
   private final String mySuperFqName;
   private final String myOuterFqName;
   private final Iterable<String> myInterfaces;
@@ -87,7 +87,7 @@ public class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     return new Diff(past);
   }
 
-  public class Diff extends Proto.Diff<JvmClass> {
+  public final class Diff extends Proto.Diff<JvmClass> {
 
     public Diff(JvmClass past) {
       super(past);

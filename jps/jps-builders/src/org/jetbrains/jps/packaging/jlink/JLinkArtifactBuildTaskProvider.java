@@ -52,7 +52,7 @@ public final class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvi
     return Collections.singletonList(new JLinkBuildTask(artifact));
   }
 
-  private static class JLinkBuildTask extends BuildTask {
+  private static final class JLinkBuildTask extends BuildTask {
     private static final Logger LOG = Logger.getInstance(JLinkBuildTask.class);
     private final JpsArtifact myArtifact;
 

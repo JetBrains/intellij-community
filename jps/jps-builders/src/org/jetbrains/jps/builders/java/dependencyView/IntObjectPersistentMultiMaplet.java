@@ -208,7 +208,7 @@ public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaple
     }
   }
 
-  private static class CollectionDataExternalizer<V> implements DataExternalizer<Collection<V>> {
+  private static final class CollectionDataExternalizer<V> implements DataExternalizer<Collection<V>> {
     private final DataExternalizer<V> myElementExternalizer;
     private final Supplier<? extends Collection<V>> myCollectionFactory;
 

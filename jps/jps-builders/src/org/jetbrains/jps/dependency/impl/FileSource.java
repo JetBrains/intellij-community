@@ -7,7 +7,7 @@ import org.jetbrains.jps.dependency.NodeSource;
 import java.io.File;
 import java.nio.file.Path;
 
-public class FileSource implements NodeSource {
+public final class FileSource implements NodeSource {
 
   private final Path myPath;
 

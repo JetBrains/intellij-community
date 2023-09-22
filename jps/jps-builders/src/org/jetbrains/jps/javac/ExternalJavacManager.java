@@ -528,7 +528,7 @@ public class ExternalJavacManager extends ProcessAdapter {
   }
 
   @ChannelHandler.Sharable
-  private class CompilationRequestsHandler extends SimpleChannelInboundHandler<JavacRemoteProto.Message> {
+  private final class CompilationRequestsHandler extends SimpleChannelInboundHandler<JavacRemoteProto.Message> {
     @Override
     public void channelInactive(ChannelHandlerContext context) throws Exception {
       try {
@@ -658,7 +658,7 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
   }
 
-  private class CompileSession extends ExternalJavacRunResult{
+  private final class CompileSession extends ExternalJavacRunResult{
     private final UUID myId;
     private final UUID myProcessId;
     private final CanceledStatus myCancelStatus;
@@ -746,7 +746,7 @@ public class ExternalJavacManager extends ProcessAdapter {
 
   }
 
-  private static class WslToLinuxPathConverter implements ExternalJavacMessageHandler.WslSupport {
+  private static final class WslToLinuxPathConverter implements ExternalJavacMessageHandler.WslSupport {
     private static final String WSL_PATH_PREFIX = "//wsl$/";
     private static final String MNT_PREFIX = "/mnt/";
     private static final int MNT_PATTERN_LENGTH = MNT_PREFIX.length() + 2;

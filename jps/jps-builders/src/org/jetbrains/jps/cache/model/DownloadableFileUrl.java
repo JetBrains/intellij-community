@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.model;
 
 import com.intellij.openapi.util.Condition;
@@ -7,7 +7,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 
-public class DownloadableFileUrl {
+public final class DownloadableFileUrl {
   private final String myFileName;
   private final String myFileExtension;
   private final String myDownloadUrl;

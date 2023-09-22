@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,7 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, ArtifactBuildTarget> {
+public final class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, ArtifactBuildTarget> {
   private static final Logger LOG = Logger.getInstance(IncArtifactBuilder.class);
   public static final String BUILDER_ID = "artifacts-builder";
 
@@ -62,7 +62,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     return JpsBuildBundle.message("builder.name.artifacts.builder");
   }
 
-  private static class IncArtifactBuilderHelper {
+  private static final class IncArtifactBuilderHelper {
     private final @NotNull ArtifactBuildTarget target;
     private final @NotNull JpsArtifact artifact;
     private final @NotNull BuildOutputConsumer outputConsumer;

@@ -100,7 +100,7 @@ public final class FormsParsing {
     }
   }
 
-  private static class EmptyValidator extends NonValidator {
+  private static final class EmptyValidator extends NonValidator {
     private IXMLEntityResolver myParameterEntityResolver;
 
     @Override
@@ -157,7 +157,7 @@ public final class FormsParsing {
     }
   }
 
-  private static class EmptyEntityResolver implements IXMLEntityResolver {
+  private static final class EmptyEntityResolver implements IXMLEntityResolver {
     @Override
     public void addInternalEntity(String name, String value) {
     }
@@ -177,7 +177,7 @@ public final class FormsParsing {
     }
   }
 
-  private static class MyXMLReader extends StdXMLReader {
+  private static final class MyXMLReader extends StdXMLReader {
     private String publicId;
     private String systemId;
 
@@ -240,9 +240,9 @@ public final class FormsParsing {
     }
   }
 
-  public static class ParserStoppedException extends RuntimeException {
+  public static final class ParserStoppedException extends RuntimeException {
     @Override
-    public Throwable fillInStackTrace() {
+    public synchronized Throwable fillInStackTrace() {
       return this;
     }
   }

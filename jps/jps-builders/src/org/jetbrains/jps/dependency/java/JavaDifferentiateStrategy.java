@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class JavaDifferentiateStrategy implements DifferentiateStrategy {
+public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
 
   @Override
   public boolean differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter) {

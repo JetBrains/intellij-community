@@ -3,7 +3,10 @@ package org.jetbrains.jps.dependency.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.SLRUCache;
-import com.intellij.util.io.*;
+import com.intellij.util.io.AppendablePersistentMap;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
@@ -13,10 +16,12 @@ import org.jetbrains.jps.dependency.SerializableGraphElement;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.io.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.function.Supplier;
 
-public class PersistentSetMultiMaplet<K extends SerializableGraphElement, V extends SerializableGraphElement> implements MultiMaplet<K, V> {
+public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, V extends SerializableGraphElement> implements MultiMaplet<K, V> {
   private final NodeSerializerRegistry mySerializerRegistry;
 
   private static final Collection<?> NULL_COLLECTION = Collections.emptyList();
@@ -142,7 +147,7 @@ public class PersistentSetMultiMaplet<K extends SerializableGraphElement, V exte
     }
   }
 
-  private static class CollectionDataExternalizer<V extends SerializableGraphElement> implements DataExternalizer<Collection<V>> {
+  private static final class CollectionDataExternalizer<V extends SerializableGraphElement> implements DataExternalizer<Collection<V>> {
     private final DataExternalizer<V> myElementExternalizer;
     private final Supplier<? extends Collection<V>> myCollectionFactory;
 

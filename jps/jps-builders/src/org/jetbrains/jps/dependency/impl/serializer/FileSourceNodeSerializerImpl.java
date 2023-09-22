@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class FileSourceNodeSerializerImpl extends NodeSerializerImpl<FileSource>{
+public final class FileSourceNodeSerializerImpl extends NodeSerializerImpl<FileSource>{
   public FileSourceNodeSerializerImpl() {
     super(FileSource.class);
   }

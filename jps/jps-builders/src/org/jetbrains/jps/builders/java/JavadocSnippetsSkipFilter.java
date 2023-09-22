@@ -10,7 +10,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.function.BiFunction;
 
-class JavadocSnippetsSkipFilter implements FileFilter {
+final class JavadocSnippetsSkipFilter implements FileFilter {
   public static final String SNIPPETS_FOLDER = "snippet-files";
   
   private static final String SNIPPETS_FOLDER_PATTERN = "/" + SNIPPETS_FOLDER + "/";

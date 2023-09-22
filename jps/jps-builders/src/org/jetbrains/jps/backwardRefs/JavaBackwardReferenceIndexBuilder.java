@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder {
+public final class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(JavaBackwardReferenceIndexBuilder.class);
   public static final String BUILDER_ID = "compiler.ref.index";
   private static final String MESSAGE_TYPE = "processed module";

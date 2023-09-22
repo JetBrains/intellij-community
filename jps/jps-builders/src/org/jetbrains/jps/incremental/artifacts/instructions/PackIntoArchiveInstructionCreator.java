@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class PackIntoArchiveInstructionCreator extends ArtifactCompilerInstructionCreatorBase {
+public final class PackIntoArchiveInstructionCreator extends ArtifactCompilerInstructionCreatorBase {
   private final DestinationInfo myJarDestination;
   private final JarInfo myJarInfo;
   private final String myPathInJar;

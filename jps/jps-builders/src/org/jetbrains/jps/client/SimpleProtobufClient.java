@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Eugene Zhuravlev
  */
-public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
+public final class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   private static final Logger LOG = Logger.getInstance(SimpleProtobufClient.class);
 
   private enum State {

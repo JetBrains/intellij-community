@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, JvmMethod.Diff> {
+public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, JvmMethod.Diff> {
   private final Iterable<TypeRepr> myArgTypes;
   private final Set<ParamAnnotation> myParamAnnotations;
   private final Set<TypeRepr.ClassType> myExceptions;
@@ -64,7 +64,7 @@ public class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, Jvm
     return new Diff(past);
   }
 
-  public class Diff extends ProtoMember.Diff<JvmMethod> {
+  public final class Diff extends ProtoMember.Diff<JvmMethod> {
 
     public Diff(JvmMethod past) {
       super(past);

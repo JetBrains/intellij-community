@@ -422,7 +422,7 @@ public final class JarsBuilder {
     writtenPaths.add(JarFile.MANIFEST_NAME);
   }
 
-  private class JarsGraph implements InboundSemiGraph<JarInfo> {
+  private final class JarsGraph implements InboundSemiGraph<JarInfo> {
     @Override
     @NotNull
     public Collection<JarInfo> getNodes() {

@@ -4,7 +4,7 @@ package org.jetbrains.jps.dependency.java;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.impl.StringReferenceID;
 
-public class ImportStaticOnDemandUsage extends JvmElementUsage {
+public final class ImportStaticOnDemandUsage extends JvmElementUsage {
 
   public ImportStaticOnDemandUsage(@NotNull String importedClassName) {
     super(new StringReferenceID(importedClassName));

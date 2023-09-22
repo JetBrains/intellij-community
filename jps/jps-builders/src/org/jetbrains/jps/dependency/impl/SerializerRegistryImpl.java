@@ -11,10 +11,13 @@ import org.jetbrains.jps.dependency.impl.serializer.JvmClassNodeSerializerImpl;
 import org.jetbrains.jps.dependency.impl.serializer.JvmModuleNodeSerializerImpl;
 import org.jetbrains.jps.dependency.impl.serializer.StringReferenceIDNodeSerializerImpl;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
-public class SerializerRegistryImpl implements NodeSerializerRegistry {
+public final class SerializerRegistryImpl implements NodeSerializerRegistry {
   private final Function<SerializableGraphElement, NodeSerializer> mySerializerSelector;
   private final Function<Integer, NodeSerializer> mySerializerIDSelector;
 

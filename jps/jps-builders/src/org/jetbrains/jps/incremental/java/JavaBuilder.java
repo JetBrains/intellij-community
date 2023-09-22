@@ -54,9 +54,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
-import javax.tools.DiagnosticListener;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -1400,7 +1398,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static class ExplodedModuleNameFinder implements Function<File, String> {
+  private static final class ExplodedModuleNameFinder implements Function<File, String> {
     private final TargetOutputIndex myOutsIndex;
 
     ExplodedModuleNameFinder(CompileContext context) {

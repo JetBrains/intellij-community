@@ -31,7 +31,7 @@ public final class TypeRepr {
     void save(DataOutput out);
   }
 
-  public static class PrimitiveType implements AbstractType {
+  public static final class PrimitiveType implements AbstractType {
     public final int type;
 
     @Override
@@ -84,7 +84,7 @@ public final class TypeRepr {
     }
   }
 
-  public static class ArrayType implements AbstractType {
+  public static final class ArrayType implements AbstractType {
     public final AbstractType elementType;
 
     public AbstractType getDeepElementType() {
@@ -138,7 +138,7 @@ public final class TypeRepr {
     }
   }
 
-  public static class ClassType implements AbstractType {
+  public static final class ClassType implements AbstractType {
     public static final ClassType[] EMPTY_ARRAY = new ClassType[0];
     public final int className;
 

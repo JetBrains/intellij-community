@@ -6,7 +6,7 @@ import org.jetbrains.jps.dependency.diff.Difference;
 
 import java.util.Collections;
 
-public class ModulePackage extends Proto implements DiffCapable<ModulePackage, ModulePackage.Diff> {
+public final class ModulePackage extends Proto implements DiffCapable<ModulePackage, ModulePackage.Diff> {
 
   private final Iterable<String> myModules;
 
@@ -34,7 +34,7 @@ public class ModulePackage extends Proto implements DiffCapable<ModulePackage, M
     return new Diff(past);
   }
 
-  public class Diff extends Proto.Diff<ModulePackage> {
+  public final class Diff extends Proto.Diff<ModulePackage> {
 
     public Diff(ModulePackage past) {
       super(past);

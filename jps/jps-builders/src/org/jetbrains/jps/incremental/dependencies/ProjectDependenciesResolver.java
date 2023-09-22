@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.dependencies;
 
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +52,7 @@ public final class ProjectDependenciesResolver extends TargetBuilder<BuildRootDe
     return JpsBuildBundle.message("builder.name.project.dependencies.resolver");
   }
 
-  public static class ProjectDependenciesResolvingTarget extends BuildTarget<BuildRootDescriptor> {
+  public static final class ProjectDependenciesResolvingTarget extends BuildTarget<BuildRootDescriptor> {
     public ProjectDependenciesResolvingTarget() {
       super(ProjectDependenciesResolvingTargetType.INSTANCE);
     }
@@ -95,7 +95,7 @@ public final class ProjectDependenciesResolver extends TargetBuilder<BuildRootDe
     }
   }
 
-  public static class ProjectDependenciesResolvingTargetType extends BuildTargetType<ProjectDependenciesResolvingTarget> {
+  public static final class ProjectDependenciesResolvingTargetType extends BuildTargetType<ProjectDependenciesResolvingTarget> {
     public static final ProjectDependenciesResolvingTargetType INSTANCE = new ProjectDependenciesResolvingTargetType();
 
     public ProjectDependenciesResolvingTargetType() {

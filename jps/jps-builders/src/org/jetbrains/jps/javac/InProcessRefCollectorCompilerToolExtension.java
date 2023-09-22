@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import org.jetbrains.jps.service.JpsServiceManager;
 
-public class InProcessRefCollectorCompilerToolExtension extends AbstractRefCollectorCompilerToolExtension {
+public final class InProcessRefCollectorCompilerToolExtension extends AbstractRefCollectorCompilerToolExtension {
   @Override
   protected boolean isEnabled() {
     if (hasServiceManager()) {

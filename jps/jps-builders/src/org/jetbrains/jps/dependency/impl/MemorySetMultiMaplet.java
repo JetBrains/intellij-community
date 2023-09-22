@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class MemorySetMultiMaplet<K, V> implements MultiMaplet<K, V> {
+public final class MemorySetMultiMaplet<K, V> implements MultiMaplet<K, V> {
   private final Map<K, Set<V>> myMap = new HashMap<>();
 
   @Override

@@ -16,7 +16,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class Utils {
+public final class Utils {
   public static final String OBJECT_CLASS_NAME = "java/lang/Object";
 
   @NotNull

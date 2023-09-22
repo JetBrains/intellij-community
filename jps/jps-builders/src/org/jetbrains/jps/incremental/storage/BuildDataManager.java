@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,7 +30,7 @@ import java.util.function.Consumer;
 /**
  * @author Eugene Zhuravlev
  */
-public class BuildDataManager {
+public final class BuildDataManager {
   private static final int VERSION = 39 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
   private static final Logger LOG = Logger.getInstance(BuildDataManager.class);
   private static final String SRC_TO_FORM_STORAGE = "src-form";

@@ -264,7 +264,7 @@ final class UsageRepr {
     }
   }
 
-  public static class MetaMethodUsage extends FMUsage {
+  public static final class MetaMethodUsage extends FMUsage {
 
     public MetaMethodUsage(final int n, final int o) {
       super(n, o);
@@ -285,7 +285,7 @@ final class UsageRepr {
     }
   }
 
-  public static class ImportStaticMemberUsage extends FMUsage {
+  public static final class ImportStaticMemberUsage extends FMUsage {
 
     public ImportStaticMemberUsage(final int n, final int o) {
       super(n, o);
@@ -465,7 +465,7 @@ final class UsageRepr {
     }
   }
 
-  public static class ClassAsGenericBoundUsage extends ClassUsage {
+  public static final class ClassAsGenericBoundUsage extends ClassUsage {
     public ClassAsGenericBoundUsage(int className) {
       super(className);
     }
@@ -551,7 +551,7 @@ final class UsageRepr {
     }
   }
 
-  public static class ClassNewUsage extends ClassExtendsUsage {
+  public static final class ClassNewUsage extends ClassExtendsUsage {
     public ClassNewUsage(int className) {
       super(className);
     }
