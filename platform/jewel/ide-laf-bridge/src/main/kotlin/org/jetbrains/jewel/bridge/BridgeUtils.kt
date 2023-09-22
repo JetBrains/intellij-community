@@ -11,11 +11,15 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Typeface
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.JBColor
+import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBValue
 import org.jetbrains.jewel.IntelliJThemeIconData
 import org.jetbrains.jewel.InteractiveComponentState
@@ -24,6 +28,8 @@ import org.jetbrains.jewel.styling.PainterProvider
 import org.jetbrains.skiko.DependsOnJBR
 import org.jetbrains.skiko.awt.font.AwtFontManager
 import org.jetbrains.skiko.toSkikoTypefaceOrNull
+import java.awt.Dimension
+import java.awt.Insets
 import javax.swing.UIManager
 
 private val logger = Logger.getInstance("JewelBridge")
@@ -82,9 +88,45 @@ fun retrieveIntAsDpOrUnspecified(key: String) =
     }
 
 fun retrieveInsetsAsPaddingValues(key: String) =
-    UIManager.getInsets(key)
-        ?.let { PaddingValues(it.left.dp, it.top.dp, it.right.dp, it.bottom.dp) }
+    UIManager.getInsets(key)?.toPaddingValues()
         ?: keyNotFound(key, "Insets")
+
+/**
+ * Converts a [Insets] to [PaddingValues]. If the receiver is a [JBInsets]
+ * instance, this function delegates to the specific [toPaddingValues] for
+ * it, which is scaling-aware.
+ */
+fun Insets.toPaddingValues() =
+    if (this is JBInsets) {
+        toPaddingValues()
+    } else {
+        PaddingValues(left.dp, top.dp, right.dp, bottom.dp)
+    }
+
+/**
+ * Converts a [JBInsets] to [PaddingValues], in a scaling-aware way. This
+ * means that the resulting [PaddingValues] will be constructed from the
+ * [JBInsets.unscaled] values, treated as [Dp]. This avoids double scaling.
+ */
+fun JBInsets.toPaddingValues() =
+    PaddingValues(unscaled.left.dp, unscaled.top.dp, unscaled.right.dp, unscaled.bottom.dp)
+
+/**
+ * Converts a [Dimension] to [DpSize]. If the receiver is a [JBDimension]
+ * instance, this function delegates to the specific [toDpSize] for it,
+ * which is scaling-aware.
+ */
+fun Dimension.toDpSize() = DpSize(width.dp, height.dp)
+
+/**
+ * Converts a [JBDimension] to [DpSize], in a scaling-aware way. This means
+ * that the resulting [DpSize] will be constructed by first obtaining the
+ * unscaled values. This avoids double scaling.
+ */
+fun JBDimension.toDpSize(): DpSize {
+    val scaleFactor = scale(1f)
+    return DpSize((width2d() / scaleFactor).dp, (height2d() / scaleFactor).dp)
+}
 
 fun retrieveArcAsCornerSize(key: String) =
     CornerSize(retrieveIntAsDp(key) / 2)
