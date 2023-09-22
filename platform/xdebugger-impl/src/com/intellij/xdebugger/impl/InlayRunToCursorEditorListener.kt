@@ -60,22 +60,13 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
   private var currentLineNumber = -1
 
   fun installScrollListeners(debuggerManagerImpl: XDebuggerManagerImpl) {
-    (EditorFactory.getInstance().getEventMulticaster() as? EditorEventMulticasterEx)?.addFocusChangeListener(object : FocusChangeListener {
-      private var myLastScrollListener = WeakReference<VisibleAreaListener?>(null)
-      private var myLastEditor = WeakReference<Editor?>(null)
-      override fun focusGained(editor: Editor) {
-        val lastEditor = myLastEditor.get()
-        val lastScrollListener = myLastScrollListener.get()
-        if (lastEditor != null && lastScrollListener != null) {
-          lastEditor.getScrollingModel().removeVisibleAreaListener(lastScrollListener)
-        }
-        val scrollListener = VisibleAreaListener {
+    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
+      override fun editorCreated(event: EditorFactoryEvent) {
+        val editor = event.editor
+        editor.getScrollingModel().addVisibleAreaListener(VisibleAreaListener {
           val session: XDebugSessionImpl = debuggerManagerImpl.currentSession ?: return@VisibleAreaListener
           scheduleInlayRunToCursor(editor, session)
-        }
-        myLastEditor = WeakReference(editor)
-        myLastScrollListener = WeakReference(scrollListener)
-        editor.getScrollingModel().addVisibleAreaListener(scrollListener, debuggerManagerImpl)
+        }, debuggerManagerImpl)
       }
     }, debuggerManagerImpl)
   }
