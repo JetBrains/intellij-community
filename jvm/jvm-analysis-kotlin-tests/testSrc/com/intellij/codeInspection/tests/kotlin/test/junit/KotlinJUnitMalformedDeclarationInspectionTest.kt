@@ -746,8 +746,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest {
     """.trimIndent())
     }
 
-    // TODO: IDEA-319390
-    fun `_test malformed before each remove private quickfix`() {
+    fun `test malformed before each remove private quickfix`() {
       myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       class MainTest {
         @org.junit.jupiter.api.BeforeEach
