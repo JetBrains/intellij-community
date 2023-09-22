@@ -220,18 +220,14 @@ value class TabStripState(val state: ULong) : FocusableComponentState {
         fun of(
             enabled: Boolean = true,
             focused: Boolean = false,
-            error: Boolean = false,
             pressed: Boolean = false,
             hovered: Boolean = false,
-            warning: Boolean = false,
             active: Boolean = false,
         ) = TabStripState(
             state = (if (enabled) CommonStateBitMask.Enabled else 0UL) or
                 (if (focused) CommonStateBitMask.Focused else 0UL) or
                 (if (hovered) CommonStateBitMask.Hovered else 0UL) or
                 (if (pressed) CommonStateBitMask.Pressed else 0UL) or
-                (if (warning) CommonStateBitMask.Warning else 0UL) or
-                (if (error) CommonStateBitMask.Error else 0UL) or
                 (if (active) CommonStateBitMask.Active else 0UL),
         )
     }
