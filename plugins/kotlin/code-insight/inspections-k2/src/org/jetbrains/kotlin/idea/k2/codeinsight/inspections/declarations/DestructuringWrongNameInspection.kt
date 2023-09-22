@@ -22,35 +22,38 @@ internal class DestructuringWrongNameInspection : LocalInspectionTool() {
     }
 
     private fun processDestructuringDeclaration(holder: ProblemsHolder, declaration: KtDestructuringDeclaration) {
-        analyze(declaration) {
-            val type = getClassType(declaration) ?: return
-            if (type.nullability != KtTypeNullability.NON_NULLABLE) return
+        val parameterNames = getParameterNames(declaration) ?: return
+        declaration.entries
+            .asSequence()
+            .withIndex()
+            .filter { (index, variable) -> variable.name != parameterNames.getOrNull(index) && variable.name in parameterNames }
+            .forEach { (index, variable) ->
+                // 'variable' can't be null because of the filter above ('parameterNames' only contains non-nulls)
+                val message = KotlinBundle.message("variable.name.0.matches.the.name.of.a.different.component", variable.name!!)
+                if (index < parameterNames.size) {
+                    val parameterName = parameterNames[index]
+                    val fix = RenameElementFix(variable, parameterName)
+                    holder.registerProblem(variable, message, fix)
+                } else {
+                    holder.registerProblem(variable, message)
+                }
+            }
+    }
+
+    private fun getParameterNames(declaration: KtDestructuringDeclaration): List<String>? {
+        return analyze(declaration) {
+            val type = getClassType(declaration) ?: return null
+            if (type.nullability != KtTypeNullability.NON_NULLABLE) return null
             val classSymbol = type.expandedClassSymbol
 
             if (classSymbol is KtNamedClassOrObjectSymbol && classSymbol.isData) {
                 val constructorSymbol = classSymbol.getDeclaredMemberScope()
                     .getConstructors()
                     .find { it.isPrimary }
-                    ?: return
+                    ?: return null
 
-                val parameterNames = constructorSymbol.valueParameters.map { it.name.asString() }
-
-                declaration.entries
-                    .asSequence()
-                    .withIndex()
-                    .filter { (index, variable) -> variable.name != parameterNames.getOrNull(index) && variable.name in parameterNames }
-                    .forEach { (index, variable) ->
-                        // 'variable' can't be null because of the filter above ('parameterNames' only contains non-nulls)
-                        val message = KotlinBundle.message("variable.name.0.matches.the.name.of.a.different.component", variable.name!!)
-                        if (index < parameterNames.size) {
-                            val parameter = constructorSymbol.valueParameters[index]
-                            val fix = RenameElementFix(variable, parameter.name.asString())
-                            holder.registerProblem(variable, message, fix)
-                        } else {
-                            holder.registerProblem(variable, message)
-                        }
-                    }
-            }
+                constructorSymbol.valueParameters.map { it.name.asString() }
+            } else null
         }
     }
 
