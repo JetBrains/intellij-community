@@ -3,6 +3,7 @@ package com.intellij.vcs.log.visible
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.alsoIfNull
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsLogRangeFilter
@@ -61,12 +62,12 @@ private fun resolveCommits(vcsLogStorage: VcsLogStorage,
                            dataPack: DataPack,
                            root: VirtualFile,
                            range: VcsLogRangeFilter.RefRange): Pair<CommitId, CommitId>? {
-  val from = resolveCommit(vcsLogStorage, dataPack, root, range.exclusiveRef)
-  val to = resolveCommit(vcsLogStorage, dataPack, root, range.inclusiveRef)
-  if (from == null || to == null) {
-    LOG.debug("Range limits unresolved for: $range in $root")
-    return null
-  }
+  val from = resolveCommit(vcsLogStorage, dataPack, root, range.exclusiveRef)?.alsoIfNull {
+    LOG.debug("Can not resolve ${range.exclusiveRef} in $root for range $range")
+  } ?: return null
+  val to = resolveCommit(vcsLogStorage, dataPack, root, range.inclusiveRef)?.alsoIfNull {
+    LOG.debug("Can not resolve ${range.inclusiveRef} in $root for range $range")
+  } ?: return null
   return from to to
 }
 
