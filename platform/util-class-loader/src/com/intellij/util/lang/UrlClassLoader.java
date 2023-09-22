@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
@@ -24,13 +25,14 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * A class loader which allows for various customizations, e.g. not locking jars or using a special cache to speed up class loading.
+ * A class loader which allows for various customizations, e.g., not locking jars or using a special cache to speed up class loading.
  * Should be constructed using {@link #build()} method.
  * <p>
  * This classloader implementation is separate from {@link PathClassLoader} because it's used in runtime modules with JDK 1.8.
  */
 public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataConsumer {
-  private static final boolean isClassPathIndexEnabledGlobalValue = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
+  private static final boolean isClassPathIndexEnabledGlobalValue =
+    Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
   private static final boolean mimicJarUrlConnection = Boolean.parseBoolean(System.getProperty("idea.mimic.jar.url.connection", "false"));
 
@@ -115,7 +117,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
       configuration.files = files;
     }
     else {
-      String[] parts = System.getProperty("java.class.path").split(System.getProperty("path.separator"));
+      String[] parts = System.getProperty("java.class.path").split(File.pathSeparator);
       Set<Path> files = new LinkedHashSet<>(parts.length);
       for (String s : parts) {
         files.add(Paths.get(s));
@@ -249,7 +251,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     }
   }
 
-  @SuppressWarnings("deprecation")
   protected boolean isPackageDefined(String packageName) {
     return getPackage(packageName) != null;
   }
@@ -310,6 +311,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
         }
       }
       finally {
+        //noinspection ThreadLocalSetWithNull
         skipFindingResource.set(null);
       }
     }
@@ -387,7 +389,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   public interface CachePool { }
 
   /**
-   * @return a new pool to be able to share internal caches between different class loaders, if they contain the same URLs
+   * @return a new pool to be able to share internal caches between different class loaders if they contain the same URLs
    * in their class paths.
    */
   public static @NotNull CachePool createCachePool() {
@@ -625,7 +627,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
     /**
      * `FileLoader` will save a list of files/packages under its root and use this information instead of walking files.
-     * Should be used only when the caches can be properly invalidated (when e.g. a new file appears under `FileLoader`'s root).
+     * Should be used only when the caches can be properly invalidated (when e.g., a new file appears under `FileLoader`'s root).
      * Currently, the flag is used for faster unit tests / debug IDE instance, because IDEA's build process (as of 14.1) ensures deletion of
      * such information upon appearing new file for output root.
      * <p>
