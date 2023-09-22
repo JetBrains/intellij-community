@@ -17,7 +17,6 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -136,11 +135,9 @@ public class VFSInitializationBenchmark {
 
   private static PersistentFSConnection initVFS(Path cachesDir,
                                                 int version) {
-    VFSInitializationResult initResult = PersistentFSConnector.connect(
+    VFSInitializationResult initResult = PersistentFSConnector.connectWithoutVfsLog(
       cachesDir,
-      version,
-      false,
-      Collections.emptyList()
+      version
     );
     return initResult.connection;
   }

@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
@@ -45,10 +46,9 @@ final class PersistentFSConnector {
     new ContentStoragesRecoverer()
   );
 
-  private static class CachesWereRecoveredFromLogException extends Exception {
-    CachesWereRecoveredFromLogException(Throwable initializationException) {
-      super("VFS caches were recovered from VfsLog due to residual unrecoverable initialization problems", initializationException);
-    }
+  public static @NotNull VFSInitializationResult connectWithoutVfsLog(@NotNull Path cachesDir,
+                                                                      int version){
+    return connect(cachesDir, version, false, Collections.emptyList());
   }
 
   public static @NotNull VFSInitializationResult connect(@NotNull Path cachesDir,
@@ -242,7 +242,7 @@ final class PersistentFSConnector {
         vfsLoader.closeEverything();
         if (e instanceof CachesWereRecoveredFromLogException) {
           // don't delete the caches, they will be substituted on the next attempt
-          throw new VFSInitException(RECOVERED_FROM_LOG, e.getMessage(), e);
+          throw new VFSInitException(RECOVERED_FROM_LOG, errorMessage, e);
         }
         else {
           vfsLoader.deleteEverything();
@@ -276,6 +276,12 @@ final class PersistentFSConnector {
       }
 
       throw new VFSInitException(UNRECOGNIZED, "VFS init failure of unrecognized category: " + errorMessage, e);
+    }
+  }
+
+  private static class CachesWereRecoveredFromLogException extends IOException {
+    CachesWereRecoveredFromLogException(Throwable initializationException) {
+      super("VFS caches were recovered from VfsLog due to residual unrecoverable initialization problems", initializationException);
     }
   }
 }

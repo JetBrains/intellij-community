@@ -154,11 +154,9 @@ public class VFSInitializationTest {
     final String corruptionReason = "VFS corrupted because I said so";
     final String corruptionCauseMessage = "Something happens here";
 
-    final VFSInitializationResult initializationResult = PersistentFSConnector.connect(
+    final VFSInitializationResult initializationResult = PersistentFSConnector.connectWithoutVfsLog(
       cachesDir,
-      /*version: */ 1,
-      false,
-      Collections.emptyList()
+      /*version: */ 1
     );
     PersistentFSConnection connection = initializationResult.connection;
     final Path corruptionMarkerFile = connection.getPersistentFSPaths().getCorruptionMarkerFile();
@@ -414,11 +412,9 @@ public class VFSInitializationTest {
           Path cachesDir = temporaryDirectory.createDir();
           int version = 1;
 
-          PersistentFSConnector.connect(
+          PersistentFSConnector.connectWithoutVfsLog(
             cachesDir,
-            version,
-            false,
-            Collections.emptyList()
+            version
           );
           //PersistentFSConnector.disconnect(initResult.connection);
           //System.out.println(initResult.totalInitializationDurationNs / 1000_000);
