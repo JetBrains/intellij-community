@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -58,15 +59,18 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
 
   @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
   private @Nullable JBLabel myServiceDirectoryLabel;
-  @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
+  @SuppressWarnings({"FieldCanBeLocal", "unused"}) // Used by reflection at showUi() and disposeUiResources()
   private @Nullable JBLabel myServiceDirectoryHint;
   private @Nullable TargetPathFieldWithBrowseButton myServiceDirectoryPathField;
+
   private @Nullable JBTextField myGradleVmOptionsField;
   @SuppressWarnings({"FieldCanBeLocal", "FieldMayBeFinal"}) // Used by reflection at showUi() and disposeUiResources()
   private @NotNull List<Component> myGradleVmOptionsComponents = new ArrayList<>();
+
   private @Nullable JBCheckBox myGenerateImlFilesCheckBox;
-  @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
+  @SuppressWarnings({"FieldCanBeLocal", "unused"}) // Used by reflection at showUi() and disposeUiResources()
   private @Nullable JBLabel myGenerateImlFilesHint;
+
   private @Nullable JBCheckBox myDownloadSourcesCheckBox;
 
   private final @NotNull GradleSettingsControl myDefaultProjectSettingsControl = new IdeaGradleDefaultProjectSettingsControl();
@@ -214,20 +218,17 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
 
   private void addServiceDirectoryControl(PaintAwarePanel canvas, int indentLevel) {
     myServiceDirectoryLabel = new JBLabel(GradleBundle.message("gradle.settings.text.user.home"));
-    myServiceDirectoryHint = new JBLabel(XmlStringUtil.wrapInHtml(GradleBundle.message("gradle.settings.text.user.home.hint")),
-                                         UIUtil.ComponentStyle.SMALL);
-    myServiceDirectoryHint.setForeground(UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER));
     myServiceDirectoryPathField = GradleRuntimeTargetUI
       .targetPathFieldWithBrowseButton(myInitialSettings.getProject(), GradleBundle.message("gradle.settings.text.user.home.dialog.title"));
+    myServiceDirectoryLabel.setLabelFor(myServiceDirectoryPathField);
     canvas.add(myServiceDirectoryLabel, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
     canvas.add(myServiceDirectoryPathField, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
 
-    canvas.add(Box.createGlue(), ExternalSystemUiUtil.getLabelConstraints(indentLevel));
-    GridBag constraints = ExternalSystemUiUtil.getFillLineConstraints(indentLevel);
-    constraints.insets.top = 0;
-    canvas.add(myServiceDirectoryHint, constraints);
-
-    myServiceDirectoryLabel.setLabelFor(myServiceDirectoryPathField);
+    myServiceDirectoryHint = addComment(
+      canvas,
+      XmlStringUtil.wrapInHtml(GradleBundle.message("gradle.settings.text.user.home.hint")),
+      ExternalSystemUiUtil.getCommentConstraints(indentLevel)
+    );
   }
 
   private void addVMOptionsControl(@NotNull PaintAwarePanel canvas, int indentLevel) {
@@ -284,20 +285,28 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     myGenerateImlFilesCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.generate.iml.files"));
     canvas.add(myGenerateImlFilesCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
 
-    myGenerateImlFilesHint = new JBLabel(
+    myGenerateImlFilesHint = addComment(
+      canvas,
       XmlStringUtil.wrapInHtml(GradleBundle.message("gradle.settings.text.generate.iml.files.hint", getIDEName())),
-      UIUtil.ComponentStyle.SMALL);
-    myGenerateImlFilesHint.setForeground(UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER));
-
-    GridBag constraints = ExternalSystemUiUtil.getFillLineConstraints(indentLevel);
-    constraints.insets.left += UIUtil.getCheckBoxTextHorizontalOffset(myGenerateImlFilesCheckBox);
-    constraints.insets.top = 0;
-    canvas.add(myGenerateImlFilesHint, constraints);
+      ExternalSystemUiUtil.getCheckBoxCommentConstraints(indentLevel, myGenerateImlFilesCheckBox)
+    );
   }
 
   private void addDownloadSourcesCheckBox(@NotNull PaintAwarePanel canvas, int indentLevel) {
     myDownloadSourcesCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.download.sources"));
     canvas.add(myDownloadSourcesCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+  }
+
+  private static @NotNull JBLabel addComment(
+    @NotNull PaintAwarePanel canvas,
+    @NotNull @NlsContexts.Label String text,
+    @NotNull GridBag constraints
+  ) {
+    var label = new JBLabel(text);
+    label.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+    label.setForeground(UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER));
+    canvas.add(label, constraints);
+    return label;
   }
 
   @Nullable
