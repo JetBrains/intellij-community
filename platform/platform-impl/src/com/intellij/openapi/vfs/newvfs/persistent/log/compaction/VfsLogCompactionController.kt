@@ -75,15 +75,14 @@ class VfsLogCompactionController(
 
   private fun openModelIfCompactionEnabled() {
     check(compactionModel == null && scheduledCompaction == null)
-    if (atomicState.get().operationMode == OperationMode.CompactData) {
+    val operationMode = atomicState.get().operationMode
+    if (operationMode == OperationMode.CompactData) {
       compactionModel = CompactedVfsModel(compactionModelDir)
-      LOG.info("excess data will be compacted")
-    }
-    else {
-      LOG.info("current mode is ${atomicState.get().operationMode}, excess data will be lost")
     }
     if (!readOnly) {
       scheduledCompaction = scheduleCompactionJob()
+      if (operationMode == OperationMode.CompactData) LOG.info("excess data will be compacted")
+      else LOG.info("current mode is ${operationMode}, excess data will be lost")
     }
   }
 
