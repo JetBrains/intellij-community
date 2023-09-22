@@ -1,11 +1,11 @@
-// FILE: test/ImportReference.kt
+// FILE: test/ImportReferenceWithAlias.kt
 // BIND_TO test.bar.A
 package test
 
-import test.foo.<caret>A
+import test.foo.<caret>A as B
 
 fun foo() {
-    val x = A()
+    val x = B()
 }
 
 // FILE: test/foo/A.kt

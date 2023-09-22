@@ -191,6 +191,11 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
         public void testImportReference() throws Exception {
             runTest("../../idea/tests/testData/refactoring/bindToElement/importReference/ImportReference.kt");
         }
+
+        @TestMetadata("ImportReferenceWithAlias.kt")
+        public void testImportReferenceWithAlias() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/importReference/ImportReferenceWithAlias.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
