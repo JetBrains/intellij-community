@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -200,7 +201,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
     RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
     SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
-    try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+    try (AccessToken ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       findShowUsages(
         project, dataContext, targetVariants, FindBundle.message("show.usages.ambiguous.title"),
         createVariantHandler(project, editor, popupPosition, searchScope)
@@ -429,8 +430,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     showElementUsagesWithResult(parameters, actionHandler);
   }
 
-  static Future<Collection<Usage>> showElementUsagesWithResult(@NotNull ShowUsagesParameters parameters,
-                                                               @NotNull ShowUsagesActionHandler actionHandler) {
+  @NotNull
+  private static Future<Collection<Usage>> showElementUsagesWithResult(@NotNull ShowUsagesParameters parameters,
+                                                                       @NotNull ShowUsagesActionHandler actionHandler) {
     ThreadingAssertions.assertEventDispatchThread();
 
     Span findUsageSpan = myFindUsagesTracer.spanBuilder("findUsages").startSpan();
@@ -448,8 +450,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     Ref<UsageNode> preselectedRow = new Ref<>();
 
     Predicate<? super Usage> originUsageCheck = originUsageCheck(parameters.editor);
-    var renderer = new ShowUsagesTableCellRenderer(originUsageCheck, outOfScopeUsages, searchScope);
-    var table = new ShowUsagesTable(renderer, usageView);
+    ShowUsagesTableCellRenderer renderer = new ShowUsagesTableCellRenderer(originUsageCheck, outOfScopeUsages, searchScope);
+    ShowUsagesTable table = new ShowUsagesTable(renderer, usageView);
 
     addUsageNodes(usageView.getRoot(), usageView, new ArrayList<>());
 
@@ -465,7 +467,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     Consumer<AbstractPopup> tableResizer = popup -> {
       if (popup != null && popup.isVisible() && !manuallyResized.get()) {
         PropertiesComponent properties = PropertiesComponent.getInstance(project);
-        var dataSize = table.getModel().getRowCount();
+        int dataSize = table.getModel().getRowCount();
         setPopupSize(table, popup, parameters.popupPosition, parameters.minWidth, properties.isValueSet(PREVIEW_PROPERTY_KEY), dataSize);
       }
     };
@@ -614,7 +616,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
     UsageSearcher usageSearcher = actionHandler.createUsageSearcher();
     long searchStarted = System.nanoTime();
-    var result = new CompletableFuture<Collection<Usage>>();
+    CompletableFuture<Collection<Usage>> result = new CompletableFuture<>();
     FindUsagesManager.startProcessUsages(indicator, project, usageSearcher, collect, () -> ApplicationManager.getApplication().invokeLater(
       () -> {
         showUsagesPopupData.header.disposeProcessIcon();
@@ -717,8 +719,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     return __ -> false;
   }
 
-  private static boolean showPopupIfNeedTo(@NotNull JBPopup popup, @NotNull RelativePoint popupPosition, Ref<Long> popupShownTime) {
-    if (!popup.isDisposed() && !popup.isVisible()) {
+  private static boolean showPopupIfNeedTo(@NotNull JBPopup popup, @NotNull RelativePoint popupPosition, @NotNull Ref<? super Long> popupShownTime) {
+    if (!popup.isDisposed() && !popup.isVisible() && popup.canShow()) {
       popup.show(popupPosition);
       popupShownTime.set(System.currentTimeMillis());
       return true;
