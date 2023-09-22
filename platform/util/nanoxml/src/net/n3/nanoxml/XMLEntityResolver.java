@@ -40,13 +40,12 @@ import java.util.Hashtable;
  * @author Marc De Scheemaecker
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.4 $
  */
-public final class XMLEntityResolver
-  implements IXMLEntityResolver {
+public final class XMLEntityResolver implements IXMLEntityResolver {
 
   /**
    * The entities.
    */
-  private Hashtable entities;
+  private final Hashtable entities;
 
 
   /**
@@ -61,19 +60,6 @@ public final class XMLEntityResolver
     this.entities.put("gt", "&#62;");
   }
 
-
-  /**
-   * Cleans up the object when it's destroyed.
-   */
-  @Override
-  protected void finalize()
-    throws Throwable {
-    this.entities.clear();
-    this.entities = null;
-    super.finalize();
-  }
-
-
   /**
    * Adds an internal entity.
    *
@@ -81,8 +67,7 @@ public final class XMLEntityResolver
    * @param value the value of the entity.
    */
   @Override
-  public void addInternalEntity(String name,
-                                String value) {
+  public void addInternalEntity(String name, String value) {
     if (!this.entities.containsKey(name)) {
       this.entities.put(name, value);
     }
@@ -97,9 +82,7 @@ public final class XMLEntityResolver
    * @param systemID the system ID of the entity.
    */
   @Override
-  public void addExternalEntity(String name,
-                                String publicID,
-                                String systemID) {
+  public void addExternalEntity(String name, String publicID, String systemID) {
     if (!this.entities.containsKey(name)) {
       this.entities.put(name, new String[]{publicID, systemID});
     }
@@ -114,9 +97,7 @@ public final class XMLEntityResolver
    * @return the reader, or null if the entity could not be resolved.
    */
   @Override
-  public Reader getEntity(IXMLReader xmlReader,
-                          String name)
-    throws XMLParseException {
+  public Reader getEntity(IXMLReader xmlReader, String name) throws XMLParseException {
     Object obj = this.entities.get(name);
 
     if (obj == null) {
@@ -152,20 +133,14 @@ public final class XMLEntityResolver
    * @param systemID  the system ID
    * @return the reader, or null if the reader could not be created/opened
    */
-  protected Reader openExternalEntity(IXMLReader xmlReader,
-                                      String publicID,
-                                      String systemID)
-    throws XMLParseException {
+  private Reader openExternalEntity(IXMLReader xmlReader, String publicID, String systemID) throws XMLParseException {
     String parentSystemID = xmlReader.getSystemID();
 
     try {
       return xmlReader.openStream(publicID, systemID);
     }
     catch (Exception e) {
-      throw new XMLParseException(parentSystemID,
-                                  xmlReader.getLineNr(),
-                                  "Could not open external entity "
-                                  + "at system ID: " + systemID);
+      throw new XMLParseException(parentSystemID, xmlReader.getLineNr(), "Could not open external entity " + "at system ID: " + systemID);
     }
   }
 }

@@ -39,8 +39,7 @@ import java.io.PrintWriter;
  * @author Marc De Scheemaecker
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.4 $
  */
-public class XMLException
-  extends Exception {
+public class XMLException extends Exception {
 
   /**
    * The message of the exception.
@@ -51,7 +50,7 @@ public class XMLException
   /**
    * The system ID of the XML data where the exception occurred.
    */
-  private String systemID;
+  private final String systemID;
 
 
   /**
@@ -63,7 +62,7 @@ public class XMLException
   /**
    * Encapsulated exception.
    */
-  private Exception encapsulatedException;
+  private final Exception encapsulatedException;
 
 
   /**
@@ -95,9 +94,7 @@ public class XMLException
    *                 occurred.
    * @param e        the encapsulated exception.
    */
-  public XMLException(String systemID,
-                      int lineNr,
-                      Exception e) {
+  public XMLException(String systemID, int lineNr, Exception e) {
     this(systemID, lineNr, e, "Nested Exception", true);
   }
 
@@ -111,9 +108,7 @@ public class XMLException
    *                 occurred.
    * @param msg      the message of the exception.
    */
-  public XMLException(String systemID,
-                      int lineNr,
-                      String msg) {
+  public XMLException(String systemID, int lineNr, String msg) {
     this(systemID, lineNr, null, msg, true);
   }
 
@@ -129,29 +124,12 @@ public class XMLException
    * @param reportParams true if the systemID, lineNr and e params need to be
    *                     appended to the message
    */
-  public XMLException(String systemID,
-                      int lineNr,
-                      Exception e,
-                      String msg,
-                      boolean reportParams) {
-    super(buildMessage(systemID, lineNr, e, msg,
-                       reportParams));
+  public XMLException(String systemID, int lineNr, Exception e, String msg, boolean reportParams) {
+    super(buildMessage(systemID, lineNr, e, msg, reportParams));
     this.systemID = systemID;
     this.lineNr = lineNr;
     this.encapsulatedException = e;
-    this.msg = buildMessage(systemID, lineNr, e, msg,
-                            reportParams);
-  }
-
-  /**
-   * Cleans up the object when it's destroyed.
-   */
-  @Override
-  protected void finalize()
-    throws Throwable {
-    this.systemID = null;
-    this.encapsulatedException = null;
-    super.finalize();
+    this.msg = buildMessage(systemID, lineNr, e, msg, reportParams);
   }
 
   /**
@@ -239,11 +217,7 @@ public class XMLException
    * @param reportParams true if the systemID, lineNr and e params need to be
    *                     appended to the message
    */
-  private static String buildMessage(String systemID,
-                                     int lineNr,
-                                     Exception e,
-                                     String msg,
-                                     boolean reportParams) {
+  private static String buildMessage(String systemID, int lineNr, Exception e, String msg, boolean reportParams) {
     String str = msg;
 
     if (reportParams) {

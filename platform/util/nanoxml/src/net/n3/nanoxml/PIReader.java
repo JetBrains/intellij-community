@@ -46,7 +46,7 @@ final class PIReader
   /**
    * The encapsulated reader.
    */
-  private IXMLReader reader;
+  private final IXMLReader reader;
 
 
   /**
@@ -64,18 +64,6 @@ final class PIReader
     this.reader = reader;
     this.atEndOfData = false;
   }
-
-
-  /**
-   * Cleans up the object when it's destroyed.
-   */
-  @Override
-  protected void finalize()
-    throws Throwable {
-    this.reader = null;
-    super.finalize();
-  }
-
 
   /**
    * Reads a block of data.

@@ -42,25 +42,20 @@ import java.util.Stack;
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.3 $
  * @see XMLElement
  */
-public final class StdXMLBuilder
-  implements IXMLBuilder {
-
-  /**
-   * This stack contains the current element and its parents.
-   */
-  private Stack stack;
-
-
-  /**
-   * The root element of the parsed XML tree.
-   */
-  private IXMLElement root;
-
+public final class StdXMLBuilder implements IXMLBuilder {
 
   /**
    * Prototype element for creating the tree.
    */
-  private IXMLElement prototype;
+  private final IXMLElement prototype;
+  /**
+   * This stack contains the current element and its parents.
+   */
+  private Stack stack;
+  /**
+   * The root element of the parsed XML tree.
+   */
+  private IXMLElement root;
 
 
   /**
@@ -82,21 +77,6 @@ public final class StdXMLBuilder
     this.prototype = prototype;
   }
 
-
-  /**
-   * Cleans up the object when it's destroyed.
-   */
-  @Override
-  protected void finalize()
-    throws Throwable {
-    this.prototype = null;
-    this.root = null;
-    this.stack.clear();
-    this.stack = null;
-    super.finalize();
-  }
-
-
   /**
    * This method is called before the parser starts processing its input.
    *
@@ -104,8 +84,7 @@ public final class StdXMLBuilder
    * @param lineNr   the line on which the parsing starts.
    */
   @Override
-  public void startBuilding(String systemID,
-                            int lineNr) {
+  public void startBuilding(String systemID, int lineNr) {
     this.stack = new Stack();
     this.root = null;
   }
@@ -119,8 +98,7 @@ public final class StdXMLBuilder
    * @param reader to read the data from the PI.
    */
   @Override
-  public void newProcessingInstruction(String target,
-                                       Reader reader) {
+  public void newProcessingInstruction(String target, Reader reader) {
     // nothing to do
   }
 
@@ -139,19 +117,14 @@ public final class StdXMLBuilder
    * @see #endElement
    */
   @Override
-  public void startElement(String name,
-                           String nsPrefix,
-                           String nsURI,
-                           String systemID,
-                           int lineNr) {
+  public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) {
     String fullName = name;
 
     if (nsPrefix != null) {
       fullName = nsPrefix + ':' + name;
     }
 
-    IXMLElement elt = this.prototype.createElement(fullName, nsURI,
-                                                   systemID, lineNr);
+    IXMLElement elt = this.prototype.createElement(fullName, nsURI, systemID, lineNr);
 
     if (this.stack.empty()) {
       this.root = elt;
@@ -179,9 +152,7 @@ public final class StdXMLBuilder
    * @see #addAttribute
    */
   @Override
-  public void elementAttributesProcessed(String name,
-                                         String nsPrefix,
-                                         String nsURI) {
+  public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) {
     // nothing to do
   }
 
@@ -198,9 +169,7 @@ public final class StdXMLBuilder
    * @see #startElement
    */
   @Override
-  public void endElement(String name,
-                         String nsPrefix,
-                         String nsURI) {
+  public void endElement(String name, String nsPrefix, String nsURI) {
     IXMLElement elt = (IXMLElement)this.stack.pop();
 
     if (elt.getChildrenCount() == 1) {
@@ -230,12 +199,7 @@ public final class StdXMLBuilder
    * @throws Exception If an exception occurred while processing the event.
    */
   @Override
-  public void addAttribute(String key,
-                           String nsPrefix,
-                           String nsURI,
-                           String value,
-                           String type)
-    throws Exception {
+  public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
     String fullName = key;
 
     if (nsPrefix != null) {
@@ -245,9 +209,7 @@ public final class StdXMLBuilder
     IXMLElement top = (IXMLElement)this.stack.peek();
 
     if (top.hasAttribute(fullName)) {
-      throw new XMLParseException(top.getSystemID(),
-                                  top.getLineNr(),
-                                  "Duplicate attribute: " + key);
+      throw new XMLParseException(top.getSystemID(), top.getLineNr(), "Duplicate attribute: " + key);
     }
 
     if (nsPrefix != null) {
@@ -272,9 +234,7 @@ public final class StdXMLBuilder
    * @param lineNr   the line in the source where the element starts.
    */
   @Override
-  public void addPCData(Reader reader,
-                        String systemID,
-                        int lineNr) {
+  public void addPCData(Reader reader, String systemID, int lineNr) {
     int bufSize = 2048;
     int sizeRead = 0;
     StringBuffer str = new StringBuffer(bufSize);

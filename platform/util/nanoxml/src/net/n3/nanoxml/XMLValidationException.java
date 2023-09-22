@@ -36,8 +36,7 @@ package net.n3.nanoxml;
  * @author Marc De Scheemaecker
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.3 $
  */
-public final class XMLValidationException
-  extends XMLException {
+public final class XMLValidationException extends XMLException {
 
   /**
    * An element was missing.
@@ -88,27 +87,21 @@ public final class XMLValidationException
 
 
   /**
-   * Which error occurred.
-   */
-  private int errorType;
-
-
-  /**
    * The name of the element where the exception occurred.
    */
-  private String elementName;
+  private final String elementName;
 
 
   /**
    * The name of the attribute where the exception occurred.
    */
-  private String attributeName;
+  private final String attributeName;
 
 
   /**
    * The value of the attribute where the exception occurred.
    */
-  private String attributeValue;
+  private final String attributeValue;
 
 
   /**
@@ -130,31 +123,14 @@ public final class XMLValidationException
                                 String attributeName,
                                 String attributeValue,
                                 String msg) {
-    super(systemID, lineNr, null,
-          msg + ((elementName == null) ? "" : (", element=" + elementName))
-          + ((attributeName == null) ? ""
-                                     : (", attribute=" + attributeName))
-          + ((attributeValue == null) ? ""
-                                      : (", value='" + attributeValue + "'")),
-          false);
+    super(systemID, lineNr, null, msg +
+                                  ((elementName == null) ? "" : (", element=" + elementName)) +
+                                  ((attributeName == null) ? "" : (", attribute=" + attributeName)) +
+                                  ((attributeValue == null) ? "" : (", value='" + attributeValue + "'")), false);
     this.elementName = elementName;
     this.attributeName = attributeName;
     this.attributeValue = attributeValue;
   }
-
-
-  /**
-   * Cleans up the object when it's destroyed.
-   */
-  @Override
-  protected void finalize()
-    throws Throwable {
-    this.elementName = null;
-    this.attributeName = null;
-    this.attributeValue = null;
-    super.finalize();
-  }
-
 
   /**
    * Returns the name of the element in which the validation is violated.

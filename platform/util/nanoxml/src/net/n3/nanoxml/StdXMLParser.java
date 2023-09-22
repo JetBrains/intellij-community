@@ -78,19 +78,6 @@ public final class StdXMLParser {
     this.entityResolver = new XMLEntityResolver();
   }
 
-
-  /**
-   * Cleans up the object when it's destroyed.
-   */
-  @Override
-  protected void finalize() throws Throwable {
-    this.builder = null;
-    this.reader = null;
-    this.entityResolver = null;
-    this.validator = null;
-    super.finalize();
-  }
-
   /**
    * Returns the builder which creates the logical structure of the XML data.
    *

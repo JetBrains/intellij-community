@@ -46,13 +46,13 @@ final class ContentReader
   /**
    * The encapsulated reader.
    */
-  private IXMLReader reader;
+  private final IXMLReader reader;
 
 
   /**
    * Buffer.
    */
-  private String buffer;
+  private final String buffer;
 
 
   /**
@@ -64,7 +64,7 @@ final class ContentReader
   /**
    * The entity resolver.
    */
-  private IXMLEntityResolver resolver;
+  private final IXMLEntityResolver resolver;
 
 
   /**
@@ -81,19 +81,6 @@ final class ContentReader
     this.resolver = resolver;
     this.buffer = buffer;
     this.bufferIndex = 0;
-  }
-
-
-  /**
-   * Cleans up the object when it's destroyed.
-   */
-  @Override
-  protected void finalize()
-    throws Throwable {
-    this.reader = null;
-    this.resolver = null;
-    this.buffer = null;
-    super.finalize();
   }
 
 

@@ -42,8 +42,7 @@ import java.util.Stack;
  * @author Marc De Scheemaecker
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.4 $
  */
-public class StdXMLReader
-  implements IXMLReader {
+public class StdXMLReader implements IXMLReader {
 
   /**
    * The stack of readers.
@@ -64,11 +63,7 @@ public class StdXMLReader
    * @throws FileNotFoundException if the system ID refers to a local file which does not exist
    * @throws IOException           if an error occurred opening the stream
    */
-  public StdXMLReader(String publicID,
-                      String systemID)
-    throws MalformedURLException,
-           FileNotFoundException,
-           IOException {
+  public StdXMLReader(String publicID, String systemID) throws MalformedURLException, FileNotFoundException, IOException {
     URL systemIDasURL = null;
 
     try {
@@ -89,8 +84,7 @@ public class StdXMLReader
     this.readers = new Stack();
     Reader reader = this.openStream(publicID, systemIDasURL.toString());
     this.currentReader.lineReader = new LineNumberReader(reader);
-    this.currentReader.pbReader
-      = new PushbackReader(this.currentReader.lineReader, 2);
+    this.currentReader.pbReader = new PushbackReader(this.currentReader.lineReader, 2);
   }
 
 
@@ -103,8 +97,7 @@ public class StdXMLReader
     this.currentReader = new StackedReader();
     this.readers = new Stack();
     this.currentReader.lineReader = new LineNumberReader(reader);
-    this.currentReader.pbReader
-      = new PushbackReader(this.currentReader.lineReader, 2);
+    this.currentReader.pbReader = new PushbackReader(this.currentReader.lineReader, 2);
     this.currentReader.publicId = "";
 
     try {
@@ -122,16 +115,14 @@ public class StdXMLReader
    * @param stream the input for the XML data.
    * @throws IOException if an I/O error occurred
    */
-  public StdXMLReader(InputStream stream)
-    throws IOException {
+  public StdXMLReader(InputStream stream) throws IOException {
     PushbackInputStream pbstream = new PushbackInputStream(stream);
     StringBuffer charsRead = new StringBuffer();
     Reader reader = this.stream2reader(stream, charsRead);
     this.currentReader = new StackedReader();
     this.readers = new Stack();
     this.currentReader.lineReader = new LineNumberReader(reader);
-    this.currentReader.pbReader
-      = new PushbackReader(this.currentReader.lineReader, 2);
+    this.currentReader.pbReader = new PushbackReader(this.currentReader.lineReader, 2);
     this.currentReader.publicId = "";
 
     try {
@@ -142,21 +133,6 @@ public class StdXMLReader
     }
 
     this.startNewStream(new StringReader(charsRead.toString()));
-  }
-
-  /**
-   * Cleans up the object when it's destroyed.
-   */
-  @Override
-  protected void finalize()
-    throws Throwable {
-    this.currentReader.lineReader = null;
-    this.currentReader.pbReader = null;
-    this.currentReader.systemId = null;
-    this.currentReader.publicId = null;
-    this.currentReader = null;
-    this.readers.clear();
-    super.finalize();
   }
 
   /**
@@ -179,9 +155,7 @@ public class StdXMLReader
         index++;
       }
 
-      while ((index < str.length())
-             && (str.charAt(index) >= 'a')
-             && (str.charAt(index) <= 'z')) {
+      while ((index < str.length()) && (str.charAt(index) >= 'a') && (str.charAt(index) <= 'z')) {
         key.append(str.charAt(index));
         index++;
       }
@@ -194,8 +168,7 @@ public class StdXMLReader
         break;
       }
 
-      while ((index < str.length()) && (str.charAt(index) != '\'')
-             && (str.charAt(index) != '"')) {
+      while ((index < str.length()) && (str.charAt(index) != '\'') && (str.charAt(index) != '"')) {
         index++;
       }
 
@@ -228,9 +201,7 @@ public class StdXMLReader
    * @param charsRead buffer where to put characters that have been read
    * @throws IOException if an I/O error occurred
    */
-  protected Reader stream2reader(InputStream stream,
-                                 StringBuffer charsRead)
-    throws IOException {
+  protected Reader stream2reader(InputStream stream, StringBuffer charsRead) throws IOException {
     PushbackInputStream pbstream = new PushbackInputStream(stream);
     int b = pbstream.read();
 
@@ -289,8 +260,7 @@ public class StdXMLReader
    * @throws IOException if no character could be read
    */
   @Override
-  public char read()
-    throws IOException {
+  public char read() throws IOException {
     int ch = this.currentReader.pbReader.read();
 
     while (ch < 0) {
@@ -313,8 +283,7 @@ public class StdXMLReader
    * @throws IOException if an I/O error occurred
    */
   @Override
-  public boolean atEOFOfCurrentStream()
-    throws IOException {
+  public boolean atEOFOfCurrentStream() throws IOException {
     int ch = this.currentReader.pbReader.read();
 
     if (ch < 0) {
@@ -332,8 +301,7 @@ public class StdXMLReader
    * @throws IOException if an I/O error occurred
    */
   @Override
-  public boolean atEOF()
-    throws IOException {
+  public boolean atEOF() throws IOException {
     int ch = this.currentReader.pbReader.read();
 
     while (ch < 0) {
@@ -357,8 +325,7 @@ public class StdXMLReader
    * @throws IOException if an I/O error occurred
    */
   @Override
-  public void unread(char ch)
-    throws IOException {
+  public void unread(char ch) throws IOException {
     this.currentReader.pbReader.unread(ch);
   }
 
@@ -368,23 +335,18 @@ public class StdXMLReader
    * @param publicID the public ID, which may be null
    * @param systemID the system ID, which is never null
    * @throws MalformedURLException if the system ID does not contain a valid URL
-   * @throws FileNotFoundException  if the system ID refers to a local file which does not exist
-   * @throws IOException            if an error occurred opening the stream
+   * @throws FileNotFoundException if the system ID refers to a local file which does not exist
+   * @throws IOException           if an error occurred opening the stream
    */
   @Override
-  public Reader openStream(String publicID,
-                           String systemID)
-    throws MalformedURLException,
-           FileNotFoundException,
-           IOException {
+  public Reader openStream(String publicID, String systemID) throws MalformedURLException, FileNotFoundException, IOException {
     URL url = new URL(this.currentReader.systemId, systemID);
 
     if (url.getRef() != null) {
       String ref = url.getRef();
 
       if (url.getFile().length() > 0) {
-        url = new URL(url.getProtocol(), url.getHost(), url.getPort(),
-                      url.getFile());
+        url = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile());
         url = new URL("jar:" + url + '!' + ref);
       }
       else {
@@ -402,8 +364,7 @@ public class StdXMLReader
     }
 
     String charsReadStr = charsRead.toString();
-    PushbackReader pbreader = new PushbackReader(reader,
-                                                 charsReadStr.length());
+    PushbackReader pbreader = new PushbackReader(reader, charsReadStr.length());
 
     for (int i = charsReadStr.length() - 1; i >= 0; i--) {
       pbreader.unread(charsReadStr.charAt(i));
@@ -434,8 +395,7 @@ public class StdXMLReader
    *                         an internal entity
    */
   @Override
-  public void startNewStream(Reader reader,
-                             boolean isInternalEntity) {
+  public void startNewStream(Reader reader, boolean isInternalEntity) {
     StackedReader oldReader = this.currentReader;
     this.readers.push(this.currentReader);
     this.currentReader = new StackedReader();
@@ -446,8 +406,7 @@ public class StdXMLReader
     }
     else {
       this.currentReader.lineReader = new LineNumberReader(reader);
-      this.currentReader.pbReader
-        = new PushbackReader(this.currentReader.lineReader, 2);
+      this.currentReader.pbReader = new PushbackReader(this.currentReader.lineReader, 2);
     }
 
     this.currentReader.systemId = oldReader.systemId;
@@ -496,10 +455,8 @@ public class StdXMLReader
    * @throws MalformedURLException if the system ID does not contain a valid URL
    */
   @Override
-  public void setSystemID(String systemID)
-    throws MalformedURLException {
-    this.currentReader.systemId = new URL(this.currentReader.systemId,
-                                          systemID);
+  public void setSystemID(String systemID) throws MalformedURLException {
+    this.currentReader.systemId = new URL(this.currentReader.systemId, systemID);
   }
 
   /**
@@ -536,9 +493,7 @@ public class StdXMLReader
    * @throws FileNotFoundException if the file could not be found
    * @throws IOException           if an I/O error occurred
    */
-  public static IXMLReader fileReader(String filename)
-    throws FileNotFoundException,
-           IOException {
+  public static IXMLReader fileReader(String filename) throws FileNotFoundException, IOException {
     StdXMLReader r = new StdXMLReader(new FileInputStream(filename));
     r.setSystemID(filename);
 
