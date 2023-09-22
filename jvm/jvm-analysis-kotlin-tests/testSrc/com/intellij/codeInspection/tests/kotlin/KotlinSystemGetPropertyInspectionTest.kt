@@ -26,7 +26,7 @@ class KotlinSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBas
       fun foo() {
           FileSystems.getDefault().getSeparator()
       }
-    """.trimIndent(), "Replace with 'java.nio.file.FileSystems.getDefault().getSeparator()'")
+    """.trimIndent(), "Replace with 'java.nio.file.FileSystems.getDefault().getSeparator()'", true)
   }
 
   fun `test quickfix path-separator`() {
@@ -40,7 +40,7 @@ class KotlinSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBas
       fun foo() {
           File.pathSeparator
       }
-    """.trimIndent(), "Replace with 'java.io.File.pathSeparator'")
+    """.trimIndent(), "Replace with 'java.io.File.pathSeparator'", true)
   }
 
   fun `test quickfix line-separator`() {
@@ -52,7 +52,7 @@ class KotlinSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBas
       fun foo() {
           System.lineSeparator()
       }
-    """.trimIndent(), "Replace with 'java.lang.System.lineSeparator()'")
+    """.trimIndent(), "Replace with 'java.lang.System.lineSeparator()'", true)
   }
 
   fun `test quickfix file-encoding`() {
@@ -66,6 +66,6 @@ class KotlinSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBas
       fun foo() {
           Charset.defaultCharset().displayName()
       }
-    """.trimIndent(), "Replace with 'java.nio.charset.Charset.defaultCharset().displayName()'")
+    """.trimIndent(), "Replace with 'java.nio.charset.Charset.defaultCharset().displayName()'", true)
   }
 }

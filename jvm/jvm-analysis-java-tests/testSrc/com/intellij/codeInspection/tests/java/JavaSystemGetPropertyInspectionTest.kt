@@ -32,7 +32,7 @@ class JavaSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBase(
             FileSystems.getDefault().getSeparator();
         }
       }
-    """.trimIndent(), "Replace with 'java.nio.file.FileSystems.getDefault().getSeparator()'")
+    """.trimIndent(), "Replace with 'java.nio.file.FileSystems.getDefault().getSeparator()'", true)
   }
 
   fun `test quickfix path-separator`() {
@@ -50,7 +50,7 @@ class JavaSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBase(
           File.pathSeparator;
         }
       }
-    """.trimIndent(), "Replace with 'java.io.File.pathSeparator'")
+    """.trimIndent(), "Replace with 'java.io.File.pathSeparator'", true)
   }
 
   fun `test quickfix line-separator`() {
@@ -66,7 +66,7 @@ class JavaSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBase(
           System.lineSeparator();
         }
       }
-    """.trimIndent(), "Replace with 'java.lang.System.lineSeparator()'")
+    """.trimIndent(), "Replace with 'java.lang.System.lineSeparator()'", true)
   }
 
   fun `test quickfix file-encoding`() {
@@ -84,6 +84,6 @@ class JavaSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBase(
           Charset.defaultCharset().displayName();
         }
       }
-    """.trimIndent(), "Replace with 'java.nio.charset.Charset.defaultCharset().displayName()'")
+    """.trimIndent(), "Replace with 'java.nio.charset.Charset.defaultCharset().displayName()'", true)
   }
 }
