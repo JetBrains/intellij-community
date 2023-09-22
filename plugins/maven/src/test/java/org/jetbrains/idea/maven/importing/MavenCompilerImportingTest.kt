@@ -261,36 +261,67 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  open fun testPreviewLanguageLevelProperty() = runBlocking {
+    val feature = LanguageLevel.HIGHEST.toJavaVersion().feature
+    importProjectAsync(("<groupId>test</groupId>" +
+                   "<artifactId>project</artifactId>" +
+                   "<version>1</version>" +
+                   "<properties>" +
+                   "  <maven.compiler.enablePreview>true</maven.compiler.enablePreview>" +
+                   "</properties>" +
+                   "<build>" +
+                   "  <plugins>" +
+                   "    <plugin>" +
+                   "      <groupId>org.apache.maven.plugins</groupId>" +
+                   "      <artifactId>maven-compiler-plugin</artifactId>" +
+                   "      <version>3.10.1</version>" +
+                   "      <configuration>" +
+                   "          <release>" + feature + "</release>" +
+                   "          <forceJavacCompilerUse>true</forceJavacCompilerUse>" +
+                   "      </configuration>" +
+                   "    </plugin>" +
+                   "  </plugins>" +
+                   "</build>"))
+    assertModules("project")
+    TestCase.assertEquals(LanguageLevel.values().get(LanguageLevel.HIGHEST.ordinal + 1), getLanguageLevelForModule())
+  }
+
+  @Test
+  open fun testPreviewLanguageLevelParameter() = runBlocking {
+    doTestPreviewConfigurationParameter("<enablePreview>true</enablePreview>")
+  }
+
+  @Test
   open fun testPreviewLanguageLevelOneLine() = runBlocking {
-    doTestPreview("<compilerArgs>--enable-preview</compilerArgs>\n")
+    doTestPreviewConfigurationParameter("<compilerArgs>--enable-preview</compilerArgs>")
   }
 
   @Test
   open fun testPreviewLanguageLevelArg() = runBlocking {
-    doTestPreview("<compilerArgs><arg>--enable-preview</arg></compilerArgs>\n")
+    doTestPreviewConfigurationParameter("<compilerArgs><arg>--enable-preview</arg></compilerArgs>")
   }
 
   @Test
   open fun testPreviewLanguageLevelCompilerArg() = runBlocking {
-    doTestPreview("<compilerArgs><compilerArg>--enable-preview</compilerArg></compilerArgs>\n")
+    doTestPreviewConfigurationParameter("<compilerArgs><compilerArg>--enable-preview</compilerArg></compilerArgs>")
   }
 
-  private suspend fun doTestPreview(compilerArgs: String?) {
+  private suspend fun doTestPreviewConfigurationParameter(configurationParameter: String?) {
     val feature = LanguageLevel.HIGHEST.feature()
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +
                    "<build>" +
                    "  <plugins>" +
-                   "    <plugin>\n" +
-                   "      <groupId>org.apache.maven.plugins</groupId>\n" +
-                   "      <artifactId>maven-compiler-plugin</artifactId>\n" +
-                   "      <version>3.8.0</version>\n" +
-                   "      <configuration>\n" +
-                   "          <release>" + feature + "</release>\n" +
-                   compilerArgs +
-                   "          <forceJavacCompilerUse>true</forceJavacCompilerUse>\n" +
-                   "      </configuration>\n" +
+                   "    <plugin>" +
+                   "      <groupId>org.apache.maven.plugins</groupId>" +
+                   "      <artifactId>maven-compiler-plugin</artifactId>" +
+                   "      <version>3.10.1</version>" +
+                   "      <configuration>" +
+                   "          <release>" + feature + "</release>" +
+                   configurationParameter +
+                   "          <forceJavacCompilerUse>true</forceJavacCompilerUse>" +
+                   "      </configuration>" +
                    "    </plugin>" +
                    "  </plugins>" +
                    "</build>"))
