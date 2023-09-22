@@ -9,10 +9,6 @@ import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactIn
 import org.junit.Test
 
 class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
-  override fun importProjectOnSetup(): Boolean {
-    return true
-  }
-
   override fun createIndicesFixture(): MavenIndicesTestFixture {
     return MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins")
   }
