@@ -72,10 +72,10 @@ class CodeVisionPass(
             span.useWithScope {
               computeWithSpan(tracer, provider.javaClass.simpleName) {
                 val results: List<Pair<TextRange, CodeVisionEntry>>
-                //val duration = measureTimeMillis {
+                val duration = measureTimeMillis {
                   results = provider.computeForEditor(editor, file)
-                //}
-                //CodeVisionFusCollector.CODE_VISION_FINISHED.log(file.project, duration, provider::class.java, file.language)
+                }
+                CodeVisionFusCollector.reportCodeVisionProviderDuration(editor, file.language, duration, provider::class.java)
                 providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results,
                                                                                                         modificationTracker.modificationCount)
               }
