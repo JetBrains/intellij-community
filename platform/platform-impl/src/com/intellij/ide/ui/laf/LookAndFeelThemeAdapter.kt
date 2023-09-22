@@ -5,10 +5,10 @@ package com.intellij.ide.ui.laf
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.bootstrap.createBaseLaF
 import com.intellij.ide.ui.UITheme
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.ide.bootstrap.createBaseLaF
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.TableActions
 import com.intellij.util.ResourceUtil

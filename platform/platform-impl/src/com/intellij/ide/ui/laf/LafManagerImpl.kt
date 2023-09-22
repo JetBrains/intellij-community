@@ -11,7 +11,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
-import com.intellij.ide.bootstrap.createBaseLaF
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.ui.*
@@ -49,6 +48,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.ide.bootstrap.createBaseLaF
 import com.intellij.ui.*
 import com.intellij.ui.popup.HeavyWeightPopup
 import com.intellij.ui.scale.JBUIScale.getFontScale

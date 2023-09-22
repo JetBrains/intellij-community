@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.bootstrap
+package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.diagnostic.PerformanceWatcher
@@ -13,6 +13,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.PathMacros
+import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.serviceAsync
@@ -179,9 +180,9 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl,
   if (!app.isHeadlessEnvironment && !app.isUnitTestMode && System.getProperty("enable.activity.preloading", "true").toBoolean()) {
     asyncScope.launch(CoroutineName("preloadingActivity executing")) {
       @Suppress("DEPRECATION")
-      val extensionPoint = app.extensionArea.getExtensionPoint<com.intellij.openapi.application.PreloadingActivity>("com.intellij.preloadingActivity")
+      val extensionPoint = app.extensionArea.getExtensionPoint<PreloadingActivity>("com.intellij.preloadingActivity")
       @Suppress("DEPRECATION")
-      for (item in ExtensionPointName<com.intellij.openapi.application.PreloadingActivity>(extensionPoint.name).filterableLazySequence()) {
+      for (item in ExtensionPointName<PreloadingActivity>(extensionPoint.name).filterableLazySequence()) {
         launch(CoroutineName(item.implementationClassName)) {
           item.instance?.let {
             executePreloadActivity(activity = it, descriptor = item.pluginDescriptor)
@@ -194,7 +195,7 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl,
 }
 
 @Suppress("DEPRECATION")
-private suspend fun executePreloadActivity(activity: com.intellij.openapi.application.PreloadingActivity, descriptor: PluginDescriptor) {
+private suspend fun executePreloadActivity(activity: PreloadingActivity, descriptor: PluginDescriptor) {
   try {
     activity.execute()
   }
@@ -202,7 +203,7 @@ private suspend fun executePreloadActivity(activity: com.intellij.openapi.applic
     throw e
   }
   catch (e: Throwable) {
-    logger<com.intellij.openapi.application.PreloadingActivity>()
+    logger<PreloadingActivity>()
       .error(PluginException("cannot execute preloading activity ${activity.javaClass.name}", e, descriptor.pluginId))
   }
 }

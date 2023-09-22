@@ -3,10 +3,11 @@
 @file:Internal
 @file:Suppress("RAW_RUN_BLOCKING")
 
-package com.intellij.ide.bootstrap
+package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.*
+import com.intellij.ide.bootstrap.InitAppContext
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginSet

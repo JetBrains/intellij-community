@@ -2,7 +2,7 @@
 package com.intellij.idea
 
 import com.intellij.ide.bootstrap.InitAppContext
-import com.intellij.ide.bootstrap.initApplication
+import com.intellij.platform.ide.bootstrap.initApplication
 import com.intellij.util.PlatformUtils
 
 internal class MainImpl : AppStarter {

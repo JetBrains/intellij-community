@@ -4,7 +4,6 @@ package com.intellij.ide
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.CommandLineProcessorResult.Companion.createError
 import com.intellij.ide.actions.ShowLogAction
-import com.intellij.ide.bootstrap.findStarter
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEdit
@@ -35,6 +34,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.CommandLineProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.configureToOpenDotIdeaOrCreateNewIfNotExists
+import com.intellij.platform.ide.bootstrap.findStarter
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil

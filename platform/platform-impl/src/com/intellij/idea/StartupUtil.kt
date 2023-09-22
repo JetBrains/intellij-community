@@ -31,6 +31,7 @@ import com.intellij.platform.diagnostic.telemetry.OpenTelemetryConfigurator
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.ide.bootstrap.*
 import com.intellij.ui.*
 import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu
