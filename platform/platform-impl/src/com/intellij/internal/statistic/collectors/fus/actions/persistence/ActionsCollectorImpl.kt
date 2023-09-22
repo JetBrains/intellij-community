@@ -15,6 +15,8 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -340,10 +342,22 @@ class ActionsCollectorImpl : ActionsCollector() {
     }
 
     /**
-     * Returns language from [CommonDataKeys.PSI_FILE]
+     * Returns language from [CommonDataKeys.PSI_FILE] or by file type from [CommonDataKeys.VIRTUAL_FILE]
      */
     private fun getFileLanguage(dataContext: DataContext): Language? {
-      return CommonDataKeys.PSI_FILE.getData(dataContext)?.language
+      return CommonDataKeys.PSI_FILE.getData(dataContext)?.language ?: getFileTypeLanguage(dataContext)
+    }
+
+    /**
+     * Returns language by file type from [CommonDataKeys.VIRTUAL_FILE]
+     */
+    private fun getFileTypeLanguage(dataContext: DataContext): Language? {
+      val virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext) ?: return null
+      val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(virtualFile.nameSequence)
+      if (fileType is LanguageFileType) {
+        return fileType.language
+      }
+      return null
     }
   }
 }
