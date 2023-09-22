@@ -440,11 +440,6 @@ public final class FSRecordsImpl {
     return invertedNameIndexModCount.get();
   }
 
-  int getLocalModCount() {
-    checkNotDisposed();
-    return connection.getModificationCount() + attributeAccessor.getLocalModificationCount();
-  }
-
   @TestOnly
   int getPersistentModCount() {
     checkNotDisposed();

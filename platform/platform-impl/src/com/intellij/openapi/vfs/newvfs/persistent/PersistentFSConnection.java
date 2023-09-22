@@ -242,10 +242,6 @@ public final class PersistentFSConnection {
     }
   }
 
-  int getModificationCount() {
-    return records.getGlobalModCount();
-  }
-
   void doForce() throws IOException {
     if (namesEnumerator instanceof Forceable) {
       ((Forceable)namesEnumerator).force();

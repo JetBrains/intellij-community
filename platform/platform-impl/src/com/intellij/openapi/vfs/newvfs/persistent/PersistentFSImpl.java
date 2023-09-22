@@ -387,12 +387,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  @Deprecated
-  public int getModificationCount() {
-    return vfsPeer.getLocalModCount();
-  }
-
-  @Override
   public int getStructureModificationCount() {
     return myStructureModificationCount.get();
   }

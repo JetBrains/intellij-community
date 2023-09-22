@@ -214,12 +214,9 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     VirtualFile virtualFile = getVirtualFile(file);
     assertNotNull(virtualFile);
     assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
-    int modificationCount = ManagingFS.getInstance().getModificationCount();
     virtualFile.set(KeyFMap.EMPTY_MAP);
     clearFileTypeCache();
     assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
-    int modificationCountAfterRedetection = ManagingFS.getInstance().getModificationCount();
-    assertEquals(modificationCount, modificationCountAfterRedetection);
   }
 
   public void testAutoDetected() throws IOException {
