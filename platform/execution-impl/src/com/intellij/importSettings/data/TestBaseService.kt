@@ -66,7 +66,7 @@ class TestJbService : JbService {
              TestChildrenSettings("Find Usages", null, "⇧F12"),
              TestChildrenSettings("Build Solution", null, "⇧F12"),
              TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
+      listOf(TestChildrenSettings("Go to Everything"),
              TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
              TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
              TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
@@ -113,7 +113,7 @@ class TestJbService : JbService {
       listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
              TestChildrenSettings("Find Usages", null, "⇧F12"),
              TestChildrenSettings("Build Solution", null, "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+             TestChildrenSettings("Go to Everything", "built-in" )),
       listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
              TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
              TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
@@ -318,22 +318,22 @@ class TestProduct(
 
 class TestBaseSetting(override val icon: Icon,
                       override val name: String,
-                      override val additionText: String?,
+                      override val comment: String?,
                       override val id: String = UUID.randomUUID().toString()) : BaseSetting
 
 class TestMultipleSetting(override val icon: Icon,
                           override val name: String,
-                          override val additionText: String?,
+                          override val comment: String?,
                           override val list: List<List<ChildSetting>>,
                           override val id: String = UUID.randomUUID().toString()) : Multiple
 
 class TestConfigurableSetting(override val icon: Icon,
                               override val name: String,
-                              override val additionText: String?,
+                              override val comment: String?,
                               override val list: List<List<ChildSetting>>,
                               override val id: String = UUID.randomUUID().toString()) : Configurable
 
 class TestChildrenSettings(override val name: String,
-                           override val additionText: String?,
-                           override val value: String,
+                           override val leftComment: String? = null,
+                           override val rightComment: String? = null,
                            override val id: String = UUID.randomUUID().toString()) : ChildSetting

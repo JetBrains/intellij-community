@@ -33,7 +33,7 @@ class MultipleSettingPane(val setting: Multiple, readOnly: Boolean) {
           }
         }
 
-        setting.additionText?.let { addTxt ->
+        setting.comment?.let { addTxt ->
           row {
             comment(addTxt).customize(UnscaledGaps(0)).resizableColumn()
           }

@@ -33,7 +33,7 @@ class SettingSyncDialog(val service: ActionsDataProvider, val product: ImportIte
                 text(service.getText(product)).customize(UnscaledGaps(0, 0, 2,0))
               }
 
-              service.getAdditionText(product)?.let { addTxt ->
+              service.getComment(product)?.let { addTxt ->
                 row {
                   comment(addTxt).customize(UnscaledGaps(0))
                 }

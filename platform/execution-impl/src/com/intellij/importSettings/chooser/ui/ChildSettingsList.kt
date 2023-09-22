@@ -6,6 +6,7 @@ import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import java.awt.event.MouseAdapter
@@ -41,22 +42,26 @@ private class CBRenderer(val configurable: Boolean) : ListCellRenderer<SettingIt
 
   private val separator = SeparatorComponent(5, JBUI.CurrentTheme.Popup.separatorColor(), null)
 
+  private val hg = 3
+  private val wg = 5
+
+  private val gaps = UnscaledGaps(wg, hg, wg, hg)
 
   val line = panel {
     row {
       checkBox("").applyToComponent {
         ch = this
-      }
+      }.customize(gaps)
       text("").applyToComponent {
         txt = this
-      }
+      }.customize(gaps)
       comment("").applyToComponent {
         addTxt = this
-      }.resizableColumn()
+      }.resizableColumn().customize(gaps)
 
       comment("").applyToComponent {
         rightTxt = this
-      }
+      }.customize(UnscaledGaps(wg, 10, wg, hg))
     }
   }
 
@@ -76,11 +81,13 @@ private class CBRenderer(val configurable: Boolean) : ListCellRenderer<SettingIt
 
     ch.isVisible = configurable
     ch.isSelected = value.choosed
+    ch.text = child.name
 
+    txt.isVisible = !configurable
     txt.text = child.name
-    addTxt.text = child.additionText ?: ""
+    addTxt.text = child.leftComment ?: ""
 
-    rightTxt.isVisible = child.value?.let {
+    rightTxt.isVisible = child.rightComment?.let {
       rightTxt.text = it
       true
     } ?: false

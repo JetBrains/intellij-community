@@ -35,7 +35,7 @@ interface ActionsDataProvider {
   fun getText(importItem: ImportItem): String
   val title: String
 
-  fun getAdditionText(importItem: ImportItem): String?
+  fun getComment(importItem: ImportItem): String?
   val main: List<Product>?
   val other: List<Product>?
 }
@@ -65,7 +65,7 @@ class JBrActionsDataProvider private constructor(): ActionsDataProvider {
   override val title: String
     get() = "JetBrains IDEs"
 
-  override fun getAdditionText(importItem: ImportItem): String? {
+  override fun getComment(importItem: ImportItem): String? {
     if(importItem is Config) {
       return importItem.path
     }
@@ -125,7 +125,7 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider {
     return "${importItem.name} Setting Sync"
   }
 
-  override fun getAdditionText(importItem: ImportItem): String? {
+  override fun getComment(importItem: ImportItem): String? {
     if(importItem is Product) {
       return importItem.lastUsage.toString()
     }
@@ -167,7 +167,7 @@ class ExtActionsDataProvider private constructor() : ActionsDataProvider {
     return importItem.name
   }
 
-  override fun getAdditionText(importItem: ImportItem): String? {
+  override fun getComment(importItem: ImportItem): String? {
     return null
   }
 
