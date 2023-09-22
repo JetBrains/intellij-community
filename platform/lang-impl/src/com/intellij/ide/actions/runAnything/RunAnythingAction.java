@@ -5,11 +5,9 @@ import com.intellij.execution.Executor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -37,7 +35,17 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 public class RunAnythingAction extends AnAction implements CustomComponentAction, DumbAware {
   public static final String RUN_ANYTHING_ACTION_ID = "RunAnything";
   public static final DataKey<Executor> EXECUTOR_KEY = DataKey.create("EXECUTOR_KEY");
+  /**
+   * @deprecated this is an internal field, must not be used outside the class
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed") 
+  @Deprecated
   public static final AtomicBoolean SHIFT_IS_PRESSED = new AtomicBoolean(false);
+  /**
+   * @deprecated this is an internal field, must not be used outside the class
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed") 
+  @Deprecated
   public static final AtomicBoolean ALT_IS_PRESSED = new AtomicBoolean(false);
 
   private static boolean ourDoubleCtrlRegistered;
@@ -47,21 +55,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     public void customize(@NotNull ActionManager actionManager) {
       initShortcutTracker();
     }
-  }
-
-  static {
-    IdeEventQueue.getInstance().addPostprocessor(event -> {
-      if (event instanceof KeyEvent) {
-        final int keyCode = ((KeyEvent)event).getKeyCode();
-        if (keyCode == KeyEvent.VK_SHIFT) {
-          SHIFT_IS_PRESSED.set(event.getID() == KeyEvent.KEY_PRESSED);
-        }
-        else if (keyCode == KeyEvent.VK_ALT) {
-          ALT_IS_PRESSED.set(event.getID() == KeyEvent.KEY_PRESSED);
-        }
-      }
-      return false;
-    }, (Disposable)null);
   }
 
   @Override
