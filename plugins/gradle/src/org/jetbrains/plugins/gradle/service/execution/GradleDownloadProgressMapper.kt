@@ -19,11 +19,11 @@ class GradleDownloadProgressMapper {
     private const val BYTES = "bytes"
   }
 
-  private val myDownloadStatusEventIds: MutableMap<String, StatusEvent> = HashMap()
+  private val inFlightDownloads: MutableMap<String /*event.descriptor.name - file uri*/, StatusEvent> = HashMap()
 
   fun canMap(event: ProgressEvent): Boolean = event is FileDownloadProgressEvent
                                               || (event is StatusEvent && event.unit == BYTES)
-                                              || (event is FinishEvent && myDownloadStatusEventIds.containsKey(event.descriptor.name))
+                                              || (event is FinishEvent && inFlightDownloads.containsKey(event.descriptor.name))
 
   fun map(taskId: ExternalSystemTaskId, event: ProgressEvent): ExternalSystemBuildEvent? {
     val operationName: @NlsSafe String = event.descriptor.name
@@ -37,8 +37,8 @@ class GradleDownloadProgressMapper {
   private fun getDownloadProgressEvent(taskId: ExternalSystemTaskId,
                                        operationName: @NlsSafe String,
                                        newEvent: StatusEvent): BuildEvent? {
-    val oldEvent = myDownloadStatusEventIds[operationName]
-    myDownloadStatusEventIds[operationName] = newEvent
+    val oldEvent = inFlightDownloads[operationName]
+    inFlightDownloads[operationName] = newEvent
     if (oldEvent == null || oldEvent.progress <= newEvent.progress) {
       val progress = if (newEvent.progress > 0) newEvent.progress else 0
       val total = if (newEvent.total > 0) newEvent.total else 0
@@ -50,7 +50,7 @@ class GradleDownloadProgressMapper {
   private fun getDownloadFinishEvent(taskId: ExternalSystemTaskId,
                                      operationName: @NlsSafe String,
                                      event: FinishEvent): BuildEvent? {
-    myDownloadStatusEventIds.remove(operationName) ?: return null
+    inFlightDownloads.remove(operationName) ?: return null
     return FileDownloadedEventImpl(taskId, null, event.eventTime, operationName, event.result.duration())
   }
 

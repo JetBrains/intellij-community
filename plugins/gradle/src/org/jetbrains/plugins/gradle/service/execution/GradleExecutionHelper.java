@@ -405,7 +405,6 @@ public class GradleExecutionHelper {
       OperationType.TASK,
       OperationType.FILE_DOWNLOAD,
       OperationType.BUILD_PHASE,
-      OperationType.WORK_ITEM,
       OperationType.PROJECT_CONFIGURATION,
       OperationType.TRANSFORM
     );
@@ -415,7 +414,6 @@ public class GradleExecutionHelper {
         OperationType.TEST,
         OperationType.TEST_OUTPUT,
         OperationType.BUILD_PHASE,
-        OperationType.WORK_ITEM,
         OperationType.PROJECT_CONFIGURATION,
         OperationType.TASK,
         OperationType.TRANSFORM
