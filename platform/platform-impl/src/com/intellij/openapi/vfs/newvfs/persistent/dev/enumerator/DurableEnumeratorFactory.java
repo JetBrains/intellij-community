@@ -110,8 +110,15 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
               //TODO RC: valueHashToId could be loaded async -- to not delay initialization (see DurableStringEnumerator)
               fillValueHashToIdMap(valuesLog, valueDescriptor, valueHashToId);
             }
-            //TODO RC: check other (potential) inconsistencies:
-            //         log was recovered,
+            //TODO RC: what if valuesLog was recovered? -- could it be the .hashToId map is somehow wasClosedProperly,
+            //         but is inconsistent with valuesLog? It seems like there is a chance that value is appended to
+            //         the log, and inserted into the map -- but one of the previous values in the log wasn't committed,
+            //         and even record header wasn't written -- and because of that whole region after that
+            //         allocated-but-not-yet-started record is lost -- so the id put in the map is now invalid.
+            //         So we should either modify AppendOnlyLog so that it doesn't allow that (e.g. we could not return
+            //         from allocateRecord until at least header is written) -- or we should rebuild the map even if
+            //         the map itself wasClosedProperly, but AppendOnlyLog was recovered, and recovered region >0
+
             //MAYBE separate 'always rebuild map' and 'rebuild map if inconsistent'
             //      (both requires .open(path,CREATE_NEW) method)
           }

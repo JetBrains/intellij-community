@@ -167,7 +167,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
    * -> re-opened: wasProperlyClosed=true
    * </pre>
    * So on 2nd re-open storage is 'properly closed', even though it could be still corrupted because of the absence
-   * of proper close after the first session. 
+   * of proper close after the first session.
    */
   public synchronized boolean wasProperlyClosed() {
     return wasProperlyClosed;
@@ -256,6 +256,14 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
     //clean all references to mapped ByteBuffers, so it's easier for GC to unmap them:
     header = null;
     bufferSource = null;
+  }
+
+  @Override
+  public String toString() {
+    return "ExtendibleHashMap" +
+           "[" + storage.storagePath() + "]" +
+           "[opened: " + storage.isOpen() + "]" +
+           "[wasProperlyClosed: " + wasProperlyClosed + "]";
   }
 
   //=============== implementation ============================================================
@@ -529,6 +537,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
       this.headerSegmentSize = headerSegmentSize;
       headerBuffer = bufferSource.slice(0, headerSegmentSize);
     }
+
     public int magicWord() {
       return headerBuffer.getInt(MAGIC_WORD_OFFSET);
     }
