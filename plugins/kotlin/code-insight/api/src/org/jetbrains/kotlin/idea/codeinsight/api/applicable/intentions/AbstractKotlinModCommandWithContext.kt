@@ -21,23 +21,31 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.reflect.KClass
 
-private val ALWAYS_TRUE: (KtElement) -> Boolean = { true }
+internal val ALWAYS_TRUE: (KtElement, ActionContext) -> Boolean = { _, _ -> true }
 
 abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>(
     clazz: KClass<ELEMENT>,
-    private val predicate: (ELEMENT) -> Boolean
+    predicate: (ELEMENT, ActionContext) -> Boolean,
+    private val applicablePredicate: AbstractKotlinApplicablePredicate<ELEMENT>? = null
 ) :
     PsiUpdateModCommandAction<ELEMENT>(clazz.java, predicate),
     KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
 
     constructor(clazz: KClass<ELEMENT>) : this(clazz, ALWAYS_TRUE)
 
+    constructor(clazz: KClass<ELEMENT>, kotlinApplicablePredicate: AbstractKotlinApplicablePredicate<ELEMENT>) :
+            this(clazz, kotlinApplicablePredicate::apply, kotlinApplicablePredicate)
+
     /**
      * Checks the intention's applicability based on [isApplicableByPsi] and [KotlinApplicabilityRange].
      */
     fun isApplicableTo(element: ELEMENT, caretOffset: Int): Boolean = isApplicableToElement(element, caretOffset)
 
-    override fun isApplicableByPsi(element: ELEMENT): Boolean = predicate(element)
+    override fun isApplicableByPsi(element: ELEMENT): Boolean =
+        applicablePredicate?.isApplicableByPsi(element) ?: TODO("isApplicableByPsi has to be overridden")
+
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<ELEMENT> =
+        applicablePredicate?.getApplicabilityRange() ?: TODO("getApplicabilityRange has to be overridden")
 
     protected open val isKotlinOnlyIntention: Boolean = true
 

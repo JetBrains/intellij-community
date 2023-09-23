@@ -21,9 +21,17 @@ import org.jetbrains.kotlin.psi.psiUtil.containsInside
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import kotlin.reflect.KClass
 
-abstract class AbstractKotlinApplicableModCommandIntentionBase<ELEMENT : KtElement>(private val clazz: KClass<ELEMENT>) :
-    PsiUpdateModCommandAction<ELEMENT>(clazz.java),
-    KotlinApplicableToolBase<ELEMENT> {
+abstract class AbstractKotlinApplicableModCommandIntentionBase<ELEMENT : KtElement>(
+    private val clazz: KClass<ELEMENT>,
+    predicate: (ELEMENT, ActionContext) -> Boolean,
+    protected val applicablePredicate: AbstractKotlinApplicablePredicate<ELEMENT>? = null
+) :
+    PsiUpdateModCommandAction<ELEMENT>(clazz.java, predicate), KotlinApplicableToolBase<ELEMENT> {
+
+    constructor(clazz: KClass<ELEMENT>) : this(clazz, ALWAYS_TRUE)
+
+    constructor(clazz: KClass<ELEMENT>, kotlinApplicablePredicate: AbstractKotlinApplicablePredicate<ELEMENT>) :
+            this(clazz, kotlinApplicablePredicate::apply, kotlinApplicablePredicate)
 
     protected abstract fun getActionName(element: ELEMENT): @IntentionName String
     
@@ -82,8 +90,16 @@ abstract class AbstractKotlinApplicableModCommandIntentionBase<ELEMENT : KtEleme
 
     protected open fun visitTargetTypeOnlyOnce(): Boolean = false
 
-    override fun getPresentation(context: ActionContext, element: ELEMENT): Presentation? {
-        if (!isApplicableTo(element, context.offset)) return null
-        return Presentation.of(getActionName(element))
-    }
+    override fun isApplicableByPsi(element: ELEMENT): Boolean =
+        applicablePredicate?.isApplicableByPsi(element) ?: true
+
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<ELEMENT> =
+        applicablePredicate?.getApplicabilityRange() ?: TODO("getApplicabilityRange has to be overridden")
+
+    override fun getPresentation(context: ActionContext, element: ELEMENT): Presentation? =
+        if (!isApplicableTo(element, context.offset)) {
+            null
+        } else {
+            Presentation.of(getActionName(element))
+        }
 }
