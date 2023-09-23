@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic;
 
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -163,7 +163,7 @@ public final class DeviceIdManager {
     if (year < 2000) year = 2000;
     if (year > 2099) year = 2099;
     calendar.set(Calendar.YEAR, year);
-    return new SimpleDateFormat("ddMMyy", Locale.ENGLISH).format(calendar.getTime()) + OSChar + UUID.randomUUID().toString();
+    return new SimpleDateFormat("ddMMyy", Locale.ENGLISH).format(calendar.getTime()) + OSChar + UUID.randomUUID();
   }
 
   private static char getOSChar() {

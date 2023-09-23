@@ -163,8 +163,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   private static void registerFakeServices(ApplicationImpl app) {
     app.registerServiceInstance(TransactionGuard.class, app.myTransactionGuard, ComponentManagerImpl.fakeCorePluginDescriptor);
-    app.registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(),
-                                ComponentManagerImpl.fakeCorePluginDescriptor);
     app.registerServiceInstance(Application.class, app, ComponentManagerImpl.fakeCorePluginDescriptor);
     app.registerServiceInstance(ReadActionCache.class, app.myReadActionCacheImpl, ComponentManagerImpl.fakeCorePluginDescriptor);
   }
@@ -1008,7 +1006,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public <T, E extends Throwable> T runWriteIntentReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
+  public <T, E extends Throwable> T runWriteIntentReadAction(@NotNull ThrowableComputable<T, E> computation) {
     return IdeEventQueue.getInstance().getRwLockHolder().runWriteIntentReadAction(computation);
   }
 
@@ -1438,7 +1436,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   @ApiStatus.Internal
   public static void postInit(@NotNull ApplicationImpl app) {
     app.myLock = IdeEventQueue.getInstance().getRwLockHolder().lock;
-
     AtomicBoolean reported = new AtomicBoolean();
     IdeEventQueue.getInstance().addPostprocessor(e -> {
       if (app.isWriteAccessAllowed() && reported.compareAndSet(false, true)) {

@@ -3,6 +3,7 @@ package com.intellij.internal.ui
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
@@ -49,7 +50,7 @@ internal class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
       }
       val splashIcon: Icon by lazy {
         findIconUsingNewImplementation(path = ApplicationInfoImpl.getShadowInstanceImpl().splashImageUrl!!,
-                                       classLoader = ApplicationInfoImpl::class.java.classLoader)!!
+                                       classLoader = ApplicationInfo::class.java.classLoader)!!
       }
       val generatedIcon: Icon by lazy {
         IconUtil.createImageIcon((createRandomImage(splashIcon.iconWidth, splashIcon.iconHeight) as Image))

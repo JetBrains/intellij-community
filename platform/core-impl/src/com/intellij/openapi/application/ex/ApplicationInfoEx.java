@@ -87,7 +87,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract String getFeedbackUrl();
 
   /**
-   * Returns URL to plugins repository without trailing slash.
+   * Returns URL to plugins repository without a trailing slash.
    */
   public abstract @NotNull String getPluginManagerUrl();
 
@@ -152,13 +152,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
     @Deprecated
     String getPatchesUrl();
   }
-
-  /**
-   * @return {@code true} if the specified plugin is an essential part of the IDE, so it cannot be disabled and isn't shown in <em>Settings | Plugins</em>.
-   */
-  public abstract boolean isEssentialPlugin(@NotNull String pluginId);
-
-  public abstract boolean isEssentialPlugin(@NotNull PluginId pluginId);
 
   public abstract String getSubscriptionFormId();
 

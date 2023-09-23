@@ -25,6 +25,9 @@
     <appStarter id="dumpActions" implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter"/>
     <protocolHandler implementation="com.intellij.openapi.application.JBProtocolHandler"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.application.ApplicationInfo"
+                        serviceImplementation="com.intellij.openapi.application.impl.ApplicationInfoServiceDelegate"/>
+
     <groupConfigurable id="appearance" weight="70"
                        helpTopic="configurable.group.appearance.help.topic"
                        displayNameKey="configurable.group.appearance.settings.display.name"

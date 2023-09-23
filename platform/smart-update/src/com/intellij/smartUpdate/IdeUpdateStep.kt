@@ -7,7 +7,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -78,7 +78,7 @@ class IdeRestartedActivity: ProjectActivity {
   }
 
   private fun notifyIdeUpdate(project: Project) {
-    val buildInfo = AboutDialog.getBuildInfo(ApplicationInfoEx.getInstanceEx()).first
+    val buildInfo = AboutDialog.getBuildInfo(ApplicationInfo.getInstance()).first
     @Suppress("DialogTitleCapitalization")
     Notification("IDE and Plugin Updates", IdeBundle.message("action.UpdateIde.task.success.title"),
                  IdeBundle.message("action.UpdateIde.installed", buildInfo), NotificationType.INFORMATION)

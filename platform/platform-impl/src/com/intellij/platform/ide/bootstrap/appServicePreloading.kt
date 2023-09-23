@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
-import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.history.LocalHistory
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ScreenReaderStateManager
@@ -103,10 +103,6 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl,
     // wants PathMacros
     launch(CoroutineName("GeneralSettings preloading")) { app.serviceAsync<GeneralSettings>() }
 
-    launch {
-      app.serviceAsync<PerformanceWatcher>()
-    }
-
     // ActionManager uses KeymapManager
     span("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
     span("ActionManager preloading") { app.serviceAsync<ActionManager>() }
@@ -156,6 +152,11 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl,
       }
 
       ApplicationImpl.postInit(app)
+
+      // wants app info as service
+      launch {
+        app.serviceAsync<PerformanceWatcher>()
+      }
     }
 
     launch(CoroutineName("app service preloading (sync)")) {

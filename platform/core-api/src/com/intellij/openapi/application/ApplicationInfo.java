@@ -2,6 +2,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -127,4 +128,13 @@ public abstract class ApplicationInfo {
   public @Nullable String getSplashImageUrl() {
     return null;
   }
+
+  /**
+   * @return {@code true} if the specified plugin is an essential part of the IDE, so it cannot be disabled and isn't shown in <em>Settings | Plugins</em>.
+   */
+  @ApiStatus.Internal
+  public abstract boolean isEssentialPlugin(@NotNull String pluginId);
+
+  @ApiStatus.Internal
+  public abstract boolean isEssentialPlugin(@NotNull PluginId pluginId);
 }

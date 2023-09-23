@@ -6,9 +6,9 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.internal.statistic.utils.platformPlugin
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
@@ -62,16 +62,16 @@ data class CommonFeedbackSystemData(
     private fun getMemorySize() = Runtime.getRuntime().maxMemory() / FileUtilRt.MEGABYTE
     private fun getCoresNumber() = Runtime.getRuntime().availableProcessors()
     private fun getAppVersionWithBuild(): String {
-      val appInfoEx = ApplicationInfoEx.getInstanceEx()
+      val appInfo = ApplicationInfo.getInstance()
 
-      var appVersion: String = appInfoEx.fullApplicationName
+      var appVersion: String = appInfo.fullApplicationName
       val edition = ApplicationNamesInfo.getInstance().editionName
       if (edition != null) {
         appVersion += " ($edition)"
       }
-      val appBuild = appInfoEx.build
+      val appBuild = appInfo.build
       appVersion += CommonFeedbackBundle.message("dialog.feedback.system.info.panel.app.version.build", appBuild.asString())
-      val timestamp: Date = appInfoEx.buildDate.time
+      val timestamp: Date = appInfo.buildDate.time
       if (appBuild.isSnapshot) {
         val time = SimpleDateFormat("HH:mm").format(timestamp)
         appVersion += CommonFeedbackBundle.message("dialog.feedback.system.info.panel.app.version.build.date.time",

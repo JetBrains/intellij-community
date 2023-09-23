@@ -10,6 +10,7 @@ import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.ConsentSettingsUi
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
@@ -160,7 +161,7 @@ fun findAppIcon(): String? {
       }
     }
   }
-  val url = ApplicationInfoImpl::class.java.getResource(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl)
+  val url = ApplicationInfo::class.java.getResource(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl)
   return if (url != null && URLUtil.FILE_PROTOCOL == url.protocol) URLUtil.urlToFile(url).absolutePath else null
 }
 

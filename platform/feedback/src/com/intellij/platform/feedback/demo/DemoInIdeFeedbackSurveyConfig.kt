@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.demo
 
-import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
 import com.intellij.platform.feedback.demo.bundle.DemoFeedbackBundle
@@ -24,7 +24,7 @@ class DemoInIdeFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
   }
 
   override fun checkExtraConditionSatisfied(project: Project): Boolean {
-    return suitableIdeVersion == ApplicationInfoEx.getInstanceEx().shortVersion &&
+    return suitableIdeVersion == ApplicationInfo.getInstance().shortVersion &&
            false
   }
 
