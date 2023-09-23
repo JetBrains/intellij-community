@@ -18,12 +18,13 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * An implementation of {@link PathCustomizer} which configures separate config, system and log paths for each process started from the IDE
- * distribution. This is needed to allo running multiple processes of the same IDE.
+ * distribution.
+ * This is needed to allow running multiple processes of the same IDE.
  */
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "FieldCanBeLocal", "UseOfSystemOutOrSystemErr"})
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public class PerProcessPathCustomizer implements PathCustomizer {
+public final class PerProcessPathCustomizer implements PathCustomizer {
   private static final String LOCK_FILE_NAME = "process.lock";
 
   private static Path ourOriginalConfigPath;
@@ -40,7 +41,7 @@ public class PerProcessPathCustomizer implements PathCustomizer {
     
     Path oldConfigPath = PathManager.getConfigDir();
     if (StartupUtil.isConfigImportNeeded(oldConfigPath)) {
-      StartupUtil.setCustomTargetDirectoryToImportConfig(oldConfigPath);
+      StartupUtil.customTargetDirectoryToImportConfig = oldConfigPath;
     }
 
     Path newConfig;

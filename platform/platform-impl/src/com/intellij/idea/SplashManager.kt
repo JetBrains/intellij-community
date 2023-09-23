@@ -13,6 +13,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.FrameBoundsConverter
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.ide.bootstrap.AppStarter
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.Splash
 import com.intellij.ui.icons.HiDPIImage
@@ -51,7 +52,23 @@ private val SHOW_SPLASH_LONGER = System.getProperty("idea.show.splash.longer", "
 
 private fun isTooLateToShowSplash(): Boolean = !SHOW_SPLASH_LONGER && LoadingState.COMPONENTS_LOADED.isOccurred
 
-internal fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfo>) {
+internal fun CoroutineScope.scheduleShowSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfo>, args: List<String>) {
+  launch(CoroutineName("showSplashIfNeeded")) {
+    if (!AppMode.isLightEdit() && CommandLineArgs.isSplashNeeded(args)) {
+      try {
+        showSplashIfNeeded(initUiDeferred = initUiDeferred, appInfoDeferred = appInfoDeferred)
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        logger<AppStarter>().warn("Cannot show splash", e)
+      }
+    }
+  }
+}
+
+private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfo>) {
   val oldJob = splashJob.get()
   if (oldJob.isCancelled) {
     return

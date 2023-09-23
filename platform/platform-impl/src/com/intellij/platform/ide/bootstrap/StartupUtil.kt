@@ -45,6 +45,7 @@ import com.jetbrains.JBR
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -56,7 +57,6 @@ import java.nio.file.StandardOpenOption
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.*
-import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiConsumer
 import java.util.function.BiFunction
@@ -87,8 +87,9 @@ private const val DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY = "idea.disable.implicit
 private const val DISABLE_AUTOMATIC_WIL_ON_DIRTY_UI_PROPERTY = "idea.disable.automatic.wil.on.dirty.ui"
 private const val MAGIC_MAC_PATH = "/AppTranslocation/"
 
-private val commandProcessor: AtomicReference<(List<String>) -> Deferred<CliResult>> =
-  AtomicReference { CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized"))) }
+private val commandProcessor: AtomicReference<(List<String>) -> Deferred<CliResult>> = AtomicReference {
+  CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized")))
+}
 
 // checked - using a Deferred type doesn't lead to loading this class on StartupUtil init
 internal var shellEnvDeferred: Deferred<Boolean?>? = null
@@ -109,21 +110,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
-  if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
-    launch {
-      span("coroutine debug probes init") {
-        enableCoroutineDump()
-      }
-      span("coroutine jstack configuration") {
-        JBR.getJstack()?.includeInfoFrom {
-          """
-  $COROUTINE_DUMP_HEADER
-  ${dumpCoroutines(stripDump = false)}
-  """
-        }
-      }
-    }
-  }
+  scheduleEnableCoroutineDumpAndJstack()
 
   val appInfoDeferred = async {
     mainClassLoaderDeferred.await()
@@ -135,9 +122,13 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   val isHeadless = AppMode.isHeadless()
 
-  val configImportNeededDeferred = if (isHeadless) CompletableDeferred(false)
-  else async(Dispatchers.IO) {
-    isConfigImportNeeded(PathManager.getConfigDir())
+  val configImportNeededDeferred = if (isHeadless) {
+    CompletableDeferred(false)
+  }
+  else {
+    async(Dispatchers.IO) {
+      isConfigImportNeeded(PathManager.getConfigDir())
+    }
   }
 
   val lockSystemDirsJob = launch {
@@ -161,8 +152,8 @@ fun CoroutineScope.startApplication(args: List<String>,
   val initEventQueueJob = scheduleInitIdeEventQueue(initAwtToolkitJob, isHeadless)
   val initLafJob = scheduleInitUi(initAwtToolkitJob, isHeadless)
   if (!isHeadless) {
-    showSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args)
-    updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
+    scheduleShowSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args)
+    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
     launch {
       patchHtmlStyle(initLafJob)
     }
@@ -186,10 +177,12 @@ fun CoroutineScope.startApplication(args: List<String>,
       }
     }
 
-    if (!isHeadless && SystemInfoRt.isMac) {
+    if (!isHeadless) {
       // preload native lib
-      Menu.isJbScreenMenuEnabled()
       JBR.getWindowDecorations()
+      if (SystemInfoRt.isMac) {
+        Menu.isJbScreenMenuEnabled()
+      }
     }
   }
 
@@ -199,28 +192,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   // log initialization must happen only after locking the system directory
   val logDeferred = setupLogger(consoleLoggerJob, checkSystemDirJob)
 
-  launch {
-    // PHM wants logger
-    logDeferred.join()
-
-    span("PHM classes preloading", Dispatchers.IO) {
-      val classLoader = AppStarter::class.java.classLoader
-      Class.forName(PersistentMapBuilder::class.java.name, true, classLoader)
-      Class.forName(PersistentMapImpl::class.java.name, true, classLoader)
-      Class.forName(PersistentEnumerator::class.java.name, true, classLoader)
-      Class.forName(ResizeableMappedFile::class.java.name, true, classLoader)
-      Class.forName(PagedFileStorage::class.java.name, true, classLoader)
-      Class.forName(PageCacheUtils::class.java.name, true, classLoader)
-      Class.forName(PersistentHashMapValueStorage::class.java.name, true, classLoader)
-      Class.forName(SLRUMap::class.java.name, true, classLoader)
-    }
-
-    if (!isHeadless) {
-      span("SvgCache creation") {
-        SvgCacheManager.svgCache = SvgCacheManager.createSvgCacheManager()
-      }
-    }
-  }
+  scheduleSvgIconCacheInitAndPreloadPhm(logDeferred, isHeadless)
 
   shellEnvDeferred = async {
     // EnvironmentUtil wants logger
@@ -230,15 +202,13 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
-  loadSystemLibsAndLogInfoAndInitMacApp(logDeferred, appInfoDeferred, initLafJob, args, mainScope)
+  scheduleLoadSystemLibsAndLogInfoAndInitMacApp(logDeferred, appInfoDeferred, initLafJob, args, mainScope)
 
   val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
 
-  val asyncScope = this@startApplication
-
   val pluginSetDeferred = async {
     // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
-    if (configImportNeededDeferred.await() && !isHeadless) {
+    if (!isHeadless && configImportNeededDeferred.await()) {
       initLafJob.join()
       val log = logDeferred.await()
       importConfig(
@@ -255,7 +225,7 @@ fun CoroutineScope.startApplication(args: List<String>,
       }
     }
 
-    PluginManagerCore.scheduleDescriptorLoading(coroutineScope = asyncScope,
+    PluginManagerCore.scheduleDescriptorLoading(coroutineScope = this@startApplication,
                                                 zipFilePoolDeferred = zipFilePoolDeferred,
                                                 mainClassLoaderDeferred = mainClassLoaderDeferred,
                                                 logDeferred = logDeferred)
@@ -291,7 +261,7 @@ fun CoroutineScope.startApplication(args: List<String>,
       runPreAppClass(args = args, classBeforeAppProperty = classBeforeAppProperty)
     }
 
-    appInfoDeferred.join() //used in ApplicationImpl::registerFakeServices
+    appInfoDeferred.join() // used in ApplicationImpl::registerFakeServices
     val app = span("app instantiation") {
       // we don't want to inherit mainScope Dispatcher and CoroutineTimeMeasurer, we only want the job
       ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job).namedChildScope("Application"), isInternal)
@@ -301,7 +271,7 @@ fun CoroutineScope.startApplication(args: List<String>,
             initAwtToolkitAndEventQueueJob = initEventQueueJob,
             pluginSetDeferred = pluginSetDeferred,
             euaDocumentDeferred = euaDocumentDeferred,
-            asyncScope = asyncScope,
+            asyncScope = this@startApplication,
             initLafJob = initLafJob,
             logDeferred = logDeferred,
             appRegisteredJob = appRegisteredJob,
@@ -330,7 +300,52 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 }
 
-fun isConfigImportNeeded(configPath: Path): Boolean {
+private fun CoroutineScope.scheduleSvgIconCacheInitAndPreloadPhm(logDeferred: Deferred<Logger>, isHeadless: Boolean) {
+  launch {
+    // PHM wants logger
+    logDeferred.join()
+
+    span("PHM classes preloading", Dispatchers.IO) {
+      val classLoader = AppStarter::class.java.classLoader
+      Class.forName(PersistentMapBuilder::class.java.name, true, classLoader)
+      Class.forName(PersistentMapImpl::class.java.name, true, classLoader)
+      Class.forName(PersistentEnumerator::class.java.name, true, classLoader)
+      Class.forName(ResizeableMappedFile::class.java.name, true, classLoader)
+      Class.forName(PagedFileStorage::class.java.name, true, classLoader)
+      Class.forName(PageCacheUtils::class.java.name, true, classLoader)
+      Class.forName(PersistentHashMapValueStorage::class.java.name, true, classLoader)
+      Class.forName(SLRUMap::class.java.name, true, classLoader)
+    }
+
+    if (!isHeadless) {
+      span("SvgCache creation") {
+        SvgCacheManager.svgCache = SvgCacheManager.createSvgCacheManager()
+      }
+    }
+  }
+}
+
+private fun CoroutineScope.scheduleEnableCoroutineDumpAndJstack() {
+  if (!System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
+    return
+  }
+
+  launch {
+    span("coroutine debug probes init") {
+      enableCoroutineDump()
+    }
+    span("coroutine jstack configuration") {
+      JBR.getJstack()?.includeInfoFrom {
+        """
+$COROUTINE_DUMP_HEADER
+${dumpCoroutines(stripDump = false)}
+"""
+      }
+    }
+  }
+}
+
+internal fun isConfigImportNeeded(configPath: Path): Boolean {
   return !Files.exists(configPath) ||
          Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)) ||
          customTargetDirectoryToImportConfig != null
@@ -341,16 +356,15 @@ fun isConfigImportNeeded(configPath: Path): Boolean {
  * This property is used to override the default target directory ([PathManager.getConfigPath]) when a custom way to read and write
  * configuration files is implemented.
  */
-@get:Internal
-@set:Internal
-var customTargetDirectoryToImportConfig: Path? = null
+@JvmField
+internal var customTargetDirectoryToImportConfig: Path? = null
 
 @Suppress("SpellCheckingInspection")
-private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: Deferred<Logger>,
-                                                                 appInfoDeferred: Deferred<ApplicationInfoEx>,
-                                                                 initUiDeferred: Job,
-                                                                 args: List<String>,
-                                                                 mainScope: CoroutineScope) {
+private fun CoroutineScope.scheduleLoadSystemLibsAndLogInfoAndInitMacApp(logDeferred: Deferred<Logger>,
+                                                                         appInfoDeferred: Deferred<ApplicationInfoEx>,
+                                                                         initUiDeferred: Job,
+                                                                         args: List<String>,
+                                                                         mainScope: CoroutineScope) {
   launch {
     // this must happen after locking system dirs
     val log = logDeferred.await()
@@ -379,26 +393,6 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
         runCatching {
           initMacApplication(mainScope)
         }.getOrLogException(log)
-      }
-    }
-  }
-}
-
-private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfo>, args: List<String>) {
-  if (AppMode.isLightEdit()) {
-    return
-  }
-
-  launch(CoroutineName("showSplashIfNeeded")) {
-    if (CommandLineArgs.isSplashNeeded(args)) {
-      try {
-        showSplashIfNeeded(initUiDeferred = initUiDeferred, appInfoDeferred = appInfoDeferred)
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        logger<AppStarter>().warn("Cannot show splash", e)
       }
     }
   }
@@ -475,11 +469,10 @@ private fun CoroutineScope.checkSystemDirs(lockSystemDirJob: Job): Job {
   return launch {
     lockSystemDirJob.join()
 
-    val (configPath, systemPath) = PathManager.getConfigDir() to PathManager.getSystemDir()
-    span("system dirs checking") {
-      if (!doCheckSystemDirs(configPath, systemPath)) {
-        exitProcess(AppExitCodes.DIR_CHECK_FAILED)
-      }
+    val configPath = PathManager.getConfigDir()
+    val systemPath = PathManager.getSystemDir()
+    if (!span("system dirs checking") { doCheckSystemDirs(configPath, systemPath) }) {
+      exitProcess(AppExitCodes.DIR_CHECK_FAILED)
     }
   }
 }
@@ -590,8 +583,8 @@ private suspend fun lockSystemDirs(args: List<String>) {
     }
     exitProcess(AppExitCodes.INSTANCE_CHECK_FAILED)
   }
-  catch (t: Throwable) {
-    StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), t)
+  catch (e: Throwable) {
+    StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), e)
     exitProcess(AppExitCodes.STARTUP_EXCEPTION)
   }
 }
@@ -689,6 +682,7 @@ interface AppStarter {
   fun importFinished(newConfigDir: Path) {}
 }
 
+@VisibleForTesting
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 class Java11ShimImpl : Java11Shim {
   override fun <K, V> copyOf(map: Map<K, V>): Map<K, V> = java.util.Map.copyOf(map)

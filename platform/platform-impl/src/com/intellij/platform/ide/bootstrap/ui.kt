@@ -223,7 +223,7 @@ fun checkHiDPISettings() {
 }
 
 // must happen after initUi
-internal fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(initUiDeferred: Job) {
+internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initUiDeferred: Job) {
   launch {
     initUiDeferred.join()
 
