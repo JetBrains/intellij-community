@@ -244,6 +244,13 @@
                      level="WEAK WARNING"
                      language="kotlin" key="inspection.protected.in.final.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.MayBeConstantInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin" key="inspection.protected.in.final.display.name" bundle="messages.KotlinBundle"/>
+
     <!-- TODO: We currently have a performance issue caused by reference search. See https://kotlin.jetbrains.space/p/kotlin/reviews/710.
                We have an idea of indexing reference counts. Enable this inspection after implement it. -->
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedSymbolInspection"
