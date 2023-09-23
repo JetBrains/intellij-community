@@ -527,7 +527,8 @@ private suspend fun reportCrashesIfAny() {
       }
     }
   }
-  IdeaFreezeReporter.saveAppInfo(appInfoFile, true)
+
+  IdeaFreezeReporter.saveAppInfo(appInfoFile = appInfoFile, overwrite = true)
   withContext(Dispatchers.IO) {
     Files.createDirectories(pidFile.parent)
     Files.writeString(pidFile, OSProcessUtil.getApplicationPid())
