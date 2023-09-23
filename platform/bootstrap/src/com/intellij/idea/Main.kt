@@ -8,7 +8,6 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.*
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.BytecodeTransformer
-import com.intellij.ide.plugins.ProductLoadingStrategy
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -33,6 +32,7 @@ import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.function.Consumer
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
@@ -45,10 +45,13 @@ fun main(rawArgs: Array<String>) {
   val startTimeUnixNano = System.currentTimeMillis() * 1000000
   startupTimings.add("startup begin")
   startupTimings.add(startTimeNano)
-  mainImpl(rawArgs, startupTimings, startTimeUnixNano)
+  mainImpl(rawArgs = rawArgs, startupTimings = startupTimings, startTimeUnixNano = startTimeUnixNano)
 }
 
-internal fun mainImpl(rawArgs: Array<String>, startupTimings: ArrayList<Any>, startTimeUnixNano: Long) {
+internal fun mainImpl(rawArgs: Array<String>,
+                      startupTimings: ArrayList<Any>,
+                      startTimeUnixNano: Long,
+                      changeClassPath: Consumer<ClassLoader>? = null) {
   val args = preprocessArgs(rawArgs)
   AppMode.setFlags(args)
   addBootstrapTiming("AppMode.setFlags", startupTimings)
@@ -60,7 +63,7 @@ internal fun mainImpl(rawArgs: Array<String>, startupTimings: ArrayList<Any>, st
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler() + rootTask()) {
         addBootstrapTiming("init scope creating", startupTimings)
         StartUpMeasurer.addTimings(startupTimings, "bootstrap", startTimeUnixNano)
-        startApp(args, this@runBlocking, busyThread)
+        startApp(args = args, mainScope = this@runBlocking, busyThread = busyThread, changeClassPath = changeClassPath)
       }
 
       awaitCancellation()
@@ -72,18 +75,28 @@ internal fun mainImpl(rawArgs: Array<String>, startupTimings: ArrayList<Any>, st
   }
 }
 
-private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busyThread: Thread) {
+private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busyThread: Thread, changeClassPath: Consumer<ClassLoader>?) {
   span("startApplication") {
-    val mainClassLoaderDeferred = async(CoroutineName("main class loader initializing")) {
-      val classLoader = AppStarter::class.java.classLoader
-      ProductLoadingStrategy.strategy.addMainModuleGroupToClassPath(classLoader)
-      return@async classLoader
+    val appStarterDeferred: Deferred<AppStarter>
+    val mainClassLoaderDeferred: Deferred<ClassLoader>?
+    if (changeClassPath == null) {
+      appStarterDeferred = async(CoroutineName("main class loading")) {
+        val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
+        MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
+      }
+      mainClassLoaderDeferred = null
     }
+    else {
+      mainClassLoaderDeferred = async(CoroutineName("main class loader initializing")) {
+        val classLoader = AppStarter::class.java.classLoader
+        changeClassPath.accept(classLoader)
+        classLoader
+      }
 
-    // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
-    val appStarterDeferred = async(CoroutineName("main class loading")) {
-      val aClass = mainClassLoaderDeferred.await().loadClass("com.intellij.idea.MainImpl")
-      MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
+      appStarterDeferred = async(CoroutineName("main class loading")) {
+        val aClass = mainClassLoaderDeferred.await().loadClass("com.intellij.idea.MainImpl")
+        MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
+      }
     }
 
     launch(CoroutineName("ForkJoin CommonPool configuration")) {

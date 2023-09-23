@@ -382,7 +382,7 @@ private fun CoroutineScope.loadDescriptorsFromProperty(context: DescriptorListLo
 
 @Suppress("DeferredIsResult")
 internal fun CoroutineScope.scheduleLoading(zipFilePoolDeferred: Deferred<ZipFilePool>?,
-                                            mainClassLoaderDeferred: Deferred<ClassLoader>,
+                                            mainClassLoaderDeferred: Deferred<ClassLoader>?,
                                             logDeferred: Deferred<Logger>?): Deferred<PluginSet> {
   val resultDeferred = async(CoroutineName("plugin descriptor loading")) {
     val isUnitTestMode = PluginManagerCore.isUnitTestMode
@@ -510,12 +510,12 @@ suspend fun loadDescriptors(
   isUnitTestMode: Boolean = PluginManagerCore.isUnitTestMode,
   isRunningFromSources: Boolean,
   zipFilePoolDeferred: Deferred<ZipFilePool>? = null,
-  mainClassLoaderDeferred: Deferred<ClassLoader>,
+  mainClassLoaderDeferred: Deferred<ClassLoader>?,
 ): PluginLoadingResult {
   val listDeferred: List<Deferred<IdeaPluginDescriptorImpl?>>
   val extraListDeferred: List<Deferred<IdeaPluginDescriptorImpl?>>
   val zipFilePool = if (context.transient) null else zipFilePoolDeferred?.await()
-  val mainClassLoader = mainClassLoaderDeferred.await()
+  val mainClassLoader = mainClassLoaderDeferred?.await() ?: PluginManagerCore::class.java.classLoader
   withContext(Dispatchers.IO) {
     listDeferred = loadDescriptorsFromDirs(
       context = context,
@@ -600,11 +600,8 @@ private fun CoroutineScope.loadDescriptorsFromDirs(
                              isRunningFromSources = isRunningFromSources,
                              pool = zipFilePool,
                              classLoader = mainClassLoader)
-
   val custom = loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipFilePool)
-
   val bundled = ProductLoadingStrategy.strategy.loadBundledPluginDescriptors(this, bundledPluginDir, isUnitTestMode, context, zipFilePool)
-
   return (root + custom + bundled)
 }
 

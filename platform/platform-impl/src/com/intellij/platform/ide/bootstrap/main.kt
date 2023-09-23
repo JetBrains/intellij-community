@@ -95,12 +95,12 @@ internal var shellEnvDeferred: Deferred<Boolean?>? = null
 
 // the main thread's dispatcher is sequential - use it with care
 fun CoroutineScope.startApplication(args: List<String>,
-                                    mainClassLoaderDeferred: Deferred<ClassLoader>,
+                                    mainClassLoaderDeferred: Deferred<ClassLoader>?,
                                     appStarterDeferred: Deferred<AppStarter>,
                                     mainScope: CoroutineScope,
                                     busyThread: Thread) {
   val appInfoDeferred = async {
-    mainClassLoaderDeferred.await()
+    mainClassLoaderDeferred?.await()
     span("app info") {
       // required for DisabledPluginsState and EUA
       ApplicationInfoImpl.getShadowInstance()

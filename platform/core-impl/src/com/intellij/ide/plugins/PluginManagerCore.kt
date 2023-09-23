@@ -368,7 +368,7 @@ object PluginManagerCore {
   @Synchronized
   fun scheduleDescriptorLoading(coroutineScope: CoroutineScope,
                                 zipFilePoolDeferred: Deferred<ZipFilePool>?,
-                                mainClassLoaderDeferred: Deferred<ClassLoader>,
+                                mainClassLoaderDeferred: Deferred<ClassLoader>?,
                                 logDeferred: Deferred<Logger>?): Deferred<PluginSet> {
     var result = initFuture
     if (result == null) {

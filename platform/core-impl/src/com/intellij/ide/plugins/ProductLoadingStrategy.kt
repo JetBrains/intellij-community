@@ -18,10 +18,8 @@ import java.nio.file.Paths
 abstract class ProductLoadingStrategy {
   companion object {
     @Volatile
-    @JvmStatic
     private var ourStrategy: ProductLoadingStrategy? = null
     
-    @JvmStatic
     var strategy: ProductLoadingStrategy
       get() {
         if (ourStrategy == null) {
