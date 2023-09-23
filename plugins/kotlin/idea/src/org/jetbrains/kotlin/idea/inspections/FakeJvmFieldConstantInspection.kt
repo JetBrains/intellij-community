@@ -10,7 +10,6 @@ import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.elements.KtLightFieldForSourceDeclarationSupport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Status.*
 import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Util.getStatus
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase.Status.*
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
