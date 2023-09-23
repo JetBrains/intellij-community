@@ -33,11 +33,9 @@ class InlineCompletionEditorListener(private val scope: CoroutineScope) : Editor
     val handler = InlineCompletionHandler(scope.childScope(supervisor = !application.isUnitTestMode)) // Completely fail only in tests
     editor.putUserData(InlineCompletionHandler.KEY, handler)
     val docListener = InlineCompletionDocumentListener(editor)
-    val caretListener = InlineCaretListener()
 
     editor.document.addDocumentListener(docListener, disposable)
     editor.addEditorMouseListener(editorMouseListener, disposable)
-    editor.caretModel.addCaretListener(caretListener, disposable)
   }
 
   private fun editorTypeSupported(editor: Editor): Boolean {

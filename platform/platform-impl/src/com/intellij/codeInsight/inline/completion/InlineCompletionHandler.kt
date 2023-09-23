@@ -13,7 +13,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
@@ -70,6 +73,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   @RequiresEdt
   fun invoke(event: InlineCompletionEvent.DirectCall) = invokeEvent(event)
 
+  @RequiresEdt
   private fun invokeEvent(event: InlineCompletionEvent) {
     if (!application.isDispatchThread) {
       LOG.error("Cannot run inline completion handler outside of EDT.")
@@ -86,20 +90,16 @@ class InlineCompletionHandler(scope: CoroutineScope) {
 
     // At this point, the previous session must be removed, otherwise, `init` will throw.
     val newSession = InlineCompletionSession.init(request.editor, provider)
+    newSession.guardCaretModifications(request)
     executor.switchJobSafely {
       newSession.assignJob(InlineCompletionJob(this@switchJobSafely))
 
       val newRequest = actualizeRequestOrNull(request)
       if (newRequest != null) {
-        assert(newRequest.editor === request.editor)
-        withContext(Dispatchers.EDT) {
-          hide(newRequest.editor, false)
-        }
+        LOG.assertTrue(newRequest.editor === request.editor)
+        newSession.guardCaretModifications(newRequest)
       }
-      val actualRequest = newRequest ?: request
-      forbidModifications(actualRequest) {
-        invokeRequest(actualRequest, newSession)
-      }
+      invokeRequest(newRequest ?: request, newSession)
     }
   }
 
@@ -122,7 +122,8 @@ class InlineCompletionHandler(scope: CoroutineScope) {
       resultFlow
         .onEmpty {
           trace(InlineCompletionEventType.Empty)
-          hide(editor, false)
+          ensureActive()
+          hide(editor, false, context)
         }
         .onCompletion {
           complete(currentCoroutineContext().isActive, editor, it, context)
@@ -177,7 +178,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
 
   @RequiresEdt
   fun hide(editor: Editor, explicit: Boolean, context: InlineCompletionContext) {
-    assert(!context.isInvalidated)
+    LOG.assertTrue(!context.isInvalidated)
     if (context.isCurrentlyDisplayingInlays) {
       trace(InlineCompletionEventType.Hide(explicit))
     }
@@ -192,9 +193,10 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     }
   }
 
+  @RequiresEdt
   fun complete(isActive: Boolean, editor: Editor, cause: Throwable?, context: InlineCompletionContext) {
     trace(InlineCompletionEventType.Completion(cause, isActive))
-    if (cause != null) {
+    if (cause != null && !context.isInvalidated) {
       hide(editor, false, context)
     }
   }
@@ -217,7 +219,6 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   ): Boolean {
     val session = InlineCompletionSession.getOrNull(request.editor) ?: return false
     if (provider == null && !session.context.isCurrentlyDisplayingInlays) {
-      session.invalidate()
       return true // Fast fall to not slow down editor
     }
     if ((provider != null && session.provider != provider) || session.provider.requiresInvalidation(request.event)) {
@@ -270,31 +271,23 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     )
   }
 
-  private suspend fun forbidModifications(request: InlineCompletionRequest, block: suspend () -> Unit) {
-    fun cancelExecution() {
-      hide(request.editor, false)
-    }
+  @RequiresEdt
+  private fun InlineCompletionSession.guardCaretModifications(request: InlineCompletionRequest) {
+    fun cancelExecution() = hide(context.editor, false)
 
-    val documentListener = object : DocumentListener {
-      override fun beforeDocumentChange(event: DocumentEvent) = cancelExecution()
-    }
     val caretListener = object : CaretListener {
       override fun caretPositionChanged(event: CaretEvent) {
-        val newOffset = request.editor.logicalPositionToOffset(event.newPosition)
-        // After document event a caret may move to the new position
-        if (newOffset != request.endOffset) {
+        val newOffset = context.editor.logicalPositionToOffset(event.newPosition)
+        val expectedOffset = context.startOffset ?: request.endOffset
+        if (newOffset != expectedOffset) {
           cancelExecution()
         }
       }
       override fun caretAdded(event: CaretEvent) = cancelExecution()
       override fun caretRemoved(event: CaretEvent) = cancelExecution()
     }
-    try {
-      request.document.addDocumentListener(documentListener)
-      request.editor.caretModel.addCaretListener(caretListener)
-      block()
-    } finally {
-      request.document.removeDocumentListener(documentListener)
+    request.editor.caretModel.addCaretListener(caretListener)
+    whenDisposed {
       request.editor.caretModel.removeCaretListener(caretListener)
     }
   }

@@ -5,15 +5,29 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import java.util.concurrent.atomic.AtomicReference
 
-internal class InlineCompletionSession private constructor(val context: InlineCompletionContext, val provider: InlineCompletionProvider) {
+internal class InlineCompletionSession private constructor(
+  val context: InlineCompletionContext,
+  val provider: InlineCompletionProvider
+) {
 
-  var job: InlineCompletionJob? = null
-    private set
+  private var toDispose: (() -> Unit)? = null
+  private val myJob = AtomicReference<InlineCompletionJob?>()
+
+  val job: InlineCompletionJob?
+    get() = myJob.get()
 
   fun assignJob(job: InlineCompletionJob) {
-    check(this.job == null) { "Job is already assigned to a session." }
-    this.job = job
+    val currentJob = myJob.getAndSet(job)
+    check(currentJob == null) { "Job is already assigned to a session." }
+  }
+
+  @RequiresEdt
+  fun whenDisposed(block: () -> Unit) {
+    // TODO change semantics after starting truly listening to typing events: we shouldn't replace dispose, we need to collect them
+    toDispose?.invoke()
+    toDispose = block
   }
 
   companion object {
@@ -37,6 +51,7 @@ internal class InlineCompletionSession private constructor(val context: InlineCo
       val currentSession = getOrNull(editor)?.apply {
         context.clear()
         context.invalidate()
+        toDispose?.invoke()
         job?.cancel()
       }
 
