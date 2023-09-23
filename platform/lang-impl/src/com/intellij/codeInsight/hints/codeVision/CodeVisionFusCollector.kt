@@ -10,12 +10,13 @@ import org.jetbrains.annotations.ApiStatus
 object CodeVisionFusCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("daemon.code.vision", 2)
 
-  val CODE_VISION_FINISHED = GROUP.registerEvent(
-    "finished",
-    EventFields.DurationMs,
-    EventFields.Class("provider_class"),
-    EventFields.Language
-  )
+    // TODO make some kind of throttling
+    val CODE_VISION_FINISHED = GROUP.registerEvent(
+      "finished",
+      EventFields.DurationMs,
+      EventFields.Class("provider_class"),
+      EventFields.Language
+    )
 
   val ANNOTATION_LOADED = GROUP.registerEvent("vcs.annotation.loaded", EventFields.DurationMs)
 
