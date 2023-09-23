@@ -90,6 +90,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 import static com.intellij.codeInsight.util.GlobalInspectionScopeKt.GlobalInspectionScope;
@@ -333,10 +334,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     ProgressIndicator fileScanningIndicator = new SensitiveProgressWrapper(progressIndicator);
     Future<?> future = startIterateScopeInBackground(scope, fileScanningIndicator, headlessEnvironment, localScopeFiles, filesToInspect);
 
+    var enabledInspectionsProvider = createEnabledInspectionsProvider(localTools, globalSimpleTools, getProject());
     PsiManager psiManager = PsiManager.getInstance(getProject());
     Processor<VirtualFile> processor = virtualFile -> {
       ProgressManager.checkCanceled();
 
+      final var cachedWrappers = new AtomicReference<EnabledInspectionsProvider.ToolWrappers>(null);
+      
       Boolean readActionSuccess = DumbService.getInstance(getProject()).tryRunReadActionInSmartMode(() -> {
         long start = getPathProfile() == null ? 0 : System.currentTimeMillis();
         PsiFile file = virtualFile.isValid() ? psiManager.findFile(virtualFile) : null;
@@ -348,11 +352,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           return true;
         }
         boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
-        Wrappers wrappers = getWrappersFromTools(localTools, globalSimpleTools, file, includeDoNotShow);
+        var wrappers = getWrappersFromTools(enabledInspectionsProvider, file, includeDoNotShow);
+        cachedWrappers.set(wrappers);
 
         inspectFile(file, getEffectiveRange(searchScope, file), inspectionManager, map,
-                    wrappers.globalSimpleWrappers,
-                    wrappers.localWrappers,
+                    wrappers.getGlobalSimpleRegularWrappers(),
+                    wrappers.getLocalRegularWrappers(),
                     inspectInjectedPsi && scope.isAnalyzeInjectedCode());
         if (start != 0) {
           updateProfile(virtualFile, System.currentTimeMillis() - start);
@@ -370,8 +375,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       getEventPublisher().fileAnalyzed(file, getProject());
 
       boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
-      Wrappers wrappers = getWrappersFromTools(localTools, globalSimpleTools, file, includeDoNotShow);
-      wrappers.externalAnnotatorWrappers.forEach(wrapper -> {
+
+      var cachedWrappersValue = cachedWrappers.get();
+      var wrappers = (cachedWrappersValue != null) ? cachedWrappersValue : getWrappersFromTools(enabledInspectionsProvider, file, includeDoNotShow);
+      wrappers.getExternalAnnotatorWrappers().forEach(wrapper -> {
         ProblemDescriptor[] descriptors = ((ExternalAnnotatorBatchInspection)wrapper.getTool()).checkFile(file, this, inspectionManager);
         InspectionToolResultExporter toolPresentation = getPresentation(wrapper);
         ReadAction.run(() -> BatchModeDescriptorsUtil
@@ -445,6 +452,31 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         throw new ProcessCanceledException();
       }
     });
+  }
+
+  protected EnabledInspectionsProvider createEnabledInspectionsProvider(
+    @NotNull List<Tools> localTools,
+    @NotNull List<Tools> globalSimpleTools,
+    @NotNull Project project
+  ) {
+    return new EnabledInspectionsProvider() {
+      @NotNull
+      @Override
+      public ToolWrappers getEnabledTools(@Nullable PsiFile psiFile, boolean includeDoNotShow) {
+        return new ToolWrappers(
+          localTools.stream()
+            .map(tool -> tool.getEnabledTool(psiFile, includeDoNotShow))
+            .filter(wrapper -> wrapper instanceof LocalInspectionToolWrapper)
+            .map(wrapper -> (LocalInspectionToolWrapper) wrapper)
+            .toList(),
+          globalSimpleTools.stream()
+            .map(tool -> tool.getEnabledTool(psiFile, includeDoNotShow))
+            .filter(wrapper -> wrapper instanceof GlobalInspectionToolWrapper)
+            .map(wrapper -> (GlobalInspectionToolWrapper) wrapper)
+            .toList()
+        );
+      }
+    };
   }
 
   protected void runExternalTools() {}
@@ -875,30 +907,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
   }
 
-  public Wrappers getWrappersFromTools(
-    @NotNull List<? extends Tools> localTools,
-    @NotNull List<? extends Tools> globalSimpleTools,
+  public EnabledInspectionsProvider.ToolWrappers getWrappersFromTools(
+    @NotNull EnabledInspectionsProvider enabledInspectionsProvider,
     @NotNull PsiFile file,
-    boolean includeDoNotShow) {
-
-    List<LocalInspectionToolWrapper> local = getWrappersFromTools(localTools, file, includeDoNotShow);
-    List<GlobalInspectionToolWrapper> globalSimple = getWrappersFromTools(globalSimpleTools, file, includeDoNotShow);
-
-    List<LocalInspectionToolWrapper> localWrappers = new ArrayList<>();
-    List<GlobalInspectionToolWrapper> globalWrappers = new ArrayList<>();
-    List<InspectionToolWrapper<?, ?>> externalAnnotatorWrappers = new ArrayList<>();
-
-    for (LocalInspectionToolWrapper wrapper : local) {
-      if (wrapper.getTool() instanceof ExternalAnnotatorBatchInspection) externalAnnotatorWrappers.add(wrapper);
-      else localWrappers.add(wrapper);
-    }
-
-    for (GlobalInspectionToolWrapper wrapper : globalSimple) {
-      if (wrapper.getTool() instanceof ExternalAnnotatorBatchInspection) externalAnnotatorWrappers.add(wrapper);
-      else globalWrappers.add(wrapper);
-    }
-
-    return new Wrappers(localWrappers, globalWrappers, externalAnnotatorWrappers);
+    boolean includeDoNotShow
+  ) {
+    return enabledInspectionsProvider.getEnabledTools(file, includeDoNotShow);
   }
 
 
