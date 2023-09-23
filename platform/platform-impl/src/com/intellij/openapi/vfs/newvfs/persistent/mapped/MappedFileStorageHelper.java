@@ -53,6 +53,7 @@ public final class MappedFileStorageHelper implements Closeable {
    * Keeps a registry of all {@link MappedFileStorageHelper} -- prevents creating duplicates, i.e. >1 storage
    * for the same path.
    */
+  //@GuardedBy(storagesRegistry)
   private static final Map<Path, MappedFileStorageHelper> storagesRegistry = new HashMap<>();
 
   public static @NotNull MappedFileStorageHelper openHelper(@NotNull FSRecordsImpl vfs,
