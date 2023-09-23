@@ -147,6 +147,14 @@ public class MMappedFileStorageTest {
   }
 
   @Test
+  public void openingSecondStorage_OverSameFile_Fails() {
+    assertThrows(
+      IllegalStateException.class,
+      () -> new MMappedFileStorage(storage.storagePath(), PAGE_SIZE)
+    );
+  }
+
+  @Test
   public void afterTruncate_fileBecomesEmptyAndZeroed_andNoTracesOfPreviousContentIsLeft() throws IOException {
     int pagesToAllocate = 16;
 

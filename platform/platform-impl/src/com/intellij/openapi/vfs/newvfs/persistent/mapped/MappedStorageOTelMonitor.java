@@ -39,7 +39,7 @@ public class MappedStorageOTelMonitor implements AutoCloseable {
 
     otelCallback = meter.batchCallback(
       () -> {
-        storagesCounter.record(MMappedFileStorage.storages());
+        storagesCounter.record(MMappedFileStorage.openedStoragesCount());
         pagesCounter.record(MMappedFileStorage.totalPagesMapped());
         pagesBytesCounter.record(MMappedFileStorage.totalBytesMapped());
         mappingTimeCounter.record(MMappedFileStorage.totalTimeForPageMap(MICROSECONDS));
