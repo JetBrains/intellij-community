@@ -8,7 +8,7 @@ import com.intellij.openapi.util.registry.Registry
 
 @Service(Service.Level.APP)
 class SearchEverywhereSemanticExperiments {
-  private val experimentGroup: Int
+  val experimentGroup: Int
     get() {
       val experimentGroup = EventLogConfiguration.getInstance().bucket % GRANULARITY
       val registryExperimentGroup = Registry.intValue("search.everywhere.ml.experiment.group", -1, -1, GRANULARITY - 1)

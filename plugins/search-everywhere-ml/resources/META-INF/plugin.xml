@@ -32,6 +32,9 @@
   </extensions>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.searchEverywhereSessionPropertyProvider"
+                    interface="com.intellij.searchEverywhereMl.SearchEverywhereSessionPropertyProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.rankingService"
                     interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService"
                     dynamic="true"/>

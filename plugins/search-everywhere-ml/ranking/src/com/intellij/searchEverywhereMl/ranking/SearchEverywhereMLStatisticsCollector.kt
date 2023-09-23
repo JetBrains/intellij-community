@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.SE_TABS
+import com.intellij.searchEverywhereMl.SearchEverywhereSessionPropertyProvider
 import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.searchEverywhereMl.ranking.features.*
 import com.intellij.searchEverywhereMl.ranking.id.SearchEverywhereMlItemIdProvider
@@ -126,11 +127,12 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                              elementIdProvider: SearchEverywhereMlItemIdProvider,
                              additionalEvents: List<EventPair<*>>) {
     eventId.log(project) {
+      val tabId = cache.tabId
       addAll(additionalEvents)
 
       addAll(
         getCommonTypeLevelEvents(seSessionId = seSessionId,
-                                 tabId = cache.tabId,
+                                 tabId = tabId,
                                  elementsSize = elements.size,
                                  searchStateFeatures = cache.searchStateFeatures,
                                  timeToFirstResult = timeToFirstResult,
@@ -144,6 +146,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                  experimentGroup = cache.experimentGroup)
       )
 
+      addAll(SearchEverywhereSessionPropertyProvider.getAllProperties(tabId))
       addAll(getElementsEvents(project, shouldLogFeatures, elements, mixedListInfo, elementIdProvider))
     }
   }
@@ -196,6 +199,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                        orderByMl: Boolean,
                                        experimentGroup: Int): List<EventPair<*>> {
     return buildList {
+      val isInternal = ApplicationManager.getApplication().isInternal
       add(SE_TAB_ID_KEY.with(tabId))
       add(SESSION_ID_LOG_DATA_KEY.with(seSessionId))
       add(SEARCH_INDEX_DATA_KEY.with(searchIndex))
@@ -212,6 +216,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       add(IS_MIXED_LIST.with(isMixedList))
       add(ORDER_BY_ML_GROUP.with(orderByMl))
       add(EXPERIMENT_GROUP.with(experimentGroup))
+      add(IS_INTERNAL.with(isInternal))
     }
   }
 
@@ -269,9 +274,10 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 75, MLSE_RECORDER_ID)
+    private val GROUP = EventLogGroup("mlse.log", 76, MLSE_RECORDER_ID)
     private const val REPORTED_ITEMS_LIMIT = 50
 
+    private val IS_INTERNAL = EventFields.Boolean("isInternal")
     private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")
     private val EXPERIMENT_GROUP = EventFields.Int("experimentGroup")
     private val FORCE_EXPERIMENT_GROUP = EventFields.Boolean("isForceExperiment")
@@ -359,6 +365,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
         SE_TAB_ID_KEY,
         EXPERIMENT_GROUP,
         ORDER_BY_ML_GROUP,
+        IS_INTERNAL,
         SEARCH_START_TIME_KEY,
         TIME_TO_FIRST_RESULT_DATA_KEY,
         TYPED_SYMBOL_KEYS,
@@ -372,6 +379,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
         SEARCH_STATE_FEATURES_DATA_KEY,
         COLLECTED_RESULTS_DATA_KEY
       )
+      fields.addAll(SearchEverywhereSessionPropertyProvider.getAllDeclarations())
       fields.addAll(SearchEverywhereContextFeaturesProvider.getContextFields())
       fields.addAll(additional)
       return GROUP.registerVarargEvent(eventId, *fields.toTypedArray())

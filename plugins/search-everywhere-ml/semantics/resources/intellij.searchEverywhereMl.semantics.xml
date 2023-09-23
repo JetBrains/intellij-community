@@ -8,6 +8,9 @@
     <searchEverywhereReorderingService
       implementation="com.intellij.searchEverywhereMl.semantics.reordering.SearchEverywhereReorderingServiceImpl"/>
 
+    <searchEverywhereMl.searchEverywhereSessionPropertyProvider
+      implementation="com.intellij.searchEverywhereMl.semantics.SearchEverywhereSemanticPropertyProvider"/>
+
     <postStartupActivity
       implementation="com.intellij.searchEverywhereMl.semantics.services.ActionSemanticSearchServiceInitializer"/>
 
