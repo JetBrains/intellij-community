@@ -121,7 +121,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myChangesBrowser = new VcsLogChangesBrowser(logData.getProject(), myUiProperties, (commitId) -> {
       int index = myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot());
-      return myLogData.getMiniDetailsGetter().getCommitData(index);
+      return myLogData.getMiniDetailsGetter().getCachedDataOrPlaceholder(index);
     }, withEditorDiffPreview, this);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,

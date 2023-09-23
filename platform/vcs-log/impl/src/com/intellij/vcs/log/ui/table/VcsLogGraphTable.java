@@ -641,7 +641,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
                                        baseStyle.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
 
     int commitId = rowInfo.getCommit();
-    VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(commitId);
+    VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCachedData(commitId);
     if (details != null) {
       int columnModelIndex = convertColumnIndexToModel(column);
       List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> {

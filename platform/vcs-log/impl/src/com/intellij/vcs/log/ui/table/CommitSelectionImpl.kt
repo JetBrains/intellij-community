@@ -40,7 +40,7 @@ internal class CommitSelectionImpl(private val logData: VcsLogData,
     }
 
     internal fun <T : VcsShortCommitDetails> VcsLogCommitSelection.getCachedDetails(dataGetter: DataGetter<T>): List<T> {
-      return getDetails(dataGetter::getCommitData)
+      return getDetails(dataGetter::getCachedDataOrPlaceholder)
     }
   }
 }

@@ -42,7 +42,7 @@ class MiniDetailsGetter internal constructor(project: Project,
   private var currentTaskIndex: Long = 0
   private val loadingFinishedListeners = ArrayList<Runnable>()
 
-  override fun getCommitData(commit: Int): VcsCommitMetadata {
+  override fun getCachedDataOrPlaceholder(commit: Int): VcsCommitMetadata {
     return getCommitData(commit, emptySet())
   }
 
@@ -84,12 +84,12 @@ class MiniDetailsGetter internal constructor(project: Project,
     return topCommitsDetailsCache[commit]
   }
 
-  override fun getCommitDataIfAvailable(commit: Int): VcsCommitMetadata? {
+  override fun getCachedData(commit: Int): VcsCommitMetadata? {
     return cache.getIfPresent(commit).takeIf { it !is LoadingDetails } ?: topCommitsDetailsCache[commit]
   }
 
-  override fun getCommitDataIfAvailable(commits: List<Int>): Int2ObjectMap<VcsCommitMetadata> {
-    return commits.associateNotNull { getCommitDataIfAvailable(it) }
+  override fun getCachedData(commits: List<Int>): Int2ObjectMap<VcsCommitMetadata> {
+    return commits.associateNotNull { getCachedData(it) }
   }
 
   override fun saveInCache(commit: Int, details: VcsCommitMetadata) = cache.put(commit, details)

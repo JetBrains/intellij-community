@@ -435,7 +435,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   }
 
   private fun getDetailsFromCache(commitIndex: Int): VcsCommitMetadata? {
-    return topCommitsDetailsCache.get(commitIndex) ?: commitDetailsGetter.getCommitDataIfAvailable(commitIndex)
+    return topCommitsDetailsCache.get(commitIndex) ?: commitDetailsGetter.getCachedData(commitIndex)
   }
 
   private fun Collection<VcsRef>.toReferencedCommitIndexes(): Set<Int> {
