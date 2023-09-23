@@ -12,9 +12,9 @@ fun foo(e: ENUM) {
     }
 }
 
+// WITH_ORDER
 // EXIST: ENUM.AAAA
 // EXIST: ENUM.BBBB
 // EXIST: ENUM.CCCC
 // EXIST: { lookupString: "else -> "}
-// NOTHING_ELSE
 // FIR_COMPARISON

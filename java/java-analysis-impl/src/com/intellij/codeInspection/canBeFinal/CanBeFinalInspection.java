@@ -110,44 +110,45 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
     }
 
     manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull RefEntity refEntity) {
-        if (problemsProcessor.getDescriptions(refEntity) == null) return;
-        refEntity.accept(new RefJavaVisitor() {
-          @Override public void visitMethod(@NotNull final RefMethod refMethod) {
-            if (!refMethod.isStatic() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) &&
-                !(refMethod instanceof RefImplicitConstructor)) {
-              globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
-                ((RefElementImpl)refMethod).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
-                problemsProcessor.ignoreElement(refMethod);
-                return false;
-              });
-            }
-          }
+      @Override
+      public void visitMethod(@NotNull final RefMethod refMethod) {
+        if (problemsProcessor.getDescriptions(refMethod) == null) return;
+        if (!refMethod.isStatic() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) &&
+            !(refMethod instanceof RefImplicitConstructor)) {
+          globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
+            ((RefElementImpl)refMethod).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
+            problemsProcessor.ignoreElement(refMethod);
+            return false;
+          });
+        }
+      }
 
-          @Override public void visitClass(@NotNull final RefClass refClass) {
-            if (!refClass.isAnonymous() && !PsiModifier.PRIVATE.equals(refClass.getAccessModifier())) {
-              globalContext.enqueueDerivedClassesProcessor(refClass, inheritor -> {
-                ((RefClassImpl)refClass).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
-                problemsProcessor.ignoreElement(refClass);
-                return false;
-              });
-            }
-          }
+      @Override
+      public void visitClass(@NotNull final RefClass refClass) {
+        if (problemsProcessor.getDescriptions(refClass) == null) return;
+        if (!refClass.isAnonymous() && !PsiModifier.PRIVATE.equals(refClass.getAccessModifier())) {
+          globalContext.enqueueDerivedClassesProcessor(refClass, inheritor -> {
+            ((RefClassImpl)refClass).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
+            problemsProcessor.ignoreElement(refClass);
+            return false;
+          });
+        }
+      }
 
-          @Override public void visitField(@NotNull final RefField refField) {
-            if (PsiModifier.PRIVATE.equals(refField.getAccessModifier())) return;
-            globalContext.enqueueFieldUsagesProcessor(refField, new GlobalJavaInspectionContext.UsagesProcessor() {
-              @Override
-              public boolean process(PsiReference psiReference) {
-                PsiElement expression = psiReference.getElement();
-                if (expression instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)expression)) {
-                  ((RefFieldImpl)refField).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
-                  problemsProcessor.ignoreElement(refField);
-                  return false;
-                }
-                return true;
-              }
-            });
+      @Override
+      public void visitField(@NotNull final RefField refField) {
+        if (problemsProcessor.getDescriptions(refField) == null) return;
+        if (PsiModifier.PRIVATE.equals(refField.getAccessModifier())) return;
+        globalContext.enqueueFieldUsagesProcessor(refField, new GlobalJavaInspectionContext.UsagesProcessor() {
+          @Override
+          public boolean process(PsiReference psiReference) {
+            PsiElement expression = psiReference.getElement();
+            if (expression instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)expression)) {
+              ((RefFieldImpl)refField).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
+              problemsProcessor.ignoreElement(refField);
+              return false;
+            }
+            return true;
           }
         });
       }

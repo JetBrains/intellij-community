@@ -15,5 +15,6 @@ internal class Test {
         fun doFrame()
     }
 
-    fun postFrameCallbackDelayed(callback: FrameCallback?) {}
+    fun postFrameCallbackDelayed(callback: FrameCallback?) {
+    }
 }

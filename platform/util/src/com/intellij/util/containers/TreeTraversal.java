@@ -217,9 +217,9 @@ public abstract class TreeTraversal {
     final TreeTraversal original;
     final TraversalInterceptor interceptor;
 
-    protected Intercepted(@NotNull String debugName,
-                          @NotNull TreeTraversal original,
-                          @NotNull TraversalInterceptor interceptor) {
+    private Intercepted(@NotNull String debugName,
+                        @NotNull TreeTraversal original,
+                        @NotNull TraversalInterceptor interceptor) {
       super(debugName);
       this.original = original;
       this.interceptor = interceptor;

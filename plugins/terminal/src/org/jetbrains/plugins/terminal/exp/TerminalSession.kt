@@ -12,10 +12,12 @@ import com.jediterm.terminal.model.JediTermDebouncerImpl
 import com.jediterm.terminal.model.JediTermTypeAheadModel
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
+import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.awt.event.KeyEvent
+import java.util.concurrent.CopyOnWriteArrayList
 
-class TerminalSession(settings: JBTerminalSystemSettingsProviderBase) : Disposable {
+class TerminalSession(settings: JBTerminalSystemSettingsProviderBase, val shellIntegration: ShellIntegration?) : Disposable {
   val model: TerminalModel
   lateinit var terminalStarter: TerminalStarter
 
@@ -25,13 +27,12 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase) : Disposab
   val controller: TerminalController
   private val commandManager: ShellCommandManager
   private val typeAheadManager: TerminalTypeAheadManager
-  @Volatile
-  var shellIntegration: ShellIntegration? = null
+  private val terminationListeners: MutableList<Runnable> = CopyOnWriteArrayList()
 
   init {
     val styleState = StyleState()
     styleState.setDefaultStyle(settings.defaultStyle)
-    textBuffer = TerminalTextBufferEx(80, 24, styleState)
+    textBuffer = TerminalTextBuffer(80, 24, styleState)
     model = TerminalModel(textBuffer, styleState)
     controller = TerminalController(model, settings)
 
@@ -47,7 +48,19 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase) : Disposab
     terminalStarter = TerminalStarter(controller, ttyConnector, TtyBasedArrayDataStream(ttyConnector), typeAheadManager, executorServiceManager)
     executorServiceManager.unboundedExecutorService.submit {
       terminalStarter.start()
+      try {
+        ttyConnector.close()
+      }
+      catch (ignored: Exception) {
+      }
+      for (terminationListener in terminationListeners) {
+        terminationListener.run()
+      }
     }
+  }
+
+  fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
+    TerminalUtil.addItem(terminationListeners, onTerminated, parentDisposable)
   }
 
   fun executeCommand(command: String) {

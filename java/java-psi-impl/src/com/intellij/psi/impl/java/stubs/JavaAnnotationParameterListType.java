@@ -20,6 +20,7 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiAnnotationParameterList;
 import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationParameterListStubImpl;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.java.AnnotationParamListElement;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationParamListImpl;
 import com.intellij.psi.stubs.IndexSink;
@@ -36,7 +37,7 @@ import java.io.IOException;
 public class JavaAnnotationParameterListType extends JavaStubElementType<PsiAnnotationParameterListStub, PsiAnnotationParameterList> {
 
   protected JavaAnnotationParameterListType() {
-    super("ANNOTATION_PARAMETER_LIST", true);
+    super("ANNOTATION_PARAMETER_LIST", true, BasicJavaElementType.BASIC_ANNOTATION_PARAMETER_LIST);
   }
 
   @Override
@@ -69,6 +70,11 @@ public class JavaAnnotationParameterListType extends JavaStubElementType<PsiAnno
   @Override
   public PsiAnnotationParameterListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new PsiAnnotationParameterListStubImpl(parentStub);
+  }
+
+  @Override
+  public boolean isAlwaysEmpty() {
+    return true;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.psi.*;
@@ -14,40 +14,33 @@ public abstract class JavaFxPropertyReference<T extends PsiElement> extends PsiR
     myPsiClass = aClass;
   }
 
-  @Nullable
-  public PsiMethod getGetter() {
+  public @Nullable PsiMethod getGetter() {
     if (myPsiClass == null) return null;
     return JavaFxPsiUtil.findPropertyGetter(myPsiClass, getPropertyName());
   }
 
-  @Nullable
-  public PsiMethod getSetter() {
+  public @Nullable PsiMethod getSetter() {
     if (myPsiClass == null) return null;
     return JavaFxPsiUtil.findInstancePropertySetter(myPsiClass, getPropertyName());
   }
 
-  @Nullable
-  public PsiField getField() {
+  public @Nullable PsiField getField() {
     if (myPsiClass == null) return null;
     return myPsiClass.findFieldByName(getPropertyName(), true);
   }
 
-  @Nullable
-  public PsiMethod getObservableGetter() {
+  public @Nullable PsiMethod getObservableGetter() {
     if (myPsiClass == null) return null;
     return JavaFxPsiUtil.findObservablePropertyGetter(myPsiClass, getPropertyName());
   }
 
-  @Nullable
-  public PsiMethod getStaticSetter() {
+  public @Nullable PsiMethod getStaticSetter() {
     return null;
   }
 
-  @Nullable
-  public PsiType getType() {
+  public @Nullable PsiType getType() {
     return JavaFxPsiUtil.getReadablePropertyType(resolve());
   }
 
-  @Nullable
-  public abstract String getPropertyName();
+  public abstract @Nullable String getPropertyName();
 }

@@ -55,13 +55,13 @@ private class KotlinProjectArtifactDependencyResolverImpl : KotlinProjectArtifac
         return dependency.artifactsClasspath.flatMap { artifactFile ->
             val artifactPath = ExternalSystemApiUtil.normalizePath(artifactFile.path)
             val ids = artifactPath?.let { artifactsMap.getModuleMapping(it)?.moduleIds }
-                                     ?: modulesOutputsMap[artifactPath]?.first?.let { listOf(it) }
-                                     ?: return@flatMap emptySet()
+                ?: modulesOutputsMap[artifactPath]?.first?.let { listOf(it) }
+                ?: return@flatMap emptySet()
             ids.mapNotNull {
                 val sourceSetDataNode = sourceSetMap[it]?.first ?: return@mapNotNull null
                 val sourceSet = sourceSetMap[it]?.second ?: return@mapNotNull null
                 val sourceSetNames = sourceSetDataNode.kotlinSourceSetData?.sourceSetInfo?.dependsOn.orEmpty()
-                                             .mapNotNull { dependsOnId -> sourceSetMap[dependsOnId]?.second?.name } + sourceSet.name
+                    .mapNotNull { dependsOnId -> sourceSetMap[dependsOnId]?.second?.name } + sourceSet.name
                 dependency.resolved(sourceSetNames.toSet())
             }.flatten()
         }.toSet() + resolvedByExtensions

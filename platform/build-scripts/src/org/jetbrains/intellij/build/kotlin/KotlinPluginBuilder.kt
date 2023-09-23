@@ -163,6 +163,7 @@ object KotlinPluginBuilder {
     "kotlin.code-insight.descriptions",
     "kotlin.code-insight.intentions-k1",
     "kotlin.code-insight.intentions-k2",
+    "kotlin.code-insight.inspections-k1",
     "kotlin.code-insight.inspections-k2",
     "kotlin.code-insight.k1",
     "kotlin.code-insight.k2",

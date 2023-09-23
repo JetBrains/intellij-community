@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -41,10 +42,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -66,15 +64,6 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final Logger LOG = Logger.getInstance(PersistentFSImpl.class);
 
-  /**
-   * If true, all roots are load from {@link FSRecords} and cached on the first attempt to load the fileId
-   * under yet-uncached root. This may take time and lead to a freeze, hence the flag to disable it.
-   */
-  private static final boolean CACHE_MISSED_ROOTS_ALL_AT_ONCE =
-    getBooleanProperty("PersistentFSImpl.CACHE_MISSED_ROOTS_ALL_AT_ONCE", false);
-  //TODO better use single property & enum as a value?
-  /** If true, on the attempt to load fileId under yet-uncached root only this specific root is loaded (if exists) */
-  private static final boolean CACHE_MISSED_ROOTS_ONE_BY_ONE = getBooleanProperty("PersistentFSImpl.CACHE_MISSED_ROOTS_ONE_BY_ONE", true);
 
   /**
    * Eager VFS saving causes a lot of issues with dispose ordering. So far disable it by default -- until we'll
@@ -82,8 +71,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    */
   private static final boolean SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN =
     getBooleanProperty("PersistentFSImpl.SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN", false);
-
-  private final AtomicBoolean missedRootsLoaded = new AtomicBoolean(false);
 
   private final Map<String, VirtualFileSystemEntry> myRoots;
 
@@ -148,7 +135,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @ApiStatus.Internal
-  public void connect() {
+  synchronized public void connect() {
     myIdToDirCache.clear();
     myVfsData = new VfsData(app);
     LOG.assertTrue(!myConnected.get() && vfsPeer == null);
@@ -157,7 +144,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @ApiStatus.Internal
-  public void disconnect() {
+  synchronized public void disconnect() {
     if (myConnected.compareAndSet(true, false)) {
       for (PersistentFsConnectionListener listener : PersistentFsConnectionListener.EP_NAME.getExtensionList()) {
         listener.beforeConnectionClosed();
@@ -179,19 +166,35 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private void doConnect() {
     if (myConnected.compareAndSet(false, true)) {
       Activity activity = StartUpMeasurer.startActivity("connect FSRecords");
-      if (!VfsLog.isVfsTrackingEnabled()) {
-        // forcefully erase VfsLog storages if the feature is disabled so that when it will be enabled again we won't consider old data as a source for recovery
-        try {
-          if (VfsLogImpl.clearStorage(new PersistentFSPaths(Path.of(FSRecords.getCachesDir())).getVfsLogStorage())) {
-            LOG.info("VfsLog data was cleared, because VFS operations logging was turned off");
-          }
-        }
-        catch (Throwable e) {
-          LOG.error("failed to clear VfsLog storage", e);
-        }
-      }
+      applyVfsLogPreferences();
       vfsPeer = FSRecords.connect();
       activity.end();
+    }
+  }
+
+  private static void applyVfsLogPreferences() {
+    Path cachesDir = Path.of(FSRecords.getCachesDir());
+    if (!cachesDir.toFile().exists()) return;
+    PersistentFSPaths fsRecordsPaths = new PersistentFSPaths(cachesDir);
+    Path vfsLogPath = fsRecordsPaths.getVfsLogStorage();
+    if (!VfsLog.isVfsTrackingEnabled()) {
+      // forcefully erase VfsLog storages if the feature is disabled so that when it will be enabled again we won't consider old data as a source for recovery
+      try {
+        if (VfsLogImpl.clearStorage(vfsLogPath)) {
+          LOG.info("VfsLog data was cleared because VFS operations logging was turned off");
+        }
+      }
+      catch (Throwable e) {
+        LOG.error("failed to clear VfsLog storage", e);
+      }
+    } else {
+      if (!vfsLogPath.toFile().exists()) {
+        // existing vfs must be cleared if vfslog directory does not exist, otherwise, vfslog will lack crucial data for recovery
+        Path corruptionMarker = fsRecordsPaths.getCorruptionMarkerFile();
+        if (!corruptionMarker.toFile().exists()) {
+          PersistentFSConnection.scheduleVFSRebuild(corruptionMarker, "VfsLog: VFS operations tracking was enabled", null);
+        }
+      }
     }
   }
 
@@ -1523,8 +1526,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (fs instanceof LocalFileSystem && !(parentPath = PathUtil.getParentPath(rootPath)).isEmpty()) {
       FileAttributes parentAttributes = loadAttributes(fs, parentPath);
       if (parentAttributes != null) {
-        throw new IllegalArgumentException("Must pass FS root path, but got: '" + path + "', which has a parent '" + parentPath + "'." +
-                                           " Use NewVirtualFileSystem.extractRootPath() for obtaining root path");
+        throw new IllegalArgumentException(
+          "Must pass FS root path, but got: '" + path + "' (url: " + rootUrl + "), " +
+          "which has a parent '" + parentPath + "'. " +
+          "Use NewVirtualFileSystem.extractRootPath() for obtaining root path");
       }
     }
 
@@ -1602,66 +1607,88 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   /**
    * Usually we cache the roots during {@link #findRoot(String, NewVirtualFileSystem)} call, so at a given
    * moment some roots _could_ be not (yet) cached. So we need to force idToDirCache to cache the root it
-   * misses: (it happens to be easier to force it to cache _all_ the roots it misses, at once)
-   */
-  private void cacheAllMissedRootsFromPersistence() {
-    //better to collect roots first, to not spend too much time holding root lock inside .forEachRoot()
-    List<String> missedRootUrls = new ArrayList<>();
-    vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
-      if (myIdToDirCache.getCachedRoot(rootFileId) == null) {
-        missedRootUrls.add(rootUrl);
-      }
-    });
-
-    cacheRootsByUrls(missedRootUrls);
-  }
-
-  /**
-   * Usually we cache the roots during {@link #findRoot(String, NewVirtualFileSystem)} call, so at a given
-   * moment some roots _could_ be not (yet) cached. So we need to force idToDirCache to cache the root it
    * misses
    */
-  private void cacheSingleMissedRootFromPersistence(int rootId) {
-    //better to collect roots first, to not spend too much time holding root lock inside .forEachRoot()
-    List<String> missedRootUrl = new ArrayList<>(1);
+  private void cacheMissedRootFromPersistence(int rootId) {
+    Ref<String> missedRootUrlRef = new Ref<>();
     vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
       if (rootId == rootFileId) {
-        missedRootUrl.add(rootUrl);
+        missedRootUrlRef.set(rootUrl);
       }
     });
 
-    cacheRootsByUrls(missedRootUrl);
+    if (missedRootUrlRef.isNull()) {
+      LOG.warn("Can't find root[#" + rootId + "]");
+      return;
+    }
+    //for roots 'name' == rootPath:
+    String rootPath = vfsPeer.getName(rootId);
+    ensureRootCached(rootPath, missedRootUrlRef.get());
   }
 
-  private void cacheRootsByUrls(@NotNull Iterable<String> missedRootUrls) {
-    VirtualFileManager fileManager = VirtualFileManager.getInstance();
-    for (String missedRootUrl : missedRootUrls) {
-      //we truncated all trailing / in the .findRoot(), before putting rootUrl into FSRecords.findOrCreateRoot()
-      // -- so now we need to append it/them back, otherwise some matching in .findRoot() won't happen:
-      if (missedRootUrl.endsWith(":")) {      // 'file:' -> 'file:///'
-        missedRootUrl += "///";
-      }
-      else if (missedRootUrl.endsWith("!")) { // '.../file.jar!' -> '.../file.jar!/'
-        missedRootUrl += '/';
-      }
-      String protocol = VirtualFileManager.extractProtocol(missedRootUrl);
-      VirtualFileSystem fs = fileManager.getFileSystem(protocol);
-      String rootPath = VirtualFileManager.extractPath(missedRootUrl);
-      if (fs instanceof NewVirtualFileSystem) {
-        NewVirtualFile cachedRoot = findRoot(rootPath, (NewVirtualFileSystem)fs);
-        LOG.trace("\tforce caching " + missedRootUrl + " (protocol: " + protocol + ", path: " + rootPath + ") -> " + cachedRoot);
-      }
-      else {
-        if (fs == null) {
-          LOG.warn("\tcan't force caching " + missedRootUrl + " (protocol: " + protocol + ", path: " + rootPath + ") " +
-                   "-> protocol:'" + protocol + "' is not registered (yet?)");
-        }
-        else {
-          LOG.warn("\tcan't force caching " + missedRootUrl + " (protocol: " + protocol + ", path: " + rootPath + ") " +
-                   "-> " + fs + " is not NewVirtualFileSystem");
-        }
-      }
+  @VisibleForTesting
+  NewVirtualFile ensureRootCached(@NotNull String missedRootPath,
+                                  @NotNull String missedRootUrl) {
+    NewVirtualFileSystem fs = detectFileSystem(missedRootUrl, missedRootPath);
+    if (fs == null) {
+      return null;
     }
+
+    try {
+      NewVirtualFile cachedRoot = findRoot(missedRootPath, fs);
+      LOG.trace(
+        "\tforce caching " + missedRootUrl + " (protocol: " + fs.getProtocol() + ", path: " + missedRootPath + ") -> " + cachedRoot);
+      return cachedRoot;
+    }
+    catch (Throwable t) {
+      if (t instanceof ControlFlowException) {
+        throw t;
+      }
+      StringBuilder sb = new StringBuilder();
+      vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
+        sb.append("[#").append(rootFileId).append("]: '").append(rootUrl).append("'\n");
+      });
+      LOG.warn("Can't cache root[url: " + missedRootUrl + "][path: " + missedRootPath + "]. \nAll roots: " + sb, t);
+      return null;
+    }
+  }
+
+  @VisibleForTesting
+  static @Nullable NewVirtualFileSystem detectFileSystem(@NotNull String rootUrl,
+                                                         @NotNull String rootPath) {
+
+    if (rootUrl.endsWith(":")) {
+      if (OSAgnosticPathUtil.startsWithWindowsDrive(rootUrl) && rootUrl.length() == 2) {
+        //Workaround for IDEA-331415: it shouldn't happen: rootUrl must be an url (even though sometimes not
+        // fully correct URL), not a win-path -- but it sometimes happens, even though shouldn't:
+        LOG.warn("detectFileSystem[root url='" + rootUrl + "', path='" + rootPath + "']: root URL is not an URL, but Win drive path");
+        return LocalFileSystem.getInstance();
+        //TODO RC: I hope this was just a fluck -- i.e. some VFS instances somehow got 'infected' by these wrong
+        // root urls, but they wash off with time -- and the need for this branch disappears. Lets replace the
+        // workaround with an AssertionError in v24.1, and see.
+      }
+
+      //We truncated all trailing '/' in the .findRoot(), before putting rootUrl into FSRecords.findOrCreateRoot()
+      // -- now we need to append them back, otherwise .extractProtocol() won't recognize the protocol
+      // E.g. 'file:' -> 'file:///'
+      rootUrl += "///";
+    }
+
+    String protocol = VirtualFileManager.extractProtocol(rootUrl);
+    VirtualFileSystem fs = VirtualFileManager.getInstance().getFileSystem(protocol);
+    if (fs instanceof NewVirtualFileSystem) {
+      return (NewVirtualFileSystem)fs;
+    }
+
+    if (fs == null) {
+      LOG.warn("\tcan't force caching " + rootUrl + " (protocol: " + protocol + ", path: " + rootPath + ") " +
+               "-> protocol:'" + protocol + "' is not registered (yet?)");
+    }
+    else {
+      LOG.warn("\tcan't force caching " + rootUrl + " (protocol: " + protocol + ", path: " + rootPath + ") " +
+               "-> " + fs + " is not NewVirtualFileSystem");
+    }
+    return null;
   }
 
 
@@ -1698,34 +1725,22 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         }
         else {
           //RC: currentId is root, but not cached -- it is OK, root _could_ be not (yet) cached, since
-          //    idToDirCache caches a root only during PersistentFSImpl.findRoot() call -- could be not
-          //    all the roots known to FSRecords were requested at a given moment.
+          //    idToDirCache caches a root only during PersistentFSImpl.findRoot() call -- it could be
+          //    that not all the roots known to FSRecords were requested at a given moment.
           //    => we need to force idToDirCache to cache the root it misses:
-          boolean shouldCacheAllRoots = CACHE_MISSED_ROOTS_ALL_AT_ONCE && missedRootsLoaded.compareAndSet(false, true);
-          if (shouldCacheAllRoots || CACHE_MISSED_ROOTS_ONE_BY_ONE) {
-            if (shouldCacheAllRoots) {
-              //Call it only once, because it could be some roots are repeatedly not resolved
-              // because apt FileSystem wasn't registered (yet -- or at all), and this could make
-              // everything slow.
-              // MAYBE: reset missedRootsLoaded if new FileSystem registered?
-              cacheAllMissedRootsFromPersistence();
-            }
-            else {// if CACHE_MISSED_ROOTS_ONE_BY_ONE
-              cacheSingleMissedRootFromPersistence(currentId);
-            }
+          cacheMissedRootFromPersistence(currentId);
 
-            foundParent = myIdToDirCache.getCachedDir(currentId);
-            if (foundParent != null) {
-              //currentId is in the list, but shouldn't be, if it is == foundParent
-              // => remove it
-              if (parentIds != null && !parentIds.isEmpty()) {
-                parentIds.removeInt(parentIds.size() - 1);
-              }
-              else {
-                parentIds = null;
-              }
-              return;
+          foundParent = myIdToDirCache.getCachedDir(currentId);
+          if (foundParent != null) {
+            //currentId is in the list, but shouldn't be, if it is == foundParent
+            // => remove it
+            if (parentIds != null && !parentIds.isEmpty()) {
+              parentIds.removeInt(parentIds.size() - 1);
             }
+            else {
+              parentIds = null;
+            }
+            return;
           }
 
 
@@ -2250,7 +2265,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @ApiStatus.Internal
-  public FSRecordsImpl peer(){
+  public FSRecordsImpl peer() {
     return vfsPeer;
   }
 

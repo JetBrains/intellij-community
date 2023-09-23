@@ -63,6 +63,11 @@ public abstract class CoverageDataManager {
   public abstract void coverageGathered(@NotNull CoverageSuite suite);
 
   /**
+   * Called each time after a coverage suite is completely processed: data is loaded and accumulated
+   */
+  public void coverageDataCalculated() {}
+
+  /**
    * Remove suite
    * @param suite coverage suite to remove
    */

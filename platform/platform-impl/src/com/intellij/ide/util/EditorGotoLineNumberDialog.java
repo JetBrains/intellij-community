@@ -24,7 +24,7 @@ public final class EditorGotoLineNumberDialog extends GotoLineNumberDialog {
   }
 
   @Override
-  protected final Coordinates getCoordinates() {
+  protected Coordinates getCoordinates() {
     Coordinates c = super.getCoordinates();
     if (c != null) return c;
 

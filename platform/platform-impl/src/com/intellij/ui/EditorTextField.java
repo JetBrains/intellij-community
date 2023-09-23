@@ -714,7 +714,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   protected void setupBorder(@NotNull EditorEx editor) {
-      editor.setBorder(BorderFactory.createCompoundBorder(UIUtil.getTextFieldBorder(), BorderFactory.createEmptyBorder(2, 2, 2, 2)));
+    editor.setBorder(new DarculaEditorTextFieldBorder(this, editor));
   }
 
   private void setupEditorFont(final EditorEx editor) {

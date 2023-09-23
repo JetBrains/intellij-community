@@ -2,16 +2,15 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.plugins.terminal.util.ShellType
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_PROMPT_EDITOR_KEY
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.properties.Delegates
 
@@ -19,8 +18,7 @@ class TerminalPromptController(
   private val editor: EditorEx,
   session: TerminalSession,
   private val commandExecutor: TerminalCommandExecutor
-) : ShellCommandListener, UserDataHolder {
-  private val completionManager: TerminalCompletionManager?
+) : ShellCommandListener {
   private val commandHistoryManager: CommandHistoryManager
   private val listeners: MutableList<PromptStateListener> = CopyOnWriteArrayList()
 
@@ -32,16 +30,11 @@ class TerminalPromptController(
   }
 
   init {
-    completionManager = when (session.shellIntegration?.shellType) {
-      ShellType.ZSH -> ZshCompletionManager(session)
-      ShellType.BASH -> BashCompletionManager(session)
-      else -> null
-    }
-    editor.putUserData(KEY, this)  // to access this object from editor action handlers
+    editor.putUserData(IS_PROMPT_EDITOR_KEY, true)
     editor.putUserData(TerminalSession.KEY, session)
-    editor.putUserData(TerminalCompletionManager.KEY, completionManager)
 
     commandHistoryManager = CommandHistoryManager(session)
+    session.addCommandListener(this)
   }
 
   fun addListener(listener: PromptStateListener) {
@@ -89,10 +82,6 @@ class TerminalPromptController(
     else editor.document.addDocumentListener(listener)
   }
 
-  override fun <T : Any?> getUserData(key: Key<T>): T? = editor.getUserData(key)
-
-  override fun <T : Any?> putUserData(key: Key<T>, value: T?) = editor.putUserData(key, value)
-
   interface PromptStateListener {
     fun promptLabelChanged(newText: @NlsSafe String) {}
     fun commandHistoryStateChanged(showing: Boolean) {}
@@ -100,6 +89,6 @@ class TerminalPromptController(
   }
 
   companion object {
-    val KEY: Key<TerminalPromptController> = Key.create("TerminalPromptController")
+    val KEY: DataKey<TerminalPromptController> = DataKey.create("TerminalPromptController")
   }
 }

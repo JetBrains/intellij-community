@@ -2,7 +2,9 @@ package com.intellij.tools.launch
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.tools.launch.Launcher.affixIO
+import com.intellij.util.SystemProperties
 import com.sun.security.auth.module.UnixSystem
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.io.File
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
@@ -103,6 +105,14 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     dockerCmd.addReadonly(paths.sourcesRootFolder.resolve("lib"))
     dockerCmd.addReadonly(paths.sourcesRootFolder.resolve("plugins"))
     dockerCmd.addReadonly(paths.sourcesRootFolder.resolve("contrib"))
+
+    // on buildserver agents libraries may be cached in ~/.m2.base
+    if (TeamCityHelper.isUnderTeamCity) {
+      val mavenCache = File(SystemProperties.getUserHome()).resolve(".m2.base")
+      if (mavenCache.isDirectory) {
+        dockerCmd.addReadonly(mavenCache)
+      }
+    }
 
     // a lot of jars in classpaths, /plugins, /xml, so we'll just mount the whole root
     dockerCmd.addReadonly(paths.communityRootFolder)

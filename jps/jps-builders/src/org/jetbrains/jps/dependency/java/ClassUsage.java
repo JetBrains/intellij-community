@@ -2,21 +2,16 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.dependency.ReferenceID;
-import org.jetbrains.jps.dependency.Usage;
+import org.jetbrains.jps.dependency.impl.StringReferenceID;
 
-public class ClassUsage implements Usage {
+public class ClassUsage extends JvmElementUsage {
 
-  @NotNull
-  private final ReferenceID myClassNode;
-
-  public ClassUsage(@NotNull ReferenceID classNode) {
-    myClassNode = classNode;
+  public ClassUsage(@NotNull String className) {
+    super(new StringReferenceID(className));
   }
 
-  @Override
-  public @NotNull ReferenceID getElementOwner() {
-    return myClassNode;
+  public String getClassName() {
+    return ((StringReferenceID)getElementOwner()).getValue();
   }
 
 }

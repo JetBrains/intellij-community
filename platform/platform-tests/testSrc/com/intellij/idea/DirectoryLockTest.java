@@ -4,6 +4,7 @@ package com.intellij.idea;
 import com.intellij.ide.CliResult;
 import com.intellij.ide.SpecialConfigFiles;
 import com.intellij.idea.DirectoryLock.CannotActivateException;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
@@ -210,9 +211,22 @@ public abstract sealed class DirectoryLockTest {
   }
 
   @Test
+  public void deletingStaleLockFileWithRecycledPid() throws Exception {
+    var scriptName = ApplicationNamesInfo.getInstance().getScriptName();
+    var nonIdeProcess = ProcessHandle.allProcesses()
+      .filter(h -> { var command = h.info().command().orElse(""); return !(command.contains("java") || command.contains(scriptName)); })
+      .findFirst().orElse(null);
+    assumeTrue("Cannot find a non-IDE process among running", nonIdeProcess != null);
+    var configDir = Files.createDirectories(testDir.resolve("c"));
+    Files.writeString(configDir.resolve(SpecialConfigFiles.LOCK_FILE), Long.toString(nonIdeProcess.pid()));
+    var lock = createLock(configDir, testDir.resolve("s"));
+    assertNull(lock.lockOrActivate(currentDir, List.of()));
+  }
+
+  @Test
   public void preservingActiveLockFile() throws Exception {
     var configDir = Files.createDirectories(testDir.resolve("c"));
-    Files.writeString(configDir.resolve(SpecialConfigFiles.LOCK_FILE), String.valueOf(ProcessHandle.current().pid()));
+    Files.writeString(configDir.resolve(SpecialConfigFiles.LOCK_FILE), Long.toString(ProcessHandle.current().pid()));
     var lock = createLock(configDir, testDir.resolve("s"));
     assertThatThrownBy(() -> lock.lockOrActivate(currentDir, List.of())).isInstanceOf(CannotActivateException.class);
   }

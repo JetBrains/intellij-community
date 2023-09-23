@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.google.common.collect.Maps;
-import com.intellij.ProjectTopics;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
@@ -462,7 +461,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
       this.project = project;
       this.moduleSdks = moduleSdks;
       connection = project.getMessageBus().simpleConnect();
-      connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
         @Override
         public void rootsChanged(@NotNull ModuleRootEvent event) {
           DumbService.getInstance(project).cancelTask(MyDumbModeTask.this);

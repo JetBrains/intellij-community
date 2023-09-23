@@ -93,10 +93,9 @@ public final class RefactoringQuickListPopupAction extends QuickSwitchSchemeActi
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       AnAction[] children = delegate.getChildren(e);
-      String place = e == null ? ActionPlaces.REFACTORING_QUICKLIST : e.getPlace();
       Condition<AnAction> popupCondition = o ->
         o instanceof PopupInMainMenuActionGroup ||
-        o instanceof ActionGroup && ((ActionGroup)o).isPopup(place);
+        o instanceof ActionGroup && ((ActionGroup)o).isPopup();
       if (ContainerUtil.find(children, popupCondition) == null) {
         return children;
       }

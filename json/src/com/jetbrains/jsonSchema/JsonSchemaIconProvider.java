@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.icons.AllIcons;
@@ -12,10 +12,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class JsonSchemaIconProvider implements FileIconProvider {
-  @Nullable
+public final class JsonSchemaIconProvider implements FileIconProvider {
   @Override
-  public Icon getIcon(@NotNull VirtualFile file, int flags, @Nullable Project project) {
+  public @Nullable Icon getIcon(@NotNull VirtualFile file, int flags, @Nullable Project project) {
     if (project != null
         && JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensionList().stream().anyMatch(e -> e.canBeSchemaFile(file))) {
       JsonSchemaService service = JsonSchemaService.Impl.get(project);

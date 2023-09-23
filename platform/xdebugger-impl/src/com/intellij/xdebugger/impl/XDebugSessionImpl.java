@@ -319,7 +319,7 @@ public final class XDebugSessionImpl implements XDebugSession {
         myDebugProcess.getProcessHandler().removeProcessListener(this);
       }
     });
-    //todo[nik] make 'createConsole()' method return ConsoleView
+    //todo make 'createConsole()' method return ConsoleView
     myConsoleView = (ConsoleView)myDebugProcess.createConsole();
     if (!myShowTabOnSuspend.get()) {
       initSessionTab(contentToReuse);

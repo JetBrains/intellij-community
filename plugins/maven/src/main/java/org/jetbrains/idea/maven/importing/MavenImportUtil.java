@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
 import com.google.common.collect.ImmutableMap;
@@ -23,7 +23,6 @@ import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
-import org.apache.commons.lang.StringUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -261,7 +260,9 @@ public final class MavenImportUtil {
     String moduleName = moduleNameMap.get(project);
     if (moduleName != null) return moduleName;
     moduleName = project.getMavenId().getArtifactId();
-    if (moduleName == null) return StringUtils.EMPTY;
+    if (moduleName == null) {
+      return "";
+    }
     if (project.getParentId() != null) {
       MavenProject parentProject = projectsTree.findProject(project.getParentId());
       if (parentProject != null) {
@@ -284,7 +285,7 @@ public final class MavenImportUtil {
       modifiableModel.addContentEntry(contentRoot);
       modifiableModel.commit();
 
-      ExternalSystemUtil.markModuleAsMaven(module, true);
+      ExternalSystemUtil.markModuleAsMaven(module, null, true);
 
       return module;
     });

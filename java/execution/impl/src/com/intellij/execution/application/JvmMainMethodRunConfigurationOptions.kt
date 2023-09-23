@@ -19,6 +19,9 @@ open class JvmMainMethodRunConfigurationOptions : JvmConfigurationOptions() {
   @get:OptionTag("INCLUDE_PROVIDED_SCOPE")
   open var isIncludeProvidedScope by property(false)
 
+  @get:OptionTag("UNNAMED_CLASS_CONFIGURATION")
+  open var isUnnamedClassConfiguration by property(false)
+
   @get:OptionTag("PASS_PARENT_ENVS")
   var isPassParentEnv by property(true)
 

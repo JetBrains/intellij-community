@@ -9,19 +9,17 @@ import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.expression.*
-import com.intellij.debugger.engine.jdi.StackFrameProxy
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import com.sun.jdi.*
 import com.sun.jdi.Value
 import org.jetbrains.annotations.ApiStatus
@@ -102,15 +100,10 @@ object KotlinEvaluatorBuilder : EvaluatorBuilder {
 }
 
 class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePosition: SourcePosition?) : Evaluator {
+
     override fun evaluate(context: EvaluationContextImpl): Any? {
         if (codeFragment.text.isEmpty()) {
             return context.debugProcess.virtualMachineProxy.mirrorOfVoid()
-        }
-
-        runReadAction {
-            if (DumbService.getInstance(codeFragment.project).isDumb) {
-                evaluationException(KotlinDebuggerEvaluationBundle.message("error.dumb.mode"))
-            }
         }
 
         if (!context.debugProcess.isAttached) {
@@ -178,10 +171,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     private fun getCompiledCodeFragment(context: ExecutionContext): CompiledCodeFragmentData {
         val cache = runReadAction {
             val contextElement = codeFragment.context ?: return@runReadAction null
-            CachedValuesManager.getCachedValue(contextElement) {
-                val storage = ConcurrentHashMap<String, CompiledCodeFragmentData>()
-                CachedValueProvider.Result(ConcurrentFactoryCache(storage), PsiModificationTracker.MODIFICATION_COUNT)
-            }
+            CachedValuesManager.getCachedValue(contextElement, OnRefreshCachedValueProvider(context.project))
         }
         if (cache == null) return compileCodeFragment(context)
 
@@ -195,7 +185,15 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
     }
 
+    private class OnRefreshCachedValueProvider(private val project: Project) : CachedValueProvider<ConcurrentFactoryCache<String, CompiledCodeFragmentData>> {
+        override fun compute(): CachedValueProvider.Result<ConcurrentFactoryCache<String, CompiledCodeFragmentData>> {
+            val storage = ConcurrentHashMap<String, CompiledCodeFragmentData>()
+            return CachedValueProvider.Result(ConcurrentFactoryCache(storage), KotlinDebuggerSessionRefreshTracker.getInstance(project))
+        }
+    }
+
     private fun compileCodeFragment(context: ExecutionContext): CompiledCodeFragmentData {
+        patchCodeFragment(context, codeFragment)
         return if (isK2Plugin()) compiledCodeFragmentDataK2(context) else compiledCodeFragmentDataK1(context)
     }
 
@@ -303,20 +301,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
 
         compilerStrategy.beforeAnalyzingCodeFragment()
-        var analysisResult = analyze(codeFragment, debugProcess)
-        val codeFragmentWasEdited = KotlinCodeFragmentEditor(codeFragment)
-            .withToStringWrapper(analysisResult.bindingContext)
-            .withSuspendFunctionWrapper(
-                analysisResult.bindingContext,
-                context,
-                isCoroutineScopeAvailable(context.frameProxy)
-            )
-            .editCodeFragment()
-
-        if (codeFragmentWasEdited) {
-            // Repeat analysis for edited code fragment
-            analysisResult = analyze(codeFragment, debugProcess)
-        }
+        val analysisResult = analyze(codeFragment, debugProcess)
 
         analysisResult.illegalSuspendFunCallDiagnostic?.let {
             evaluationException(DefaultErrorMessages.render(it))
@@ -331,12 +316,6 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
         return createCompiledDataDescriptor(result)
     }
-
-    private fun isCoroutineScopeAvailable(frameProxy: StackFrameProxy) =
-        if (frameProxy is CoroutineStackFrameProxyImpl)
-            frameProxy.isCoroutineScopeAvailable()
-        else
-            false
 
     private data class ErrorCheckingResult(
         val bindingContext: BindingContext,

@@ -48,8 +48,8 @@
                         serviceImplementation="com.intellij.ide.ui.laf.LafManagerImpl"
                         headlessImplementation="com.intellij.ide.ui.laf.HeadlessLafManagerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.ide.ui.ThemesListProvider"
-                        serviceImplementation="com.intellij.ide.ui.laf.ThemesListProviderImpl"/>
+    <applicationService serviceInterface="com.intellij.ide.ui.ThemeListProvider"
+                        serviceImplementation="com.intellij.ide.ui.laf.ThemeListProviderImpl"/>
 
     <applicationService serviceInterface="com.intellij.ide.environment.EnvironmentService"
                         serviceImplementation="com.intellij.ide.environment.impl.DefaultEnvironmentService"

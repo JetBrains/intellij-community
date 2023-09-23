@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 /**
  * Proposals provider for inline completion.
@@ -19,10 +20,13 @@ import org.jetbrains.annotations.ApiStatus
  *   otherwise, proposals will be generated/canceled on each typing.
  *   - Any inline completion request will be cancelled if inline is in rendering mode
  *   - In case a newer inline completion proposals are generated, previous call will be cancelled and hidden
+ *   - If some event requires hiding of shown elements, implement [requiresInvalidation].
+ *
  *
  * @see InlineCompletionElement
  * @see InlineCompletionRequest
  * @see InlineCompletionEvent
+ * @see InlineCompletionPlaceholder
  */
 @ApiStatus.Experimental
 interface InlineCompletionProvider {
@@ -30,9 +34,14 @@ interface InlineCompletionProvider {
 
   fun isEnabled(event: InlineCompletionEvent): Boolean
 
+  fun requiresInvalidation(event: InlineCompletionEvent): Boolean = false
+
   companion object {
     val EP_NAME = ExtensionPointName.create<InlineCompletionProvider>("com.intellij.inline.completion.provider")
     fun extensions(): List<InlineCompletionProvider> = EP_NAME.extensionList
+
+    @TestOnly
+    fun testExtension(): List<InlineCompletionProvider> = EP_NAME.extensionList
   }
 
   object DUMMY : InlineCompletionProvider {

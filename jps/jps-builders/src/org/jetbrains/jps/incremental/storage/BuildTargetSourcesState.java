@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.google.gson.Gson;
@@ -11,7 +11,10 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetIndex;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -44,8 +47,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jetbrains.jps.incremental.IncProjectBuilder.MAX_BUILDER_THREADS;
-import static org.jetbrains.jps.incremental.storage.Xxh3HashingService.getStringHash;
 import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHES;
+import static org.jetbrains.jps.incremental.storage.Xxh3HashingService.getStringHash;
 
 /**
  * Report the state of module sources from which this build was created. <b>This class created as experimental for
@@ -61,7 +64,7 @@ import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHE
  * <b>This is class can be changed or removed in future</b>
  */
 @ApiStatus.Experimental
-public class BuildTargetSourcesState implements BuildListener {
+public final class BuildTargetSourcesState implements BuildListener {
   private static final Logger LOG = Logger.getInstance(BuildTargetSourcesState.class);
   private static final String TARGET_SOURCES_STATE_FILE_NAME = "target_sources_state.json";
   private final ExecutorService myParallelBuildExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
@@ -256,8 +259,7 @@ public class BuildTargetSourcesState implements BuildListener {
     }
   }
 
-  @NotNull
-  private Optional<Long> getBuildTargetHash(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
+  private @NotNull Optional<Long> getBuildTargetHash(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
     long[] longs = Stream.concat(target.getOutputRoots(context).stream().map(it -> compilationOutputHash(it, target)),
                                  myBuildRootIndex.getTargetRoots(target, context).stream().map(it -> sourceRootHash(it, target)))
       .filter(it -> !ContainerUtil.isEmpty(it))
@@ -268,8 +270,7 @@ public class BuildTargetSourcesState implements BuildListener {
     return Optional.of(Xxh3HashingService.getLongsHash(longs));
   }
 
-  @NotNull
-  private Optional<Long> getFileHash(@NotNull BuildTarget<?> target, @NotNull File file, @NotNull File rootPath) throws IOException {
+  private @NotNull Optional<Long> getFileHash(@NotNull BuildTarget<?> target, @NotNull File file, @NotNull File rootPath) throws IOException {
     StampsStorage<? extends StampsStorage.Stamp> storage = myProjectStamps.getStampStorage();
     assert storage instanceof FileStampStorage;
     FileStampStorage fileStampStorage = (FileStampStorage)storage;
@@ -290,8 +291,7 @@ public class BuildTargetSourcesState implements BuildListener {
     return Xxh3HashingService.getLongsHash(stringHash, fileHash);
   }
 
-  @NotNull
-  private Map<String, Map<String, BuildTargetState>> loadCurrentTargetState() {
+  private @NotNull Map<String, Map<String, BuildTargetState>> loadCurrentTargetState() {
     if (!myTargetStateStorage.exists()) return new HashMap<>();
     try (BufferedReader bufferedReader = new BufferedReader(new FileReader(myTargetStateStorage, StandardCharsets.UTF_8))) {
       Map<String, Map<String, BuildTargetState>> result = gson.fromJson(bufferedReader, myTokenType);
@@ -307,13 +307,11 @@ public class BuildTargetSourcesState implements BuildListener {
     return !PORTABLE_CACHES || myProjectStamps == null;
   }
 
-  @NotNull
-  private static String toRelative(@NotNull File target, @NotNull File rootPath) {
+  private static @NotNull String toRelative(@NotNull File target, @NotNull File rootPath) {
     return FileUtilRt.toSystemIndependentName(Paths.get(rootPath.getPath()).relativize(Paths.get(target.getPath())).toString());
   }
 
-  @NotNull
-  private static String getOutputFolderPath(JpsProject project) {
+  private static @NotNull String getOutputFolderPath(JpsProject project) {
     JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(project);
     if (projectExtension == null) return "";
     String url = projectExtension.getOutputUrl();

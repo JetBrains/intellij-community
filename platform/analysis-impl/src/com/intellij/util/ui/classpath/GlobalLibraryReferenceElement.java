@@ -36,7 +36,7 @@ public class GlobalLibraryReferenceElement implements SimpleClasspathElement {
 
   public void writeExternal(Element element) {
     element.setAttribute(NAME_ATTRIBUTE, myLibraryName);
-    //todo[nik,greg] remote later. this is needed only for forward compatibility with version before 8
+    //todo remote later. this is needed only for forward compatibility with version before 8
     element.setAttribute(LEVEL_ATTRIBUTE, LibraryTablesRegistrar.APPLICATION_LEVEL);
   }
 
@@ -54,7 +54,7 @@ public class GlobalLibraryReferenceElement implements SimpleClasspathElement {
   @Override
   public void serialize(Element element) throws IOException {
     element.setAttribute(NAME_ATTRIBUTE, myLibraryName);
-    //todo[nik,greg] remote later. this is needed only for forward compatibility with version before 8
+    //todo remote later. this is needed only for forward compatibility with version before 8
     element.setAttribute(LEVEL_ATTRIBUTE, LibraryTablesRegistrar.APPLICATION_LEVEL);
   }
 

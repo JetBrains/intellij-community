@@ -11,7 +11,7 @@ import org.junit.Test
 class MavenSetupProjectTest : MavenSetupProjectTestCase() {
 
   @Test
-  fun `test settings are not reset`() {
+  fun `test settings are not reset`() = runBlocking {
     runBlocking {
       val projectInfo = generateProject("A")
       val linkedProjectInfo = generateProject("L")
@@ -30,31 +30,33 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
   }
 
   @Test
-  fun `test project open`() {
+  fun `test project open`() = runBlocking {
     runBlocking {
       val projectInfo = generateProject("A")
       waitForImport {
         openProjectAsync(projectInfo.projectFile)
       }.useProjectAsync {
         assertProjectState(it, projectInfo)
+
       }
     }
   }
 
   @Test
-  fun `test project import`() {
+  fun `test project import`() = runBlocking {
     runBlocking {
       val projectInfo = generateProject("A")
       waitForImport {
-        importProjectAsync(projectInfo.projectFile)
+        importProjectActionAsync(projectInfo.projectFile)
       }.useProjectAsync {
         assertProjectState(it, projectInfo)
+
       }
     }
   }
 
   @Test
-  fun `test project attach`() {
+  fun `test project attach`() = runBlocking {
     runBlocking {
       val projectInfo = generateProject("A")
       openPlatformProjectAsync(projectInfo.projectFile.parent)
@@ -68,7 +70,7 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
   }
 
   @Test
-  fun `test project import from script`() {
+  fun `test project import from script`() = runBlocking {
     runBlocking {
       val projectInfo = generateProject("A")
       openPlatformProjectAsync(projectInfo.projectFile.parent)
@@ -82,7 +84,7 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
   }
 
   @Test
-  fun `test module attach`() {
+  fun `test module attach`() = runBlocking {
     runBlocking {
       val projectInfo = generateProject("A")
       val linkedProjectInfo = generateProject("L")
@@ -99,7 +101,7 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
   }
 
   @Test
-  fun `test project re-open`() {
+  fun `test project re-open`() = runBlocking {
     runBlocking {
       val projectInfo = generateProject("A")
       val linkedProjectInfo = generateProject("L")
@@ -120,7 +122,7 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
   }
 
   @Test
-  fun `test project re-open with same module name in different cases`() {
+  fun `test project re-open with same module name in different cases`() = runBlocking {
     val projectPom = createModulePom("project-name", """
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -130,19 +132,16 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
                          <module>dir1/m</module>
                          <module>dir2/M</module>
                        </modules>
-                       
                        """.trimIndent())
     createModulePom("project-name/dir1/m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
-      
       """.trimIndent())
     createModulePom("project-name/dir2/M", """
       <groupId>test</groupId>
       <artifactId>M</artifactId>
       <version>1</version>
-      
       """.trimIndent())
 
     runBlocking {
@@ -160,7 +159,7 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
   }
 
   @Test
-  fun `test project re-import deprecation`() {
+  fun `test project re-import deprecation`() = runBlocking {
     runBlocking {
       val projectInfo = generateProject("A")
       val linkedProjectInfo = generateProject("L")
@@ -174,7 +173,7 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
         }
         assertProjectState(it, projectInfo, linkedProjectInfo)
       }
-      importProjectAsync(projectInfo.projectFile)
+      importProjectActionAsync(projectInfo.projectFile)
         .useProjectAsync {
           assertProjectState(it, projectInfo, linkedProjectInfo)
         }
@@ -182,9 +181,11 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
   }
 
   @Test
-  fun `test workspace import forcibly enabled once per project`() {
+  fun `test workspace import forcibly enabled once per project`() = runBlocking {
     runBlocking {
       val projectInfo = generateProject("A")
+
+      MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
       waitForImport {
         openProjectAsync(projectInfo.projectFile)
       }.useProjectAsync(true) {

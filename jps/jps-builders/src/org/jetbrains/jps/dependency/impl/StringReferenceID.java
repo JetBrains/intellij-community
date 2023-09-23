@@ -10,6 +10,10 @@ public final class StringReferenceID implements ReferenceID {
     myValue = value;
   }
 
+  public String getValue() {
+    return myValue;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

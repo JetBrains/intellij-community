@@ -8,7 +8,6 @@ project.kmpJvm.commonMain
 
 project.kmpJvm.commonTest
     kmpJvm.commonMain (friend, TEST)
-    kmpJvm.jvmMain (friend, RUNTIME)
     kmpJvm.jvmMain (friend, TEST)
     pureJavaLib.main (TEST)
 
@@ -19,7 +18,6 @@ project.kmpJvm.jvmMain
 project.kmpJvm.jvmTest
     kmpJvm.commonMain (friend, TEST)
     kmpJvm.commonTest (refines, TEST)
-    kmpJvm.jvmMain (friend, RUNTIME)
     kmpJvm.jvmMain (friend, TEST)
     pureJavaLib.main (TEST)
 

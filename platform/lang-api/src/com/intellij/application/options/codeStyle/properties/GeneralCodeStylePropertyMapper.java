@@ -20,7 +20,7 @@ public final class GeneralCodeStylePropertyMapper extends AbstractCodeStylePrope
 
   public static final String COMMON_DOMAIN_ID = "all";
 
-  private final static Set<String> GENERAL_FIELDS = ContainerUtil.newHashSet(
+  private static final Set<String> GENERAL_FIELDS = ContainerUtil.newHashSet(
     "LINE_SEPARATOR",
     "RIGHT_MARGIN",
     "WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN",
@@ -30,7 +30,7 @@ public final class GeneralCodeStylePropertyMapper extends AbstractCodeStylePrope
     "FORMATTER_TAGS_ACCEPT_REGEXP"
   );
 
-  private final static Set<String> INDENT_FIELDS = ContainerUtil.newHashSet(
+  private static final Set<String> INDENT_FIELDS = ContainerUtil.newHashSet(
     "INDENT_SIZE",
     "USE_TAB_CHARACTER",
     "TAB_SIZE",
@@ -42,9 +42,8 @@ public final class GeneralCodeStylePropertyMapper extends AbstractCodeStylePrope
     super(settings);
   }
 
-  @NotNull
   @Override
-  protected List<CodeStyleObjectDescriptor> getSupportedFields() {
+  protected @NotNull List<CodeStyleObjectDescriptor> getSupportedFields() {
     List<CodeStyleObjectDescriptor> supportedFields = new ArrayList<>(2);
     supportedFields.add(new CodeStyleObjectDescriptor(getRootSettings(), GENERAL_FIELDS));
     supportedFields.add(new CodeStyleObjectDescriptor(getRootSettings().OTHER_INDENT_OPTIONS, INDENT_FIELDS));
@@ -56,15 +55,13 @@ public final class GeneralCodeStylePropertyMapper extends AbstractCodeStylePrope
     return true;
   }
 
-  @NotNull
   @Override
-  public String getLanguageDomainId() {
+  public @NotNull String getLanguageDomainId() {
     return COMMON_DOMAIN_ID;
   }
 
-  @Nullable
   @Override
-  protected CodeStylePropertyAccessor<?> getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+  protected @Nullable CodeStylePropertyAccessor<?> getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
     if (codeStyleObject instanceof CodeStyleSettings) {
       if ("LINE_SEPARATOR".equals(field.getName())) {
         return new LineSeparatorAccessor(codeStyleObject, field);
@@ -79,9 +76,8 @@ public final class GeneralCodeStylePropertyMapper extends AbstractCodeStylePrope
       super(object, field);
     }
 
-    @Nullable
     @Override
-    protected String fromExternal(@NotNull String str) {
+    protected @Nullable String fromExternal(@NotNull String str) {
       return switch (str) {
         case "lf" -> "\n";
         case "cr" -> "\r";
@@ -90,9 +86,8 @@ public final class GeneralCodeStylePropertyMapper extends AbstractCodeStylePrope
       };
     }
 
-    @NotNull
     @Override
-    protected String toExternal(@NotNull String value) {
+    protected @NotNull String toExternal(@NotNull String value) {
       return switch (value) {
         case "\n" -> "lf";
         case "\r" -> "cr";
@@ -116,8 +111,7 @@ public final class GeneralCodeStylePropertyMapper extends AbstractCodeStylePrope
   }
 
   @Override
-  @Nullable
-  public String getPropertyDescription(@NotNull String externalName) {
+  public @Nullable String getPropertyDescription(@NotNull String externalName) {
     String key = "codestyle.property.description." + externalName;
     return OptionsBundle.INSTANCE.containsKey(key) ? OptionsBundle.message("codestyle.property.description." + externalName) : null;
   }

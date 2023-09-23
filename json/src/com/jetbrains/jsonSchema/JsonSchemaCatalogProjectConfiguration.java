@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @State(name = "JsonSchemaCatalogProjectConfiguration", storages = @Storage("jsonCatalog.xml"))
-public class JsonSchemaCatalogProjectConfiguration implements PersistentStateComponent<JsonSchemaCatalogProjectConfiguration.MyState> {
+public final class JsonSchemaCatalogProjectConfiguration implements PersistentStateComponent<JsonSchemaCatalogProjectConfiguration.MyState> {
   public volatile MyState myState = new MyState();
   private final List<Runnable> myChangeHandlers = ContainerUtil.createConcurrentList();
 
@@ -31,7 +31,7 @@ public class JsonSchemaCatalogProjectConfiguration implements PersistentStateCom
     myChangeHandlers.add(runnable);
   }
 
-  public static JsonSchemaCatalogProjectConfiguration getInstance(@NotNull final Project project) {
+  public static JsonSchemaCatalogProjectConfiguration getInstance(final @NotNull Project project) {
     return project.getService(JsonSchemaCatalogProjectConfiguration.class);
   }
 
@@ -45,9 +45,8 @@ public class JsonSchemaCatalogProjectConfiguration implements PersistentStateCom
     }
   }
 
-  @Nullable
   @Override
-  public MyState getState() {
+  public @Nullable MyState getState() {
     return myState;
   }
 
@@ -64,7 +63,7 @@ public class JsonSchemaCatalogProjectConfiguration implements PersistentStateCom
     }
   }
 
-  static class MyState {
+  static final class MyState {
     @Tag("enabled")
     public boolean myIsCatalogEnabled = true;
 

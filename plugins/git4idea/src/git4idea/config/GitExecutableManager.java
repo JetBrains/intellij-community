@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.execution.wsl.WSLDistribution;
@@ -250,6 +250,21 @@ public class GitExecutableManager {
     else {
       return task.compute();
     }
+  }
+
+  /**
+   * Try get configured {@link #getVersion(Project)},
+   * if it's {@link GitVersion#NULL} then call {@link #identifyVersion(GitExecutable)}
+   */
+  @RequiresBackgroundThread(generateAssertion = false)
+  @NotNull
+  public GitVersion getVersionOrIdentifyIfNeeded(@NotNull Project project) {
+    var version = getVersion(project);
+    if (version.isNull()) {
+      version = tryGetVersion(project);
+    }
+
+    return version != null ? version : GitVersion.NULL;
   }
 
   @RequiresBackgroundThread(generateAssertion = false)

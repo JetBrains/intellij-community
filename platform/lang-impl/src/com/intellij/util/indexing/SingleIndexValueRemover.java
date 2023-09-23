@@ -16,23 +16,21 @@ final
 class SingleIndexValueRemover {
   private final FileBasedIndexImpl myIndexImpl;
   final @NotNull ID<?, ?> indexId;
-  private final VirtualFile file;
   private final int inputId;
   private final @Nullable String fileInfo;
-  private final boolean isWritingValuesSeparately;
+  private final @NotNull FileIndexesValuesApplier.ApplicationMode applicationMode;
   long evaluatingValueRemoverTime;
 
   SingleIndexValueRemover(FileBasedIndexImpl indexImpl, @NotNull ID<?, ?> indexId,
                           @Nullable VirtualFile file,
                           @Nullable FileContent fileContent,
                           int inputId,
-                          boolean isWritingValuesSeparately) {
+                          @NotNull FileIndexesValuesApplier.ApplicationMode applicationMode) {
     myIndexImpl = indexImpl;
     this.indexId = indexId;
-    this.file = file;
     this.inputId = inputId;
     this.fileInfo = FileBasedIndexImpl.getFileInfoLogString(inputId, file, fileContent);
-    this.isWritingValuesSeparately = isWritingValuesSeparately;
+    this.applicationMode = applicationMode;
   }
 
   /**
@@ -46,12 +44,7 @@ class SingleIndexValueRemover {
 
     UpdatableIndex<?, ?, FileContent, ?> index = myIndexImpl.getIndex(indexId);
 
-    if (isWritingValuesSeparately) {
-      FileBasedIndexImpl.markFileWritingIndexes(inputId);
-    }
-    else {
-      FileBasedIndexImpl.markFileIndexed(file, null);
-    }
+    FileBasedIndexImpl.markFileWritingIndexes(inputId);
     try {
       Supplier<Boolean> storageUpdate;
       long startTime = System.nanoTime();
@@ -81,12 +74,7 @@ class SingleIndexValueRemover {
       return false;
     }
     finally {
-      if (isWritingValuesSeparately) {
-        FileBasedIndexImpl.unmarkWritingIndexes();
-      }
-      else {
-        FileBasedIndexImpl.unmarkBeingIndexed();
-      }
+      FileBasedIndexImpl.unmarkWritingIndexes();
     }
   }
 
@@ -96,7 +84,7 @@ class SingleIndexValueRemover {
            "indexId=" + indexId +
            ", inputId=" + inputId +
            ", fileInfo='" + fileInfo + '\'' +
-           ", isWritingValuesSeparately=" + isWritingValuesSeparately +
+           ", applicationMode =" + applicationMode +
            '}';
   }
 }

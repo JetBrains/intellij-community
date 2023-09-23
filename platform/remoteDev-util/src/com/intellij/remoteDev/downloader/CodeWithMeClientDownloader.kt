@@ -32,7 +32,6 @@ import com.intellij.util.io.BaseOutputReader
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpRequests.HttpStatusException
-import com.intellij.util.io.readText
 import com.intellij.util.system.CpuArch
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.withFragment
@@ -571,7 +570,12 @@ object CodeWithMeClientDownloader {
             progressIndicator.text2 = ""
           }
           "file" -> {
-            Files.copy(url.toPath(), path, StandardCopyOption.REPLACE_EXISTING)
+            val source = url.toPath()
+            if (source.isDirectory()) {
+              error("Downloading a directory is not supported. Source: $url, destination: ${path.absolutePathString()}")
+            }
+
+            Files.copy(source, path, StandardCopyOption.REPLACE_EXISTING)
           }
           else -> {
             error("scheme ${url.scheme} is not supported")

@@ -41,6 +41,7 @@ internal object ActualAnnotationsNotMatchExpectFixFactory {
             expectDeclaration,
             actualDeclaration,
             expectAnnotationEntry,
+            diagnostic.actualAnnotationTargetSourceElement,
             mappedIncompatibilityType,
             annotationClassIdProvider = { expectAnnotationEntry.getAnnotationClassId() }
         )

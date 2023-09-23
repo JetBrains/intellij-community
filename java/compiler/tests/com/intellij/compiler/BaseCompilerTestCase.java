@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
-import com.intellij.ProjectTopics;
 import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.ExitStatus;
 import com.intellij.compiler.server.BuildManager;
@@ -58,10 +57,10 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
-        //todo[nik] projectOpened isn't called in tests so we need to add this listener manually
+        //todo projectOpened isn't called in tests so we need to add this listener manually
         forceFSRescan();
       }
     });
@@ -322,7 +321,7 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   @NotNull
   @Override
   protected Module doCreateRealModule(@NotNull String moduleName) {
-    //todo[nik] reuse code from PlatformTestCase
+    //todo reuse code from PlatformTestCase
     VirtualFile baseDir = getOrCreateProjectBaseDir();
     Path moduleFile = baseDir.toNioPath().resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     return WriteAction.computeAndWait(() -> {

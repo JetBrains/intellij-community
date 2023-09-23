@@ -1,27 +1,27 @@
 <html>
 <body>
 Reports <code>instanceof</code> expressions where
-the compared type is an interface, and the compared expression has a class type that neither
-implements the compared interface, nor has any visible subclasses which implement the compared interface.
+the expression that is checked has a class/interface type that neither extends/implements the class/interface type on the right-side of the
+<code>instanceof</code> expression, nor has subclasses that do.
 <p>
-  Although that might be intended, normally such a construct is most likely an error, where
-  the resulting <code>instanceof</code> expression always evaluates to <code>false</code>.
+  Although it could be intended for e.g. library code, such a construct is likely erroneous,
+  because no instance of any class declared in the project could pass this <code>instanceof</code> test.
 </p>
 <p><b>Example:</b></p>
 <pre><code>
-  interface I1 {}
+  class Foo { }
 
-  interface I2 {}
-
-  interface I3 extends I1 {}
-
-  static class Sub1 implements I1 {}
-
-  static class Sub2 extends Sub1 implements I2 {
-    void test(Sub1 sub1) {
-      if (sub1 instanceof I3) { // here 'I3' is incompatible interface
+  interface Bar { }
+  
+  class Main {
+      void test(Foo f, Bar b) {
+          if (f instanceof Bar) { // problem
+              System.out.println("fail");
+          }
+          if (b instanceof Foo) { // problem
+              System.out.println("fail");
+          }
       }
-    }
   }
 </code></pre>
 <!-- tooltip end -->

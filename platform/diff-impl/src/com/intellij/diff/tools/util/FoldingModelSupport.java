@@ -37,6 +37,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.NonUrgentExecutor;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -150,7 +151,7 @@ public class FoldingModelSupport {
                       @Nullable final UserDataHolder context,
                       @NotNull final Settings settings) {
     if (!myEnabled) return;
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     for (FoldedBlock folding : getFoldedBlocks()) {
       folding.destroyHighlighter();
@@ -771,7 +772,7 @@ public class FoldingModelSupport {
 
   @RequiresEdt
   public void updateContext(@NotNull UserDataHolder context, @NotNull final Settings settings) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myFoldings.isEmpty()) return; // do not rewrite cache by initial state
     context.putUserData(CACHE_KEY, getFoldingCache(settings));
   }

@@ -175,7 +175,12 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.testng.rt", "testng-rt.jar")
       spec.withProjectLibrary("TestNG")
     },
-    plugin(listOf("intellij.dev", "intellij.dev.psiViewer", "intellij.platform.statistics.devkit")),
+    plugin(listOf(
+      "intellij.dev",
+      "intellij.dev.psiViewer",
+      "intellij.dev.codeInsight",
+      "intellij.platform.statistics.devkit",
+    )),
     pluginAuto(listOf("intellij.devkit")) { spec ->
       spec.withModule("intellij.devkit.core")
       spec.withModule("intellij.devkit.git")
@@ -269,7 +274,11 @@ object CommunityRepositoryModules {
       "intellij.searchEverywhereMl.ranking.vcs",
       "intellij.searchEverywhereMl.typos",
       "intellij.searchEverywhereMl.semantics"
-    )),
+    )) { spec ->
+      spec.withModule("intellij.searchEverywhereMl.semantics.java")
+      spec.withModule("intellij.searchEverywhereMl.semantics.kotlin")
+      spec.withModule("intellij.searchEverywhereMl.semantics.testCommands")
+    },
     plugin("intellij.platform.testFramework.ui") { spec ->
       spec.withModuleLibrary("intellij.remoterobot.remote.fixtures", spec.mainModule, "")
       spec.withModuleLibrary("intellij.remoterobot.robot.server.core", spec.mainModule, "")
@@ -618,7 +627,6 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("android-test-plugin-host-device-info-proto")
       spec.withProjectLibrary("asm-tools")
       spec.withProjectLibrary("baksmali")
-      spec.withProjectLibrary("commons-lang")
       spec.withProjectLibrary("emulator-proto")
       spec.withProjectLibrary("ffmpeg")
       spec.withProjectLibrary("ffmpeg-javacpp")
@@ -746,6 +754,7 @@ object CommunityRepositoryModules {
       spec.withModules(listOf(
         "intellij.groovy.psi",
         "intellij.groovy.structuralSearch",
+        "intellij.groovy.git",
       ))
       spec.withModule("intellij.groovy.jps", "groovy-jps.jar")
       spec.withModule("intellij.groovy.rt", "groovy-rt.jar")

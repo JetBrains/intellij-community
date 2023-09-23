@@ -3,10 +3,11 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.indexing.dependencies.IndexingRequestToken;
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
@@ -25,6 +26,7 @@ public final class UnindexedFilesUpdater {
   private static final int DEFAULT_MAX_INDEXER_THREADS = 4;
   // Allows to specify number of indexing threads. -1 means the default value (currently, 4).
   private static final int INDEXER_THREAD_COUNT = SystemProperties.getIntProperty("caches.indexerThreadsCount", -1);
+  private static final boolean IS_HT_SMT_ENABLED = SystemProperties.getBooleanProperty("intellij.system.ht.smt.enabled", false);
 
   private final @NotNull Project myProject;
   private final boolean myStartSuspended;
@@ -76,8 +78,9 @@ public final class UnindexedFilesUpdater {
   }
 
   public void queue() {
+    IndexingRequestToken indexingRequest = myProject.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
     new UnindexedFilesScanner(myProject, myStartSuspended, myOnProjectOpen, myPredefinedIndexableFilesIterators, myMark, myIndexingReason,
-                              myScanningType)
+                              myScanningType, indexingRequest)
       .queue(myProject);
   }
 
@@ -90,7 +93,7 @@ public final class UnindexedFilesUpdater {
     if (threadCount <= 0) {
       threadCount =
         Math.max(1, Math.min(useConservativeThreadCountPolicy
-                             ? DEFAULT_MAX_INDEXER_THREADS : getMaxBackgroundThreadCount(), getMaxBackgroundThreadCount()));
+                             ? DEFAULT_MAX_INDEXER_THREADS : getMaxNumberOfIndexingThreads(), getMaxNumberOfIndexingThreads()));
     }
     return threadCount;
   }
@@ -101,9 +104,17 @@ public final class UnindexedFilesUpdater {
   public static int getMaxNumberOfIndexingThreads() {
     // Change of the registry option requires IDE restart.
     int threadCount = INDEXER_THREAD_COUNT;
-    return Math.max(1, threadCount <= 0 ? getMaxBackgroundThreadCount() : threadCount);
+    if (threadCount > 0) {
+      return threadCount;
+    }
+
+    return Math.max(1, getAvailablePhysicalCoresNumber() - 1);
   }
 
+  public static int getAvailablePhysicalCoresNumber() {
+    var availableCores = Runtime.getRuntime().availableProcessors();
+    return IS_HT_SMT_ENABLED ? availableCores / 2 : availableCores;
+  }
   /**
    * Scanning activity can be scaled well across number of threads, so we're trying to use all available resources to do it faster.
    */
@@ -115,8 +126,8 @@ public final class UnindexedFilesUpdater {
   }
 
   private static int getMaxBackgroundThreadCount() {
-    int coresToLeaveForOtherActivity = DumbServiceImpl.ALWAYS_SMART
-                                       ? getMaxNumberOfIndexingThreads() : ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
+    // note that getMaxBackgroundThreadCount is used to calculate threads count is FilesScanExecutor, which is also used for "FindInFiles"
+    int coresToLeaveForOtherActivity = ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
     return Runtime.getRuntime().availableProcessors() - coresToLeaveForOtherActivity;
   }
 

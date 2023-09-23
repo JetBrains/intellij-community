@@ -21,7 +21,7 @@ import java.util.Iterator;
 import static com.intellij.openapi.editor.actions.IncrementalFindAction.SEARCH_DISABLED;
 
 public final class SelectAllOccurrencesAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
-  protected SelectAllOccurrencesAction() {
+  private SelectAllOccurrencesAction() {
     super(new Handler());
   }
 

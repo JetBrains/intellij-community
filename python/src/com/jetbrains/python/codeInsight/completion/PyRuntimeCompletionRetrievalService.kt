@@ -111,7 +111,7 @@ private fun postProcessingChildren(completionResultData: CompletionResultData,
 }
 
 private fun proceedPyValueChildrenNames(childrenNodes: Set<String>,
-                                        stringPresentation: String,
+                                        stringPresentation: String?,
                                         ignoreML: Boolean = true): List<LookupElement> {
   return childrenNodes.map {
     val lookupElement = LookupElementBuilder.create(it).withTypeText(stringPresentation).withIcon(
@@ -247,6 +247,10 @@ fun createCompletionResultSet(retrievalService: PyRuntimeCompletionRetrievalServ
 
   return ApplicationUtil.runWithCheckCanceled(Callable {
     return@Callable pyObjectCandidates.flatMap { candidate ->
+      if (candidate.psiName.delimiter == null) {
+        return@flatMap getNodesByPrefix(treeNodeList, candidate.psiName.pyQualifiedName,
+                                        parameters.completionType).flatMap { proceedPyValueChildrenNames(setOf(it), null) }
+      }
       val parentNode = getParentNodeByName(treeNodeList, candidate.psiName.pyQualifiedName, parameters.completionType)
       val valueContainer = parentNode?.valueContainer
       if (valueContainer is PyDebugValue) {

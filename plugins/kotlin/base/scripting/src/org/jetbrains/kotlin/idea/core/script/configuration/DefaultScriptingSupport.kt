@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.core.script.configuration
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -12,11 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
-import com.intellij.ui.EditorNotifications
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.core.script.*
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptConfigurationManagerExtensions.LOADER
@@ -28,7 +23,6 @@ import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptOutsider
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.*
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
-import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -327,16 +321,6 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
             scriptingDebugLog(file) { "new script reports = $newReports" }
 
             project.service<ScriptReportSink>().attachReports(file, newReports)
-
-            GlobalScope.launch(EDT(project)) {
-                if (project.isDisposed) return@launch
-
-                val ktFile = PsiManager.getInstance(project).findFile(file)
-                if (ktFile != null) {
-                    DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
-                }
-                EditorNotifications.getInstance(project).updateAllNotifications()
-            }
         }
     }
 

@@ -2,6 +2,7 @@
 
 package org.jetbrains.plugins.textmate
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.IntellijInternalApi
@@ -17,12 +18,12 @@ internal fun registerBundlesInParallel(scope: CoroutineScope,
                                        bundlesToLoad: List<TextMateBundleToLoad>,
                                        registrar: (TextMateBundleToLoad) -> Boolean,
                                        registrationFailed: Consumer<TextMateBundleToLoad>? = null) {
-  suspend fun handleError(bundleToLoad: TextMateBundleToLoad, t: Throwable? = null) {
-    if (registrationFailed == null) {
+  fun handleError(bundleToLoad: TextMateBundleToLoad, t: Throwable? = null) {
+    if (registrationFailed == null || ApplicationManager.getApplication().isHeadlessEnvironment) {
       TextMateService.LOG.error("Cannot load builtin textmate bundle", t, bundleToLoad.toString())
     }
     else {
-      withContext(Dispatchers.EDT) {
+      scope.launch(Dispatchers.EDT) {
         registrationFailed.accept(bundleToLoad)
       }
     }

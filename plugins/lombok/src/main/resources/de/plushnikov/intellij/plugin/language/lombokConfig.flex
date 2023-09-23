@@ -23,7 +23,7 @@ CLEAR="clear"
 KEY_CHARACTER=([:letter:] | [:digit:] | ".")+
 SEPARATOR=[\ \t]* [=] [\ \t]*
 SIGN=[\ \t]*[\-\+]
-VALUE_CHARACTER=[^:=\n\r\f\\] | "\\"{CRLF} | "\\".
+VALUE_CHARACTER=[^:=\n\r\f\\] | "\\"{CRLF} | "\\". | :
 
 %state IN_VALUE
 %state IN_KEY_VALUE_SEPARATOR

@@ -17,9 +17,7 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.model.MavenArchetype;
-import org.jetbrains.idea.maven.model.MavenArtifactInfo;
-import org.jetbrains.idea.maven.model.MavenIndexId;
+import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -36,7 +34,7 @@ import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.split;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
-public final class MavenIndex implements MavenSearchIndex {
+public final class MavenIndex implements MavenSearchIndex, MavenGAVIndex {
   public static final Topic<IndexListener> INDEX_IS_BROKEN =
     new Topic<>("Maven Index Broken Listener", IndexListener.class);
   private static final String DATA_DIR_PREFIX = "data";
@@ -54,7 +52,7 @@ public final class MavenIndex implements MavenSearchIndex {
   private final Set<String> myRegisteredRepositoryIds;
 
   private final String myRepositoryPathOrUrl;
-  private final Kind myKind;
+  private final IndexKind myKind;
   private final AtomicBoolean myDataClosed = new AtomicBoolean(false);
   private final Lock indexUpdateLock = new ReentrantLock();
   private volatile Long myUpdateTimestamp;
@@ -181,12 +179,12 @@ public final class MavenIndex implements MavenSearchIndex {
 
   @Override
   public File getRepositoryFile() {
-    return myKind == Kind.LOCAL ? new File(myRepositoryPathOrUrl) : null;
+    return myKind == IndexKind.LOCAL ? new File(myRepositoryPathOrUrl) : null;
   }
 
   @Override
   public String getRepositoryUrl() {
-    return myKind == Kind.REMOTE ? myRepositoryPathOrUrl : null;
+    return myKind == IndexKind.REMOTE ? myRepositoryPathOrUrl : null;
   }
 
   @Override
@@ -195,8 +193,14 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   @Override
-  public Kind getKind() {
+  public IndexKind getKind() {
     return myKind;
+  }
+
+  @Override
+  public MavenRepositoryInfo getRepository() {
+    if (myKind == IndexKind.ONLINE) return null;
+    return new MavenRepositoryInfo(getRepositoryId(), getRepositoryId(), myRepositoryPathOrUrl, myKind);
   }
 
   @Override
@@ -221,10 +225,10 @@ public final class MavenIndex implements MavenSearchIndex {
       final File currentDataContextDir = getCurrentDataContextDir();
 
       boolean reuseExistingContext = fullUpdate ?
-                                     myKind != Kind.LOCAL && hasValidContext(currentDataContextDir) :
+                                     myKind != IndexKind.LOCAL && hasValidContext(currentDataContextDir) :
                                      hasValidContext(currentDataContextDir);
 
-      fullUpdate = fullUpdate || !reuseExistingContext && myKind == Kind.LOCAL;
+      fullUpdate = fullUpdate || !reuseExistingContext && myKind == IndexKind.LOCAL;
 
       if (reuseExistingContext) {
         try {
@@ -395,7 +399,7 @@ public final class MavenIndex implements MavenSearchIndex {
       closeAndClean(myData.groupWithArtifactToVersionMap);
       closeAndClean(myData.archetypeIdToDescriptionMap);
       close(false);
-    } 
+    }
   }
 
   public File getDir() {
@@ -455,10 +459,12 @@ public final class MavenIndex implements MavenSearchIndex {
     }, failedResponses);
   }
 
+  @Override
   public Collection<String> getGroupIds() {
     return doIndexTask(() -> getGroupIdsRaw(), Collections.emptySet());
   }
 
+  @Override
   public Set<String> getArtifactIds(final String groupId) {
     return doIndexTask(() -> notNullize(myData.groupToArtifactMap.get(groupId)), Collections.emptySet());
   }
@@ -472,6 +478,7 @@ public final class MavenIndex implements MavenSearchIndex {
     }, null);
   }
 
+  @Override
   public Set<String> getVersions(final String groupId, final String artifactId) {
     String ga = groupId + ":" + artifactId;
     return doIndexTask(() -> notNullize(myData.groupWithArtifactToVersionMap.get(ga)), Collections.emptySet());
@@ -501,6 +508,7 @@ public final class MavenIndex implements MavenSearchIndex {
     return doIndexTask(() -> notNullize(indexData.groupWithArtifactToVersionMap.get(groupWithArtifact)).contains(version), false);
   }
 
+  @Override
   public Set<MavenArtifactInfo> search(final String pattern, final int maxResult) {
     return doIndexAndRecoveryTask(() -> myData.search(pattern, maxResult), Collections.emptySet());
   }

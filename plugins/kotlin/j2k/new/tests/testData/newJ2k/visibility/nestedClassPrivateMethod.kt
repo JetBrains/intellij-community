@@ -4,6 +4,7 @@ class Foo {
     }
 
     private class Inner {
-        fun x() {}
+        fun x() {
+        }
     }
 }

@@ -195,7 +195,7 @@ public final class InplaceChangeSignature implements DocumentListener {
     }
   }
 
-  protected void showBalloon() {
+  private void showBalloon() {
     NonFocusableCheckBox checkBox = new NonFocusableCheckBox(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
     checkBox.addActionListener(e -> {
       myDelegate = checkBox.isSelected();

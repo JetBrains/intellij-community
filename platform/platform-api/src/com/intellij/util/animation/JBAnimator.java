@@ -140,7 +140,7 @@ public final class JBAnimator implements Disposable {
     final var taskId = myRunning.incrementAndGet();
 
     if (!myIgnorePowerSaveMode && PowerSaveMode.isEnabled()
-        || Registry.is("ui.no.bangs.and.whistles")
+        || Registry.is("ui.no.bangs.and.whistles", false)
         || RemoteDesktopService.isRemoteSession()
         || duration == 0) {
       myCurrentAnimatorFuture = myService.schedule(() -> {

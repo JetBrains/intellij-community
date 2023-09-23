@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -111,8 +111,7 @@ public final class BuildRunner {
     );
   }
 
-  @NotNull
-  public static @Nls String getRootCompilerName() {
+  public static @NotNull @Nls String getRootCompilerName() {
     return JpsBuildBundle.message("builder.name.root");
   }
 
@@ -151,7 +150,7 @@ public final class BuildRunner {
             break;
 
           case CLEAN:
-            //todo[nik]
+            //todo
     //        new ProjectBuilder(new GantBinding(), project).clean();
             break;
           case UP_TO_DATE_CHECK:
@@ -252,7 +251,7 @@ public final class BuildRunner {
 
   private static void includeDependenciesToScope(Set<? extends BuildTargetType<?>> targetTypes, Set<BuildTarget<?>> targets,
                                                  Set<? super BuildTargetType<?>> targetTypesToForceBuild, ProjectDescriptor descriptor) {
-    //todo[nik] get rid of CompileContext parameter for BuildTargetIndex.getDependencies() and use it here
+    //todo get rid of CompileContext parameter for BuildTargetIndex.getDependencies() and use it here
     TargetOutputIndex dummyIndex = new TargetOutputIndex() {
       @Override
       public Collection<BuildTarget<?>> getTargetsByOutputFile(@NotNull File file) {

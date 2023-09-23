@@ -14,25 +14,26 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class OoChildForParentWithPidEntityImpl(val dataSource: OoChildForParentWithPidEntityData) : OoChildForParentWithPidEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class OoChildForParentWithPidEntityImpl(private val dataSource: OoChildForParentWithPidEntityData) : OoChildForParentWithPidEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(OoParentWithPidEntity::class.java,
                                                                                 OoChildForParentWithPidEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
     )
 
@@ -50,6 +51,7 @@ open class OoChildForParentWithPidEntityImpl(val dataSource: OoChildForParentWit
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: OoChildForParentWithPidEntityData?) : ModifiableWorkspaceEntityBase<OoChildForParentWithPidEntity, OoChildForParentWithPidEntityData>(
     result), OoChildForParentWithPidEntity.Builder {
@@ -79,7 +81,7 @@ open class OoChildForParentWithPidEntityImpl(val dataSource: OoChildForParentWit
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -171,7 +173,7 @@ open class OoChildForParentWithPidEntityImpl(val dataSource: OoChildForParentWit
 class OoChildForParentWithPidEntityData : WorkspaceEntityData<OoChildForParentWithPidEntity>() {
   lateinit var childProperty: String
 
-  fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
+  internal fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OoChildForParentWithPidEntity> {
     val modifiable = OoChildForParentWithPidEntityImpl.Builder(null)
@@ -188,6 +190,11 @@ class OoChildForParentWithPidEntityData : WorkspaceEntityData<OoChildForParentWi
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.OoChildForParentWithPidEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -243,9 +250,5 @@ class OoChildForParentWithPidEntityData : WorkspaceEntityData<OoChildForParentWi
     var result = javaClass.hashCode()
     result = 31 * result + childProperty.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

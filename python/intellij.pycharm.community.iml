@@ -2,8 +2,9 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/ideCoreSrc">
-      <sourceFolder url="file://$MODULE_DIR$/ideCoreSrc" type="java-resource" />
+    <content url="file://$MODULE_DIR$/ide-common">
+      <sourceFolder url="file://$MODULE_DIR$/ide-common/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/ide-common/src" isTestSource="false" packagePrefix="com.intellij.pycharm.community" />
     </content>
     <content url="file://$MODULE_DIR$/resources">
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
@@ -19,5 +20,6 @@
     <orderEntry type="module" module-name="intellij.python.featuresTrainer" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.notebooks.visualization" />
     <orderEntry type="module" module-name="intellij.jupyter.core" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
   </component>
 </module>

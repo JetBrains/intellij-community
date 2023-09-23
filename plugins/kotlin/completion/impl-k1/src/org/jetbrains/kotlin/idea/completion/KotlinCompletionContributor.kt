@@ -57,7 +57,7 @@ class KotlinCompletionContributor : CompletionContributor() {
         val tokenBefore = psiFile.findElementAt(max(0, offset - 1))
 
         // this code will make replacement offset "modified" and prevents altering it by the code in CompletionProgressIndicator
-        context.replacementOffset = context.replacementOffset
+        context.markReplacementOffsetAsModified()
 
         val dummyIdentifierCorrected = CompletionDummyIdentifierProviderService.getInstance().correctPositionForStringTemplateEntry(context)
         if (dummyIdentifierCorrected) {

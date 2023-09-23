@@ -382,7 +382,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     private MinusculeMatcher currentMatcher = null;
     private boolean locked = false;
 
-    protected DirectoriesWithCompletionPopupPanel(@NotNull List<CompletionItem> items) {
+    private DirectoriesWithCompletionPopupPanel(@NotNull List<CompletionItem> items) {
       super(items, SimpleListCellRenderer.create("", item -> item.displayText), true);
       setupRenderers();
 

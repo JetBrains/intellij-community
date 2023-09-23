@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.builder
 
+
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.FileVisitDetails
-import org.gradle.api.file.RegularFile
 import org.gradle.api.java.archives.Manifest
 import org.gradle.api.java.archives.internal.ManifestInternal
 import org.gradle.plugins.ear.Ear
@@ -24,10 +24,11 @@ import org.jetbrains.plugins.gradle.tooling.internal.ear.EarResourceImpl
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
-import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.reportModelBuilderFailure
+import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getTaskArchiveFile
+import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getTaskArchiveFileName
+import static com.intellij.gradle.toolingExtension.impl.modelBuilder.ExtraModelBuilder.reportModelBuilderFailure
 import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveCall
 import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveGetProperty
-
 /**
  * @author Vladislav.Soroka
  */
@@ -38,7 +39,6 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
   // Manifest.writeTo(Writer) was deprecated since 2.14.1 version
   // https://github.com/gradle/gradle/commit/b435112d1baba787fbe4a9a6833401e837df9246
   private static boolean is2_14_1_OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("2.14.1")
-  private static is6OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("6.0")
   private static is82OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("8.2")
 
   @Override
@@ -67,7 +67,7 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
     for (task in project.tasks) {
       if (task instanceof Ear) {
 
-        String appDirName;
+        String appDirName
         if (is82OrBetter) {
           def appDirectoryLocation = reflectiveGetProperty(task, "getAppDirectory", Object)
           appDirName = reflectiveCall(appDirectoryLocation, "getAsFile", File).absolutePath
@@ -76,9 +76,7 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
                        "src/main/application" : String.valueOf(project.property(APP_DIR_PROPERTY))
         }
 
-        final EarModelImpl earModel =
-          is6OrBetter ? new EarModelImpl(reflectiveGetProperty(task, "getArchiveFileName", String), appDirName, task.getLibDirName()) :
-          new EarModelImpl(reflectiveCall(task, "getArchiveName", String), appDirName, task.getLibDirName())
+        final EarModelImpl earModel = new EarModelImpl(getTaskArchiveFileName(task), appDirName, task.getLibDirName())
 
         final List<EarConfiguration.EarResource> earResources = []
         final Ear earTask = task as Ear
@@ -118,7 +116,7 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
           earModel.deploymentDescriptor = writer.toString()
         }
 
-        earModel.archivePath = is6OrBetter ? reflectiveGetProperty(earTask, "getArchiveFile", RegularFile).asFile : earTask.archivePath
+        earModel.archivePath = getTaskArchiveFile(earTask)
 
         Manifest manifest = earTask.manifest
         if (manifest != null) {

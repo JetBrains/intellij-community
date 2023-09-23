@@ -107,21 +107,32 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
       CachedValueProvider.Result.create(map, dependencies.toList())
     }
 
+  override fun getMatchingSymbols(namespace: SymbolNamespace,
+                                  kind: SymbolKind,
+                                  name: String,
+                                  params: WebSymbolsNameMatchQueryParams,
+                                  scope: Stack<WebSymbolsScope>): List<WebSymbol> =
+    if ((params.queryExecutor.allowResolve || !requiresResolve)
+        && (framework == null || params.framework == framework)
+        && provides(namespace, kind)) {
+      getMap(params.queryExecutor).getMatchingSymbols(namespace, kind, name, params, Stack(scope)).toList()
+    }
+    else emptyList()
+
   override fun getSymbols(namespace: SymbolNamespace,
                           kind: SymbolKind,
-                          name: String?,
-                          params: WebSymbolsNameMatchQueryParams,
+                          params: WebSymbolsListSymbolsQueryParams,
                           scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
         && provides(namespace, kind)) {
-      getMap(params.queryExecutor).getSymbols(namespace, kind, name, params, Stack(scope)).toList()
+      getMap(params.queryExecutor).getSymbols(namespace, kind, params).toList()
     }
     else emptyList()
 
   override fun getCodeCompletions(namespace: SymbolNamespace,
                                   kind: SymbolKind,
-                                  name: String?,
+                                  name: String,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)

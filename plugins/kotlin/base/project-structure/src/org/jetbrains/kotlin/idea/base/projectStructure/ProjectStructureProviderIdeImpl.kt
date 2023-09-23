@@ -13,11 +13,14 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptDependencyModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
+import org.jetbrains.kotlin.analysis.project.structure.impl.KtCodeFragmentModuleImpl
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderIdeImpl.Companion.getKtModuleByModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.idea.base.util.isOutsiderFile
+import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 
 @ApiStatus.Internal
@@ -94,7 +97,8 @@ private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
 }
 
 private fun calculateKtModule(psiElement: PsiElement): KtModule {
-    val virtualFile = psiElement.containingFile?.virtualFile
+    val containingFile = psiElement.containingFile
+    val virtualFile = containingFile?.virtualFile
     val project = psiElement.project
     val config = ModuleInfoProvider.Configuration(
         createSourceLibraryInfoForLibraryBinaries = false,
@@ -109,5 +113,11 @@ private fun calculateKtModule(psiElement: PsiElement): KtModule {
         return KtSourceModuleByModuleInfoForOutsider(virtualFile, originalFile, moduleInfo)
     }
 
-    return ProjectStructureProviderIdeImpl.getKtModuleByModuleInfo(moduleInfo)
+    val moduleByModuleInfo = getKtModuleByModuleInfo(moduleInfo)
+
+    if (containingFile is KtCodeFragment) {
+        return KtCodeFragmentModuleImpl(containingFile, moduleByModuleInfo)
+    }
+
+    return moduleByModuleInfo
 }

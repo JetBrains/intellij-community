@@ -151,7 +151,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     }
   }
 
-  private void appendCoverageArgument(@NotNull RunConfigurationBase configuration,
+  private void appendCoverageArgument(@NotNull RunConfigurationBase<?> configuration,
                                       @NotNull JavaParameters params,
                                       JavaCoverageEnabledConfiguration coverageConfig) {
     JavaParameters coverageParams = new JavaParameters();

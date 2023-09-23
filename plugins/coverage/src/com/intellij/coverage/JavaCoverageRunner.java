@@ -132,8 +132,4 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     }
     return tempFile;
   }
-
-  public boolean shouldProcessUnloadedClasses() {
-    return true;
-  }
 }

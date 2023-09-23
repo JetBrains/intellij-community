@@ -24,6 +24,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -200,7 +201,9 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     Module module = projectFileIndex.getModuleForFile(notNullVFile);
     if (module == null) {
       List<OrderEntry> entries = projectFileIndex.getOrderEntriesForFile(notNullVFile);
-      if (entries.isEmpty() && (projectFileIndex.isInLibrary(notNullVFile) || myAdditionalIndexableFileSet.isInSet(notNullVFile))) {
+      if (entries.isEmpty() &&
+          (WorkspaceFileIndex.getInstance(myProject).findFileSet(notNullVFile, true, false, true, true, true) != null ||
+           myAdditionalIndexableFileSet.isInSet(notNullVFile))) {
         return allScope;
       }
 

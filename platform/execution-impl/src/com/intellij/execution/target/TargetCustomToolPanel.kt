@@ -41,13 +41,8 @@ class TargetCustomToolPanel(private val project: Project,
     languagePanel?.configurable?.apply()
   }
 
-  /**
-   * While [targetSupplier] might return temp [TargetEnvironmentConfiguration], [preparedConfiguration] is the actual configuration that can be
-   * used for creating Python SDK.
-   * Call [validateCustomTool] before this method to make sure there are no errors
-   */
-  fun createCustomTool(preparedConfiguration: TargetEnvironmentConfiguration): Any? {
-    return customToolLanguageConfigurable?.createCustomTool(preparedConfiguration)
+  fun createCustomTool(): Any? {
+    return customToolLanguageConfigurable?.createCustomTool()
   }
 
   fun validateCustomTool(): Collection<ValidationInfo> = customToolLanguageConfigurable?.validate() ?: emptyList()

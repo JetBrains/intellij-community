@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -136,7 +137,16 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   }
 
   private void forceSoftWraps() {
-    ((SettingsImpl)myEditor.getSettings()).setUseSoftWrapsQuiet();
+    EditorSettings editorSettings = myEditor.getSettings();
+
+    if (editorSettings instanceof SettingsImpl) {
+      ((SettingsImpl)editorSettings).setUseSoftWrapsQuiet();
+    }
+    else {
+      LOG.error(new IllegalStateException("Unexpected implementation class of editor settings: " +
+                                          "class=" + editorSettings.getClass() + "editor=" + myEditor));
+    }
+
     myEditor.putUserData(EditorImpl.FORCED_SOFT_WRAPS, Boolean.TRUE);
     myUseSoftWraps = areSoftWrapsEnabledInEditor();
     Project project = myEditor.getProject();
@@ -216,7 +226,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public boolean isSoftWrappingEnabled() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return myUseSoftWraps && !myEditor.isPurePaintingMode();
   }
 

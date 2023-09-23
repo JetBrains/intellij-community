@@ -7,31 +7,43 @@ import com.intellij.collaboration.api.httpclient.*
 import com.intellij.collaboration.api.json.JsonHttpApiHelper
 import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.json.loadOptionalJsonList
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpSecurityUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
-import org.jetbrains.plugins.gitlab.api.request.getServerMetadataOrVersion
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
+@ApiStatus.Experimental
 sealed interface GitLabApi : HttpApiHelper {
+  val server: GitLabServerPath
+
   val graphQL: GraphQL
   val rest: Rest
+
+  suspend fun getMetadataOrNull(): GitLabServerMetadata?
 
   interface GraphQL : GraphQLApiHelper, GitLabApi
   interface Rest : JsonHttpApiHelper, GitLabApi
 }
 
 // this dark inheritance magic is required to make extensions work properly
-class GitLabApiImpl(httpHelper: HttpApiHelper) : GitLabApi, HttpApiHelper by httpHelper {
+internal class GitLabApiImpl(
+  override val server: GitLabServerPath,
+  httpHelper: HttpApiHelper
+) : GitLabApi, HttpApiHelper by httpHelper {
+  constructor(
+    server: GitLabServerPath,
+    tokenSupplier: (() -> String)? = null
+  ) : this(server, tokenSupplier?.let { httpHelper(it) } ?: httpHelper())
 
-  constructor(tokenSupplier: () -> String) : this(httpHelper(tokenSupplier))
-
-  constructor() : this(httpHelper())
+  override suspend fun getMetadataOrNull(): GitLabServerMetadata? =
+    service<GitLabServersManager>().getMetadataOrNull(this)
 
   override val graphQL: GitLabApi.GraphQL =
     GraphQLImpl(GraphQLApiHelper(logger<GitLabApi>(),
@@ -56,36 +68,40 @@ class GitLabApiImpl(httpHelper: HttpApiHelper) : GitLabApi, HttpApiHelper by htt
     JsonHttpApiHelper by helper
 }
 
-suspend fun GitLabApi.GraphQL.gitLabQuery(serverPath: GitLabServerPath, query: GitLabGQLQuery, variablesObject: Any? = null): HttpRequest {
-  val serverMeta = service<GitLabServersManager>().getMetadata(serverPath) {
-    runCatching { rest.getServerMetadataOrVersion(it) }
-  }
-  val queryLoader = if (serverMeta?.enterprise == false) {
-    GitLabGQLQueryLoaders.community
-  }
-  else {
-    GitLabGQLQueryLoaders.default
-  }
-  return query(serverPath.gqlApiUri, { queryLoader.loadQuery(query.filePath) }, variablesObject)
+suspend fun GitLabApi.getMetadata(): GitLabServerMetadata {
+  val metadata = getMetadataOrNull()
+  requireNotNull(metadata) { "Could not retrieve server metadata for $server" }
+  return metadata
 }
 
-suspend inline fun <reified T> GitLabApi.Rest.loadList(serverPath: GitLabServerPath, requestName: GitLabApiRequestName, uri: String)
+suspend fun GitLabApi.GraphQL.gitLabQuery(query: GitLabGQLQuery, variablesObject: Any? = null): HttpRequest {
+  if (query == GitLabGQLQuery.GET_METADATA) {
+    return query(server.gqlApiUri, { GitLabGQLQueryLoaders.default.loadQuery(query.filePath) }, variablesObject)
+  }
+
+  val serverMeta = getMetadata()
+  val queryLoader = GitLabGQLQueryLoaders.forMetadata(serverMeta)
+
+  return query(server.gqlApiUri, { queryLoader.loadQuery(query.filePath) }, variablesObject)
+}
+
+suspend inline fun <reified T> GitLabApi.Rest.loadList(requestName: GitLabApiRequestName, uri: String)
   : HttpResponse<out List<T>> {
   val request = request(uri).GET().build()
-  return withErrorStats(serverPath, requestName) {
+  return withErrorStats(requestName) {
     loadJsonList(request)
   }
 }
 
-suspend inline fun <reified T> GitLabApi.Rest.loadUpdatableJsonList(serverPath: GitLabServerPath, requestName: GitLabApiRequestName,
-                                                                    uri: URI, eTag: String? = null)
+suspend inline fun <reified T> GitLabApi.Rest.loadUpdatableJsonList(requestName: GitLabApiRequestName, uri: URI,
+                                                                    eTag: String? = null)
   : HttpResponse<out List<T>?> {
   val request = request(uri).GET().apply {
     if (eTag != null) {
       header("If-None-Match", eTag)
     }
   }.build()
-  return withErrorStats(serverPath, requestName) {
+  return withErrorStats(requestName) {
     loadOptionalJsonList(request)
   }
 }

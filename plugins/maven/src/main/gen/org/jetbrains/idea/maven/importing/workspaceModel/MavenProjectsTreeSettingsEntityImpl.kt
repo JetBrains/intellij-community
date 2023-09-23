@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -11,23 +12,21 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class MavenProjectsTreeSettingsEntityImpl(val dataSource: MavenProjectsTreeSettingsEntityData) : MavenProjectsTreeSettingsEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class MavenProjectsTreeSettingsEntityImpl(private val dataSource: MavenProjectsTreeSettingsEntityData) : MavenProjectsTreeSettingsEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -41,6 +40,7 @@ open class MavenProjectsTreeSettingsEntityImpl(val dataSource: MavenProjectsTree
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: MavenProjectsTreeSettingsEntityData?) : ModifiableWorkspaceEntityBase<MavenProjectsTreeSettingsEntity, MavenProjectsTreeSettingsEntityData>(
     result), MavenProjectsTreeSettingsEntity.Builder {
@@ -70,7 +70,7 @@ open class MavenProjectsTreeSettingsEntityImpl(val dataSource: MavenProjectsTree
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -138,7 +138,7 @@ open class MavenProjectsTreeSettingsEntityImpl(val dataSource: MavenProjectsTree
 class MavenProjectsTreeSettingsEntityData : WorkspaceEntityData<MavenProjectsTreeSettingsEntity>() {
   lateinit var importedFilePaths: MutableList<String>
 
-  fun isImportedFilePathsInitialized(): Boolean = ::importedFilePaths.isInitialized
+  internal fun isImportedFilePathsInitialized(): Boolean = ::importedFilePaths.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<MavenProjectsTreeSettingsEntity> {
     val modifiable = MavenProjectsTreeSettingsEntityImpl.Builder(null)
@@ -155,6 +155,11 @@ class MavenProjectsTreeSettingsEntityData : WorkspaceEntityData<MavenProjectsTre
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettingsEntity") as EntityMetadata
   }
 
   override fun clone(): MavenProjectsTreeSettingsEntityData {
@@ -215,10 +220,5 @@ class MavenProjectsTreeSettingsEntityData : WorkspaceEntityData<MavenProjectsTre
     var result = javaClass.hashCode()
     result = 31 * result + importedFilePaths.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.importedFilePaths?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

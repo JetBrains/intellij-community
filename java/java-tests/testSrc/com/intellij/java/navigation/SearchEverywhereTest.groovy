@@ -12,7 +12,6 @@ import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
 import com.intellij.util.Processor
@@ -130,7 +129,7 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       future = ui.findElementsForPattern("bravo charlie")
       matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "bravo charlie")
       matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "bravo charlie")
-      assert waitForFuture(future, SEARCH_TIMEOUT) == [matchedAction1, class1, matchedAction2,  class2]
+      assert waitForFuture(future, SEARCH_TIMEOUT) == [matchedAction1, class1, matchedAction2, class2]
     }
     finally {
       actions.each {actionManager.unregisterAction(it.key)}
@@ -163,12 +162,12 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       def testElements = [action1, action2, matchedAction1, matchedAction2, class1, class2] as Set
 
       def future = ui.findElementsForPattern("bravo")
-      def bravoResult = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)
+      def bravoResult = waitForFuture(future, SEARCH_TIMEOUT)
       assert bravoResult.findAll { it in testElements } == [class1, matchedAction1, class2, matchedAction2]
 
       abbreviationManager.register("bravo", "ia2")
       future = ui.findElementsForPattern("bravo")
-      bravoResult = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)
+      bravoResult = waitForFuture(future, SEARCH_TIMEOUT)
       assert bravoResult.findAll { it in testElements } == [action2, class1, matchedAction1, class2]
     }
     finally {

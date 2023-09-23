@@ -15,5 +15,6 @@ internal class C<T> {
         return comparable.compareTo(t)
     }
 
-    fun foo5(w: Collection<*>?) {}
+    fun foo5(w: Collection<*>?) {
+    }
 }

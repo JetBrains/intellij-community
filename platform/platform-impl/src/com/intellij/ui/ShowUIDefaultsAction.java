@@ -22,9 +22,9 @@ import com.intellij.ui.speedSearch.FilteringTableModel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.GrayFilter;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,22 +106,26 @@ public final class ShowUIDefaultsAction extends AnAction implements DumbAware {
                     }
                   }
                 });
-              } else if (value instanceof Boolean) {
+              }
+              else if (value instanceof Boolean) {
                 updateValue(pair, !((Boolean)value), row, column);
                 changed.set(true);
-              } else if (value instanceof Integer) {
+              }
+              else if (value instanceof Integer) {
                 Integer newValue = editNumber(key.toString(), value.toString(), Integer::parseInt);
                 if (newValue != null) {
                   updateValue(pair, newValue, row, column);
                   changed.set(true);
                 }
-              } else if (value instanceof Float) {
+              }
+              else if (value instanceof Float) {
                 Float newValue = editNumber(key.toString(), value.toString(), Float::parseFloat);
                 if (newValue != null) {
                   updateValue(pair, newValue, row, column);
                   changed.set(true);
                 }
-              } else if (value instanceof EmptyBorder) {
+              }
+              else if (value instanceof EmptyBorder) {
                 Insets i = ((Border)value).getBorderInsets(null);
 
                 String oldInsets = String.format("%d,%d,%d,%d", i.top, i.left, i.bottom, i.right);
@@ -130,21 +134,24 @@ public final class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   updateValue(pair, new JBEmptyBorder(newInsets), row, column);
                   changed.set(true);
                 }
-              } else if (value instanceof Insets i) {
+              }
+              else if (value instanceof Insets i) {
                 String oldInsets = String.format("%d,%d,%d,%d", i.top, i.left, i.bottom, i.right);
                 Insets newInsets = editInsets(key.toString(), oldInsets);
                 if (newInsets != null) {
                   updateValue(pair, newInsets, row, column);
                   changed.set(true);
                 }
-              } else if (value instanceof UIUtil.GrayFilter f) {
+              }
+              else if (value instanceof GrayFilter f) {
                 String oldFilter = String.format("%d,%d,%d", f.getBrightness(), f.getContrast(), f.getAlpha());
-                UIUtil.GrayFilter newValue = editGrayFilter(key.toString(), oldFilter);
+                GrayFilter newValue = editGrayFilter(key.toString(), oldFilter);
                 if (newValue != null) {
                   updateValue(pair, newValue, row, column);
                   changed.set(true);
                 }
-              } else if (value instanceof Font) {
+              }
+              else if (value instanceof Font) {
                 Font newValue = editFontSize(key.toString(), (Font)value);
                 if (newValue != null) {
                   UIManager.getDefaults().remove(key);
@@ -152,7 +159,8 @@ public final class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   setValueAt(newValue, row, column);
                   changed.set(true);
                 }
-              } else if (value instanceof Dimension d) {
+              }
+              else if (value instanceof Dimension d) {
                 String oldDimension = String.format("%d,%d", d.width, d.height);
                 Dimension newDimension = editDimension(key.toString(), oldDimension);
                 if (newDimension != null) {
@@ -197,28 +205,33 @@ public final class ShowUIDefaultsAction extends AnAction implements DumbAware {
             final JLabel label = new JLabel(value == null ? "" : value.toString());
             final JPanel panel = simplePanel(label);
             if (value instanceof Color c) {
-              label.setText(String.format("  [%d,%d,%d] #%s", c.getRed(), c.getGreen(), c.getBlue(), StringUtil.toUpperCase(ColorUtil.toHex(c))));
+              label.setText(
+                String.format("  [%d,%d,%d] #%s", c.getRed(), c.getGreen(), c.getBlue(), StringUtil.toUpperCase(ColorUtil.toHex(c))));
               Color fg = ColorUtil.isDark(c) ? Gray.xFF : Gray.x00;
               label.setForeground(fg);
               panel.setBackground(c);
               return panel;
-            } else if (value instanceof Icon) {
+            }
+            else if (value instanceof Icon) {
               try {
                 final Icon icon = new IconWrap((Icon)value);
                 if (icon.getIconHeight() <= 20) {
                   label.setIcon(icon);
                 }
-                label.setText(String.format("(%dx%d) %s)",icon.getIconWidth(), icon.getIconHeight(), label.getText()));
+                label.setText(String.format("(%dx%d) %s)", icon.getIconWidth(), icon.getIconHeight(), label.getText()));
               }
               catch (Throwable e1) {//
               }
               return panel;
-            } else if (value instanceof Border) {
+            }
+            else if (value instanceof Border) {
               try {
                 final Insets i = ((Border)value).getBorderInsets(null);
                 label.setText(String.format("[%d, %d, %d, %d] %s", i.top, i.left, i.bottom, i.right, label.getText()));
                 return panel;
-              } catch (Exception ignore) {}
+              }
+              catch (Exception ignore) {
+              }
             }
             return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           }
@@ -234,28 +247,29 @@ public final class ShowUIDefaultsAction extends AnAction implements DumbAware {
             if ((content.searchField.hasFocus() && StringUtil.isEmpty(content.searchField.getSelectedText())) || content.table.hasFocus()) {
               int[] rows = content.table.getSelectedRows();
               if (rows.length > 0) {
-                  return new TextCopyProvider() {
-                    @Override
-                    public @NotNull ActionUpdateThread getActionUpdateThread() {
-                      return ActionUpdateThread.EDT;
-                    }
+                return new TextCopyProvider() {
+                  @Override
+                  public @NotNull ActionUpdateThread getActionUpdateThread() {
+                    return ActionUpdateThread.EDT;
+                  }
 
-                    @Override
-                    public Collection<String> getTextLinesToCopy() {
-                      List<String> result = new ArrayList<>();
-                      String tail = rows.length > 1 ? "," : "";
-                      for (int row : rows) {
-                        var pair = (Pair<?, ?>)content.table.getModel().getValueAt(row, 0);
-                        if (pair.second instanceof Color) {
-                          result.add("\"" + pair.first.toString() + "\": \"" + ColorUtil.toHtmlColor((Color)pair.second) + "\"" + tail);
-                        } else {
-                          result.add("\"" + pair.first.toString() + "\": \"" + pair.second + "\"" + tail);
-                        }
+                  @Override
+                  public Collection<String> getTextLinesToCopy() {
+                    List<String> result = new ArrayList<>();
+                    String tail = rows.length > 1 ? "," : "";
+                    for (int row : rows) {
+                      var pair = (Pair<?, ?>)content.table.getModel().getValueAt(row, 0);
+                      if (pair.second instanceof Color) {
+                        result.add("\"" + pair.first.toString() + "\": \"" + ColorUtil.toHtmlColor((Color)pair.second) + "\"" + tail);
                       }
-
-                      return result;
+                      else {
+                        result.add("\"" + pair.first.toString() + "\": \"" + pair.second + "\"" + tail);
+                      }
                     }
-                  };
+
+                    return result;
+                  }
+                };
               }
             }
           }
@@ -271,54 +285,57 @@ public final class ShowUIDefaultsAction extends AnAction implements DumbAware {
         String newValue = Messages.showInputDialog(getRootPane(), IdeBundle.message("dialog.message.enter.new.value.for.0", key),
                                                    IdeBundle.message("dialog.title.number.editor"), null, value,
                                                    new InputValidator() {
-                                     @Override
-                                     public boolean checkInput(String inputString) {
-                                       try {
-                                         parser.apply(inputString);
-                                         return true;
-                                       } catch (NumberFormatException nfe){
-                                         return false;
-                                       }
-                                     }
+                                                     @Override
+                                                     public boolean checkInput(String inputString) {
+                                                       try {
+                                                         parser.apply(inputString);
+                                                         return true;
+                                                       }
+                                                       catch (NumberFormatException nfe) {
+                                                         return false;
+                                                       }
+                                                     }
 
-                                     @Override
-                                     public boolean canClose(String inputString) {
-                                       return checkInput(inputString);
-                                     }
-                                   });
+                                                     @Override
+                                                     public boolean canClose(String inputString) {
+                                                       return checkInput(inputString);
+                                                     }
+                                                   });
 
         return newValue != null ? parser.apply(newValue) : null;
       }
 
       private @Nullable Insets editInsets(String key, String value) {
         String newValue = Messages.showInputDialog(getRootPane(),
-                                                   IdeBundle.message("dialog.message.enter.new.value.for.0.in.form.top.left.bottom.right", key),
+                                                   IdeBundle.message("dialog.message.enter.new.value.for.0.in.form.top.left.bottom.right",
+                                                                     key),
                                                    IdeBundle.message("dialog.title.insets.editor"), null, value,
                                                    new InputValidator() {
-             @Override
-             public boolean checkInput(String inputString) {
-               return parseInsets(inputString) != null;
-             }
+                                                     @Override
+                                                     public boolean checkInput(String inputString) {
+                                                       return parseInsets(inputString) != null;
+                                                     }
 
-             @Override
-             public boolean canClose(String inputString) {
-               return checkInput(inputString);
-             }
-           });
+                                                     @Override
+                                                     public boolean canClose(String inputString) {
+                                                       return checkInput(inputString);
+                                                     }
+                                                   });
 
         return newValue != null ? parseInsets(newValue) : null;
       }
 
       private static @Nullable Insets parseInsets(String value) {
         String[] parts = value.split(",");
-        if(parts.length != 4) {
+        if (parts.length != 4) {
           return null;
         }
 
         try {
           List<Integer> v = ContainerUtil.map(parts, p -> Integer.parseInt(p));
           return JBUI.insets(v.get(0), v.get(1), v.get(2), v.get(3));
-        } catch (NumberFormatException nex) {
+        }
+        catch (NumberFormatException nex) {
           return null;
         }
       }
@@ -328,35 +345,36 @@ public final class ShowUIDefaultsAction extends AnAction implements DumbAware {
                                                    IdeBundle.message("dialog.message.enter.new.value.for.0.in.form.width.height", key),
                                                    IdeBundle.message("dialog.title.dimension.editor"), null, value,
                                                    new InputValidator() {
-             @Override
-             public boolean checkInput(String inputString) {
-               return parseDimension(inputString) != null;
-             }
+                                                     @Override
+                                                     public boolean checkInput(String inputString) {
+                                                       return parseDimension(inputString) != null;
+                                                     }
 
-             @Override
-             public boolean canClose(String inputString) {
-               return checkInput(inputString);
-             }
-           });
+                                                     @Override
+                                                     public boolean canClose(String inputString) {
+                                                       return checkInput(inputString);
+                                                     }
+                                                   });
 
         return newValue != null ? parseDimension(newValue) : null;
       }
 
       private static @Nullable Dimension parseDimension(String value) {
         String[] parts = value.split(",");
-        if(parts.length != 2) {
+        if (parts.length != 2) {
           return null;
         }
 
         try {
           List<Integer> v = ContainerUtil.map(parts, p -> Integer.parseInt(p));
           return JBUI.size(v.get(0), v.get(1));
-        } catch (NumberFormatException nex) {
+        }
+        catch (NumberFormatException nex) {
           return null;
         }
       }
 
-      private @Nullable UIUtil.GrayFilter editGrayFilter(String key, String value) {
+      private @Nullable GrayFilter editGrayFilter(String key, String value) {
         String newValue = Messages.showInputDialog(getRootPane(),
                                                    IdeBundle.message(
                                                      "dialog.message.enter.new.value.for.0.in.form.brightness.contrast.alpha", key),
@@ -376,16 +394,17 @@ public final class ShowUIDefaultsAction extends AnAction implements DumbAware {
         return newValue != null ? parseGrayFilter(newValue) : null;
       }
 
-      private static @Nullable UIUtil.GrayFilter parseGrayFilter(String value) {
+      private static @Nullable GrayFilter parseGrayFilter(String value) {
         String[] parts = value.split(",");
-        if(parts.length != 3) {
+        if (parts.length != 3) {
           return null;
         }
 
         try {
           List<Integer> v = ContainerUtil.map(parts, p -> Integer.parseInt(p));
-          return new UIUtil.GrayFilter(v.get(0), v.get(1), v.get(2));
-        } catch (NumberFormatException nex) {
+          return new GrayFilter(v.get(0), v.get(1), v.get(2));
+        }
+        catch (NumberFormatException nex) {
           return null;
         }
       }
@@ -393,7 +412,8 @@ public final class ShowUIDefaultsAction extends AnAction implements DumbAware {
       private @Nullable Font editFontSize(String key, Font font) {
         String newValue = Messages.showInputDialog(getRootPane(),
                                                    IdeBundle.message("label.enter.new.font.size.for.0", key),
-                                                   IdeBundle.message("dialog.title.font.size.editor"), null, Integer.toString(font.getSize()),
+                                                   IdeBundle.message("dialog.title.font.size.editor"), null,
+                                                   Integer.toString(font.getSize()),
                                                    new InputValidator() {
                                                      @Override
                                                      public boolean checkInput(String inputString) {
@@ -413,7 +433,8 @@ public final class ShowUIDefaultsAction extends AnAction implements DumbAware {
         try {
           int newSize = Integer.parseInt(value);
           return (newSize > 0) ? font.deriveFont((float)newSize) : null;
-        } catch (NumberFormatException nex) {
+        }
+        catch (NumberFormatException nex) {
           return null;
         }
       }
@@ -450,7 +471,7 @@ public final class ShowUIDefaultsAction extends AnAction implements DumbAware {
                 value instanceof Float ||
                 value instanceof EmptyBorder ||
                 value instanceof Insets ||
-                value instanceof UIUtil.GrayFilter ||
+                value instanceof GrayFilter ||
                 value instanceof Font ||
                 value instanceof Dimension);
       }
@@ -473,7 +494,8 @@ public final class ShowUIDefaultsAction extends AnAction implements DumbAware {
     public void paintIcon(Component c, Graphics g, int x, int y) {
       try {
         myIcon.paintIcon(c, g, x, y);
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         EmptyIcon.ICON_0.paintIcon(c, g, x, y);
       }
     }

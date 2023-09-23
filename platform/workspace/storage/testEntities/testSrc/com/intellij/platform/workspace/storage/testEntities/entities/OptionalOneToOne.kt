@@ -37,7 +37,7 @@ interface OptionalOneToOneParentEntity : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: OptionalOneToOneParentEntity,
-                                      modification: OptionalOneToOneParentEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: OptionalOneToOneParentEntity.Builder.() -> Unit): OptionalOneToOneParentEntity = modifyEntity(
   OptionalOneToOneParentEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -70,6 +70,6 @@ interface OptionalOneToOneChildEntity : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: OptionalOneToOneChildEntity,
-                                      modification: OptionalOneToOneChildEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: OptionalOneToOneChildEntity.Builder.() -> Unit): OptionalOneToOneChildEntity = modifyEntity(
   OptionalOneToOneChildEntity.Builder::class.java, entity, modification)
 //endregion

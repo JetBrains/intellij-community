@@ -5,18 +5,15 @@ import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 
+/**
+ * @deprecated don't add new constants to this class and use the replacement for the existing one.
+ */
+@Deprecated
 public interface ExtensionPoints {
   /**
-   * This extension point allows a plugin vendor to provide users with ability to report exceptions that happened in
-   * their plugin code.
-   * Extension declaration sample is as follows:
-   * <pre>{@code
-   *   <extensions xmlns="com.intellij">
-   *     <errorHandler implementation="my.plugin.package.MyErrorHandler"/>
-   *   </extensions>
-   * }</pre>
-   * The {@code my.plugin.package.MyErrorHandler} class must implement {@link ErrorReportSubmitter}.
+   * @deprecated the constant was moved to IdeErrorsDialog 
    */
   @ApiStatus.Internal
+  @Deprecated  
   ExtensionPointName<ErrorReportSubmitter> ERROR_HANDLER_EP = ExtensionPointName.create("com.intellij.errorHandler");
 }

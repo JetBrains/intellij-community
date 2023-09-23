@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
+import com.intellij.coverage.BaseCoverageAnnotator;
 import com.intellij.coverage.CoverageAnnotator;
 import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageSuitesBundle;
@@ -38,24 +39,6 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   public ColumnInfo[] createColumnInfos() {
     return new ColumnInfo[]{new ElementColumnInfo(),
       new PercentageCoverageColumnInfo(1, CoverageBundle.message("table.column.name.statistics"), mySuitesBundle, myStateBean)};
-  }
-
-  @Override
-  public String getSummaryForNode(@NotNull AbstractTreeNode node) {
-    String statInfo = myAnnotator.getDirCoverageInformationString((PsiDirectory)node.getValue(),
-                                                                  mySuitesBundle,
-                                                                  myCoverageDataManager);
-    
-    if (statInfo == null) {
-      return CoverageBundle.message("node.summary.no.coverage", node.toString());
-    }
-    return CoverageBundle.message("node.summary.coverage.statistic", statInfo, node.toString());
-  }
-
-  @Override
-  public String getSummaryForRootNode(@NotNull AbstractTreeNode childNode) {
-    final Object value = childNode.getValue();
-    return myAnnotator.getDirCoverageInformationString(((PsiDirectory)value), mySuitesBundle, myCoverageDataManager);
   }
 
   @Override
@@ -97,31 +80,34 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
       final PsiDirectory psiDirectory = (PsiDirectory)val;
       final PsiDirectory[] subdirectories = ReadAction.compute(() -> psiDirectory.getSubdirectories());
       for (PsiDirectory subdirectory : subdirectories) {
-        if (!myAnnotator.isLoading()) {
-          final String info = myAnnotator.getDirCoverageInformationString(subdirectory, mySuitesBundle, myCoverageDataManager);
-          if (info == null) {
-            continue;
-          }
-        }
-        final CoverageListNode e = new CoverageListNode(myProject, subdirectory, mySuitesBundle, myStateBean, false);
-        e.setParent(node);
+        if (myAnnotator.getDirCoverageInformationString(subdirectory, mySuitesBundle, myCoverageDataManager) == null) continue;
+        CoverageListNode e = new CoverageListNode(myProject, subdirectory, mySuitesBundle, myStateBean);
         if (!e.getChildren().isEmpty()) {
           children.add(e);
         }
       }
       final PsiFile[] psiFiles = ReadAction.compute(() -> psiDirectory.getFiles());
       for (PsiFile psiFile : psiFiles) {
-        if (!myAnnotator.isLoading()) {
-          final String info = myAnnotator.getFileCoverageInformationString(psiFile, mySuitesBundle, myCoverageDataManager);
-          if (info == null) {
-            continue;
+        if (myAnnotator.getFileCoverageInformationString(psiFile, mySuitesBundle, myCoverageDataManager) == null) continue;
+        CoverageListNode e = new CoverageListNode(myProject, psiFile, mySuitesBundle, myStateBean);
+        if (!myStateBean.isShowOnlyModified() || isModified(e.getFileStatus())) {
+          children.add(e);
+        }
+        else {
+          if (myAnnotator instanceof BaseCoverageAnnotator baseCoverageAnnotator) {
+            baseCoverageAnnotator.setVcsFilteredChildren(true);
           }
         }
-        final CoverageListNode e = new CoverageListNode(myProject, psiFile, mySuitesBundle, myStateBean, true);
-        e.setParent(node);
-        children.add(e);
       }
     }
     return children;
+  }
+
+  @Override
+  public boolean hasVCSFilteredNodes() {
+    if (myAnnotator instanceof BaseCoverageAnnotator baseCoverageAnnotator) {
+      return baseCoverageAnnotator.hasVcsFilteredChildren();
+    }
+    return super.hasVCSFilteredNodes();
   }
 }

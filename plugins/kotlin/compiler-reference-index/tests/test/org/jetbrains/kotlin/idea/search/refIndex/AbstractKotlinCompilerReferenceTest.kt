@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.search.refIndex
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.testFramework.assertEqualsToFile
-import com.intellij.util.io.readText
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import kotlin.io.path.*
 

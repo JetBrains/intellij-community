@@ -9,7 +9,7 @@ class CommitSupportTest : BasePlatformTestCase() {
   fun `test commit message has highlighting with all quick fixes`() {
     configureCommit(myFixture, """
             
-            This is <caret><warning>a</warning> error.
+            This is <caret><TYPO descr="Use an instead of 'a' if the following word starts with a vowel sound, e.g. 'an article', 'an hour'." textAttributesKey="TYPO">a</TYPO> error.
             
             This reverts commit abcdef00.
             

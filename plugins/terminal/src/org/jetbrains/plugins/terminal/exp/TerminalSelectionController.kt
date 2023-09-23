@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
-import com.intellij.openapi.util.Key
 import com.intellij.util.MathUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
@@ -57,6 +57,12 @@ class TerminalSelectionController(
           val newBlock = outputModel.getByIndex(newIndex)
           selectionModel.selectedBlocks = listOf(newBlock)
           makeBlockVisible(newBlock)
+        }
+        else if (isBelow) {
+          // The last block is already selected, so scroll to the end of the output
+          val editor = outputModel.editor
+          val visibleHeight = editor.scrollingModel.visibleArea.height
+          editor.scrollingModel.scrollVertically(editor.contentComponent.height - visibleHeight)
         }
       }
     }
@@ -140,6 +146,6 @@ class TerminalSelectionController(
   }
 
   companion object {
-    val KEY: Key<TerminalSelectionController> = Key.create("TerminalSelectionController")
+    val KEY: DataKey<TerminalSelectionController> = DataKey.create("TerminalSelectionController")
   }
 }

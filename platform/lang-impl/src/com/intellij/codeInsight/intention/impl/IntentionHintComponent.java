@@ -45,6 +45,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.AnchoredPoint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.ui.icons.RowIcon;
@@ -54,6 +55,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -253,9 +255,15 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   private void showPopupFromVisibleToolbar(@NotNull CodeFloatingToolbar toolbar) {
-    RelativePoint position = findPositionForToolbarButton(toolbar);
-    adjustVerticalOverlapping(position);
-    showPopup(position);
+    Component component = toolbar.getHintComponent();
+    if (component == null) return;
+    RelativePoint defaultPosition = new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM, component);
+    ListPopup popup = getOrCreateListPopup();
+    List<ActionButton> buttons = UIUtil.findComponentsOfType(toolbar.getHintComponent(), ActionButton.class);
+    ActionButton intentionsButton = ContainerUtil.find(buttons, b -> b.getAction() instanceof ShowIntentionActionsAction);
+    if (intentionsButton == null) return;
+    toolbar.attachPopupToButton(intentionsButton, popup);
+    showPopup(defaultPosition);
   }
 
   private @Nullable CodeFloatingToolbar getFloatingToolbar() {
@@ -264,13 +272,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     return CodeFloatingToolbar.getToolbar(myEditor);
   }
 
-  private void adjustVerticalOverlapping(@Nullable RelativePoint position) {
-    if (position == null) return;
+  private ListPopup getOrCreateListPopup() {
     if (myPopup.myListPopup == null) {
       myPopup.myHint = this;
       IntentionPopup.recreateMyPopup(myPopup, new IntentionListStep(myPopup, myPopup.myEditor, myPopup.myFile, myPopup.myProject, myPopup.myCachedIntentions));
     }
-    ActionButton.adjustVerticalOverlapping(myPopup.myListPopup, position.getOriginalComponent());
+    return myPopup.myListPopup;
   }
 
   private void showPopup(@Nullable RelativePoint positionHint) {
@@ -303,19 +310,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     popup.y += adjust;
 
     return new RelativePoint(swCorner.getComponent(), popup);
-  }
-
-  private static @Nullable RelativePoint findPositionForToolbarButton(@NotNull CodeFloatingToolbar toolbar){
-    JComponent component = toolbar.getHintComponent();
-    if (component == null) return null;
-    List<ActionButton> buttons = UIUtil.findComponentsOfType(component, ActionButton.class);
-    ActionButton intentionButton = ContainerUtil.find(buttons, (button) -> button.getAction() instanceof ShowIntentionActionsAction);
-    if (intentionButton == null) return null;
-    RelativePoint buttonPoint = RelativePoint.getSouthWestOf(intentionButton);
-    RelativePoint toolbarPoint = RelativePoint.getSouthWestOf(component);
-    int horizontalOffset = toolbarPoint.getScreenPoint().x - buttonPoint.getScreenPoint().x;
-    buttonPoint.getPoint().translate(horizontalOffset, 0);
-    return buttonPoint;
   }
 
   private static final class MyComponentHint extends LightweightHint {
@@ -507,7 +501,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       add(myIconLabel, BorderLayout.CENTER);
       setBorder(LightBulbUtil.createInactiveBorder(editor));
       CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
-      if (floatingToolbar != null && floatingToolbar.isShown()) {
+      boolean isIntegrated = !Registry.is("floating.codeToolbar.hideIntentionsButton");
+      if (isIntegrated && floatingToolbar != null && floatingToolbar.canBeShownAtCurrentSelection()) {
         setVisible(false);
       }
     }
@@ -756,7 +751,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       }
 
       Disposer.register(popup, popup.myListPopup);
-      Disposer.register(popup.myListPopup, ApplicationManager.getApplication()::assertIsDispatchThread);
+      Disposer.register(popup.myListPopup, ThreadingAssertions::assertEventDispatchThread);
     }
 
     private static void highlightOnHover(@NotNull IntentionActionWithTextCaching actionWithCaching, @NotNull HighlightingContext context,

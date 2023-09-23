@@ -24,6 +24,7 @@ import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.*;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.ui.EDT;
@@ -79,7 +80,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       return;
     }
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
       int count = ActivityTracker.getInstance().getCount();
       if (ourPrevMapEventCount != count || ApplicationManager.getApplication().isUnitTestMode()) {

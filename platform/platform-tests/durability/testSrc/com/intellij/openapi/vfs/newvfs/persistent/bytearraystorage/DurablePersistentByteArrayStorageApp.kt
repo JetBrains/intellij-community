@@ -12,7 +12,7 @@ class DurablePersistentByteArrayStorageApp : App {
     val path = Path.of("dpba.dat")
     val stateSize = Storage.stateSize
 
-    val persistence = DurablePersistentByteArray(path, OpenMode.ReadWrite, stateSize) { ByteArray(stateSize) }
+    val persistence = DurablePersistentByteArray.open(path, OpenMode.ReadWrite, stateSize) { ByteArray(stateSize) }
 
     override fun setBytes(bytes: ByteArray, offset: Int) {
       persistence.commitChange {

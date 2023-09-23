@@ -88,7 +88,7 @@ final class SyntheticLibraryDescriptor {
     return ContainerUtil.union(sourceRoots, binaryRoots);
   }
 
-  public final boolean contains(@NotNull VirtualFile file) {
+  public boolean contains(@NotNull VirtualFile file) {
     return contains(file, true, true);
   }
 

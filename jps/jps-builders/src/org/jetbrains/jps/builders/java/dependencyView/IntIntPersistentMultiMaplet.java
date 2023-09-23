@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.containers.SLRUCache;
@@ -21,9 +21,8 @@ public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   public IntIntPersistentMultiMaplet(final File file, final KeyDescriptor<Integer> keyExternalizer) throws IOException {
     myMap = new PersistentHashMap<>(file, keyExternalizer, new IntSetExternalizer());
     myCache = new SLRUCache<>(CACHE_SIZE, CACHE_SIZE) {
-      @NotNull
       @Override
-      public IntSet createValue(Integer key) {
+      public @NotNull IntSet createValue(Integer key) {
         try {
           final IntSet collection = myMap.get(key);
           return collection == null? NULL_COLLECTION : collection;
@@ -73,7 +72,7 @@ public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
       myCache.remove(key);
       myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
-        public void append(@NotNull final DataOutput out) throws IOException {
+        public void append(final @NotNull DataOutput out) throws IOException {
           IntIterator iterator = value.iterator();
           while (iterator.hasNext()) {
             int value1 = iterator.nextInt();
@@ -93,7 +92,7 @@ public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
       myCache.remove(key);
       myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
-        public void append(@NotNull final DataOutput out) throws IOException {
+        public void append(final @NotNull DataOutput out) throws IOException {
           DataInputOutputUtil.writeINT(out, value);
         }
       });
@@ -210,7 +209,7 @@ public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
 
   private static final class IntSetExternalizer implements DataExternalizer<IntSet> {
     @Override
-    public void save(@NotNull final DataOutput out, final IntSet value) throws IOException {
+    public void save(final @NotNull DataOutput out, final IntSet value) throws IOException {
       IntIterator iterator = value.iterator();
       while (iterator.hasNext()) {
         int elem = iterator.nextInt();
@@ -219,7 +218,7 @@ public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
     }
 
     @Override
-    public IntSet read(@NotNull final DataInput in) throws IOException {
+    public IntSet read(final @NotNull DataInput in) throws IOException {
       final IntSet result = new IntOpenHashSet();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {

@@ -203,13 +203,29 @@ public class CompositeElement extends TreeElement {
 
   @Override
   public @NotNull String getText() {
+    TreeElement firstChildNode = getFirstChildNode();
+    if (firstChildNode == null) {
+      return "";
+    }
+    else if (firstChildNode == getLastChildNode()) {
+      if (firstChildNode instanceof ForeignLeafPsiElement) {
+        return "";
+      }
+      return firstChildNode.getText();
+    }
     return new String(textToCharArray());
   }
 
   @Override
   public @NotNull CharSequence getChars() {
+    TreeElement firstChildNode = getFirstChildNode();
+    if (firstChildNode == null) {
+      return "";
+    }
+    else if (firstChildNode == getLastChildNode()) {
+      return firstChildNode.getChars();
+    }
     return getText();
-    //return new CharArrayCharSequence(textToCharArray());
   }
 
   @Override

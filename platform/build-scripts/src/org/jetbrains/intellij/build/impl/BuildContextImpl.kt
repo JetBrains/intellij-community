@@ -2,7 +2,6 @@
 @file:Suppress("ReplaceGetOrSet")
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
 import io.opentelemetry.api.common.AttributeKey
@@ -56,6 +55,9 @@ class BuildContextImpl(
   override val useModularLoader: Boolean
     get() = productProperties.supportModularLoading && options.useModularLoader
 
+  override val generateRuntimeModuleRepository: Boolean
+    get() = useModularLoader || isEmbeddedJetBrainsClientEnabled && options.generateRuntimeModuleRepository
+  
   override val applicationInfo = ApplicationInfoPropertiesImpl(this)
   private var builtinModulesData: BuiltinModulesFileData? = null
 
@@ -240,7 +242,7 @@ class BuildContextImpl(
     get() = productProperties.productLayout.bundledPluginModules.contains("intellij.java.plugin")
 
   override fun patchInspectScript(path: Path) {
-    //todo[nik] use placeholder in inspect.sh/inspect.bat file instead
+    //todo use placeholder in inspect.sh/inspect.bat file instead
     Files.writeString(path, Files.readString(path).replace(" inspect ", " ${productProperties.inspectCommandName} "))
   }
 
@@ -266,8 +268,10 @@ class BuildContextImpl(
     jvmArgs.add("-Djna.nosys=true")
     jvmArgs.add("-Djna.noclasspath=true")
 
+    if (useModularLoader || generateRuntimeModuleRepository) {
+      jvmArgs.add("-Dintellij.platform.runtime.repository.path=${macroName}/${MODULE_DESCRIPTORS_JAR_PATH}".let { if (isScript) '"' + it + '"' else it })
+    }
     if (useModularLoader) {
-      jvmArgs.add("-Dintellij.platform.runtime.repository.path=$macroName/${RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME}")
       jvmArgs.add("-Dintellij.platform.root.module=${productProperties.applicationInfoModule}")
     }
 

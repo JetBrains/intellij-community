@@ -7,6 +7,7 @@ internal class A {
         val d = 1.0
         val f = 1.0f
         val c = 1.toChar()
+
         t(i == i)
         t(i == b.toInt())
         t(i == s.toInt())
@@ -14,6 +15,7 @@ internal class A {
         t(i.toDouble() == d)
         t(i.toFloat() == f)
         t(i == c.code)
+
         t(b.toInt() == i)
         t(b == b)
         t(b.toShort() == s)
@@ -21,6 +23,7 @@ internal class A {
         t(b.toDouble() == d)
         t(b.toFloat() == f)
         t(b == c.code.toByte())
+
         t(s.toInt() == i)
         t(s == b.toShort())
         t(s == s)
@@ -28,6 +31,7 @@ internal class A {
         t(s.toDouble() == d)
         t(s.toFloat() == f)
         t(s == c.code.toShort())
+
         t(l == i.toLong())
         t(l == b.toLong())
         t(l == s.toLong())
@@ -35,6 +39,7 @@ internal class A {
         t(l.toDouble() == d)
         t(l.toFloat() == f)
         t(l == c.code.toLong())
+
         t(d == i.toDouble())
         t(d == b.toDouble())
         t(d == s.toDouble())
@@ -42,6 +47,7 @@ internal class A {
         t(d == d)
         t(d == f.toDouble())
         t(d == c.code.toDouble())
+
         t(f == i.toFloat())
         t(f == b.toFloat())
         t(f == s.toFloat())
@@ -49,6 +55,7 @@ internal class A {
         t(f.toDouble() == d)
         t(f == f)
         t(f == c.code.toFloat())
+
         t(c.code == i)
         t(c.code.toByte() == b)
         t(c.code.toShort() == s)
@@ -56,6 +63,7 @@ internal class A {
         t(c.code.toDouble() == d)
         t(c.code.toFloat() == f)
         t(c == c)
+
         t(i.toDouble() != d)
     }
 
@@ -67,6 +75,7 @@ internal class A {
         val d = 1.0
         val f = 1.0f
         val c = 1.toChar()
+
         t(i > i)
         t(i > b)
         t(i > s)
@@ -74,6 +83,7 @@ internal class A {
         t(i > d)
         t(i > f)
         t(i > c.code)
+
         t(b > i)
         t(b > b)
         t(b > s)
@@ -81,6 +91,7 @@ internal class A {
         t(b > d)
         t(b > f)
         t(b > c.code.toByte())
+
         t(s > i)
         t(s > b)
         t(s > s)
@@ -88,6 +99,7 @@ internal class A {
         t(s > d)
         t(s > f)
         t(s > c.code.toShort())
+
         t(l > i)
         t(l > b)
         t(l > s)
@@ -95,6 +107,7 @@ internal class A {
         t(l > d)
         t(l > f)
         t(l > c.code.toLong())
+
         t(d > i)
         t(d > b)
         t(d > s)
@@ -102,6 +115,7 @@ internal class A {
         t(d > d)
         t(d > f)
         t(d > c.code.toDouble())
+
         t(f > i)
         t(f > b)
         t(f > s)
@@ -109,6 +123,7 @@ internal class A {
         t(f > d)
         t(f > f)
         t(f > c.code.toFloat())
+
         t(c.code > i)
         t(c.code.toByte() > b)
         t(c.code.toShort() > s)
@@ -118,5 +133,6 @@ internal class A {
         t(c > c)
     }
 
-    private fun t(b: Boolean) {}
+    private fun t(b: Boolean) {
+    }
 }

@@ -7,9 +7,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vladislav.Soroka
  */
-public interface ModelBuilderContext extends MessageReporter {
+public interface ModelBuilderContext {
 
   @NotNull Gradle getGradle();
+
+  @NotNull MessageReporter getMessageReporter();
 
   /**
    * @return cached data if it's already created, newly created data otherwise

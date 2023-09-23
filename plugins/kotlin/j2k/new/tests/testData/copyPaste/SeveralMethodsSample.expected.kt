@@ -31,6 +31,7 @@ class A {
         if (element is JetNamedFunction || element is JetProperty) {
             val bindingContext: BindingContext =
                 AnalyzerFacadeWithCache.analyzeFileWithCache(element.getContainingJetFile()).getBindingContext()
+
             val declarationDescriptor: DeclarationDescriptor =
                 bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, element)
             if (declarationDescriptor is CallableMemberDescriptor) {
@@ -44,7 +45,10 @@ class A {
                 }
             }
         }
-        assert(element is PsiMethod) { ("Method accepts only kotlin functions/properties and java methods, but '" + element.getText()).toString() + "' was found" }
+
+        assert(
+            element is PsiMethod
+        ) { ("Method accepts only kotlin functions/properties and java methods, but '" + element.getText()).toString() + "' was found" }
         return JetRefactoringUtil.formatPsiMethod(element as PsiMethod, true, false)
     }
 

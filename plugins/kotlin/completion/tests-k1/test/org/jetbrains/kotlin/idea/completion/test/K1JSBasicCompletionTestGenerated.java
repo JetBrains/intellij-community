@@ -601,9 +601,39 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/extensionDeclarations/ExtensionFunReceiverForce.kt");
             }
 
+            @TestMetadata("ExtensionFunReceiverInvocationCall0.kt")
+            public void testExtensionFunReceiverInvocationCall0() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/ExtensionFunReceiverInvocationCall0.kt");
+            }
+
+            @TestMetadata("ExtensionFunReceiverLowerCase.kt")
+            public void testExtensionFunReceiverLowerCase() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/ExtensionFunReceiverLowerCase.kt");
+            }
+
+            @TestMetadata("ExtensionFunReceiverLowerCaseWithInvocationCall.kt")
+            public void testExtensionFunReceiverLowerCaseWithInvocationCall() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/ExtensionFunReceiverLowerCaseWithInvocationCall.kt");
+            }
+
             @TestMetadata("ExtensionInsideFunction.kt")
             public void testExtensionInsideFunction() throws Exception {
                 runTest("../testData/basic/common/extensionDeclarations/ExtensionInsideFunction.kt");
+            }
+
+            @TestMetadata("ExtensionPropReceiver.kt")
+            public void testExtensionPropReceiver() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/ExtensionPropReceiver.kt");
+            }
+
+            @TestMetadata("ExtensionPropReceiverLowerCase.kt")
+            public void testExtensionPropReceiverLowerCase() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/ExtensionPropReceiverLowerCase.kt");
+            }
+
+            @TestMetadata("ExtensionPropReceiverLowerCaseWithInvocationCall.kt")
+            public void testExtensionPropReceiverLowerCaseWithInvocationCall() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/ExtensionPropReceiverLowerCaseWithInvocationCall.kt");
             }
 
             @TestMetadata("FunctionTypeParameterAsReceiver1.kt")
@@ -634,6 +664,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
             @TestMetadata("NestedClassName2.kt")
             public void testNestedClassName2() throws Exception {
                 runTest("../testData/basic/common/extensionDeclarations/NestedClassName2.kt");
+            }
+
+            @TestMetadata("NestedClassNameLowerCase.kt")
+            public void testNestedClassNameLowerCase() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/NestedClassNameLowerCase.kt");
             }
         }
 
@@ -908,6 +943,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
             @TestMetadata("runCatchingWithoutScope.kt")
             public void testRunCatchingWithoutScope() throws Exception {
                 runTest("../testData/basic/common/extensions/runCatchingWithoutScope.kt");
+            }
+
+            @TestMetadata("runCatchingWithoutScopeK2.kt")
+            public void testRunCatchingWithoutScopeK2() throws Exception {
+                runTest("../testData/basic/common/extensions/runCatchingWithoutScopeK2.kt");
             }
 
             @TestMetadata("StarTypeArg.kt")
@@ -3417,6 +3457,16 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("callable.kt")
+            public void testCallable() throws Exception {
+                runTest("../testData/basic/common/when/callable.kt");
+            }
+
+            @TestMetadata("callable2.kt")
+            public void testCallable2() throws Exception {
+                runTest("../testData/basic/common/when/callable2.kt");
+            }
+
             @TestMetadata("enumInEmptyWhen.kt")
             public void testEnumInEmptyWhen() throws Exception {
                 runTest("../testData/basic/common/when/enumInEmptyWhen.kt");
@@ -3452,6 +3502,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/when/nonSealedClassInWhen.kt");
             }
 
+            @TestMetadata("nonSealedClassInWhen2.kt")
+            public void testNonSealedClassInWhen2() throws Exception {
+                runTest("../testData/basic/common/when/nonSealedClassInWhen2.kt");
+            }
+
             @TestMetadata("nonSealedClassWithTypeArgs.kt")
             public void testNonSealedClassWithTypeArgs() throws Exception {
                 runTest("../testData/basic/common/when/nonSealedClassWithTypeArgs.kt");
@@ -3465,6 +3520,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
             @TestMetadata("nullableSealedClassInWhen.kt")
             public void testNullableSealedClassInWhen() throws Exception {
                 runTest("../testData/basic/common/when/nullableSealedClassInWhen.kt");
+            }
+
+            @TestMetadata("onTyping.kt")
+            public void testOnTyping() throws Exception {
+                runTest("../testData/basic/common/when/onTyping.kt");
             }
 
             @TestMetadata("sealedClassInWhen.kt")

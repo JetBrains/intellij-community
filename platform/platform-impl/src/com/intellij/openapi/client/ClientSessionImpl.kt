@@ -12,6 +12,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -50,10 +51,10 @@ abstract class ClientSessionImpl(
     registerServiceInstance(ClientSession::class.java, this, fakeCorePluginDescriptor)
   }
 
-  override fun <T : Any> findConstrictorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+  override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
     return (lookup.findConstructorOrNull(aClass, sessionConstructorMethodType)?.invoke(this) as T?)
-           ?: super.findConstrictorAndInstantiateClass(lookup, aClass)
+           ?: super.findConstructorAndInstantiateClass(lookup, aClass)
   }
 
   fun registerServices() {
@@ -164,7 +165,11 @@ abstract class ClientAppSessionImpl(
   }
 
   override val projectSessions: List<ClientProjectSession>
-    get() = ProjectManager.getInstance().openProjects.mapNotNull { ClientSessionsManager.getProjectSession(it, this) }
+    get() {
+      return ProjectManager.getInstance().openProjects.mapNotNull {
+        it.service<ClientSessionsManager<*>>().getSession(clientId) as? ClientProjectSession
+      }
+    }
 
   init {
     @Suppress("LeakingThis")
@@ -188,11 +193,11 @@ open class ClientProjectSessionImpl(
                                                                                        componentManager = project,
                                                                                        project = project)
 
-  override fun <T : Any> findConstrictorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+  override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
     return ((lookup.findConstructorOrNull(aClass, projectMethodType)?.invoke(project)
             ?: lookup.findConstructorOrNull(aClass, projectSessionConstructorMethodType)?.invoke(this) ) as T?)
-           ?: super.findConstrictorAndInstantiateClass(lookup, aClass)
+           ?: super.findConstructorAndInstantiateClass(lookup, aClass)
   }
 
 

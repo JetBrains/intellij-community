@@ -63,7 +63,7 @@ public class FormsBuilderTest extends JpsBuildTestCase {
     assertInstrumented(m, "xxx/MyForm.class");
 
     JpsUiDesignerExtensionService.getInstance().getOrCreateUiDesignerConfiguration(myProject).setInstrumentClasses(false);
-    rebuildAllModules();//todo[nik,jeka] perhaps we shouldn't require rebuild to remove instrumented code
+    rebuildAllModules();//todo perhaps we shouldn't require rebuild to remove instrumented code
     assertNotInstrumented(m, "xxx/MyForm.class");
   }
 

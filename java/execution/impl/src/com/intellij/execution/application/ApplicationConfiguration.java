@@ -184,10 +184,13 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   @NotNull
   public JavaRunConfigurationModule checkClass() throws RuntimeConfigurationException {
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
-    final PsiClass psiClass =
-      configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
-    if (!PsiMethodUtil.hasMainMethod(psiClass)) {
-      throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", getMainClassName()));
+    if (getOptions().isUnnamedClassConfiguration()) {
+      // TODO: Check Unnamed class index
+    } else {
+      final PsiClass psiClass = configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
+      if (psiClass == null || !PsiMethodUtil.hasMainMethod(psiClass)) {
+        throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", getMainClassName()));
+      }
     }
     return configurationModule;
   }
@@ -347,6 +350,10 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   public void setIncludeProvidedScope(boolean value) {
     getOptions().setIncludeProvidedScope(value);
   }
+
+  public boolean isUnnamedClassConfiguration() { return getOptions().isUnnamedClassConfiguration(); }
+
+  public void setUnnamedClassConfiguration(boolean value) { getOptions().setUnnamedClassConfiguration(value); }
 
   @Override
   public Collection<Module> getValidModules() {

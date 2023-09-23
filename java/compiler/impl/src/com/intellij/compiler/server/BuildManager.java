@@ -2,7 +2,6 @@
 package com.intellij.compiler.server;
 
 import com.intellij.DynamicBundle;
-import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
@@ -1979,7 +1978,7 @@ public final class BuildManager implements Disposable {
       if (!project.isDefault()) {
         connection.subscribe(WorkspaceModelTopics.CHANGED, new WSModelChangeListener(project));
 
-        connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+        connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
           @Override
           public void rootsChanged(@NotNull ModuleRootEvent event) {
             if (!event.isCausedByWorkspaceModelChangesOnly()) {

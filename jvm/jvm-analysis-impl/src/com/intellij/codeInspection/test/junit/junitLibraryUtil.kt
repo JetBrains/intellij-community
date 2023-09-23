@@ -1,25 +1,53 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.test.junit
 
+import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValueProvider.Result
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.Function
+import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.text.VersionComparatorUtil
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
 import org.jetbrains.uast.UElement
 
 internal fun isJUnit3InScope(file: PsiFile): Boolean {
-  return JavaLibraryUtil.hasLibraryClass(ModuleUtil.findModuleForFile(file), JUNIT_FRAMEWORK_TEST_CASE)
+  return hasInModuleScope(file, JUNIT_FRAMEWORK_TEST_CASE)
 }
 
 internal fun isJUnit4InScope(file: PsiFile): Boolean {
-  return JavaLibraryUtil.hasLibraryClass(ModuleUtil.findModuleForFile(file), ORG_JUNIT_TEST)
+  return hasInModuleScope(file, ORG_JUNIT_TEST)
 }
 
 internal fun isJUnit5InScope(file: PsiFile): Boolean {
-  return JavaLibraryUtil.hasLibraryClass(ModuleUtil.findModuleForFile(file), ORG_JUNIT_JUPITER_API_TEST)
+  return hasInModuleScope(file, ORG_JUNIT_JUPITER_API_TEST)
+}
+
+private fun hasInModuleScope(file: PsiFile, detectionClass: String): Boolean {
+  val vFile = file.virtualFile ?: return false
+  val module = ModuleUtil.findModuleForFile(file) ?: return false
+  val productionScope = module.getModuleScope(false)
+  if (!productionScope.contains(vFile)) {
+    return JavaLibraryUtil.hasLibraryClass(module, detectionClass)
+  }
+
+  return getProductionClassDetectionMap(module).getOrDefault(detectionClass, false)
+}
+
+private fun getProductionClassDetectionMap(module: Module): Map<String, Boolean> {
+  return CachedValuesManager.getManager(module.project).getCachedValue(module, CachedValueProvider {
+    val map = ConcurrentFactoryMap.createMap<String, Boolean>(Function {
+      val productionScope = module.getModuleWithDependenciesAndLibrariesScope(false)
+      JavaPsiFacade.getInstance(module.project).findClass(it, productionScope) != null
+    })
+    Result.create(map, JavaLibraryModificationTracker.getInstance(module.project))
+  })
 }
 
 class JUnitVersion(val asString: String) : Comparable<JUnitVersion> {

@@ -4,7 +4,6 @@
 
 package com.intellij.ui
 
-import com.intellij.ProjectTopics
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.Disposable
@@ -77,7 +76,7 @@ class EditorNotificationsImpl(private val project: Project,
         updateAllNotifications()
       }
     })
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+    connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         updateAllNotifications()
       }

@@ -1,42 +1,27 @@
 package com.intellij.searchEverywhereMl.semantics.settings
 
-import com.intellij.openapi.components.*
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.searchEverywhereMl.semantics.services.ActionEmbeddingsStorage
-import com.intellij.util.xmlb.annotations.OptionTag
+import com.intellij.openapi.application.ApplicationManager
 
-
-@Service(Service.Level.APP)
-@State(
-  name = "SemanticSearchSettings",
-  storages = [Storage(value = "semantic-search-settings.xml", roamingType = RoamingType.DISABLED, exportable = true)]
-)
-class SemanticSearchSettings : PersistentStateComponent<SemanticSearchSettingsState> {
-  private var state = SemanticSearchSettingsState()
-
+interface SemanticSearchSettings {
   var enabledInActionsTab: Boolean
-    get() = state.enabledInActionsTab
-    set(newValue) {
-      state.enabledInActionsTab = newValue
-      ActionEmbeddingsStorage.getInstance().run { if (newValue) prepareForSearch() else tryStopGeneratingEmbeddings() }
-    }
+  var enabledInFilesTab: Boolean
+  var enabledInSymbolsTab: Boolean
+  var enabledInClassesTab: Boolean
 
-  override fun getState(): SemanticSearchSettingsState = state
+  val manuallyDisabledInActionsTab: Boolean
+    get() = false
+  val manuallyDisabledInFilesTab: Boolean
+    get() = false
+  val manuallyDisabledInSymbolsTab: Boolean
+    get() = false
+  val manuallyDisabledInClassesTab: Boolean
+    get() = false
 
-  override fun loadState(newState: SemanticSearchSettingsState) {
-    state = newState
-  }
-
-  fun getUseRemoteActionsServer() = Registry.`is`("search.everywhere.ml.semantic.actions.server.use")
-
-  fun getActionsAPIToken(): String = Registry.stringValue("search.everywhere.ml.semantic.actions.server.token")
+  fun isEnabled(): Boolean
+  fun getUseRemoteActionsServer(): Boolean
+  fun getActionsAPIToken(): String
 
   companion object {
-    fun getInstance() = service<SemanticSearchSettings>()
+    fun getInstance(): SemanticSearchSettings = ApplicationManager.getApplication().getService(SemanticSearchSettings::class.java)
   }
-}
-
-class SemanticSearchSettingsState : BaseState() {
-  @get:OptionTag("enabled_in_actions_tab")
-  var enabledInActionsTab by property(false)
 }

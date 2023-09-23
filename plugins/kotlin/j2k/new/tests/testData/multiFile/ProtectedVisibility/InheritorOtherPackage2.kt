@@ -5,6 +5,6 @@ import test.BaseOtherPackage
 class DerivedOtherPackage protected constructor() : BaseOtherPackage() {
     init {
         foo()
-        val i = i
+        val i = this.i
     }
 }

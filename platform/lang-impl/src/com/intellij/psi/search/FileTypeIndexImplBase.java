@@ -206,7 +206,7 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   @Override
   public @NotNull ValueContainer<Void> getData(@NotNull FileType type) throws StorageException {
     int fileTypeId = getFileTypeId(type);
-    ValueContainerImpl<Void> result = new ValueContainerImpl<>(false);
+    ValueContainerImpl<Void> result = ValueContainerImpl.createNewValueContainer();
 
     myLock.readLock().lock();
     try {

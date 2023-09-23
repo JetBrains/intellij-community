@@ -61,9 +61,19 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
             KotlinTestUtils.runTest(this::doTestCallable, this, testDataFilePath);
         }
 
+        @TestMetadata("enumEntryInheritor.kt")
+        public void testEnumEntryInheritor() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinFunction/enumEntryInheritor.kt");
+        }
+
         @TestMetadata("hierarchyWithMissedLevel.kt")
         public void testHierarchyWithMissedLevel() throws Exception {
             runTest("../testData/inheritorsSearch/kotlinFunction/hierarchyWithMissedLevel.kt");
+        }
+
+        @TestMetadata("inEnum.kt")
+        public void testInEnum() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinFunction/inEnum.kt");
         }
 
         @TestMetadata("objectLiteralInheritor.kt")

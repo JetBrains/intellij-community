@@ -9,6 +9,7 @@ import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.impl.PsiRecordComponentStubImpl;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.PsiRecordComponentImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -23,7 +24,7 @@ import java.io.IOException;
 
 public class JavaRecordComponentElementType extends JavaStubElementType<PsiRecordComponentStub, PsiRecordComponent> {
   public JavaRecordComponentElementType() {
-    super("RECORD_COMPONENT");
+    super("RECORD_COMPONENT", BasicJavaElementType.BASIC_RECORD_COMPONENT);
   }
 
   @NotNull
@@ -73,6 +74,6 @@ public class JavaRecordComponentElementType extends JavaStubElementType<PsiRecor
 
     LighterASTNode modifierList = LightTreeUtil.firstChildOfType(tree, node, JavaElementType.MODIFIER_LIST);
     boolean hasDeprecatedAnnotation = modifierList != null && RecordUtil.isDeprecatedByAnnotation(tree, modifierList);
-    return new PsiRecordComponentStubImpl(parentStub, name, typeInfo, typeInfo.isEllipsis, hasDeprecatedAnnotation);
+    return new PsiRecordComponentStubImpl(parentStub, name, typeInfo, typeInfo.isEllipsis(), hasDeprecatedAnnotation);
   }
 }

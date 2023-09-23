@@ -48,6 +48,24 @@ interface WebSymbolsQueryExecutor : ModificationTracker {
                         strictScope: Boolean = false,
                         scope: List<WebSymbolsScope> = emptyList()): List<WebSymbol>
 
+  fun runListSymbolsQuery(namespace: SymbolNamespace,
+                          kind: SymbolKind,
+                          expandPatterns: Boolean,
+                          virtualSymbols: Boolean = true,
+                          abstractSymbols: Boolean = false,
+                          strictScope: Boolean = false,
+                          scope: List<WebSymbolsScope> = emptyList()): List<WebSymbol> =
+    runListSymbolsQuery(emptyList(), namespace, kind, expandPatterns, virtualSymbols, abstractSymbols, strictScope, scope)
+
+  fun runListSymbolsQuery(path: List<WebSymbolQualifiedName>,
+                          namespace: SymbolNamespace,
+                          kind: SymbolKind,
+                          expandPatterns: Boolean,
+                          virtualSymbols: Boolean = true,
+                          abstractSymbols: Boolean = false,
+                          strictScope: Boolean = false,
+                          scope: List<WebSymbolsScope> = emptyList()): List<WebSymbol>
+
   fun runCodeCompletionQuery(namespace: SymbolNamespace,
                              kind: SymbolKind,
                              name: String,
@@ -65,6 +83,6 @@ interface WebSymbolsQueryExecutor : ModificationTracker {
 
   fun withNameConversionRules(rules: List<WebSymbolNameConversionRules>): WebSymbolsQueryExecutor
 
-  fun hasExclusiveScopeFor(namespace: SymbolNamespace, kind: SymbolKind, scope: List<WebSymbolsScope> = emptyList()) : Boolean
+  fun hasExclusiveScopeFor(namespace: SymbolNamespace, kind: SymbolKind, scope: List<WebSymbolsScope> = emptyList()): Boolean
 
 }

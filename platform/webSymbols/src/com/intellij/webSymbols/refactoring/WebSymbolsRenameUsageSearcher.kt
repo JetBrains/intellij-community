@@ -18,7 +18,8 @@ class WebSymbolsRenameUsageSearcher : RenameUsageSearcher {
         WebSymbolsUsageSearcher.buildWebSymbolUsagesQueries(symbol, parameters.project, parameters.searchScope)
           .map { query ->
             query.mapping {
-              WebSymbolPsiModifiableRenameUsage(WebSymbolsQueryExecutorFactory.create(it.file), symbol, PsiRenameUsage.defaultPsiRenameUsage(it))
+              WebSymbolPsiModifiableRenameUsage(WebSymbolsQueryExecutorFactory.create(it.file), symbol,
+                                                PsiRenameUsage.defaultPsiRenameUsage(it))
             }
           }
       }

@@ -5,6 +5,7 @@ import com.intellij.psi.PsiAnnotationMemberValue
 import com.intellij.psi.PsiAnnotationParameterList
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaCodeReferenceElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
@@ -13,7 +14,8 @@ import org.jetbrains.kotlin.asJava.elements.KtLightAbstractAnnotation
 import org.jetbrains.kotlin.asJava.elements.KtLightEmptyAnnotationParameterList
 import org.jetbrains.kotlin.psi.KtCallElement
 
-internal class UastFakeLightNullabilityAnnotation(
+@ApiStatus.Internal
+class UastFakeLightNullabilityAnnotation(
     private val nullability: KtTypeNullability,
     parent: PsiElement
 ) : KtLightAbstractAnnotation(parent) {

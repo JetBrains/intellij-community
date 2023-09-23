@@ -3,20 +3,23 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.containers.hash.LongLinkedHashMap;
 import com.intellij.util.io.stats.FilePageCacheStatistics;
 import com.intellij.util.lang.CompoundRuntimeException;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
@@ -66,7 +69,7 @@ final class FilePageCache {
   //@GuardedBy("storageById")
   private final Map<Path, Exception> stackTracesOfStorageRegistration = KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION ? new HashMap<>() : null;
   //@GuardedBy("storageById")
-  private final Map<Path, PagedFileStorage> storageByPath = new HashMap<>();
+  private final Map<Path, PagedFileStorage> storageByAbsolutePath = new HashMap<>();
 
   /**
    * In cases there both pagesAllocationLock and pagesAccessLock need to be acquired, pagesAllocationLock
@@ -89,7 +92,7 @@ final class FilePageCache {
   private final LongLinkedHashMap<DirectBufferWrapper> pagesByPageId;
 
   //@GuardedBy("pagesAllocationLock")
-  private final LinkedHashMap<Long, DirectBufferWrapper> pagesToRemoveByPageId = new LinkedHashMap<>();
+  private final Long2ObjectLinkedOpenHashMap<DirectBufferWrapper> pagesToRemoveByPageId = new Long2ObjectLinkedOpenHashMap<>();
 
   private final long cachedSizeLimit;
   /** Total size of all pages currently cached (i.e. in .pagesByPageId, not in .pagesToRemoveByPageId), bytes */
@@ -347,9 +350,10 @@ final class FilePageCache {
       PagedFileStorage removedStorage = storageById.remove((int)(storageId >> 32));
       if (removedStorage != null) {
         Path storageFile = removedStorage.getFile();
-        storageByPath.remove(storageFile);
+        Path storageAbsolutePath = storageFile.toAbsolutePath();
+        storageByAbsolutePath.remove(storageAbsolutePath);
         if (KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION) {
-          stackTracesOfStorageRegistration.remove(storageFile);
+          stackTracesOfStorageRegistration.remove(storageAbsolutePath);
         }
       }
     }
@@ -391,13 +395,14 @@ final class FilePageCache {
   long registerPagedFileStorage(@NotNull PagedFileStorage storage) {
     synchronized (storageById) {
       Path storageFile = storage.getFile();
-      PagedFileStorage alreadyRegisteredStorage = storageByPath.get(storageFile);
+      Path storageAbsolutePath = storageFile.toAbsolutePath();
+      PagedFileStorage alreadyRegisteredStorage = storageByAbsolutePath.get(storageAbsolutePath);
       if (alreadyRegisteredStorage != null) {
         IllegalStateException ex = new IllegalStateException(
-          "Storage for [" + storageFile.toAbsolutePath() + "] is already registered"
+          "Storage for [" + storageAbsolutePath + "] is already registered"
         );
         if (KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION) {
-          Exception stackTraceHolder = stackTracesOfStorageRegistration.get(storageFile);
+          Exception stackTraceHolder = stackTracesOfStorageRegistration.get(storageAbsolutePath);
           if (stackTraceHolder != null) {
             ex.addSuppressed(stackTraceHolder);
           }
@@ -413,9 +418,9 @@ final class FilePageCache {
         storageIndex++;
       }
       storageById.put(storageIndex, storage);
-      storageByPath.put(storageFile, storage);
+      storageByAbsolutePath.put(storageAbsolutePath, storage);
       if (KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION) {
-        stackTracesOfStorageRegistration.put(storageFile, new Exception("Storage[" + storageFile + "] registration stack trace"));
+        stackTracesOfStorageRegistration.put(storageAbsolutePath, new Exception("Storage[" + storageAbsolutePath + "] registration stack trace"));
       }
       myMaxRegisteredFiles = Math.max(myMaxRegisteredFiles, storageById.size());
       return (long)storageIndex << 32;
@@ -470,14 +475,15 @@ final class FilePageCache {
   private void disposeRemovedSegments(@Nullable PagedFileStorage verificationStorage) {
     assertUnderSegmentAllocationLock();
 
-    if (pagesToRemoveByPageId.isEmpty()) return;
-    Iterator<Map.Entry<Long, DirectBufferWrapper>> iterator = pagesToRemoveByPageId.entrySet().iterator();
+    if (pagesToRemoveByPageId.isEmpty()) {
+      return;
+    }
+
+    ObjectIterator<DirectBufferWrapper> iterator = pagesToRemoveByPageId.values().iterator();
     while (iterator.hasNext()) {
       try {
-        Map.Entry<Long, DirectBufferWrapper> entry = iterator.next();
-        DirectBufferWrapper wrapper = entry.getValue();
+        DirectBufferWrapper wrapper = iterator.next();
         boolean released = wrapper.tryRelease(wrapper.getFile() == verificationStorage);
-
         if (released) {
           iterator.remove();
         }

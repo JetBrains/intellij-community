@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.ide.BrowserUtil
+import com.intellij.notification.NotificationListener
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -10,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
@@ -21,11 +23,13 @@ import org.jetbrains.plugins.gitlab.api.data.GitLabSnippetBlobActionEnum
 import org.jetbrains.plugins.gitlab.api.data.GitLabVisibilityLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
+import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
-import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.snippets.PathHandlingMode.Companion.getFileNameExtractor
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.*
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics.logSnippetActionExecuted
 import java.awt.datatransfer.StringSelection
 
 /**
@@ -50,16 +54,36 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
         val files = collectNonBinaryFiles(editor?.virtualFile?.let(::listOf)
                                           ?: selectedFiles
                                           ?: listOfNotNull(selectedFile))
+        val initialTitle = selectedFile?.name
+                           ?: selectedFiles?.firstOrNull()?.name
+                           ?: files.first().name
+
+        val contents = async(Dispatchers.IO) {
+          readAction {
+            collectContents(editor, files) ?: listOf()
+          }
+        }
 
         val accountManager = service<GitLabAccountManager>()
         val apiManager = service<GitLabApiManager>()
-        val result = showDialog(apiManager, files) ?: return@launch
+
+        // Ensure at least some account is available
+        if (accountManager.accountsState.value.isEmpty()) {
+          if (!attemptLogin(accountManager)) return@launch
+        }
+
+        val result = showDialog(initialTitle, contents, apiManager, files) ?: return@launch
 
         withBackgroundProgress(project, message("snippet.create.action.progress"), true) {
-          createSnippet(accountManager, apiManager, result, editor, files)
+          createSnippet(accountManager, apiManager, result, files)
         }
       }
+      catch (e: CancellationException) {
+        throw e
+      }
       catch (e: Exception) {
+        logSnippetActionExecuted(project, CREATE_ERRORED)
+
         VcsNotifier.getInstance(project)
           .notifyError(GL_NOTIFICATION_CREATE_SNIPPET_ERROR,
                        message("snippet.create.action.error.title"),
@@ -69,21 +93,65 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
   }
 
   /**
+   * Attempts an initial login and stores the login details in the account manager.
+   */
+  private suspend fun attemptLogin(accountManager: GitLabAccountManager): Boolean {
+    return coroutineScope {
+      async(Dispatchers.Main) {
+        val (account, token) = GitLabLoginUtil.logInViaToken(project, null) { server, name ->
+          GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
+        } ?: return@async false
+
+        accountManager.updateAccount(account, token)
+        true
+      }.await()
+    }
+  }
+
+  /**
    * Gives the user a dialog to re-attempt login after no token could be found for a certain account.
    * If the user could still not be authenticated could be done, `null` is returned.
    */
   private suspend fun reattemptLogin(apiManager: GitLabApiManager,
-                                     accounts: Set<GitLabAccount>,
+                                     accountManager: GitLabAccountManager,
                                      result: GitLabCreateSnippetResult): GitLabApi? {
     return coroutineScope {
       async(Dispatchers.Main) {
         val token = GitLabLoginUtil.updateToken(project, null, result.account) { server, name ->
-          GitLabLoginUtil.isAccountUnique(accounts, server, name)
+          GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
         }
 
-        token?.let(apiManager::getClient)
+        token?.let {
+          accountManager.updateAccount(result.account, it)
+          apiManager.getClient(result.account.server, it)
+        }
       }.await()
     }
+  }
+
+  /**
+   * Gets and verifies an API Client that can be used to create a snippet with.
+   * If no token is registered, the user is prompted to attempt a login. If the token is present,
+   * but it turns out to be invalid, the user is also prompted to attempt a login.
+   *
+   * The result is either an API Client that can be used to call API endpoints, or `null` if the
+   * user gives up.
+   */
+  private suspend fun getAndVerifyApi(accountManager: GitLabAccountManager,
+                                      apiManager: GitLabApiManager,
+                                      result: GitLabCreateSnippetResult): GitLabApi? {
+    // Fetch token, if no token is present, re-login
+    val server = result.account.server
+    val api = accountManager.findCredentials(result.account)?.let { apiManager.getClient(server, it) }
+              ?: reattemptLogin(apiManager, accountManager, result)
+              ?: return null
+
+    // If token is present, we check that it is valid with a test request. Reattempt login if token is invalid.
+    if (api.graphQL.getCurrentUser() == null) {
+      return reattemptLogin(apiManager, accountManager, result)
+    }
+
+    return api
   }
 
   /**
@@ -95,21 +163,14 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
   private suspend fun createSnippet(accountManager: GitLabAccountManager,
                                     apiManager: GitLabApiManager,
                                     result: GitLabCreateSnippetResult,
-                                    editor: Editor?,
                                     files: List<VirtualFile>) {
     // Process result by creating the snippet, copying url, etc.
     val data = result.data
-    val api = accountManager.findCredentials(result.account)?.let(apiManager::getClient)
-              ?: reattemptLogin(apiManager, accountManager.accountsState.value, result)
-              ?: return
-    val server = result.account.server
+    val api = getAndVerifyApi(accountManager, apiManager, result) ?: return
 
     val fileNameExtractor = getFileNameExtractor(project, files, data.pathHandlingMode)
-    val contents = readAction {
-      collectContents(editor, files) ?: listOf()
-    }
 
-    val snippetBlobActions = contents.map { glContents ->
+    val snippetBlobActions = result.nonEmptyContents.map { glContents ->
       GitLabSnippetBlobAction(
         GitLabSnippetBlobActionEnum.create,
         glContents.capturedContents,
@@ -119,7 +180,6 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
     }
 
     val httpResult = api.graphQL.createSnippet(
-      server,
       data.onProject,
       data.title,
       data.description,
@@ -136,17 +196,20 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
       BrowserUtil.browse(url)
     }
 
+    logSnippetActionExecuted(project, CREATE_CREATED)
+
     VcsNotifier.getInstance(project)
-      .notifyInfo(GL_NOTIFICATION_CREATE_SNIPPET_SUCCESS,
-                  message("snippet.create.action.success.title"),
-                  message("snippet.create.action.success.description", url))
+      .notifyMinorInfo(GL_NOTIFICATION_CREATE_SNIPPET_SUCCESS,
+                       message("snippet.create.action.success.title"),
+                       HtmlChunk.link(url, message("snippet.create.action.success.description")).toString())
+      .setListener(NotificationListener.URL_OPENING_LISTENER)
   }
 
   /**
    * Checks whether the user should be able to see and click the 'Create Snippet' button.
    */
   fun canCreateSnippet(editor: Editor?, selectedFile: VirtualFile?, selectedFiles: List<VirtualFile>?): Boolean {
-    if (project.isDefault || service<GitLabAccountManager>().accountsState.value.isEmpty()) {
+    if (project.isDefault) {
       return false
     }
 
@@ -163,7 +226,9 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
   /**
    * Shows the 'Create Snippet' dialog and returns a view-model representing the final state of the user inputs.
    */
-  private suspend fun showDialog(apiManager: GitLabApiManager,
+  private suspend fun showDialog(initialTitle: String,
+                                 contents: Deferred<List<GitLabSnippetFileContents>>,
+                                 apiManager: GitLabApiManager,
                                  files: List<VirtualFile>): GitLabCreateSnippetResult? =
     coroutineScope {
       val availablePathHandlingModes =
@@ -179,8 +244,9 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
         service<GitLabAccountManager>(),
         apiManager,
         availablePathHandlingModes.toSet(),
+        contents,
         GitLabCreateSnippetViewModelData(
-          "",
+          initialTitle,
           "",
 
           true,
@@ -197,10 +263,12 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
           .create(this, project, vm)
 
         dialog.showAndGet()
-      }
+      }.await()
+
+      logSnippetActionExecuted(project, if (dialogIsOk) CREATE_OK else CREATE_CANCEL)
 
       // Await result of dialog
-      if (!dialogIsOk.await()) {
+      if (!dialogIsOk) {
         return@coroutineScope null
       }
 

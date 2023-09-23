@@ -9,4 +9,11 @@
     <psiViewer.extension implementation="com.intellij.java.devkit.psiViewer.PsiViewerCodeFragmentExtension"/>
     <psiViewer.extension implementation="com.intellij.java.devkit.psiViewer.PsiViewerMethodExtension"/>
   </extensions>
+
+  <actions resource-bundle="messages.JavaPsiViewerBundle">
+    <action class="com.intellij.java.devkit.psiViewer.debug.PsiViewerDebugAction" id="Debug.PsiViewer">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Memory.CalculateRetainedSize"/>
+    </action>
+    <action class="com.intellij.java.devkit.psiViewer.debug.PsiViewerDebugSelectUIAction" id="Debug.PsiViewer.Toggle.UI"/>
+  </actions>
 </idea-plugin>

@@ -24,16 +24,14 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 
-class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinInspection() {
-    companion object {
-        val scopeFunctions = listOf(
-            "kotlin.also",
-            "kotlin.let",
-            "kotlin.takeIf",
-            "kotlin.takeUnless"
-        ).map { FqName(it) }
-    }
+private val scopeFunctions: List<FqName> = listOf(
+    "kotlin.also",
+    "kotlin.let",
+    "kotlin.takeIf",
+    "kotlin.takeUnless"
+).map { FqName(it) }
 
+class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return lambdaExpressionVisitor(fun(lambda: KtLambdaExpression) {
             if (lambda.valueParameters.isNotEmpty()) return

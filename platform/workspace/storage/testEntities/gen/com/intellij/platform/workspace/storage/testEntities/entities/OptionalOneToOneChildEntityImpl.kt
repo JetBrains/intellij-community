@@ -13,25 +13,26 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class OptionalOneToOneChildEntityImpl(val dataSource: OptionalOneToOneChildEntityData) : OptionalOneToOneChildEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class OptionalOneToOneChildEntityImpl(private val dataSource: OptionalOneToOneChildEntityData) : OptionalOneToOneChildEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(OptionalOneToOneParentEntity::class.java,
                                                                           OptionalOneToOneChildEntity::class.java,
                                                                           ConnectionId.ConnectionType.ONE_TO_ONE, true)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       PARENT_CONNECTION_ID,
     )
 
@@ -49,6 +50,7 @@ open class OptionalOneToOneChildEntityImpl(val dataSource: OptionalOneToOneChild
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: OptionalOneToOneChildEntityData?) : ModifiableWorkspaceEntityBase<OptionalOneToOneChildEntity, OptionalOneToOneChildEntityData>(
     result), OptionalOneToOneChildEntity.Builder {
@@ -78,7 +80,7 @@ open class OptionalOneToOneChildEntityImpl(val dataSource: OptionalOneToOneChild
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -160,7 +162,7 @@ open class OptionalOneToOneChildEntityImpl(val dataSource: OptionalOneToOneChild
 class OptionalOneToOneChildEntityData : WorkspaceEntityData<OptionalOneToOneChildEntity>() {
   lateinit var data: String
 
-  fun isDataInitialized(): Boolean = ::data.isInitialized
+  internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OptionalOneToOneChildEntity> {
     val modifiable = OptionalOneToOneChildEntityImpl.Builder(null)
@@ -177,6 +179,11 @@ class OptionalOneToOneChildEntityData : WorkspaceEntityData<OptionalOneToOneChil
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.OptionalOneToOneChildEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -231,9 +238,5 @@ class OptionalOneToOneChildEntityData : WorkspaceEntityData<OptionalOneToOneChil
     var result = javaClass.hashCode()
     result = 31 * result + data.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

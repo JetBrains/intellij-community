@@ -343,6 +343,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
             listOf(srcDir),
             target = outDir,
             classpath = classpath + listOf(outDir),
+            options = listOf("-Xabi-stability=stable"),
             compileKotlinSourcesBeforeJava = false
         ).compile()
         return outDir

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
 import org.jetbrains.idea.maven.project.MavenDirectoryCompletionContributor
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -17,7 +18,7 @@ import org.junit.Test
 class MavenDirectoryCompletionContributorTest : MavenMultiVersionImportingTestCase() {
 
   @Test
-  fun testVariants() {
+  fun testVariants() = runBlocking {
     createProjectPom("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
@@ -36,7 +37,7 @@ class MavenDirectoryCompletionContributorTest : MavenMultiVersionImportingTestCa
                                   <artifactId>module</artifactId>
                                   <version>1</version>""")
 
-    importProject()
+    importProjectAsync()
 
     fun check(dir: VirtualFile, vararg expected: Pair<String, JpsModuleSourceRootType<*>>) {
       val psiDir = ApplicationManager.getApplication().runReadAction<PsiDirectory> {

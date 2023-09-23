@@ -7,9 +7,11 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginContentDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -72,6 +74,12 @@ public class Invoker implements InvokerMBean {
       build.getBaselineVersion(),
       build.asString()
     );
+  }
+
+  @Override
+  public boolean isApplicationInitialized() {
+    Application application = ApplicationManager.getApplication();
+    return application != null && ((ApplicationEx)application).isComponentCreated();
   }
 
   @Override

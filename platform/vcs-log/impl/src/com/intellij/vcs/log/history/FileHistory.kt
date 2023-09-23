@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.util.registry.Registry
@@ -275,6 +276,7 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
           }
         }
       }
+      ProgressManager.checkCanceled()
     }
   }
 

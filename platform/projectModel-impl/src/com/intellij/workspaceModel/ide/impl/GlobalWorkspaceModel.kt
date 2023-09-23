@@ -66,7 +66,7 @@ class GlobalWorkspaceModel : Disposable {
         val activity = StartUpMeasurer.startActivity("global cache loading")
         val previousStorage: MutableEntityStorage?
         val loadingCacheTime = measureTimeMillis {
-          previousStorage = cache.loadCache()?.toBuilder()
+          previousStorage = cache.loadCache()
         }
         val storage = if (previousStorage == null) {
           MutableEntityStorage.create()
@@ -84,7 +84,7 @@ class GlobalWorkspaceModel : Disposable {
     entityStorage = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
 
     val callback = JpsGlobalModelSynchronizer.getInstance().loadInitialState(mutableEntityStorage, entityStorage, loadedFromCache)
-    val changes = mutableEntityStorage.collectChanges(EntityStorageSnapshot.empty())
+    val changes = mutableEntityStorage.collectChanges()
     entityStorage.replace(mutableEntityStorage.toSnapshot(), changes, {}, {})
     callback.invoke()
   }
@@ -108,7 +108,7 @@ class GlobalWorkspaceModel : Disposable {
       }
       val changes: Map<Class<*>, List<EntityChange<*>>>
       collectChangesTimeMillis = measureTimeMillis {
-        changes = builder.collectChanges(before)
+        changes = builder.collectChanges()
       }
       initializingTimeMillis = measureTimeMillis {
         this.initializeBridges(changes, builder)

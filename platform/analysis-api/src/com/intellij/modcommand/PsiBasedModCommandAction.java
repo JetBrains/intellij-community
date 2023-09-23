@@ -9,11 +9,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 
 /**
  * A convenient abstract class to implement {@link ModCommandAction}
@@ -24,6 +24,7 @@ import java.util.Objects;
 public abstract class PsiBasedModCommandAction<E extends PsiElement> implements ModCommandAction {
   private final @Nullable SmartPsiElementPointer<E> myPointer;
   private final @Nullable Class<E> myClass;
+  private final @Nullable Predicate<? super E> myFilter;
 
   /**
    * Constructs an instance, which is bound to a specified element
@@ -33,6 +34,7 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   protected PsiBasedModCommandAction(@NotNull E element) {
     myPointer = SmartPointerManager.createPointer(element);
     myClass = null;
+    myFilter = null;
   }
 
   /**
@@ -44,6 +46,20 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   protected PsiBasedModCommandAction(@NotNull Class<E> elementClass) {
     myPointer = null;
     myClass = elementClass;
+    myFilter = null;
+  }
+
+  /**
+   * Constructs an instance, which will look for an element 
+   * of a specified class at the caret offset, satisfying the specified filter.
+   * 
+   * @param elementClass element class
+   * @param filter predicate to check the elements: elements that don't satisfy will be skipped
+   */
+  protected PsiBasedModCommandAction(@NotNull Class<E> elementClass, @NotNull Predicate<? super E> filter) {
+    myPointer = null;
+    myClass = elementClass;
+    myFilter = filter;
   }
 
   @Override
@@ -63,15 +79,36 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
     if (!BaseIntentionAction.canModify(file)) return null;
     Class<E> cls = Objects.requireNonNull(myClass);
     if (context.element() != null && context.element().isValid()) {
-      return ObjectUtils.tryCast(context.element(), cls);
+      return getIfSatisfied(context.element());
     }
-    PsiElement element = file.findElementAt(offset);
-    E target = PsiTreeUtil.getNonStrictParentOfType(element, cls);
-    if (target == null && offset > 0) {
-      element = file.findElementAt(offset - 1);
-      target = PsiTreeUtil.getNonStrictParentOfType(element, cls);
+    PsiElement right = file.findElementAt(offset);
+    PsiElement left = offset > 0 ? file.findElementAt(offset - 1) : right;
+    if (left == null && right == null) return null;
+    if (left == null) left = right;
+    if (right == null) right = left;
+    PsiElement commonParent = PsiTreeUtil.findCommonParent(left, right);
+    while (left != commonParent || right != commonParent) {
+      E result = getIfSatisfied(right);
+      if (result != null) return result;
+      result = getIfSatisfied(left);
+      if (result != null) return result;
+      if (left != commonParent) left = left.getParent();
+      if (right != commonParent) right = right.getParent();
     }
-    return target;
+    while(true) {
+      if (commonParent == null) return null;
+      if (cls.isInstance(commonParent)) return cls.cast(commonParent);
+      if (commonParent instanceof PsiFile) return null;
+      commonParent = commonParent.getParent();
+    }
+  }
+
+  private E getIfSatisfied(PsiElement element) {
+    Class<E> cls = Objects.requireNonNull(myClass);
+    if (!cls.isInstance(element)) return null;
+    E result = cls.cast(element);
+    if (myFilter != null && !myFilter.test(result)) return null;
+    return result;
   }
 
   @Override

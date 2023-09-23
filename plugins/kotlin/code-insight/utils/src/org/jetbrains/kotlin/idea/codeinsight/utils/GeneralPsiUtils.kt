@@ -8,8 +8,13 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
 
 fun PsiFile.adjustLineIndent(startOffset: Int, endOffset: Int) {
-    if (!commitAndUnblockDocument()) return
+    if (isPhysical && !commitAndUnblockDocument()) return
     CodeStyleManager.getInstance(project).adjustLineIndent(this, TextRange(startOffset, endOffset))
+}
+
+fun PsiFile.reformat(startOffset: Int, endOffset: Int) {
+    if (isPhysical && !commitAndUnblockDocument()) return
+    CodeStyleManager.getInstance(project).reformatText(this, startOffset, endOffset)
 }
 
 /**

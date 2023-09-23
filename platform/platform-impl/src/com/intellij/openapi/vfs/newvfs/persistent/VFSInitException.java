@@ -37,6 +37,9 @@ public final class VFSInitException extends IOException {
     /** Rebuild marker was found */
     SCHEDULED_REBUILD,
 
+    /** Caches were recovered from VfsLog, because of residual initialization problems */
+    RECOVERED_FROM_LOG,
+
     /** Application wasn't closed properly, VFS storages are likely fractured */
     NOT_CLOSED_PROPERLY,
     HAS_ERRORS_IN_PREVIOUS_SESSION,

@@ -38,6 +38,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -852,6 +853,9 @@ public final class EditorUtil {
    * presentation mode, when adjusted presentation mode font size is used). Returned font has fallback variants (i.e. if main font doesn't
    * support certain Unicode characters, some other font may be used to display them), but fallback mechanism differs from the one used in
    * editor.
+   * <p/>
+   * <b>Note:</b> it's not a font used in the exact instance of {@link Editor},
+   * because of presentation mode adjustment and because of per-editor font size scaling.
    */
   public static Font getEditorFont() {
     float fontSize = UISettingsUtils.getInstance().getScaledEditorFontSize();
@@ -905,7 +909,7 @@ public final class EditorUtil {
   }
 
   public static void disposeWithEditor(@NotNull Editor editor, @NotNull Disposable disposable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (editor.isDisposed()) {
       Disposer.dispose(disposable);
       return;

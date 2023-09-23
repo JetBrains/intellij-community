@@ -5,6 +5,7 @@ import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -33,9 +34,10 @@ public class PyRunLineMarkerContributor extends RunLineMarkerContributor {
   @Override
   public Info getInfo(@NotNull PsiElement element) {
     if (isMainClauseOnTopLevel(element)) {
-      final AnAction[] actions = ExecutorAction.getActions();
-      Function<PsiElement, String> tooltipProvider =
-        psiElement -> StringUtil.join(ContainerUtil.mapNotNull(actions, action -> getText(action, psiElement)), "\n");
+      AnAction[] actions = ExecutorAction.getActions();
+      AnActionEvent event = createActionEvent(element);
+      Function<PsiElement, String> tooltipProvider = o -> StringUtil.join(ContainerUtil.mapNotNull(
+        actions, action -> getText(action, event)), "\n");
       return new Info(AllIcons.RunConfigurations.TestState.Run, tooltipProvider, actions);
     }
     return null;

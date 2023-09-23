@@ -12,16 +12,16 @@ import org.jetbrains.annotations.NotNull;
 final class MentionOnlyUndoableAction implements UndoableAction {
   private final DocumentReference[] myRefs;
 
-  protected MentionOnlyUndoableAction(DocumentReference @NotNull [] refs) {
+  MentionOnlyUndoableAction(DocumentReference @NotNull [] refs) {
     myRefs = refs;
   }
 
   @Override
-  public final void undo() {
+  public void undo() {
   }
 
   @Override
-  public final void redo() {
+  public void redo() {
   }
 
   @Override

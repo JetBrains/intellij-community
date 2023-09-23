@@ -75,8 +75,7 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
    * @param file  the file in which the intention was invoked.
    * @return the element under the caret.
    */
-  @Nullable
-  protected PsiElement getElement(@NotNull Editor editor, @NotNull PsiFile file) {
+  protected @Nullable PsiElement getElement(@NotNull Editor editor, @NotNull PsiFile file) {
     int position = editor.getCaretModel().getOffset();
     return file.findElementAt(useElementToTheLeft ? position - 1 : position);
   }

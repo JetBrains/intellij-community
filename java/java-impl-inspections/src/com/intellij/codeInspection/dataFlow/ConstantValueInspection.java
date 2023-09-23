@@ -19,6 +19,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -363,47 +364,16 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static boolean containsImmediateThrowStatement(PsiSwitchExpression expression) {
-    class Visitor extends JavaRecursiveElementWalkingVisitor {
-      boolean found = false;
-
-      @Override
-      public void visitElement(@NotNull PsiElement psiElement) {
-        if (found) {
-          return;
-        }
-        if (psiElement != expression) {
-          PsiElement parent = psiElement.getParent();
-          // do not process any anonymous class children except its getArgumentList()
-          //if the visitor was not called from inside anonymous class
-          if (parent instanceof PsiAnonymousClass && !(psiElement instanceof PsiExpressionList)) {
-            return;
-          }
-        }
-        super.visitElement(psiElement);
+    Ref<Boolean> ref = Ref.create();
+    ref.set(false);
+    ControlFlowUtils.processElementsInCurrentScope(expression, element -> {
+      if (element instanceof PsiThrowStatement) {
+        ref.set(true);
+        return false;
       }
-
-      @Override
-      public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
-        // process anonymous getArgumentList()
-        visitElement(aClass);
-      }
-
-      @Override
-      public void visitClass(@NotNull PsiClass aClass) {
-      }
-
-      @Override
-      public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
-        found = true;
-      }
-
-      @Override
-      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
-      }
-    }
-    Visitor visitor = new Visitor();
-    expression.accept(visitor);
-    return visitor.found;
+      return true;
+    });
+    return ref.get();
   }
 
   private static boolean isDereferenceContext(PsiExpression ref) {

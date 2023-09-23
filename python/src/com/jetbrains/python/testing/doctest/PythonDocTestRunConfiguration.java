@@ -7,16 +7,45 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class PythonDocTestRunConfiguration extends AbstractPythonLegacyTestRunConfiguration<PythonDocTestRunConfiguration>
                                           implements PythonDocTestRunConfigurationParams {
   protected @NlsSafe String myPluralTitle = "Doctests";
   protected @NlsSafe String myTitle = "Doctest";
+
+  private String myParameters = "";
+
+  private boolean isParametersEnabled = true;
+
+  public final @NotNull List<String> getParametersList() {
+    return isParametersEnabled ? ProgramParametersConfigurator.expandMacrosAndParseParameters(myParameters) : new ArrayList<>();
+  }
+
+  public final @NotNull String getParametersString() {
+    return isParametersEnabled ? myParameters : "";
+  }
+
+  public void addParameters(@NotNull String parameters) {
+    myParameters = parameters;
+  }
+
+  public void setParametersEnabled(boolean isEnabled) {
+    isParametersEnabled = isEnabled;
+  }
+
+  public boolean isParametersEnabled() {
+    return isParametersEnabled;
+  }
+
   public PythonDocTestRunConfiguration(Project project,
                                        ConfigurationFactory configurationFactory) {
     super(project, configurationFactory);

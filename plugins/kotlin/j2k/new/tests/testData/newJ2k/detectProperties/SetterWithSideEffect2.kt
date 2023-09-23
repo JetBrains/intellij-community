@@ -1,5 +1,6 @@
 class C {
     private var x = ""
+
     fun getX(): String {
         return x
     }

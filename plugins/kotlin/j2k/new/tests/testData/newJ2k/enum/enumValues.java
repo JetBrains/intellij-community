@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:+EnumEntries
 // RUNTIME_WITH_FULL_JDK
 
 import java.lang.reflect.Array;
@@ -20,8 +19,6 @@ enum MyEnum {
 }
 
 class EnumTest {
-    //TODO: Remove after Enum.entries is marked as non-experimental in Kotlin 1.9
-    @ExperimentalStdlibApi
     void replaceWithEntries() {
         MyEnum x = MyEnum.values()[1];
 
@@ -32,8 +29,6 @@ class EnumTest {
         for (MyEnum value : MyEnum.values()) {}
     }
 
-    //TODO: Remove after Enum.entries is marked as non-experimental in Kotlin 1.9
-    @ExperimentalStdlibApi
     void replaceWithEntriesWithConversionToArray() {
         // Simple call
         MyEnum[] x = MyEnum.values();

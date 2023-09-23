@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.execution
 
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.internal.statistic.FUCollectorTestCase
+import com.intellij.internal.statistic.eventLog.ExternalEventLogSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
@@ -15,6 +16,7 @@ import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.runTask
+import com.intellij.testFramework.ExtensionTestUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
@@ -33,6 +35,10 @@ class GradleTasksExecutionTest : GradleImportingTestCase() {
 
   @Test
   fun `test fus contains only well known task metrics`() {
+    ExtensionTestUtil.maskExtensions(ExternalEventLogSettings.EP_NAME, listOf(object : ExternalEventLogSettings {
+      override fun forceLoggingAlwaysEnabled(): Boolean = true
+      override fun getExtraLogUploadHeaders(): Map<String, String> = emptyMap()
+    }), testRootDisposable)
     val buildScript = createBuildScriptBuilder()
       .withTask("userDefinedTask") {
         code("dependsOn { subprojects.collect { \"\$it.name:clean\"} }\n  dependsOn { subprojects.collect { \"\$it.name:build\"} }")

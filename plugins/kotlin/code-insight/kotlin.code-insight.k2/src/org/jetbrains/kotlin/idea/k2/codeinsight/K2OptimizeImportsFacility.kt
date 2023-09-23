@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.resolve.ImportPath
 internal class K2OptimizeImportsFacility : KotlinOptimizeImportsFacility {
     private class K2ImportData(override val unusedImports: List<KtImportDirective>) : KotlinOptimizeImportsFacility.ImportData
 
-    override fun analyzeImports(file: KtFile): KotlinOptimizeImportsFacility.ImportData? {
+    override fun analyzeImports(file: KtFile): KotlinOptimizeImportsFacility.ImportData {
         // Import optimizer might be called from reformat action in EDT, see KTIJ-25031
         @OptIn(KtAllowAnalysisOnEdt::class)
         val importAnalysis = allowAnalysisOnEdt {

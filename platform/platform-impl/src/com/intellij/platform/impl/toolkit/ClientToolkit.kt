@@ -3,11 +3,12 @@
 package com.intellij.platform.impl.toolkit
 
 import java.awt.*
-import java.awt.peer.*
-import javax.swing.JComponent
+import java.awt.peer.DialogPeer
+import java.awt.peer.FramePeer
+import java.awt.peer.WindowPeer
 
 interface ClientToolkit {
-  fun createPanelWindow(panel: JComponent, target: Window, realParent: JComponent?): WindowPeer
+  fun createPanelWindow(panel: Component, target: Window, realParent: Container?): WindowPeer
   fun createWindow(target: Window): WindowPeer
   fun createDialog(target: Dialog): DialogPeer
   fun createFrame(target: Frame): FramePeer

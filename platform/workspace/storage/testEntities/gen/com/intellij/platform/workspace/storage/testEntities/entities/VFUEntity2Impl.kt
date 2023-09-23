@@ -11,24 +11,24 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class VFUEntity2Impl(private val dataSource: VFUEntity2Data) : VFUEntity2, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -51,6 +51,7 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: VFUEntity2Data?) : ModifiableWorkspaceEntityBase<VFUEntity2, VFUEntity2Data>(result), VFUEntity2.Builder {
     constructor() : this(VFUEntity2Data())
@@ -82,7 +83,7 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -191,9 +192,9 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
   lateinit var directoryPath: VirtualFileUrl
   lateinit var notNullRoots: MutableList<VirtualFileUrl>
 
-  fun isDataInitialized(): Boolean = ::data.isInitialized
-  fun isDirectoryPathInitialized(): Boolean = ::directoryPath.isInitialized
-  fun isNotNullRootsInitialized(): Boolean = ::notNullRoots.isInitialized
+  internal fun isDataInitialized(): Boolean = ::data.isInitialized
+  internal fun isDirectoryPathInitialized(): Boolean = ::directoryPath.isInitialized
+  internal fun isNotNullRootsInitialized(): Boolean = ::notNullRoots.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<VFUEntity2> {
     val modifiable = VFUEntity2Impl.Builder(null)
@@ -210,6 +211,11 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.VFUEntity2") as EntityMetadata
   }
 
   override fun clone(): VFUEntity2Data {
@@ -283,12 +289,5 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
     result = 31 * result + directoryPath.hashCode()
     result = 31 * result + notNullRoots.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.notNullRoots?.let { collector.add(it::class.java) }
-    this.filePath?.let { collector.add(it::class.java) }
-    this.directoryPath?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

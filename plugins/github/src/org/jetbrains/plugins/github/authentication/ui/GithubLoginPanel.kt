@@ -10,6 +10,7 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Panel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -22,6 +23,7 @@ import javax.swing.JTextField
 internal typealias UniqueLoginPredicate = (login: String, server: GithubServerPath) -> Boolean
 
 internal class GithubLoginPanel(
+  cs: CoroutineScope,
   executorFactory: GithubApiRequestExecutor.Factory,
   isAccountUnique: UniqueLoginPredicate
 ) : Wrapper() {
@@ -30,8 +32,8 @@ internal class GithubLoginPanel(
   private var tokenAcquisitionError: ValidationInfo? = null
 
   private lateinit var currentUi: GHCredentialsUi
-  private var tokenUi = GHTokenCredentialsUi(serverTextField, executorFactory, isAccountUnique)
-  private var oauthUi = GHOAuthCredentialsUi(executorFactory, isAccountUnique)
+  private var tokenUi = GHTokenCredentialsUi(cs, serverTextField, executorFactory, isAccountUnique)
+  private var oauthUi = GHOAuthCredentialsUi(cs, executorFactory, isAccountUnique)
 
   private val progressIcon = AnimatedIcon.Default()
   private val progressExtension = ExtendableTextComponent.Extension { progressIcon }

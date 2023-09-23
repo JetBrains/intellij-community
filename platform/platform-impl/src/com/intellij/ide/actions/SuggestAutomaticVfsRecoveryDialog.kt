@@ -51,8 +51,7 @@ class SuggestAutomaticVfsRecoveryDialog(private val isRestartCapable: Boolean, p
     }
     row {
       text(IdeBundle.message("dialog.message.recover.vfs.automatic.suggestion.invoke.later",
-                             IdeBundle.message("recover.caches.from.log.recovery.action.name"),
-                             ActionsBundle.message("group.CacheRecovery.text")))
+                             ActionsBundle.message("action.RecoverCachesFromLog.text")))
     }
   }
 

@@ -13,13 +13,29 @@ import java.util.List;
 public abstract class ComponentsListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
   private static final int FORWARD = 1;
   private static final int BACKWARD = -1;
+  private final boolean myReturnNullIfOutsideOfOrderedComponents;
+
+  public ComponentsListFocusTraversalPolicy() {
+    this(false);
+  }
+
+  /**
+   * @param returnNullIfOutsideOfOrderedComponents specifies whether {@code getComponentAfter} and {@code getComponentBefore} should
+   *                                               return null if focus goes beyond ordered components. When these methods return null,
+   *                                               it indicates that focus should go to the next/previous component outside of this focus
+   *                                               traversal provider. The default behavior is to fall back to {@code LayoutTraversalPolicy}
+   *                                               which may add unwanted components into the focus order.
+   */
+  public ComponentsListFocusTraversalPolicy(boolean returnNullIfOutsideOfOrderedComponents) {
+    myReturnNullIfOutsideOfOrderedComponents = returnNullIfOutsideOfOrderedComponents;
+  }
 
   @Override
   public Component getComponentAfter(Container aContainer, Component aComponent) {
     final List<Component> components = getOrderedComponents();
     int i = components.indexOf(aComponent);
     Component after = (i != -1 ? searchShowing(components, i + 1, FORWARD) : null);
-    if (after == null) {
+    if (after == null && !myReturnNullIfOutsideOfOrderedComponents) {
       // Let LayoutFTP detect the nearest focus cycle root and handle cycle icity correctly.
       return super.getComponentAfter(aContainer, aComponent);
     }
@@ -31,7 +47,7 @@ public abstract class ComponentsListFocusTraversalPolicy extends LayoutFocusTrav
     final List<Component> components = getOrderedComponents();
     int i = components.indexOf(aComponent);
     Component before = (i != -1 ? searchShowing(components, i - 1, BACKWARD) : null);
-    if (before == null) {
+    if (before == null && !myReturnNullIfOutsideOfOrderedComponents) {
       // Let LayoutFTP detect the nearest focus cycle root and handle cyclicity correctly.
       return super.getComponentBefore(aContainer, aComponent);
     }

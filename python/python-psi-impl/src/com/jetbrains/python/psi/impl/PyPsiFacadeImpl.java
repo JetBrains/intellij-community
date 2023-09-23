@@ -31,7 +31,6 @@ import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -60,12 +59,6 @@ public class PyPsiFacadeImpl extends PyPsiFacade {
   @Override
   public PyQualifiedNameResolveContext createResolveContextFromFoothold(@NotNull PsiElement foothold) {
     return PyResolveImportUtil.fromFoothold(foothold);
-  }
-
-  @Nullable
-  @Override
-  public PyClass findClass(String qName) {
-    return PyClassNameIndex.findClass(qName, myProject);
   }
 
   @NotNull

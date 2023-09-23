@@ -60,7 +60,7 @@ public final class LookupValueFactory {
 
     private final String myHint;
 
-    protected LookupValueWithIconAndHint(final String name, final Icon icon, String hint) {
+    private LookupValueWithIconAndHint(final String name, final Icon icon, String hint) {
       super(name, icon);
       myHint = hint;
     }

@@ -159,6 +159,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 public void testCeSeveralLambdas() throws Exception {
                     runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceSeveralLambdas.kt");
                 }
+
+                @TestMetadata("samConstruction.kt")
+                public void testSamConstruction() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/samConstruction.kt");
+                }
             }
         }
 
@@ -265,6 +270,16 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
             @TestMetadata("functionCallWithSuspendFunctionInside.kt")
             public void testFunctionCallWithSuspendFunctionInside() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/coroutines/functionCallWithSuspendFunctionInside.kt");
+            }
+
+            @TestMetadata("infixSuspendCall.kt")
+            public void testInfixSuspendCall() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/infixSuspendCall.kt");
+            }
+
+            @TestMetadata("operatorSuspendCall.kt")
+            public void testOperatorSuspendCall() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/operatorSuspendCall.kt");
             }
 
             @TestMetadata("primitivesCoertion.kt")

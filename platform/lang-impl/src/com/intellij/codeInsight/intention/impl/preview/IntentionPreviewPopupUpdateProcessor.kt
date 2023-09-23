@@ -31,6 +31,7 @@ import com.intellij.ui.popup.PopupPositionManager.Position.LEFT
 import com.intellij.ui.popup.PopupPositionManager.Position.RIGHT
 import com.intellij.ui.popup.PopupPositionManager.PositionAdjuster
 import com.intellij.ui.popup.PopupUpdateProcessor
+import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
@@ -116,7 +117,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   private fun adjustPosition(originalPopup: JBPopup?, checkResizing: Boolean = false) {
     if (originalPopup != null && originalPopup.content.isShowing) {
       val positionAdjuster = PositionAdjuster(originalPopup.content)
-      val previousDimension = PositionAdjuster.getPopupSize(popup)
+      val previousDimension = PopupImplUtil.getPopupSize(popup)
       val bounds: Rectangle = positionAdjuster.adjustBounds(previousDimension, arrayOf(RIGHT, LEFT))
       val popupSize = popup.size
       if (checkResizing && popupSize != null && bounds.width < MIN_WIDTH) {

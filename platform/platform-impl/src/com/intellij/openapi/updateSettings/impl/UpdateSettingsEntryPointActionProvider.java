@@ -58,6 +58,10 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   }
 
   private static void preparePrevPlatformUpdate() {
+    if (!UpdateSettings.getInstance().isCheckNeeded()) {
+      return;
+    }
+
     PropertiesComponent properties = PropertiesComponent.getInstance();
     BuildNumber newBuildForUpdate;
     try {
@@ -137,8 +141,19 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   public static void newPlatformUpdate(@NotNull PlatformUpdates.Loaded platformUpdateInfo,
                                        @NotNull List<PluginDownloader> updatedPlugins,
                                        @NotNull Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
-    setPlatformUpdateInfo(platformUpdateInfo);
-    newPlatformUpdate(updatedPlugins, incompatiblePlugins, null);
+    UpdateSettings settings = UpdateSettings.getInstance();
+    if (settings.isCheckNeeded()) {
+      setPlatformUpdateInfo(platformUpdateInfo);
+    }
+    else {
+      setPlatformUpdateInfo(null);
+    }
+    if (settings.isPluginsCheckNeeded()) {
+      newPlatformUpdate(updatedPlugins, incompatiblePlugins, null);
+    }
+    else {
+      newPlatformUpdate(null, null, (String)null);
+    }
     updateState();
   }
 
@@ -168,13 +183,18 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
   public static void newPluginUpdates(@NotNull Collection<PluginDownloader> updatedPlugins,
                                       @NotNull Collection<PluginNode> customRepositoryPlugins) {
-    myUpdatedPlugins = updatedPlugins;
-    myCustomRepositoryPlugins = customRepositoryPlugins;
+    if (UpdateSettings.getInstance().isPluginsCheckNeeded()) {
+      myUpdatedPlugins = updatedPlugins;
+      myCustomRepositoryPlugins = customRepositoryPlugins;
+    }
+    else {
+      myUpdatedPlugins = null;
+    }
     updateState();
   }
 
   private static void newUpdatedPlugins(@Nullable Collection<PluginDownloader> updatedPlugins) {
-    myUpdatedPlugins = updatedPlugins == null || updatedPlugins.isEmpty() ? null : updatedPlugins;
+    myUpdatedPlugins = ContainerUtil.isEmpty(updatedPlugins) ? null : updatedPlugins;
     updateState();
   }
 

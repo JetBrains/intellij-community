@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.CancellablePromise
@@ -37,7 +38,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
   private var previousStatus: Status? = null
 
   init {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     tree.showsRootHandles = false
     project.messageBus.connect(this)
       .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this)

@@ -17,6 +17,9 @@ public class DataFlowInspection20Test extends DataFlowInspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
   }
 
+  public void testSealedClassCast() { doTest(); }
+  public void testCastToSealedInterface() { doTest(); }
+
   public void testWhenPatterns() {
     doTest();
   }

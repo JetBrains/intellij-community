@@ -117,11 +117,7 @@ class CompilationContextImpl private constructor(
     val modules = project.modules
     nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
     dependenciesProperties = DependenciesProperties(paths.communityHomeDirRoot)
-    bundledRuntime = BundledRuntimeImpl(options = options,
-                                        paths = paths,
-                                        dependenciesProperties = dependenciesProperties,
-                                        error = messages::error,
-                                        info = messages::info)
+    bundledRuntime = BundledRuntimeImpl(context = this)
   }
 
   companion object {

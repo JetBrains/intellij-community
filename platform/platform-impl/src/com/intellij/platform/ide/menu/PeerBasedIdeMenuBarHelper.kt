@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.EDT
+import com.intellij.ui.mac.foundation.NSDefaults
 import com.intellij.ui.mac.screenmenu.MenuBar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -14,22 +15,10 @@ internal open class PeerBasedIdeMenuBarHelper(private val screenMenuPeer: MenuBa
                                               menuBar: MenuBarImpl) : IdeMenuBarHelper(flavor, menuBar) {
   override fun isUpdateForbidden() = screenMenuPeer.isAnyChildOpened
 
-  override suspend fun updateMenuActions(mainActionGroup: ActionGroup?, forceRebuild: Boolean, isFirstUpdate: Boolean): List<ActionGroup> {
-    val newVisibleActions = if (mainActionGroup == null) {
-      emptyList()
-    }
-    else {
-      expandMainActionGroup(mainActionGroup = mainActionGroup,
-                            menuBar = menuBar.component,
-                            frame = menuBar.frame,
-                            presentationFactory = presentationFactory,
-                            isFirstUpdate = isFirstUpdate) ?: return emptyList()
-    }
-
+  override suspend fun doUpdateVisibleActions(newVisibleActions: List<ActionGroup>, forceRebuild: Boolean) {
     if (!forceRebuild && newVisibleActions == visibleActions && !presentationFactory.isNeedRebuild) {
-      return newVisibleActions
+      return
     }
-
     withContext(Dispatchers.EDT) {
       visibleActions = newVisibleActions
       screenMenuPeer.beginFill()
@@ -43,7 +32,7 @@ internal open class PeerBasedIdeMenuBarHelper(private val screenMenuPeer: MenuBa
                                                          presentationFactory = presentationFactory,
                                                          isMnemonicEnabled = enableMnemonics,
                                                          frame = menuBar.frame,
-                                                         useDarkIcons = menuBar.isDarkMenu)
+                                                         useDarkIcons = NSDefaults.isDarkMenuBar())
             )
           }
         }
@@ -54,6 +43,5 @@ internal open class PeerBasedIdeMenuBarHelper(private val screenMenuPeer: MenuBa
       }
       flavor.updateAppMenu()
     }
-    return newVisibleActions
   }
 }

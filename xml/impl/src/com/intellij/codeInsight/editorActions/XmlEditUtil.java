@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -31,8 +31,7 @@ public final class XmlEditUtil {
     return "\"";
   }
 
-  @NotNull
-  private static CodeStyleSettings.QuoteStyle getQuoteStyleForFile(@NotNull PsiFile file) {
+  private static @NotNull CodeStyleSettings.QuoteStyle getQuoteStyleForFile(@NotNull PsiFile file) {
     return CodeStyle.getSettings(file)
       .getCustomSettings(HtmlCodeStyleSettings.class)
       .HTML_QUOTE_STYLE;

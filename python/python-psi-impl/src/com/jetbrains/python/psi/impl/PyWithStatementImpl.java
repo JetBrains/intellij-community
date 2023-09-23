@@ -2,6 +2,8 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiListLikeElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -12,10 +14,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
-public class PyWithStatementImpl extends PyElementImpl implements PyWithStatement {
+public class PyWithStatementImpl extends PyElementImpl implements PyWithStatement, PsiListLikeElement {
   private static final TokenSet WITH_ITEM = TokenSet.create(PyElementTypes.WITH_ITEM);
 
   public PyWithStatementImpl(ASTNode astNode) {
@@ -67,5 +70,10 @@ public class PyWithStatementImpl extends PyElementImpl implements PyWithStatemen
   @Override
   public boolean isAsync() {
     return getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD) != null;
+  }
+
+  @Override
+  public @NotNull List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getWithItems());
   }
 }

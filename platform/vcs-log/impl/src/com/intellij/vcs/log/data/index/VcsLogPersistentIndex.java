@@ -159,13 +159,13 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     if (myDisposableFlag.isDisposed()) return;
     if (myCommitsToIndex.isEmpty()) return;
     // for fresh index, wait for complete log to load and index everything in one command
-    if (myBackend.isFresh() && !full) return;
+    if (isFreshOrEmpty() && !full) return;
 
     Map<VirtualFile, IntSet> commitsToIndex = myCommitsToIndex;
     myCommitsToIndex = new HashMap<>();
 
-    boolean isFull = full && myBackend.isFresh();
-    if (isFull) LOG.debug("Index storage for project " + myProject.getName() + " is fresh, scheduling full reindex");
+    boolean isFull = full && isFreshOrEmpty();
+    if (isFull) LOG.debug("Index storage for project " + myProject.getName() + " is fresh or empty, scheduling full reindex");
     for (VirtualFile root : commitsToIndex.keySet()) {
       IntSet commits = commitsToIndex.get(root);
       if (commits.isEmpty()) continue;
@@ -183,6 +183,11 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       myIndexCollector.reportFreshIndex();
       myBackend.setFresh(false);
     }
+  }
+
+  private boolean isFreshOrEmpty() {
+    if (myBackend.isFresh()) return true;
+    return myBackend.isEmpty() && !ContainerUtil.exists(myRoots, root -> isIndexingIsProgress(root));
   }
 
   private void storeDetail(@NotNull VcsLogIndexer.CompressedDetails detail, @NotNull VcsLogWriter mutator) {
@@ -213,7 +218,11 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   @Override
   public synchronized boolean isIndexed(@NotNull VirtualFile root) {
     return isIndexingEnabled(root) &&
-           (!myCommitsToIndex.containsKey(root) && myNumberOfTasks.get(root).get() == 0);
+           (!myCommitsToIndex.containsKey(root) && !isIndexingIsProgress(root));
+  }
+
+  private boolean isIndexingIsProgress(@NotNull VirtualFile root) {
+    return myNumberOfTasks.get(root).get() != 0;
   }
 
   @Override

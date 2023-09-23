@@ -3,6 +3,7 @@ package com.intellij.updater;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.containers.ContainerUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,16 +19,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
-@SuppressWarnings("JUnit3StyleTestMethodInJUnit4Class")
+@SuppressWarnings({"JUnit3StyleTestMethodInJUnit4Class", "DuplicateExpressions"})
 public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   @SuppressWarnings("JUnitTestCaseWithNoTests")
   public static final class StandardModeTest extends PatchApplyingRevertingTest { }
@@ -223,7 +225,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).isEmpty();
-    assertAppliedAndReverted(preparationResult, expected -> expected.remove("bin/idea.bat"));
+    assertAppliedAndReverted(preparationResult, (original, target) -> target.remove("bin/idea.bat"));
   }
 
   @Test
@@ -241,10 +243,10 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).isEmpty();
-    assertAppliedAndReverted(preparationResult, expected -> {
-      expected.remove("opt/");
-      expected.remove("opt/file.txt");
-      expected.remove("opt/another.txt");
+    assertAppliedAndReverted(preparationResult, (original, target) -> {
+      target.remove("opt/");
+      target.remove("opt/file.txt");
+      target.remove("opt/another.txt");
     });
   }
 
@@ -379,7 +381,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).isEmpty();
-    assertAppliedAndReverted(preparationResult, expected -> expected.put("lib/boot.jar", CHECKSUMS.BOOTSTRAP_JAR));
+    assertAppliedAndReverted(preparationResult, (original, target) -> target.put("lib/boot.jar", CHECKSUMS.BOOTSTRAP_JAR));
   }
 
   @Test
@@ -422,7 +424,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).isEmpty();
-    assertAppliedAndReverted(preparationResult, expected -> expected.put("new_file.txt", CHECKSUMS.README_TXT));
+    assertAppliedAndReverted(preparationResult, (original, target) -> target.put("new_file.txt", CHECKSUMS.README_TXT));
   }
 
   @Test
@@ -703,6 +705,32 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     assertAppliedAndReverted();
   }
 
+  @Test
+  public void creatingParentDirectoriesForMissingCriticalFiles() throws Exception {
+    randomFile(myOlderDir.toPath().resolve("plugins/some/lib/plugin.jar"));
+    randomFile(myOlderDir.toPath().resolve("plugins/other/lib/plugin.jar"));
+    resetNewerDir();
+    randomFile(myNewerDir.toPath().resolve("plugins/some/lib/plugin.jar"));
+
+    myPatchSpec.setCriticalFiles(List.of("plugins/some/lib/plugin.jar"));
+    createPatch();
+
+    NioFiles.deleteRecursively(myOlderDir.toPath().resolve("plugins/some"));
+
+    var preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+    assertThat(preparationResult.validationResults).containsExactly(
+      new ValidationResult(ValidationResult.Kind.CONFLICT,
+                           "plugins/some/lib/plugin.jar",
+                           ValidationResult.Action.UPDATE,
+                           "Absent",
+                           ValidationResult.Option.REPLACE, ValidationResult.Option.IGNORE)
+    );
+    assertAppliedAndReverted(preparationResult, (original, target) -> {
+      original.put("plugins/some/", Digester.DIRECTORY);
+      original.put("plugins/some/lib/", Digester.DIRECTORY);
+    });
+  }
+
   @Override
   protected Patch createPatch() throws IOException {
     assertFalse(myFile.exists());
@@ -737,7 +765,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
     if (myDoBackup) {
       PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backupDir, TEST_UI);
-      assertEquals(original, digest(patch, myOlderDir));
+      assertThat(digest(patch, myOlderDir)).containsExactlyEntriesOf(original);
     }
   }
 
@@ -745,43 +773,43 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     if (!myFile.exists()) {
       createPatch();
     }
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    assertAppliedAndReverted(preparationResult, expected -> {});
+    var preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+    assertAppliedAndReverted(preparationResult, (original, target) -> {});
   }
 
   private void assertAppliedAndReverted(PatchFileCreator.PreparationResult preparationResult) throws Exception {
-    assertAppliedAndReverted(preparationResult, expected -> {});
+    assertAppliedAndReverted(preparationResult, (original, target) -> {});
   }
 
   private void assertAppliedAndReverted(PatchFileCreator.PreparationResult preparationResult,
-                                        Consumer<Map<String, Long>> corrector) throws Exception {
-    Patch patch = preparationResult.patch;
-    Map<String, Long> original = digest(patch, myOlderDir);
-    Map<String, Long> target = digest(patch, myNewerDir);
-    corrector.accept(target);
-    File backupDir = myDoBackup ? getTempFile("backup") : null;
+                                        BiConsumer<Map<String, Long>, Map<String, Long>> adjuster) throws Exception {
+    var patch = preparationResult.patch;
+    var original = digest(patch, myOlderDir);
+    var target = digest(patch, myNewerDir);
+    adjuster.accept(original, target);
+    var backupDir = myDoBackup ? getTempFile("backup") : null;
 
-    Map<String, ValidationResult.Option> options = new HashMap<>();
-    for (ValidationResult each : preparationResult.validationResults) {
+    var options = new HashMap<String, ValidationResult.Option>();
+    for (var each : preparationResult.validationResults) {
       if (patch.isStrict()) {
         assertThat(each.options).isNotEmpty().doesNotContain(ValidationResult.Option.NONE);
         options.put(each.path, each.options.get(0));
       }
       else {
-        assertNotSame(each.toString(), ValidationResult.Kind.ERROR, each.kind);
+        assertThat(each.kind).describedAs(each.toString()).isNotSameAs(ValidationResult.Kind.ERROR);
       }
     }
 
-    PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, options, backupDir, TEST_UI);
+    var applicationResult = PatchFileCreator.apply(preparationResult, options, backupDir, TEST_UI);
     if (applicationResult.error != null) {
       throw new AssertionError("patch failed", applicationResult.error);
     }
-    assertTrue(applicationResult.applied);
-    assertEquals(target, digest(patch, myOlderDir));
+    assertThat(applicationResult.applied).isTrue();
+    assertThat(digest(patch, myOlderDir)).containsExactlyEntriesOf(target);
 
     if (myDoBackup) {
       PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backupDir, TEST_UI);
-      assertEquals(original, digest(patch, myOlderDir));
+      assertThat(digest(patch, myOlderDir)).containsExactlyEntriesOf(original);
     }
   }
 

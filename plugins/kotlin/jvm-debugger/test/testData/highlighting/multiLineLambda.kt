@@ -16,6 +16,11 @@ fun main() {
          it }
 
   setOf(1)
+    //Breakpoint!, lambdaOrdinal = 1
+    .maxOf {
+         it }.toLong()
+
+  setOf(1)
     //Breakpoint!, lambdaOrdinal = 2
     .map { it } .maxOf { it
        }

@@ -25,6 +25,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
@@ -128,7 +129,7 @@ class KotlinLineBreakpointType :
         }
 
         lambdas.forEachIndexed { ordinal, lambda ->
-            val positionImpl = XSourcePositionImpl.createByElement(lambda.bodyExpression)
+            val positionImpl = XSourcePositionImpl.createByElement(lambda)
             if (positionImpl != null) {
                 result.add(LambdaJavaBreakpointVariant(positionImpl, lambda, ordinal))
             }

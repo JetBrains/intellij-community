@@ -28,6 +28,16 @@ public class DeclareCollectionAsInterface
         set2.put("bar", "bar");
     }
 
+    public void trimToSize(ArrayList<String> data)
+    {
+        data.trimToSize();
+    }
+
+    public int size(<warning descr="Declaration of 'ArrayList' should probably be weakened to 'java.util.List'">ArrayList</warning><String> data)
+    {
+       return data.size();
+    }
+
     public HashMap fooBaz()
     {
         return new HashMap();

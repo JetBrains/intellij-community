@@ -52,7 +52,7 @@ public final class MacrosDialog extends DialogWrapper {
                       @NotNull Predicate<? super Macro> filter,
                       @Nullable Map<String, String> userMacros) {
     super(parent, true);
-    myDataContext = DataManager.getInstance().getDataContext(parent);
+    myDataContext = MacroManager.getCorrectContext(DataManager.getInstance().getDataContext(parent));
     init(filter, userMacros);
   }
 

@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.webTypes.json
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.applyIf
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_CLASSES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_FUNCTIONS
@@ -27,6 +29,7 @@ import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.js.WebSymbolJsKind
+import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConverter
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
@@ -178,30 +181,75 @@ internal fun Reference.getSymbolKind(context: WebSymbol?): WebSymbolQualifiedKin
       WebSymbolQualifiedKind(it.namespace, it.kind)
     }
 
-internal fun Reference.resolve(name: String?,
+internal fun Reference.resolve(name: String,
                                scope: List<WebSymbolsScope>,
                                queryExecutor: WebSymbolsQueryExecutor,
                                virtualSymbols: Boolean = true,
-                               abstractSymbols: Boolean = false): List<WebSymbol> {
-  if (name != null && name.isEmpty())
-    return emptyList()
+                               abstractSymbols: Boolean = false): List<WebSymbol> =
+  processWebSymbols(name, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
+    runNameMatchQuery(path, virtualSymbols2, abstractSymbols2, false, scope)
+  }
+
+internal fun Reference.resolve(scope: List<WebSymbolsScope>,
+                               queryExecutor: WebSymbolsQueryExecutor,
+                               virtualSymbols: Boolean = true,
+                               abstractSymbols: Boolean = false): List<WebSymbol> =
+  processWebSymbols(null, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
+    if (path.isEmpty()) return@processWebSymbols emptyList()
+    val lastSegment = path.last()
+    if (lastSegment.name.isEmpty())
+      runListSymbolsQuery(path.subList(0, path.size - 1), lastSegment.namespace, lastSegment.kind,
+                          false, virtualSymbols2, abstractSymbols2, false, scope)
+    else
+      runNameMatchQuery(path, virtualSymbols2, abstractSymbols2, false, scope)
+  }
+
+internal fun Reference.list(scope: List<WebSymbolsScope>,
+                            queryExecutor: WebSymbolsQueryExecutor,
+                            expandPatterns: Boolean,
+                            virtualSymbols: Boolean = true,
+                            abstractSymbols: Boolean = false): List<WebSymbol> =
+  processWebSymbols(null, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
+    if (path.isEmpty()) return@processWebSymbols emptyList()
+    val lastSegment = path.last()
+    runListSymbolsQuery(path.subList(0, path.size - 1), lastSegment.namespace, lastSegment.kind,
+                        expandPatterns, virtualSymbols2, abstractSymbols2, false, scope)
+  }
+
+private fun Reference.processWebSymbols(
+  name: String?,
+  scope: List<WebSymbolsScope>,
+  queryExecutor: WebSymbolsQueryExecutor,
+  virtualSymbols: Boolean,
+  abstractSymbols: Boolean,
+  queryRunner: WebSymbolsQueryExecutor.(List<WebSymbolQualifiedName>, Boolean, Boolean) -> List<WebSymbol>
+): List<WebSymbol> {
+  ProgressManager.checkCanceled()
   return when (val reference = this.value) {
-    is String -> queryExecutor.runNameMatchQuery(
-      parseWebTypesPath(reference + if (name != null) "/$name" else "", scope.lastWebSymbol),
-      virtualSymbols, abstractSymbols, scope = scope)
+    is String -> queryExecutor.queryRunner(
+      parseWebTypesPath(reference, scope.lastWebSymbol).applyIf(name != null) { withLastSegmentName(name ?: "") },
+      virtualSymbols, abstractSymbols)
     is ReferenceWithProps -> {
       val nameConversionRules = reference.createNameConversionRules(scope.lastWebSymbol)
-      val path = parseWebTypesPath((reference.path ?: return emptyList()) + if (name != null) "/$name" else "", scope.lastWebSymbol)
-      val matches = queryExecutor.withNameConversionRules(nameConversionRules)
-        .runNameMatchQuery(path, reference.includeVirtual ?: virtualSymbols,
-                           reference.includeAbstract ?: abstractSymbols,
-                           false, scope)
+      val path = parseWebTypesPath(reference.path ?: return emptyList(), scope.lastWebSymbol)
+        .applyIf(name != null) { withLastSegmentName(name ?: "") }
+      val matches = queryExecutor.withNameConversionRules(nameConversionRules).queryRunner(
+        path, reference.includeVirtual ?: virtualSymbols, reference.includeAbstract ?: abstractSymbols)
       if (reference.filter == null) return matches
       val properties = reference.additionalProperties.toMap()
       WebSymbolsFilter.get(reference.filter)
         .filterNameMatches(matches, queryExecutor, scope, properties)
     }
     else -> throw IllegalArgumentException(reference::class.java.name)
+  }.flatMap { symbol ->
+    if (symbol is WebSymbolMatch
+        && symbol.nameSegments.size == 1
+        && symbol.nameSegments[0].let { segment ->
+        segment.canUnwrapSymbols()
+        && segment.symbols.all { it.name == symbol.name }
+      })
+      symbol.nameSegments[0].symbols
+    else listOf(symbol)
   }
 }
 
@@ -211,11 +259,13 @@ internal fun Reference.codeCompletion(name: String,
                                       position: Int = 0,
                                       virtualSymbols: Boolean = true): List<WebSymbolCodeCompletionItem> {
   return when (val reference = this.value) {
-    is String -> queryExecutor.runCodeCompletionQuery(parseWebTypesPath("$reference/$name", scope.lastWebSymbol), position,
-                                                      virtualSymbols, scope)
+    is String -> queryExecutor.runCodeCompletionQuery(
+      parseWebTypesPath("$reference", scope.lastWebSymbol).withLastSegmentName(name), position,
+      virtualSymbols, scope
+    )
     is ReferenceWithProps -> {
       val nameConversionRules = reference.createNameConversionRules(scope.lastWebSymbol)
-      val path = parseWebTypesPath((reference.path ?: return emptyList()) + "/$name", scope.lastWebSymbol)
+      val path = parseWebTypesPath(reference.path ?: return emptyList(), scope.lastWebSymbol).withLastSegmentName(name)
       val codeCompletions = queryExecutor.withNameConversionRules(nameConversionRules)
         .runCodeCompletionQuery(path, position, reference.includeVirtual ?: virtualSymbols, scope)
       if (reference.filter == null) return codeCompletions
@@ -465,6 +515,12 @@ fun parseWebTypesPath(path: String?, context: WebSymbol?): List<WebSymbolQualifi
     parseWebTypesPath(StringUtil.split(path, "/", true, true), context)
   else
     emptyList()
+
+internal fun List<WebSymbolQualifiedName>.withLastSegmentName(name: String) =
+  if (isNotEmpty())
+    subList(0, size - 1) + last().copy(name = name)
+  else
+    this
 
 internal fun String.asWebTypesSymbolNamespace(): SymbolNamespace? =
   takeIf { it == NAMESPACE_JS || it == NAMESPACE_HTML || it == NAMESPACE_CSS }

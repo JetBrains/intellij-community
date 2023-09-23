@@ -9,7 +9,6 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffType;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -24,6 +23,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
@@ -121,8 +121,8 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
   }
 
-  int getEditorTextOffset() {
-    return EditorFragmentComponent.createEditorFragmentBorder(myEditor).getBorderInsets(myEditorComponent).left;
+  private int getEditorTextOffset() {
+    return createEditorFragmentBorder().getBorderInsets(myEditorComponent).left;
   }
 
   @Override
@@ -145,18 +145,10 @@ public class LineStatusMarkerPopupPanel extends JPanel {
 
 
   public static void showPopupAt(@NotNull Editor editor,
-                                 @NotNull ActionToolbar toolbar,
-                                 @Nullable JComponent editorComponent,
-                                 @Nullable JComponent additionalInfoPanel,
+                                 @NotNull LineStatusMarkerPopupPanel panel,
                                  @Nullable Point mousePosition,
-                                 @NotNull Disposable childDisposable,
-                                 @Nullable DataProvider dataProvider) {
-    LineStatusMarkerPopupPanel popupPanel = new LineStatusMarkerPopupPanel(editor, toolbar, editorComponent, additionalInfoPanel);
-
-    if (dataProvider != null) DataManager.registerDataProvider(popupPanel, dataProvider);
-    toolbar.setTargetComponent(popupPanel);
-
-    LightweightHint hint = new LightweightHint(popupPanel);
+                                 @NotNull Disposable childDisposable) {
+    LightweightHint hint = new LightweightHint(panel);
     HintListener closeListener = __ -> Disposer.dispose(childDisposable);
     hint.addHintListener(closeListener);
     hint.setForceLightweightPopup(true);
@@ -169,7 +161,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
       if (delta < 0) delta += lineHeight;
       point.y = mousePosition.y + delta;
     }
-    point.x -= popupPanel.getEditorTextOffset(); // align main editor with the one in popup
+    point.x -= panel.getEditorTextOffset(); // align main editor with the one in popup
 
     int flags = HintManager.HIDE_BY_CARET_MOVE | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, flags, -1, false, new HintHint(editor, point));
@@ -228,7 +220,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
   }
 
   @NotNull
-  public static Border createEditorFragmentBorder() {
+  private static Border createEditorFragmentBorder() {
     Border outsideEditorBorder = JBUI.Borders.customLine(getBorderColor(), 1);
     Border insideEditorBorder = JBUI.Borders.empty(2);
     return BorderFactory.createCompoundBorder(outsideEditorBorder, insideEditorBorder);
@@ -264,8 +256,9 @@ public class LineStatusMarkerPopupPanel extends JPanel {
                                                          @NotNull EditorTextField textField,
                                                          @NotNull Document vcsDocument,
                                                          TextRange vcsTextRange,
-                                                         @NotNull FileType fileType) {
-    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType);
+                                                         @Nullable FileType fileType) {
+    FileType type = fileType != null ? fileType : PlainTextFileType.INSTANCE;
+    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, type);
     highlighter.setText(vcsDocument.getImmutableCharSequence());
     FragmentedEditorHighlighter fragmentedHighlighter = new FragmentedEditorHighlighter(highlighter, vcsTextRange);
     textField.addSettingsProvider(uEditor -> uEditor.setHighlighter(fragmentedHighlighter));
@@ -317,5 +310,14 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     }
 
     Disposer.register(parentDisposable, () -> highlighters.forEach(RangeMarker::dispose));
+  }
+
+  public static @NotNull LineStatusMarkerPopupPanel create(@NotNull Editor editor,
+                                                           @NotNull ActionToolbar toolbar,
+                                                           @Nullable JComponent editorComponent,
+                                                           @Nullable JComponent additionalInfo) {
+    LineStatusMarkerPopupPanel panel = new LineStatusMarkerPopupPanel(editor, toolbar, editorComponent, additionalInfo);
+    toolbar.setTargetComponent(panel);
+    return panel;
   }
 }

@@ -142,10 +142,10 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
     private final Language myLanguage;
 
-    protected SoftMarginsOption(@NotNull Language language,
-                                @NotNull String optionName,
-                                @NotNull String title,
-                                @Nullable String groupName) {
+    private SoftMarginsOption(@NotNull Language language,
+                              @NotNull String optionName,
+                              @NotNull String title,
+                              @Nullable String groupName) {
       super(optionName, title, groupName, null, null);
       myLanguage = language;
     }
@@ -169,9 +169,9 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
   private final class CommaSeparatedIdentifiersOption extends FieldOption {
 
-    protected CommaSeparatedIdentifiersOption(@NotNull String optionName,
-                                              @NotNull String title,
-                                              @Nullable String groupName) {
+    private CommaSeparatedIdentifiersOption(@NotNull String optionName,
+                                            @NotNull String title,
+                                            @Nullable String groupName) {
       super(null, optionName, title, groupName, null, null);
     }
 

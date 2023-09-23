@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +17,8 @@ import java.util.function.UnaryOperator;
 
 @ApiStatus.Internal
 final class FileLocalStringEnumerator implements AbstractStringEnumerator {
-  private final Object2IntMap<String> myEnumerates;
+  @SuppressWarnings("SSBasedInspection")
+  private final Object2IntOpenHashMap<String> myEnumerates;
   private final ArrayList<String> myStrings = new ArrayList<>();
 
   FileLocalStringEnumerator(boolean forSavingStub) {
@@ -58,7 +58,7 @@ final class FileLocalStringEnumerator implements AbstractStringEnumerator {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
   }
 
   @Override
@@ -75,6 +75,14 @@ final class FileLocalStringEnumerator implements AbstractStringEnumerator {
     myStrings.ensureCapacity(myStrings.size() + numberOfStrings);
     for (int i = 0; i < numberOfStrings; i++) {
       myStrings.add(mapping.apply(IOUtil.readUTF(stream)));
+    }
+  }
+
+  void read(@NotNull DataInput stream) throws IOException {
+    int numberOfStrings = DataInputOutputUtil.readINT(stream);
+    myStrings.ensureCapacity(myStrings.size() + numberOfStrings);
+    for (int i = 0; i < numberOfStrings; i++) {
+      myStrings.add(IOUtil.readUTF(stream));
     }
   }
 }

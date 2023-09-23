@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.emmet;
 
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
@@ -85,9 +85,8 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
     myFilterCheckboxes = null;
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     return myPanel;
   }
 
@@ -149,8 +148,7 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
     Disposer.dispose(this);
   }
 
-  @NotNull
-  private Set<String> enabledFilters() {
+  private @NotNull Set<String> enabledFilters() {
     Set<String> result = new HashSet<>();
     for (Map.Entry<String, JBCheckBox> checkbox : myFilterCheckboxes.entrySet()) {
       if (checkbox.getValue().isSelected()) {
@@ -160,21 +158,18 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
     return result;
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return XmlBundle.message("configurable.XmlEmmetConfigurable.display.name");
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     return getId();
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "reference.idesettings.emmet.xml";
   }
 }

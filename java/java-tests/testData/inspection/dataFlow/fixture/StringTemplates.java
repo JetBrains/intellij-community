@@ -38,6 +38,12 @@ class Main {
     if (<warning descr="Condition 's3.equals(\"a123b\")' is always 'true'">s3.equals("a123b")</warning>) {}
     String s4 = STR."x = \{x}";
     if (<warning descr="Condition 's4.length() >= 5 && s4.length() <= 15' is always 'true'"><warning descr="Condition 's4.length() >= 5' is always 'true'">s4.length() >= 5</warning> && <warning descr="Condition 's4.length() <= 15' is always 'true' when reached">s4.length() <= 15</warning></warning>) {}
+    String s5 = STR."hello\{}";
+    if (<warning descr="Condition 's5.equals(\"hellonull\")' is always 'true'">s5.equals("hellonull")</warning>) {}
   }
-
+  
+  void testIncomplete() {
+    int x = 1;
+    return <error descr="Processor missing from string template expression">"\{x}"</error>;
+  }
 }

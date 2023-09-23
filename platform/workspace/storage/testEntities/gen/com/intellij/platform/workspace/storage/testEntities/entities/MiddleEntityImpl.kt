@@ -15,21 +15,21 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToAbstractManyParent
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractManyParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class MiddleEntityImpl(val dataSource: MiddleEntityData) : MiddleEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class MiddleEntityImpl(private val dataSource: MiddleEntityData) : MiddleEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositeBaseEntity::class.java, BaseEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
     )
 
@@ -47,6 +47,7 @@ open class MiddleEntityImpl(val dataSource: MiddleEntityData) : MiddleEntity, Wo
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: MiddleEntityData?) : ModifiableWorkspaceEntityBase<MiddleEntity, MiddleEntityData>(result), MiddleEntity.Builder {
     constructor() : this(MiddleEntityData())
@@ -75,7 +76,7 @@ open class MiddleEntityImpl(val dataSource: MiddleEntityData) : MiddleEntity, Wo
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -161,7 +162,7 @@ open class MiddleEntityImpl(val dataSource: MiddleEntityData) : MiddleEntity, Wo
 class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {
   lateinit var property: String
 
-  fun isPropertyInitialized(): Boolean = ::property.isInitialized
+  internal fun isPropertyInitialized(): Boolean = ::property.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<MiddleEntity> {
     val modifiable = MiddleEntityImpl.Builder(null)
@@ -178,6 +179,11 @@ class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.MiddleEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -232,9 +238,5 @@ class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {
     var result = javaClass.hashCode()
     result = 31 * result + property.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

@@ -3,10 +3,11 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.io
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.AtomicDurableRecord.Companion.RecordBuilder
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArray.Companion.OpenMode.ReadWrite
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker.AdvanceToken
+import com.intellij.openapi.vfs.newvfs.persistent.log.util.CloseableAdvancingPositionTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.LockFreeAdvancingPositionTracker
-import com.intellij.util.io.ResilientFileChannel
 import java.io.Closeable
 import java.io.Flushable
 import java.io.IOException
@@ -17,44 +18,35 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.nio.file.StandardOpenOption.*
 import java.util.*
-import kotlin.io.path.deleteExisting
-import kotlin.io.path.div
-import kotlin.io.path.forEachDirectoryEntry
-import kotlin.io.path.name
+import kotlin.io.path.*
 
 /**
- * @param chunkSize if changed between instantiations, storage must be cleared beforehand (everything in [storagePath])
+ * @param pageSize if changed between instantiations, storage must be cleared beforehand (everything in [storagePath])
  */
 class AppendLogStorage(
   private val storagePath: Path,
   private val openMode: Mode,
-  private val chunkSize: Int
+  private val pageSize: Int
 ) : RandomAccessReadBuffer, Flushable, Closeable {
-  private val chunksDir = storagePath / "chunks"
-  private val persistentSizeHandler: PersistentVar<Long> = PersistentVar.long(storagePath / "size")
-  private var persistentSize by persistentSizeHandler
-  private val persistentStartOffsetHandler: PersistentVar<Long> = PersistentVar.long(storagePath / "startOffset")
-  private var persistentStartOffset by persistentStartOffsetHandler
-  private val storageIO: ChunkedMemoryMappedIO
-  private val positionTracker: AdvancingPositionTracker
-  @Volatile
-  private var closedForAppending: Boolean = false
+  private val pagesDir = storagePath / "chunks"
+  private val atomicState: AtomicDurableRecord<State>
+  private val storageIO: PagedMemoryMappedIO
+  private val positionTracker: CloseableAdvancingPositionTracker
 
   init {
-    require(chunkSize > 0 && (chunkSize and (chunkSize - 1)) == 0) { "chunkSize must be a power of 2" }
+    require(pageSize > 0 && (pageSize and (pageSize - 1)) == 0) { "pageSize must be a power of 2" }
 
     FileUtil.ensureExists(storagePath.toFile())
-    FileUtil.ensureExists(chunksDir.toFile())
+    FileUtil.ensureExists(pagesDir.toFile())
 
-    val firstChunkId = (persistentStartOffset ?: 0L) / chunkSize
-    storageIO = ChunkedMemoryMappedIO(chunkSize, firstChunkId.toInt()) {
-      require(it >= 0) { "negative chunk id: $it" }
-      ResilientFileChannel(chunksDir / chunkName(it), openMode.openOptions).use { fileChannel ->
-        fileChannel.map(openMode.mapMode, 0L, chunkSize.toLong())
-      }
+    atomicState = AtomicDurableRecord.open(storagePath / "state", ReadWrite, stateBuilder)
+
+    val stateSnapshot = atomicState.get()
+    val firstPageId = stateSnapshot.startOffset / pageSize
+    storageIO = PagedMemoryMappedIO.openFilePerPage(pageSize, openMode.mapMode, firstPageId = firstPageId.toInt()) {
+      pagesDir / pageName(it)
     }
-
-    positionTracker = LockFreeAdvancingPositionTracker(persistentSize ?: 0L)
+    positionTracker = LockFreeAdvancingPositionTracker(stateSnapshot.size)
   }
 
   /**
@@ -68,10 +60,7 @@ class AppendLogStorage(
   }
 
   fun appendEntry(size: Long): AppendContext {
-    check(!closedForAppending) {
-      "AppendLogStorage is already closed for new appends" //  there is a disposal in progress
-    }
-    val token = positionTracker.beginAdvance(size)
+    val token = positionTracker.startAdvance(size)
     return AppendContextImpl(token, size)
   }
 
@@ -98,6 +87,9 @@ class AppendLogStorage(
     }
 
     override fun write(position: Long, buf: ByteBuffer, offset: Int, length: Int) {
+      require(position >= 0 && position + length <= expectedSize) {
+        "[$position..${position + length}) is not contained in [0..$expectedSize)"
+      }
       storageIO.write(position + advanceToken.position, buf, offset, length)
     }
   }
@@ -108,28 +100,30 @@ class AppendLogStorage(
    * There must be an external guarantee that read/write access will never happen to the [0, position) memory region.
    */
   fun clearUpTo(position: Long) {
-    require(position >= (persistentStartOffset ?: 0L)) {
-      "new start offset is smaller than before: was $persistentStartOffset, new $position"
+    atomicState.update {
+      require(position >= startOffset) {
+        "new start offset is smaller than before: was $startOffset, new $position"
+      }
+      startOffset = position
     }
-    persistentStartOffset = position
     val lastByteToFree = position - 1
     if (lastByteToFree < 0) return
-    storageIO.disposeChunksContainedIn(0..lastByteToFree)
-    val lastChunkToClear = storageIO.getChunkIdForByte(lastByteToFree) - 1 // lastByteToFree might be in the middle of the chunk
-    chunksDir.forEachDirectoryEntry("*.dat") { chunkFile ->
+    storageIO.disposePagesContainedIn(0..lastByteToFree)
+    val lastPageToClear = storageIO.getPageIdForByte(lastByteToFree) - 1 // lastByteToFree might be in the middle of the page
+    pagesDir.forEachDirectoryEntry("*.dat") { pageFile ->
       val id = try {
-        chunkFile.name.removeSuffix(".dat").toInt(CHUNK_ENCODING_RADIX)
+        pageFile.name.removeSuffix(".dat").toInt(PAGE_ENCODING_RADIX)
       }
       catch (e: Throwable) {
-        LOG.warn("alien file in chunks directory: ${chunkFile.toAbsolutePath()}", e)
+        LOG.warn("alien file in pages directory: ${pageFile.toAbsolutePath()}", e)
         null
       }
-      if (id != null && id <= lastChunkToClear) {
+      if (id != null && id <= lastPageToClear) {
         try {
-          chunkFile.deleteExisting()
+          pageFile.deleteExisting()
         }
         catch (e: IOException) {
-          LOG.warn("failed to clear chunk ${chunkFile.toAbsolutePath()}", e)
+          LOG.warn("failed to clear page ${pageFile.toAbsolutePath()}", e)
         }
       }
     }
@@ -137,36 +131,60 @@ class AppendLogStorage(
 
   fun size(): Long = positionTracker.getReadyPosition()
   fun emergingSize(): Long = positionTracker.getCurrentAdvancePosition()
-  fun persistentSize(): Long = persistentSize ?: 0L
-  fun startOffset(): Long = persistentStartOffset ?: 0L
+  fun persistentSize(): Long = atomicState.get().size
+  fun startOffset(): Long = atomicState.get().startOffset
 
   override fun flush() {
     val readyPosition = positionTracker.getReadyPosition()
-    if (readyPosition != persistentSize) {
+    if (readyPosition != persistentSize()) {
       storageIO.flush()
-      persistentSize = readyPosition
+      atomicState.update {
+        size = readyPosition
+      }
     }
   }
 
   fun forbidNewAppends() {
-    closedForAppending = true
+    positionTracker.close()
   }
 
   override fun close() {
+    // TODO safe close()
     storageIO.close()
-    persistentSizeHandler.close()
-    persistentStartOffsetHandler.close()
+    atomicState.close()
   }
 
-  private fun chunkName(id: Int): String = id.toString(CHUNK_ENCODING_RADIX) + ".dat"
+  private fun pageName(id: Int): String = id.toString(PAGE_ENCODING_RADIX) + ".dat"
 
   companion object {
     private val LOG = Logger.getInstance(AppendLogStorage::class.java)
-    private const val CHUNK_ENCODING_RADIX = 16
+    private const val PAGE_ENCODING_RADIX = 16
 
     enum class Mode(val openOptions: Set<StandardOpenOption>, val mapMode: MapMode) {
       Read(EnumSet.of(READ), MapMode.READ_ONLY),
       ReadWrite(EnumSet.of(READ, WRITE, CREATE), MapMode.READ_WRITE)
+    }
+
+    private interface State {
+      var size: Long
+      var startOffset: Long
+    }
+
+    private val stateBuilder: RecordBuilder<State>.() -> State = {
+      object : State { // 32 bytes
+        override var size by long(0)
+        override var startOffset by long(0)
+        private val reserved_ by bytearray(16)
+      }
+    }
+
+    fun resetSize(storagePath: Path, newSize: Long) {
+      val statePath = storagePath / "state"
+      require(statePath.exists()) { "state file of AppendLogStorage does not exist in $storagePath" }
+      val atomicState = AtomicDurableRecord.open(statePath, ReadWrite, stateBuilder)
+      atomicState.update {
+        size = newSize
+      }
     }
   }
 }

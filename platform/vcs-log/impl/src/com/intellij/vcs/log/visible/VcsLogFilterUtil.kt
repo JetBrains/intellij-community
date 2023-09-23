@@ -25,7 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @RequiresBackgroundThread
 fun VcsLogData.filter(filters: VcsLogFilterCollection, commitCount: CommitCountStage = CommitCountStage.ALL): IntSet? {
-  return VcsLogFiltererImpl(logProviders, storage, topCommitsCache, commitDetailsGetter, index).filter(dataPack, filters, commitCount)
+  return VcsLogFiltererImpl(this).filter(dataPack, filters, commitCount)
 }
 
 @ApiStatus.Internal

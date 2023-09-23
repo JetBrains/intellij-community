@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.event.*;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
@@ -24,6 +24,7 @@ import org.gradle.tooling.events.StatusEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.Message;
+import org.jetbrains.plugins.gradle.tooling.MessageReporter;
 
 import java.io.File;
 import java.util.HashMap;
@@ -32,7 +33,6 @@ import java.util.UUID;
 
 import static com.intellij.openapi.util.text.StringUtil.formatDuration;
 import static com.intellij.openapi.util.text.StringUtil.formatFileSize;
-import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX;
 
 /**
  * @author Vladislav.Soroka
@@ -105,12 +105,12 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   }
 
   private boolean maybeReportModelBuilderMessage(String eventDescription) {
-    if (!eventDescription.startsWith(MODEL_BUILDER_SERVICE_MESSAGE_PREFIX)) {
+    if (!eventDescription.startsWith(MessageReporter.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX)) {
       return false;
     }
     try {
       Message message = new GsonBuilder().create()
-        .fromJson(StringUtil.substringAfter(eventDescription, MODEL_BUILDER_SERVICE_MESSAGE_PREFIX), Message.class);
+        .fromJson(StringUtil.substringAfter(eventDescription, MessageReporter.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX), Message.class);
       MessageEvent.Kind kind = MessageEvent.Kind.valueOf(message.getKind().name());
       Message.FilePosition messageFilePosition = message.getFilePosition();
       FilePosition filePosition = messageFilePosition == null ? null :
@@ -135,8 +135,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
 
   private void sendProgressToOutputIfNeeded(ProgressEvent progressEvent) {
     @NlsSafe final String operationName = progressEvent.getDescriptor().getName();
-    if (progressEvent instanceof StatusEvent) {
-      StatusEvent statusEvent = ((StatusEvent)progressEvent);
+    if (progressEvent instanceof StatusEvent statusEvent) {
       if ("bytes".equals(statusEvent.getUnit())) {
         StatusEvent oldStatusEvent = myDownloadStatusEventIds.get(operationName);
         myDownloadStatusEventIds.put(operationName, statusEvent);

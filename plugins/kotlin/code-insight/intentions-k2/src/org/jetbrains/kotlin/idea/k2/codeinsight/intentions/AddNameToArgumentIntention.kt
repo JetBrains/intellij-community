@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.addArgumentName
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.getStableNameFor
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -30,7 +31,8 @@ internal class AddNameToArgumentIntention :
     override fun getActionName(element: KtValueArgument, context: Context): String =
         KotlinBundle.message("add.0.to.argument", context.argumentName)
 
-    override fun getApplicabilityRange() = ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtValueArgument> =
+        ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
 
     override fun isApplicableByPsi(element: KtValueArgument): Boolean {
         if (element.isNamed()) return false
@@ -53,6 +55,6 @@ internal class AddNameToArgumentIntention :
     override fun apply(element: KtValueArgument, context: Context, project: Project, editor: Editor?) =
         addArgumentName(element, context.argumentName)
 
-    override fun skipProcessingFurtherElementsAfter(element: PsiElement) =
+    override fun skipProcessingFurtherElementsAfter(element: PsiElement): Boolean =
         element is KtValueArgumentList || element is KtContainerNode || super.skipProcessingFurtherElementsAfter(element)
 }

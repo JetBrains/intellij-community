@@ -45,7 +45,6 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   }
 
   /**
-   * Used by yann and gitee
    * @deprecated use {@link HTMLEditorKitBuilder}
    */
   @Deprecated

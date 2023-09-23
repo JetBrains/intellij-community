@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.remote;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,17 +35,15 @@ public final class JsonFileResolver {
            JsonSchemaCatalogProjectConfiguration.getInstance(project).isRemoteActivityEnabled();
   }
 
-  @Nullable
-  public static VirtualFile urlToFile(@NotNull String urlString) {
+  public static @Nullable VirtualFile urlToFile(@NotNull String urlString) {
     if (urlString.startsWith(JsonSchemaObject.TEMP_URL)) {
       return TempFileSystem.getInstance().findFileByPath(urlString.substring(JsonSchemaObject.TEMP_URL.length() - 1));
     }
     return VirtualFileManager.getInstance().findFileByUrl(FileUtil.toSystemIndependentName(replaceUnsafeSchemaStoreUrls(urlString)));
   }
 
-  @Nullable
   @Contract("null -> null; !null -> !null")
-  public static String replaceUnsafeSchemaStoreUrls(@Nullable String urlString) {
+  public static @Nullable String replaceUnsafeSchemaStoreUrls(@Nullable String urlString) {
     if (urlString == null) return null;
     if (urlString.equals(JsonSchemaCatalogManager.DEFAULT_CATALOG)) {
       return JsonSchemaCatalogManager.DEFAULT_CATALOG_HTTPS;
@@ -57,9 +55,8 @@ public final class JsonFileResolver {
     return urlString;
   }
 
-  @Nullable
-  public static VirtualFile resolveSchemaByReference(@Nullable VirtualFile currentFile,
-                                                     @Nullable String schemaUrl) {
+  public static @Nullable VirtualFile resolveSchemaByReference(@Nullable VirtualFile currentFile,
+                                                               @Nullable String schemaUrl) {
     if (schemaUrl == null) return null;
 
     boolean isHttpPath = isHttpPath(schemaUrl);

@@ -8,16 +8,14 @@ interface OperationLogStorage {
   fun bytesForOperationDescriptor(tag: VfsOperationTag): Int
 
   /**
-   * One of [completeTracking] or [completeTrackingWithCallback] must be called exactly once
+   * [completeTracking] must be called exactly once
    */
   interface OperationTracker {
-    fun completeTracking(composeOperation: () -> VfsOperation<*>)
-
     /**
      * @param trackingCompletedCallback called when operation's descriptor writing is finished, i.e. descriptor can be
      * read from the storage (given there are no pending preceding operations that need tracking completion)
      */
-    fun completeTrackingWithCallback(trackingCompletedCallback: () -> Unit, composeOperation: () -> VfsOperation<*>)
+    fun completeTracking(trackingCompletedCallback: (() -> Unit)? = null, composeOperation: () -> VfsOperation<*>)
   }
 
   fun trackOperation(tag: VfsOperationTag): OperationTracker

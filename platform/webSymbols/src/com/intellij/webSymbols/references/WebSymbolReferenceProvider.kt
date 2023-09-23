@@ -161,7 +161,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
       nameSegments
         .flatMap { it.symbols }
         .filter { !it.extension }
-        .asSingleSymbol()
+        .asSingleSymbol(force = true)
         ?.let { listOf(it) }
       ?: emptyList()
 

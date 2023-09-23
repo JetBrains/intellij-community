@@ -12,6 +12,7 @@ import com.intellij.util.io.keyStorage.InlinedKeyStorage;
 import com.intellij.util.io.keyStorage.NoDataException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.Closeable;
@@ -29,9 +30,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author max
  * @author jeka
  */
-public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>, Forceable, Closeable, SelfDiagnosing {
+public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>,
+                                                                ScannableDataEnumeratorEx<Data>,
+                                                                Forceable, Closeable, SelfDiagnosing {
   protected static final Logger LOG = Logger.getInstance(PersistentEnumeratorBase.class);
-  protected static final int NULL_ID = DataEnumeratorEx.NULL_ID;
 
   protected static final boolean USE_RW_LOCK = SystemProperties.getBooleanProperty("idea.persistent.data.use.read.write.lock", false);
   private static final int META_DATA_OFFSET = 4;
@@ -201,7 +203,8 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         t.addSuppressed(errorOnClose);
       }
       throw t;
-    } finally {
+    }
+    finally {
       unlockStorageWrite();
     }
   }
@@ -323,17 +326,37 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  public boolean processAllDataObject(final @NotNull Processor<? super Data> processor, final @Nullable DataFilter filter)
+  public boolean processAllDataObject(final @NotNull Processor<? super Data> processor,
+                                      final @Nullable DataFilter filter)
     throws IOException {
     return traverseAllRecords(new RecordsProcessor() {
       @Override
-      public boolean process(final int record) throws IOException {
+      public boolean process(int record) throws IOException {
         if (filter == null || filter.accept(record)) {
           return processor.process(valueOf(record));
         }
         return true;
       }
     });
+  }
+
+  public boolean forEach(@NotNull ValueReader<? super Data> reader,
+                         @Nullable DataFilter filter) throws IOException {
+    return traverseAllRecords(new RecordsProcessor() {
+      @Override
+      public boolean process(final int record) throws IOException {
+        if (filter == null || filter.accept(record)) {
+          Data value = valueOf(record);
+          return reader.read(record, value);
+        }
+        return true;
+      }
+    });
+  }
+
+  @Override
+  public boolean forEach(@NotNull ValueReader<? super Data> reader) throws IOException {
+    return forEach(reader, /*filter: */null);
   }
 
   public @NotNull Collection<Data> getAllDataObjects(final @Nullable DataFilter filter) throws IOException {
@@ -409,10 +432,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public boolean iterateData(@NotNull Processor<? super Data> processor) throws IOException {
-    return doIterateData((offset, data) -> processor.process(data));
+    return iterateData((offset, data) -> processor.process(data));
   }
 
-  protected boolean doIterateData(@NotNull AppendableObjectStorage.StorageObjectProcessor<? super Data> processor) throws IOException {
+  boolean iterateData(@NotNull AppendableObjectStorage.StorageObjectProcessor<? super Data> processor) throws IOException {
     lockStorageWrite(); // todo locking in key storage
     try {
       myKeyStorage.force();
@@ -429,14 +452,15 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   @Override
-  public Data valueOf(int idx) throws IOException {
+  public Data valueOf(@Range(from = 1, to = Integer.MAX_VALUE) int idx) throws IOException {
+    //noinspection ConstantValue
     if (idx <= NULL_ID) return null;
     return catchCorruption(() -> {
       return findValueFor(idx);
     });
   }
 
-  private Data findValueFor(int idx) throws IOException {
+  private Data findValueFor(@Range(from = 1, to = Integer.MAX_VALUE) int idx) throws IOException {
     boolean shouldLock = shouldLockOnValueOf();
     if (shouldLock) {
       lockStorageRead();

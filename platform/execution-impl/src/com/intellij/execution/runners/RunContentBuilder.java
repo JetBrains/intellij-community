@@ -365,7 +365,8 @@ public final class RunContentBuilder extends RunTab {
       return myDelegate.getChildren(e);
     }
 
-    protected @Nullable Component getEventComponent(@Nullable AnActionEvent e) {
+    @Nullable
+    private Component getEventComponent(@Nullable AnActionEvent e) {
       if (e == null) return null;
       SingleContentSupplier supplier = e.getData(SingleContentSupplier.KEY);
       return supplier != null ? supplier.getTabs().getComponent() : null;

@@ -13,7 +13,6 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
@@ -22,12 +21,14 @@ import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData) : ProjectModelTestEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTestEntityData) : ProjectModelTestEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ProjectModelTestEntity::class.java,
                                                                                 ProjectModelTestEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_MANY, true)
@@ -38,7 +39,7 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
                                                                                ContentRootTestEntity::class.java,
                                                                                ConnectionId.ConnectionType.ONE_TO_ONE, true)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
       CHILDRENENTITIES_CONNECTION_ID,
       CONTENTROOT_CONNECTION_ID,
@@ -68,6 +69,7 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
     return connections
   }
 
+
   class Builder(result: ProjectModelTestEntityData?) : ModifiableWorkspaceEntityBase<ProjectModelTestEntity, ProjectModelTestEntityData>(
     result), ProjectModelTestEntity.Builder {
     constructor() : this(ProjectModelTestEntityData())
@@ -96,7 +98,7 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -289,8 +291,8 @@ class ProjectModelTestEntityData : WorkspaceEntityData<ProjectModelTestEntity>()
   lateinit var info: String
   lateinit var descriptor: Descriptor
 
-  fun isInfoInitialized(): Boolean = ::info.isInitialized
-  fun isDescriptorInitialized(): Boolean = ::descriptor.isInitialized
+  internal fun isInfoInitialized(): Boolean = ::info.isInitialized
+  internal fun isDescriptorInitialized(): Boolean = ::descriptor.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ProjectModelTestEntity> {
     val modifiable = ProjectModelTestEntityImpl.Builder(null)
@@ -307,6 +309,11 @@ class ProjectModelTestEntityData : WorkspaceEntityData<ProjectModelTestEntity>()
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.ProjectModelTestEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -365,10 +372,5 @@ class ProjectModelTestEntityData : WorkspaceEntityData<ProjectModelTestEntity>()
     result = 31 * result + info.hashCode()
     result = 31 * result + descriptor.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.descriptor?.let { collector.addDataToInspect(it) }
-    collector.sameForAllEntities = true
   }
 }

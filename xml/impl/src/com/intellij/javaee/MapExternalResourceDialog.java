@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javaee;
 
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -186,9 +185,8 @@ public class MapExternalResourceDialog extends DialogWrapper {
     return new Dimension(400, 300);
   }
 
-  @Nullable
   @Override
-  protected String getDimensionServiceKey() {
+  protected @Nullable String getDimensionServiceKey() {
     return getClass().getName();
   }
 
@@ -196,8 +194,7 @@ public class MapExternalResourceDialog extends DialogWrapper {
     return myUri.getText();
   }
 
-  @Nullable
-  public String getResourceLocation() {
+  public @Nullable String getResourceLocation() {
     if (mySchemasTree.hasFocus()) {
       TreePath path = mySchemasTree.getSelectionPath();
       if (path == null) return null;
@@ -210,9 +207,8 @@ public class MapExternalResourceDialog extends DialogWrapper {
     }
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return "Map External Resource dialog";
   }
 

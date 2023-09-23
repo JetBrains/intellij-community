@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -29,15 +29,14 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticSetterAttribute
 
 import java.util.*;
 
-public class JavaFxImportsOptimizer implements ImportOptimizer {
+public final class JavaFxImportsOptimizer implements ImportOptimizer {
   @Override
   public boolean supports(@NotNull PsiFile file) {
     return JavaFxFileTypeFactory.isFxml(file);
   }
 
-  @NotNull
   @Override
-  public Runnable processFile(@NotNull final PsiFile file) {
+  public @NotNull Runnable processFile(final @NotNull PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
     if (vFile instanceof VirtualFileWindow) vFile = ((VirtualFileWindow)vFile).getDelegate();
     final Project project = file.getProject();
@@ -96,8 +95,8 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
     };
   }
 
-  private static void collectNamesToImport(@NotNull final Collection<Pair<String, Boolean>> names,
-                                           @NotNull final Collection<String> demandedForNested,
+  private static void collectNamesToImport(final @NotNull Collection<Pair<String, Boolean>> names,
+                                           final @NotNull Collection<String> demandedForNested,
                                            @NotNull XmlFile file) {
     file.accept(new JavaFxUsedClassesVisitor() {
       @Override
@@ -112,7 +111,7 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
     });
   }
 
-  public static abstract class JavaFxUsedClassesVisitor extends XmlRecursiveElementVisitor {
+  public abstract static class JavaFxUsedClassesVisitor extends XmlRecursiveElementVisitor {
     @Override
     public void visitXmlProlog(@NotNull XmlProlog prolog) {}
 
@@ -167,8 +166,7 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
       }
     }
 
-    @Nullable
-    private static String getTopmostOwnerClassQualifiedName(@NotNull PsiClass psiClass) {
+    private static @Nullable String getTopmostOwnerClassQualifiedName(@NotNull PsiClass psiClass) {
       PsiClass ownerClass = null;
       for (PsiClass aClass = psiClass.getContainingClass(); aClass != null; aClass = aClass.getContainingClass()) {
         ownerClass = aClass;

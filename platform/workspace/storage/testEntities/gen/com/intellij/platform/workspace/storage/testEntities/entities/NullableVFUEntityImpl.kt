@@ -11,11 +11,11 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import kotlin.jvm.JvmName
@@ -23,13 +23,13 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class NullableVFUEntityImpl(val dataSource: NullableVFUEntityData) : NullableVFUEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class NullableVFUEntityImpl(private val dataSource: NullableVFUEntityData) : NullableVFUEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -46,6 +46,7 @@ open class NullableVFUEntityImpl(val dataSource: NullableVFUEntityData) : Nullab
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: NullableVFUEntityData?) : ModifiableWorkspaceEntityBase<NullableVFUEntity, NullableVFUEntityData>(
     result), NullableVFUEntity.Builder {
@@ -76,7 +77,7 @@ open class NullableVFUEntityImpl(val dataSource: NullableVFUEntityData) : Nullab
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -135,7 +136,7 @@ class NullableVFUEntityData : WorkspaceEntityData<NullableVFUEntity>() {
   lateinit var data: String
   var fileProperty: VirtualFileUrl? = null
 
-  fun isDataInitialized(): Boolean = ::data.isInitialized
+  internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<NullableVFUEntity> {
     val modifiable = NullableVFUEntityImpl.Builder(null)
@@ -152,6 +153,11 @@ class NullableVFUEntityData : WorkspaceEntityData<NullableVFUEntity>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.NullableVFUEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -210,10 +216,5 @@ class NullableVFUEntityData : WorkspaceEntityData<NullableVFUEntity>() {
     result = 31 * result + data.hashCode()
     result = 31 * result + fileProperty.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.fileProperty?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

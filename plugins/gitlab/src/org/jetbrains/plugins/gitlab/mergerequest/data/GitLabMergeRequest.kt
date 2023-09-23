@@ -13,11 +13,8 @@ import com.intellij.util.childScope
 import com.intellij.vcsUtil.VcsFileUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.*
-import org.jetbrains.plugins.gitlab.api.getResultOrThrow
-import org.jetbrains.plugins.gitlab.api.loadUpdatableJsonList
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
@@ -81,7 +78,8 @@ internal class LoadedGitLabMergeRequest(
   parentCs: CoroutineScope,
   private val api: GitLabApi,
   private val projectMapping: GitLabProjectMapping,
-  mergeRequest: GitLabMergeRequestDTO
+  mergeRequest: GitLabMergeRequestDTO,
+  backupCommits: List<GitLabCommitRestDTO>
 ) : GitLabMergeRequest,
     GitLabMergeRequestDiscussionsContainer {
   private val cs = parentCs.childScope(Dispatchers.Default + CoroutineExceptionHandler { _, e -> LOG.warn(e) })
@@ -97,7 +95,7 @@ internal class LoadedGitLabMergeRequest(
   private val mergeRequestRefreshRequest = MutableSharedFlow<Unit>()
 
   private val mergeRequestDetailsState: MutableStateFlow<GitLabMergeRequestFullDetails> =
-    MutableStateFlow(GitLabMergeRequestFullDetails.fromGraphQL(mergeRequest))
+    MutableStateFlow(GitLabMergeRequestFullDetails.fromGraphQL(mergeRequest, backupCommits))
   override val details: StateFlow<GitLabMergeRequestFullDetails> = mergeRequestDetailsState.asStateFlow()
 
   override val changes: SharedFlow<GitLabMergeRequestChanges> = mergeRequestDetailsState
@@ -109,7 +107,7 @@ internal class LoadedGitLabMergeRequest(
     GitLabETagUpdatableListLoader<GitLabResourceStateEventDTO>(getMergeRequestStateEventsUri(glProject, iid)
     ) { uri, eTag ->
       api.rest.loadUpdatableJsonList<GitLabResourceStateEventDTO>(
-        glProject.serverPath, GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
+        GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
       )
     }
   override val stateEvents = stateEventsLoader.batches.collectBatches()
@@ -120,7 +118,7 @@ internal class LoadedGitLabMergeRequest(
     GitLabETagUpdatableListLoader<GitLabResourceLabelEventDTO>(getMergeRequestLabelEventsUri(glProject, iid)
     ) { uri, eTag ->
       api.rest.loadUpdatableJsonList<GitLabResourceLabelEventDTO>(
-        glProject.serverPath, GitLabApiRequestName.REST_GET_MERGE_REQUEST_LABEL_EVENTS, uri, eTag
+        GitLabApiRequestName.REST_GET_MERGE_REQUEST_LABEL_EVENTS, uri, eTag
       )
     }
   override val labelEvents = labelEventsLoader.batches.collectBatches()
@@ -131,7 +129,7 @@ internal class LoadedGitLabMergeRequest(
     GitLabETagUpdatableListLoader<GitLabResourceMilestoneEventDTO>(getMergeRequestMilestoneEventsUri(glProject, iid)
     ) { uri, eTag ->
       api.rest.loadUpdatableJsonList<GitLabResourceMilestoneEventDTO>(
-        glProject.serverPath, GitLabApiRequestName.REST_GET_MERGE_REQUEST_MILESTONE_EVENTS, uri, eTag
+        GitLabApiRequestName.REST_GET_MERGE_REQUEST_MILESTONE_EVENTS, uri, eTag
       )
     }
   override val milestoneEvents = milestoneEventsLoader.batches.collectBatches()
@@ -149,7 +147,7 @@ internal class LoadedGitLabMergeRequest(
         try {
           _isLoading.value = true
           val updatedMergeRequest = api.graphQL.loadMergeRequest(glProject, iid).body()!!
-          mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
+          updateMergeRequestData(updatedMergeRequest)
         }
         finally {
           _isLoading.value = false
@@ -186,7 +184,7 @@ internal class LoadedGitLabMergeRequest(
                                                                commitMessage,
                                                                mergeRequest.commits.first().sha, // First from the list -- last commit from review
                                                                withSquash = false).getResultOrThrow()
-      mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
+      updateMergeRequestData(updatedMergeRequest)
     }
     discussionsContainer.checkUpdates()
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.MERGE)
@@ -200,7 +198,7 @@ internal class LoadedGitLabMergeRequest(
                                                                commitMessage,
                                                                mergeRequest.commits.first().sha, // First from the list -- last commit from review
                                                                withSquash = true).getResultOrThrow()
-      mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
+      updateMergeRequestData(updatedMergeRequest)
     }
     discussionsContainer.checkUpdates()
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.SQUASH_MERGE)
@@ -211,7 +209,7 @@ internal class LoadedGitLabMergeRequest(
       api.rest.mergeRequestRebase(glProject, iid)
       do {
         val updatedMergeRequest = api.graphQL.loadMergeRequest(glProject, iid).body()!!
-        mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
+        updateMergeRequestData(updatedMergeRequest)
         delay(1.seconds)
       }
       while (updatedMergeRequest.rebaseInProgress)
@@ -248,7 +246,7 @@ internal class LoadedGitLabMergeRequest(
     withContext(cs.coroutineContext + Dispatchers.IO) {
       val updatedMergeRequest = api.graphQL.mergeRequestUpdate(glProject, iid, GitLabMergeRequestNewState.CLOSED)
         .getResultOrThrow()
-      mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
+      updateMergeRequestData(updatedMergeRequest)
       stateEventsLoader.checkForUpdates()
     }
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.CLOSE)
@@ -258,7 +256,7 @@ internal class LoadedGitLabMergeRequest(
     withContext(cs.coroutineContext + Dispatchers.IO) {
       val updatedMergeRequest = api.graphQL.mergeRequestUpdate(glProject, iid, GitLabMergeRequestNewState.OPEN)
         .getResultOrThrow()
-      mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
+      updateMergeRequestData(updatedMergeRequest)
       stateEventsLoader.checkForUpdates()
     }
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.REOPEN)
@@ -268,7 +266,7 @@ internal class LoadedGitLabMergeRequest(
     withContext(cs.coroutineContext + Dispatchers.IO) {
       val updatedMergeRequest = api.graphQL.mergeRequestSetDraft(glProject, iid, isDraft = false)
         .getResultOrThrow()
-      mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
+      updateMergeRequestData(updatedMergeRequest)
     }
     discussionsContainer.checkUpdates()
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.POST_REVIEW)
@@ -276,9 +274,15 @@ internal class LoadedGitLabMergeRequest(
 
   override suspend fun setReviewers(reviewers: List<GitLabUserDTO>) {
     withContext(cs.coroutineContext + Dispatchers.IO) {
-      val updatedMergeRequest = api.graphQL.mergeRequestSetReviewers(glProject, iid, reviewers)
-        .getResultOrThrow()
-      mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
+      val updatedMergeRequest = if (GitLabVersion(15, 3) <= api.getMetadata().version) {
+        api.graphQL.mergeRequestSetReviewers(glProject, iid, reviewers).getResultOrThrow()
+      }
+      else {
+        api.rest.mergeRequestSetReviewers(glProject, iid, reviewers).body()
+        api.graphQL.loadMergeRequest(glProject, iid).body() ?: error("Merge request could not be loaded")
+      }
+
+      updateMergeRequestData(updatedMergeRequest)
     }
     discussionsContainer.checkUpdates()
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.SET_REVIEWERS)
@@ -289,7 +293,7 @@ internal class LoadedGitLabMergeRequest(
       reviewers.forEach { reviewer ->
         val updatedMergeRequest = api.graphQL.mergeRequestReviewerRereview(glProject, iid, reviewer)
           .getResultOrThrow()
-        mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
+        updateMergeRequestData(updatedMergeRequest)
       }
     }
     discussionsContainer.checkUpdates()
@@ -309,6 +313,16 @@ internal class LoadedGitLabMergeRequest(
   override suspend fun addNote(position: GitLabDiffPositionInput, body: String) = discussionsContainer.addNote(position, body)
 
   override suspend fun submitDraftNotes() = discussionsContainer.submitDraftNotes()
+
+  // Compatibility fix to make sure commits are loaded
+  private suspend fun updateMergeRequestData(updatedMergeRequest: GitLabMergeRequestDTO) {
+    val commits =
+      if (updatedMergeRequest.commits == null)
+        api.rest.getMergeRequestCommits(projectMapping.repository, updatedMergeRequest.iid).body()
+      else listOf()
+
+    mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest, commits)
+  }
 
   override fun getRelativeFilePath(virtualFile: VirtualFile): FilePath? {
     val path = try {

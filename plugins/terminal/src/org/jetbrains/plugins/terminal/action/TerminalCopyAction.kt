@@ -3,12 +3,17 @@ package org.jetbrains.plugins.terminal.action
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ide.CopyPasteManager
 import org.jetbrains.plugins.terminal.exp.CommandBlock
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isAlternateBufferEditor
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.selectionController
 import org.jetbrains.plugins.terminal.exp.TerminalPromotedDumbAwareAction
 
-class TerminalCopyAction : TerminalPromotedDumbAwareAction() {
+class TerminalCopyAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     val editor = e.editor ?: return
     val selectionController = e.selectionController
@@ -23,9 +28,10 @@ class TerminalCopyAction : TerminalPromotedDumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = (e.outputController != null || e.simpleTerminalController != null)
-                                         && (e.selectionController?.primarySelection != null
-                                             || e.editor?.selectionModel?.hasSelection() == true)
+    val editor = e.editor
+    e.presentation.isEnabledAndVisible = editor != null
+                                         && (editor.isOutputEditor || editor.isAlternateBufferEditor)
+                                         && (e.selectionController?.primarySelection != null || editor.selectionModel.hasSelection())
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

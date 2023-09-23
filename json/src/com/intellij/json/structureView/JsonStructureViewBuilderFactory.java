@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.structureView;
 
 import com.intellij.ide.impl.StructureViewWrapperImpl;
@@ -28,9 +28,8 @@ public class JsonStructureViewBuilderFactory implements PsiStructureViewFactory 
       ExtensionPointUtil.createKeyedExtensionDisposable(this, PsiStructureViewFactory.EP_NAME.getPoint()));
   }
 
-  @Nullable
   @Override
-  public StructureViewBuilder getStructureViewBuilder(@NotNull final PsiFile psiFile) {
+  public @Nullable StructureViewBuilder getStructureViewBuilder(final @NotNull PsiFile psiFile) {
     if (!(psiFile instanceof JsonFile)) {
       return null;
     }
@@ -50,9 +49,8 @@ public class JsonStructureViewBuilderFactory implements PsiStructureViewFactory 
     }
 
     return new TreeBasedStructureViewBuilder() {
-      @NotNull
       @Override
-      public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+      public @NotNull StructureViewModel createStructureViewModel(@Nullable Editor editor) {
         return new JsonStructureViewModel(psiFile, editor);
       }
     };

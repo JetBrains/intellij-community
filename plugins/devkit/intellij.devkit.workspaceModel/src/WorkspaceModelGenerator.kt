@@ -19,6 +19,9 @@ import kotlinx.coroutines.*
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.kotlin.config.ExplicitApiMode
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
+import org.jetbrains.kotlin.idea.facet.KotlinFacet
 
 private val LOG = logger<WorkspaceModelGenerator>()
 
@@ -35,7 +38,7 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
       acceptedSourceRoots.map { sourceRoot ->
         withContext(Dispatchers.EDT) {
           System.setProperty(CODEGEN_REGISTRY_KEY, Registry.`is`(CODEGEN_REGISTRY_KEY).toString())
-          CodeWriter.generate(project, module, sourceRoot.file!!) {
+          CodeWriter.generate(project, module, sourceRoot.file!!, module.explicitApiEnabled) {
             createGeneratedSourceFolder(module, sourceRoot)
           }
         }
@@ -91,6 +94,12 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
       return@filter !javaSourceRootProperties.isForGeneratedSources
     }
   }
+
+  private val Module.explicitApiEnabled: Boolean
+    get() {
+      val something: IKotlinFacetSettings? = KotlinFacet.get(this)?.configuration?.settings
+      return something?.compilerArguments?.explicitApi == ExplicitApiMode.STRICT.state
+    }
 
   companion object {
     const val GENERATED_FOLDER_NAME = "gen"

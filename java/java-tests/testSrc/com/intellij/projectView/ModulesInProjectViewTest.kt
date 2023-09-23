@@ -13,7 +13,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
 
-open class ModulesInProjectViewTestCase : BaseProjectViewTestCase() {
+abstract class ModulesInProjectViewTestCase : BaseProjectViewTestCase() {
   init {
     myPrintInfo = Queryable.PrintInfo()
   }

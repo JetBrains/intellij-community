@@ -29,8 +29,8 @@ import java.io.IOException;
 public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, PsiField> {
   private static final int INITIALIZER_LENGTH_LIMIT = 1000;
 
-  public JavaFieldStubElementType(@NotNull String id) {
-    super(id);
+  public JavaFieldStubElementType(@NotNull String id, @NotNull IElementType parentElementType) {
+    super(id, parentElementType);
   }
 
   @Override

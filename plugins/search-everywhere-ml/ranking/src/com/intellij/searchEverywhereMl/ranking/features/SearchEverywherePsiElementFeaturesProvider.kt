@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.PsiItemWithPresentation
 import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
 import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -31,6 +32,9 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
     @JvmStatic
     val IS_INVALID_DATA_KEY = EventFields.Boolean("isInvalid")
 
+    private val SIMILARITY_SCORE = EventFields.Double("similarityScore")
+    private val IS_PURE_SEMANTIC = EventFields.Boolean("isPureSemantic")
+
     private val LANGUAGE_DATA_KEY = EventFields.StringValidatedByCustomRule("language", LangCustomRuleValidator::class.java)
     private val LANGUAGE_USE_COUNT_DATA_KEY = EventFields.Int("langUseCount")
     private val LANGUAGE_IS_MOST_USED_DATA_KEY = EventFields.Boolean("langIsMostUsed")
@@ -43,7 +47,7 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> = listOf(
-    IS_INVALID_DATA_KEY,
+    IS_INVALID_DATA_KEY, SIMILARITY_SCORE, IS_PURE_SEMANTIC,
     LANGUAGE_DATA_KEY, LANGUAGE_USE_COUNT_DATA_KEY, LANGUAGE_IS_MOST_USED_DATA_KEY,
     LANGUAGE_IS_IN_TOP_3_MOST_USED_DATA_KEY, LANGUAGE_USED_IN_LAST_DAY, LANGUAGE_USED_IN_LAST_WEEK,
     LANGUAGE_USED_IN_LAST_MONTH, LANGUAGE_NEVER_USED_DATA_KEY, LANGUAGE_IS_SAME_AS_OPENED_FILE
@@ -54,6 +58,13 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
                                   searchQuery: String,
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?): List<EventPair<*>> {
+    if (element is PsiItemWithSimilarity<*>) {
+      return buildList {
+        addAll(getElementFeatures(element.value, currentTime, searchQuery, elementPriority, cache))
+        element.similarityScore?.let { add(SIMILARITY_SCORE.with(it)) }
+        add(IS_PURE_SEMANTIC.with(element.isPureSemantic))
+      }
+    }
     val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element) ?: return emptyList()
     return getLanguageFeatures(psiElement, cache) + getNameFeatures(element, searchQuery)
   }
@@ -120,7 +131,8 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
 }
 
 object SearchEverywherePsiElementFeaturesProviderUtils {
-  fun getPsiElement(element: Any) = when (element) {
+  fun getPsiElement(element: Any): PsiElement? = when (element) {
+    is PsiItemWithSimilarity<*> -> getPsiElement(element.value)
     is PsiItemWithPresentation -> element.item
     is PsiElement -> element
     else -> null

@@ -3,5 +3,6 @@ internal class Test {
         map.forEach { (key: String?, value: String?) -> foo(key, value) }
     }
 
-    fun foo(key: String?, value: String?) {}
+    fun foo(key: String?, value: String?) {
+    }
 }

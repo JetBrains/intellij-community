@@ -286,20 +286,20 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
    * and to accept the resulting value on the foreground thread.
    */
   private void submit(@NotNull Command command) {
-    invokeCommand(command).thenAsync(value -> accept(command, value));
+    computeTreeDataOnBgt(command).thenAsync(value -> applyToUiTree(command, value));
   }
 
   @NotNull
-  private CancellablePromise<Node> invokeCommand(@NotNull Command command) {
+  private CancellablePromise<Node> computeTreeDataOnBgt(@NotNull Command command) {
     if (command.canRunAsync()) {
-      return background.computeAsync(command::getAsync);
+      return background.computeAsync(command::computeAsync);
     }
-    return background.compute(command);
+    return background.compute(command::computeNode);
   }
 
-  private Promise<Void> accept(@NotNull Command command, Node value) {
+  private Promise<Void> applyToUiTree(@NotNull Command command, Node value) {
     return foreground.compute(() -> {
-      command.accept(value);
+      command.applyToUiTree(value);
       return null;
     });
   }
@@ -430,7 +430,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
   }
 
 
-  private abstract static class Command implements Obsolescent, Supplier<Node>, Consumer<Node> {
+  private abstract static class Command implements Obsolescent {
     final AsyncPromise<Node> promise = new AsyncPromise<>();
     final String name;
     final Object object;
@@ -447,7 +447,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     }
 
     @NotNull
-    Promise<Node> getAsync() {
+    Promise<Node> computeAsync() {
       started = true;
       if (isObsolete()) {
         if (LOG.isTraceEnabled()) LOG.debug("obsolete command: ", this);
@@ -455,19 +455,19 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       }
       else {
         if (LOG.isTraceEnabled()) LOG.debug("background async command: ", this);
-        return getNodeAsync(object);
+        return computeAsync(object);
       }
     }
 
     @NotNull
-    Promise<Node> getNodeAsync(Object object) {
-      Node node = getNode(object);
+    Promise<Node> computeAsync(Object object) {
+      Node node = computeNode(object);
       return resolvedPromise(node);
     }
 
-    abstract Node getNode(Object object);
+    abstract Node computeNode(Object object);
 
-    abstract void setNode(Node node);
+    abstract void applyNodeToUiTree(Node node);
 
     boolean isPending() {
       return Promise.State.PENDING == promise.getState();
@@ -478,8 +478,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       return object == null ? name : name + ": " + object;
     }
 
-    @Override
-    public Node get() {
+    public Node computeNode() {
       started = true;
       if (isObsolete()) {
         if (LOG.isTraceEnabled()) LOG.debug("obsolete command: ", this);
@@ -487,18 +486,17 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       }
       else {
         if (LOG.isTraceEnabled()) LOG.debug("background command: ", this);
-        return getNode(object);
+        return computeNode(object);
       }
     }
 
-    @Override
-    public void accept(Node node) {
+    public void applyToUiTree(Node node) {
       if (isObsolete()) {
         if (LOG.isTraceEnabled()) LOG.debug("obsolete command: ", this);
       }
       else {
         if (LOG.isTraceEnabled()) LOG.debug("foreground command: ", this);
-        setNode(node);
+        applyNodeToUiTree(node);
       }
     }
   }
@@ -515,14 +513,14 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     }
 
     @Override
-    Node getNode(Object object) {
+    Node computeNode(Object object) {
       if (object == null) object = model.getRoot();
       if (object == null || isObsolete()) return null;
       return new Node(object, LeafState.get(object, model));
     }
 
     @Override
-    void setNode(Node loaded) {
+    void applyNodeToUiTree(Node loaded) {
       Node root = tree.root;
       if (root == null && loaded == null) {
         if (LOG.isTraceEnabled()) LOG.debug("no root");
@@ -591,7 +589,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     }
 
     @Override
-    @NotNull Promise<Node> getNodeAsync(Object object) {
+    @NotNull Promise<Node> computeAsync(Object object) {
       Node loaded = new Node(object, LeafState.get(object, model));
       if (loaded.leafState == LeafState.ALWAYS || isObsolete()) return resolvedPromise(loaded);
 
@@ -603,11 +601,11 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
           return loaded;
         });
       }
-      return super.getNodeAsync(object);
+      return super.computeAsync(object);
     }
 
     @Override
-    Node getNode(Object object) {
+    Node computeNode(Object object) {
       Node loaded = new Node(object, LeafState.get(object, model));
       if (loaded.leafState == LeafState.ALWAYS || isObsolete()) return loaded;
 
@@ -651,7 +649,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     }
 
     @Override
-    void setNode(Node loaded) {
+    void applyNodeToUiTree(Node loaded) {
       if (loaded == null || loaded.isLoadingRequired()) {
         if (LOG.isTraceEnabled()) LOG.debug("cancelled command: ", this);
         return;

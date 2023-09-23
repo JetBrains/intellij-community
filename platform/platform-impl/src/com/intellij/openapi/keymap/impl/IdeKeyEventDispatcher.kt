@@ -28,9 +28,6 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.impl.keyGestures.KeyboardGestureProcessor
 import com.intellij.openapi.keymap.impl.ui.ShortcutTextField
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.PotemkinOverlayProgress
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -51,13 +48,10 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.matching.KeyboardLayoutUtil
 import com.intellij.util.ui.MacUIUtil
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -529,66 +523,47 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     if (actions.isEmpty()) {
       return false
     }
-
+    val contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context)
     val wrappedContext = Utils.wrapDataContext(context)
     val project = CommonDataKeys.PROJECT.getData(wrappedContext)
     val dumb = project != null && DumbService.getInstance(project).isDumb
     fireBeforeShortcutTriggered(shortcut = shortcut, actions = actions, context = context)
     val wouldBeEnabledIfNotDumb = ContainerUtil.createLockFreeCopyOnWriteList<AnAction>()
-    val indicator = if (Registry.`is`("actionSystem.update.actions.cancelable.beforeActionPerformedUpdate", true)) {
-      PotemkinOverlayProgress(PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(wrappedContext))
-    }
-    else {
-      ProgressIndicatorBase()
-    }
 
-    val chosenPair = ProgressManager.getInstance().runProcess<Pair<Trinity<AnAction, AnActionEvent, Long>, Boolean>>(
-      {
-        val events = ConcurrentHashMap<Presentation, AnActionEvent>()
-        val chosen = Utils.runUpdateSessionForInputEvent(
-          /* actions = */ actions,
-          /* inputEvent = */ e,
-          /* dataContext = */ wrappedContext,
-          /* place = */ place,
-          /* actionProcessor = */ processor,
-          /* factory = */ presentationFactory,
-          /* eventTracker = */ { event -> events.put(event.presentation, event) },
-          /* function = */ { session, adjusted ->
-            doUpdateActionsInner(session = session,
-                                 actions = adjusted,
-                                 dumb = dumb,
-                                 wouldBeEnabledIfNotDumb = wouldBeEnabledIfNotDumb) { key -> events.get(key) }
-          }
-        ) ?: return@runProcess null
-        if (!this.context.secondStrokeActions.contains(chosen.first)) {
-          // use not frozen data context
-          val actionEvent = chosen.second.withDataContext(wrappedContext)
-          if (!ActionUtil.lastUpdateAndCheckDumb(chosen.first, actionEvent, false)) {
-            LOG.warn("Action '${actionEvent.presentation.text}' (${chosen.first.javaClass}) has become disabled" +
-                     " in `beforeActionPerformedUpdate` right after successful `update`")
-            logTimeMillis(chosen.third, chosen.first)
-          }
-          else {
-            return@runProcess Pair(Trinity.create<AnAction, AnActionEvent, Long>(chosen.first, actionEvent, chosen.third), true)
-          }
+    val chosenPair = Utils.runWithInputEventEdtDispatcher(contextComponent) {
+      val events = ConcurrentHashMap<Presentation, AnActionEvent>()
+      val chosen = Utils.runUpdateSessionForInputEvent(
+        actions, e, wrappedContext, place, processor, presentationFactory,
+        { event -> events.put(event.presentation, event) }) { session, adjusted ->
+        doUpdateActionsInner(session, adjusted, dumb, wouldBeEnabledIfNotDumb) { key -> events.get(key) }
+      } ?: return@runWithInputEventEdtDispatcher null
+      if (!this@IdeKeyEventDispatcher.context.secondStrokeActions.contains(chosen.action)) {
+        if (!ActionUtil.lastUpdateAndCheckDumb(chosen.action, chosen.event, false)) {
+          LOG.warn("Action '${chosen.event.presentation.text}' (${chosen.action.javaClass}) has become disabled" +
+                   " in `beforeActionPerformedUpdate` right after successful `update`")
+          logTimeMillis(chosen.startedAt, chosen.action)
         }
-        Pair(chosen, false)
-      },
-      indicator)
-
+        else {
+          return@runWithInputEventEdtDispatcher Pair(chosen, true)
+        }
+      }
+      Pair(chosen, false)
+    }
     val chosen = chosenPair?.first
     val doPerform = chosen != null && chosenPair.second
-    val hasSecondStroke = chosen != null && this.context.secondStrokeActions.contains(chosen.first)
+    val hasSecondStroke = chosen != null && this.context.secondStrokeActions.contains(chosen.action)
     if (e.id == KeyEvent.KEY_PRESSED && !hasSecondStroke && (chosen != null || !wouldBeEnabledIfNotDumb.isEmpty())) {
       ignoreNextKeyTypedEvent = true
     }
 
     if (doPerform) {
-      doPerformActionInner(e = e, processor = processor, context = context, action = chosen!!.first, actionEvent = chosen.second)
-      logTimeMillis(startedAt = chosen.third, action = chosen.first)
+      chosen!!
+      doPerformActionInner(e, processor, context, chosen.action, chosen.event)
+      logTimeMillis(chosen.startedAt, chosen.action)
     }
     else if (hasSecondStroke) {
-      waitSecondStroke(chosenAction = chosen!!.first, presentation = chosen.second.presentation)
+      chosen!!
+      waitSecondStroke(chosen.action, chosen.event.presentation)
     }
     else if (!wouldBeEnabledIfNotDumb.isEmpty()) {
       val actionManager = ActionManager.getInstance()
@@ -598,13 +573,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
                                  // invokeLater to make sure correct dataContext is taken from focus
                                  ApplicationManager.getApplication().invokeLater {
                                    DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
-                                     processAction(e = e,
-                                                   place = place,
-                                                   context = dataContext,
-                                                   actions = actions,
-                                                   processor = processor,
-                                                   presentationFactory = presentationFactory,
-                                                   shortcut = shortcut)
+                                     processAction(e, place, dataContext, actions, processor, presentationFactory, shortcut)
                                    }
                                  }
                                },
@@ -824,11 +793,13 @@ private fun hasMnemonicInBalloons(container: Container?, code: Int): Boolean {
   return false
 }
 
+private data class UpdateResult(val action: AnAction, val event: AnActionEvent, val startedAt: Long)
+
 private fun doUpdateActionsInner(session: UpdateSession,
                                  actions: List<AnAction>,
                                  dumb: Boolean,
                                  wouldBeEnabledIfNotDumb: MutableList<in AnAction>,
-                                 events: Function<in Presentation, out AnActionEvent?>): Trinity<AnAction, AnActionEvent, Long>? {
+                                 events: Function<in Presentation, out AnActionEvent?>): UpdateResult? {
   for (action in actions) {
     val startedAt = System.currentTimeMillis()
     val presentation = session.presentation(action)
@@ -845,7 +816,7 @@ private fun doUpdateActionsInner(session: UpdateSession,
       logTimeMillis(startedAt, action)
       continue
     }
-    return Trinity.create(action, event, startedAt)
+    return UpdateResult(action, event, startedAt)
   }
   return null
 }

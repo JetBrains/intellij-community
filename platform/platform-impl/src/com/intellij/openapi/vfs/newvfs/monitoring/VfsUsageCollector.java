@@ -21,11 +21,13 @@ import static com.intellij.internal.statistic.eventLog.events.EventFields.Enum;
 import static com.intellij.internal.statistic.eventLog.events.EventFields.Long;
 import static com.intellij.internal.statistic.eventLog.events.EventFields.*;
 
+import java.lang.Enum;
+
 @ApiStatus.Internal
 public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final int DURATION_THRESHOLD_MS = 100;
 
-  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 13);
+  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 14);
 
 
   /* ================== EVENT_INITIAL_REFRESH: ====================================================== */

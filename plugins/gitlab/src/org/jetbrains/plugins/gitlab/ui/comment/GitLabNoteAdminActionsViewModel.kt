@@ -13,6 +13,11 @@ interface GitLabNoteAdminActionsViewModel {
 
   val editVm: Flow<GitLabNoteEditingViewModel?>
 
+  /**
+   * Whether the note can be edited.
+   */
+  suspend fun canEdit(): Boolean
+
   fun startEditing()
   fun stopEditing()
 
@@ -47,6 +52,9 @@ class GitLabNoteAdminActionsViewModelImpl(parentCs: CoroutineScope, private val 
       emit(null)
     }
   }.shareIn(cs, SharingStarted.Lazily, 1)
+
+  override suspend fun canEdit(): Boolean =
+    note.canEdit()
 
   override fun delete() {
     taskLauncher.launch {

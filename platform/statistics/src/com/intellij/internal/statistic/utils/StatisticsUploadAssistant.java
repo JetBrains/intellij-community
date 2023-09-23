@@ -19,6 +19,7 @@ public final class StatisticsUploadAssistant {
   private static final String IDEA_HEADLESS_ENABLE_STATISTICS = "idea.headless.enable.statistics";
   private static final String IDEA_SUPPRESS_REPORT_STATISTICS = "idea.suppress.statistics.report";
   private static final String ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT = "idea.local.statistics.without.report";
+  private static final String USE_TEST_STATISTICS_SEND_ENDPOINT = "idea.use.test.statistics.send.endpoint";
   private static final String USE_TEST_STATISTICS_CONFIG = "idea.use.test.statistics.config";
   private static final String DISABLE_COLLECT_STATISTICS = "idea.disable.collect.statistics";
 
@@ -99,6 +100,7 @@ public final class StatisticsUploadAssistant {
   public static boolean isTestStatisticsEnabled() {
     return isLocalStatisticsWithoutReport()
            || isTeamcityDetected()
+           || isUseTestStatisticsSendEndpoint()
            || isUseTestStatisticsConfig();
   }
 
@@ -118,13 +120,13 @@ public final class StatisticsUploadAssistant {
 
     return new EventLogStatisticsService(
       EventLogInternalSendConfig.createByRecorder(recorderId, true),
-      new EventLogInternalApplicationInfo(recorderId, isUseTestStatisticsConfig()),
+      new EventLogInternalApplicationInfo(isUseTestStatisticsConfig(), isUseTestStatisticsSendEndpoint()),
       listener
     );
   }
 
-  public static EventLogUploadSettingsService createExternalSettings(@NotNull String recorderId, boolean isTest, long cacheTimeoutMs) {
-    return new EventLogUploadSettingsService(recorderId, new EventLogInternalApplicationInfo(recorderId, isTest), cacheTimeoutMs);
+  public static EventLogUploadSettingsService createExternalSettings(@NotNull String recorderId, boolean isTestConfig, boolean isTestSendEndpoint, long cacheTimeoutMs) {
+    return new EventLogUploadSettingsService(recorderId, new EventLogInternalApplicationInfo(isTestConfig, isTestSendEndpoint), cacheTimeoutMs);
   }
 
   public static boolean isTeamcityDetected() {
@@ -137,6 +139,10 @@ public final class StatisticsUploadAssistant {
 
   public static boolean isLocalStatisticsWithoutReport() {
     return Boolean.getBoolean(ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT);
+  }
+
+  public static boolean isUseTestStatisticsSendEndpoint() {
+    return Boolean.getBoolean(USE_TEST_STATISTICS_SEND_ENDPOINT);
   }
 
   public static boolean isUseTestStatisticsConfig() {

@@ -6,7 +6,6 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.ide.DataManager
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP
@@ -15,11 +14,11 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.content.Content
 import com.intellij.util.Consumer
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.VcsLogTabsManager.Companion.generateDisplayName
 import com.intellij.vcs.log.impl.VcsProjectLog.Companion.getLogProviders
-import com.intellij.vcs.log.impl.VcsProjectLog.ProjectLogListener
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogPanel
 import org.jetbrains.annotations.NonNls
@@ -67,7 +66,7 @@ class VcsLogContentProvider(project: Project) : ChangesViewContentProvider {
 
   @RequiresEdt
   internal fun addMainUi(logManager: VcsLogManager) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (ui == null) {
       ui = logManager.createLogUi(MAIN_LOG_ID, VcsLogTabLocation.TOOL_WINDOW, false)
       val panel = VcsLogPanel(logManager, ui!!)
@@ -92,7 +91,7 @@ class VcsLogContentProvider(project: Project) : ChangesViewContentProvider {
 
   @RequiresEdt
   internal fun disposeMainUi() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     container.removeAll()
     DataManager.removeDataProvider(container)
@@ -114,7 +113,7 @@ class VcsLogContentProvider(project: Project) : ChangesViewContentProvider {
    */
   @RequiresEdt
   fun executeOnMainUiCreated(consumer: Consumer<in MainVcsLogUi>) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val future = waitMainUiCreation()
     future.addListener({
                          try {
@@ -130,7 +129,7 @@ class VcsLogContentProvider(project: Project) : ChangesViewContentProvider {
 
   @RequiresEdt
   fun waitMainUiCreation(): ListenableFuture<MainVcsLogUi> {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (ui != null) {
       return Futures.immediateFuture(ui)
     }

@@ -79,7 +79,7 @@ public final class DescriptorComposer extends HTMLComposerImpl {
     return XmlStringUtil.isWrappedInHtml(text) ? XmlStringUtil.stripHtml(text) : StringUtil.escapeXmlEntities(text);
   }
 
-  protected void composeAdditionalDescription(@NotNull StringBuilder buf, @NotNull RefEntity refEntity) {}
+  private void composeAdditionalDescription(@NotNull StringBuilder buf, @NotNull RefEntity refEntity) {}
 
   @Override
   public void compose(@NotNull StringBuilder buf, RefEntity refElement, CommonProblemDescriptor descriptor) {
@@ -119,7 +119,10 @@ public final class DescriptorComposer extends HTMLComposerImpl {
     }
   }
 
-  protected void composeDescription(@NotNull CommonProblemDescriptor description, int i, @NotNull StringBuilder buf, @NotNull RefEntity refElement) {
+  private void composeDescription(@NotNull CommonProblemDescriptor description,
+                                  int i,
+                                  @NotNull StringBuilder buf,
+                                  @NotNull RefEntity refElement) {
     PsiElement expression = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement() : null;
     StringBuilder anchor = new StringBuilder();
     VirtualFile vFile = null;

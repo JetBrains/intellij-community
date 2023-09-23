@@ -23,19 +23,9 @@ import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWith
 
 
 public class PerformanceTestInfo {
-
-  private static class IterationStatus {
-    private final IterationResult iterationResult;
-    private final boolean passed;
-    private final String message;
-
-    private IterationStatus(@NotNull IterationResult iterationResult,
-                            boolean passed,
-                            @NotNull String logMessage) {
-      this.iterationResult = iterationResult;
-      this.passed = passed;
-      this.message = logMessage;
-    }
+  private record IterationStatus(@NotNull IterationResult iterationResult,
+                                 boolean passed,
+                                 @NotNull String logMessage) {
   }
 
   private final ThrowableComputable<Integer, ?> test; // runnable to measure; returns actual input size
@@ -83,7 +73,7 @@ public class PerformanceTestInfo {
   public PerformanceTestInfo usesAllCPUCores() { return usesMultipleCPUCores(8); }
 
   /**
-   * Invoke this method if and only if the code under performance tests is using {@code maxCores} CPU cores (or less if the computer has less).
+   * Invoke this method if and only if the code under performance tests is using {@code maxCores} CPU cores (or fewer if the computer has less than {@code maxCores} cores).
    * The "standard" expected time then should be given for a machine which has {@code maxCores} CPU cores.
    * Actual test expected time will be adjusted according to the number of cores the actual computer has.
    */
@@ -157,7 +147,7 @@ public class PerformanceTestInfo {
           }
 
           IterationStatus status =
-            computeWithSpanAttribute(tracer, "Attempt: " + attempt, "Attempt status", (st) -> String.valueOf(st.passed), () -> {
+            computeWithSpanAttribute(tracer, "Attempt: " + attempt, "Attempt status", (st) -> String.valueOf(st.passed()), () -> {
               CpuUsageData currentData;
               try {
                 currentData = CpuUsageData.measureCpuUsage(() -> actualInputSize.set(test.compute()));
@@ -179,9 +169,9 @@ public class PerformanceTestInfo {
               return new IterationStatus(iterationResult, passed, message);
             });
 
-          boolean testPassed = status.passed;
-          String logMessage = status.message;
-          IterationResult iterationResult = status.iterationResult;
+          boolean testPassed = status.passed();
+          String logMessage = status.logMessage();
+          IterationResult iterationResult = status.iterationResult();
 
           if (testPassed) {
             TeamCityLogger.info(logMessage);
@@ -233,43 +223,16 @@ public class PerformanceTestInfo {
                        iterationResult == IterationResult.BORDERLINE ? "33;1m" : // yellow
                        "31;1m"; // red
     return
-      what +
-      " took \u001B[" +
-      colorCode +
-      Math.abs(percentage) +
-      "% " +
-      (percentage > 0 ? "more" : "less") +
-      " time\u001B[0m than expected" +
-      (iterationResult == IterationResult.DISTRACTED && initialMaxRetries != 1
-       ? " (but JIT compilation took too long, will retry anyway)"
-       : "") +
-      "\n  Expected: " +
-      expectedOnMyMachine +
-      "ms" +
-      (expectedOnMyMachine < 1000 ? "" : " (" + StringUtil.formatDuration(expectedOnMyMachine) + ")") +
-      "\n  Actual:   " +
-      duration +
-      "ms" +
-      (duration < 1000 ? "" : " (" + StringUtil.formatDuration(duration) + ")") +
-      (expectedInputSize != actualInputSize ? "\n  (Expected time was adjusted accordingly to input size: expected " +
-                                              expectedInputSize +
-                                              ", actual " +
-                                              actualInputSize +
-                                              ".)" : "") +
-      (usedReferenceCpuCores != actualUsedCpuCores ?
-       "\n  (Expected time was adjusted accordingly to number of available CPU cores: reference CPU has " +
-       usedReferenceCpuCores +
-       ", actual value is " +
-       actualUsedCpuCores +
-       ".)" : "") +
-      "\n  Timings:  " +
-      Timings.getStatistics() +
-      "\n  Threads:  " +
-      data.getThreadStats() +
-      "\n  GC stats: " +
-      data.getGcStats() +
-      "\n  Process:  " +
-      data.getProcessCpuStats();
+      what+" took \u001B[" + colorCode + Math.abs(percentage) + "% " + (percentage > 0 ? "more" : "less") + " time\u001B[0m than expected" +
+      (iterationResult == IterationResult.DISTRACTED && initialMaxRetries != 1 ? " (but JIT compilation took too long, will retry anyway)" : "") +
+      "\n  Expected: " + expectedOnMyMachine + "ms" + (expectedOnMyMachine < 1000 ? "" : " (" + StringUtil.formatDuration(expectedOnMyMachine) + ")") +
+      "\n  Actual:   " + duration + "ms" + (duration < 1000 ? "" : " (" + StringUtil.formatDuration(duration) + ")") +
+      (expectedInputSize != actualInputSize ? "\n  (Expected time was adjusted accordingly to input size: expected " + expectedInputSize + ", actual " + actualInputSize + ".)": "") +
+      (usedReferenceCpuCores != actualUsedCpuCores ? "\n  (Expected time was adjusted accordingly to number of available CPU cores: reference CPU has " + usedReferenceCpuCores + ", actual value is " + actualUsedCpuCores + ".)": "") +
+      "\n  Timings:  " + Timings.getStatistics() +
+      "\n  Threads:  " + data.getThreadStats() +
+      "\n  GC stats: " + data.getGcStats() +
+      "\n  Process:  " + data.getProcessCpuStats();
   }
 
   private long lastJitUsage;
@@ -303,8 +266,8 @@ public class PerformanceTestInfo {
   private enum JitUsageResult {DEFINITELY_LOW, UNCLEAR}
 
   enum IterationResult {
-    ACCEPTABLE, // test was completed within specified range
-    BORDERLINE, // test barely managed to complete within specified range
+    ACCEPTABLE, // test was completed within the specified range
+    BORDERLINE, // test barely managed to complete within the specified range
     SLOW,       // test was too slow
     DISTRACTED  // CPU was occupied by irrelevant computations for too long (e.g., JIT or GC)
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util.documentation;
 
 import com.intellij.documentation.mdn.MdnDocumentationKt;
@@ -40,12 +40,11 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
   private static final Logger LOG = Logger.getInstance(XmlDocumentationProvider.class);
 
-  @NonNls private static final String NAME_ATTR_NAME = "name";
+  private static final @NonNls String NAME_ATTR_NAME = "name";
 
 
   @Override
-  @Nullable
-  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nullable @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof SchemaPrefix) {
       return ((SchemaPrefix)element).getQuickNavigateInfo();
     }
@@ -187,8 +186,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return enumerationTag.get();
   }
 
-  @NlsSafe
-  public String findDocRightAfterElement(final PsiElement parent, final String referenceName) {
+  public @NlsSafe String findDocRightAfterElement(final PsiElement parent, final String referenceName) {
     // Check for comment right after the xml attlist decl
     PsiElement uncleElement = parent.getNextSibling();
     if (uncleElement instanceof PsiWhiteSpace && uncleElement.getText().indexOf('\n') == -1) uncleElement = uncleElement.getNextSibling();
@@ -198,16 +196,14 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  @NlsSafe
-  private String formatDocFromComment(final PsiElement curElement, final String name) {
+  private @NlsSafe String formatDocFromComment(final PsiElement curElement, final String name) {
     String text = curElement.getText();
     text = text.substring("<!--".length(),text.length()-"-->".length()).trim();
     text = escapeDocumentationTextText(text);
     return generateDoc(text, name,null, null);
   }
 
-  @NlsSafe
-  protected String generateDoc(String str, String name, String typeName, String version) {
+  protected @NlsSafe String generateDoc(String str, String name, String typeName, String version) {
     if (str == null) return null;
     StringBuilder buf = new StringBuilder(str.length() + 20);
 
@@ -266,8 +262,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  @NlsSafe
-  static String generateHtmlAdditionalDocTemplate(@NotNull PsiElement element) {
+  static @NlsSafe String generateHtmlAdditionalDocTemplate(@NotNull PsiElement element) {
     StringBuilder buf = new StringBuilder();
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile != null) {
@@ -428,7 +423,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         xmlFile,
         new PsiElementProcessor() {
           @Override
-          public boolean execute(@NotNull final PsiElement element) {
+          public boolean execute(final @NotNull PsiElement element) {
             if (element instanceof XmlEntityDecl) {
               final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
               if (entityDecl.isInternalReference() && name.equals(entityDecl.getName())) {
@@ -457,9 +452,9 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     String result;
     String version;
     String url;
-    @NonNls public static final String DOCUMENTATION_ELEMENT_LOCAL_NAME = "documentation";
-    private @NonNls static final String CDATA_PREFIX = "<![CDATA[";
-    private @NonNls static final String CDATA_SUFFIX = "]]>";
+    public static final @NonNls String DOCUMENTATION_ELEMENT_LOCAL_NAME = "documentation";
+    private static final @NonNls String CDATA_PREFIX = "<![CDATA[";
+    private static final @NonNls String CDATA_SUFFIX = "]]>";
 
     @Override
     public boolean execute(@NotNull PsiElement element) {

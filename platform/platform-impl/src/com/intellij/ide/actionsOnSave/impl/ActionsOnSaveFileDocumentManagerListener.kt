@@ -2,6 +2,7 @@
 package com.intellij.ide.actionsOnSave.impl
 
 import com.intellij.ide.actions.SaveDocumentAction
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionResult
@@ -21,10 +22,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 
 private val EP_NAME = ExtensionPointName<ActionsOnSaveFileDocumentManagerListener.ActionOnSave>("com.intellij.actionOnSave")
 
@@ -149,7 +149,16 @@ private class CurrentActionListener : AnActionListener {
   }
 }
 
+@VisibleForTesting
 @Service(Service.Level.APP)
-private class CurrentActionHolder(@JvmField val coroutineScope: CoroutineScope) {
+class CurrentActionHolder(@JvmField val coroutineScope: CoroutineScope) {
   var runningSaveDocumentAction = false
+
+  @TestOnly
+  fun waitForTasks() {
+    @Suppress("DEPRECATION")
+    runUnderModalProgressIfIsEdt {
+      coroutineScope.coroutineContext.job.children.toList().joinAll()
+    }
+  }
 }

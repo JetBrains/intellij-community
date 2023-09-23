@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
 
 class KotlinFirCompletionContributor : CompletionContributor() {
     init {
@@ -49,6 +51,11 @@ class KotlinFirCompletionContributor : CompletionContributor() {
         identifierProviderService: CompletionDummyIdentifierProviderService,
         context: CompletionInitializationContext
     ) {
+        // If replacement context is not "modified" externally then `com.intellij.codeInsight.completion.CompletionProgressIndicator`
+        // searches for the reference at caret and on Tab replaces the whole reference, which in case of completion in Kotlin leads to bugs
+        // such as KTIJ-26872.
+        context.markReplacementOffsetAsModified()
+
         val dummyIdentifierCorrected = identifierProviderService.correctPositionForStringTemplateEntry(context)
         if (dummyIdentifierCorrected) {
             return
@@ -119,7 +126,7 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         positionContext: FirRawPositionCompletionContext,
         result: CompletionResultSet
     ): CompletionSorter = CompletionSorter.defaultSorter(parameters, result.prefixMatcher)
-            .let { Weighers.addWeighersToCompletionSorter(it, positionContext) }
+        .let { Weighers.addWeighersToCompletionSorter(it, positionContext) }
 
     private val AFTER_NUMBER_LITERAL = PsiJavaPatterns.psiElement().afterLeafSkipping(
         PsiJavaPatterns.psiElement().withText(""),
@@ -156,4 +163,13 @@ internal data class FirCompletionSessionParameters(
 
     val allowJavaGettersAndSetters: Boolean = !allowSyntheticJavaProperties || basicContext.parameters.invocationCount > 1
     val allowExpectedDeclarations: Boolean = basicContext.originalKtFile.moduleInfo.platform.isMultiPlatform()
+
+    val allowClassifiersAndPackagesForPossibleExtensionCallables: Boolean
+        get() {
+            val declaration = (positionContext as? FirTypeNameReferencePositionContext)?.typeReference?.parent ?: return true
+            return !(basicContext.parameters.invocationCount == 0
+                    && (declaration is KtNamedFunction || declaration is KtProperty)
+                    && positionContext.explicitReceiver == null
+                    && basicContext.prefixMatcher.prefix.firstOrNull()?.isLowerCase() == true)
+        }
 }

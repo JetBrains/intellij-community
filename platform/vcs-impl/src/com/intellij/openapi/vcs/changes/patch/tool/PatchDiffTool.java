@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.components.panels.Wrapper;
-import it.unimi.dsi.fastutil.ints.IntListIterator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,22 +101,21 @@ final class PatchDiffTool implements FrameDiffTool {
     }
 
     private void onInit() {
-      PatchChangeBuilder builder = new PatchChangeBuilder();
-      builder.exec(myRequest.getPatch().getHunks());
-      myHunks.addAll(builder.getHunks());
+      PatchChangeBuilder.PatchState state = new PatchChangeBuilder().build(myRequest.getPatch().getHunks());
+      myHunks.addAll(state.getHunks());
 
       Document patchDocument = myEditor.getDocument();
-      WriteAction.run(() -> patchDocument.setText(builder.getPatchContent().toString()));
+      WriteAction.run(() -> patchDocument.setText(state.getPatchContent().toString()));
 
       myEditor.getGutter().setLineNumberConverter(
-        new LineNumberConverterAdapter(builder.getLineConvertor1().createConvertor()),
-        new LineNumberConverterAdapter(builder.getLineConvertor2().createConvertor())
+        new LineNumberConverterAdapter(state.getLineConvertor1().createConvertor()),
+        new LineNumberConverterAdapter(state.getLineConvertor2().createConvertor())
       );
 
-      for (IntListIterator iterator = builder.getSeparatorLines().iterator(); iterator.hasNext(); ) {
-        int offset = patchDocument.getLineStartOffset(iterator.nextInt());
+      state.getSeparatorLines().forEach(line -> {
+        int offset = patchDocument.getLineStartOffset(line);
         DiffDrawUtil.createLineSeparatorHighlighter(myEditor, offset, offset);
-      }
+      });
 
       // highlighting
       for (PatchChangeBuilder.Hunk hunk : myHunks) {

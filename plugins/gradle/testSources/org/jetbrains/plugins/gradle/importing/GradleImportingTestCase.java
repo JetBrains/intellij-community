@@ -18,7 +18,6 @@ import com.intellij.openapi.externalSystem.test.JavaExternalSystemImportingTestC
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.environment.Environment;
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.projectRoots.impl.JavaHomeFinder;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver;
@@ -51,7 +50,6 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GroovyDslGradleSettingScriptBuilder;
@@ -62,6 +60,7 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
+import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.graldeJvm.GradleJvmResolver;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -248,26 +247,12 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion) {
-    JavaVersion javaRuntimeVersion = JavaVersion.current();
-    if (GradleJvmSupportMatrix.isSupported(gradleVersion, javaRuntimeVersion)) {
+    if (GradleJvmSupportMatrix.isSupported(gradleVersion, JavaVersion.current())) {
       return IdeaTestUtil.requireRealJdkHome();
     }
     // fix exception of FJP at JavaHomeFinder.suggestHomePaths => ... => EnvironmentUtil.getEnvironmentMap => CompletableFuture.<clinit>
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
-    List<String> paths = JavaHomeFinder.suggestHomePaths(true);
-    for (String path : paths) {
-      if (JdkUtil.checkForJdk(path)) {
-        JdkVersionDetector.JdkVersionInfo jdkVersionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(path);
-        if (jdkVersionInfo == null) continue;
-        if (GradleJvmSupportMatrix.isSupported(gradleVersion, jdkVersionInfo.version)) {
-          return path;
-        }
-      }
-    }
-    fail("Cannot find JDK for Gradle " + gradleVersion.getVersion() +
-         "\nchecked paths: " + paths +
-         "\npossibly compatible java versions: " + GradleJvmSupportMatrix.Companion.getSupportedJavaVersions(gradleVersion));
-    return null;
+    return GradleJvmResolver.resolveGradleJvmHomePath(gradleVersion);
   }
 
   public String findJdkPath() {

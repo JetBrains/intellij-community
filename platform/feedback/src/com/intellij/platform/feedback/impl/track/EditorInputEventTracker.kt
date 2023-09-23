@@ -2,10 +2,12 @@
 package com.intellij.platform.feedback.impl.track
 
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.feedback.impl.IdleFeedbackResolver
@@ -18,6 +20,13 @@ import java.time.LocalDateTime
  * Tracks keyboard and mouse activity in any editor and show a feedback notification after a long inactivity.
  */
 class EditorInputEventTracker : TypedHandlerDelegate(), EditorMouseListener, EditorMouseMotionListener {
+  init {
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
   // 10 minutes
   private val MIN_INACTIVE_TIME = 600
 

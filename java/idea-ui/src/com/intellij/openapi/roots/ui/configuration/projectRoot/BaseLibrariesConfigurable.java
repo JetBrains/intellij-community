@@ -116,7 +116,6 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   }
 
   private List<LibraryConfigurable> getLibraryConfigurables() {
-    //todo[nik] improve
     List<LibraryConfigurable> libraryConfigurables = new ArrayList<>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final TreeNode node = myRoot.getChildAt(i);
@@ -280,15 +279,15 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
 
               List<String> types = ContainerUtil.sorted(containerType2Usage.keySet());
 
-              final StringBuilder sb = new StringBuilder("Library '");
+              final StringBuilder sb = new StringBuilder(JavaUiBundle.message("library1"));
               Library libraryModel = myContext.getLibraryModel(library);
-              sb.append(libraryModel != null ? libraryModel.getName() : library.getName()).append("' is used in ");
+              sb.append(libraryModel != null ? libraryModel.getName() : library.getName()).append(JavaUiBundle.message("is.used.in"));
               for (int i = 0; i < types.size(); i++) {
                 if (i > 0 && i == types.size() - 1) {
-                  sb.append(" and in ");
+                  sb.append(JavaUiBundle.message("and.in"));
                 }
                 else if (i > 0) {
-                  sb.append(", in ");
+                  sb.append(JavaUiBundle.message("in"));
                 }
                 String type = types.get(i);
                 Collection<ProjectStructureElementUsage> usagesOfType = containerType2Usage.get(type);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.xml;
 
 import com.intellij.lang.HelpID;
@@ -25,8 +25,7 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
   }
 
   @Override
-  @NotNull
-  public String getType(@NotNull PsiElement element) {
+  public @NotNull String getType(@NotNull PsiElement element) {
     if (element instanceof XmlTag) {
       final PsiMetaData metaData = ((XmlTag)element).getMetaData();
       if (metaData != null && metaData.getDeclaration() instanceof XmlTag) {
@@ -60,8 +59,7 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
   }
 
   @Override
-  @NotNull
-  public String getDescriptiveName(@NotNull PsiElement element) {
+  public @NotNull String getDescriptiveName(@NotNull PsiElement element) {
     if (element instanceof XmlTag) {
       return ((XmlTag)element).getName();
     }
@@ -77,8 +75,7 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
   }
 
   @Override
-  @NotNull
-  public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
+  public @NotNull String getNodeText(@NotNull PsiElement element, boolean useFullName) {
     if (element instanceof XmlTag xmlTag) {
       final PsiMetaData metaData = xmlTag.getMetaData();
       final String name = metaData != null ? DescriptiveNameUtil.getMetaDataName(metaData) : xmlTag.getName();

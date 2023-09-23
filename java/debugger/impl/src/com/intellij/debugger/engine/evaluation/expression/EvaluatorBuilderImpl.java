@@ -1018,8 +1018,11 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitInstanceOfExpression " + expression);
       }
-      PsiElement parentOfType = PsiTreeUtil.getParentOfType(expression, PsiWhileStatement.class,
-                                                            PsiIfStatement.class, PsiPolyadicExpression.class);
+      PsiElement parentOfType = PsiTreeUtil.getParentOfType(expression,
+                                                            PsiWhileStatement.class,
+                                                            PsiIfStatement.class,
+                                                            PsiPolyadicExpression.class,
+                                                            PsiConditionalExpression.class);
       CodeFragmentEvaluator oldFragmentEvaluator = parentOfType != null ?
                                                    myCurrentFragmentEvaluator : setNewCodeFragmentEvaluator();
       try {

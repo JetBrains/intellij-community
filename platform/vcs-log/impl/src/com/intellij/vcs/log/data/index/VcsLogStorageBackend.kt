@@ -13,6 +13,7 @@ import java.util.function.IntFunction
 internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage {
   val storageId: StorageId
   var isFresh: Boolean
+  val isEmpty: Boolean
 
   fun getMessage(commitId: Int): String?
 

@@ -573,7 +573,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     myOptionsToolbar.setTargetComponent(mySearchCriteriaEdit);
     myOptionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     myOptionsToolbar.setForceMinimumSize(true);
-    myOptionsToolbar.setBorder(JBUI.Borders.empty(3));
+    myOptionsToolbar.setBorder(JBUI.Borders.empty(DEFAULT_VGAP, 0));
 
     // Search editor panel, 1st splitter element
     final var searchEditorPanel = new JPanel(new GridBagLayout());

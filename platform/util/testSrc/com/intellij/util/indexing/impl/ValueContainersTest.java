@@ -39,7 +39,7 @@ public class ValueContainersTest extends TestCase {
   }
 
   public void testMixedValueContainer() {
-    ValueContainerImpl<String> container = new ValueContainerImpl<>();
+    ValueContainerImpl<String> container = ValueContainerImpl.createNewValueContainer();
 
     container.addValue(294005, "com");
     container.addValue(294001, "com");
@@ -73,7 +73,7 @@ public class ValueContainersTest extends TestCase {
         return map;
       }
     }
-    ValueContainerImpl<Map<String, String>> container = new ValueContainerImpl<>();
+    ValueContainerImpl<Map<String, String>> container = ValueContainerImpl.createNewValueContainer();
     container.addValue(111, new HashMap<>());
     container.addValue(222, new HashMap<>());
     Map<String, String> value = new HashMap<>();
@@ -84,7 +84,7 @@ public class ValueContainersTest extends TestCase {
     BufferExposingByteArrayOutputStream os = new BufferExposingByteArrayOutputStream();
     container.saveTo(new DataOutputStream(os), externalizer);
 
-    ValueContainerImpl<Map<String, String>> container2 = new ValueContainerImpl<>();
+    ValueContainerImpl<Map<String, String>> container2 = ValueContainerImpl.createNewValueContainer();
     container2.readFrom(new DataInputStream(new ByteArrayInputStream(os.toByteArray())), new MyValueExternalizer(), ValueContainerInputRemapping.IDENTITY);
     AtomicInteger count = new AtomicInteger();
     container2.forEach((id, value1) -> {
@@ -104,7 +104,7 @@ public class ValueContainersTest extends TestCase {
 
   private static <T> void runSimpleAddRemoveIteration(T[] values, int[][] inputIds) {
     HashMap<T, IntList> valueToIdList = new HashMap<>();
-    ValueContainerImpl<T> container = new ValueContainerImpl<>();
+    ValueContainerImpl<T> container = ValueContainerImpl.createNewValueContainer();
 
     for(int i = 0; i < values.length; ++i) {
       IntList list = new IntArrayList(inputIds.length);

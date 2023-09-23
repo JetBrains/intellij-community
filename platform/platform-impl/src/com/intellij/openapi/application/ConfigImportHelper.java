@@ -12,9 +12,9 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
+import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.idea.StartupErrorReporter;
 import com.intellij.openapi.application.migrations.BigDataTools232;
-import com.intellij.openapi.application.migrations.PackageSearch232;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -357,6 +357,9 @@ public final class ConfigImportHelper {
     if ("never".equals(showImportDialog)) {
       return null;
     }
+
+    //noinspection TestOnlyProblems
+    LookAndFeelThemeAdapterKt.setEarlyUiLaF();
 
     ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, ConfigImportHelper::findConfigDirectoryByPath);
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
@@ -890,7 +893,6 @@ public final class ConfigImportHelper {
     var currentProductVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
     var options = new PluginMigrationOptions(currentProductVersion, newConfigDir, oldConfigDir, toMigrate, toDownload);
     new BigDataTools232().migratePlugins(options);
-    new PackageSearch232().migratePlugins(options);
   }
 
   private static void partitionNonBundled(Collection<? extends IdeaPluginDescriptor> descriptors,

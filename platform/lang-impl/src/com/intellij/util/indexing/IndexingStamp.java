@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -339,7 +339,8 @@ public final class IndexingStamp {
 
   @TestOnly
   public static boolean hasIndexingTimeStamp(int fileId) {
-    return getTimestamp(fileId, false) != null;
+    Timestamps timestamp = getTimestamp(fileId, false);
+    return timestamp != null && timestamp.myIndexStamps != null && !timestamp.myIndexStamps.isEmpty();
   }
 
   public static void update(int fileId, @NotNull ID<?, ?> indexName, final long indexCreationStamp) {

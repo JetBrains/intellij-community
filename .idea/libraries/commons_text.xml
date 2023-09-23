@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="commons-text" type="repository">
+    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.apache.commons:commons-text:1.10.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-text/1.10.0/commons-text-1.10.0.jar">
+          <sha256sum>770cd903fa7b604d1f7ef7ba17f84108667294b2b478be8ed1af3bffb4ae0018</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-text/1.10.0/commons-text-1.10.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-text/1.10.0/commons-text-1.10.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

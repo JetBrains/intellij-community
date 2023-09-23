@@ -5,12 +5,10 @@ import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.gdpr.showDataSharingAgreement
 import com.intellij.ide.gdpr.showEndUserAndDataSharingAgreements
-import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import kotlinx.coroutines.*
-import javax.swing.UIManager
 
 // On startup 2 dialogs must be shown:
 // - gdpr agreement
@@ -26,7 +24,8 @@ internal suspend fun loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx
   }
 }
 
-internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Document?, asyncScope: CoroutineScope): (suspend () -> Boolean)? {
+internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Document?,
+                                                asyncScope: CoroutineScope): (suspend () -> Boolean)? {
   val updateCached = asyncScope.launch(CoroutineName("eua cache updating") + Dispatchers.IO) {
     EndUserAgreement.updateCachedContentToLatestBundledVersion()
   }
@@ -34,10 +33,6 @@ internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Docum
   suspend fun prepareAndExecuteInEdt(task: () -> Unit) {
     updateCached.join()
     withContext(RawSwingDispatcher) {
-      if (UIManager.getLookAndFeel() !is IntelliJLaf) {
-        //todo need a way to set default light theme
-        UIManager.setLookAndFeel(IntelliJLaf())
-      }
       task()
     }
   }

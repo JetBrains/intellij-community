@@ -40,7 +40,15 @@
     <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCloseHistoryHandler"
                          id="terminalCloseHistory" order="first"/>
     <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalSelectPromptHandler"
-                         id="terminalSelectPrompt" order="first"/>
+                         id="terminalSelectPrompt" order="first, after terminalCloseHistory"/>
+    <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCloseSearchHandler"
+                         id="terminalCloseSearch" order="first, after terminalSelectPrompt"/>
+    <editorActionHandler action="Find" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalFindHandler"
+                         id="terminalFind" order="first"/>
+    <editorActionHandler action="FindNext" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalFindNextHandler"
+                         id="terminalFindNext" order="first"/>
+    <editorActionHandler action="FindPrevious" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalFindPreviousHandler"
+                         id="terminalFindPrevious" order="first"/>
     <typedHandler implementation="org.jetbrains.plugins.terminal.exp.TerminalCompletionAutoPopupHandler"
                   id="terminalCompletionAutoPopup" order="first"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.terminal.exp.TerminalCharFilter"
@@ -49,9 +57,6 @@
                             id="terminalCommandSpec"
                             implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCommandSpecCompletionContributor"
                             order="first, before shShebang, before liveTemplates"/>
-    <completion.contributor language="any"
-                            implementationClass="org.jetbrains.plugins.terminal.exp.TerminalSessionCompletionContributor"
-                            order="first, after terminalCommandSpec, before shShebang, before liveTemplates"/>
     <weigher key="completion"
              id="terminalCommandSpec"
              order="before stats"

@@ -81,6 +81,8 @@
     <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonLiteralAnnotator"/>
 
     <!-- Inspections -->
+    <inspection.basicVisitor class="com.intellij.json.psi.JsonElementVisitor"/>
+
     <localInspection language="JSON" shortName="JsonStandardCompliance"
                      bundle="messages.JsonBundle" key="inspection.compliance.name" groupKey="json.inspection.group"
                      enabledByDefault="true" level="ERROR"
@@ -176,6 +178,8 @@
                     interface="com.jetbrains.jsonSchema.extension.JsonSchemaGotoDeclarationSuppressor"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonLikePsiWalkerFactory"
                     interface="com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonSchemaMapper"
+                    interface="com.jetbrains.jsonSchema.extension.JsonSchemaMapper" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonSchemaEnabler" interface="com.jetbrains.jsonSchema.extension.JsonSchemaEnabler"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonWidgetSuppressor"

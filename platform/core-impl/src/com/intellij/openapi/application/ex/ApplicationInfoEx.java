@@ -46,6 +46,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   @ApiStatus.Experimental
   public abstract boolean isPreview();
 
+  /**
+   * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getDownloadPageUrl()} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public final String getDownloadUrl() {
     String productUrl = getProductUrl();
     return productUrl != null ? productUrl + "download/" : null;
@@ -53,12 +58,32 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract @Nullable UpdateUrls getUpdateUrls();
 
+  /**
+   * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getGettingStartedPageUrl()} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public abstract String getDocumentationUrl();
 
+  /**
+   * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getTechnicalSupportUrl()} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public abstract String getSupportUrl();
 
+  /**
+   * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getBugReportUrl()} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public abstract String getYoutrackUrl();
 
+  /**
+   * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getFeedbackReporter()} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public abstract String getFeedbackUrl();
 
   /**
@@ -87,10 +112,25 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   @Deprecated
   public abstract String getBuiltinPluginsUrl();
 
+  /**
+   * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getHelpPageUrl()} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public abstract String getWebHelpUrl();
 
+  /**
+   * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getWhatIsNewPageUrl()} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public abstract String getWhatsNewUrl();
 
+  /**
+   * @deprecated use {@link com.intellij.ide.actions.WhatsNewUtil#isWhatsNewAvailable()} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public abstract boolean isShowWhatsNewOnUpdate();
 
   public abstract @Nullable String getWinKeymapUrl();
@@ -98,7 +138,18 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract @Nullable String getMacKeymapUrl();
 
   public interface UpdateUrls {
+    /**
+     * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getUpdateMetadataUrl()} instead
+     */
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated
     String getCheckingUrl();
+
+    /**
+     * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#computePatchUrl} instead
+     */
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated
     String getPatchesUrl();
   }
 

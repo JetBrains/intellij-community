@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
-import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -19,7 +18,7 @@ public final class RichControlFlow {
   // Tarjan. Testing flow graph reducibility.
   // Journal of Computer and System Sciences 9.3 (1974): 355-365.
   public boolean reducible() {
-    if (dfsTree.back.isEmpty()) {
+    if (dfsTree.isBackEmpty()) {
       return true;
     }
     int size = controlFlow.transitions.length;
@@ -39,13 +38,9 @@ public final class RichControlFlow {
     }
 
     // from whom back connections
-    for (Edge edge : dfsTree.back) {
-      cycleIncoming[edge.to].add(edge.from);
-    }
+    dfsTree.iterateBack((from, to) -> cycleIncoming[to].add(from));
     // from whom ordinary connections
-    for (Edge edge : dfsTree.nonBack) {
-      nonCycleIncoming[edge.to].add(edge.from);
-    }
+    dfsTree.iterateNonBack((from, to) -> nonCycleIncoming[to].add(from));
 
     for (int w = size - 1; w >= 0 ; w--) {
       top = 0;

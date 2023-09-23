@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.dvcs.branch.DvcsBranchInfo;
@@ -147,6 +147,14 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
 
   public void setRecentCommonBranch(@NotNull String value) {
     getState().setRecentCommonBranch(value);
+  }
+
+  public boolean showRecentBranches() {
+    return getState().getShowRecentBranches();
+  }
+
+  public void setShowRecentBranches(boolean value) {
+    getState().setShowRecentBranches(value);
   }
 
   public boolean warnAboutCrlf() {

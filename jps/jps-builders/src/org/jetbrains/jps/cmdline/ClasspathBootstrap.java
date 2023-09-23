@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.google.gson.Gson;
@@ -37,8 +37,7 @@ import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 import org.jetbrains.xxh3.Xxh3;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -226,8 +225,7 @@ public final class ClasspathBootstrap {
     return PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
   }
 
-  @Nullable
-  public static File getResourceFile(Class<?> aClass) {
+  public static @Nullable File getResourceFile(Class<?> aClass) {
     final String resourcePath = getResourcePath(aClass);
     return resourcePath != null? new File(resourcePath) : null;
   }

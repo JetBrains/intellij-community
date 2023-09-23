@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.impl.AbstractEntityStorage
 import com.intellij.platform.workspace.storage.impl.references.MutableReferenceContainer
 import com.intellij.platform.workspace.storage.impl.references.ReferenceContainer
 import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
@@ -17,7 +18,7 @@ class StorageMutabilityTest {
   @Test
   fun `check refs copying on empty storage`() {
     val emptyBuilder = createEmptyBuilder()
-    compareRefsInstances(emptyBuilder, MutableEntityStorage.from(emptyBuilder))
+    compareRefsInstances(emptyBuilder, MutableEntityStorage.from(emptyBuilder.toSnapshot()))
 
     var snapshot = emptyBuilder.toSnapshot()
     var builder = MutableEntityStorage.from(snapshot)
@@ -33,7 +34,7 @@ class StorageMutabilityTest {
   @Test
   fun `check complex refs modifications`() {
     val emptyBuilder = createEmptyBuilder()
-    val emptyBuilderCopy = MutableEntityStorage.from(emptyBuilder)
+    val emptyBuilderCopy = MutableEntityStorage.from(emptyBuilder.toSnapshot())
 
     val entity = MainEntityList("123", MySource) {
       this.child = listOf(AttachedEntityList("xyz", MySource))

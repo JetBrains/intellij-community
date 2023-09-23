@@ -14,9 +14,9 @@ import static com.intellij.openapi.application.ex.ClipboardUtil.getTextInClipboa
 
 public final class AnalyzeStacktraceDialog extends DialogWrapper {
   private final Project myProject;
-  protected AnalyzeStacktraceUtil.StacktraceEditorPanel myEditorPanel;
+  private AnalyzeStacktraceUtil.StacktraceEditorPanel myEditorPanel;
 
-  protected AnalyzeStacktraceDialog(Project project) {
+  AnalyzeStacktraceDialog(Project project) {
     super(project, true);
     myProject = project;
     setTitle(IdeBundle.message("unscramble.dialog.title"));

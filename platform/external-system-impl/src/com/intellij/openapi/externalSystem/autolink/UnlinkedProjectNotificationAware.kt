@@ -1,21 +1,23 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.CommonBundle
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.ide.environment.EnvironmentService
+import com.intellij.ide.environment.description
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction.createSimpleExpiring
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
+import com.intellij.openapi.externalSystem.importing.ExternalSystemKeyProvider
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.ui.ExternalSystemTextProvider
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
@@ -47,15 +49,16 @@ class UnlinkedProjectNotificationAware(
     val notificationManager = NotificationGroupManager.getInstance()
     val notificationGroup = notificationManager.getNotificationGroup(NOTIFICATION_GROUP_ID)
     val notificationContent = textProvider.getUPNText(projectId.projectName)
+    if (checkEnvironment(projectId, callback)) {
+      return
+    }
     notifiedNotifications.computeIfAbsent(projectId) {
       notificationGroup.createNotification(notificationContent, NotificationType.INFORMATION)
         .setSuggestionType(true)
         .setNotificationHelp(textProvider.getUPNHelpText())
         .addAction(createSimpleExpiring(textProvider.getUPNLinkActionText()) { callback() })
-        .addAction(createSimpleExpiring(textProvider.getUPNSkipActionText()) {
-          disabledNotifications.add(projectId.systemId.id)
-          LOG.debug(projectId.debugName + ": notification is disabled")
-        }).whenExpired {
+        .addAction(createSimpleExpiring(textProvider.getUPNSkipActionText()) { disableNotification(projectId) })
+        .whenExpired {
           notifiedNotifications.remove(projectId)
           LOG.debug(projectId.debugName + ": notification is expired")
         }.apply {
@@ -63,6 +66,48 @@ class UnlinkedProjectNotificationAware(
           LOG.debug(projectId.debugName + ": notification is notified")
         }
     }
+  }
+
+  private fun checkEnvironment(projectId: ExternalSystemProjectId, callback: () -> Unit) : Boolean {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment && !ApplicationManager.getApplication().isUnitTestMode) {
+      LOG.warn("Unlinked project notification is shown; Consider specifying '${ExternalSystemKeyProvider.Keys.LINK_UNLINKED_PROJECT.id}' to import the necessary build scripts.")
+    }
+    val environmentService = service<EnvironmentService>()
+    val linkChoice: String = runBlockingCancellable {
+      environmentService.getEnvironmentValue(ExternalSystemKeyProvider.Keys.LINK_UNLINKED_PROJECT, "")
+    }
+    if (linkChoice != "") {
+      if (linkChoice == "all") {
+        callback()
+        return true
+      }
+      val allChoices = linkChoice.split(",")
+      val choiceForThisBuildSystem = allChoices.find { it.startsWith(projectId.systemId.readableName) }?.substringAfter(":")
+      when (choiceForThisBuildSystem) {
+        "import" -> {
+          callback()
+          return true
+        }
+        "skip" -> {
+          disableNotification(projectId)
+          return true
+        }
+        null -> {
+          // no decision for this build system, proceed with UI notification (though it is useless here)
+        }
+        else -> {
+          LOG.error("""Invalid value for the key ${ExternalSystemKeyProvider.Keys.LINK_UNLINKED_PROJECT}. 
+The correct usage:
+ ${ExternalSystemKeyProvider.Keys.LINK_UNLINKED_PROJECT.description}""")
+        }
+      }
+    }
+    return false
+  }
+
+  private fun disableNotification(projectId: ExternalSystemProjectId) {
+    disabledNotifications.add(projectId.systemId.id)
+    LOG.debug(projectId.debugName + ": notification is disabled")
   }
 
   fun notificationExpire(projectId: ExternalSystemProjectId) {

@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerCMDState
@@ -33,11 +34,11 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
 
   private fun setupTestManagerForLegacyImport() {
 
-    myProjectsManager.setProgressListener(myTestSyncViewManager)
+    projectsManager.setProgressListener(myTestSyncViewManager)
   }
 
   @Test
-  fun testShouldShowWarningIfProjectJDKIsNullAndRollbackToInternal() {
+  fun testShouldShowWarningIfProjectJDKIsNullAndRollbackToInternal() = runBlocking {
     val projectSdk = ProjectRootManager.getInstance(myProject).projectSdk
     val jdkForImporter = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.importingSettings.jdkForImporter
     try {
@@ -58,7 +59,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testShouldShowLogsOfMavenServerIfNotStarted() {
+  fun testShouldShowLogsOfMavenServerIfNotStarted() = runBlocking {
     try {
       LoggedErrorProcessor.executeWith<RuntimeException>(loggedErrorProcessor("Maven server exception for tests")) {
         MavenServerCMDState.setThrowExceptionOnNextServerStart()
@@ -72,7 +73,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun `test maven server not started - bad vm config`() {
+  fun `test maven server not started - bad vm config`() = runBlocking {
     LoggedErrorProcessor.executeWith<RuntimeException>(loggedErrorProcessor("java.util.concurrent.ExecutionException:")) {
       createProjectSubFile(".mvn/jvm.config", "-Xms100m -Xmx10m")
       createAndImportProject()
@@ -81,7 +82,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun `test maven import - bad maven config`() {
+  fun `test maven import - bad maven config`() = runBlocking {
     assumeVersionMoreThan("3.3.1")
     createProjectSubFile(".mvn/maven.config", "-aaaaT1")
     createAndImportProject()

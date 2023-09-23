@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
@@ -34,10 +34,9 @@ public class EmmetAbbreviationBalloon {
   private final String myAbbreviationsHistoryKey;
   private final String myLastAbbreviationKey;
   private final Callback myCallback;
-  @NotNull private final EmmetContextHelp myContextHelp;
+  private final @NotNull EmmetContextHelp myContextHelp;
 
-  @Nullable
-  private static String ourTestingAbbreviation;
+  private static @Nullable String ourTestingAbbreviation;
 
 
   public EmmetAbbreviationBalloon(@NotNull String abbreviationsHistoryKey,
@@ -63,7 +62,7 @@ public class EmmetAbbreviationBalloon {
     });
   }
 
-  public void show(@NotNull final CustomTemplateCallback customTemplateCallback) {
+  public void show(final @NotNull CustomTemplateCallback customTemplateCallback) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (ourTestingAbbreviation == null) {
         throw new RuntimeException("Testing abbreviation is not set. See EmmetAbbreviationBalloon#setTestingAbbreviation");
@@ -169,14 +168,11 @@ public class EmmetAbbreviationBalloon {
   }
 
   public static class EmmetContextHelp {
-    @NotNull
-    private final Supplier<@Tooltip String> myDescription;
+    private final @NotNull Supplier<@Tooltip String> myDescription;
 
-    @Nullable
-    private Supplier<@LinkLabel String> myLinkText = null;
+    private @Nullable Supplier<@LinkLabel String> myLinkText = null;
 
-    @Nullable
-    private String myLinkUrl = null;
+    private @Nullable String myLinkUrl = null;
 
     public EmmetContextHelp(@NotNull Supplier<@Tooltip String> description) {
       myDescription = description;
@@ -190,8 +186,7 @@ public class EmmetAbbreviationBalloon {
       myLinkUrl = linkUrl;
     }
 
-    @NotNull
-    public ContextHelpLabel createHelpLabel() {
+    public @NotNull ContextHelpLabel createHelpLabel() {
       String linkText = doIfNotNull(myLinkText, Supplier::get);
       String description = myDescription.get();
       if (StringUtil.isEmpty(linkText) || StringUtil.isEmpty(myLinkUrl)) {

@@ -136,6 +136,7 @@ public final class ExpUiIcons {
     /** 17x17 */ public static final @NotNull Icon CwmIconModificator = load("expui/codeWithMe/cwmIconModificator.svg", -457325122, 2);
     /** 15x15 */ public static final @NotNull Icon CwmIconModificator_14x14 = load("expui/codeWithMe/cwmIconModificator@14x14.svg", 1233056681, 2);
     /** 22x22 */ public static final @NotNull Icon CwmIconModificator_20x20 = load("expui/codeWithMe/cwmIconModificator@20x20.svg", 561818425, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmIconModificatorMenu = load("expui/codeWithMe/cwmIconModificatorMenu.svg", 91482355, 2);
     /** 16x16 */ public static final @NotNull Icon CwmInvite = load("expui/codeWithMe/cwmInvite.svg", 1273298697, 2);
     /** 16x16 */ public static final @NotNull Icon CwmUsers = load("expui/codeWithMe/cwmUsers.svg", 374429727, 2);
     /** 20x20 */ public static final @NotNull Icon CwmUsers_20x20 = load("expui/codeWithMe/cwmUsers@20x20.svg", 1716201367, 2);
@@ -574,14 +575,14 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon StepOver = load("expui/run/stepOver.svg", -1962436714, 2);
     /** 16x16 */ public static final @NotNull Icon Stop = load("expui/run/stop.svg", 1749021823, 10);
     /** 16x16 */ public static final @NotNull Icon TestCustom = load("expui/run/testCustom.svg", -1282705019, 2);
-    /** 16x16 */ public static final @NotNull Icon TestError = load("expui/run/testError.svg", -395679554, 2);
-    /** 16x16 */ public static final @NotNull Icon TestFailed = load("expui/run/testFailed.svg", -721083451, 2);
+    /** 16x16 */ public static final @NotNull Icon TestError = load("expui/run/testError.svg", 1371661315, 2);
+    /** 16x16 */ public static final @NotNull Icon TestFailed = load("expui/run/testFailed.svg", -343958905, 2);
     /** 16x16 */ public static final @NotNull Icon TestIgnored = load("expui/run/testIgnored.svg", 1363493756, 2);
     /** 16x16 */ public static final @NotNull Icon TestNotRunYet = load("expui/run/testNotRunYet.svg", 328670944, 2);
-    /** 16x16 */ public static final @NotNull Icon TestPassed = load("expui/run/testPassed.svg", 480210793, 2);
+    /** 16x16 */ public static final @NotNull Icon TestPassed = load("expui/run/testPassed.svg", -1947435834, 2);
     /** 16x16 */ public static final @NotNull Icon TestPassedIgnored = load("expui/run/testPassedIgnored.svg", -291968708, 2);
     /** 16x16 */ public static final @NotNull Icon TestPaused = load("expui/run/testPaused.svg", 820702611, 2);
-    /** 16x16 */ public static final @NotNull Icon TestSkipped = load("expui/run/testSkipped.svg", -1005073221, 2);
+    /** 16x16 */ public static final @NotNull Icon TestSkipped = load("expui/run/testSkipped.svg", 1242536403, 2);
     /** 16x16 */ public static final @NotNull Icon TestTerminated = load("expui/run/testTerminated.svg", -2033175435, 2);
     /** 16x16 */ public static final @NotNull Icon TestUnknown = load("expui/run/testUnknown.svg", -611982271, 2);
     /** 16x16 */ public static final @NotNull Icon ViewBreakpoints = load("expui/run/viewBreakpoints.svg", -924866217, 2);
@@ -606,7 +607,7 @@ public final class ExpUiIcons {
   public static final class Status {
     /** 16x16 */ public static final @NotNull Icon Error = load("expui/status/error.svg", -143235814, 2);
     /** 16x16 */ public static final @NotNull Icon ErrorOutline = load("expui/status/errorOutline.svg", -281923861, 2);
-    /** 16x16 */ public static final @NotNull Icon FailedInProgress = load("expui/status/failedInProgress.svg", 8468379, 2);
+    /** 16x16 */ public static final @NotNull Icon FailedInProgress = load("expui/status/failedInProgress.svg", -821599555, 2);
     /** 16x16 */ public static final @NotNull Icon Info = load("expui/status/info.svg", 370358095, 2);
     /** 16x16 */ public static final @NotNull Icon InfoOutline = load("expui/status/infoOutline.svg", -1701696200, 2);
     /** 16x16 */ public static final @NotNull Icon Success = load("expui/status/success.svg", 282847188, 2);
@@ -659,6 +660,8 @@ public final class ExpUiIcons {
     /** 20x20 */ public static final @NotNull Icon Problems_20x20 = load("expui/toolwindow/problems@20x20.svg", 1864041050, 2);
     /** 16x16 */ public static final @NotNull Icon Profiler = load("expui/toolwindow/profiler.svg", -2026725006, 2);
     /** 20x20 */ public static final @NotNull Icon Profiler_20x20 = load("expui/toolwindow/profiler@20x20.svg", -700074637, 2);
+    /** 16x16 */ public static final @NotNull Icon ProfilerAndroid = load("expui/toolwindow/profilerAndroid.svg", -926134973, 2);
+    /** 20x20 */ public static final @NotNull Icon ProfilerAndroid_20x20 = load("expui/toolwindow/profilerAndroid@20x20.svg", -487917978, 2);
     /** 16x16 */ public static final @NotNull Icon Project = load("expui/toolwindow/project.svg", 566177333, 2);
     /** 20x20 */ public static final @NotNull Icon Project_20x20 = load("expui/toolwindow/project@20x20.svg", 268424096, 2);
     /** 16x16 */ public static final @NotNull Icon Repositories = load("expui/toolwindow/repositories.svg", 974555029, 2);

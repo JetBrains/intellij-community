@@ -5,14 +5,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.function.Function;
 
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public final class ExceptionUtil extends ExceptionUtilRt {
@@ -179,12 +177,9 @@ public final class ExceptionUtil extends ExceptionUtilRt {
   public static <E extends Exception>
   void runAllAndRethrowAllExceptions(@NotNull E example,
                                      ThrowableRunnable<? extends Exception> @NotNull ... potentiallyFailingTasks) throws E {
-    E exception = null;
-    for (ThrowableRunnable<? extends Exception> potentiallyFailingTask : potentiallyFailingTasks) {
-      try {
-        potentiallyFailingTask.run();
-      }
-      catch (Throwable e) {
+    Function<List<? extends Throwable>, E> combiner = exceptions -> {
+      E exception = null;
+      for (Throwable e : exceptions) {
         if (exception == null) {
           if (example.getClass().isAssignableFrom(e.getClass())) {
             exception = (E)e;
@@ -198,9 +193,32 @@ public final class ExceptionUtil extends ExceptionUtilRt {
           exception.addSuppressed(e);
         }
       }
+      return exception;
+    };
+
+    runAllAndRethrowAllExceptions(combiner, potentiallyFailingTasks);
+  }
+
+  @SuppressWarnings("unchecked")
+  @ApiStatus.Internal
+  public static <E extends Exception>
+  void runAllAndRethrowAllExceptions(@NotNull Function<List<? extends Throwable>, E> exceptionsCombiner,
+                                     ThrowableRunnable<? extends Exception> @NotNull ... potentiallyFailingTasks) throws E {
+    List<Throwable> exceptions = null;
+    for (ThrowableRunnable<? extends Exception> potentiallyFailingTask : potentiallyFailingTasks) {
+      try {
+        potentiallyFailingTask.run();
+      }
+      catch (Throwable e) {
+        if (exceptions == null) {
+          exceptions = new ArrayList<>();
+        }
+        exceptions.add(e);
+      }
     }
-    if (exception != null) {
-      throw exception;
+
+    if (exceptions != null) {
+      throw exceptionsCombiner.apply(exceptions);
     }
   }
 }

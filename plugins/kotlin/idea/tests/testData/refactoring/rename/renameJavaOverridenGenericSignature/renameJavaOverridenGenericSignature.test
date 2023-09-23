@@ -1,0 +1,8 @@
+{
+  "type": "MARKED_ELEMENT",
+  "mainFile": "test/Foo.java",
+  "newName": "renamedBaz",
+  "withRuntime": "true",
+  "byRef": "true",
+  "enabledInK2": true
+}

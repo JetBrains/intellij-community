@@ -7,19 +7,16 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
 
-
-internal class InlayActionHandlerUsagesCollector : CounterUsagesCollector() {
+internal object InlayActionHandlerUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
-    private val GROUP = EventLogGroup("inlay.action.handler", 1)
-    private val HANDLER_FIELD = EventFields.StringValidatedByCustomRule("id", PluginInfoValidationRule::class.java)
-    private val CLICK_HANDLER_EVENT = GROUP.registerEvent("click.handled",
-                                                          HANDLER_FIELD,
-                                                          EventFields.PluginInfo)
+  private val GROUP = EventLogGroup("inlay.action.handler", 1)
+  private val HANDLER_FIELD = EventFields.StringValidatedByCustomRule("id", PluginInfoValidationRule::class.java)
+  private val CLICK_HANDLER_EVENT = GROUP.registerEvent("click.handled",
+                                                        HANDLER_FIELD,
+                                                        EventFields.PluginInfo)
 
-    fun clickHandled(handlerId: String, handlerClass: Class<*>) {
-      CLICK_HANDLER_EVENT.log(handlerId, getPluginInfo(handlerClass))
-    }
+  fun clickHandled(handlerId: String, handlerClass: Class<*>) {
+    CLICK_HANDLER_EVENT.log(handlerId, getPluginInfo(handlerClass))
   }
 }

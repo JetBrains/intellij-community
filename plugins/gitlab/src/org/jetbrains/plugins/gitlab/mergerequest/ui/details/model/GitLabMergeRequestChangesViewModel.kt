@@ -6,7 +6,8 @@ import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesContainer
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelDelegate
-import com.intellij.collaboration.util.REVISION_COMPARISON_CHANGE_HASHING_STRATEGY
+import com.intellij.collaboration.util.CODE_REVIEW_CHANGE_HASHING_STRATEGY
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
@@ -16,14 +17,10 @@ import com.intellij.util.containers.CollectionFactory
 import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
-import org.jetbrains.plugins.gitlab.mergerequest.data.firstNote
-import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
+import org.jetbrains.plugins.gitlab.mergerequest.data.*
 import java.util.concurrent.ConcurrentHashMap
 
-internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewModel<GitLabCommitDTO> {
+internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewModel<GitLabCommit> {
   /**
    * View model of a current change list
    */
@@ -45,12 +42,12 @@ internal class GitLabMergeRequestChangesViewModelImpl(
   parentCs: CoroutineScope,
   mergeRequest: GitLabMergeRequest
 ) : GitLabMergeRequestChangesViewModel,
-    CodeReviewChangesViewModel<GitLabCommitDTO> {
+    CodeReviewChangesViewModel<GitLabCommit> {
   private val cs = parentCs.childScope()
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private val changesContainer: Flow<Result<CodeReviewChangesContainer>> = mergeRequest.changes.mapLatest {
-    runCatching {
+    runCatchingUser {
       val changes = it.getParsedChanges()
       CodeReviewChangesContainer(changes.changes, changes.commits.map { it.sha }, changes.changesByCommits)
     }
@@ -60,7 +57,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
     GitLabMergeRequestChangeListViewModelImpl(project, this)
   }
 
-  override val reviewCommits: SharedFlow<List<GitLabCommitDTO>> =
+  override val reviewCommits: SharedFlow<List<GitLabCommit>> =
     mergeRequest.changes.map { it.commits }.modelFlow(cs, LOG)
 
   override val selectedCommitIndex: SharedFlow<Int> = reviewCommits.combine(delegate.selectedCommit) { commits, sha ->
@@ -68,7 +65,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
     else commits.indexOfFirst { it.sha == sha }
   }.modelFlow(cs, LOG)
 
-  override val selectedCommit: SharedFlow<GitLabCommitDTO?> = reviewCommits.combine(selectedCommitIndex) { commits, index ->
+  override val selectedCommit: SharedFlow<GitLabCommit?> = reviewCommits.combine(selectedCommitIndex) { commits, index ->
     index.takeIf { it >= 0 }?.let { commits[it] }
   }.modelFlow(cs, LOG)
 
@@ -79,8 +76,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
             mergeRequest.changes.map { it.getParsedChanges() }.catch { },
             delegate.selectedCommit) { positions, parsedChanges, commit ->
       val changes = parsedChanges.getChanges(commit)
-      val result: MutableMap<Change, Int> =
-        CollectionFactory.createCustomHashingStrategyMap(REVISION_COMPARISON_CHANGE_HASHING_STRATEGY)
+      val result: MutableMap<Change, Int> = CollectionFactory.createCustomHashingStrategyMap(CODE_REVIEW_CHANGE_HASHING_STRATEGY)
       changes.associateWithTo(result) { change ->
         val patch = parsedChanges.patchesByChange[change] ?: return@associateWithTo 0
         //TODO: cache?
@@ -104,7 +100,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
     delegate.selectChange(change)
   }
 
-  override fun commitHash(commit: GitLabCommitDTO): String = commit.shortId
+  override fun commitHash(commit: GitLabCommit): String = commit.shortId
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

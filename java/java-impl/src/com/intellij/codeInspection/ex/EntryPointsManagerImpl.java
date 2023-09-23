@@ -20,7 +20,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -38,10 +37,10 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   
   @Override
   public void configureAnnotations(boolean implicitWritesOnly) {
-    final List<String> list = new ArrayList<>(ADDITIONAL_ANNOTATIONS);
-    final List<String> writeList = new ArrayList<>(myWriteAnnotations);
+    List<String> list = new ArrayList<>(ADDITIONAL_ANNOTATIONS);
+    List<String> writeList = new ArrayList<>(myWriteAnnotations);
 
-    final JPanel listPanel;
+    JPanel listPanel;
     if (implicitWritesOnly) {
       listPanel = null;
     }
@@ -53,7 +52,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
       Set<PsiAnnotation.TargetType> annotationTargets = AnnotationTargetUtil.getAnnotationTargets(psiClass);
       return annotationTargets != null && annotationTargets.contains(PsiAnnotation.TargetType.FIELD);
     };
-    final JPanel writtenAnnotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+    JPanel writtenAnnotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       writeList, JavaBundle.message("separator.mark.field.as.implicitly.written.if.annotated.by"), false, applicableToField);
     new DialogWrapper(myProject) {
       {
@@ -63,8 +62,8 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
 
       @Override
       protected JComponent createCenterPanel() {
-        final JPanel panel = new JPanel(new GridBagLayout());
-        final var constraints = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1,
+        JPanel panel = new JPanel(new GridBagLayout());
+        var constraints = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1,
                                                        GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                                        JBInsets.emptyInsets(), 0, 0);
         if (listPanel != null) {
@@ -89,28 +88,23 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
     }.show();
   }
 
-  public static JButton createConfigureAnnotationsButton(final Project project, boolean implicitWritesOnly) {
-    final JButton configureAnnotations = new JButton(JavaBundle.message("button.annotations"));
-    configureAnnotations.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        getInstance(project).configureAnnotations(implicitWritesOnly);
-      }
-    });
+  public static JButton createConfigureAnnotationsButton(Project project, boolean implicitWritesOnly) {
+    JButton configureAnnotations = new JButton(JavaBundle.message("button.annotations"));
+    configureAnnotations.addActionListener(__ -> getInstance(project).configureAnnotations(implicitWritesOnly));
     return configureAnnotations;
   }
 
-  public static JButton createConfigureClassPatternsButton(final Project project) {
-    final JButton configureClassPatterns = new JButton(JavaBundle.message("button.code.patterns"));
+  public static JButton createConfigureClassPatternsButton(Project project) {
+    JButton configureClassPatterns = new JButton(JavaBundle.message("button.code.patterns"));
     configureClassPatterns.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final EntryPointsManagerBase entryPointsManagerBase = getInstance(project);
-        final ArrayList<ClassPattern> list = new ArrayList<>();
+        EntryPointsManagerBase entryPointsManagerBase = getInstance(project);
+        ArrayList<ClassPattern> list = new ArrayList<>();
         for (ClassPattern pattern : entryPointsManagerBase.getPatterns()) {
           list.add(new ClassPattern(pattern));
         }
-        final ClassPatternsPanel panel = new ClassPatternsPanel(list);
+        ClassPatternsPanel panel = new ClassPatternsPanel(list);
         new DialogWrapper(entryPointsManagerBase.myProject) {
 
           {
@@ -125,12 +119,12 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
 
           @Override
           protected void doOKAction() {
-            final String error = panel.getValidationError(project);
+            String error = panel.getValidationError(project);
             if (error != null) {
               Messages.showErrorDialog(panel, error);
               return;
             }
-            final LinkedHashSet<ClassPattern> patterns = entryPointsManagerBase.getPatterns();
+            Set<ClassPattern> patterns = entryPointsManagerBase.getPatterns();
             patterns.clear();
             patterns.addAll(list);
             DaemonCodeAnalyzer.getInstance(entryPointsManagerBase.myProject).restart();

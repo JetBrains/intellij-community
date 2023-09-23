@@ -52,8 +52,8 @@ public final class HtmlMarkdownUtils {
 
   private static final Set<String> ACCEPTABLE_TAGS =
     Set.of("span", "img", "p", "i", "code", "ul", "h1", "h2", "h3", "h4", "h5", "h6",
-                               "li", "blockquote", "ol", "b", "a", "tt", "pre", "tr", "th",
-                               "td", "table", "strong", "em", "u", "dl", "dd", "dt");
+           "li", "blockquote", "ol", "b", "a", "tt", "pre", "tr", "th",
+           "td", "table", "strong", "em", "u", "dl", "dd", "dt");
 
   private HtmlMarkdownUtils() {
   }
@@ -260,7 +260,8 @@ public final class HtmlMarkdownUtils {
         String replacement = isOpenTag ? "<span>" : "</span>";
         builder.replace(start, end, replacement);
         diff += 1;
-      } else {
+      }
+      else {
         builder.replace(start, start + 1, "&lt;");
         diff += 3;
       }

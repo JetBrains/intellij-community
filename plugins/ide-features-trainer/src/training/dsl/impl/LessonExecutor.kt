@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.intellij.lang.annotations.Language
 import training.dsl.*
 import training.learn.ActionsRecorder
@@ -134,7 +135,7 @@ internal class LessonExecutor(val lesson: KLesson,
   }
 
   fun task(taskContent: TaskContext.() -> Unit) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     val taskProperties = LessonExecutorUtil.taskProperties(taskContent, project)
     addTaskAction(taskProperties, taskContent) {
@@ -149,7 +150,7 @@ internal class LessonExecutor(val lesson: KLesson,
 
   override fun dispose() {
     if (hasBeenStopped) return
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val lessonPassed = currentTaskIndex == taskActions.size
     val visualIndex = if(lessonPassed) currentVisualIndex else (taskActions[currentTaskIndex].taskVisualIndex ?: 0)
     lesson.onStop(project, lessonPassed, currentTaskIndex, visualIndex, internalProblems)
@@ -216,7 +217,7 @@ internal class LessonExecutor(val lesson: KLesson,
 
   private fun processNextTask2() {
     LessonManager.instance.clearRestoreMessage()
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (currentTaskIndex == taskActions.size) {
       LessonManager.instance.passLesson(lesson)
       return
@@ -251,7 +252,7 @@ internal class LessonExecutor(val lesson: KLesson,
   }
 
   private fun processTask(taskContent: TaskContext.() -> Unit) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val recorder = ActionsRecorder(project, selectedEditor?.document, this)
     currentRecorder = recorder
     val taskCallbackData = TaskData()
@@ -404,7 +405,7 @@ internal class LessonExecutor(val lesson: KLesson,
   }
 
   private fun stepHasBeenCompleted(taskContext: TaskContextImpl, taskInfo: TaskInfo) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     // do not process the next task if the current task is not fully completed
     // or lesson has been stopped during task completion (dialogs in Recent Files and Restore removed code lessons)
     // or the next task already has been processed

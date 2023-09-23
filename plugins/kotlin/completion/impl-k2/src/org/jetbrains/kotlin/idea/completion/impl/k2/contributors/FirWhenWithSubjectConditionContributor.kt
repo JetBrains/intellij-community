@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.contributors
 
 import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
@@ -23,14 +24,17 @@ import org.jetbrains.kotlin.idea.completion.InsertionHandlerBase
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirWithSubjectEntryPositionContext
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.addTypeArguments
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.createStarTypeArgumentsList
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveToExpandedSymbol
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
@@ -43,6 +47,11 @@ internal class FirWhenWithSubjectConditionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
 ) : FirCompletionContributorBase<FirWithSubjectEntryPositionContext>(basicContext, priority) {
+    private val prefix: String get() = basicContext.prefixMatcher.prefix
+    private val onTypingIsKeyword: Boolean = prefix.isNotEmpty() && KtTokens.IS_KEYWORD.value.startsWith(prefix)
+
+    override val prefixMatcher: PrefixMatcher = if (onTypingIsKeyword) basicContext.prefixMatcher.cloneWithPrefix("") else super.prefixMatcher
+
     context(KtAnalysisSession)
     override fun complete(
         positionContext: FirWithSubjectEntryPositionContext,
@@ -59,10 +68,11 @@ internal class FirWhenWithSubjectConditionContributor(
         val isSingleCondition = whenCondition.isSingleConditionInEntry()
         when {
             classSymbol?.classKind == KtClassKind.ENUM_CLASS -> {
-                completeEnumEntries(classSymbol, allConditionsExceptCurrent, visibilityChecker, isSingleCondition)
+                completeEnumEntries(weighingContext, classSymbol, allConditionsExceptCurrent, visibilityChecker, isSingleCondition)
             }
             classSymbol?.modality == Modality.SEALED -> {
                 completeSubClassesOfSealedClass(
+                    weighingContext,
                     classSymbol,
                     allConditionsExceptCurrent,
                     whenCondition,
@@ -71,11 +81,11 @@ internal class FirWhenWithSubjectConditionContributor(
                 )
             }
             else -> {
-                completeAllTypes(whenCondition, visibilityChecker, isSingleCondition)
+                completeAllTypes(weighingContext, whenCondition, visibilityChecker, isSingleCondition)
             }
         }
-        addNullIfWhenExpressionCanReturnNull(subjectType)
-        addElseBranchIfSingleConditionInEntry(whenCondition)
+        addNullIfWhenExpressionCanReturnNull(weighingContext, subjectType)
+        addElseBranchIfSingleConditionInEntry(weighingContext, whenCondition)
     }
 
     context(KtAnalysisSession)
@@ -86,15 +96,16 @@ internal class FirWhenWithSubjectConditionContributor(
 
 
     context(KtAnalysisSession)
-    private fun addNullIfWhenExpressionCanReturnNull(type: KtType?) {
+    private fun addNullIfWhenExpressionCanReturnNull(context: WeighingContext, type: KtType?) {
         if (type?.canBeNull == true) {
             val lookupElement = createKeywordElement(keyword = KtTokens.NULL_KEYWORD.value)
-            sink.addElement(lookupElement)
+            applyWeighsAndAddElementToSink(context, lookupElement, symbolWithOrigin = null)
         }
     }
 
     context(KtAnalysisSession)
     private fun completeAllTypes(
+        context: WeighingContext,
         whenCondition: KtWhenCondition,
         visibilityChecker: CompletionVisibilityChecker,
         isSingleCondition: Boolean,
@@ -107,10 +118,11 @@ internal class FirWhenWithSubjectConditionContributor(
                 availableFromScope += classifier
 
                 addLookupElement(
+                    context,
                     classifier.name.asString(),
                     classifier,
+                    CompletionSymbolOrigin.Scope(classifierWithScopeKind.scopeKind),
                     (classifier as? KtNamedClassOrObjectSymbol)?.classIdIfNonLocal?.asSingleFqName(),
-                    isPrefixNeeded(classifier),
                     isSingleCondition,
                 )
             }
@@ -121,29 +133,34 @@ internal class FirWhenWithSubjectConditionContributor(
                     if (classifier !is KtNamedSymbol || classifier in availableFromScope) return@forEach
 
                     addLookupElement(
+                        context,
                         classifier.name.asString(),
                         classifier,
+                        CompletionSymbolOrigin.Index,
                         (classifier as? KtNamedClassOrObjectSymbol)?.classIdIfNonLocal?.asSingleFqName(),
-                        isPrefixNeeded(classifier),
                         isSingleCondition,
-                        availableWithoutImport = false,
                     )
                 }
         }
     }
 
     context(KtAnalysisSession)
-    private fun isPrefixNeeded(classifier: KtClassifierSymbol): Boolean {
-        return when (classifier) {
+    private fun isPrefixNeeded(symbol: KtNamedSymbol): Boolean {
+        return when (symbol) {
             is KtAnonymousObjectSymbol -> return false
-            is KtNamedClassOrObjectSymbol -> !classifier.classKind.isObject
-            is KtTypeAliasSymbol -> (classifier.expandedType as? KtNonErrorClassType)?.classSymbol?.let { isPrefixNeeded(it) } == true
+            is KtNamedClassOrObjectSymbol -> onTypingIsKeyword || !symbol.classKind.isObject
+            is KtTypeAliasSymbol -> {
+                (symbol.expandedType as? KtNonErrorClassType)?.classSymbol?.let { it is KtNamedSymbol && isPrefixNeeded(it) } == true
+            }
+
             is KtTypeParameterSymbol -> true
+            else -> false
         }
     }
 
     context(KtAnalysisSession)
     private fun completeSubClassesOfSealedClass(
+        context: WeighingContext,
         classSymbol: KtNamedClassOrObjectSymbol,
         conditions: List<KtWhenCondition>,
         whenCondition: KtWhenCondition,
@@ -161,16 +178,17 @@ internal class FirWhenWithSubjectConditionContributor(
             .forEach { inheritor ->
                 val classId = inheritor.classIdIfNonLocal ?: return@forEach
                 addLookupElement(
+                    context,
                     classId.relativeClassName.asString(),
                     inheritor,
+                    CompletionSymbolOrigin.Index,
                     classId.asSingleFqName(),
-                    isPrefixNeeded(inheritor),
-                    isSingleCondition
+                    isSingleCondition,
                 )
             }
 
         if (allInheritors.any { it.modality == Modality.ABSTRACT }) {
-            completeAllTypes(whenCondition, visibilityChecker, isSingleCondition)
+            completeAllTypes(context, whenCondition, visibilityChecker, isSingleCondition)
         }
     }
 
@@ -205,16 +223,19 @@ internal class FirWhenWithSubjectConditionContributor(
             .apply { getAllSealedInheritorsTo(classSymbol, this) }
     }
 
-    private fun addElseBranchIfSingleConditionInEntry(whenCondition: KtWhenCondition) {
+    context(KtAnalysisSession)
+    private fun addElseBranchIfSingleConditionInEntry(context: WeighingContext, whenCondition: KtWhenCondition) {
         val whenEntry = whenCondition.parent as? KtWhenEntry ?: return
         if (whenEntry.conditions.size > 1) return
         val lookupElement = createKeywordElement(keyword = KtTokens.ELSE_KEYWORD.value, tail = " -> ")
-        sink.addElement(lookupElement)
+
+        applyWeighsAndAddElementToSink(context, lookupElement, symbolWithOrigin = null)
     }
 
 
     context(KtAnalysisSession)
     private fun completeEnumEntries(
+        context: WeighingContext,
         classSymbol: KtNamedClassOrObjectSymbol,
         conditions: List<KtWhenCondition>,
         visibilityChecker: CompletionVisibilityChecker,
@@ -232,10 +253,11 @@ internal class FirWhenWithSubjectConditionContributor(
             .filter { visibilityChecker.isVisible(it) }
             .forEach { entry ->
                 addLookupElement(
+                    context,
                     "${classSymbol.name.asString()}.${entry.name.asString()}",
                     entry,
+                    CompletionSymbolOrigin.Index,
                     entry.callableIdIfNonLocal?.asSingleFqName(),
-                    isPrefixNeeded = false,
                     isSingleCondition,
                 )
             }
@@ -248,13 +270,14 @@ internal class FirWhenWithSubjectConditionContributor(
 
     context(KtAnalysisSession)
     private fun addLookupElement(
+        context: WeighingContext,
         lookupString: String,
         symbol: KtNamedSymbol,
+        origin: CompletionSymbolOrigin,
         fqName: FqName?,
-        isPrefixNeeded: Boolean,
         isSingleCondition: Boolean,
-        availableWithoutImport: Boolean = true,
     ) {
+        val isPrefixNeeded = isPrefixNeeded(symbol)
         val typeArgumentsCount = (symbol as? KtSymbolWithTypeParameters)?.typeParameters?.size ?: 0
         val lookupObject = WhenConditionLookupObject(symbol.name, fqName, isPrefixNeeded, isSingleCondition, typeArgumentsCount)
 
@@ -264,7 +287,13 @@ internal class FirWhenWithSubjectConditionContributor(
             .withInsertHandler(WhenConditionInsertionHandler)
             .withTailText(createStarTypeArgumentsList(typeArgumentsCount), /*grayed*/true)
             .letIf(isSingleCondition) { it.appendTailText(" -> ",  /*grayed*/true) }
-            .let(sink::addElement)
+            .let { applyWeighsAndAddElementToSink(context, it, KtSymbolWithOrigin(symbol, origin)) }
+    }
+
+    context(KtAnalysisSession)
+    private fun applyWeighsAndAddElementToSink(context: WeighingContext, element: LookupElement, symbolWithOrigin: KtSymbolWithOrigin?) {
+        applyWeighsToLookupElement(context, element, symbolWithOrigin)
+        sink.addElement(element)
     }
 }
 

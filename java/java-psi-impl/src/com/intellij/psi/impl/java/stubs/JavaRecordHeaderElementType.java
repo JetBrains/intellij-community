@@ -6,6 +6,7 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiRecordHeader;
 import com.intellij.psi.impl.java.stubs.impl.PsiRecordHeaderStubImpl;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.PsiRecordHeaderImpl;
 import com.intellij.psi.impl.source.tree.java.RecordHeaderElement;
 import com.intellij.psi.stubs.IndexSink;
@@ -18,7 +19,7 @@ import java.io.IOException;
 
 public class JavaRecordHeaderElementType extends JavaStubElementType<PsiRecordHeaderStub, PsiRecordHeader> {
   public JavaRecordHeaderElementType() {
-    super("RECORD_HEADER");
+    super("RECORD_HEADER", BasicJavaElementType.BASIC_RECORD_HEADER);
   }
 
   @NotNull
@@ -35,6 +36,11 @@ public class JavaRecordHeaderElementType extends JavaStubElementType<PsiRecordHe
   @Override
   public PsiRecordHeaderStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new PsiRecordHeaderStubImpl(parentStub);
+  }
+
+  @Override
+  public boolean isAlwaysEmpty() {
+    return true;
   }
 
   @Override

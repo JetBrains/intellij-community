@@ -44,7 +44,8 @@ interface MainEntityToParent : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: MainEntityToParent, modification: MainEntityToParent.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: MainEntityToParent,
+                                      modification: MainEntityToParent.Builder.() -> Unit): MainEntityToParent = modifyEntity(
   MainEntityToParent.Builder::class.java, entity, modification)
 //endregion
 
@@ -76,7 +77,7 @@ interface AttachedEntityToParent : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: AttachedEntityToParent,
-                                      modification: AttachedEntityToParent.Builder.() -> Unit) = modifyEntity(
+                                      modification: AttachedEntityToParent.Builder.() -> Unit): AttachedEntityToParent = modifyEntity(
   AttachedEntityToParent.Builder::class.java, entity, modification)
 
 var AttachedEntityToParent.Builder.ref: MainEntityToParent
@@ -114,7 +115,7 @@ interface AttachedEntityToNullableParent: WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: AttachedEntityToNullableParent,
-                                      modification: AttachedEntityToNullableParent.Builder.() -> Unit) = modifyEntity(
+                                      modification: AttachedEntityToNullableParent.Builder.() -> Unit): AttachedEntityToNullableParent = modifyEntity(
   AttachedEntityToNullableParent.Builder::class.java, entity, modification)
 
 var AttachedEntityToNullableParent.Builder.nullableRef: MainEntityToParent?

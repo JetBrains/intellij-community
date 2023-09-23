@@ -135,6 +135,11 @@ interface BaseKotlinUastResolveProviderService {
         isForFake: Boolean = false,
     ): PsiType?
 
+    fun getSuspendContinuationType(
+        suspendFunction: KtFunction,
+        containingLightDeclaration: PsiModifierListOwner?,
+    ): PsiType?
+
     fun getFunctionType(ktFunction: KtFunction, source: UElement?): PsiType?
 
     fun getFunctionalInterfaceType(uLambdaExpression: KotlinULambdaExpression): PsiType?

@@ -66,7 +66,12 @@ public class ToolingStreamApiUtils {
   }
 
   public static List<File> readFiles(@NotNull IonReader reader) {
+    return readFiles(reader, null);
+  }
+
+  public static List<File> readFiles(@NotNull IonReader reader, @Nullable String fieldName) {
     reader.next();
+    assertFieldName(reader, fieldName);
     List<File> list = new ArrayList<>();
     reader.stepIn();
     File file;
@@ -104,7 +109,15 @@ public class ToolingStreamApiUtils {
   public static <K, V> Map<K, V> readMap(@NotNull IonReader reader,
                                          @NotNull Supplier<? extends K> keyReader,
                                          @NotNull Supplier<? extends V> valueReader) {
+    return readMap(reader, null, keyReader, valueReader);
+  }
+
+  public static <K, V> Map<K, V> readMap(@NotNull IonReader reader,
+                                         @Nullable String fieldName,
+                                         @NotNull Supplier<? extends K> keyReader,
+                                         @NotNull Supplier<? extends V> valueReader) {
     reader.next();
+    assertFieldName(reader, fieldName);
     reader.stepIn();
     Map<K, V> map = new HashMap<>();
     while (reader.next() != null) {
@@ -114,20 +127,6 @@ public class ToolingStreamApiUtils {
     }
     reader.stepOut();
     return map;
-  }
-
-  public static Map<String, Set<File>> readStringToFileSetMap(@NotNull final IonReader reader) {
-    return readMap(reader, new Supplier<String>() {
-      @Override
-      public String get() {
-        return readString(reader, null);
-      }
-    }, new Supplier<Set<File>>() {
-      @Override
-      public Set<File> get() {
-        return readFilesSet(reader);
-      }
-    });
   }
 
   public static void writeString(@NotNull IonWriter writer, @NotNull String fieldName, @Nullable String value) throws IOException {

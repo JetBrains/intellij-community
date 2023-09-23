@@ -159,6 +159,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 public void testCeSeveralLambdas() throws Exception {
                     runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceSeveralLambdas.kt");
                 }
+
+                @TestMetadata("samConstruction.kt")
+                public void testSamConstruction() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/samConstruction.kt");
+                }
             }
         }
 
@@ -265,6 +270,16 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
             @TestMetadata("functionCallWithSuspendFunctionInside.kt")
             public void testFunctionCallWithSuspendFunctionInside() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/coroutines/functionCallWithSuspendFunctionInside.kt");
+            }
+
+            @TestMetadata("infixSuspendCall.kt")
+            public void testInfixSuspendCall() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/infixSuspendCall.kt");
+            }
+
+            @TestMetadata("operatorSuspendCall.kt")
+            public void testOperatorSuspendCall() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/operatorSuspendCall.kt");
             }
 
             @TestMetadata("primitivesCoertion.kt")
@@ -1881,6 +1896,17 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/evaluation/jvmMultiModule")
     public abstract static class JvmMultiModule extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/evaluation/jvmMultiModule/delegates")
+        public static class Delegates extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doJvmMultiModuleTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            }
 
+            @TestMetadata("multiModuleDelegateInlineAccessor.kt")
+            public void testMultiModuleDelegateInlineAccessor() throws Exception {
+                runTest("testData/evaluation/jvmMultiModule/delegates/multiModuleDelegateInlineAccessor.kt");
+            }
+        }
     }
 }

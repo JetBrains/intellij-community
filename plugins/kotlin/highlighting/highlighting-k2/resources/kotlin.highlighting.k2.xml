@@ -1,4 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.highlighting">
+  <dependencies>
+    <module name="kotlin.searching.k2"/>
+  </dependencies>
 
   <extensionPoints>
     <extensionPoint

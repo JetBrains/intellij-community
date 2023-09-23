@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.pointer.JsonPointerPosition;
@@ -10,7 +10,7 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.intellij.lang.regexp.ecmascript.EcmaScriptRegexpLanguage;
 import org.jetbrains.annotations.NotNull;
 
-public class JsonSchemaRegexInjector extends JsonSchemaInjectorBase {
+public final class JsonSchemaRegexInjector extends JsonSchemaInjectorBase {
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     if (!(context instanceof JsonStringLiteral)) return;

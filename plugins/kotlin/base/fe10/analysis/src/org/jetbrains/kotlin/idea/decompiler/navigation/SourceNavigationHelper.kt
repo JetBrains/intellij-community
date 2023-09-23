@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
-import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
@@ -20,8 +19,6 @@ import org.jetbrains.kotlin.fileClasses.fileClassInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.binariesScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -35,6 +32,7 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.debugText.getDebugText
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.SmartList
 
@@ -229,7 +227,8 @@ object SourceNavigationHelper {
 
             val candidateDescriptor = candidate.resolveToDescriptorIfAny() as? CallableDescriptor ?: continue
             if (declaration is KtCallableDeclaration &&
-                ByDescriptorIndexer.isSameCallable(declaration, candidateDescriptor)) {
+                ByDescriptorIndexer.isSameCallable(declaration, candidateDescriptor) &&
+                declaration.isExpectDeclaration() == candidate.isExpectDeclaration()) {
                 return candidate
             }
         }
@@ -243,13 +242,11 @@ object SourceNavigationHelper {
         helper: KotlinStringStubIndexHelper<T>
     ): T? {
         val classFqName = entity.fqName ?: return null
-        val isForJvm = entity.containingKtFile.viewProvider.fileType is JavaClassFileType
         return targetScopes(entity, navigationKind).firstNotNullOfOrNull { scope ->
             ProgressManager.checkCanceled()
             val declarations = helper[classFqName.asString(), entity.project, scope]
             declarations.firstOrNull { declaration ->
-                val isExpect = declaration.isExpectDeclaration()
-                if (isForJvm) !isExpect else isExpect
+                entity.isExpectDeclaration() == declaration.isExpectDeclaration()
             } ?: declarations.firstOrNull()
         }
     }
@@ -271,7 +268,7 @@ object SourceNavigationHelper {
 
         return scopes.flatMap { scope ->
             ProgressManager.checkCanceled()
-            helper[declaration.fqName!!.asString(), declaration.project, scope].sortedBy { it.isExpectDeclaration() }
+            helper[declaration.fqName!!.asString(), declaration.project, scope]
         }
     }
 

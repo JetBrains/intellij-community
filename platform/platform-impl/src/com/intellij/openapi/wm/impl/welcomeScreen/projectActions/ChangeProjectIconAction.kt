@@ -2,11 +2,8 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.IdeBundle
-import com.intellij.ide.RecentProjectIconHelper
+import com.intellij.ide.*
 import com.intellij.ide.RecentProjectIconHelper.Companion.createIcon
-import com.intellij.ide.RecentProjectsManager
-import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
@@ -76,6 +73,11 @@ internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase()
         VfsUtil.markDirtyAndRefresh(false, false, false, iconSvg)
         FileUtil.delete(iconPng)
         RecentProjectIconHelper.refreshProjectIcon(projectPath)
+        event.project?.let {
+          val customizer = ProjectWindowCustomizerService.getInstance()
+          customizer.dropProjectIconCache(it)
+          customizer.setIconMainColorAsProjectColor(it)
+        }
       }
       if (ui.iconRemoved) {
         FileUtil.delete(ui.pathToIcon())

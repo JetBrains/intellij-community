@@ -3,14 +3,13 @@ package com.intellij.platform.workspace.storage.tests.cache
 
 import com.intellij.platform.workspace.storage.EntityStorageSnapshot
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.query.groupBy
 import com.intellij.platform.workspace.storage.query.map
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import com.intellij.platform.workspace.storage.toBuilder
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -37,7 +36,7 @@ class CacheApiTest {
 
     val snapshot2 = snapshot.toBuilder().also {
       it addEntity NamedEntity("AnotherEntity", MySource)
-    }.toMySnapshot(snapshot)
+    }.toSnapshot()
 
     val res2 = snapshot2.cached(query)
     assertEquals(2, res2.size)
@@ -66,7 +65,7 @@ class CacheApiTest {
 
     val snapshot2 = snapshot.toBuilder().also {
       it addEntity NamedEntity("AnotherEntity", MySource)
-    }.toMySnapshot(snapshot)
+    }.toSnapshot()
 
     val res2 = snapshot2.cached(query)
     assertEquals(2, res2.size)
@@ -138,7 +137,7 @@ class CacheApiTest {
       it.modifyEntity(entity) {
         this.myName = "DifferentName"
       }
-    }.toMySnapshot(snapshot)
+    }.toSnapshot()
 
     val res2 = snapshot2.cached(query)
     assertEquals(2, res2.size)
@@ -176,7 +175,7 @@ class CacheApiTest {
 
     val newSnapshot = snapshot.toBuilder().also {
       it addEntity NamedEntity("ThirdEntity", MySource)
-    }.toMySnapshot(snapshot)
+    }.toSnapshot()
 
     val res2 = newSnapshot.cached(query)
     assertEquals(3, res2.size)
@@ -204,7 +203,7 @@ class CacheApiTest {
 
     val newSnapshot = snapshot.toBuilder().also {
       it.removeEntity(it.resolve(NameId("AnotherEntity"))!!)
-    }.toMySnapshot(snapshot)
+    }.toSnapshot()
 
     val res2 = newSnapshot.cached(query)
     assertEquals(1, res2.size)
@@ -229,7 +228,7 @@ class CacheApiTest {
       it.modifyEntity(it.resolve(NameId("AnotherEntity"))!!) {
         this.entitySource = MySource
       }
-    }.toMySnapshot(snapshot)
+    }.toSnapshot()
 
     val res2 = newSnapshot.cached(query)
     assertEquals(2, res2.size)
@@ -256,7 +255,7 @@ class CacheApiTest {
       it.modifyEntity(it.resolve(NameId("AnotherEntity"))!!) {
         this.entitySource = MySource
       }
-    }.toMySnapshot(snapshot)
+    }.toSnapshot()
 
     val res2 = newSnapshot.cached(query)
     assertEquals(1, res2.size)
@@ -264,12 +263,6 @@ class CacheApiTest {
     val values = res2[MySource]!!
     assertContains(values, "AnotherEntity")
     assertContains(values, "MyName")
-  }
-
-  @OptIn(EntityStorageInstrumentationApi::class)
-  private fun MutableEntityStorage.toMySnapshot(previous: EntityStorageSnapshot): EntityStorageSnapshot {
-    val changes = this.collectChanges(previous)
-    return this.instrumentation.toSnapshot(previous, changes)
   }
 
   private fun createNamedEntity(also: MutableEntityStorage.() -> Unit = {}): EntityStorageSnapshot {

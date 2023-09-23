@@ -20,7 +20,7 @@ import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingConfigImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingModelImpl;
-import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil;
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 
 import java.io.File;
 import java.util.*;
@@ -42,7 +42,7 @@ public class AnnotationProcessingModelBuilder extends AbstractModelBuilderServic
       return null;
     }
 
-    final SourceSetContainer container = JavaPluginUtil.getJavaPluginAccessor(project).getSourceSetContainer();
+    final SourceSetContainer container = JavaPluginUtil.getSourceSetContainer(project);
     if (container == null) {
       return null;
     }

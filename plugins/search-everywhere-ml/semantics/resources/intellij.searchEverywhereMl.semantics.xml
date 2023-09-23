@@ -1,5 +1,4 @@
 <idea-plugin package="com.intellij.searchEverywhereMl.semantics">
-
   <resource-bundle>messages.searchEverywhereMlSemanticsBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -12,10 +11,38 @@
     <postStartupActivity
       implementation="com.intellij.searchEverywhereMl.semantics.services.ActionSemanticSearchServiceInitializer"/>
 
+    <postStartupActivity
+      implementation="com.intellij.searchEverywhereMl.semantics.services.FileSemanticSearchServiceInitializer"/>
+
+    <postStartupActivity
+      implementation="com.intellij.searchEverywhereMl.semantics.services.SymbolSemanticSearchServiceInitializer"/>
+
+    <postStartupActivity
+      implementation="com.intellij.searchEverywhereMl.semantics.services.ClassSemanticSearchServiceInitializer"/>
+
+    <applicationService
+      serviceInterface="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings"
+      serviceImplementation="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettingsImpl"/>
+
     <advancedSetting default="false" id="search.everywhere.ml.semantic.actions.enable"
                      groupKey="advanced.setting.search.everywhere.ml.name"
                      service="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings"
                      property="enabledInActionsTab"/>
+
+    <advancedSetting default="false" id="search.everywhere.ml.semantic.files.enable"
+                     groupKey="advanced.setting.search.everywhere.ml.name"
+                     service="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings"
+                     property="enabledInFilesTab"/>
+
+    <advancedSetting default="false" id="search.everywhere.ml.semantic.symbols.enable"
+                     groupKey="advanced.setting.search.everywhere.ml.name"
+                     service="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings"
+                     property="enabledInSymbolsTab"/>
+
+    <advancedSetting default="false" id="search.everywhere.ml.semantic.classes.enable"
+                     groupKey="advanced.setting.search.everywhere.ml.name"
+                     service="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings"
+                     property="enabledInClassesTab"/>
 
     <registryKey defaultValue="false"
                  description="Use remote server for the Actions tab"
@@ -33,12 +60,44 @@
                  description="Highlight semantic items in Search Everywhere"
                  key="search.everywhere.ml.semantic.highlight.items"/>
 
-    <registryKey defaultValue="0.0.2"
+    <registryKey defaultValue="0.0.3"
                  description="Semantic text search model version"
                  key="search.everywhere.ml.semantic.model.version"/>
+
+    <registryKey defaultValue="true"
+                 description="Show embedding indexing progress indicator"
+                 key="search.everywhere.ml.semantic.indexing.show.progress"/>
+
+    <registryKey defaultValue="50000"
+                 description="Semantic search indexable files limit"
+                 key="search.everywhere.ml.semantic.indexing.indexable.files.limit"/>
+
+    <registryKey defaultValue="100000"
+                 description="Semantic search indexable symbols limit"
+                 key="search.everywhere.ml.semantic.indexing.indexable.symbols.limit"/>
+
+    <registryKey defaultValue="50000"
+                 description="Semantic search indexable classes limit"
+                 key="search.everywhere.ml.semantic.indexing.indexable.classes.limit"/>
+
+    <registryKey defaultValue="true"
+                 description="Restrict memory usage of semantic search indexing"
+                 key="search.everywhere.ml.semantic.indexing.restrict.memory.usage"/>
 
     <notificationGroup id="Semantic search" displayType="STICKY_BALLOON"
                        bundle="messages.searchEverywhereMlSemanticsBundle"
                        key="search.everywhere.ml.semantic.notification.group.name"/>
   </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.searcheverywhere.ml.fileIndexableEntitiesProvider"
+                    interface="com.intellij.searchEverywhereMl.semantics.indices.FileIndexableEntitiesProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <projectListeners>
+    <listener
+      class="com.intellij.searchEverywhereMl.semantics.services.IndexingLifecycleListener"
+      topic="com.intellij.searchEverywhereMl.semantics.listeners.SemanticIndexingFinishListener"/>
+  </projectListeners>
 </idea-plugin>

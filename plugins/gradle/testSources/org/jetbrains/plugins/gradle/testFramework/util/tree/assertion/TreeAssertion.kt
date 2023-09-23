@@ -5,26 +5,54 @@ import org.jetbrains.plugins.gradle.testFramework.util.tree.Tree
 
 interface TreeAssertion<T> {
 
-  fun assertNode(name: String, assert: Node<T>.() -> Unit = {})
+  /**
+   * Defines assertion for next child node.
+   *
+   * @param name is node name matcher on equals
+   * @param assert builds a list of child assertions
+   * @param flattenIf skips this node assertion (name and value),
+   * but it applies child assertions as if they are on the same level with this node assertion.
+   * @param skipIf skips this node assertion with them child assertions.
+   * @param isUnordered finds node for assertion out of sibling definition order.
+   */
+  fun assertNode(
+    name: String,
+    flattenIf: Boolean = false,
+    skipIf: Boolean = false,
+    isUnordered: Boolean = false,
+    assert: Node<T>.() -> Unit = {}
+  )
 
-  fun assertNode(regex: Regex, assert: Node<T>.() -> Unit = {})
+  /**
+   * Defines assertion for next child node.
+   *
+   * @param regex is node name matcher
+   * @param assert builds a list of child assertions
+   * @param flattenIf skips this node assertion (name and value),
+   * but it applies child assertions as if they are on the same level with this node assertion.
+   * @param skipIf skips this node assertion with them child assertions.
+   * @param isUnordered finds node for assertion out of sibling definition order.
+   */
+  fun assertNode(
+    regex: Regex,
+    flattenIf: Boolean = false,
+    skipIf: Boolean = false,
+    isUnordered: Boolean = false,
+    assert: Node<T>.() -> Unit = {}
+  )
 
   interface Node<T> : TreeAssertion<T> {
 
     /**
      * Postpones value assertion after assertion of tree structure.
-     * Assertion will be skipped if the structure is incorrect or the current is flattened.
+     * Assertion will be skipped if the structure is incorrect or the current node is flattened.
      */
     fun assertValue(assert: (T) -> Unit)
-
-    fun assertNode(name: String, flattenIf: Boolean, assert: Node<T>.() -> Unit = {})
-
-    fun assertNode(regex: Regex, flattenIf: Boolean, assert: Node<T>.() -> Unit = {})
   }
 
   companion object {
 
     fun <T> assertTree(actualTree: Tree<T>, isUnordered: Boolean = false, assert: TreeAssertion<T>.() -> Unit) =
-      AbstractTreeAssertion.assertTree(actualTree, isUnordered, assert)
+      TreeAssertionImpl.assertTree(actualTree, isUnordered, assert)
   }
 }

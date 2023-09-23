@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.caches.project
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
@@ -253,7 +252,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
 
         override fun subscribe(connection: MessageBusConnection) {
             connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
-            connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
+            connection.subscribe(ModuleRootListener.TOPIC, this)
         }
 
         override fun checkKeyValidity(key: Sdk) = Unit

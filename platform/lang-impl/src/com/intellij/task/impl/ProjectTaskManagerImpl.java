@@ -172,7 +172,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   public Promise<Result> run(@NotNull ProjectTaskContext context, @NotNull ProjectTask projectTask) {
     Tracer.Span buildSpan = Tracer.start("build");
     AsyncPromise<Result> promiseResult = new AsyncPromise<>();
-    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = groupByRunner(projectTask);
+    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = groupByRunner(projectTask, context);
 
     buildSpan.complete();
     context.putUserData(ProjectTaskScope.KEY, new ProjectTaskScope() {
@@ -282,13 +282,18 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   }
 
   private List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> groupByRunner(@NotNull ProjectTask projectTask) {
+    return groupByRunner(projectTask, null);
+  }
+
+  private List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> groupByRunner(@NotNull ProjectTask projectTask,
+                                                                                         @Nullable ProjectTaskContext context) {
     List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = new SmartList<>();
     Consumer<Collection<? extends ProjectTask>> taskClassifier = tasks -> {
       Map<ProjectTaskRunner, ? extends List<? extends ProjectTask>> toBuild = tasks.stream().collect(
         groupingBy(aTask -> stream(ProjectTaskRunner.EP_NAME.getExtensions())
           .filter(runner -> {
             try {
-              return runner.canRun(myProject, aTask);
+              return runner.canRun(myProject, aTask, context);
             }
             catch (ProcessCanceledException e) {
               throw e;

@@ -27,8 +27,8 @@ class JdkWarmupProjectActivity : ProjectActivity {
     if (WarmupStatus.currentStatus(ApplicationManager.getApplication()) != WarmupStatus.InProgress) {
       return
     }
-    val configuredJdk = serviceAsync<EnvironmentService>().getEnvironmentValue(JvmEnvironmentKeyProvider.Keys.JDK_KEY)
-    if (configuredJdk == null) {
+    val configuredJdk = serviceAsync<EnvironmentService>().getEnvironmentValue(JvmEnvironmentKeyProvider.Keys.JDK_KEY, SENTINEL)
+    if (configuredJdk == SENTINEL) {
       println("Environment does not provide configured JDK")
       return
     }
@@ -43,3 +43,5 @@ class JdkWarmupProjectActivity : ProjectActivity {
     }
   }
 }
+
+private val SENTINEL : String = ""

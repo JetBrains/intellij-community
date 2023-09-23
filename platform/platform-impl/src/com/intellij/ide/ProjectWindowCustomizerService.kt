@@ -11,14 +11,17 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
+import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -30,7 +33,6 @@ import java.nio.file.Path
 import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
-
 
 @Service(Service.Level.PROJECT)
 private class ProjectWindowCustomizerIconCache(private val project: Project) {
@@ -48,7 +50,7 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
 
   private fun getIconRaw(): Icon {
     val path = ProjectWindowCustomizerService.projectPath(project) ?: ""
-    return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, iconSize = 16)
+    return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, iconSize = 20)
   }
 }
 
@@ -118,13 +120,15 @@ class ProjectWindowCustomizerService : Disposable {
   @Internal
   fun getGradientProjectColor(project: Project): Color {
     return getDeprecatedCustomToolbarColor(project)
-           ?: getProjectColor(storageFor(project)).gradient
+           ?: storageFor(project)?.let { getProjectColor(it).gradient }
+           ?: defaultColors.gradient
   }
 
   @Internal
   fun getProjectColorToCustomize(project: Project): Color {
     return getDeprecatedCustomToolbarColor(project)
-           ?: getProjectColor(storageFor(project)).iconColorStart
+           ?: storageFor(project)?.let { getProjectColor(it).iconColorStart }
+           ?: defaultColors.iconColorStart
   }
 
   fun getRecentProjectIconColor(projectPath: String): Pair<Color, Color> {
@@ -133,21 +137,25 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   private fun getDeprecatedCustomToolbarColor(project: Project): Color? {
-    val colorStr = PropertiesComponent.getInstance(project).getValue(TOOLBAR_BACKGROUND_KEY)
-    return ColorUtil.fromHex(colorStr, null)
+    val colorStr = project.serviceIfCreated<PropertiesComponent>()?.getValue(TOOLBAR_BACKGROUND_KEY)
+    return ColorHexUtil.fromHex(colorStr, null)
   }
 
   @Internal
-  fun getCurrentProjectColorIndex(project: Project): Int? =  getProjectColor(storageFor(project)).index
+  fun getCurrentProjectColorIndex(project: Project): Int? =  storageFor(project)?.let { getProjectColor(it).index }
 
   private fun getProjectColor(colorStorage: ProjectColorStorage): ProjectColors {
     val projectPath = colorStorage.projectPath ?: return defaultColors
 
-    // Get calculated earlier color or calculate next color
+    // Get calculated earlier color or calculate the next color
     return colorCache.computeIfAbsent(projectPath) {
+      if (colorStorage is WorkspaceProjectColorStorage && colorStorage.isEmpty) {
+        setupWorkspaceStorage(colorStorage.project)
+      }
+
       // Get custom project color and transform it for toolbar
       val customColors = colorStorage.customColor?.takeIf { it.isNotEmpty() }?.let {
-        val color = ColorUtil.fromHex(it)
+        val color = ColorHexUtil.fromHex(it)
         val toolbarColor = ColorUtil.toAlpha(color, 90)
         ProjectColors(toolbarColor, color, color)
       }
@@ -184,8 +192,25 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   @Internal
+  fun dropProjectIconCache(project: Project) {
+    project.service<ProjectWindowCustomizerIconCache>().cachedIcon.drop()
+  }
+
+  @Internal
+  fun setIconMainColorAsProjectColor(project: Project): Boolean {
+    if (!RecentProjectsManagerBase.getInstanceEx().hasCustomIcon(project)) return false
+
+    val icon = project.service<ProjectWindowCustomizerIconCache>().cachedIcon.get()
+    val iconMainColor = IconUtil.mainColor(icon)
+    setCustomProjectColor(project, iconMainColor)
+
+    return true
+  }
+
+  @Internal
   fun setAssociatedColorsIndex(project: Project, index: Int) {
-    setAssociatedColorsIndex(storageFor(project), index)
+    val storage = storageFor(project) ?: return
+    setAssociatedColorsIndex(storage, index)
   }
 
   private fun setAssociatedColorsIndex(colorStorage: ProjectColorStorage, index: Int) {
@@ -195,7 +220,8 @@ class ProjectWindowCustomizerService : Disposable {
 
   @Internal
   fun setCustomProjectColor(project: Project, color: Color?) {
-    setCustomProjectColor(storageFor(project), color)
+    val storage = storageFor(project) ?: return
+    setCustomProjectColor(storage, color)
   }
 
   private fun setCustomProjectColor(colorStorage: ProjectColorStorage, color: Color?) {
@@ -212,6 +238,12 @@ class ProjectWindowCustomizerService : Disposable {
     val workspaceStorage = WorkspaceProjectColorStorage(project)
     if (!workspaceStorage.isEmpty) return
 
+    if (RecentProjectsManagerBase.getInstanceEx().hasCustomIcon(project)) {
+      // On the first opening if there is a custom icon, we set the custom color generated from the icon
+      setIconMainColorAsProjectColor(project)
+      return
+    }
+
     // Perform initial setup of storages for the project
     val path = projectPath(project) ?: return
     val recentProjectsStorage = RecentProjectColorStorage(path)
@@ -227,7 +259,8 @@ class ProjectWindowCustomizerService : Disposable {
 
   @Internal
   fun clearToolbarColorsAndInMemoryCache(project: Project) {
-    clearToolbarColorsAndInMemoryCache(storageFor(project))
+    val storage = storageFor(project) ?: return
+    clearToolbarColorsAndInMemoryCache(storage)
   }
 
   private fun clearToolbarColorsAndInMemoryCache(colorStorage: ProjectColorStorage) {
@@ -247,7 +280,7 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   private fun storageFor(projectPath: String) = RecentProjectColorStorage(projectPath)
-  private fun storageFor(project: Project) = WorkspaceProjectColorStorage(project)
+  private fun storageFor(project: Project) = if (project.isDisposed) null else WorkspaceProjectColorStorage(project)
 
   internal fun update(newValue: Boolean) {
     if (newValue != ourSettingsValue) {

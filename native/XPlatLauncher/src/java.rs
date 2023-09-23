@@ -25,11 +25,11 @@ use {
 use std::ffi::{c_char, CStr, c_int};
 
 #[cfg(target_os = "windows")]
-const LIBJVM_REL_PATH: &str = "bin\\server\\jvm.dll";
+const JVM_LIB_REL_PATH: &str = "bin\\server\\jvm.dll";
 #[cfg(target_os = "macos")]
-const LIBJVM_REL_PATH: &str = "lib/server/libjvm.dylib";
+const JVM_LIB_REL_PATH: &str = "lib/libjli.dylib";
 #[cfg(target_os = "linux")]
-const LIBJVM_REL_PATH: &str = "lib/server/libjvm.so";
+const JVM_LIB_REL_PATH: &str = "lib/server/libjvm.so";
 
 static HOOK_NAME: &str = "vfprintf";
 static HOOK_MESSAGES: Mutex<Option<Vec<String>>> = Mutex::new(None);
@@ -57,7 +57,7 @@ extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: va_l
 
 #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
 fn get_vfprintf_hook_pointer() -> *mut c_void {
-    unsafe { std::mem::transmute::<extern "C" fn(*const c_void, *const c_char, va_list::VaList) -> jint, *mut c_void>(vfprintf_hook) }
+    vfprintf_hook as *mut c_void
 }
 
 #[cfg(all(target_os = "windows", target_arch = "aarch64"))]
@@ -148,9 +148,9 @@ fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv
     // Read current directory and pass it to JVM through environment variable. The real current directory will be changed
     // in load_libjvm().
     let work_dir = env::current_dir().context("Failed to get current directory")?;
-    env::set_var("IDEA_INITIAL_DIRECTORY", &work_dir);
+    env::set_var("IDEA_INITIAL_DIRECTORY", work_dir);
 
-    let libjvm_path = jre_home.join(LIBJVM_REL_PATH);
+    let libjvm_path = jre_home.join(JVM_LIB_REL_PATH);
     debug!("[JVM] Loading {libjvm_path:?}");
     let libjvm = load_libjvm(jre_home, &libjvm_path)?;
 
@@ -210,7 +210,7 @@ fn get_jvm_init_args(vm_options: Vec<String>) -> Result<(jni::sys::JavaVMInitArg
     let mut jni_options = Vec::with_capacity(vm_options.len() + 1);
 
     let hook_pointer = get_vfprintf_hook_pointer();
-    if hook_pointer != std::ptr::null_mut() {
+    if !hook_pointer.is_null() {
         jni_options.push(jni::sys::JavaVMOption {
             optionString: CString::new(HOOK_NAME)?.into_raw(),
             extraInfo: hook_pointer,
@@ -251,9 +251,8 @@ fn call_main_method(mut jni_env: JNIEnv<'_>, main_class: &str, args: Vec<String>
     match jni_env.call_static_method(main_class_name, MAIN_METHOD_NAME, MAIN_METHOD_SIGNATURE, &main_args) {
         Ok(_) => Ok(()),
         Err(e) => {
-            match e {
-                jni::errors::Error::JavaException => jni_env.exception_describe()?,
-                _ => { }
+            if let jni::errors::Error::JavaException = e {
+                jni_env.exception_describe()?
             };
             Err(Error::from(e))
         }

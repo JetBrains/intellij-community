@@ -2,6 +2,9 @@
 package org.jetbrains.plugins.gitlab.api
 
 enum class GitLabGQLQuery(val filePath: String) {
+  @SinceGitLab("12.0")
+  GET_METADATA("graphql/query/getMetadata.graphql"),
+
   @SinceGitLab("12.5")
   GET_CURRENT_USER("graphql/query/getCurrentUser.graphql"),
   @SinceGitLab("12.0")

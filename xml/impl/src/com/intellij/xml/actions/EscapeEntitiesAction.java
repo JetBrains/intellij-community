@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -41,8 +41,7 @@ final class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeIn
     return result.toString();
   }
 
-  @NotNull
-  private static Int2ObjectMap<String> computeMap(XmlFile xmlFile) {
+  private static @NotNull Int2ObjectMap<String> computeMap(XmlFile xmlFile) {
     final XmlFile file = XmlUtil.findXmlFile(xmlFile, Html5SchemaProvider.getCharsDtdLocation());
     assert file != null;
 
@@ -79,9 +78,8 @@ final class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeIn
     return file instanceof XmlFile;
   }
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return this;
   }
 

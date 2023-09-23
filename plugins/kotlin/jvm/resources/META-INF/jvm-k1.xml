@@ -96,6 +96,10 @@
                    description="Enable bytecode instrumentation for Kotlin classes"
                    defaultValue="false"
                    restartRequired="false"/>
+
+      <registryKey key="kotlin.not.configured.show.notification"
+                   defaultValue="true"
+                   description="Show notification about Kotlin missing configuration"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.uast">

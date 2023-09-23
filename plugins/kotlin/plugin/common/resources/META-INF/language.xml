@@ -6,6 +6,9 @@
 
     <lang.commenter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinCommenter"/>
 
+    <inspection.basicVisitor class="org.jetbrains.kotlin.psi.KtVisitorVoid"/>
+    <inspection.basicVisitor class="org.jetbrains.kotlin.psi.KtVisitor"/>
+
     <itemPresentationProvider
             implementationClass="org.jetbrains.kotlin.idea.presentation.KtFunctionPresenter"
             forClass="org.jetbrains.kotlin.psi.KtFunction"/>

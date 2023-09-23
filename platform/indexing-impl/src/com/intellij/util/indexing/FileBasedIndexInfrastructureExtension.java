@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.PathManager;
@@ -90,8 +90,7 @@ public interface FileBasedIndexInfrastructureExtension {
    * @return index persistent state root for given extension, namely a place where all cached data will be stored.
    * Every index extension persistent data should be stored in `{@link PathManager#getIndexRoot()}/getPersistentStateRoot()` dir.
    */
-  @Nullable
-  default String getPersistentStateRoot() {
+  default @Nullable String getPersistentStateRoot() {
     return null;
   }
 

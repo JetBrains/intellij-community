@@ -312,7 +312,7 @@ public final class LogConfigurationPanel<T extends RunConfigurationBase> extends
   }
 
   private final class MyIsActiveColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
-    protected MyIsActiveColumnInfo() {
+    private MyIsActiveColumnInfo() {
       super(DiagnosticBundle.message("log.monitor.is.active.column"));
     }
 
@@ -342,7 +342,7 @@ public final class LogConfigurationPanel<T extends RunConfigurationBase> extends
   }
 
   private final class MyIsSkipColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
-    protected MyIsSkipColumnInfo() {
+    private MyIsSkipColumnInfo() {
       super(DiagnosticBundle.message("log.monitor.is.skipped.column"));
     }
 

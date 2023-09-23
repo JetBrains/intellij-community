@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options;
 
@@ -127,7 +127,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor implements Sma
   }
 
   @Override
-  public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CommonCodeStyleSettings.IndentOptions options) {
+  public void reset(final @NotNull CodeStyleSettings settings, final @NotNull CommonCodeStyleSettings.IndentOptions options) {
     super.reset(settings, options);
     for (ContinuationOption continuationOption : myContinuationOptions) {
       continuationOption.reset(options);

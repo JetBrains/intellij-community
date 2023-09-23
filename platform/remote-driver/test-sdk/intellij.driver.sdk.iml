@@ -10,6 +10,5 @@
     <orderEntry type="module" module-name="intellij.driver.client" exported="" />
     <orderEntry type="library" exported="" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" exported="" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.driver.model" />
   </component>
 </module>

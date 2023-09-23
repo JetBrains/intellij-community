@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 public abstract class RootHolderIteratorBase implements IndexableFilesIterator {
+  private final boolean iterateNonProjectFiles;
   protected final @NotNull EntityReference<?> entityReference;
   private final @NotNull IndexableIteratorPresentation presentation;
   protected final @NotNull IndexingRootHolder roots;
@@ -18,9 +19,17 @@ public abstract class RootHolderIteratorBase implements IndexableFilesIterator {
   protected RootHolderIteratorBase(@NotNull EntityReference<?> entityReference,
                                    @NotNull IndexingRootHolder roots,
                                    @NotNull IndexableIteratorPresentation presentation) {
+    this(entityReference, roots, presentation, false);
+  }
+
+  protected RootHolderIteratorBase(@NotNull EntityReference<?> entityReference,
+                                   @NotNull IndexingRootHolder roots,
+                                   @NotNull IndexableIteratorPresentation presentation,
+                                   boolean iterateNonProjectFiles) {
     this.entityReference = entityReference;
     this.roots = roots.immutableCopyOf();
     this.presentation = presentation;
+    this.iterateNonProjectFiles = iterateNonProjectFiles;
   }
 
   @Override
@@ -40,7 +49,7 @@ public abstract class RootHolderIteratorBase implements IndexableFilesIterator {
 
   @Override
   public final boolean iterateFiles(@NotNull Project project, @NotNull ContentIterator fileIterator, @NotNull VirtualFileFilter fileFilter) {
-    return IndexableFilesIterationMethods.INSTANCE.iterateRoots(project, roots, fileIterator, fileFilter, true);
+    return IndexableFilesIterationMethods.INSTANCE.iterateRoots(project, roots, fileIterator, fileFilter, !iterateNonProjectFiles);
   }
 
   @Override

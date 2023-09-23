@@ -17,12 +17,14 @@ internal class Test {
         println(c)
     }
 
+
     var b: Int = 0
 
     init {
         println("3")
         b = 2
     }
+
 
     init {
         println("4")

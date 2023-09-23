@@ -1,8 +1,11 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.refactoring.introduce">
-    <dependencies>
-        <module name="kotlin.refactorings.k2"/>
-    </dependencies>
-    <extensions defaultExtensionNs="com.intellij">
-
-    </extensions>
+  <dependencies>
+    <module name="kotlin.refactorings.k2"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableService"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.KotlinIntroduceVariableServiceK2Impl"
+    />
+  </extensions>
 </idea-plugin>

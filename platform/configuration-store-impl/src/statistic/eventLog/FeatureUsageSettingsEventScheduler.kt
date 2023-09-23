@@ -27,10 +27,6 @@ private val PERIOD_DELAY = 1.days
 
 internal class FeatureUsageSettingsEventScheduler : FeatureUsageStateEventTracker {
   override fun initialize() {
-    if (!FeatureUsageLogger.isEnabled()) {
-      return
-    }
-
     ApplicationManager.getApplication().coroutineScope.launch {
       delay(PERIOD_DELAY)
       while (true) {

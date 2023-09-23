@@ -9,6 +9,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -100,20 +101,31 @@ public abstract class RunLineMarkerContributor {
     return true;
   }
 
+  /** @deprecated Prefer {@link #getText(AnAction, AnActionEvent)} instead */
+  @Deprecated
   protected static @Nullable("null means disabled") String getText(@NotNull AnAction action, @NotNull PsiElement element) {
-    if (!(action instanceof ExecutorAction)) {
-      return null;
-    }
-    DataContext dataContext = SimpleDataContext.builder()
-      .add(CommonDataKeys.PROJECT, element.getProject())
-      .add(CommonDataKeys.PSI_ELEMENT, element)
-      .build();
-    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
+    return getText(action, createActionEvent(element));
+  }
+
+  protected static @Nullable("null means disabled") String getText(@NotNull AnAction action, @NotNull AnActionEvent event) {
+    if (!(action instanceof ExecutorAction)) return null;
+    event.getPresentation().copyFrom(action.getTemplatePresentation());
+    event.getPresentation().setEnabledAndVisible(true);
     action.update(event);
     if (!event.getPresentation().isEnabledAndVisible()) {
       return null;
     }
     return event.getPresentation().getText();
+  }
+
+  protected static @NotNull AnActionEvent createActionEvent(@NotNull PsiElement element) {
+    DataContext dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, element.getProject())
+      .add(CommonDataKeys.PSI_ELEMENT, element)
+      .build();
+    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
+    Utils.initUpdateSession(event);
+    return event;
   }
 
   protected static @NotNull Icon getTestStateIcon(String url, @NotNull Project project, boolean isClass) {

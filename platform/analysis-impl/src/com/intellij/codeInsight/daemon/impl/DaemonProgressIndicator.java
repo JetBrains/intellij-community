@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.StandardProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.util.TraceableDisposable;
@@ -36,44 +37,67 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   @Override
   public final void stop() {
+    boolean cancelled = false;
     synchronized (getLock()) {
       super.stop();
-      cancel();
+      if (tryCancel()) {
+        cancelled = true;
+      }
+    }
+    if (cancelled) {
+      onStop();
     }
   }
 
   // return true if was stopped
-  boolean stopIfRunning() {
+  void stopIfRunning() {
     synchronized (getLock()) {
       if(mySpan != null) {
         mySpan.end();
       }
       if (isRunning()) {
         stop();
-        return true;
+        return;
       }
       cancel();
-      return false;
     }
   }
 
-  @Override
-  public final void cancel() {
+  private boolean tryCancel() {
     synchronized (getLock()) {
       if (!isCanceled()) {
         myTraceableDisposable.kill("Daemon Progress Canceled");
         super.cancel();
+        return true;
       }
     }
+    return false;
   }
 
-  public final void cancel(@NotNull Throwable cause) {
-    synchronized (getLock()) {
-      if (!isCanceled()) {
-        myCancellationCause = cause;
+  protected void onCancelled(@NotNull String reason) { }
+
+  protected void onStop() { }
+
+  @Override
+  public final void cancel() {
+    cancel("daemon progress cancelled with no specified reason");
+  }
+
+  public final void cancel(@NotNull String reason) {
+    doCancel(null, reason);
+  }
+
+  public final void cancel(@NotNull Throwable cause, @NotNull String reason) {
+    doCancel(cause, reason);
+  }
+
+  private void doCancel(@Nullable Throwable cause, @NotNull String reason) {
+    if (tryCancel()) {
+      myCancellationCause = cause;
+      if (cause != null) {
         myTraceableDisposable.killExceptionally(cause);
-        super.cancel();
       }
+      ProgressManager.getInstance().executeNonCancelableSection(() -> onCancelled(reason));
     }
   }
 

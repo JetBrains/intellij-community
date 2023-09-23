@@ -2087,6 +2087,26 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         public void testVirtualMethodHidden() throws Exception {
             runTest("../idea/tests/testData/quickfix/override/virtualMethodHidden.kt");
         }
+
+        @TestMetadata("virtualMethodHiddenWithInternalModifier.kt")
+        public void testVirtualMethodHiddenWithInternalModifier() throws Exception {
+            runTest("../idea/tests/testData/quickfix/override/virtualMethodHiddenWithInternalModifier.kt");
+        }
+
+        @TestMetadata("virtualMethodHiddenWithPrivateModifier.kt")
+        public void testVirtualMethodHiddenWithPrivateModifier() throws Exception {
+            runTest("../idea/tests/testData/quickfix/override/virtualMethodHiddenWithPrivateModifier.kt");
+        }
+
+        @TestMetadata("virtualMethodHiddenWithProtectedModifier.kt")
+        public void testVirtualMethodHiddenWithProtectedModifier() throws Exception {
+            runTest("../idea/tests/testData/quickfix/override/virtualMethodHiddenWithProtectedModifier.kt");
+        }
+
+        @TestMetadata("virtualMethodHiddenWithPublicModifier.kt")
+        public void testVirtualMethodHiddenWithPublicModifier() throws Exception {
+            runTest("../idea/tests/testData/quickfix/override/virtualMethodHiddenWithPublicModifier.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

@@ -21,6 +21,7 @@ import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -48,8 +49,8 @@ private class GHCloneDialogExtensionComponent(project: Project, modalityState: M
 
   override fun isAccountHandled(account: GithubAccount): Boolean = account.isGHAccount
 
-  override fun createLoginPanel(account: GithubAccount?, cancelHandler: () -> Unit): JComponent =
-    GHCloneDialogLoginPanel(account).apply {
+  override fun createLoginPanel(cs: CoroutineScope, account: GithubAccount?, cancelHandler: () -> Unit): JComponent =
+    GHCloneDialogLoginPanel(cs, account).apply {
       val chooseLoginUiHandler = { setChooseLoginUi() }
       loginPanel.setCancelHandler(if (getAccounts().isEmpty()) chooseLoginUiHandler else cancelHandler)
     }.also {
@@ -83,7 +84,10 @@ private class GHCloneDialogExtensionComponent(project: Project, modalityState: M
   private fun getLoginPanel(): GHCloneDialogLoginPanel? = content as? GHCloneDialogLoginPanel
 }
 
-private class GHCloneDialogLoginPanel(account: GithubAccount?) :
+private class GHCloneDialogLoginPanel(
+  cs: CoroutineScope,
+  account: GithubAccount?
+) :
   JBPanel<GHCloneDialogLoginPanel>(ListLayout.vertical(0)),
   Disposable {
 
@@ -105,7 +109,7 @@ private class GHCloneDialogLoginPanel(account: GithubAccount?) :
       add(JBLabel(message("label.login.option.separator")).apply { border = empty(0, 6, 0, 4) })
       add(useTokenLink)
     }
-  val loginPanel = CloneDialogLoginPanel(account).apply {
+  val loginPanel = CloneDialogLoginPanel(cs, account).apply {
     setServer(GithubServerPath.DEFAULT_HOST, false)
   }.also {
     Disposer.register(this, it)

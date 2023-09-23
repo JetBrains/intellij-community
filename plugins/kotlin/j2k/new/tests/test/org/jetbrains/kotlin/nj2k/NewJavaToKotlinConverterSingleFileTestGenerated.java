@@ -1192,6 +1192,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/comments/commentInsideCall.java");
         }
 
+        @TestMetadata("commentedStatementWithLineBreak.java")
+        public void testCommentedStatementWithLineBreak() throws Exception {
+            runTest("testData/newJ2k/comments/commentedStatementWithLineBreak.java");
+        }
+
         @TestMetadata("comments.java")
         public void testComments() throws Exception {
             runTest("testData/newJ2k/comments/comments.java");
@@ -1205,6 +1210,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("comments3.java")
         public void testComments3() throws Exception {
             runTest("testData/newJ2k/comments/comments3.java");
+        }
+
+        @TestMetadata("commentsAfterLastElement.java")
+        public void testCommentsAfterLastElement() throws Exception {
+            runTest("testData/newJ2k/comments/commentsAfterLastElement.java");
         }
 
         @TestMetadata("commentsForConstructors.java")
@@ -1240,6 +1250,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("fieldsInitializedFromParams.java")
         public void testFieldsInitializedFromParams() throws Exception {
             runTest("testData/newJ2k/comments/fieldsInitializedFromParams.java");
+        }
+
+        @TestMetadata("identicalComments.java")
+        public void testIdenticalComments() throws Exception {
+            runTest("testData/newJ2k/comments/identicalComments.java");
         }
 
         @TestMetadata("removeNoInspectionComment.java")
@@ -2584,6 +2599,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("argumentList.java")
+        public void testArgumentList() throws Exception {
+            runTest("testData/newJ2k/formatting/argumentList.java");
+        }
+
+        @TestMetadata("assignment.java")
+        public void testAssignment() throws Exception {
+            runTest("testData/newJ2k/formatting/assignment.java");
+        }
+
         @TestMetadata("chainedCall.java")
         public void testChainedCall() throws Exception {
             runTest("testData/newJ2k/formatting/chainedCall.java");
@@ -2609,6 +2634,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/formatting/parameterList.java");
         }
 
+        @TestMetadata("simpleLineBreaks.java")
+        public void testSimpleLineBreaks() throws Exception {
+            runTest("testData/newJ2k/formatting/simpleLineBreaks.java");
+        }
+
         @TestMetadata("staticAndNonStaticMembersWithComments.java")
         public void testStaticAndNonStaticMembersWithComments() throws Exception {
             runTest("testData/newJ2k/formatting/staticAndNonStaticMembersWithComments.java");
@@ -2617,6 +2647,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("staticMembersWithComments.java")
         public void testStaticMembersWithComments() throws Exception {
             runTest("testData/newJ2k/formatting/staticMembersWithComments.java");
+        }
+
+        @TestMetadata("trailingComma.java")
+        public void testTrailingComma() throws Exception {
+            runTest("testData/newJ2k/formatting/trailingComma.java");
         }
     }
 
@@ -3179,6 +3214,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
     public static class InvalidCode extends AbstractNewJavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("absentArgument.java")
+        public void testAbsentArgument() throws Exception {
+            runTest("testData/newJ2k/invalidCode/absentArgument.java");
         }
 
         @TestMetadata("annotationApplicationWithoutName.java")
@@ -5007,6 +5047,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("ConvertConcatenationToRawString.java")
         public void testConvertConcatenationToRawString() throws Exception {
             runTest("testData/newJ2k/postProcessing/ConvertConcatenationToRawString.java");
+        }
+
+        @TestMetadata("ExplicitParentheses.java")
+        public void testExplicitParentheses() throws Exception {
+            runTest("testData/newJ2k/postProcessing/ExplicitParentheses.java");
+        }
+
+        @TestMetadata("ExplicitThis.java")
+        public void testExplicitThis() throws Exception {
+            runTest("testData/newJ2k/postProcessing/ExplicitThis.java");
         }
 
         @TestMetadata("GetOperator.java")

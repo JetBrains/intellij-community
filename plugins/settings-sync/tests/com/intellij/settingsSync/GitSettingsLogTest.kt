@@ -2,12 +2,14 @@ package com.intellij.settingsSync
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.ui.JBAccountInfoService
-import com.intellij.util.io.*
+import com.intellij.util.io.createParentDirectories
+import com.intellij.util.io.write
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
@@ -24,10 +26,7 @@ import java.nio.file.Path
 import java.nio.file.attribute.FileAttribute
 import java.time.Instant
 import java.util.*
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.createFile
-import kotlin.io.path.div
-import kotlin.io.path.writeText
+import kotlin.io.path.*
 
 
 @RunWith(JUnit4::class)
@@ -412,6 +411,17 @@ internal class GitSettingsLogTest {
   fun `use empty name if JBA doesn't provide one`() {
     jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", null, null)
     checkUsernameEmail("", "")
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-305967"])
+  fun `unlock git if locked`() {
+    val gitSettingsLog = initializeGitSettingsLog()
+    Disposer.dispose(gitSettingsLog)
+    val indexLock  = settingsSyncStorage / ".git" / "index.lock"
+    indexLock.createFile()
+    val newGitSettingsLog = initializeGitSettingsLog()
+    assertFalse(indexLock.exists())
   }
 
   private fun checkUsernameEmail(expectedName: String, expectedEmail: String) {

@@ -7,5 +7,6 @@ class TestMutableIterator : MutableIterator<String?> {
         return null
     }
 
-    override fun remove() {}
+    override fun remove() {
+    }
 }

@@ -19,7 +19,8 @@ interface WorkspaceFileIndexData {
                   honorExclusion: Boolean,
                   includeContentSets: Boolean,
                   includeExternalSets: Boolean,
-                  includeExternalSourceSets: Boolean): WorkspaceFileInternalInfo
+                  includeExternalSourceSets: Boolean,
+                  includeCustomKindSets: Boolean): WorkspaceFileInternalInfo
 
   fun visitFileSets(visitor: WorkspaceFileSetVisitor)
 

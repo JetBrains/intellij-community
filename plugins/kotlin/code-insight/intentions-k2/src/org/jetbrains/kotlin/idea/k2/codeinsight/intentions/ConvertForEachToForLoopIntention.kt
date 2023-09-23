@@ -1,23 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiDocumentManager
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.ImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidPointers
 import org.jetbrains.kotlin.idea.codeinsight.utils.getImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.core.AbstractKotlinNameSuggester
-import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.CallableId
@@ -46,7 +43,7 @@ private val FOR_EACH_INDEXED_CALLABLE_IDS: Set<CallableId> = setOf(
 private typealias ReturnsToReplace = List<SmartPsiElementPointer<KtReturnExpression>>
 
 internal class ConvertForEachToForLoopIntention
-    : AbstractKotlinApplicableIntentionWithContext<KtCallExpression, ConvertForEachToForLoopIntention.Context>(
+    : AbstractKotlinModCommandWithContext<KtCallExpression, ConvertForEachToForLoopIntention.Context>(
         KtCallExpression::class
     ) {
 
@@ -113,40 +110,38 @@ internal class ConvertForEachToForLoopIntention
         }
     }
 
-    override fun apply(element: KtCallExpression, context: Context, project: Project, editor: Editor?) {
+    override fun apply(element: KtCallExpression, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
         val qualifiedExpression = element.getQualifiedExpressionForSelector()
         val receiverExpression = qualifiedExpression?.receiverExpression
         val targetExpression = qualifiedExpression ?: element
         val commentSaver = CommentSaver(targetExpression)
 
-        val lambda = element.getSingleLambdaArgument() ?: return
+        val lambda = element.getSingleLambdaArgument()?.takeIf { it.bodyExpression != null } ?: return
         val isForEachIndexed =  element.getCallNameExpression()?.getReferencedName() == FOR_EACH_INDEXED_NAME.asString()
-        val loop = generateLoop(receiverExpression, lambda, isForEachIndexed, context) ?: return
+        val loopLabelName= suggestLoopName(lambda)
+        val loop = generateLoop(receiverExpression, lambda, loopLabelName, isForEachIndexed, context.analyzeContext) ?: return
         val result = targetExpression.replace(loop)
         commentSaver.restore(result)
 
-        if (editor == null) return
-
         if (result is KtLabeledExpression) {
-            editor.caretModel.moveToOffset(result.startOffset)
-            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-            KotlinVariableInplaceRenameHandler().doRename(result, editor, null)
+            updater.rename(result, listOf(loopLabelName))
         } else {
             val forExpression = result as? KtForExpression ?: result.collectDescendantsOfType<KtForExpression>().first()
-            forExpression.loopParameter?.let { editor.caretModel.moveToOffset(it.startOffset) }
+            forExpression.loopParameter?.let {
+                updater.moveTo(it)
+            }
         }
     }
 
     private fun generateLoop(
         receiver: KtExpression?,
         lambda: KtLambdaExpression,
+        loopLabelName: String,
         isForEachIndexed: Boolean,
         context: Context
     ): KtExpression? {
         val factory = KtPsiFactory(lambda.project)
         val body = lambda.bodyExpression ?: return null
-
-        val loopLabelName by lazy { suggestLoopName(lambda) }
         var needLoopLabel = false
 
         for (returnExpr in context.returnsToReplace.dereferenceValidPointers()) {
@@ -172,7 +167,8 @@ internal class ConvertForEachToForLoopIntention
 
     private fun suggestLoopName(lambda: KtLambdaExpression): String =
         KotlinNameSuggester.suggestNameByName("loop") { candidate ->
-            !lambda.anyDescendantOfType<KtLabeledExpression> { it.getLabelName() == candidate }
+            val b = !lambda.anyDescendantOfType<KtLabeledExpression> { it.getLabelName() == candidate }
+            b
         }
 
     private fun getLoopRange(receiver: KtExpression?, context: Context, factory: KtPsiFactory): KtExpression? {

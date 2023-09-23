@@ -5,6 +5,9 @@ package com.intellij.util
 
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import kotlin.reflect.KProperty
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
@@ -35,4 +38,22 @@ fun <T> Sequence<T>.multiple(): Boolean {
     next()
     return hasNext()
   }
+}
+
+@OptIn(ExperimentalContracts::class)
+inline fun <T1 : AutoCloseable?, T2 : AutoCloseable?, R>
+  Pair<() -> T1, () -> T2>.use(block: (T1, T2) -> R): R {
+  contract {
+    callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+  }
+  return first.invoke().use { o1 -> second.invoke().use { o2 -> block(o1, o2) } }
+}
+
+@OptIn(ExperimentalContracts::class)
+inline fun <T1 : AutoCloseable?, T2 : AutoCloseable?, T3 : AutoCloseable, R>
+  Triple<() -> T1, () -> T2, () -> T3>.use(block: (T1, T2, T3) -> R): R {
+  contract {
+    callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+  }
+  return first.invoke().use { o1 -> second.invoke().use { o2 -> third.invoke().use { o3 -> block(o1, o2, o3) } } }
 }

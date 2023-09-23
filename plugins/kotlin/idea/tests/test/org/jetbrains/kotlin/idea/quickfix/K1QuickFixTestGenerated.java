@@ -12145,6 +12145,26 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             public void testVirtualMethodHidden() throws Exception {
                 runTest("testData/quickfix/override/virtualMethodHidden.kt");
             }
+
+            @TestMetadata("virtualMethodHiddenWithInternalModifier.kt")
+            public void testVirtualMethodHiddenWithInternalModifier() throws Exception {
+                runTest("testData/quickfix/override/virtualMethodHiddenWithInternalModifier.kt");
+            }
+
+            @TestMetadata("virtualMethodHiddenWithPrivateModifier.kt")
+            public void testVirtualMethodHiddenWithPrivateModifier() throws Exception {
+                runTest("testData/quickfix/override/virtualMethodHiddenWithPrivateModifier.kt");
+            }
+
+            @TestMetadata("virtualMethodHiddenWithProtectedModifier.kt")
+            public void testVirtualMethodHiddenWithProtectedModifier() throws Exception {
+                runTest("testData/quickfix/override/virtualMethodHiddenWithProtectedModifier.kt");
+            }
+
+            @TestMetadata("virtualMethodHiddenWithPublicModifier.kt")
+            public void testVirtualMethodHiddenWithPublicModifier() throws Exception {
+                runTest("testData/quickfix/override/virtualMethodHiddenWithPublicModifier.kt");
+            }
         }
     }
 

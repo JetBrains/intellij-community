@@ -29,9 +29,8 @@ public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaple
     myValueExternalizer = valueExternalizer;
     myMap = new PersistentHashMap<>(file, keyExternalizer, new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
     myCache = new SLRUCache<>(CACHE_SIZE, CACHE_SIZE) {
-      @NotNull
       @Override
-      public Collection<V> createValue(Integer key) {
+      public @NotNull Collection<V> createValue(Integer key) {
         try {
           final Collection<V> collection = myMap.get(key);
           //noinspection unchecked
@@ -208,7 +207,7 @@ public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaple
     }
   }
 
-  private static class CollectionDataExternalizer<V> implements DataExternalizer<Collection<V>> {
+  private static final class CollectionDataExternalizer<V> implements DataExternalizer<Collection<V>> {
     private final DataExternalizer<V> myElementExternalizer;
     private final Supplier<? extends Collection<V>> myCollectionFactory;
 
@@ -218,14 +217,14 @@ public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaple
     }
 
     @Override
-    public void save(@NotNull final DataOutput out, final Collection<V> value) throws IOException {
+    public void save(final @NotNull DataOutput out, final Collection<V> value) throws IOException {
       for (V x : value) {
         myElementExternalizer.save(out, x);
       }
     }
 
     @Override
-    public Collection<V> read(@NotNull final DataInput in) throws IOException {
+    public Collection<V> read(final @NotNull DataInput in) throws IOException {
       final Collection<V> result = myCollectionFactory.get();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {

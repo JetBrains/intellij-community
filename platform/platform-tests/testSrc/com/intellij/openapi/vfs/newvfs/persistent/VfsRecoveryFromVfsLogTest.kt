@@ -11,7 +11,7 @@ import kotlin.system.exitProcess
 object VfsRecoveryFromVfsLogTest {
   fun fullRecoveryIsIdentity(cachesDir: Path, dirForRecoveredCaches: Path = cachesDir.resolveSibling("recovered-caches")) {
     println("testing recovery")
-    val vfsLog = VfsLogImpl(PersistentFSPaths(cachesDir).vfsLogStorage, true)
+    val vfsLog = VfsLogImpl.open(PersistentFSPaths(cachesDir).vfsLogStorage, true)
     vfsLog.query().use {
       println("VfsLog state: begin=${it.begin().getPosition()}, end=${it.end().getPosition()}, " +
               "compacted position=${it.getBaseSnapshot({ throw AssertionError() }, { throw AssertionError() })
@@ -80,7 +80,7 @@ object VfsRecoveryFromVfsLogTest {
       check(args.size == 2)
       val targetPosition = args[1].toLong()
 
-      val vfsLog = VfsLogImpl(cachesCopy / "vfslog", true)
+      val vfsLog = VfsLogImpl.open(cachesCopy / "vfslog", true)
       for (i in 4 downTo 1) {
         vfsLog.forceCompactionUpTo(targetPosition / i)
       }

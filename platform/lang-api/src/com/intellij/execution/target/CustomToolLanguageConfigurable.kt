@@ -9,7 +9,7 @@ interface CustomToolLanguageConfigurable<T> {
   /**
    * Call [validate] first to make sure there are no errors
    */
-  fun createCustomTool(savedConfiguration: TargetEnvironmentConfiguration): T?
+  fun createCustomTool(): T?
 
-  fun validate():Collection<ValidationInfo>
+  fun validate(): Collection<ValidationInfo>
 }

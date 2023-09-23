@@ -534,9 +534,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
         else {
           ReadAction.nonBlocking(
                       () -> {
-                        CodeFormattingData data = CodeFormattingData.getOrCreate(file);
-                        data.prepare(file, Collections.singletonList(file.getTextRange()));
-                        return data;
+                        return CodeFormattingData.prepare(file, Collections.singletonList(file.getTextRange()));
                       }
                     )
                     .withDocumentsCommitted(myProject)

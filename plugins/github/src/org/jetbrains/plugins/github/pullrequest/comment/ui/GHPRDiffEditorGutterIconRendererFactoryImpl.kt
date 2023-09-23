@@ -5,13 +5,14 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.collaboration.ui.codereview.diff.AddCommentGutterIconRenderer
 import com.intellij.collaboration.ui.codereview.diff.DiffEditorGutterIconRendererFactory
-import com.intellij.collaboration.ui.codereview.diff.EditorComponentInlaysManager
+import com.intellij.collaboration.ui.codereview.editor.insertComponentAfter
 import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
@@ -19,7 +20,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import javax.swing.JComponent
 
 class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel: GHPRReviewProcessModel,
-                                                  private val inlaysManager: EditorComponentInlaysManager,
+                                                  private val editor: EditorEx,
                                                   private val componentFactory: GHPRDiffEditorReviewComponentsFactory,
                                                   private val cumulative: Boolean,
                                                   private val lineLocationCalculator: (Int) -> GHPRCommentLocation?)
@@ -93,7 +94,7 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
         else
           createComponent(side, line, line, hideCallback)
 
-        val disposable = inlaysManager.insertAfter(realEditorLine, component) ?: return
+        val disposable = editor.insertComponentAfter(realEditorLine, component) ?: return
         CollaborationToolsUIUtil.focusPanel(component)
         inlay = component to disposable
       }

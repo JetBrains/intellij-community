@@ -25,8 +25,7 @@ import java.util.function.Function;
 public final class EditSourceUtil {
   private EditSourceUtil() { }
 
-  @Nullable
-  public static Navigatable getDescriptor(@NotNull PsiElement element) {
+  public static @Nullable Navigatable getDescriptor(@NotNull PsiElement element) {
     PsiElement original = getNavigatableOriginalElement(element);
     if (original != null) {
       element = original;

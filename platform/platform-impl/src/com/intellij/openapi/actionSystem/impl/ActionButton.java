@@ -8,11 +8,10 @@ import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClic
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
@@ -22,8 +21,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.WizardPopup;
@@ -178,7 +176,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public final boolean isSelected() {
-    return myAction instanceof Toggleable && Toggleable.isSelected(myPresentation);
+    return Toggleable.isSelected(myPresentation);
   }
 
   @Override
@@ -249,37 +247,15 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     popup.setShowSubmenuOnHover(true);
     popup.setAlignByParentBounds(false);
     popup.setActiveRoot(getPopupContainer(this) == null);
-    InputEvent inputEvent = event.getInputEvent();
-    LOG.assertTrue(inputEvent != null);
-    Component component = inputEvent.getComponent();
-    adjustVerticalOverlapping(popup, component);
-    popup.showUnderneathOf(component);
-    return popup;
-  }
-
-  public static void adjustVerticalOverlapping(JBPopup popup, Component component){
-    popup.addListener(new JBPopupListener() {
-      @Override
-      public void beforeShown(@NotNull LightweightWindowEvent event) {
-        Dimension popupSize = getFullPopupSize(popup);
-        Point currentLocation = popup.getLocationOnScreen();
-        Rectangle currentArea = new Rectangle(currentLocation, popupSize);
-        Point aboveLocation = new RelativePoint(component, new Point(0, 0)).getScreenPoint();
-        Rectangle componentArea = new Rectangle(aboveLocation, component.getSize());
-        if (currentArea.intersects(componentArea)) {
-          int y = aboveLocation.y - popupSize.height;
-          if (y >= 0) {
-            popup.setLocation(new Point(currentLocation.x, y));
-          }
-        }
+    if (ActionPlaces.EDITOR_FLOATING_TOOLBAR.equals(event.getPlace())) {
+      Editor editor = event.getData(CommonDataKeys.EDITOR);
+      CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
+      if (floatingToolbar != null) {
+        floatingToolbar.attachPopupToButton(this, popup);
       }
-    });
-  }
-
-  private static @NotNull Dimension getFullPopupSize(@NotNull JBPopup popup){
-    Dimension contentSize = popup.getSize();
-    int footerAdvertisementHeight = popup instanceof AbstractPopup abstractPopup ? abstractPopup.getAdComponentHeight() : 0;
-    return new Dimension(contentSize.width, contentSize.height + footerAdvertisementHeight);
+    }
+    popup.showUnderneathOf(this);
+    return popup;
   }
 
   private @NotNull MenuItemPresentationFactory createPresentationFactory() {
@@ -639,7 +615,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   protected final class AccessibleActionButton extends JComponent.AccessibleJComponent implements AccessibleAction {
-    protected AccessibleActionButton() {
+    private AccessibleActionButton() {
     }
 
     @Override
@@ -691,7 +667,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       return var1;
     }
 
-    protected void setCustomAccessibleStateSet(@NotNull AccessibleStateSet accessibleStateSet) {
+    private void setCustomAccessibleStateSet(@NotNull AccessibleStateSet accessibleStateSet) {
       int state = getPopState();
 
       // TODO: Not sure what the "POPPED" state represents

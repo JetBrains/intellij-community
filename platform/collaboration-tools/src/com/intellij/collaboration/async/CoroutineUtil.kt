@@ -256,7 +256,14 @@ fun <T> Flow<Result<T>>.throwFailure(): Flow<T> =
  */
 suspend fun CoroutineScope.cancelAndJoinSilently() {
   val cs = this
-  val job = cs.coroutineContext[Job] ?: error("Missing Job in $cs")
+  cs.coroutineContext[Job]?.cancelAndJoinSilently() ?: error("Missing Job in $this")
+}
+
+/**
+ * Cancel the job, await its completion but ignore the completion exception if any to void cancelling the caller
+ */
+suspend fun Job.cancelAndJoinSilently() {
+  val job = this
   try {
     job.cancelAndJoin()
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
@@ -9,9 +9,9 @@ import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
 import com.intellij.ui.JBColor
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
+import com.intellij.util.ui.GrayFilter
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Dimension
@@ -23,7 +23,7 @@ import javax.swing.JComponent
 import javax.swing.UIManager
 
 @ApiStatus.Internal
-val lightThemeDarkHeaderDisableFilter: () -> RGBImageFilter =  { UIUtil.GrayFilter(0, 0, 30) }
+val lightThemeDarkHeaderDisableFilter: () -> RGBImageFilter = { GrayFilter(0, 0, 30) }
 
 fun getHeaderBackgroundColor(component: JComponent, state: Int): Color? {
   if (ProjectWindowCustomizerService.getInstance().isActive()) {
@@ -44,7 +44,6 @@ fun getHeaderBackgroundColor(component: JComponent, state: Int): Color? {
 internal class HeaderToolbarButtonLook(
   private val iconSize: () -> Int = { JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSize() }
 ) : IdeaActionButtonLook() {
-
   override fun getButtonArc(): JBValue {
     return JBUI.CurrentTheme.MainToolbar.Button.hoverArc()
   }

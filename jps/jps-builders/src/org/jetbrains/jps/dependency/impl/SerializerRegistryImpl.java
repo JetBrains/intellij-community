@@ -6,18 +6,24 @@ import org.jetbrains.jps.dependency.ConfigurationException;
 import org.jetbrains.jps.dependency.NodeSerializer;
 import org.jetbrains.jps.dependency.NodeSerializerRegistry;
 import org.jetbrains.jps.dependency.SerializableGraphElement;
+import org.jetbrains.jps.dependency.impl.serializer.FileSourceNodeSerializerImpl;
+import org.jetbrains.jps.dependency.impl.serializer.JvmClassNodeSerializerImpl;
+import org.jetbrains.jps.dependency.impl.serializer.JvmModuleNodeSerializerImpl;
+import org.jetbrains.jps.dependency.impl.serializer.StringReferenceIDNodeSerializerImpl;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-public class SerializerRegistryImpl implements NodeSerializerRegistry {
+public final class SerializerRegistryImpl implements NodeSerializerRegistry {
   private final Function<SerializableGraphElement, NodeSerializer> mySerializerSelector;
   private final Function<Integer, NodeSerializer> mySerializerIDSelector;
-  
-  private static NodeSerializerRegistry INSTANCE = new SerializerRegistryImpl(Collections.emptyList() /* todo: define serializers here*/);
+
+  private static final NodeSerializerRegistry INSTANCE =
+    new SerializerRegistryImpl(
+      Arrays.asList(new FileSourceNodeSerializerImpl(), new StringReferenceIDNodeSerializerImpl(), new JvmClassNodeSerializerImpl(), new JvmModuleNodeSerializerImpl()));
 
   public static NodeSerializerRegistry getInstance() {
     return INSTANCE;

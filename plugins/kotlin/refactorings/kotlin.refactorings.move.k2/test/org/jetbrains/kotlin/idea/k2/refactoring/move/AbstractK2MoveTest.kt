@@ -50,14 +50,15 @@ enum class K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
             val targetDirPath = targetPackage?.replace('.', '/') ?: config.getNullableString("targetDirectory")
             if (targetDirPath != null) {
                 runWriteAction { VfsUtil.createDirectoryIfMissing(rootDir, targetDirPath) }
-                val newParent = if (targetPackage != null) {
-                    JavaPsiFacade.getInstance(project).findPackage(targetPackage)!!.directories[0]
-                } else {
-                    rootDir.findFileByRelativePath(targetDirPath)!!.toPsiDirectory(project)!!
-                }
                 val source = K2MoveSource.FileSource(mainFile as KtFile)
-                val target = K2MoveTarget.SourceDirectory(newParent)
-                K2MoveDescriptor.Files(source, target)
+                val target = if (targetPackage != null) {
+                    val pkg = JavaPsiFacade.getInstance(project).findPackage(targetPackage)!!
+                    val directory = JavaPsiFacade.getInstance(project).findPackage(targetPackage)!!.directories[0]
+                    K2MoveTarget.SourceDirectory(pkg, directory)
+                } else {
+                    val directory = rootDir.findFileByRelativePath(targetDirPath)!!.toPsiDirectory(project)!!
+                    K2MoveTarget.SourceDirectory(directory)
+                }
                 K2MoveFilesOrDirectoriesRefactoringProcessor(K2MoveDescriptor.Files(source, target)).run()
             } else {
                 val targetFile = config.getString("targetFile")

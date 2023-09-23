@@ -1,5 +1,6 @@
 class Foo {
     /*/
     / */
-    fun foo() {}
+    fun foo() {
+    }
 }

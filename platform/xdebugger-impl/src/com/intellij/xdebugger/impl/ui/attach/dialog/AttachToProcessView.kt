@@ -17,6 +17,7 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.attach.XAttachDebuggerProvider
 import com.intellij.xdebugger.attach.XAttachHost
@@ -72,7 +73,7 @@ abstract class AttachToProcessView(
   fun getMainComponent() = centerPanel
 
   fun updateProcesses() {
-    application.assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (state.dialogDisposable.isNotAlive) return
     showLoadingPanel()
     updateJob?.cancel()

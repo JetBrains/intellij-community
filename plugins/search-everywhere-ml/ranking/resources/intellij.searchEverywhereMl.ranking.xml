@@ -118,12 +118,17 @@
       implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywherePsiElementFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereTypoFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileGroupFeatureProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereTextFeaturesProvider"/>
 
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.ActionKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.PsiElementKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.RunConfigurationsKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.NavigationItemKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.TypoKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.TextKeyProvider"/>
 
     <rankingModelLoader
       implementation="com.intellij.searchEverywhereMl.ranking.model.SearchEverywhereActionsRankingModelLoader"/>

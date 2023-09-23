@@ -22,10 +22,8 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractNumberConversionIntention implements ModCommandAction {
 
-  @IntentionFamilyName
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @IntentionFamilyName @NotNull String getFamilyName() {
     return CodeInsightBundle.message("intention.family.convert.number");
   }
 
@@ -54,8 +52,7 @@ public abstract class AbstractNumberConversionIntention implements ModCommandAct
     return Presentation.of(LangBundle.message("intention.name.convert.number.to.with.text", singleConverter, convertedText));
   }
 
-  @Nullable
-  private NumberConversionContext getContext(@NotNull ActionContext actionContext) {
+  private @Nullable NumberConversionContext getContext(@NotNull ActionContext actionContext) {
     PsiElement element = actionContext.findLeaf();
     NumberConversionContext context = element == null ? null : extract(element);
     if (context == null) {
@@ -95,9 +92,8 @@ public abstract class AbstractNumberConversionIntention implements ModCommandAct
         return Presentation.of(toString());
       }
 
-      @NlsSafe
       @Override
-      public String toString() {
+      public @NlsSafe String toString() {
         return StringUtil.capitalize(myConverter.toString()) + " (" + myResult + ")";
       }
 
@@ -118,9 +114,8 @@ public abstract class AbstractNumberConversionIntention implements ModCommandAct
    * @param element an element to extract the context from
    * @return extracted context or null if given element is not a number which could be converted.
    */
-  @Nullable
   @Contract(pure = true)
-  protected abstract NumberConversionContext extract(@NotNull PsiElement element);
+  protected abstract @Nullable NumberConversionContext extract(@NotNull PsiElement element);
 
   /**
    * Returns list of converters which are applicable to given file
@@ -128,9 +123,8 @@ public abstract class AbstractNumberConversionIntention implements ModCommandAct
    * @param file file to find relevant converters
    * @return list of converters for given PsiFile
    */
-  @NotNull
   @Contract(pure = true)
-  protected abstract List<NumberConverter> getConverters(@NotNull PsiFile file);
+  protected abstract @NotNull List<NumberConverter> getConverters(@NotNull PsiFile file);
 
   /**
    * Performs a replacement of given source number with the conversion result.
@@ -147,15 +141,15 @@ public abstract class AbstractNumberConversionIntention implements ModCommandAct
     /**
      * An element which represents a number to be converted
      */
-    @NotNull final SmartPsiElementPointer<PsiElement> myElement;
+    final @NotNull SmartPsiElementPointer<PsiElement> myElement;
     /**
      * A value of that number
      */
-    @NotNull final Number myNumber;
+    final @NotNull Number myNumber;
     /**
      * A textual representation of the number
      */
-    @NotNull final String myText;
+    final @NotNull String myText;
     /**
      * Whether there's a separate negation (unary minus) applied to the number. If true, {@link #myText} doesn't include that negation,
      * but {@link #myNumber} is properly negated and {@link #myElement} points to the unary minus expression.
@@ -174,8 +168,7 @@ public abstract class AbstractNumberConversionIntention implements ModCommandAct
       return myElement.getElement();
     }
 
-    @NotNull
-    public Project getProject() {
+    public @NotNull Project getProject() {
       return myElement.getProject();
     }
   }

@@ -87,7 +87,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
 
   public static boolean isTaskManagerComboInToolbarEnabledAndVisible(LocalTask activeTask, TaskManager taskManager) {
     return !isOriginalDefault(activeTask) ||
-           taskManager.getAllRepositories().length != 0 ||
+           ContainerUtil.exists(taskManager.getAllRepositories(), repository -> !repository.isShared()) ||
            TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO;
   }
 

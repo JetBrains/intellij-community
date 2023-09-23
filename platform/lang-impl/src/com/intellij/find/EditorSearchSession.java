@@ -126,8 +126,7 @@ public final class EditorSearchSession implements SearchSession,
 
       @Override
       public void hideNotify() {
-        myLivePreviewController.off();
-        mySearchResults.removeListener(EditorSearchSession.this);
+        disableLivePreview();
       }
     });
 
@@ -553,6 +552,11 @@ public final class EditorSearchSession implements SearchSession,
     myLivePreviewController.setUserActivityDelay(LivePreviewController.USER_ACTIVITY_TRIGGERING_DELAY);
 
     mySearchResults.addListener(this);
+  }
+
+  public void disableLivePreview() {
+    myLivePreviewController.off();
+    mySearchResults.removeListener(this);
   }
 
   private void updateResults(final boolean allowedToChangedEditorSelection) {

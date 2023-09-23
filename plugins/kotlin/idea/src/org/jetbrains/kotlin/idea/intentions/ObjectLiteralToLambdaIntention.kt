@@ -161,13 +161,13 @@ class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiter
         val parentCall = ((replaced.parent as? KtValueArgument)
             ?.parent as? KtValueArgumentList)
             ?.parent as? KtCallExpression
-        if (parentCall != null && RedundantSamConstructorInspection.samConstructorCallsToBeConverted(parentCall)
+        if (parentCall != null && RedundantSamConstructorInspection.Util.samConstructorCallsToBeConverted(parentCall)
                 .singleOrNull() == callExpression
         ) {
             runWriteActionIfPhysical(element) {
                 commentSaver.restore(replaced, forceAdjustIndent = true/* by some reason lambda body is sometimes not properly indented */)
             }
-            RedundantSamConstructorInspection.replaceSamConstructorCall(callExpression)
+            RedundantSamConstructorInspection.Util.replaceSamConstructorCall(callExpression)
             if (parentCall.canMoveLambdaOutsideParentheses()) runWriteActionIfPhysical(element) {
                 parentCall.moveFunctionLiteralOutsideParentheses()
             }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -84,8 +84,7 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
     return getAttributeDescriptorFromFacelets(attributeName, context);
   }
 
-  @Nullable
-  public static XmlAttributeDescriptor getAttributeDescriptorFromFacelets(final String attributeName, final XmlTag context) {
+  public static @Nullable XmlAttributeDescriptor getAttributeDescriptorFromFacelets(final String attributeName, final XmlTag context) {
     if (context == null) {
       return null;
     }

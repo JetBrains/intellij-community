@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.psi.imports
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.nextLeaf
+import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -30,7 +31,10 @@ fun KtFile.addImport(fqName: FqName, allUnder: Boolean = false, alias: Name? = n
         return if (imports.isEmpty()) {
             val packageDirective = packageDirective?.takeIf { it.packageKeyword != null }
             packageDirective?.let {
-                addAfter(psiFactory.createNewLine(2), it)
+                val elemAfterPkg = packageDirective.nextSibling
+                val linesAfterPkg = elemAfterPkg.getLineCount() - 1
+                val missingLines = 2 - linesAfterPkg
+                if (missingLines > 0) addAfter(psiFactory.createNewLine(missingLines), it)
             }
 
             (importList.add(newDirective) as KtImportDirective).also {

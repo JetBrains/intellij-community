@@ -40,6 +40,9 @@ internal data class GenericContentEntityOriginImpl(override val reference: Entit
 internal data class ExternalEntityOriginImpl(override val reference: EntityReference<*>,
                                              override val rootHolder: IndexingSourceRootHolder) : ExternalEntityOrigin
 
+internal data class CustomKindEntityOriginImpl(override val reference: EntityReference<*>,
+                                               override val rootHolder: IndexingRootHolder) : CustomKindEntityOrigin
+
 internal open class IndexingRootHolderImpl(override val roots: List<VirtualFile>,
                                            override val nonRecursiveRoots: List<VirtualFile>) : IndexingRootHolder {
 

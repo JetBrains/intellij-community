@@ -30,22 +30,32 @@ private fun PyDecoratorList.hasDecorator(vararg names: String) = names.any { fin
 
 private fun PyElement.getFixtureName() = name ?: (this as? PyStringLiteralExpression)?.stringValue
 
+/**
+ * Needed to avoid using the too wide `PyExpression` type
+ */
+private sealed class PyParameterOrPyReferenceExpression(val expression: PyExpression) {
+  class Parameter(expression: PyExpression) : PyParameterOrPyReferenceExpression(expression)
+  class Reference(expression: PyExpression) : PyParameterOrPyReferenceExpression(expression)
+}
+
 internal fun getFixtureLink(element: PyElement, typeEvalContext: TypeEvalContext): NamedFixtureLink? {
   val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return null
   return when (element) {
-    is PyNamedParameter -> getFixtureAsParameterLink(element, typeEvalContext, module)
+    is PyNamedParameter -> getFixtureAsExpressionLink(PyParameterOrPyReferenceExpression.Parameter(element), typeEvalContext, module)
+    is PyReferenceExpression -> getFixtureAsExpressionLink(PyParameterOrPyReferenceExpression.Reference(element), typeEvalContext, module)
     is PyStringLiteralExpression -> getFixtureAsStringLink(element, typeEvalContext, module)
     else -> null
   }
 }
 
 /**
- * If named parameter has fixture (and import statement) -- return it
+ * If named parameter or reference expression has fixture (and import statement) -- return it
  */
-private fun getFixtureAsParameterLink(element: PyNamedParameter, typeEvalContext: TypeEvalContext, module: Module): NamedFixtureLink? {
-  val func = PsiTreeUtil.getParentOfType(element, PyFunction::class.java) ?: return null
-  val fixtureCandidates = getFixtures(module, func, typeEvalContext).filter { o -> o.name == element.name }
-  return module.basePath?.let { return findRightFixture(fixtureCandidates, func, element, typeEvalContext, it) }
+private fun getFixtureAsExpressionLink(element: PyParameterOrPyReferenceExpression, typeEvalContext: TypeEvalContext, module: Module): NamedFixtureLink? {
+  val pyExpression = element.expression
+  val func = PsiTreeUtil.getParentOfType(pyExpression, PyFunction::class.java) ?: return null
+  val fixtureCandidates = getFixtures(module, func, typeEvalContext).filter { o -> o.name == pyExpression.name }
+  return module.basePath?.let { return findRightFixture(fixtureCandidates, func, pyExpression, typeEvalContext, it) }
 }
 
 /**
@@ -103,7 +113,8 @@ private fun findRightFixture(fixtureCandidates: List<PyTestFixture>,
   if (!fixtureCandidates.isEmpty()) {
     val containingClass = if (pyFixtureElement is PyStringLiteralExpression) {
       PsiTreeUtil.getParentOfType<PyDecorator>(pyFixtureElement)?.target
-    } else {
+    }
+    else {
       func
     }?.containingClass
     containingClass?.let { pyClass ->
@@ -143,7 +154,7 @@ private fun findRightFixture(fixtureCandidates: List<PyTestFixture>,
 
   // search reserved fixture class in "_pytest" dir
   if (elementName in reservedFixtureClassSet) {
-      return NamedFixtureLink(PyTestFixture(null, null, elementName), null)
+    return NamedFixtureLink(PyTestFixture(null, null, elementName), null)
   }
   return null
 }

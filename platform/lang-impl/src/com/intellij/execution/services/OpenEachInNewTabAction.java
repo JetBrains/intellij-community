@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
+import static com.intellij.execution.services.ServiceViewActionProvider.getSelectedItems;
 import static com.intellij.execution.services.ServiceViewActionProvider.getSelectedView;
 
 final class OpenEachInNewTabAction extends DumbAwareAction {
@@ -23,10 +24,9 @@ final class OpenEachInNewTabAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    ServiceView serviceView = getSelectedView(e);
     boolean enabled = e.getProject() != null &&
-                      serviceView != null &&
-                      !serviceView.getSelectedItems().isEmpty();
+                      getSelectedView(e) != null &&
+                      !getSelectedItems(e).isEmpty();
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled || !ActionPlaces.isPopupPlace(e.getPlace()));
   }
@@ -40,7 +40,7 @@ final class OpenEachInNewTabAction extends DumbAwareAction {
     if (serviceView == null) return;
 
     ServiceViewManagerImpl manager = (ServiceViewManagerImpl)ServiceViewManager.getInstance(project);
-    for (ServiceViewItem item : serviceView.getSelectedItems()) {
+    for (ServiceViewItem item : getSelectedItems(e)) {
       manager.extract(new ServiceViewDragBean(serviceView, Collections.singletonList(item)));
     }
   }

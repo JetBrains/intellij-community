@@ -57,7 +57,7 @@ class Simple {
     var s1 = <warning descr="[VARIABLE_WITH_REDUNDANT_INITIALIZER] Variable 's1' initializer is redundant">(source())</warning>
     s1 = (foo())
     val s = (s1)
-    sink(<warning descr="Unsafe string is used as safe parameter">(s)</warning>)
+    sink((s))
   }
 
   fun unsafeReturn(): @Untainted String? {

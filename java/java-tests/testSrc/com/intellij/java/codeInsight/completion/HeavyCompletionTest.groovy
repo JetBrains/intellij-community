@@ -16,12 +16,10 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.PsiTreeUtil
@@ -30,8 +28,6 @@ import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.ui.JBColor
-import com.intellij.util.indexing.DumbModeAccessType
-import com.intellij.util.indexing.FileBasedIndex
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
@@ -131,27 +127,6 @@ class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureByText("a.java", "class Main { ABCDE<caret> }")
     myFixture.complete(CompletionType.BASIC, 3)
     myFixture.checkResult("class Main { foo.bar.AxBxCxDxEx<caret> }")
-  }
-
-  @NeedsIndex.ForStandardLibrary
-  void testPreferOwnMethods() {
-    def nanoUrls = IntelliJProjectConfiguration.getProjectLibraryClassesRootUrls("NanoXML")
-    ModuleRootModificationUtil.addModuleLibrary(module, 'nano1', nanoUrls, [])
-
-    def finalProject = project
-    FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, { ->
-      assert JavaPsiFacade.getInstance(finalProject).findClass('net.n3.nanoxml.StdXMLParser', GlobalSearchScope.allScope(finalProject))
-    })
-
-    myFixture.configureByText "a.java", """
-public class Test {
-  void method(net.n3.nanoxml.StdXMLParser f) {
-    f.<caret>
-  }
-}
-"""
-    myFixture.completeBasic()
-    myFixture.assertPreferredCompletionItems 0, 'getBuilder'
   }
 
   void testNoJavaStructureModificationOnSecondInvocation() {

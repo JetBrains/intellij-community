@@ -338,8 +338,8 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     try {
       listener.onUpdated(event)
     }
-    catch (e: Exception) {
-      thisLogger().error("$listener shouldn't throw exceptions", e)
+    catch (t: Throwable) {
+      thisLogger().error("$listener shouldn't throw exceptions", t)
     }
   }
 

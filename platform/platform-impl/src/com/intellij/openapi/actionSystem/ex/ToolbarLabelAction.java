@@ -58,15 +58,15 @@ public abstract class ToolbarLabelAction extends DumbAwareAction implements Cust
   protected @Nullable @TooltipTitle String getHyperlinkTooltip() { return null; }
 
   private static final class MyLinkTooltip extends HelpTooltip {
-    final void mouseEntered(@NotNull MouseEvent e) {
+    void mouseEntered(@NotNull MouseEvent e) {
       myMouseListener.mouseEntered(e);
     }
 
-    final void mouseExited(@NotNull MouseEvent e) {
+    void mouseExited(@NotNull MouseEvent e) {
       myMouseListener.mouseExited(e);
     }
 
-    final void mouseMoved(@NotNull MouseEvent e) {
+    void mouseMoved(@NotNull MouseEvent e) {
       myMouseListener.mouseMoved(e);
     }
   }

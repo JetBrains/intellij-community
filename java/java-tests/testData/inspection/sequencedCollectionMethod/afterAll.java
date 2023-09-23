@@ -17,4 +17,14 @@ public class Test {
     list.remove("e");
     list.get(1);
   }
+  
+  void testAdd(List<String> list) {
+    list.addFirst("hello");
+  }
+  
+  void testSeries(List<String> list) {
+    System.out.println(list.get(0));
+    System.out.println(list.get(1));
+    System.out.println(list.get(2));
+  }
 }

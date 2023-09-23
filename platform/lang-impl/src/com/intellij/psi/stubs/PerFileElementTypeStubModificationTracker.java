@@ -36,6 +36,9 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   private final ConcurrentMap<String, List<StubFileElementType<?>>> myFileElementTypesCache = new ConcurrentHashMap<>();
   private final ConcurrentMap<StubFileElementType<?>, Long> myModCounts = new ConcurrentHashMap<>();
   private final SynchronizedClearableLazy<@Nullable StubUpdatingIndexStorage> myStubUpdatingIndexStorage = new SynchronizedClearableLazy<>(() -> {
+    if (FileBasedIndex.USE_IN_MEMORY_INDEX) {
+      return null;
+    }
     final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     fileBasedIndex.waitUntilIndicesAreInitialized();
     try {

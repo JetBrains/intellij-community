@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 
-@TestApplication
 class VirtualFileIndexTest {
   @TempDir
   lateinit var tempdir: Path

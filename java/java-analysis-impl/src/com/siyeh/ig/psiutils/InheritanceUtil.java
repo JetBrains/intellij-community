@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public final class InheritanceUtil {
 
   private InheritanceUtil() {}
 
-  public static ThreeState existsMutualSubclass(PsiClass class1, final PsiClass class2, final boolean avoidExpensiveProcessing) {
+  public static ThreeState existsMutualSubclass(PsiClass class1, PsiClass class2, boolean avoidExpensiveProcessing) {
     if (class1 instanceof PsiTypeParameter) {
       final PsiClass[] superClasses = class1.getSupers();
       ThreeState result = ThreeState.YES;
@@ -76,7 +76,20 @@ public final class InheritanceUtil {
         (isJavaClass(class2) && !isJavaClass(class1))) {
       // Assume that it could be faster to search inheritors from non-functional interface or from class with a longer simple name
       // Also prefer searching inheritors from Java class over other JVM languages as Java is usually faster
-      return doSearch(class2, class1, avoidExpensiveProcessing, scope);
+      PsiClass tmp = class1;
+      class1 = class2;
+      class2 = tmp;
+    }
+    if (DeclarationSearchUtils.isTooExpensiveToSearch(class1, false)) {
+      if (!DeclarationSearchUtils.isTooExpensiveToSearch(class2, false)) {
+        PsiClass tmp = class1;
+        class1 = class2;
+        class2 = tmp;
+      }
+      else if (avoidExpensiveProcessing) {
+        // class inheritor search is too expensive on common names
+        return ThreeState.UNSURE;
+      }
     }
     return doSearch(class1, class2, avoidExpensiveProcessing, scope);
   }

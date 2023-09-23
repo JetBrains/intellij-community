@@ -34,8 +34,8 @@ import java.util.List;
 import java.util.Set;
 
 abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, PsiMethod> {
-  JavaMethodElementType(@NonNls final String name) {
-    super(name);
+  JavaMethodElementType(@NonNls final String name, @NotNull IElementType parentElementType) {
+    super(name, parentElementType);
   }
 
   @Override
@@ -141,7 +141,7 @@ abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, 
         for (StubElement<?> paramStub : stubElement.getChildrenStubs()) {
           if (paramStub instanceof PsiParameterStub) {
             TypeInfo type = ((PsiParameterStub)paramStub).getType();
-            String typeName = PsiNameHelper.getShortClassName(type.text);
+            String typeName = PsiNameHelper.getShortClassName(type.text());
             if (TypeConversionUtil.isPrimitive(typeName) || TypeConversionUtil.isPrimitiveWrapper(typeName)) continue;
             if (!methodTypeParams.contains(typeName)) {
               sink.occurrence(JavaStubIndexKeys.METHOD_TYPES, typeName);

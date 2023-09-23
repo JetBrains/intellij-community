@@ -41,6 +41,7 @@ import com.intellij.ui.DirtyUI
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.CommonProcessors.FindProcessor
+import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
@@ -270,6 +271,23 @@ object LocalTrackerDiffUtil {
     tracker.setPartiallyExcludedFromCommit(lines, side, !wasExcludedFromCommit)
 
     provider.viewer.rediff()
+  }
+
+  /**
+   * @param includedIntoCommitCount Changes that belong into current changelist AND included for commit
+   * @param excludedCount Changes that belong to another changelist
+   */
+  @JvmStatic
+  fun getStatusText(totalCount: Int, includedIntoCommitCount: Int, excludedCount: Int, isContentsEqual: ThreeState): @Nls String {
+    if (totalCount == 0 && isContentsEqual == ThreeState.NO) {
+      return DiffBundle.message("diff.all.differences.ignored.text")
+    }
+
+    val actualChanges = totalCount - excludedCount
+    var message = DiffBundle.message("diff.count.differences.status.text", totalCount - excludedCount)
+    if (includedIntoCommitCount != actualChanges) message += DiffBundle.message("diff.included.count.differences.status.text", includedIntoCommitCount)
+    if (excludedCount > 0) message += " " + DiffBundle.message("diff.inactive.count.differences.status.text", excludedCount)
+    return message
   }
 
   @JvmStatic

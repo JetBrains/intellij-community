@@ -62,6 +62,7 @@
    },
    {
     name-part: "keyup",
+    display-name: "event",
     symbol: {
      matchedName: "js/ng-custom-events/<pattern>",
      name: "Extended key events",
@@ -79,6 +80,7 @@
    },
    {
     name-part: ".",
+    display-name: "event",
     symbol: {
      matchedName: "js/ng-custom-events/<pattern>",
      name: "Extended key events",
@@ -112,6 +114,7 @@
    },
    {
     name-part: ".",
+    display-name: "event",
    },
    {
     name-part: "shift",
@@ -131,9 +134,11 @@
    },
    {
     name-part: ".",
+    display-name: "event",
    },
    {
     name-part: "0",
+    display-name: "key name",
     matchScore: 0,
     symbol: {
      matchedName: "js/key-names/<pattern>",

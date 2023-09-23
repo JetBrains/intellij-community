@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -13,7 +13,6 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -31,6 +30,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -253,7 +253,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   @Override
   public void doApplyInformationToEditor() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     CachedIntentions cachedIntentions = myCachedIntentions;
     boolean actionsChanged = myActionsChanged;
@@ -287,7 +287,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
    */
   @ApiStatus.Internal
   public static void getActionsToShowSync(@NotNull Editor hostEditor, @NotNull PsiFile hostFile, @NotNull IntentionsInfo intentions) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     EditorNotificationActions.collectActions(hostEditor, intentions);
     intentions.filterActions(hostFile);
   }

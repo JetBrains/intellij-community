@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.OpenInRightSplitAction;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.gotoByName.FileTypeRef;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -124,7 +126,8 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
         OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, file, pos.first, pos.second);
         if (descriptor.canNavigate()) {
           ApplicationManager.getApplication().invokeLater(() -> {
-            descriptor.navigate(true);
+            if ((modifiers & InputEvent.SHIFT_MASK) != 0) OpenInRightSplitAction.Companion.openInRightSplit(myProject, file, descriptor, true);
+            else descriptor.navigate(true);
             if (pos.first > 0) {
               FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.file.line");
             }

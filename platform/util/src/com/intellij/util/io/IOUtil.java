@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.text.ByteArrayCharSequence;
@@ -25,6 +26,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.IntFunction;
+
+import static java.nio.charset.StandardCharsets.US_ASCII;
 
 public final class IOUtil {
   public static final int KiB = 1024;
@@ -364,6 +367,7 @@ public final class IOUtil {
   }
 
 
+  private static final byte[] ZEROES = new byte[1024];
   /**
    * Imitates 'fallocate' linux call: ensures file region [channel.size()..upUntilSize) is allocated on disk,
    * and zeroed. We can't call 'fallocate' directly, hence just write zeros into the channel.
@@ -372,8 +376,8 @@ public final class IOUtil {
                                         long upUntilSize) throws IOException {
     long channelSize = channel.size();
     if (channelSize < upUntilSize) {
-      int stride = 1024;
-      ByteBuffer zeros = ByteBuffer.allocate(stride);
+      int stride = ZEROES.length;
+      ByteBuffer zeros = ByteBuffer.wrap(ZEROES);
       for (long pos = channelSize; pos < upUntilSize; pos += stride) {
         int remainsToZero = Math.toIntExact(Math.min(stride, upUntilSize - pos));
         zeros.clear().limit(remainsToZero);
@@ -449,5 +453,52 @@ public final class IOUtil {
       }
     }
     return sb.toString();
+  }
+
+  /** Convert 4-chars ascii string into an int32 'magicWord' -- i.e. reserved header value used to identify a file format. */
+  public static int asciiToMagicWord(@NotNull String ascii) {
+    if (ascii.length() != 4) {
+      throw new IllegalArgumentException("ascii[" + ascii + "] must be 4 ASCII chars long");
+    }
+    byte[] bytes = ascii.getBytes(US_ASCII);
+    if (bytes.length != 4) {
+      throw new IllegalArgumentException("ascii bytes [" + toHexString(bytes) + "].length must be 4");
+    }
+
+    return (Byte.toUnsignedInt(bytes[0]) << 24)
+           | (Byte.toUnsignedInt(bytes[1]) << 16)
+           | (Byte.toUnsignedInt(bytes[2]) << 8)
+           | Byte.toUnsignedInt(bytes[3]);
+  }
+
+  public static String magicWordToASCII(int magicWord) {
+    byte[] ascii = new byte[4];
+    ascii[0] = (byte)((magicWord >> 24) & 0xFF);
+    ascii[1] = (byte)((magicWord >> 16) & 0xFF);
+    ascii[2] = (byte)((magicWord >> 8) & 0xFF);
+    ascii[3] = (byte)((magicWord) & 0xFF);
+    return new String(ascii, US_ASCII);
+  }
+
+  /**
+   * Tries to wrap storageToWrap into another storage Out with the wrapperer.
+   * If the wrapperer call fails -- close storageToWrap before propagating exception up the callstack.
+   * (If the wrapperer call succeeded -- wrapping storage (Out) is now responsible for the closing of wrapped storage)
+   */
+  public static <Out extends AutoCloseable, In extends AutoCloseable, E extends Throwable>
+  Out wrapSafely(@NotNull In storageToWrap,
+                 @NotNull ThrowableNotNullFunction<In, Out, E> wrapperer) throws E {
+    try {
+      return wrapperer.fun(storageToWrap);
+    }
+    catch (Throwable mainEx) {
+      try {
+        storageToWrap.close();
+      }
+      catch (Throwable closeEx) {
+        mainEx.addSuppressed(closeEx);
+      }
+      throw mainEx;
+    }
   }
 }

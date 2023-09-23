@@ -95,6 +95,7 @@
       "cwmDisableCall.svg": "codeWithMe/cwmDisableCall.svg",
       "cwmEnableCall.svg": "codeWithMe/cwmEnableCall.svg",
       "cwmIconModificator.svg": "codeWithMe/cwmIconModificator.svg",
+      "cwmIconModificatorMenu.svg": "codeWithMe/cwmIconModificatorMenu.svg",
       "cwmInvite.svg": "codeWithMe/cwmInvite.svg",
       "cwmUsers.svg": "users.svg"
     },
@@ -746,6 +747,7 @@
         "toolwindows/toolWindowProblemsEmpty.svg"
       ],
       "profiler.svg": "toolwindows/toolWindowProfiler.svg",
+      "profilerAndroid.svg": "toolwindows/toolWindowProfilerAndroid.svg",
       "project.svg": "toolwindows/toolWindowProject.svg",
       "run.svg": "toolwindows/toolWindowRun.svg",
       "toolWindowRunWithCoverage.svg": "toolwindows/toolWindowRunWithCoverage.svg",

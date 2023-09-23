@@ -204,7 +204,7 @@ final class SlideComponent extends JComponent {
   }
 
   @Override
-  public final void setToolTipText(String text) {
+  public void setToolTipText(String text) {
     //disable tooltips
   }
 

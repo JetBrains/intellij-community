@@ -29,11 +29,11 @@ interface ExternalProductResourceUrls {
    * is available. Currently, there is no specification of that XML file format; you may use [the file](https://www.jetbrains.com/updates/updates.xml)
    * used by JetBrains IDEs as a reference.
    */
-  val updatesMetadataXmlUrl: Url?
+  val updateMetadataUrl: Url?
 
   /**
    * Returns URL which can be used to download a patch from build [from] to build [to].
-   * This function is called only if [the metadata][updatesMetadataXmlUrl] contains information about a patch for these versions, 
+   * This function is called only if [the metadata][updateMetadataUrl] contains information about a patch for these versions, 
    * and a user initiates update.
    */
   fun computePatchUrl(from: BuildNumber, to: BuildNumber): Url?

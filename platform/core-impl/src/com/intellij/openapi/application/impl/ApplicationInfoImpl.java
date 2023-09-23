@@ -430,7 +430,12 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public @NotNull String getApplicationSvgIconUrl() {
-    return isEAP() && mySvgEapIconUrl != null ? mySvgEapIconUrl : mySvgIconUrl;
+    return getApplicationSvgIconUrl(isEAP());
+  }
+
+  @ApiStatus.Internal
+  public @NotNull String getApplicationSvgIconUrl(boolean isEap) {
+    return isEap && mySvgEapIconUrl != null ? mySvgEapIconUrl : mySvgIconUrl;
   }
 
   @Override
@@ -438,6 +443,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return getSmallApplicationSvgIconUrl(isEAP());
   }
 
+  @ApiStatus.Internal
   public @NotNull String getSmallApplicationSvgIconUrl(boolean isEap) {
     return isEap && mySmallSvgEapIconUrl != null ? mySmallSvgEapIconUrl : mySmallSvgIconUrl;
   }

@@ -517,6 +517,8 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   /**
+   * Can be called on EDT thread.
+   * It is used only for backward compatibility.
    * @deprecated use {@link OverrideImplementUtil#showJavaOverrideImplementChooser(Editor, PsiElement, boolean, Collection, Collection, java.util.function.Consumer)}
    */
   @Deprecated
@@ -535,6 +537,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   /**
+   * Must be call on a background thread
    * @param candidates, secondary should allow modifications
    */
   public static void showJavaOverrideImplementChooser(@NotNull Editor editor,
@@ -554,6 +557,9 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
+  /**
+   * Must be called on EDT thread
+   */
   @Nullable
   private static JavaOverrideImplementMemberChooser showJavaOverrideImplementChooser(@Nullable JavaOverrideImplementMemberChooserContainer container,
                                                                                      @NotNull Editor editor,

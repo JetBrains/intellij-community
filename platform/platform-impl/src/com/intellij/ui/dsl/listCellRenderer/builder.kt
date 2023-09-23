@@ -16,7 +16,7 @@ internal annotation class LcrDslMarker
  * * Rectangular selection and correct insets for old UI
  * * Rounded selection, correct insets and height for new UI
  * * Uses correct colors for text in selected/unselected state
- * * Gray color has different color in selected state
+ * * Grey color has different color in selected state
  * * Supports IDE scaling and compact mode
  * * Provides accessibility details for rows: by default it is concatenation of accessible names of all visible cells
  *
@@ -24,7 +24,7 @@ internal annotation class LcrDslMarker
  */
 @ApiStatus.Experimental
 fun <T> listCellRenderer(init: LcrRow<T>.() -> Unit): ListCellRenderer<T> {
-  return LcrRowImpl(init)
+  return UiDslRendererProvider.getRenderer(init)
 }
 
 /**

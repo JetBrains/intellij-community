@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -260,6 +260,14 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   public void testFinalParamUsedInsideAnon() throws Exception {
     JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_PARAMETERS = false;
     doTestWithJava17();
+  }
+
+  public void testStringTemplateJava21Preview() throws Exception {
+    doTest();
+  }
+
+  public void testStringTemplateExceptionJava21Preview() throws Exception {
+    doTest();
   }
 
   private void doTestWithJava17() throws Exception {

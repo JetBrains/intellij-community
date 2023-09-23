@@ -41,7 +41,7 @@ import javax.swing.JComponent
 // Code is partially copied from com.intellij.codeInsight.daemon.impl.SetupSDKNotificationProvider
 class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
-        if (!Registry.`is`("unknown.sdk.show.editor.actions")) {
+        if (!Registry.`is`("kotlin.not.configured.show.notification")) {
             return null
         }
 
@@ -51,6 +51,11 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
 
         val psiFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return null
         if (psiFile.language !== KotlinLanguage.INSTANCE) {
+            return null
+        }
+
+        // No notification while auto-configuration is checking/running
+        if (!KotlinProjectConfigurationService.getInstance(project).shouldShowNotConfiguredDialog()) {
             return null
         }
 

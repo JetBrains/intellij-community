@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public final class BlockCommentSelectioner implements ExtendWordSelectionHandler {
+public class BlockCommentSelectioner implements ExtendWordSelectionHandler {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof PsiComment && !(e instanceof PsiDocCommentBase);

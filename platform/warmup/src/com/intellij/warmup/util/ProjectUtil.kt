@@ -9,8 +9,10 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.PatchProjectUtil
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
-import com.intellij.ide.observation.ActivityInProgressPredicate
+import com.intellij.ide.observation.Observation
 import com.intellij.ide.warmup.WarmupConfigurator
+import com.intellij.ide.warmup.WarmupStatus
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.blockingContext
@@ -29,7 +31,6 @@ import com.intellij.warmup.impl.WarmupConfiguratorOfCLIConfigurator
 import com.intellij.warmup.impl.getCommandLineReporter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.util.*
@@ -39,7 +40,7 @@ fun importOrOpenProject(args: OpenProjectArgs): Project {
   // most of the sensible operations would run in the same thread
   return runUnderModalProgressIfIsEdt {
     runTaskAndLogTime("open project") {
-      importOrOpenProjectImpl(args)
+      importOrOpenProjectImpl0(args)
     }
   }
 }
@@ -48,7 +49,17 @@ suspend fun importOrOpenProjectAsync(args: OpenProjectArgs): Project {
   WarmupLogger.logInfo("Opening project from ${args.projectDir}...")
   // most of the sensible operations would run in the same thread
   return runTaskAndLogTime("open project") {
-    importOrOpenProjectImpl(args)
+    importOrOpenProjectImpl0(args)
+  }
+}
+
+private suspend fun importOrOpenProjectImpl0(args: OpenProjectArgs): Project {
+  val currentStatus = WarmupStatus.currentStatus(ApplicationManager.getApplication())
+  WarmupStatus.statusChanged(ApplicationManager.getApplication(), WarmupStatus.InProgress)
+  try {
+    return importOrOpenProjectImpl(args)
+  } finally {
+    WarmupStatus.statusChanged(ApplicationManager.getApplication(), currentStatus)
   }
 }
 
@@ -88,19 +99,12 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
 
   if (isPredicateBasedWarmup()) {
     runTaskAndLogTime("awaiting completion predicates") {
-      predicateLoop@ while (true) {
-        for (processBusyPredicate in ActivityInProgressPredicate.EP_NAME.extensionList) {
-          if (processBusyPredicate.isInProgress(project)) {
-            WarmupLogger.logInfo("'${processBusyPredicate.presentableName}' is in running...")
-            delay(1000)
-            continue@predicateLoop
-          }
-        }
-        WarmupLogger.logInfo("All predicates are completed")
-        break
+      withLoggingProgressReporter {
+        Observation.awaitConfiguration(project)
       }
     }
   }
+
 
   yieldAndWaitForDumbModeEnd(project)
 
@@ -166,6 +170,7 @@ private val listener = object : ConversionListener {
     WarmupLogger.logInfo("PROGRESS: Project conversion failed for:\n" + readonlyFiles.joinToString("\n"))
   }
 }
+
 
 private suspend fun callProjectConversion(projectArgs: OpenProjectArgs) {
   if (!projectArgs.convertProject) {

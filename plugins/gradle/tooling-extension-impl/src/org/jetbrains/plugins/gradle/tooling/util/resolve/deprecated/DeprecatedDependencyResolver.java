@@ -3,7 +3,7 @@
 
 package org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated;
 
-import com.intellij.gradle.toolingExtension.impl.sourceSetModel.provider.SourceSetCachedFinder;
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetCachedFinder;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.*;
@@ -25,7 +25,7 @@ import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyTraverser;
-import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil;
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -307,7 +307,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
 
     result.add(fileCollectionDependency);
 
-    SourceSetCachedFinder sourceSetFinder = SourceSetCachedFinder.getInstance(myContext);
+    GradleSourceSetCachedFinder sourceSetFinder = GradleSourceSetCachedFinder.getInstance(myContext);
     for (File file : files) {
       SourceSet outputDirSourceSet = sourceSetFinder.findByArtifact(file.getPath());
       if (outputDirSourceSet != null) {
@@ -328,7 +328,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
       return null;
     }
 
-    SourceSetContainer sourceSets = JavaPluginUtil.getJavaPluginAccessor(project).getSourceSetContainer();
+    SourceSetContainer sourceSets = JavaPluginUtil.getSourceSetContainer(project);
     return sourceSets == null ? null : sourceSets.findByName(name);
   }
 
@@ -729,7 +729,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
       artifactMap.put(toMyModuleIdentifier(artifact.getModuleVersion().getId()), artifact);
     }
 
-    SourceSetCachedFinder sourceSetFinder = SourceSetCachedFinder.getInstance(myContext);
+    GradleSourceSetCachedFinder sourceSetFinder = GradleSourceSetCachedFinder.getInstance(myContext);
     for (Dependency it : dependencies) {
       try {
         if (it instanceof ProjectDependency) {

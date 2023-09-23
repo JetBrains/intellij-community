@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.openapi.application.runReadAction
 import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableTool
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.isApplicableWithAnalyze
@@ -45,7 +46,7 @@ abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement> : Abstrac
 
             override fun shouldApplyInWriteAction(): Boolean = this@AbstractKotlinApplicableInspection.shouldApplyInWriteAction()
             override fun getFamilyName(): String = this@AbstractKotlinApplicableInspection.getActionFamilyName()
-            override fun getName(): String = elementPointer.element?.let { getActionName(it) } ?: familyName
+            override fun getName(): String = runReadAction { elementPointer.element?.let { getActionName(it) } } ?: familyName
             override fun getSubstitutedClass(): Class<*> = inspectionClass
         }
 

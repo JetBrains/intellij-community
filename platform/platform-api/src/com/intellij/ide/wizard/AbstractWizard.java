@@ -237,9 +237,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       }
       catch (CommitStepException exc) {
         String message = exc.getMessage();
-        if (message != null) {
-          Messages.showErrorDialog(myContentPanel, message);
-        }
+        Messages.showErrorDialog(myContentPanel, message);
       }
     }
     else {

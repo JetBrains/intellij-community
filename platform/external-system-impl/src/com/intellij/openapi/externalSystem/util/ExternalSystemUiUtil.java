@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,6 +70,20 @@ public final class ExternalSystemUiUtil {
   public static GridBag getFillLineConstraints(int indentLevel) {
     Insets insets = JBUI.insets(INSETS, INSETS + INSETS * indentLevel, 0, INSETS);
     return new GridBag().weightx(1).coverLine().fillCellHorizontally().anchor(GridBagConstraints.WEST).insets(insets);
+  }
+
+  @NotNull
+  public static GridBag getCommentConstraints(int indentLevel) {
+    GridBag constraints = getFillLineConstraints(indentLevel);
+    constraints.insets.top = 0;
+    return constraints;
+  }
+
+  @NotNull
+  public static GridBag getCheckBoxCommentConstraints(int indentLevel, @NotNull JCheckBox checkBox) {
+    GridBag constraints = getCommentConstraints(indentLevel);
+    constraints.insets.left += UIUtil.getCheckBoxTextHorizontalOffset(checkBox);
+    return constraints;
   }
 
   public static void fillBottom(@NotNull JComponent component) {

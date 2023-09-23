@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Predicates
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.InvalidModuleException
@@ -65,7 +67,7 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
 
             if (unwrappedException is InvalidModuleException) {
                 val currentAttempt = attempt
-                if (currentAttempt < ATTEMPT_THREASHOLD) {
+                if (currentAttempt < ATTEMPT_THRESHOLD) {
                     attempt = currentAttempt + 1
                     throw e
                 }
@@ -104,6 +106,8 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
 
         val shouldHighlightErrors = file.shouldHighlightErrors()
 
+        val isInjectedCode = isIgnoredInjectedCode(holder)
+
         val analysisResult =
             if (shouldHighlightErrors) {
                 file.analyzeWithAllCompilerChecks(
@@ -114,7 +118,7 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
                             !RenderingContext.parameters(it).any(::checkIfDescriptor)
                         ) {
                             annotateDiagnostic(
-                                element, holder, listOf(it), highlightInfoByDiagnostic, calculatingInProgress = true
+                                element, holder, listOf(it), isInjectedCode, highlightInfoByDiagnostic, calculatingInProgress = true
                             )
                         }
                     }
@@ -150,14 +154,14 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
             .groupBy { it.psiElement }
             .forEach { (psiElement, diagnostics) ->
                 // annotate diagnostics those were not possible to report (and therefore render) on-the-fly
-                annotateDiagnostic(psiElement, holder, diagnostics, highlightInfoByDiagnostic, calculatingInProgress = false)
+                annotateDiagnostic(psiElement, holder, diagnostics, isInjectedCode, highlightInfoByDiagnostic, calculatingInProgress = false)
             }
 
         // apply quick fixes for all diagnostics grouping by element
         highlightInfoByDiagnostic.keys
             .groupBy { it.psiElement }
             .forEach {
-                annotateDiagnostic(it.key, holder, it.value, highlightInfoByDiagnostic, calculatingInProgress = false)
+                annotateDiagnostic(it.key, holder, it.value, isInjectedCode, highlightInfoByDiagnostic, calculatingInProgress = false)
             }
         KotlinCompilationErrorFrequencyStatsCollector.recordCompilationErrorsHappened(
             diagnostics.asSequence().filter { it.severity == Severity.ERROR }.map(Diagnostic::factoryName),
@@ -169,6 +173,7 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
         element: PsiElement,
         holder: HighlightInfoHolder,
         diagnostics: List<Diagnostic>,
+        isInjectedCode: Boolean,
         highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>? = null,
         calculatingInProgress: Boolean = true
     ) {
@@ -178,8 +183,29 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
             val unresolved = diagnostics.any { it.factory == Errors.UNRESOLVED_REFERENCE }
             element.putUserData(UNRESOLVED_KEY, if (unresolved) Unit else null)
         }
-        ElementAnnotator(element) { shouldSuppressUnusedParameter(it) }
-            .registerDiagnosticsAnnotations(holder, diagnostics, highlightInfoByDiagnostic, calculatingInProgress)
+
+        val activeDiagnostics = if (!isInjectedCode) {
+            diagnostics
+        }
+        else {
+            diagnostics.filter { it.factoryName !in suppressedInjectedFilesDiagnostics }
+        }
+
+        if (activeDiagnostics.isNotEmpty()) {
+            ElementAnnotator(element) { shouldSuppressUnusedParameter(it) }
+                .registerDiagnosticsAnnotations(holder, activeDiagnostics, highlightInfoByDiagnostic, calculatingInProgress)
+        }
+    }
+
+    private fun isIgnoredInjectedCode(holder: HighlightInfoHolder): Boolean {
+        val file = holder.annotationSession.file
+        if (file.virtualFile?.extension == "kts") {
+            // exclude scripts and notebook cells
+            return false
+        }
+
+        return InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(file)
+                || file.getUserData(FileContextUtil.INJECTED_IN_ELEMENT) != null
     }
 
     protected open fun shouldSuppressUnusedParameter(parameter: KtParameter): Boolean = false
@@ -191,7 +217,12 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
 
         private val DO_NOT_HIGHLIGHT_KEY = Key<Unit>("DO_NOT_HIGHLIGHT_KEY")
 
-        private const val ATTEMPT_THREASHOLD = 10
+        private const val ATTEMPT_THRESHOLD = 10
+
+        private val suppressedInjectedFilesDiagnostics: Set<String> = setOf(
+            "UNRESOLVED_REFERENCE",
+            "NOTHING_TO_OVERRIDE"
+        )
 
         @JvmStatic
         fun KtElement.suppressHighlight() {

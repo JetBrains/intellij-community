@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.ide.actions.ImportProjectAction
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.assertWithinTimeout
 import com.intellij.maven.testFramework.xml.MavenBuildFileBuilder
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -57,7 +58,7 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
     }
   }
 
-  suspend fun importProjectAsync(projectFile: VirtualFile): Project {
+  suspend fun importProjectActionAsync(projectFile: VirtualFile): Project {
     return performOpenAction(
       action = ImportProjectAction(),
       systemId = SYSTEM_ID,
@@ -119,7 +120,7 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
       .settings.getGeneralSettings()
   }
 
-  fun assertProjectState(project: Project, vararg projectsInfo: ProjectInfo) {
+  suspend fun assertProjectState(project: Project, vararg projectsInfo: ProjectInfo) = assertWithinTimeout {
     assertProjectStructure(project, *projectsInfo)
   }
 

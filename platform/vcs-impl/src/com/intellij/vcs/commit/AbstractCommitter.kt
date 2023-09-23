@@ -12,7 +12,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
-import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.Companion.COMMIT_ACTIVITY
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.COMMIT_ACTIVITY
 import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.annotations.Nls
 

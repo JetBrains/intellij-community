@@ -10,6 +10,7 @@ final class MavenCommandProvider implements CommandProvider {
   @Override
   public @NotNull Map<String, CreateCommand> getCommands() {
     return Map.of(ImportMavenProjectCommand.PREFIX, ImportMavenProjectCommand::new,
-                  SetMavenSettingsXmlFilePathCommand.PREFIX, SetMavenSettingsXmlFilePathCommand::new);
+                  SetMavenSettingsXmlFilePathCommand.PREFIX, SetMavenSettingsXmlFilePathCommand::new,
+                  ExecuteMavenGoalCommand.PREFIX, ExecuteMavenGoalCommand::new);
   }
 }

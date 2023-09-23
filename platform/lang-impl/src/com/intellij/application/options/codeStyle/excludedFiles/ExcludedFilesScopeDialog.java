@@ -24,8 +24,8 @@ public final class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
   /**
    * @param availableScopes editable scopes, means that names are @NlsSafe
    */
-  protected ExcludedFilesScopeDialog(@NotNull Project project,
-                                     @NotNull List<? extends NamedScope> availableScopes) {
+  ExcludedFilesScopeDialog(@NotNull Project project,
+                           @NotNull List<? extends NamedScope> availableScopes) {
     super(project);
     myAvailableScopes = availableScopes;
     setTitle(LangBundle.message("dialog.title.add.scope"));

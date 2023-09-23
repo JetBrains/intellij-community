@@ -4,9 +4,7 @@ package com.intellij.codeInsight.hint;
 import com.intellij.codeInsight.EditorInfo;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.intellij.lang.annotations.Language;
@@ -162,7 +160,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Value:</td><td>&quot;bar&quot; or &quot;foo&quot;</td></tr>" +
            "</table>");
   }
-  
+
   public void testNotValue() {
     doTest("""
              void test(String x) {
@@ -189,7 +187,75 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Not equal to:</td><td>X.A</td></tr>" +
            "</table>");
   }
-  
+
+  public void testVarIdentifier() {
+    doTest("""
+             void test() {
+               var <selection>x</selection> = 1;
+             }""", "int",
+           "<table>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>int</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Value:</td><td>1</td></tr>" +
+           "</table>");
+  }
+
+  public void testVarKeyword() {
+    doTest("""
+             void test() {
+               <selection>var</selection> x = 1;
+             }""", "int",
+           "<table>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>int</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Value:</td><td>1</td></tr>" +
+           "</table>");
+  }
+  public void testLambdaParameter() {
+    doTest("""
+             void test() {
+                        interface Consumer<T>{
+                          public void consume(T t);
+                        }
+                        class Test2{
+                                     public void test(Consumer<String> a) {
+                     
+                                     }
+                                 }
+                                 new Test2().test(<selection>a</selection>-> System.out.println(a));
+             }""", "String", "String");
+  }
+
+  public void testLambdaParameter2() {
+    doTest("""
+             void test() {
+                        interface Consumer<T>{
+                          public void consume(T t);
+                        }
+                        class Test2{
+                                     public void test(Consumer<String> a) {
+                     
+                                     }
+                                 }
+                                 new Test2().test((<selection>var a</selection>)-> System.out.println(a));
+             }""", "String", "String");
+  }
+  public void testDeconstructionVariable() {
+    doTest("""
+             void test(Object x) {
+                switch (x) {
+                    record Record(String a) {
+                
+                    }
+                
+                    case Record(<selection>var a</selection>) -> {
+                        System.out.println(a);
+                    }
+                    default -> {
+                        System.out.println(x);
+                    }
+                }
+             }""", "String", "String");
+  }
+
   public void testEscaping() {
     doTest("""
              public static void main(int i) {
@@ -211,12 +277,24 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
     assertEquals("Single selection must be specified", 1, info.caretState.carets().size());
     TextRange selection = info.caretState.carets().get(0).selection;
     assertNotNull("No <selection>..</selection> in test data", selection);
-    PsiExpression expression =
+    PsiElement element =
       PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiExpression.class);
-    assertNotNull("Expression not found", expression);
+    if (element == null) {
+      element =
+        PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiParameter.class);
+    }
+    if (element == null) {
+      element =
+        PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiIdentifier.class);
+    }
+    if (element == null) {
+      element =
+        PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiKeyword.class);
+    }
+    assertNotNull("Expression not found", element);
     JavaTypeProvider provider = new JavaTypeProvider();
-    assertEquals(expectedHint, provider.getInformationHint(expression));
+    assertEquals(expectedHint, provider.getInformationHint(element));
     assertTrue(provider.hasAdvancedInformation());
-    assertEquals(expectedAdvancedHint, provider.getAdvancedInformationHint(expression));
+    assertEquals(expectedAdvancedHint, provider.getAdvancedInformationHint(element));
   }
 }

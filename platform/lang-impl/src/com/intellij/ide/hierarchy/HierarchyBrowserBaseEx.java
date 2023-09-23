@@ -48,6 +48,7 @@ import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.SingleAlarm;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -357,7 +358,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   public void changeView(@Nls @NotNull String typeName, boolean requestFocus) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Sheet sheet = myType2Sheet.get(typeName);
     myCurrentSheet.set(sheet);
 
@@ -501,7 +502,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   @NotNull
   public StructureTreeModel<?> getTreeModel(@NotNull String viewType) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return myType2Sheet.get(viewType).myStructureTreeModel;
   }
 
@@ -573,7 +574,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   protected void doRefresh(boolean currentBuilderOnly) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (currentBuilderOnly) LOG.assertTrue(getCurrentViewType() != null);
 
@@ -625,7 +626,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
 
     @Override
-    public final boolean isSelected(@NotNull AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return HierarchyBrowserManager.getSettings(myProject).SORT_ALPHABETICALLY;
     }
 
@@ -635,14 +636,14 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
 
     @Override
-    public final void setSelected(@NotNull AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       HierarchyBrowserManager.getSettings(myProject).SORT_ALPHABETICALLY = flag;
       Comparator<NodeDescriptor<?>> comparator = getComparator();
       myType2Sheet.values().stream().map(s->s.myStructureTreeModel).filter(m-> m != null).forEach(m->m.setComparator(comparator));
     }
 
     @Override
-    public final void update(@NotNull AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
       super.update(event);
       Presentation presentation = event.getPresentation();
       presentation.setEnabled(isValidBase());
@@ -723,12 +724,12 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
 
     @Override
-    public final void actionPerformed(@NotNull AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       doRefresh(false);
     }
 
     @Override
-    public final void update(@NotNull AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
       Presentation presentation = event.getPresentation();
       presentation.setEnabled(isValidBase());
     }

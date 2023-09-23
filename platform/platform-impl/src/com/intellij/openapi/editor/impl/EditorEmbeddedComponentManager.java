@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
@@ -13,6 +14,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +39,7 @@ public final class EditorEmbeddedComponentManager {
   }
 
   public @Nullable Inlay<?> addComponent(@NotNull EditorEx editor, @NotNull JComponent component, @NotNull Properties properties) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     ComponentInlays inlays = getComponentInlaysFor(editor);
     return inlays.add(component, properties.resizePolicy, properties.rendererFactory,
@@ -197,8 +199,10 @@ public final class EditorEmbeddedComponentManager {
 
     @Override
     public void doLayout() {
-      synchronizeBoundsWithInlay();
-      super.doLayout();
+      ReadAction.run(() -> {
+        synchronizeBoundsWithInlay();
+        super.doLayout();
+      });
     }
 
     @Override
@@ -294,6 +298,15 @@ public final class EditorEmbeddedComponentManager {
                                                                          renderer);
       if (inlay == null) return null;
       Disposer.register(this, inlay);
+
+      renderer.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent e) {
+          if (e.getSource() instanceof MyRenderer renderer) {
+            revalidateComponents(renderer.getBounds().y);
+          }
+        }
+      });
 
       renderer.addMouseWheelListener(myEditor.getContentComponent()::dispatchEvent);
 

@@ -6,6 +6,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import de.plushnikov.intellij.plugin.LombokClassNames;
+import de.plushnikov.intellij.plugin.lombokconfig.LombokNullAnnotationLibrary;
+import de.plushnikov.intellij.plugin.lombokconfig.LombokNullAnnotationLibraryDefned;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.handler.singular.BuilderElementHandler;
 import de.plushnikov.intellij.plugin.processor.handler.singular.SingularHandlerFactory;
@@ -52,6 +54,8 @@ public class BuilderInfo {
   private String instanceVariableName = "this";
   private CapitalizationStrategy capitalizationStrategy;
 
+  private LombokNullAnnotationLibrary nullAnnotationLibrary;
+
   public static BuilderInfo fromPsiParameter(@NotNull PsiParameter psiParameter) {
     final BuilderInfo result = new BuilderInfo();
 
@@ -63,6 +67,7 @@ public class BuilderInfo {
 
     result.fieldInBuilderName = psiParameter.getName();
     result.capitalizationStrategy = CapitalizationStrategy.defaultValue();
+    result.nullAnnotationLibrary = LombokNullAnnotationLibraryDefned.NONE;
 
     result.singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiParameter, LombokClassNames.SINGULAR);
     result.builderElementHandler = SingularHandlerFactory.getHandlerFor(psiParameter, null!=result.singularAnnotation);
@@ -86,6 +91,7 @@ public class BuilderInfo {
     final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
     result.fieldInBuilderName = accessorsInfo.removePrefix(psiField.getName());
     result.capitalizationStrategy = accessorsInfo.getCapitalizationStrategy();
+    result.nullAnnotationLibrary = LombokNullAnnotationLibraryDefned.NONE;
 
     result.singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.SINGULAR);
     result.builderElementHandler = SingularHandlerFactory.getHandlerFor(psiField, null!=result.singularAnnotation);
@@ -104,6 +110,7 @@ public class BuilderInfo {
 
     result.fieldInBuilderName = psiRecordComponent.getName();
     result.capitalizationStrategy = CapitalizationStrategy.defaultValue();
+    result.nullAnnotationLibrary = LombokNullAnnotationLibraryDefned.NONE;
 
     result.singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiRecordComponent, LombokClassNames.SINGULAR);
     result.builderElementHandler = SingularHandlerFactory.getHandlerFor(psiRecordComponent, null!=result.singularAnnotation);
@@ -156,6 +163,11 @@ public class BuilderInfo {
     return this;
   }
 
+  BuilderInfo withNullAnnotationLibrary(LombokNullAnnotationLibrary annotationLibrary) {
+    nullAnnotationLibrary = annotationLibrary;
+    return this;
+  }
+
   public boolean useForBuilder() {
     boolean result = true;
 
@@ -199,6 +211,10 @@ public class BuilderInfo {
 
   public CapitalizationStrategy getCapitalizationStrategy() {
     return capitalizationStrategy;
+  }
+
+  public LombokNullAnnotationLibrary getNullAnnotationLibrary() {
+    return nullAnnotationLibrary;
   }
 
   public PsiType getFieldType() {

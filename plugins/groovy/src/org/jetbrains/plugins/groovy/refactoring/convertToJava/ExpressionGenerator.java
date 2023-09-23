@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -9,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -868,7 +870,16 @@ public class ExpressionGenerator extends Generator {
     final String text = literal.getText();
     final String value = GrStringUtil.unescapeString(GrStringUtil.removeQuotes(text));
     if (text.startsWith("'''") || text.startsWith("\"\"\"")) {
-      builder.append('"').append(StringUtil.escapeStringCharacters(value)).append('"');
+      if (HighlightingFeature.TEXT_BLOCKS.isAvailable(literal)) {
+        builder
+          .append("\"\"\"\n")
+          .append(PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.escapeStringCharacters(value)))
+          .append("\"\"\"");
+      }
+      else {
+        String content = StringUtil.escapeStringCharacters(value).replaceAll("\\\\n([^\"])", "\\\\n\" +\n \"$1");
+        builder.append('"').append(content).append('"');
+      }
     }
     else if (text.startsWith("'")) {
       if (isChar) {

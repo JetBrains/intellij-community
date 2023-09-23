@@ -47,6 +47,6 @@ public final class BackAction extends AnAction implements DumbAware {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
+    return ActionUpdateThread.BGT;
   }
 }

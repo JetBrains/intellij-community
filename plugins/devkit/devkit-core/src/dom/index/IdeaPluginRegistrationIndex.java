@@ -32,9 +32,7 @@ import org.jetbrains.idea.devkit.dom.index.RegistrationEntry.RegistrationType;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Class FQN or ID -> entry in {@code plugin.xml}.
@@ -183,7 +181,9 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
   public static boolean processAllActionOrGroup(@NotNull Project project,
                                                 GlobalSearchScope scope,
                                                 Processor<? extends ActionOrGroup> processor) {
-    return FileBasedIndex.getInstance().processAllKeys(NAME, s -> processActionOrGroup(project, s, scope, processor), scope, null);
+    Set<String> keys = new HashSet<>();
+    FileBasedIndex.getInstance().processAllKeys(NAME, s -> keys.add(s), scope, null);
+    return ContainerUtil.process(keys, s -> processActionOrGroup(project, s, scope, processor));
   }
 
   public static boolean processActionOrGroupClass(@NotNull Project project,

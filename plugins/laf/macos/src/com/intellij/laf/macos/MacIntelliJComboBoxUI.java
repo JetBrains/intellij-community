@@ -56,7 +56,10 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     JButton button = new BasicArrowButton(SwingConstants.SOUTH, bg, fg, fg, fg) {
       @Override
       public void paint(Graphics g) {
-        if (!LafManager.getInstance().getCurrentUIThemeLookAndFeel().getTheme().getName().equals("macOS Light")) return; // Paint events may still arrive after UI switch until entire UI is updated.
+        // paint events may still arrive after UI switch until the entire UI is updated
+        if (!LafManager.getInstance().getCurrentUIThemeLookAndFeel().getId().equals("macOSLight")) {
+          return;
+        }
 
         Icon icon = MacIconLookup.getIcon("comboRight", false, false, comboBox.isEnabled(), comboBox.isEditable());
         if (getWidth() != icon.getIconWidth() || getHeight() != icon.getIconHeight()) {

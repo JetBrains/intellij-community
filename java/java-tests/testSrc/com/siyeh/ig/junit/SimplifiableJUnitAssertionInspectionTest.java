@@ -38,6 +38,9 @@ public class SimplifiableJUnitAssertionInspectionTest extends LightJavaInspectio
   public void testSimplifiableJUnit40Assertion() {
     doTest();
   }
+  public void testSimplifiableInstanceOf() {
+    doTest();
+  }
 
   @NotNull
   @Override
@@ -51,53 +54,74 @@ public class SimplifiableJUnitAssertionInspectionTest extends LightJavaInspectio
     return new SimplifiableAssertionInspection();
   }
 
+  @SuppressWarnings({"deprecation", "NonFinalUtilityClass"})
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "package junit.framework;" +
-      " /** @noinspection ALL*/ public abstract class TestCase extends Assert {" +
-      "    protected void setUp() throws Exception {}" +
-      "    protected void tearDown() throws Exception {}" +
-      "    public static void assertTrue(boolean condition) {" +
-      "        Assert.assertTrue(condition);" +
-      "    }" +
-      "}",
+      """
+package junit.framework;
+ /** @noinspection ALL*/ public abstract class TestCase extends Assert {
+    protected void setUp() throws Exception {}
+    protected void tearDown() throws Exception {}
+    public static void assertTrue(boolean condition) {
+        Assert.assertTrue(condition);
+    }
+}""",
 
-      "package junit.framework;" +
-      "public class Assert {" +
-      "    public static void assertTrue(String message, boolean condition) {}" +
-      "    public static void assertTrue(boolean condition) {}" +
-      "    public static void assertEquals(String message, Object expected, Object actual) {}" +
-      "    public static void assertEquals(Object expected, Object actual) {}" +
-      "    public static void assertFalse(String message, boolean condition) {}" +
-      "    public static void assertFalse(boolean condition) {}" +
-      "}",
+      """
+package junit.framework;
+public class Assert {
+    public static void assertTrue(String message, boolean condition) {}
+    public static void assertTrue(boolean condition) {}
+    public static void assertEquals(String message, Object expected, Object actual) {}
+    public static void assertEquals(Object expected, Object actual) {}
+    public static void assertFalse(String message, boolean condition) {}
+    public static void assertFalse(boolean condition) {}
+}""",
 
-      "package org.junit;" +
-      "public class Assert {" +
-      "    public static public void assertTrue(boolean condition) {}" +
-      "    public static public void assertFalse(boolean condition) {}" +
-      "    public static void assertEquals(boolean expected, boolean actual) {}" +
-      "    public static void assertFalse(String message, boolean condition) {}" +
-      "    public static void assertNotEquals(long a, long b) {}" +
-      "}",
+      """
+package org.junit;
+public class Assert {
+    public static void assertTrue(boolean condition) {}
+    public static void assertFalse(boolean condition) {}
+    public static void assertEquals(boolean expected, boolean actual) {}
+    public static void assertFalse(String message, boolean condition) {}
+    public static void assertNotEquals(long a, long b) {}
+}""",
 
-      "package org.junit;" +
-      "import java.lang.annotation.ElementType;" +
-      "import java.lang.annotation.Retention;" +
-      "import java.lang.annotation.RetentionPolicy;" +
-      "import java.lang.annotation.Target;" +
-      "@Retention(RetentionPolicy.RUNTIME)" +
-      "@Target({ElementType.METHOD})" +
-      "public @interface Test {}",
+      """
+package org.junit;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Test {}""",
 
       """
 package org.junit.jupiter.api;
 import java.util.function.Supplier;
-public final class Assertions {
+public class Assertions {
     public static void assertNotEquals(Object expected, Object actual) {}
     public static void assertFalse(boolean expected) {}
-}"""
+    public static void assertFalse(boolean condition, String message) {}
+    public static void assertFalse(boolean condition, Supplier<String> messageSupplier) {}
+    public static void assertTrue(boolean condition) {}
+    public static void assertTrue(boolean condition, String message) {}
+    public static void assertTrue(boolean condition, Supplier<String> messageSupplier) {}
+    public static <T> T assertInstanceOf(Class<T> expectedType, Object actualValue) {}
+    public static <T> T assertInstanceOf(Class<T> expectedType, Object actualValue, String message) {}
+    public static <T> T assertInstanceOf(Class<T> expectedType, Object actualValue, Supplier<String> messageSupplier) {}
+}""",
+
+      """
+package org.testng;
+public class Assert {
+    public static void assertTrue(boolean condition) {}
+    public static void assertTrue(boolean condition, String message) {}
+}
+"""
     };
   }
 }

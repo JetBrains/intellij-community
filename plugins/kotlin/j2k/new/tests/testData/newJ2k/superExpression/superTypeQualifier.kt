@@ -1,9 +1,11 @@
 internal interface A {
-    fun foo() {}
+    fun foo() {
+    }
 }
 
 internal interface B {
-    fun foo() {}
+    fun foo() {
+    }
 }
 
 internal class C : A, B {

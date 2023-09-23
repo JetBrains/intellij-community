@@ -4,7 +4,6 @@ package com.intellij.ide.ui.laf;
 import com.intellij.ide.ui.UITheme;
 import org.jetbrains.annotations.NotNull;
 
-
 /**
  * @deprecated Use {@link UIThemeLookAndFeelInfoImpl}
  */

@@ -134,9 +134,9 @@ final class ImmediatePainter {
     final EditorSettings settings = editor.getSettings();
     final boolean isBlockCursor = editor.isInsertMode() == settings.isBlockCursor();
     final int lineHeight = editor.getLineHeight();
+    final int caretHeight = editor.myView.getCaretHeight();
     final int ascent = editor.getAscent();
-    final int topOverhang = editor.myView.getTopOverhang();
-    final int bottomOverhang = editor.myView.getBottomOverhang();
+    final int topOverhang = settings.isFullLineHeightCursor() ? 0 : editor.myView.getTopOverhang();
 
     final char c1 = offset == 0 ? ' ' : document.getCharsSequence().charAt(offset - 1);
 
@@ -175,7 +175,7 @@ final class ImmediatePainter {
                                          : JBUIScale.scale(caret.getVisualAttributes().getWidth(settings.getLineCursorWidth()));
     final float caretShift = isBlockCursor ? 0 : caretWidth <= 1 ? 0 : 1 / JBUIScale.sysScale(g);
     final Rectangle2D caretRectangle = new Rectangle2D.Float(p2x + width2 - caretShift, p2y - topOverhang,
-                                                             caretWidth, lineHeight + topOverhang + bottomOverhang);
+                                                             caretWidth, caretHeight);
 
     final float rectangle2Start = (float)PaintUtil.alignToInt(p2x, g, PaintUtil.RoundingMode.FLOOR);
     final float rectangle2End = (float)PaintUtil.alignToInt(p2x + width2 + caretWidth - caretShift, g, PaintUtil.RoundingMode.CEIL);

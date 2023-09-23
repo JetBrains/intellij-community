@@ -55,17 +55,17 @@ public final class RegistryToggleAction extends ToggleAction {
   }
 
   @Override
-  public final boolean isSelected(@NotNull AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return myRegistryValue.asBoolean();
   }
 
   @Override
-  public final @NotNull ActionUpdateThread getActionUpdateThread() {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
   }
 
   @Override
-  public final void setSelected(@NotNull AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     myRegistryValue.setValue(state);
   }
 }

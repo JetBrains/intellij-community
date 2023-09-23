@@ -1,6 +1,6 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
-import ai.grazie.emb.FloatTextEmbedding
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -11,18 +11,21 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments
+import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments.SemanticSearchFeature
 import com.intellij.searchEverywhereMl.semantics.indices.InMemoryEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
+import com.intellij.searchEverywhereMl.semantics.utils.ScoredText
+import com.intellij.searchEverywhereMl.semantics.utils.generateEmbedding
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.io.File
-import java.nio.file.Files
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.math.sqrt
 
 /**
  * Thread-safe service for semantic actions search.
@@ -31,34 +34,53 @@ import kotlin.math.sqrt
  */
 @Service(Service.Level.APP)
 class ActionEmbeddingsStorage {
-  private val root = File(PathManager.getSystemPath()).resolve(SEMANTIC_SEARCH_RESOURCES_DIR).also { Files.createDirectories(it.toPath()) }
-
-  private val index = InMemoryEmbeddingSearchIndex(root.resolve(INDEX_DIR).toPath())
+  val index = InMemoryEmbeddingSearchIndex(
+    File(PathManager.getSystemPath())
+      .resolve(SEMANTIC_SEARCH_RESOURCES_DIR)
+      .resolve(LocalArtifactsManager.getInstance().getModelVersion())
+      .resolve(INDEX_DIR).toPath()
+  )
 
   private val setupTaskIndicator = AtomicReference<ProgressIndicator>(null)
 
-  fun prepareForSearch() {
-    ApplicationManager.getApplication().executeOnPooledThread {
-      // LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
-      index.loadFromDisk()
-      generateEmbeddingsIfNecessary()
+  fun prepareForSearch(project: Project) {
+    DumbService.getInstance(project).runWhenSmart {
+      ApplicationManager.getApplication().executeOnPooledThread {
+        LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
+        index.loadFromDisk()
+        generateEmbeddingsIfNecessary()
+      }
     }
   }
 
   fun tryStopGeneratingEmbeddings() = setupTaskIndicator.getAndSet(null)?.cancel()
 
   /* Thread-safe job for updating embeddings. Consequent call stops the previous execution */
-  private fun generateEmbeddingsIfNecessary() {
-    val project = ProjectManager.getInstance().openProjects[0]
-    ProgressManager.getInstance().run(ActionEmbeddingStorageSetup(project, index, setupTaskIndicator))
+  @RequiresBackgroundThread
+  fun generateEmbeddingsIfNecessary() {
+    val backgroundable = ActionEmbeddingsStorageSetup(index, setupTaskIndicator)
+    if (Registry.`is`("search.everywhere.ml.semantic.indexing.show.progress")) {
+      ProgressManager.getInstance().run(backgroundable)
+    }
+    else {
+      val indicator = EmptyProgressIndicator()
+      ProgressManager.getInstance().runProcess({ backgroundable.run(indicator) }, indicator)
+      backgroundable.onCancel()
+    }
   }
 
+  @RequiresBackgroundThread
   fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double? = null): List<ScoredText> {
     if (!checkSearchEnabled()) return emptyList()
-    val localEmbeddingService = runBlockingCancellable { LocalEmbeddingServiceProvider.getInstance().getService() } ?: return emptyList()
-    val computeTask = { runBlockingCancellable { localEmbeddingService.embed(listOf(text)) }.single().normalized() }
-    val embedding = ProgressManager.getInstance().runProcess(computeTask, EmptyProgressIndicator())
+    val embedding = generateEmbedding(text) ?: return emptyList()
     return index.findClosest(embedding, topK, similarityThreshold)
+  }
+
+  @RequiresBackgroundThread
+  fun streamSearchNeighbours(text: String, similarityThreshold: Double? = null): Sequence<ScoredText> {
+    if (!checkSearchEnabled()) return emptySequence()
+    val embedding = generateEmbedding(text) ?: return emptySequence()
+    return index.streamFindClose(embedding, similarityThreshold)
   }
 
   companion object {
@@ -66,7 +88,7 @@ class ActionEmbeddingsStorage {
 
     fun getInstance() = service<ActionEmbeddingsStorage>()
 
-    private fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInActionsTab
+    private fun checkSearchEnabled() = false
 
     private fun shouldIndexAction(action: AnAction?): Boolean {
       return action != null && !(action is ActionGroup && !action.isSearchable) && action.templateText != null
@@ -79,20 +101,13 @@ class ActionEmbeddingsStorage {
   }
 }
 
-data class ScoredText(val text: String, val similarity: Double)
-
-fun FloatTextEmbedding.normalized(): FloatTextEmbedding {
-  val norm = sqrt(this * this)
-  return FloatTextEmbedding(this.values.map { it / norm }.toFloatArray())
-}
-
 @Suppress("unused")  // Registered in the plugin's XML file
 class ActionSemanticSearchServiceInitializer : ProjectActivity {
   override suspend fun execute(project: Project) {
     // Instantiate service for the first time with state loading if available.
     // Whether the state exists or not, we generate the missing embeddings:
-    if (SemanticSearchSettings.getInstance().enabledInActionsTab) {
-      ActionEmbeddingsStorage.getInstance().prepareForSearch()
+    if (false) {
+      ActionEmbeddingsStorage.getInstance().prepareForSearch(project)
     }
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlready
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.*
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -78,7 +79,7 @@ class EntityWithSymbolicIdInPStorageTest {
 
   @Test
   fun `add entity with existing persistent id`() {
-    builder = MutableEntityStorageImpl.create()
+    builder = createEmptyBuilder()
     val exception = assertThrows<Throwable> {
       builder.addNamedEntity("MyName")
       builder.addNamedEntity("MyName")
@@ -89,7 +90,7 @@ class EntityWithSymbolicIdInPStorageTest {
   @Test
   @Disabled("Incorrect test")
   fun `add entity with existing persistent id - restoring after exception`() {
-    builder = MutableEntityStorageImpl.create()
+    builder = createEmptyBuilder()
     try {
       builder.addNamedEntity("MyName")
       builder.addNamedEntity("MyName")
@@ -102,7 +103,7 @@ class EntityWithSymbolicIdInPStorageTest {
 
   @Test
   fun `modify entity to repeat persistent id`() {
-    builder = MutableEntityStorageImpl.create()
+    builder = createEmptyBuilder()
     val exception = assertThrows<Throwable> {
       builder.addNamedEntity("MyName")
       val namedEntity = builder.addNamedEntity("AnotherId")
@@ -115,7 +116,7 @@ class EntityWithSymbolicIdInPStorageTest {
 
   @Test
   fun `modify entity to repeat persistent id - restoring after exception`() {
-    builder = MutableEntityStorageImpl.create()
+    builder = createEmptyBuilder()
     try {
       builder.addNamedEntity("MyName")
       val namedEntity = builder.addNamedEntity("AnotherId")

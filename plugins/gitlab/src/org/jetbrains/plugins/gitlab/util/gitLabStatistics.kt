@@ -10,7 +10,10 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.gitlab.api.GitLabEdition
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
+import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
+import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
 
@@ -35,7 +38,20 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 8)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 10)
+
+  /**
+   * Server metadata was fetched
+   */
+  private val SERVER_METADATA_FETCHED_EVENT = COUNTERS_GROUP.registerEvent("api.server.version-fetched",
+                                                                           EventFields.Enum("edition", GitLabEdition::class.java),
+                                                                           EventFields.Version)
+
+  /**
+   * Logs a metadata fetched event.
+   */
+  fun logServerMetadataFetched(metadata: GitLabServerMetadata): Unit =
+    SERVER_METADATA_FETCHED_EVENT.log(metadata.edition, metadata.version.toString())
 
   /**
    * Server returned 5** error
@@ -45,8 +61,8 @@ internal object GitLabStatistics {
                                                                 EventFields.Boolean("is_default_server"),
                                                                 EventFields.Version)
 
-  fun logServerError(request: GitLabApiRequestName, isDefaultServer: Boolean, serverVersion: String?): Unit =
-    SERVER_ERROR_EVENT.log(request, isDefaultServer, serverVersion)
+  fun logServerError(request: GitLabApiRequestName, isDefaultServer: Boolean, serverVersion: GitLabVersion?): Unit =
+    SERVER_ERROR_EVENT.log(request, isDefaultServer, serverVersion?.toString())
 
   /**
    * Server returned error about missing GQL fields
@@ -56,8 +72,8 @@ internal object GitLabStatistics {
                                  EventFields.Enum("query", GitLabGQLQuery::class.java),
                                  EventFields.Version)
 
-  fun logGqlModelError(query: GitLabGQLQuery, serverVersion: String?): Unit =
-    GQL_MODEL_ERROR_EVENT.log(query, serverVersion)
+  fun logGqlModelError(query: GitLabGQLQuery, serverVersion: GitLabVersion?): Unit =
+    GQL_MODEL_ERROR_EVENT.log(query, serverVersion?.toString())
 
   /**
    * Error occurred during response parsing
@@ -67,8 +83,8 @@ internal object GitLabStatistics {
                                  EventFields.Class("class"),
                                  EventFields.Version)
 
-  fun logJsonDeserializationError(clazz: Class<*>, serverVersion: String?): Unit =
-    JSON_DESERIALIZATION_ERROR_EVENT.log(clazz, serverVersion)
+  fun logJsonDeserializationError(clazz: Class<*>, serverVersion: GitLabVersion?): Unit =
+    JSON_DESERIALIZATION_ERROR_EVENT.log(clazz, serverVersion?.toString())
 
   internal class GitLabCountersCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = COUNTERS_GROUP
@@ -163,6 +179,19 @@ internal object GitLabStatistics {
   private val MR_ACTION_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.action.performed", MR_ACTION_FIELD)
 
   fun logMrActionExecuted(project: Project, action: MergeRequestAction): Unit = MR_ACTION_EVENT.log(project, action)
+
+  private val SNIPPET_ACTION_EVENT = COUNTERS_GROUP.registerEvent("snippets.action.performed",
+                                                                  EventFields.Enum<SnippetAction>("action"))
+
+  fun logSnippetActionExecuted(project: Project, action: SnippetAction): Unit = SNIPPET_ACTION_EVENT.log(project, action)
+
+  enum class SnippetAction {
+    CREATE_OPEN_DIALOG,
+    CREATE_OK,
+    CREATE_CANCEL,
+    CREATE_CREATED,
+    CREATE_ERRORED
+  }
   //endregion
 }
 
@@ -172,6 +201,7 @@ enum class GitLabApiRequestName {
   REST_GET_COMMIT,
   REST_GET_COMMIT_DIFF,
   REST_GET_MERGE_REQUEST_DIFF,
+  REST_GET_MERGE_REQUEST_CHANGES,
   REST_DELETE_DRAFT_NOTE,
   REST_GET_DRAFT_NOTES,
   REST_SUBMIT_DRAFT_NOTES,
@@ -180,10 +210,13 @@ enum class GitLabApiRequestName {
   REST_APPROVE_MERGE_REQUEST,
   REST_UNAPPROVE_MERGE_REQUEST,
   REST_REBASE_MERGE_REQUEST,
+  REST_PUT_MERGE_REQUEST_REVIEWERS,
+  REST_GET_MERGE_REQUEST_COMMITS,
   REST_GET_MERGE_REQUEST_STATE_EVENTS,
   REST_GET_MERGE_REQUEST_LABEL_EVENTS,
   REST_GET_MERGE_REQUEST_MILESTONE_EVENTS,
 
+  GQL_GET_METADATA,
   GQL_GET_CURRENT_USER,
   GQL_GET_MERGE_REQUEST,
   GQL_FIND_MERGE_REQUEST,
@@ -206,6 +239,7 @@ enum class GitLabApiRequestName {
 
   companion object {
     fun of(gqlQuery: GitLabGQLQuery): GitLabApiRequestName = when (gqlQuery) {
+      GitLabGQLQuery.GET_METADATA -> GQL_GET_METADATA
       GitLabGQLQuery.GET_CURRENT_USER -> GQL_GET_CURRENT_USER
       GitLabGQLQuery.GET_MERGE_REQUEST -> GQL_GET_MERGE_REQUEST
       GitLabGQLQuery.FIND_MERGE_REQUESTS -> GQL_FIND_MERGE_REQUEST

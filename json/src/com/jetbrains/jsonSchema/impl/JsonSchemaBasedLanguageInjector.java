@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.pointer.JsonPointerPosition;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class JsonSchemaBasedLanguageInjector extends JsonSchemaInjectorBase {
+public final class JsonSchemaBasedLanguageInjector extends JsonSchemaInjectorBase {
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     if (!(context instanceof JsonStringLiteral)) return;
@@ -25,8 +25,7 @@ public class JsonSchemaBasedLanguageInjector extends JsonSchemaInjectorBase {
     injectForHost(registrar, (JsonStringLiteral)context, language);
   }
 
-  @Nullable
-  public static InjectedLanguageData getLanguageToInject(@NotNull PsiElement context, boolean relaxPositionCheck) {
+  public static @Nullable InjectedLanguageData getLanguageToInject(@NotNull PsiElement context, boolean relaxPositionCheck) {
     Project project = context.getProject();
     PsiFile containingFile = context.getContainingFile();
     JsonSchemaObject schemaObject = JsonSchemaService.Impl.get(project).getSchemaObject(containingFile);

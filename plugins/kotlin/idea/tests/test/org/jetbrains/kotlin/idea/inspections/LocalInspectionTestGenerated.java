@@ -16921,6 +16921,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("abstractFunctionParameter.kt")
+        public void testAbstractFunctionParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/abstractFunctionParameter.kt");
+        }
+
         @TestMetadata("asDefaultConstructorParameter.kt")
         public void testAsDefaultConstructorParameter() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/asDefaultConstructorParameter.kt");
@@ -16929,6 +16934,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("callableReference.kt")
         public void testCallableReference() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/callableReference.kt");
+        }
+
+        @TestMetadata("catchParameter.kt")
+        public void testCatchParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/catchParameter.kt");
         }
 
         @TestMetadata("classByPrimaryConstructor.kt")
@@ -16966,9 +16976,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/dataInlineClassDeclarationk2.kt");
         }
 
+        @TestMetadata("entryPoint.kt")
+        public void testEntryPoint() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/entryPoint.kt");
+        }
+
         @TestMetadata("enumSecondaryConstructor.kt")
         public void testEnumSecondaryConstructor() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/enumSecondaryConstructor.kt");
+        }
+
+        @TestMetadata("expectFunctionParameter.kt")
+        public void testExpectFunctionParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/expectFunctionParameter.kt");
         }
 
         @TestMetadata("functionLiteralParameters.kt")
@@ -17061,6 +17081,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/lastPropertyInPrimaryConstructorWithComments.kt");
         }
 
+        @TestMetadata("loopParameter.kt")
+        public void testLoopParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/loopParameter.kt");
+        }
+
+        @TestMetadata("namedFunctionalParameter.kt")
+        public void testNamedFunctionalParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/namedFunctionalParameter.kt");
+        }
+
+        @TestMetadata("namelessFunctionalParameter.kt")
+        public void testNamelessFunctionalParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/namelessFunctionalParameter.kt");
+        }
+
         @TestMetadata("nestedPrivateObject.kt")
         public void testNestedPrivateObject() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/nestedPrivateObject.kt");
@@ -17076,9 +17111,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/overrideProperty.kt");
         }
 
-        @TestMetadata("parameterOfInterface.kt")
-        public void testParameterOfInterface() throws Exception {
-            runTest("testData/inspectionsLocal/unusedSymbol/parameterOfInterface.kt");
+        @TestMetadata("parameterOfFunctionInInterface.kt")
+        public void testParameterOfFunctionInInterface() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/parameterOfFunctionInInterface.kt");
+        }
+
+        @TestMetadata("parameterOfOpenFunction.kt")
+        public void testParameterOfOpenFunction() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/parameterOfOpenFunction.kt");
+        }
+
+        @TestMetadata("parameterOfOverriddenFunction.kt")
+        public void testParameterOfOverriddenFunction() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/parameterOfOverriddenFunction.kt");
         }
 
         @TestMetadata("primaryConstructorParameter.kt")
@@ -17099,6 +17144,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("privateOperator.kt")
         public void testPrivateOperator() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/privateOperator.kt");
+        }
+
+        @TestMetadata("privateOperatorUsed.kt")
+        public void testPrivateOperatorUsed() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/privateOperatorUsed.kt");
         }
 
         @TestMetadata("privateProperty.kt")
@@ -17214,6 +17264,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("unusedFunctionExplicitApi.kt")
         public void testUnusedFunctionExplicitApi() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/unusedFunctionExplicitApi.kt");
+        }
+
+        @TestMetadata("unusedPublicMembers.kt")
+        public void testUnusedPublicMembers() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/unusedPublicMembers.kt");
         }
 
         @TestMetadata("usedEnumFunction.kt")
@@ -17349,6 +17404,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("usedEnumFunctionWithNestedEnum2.kt")
         public void testUsedEnumFunctionWithNestedEnum2() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithNestedEnum2.kt");
+        }
+
+        @TestMetadata("valInPrimaryConstructor.kt")
+        public void testValInPrimaryConstructor() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/valInPrimaryConstructor.kt");
         }
 
         @TestMetadata("valueClassGenericParameter.kt")

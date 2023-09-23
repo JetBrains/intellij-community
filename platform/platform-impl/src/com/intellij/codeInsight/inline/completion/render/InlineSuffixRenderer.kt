@@ -11,7 +11,7 @@ import java.awt.Graphics
 import java.awt.Rectangle
 
 @ApiStatus.Experimental
-class InlineSuffixRenderer(private val editor: Editor, val suffix: String) : EditorCustomElementRenderer {
+class InlineSuffixRenderer(private val editor: Editor, val suffix: String) : EditorCustomElementRenderer, InlineCompletionElementRenderer {
   private val width = editor.contentComponent.getFontMetrics(InlineFontUtils.font(editor)).stringWidth(suffix)
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
@@ -23,7 +23,7 @@ class InlineSuffixRenderer(private val editor: Editor, val suffix: String) : Edi
   }
 
   override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
-    g.color = InlineFontUtils.color
+    g.color = InlineFontUtils.color(editor)
     g.font = InlineFontUtils.font(editor)
     g.drawString(suffix, targetRegion.x, targetRegion.y + editor.ascent)
   }

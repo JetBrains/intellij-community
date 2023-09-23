@@ -12,7 +12,7 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitFileRevision
 import git4idea.test.*
 import junit.framework.TestCase
-import org.apache.commons.lang.RandomStringUtils
+import org.apache.commons.lang3.RandomStringUtils
 import java.io.File
 import java.io.IOException
 

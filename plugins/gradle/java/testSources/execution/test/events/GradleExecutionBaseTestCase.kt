@@ -84,7 +84,7 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     }
   }
 
-  fun executeTasks(commandLine: String, isRunAsTest: Boolean) {
+  fun executeTasks(commandLine: String, isRunAsTest: Boolean = false) {
     val runManager = RunManager.getInstance(project)
     val runConfigurationName = "GradleTestExecutionTestCase (" + LocalTimeCounter.currentTime() + ")"
     val runnerSettings = runManager.createConfiguration(runConfigurationName, GradleExternalTaskConfigurationType::class.java)
@@ -123,7 +123,7 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     buildViewFixture.assertBuildViewTreeEquals { treeString ->
       val actualTree = buildTree(treeString!!)
       TreeAssertion.assertTree(actualTree) {
-        assertNode("", assert)
+        assertNode("", assert = assert)
       }
     }
   }

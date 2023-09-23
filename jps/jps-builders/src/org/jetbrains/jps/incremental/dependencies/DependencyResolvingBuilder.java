@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.dependencies;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,11 +44,11 @@ import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.Artif
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsLibraryDependency;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.JpsMavenSettings;
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.model.serialization.JpsPathVariablesConfiguration;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.util.JpsChecksumUtil;
-import org.jetbrains.jps.model.serialization.JpsMavenSettings;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
@@ -131,7 +131,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   public ExitCode build(CompileContext context,
                         ModuleChunk chunk,
                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                        OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
+                        OutputConsumer outputConsumer) {
 
     final Exception error = context.getUserData(RESOLVE_ERROR_KEY);
     if (error != null) {
@@ -742,8 +742,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
    * @param mavenSettingsXmlAuth Settings obtained from {@link JpsMavenSettings#loadAuthenticationSettings(File, File)}
    * @return Authentication data or null, if no suitable authentication is found.
    */
-  @Nullable
-  private static ArtifactAuthenticationData obtainRemoteRepositoryAuthenticationData(
+  private static @Nullable ArtifactAuthenticationData obtainRemoteRepositoryAuthenticationData(
     @NotNull JpsRemoteRepositoryDescription description,
     @NotNull Map<String, JpsMavenSettings.RemoteRepositoryAuthentication> mavenSettingsXmlAuth
   ) {
@@ -768,8 +767,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     return null;
   }
 
-  @Nullable
-  private static ArtifactAuthenticationData loadRemoteRepositoryAuthenticationFromSystemProperty(
+  private static @Nullable ArtifactAuthenticationData loadRemoteRepositoryAuthenticationFromSystemProperty(
     @NotNull JpsRemoteRepositoryDescription description
   ) {
     String propertyName = REMOTE_REPOSITORY_AUTH_PROPERTY_PREFIX + description.getId();
@@ -802,18 +800,17 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     return root != null ? new File(root, DEFAULT_MAVEN_REPOSITORY_PATH) : new File(DEFAULT_MAVEN_REPOSITORY_PATH);
   }
 
-  @NotNull
-  private static @Nls String getBuilderName() {
+  private static @NotNull @Nls String getBuilderName() {
     return JpsBuildBundle.message("builder.name.maven.dependency.resolver");
   }
 
-  private static class ArtifactVerificationException extends ProjectBuildException {
+  private static final class ArtifactVerificationException extends ProjectBuildException {
     ArtifactVerificationException(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message) {
       super(message);
     }
   }
 
-  private static class RemoteRepositoryNotFoundException extends ProjectBuildException {
+  private static final class RemoteRepositoryNotFoundException extends ProjectBuildException {
     RemoteRepositoryNotFoundException(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message) {
       super(message);
     }

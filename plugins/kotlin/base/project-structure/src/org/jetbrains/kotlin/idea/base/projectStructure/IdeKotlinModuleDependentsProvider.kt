@@ -15,13 +15,13 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.kotlin.analysis.project.structure.KtBuiltinsModule
+import org.jetbrains.kotlin.analysis.project.structure.KtCodeFragmentModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptDependencyModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSdkModule
 import org.jetbrains.kotlin.analysis.project.structure.impl.KotlinModuleDependentsProviderBase
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.util.getTransitiveLibraryDependencyInfos
@@ -42,9 +42,11 @@ internal class IdeKotlinModuleDependentsProvider(private val project: Project) :
             is KtSdkModule -> emptySet()
             is KtBuiltinsModule -> emptySet()
 
+            // Code fragments are leaf modules
+            is KtCodeFragmentModule -> emptySet()
+
             // Script modules are not supported yet (see KTIJ-25620).
             is KtScriptModule, is KtScriptDependencyModule -> emptySet()
-
             is NotUnderContentRootModuleByModuleInfo -> emptySet()
 
             else -> throw KotlinExceptionWithAttachments("Unexpected ${KtModule::class.simpleName}").withAttachment("module.txt", module)

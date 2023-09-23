@@ -750,6 +750,23 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   @Override
+  public void rawAdvanceLexer(int steps) {
+    ProgressIndicatorProvider.checkCanceled();
+    if (steps < 0) {
+      throw new IllegalArgumentException("Steps must be a positive integer - lexer can only be advanced. " +
+                                         "Use Marker.rollbackTo if you want to rollback PSI building.");
+    }
+    if (steps == 0) return;
+    // Be permissive as advanceLexer() and don't throw error if advancing beyond eof state
+    myCurrentLexeme += steps;
+    if (myCurrentLexeme > myLexemeCount || myCurrentLexeme < 0 /* int overflow */ ) {
+      myCurrentLexeme = myLexemeCount;
+    }
+    myTokenTypeChecked = false;
+    clearCachedTokenType();
+  }
+
+  @Override
   public void setWhitespaceSkippedCallback(@Nullable WhitespaceSkippedCallback callback) {
     myWhitespaceSkippedCallback = callback;
   }

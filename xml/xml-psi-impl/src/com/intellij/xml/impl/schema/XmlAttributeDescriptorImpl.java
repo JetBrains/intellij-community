@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.PsiElement;
@@ -19,10 +19,8 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
   String myUse;
   String myReferenceName;
 
-  @NonNls
-  public static final String REQUIRED_ATTR_VALUE = "required";
-  @NonNls
-  public static final String QUALIFIED_ATTR_VALUE = "qualified";
+  public static final @NonNls String REQUIRED_ATTR_VALUE = "required";
+  public static final @NonNls String QUALIFIED_ATTR_VALUE = "qualified";
 
   public XmlAttributeDescriptorImpl(XmlTag tag) {
     myTag = tag;
@@ -70,8 +68,7 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
     return false;
   }
 
-  @Nullable
-  public String getType() {
+  public @Nullable String getType() {
     return myTag.getAttributeValue("type");
   }
 
@@ -90,9 +87,8 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
     return isEnumerated(null);
   }
 
-  @Nullable
   @Override
-  public String validateValue(XmlElement context, String value) {
+  public @Nullable String validateValue(XmlElement context, String value) {
     return null;
   }
 

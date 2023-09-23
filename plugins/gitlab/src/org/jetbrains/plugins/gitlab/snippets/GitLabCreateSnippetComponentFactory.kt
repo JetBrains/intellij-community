@@ -10,8 +10,8 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.util.maximumWidth
 import com.intellij.util.childScope
+import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
@@ -20,7 +20,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
-import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JTextField
@@ -41,6 +40,13 @@ internal object GitLabCreateSnippetComponentFactory {
         title = message("snippet.create.dialog.title")
 
         init()
+
+        cs.launch {
+          val hasNonEmptyContents = createSnippetVm.nonEmptyContents.await().isNotEmpty()
+          createSnippetVm.glAccounts.collectLatest {
+            isOKActionEnabled = hasNonEmptyContents && it.isNotEmpty()
+          }
+        }
       }
 
       override fun createCenterPanel(): JComponent =
@@ -142,6 +148,7 @@ internal object GitLabCreateSnippetComponentFactory {
               .bindSelected({ data.value.isOpenInBrowser }, { v -> data.update { data.value.copy(isOpenInBrowser = v) } })
           }
 
+          // Account selection if >1 accounts available
           row(message("snippet.create.account.label")) {
             val selectAccount = comboBox(listOf<GitLabAccount>(), ListCellRenderer<GitLabAccount?> { _, accountOrNull, _, _, _ ->
               // The list shouldn't contain nulls, but if they do, don't render anything
@@ -178,6 +185,27 @@ internal object GitLabCreateSnippetComponentFactory {
               }
             }
           }
+
+          // Error line - some contents empty/no non-empty contents
+          row {
+            val emptyContentsLabel = label(message("snippet.create.error.some-empty-contents")).applyToComponent {
+              foreground = NamedColorUtil.getErrorForeground()
+            }.component
+
+            cs.launch {
+              val emptyContents = createSnippetVm.emptyContents.await()
+              val nonEmptyContents = createSnippetVm.nonEmptyContents.await()
+              visible(emptyContents.isNotEmpty())
+
+              if (nonEmptyContents.isEmpty()) {
+                emptyContentsLabel.text = message("snippet.create.error.no-contents")
+              }
+              else if (emptyContents.isNotEmpty()) {
+                emptyContentsLabel.toolTipText = message("snippet.create.error.some-empty-contents.tooltip",
+                                                         emptyContents.mapNotNull { it.file }.joinToString(", ") { it.name })
+              }
+            }
+          }.visible(false)
         }
       }
     }

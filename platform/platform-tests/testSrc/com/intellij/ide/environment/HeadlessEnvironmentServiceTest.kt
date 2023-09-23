@@ -15,14 +15,15 @@ import com.intellij.openapi.vfs.writeText
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.replaceService
-import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import junit.framework.TestCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
+import java.util.function.Supplier
 import kotlin.io.path.deleteIfExists
+import kotlin.io.path.readText
 
 class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
   private val configurationFilePath: Path
@@ -194,9 +195,9 @@ private val notRegisteredDummyKey: EnvironmentKey = EnvironmentKey.create("not.r
 
 private class TestKeyProvider : EnvironmentKeyProvider {
 
-  override val knownKeys: Map<EnvironmentKey, String> = mapOf(
-    dummyKey to "My dummy test key\nWith a long description",
-    dummyKey2 to "Just another dummy key",
+  override val knownKeys: Map<EnvironmentKey, Supplier<String>> = mapOf(
+    dummyKey to Supplier { "My dummy test key\nWith a long description" },
+    dummyKey2 to Supplier { "Just another dummy key" },
   )
 
   override suspend fun getRequiredKeys(project: Project): List<EnvironmentKey> =

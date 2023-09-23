@@ -27,6 +27,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,6 +37,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -140,7 +142,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   public void testClearAndPrintWhileAnotherClearExecution() throws Exception {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ConsoleViewImpl console = myConsole;
     for (int i = 0; i < 100; i++) {
       // To speed up test execution, set -Dconsole.flush.delay.ms=5 to reduce ConsoleViewImpl.DEFAULT_FLUSH_DELAY
@@ -592,6 +594,67 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     assertEquals(customHyperlink, hyperlinks.getHyperlinkAt(0));
     assertNotNull(hyperlinks.getHyperlinkAt(10));
     assertEquals(customHyperlink, hyperlinks.getHyperlinkAt(10));
+  }
+
+  public void testSeveralUpdatesDoNotProduceDuplicateHyperlinks() {
+    HyperlinkInfo customHyperlink = project -> {
+    };
+    Filter customFilter = (line, entireLength) -> {
+      try {
+        TimeUnit.MILLISECONDS.sleep(100);
+      }
+      catch (InterruptedException ignored) {
+      }
+      return new Filter.Result(0, 10, customHyperlink);
+    };
+    myConsole.addMessageFilter(customFilter);
+    myConsole.print("the only line", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.waitAllRequests();
+    for (int i = 0; i < 10; ++i) {
+      myConsole.rehighlightHyperlinksAndFoldings();
+    }
+    myConsole.waitAllRequests();
+    myConsole.getHyperlinks().waitForPendingFilters(2000);
+    assertEquals(1, myConsole.getHyperlinks().findAllHyperlinksOnLine(0).size());
+  }
+
+
+  public void testExpirableTokenProvider() {
+    ExpirableTokenProvider tokenProvider = new ExpirableTokenProvider();
+    Expirable token1 = tokenProvider.createExpirable();
+
+    assertFalse(token1.isExpired());
+
+    tokenProvider.invalidateAll();
+    assertTrue(token1.isExpired());
+
+    Expirable token2 = tokenProvider.createExpirable();
+    assertFalse(token2.isExpired());
+  }
+
+  public void testNotHighlightedWhenExpired() {
+    HyperlinkInfo customHyperlink = project -> {
+    };
+    Filter customFilter = (line, entireLength) -> {
+      try {
+        TimeUnit.MILLISECONDS.sleep(500);
+      }
+      catch (InterruptedException ignored) {
+      }
+      return new Filter.Result(0, 10, customHyperlink);
+    };
+    myConsole.addMessageFilter(customFilter);
+    myConsole.print("the only line", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.waitAllRequests();
+    myConsole.getHyperlinks().waitForPendingFilters(2000);
+    assertEquals(1, myConsole.getHyperlinks().findAllHyperlinksOnLine(0).size());
+    // ^-- not highlighted when expired
+
+    myConsole.rehighlightHyperlinksAndFoldings();
+    myConsole.invalidateFiltersExpirableTokens();
+    myConsole.getHyperlinks().waitForPendingFilters(2000);
+    assertEquals(0, myConsole.getHyperlinks().findAllHyperlinksOnLine(0).size());
+    // ^-- highlighted when no expiration
   }
 
   public void testBackspaceDeletesPreviousOutput() {

@@ -392,7 +392,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
   }
 }
 
-private fun extractSnapshotFromZipStream(stream: InputStream): SettingsSnapshot {
+private fun extractSnapshotFromZipStream(stream: InputStream): SettingsSnapshot? {
   val tempFile = FileUtil.createTempFile(UUID.randomUUID().toString(), null)
   try {
     FileUtil.writeToFile(tempFile, stream.readAllBytes())

@@ -5,6 +5,7 @@ class Test {
 
     private val notNullInitializerField = notNullString(3)
     var notNullInitializerPublicField: String = notNullString(3)
+
     fun testProperty() {
         notNullInitializerField[0]
         notNullInitializerPublicField[0]

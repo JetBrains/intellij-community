@@ -47,7 +47,7 @@ class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
             holder.registerProblem(
                 suspendModifier,
                 KotlinBundle.message("redundant.suspend.modifier"),
-                IntentionWrapper(RemoveModifierFixBase(function, KtTokens.SUSPEND_KEYWORD, isRedundant = true))
+                IntentionWrapper(RemoveModifierFixBase(function, KtTokens.SUSPEND_KEYWORD, isRedundant = true).asIntention())
             )
         })
     }

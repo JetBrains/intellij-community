@@ -798,7 +798,7 @@ public abstract class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
       }
     }
 
-    protected void onLabelHidden(@NotNull JBLabel component) {
+    private void onLabelHidden(@NotNull JBLabel component) {
       if (myVisibleLabelsColumn.remove(component)) {
         alignForm();
       }

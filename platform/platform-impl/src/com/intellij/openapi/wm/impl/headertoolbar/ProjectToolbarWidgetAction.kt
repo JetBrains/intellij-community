@@ -166,7 +166,7 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
     val content = panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {
         row {
-          icon(RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectPath, true, 16))
+          icon(RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectPath, true, 20))
             .align(AlignY.TOP)
             .customize(UnscaledGaps(right = 8))
 

@@ -22,7 +22,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
-import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenDisposable;
@@ -31,6 +31,7 @@ import org.jetbrains.idea.maven.config.MavenConfigSettings;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.indices.MavenIndices;
+import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -342,6 +343,11 @@ final class MavenServerManagerImpl implements MavenServerManager {
   }
 
   @Override
+  public MavenIndexerWrapper createIndexer() {
+    return createDedicatedIndexer();
+  }
+
+  @Override
   public MavenIndexerWrapper createIndexer(@NotNull Project project) {
     if (Registry.is("maven.dedicated.indexer")) {
       return createDedicatedIndexer();
@@ -361,7 +367,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
 
           @Override
           protected MavenIndices createMavenIndices() {
-            MavenIndices indices = new MavenIndices(this, getIndicesDir().toFile());
+            MavenIndices indices = new MavenIndices(this, MavenSystemIndicesManager.getInstance().getIndicesDir().toFile());
             Disposer.register(MavenServerManagerImpl.this, indices);
             return indices;
           }
@@ -422,7 +428,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
       return new MavenIndexerWrapper(null) {
         @Override
         protected MavenIndices createMavenIndices() {
-          MavenIndices indices = new MavenIndices(this, getIndicesDir().toFile());
+          MavenIndices indices = new MavenIndices(this, MavenSystemIndicesManager.getInstance().getIndicesDir().toFile());
           Disposer.register(project, indices);
           return indices;
         }
@@ -436,7 +442,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
     return new MavenIndexerWrapper(null) {
       @Override
       protected MavenIndices createMavenIndices() {
-        MavenIndices indices = new MavenIndices(this, getIndicesDir().toFile());
+        MavenIndices indices = new MavenIndices(this, MavenSystemIndicesManager.getInstance().getIndicesDir().toFile());
         Disposer.register(project, indices);
         return indices;
       }
@@ -546,8 +552,8 @@ final class MavenServerManagerImpl implements MavenServerManager {
   }
 
   private static @Nullable File getGlobalConfigFromMavenConfig(@NotNull Project project,
-                                                        @NotNull MavenGeneralSettings settings,
-                                                        RemotePathTransformerFactory.Transformer transformer) {
+                                                               @NotNull MavenGeneralSettings settings,
+                                                               RemotePathTransformerFactory.Transformer transformer) {
 
     MavenConfig mavenConfig = settings.getMavenConfig();
     if (mavenConfig == null) return null;

@@ -27,36 +27,37 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * The place where all the data is stored for VFS parts loaded into a memory: name-ids, flags, user data, children.
- *
+ * <p>
  * The purpose is to avoid holding this data in separate immortal file/directory objects because that involves space overhead, significant
  * when there are hundreds of thousands of files.
- *
+ * <p>
  * The data is stored per-id in blocks of {@link #SEGMENT_SIZE}. File ids in one project tend to cluster together,
  * so the overhead for non-loaded id should not be large in most cases.
- *
+ * <p>
  * File objects are still created if needed. There might be several objects for the same file, so equals() should be used instead of ==.
- *
+ * <p>
  * The lifecycle of a file object is as follows:
  *
- * 1. The file has not been instantiated yet, so {@link #getFileById} returns null.
+ * <ol>
+ * <li> The file has not been instantiated yet, so {@link #getFileById} returns null. </li>
  *
- * 2. A file is explicitly requested by calling getChildren or findChild on its parent. The parent initializes all the necessary data (in a thread-safe context)
- * and creates the file instance. See {@link #initFile}
+ * <li> A file is explicitly requested by calling getChildren or findChild on its parent. The parent initializes all the necessary data (in a thread-safe context)
+ * and creates the file instance. See {@link #initFile} </li>
  *
- * 3. After that the file is live, an object representing it can be retrieved any time from its parent. File system roots are
- * kept on hard references in {@link PersistentFS}
+ * <li> After that the file is live, an object representing it can be retrieved any time from its parent. File system roots are
+ * kept on hard references in {@link PersistentFS} </li>
  *
- * 4. If a file is deleted (invalidated), then its data is not needed anymore, and should be removed. But this can only happen after
- * all the listener have been notified about the file deletion and have had their chance to look at the data the last time. See {@link #killInvalidatedFiles()}
+ * <li> If a file is deleted (invalidated), then its data is not needed anymore, and should be removed. But this can only happen after
+ * all the listener have been notified about the file deletion and have had their chance to look at the data the last time. See {@link #killInvalidatedFiles()} </li>
  *
- * 5. The file with removed data is marked as "dead" (see {@link #myDeadMarker}), any access to it will throw {@link InvalidVirtualFileAccessException}
- * Dead ids won't be reused in the same session of the IDE.
+ * <li> The file with removed data is marked as "dead" (see {@link #myDeadMarker}), any access to it will throw {@link InvalidVirtualFileAccessException}
+ * Dead ids won't be reused in the same session of the IDE. </li>
+ * </ol>
  */
 public final class VfsData {
   @TestOnly
@@ -67,8 +68,6 @@ public final class VfsData {
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
 
-  private static final short NULL_INDEXING_STAMP = 0;
-  private static final AtomicInteger ourIndexingStamp = new AtomicInteger(1);
   private final Application app;
 
   public static boolean isIsIndexedFlagDisabled() {
@@ -86,14 +85,6 @@ public final class VfsData {
       }
     }
     return isIsIndexedFlagDisabled;
-  }
-
-  @ApiStatus.Internal
-  static void markAllFilesAsUnindexed() {
-    ourIndexingStamp.updateAndGet(cur -> {
-      int next = cur + 1;
-      return (short)next == NULL_INDEXING_STAMP ? (NULL_INDEXING_STAMP + 1) : next;
-    });
   }
 
   private final Object myDeadMarker = ObjectUtils.sentinel("dead file");
@@ -271,19 +262,18 @@ public final class VfsData {
       this.vfsData = vfsData;
     }
 
-    boolean isIndexed(int fileId) {
+    int getIndexedStamp(int fileId) {
       if (isIsIndexedFlagDisabled(vfsData.app)) {
-        return false;
+        return 0;
       }
-      return myIntArray.get(getOffset(fileId) * 3 + 2) == ourIndexingStamp.intValue();
+      return myIntArray.get(getOffset(fileId) * 3 + 2);
     }
 
-    void setIndexed(int fileId, boolean indexed) {
+    void setIndexedStamp(int fileId, int stamp) {
       if (isIsIndexedFlagDisabled(vfsData.app)) {
         return;
       }
       if (fileId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId);
-      int stamp = indexed ? ourIndexingStamp.intValue() : NULL_INDEXING_STAMP;
       myIntArray.set(getOffset(fileId) * 3 + 2, stamp);
     }
 

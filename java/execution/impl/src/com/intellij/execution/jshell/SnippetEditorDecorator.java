@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.jshell;
 
-import com.intellij.ProjectTopics;
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
@@ -120,7 +119,7 @@ public final class SnippetEditorDecorator implements EditorNotificationProvider 
       }, ModalityState.stateForComponent(this), project.getDisposed());
 
       myBusConnection = project.getMessageBus().connect();
-      myBusConnection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
+      myBusConnection.subscribe(ModuleListener.TOPIC, new ModuleListener() {
         @Override
         public void modulesAdded(@NotNull Project project, @NotNull List<? extends Module> modules) {
           reloadModules();

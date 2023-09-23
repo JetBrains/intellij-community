@@ -1,5 +1,6 @@
 internal class A {
     private var i = byte.toInt()
+
     fun foo() {
         i = 10
     }

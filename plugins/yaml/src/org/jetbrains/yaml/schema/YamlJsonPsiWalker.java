@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.json.pointer.JsonPointerPosition;
@@ -23,10 +24,13 @@ import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.impl.JsonSchemaType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementGenerator;
+import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.YAMLTokenTypes;
+import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.*;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 
@@ -132,8 +136,8 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
 
   @Override
   public Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement originalPosition, PsiElement computedPosition) {
-    YAMLMapping object = PsiTreeUtil.getParentOfType(originalPosition, YAMLMapping.class);
-    YAMLMapping otherObject = PsiTreeUtil.getParentOfType(computedPosition, YAMLMapping.class);
+    YAMLMapping object = PsiTreeUtil.getParentOfType(originalPosition, YAMLMapping.class, false);
+    YAMLMapping otherObject = PsiTreeUtil.getParentOfType(computedPosition, YAMLMapping.class, false);
     // the original position can be either a sound element or a whitespace; whitespaces can belong to the parent
     if (object == null || otherObject != null
                           && PsiTreeUtil.isAncestor(CompletionUtil.getOriginalOrSelf(object),
@@ -142,6 +146,16 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     }
     if (object == null) return Collections.emptySet();
     return new YamlObjectAdapter(object).getPropertyList().stream().map(p -> p.getName()).collect(Collectors.toSet());
+  }
+
+  @Override
+  public int indentOf(@NotNull PsiElement element) {
+    return YAMLUtil.getIndentToThisElement(element);
+  }
+
+  @Override
+  public int indentOf(@NotNull PsiFile file) {
+    return Objects.requireNonNull(CodeStyle.getLanguageSettings(file, YAMLLanguage.INSTANCE).getIndentOptions()).INDENT_SIZE;
   }
 
   @Nullable
@@ -389,6 +403,12 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
       roots.add(topLevelValue == null ? document : topLevelValue);
     }
     return roots;
+  }
+
+  @Override
+  @Deprecated(forRemoval = true)
+  public boolean requiresReformatAfterArrayInsertion() {
+    return false;
   }
 
   @Nullable

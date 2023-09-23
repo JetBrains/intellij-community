@@ -33,9 +33,9 @@ import com.jetbrains.python.sdk.add.target.conda.suggestCondaPath
 import com.jetbrains.python.sdk.associateWithModule
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.CondaEnvResult
-import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.InputData
-import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.Source
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.CondaEnvResult
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.InputData
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Source
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand

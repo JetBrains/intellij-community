@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.ExceptionUtil;
@@ -14,11 +14,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.*;
+import java.util.stream.IntStream;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.CONNECTED_MAGIC;
 import static java.util.Comparator.comparing;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.joining;
 import static org.junit.Assert.*;
 
@@ -57,7 +60,6 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
   @NotNull
   protected abstract T openStorage(final Path storageFile) throws IOException;
-
 
 
   @Test
@@ -241,7 +243,6 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       );
     }
   }
-
 
 
   @Test
@@ -565,6 +566,41 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     assertEquals("errorsAccumulated be restored",
                  errorsWritten,
                  storage.getErrorsAccumulated());
+  }
+
+
+  @Test
+  public void allocatedRecordId_CouldBeAlwaysWritten_EvenInMultiThreadedEnv() throws Exception {
+    //RC: there are EA reports with 'fileId ... outside of allocated range ...' exception
+    //    _just after recordId was allocated_. So the test checks there are no concurrency errors
+    //    that could leads to that:
+    int CPUs = Runtime.getRuntime().availableProcessors();
+    int recordsPerThread = maxRecordsToInsert / CPUs;
+    ExecutorService pool = Executors.newFixedThreadPool(CPUs);
+    try {
+      Callable<Object> insertingRecordsTask = () -> {
+        for (int i = 0; i < recordsPerThread; i++) {
+          int recordId = storage.allocateRecord();
+          storage.setParent(recordId, 1);
+          storage.setNameId(recordId, 11);
+          storage.setContentRecordId(recordId, 12);
+          storage.setAttributeRecordId(recordId, 13);
+          storage.setFlags(recordId, PersistentFS.Flags.MUST_RELOAD_LENGTH);
+        }
+        return null;
+      };
+      List<Future<Object>> futures = IntStream.range(0, CPUs)
+        .mapToObj(i -> insertingRecordsTask)
+        .map(pool::submit)
+        .toList();
+      for (Future<Object> future : futures) {
+        future.get();//give a chance to deliver exception
+      }
+    }
+    finally {
+      pool.shutdown();
+      pool.awaitTermination(15, SECONDS);
+    }
   }
 
 

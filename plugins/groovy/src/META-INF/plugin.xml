@@ -14,6 +14,7 @@
   <vendor>JetBrains</vendor>
 
   <content>
+    <module name="intellij.groovy.git"/>
     <module name="intellij.groovy/ant"/>
     <module name="intellij.groovy/byte-code-viewer"/>
   </content>
@@ -510,6 +511,7 @@
     <lang.formatter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder"/>
     <lang.whiteSpaceFormattingStrategy language="Groovy"
                                        implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyWhiteSpaceFormattingStrategy"/>
+    <inspection.basicVisitor class="org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor"/>
 
     <focusModeProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.GrFocusModeProvider" />
     <postFormatProcessor implementation="org.jetbrains.plugins.groovy.formatter.GroovyBracePostFormatProcessor"/>

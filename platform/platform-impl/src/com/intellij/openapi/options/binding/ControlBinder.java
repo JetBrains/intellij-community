@@ -107,7 +107,7 @@ public final class ControlBinder {
     return false;
   }
 
-  protected Object convert(Object value, Class to) {
+  private Object convert(Object value, Class to) {
     Class from = value.getClass();
     if (!to.isAssignableFrom(from)) {
       if (to.isPrimitive()) {

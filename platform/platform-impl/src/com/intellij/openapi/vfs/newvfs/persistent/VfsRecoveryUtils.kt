@@ -14,12 +14,10 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.MUST_RELOAD
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.MUST_RELOAD_LENGTH
 import com.intellij.openapi.vfs.newvfs.persistent.log.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
-import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult.*
-import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.TraverseDirection
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogOperationTrackingContext.Companion.trackPlainOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.AttributesOperation.Companion.fileId
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperation.Companion.fileId
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.PersistentVar
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SnapshotFillerPresets.buildFiller
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SnapshotFillerPresets.constrain
@@ -64,7 +62,6 @@ object VfsRecoveryUtils {
    * @param cachesBackupSiblingPath path to place caches backup to
    */
   @JvmOverloads
-  @OptIn(ExperimentalPathApi::class)
   fun applyStoragesReplacementIfMarkerExists(
     storagesReplacementMarkerFile: Path,
     cachesBackupSiblingPath: Path? = Path.of("caches-backup")
@@ -93,19 +90,23 @@ object VfsRecoveryUtils {
       return false
     }
 
+    // FIXME memory mapped buffers that some storages use can still be open after recovery was done, preventing the file move on Windows
+    //  calling gc should help, but is not guaranteed to work
+    repeat(3) { System.gc() }
+
     if (backupPath != null) {
       if (backupPath.exists()) {
         LOG.info("deleting an old backup")
-        backupPath.deleteRecursively()
+        FileUtil.deleteRecursively(backupPath)
       }
-      cachesDir.moveTo(backupPath)
+      FileUtil.moveDirWithContent(cachesDir.toFile(), backupPath.toFile())
       LOG.info("created a backup successfully")
     }
     if (cachesDir.exists()) {
       LOG.info("deleting current caches")
-      cachesDir.deleteRecursively()
+      FileUtil.deleteRecursively(cachesDir)
     }
-    newCachesDir.moveTo(cachesDir, true)
+    FileUtil.moveDirWithContent(newCachesDir.toFile(), cachesDir.toFile())
     LOG.info("successfully replaced storages")
     return true
   }
@@ -114,6 +115,7 @@ object VfsRecoveryUtils {
     var fileStateCounts: Map<RecoveryState, Int> = emptyMap(),
     var recoveredAttributesCount: Long = 0,
     var botchedAttributesCount: Long = 0,
+    var droppedObsoleteAttributesCount: Long = 0,
     var recoveredContentsCount: Int = 0,
     var lostContentsCount: Int = 0,
     var duplicateChildrenDeduplicated: Int = 0,
@@ -174,6 +176,7 @@ object VfsRecoveryUtils {
     private val vfsTimeMachine: SinglePassVfsTimeMachine,
     private val setFiller: (SnapshotFillerPresets.Filler) -> Unit,
     private val compactedVfs: ExtendedVfsSnapshot?,
+    private val namesEnumerator: PersistentStringEnumerator,
     val payloadReader: PayloadReader = queryContext.payloadReader,
     val fileStates: FileStateController = FileStateController(),
   ) : AutoCloseable {
@@ -181,12 +184,33 @@ object VfsRecoveryUtils {
 
     fun getSnapshot(filler: SnapshotFillerPresets.Filler): ExtendedVfsSnapshot {
       setFiller(filler)
-      val snapshot = vfsTimeMachine.getSnapshot(point()).precededByCompactedInstance()
-      return snapshot
+      return vfsTimeMachine.getSnapshot(point()).precededByCompactedInstance()
     }
 
     private fun ExtendedVfsSnapshot.precededByCompactedInstance(): ExtendedVfsSnapshot =
       compactedVfs?.let { this.precededBy(it) } ?: this
+
+    fun calculateAttributesAlteredAfterRecoveryPointFilter(fileIdRange: IntRange): (fileId: Int) -> Boolean {
+      //val dropAttrsSet = mutableSetOf<Pair<Int, EnumeratedFileAttribute>>()
+      val erasedFileIds = mutableSetOf<Int>()
+      VfsChronicle.traverseOperationsLog(point(), OperationLogStorage.TraverseDirection.PLAY,
+                                         VfsModificationContract.attributeData.relevantOperations,
+                                         onIncomplete = { /* skip FIXME ? */ },
+                                         onCompleteExceptional = { /* skip FIXME ? */ }) { op ->
+        VfsModificationContract.attributeData.modifier(op) { overwriteData ->
+          val fileId = op.getFileId()!!
+          if (fileId in fileIdRange) {
+            erasedFileIds.add(fileId)
+            // TODO maybe do it per attribute
+            //if (overwriteData.enumeratedAttributeFilter == null) erasedFileIds.add(fileId)
+            //else dropAttrsSet.add(fileId to overwriteData.enumeratedAttributeFilter)
+          }
+        }
+      }
+      return { fileId ->
+        fileId in erasedFileIds // TODO maybe || (fileId to attr) in dropAttrsSet
+      }
+    }
 
     var lastAllocatedRecord = superRootId
       private set
@@ -201,9 +225,11 @@ object VfsRecoveryUtils {
     }
 
     override fun close() {
+      // TODO safe close
       newVfsLog.awaitPendingWrites()
       newVfsLog.dispose()
       newFsRecords.dispose()
+      namesEnumerator.close()
     }
   }
 
@@ -267,10 +293,10 @@ object VfsRecoveryUtils {
       )
 
       copyVfsLog(oldStorageDir, newStorageDir, point.copy())
-      val newVfsLog = VfsLogImpl(PersistentFSPaths(newStorageDir).vfsLogStorage, false)
+      val newVfsLog = VfsLogImpl.open(PersistentFSPaths(newStorageDir).vfsLogStorage, false)
 
       RecoveryContext(this, point.constCopier(), queryContext, newFsRecords, newVfsLog, progressReporter,
-                      vtm, { fillerHolder.filler = it }, compactedVfs)
+                      vtm, { fillerHolder.filler = it }, compactedVfs, namesEnum)
     }) as RecoveryContext
 
     ctx.use {
@@ -394,6 +420,7 @@ object VfsRecoveryUtils {
             fileId == null || fileId in chunkRange
           }
       )
+      val alteredAttributesFilter = calculateAttributesAlteredAfterRecoveryPointFilter(chunkRange)
 
       for (file in chunkRange.map { snapshot.getFileById(it) }) {
         ensureAllocated(file.fileId)
@@ -436,25 +463,35 @@ object VfsRecoveryUtils {
               }) { true }
             }
           }
-          // recover available attrs except children
-          for ((enumeratedAttrId, dataRef) in file.attributeDataMap.get()) {
-            if (enumeratedAttrId == childrenAttributeEnumerated) continue
-            val attr = queryContext.deenumerateAttribute(enumeratedAttrId) ?: throw IllegalStateException(
-              "cannot deenumerate attribute using vfslog enumerator (enumeratedAttribute=$enumeratedAttrId)")
-            try {
-              val attrData = payloadReader(dataRef)
-              if (attrData !is Ready) continue // skip if NotAvailable
-              val attrContent = attrData.value
-                                  .cutOutAttributeVersionPrefix(attr) ?: continue // TODO this doesn't look like it should be here
-              newFsRecords.writeAttribute(file.fileId, attr).use {
-                it.write(attrContent)
+          if (alteredAttributesFilter(file.fileId)) {
+            val keys = file.attributeDataMap.get().keys
+            recoveryResult.droppedObsoleteAttributesCount += keys.size - if (childrenAttributeEnumerated in keys) 1 else 0
+            // TODO maybe do it per attribute with a special event of some sort
+            newVfsLogOperationWriteContext.trackPlainOperation(VfsOperationTag.ATTR_DELETE_ATTRS, {
+              VfsOperation.AttributesOperation.DeleteAttributes(file.fileId, it)
+            }) { Unit }
+          }
+          else {
+            // recover available attrs except children
+            for ((enumeratedAttrId, dataRef) in file.attributeDataMap.get()) {
+              if (enumeratedAttrId == childrenAttributeEnumerated) continue
+              val attr = queryContext.deenumerateAttribute(enumeratedAttrId) ?: throw IllegalStateException(
+                "cannot deenumerate attribute using vfslog enumerator (enumeratedAttribute=$enumeratedAttrId)")
+              try {
+                val attrData = payloadReader(dataRef)
+                if (attrData !is Ready) continue // skip if NotAvailable
+                val attrContent = attrData.value
+                                    .cutOutAttributeVersionPrefix(attr) ?: continue // TODO this doesn't look like it should be here
+                newFsRecords.writeAttribute(file.fileId, attr).use {
+                  it.write(attrContent)
+                }
+                recoveryResult.recoveredAttributesCount++
               }
-              recoveryResult.recoveredAttributesCount++
-            }
-            catch (e: Throwable) {
-              recoveryResult.botchedAttributesCount++
-              if (e is IOException) {
-                throw e
+              catch (e: Throwable) {
+                recoveryResult.botchedAttributesCount++
+                if (e is IOException) {
+                  throw e
+                }
               }
             }
           }
@@ -651,19 +688,23 @@ object VfsRecoveryUtils {
     val newPaths = PersistentFSPaths(newStorageDir)
     require(!newPaths.vfsLogStorage.exists()) { "vfsLog exists in new caches directory" }
     oldPaths.vfsLogStorage.copyRecursively(newPaths.vfsLogStorage)
-    val operationsSizePath = newPaths.vfsLogStorage / "operations" / "size"
-    if (!operationsSizePath.exists()) {
-      throw VfsRecoveryException("vfslog operations size file not found")
+    val operationsPath = newPaths.vfsLogStorage / "operations"
+    if (!operationsPath.exists() || !operationsPath.isDirectory()) {
+      throw VfsRecoveryException("vfslog operations directory not found")
     }
     else {
       try {
-        PersistentVar.long(operationsSizePath).use {
-          it.setValue(point.getPosition())
-        }
+        AppendLogStorage.resetSize(operationsPath, point.getPosition())
       }
       catch (e: Throwable) {
         throw VfsRecoveryException("failed to truncate new vfslog", e)
       }
+    }
+    try {
+      VfsLogImpl.filterOutRecoveryPoints(newPaths.vfsLogStorage, 0L until point.getPosition())
+    }
+    catch (e: Throwable) {
+      throw VfsRecoveryException("failed to filter out recovery points", e)
     }
   }
 
@@ -682,7 +723,7 @@ object VfsRecoveryUtils {
   }
 
   @OptIn(ExperimentalTime::class)
-  private inline fun wrapRecovery(body: RecoveryResult.() -> Unit): RecoveryResult =
+  private fun wrapRecovery(body: RecoveryResult.() -> Unit): RecoveryResult =
     try {
       val recoveryResult = RecoveryResult()
       recoveryResult.recoveryTime = measureTime { recoveryResult.body() }
@@ -720,48 +761,6 @@ object VfsRecoveryUtils {
   }
 
   data class RecoveryPoint(val timestamp: Long, val point: OperationLogStorage.Iterator)
-
-  /**
-   * @return iterator <= [point], such that there are at least [completeOperationsAtLeast] preceding operations without
-   * exceptions and incomplete descriptors
-   */
-  fun findClosestPrecedingPointWithNoIncompleteOperationsBeforeIt(
-    point: () -> OperationLogStorage.Iterator,
-    completeOperationsAtLeast: Int = 50_000
-  ): OperationLogStorage.Iterator? {
-    var candidate = point()
-    out@ while (candidate.hasPrevious()) {
-      val checkIter = candidate.copy()
-      for (i in 1..completeOperationsAtLeast) {
-        if (!checkIter.hasPrevious()) return null
-        when (val result = checkIter.previous()) {
-          is Complete -> {
-            if (!result.operation.result.hasValue) { // exceptional operation
-              candidate = checkIter.copy()
-              continue@out
-            }
-          }
-          is Incomplete -> {
-            candidate = checkIter.copy()
-            continue@out
-          }
-          is Invalid -> throw result.cause
-        }
-      }
-      return candidate
-    }
-    return null
-  }
-
-  fun generateRecoveryPointsPriorTo(point: () -> OperationLogStorage.Iterator): Sequence<RecoveryPoint> = sequence {
-    val iter = point()
-    // position iter after a vfile event end operation
-    VfsChronicle.traverseOperationsLog(iter, TraverseDirection.REWIND, VfsOperationTagsMask.ALL) {
-      if (it is VfsOperation.VFileEventOperation.EventStart) {
-        yield(RecoveryPoint(it.eventTimestamp, iter.copy()))
-      }
-    }
-  }
 
   fun Sequence<RecoveryPoint>.thinOut(
     skipPeriodMsInit: Long = 30_000,

@@ -3,14 +3,14 @@ package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.Divider
-import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass
-import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.SuppressionUtil
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.command.WriteCommandAction
@@ -22,43 +22,118 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
-import org.jetbrains.kotlin.idea.base.psi.mustHaveNonEmptyPrimaryConstructor
+import org.jetbrains.kotlin.idea.highlighting.highlighters.isCalleeExpression
+import org.jetbrains.kotlin.idea.highlighting.highlighters.isConstructorCallReference
 import org.jetbrains.kotlin.idea.inspections.describe
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
-class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile, private val refHolder: KotlinRefsHolder) {
-    internal fun collectHighlights(holder: HighlightInfoHolder) {
+context(KtAnalysisSession)
+class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile,
+                                      private val holder: HighlightInfoHolder) : KtVisitorVoid() {
+    private val enabled: Boolean
+    private val deadCodeKey: HighlightDisplayKey?
+    private val deadCodeInspection: LocalInspectionTool?
+    private val deadCodeInfoType: HighlightInfoType.HighlightInfoTypeImpl?
+    private val refHolder:KotlinRefsHolder = KotlinRefsHolder()
+    private val javaInspection: UnusedDeclarationInspectionBase = UnusedDeclarationInspectionBase()
+
+    init {
         val profile = InspectionProjectProfileManager.getInstance(ktFile.project).getCurrentProfile().let { p ->
             InspectionProfileWrapper.getCustomInspectionProfileWrapper(ktFile)?.apply(p)?.inspectionProfile ?: p
         }
+        deadCodeKey = HighlightDisplayKey.find("UnusedSymbol")
+        deadCodeInspection = profile.getUnwrappedTool("UnusedSymbol", ktFile) as? LocalInspectionTool
 
-        val deadCodeKey = HighlightDisplayKey.find("UnusedSymbol") ?: return
-        val deadCodeInspection = profile.getUnwrappedTool("UnusedSymbol", ktFile) as? LocalInspectionTool ?: return
-
-        val deadCodeInfoType =
+        deadCodeInfoType = if (deadCodeKey == null) null else
             HighlightInfoType.HighlightInfoTypeImpl(
               profile.getErrorLevel(deadCodeKey, ktFile).severity,
                 ((profile.getEditorAttributes(deadCodeKey.toString(), ktFile)) ?: HighlightInfoType.UNUSED_SYMBOL.getAttributesKey())
             )
-        if (!profile.isToolEnabled(deadCodeKey, ktFile)) return
-        if (!HighlightingLevelManager.getInstance(ktFile.project).shouldInspect(ktFile)) return
+        enabled = deadCodeInspection != null
+                  && deadCodeInfoType != null
+                  && profile.isToolEnabled(deadCodeKey, ktFile)
+                  && HighlightingLevelManager.getInstance(ktFile.project).shouldInspect(ktFile)
+    }
 
+    context(KtAnalysisSession)
+    internal fun collectHighlights(holder: HighlightInfoHolder) {
+        if (!enabled) return
         Divider.divideInsideAndOutsideAllRoots(ktFile, ktFile.textRange, holder.annotationSession.priorityRange, Predicates.alwaysTrue()) { dividedElements ->
+            registerLocalReferences(dividedElements.inside())
+            registerLocalReferences(dividedElements.outside())
+
+            val declarationVisitor = object : KtVisitorVoid() {
+                override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
+                    handleDeclaration(declaration, deadCodeInspection!!, deadCodeInfoType!!, deadCodeKey!!, holder)
+                }
+            }
             // highlight visible symbols first
             for (declaration in dividedElements.inside()) {
-                if (declaration is KtNamedDeclaration) {
-                    handleDeclaration(declaration, deadCodeInspection, deadCodeInfoType, deadCodeKey, holder)
-                }
+                declaration.accept(declarationVisitor)
             }
             for (declaration in dividedElements.outside()) {
-                if (declaration is KtNamedDeclaration) {
-                    handleDeclaration(declaration, deadCodeInspection, deadCodeInfoType, deadCodeKey, holder)
-                }
+                declaration.accept(declarationVisitor)
             }
             true
+        }
+    }
+
+    private fun registerLocalReferences(elements: List<PsiElement>) {
+        val registerDeclarationAccessVisitor = object : KtVisitorVoid() {
+            override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+                val symbol = expression.mainReference.resolveToSymbol()
+                if (symbol is KtLocalVariableSymbol || symbol is KtValueParameterSymbol || symbol is KtKotlinPropertySymbol) {
+                    refHolder.registerLocalRef(symbol.psi, expression)
+                }
+                if (!expression.isCalleeExpression()) {
+                    val parent = expression.parent
+
+                    if (parent is KtInstanceExpressionWithLabel) {
+                        // Do nothing: 'super' and 'this' are highlighted as a keyword
+                        return
+                    }
+                    if (expression.isConstructorCallReference()) {
+                        refHolder.registerLocalRef((expression.mainReference.resolveToSymbol() as? KtConstructorSymbol)?.psi, expression)
+                    }
+                    else if (symbol is KtClassifierSymbol) {
+                        refHolder.registerLocalRef(symbol.psi, expression)
+                    }
+                }
+            }
+
+            override fun visitBinaryExpression(expression: KtBinaryExpression) {
+                val call = expression.resolveCall()?.successfulCallOrNull<KtCall>() ?: return
+                if (call is KtSimpleFunctionCall) {
+                    refHolder.registerLocalRef(call.symbol.psi, expression)
+                }
+            }
+
+            override fun visitCallableReferenceExpression(expression: KtCallableReferenceExpression) {
+                val symbol = expression.callableReference.mainReference.resolveToSymbol() ?: return
+                refHolder.registerLocalRef(symbol.psi, expression)
+            }
+
+            override fun visitCallExpression(expression: KtCallExpression) {
+                val callee = expression.calleeExpression ?: return
+                val call = expression.resolveCall()?.singleCallOrNull<KtCall>() ?: return
+                if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return
+                refHolder.registerLocalRef((call as? KtSimpleFunctionCall)?.symbol?.psi, expression)
+            }
+        }
+        for (declaration in elements) {
+            declaration.accept(registerDeclarationAccessVisitor)
+        }
+    }
+
+    override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
+        if (enabled) {
+            handleDeclaration(declaration, deadCodeInspection!!, deadCodeInfoType!!, deadCodeKey!!, holder)
         }
     }
 
@@ -67,78 +142,32 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile, private val re
                                   deadCodeInfoType: HighlightInfoType.HighlightInfoTypeImpl,
                                   deadCodeKey: HighlightDisplayKey,
                                   holder: HighlightInfoHolder) {
-        if (!declarationAllowedToBeUnused(declaration)) return
-
-        val mustBeLocallyReferenced = declaration is KtParameter ||
+        if (!KotlinUnusedSymbolUtil.isApplicableByPsi(declaration)) return
+        if (refHolder.isUsedLocally(declaration)) return // even for non-private declarations our refHolder might have usage info
+        val mustBeLocallyReferenced = declaration is KtParameter && !(declaration.hasValOrVar()) ||
                                       declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) ||
                                       ((declaration.parent as? KtClassBody)?.parent as? KtClassOrObject)?.isLocal == true
 
         val nameIdentifier = declaration.nameIdentifier
-        if (mustBeLocallyReferenced &&
-            !refHolder.isUsedLocally(declaration) &&
+        val problemPsiElement: PsiElement = if (mustBeLocallyReferenced &&
             !SuppressionUtil.inspectionResultSuppressed(declaration, deadCodeInspection) &&
             declaration.annotationEntries.isEmpty() //instead of slow implicit usages checks
         ) {
-            val description = declaration.describe() ?: return
-            val info = HighlightInfo.newHighlightInfo(deadCodeInfoType)
-              .range(nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword() ?: declaration)
-              .descriptionAndTooltip(KotlinBaseHighlightingBundle.message("inspection.message.never.used", description))
-              .group(GeneralHighlightingPass.POST_UPDATE_ALL)
-              .registerFix(SafeDeleteFix(declaration), null, null, null, deadCodeKey)
-              .create()
-            holder.add(info)
+            nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword() ?: declaration
+        } else {
+            (KotlinUnusedSymbolUtil.getPsiToReportProblem(declaration) { javaInspection.isEntryPoint(it) } ?: return)
         }
-    }
-
-    private fun declarationAllowedToBeUnused(declaration: KtNamedDeclaration): Boolean {
-        if (declaration is KtClassOrObject && declaration.isTopLevel()) {
-            //top level private classes are visible from java as package locals
-            return false
-        }
-
-        if (declaration is KtObjectDeclaration && declaration.isCompanion()) {
-            //can be used implicitly by referencing members
-            return false
-        }
-
-        if (declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-            return false
-        }
-
-        if (declaration.hasModifier(KtTokens.OPERATOR_KEYWORD)) {
-            //TODO we don't highlight operators now, can be improved later
-            return false
-        }
-
-        if (declaration is KtParameter) {
-            val function = declaration.ownerFunction ?: return true
-            if (function is KtPrimaryConstructor) {
-                val containingClass = function.containingClass() ?: return true
-                if (containingClass.mustHaveNonEmptyPrimaryConstructor()) {
-                    //parameters are uses implicitly in equals/hashCode/etc
-                    return false
-                }
-                if (declaration.hasValOrVar() && !declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
-                    //can be used outside
-                    return false
-                }
-            } else if (function.hasModifier(KtTokens.OVERRIDE_KEYWORD) ||
-                function.hasModifier(KtTokens.OPEN_KEYWORD) ||
-                function.hasModifier(KtTokens.ABSTRACT_KEYWORD) ||
-                function.containingClass()?.isInterface() == true
-            ) {
-                //function can be in the hierarchy
-                return false
-            } else if (function is KtFunctionLiteral) {
-                return false
-            }
-        }
-        return true
+        val description = declaration.describe() ?: return
+        val message = KotlinBaseHighlightingBundle.message("inspection.message.never.used", description)
+        val builder = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(problemPsiElement, message, deadCodeInfoType, null)
+        val fixes = KotlinUnusedSymbolUtil.createQuickFixes(declaration)
+        fixes.forEach { builder.registerFix(it, null, null, null, deadCodeKey) }
+        holder.add(builder.create())
     }
 }
 
 class KotlinRefsHolder {
-    val localRefs = mutableMapOf<KtDeclaration, KtElement>()
+    private val localRefs = mutableMapOf<KtDeclaration, KtElement>()
 
     fun registerLocalRef(declaration: PsiElement?, reference: KtElement) {
         if (declaration is KtDeclaration) {

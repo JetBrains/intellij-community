@@ -6,6 +6,9 @@ package com.intellij.ui.svg
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.hasher
 import com.intellij.ui.icons.IconLoadMeasurer
@@ -18,12 +21,15 @@ import com.intellij.util.createDocumentBuilder
 import com.intellij.util.text.CharSequenceReader
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.awt.Component
+import java.awt.Graphics
 import java.awt.Image
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.io.IOException
 import java.io.InputStream
 import java.io.StringWriter
+import javax.swing.Icon
 import javax.xml.XMLConstants
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
@@ -86,11 +92,7 @@ internal fun loadSvg(path: String?,
 }
 
 @Internal
-fun newSvgPatcher(digest: LongArray?, newPalette: Map<String, String>, alphaProvider: (String) -> Int?): SvgAttributePatcher? {
-  if (newPalette.isEmpty()) {
-    return null
-  }
-
+fun newSvgPatcher(digest: LongArray?, newPalette: Map<String, String>, alphaProvider: (String) -> Int?): SvgAttributePatcher {
   return object : SvgAttributePatcher {
     override fun digest(): LongArray? = digest
 
@@ -130,12 +132,14 @@ fun newSvgPatcher(digest: LongArray?, newPalette: Map<String, String>, alphaProv
 }
 
 private fun toCanonicalColor(color: String): String {
-  var s = color.lowercase()
+  val s = color.lowercase()
   //todo[kb]: add support for red, white, black, and other named colors
   if (s.startsWith('#') && s.length < 7) {
-    s = "#" + ColorUtil.toHex(ColorUtil.fromHex(s))
+    return "#" + ColorUtil.toHex(ColorHexUtil.fromHex(s))
   }
-  return s
+  else {
+    return s
+  }
 }
 
 @Internal
@@ -188,8 +192,8 @@ private inline fun loadAndCacheIfApplicable(path: String?,
                                   precomputedCacheKey = precomputedCacheKey,
                                   scale = scale,
                                   compoundCacheKey = compoundCacheKey,
-                                  colorPatcher = colorPatcherProvider?.attributeForPath(path),
-                                  deprecatedColorPatcher = colorPatcherProvider?.forPath(path),
+                                  colorPatcher = path?.let { colorPatcherProvider?.attributeForPath(it) },
+                                  deprecatedColorPatcher = path?.let { colorPatcherProvider?.forPath(path) },
                                   dataProvider = dataProvider)
 }
 
@@ -248,6 +252,16 @@ private inline fun loadAndCacheIfApplicable(path: String?,
                         path = path,
                         key = key,
                         cache = svgCache)
+}
+
+private fun themeDigestToCacheKey(themeDigest: LongArray): Long {
+  return when (themeDigest.size) {
+    0 -> 0
+    1 -> themeDigest.first()
+    2 -> hasher.hashLongLongToLong(themeDigest[0], themeDigest[1])
+    3 -> hasher.hashLongLongLongToLong(themeDigest[0], themeDigest[1], themeDigest[2])
+    else -> hasher.hashStream().putLongArray(themeDigest).asLong
+  }
 }
 
 private fun renderAndCache(@Suppress("DEPRECATION") deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?,
@@ -338,5 +352,23 @@ fun loadWithSizes(sizes: List<Int>, data: ByteArray, scale: Float = JBUIScale.sy
     else {
       image
     }
+  }
+}
+
+private var selectionColorPatcher: SVGLoader.SvgElementColorPatcherProvider? = null
+
+fun setSelectionColorPatcherProvider(colorPatcher: SVGLoader.SvgElementColorPatcherProvider?) {
+  selectionColorPatcher = colorPatcher
+  IconLoader.clearCache()
+}
+
+@Internal
+fun paintIconWithSelection(icon: Icon, c: Component?, g: Graphics?, x: Int, y: Int) {
+  val patcher = selectionColorPatcher
+  if (patcher == null || !Registry.`is`("ide.patch.icons.on.selection", false)) {
+    icon.paintIcon(c, g, x, y)
+  }
+  else {
+    IconLoader.colorPatchedIcon(icon, patcher).paintIcon(c, g, x, y)
   }
 }

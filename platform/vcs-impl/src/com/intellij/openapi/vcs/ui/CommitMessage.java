@@ -12,14 +12,14 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -35,7 +35,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -51,7 +51,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.StringUtil.convertLineSeparators;
@@ -280,7 +279,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   @RequiresEdt
   public void setChangesSupplier(@NotNull Supplier<Iterable<Change>> changesSupplier) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myEditorField.getDocument().putUserData(CHANGES_SUPPLIER_KEY, changesSupplier);
   }
 
@@ -328,16 +327,12 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
           new InspectionProfileWrapper(CommitMessageInspectionProfile.getInstance(myProject)));
       }
       editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false);
-      try {
-        // must create TrafficRenderer outside EDT
-        ConditionalTrafficLightRenderer renderer =
-          ReadAction.nonBlocking(() -> new ConditionalTrafficLightRenderer(myProject, editor.getDocument())).expireWith(myProject)
-            .submit(AppExecutorUtil.getAppExecutorService()).get();
-        ((EditorMarkupModelImpl)editor.getMarkupModel()).setErrorStripeRenderer(renderer);
-      }
-      catch (InterruptedException | ExecutionException e) {
-        throw new RuntimeException(e);
-      }
+
+      EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
+      ModalityState modality = ModalityState.defaultModalityState();
+      TrafficLightRenderer.setTrafficLightOnEditor(myProject, markupModel, modality, () -> {
+        return new ConditionalTrafficLightRenderer(myProject, editor.getDocument());
+      });
     }
   }
 

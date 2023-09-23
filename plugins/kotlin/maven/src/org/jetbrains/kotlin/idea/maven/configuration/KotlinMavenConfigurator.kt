@@ -7,6 +7,8 @@ import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.undo.BasicUndoableAction
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -122,6 +124,14 @@ protected constructor(
                 }
             }
             collector.showNotification()
+
+            UndoManager.getInstance(project).undoableActionPerformed(object : BasicUndoableAction() {
+                override fun undo() {
+                    KotlinJ2KOnboardingFUSCollector.logConfigureKtUndone(project)
+                }
+
+                override fun redo() {}
+            })
         }
     }
 

@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
@@ -26,7 +27,8 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
+@Service
+public final class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
 
   public FieldNameConstantsOldProcessor() {
     super(PsiField.class, LombokClassNames.FIELD_NAME_CONSTANTS);

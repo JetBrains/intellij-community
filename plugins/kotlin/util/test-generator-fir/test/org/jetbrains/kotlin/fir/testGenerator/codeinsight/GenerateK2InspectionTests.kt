@@ -43,14 +43,17 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/removeRedundantQualifierName")
             model("${idea}/inspectionsLocal/equalsBetweenInconvertibleTypes")
             model("${idea}/inspectionsLocal/redundantIf")
+            model("${idea}/inspectionsLocal/mayBeConstant")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
         }
         /**
          * `unusedSymbol` tests require [com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass] to run,
          * so they extend the other base class [AbstractK2LocalInspectionAndGeneralHighlightingTest]
          */
-        testClass<AbstractK2LocalInspectionAndGeneralHighlightingTest> {
-            model("${idea}/inspectionsLocal/unusedSymbol")
+        val packageName = AbstractK2LocalInspectionAndGeneralHighlightingTest::class.java.`package`.name
+        val generatedClassName = "$packageName.K2UnusedSymbolHighlightingTestGenerated"
+        testClass<AbstractK2LocalInspectionAndGeneralHighlightingTest>(generatedClassName) {
+            model("${idea}/inspectionsLocal/unusedSymbol", pattern = Patterns.KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractK2InspectionTest> {

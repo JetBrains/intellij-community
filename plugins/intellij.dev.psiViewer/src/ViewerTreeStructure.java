@@ -27,15 +27,15 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
   private PsiElement myRootPsiElement;
   private final Object myRootElement = ObjectUtils.sentinel("Psi Viewer Root");
 
-  ViewerTreeStructure(@NotNull Project project) {
+  public ViewerTreeStructure(@NotNull Project project) {
     myProject = project;
   }
 
-  void setRootPsiElement(PsiElement rootPsiElement) {
+  public void setRootPsiElement(PsiElement rootPsiElement) {
     myRootPsiElement = rootPsiElement;
   }
 
-  PsiElement getRootPsiElement() {
+  public PsiElement getRootPsiElement() {
     return myRootPsiElement;
   }
 
@@ -147,11 +147,11 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     return new ViewerNodeDescriptor(myProject, element, parentDescriptor);
   }
 
-  void setShowWhiteSpaces(boolean showWhiteSpaces) {
+  public void setShowWhiteSpaces(boolean showWhiteSpaces) {
     myShowWhiteSpaces = showWhiteSpaces;
   }
 
-  void setShowTreeNodes(boolean showTreeNodes) {
+  public void setShowTreeNodes(boolean showTreeNodes) {
     myShowTreeNodes = showTreeNodes;
   }
 

@@ -157,7 +157,7 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
             declaration.visibilityModifier() ?: nameElement,
             KotlinBundle.message("0.1.could.be.private", member, declaration.getName().toString()),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-            IntentionWrapper(AddModifierFixFE10(modifierListOwner, KtTokens.PRIVATE_KEYWORD))
+            IntentionWrapper(AddModifierFixFE10(modifierListOwner, KtTokens.PRIVATE_KEYWORD).asIntention())
         )
     }
 }

@@ -22,12 +22,13 @@ import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.inspections.ExplicitThisInspection.Util.thisAsReceiverOrNull
 
 class ExplicitThisInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
         override fun visitExpression(expression: KtExpression) {
             val thisExpression = expression.thisAsReceiverOrNull() ?: return
-            if (hasExplicitThis(expression)) {
+            if (Util.hasExplicitThis(expression)) {
                 holder.registerProblem(
                     thisExpression,
                     KotlinBundle.message("redundant.explicit.this"),
@@ -37,7 +38,7 @@ class ExplicitThisInspection : AbstractKotlinInspection() {
         }
     }
 
-    companion object {
+    object Util {
         fun KtExpression.thisAsReceiverOrNull() = when (this) {
             is KtCallableReferenceExpression -> receiverExpression as? KtThisExpression
             is KtDotQualifiedExpression -> receiverExpression as? KtThisExpression

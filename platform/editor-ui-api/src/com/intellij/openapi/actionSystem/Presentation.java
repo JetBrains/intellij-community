@@ -5,10 +5,7 @@ import com.intellij.DynamicBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.BitUtil;
 import com.intellij.util.SmartFMap;
@@ -86,6 +83,7 @@ public final class Presentation implements Cloneable {
   public static final @NonNls String PROP_ENABLED = "enabled";
 
   public static final @NonNls Key<@Nls String> PROP_VALUE = Key.create("value");
+  public static final @NonNls Key<@NlsSafe String> PROP_KEYBOARD_SHORTCUT_SUFFIX = Key.create("keyboardShortcutTextSuffix");
 
   public static final double DEFAULT_WEIGHT = 0;
   public static final double HIGHER_WEIGHT = 42;
@@ -259,6 +257,16 @@ public final class Presentation implements Cloneable {
     setText(text, true);
   }
 
+  @ApiStatus.Internal
+  public void setFallbackPresentationText(@NotNull Supplier<String> supplier) {
+    Supplier<TextWithMnemonic> original = myTextWithMnemonicSupplier;
+    Supplier<TextWithMnemonic> fallback = getTextWithMnemonic(supplier, true);
+    myTextWithMnemonicSupplier = () -> {
+      TextWithMnemonic result = original.get();
+      return result == null ? fallback.get() : result;
+    };
+  }
+
   /**
    * @return the text with mnemonic, properly escaped, so it could be passed to {@link #setText(String)} (e.g. to copy the presentation).
    */
@@ -370,7 +378,7 @@ public final class Presentation implements Cloneable {
   /**
    * For an action group presentation sets whether the action group is a popup group or not.
    * A popup action group is shown as a submenu, a toolbar button that shows a popup when clicked, etc.
-   * A non-popup action group child actions are injected into the group parent group.
+   * A non-popup action group child actions are injected into the parent group.
    */
   public void setPopupGroup(boolean popup) {
     myFlags = BitUtil.set(myFlags, IS_POPUP_GROUP, popup);

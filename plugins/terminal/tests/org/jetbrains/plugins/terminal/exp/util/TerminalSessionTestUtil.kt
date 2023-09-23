@@ -28,8 +28,7 @@ object TerminalSessionTestUtil {
     val process = runner.createProcess(configuredOptions)
     val ttyConnector = runner.createTtyConnector(process)
 
-    val session = TerminalSession(runner.settingsProvider)
-    session.shellIntegration = configuredOptions.shellIntegration
+    val session = TerminalSession(runner.settingsProvider, configuredOptions.shellIntegration)
     val model: TerminalModel = session.model
 
     val promptShownFuture = CompletableFuture<Boolean>()

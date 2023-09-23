@@ -12,7 +12,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.impl.BundledRuntimeImpl.Companion.getProductPrefix
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
@@ -28,7 +27,7 @@ import kotlin.time.Duration.Companion.minutes
 class LinuxDistributionBuilder(override val context: BuildContext,
                                private val customizer: LinuxDistributionCustomizer,
                                private val ideaProperties: Path?) : OsSpecificDistributionBuilder {
-  private companion object {
+  internal companion object {
     const val NO_RUNTIME_SUFFIX = "-no-jbr"
   }
 
@@ -57,7 +56,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         generateBuildTxt(context, targetPath)
         copyDistFiles(context = context, newDir = targetPath, os = OsFamily.LINUX, arch = arch)
         Files.copy(ideaProperties!!, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
-        //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
+        //todo converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
         // for real installers we need to checkout all text files with 'lf' separators anyway
         convertLineSeparators(targetPath.resolve("bin/idea.properties"), "\n")
         if (iconPngPath != null) {
@@ -88,7 +87,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         }
       }
 
-      val runtimeDir = context.bundledRuntime.extract(getProductPrefix(context), OsFamily.LINUX, arch)
+      val runtimeDir = context.bundledRuntime.extract(os = OsFamily.LINUX, arch = arch)
       val tarGzPath = buildTarGz(arch = arch, runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, suffix = suffix(arch))
       launch {
         if (arch == JvmArchitecture.x64) {
@@ -177,9 +176,24 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     tarPath
   }
 
+  private val snapVersion: String by lazy {
+    val appInfo = context.applicationInfo
+    val versionSuffix = appInfo.versionSuffix?.replace(' ', '-') ?: ""
+    "${appInfo.majorVersion}.${appInfo.minorVersion}${if (versionSuffix.isEmpty()) "" else "-${versionSuffix}"}"
+  }
+
+  internal val snapArtifactName: String? by lazy {
+    "${customizer.snapName ?: return@lazy null}_${snapVersion}_amd64.snap"
+  }
+
   private suspend fun buildSnapPackage(runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture) {
-    val snapName = customizer.snapName ?: return
+    val snapName = customizer.snapName
+    if (snapName == null) {
+      Span.current().addEvent("Linux .snap package build skipped because of missing snapName in ${customizer::class.java.simpleName}")
+      return
+    }
     if (!context.options.buildUnixSnaps) {
+      Span.current().addEvent("Linux .snap package build is disabled")
       return
     }
 
@@ -215,8 +229,6 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         copyFile(iconPngPath, snapDir.resolve("$snapName.png"))
         val snapcraftTemplate = context.paths.communityHomeDir.resolve(
           "platform/build-scripts/resources/linux/snap/snapcraft-template.yaml")
-        val versionSuffix = appInfo.versionSuffix?.replace(' ', '-') ?: ""
-        val version = "${appInfo.majorVersion}.${appInfo.minorVersion}${if (versionSuffix.isEmpty()) "" else "-${versionSuffix}"}"
         val snapcraftConfig = snapDir.resolve("snapcraft.yaml")
         substituteTemplatePlaceholders(
           inputFile = snapcraftTemplate,
@@ -224,7 +236,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           placeholder = "$",
           values = listOf(
             Pair("NAME", snapName),
-            Pair("VERSION", version),
+            Pair("VERSION", snapVersion),
             Pair("SUMMARY", productName),
             Pair("DESCRIPTION", customizer.snapDescription ?: ""),
             Pair("GRADE", if (appInfo.isEAP) "devel" else "stable"),
@@ -254,7 +266,9 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         val resultDir = snapDir.resolve("result")
         Files.createDirectories(resultDir)
         span.addEvent("build package")
-        val snapArtifact = snapName + "_" + version + "_amd64.snap"
+        check(Docker.isAvailable) {
+          "Docker is required to build snaps"
+        }
         runProcess(
           args = listOf(
             "docker", "run", "--rm", "--volume=$snapcraftConfig:/build/snapcraft.yaml:ro",
@@ -267,12 +281,12 @@ class LinuxDistributionBuilder(override val context: BuildContext,
             "--workdir=/build",
             context.options.snapDockerImage,
             "snapcraft",
-            "snap", "-o", "result/$snapArtifact"
+            "snap", "-o", "result/$snapArtifactName"
           ),
           workingDir = snapDir,
           timeout = context.options.snapDockerBuildTimeoutMin.minutes,
         )
-        val snapArtifactPath = moveFileToDir(resultDir.resolve(snapArtifact), context.paths.artifactDir)
+        val snapArtifactPath = moveFileToDir(resultDir.resolve(snapArtifactName), context.paths.artifactDir)
         context.notifyArtifactBuilt(snapArtifactPath)
         checkExecutablePermissions(unSquashSnap(snapArtifactPath), root = "", includeRuntime = true, arch = arch)
       }

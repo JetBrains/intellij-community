@@ -87,7 +87,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
                        param: T,
                        needReadAction: Boolean,
                        evaluator: (T) -> Icon?,
-                       listener: ((DeferredIconImpl<T>, Icon?) -> Unit)?) {
+                       listener: ((DeferredIconImpl<T>, Icon) -> Unit)?) {
     this.param = param
     delegateIcon = baseIcon ?: EMPTY_ICON
     scaledDelegateIcon = delegateIcon

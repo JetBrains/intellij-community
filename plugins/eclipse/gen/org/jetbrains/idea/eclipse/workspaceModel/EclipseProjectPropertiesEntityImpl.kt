@@ -18,25 +18,26 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectPropertiesEntityData) : EclipseProjectPropertiesEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class EclipseProjectPropertiesEntityImpl(private val dataSource: EclipseProjectPropertiesEntityData) : EclipseProjectPropertiesEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
                                                                           EclipseProjectPropertiesEntity::class.java,
                                                                           ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
     )
 
@@ -68,6 +69,7 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
     return connections
   }
 
+
   class Builder(result: EclipseProjectPropertiesEntityData?) : ModifiableWorkspaceEntityBase<EclipseProjectPropertiesEntity, EclipseProjectPropertiesEntityData>(
     result), EclipseProjectPropertiesEntity.Builder {
     constructor() : this(EclipseProjectPropertiesEntityData())
@@ -97,7 +99,7 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -319,13 +321,13 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
   var expectedModuleSourcePlace: Int = 0
   lateinit var srcPlace: Map<String, Int>
 
-  fun isVariablePathsInitialized(): Boolean = ::variablePaths.isInitialized
-  fun isEclipseUrlsInitialized(): Boolean = ::eclipseUrls.isInitialized
-  fun isUnknownConsInitialized(): Boolean = ::unknownCons.isInitialized
-  fun isKnownConsInitialized(): Boolean = ::knownCons.isInitialized
+  internal fun isVariablePathsInitialized(): Boolean = ::variablePaths.isInitialized
+  internal fun isEclipseUrlsInitialized(): Boolean = ::eclipseUrls.isInitialized
+  internal fun isUnknownConsInitialized(): Boolean = ::unknownCons.isInitialized
+  internal fun isKnownConsInitialized(): Boolean = ::knownCons.isInitialized
 
 
-  fun isSrcPlaceInitialized(): Boolean = ::srcPlace.isInitialized
+  internal fun isSrcPlaceInitialized(): Boolean = ::srcPlace.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<EclipseProjectPropertiesEntity> {
     val modifiable = EclipseProjectPropertiesEntityImpl.Builder(null)
@@ -342,6 +344,10 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("org.jetbrains.idea.eclipse.config.EclipseProjectPropertiesEntity") as EntityMetadata
   }
 
   override fun clone(): EclipseProjectPropertiesEntityData {
@@ -431,14 +437,5 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
     result = 31 * result + expectedModuleSourcePlace.hashCode()
     result = 31 * result + srcPlace.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.knownCons?.let { collector.add(it::class.java) }
-    this.eclipseUrls?.let { collector.add(it::class.java) }
-    this.unknownCons?.let { collector.add(it::class.java) }
-    this.variablePaths?.let { collector.add(it::class.java) }
-    this.srcPlace?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

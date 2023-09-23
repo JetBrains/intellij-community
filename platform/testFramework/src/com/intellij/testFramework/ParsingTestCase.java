@@ -412,7 +412,11 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   }
 
   protected void checkResult(@NotNull @TestDataFile String targetDataName, @NotNull PsiFile file) throws IOException {
-    doCheckResult(myFullDataPath, file, checkAllPsiRoots(), targetDataName, skipSpaces(), includeRanges(), allTreesInSingleFile());
+    checkResult(myFullDataPath, targetDataName, file);
+  }
+
+  protected void checkResult(String fullDataPath, @NotNull @TestDataFile String targetDataName, @NotNull PsiFile file) throws IOException {
+    doCheckResult(fullDataPath, file, checkAllPsiRoots(), targetDataName, skipSpaces(), includeRanges(), allTreesInSingleFile());
     if (SystemProperties.getBooleanProperty("dumpAstTypeNames", false)) {
       printAstTypeNamesTree(targetDataName, file);
     }

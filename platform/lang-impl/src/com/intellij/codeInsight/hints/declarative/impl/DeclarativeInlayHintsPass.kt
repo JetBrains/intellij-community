@@ -75,7 +75,8 @@ class DeclarativeInlayHintsPass(
           val lineEndOffset = editor.document.getLineEndOffset(position.line)
           val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingEolElements, inlayData, lineEndOffset)
           if (!updated) {
-            val presentationList = InlayPresentationList(inlayData.tree, inlayData.hasBackground, inlayData.disabled, createPayloads(inlayData), inlayData.providerClass)
+            val presentationList = InlayPresentationList(inlayData.tree, inlayData.hasBackground, inlayData.disabled,
+                                                         createPayloads(inlayData), inlayData.providerClass, inlayData.tooltip)
             val renderer = DeclarativeInlayRenderer(presentationList, storage, inlayData.providerId)
             val inlay = inlayModel.addAfterLineEndElement(lineEndOffset, true, renderer)
             if (inlay != null) {
@@ -87,7 +88,7 @@ class DeclarativeInlayHintsPass(
           val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingInlineElements, inlayData, position.offset)
           if (!updated) {
             val presentationList = InlayPresentationList(inlayData.tree, inlayData.hasBackground, inlayData.disabled,
-                                                         createPayloads(inlayData), inlayData.providerClass)
+                                                         createPayloads(inlayData), inlayData.providerClass, inlayData.tooltip)
             val renderer = DeclarativeInlayRenderer(presentationList, storage, inlayData.providerId)
             val inlay = inlayModel.addInlineElement(position.offset, position.relatedToPrevious, position.priority, renderer)
             if (inlay != null) {

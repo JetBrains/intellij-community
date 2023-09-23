@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.JsonObject;
@@ -15,14 +15,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class JsonRequiredPropsReferenceProvider extends PsiReferenceProvider {
+public final class JsonRequiredPropsReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     return new PsiReference[] {new JsonRequiredPropReference((JsonStringLiteral)element)};
   }
 
-  @Nullable
-  public static JsonObject findPropertiesObject(PsiElement element) {
+  public static @Nullable JsonObject findPropertiesObject(PsiElement element) {
     PsiElement parent = getParentSafe(getParentSafe(getParentSafe(element)));
     if (!(parent instanceof JsonObject)) return null;
     Optional<JsonProperty> propertiesProp =
@@ -40,14 +39,13 @@ public class JsonRequiredPropsReferenceProvider extends PsiReferenceProvider {
     return element == null ? null : element.getParent();
   }
 
-  private static class JsonRequiredPropReference extends JsonSchemaBaseReference<JsonStringLiteral> {
+  private static final class JsonRequiredPropReference extends JsonSchemaBaseReference<JsonStringLiteral> {
     JsonRequiredPropReference(JsonStringLiteral element) {
       super(element, ElementManipulators.getValueTextRange(element));
     }
 
-    @Nullable
     @Override
-    public PsiElement resolveInner() {
+    public @Nullable PsiElement resolveInner() {
       JsonObject propertiesObject = findPropertiesObject(getElement());
       if (propertiesObject != null) {
         String name = getElement().getValue();

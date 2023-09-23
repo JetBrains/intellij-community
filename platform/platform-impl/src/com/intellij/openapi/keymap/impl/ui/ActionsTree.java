@@ -251,7 +251,7 @@ public final class ActionsTree {
   }
 
   private final class MyModel extends DefaultTreeModel implements TreeTableModel {
-    protected MyModel(DefaultMutableTreeNode root) {
+    private MyModel(DefaultMutableTreeNode root) {
       super(root);
     }
 

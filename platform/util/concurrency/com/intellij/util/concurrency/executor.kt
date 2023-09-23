@@ -5,6 +5,7 @@
 package com.intellij.util.concurrency
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
@@ -40,7 +41,11 @@ class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, private 
   override fun execute(it: Runnable) {
     childScope.launch(context) {
       // blockingContext not used by intention - low-level tasks are expected in a such executors
-      it.run()
+      try {
+        it.run()
+      }
+      catch (_: ProcessCanceledException) {
+      }
     }
   }
 

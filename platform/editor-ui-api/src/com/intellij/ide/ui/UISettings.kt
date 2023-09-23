@@ -237,10 +237,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       toolbarSettingsState.showNewMainToolbar = !value && toolbarSettingsState.showNewMainToolbar
     }
 
-  var minimizeHeader: Boolean
-    get() = state.minimizeHeader
+  var showNewMainToolbar: Boolean
+    get() = state.showNewMainToolbar
     set(value) {
-      state.minimizeHeader = value
+      state.showNewMainToolbar = value
     }
 
   var showIconsInMenus: Boolean
@@ -498,6 +498,16 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     get() = state.showBreakpointsOverLineNumbers
     set(value) {
       state.showBreakpointsOverLineNumbers = value
+    }
+
+  var currentIdeScale: Float
+    get() = if (presentationMode) presentationModeIdeScale else ideScale
+    set(scale) {
+      when {
+        scale.percentValue == currentIdeScale.percentValue -> return
+        presentationMode -> presentationModeIdeScale = scale
+        else -> ideScale = scale
+      }
     }
 
   companion object {

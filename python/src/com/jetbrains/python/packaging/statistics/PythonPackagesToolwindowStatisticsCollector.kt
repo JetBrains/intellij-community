@@ -4,23 +4,14 @@ package com.jetbrains.python.packaging.statistics
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-class PythonPackagesToolwindowStatisticsCollector : CounterUsagesCollector() {
+object PythonPackagesToolwindowStatisticsCollector : CounterUsagesCollector() {
 
   override fun getGroup() = GROUP
 
-  companion object {
-    private val GROUP = EventLogGroup("python.packages.toolwindow", 1)
+  private val GROUP = EventLogGroup("python.packages.toolwindow", 1)
 
-    @JvmStatic
-    val installPackageEvent = GROUP.registerEvent("installed")
-
-    @JvmStatic
-    val uninstallPackageEvent = GROUP.registerEvent("uninstalled")
-
-    @JvmStatic
-    val requestDetailsEvent = GROUP.registerEvent("details.requested")
-
-    @JvmStatic
-    val repositoriesChangedEvent = GROUP.registerEvent("repositories.changed")
-  }
+  val installPackageEvent = GROUP.registerEvent("installed")
+  val uninstallPackageEvent = GROUP.registerEvent("uninstalled")
+  val requestDetailsEvent = GROUP.registerEvent("details.requested")
+  val repositoriesChangedEvent = GROUP.registerEvent("repositories.changed")
 }

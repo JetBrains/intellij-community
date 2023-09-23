@@ -33,6 +33,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.emptyConstructorMethodType
 import com.intellij.serviceContainer.findConstructorOrNull
+import com.intellij.util.namedChildScope
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
@@ -45,8 +46,14 @@ private val moduleMethodType = MethodType.methodType(Void.TYPE, Module::class.ja
 private val LOG: Logger
   get() = logger<ModuleImpl>()
 
-open class ModuleImpl @ApiStatus.Internal constructor(name: String, project: Project) :
-  ComponentManagerImpl(parent = project as ComponentManagerImpl, coroutineScope = null), ModuleEx, Queryable {
+open class ModuleImpl @ApiStatus.Internal constructor(
+  name: String,
+  project: Project,
+) : ComponentManagerImpl(
+  parent = project as ComponentManagerImpl,
+  coroutineScope = project.getCoroutineScope().namedChildScope("ModuleImpl@${System.identityHashCode(this)}"),
+), ModuleEx, Queryable {
+
   private val project: Project
   protected var imlFilePointer: VirtualFilePointer? = null
 
@@ -86,7 +93,7 @@ open class ModuleImpl @ApiStatus.Internal constructor(name: String, project: Pro
     this.name = name
   }
 
-  final override fun <T : Any> findConstrictorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+  final override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
     return (lookup.findConstructorOrNull(aClass, moduleMethodType)?.invoke(this)
             ?: lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()

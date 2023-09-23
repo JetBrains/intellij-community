@@ -27,7 +27,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
   override val isConnected: Boolean
     get() {
       try {
-        invoker.getProductVersion()
+        return invoker.isApplicationInitialized()
       }
       catch (ut: UndeclaredThrowableException) {
         if (ut.cause is InstanceNotFoundException) {
@@ -38,8 +38,6 @@ internal class DriverImpl(host: JmxHost?) : Driver {
       catch (ioe: JmxCallException) {
         return false
       }
-
-      return true
     }
 
   override fun getProductVersion(): ProductVersion {
@@ -146,15 +144,14 @@ internal class DriverImpl(host: JmxHost?) : Driver {
         return array
       }
 
-      return value // todo better handle primitive lists
+      return value
     }
 
     return value // let's hope we will be able to cast it
   }
 
   private fun serviceBridge(clazz: Class<*>): Any {
-    val remote = findRemoteMeta(clazz)
-                 ?: throw IllegalArgumentException("Class $clazz is not annotated with @Remote annotation")
+    val remote = findRemoteMeta(clazz) ?: throw notAnnotatedError(clazz)
 
     return Proxy.newProxyInstance(getClassLoader(), arrayOf(clazz)) { proxy: Any?, method: Method, args: Array<Any?>? ->
       when (method.name) {
@@ -187,8 +184,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
   }
 
   private fun serviceBridge(clazz: Class<*>, project: ProjectRef): Any {
-    val remote = findRemoteMeta(clazz)
-                 ?: throw IllegalArgumentException("Class $clazz is not annotated with @Remote annotation")
+    val remote = findRemoteMeta(clazz) ?: throw notAnnotatedError(clazz)
 
     return Proxy.newProxyInstance(getClassLoader(), arrayOf(clazz)) { proxy: Any?, method: Method, args: Array<Any?>? ->
       when (method.name) {
@@ -226,8 +222,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
   }
 
   private fun utilityBridge(clazz: Class<*>): Any {
-    val remote = findRemoteMeta(clazz)
-                 ?: throw IllegalArgumentException("Class $clazz is not annotated with @Remote annotation")
+    val remote = findRemoteMeta(clazz) ?: throw notAnnotatedError(clazz)
 
     return Proxy.newProxyInstance(getClassLoader(), arrayOf(clazz)) { proxy: Any?, method: Method, args: Array<Any?>? ->
       when (method.name) {
@@ -254,8 +249,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
   }
 
   private fun refBridge(clazz: Class<*>, ref: Ref, pluginId: String?): Any {
-    val remote = findRemoteMeta(clazz)
-                 ?: throw IllegalArgumentException("Class $clazz is not annotated with @Remote annotation")
+    val remote = findRemoteMeta(clazz) ?: throw notAnnotatedError(clazz)
 
     return Proxy.newProxyInstance(getClassLoader(),
                                   arrayOf(clazz, RefWrapper::class.java)) { proxy: Any?, method: Method, args: Array<Any?>? ->
@@ -285,6 +279,10 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     }
   }
 
+  private fun notAnnotatedError(clazz: Class<*>): IllegalArgumentException {
+    return IllegalArgumentException("Class $clazz is not annotated with @Remote annotation")
+  }
+
   private fun getClassLoader(): ClassLoader? {
     return javaClass.classLoader
   }
@@ -303,7 +301,13 @@ internal class DriverImpl(host: JmxHost?) : Driver {
         sessionHolder.set(currentValue)
       }
       else {
-        invoker.cleanup(runAsSession.id) // todo handle network errors quietly
+        try {
+          invoker.cleanup(runAsSession.id)
+        }
+        catch (e: JmxCallException) {
+          System.err.println("Unable to cleanup remote Driver session")
+        }
+
         sessionHolder.remove()
       }
     }
@@ -346,6 +350,8 @@ private val NO_SESSION: Session = Session(0, OnDispatcher.DEFAULT, LockSemantics
 internal interface Invoker : AutoCloseable {
   fun getProductVersion(): ProductVersion
 
+  fun isApplicationInitialized(): Boolean
+
   fun exit()
 
   fun invoke(call: RemoteCall): RemoteCallResult
@@ -355,4 +361,4 @@ internal interface Invoker : AutoCloseable {
   fun cleanup(sessionId: Int)
 }
 
-class DriverCallException(message: String, e: Throwable): RuntimeException(message, e)
+class DriverCallException(message: String, e: Throwable) : RuntimeException(message, e)

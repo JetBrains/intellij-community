@@ -4,6 +4,7 @@ internal class A // this is a primary constructor
     private val v = 1
 
     // end of secondary constructor 1 body
+
     // this is a secondary constructor 2
     constructor(s: String) : this(s.length) // end of secondary constructor 2 body
 }

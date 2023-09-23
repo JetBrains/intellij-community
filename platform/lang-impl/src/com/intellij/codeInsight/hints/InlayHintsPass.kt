@@ -73,7 +73,6 @@ class InlayHintsPass(
   }
 
   override fun doApplyInformationToEditor() {
-    if (editor !is EditorImpl) return
     val positionKeeper = EditorScrollingPositionKeeper(editor)
     positionKeeper.savePosition()
     applyCollected(sharedSink.complete(), rootElement, editor)
@@ -108,7 +107,7 @@ class InlayHintsPass(
       }
 
       val isBulk = shouldBeBulk(hints, existingInlineInlays, existingBlockAboveInlays, existingBlockBelowInlays)
-      val factory = PresentationFactory(editor as EditorImpl)
+      val factory = PresentationFactory(editor)
       inlayModel.execute(isBulk) {
         updateOrDispose(existingInlineInlays, hints, Inlay.Placement.INLINE, factory, editor)
         updateOrDispose(existingAfterLineEndInlays, hints, Inlay.Placement.INLINE /* 'hints' consider them as INLINE*/, factory, editor)

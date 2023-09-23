@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash.ui
 
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
@@ -41,6 +41,7 @@ import git4idea.ui.StashInfo
 import git4idea.ui.StashInfo.Companion.subject
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.PropertyKey
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.stream.Stream
@@ -52,6 +53,7 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
   private val stashCache: GitStashCache get() = project.service()
 
   override val dataClass: Class<StashInfo> get() = StashInfo::class.java
+  override val tag: ChangesBrowserNode.Tag = GitBundleTag("stash.root.node.title")
   override val applyAction: AnAction get() = ActionManager.getInstance().getAction(GIT_STASH_APPLY_ACTION)
   override val popAction: AnAction get() = ActionManager.getInstance().getAction(GIT_STASH_POP_ACTION)
 
@@ -77,7 +79,7 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
 
   override fun buildPatchesTree(modelBuilder: TreeModelBuilder) {
     val stashesMap = stashTracker.stashes
-    val stashesRoot = SavedPatchesTree.TagWithCounterChangesBrowserNode(GitBundle.message("stash.root.node.title"))
+    val stashesRoot = SavedPatchesTree.TagWithCounterChangesBrowserNode(tag)
     modelBuilder.insertSubtreeRoot(stashesRoot)
     for ((root, stashesList) in stashesMap) {
       val rootNode = if (stashesMap.size > 1 &&
@@ -120,6 +122,10 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
 
   override fun dispose() {
     stashCache.clear()
+  }
+
+  class GitBundleTag(@field:PropertyKey(resourceBundle = GitBundle.BUNDLE) private val key: String) : ChangesBrowserNode.Tag {
+    override fun toString(): @Nls String = GitBundle.message(key)
   }
 
   private data class MyTag(@Nls private val text: String, private val hash: Hash) : ChangesBrowserNode.Tag {

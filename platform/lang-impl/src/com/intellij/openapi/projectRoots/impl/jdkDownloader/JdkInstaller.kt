@@ -38,6 +38,7 @@ import kotlin.concurrent.withLock
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.readBytes
 import kotlin.math.absoluteValue
 
 interface JdkInstallRequest {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.ide.IdeBundle;
@@ -101,16 +101,14 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
   public abstract Icon getCommonIcon(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos);
   
-  @NotNull
-  public static List<? extends MergeableLineMarkerInfo<?>> getMergedMarkers(LineMarkerInfo<?> info) {
+  public static @NotNull List<? extends MergeableLineMarkerInfo<?>> getMergedMarkers(LineMarkerInfo<?> info) {
     if (info instanceof MyLineMarkerInfo) {
       return ((MyLineMarkerInfo)info).getInfos();
     }
     return Collections.emptyList();
   }
 
-  @NotNull
-  public Function<? super PsiElement, String> getCommonTooltip(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
+  public @NotNull Function<? super PsiElement, String> getCommonTooltip(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
     return element -> {
       Set<String> tooltips = new LinkedHashSet<>(ContainerUtil.mapNotNull(infos, info -> info.getLineMarkerTooltip()));
       StringBuilder tooltip = new StringBuilder();
@@ -125,8 +123,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
 
-  @NotNull
-  public GutterIconRenderer.Alignment getCommonIconAlignment(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
+  public @NotNull GutterIconRenderer.Alignment getCommonIconAlignment(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
     return GutterIconRenderer.Alignment.LEFT;
   }
 
@@ -134,14 +131,11 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     return infos.get(0).getAccessibleNameProvider();
   }
 
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public String getElementPresentation(@NotNull PsiElement element) {
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getElementPresentation(@NotNull PsiElement element) {
     return myPresentationProvider != null ? myPresentationProvider.fun(element) : element.getText();
   }
 
-  @NotNull
-  public static List<LineMarkerInfo<?>> merge(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
+  public static @NotNull List<LineMarkerInfo<?>> merge(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
     List<LineMarkerInfo<?>> result = new SmartList<>();
     for (int i = 0; i < markers.size(); i++) {
       MergeableLineMarkerInfo<?> marker = markers.get(i);
@@ -186,8 +180,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       myMarkers = markers;
     }
     
-    @NotNull
-    public List<? extends MergeableLineMarkerInfo<?>> getInfos() {
+    public @NotNull List<? extends MergeableLineMarkerInfo<?>> getInfos() {
       return myMarkers;
     }
 
@@ -213,8 +206,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       return commonActionGroup;
     }
 
-    @NotNull
-    private static TextRange getCommonTextRange(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
+    private static @NotNull TextRange getCommonTextRange(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
       int startOffset = Integer.MAX_VALUE;
       int endOffset = Integer.MIN_VALUE;
       for (MergeableLineMarkerInfo<?> marker : markers) {
@@ -224,8 +216,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       return TextRange.create(startOffset, endOffset);
     }
 
-    @NotNull
-    private static GutterIconNavigationHandler<PsiElement> getCommonNavigationHandler(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
+    private static @NotNull GutterIconNavigationHandler<PsiElement> getCommonNavigationHandler(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
       return new MergedGutterIconNavigationHandler(markers);
     }
 
@@ -269,8 +260,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       myInfos = Collections.unmodifiableList(infos);
     }
 
-    @NotNull
-    private List<LineMarkerInfo<?>> getMergedLineMarkersInfos() {
+    private @NotNull List<LineMarkerInfo<?>> getMergedLineMarkersInfos() {
       return myInfos;
     }
 

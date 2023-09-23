@@ -33,7 +33,7 @@ class CanBeValInspection : AbstractKotlinInspection() {
             private val pseudocodeCache = HashMap<KtDeclaration, Pseudocode>()
             override fun visitDeclaration(declaration: KtDeclaration) {
                 super.visitDeclaration(declaration)
-                if (declaration is KtValVarKeywordOwner && canBeVal(declaration, pseudocodeCache, ignoreNotUsedVals = true)) {
+                if (declaration is KtValVarKeywordOwner && Util.canBeVal(declaration, pseudocodeCache, ignoreNotUsedVals = true)) {
                     reportCanBeVal(declaration)
                 }
             }
@@ -53,7 +53,7 @@ class CanBeValInspection : AbstractKotlinInspection() {
         }
     }
 
-    companion object {
+    object Util {
         fun canBeVal(
             declaration: KtDeclaration,
             pseudocodeCache: HashMap<KtDeclaration, Pseudocode> = HashMap(),
@@ -161,4 +161,5 @@ class CanBeValInspection : AbstractKotlinInspection() {
             return false
         }
     }
+
 }

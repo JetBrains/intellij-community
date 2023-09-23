@@ -33,6 +33,7 @@ public class PythonDocTestRunConfigurationEditor extends SettingsEditor<PythonDo
 
   @Override
   protected void disposeEditor() {
+    myForm.removeListeners();
     myForm = null;
   }
 }

@@ -90,7 +90,7 @@ public final class PsiUtil extends PsiUtilCore {
    * <p>NOTE:</p>
    * If there is no module (IDEA's) dependency from module with {@code place} on a module with {@code member},
    * then reference won't be resolved and this method will return {@code true}.
-   *
+   * <p>
    * Please use {@link #isMemberAccessibleAt(PsiMember, PsiElement)} to catch these cases as well
    */
   public static boolean isAccessible(@NotNull Project project, @NotNull PsiMember member,
@@ -1033,7 +1033,7 @@ public final class PsiUtil extends PsiUtilCore {
     return false;
   }
 
-  public static final Key<LanguageLevel> FILE_LANGUAGE_LEVEL_KEY = Key.create("FORCE_LANGUAGE_LEVEL");
+  public static final Key<LanguageLevel> FILE_LANGUAGE_LEVEL_KEY = LanguageLevel.FILE_LANGUAGE_LEVEL_KEY;
 
   public static boolean isLanguageLevel5OrHigher(@NotNull PsiElement element) {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_5);

@@ -4,7 +4,6 @@
 
 package com.intellij.openapi.fileEditor.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
@@ -215,7 +214,6 @@ open class FileEditorManagerImpl(
           return@flatMapLatest flowOf(null)
         }
 
-        fileTitleUpdateChannel.queue(composite.file)
         composite.selectedEditorWithProvider.mapLatest { fileEditorWithProvider ->
           if (fileEditorWithProvider == null) null else SelectionState(composite = composite, fileEditorProvider = fileEditorWithProvider)
         }
@@ -294,7 +292,7 @@ open class FileEditorManagerImpl(
     connection.subscribe(FileStatusListener.TOPIC, MyFileStatusListener())
     connection.subscribe(FileTypeManager.TOPIC, MyFileTypeListener())
     if (!LightEdit.owns(project)) {
-      connection.subscribe(ProjectTopics.PROJECT_ROOTS, MyRootListener())
+      connection.subscribe(ModuleRootListener.TOPIC, MyRootListener())
       connection.subscribe(AdditionalLibraryRootsListener.TOPIC, MyRootListener())
     }
 
@@ -489,15 +487,10 @@ open class FileEditorManagerImpl(
     val result = CompletableDeferred<EditorsSplitters?>()
     val focusManager = IdeFocusManager.getGlobalInstance()
     focusManager.doWhenFocusSettlesDown {
-      if (project.isDisposed) {
-        result.complete(null)
-        return@doWhenFocusSettlesDown
-      }
-
-      val container = DockManager.getInstance(project).getContainerFor(focusManager.focusOwner) {
-        it is DockableEditorTabbedContainer
-      }
-      result.complete(if (container is DockableEditorTabbedContainer) container.splitters else mainSplitters)
+      result.complete(
+        if (project.isDisposed) null
+        else getDockContainer(focusManager.focusOwner)?.splitters ?: mainSplitters
+      )
     }
     return result
   }
@@ -507,18 +500,17 @@ open class FileEditorManagerImpl(
     if (Registry.`is`("ide.navigate.to.recently.focused.editor", false)) {
       getLastFocusedSplitters()?.let { return it }
     }
-
     val focusManager = IdeFocusManager.getGlobalInstance()
-    var focusOwner = focusManager.focusOwner
+    val focusOwner = focusManager.focusOwner
                      ?: KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
                      ?: focusManager.getLastFocusedFor(focusManager.lastFocusedIdeWindow)
-    var container = DockManager.getInstance(project).getContainerFor(focusOwner) { it is DockableEditorTabbedContainer }
-    if (container == null) {
-      focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
-      container = DockManager.getInstance(project).getContainerFor(focusOwner) { it is DockableEditorTabbedContainer }
-    }
-    return if (container is DockableEditorTabbedContainer) container.splitters else mainSplitters
+    val container = getDockContainer(focusOwner)
+                    ?: getDockContainer(KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow)
+    return container?.splitters ?: mainSplitters
   }
+
+  private fun getDockContainer(focusOwner: Component?) =
+    DockManager.getInstance(project).getContainerFor(focusOwner) { it is DockableEditorTabbedContainer } as DockableEditorTabbedContainer?
 
   override val preferredFocusedComponent: JComponent?
     get() = currentFileEditorFlow.value?.preferredFocusedComponent
@@ -617,26 +609,21 @@ open class FileEditorManagerImpl(
   override val windows: Array<EditorWindow>
     get() = getAllSplitters().flatMap(EditorsSplitters::getWindowSequence).toTypedArray()
 
-  override fun getNextWindow(window: EditorWindow): EditorWindow? {
-    val windows = splitters.getOrderedWindows()
-    for (i in windows.indices) {
-      if (windows[i] == window) {
-        return windows.get((i + 1) % windows.size)
-      }
-    }
-    LOG.error("No window found")
-    return null
-  }
+  override fun getNextWindow(window: EditorWindow) = getNextWindowImpl(window, ascending = true)
 
-  override fun getPrevWindow(window: EditorWindow): EditorWindow? {
+  override fun getPrevWindow(window: EditorWindow) = getNextWindowImpl(window, ascending = false)
+
+  private fun getNextWindowImpl(currentWindow: EditorWindow, ascending: Boolean): EditorWindow? {
     val windows = splitters.getOrderedWindows()
-    for (i in windows.indices) {
-      if (windows[i] == window) {
-        return windows.get((i + windows.size - 1) % windows.size)
-      }
+    val currentWindowIndex = windows.indexOf(currentWindow)
+    return if (currentWindowIndex != -1) {
+      val nextWindowIndex = currentWindowIndex + (if (ascending) 1 else -1)
+      windows[nextWindowIndex % windows.size]
     }
-    LOG.error("No window found")
-    return null
+    else {
+      LOG.error("No window found")
+      null
+    }
   }
 
   override fun createSplitter(orientation: Int, window: EditorWindow?) {
@@ -786,13 +773,16 @@ open class FileEditorManagerImpl(
     }
 
     if (windowToOpenIn == null) {
-      val mode = getOpenMode(IdeEventQueue.getInstance().trueCurrentEvent)
+      val mode = options.openMode ?: getOpenMode(IdeEventQueue.getInstance().trueCurrentEvent)
       if (mode == OpenMode.NEW_WINDOW) {
         if (forbidSplitFor(file)) {
           closeFile(file)
         }
         return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file) { editorWindow ->
-          openFileImpl2(window = editorWindow, file = file, options = options)
+          if (forbidSplitFor(file = file) && !editorWindow.isFileOpen(file = file)) {
+            closeFile(file = file)
+          }
+          doOpenFile(file = file, windowToOpenIn = editorWindow, options = options)
         }
       }
       else if (mode == OpenMode.RIGHT_SPLIT) {
@@ -809,6 +799,12 @@ open class FileEditorManagerImpl(
       windowToOpenIn = getOrCreateCurrentWindow(file)
     }
 
+    return doOpenFile(file = file, windowToOpenIn = windowToOpenIn, options = options)
+  }
+
+  private fun doOpenFile(file: VirtualFile,
+                         windowToOpenIn: EditorWindow,
+                         options: FileEditorOpenOptions): FileEditorComposite {
     if (ApplicationManager.getApplication().isWriteAccessAllowed) {
       if (forbidSplitFor(file = file) && !windowToOpenIn.isFileOpen(file)) {
         closeFile(file)
@@ -817,16 +813,46 @@ open class FileEditorManagerImpl(
     }
     else {
       val context = ClientId.coroutineContext()
-      return runWithModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
+      val composite = runWithModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
         withContext(context) {
           openFileAsync(window = windowToOpenIn, file = getOriginalFile(file), entry = null, options = options)
         }
       }
+      if (composite is EditorComposite && options.requestFocus && !ApplicationManager.getApplication().isUnitTestMode) {
+        // NOTE: it is a workaround on problem with runWithModalProgressBlocking which does not respect focus requests.
+        // It can be removed when the problem is solved. Original bug: IDEA-327729
+        composite.preferredFocusedComponent?.requestFocusInWindow()
+      }
+      return composite
     }
   }
 
   override suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
     var windowToOpenIn: EditorWindow? = null
+
+    val mode = options.openMode
+    if (mode == OpenMode.NEW_WINDOW) {
+      return withContext(Dispatchers.EDT) {
+        if (forbidSplitFor(file)) {
+          closeFile(file)
+        }
+        (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file) { editorWindow ->
+          if (forbidSplitFor(file = file) && !editorWindow.isFileOpen(file = file)) {
+            closeFile(file = file)
+          }
+
+          doOpenFile(file = file, windowToOpenIn = editorWindow, options = options)
+        }
+      }
+    }
+    else if (mode == OpenMode.RIGHT_SPLIT) {
+      withContext(Dispatchers.EDT) {
+        openInRightSplit(file)
+      }?.let {
+        return it
+      }
+    }
+
     if (options.reuseOpen || !AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER)) {
       windowToOpenIn = withContext(Dispatchers.EDT) { findWindowInAllSplitters(file) }
     }
@@ -913,15 +939,11 @@ open class FileEditorManagerImpl(
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use public API.", level = DeprecationLevel.ERROR)
-  fun openFileImpl2(window: EditorWindow,
-                    file: VirtualFile,
-                    focusEditor: Boolean): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+  fun openFileImpl2(window: EditorWindow, file: VirtualFile, focusEditor: Boolean): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
     return openFileImpl2(window = window, file = file, options = FileEditorOpenOptions(requestFocus = focusEditor)).retrofit()
   }
 
-  open fun openFileImpl2(window: EditorWindow,
-                         file: VirtualFile,
-                         options: FileEditorOpenOptions): FileEditorComposite {
+  open fun openFileImpl2(window: EditorWindow, file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
     if (forbidSplitFor(file) && !window.isFileOpen(file)) {
       closeFile(file)
     }
@@ -1305,6 +1327,7 @@ open class FileEditorManagerImpl(
       reuseOpen = !effectiveDescriptor.isUseCurrentWindow,
       usePreviewTab = effectiveDescriptor.isUsePreviewTab,
       requestFocus = focusEditor,
+      openMode = getOpenMode(IdeEventQueue.getInstance().trueCurrentEvent),
     )
     val result = if (ApplicationManager.getApplication().isWriteAccessAllowed) {
       // runWithModalProgressBlocking cannot be used under a write action - https://youtrack.jetbrains.com/issue/IDEA-319932
@@ -1312,11 +1335,17 @@ open class FileEditorManagerImpl(
     }
     else {
       val context = ClientId.coroutineContext()
-      runWithModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
+      val composite = runWithModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
         withContext(context) {
-          openFile(file = file, options = openOptions).allEditors
+          openFile(file = file, options = openOptions)
         }
       }
+      if (composite is EditorComposite && openOptions.requestFocus && !ApplicationManager.getApplication().isUnitTestMode) {
+        // NOTE: it is a workaround on problem with runWithModalProgressBlocking which does not respect focus requests.
+        // It can be removed when the problem is solved. Original bug: IDEA-327729
+        composite.preferredFocusedComponent?.requestFocusInWindow()
+      }
+      composite.allEditors
     }
 
     for (editor in result) {

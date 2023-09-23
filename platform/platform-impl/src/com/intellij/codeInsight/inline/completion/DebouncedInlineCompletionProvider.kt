@@ -42,7 +42,7 @@ abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
     return debounce(request)
   }
 
-  private suspend fun debounce(request: InlineCompletionRequest): Flow<InlineCompletionElement> {
+  suspend fun debounce(request: InlineCompletionRequest): Flow<InlineCompletionElement> {
     jobCall?.cancel()
     jobCall = coroutineContext.job
     delay(delay)

@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -30,18 +31,20 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.util.stream.Stream
 import javax.swing.JTree
+import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 
 class SavedPatchesTree(project: Project,
                        private val savedPatchesProviders: List<SavedPatchesProvider<*>>,
-                       parentDisposable: Disposable) : ChangesTree(project, false, false, false) {
+                       parentDisposable: Disposable) : AsyncChangesTree(project, false, false, false) {
   internal val speedSearch: SpeedSearchSupply
+  override val changesTreeModel: AsyncChangesTreeModel = SavedPatchesTreeModel()
 
   init {
     val nodeRenderer = ChangesBrowserNodeRenderer(myProject, { isShowFlatten }, false)
     setCellRenderer(MyTreeRenderer(nodeRenderer))
 
-    isKeepTreeState = true
+    treeStateStrategy = SavedPatchesTreeStateStrategy
     isScrollToSelection = false
     setEmptyText(VcsBundle.message("saved.patch.empty.text"))
     speedSearch = MySpeedSearch.installOn(this)
@@ -60,23 +63,6 @@ class SavedPatchesTree(project: Project,
     }
 
     savedPatchesProviders.forEach { provider -> provider.subscribeToPatchesListChanges(parentDisposable, ::rebuildTree) }
-  }
-
-  override fun rebuildTree() {
-    val wasEmpty = VcsTreeModelData.all(this).iterateUserObjects().isEmpty
-
-    val modelBuilder = TreeModelBuilder(project, groupingSupport.grouping)
-    if (savedPatchesProviders.any { !it.isEmpty() }) {
-      savedPatchesProviders.forEach { provider -> provider.buildPatchesTree(modelBuilder) }
-    }
-    updateTreeModel(modelBuilder.build())
-
-    if (!VcsTreeModelData.all(this).iterateUserObjects().isEmpty && wasEmpty) {
-      expandDefaults()
-    }
-    if (selectionCount == 0) {
-      TreeUtil.selectFirstNode(this)
-    }
   }
 
   override fun installGroupingSupport(): ChangesGroupingSupport {
@@ -99,8 +85,22 @@ class SavedPatchesTree(project: Project,
 
   override fun getToggleClickCount(): Int = 2
 
-  class TagWithCounterChangesBrowserNode(text: @Nls String, expandByDefault: Boolean = true, private val sortWeight: Int? = null) :
-    TagChangesBrowserNode(TagImpl(text), SimpleTextAttributes.REGULAR_ATTRIBUTES, expandByDefault) {
+  private inner class SavedPatchesTreeModel : SimpleAsyncChangesTreeModel() {
+    override fun buildTreeModelSync(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
+      val modelBuilder = TreeModelBuilder(project, grouping)
+      if (savedPatchesProviders.any { !it.isEmpty() }) {
+        savedPatchesProviders.forEach { provider -> provider.buildPatchesTree(modelBuilder) }
+      }
+      return modelBuilder.build()
+    }
+  }
+
+  class TagWithCounterChangesBrowserNode(tag: Tag, expandByDefault: Boolean = true, private val sortWeight: Int? = null) :
+    TagChangesBrowserNode(tag, SimpleTextAttributes.REGULAR_ATTRIBUTES, expandByDefault) {
+
+    constructor(text: @Nls String, expandByDefault: Boolean = true, sortWeight: Int? = null) :
+      this(TagImpl(text), expandByDefault, sortWeight)
+
     private val stashCount = ClearableLazyValue.create {
       allUnder(this).userObjects(SavedPatchesProvider.PatchObject::class.java).size
     }
@@ -189,6 +189,28 @@ class SavedPatchesTree(project: Project,
       return changes.any {
         matchingFragments(it.filePath.name) != null
       }
+    }
+  }
+
+  private data class SavedPatchesTreeState(val treeState: TreeState, val wasEmpty: Boolean)
+
+  private object SavedPatchesTreeStateStrategy : TreeStateStrategy<SavedPatchesTreeState> {
+    override fun saveState(tree: ChangesTree): SavedPatchesTreeState {
+      val treeState = TreeState.createOn(tree, true, true)
+      val wasEmpty = VcsTreeModelData.all(tree).iterateUserObjects().isEmpty
+      return SavedPatchesTreeState(treeState, wasEmpty)
+    }
+
+    override fun restoreState(tree: ChangesTree, state: SavedPatchesTreeState?, scrollToSelection: Boolean) {
+      if (state == null) return
+
+      state.treeState.setScrollToSelection(scrollToSelection)
+      state.treeState.applyTo(tree)
+
+      if (!VcsTreeModelData.all(tree).iterateUserObjects().isEmpty && state.wasEmpty) {
+        tree.expandDefaults()
+      }
+      if (tree.selectionCount == 0) TreeUtil.selectFirstNode(tree)
     }
   }
 }

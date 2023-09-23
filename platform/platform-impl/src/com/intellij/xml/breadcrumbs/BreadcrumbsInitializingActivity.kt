@@ -100,7 +100,7 @@ private class MyVirtualFileListener(private val myProject: Project) : VirtualFil
   }
 }
 
-private fun isAbove() = EditorSettingsExternalizable.getInstance().isBreadcrumbsAbove
+private fun isAbove() = ClientId.withClientId(ClientId.localId) { EditorSettingsExternalizable.getInstance().isBreadcrumbsAbove }
 
 private fun reinitBreadcrumbsComponent(fileEditorManager: FileEditorManager, file: VirtualFile, above: Boolean, allClients: Boolean) {
   val editors = if (allClients) fileEditorManager.getAllEditors(file) else fileEditorManager.getEditors(file)
@@ -156,10 +156,10 @@ private fun isSuitable(project: Project, file: VirtualFile, forcedShown: Boolean
     return false
   }
   val providerExists = BreadcrumbsUtilEx.findProvider(file, project, forcedShown) != null
-  if (!providerExists) {
-    return false
-  }
+
   for (collector in FileBreadcrumbsCollector.EP_NAME.getExtensions(project)) {
+    if (!providerExists && collector.requiresProvider()) continue
+
     if (collector.handlesFile(file)) {
       return true
     }

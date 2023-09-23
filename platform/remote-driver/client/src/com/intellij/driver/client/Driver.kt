@@ -58,3 +58,7 @@ inline fun <reified T : Any> Driver.service(): T {
 inline fun <reified T : Any> Driver.service(project: ProjectRef): T {
   return service(T::class, project)
 }
+
+inline fun <reified T : Any> Driver.utility(): T {
+  return utility(T::class)
+}

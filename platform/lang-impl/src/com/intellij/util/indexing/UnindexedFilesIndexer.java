@@ -18,6 +18,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
+import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
@@ -43,10 +44,12 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
   private final @NotNull Map<@NotNull IndexableFilesIterator, @NotNull Collection<@NotNull VirtualFile>> providerToFiles;
   private final @NonNls @NotNull String indexingReason;
   private final @NotNull LongSet scanningIds;
+  private final @NotNull IndexingRequestToken indexingRequest;
 
   UnindexedFilesIndexer(@NotNull Project project,
-                        @NonNls @NotNull String indexingReason) {
-    this(project, Collections.emptyMap(), indexingReason, LongSets.emptySet());
+                        @NonNls @NotNull String indexingReason,
+                        @NotNull IndexingRequestToken indexingRequest) {
+    this(project, Collections.emptyMap(), indexingReason, LongSets.emptySet(), indexingRequest);
   }
 
   /**
@@ -55,14 +58,16 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
    * if providerToFiles is not empty, providerToFiles files will be indexed in the first order, then files reported by FileBasedIndexImpl#getFilesToUpdate
    */
   public UnindexedFilesIndexer(@NotNull Project project,
-                        @NotNull Map<@NotNull IndexableFilesIterator, @NotNull Collection<@NotNull VirtualFile>> providerToFiles,
-                        @NonNls @NotNull String indexingReason,
-                        @NotNull LongSet scanningIds) {
+                               @NotNull Map<@NotNull IndexableFilesIterator, @NotNull Collection<@NotNull VirtualFile>> providerToFiles,
+                               @NonNls @NotNull String indexingReason,
+                               @NotNull LongSet scanningIds,
+                               @NotNull IndexingRequestToken indexingRequest) {
     myProject = project;
     myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     this.providerToFiles = providerToFiles;
     this.indexingReason = indexingReason;
     this.scanningIds = scanningIds;
+    this.indexingRequest = indexingRequest;
   }
 
   void indexFiles(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory,
@@ -91,10 +96,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
   private void doIndexFiles(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory,
                             @NotNull ProgressIndicator progressIndicator) {
     int numberOfIndexingThreads = UnindexedFilesUpdater.getNumberOfIndexingThreads();
-    LOG.info(
-      "Use " + numberOfIndexingThreads + " indexing " + StringUtil.pluralize("thread", numberOfIndexingThreads) +
-      " for indexing of " + myProject.getName());
-    IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, numberOfIndexingThreads);
+    IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, indexingRequest, numberOfIndexingThreads);
 
     List<IndexUpdateRunner.FileSet> fileSets = getExplicitlyRequestedFilesSets();
     if (!fileSets.isEmpty()) {
@@ -235,7 +237,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     LongArraySet ids = new LongArraySet(scanningIds.size() + otherIndexingTask.scanningIds.size());
     ids.addAll(scanningIds);
     ids.addAll(otherIndexingTask.scanningIds);
-    return new UnindexedFilesIndexer(myProject, mergedFilesToIndex, mergedReason, ids);
+    return new UnindexedFilesIndexer(myProject, mergedFilesToIndex, mergedReason, ids, indexingRequest.mergeWith(otherIndexingTask.indexingRequest));
   }
 
   @NotNull

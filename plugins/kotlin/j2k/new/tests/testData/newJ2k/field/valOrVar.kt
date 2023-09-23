@@ -11,7 +11,7 @@ internal class A(private val field6: Int, private val field8: Int, a: A) {
 
     init {
         if (field6 > 0) {
-            field10 = 10
+            this.field10 = 10
         }
         a.field11 = 10
     }

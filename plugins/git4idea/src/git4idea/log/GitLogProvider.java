@@ -5,8 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -527,8 +525,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     }
 
     List<TimedVcsCommit> commits = new ArrayList<>();
-    GitLogUtil.readTimedCommits(myProject, root, configParameters, filterParameters, user -> {},
-                                ref -> {}, new CollectConsumer<>(commits));
+    GitLogUtil.readTimedCommits(myProject, root, configParameters, filterParameters, null, null, new CollectConsumer<>(commits));
     return commits;
   }
 
@@ -599,7 +596,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       return (T)Boolean.TRUE;
     }
     else if (property == VcsLogProperties.SUPPORTS_INDEXING) {
-      return (T)Boolean.valueOf(isIndexingOn());
+      return (T)Boolean.TRUE;
     }
     else if (property == VcsLogProperties.SUPPORTS_LOG_DIRECTORY_HISTORY) {
       return (T)Boolean.TRUE;
@@ -614,14 +611,6 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   @Override
   public VcsLogIndexer getIndexer() {
     return new GitLogIndexer(myProject, myRepositoryManager);
-  }
-
-  public static boolean isIndexingOn() {
-    return getIndexingRegistryOption().asBoolean();
-  }
-
-  public static @NotNull RegistryValue getIndexingRegistryOption() {
-    return Registry.get("vcs.log.index.git");
   }
 
   private static String prepareParameter(String paramName, String value) {

@@ -2,10 +2,13 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.openapi.util.IntRef;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.WriterDecidesStrategy;
+import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
+import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
+import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.WriterDecidesStrategy;
+import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
@@ -13,21 +16,21 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage.NULL_ID;
+import static com.intellij.util.io.blobstorage.StreamlinedBlobStorage.NULL_ID;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
 
 @RunWith(Theories.class)
 public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobStorage> extends BlobStorageTestBase<S> {
 
-  protected final StorageRecord[] randomRecordsToStartWith;
 
   protected final int pageSize;
   protected final SpaceAllocationStrategy allocationStrategy;
@@ -35,14 +38,14 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   @DataPoints
   public static List<SpaceAllocationStrategy> allocationStrategiesToTry() {
     return Arrays.asList(
-      new WriterDecidesStrategy(1024),
-      new WriterDecidesStrategy(256),
-      new DataLengthPlusFixedPercentStrategy(1024, 256, 30),
-      new DataLengthPlusFixedPercentStrategy(256, 64, 30),
+      new WriterDecidesStrategy(StreamlinedBlobStorageHelper.MAX_CAPACITY, 1024),
+      new WriterDecidesStrategy(StreamlinedBlobStorageHelper.MAX_CAPACITY, 256),
+      new DataLengthPlusFixedPercentStrategy(256, 1024, StreamlinedBlobStorageHelper.MAX_CAPACITY, 30),
+      new DataLengthPlusFixedPercentStrategy(64, 256, StreamlinedBlobStorageHelper.MAX_CAPACITY, 30),
 
       //put stress on allocation/reallocation code paths
-      new DataLengthPlusFixedPercentStrategy(128, 64, 0),
-      new DataLengthPlusFixedPercentStrategy(2, 2, 0)
+      new DataLengthPlusFixedPercentStrategy(64, 128, StreamlinedBlobStorageHelper.MAX_CAPACITY, 0),
+      new DataLengthPlusFixedPercentStrategy(2, 2, StreamlinedBlobStorageHelper.MAX_CAPACITY, 0)
     );
   }
 
@@ -57,15 +60,19 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   }
 
 
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected StreamlinedBlobStorageTestBase(final @NotNull Integer pageSize,
                                            final @NotNull SpaceAllocationStrategy strategy) {
     this.pageSize = pageSize;
     this.allocationStrategy = strategy;
-    randomRecordsToStartWith = generateRecords(ENOUGH_RECORDS, maxPayloadSize(pageSize));
   }
 
-  /* ======================== TESTS (specific for this impl) ===================================== */
+  protected StorageRecord[] randomRecordsToStartWith;
+
+  @Before
+  public void generateRandomRecords() throws Exception {
+    randomRecordsToStartWith = generateRecords(ENOUGH_RECORDS, storage.maxPayloadSupported());
+  }
+
   @Test
   public void emptyStorageHasNoRecords() throws Exception {
     final IntArrayList nonExistentIds = new IntArrayList();
@@ -84,6 +91,24 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
       );
     }
   }
+
+
+  @Test
+  public void openFileWithIncorrectMagicWordFails() throws Exception {
+    storage.close();
+    Files.write(storagePath, new byte[]{1, 2, 3, 4}, StandardOpenOption.WRITE);
+
+    try {
+      openStorage(storagePath);
+    }
+    catch (IOException e) {
+      assertTrue(
+        "Expect error message about 'magicWord mismatch'",
+        e.getMessage().contains("magicWord")
+      );
+    }
+  }
+
 
   @Test
   public void dataFormatVersion_CouldBeWritten_AndReadBackAsIs_AfterStorageReopened() throws Exception {
@@ -105,6 +130,28 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
       dataFormatVersion
     );
   }
+
+  @Test
+  public void wasClosedProperly_isTrueForNewStorage() throws IOException {
+    assertTrue(
+      "New empty storage is always 'closed properly'",
+      storage.wasClosedProperly()
+    );
+  }
+
+  @Test
+  public void wasClosedProperly_isTrueForClosedAndReopenedStorage() throws IOException {
+    storage.close();
+    storage = openStorage(storagePath);
+    assertTrue(
+      "Storage is 'closed properly' if it was closed and opened again",
+      storage.wasClosedProperly()
+    );
+  }
+
+  //RC: there is no easy way to check .wasClosedProperly() is false after not-closing
+  //    because not-closing is hard to do without JVM kill -- most our storages prevent
+  //    reopen already opened file without closing it first.
 
   @Test
   public void manyRecordsWritten_CouldAllBeReadBackUnchanged_ById() throws Exception {
@@ -157,14 +204,32 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
     }
   }
 
+
+  @Test
+  public void singleRecordWithMaxSupportedPayload_CouldBeWritten_AndReadBackById() throws Exception {
+    //Specifically, check payloads = maxPayloadSupported
+
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    StorageRecord maxSupportedRecord = new StorageRecord(randomString(rnd, storage.maxPayloadSupported()));
+    StorageRecord writtenRecord = maxSupportedRecord.writeIntoStorage(this, storage);
+
+    StorageRecord recordReadBack = StorageRecord.readFromStorage(this, storage, writtenRecord.recordId);
+    assertEquals(
+      "Huge record[#" + writtenRecord.recordId + "] must be read back as-is: " +
+      "written [" + writtenRecord.payload + "], read back[" + recordReadBack.payload + "]",
+      writtenRecord.payload,
+      recordReadBack.payload
+    );
+  }
+
   @Test
   public void manyRecordsWritten_WithBigPayload_CouldAllBeReadBackUnchanged_ById() throws Exception {
-    //Specifically check payloads close to pageSize (-some margin for record header)
+    //Specifically check payloads close to maxPayloadSize (-some margin for record header)
 
-    int enoughRecordsButNotTooManyToNotTriggerOoM = 1000;
+    int enoughRecordsButNotTooManyToNotTriggerOoM = 100;
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     final StorageRecord[] recordsToWrite = generateRecords(enoughRecordsButNotTooManyToNotTriggerOoM, () -> {
-      return rnd.nextInt(1, maxPayloadSize(pageSize));
+      return rnd.nextInt(storage.maxPayloadSupported() / 2, storage.maxPayloadSupported());
     });
     for (int i = 0; i < recordsToWrite.length; i++) {
       recordsToWrite[i] = recordsToWrite[i].writeIntoStorage(this, storage);
@@ -183,19 +248,16 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   }
 
   @Test
-  public void recordsLargerThanPageSize_AreRejected_ButDoNotBreakStorage() throws Exception {
-    //records must be on a single page, hence total size(record) <= pageSize
-    // I don't want to expose recordSize/payloadSize internal relationship, hence
-    // I just vary payload size _around_ PAGE_SIZE to check that they are either stored OK,
-    // or throw IAE without breaking the storage
+  public void recordsLargerThanMaxPayloadSize_AreRejected_ButDoNotBreakStorage() throws Exception {
+    //maxPayloadSupported is generally about records being on a single page.
+    // But don't want to expose recordSize/payloadSize internal relationship, neither recordHeader size, hence
+    // I just vary payload size _around_ storage.maxPayloadSupported() to check that records are either stored
+    // OK, or throw IAE without breaking the storage
     final int margin = 16;
-    assumeTrue(
-      "capacity/length are 2 bytes, hence this test is not applicable for PAGE_SIZE > " + storage.maxPayloadSupported(),
-      pageSize + margin + 1 < storage.maxPayloadSupported()
-    );
+    final int maxPayloadSupported = storage.maxPayloadSupported();
     final List<StorageRecord> recordsActuallyWritten = new ArrayList<>();
     try {
-      for (int payloadSize = pageSize - margin; payloadSize < pageSize + margin; payloadSize++) {
+      for (int payloadSize = maxPayloadSupported - margin; payloadSize < maxPayloadSupported + margin; payloadSize++) {
         final StorageRecord recordWritten = StorageRecord.recordWithRandomPayload(payloadSize)
           .writeIntoStorage(this, storage);
         recordsActuallyWritten.add(recordWritten);
@@ -209,12 +271,12 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
       }
       fail("_Some_ payload size around PAGE_SIZE must be rejected by storage");
     }
-    catch (IllegalArgumentException|IllegalStateException e) {
+    catch (IllegalArgumentException | IllegalStateException e) {
       //this is expectable
     }
 
     //now check storage wasn't broken: add one record on the top of it
-    final StorageRecord recordWrittenOnTop = StorageRecord.recordWithRandomPayload(pageSize / 2)
+    final StorageRecord recordWrittenOnTop = StorageRecord.recordWithRandomPayload(maxPayloadSupported / 2)
       .writeIntoStorage(this, storage);
     recordsActuallyWritten.add(recordWrittenOnTop);
 
@@ -222,7 +284,7 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
     final List<StorageRecord> recordsReadBack = new ArrayList<>();
     storage.forEach((recordId, recordCapacity, recordLength, payload) -> {
       if (storage.isRecordActual(recordLength)) {
-        final StorageRecord recordRead = new StorageRecord(recordId, StreamlinedBlobStorageTestBase.stringFromBuffer(payload));
+        final StorageRecord recordRead = new StorageRecord(recordId, stringFromBuffer(payload));
         recordsReadBack.add(recordRead);
       }
       return true;
@@ -305,10 +367,6 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
 
 
   /* ========================= adapter implementation: ========================================= */
-
-  protected int maxPayloadSize(int pageSize) {
-    return pageSize - 10;//TODO each storage has own headers size, 10 is just an upper margin for header size
-  }
 
 
   @Override

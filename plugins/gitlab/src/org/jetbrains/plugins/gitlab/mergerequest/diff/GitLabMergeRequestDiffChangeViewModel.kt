@@ -55,7 +55,7 @@ internal class GitLabMergeRequestDiffChangeViewModelImpl(
 
   private val cs = parentCs.childScope(Dispatchers.Default + CoroutineName("GitLab Merge Request Review Diff Change"))
 
-  override val isCumulativeChange: Boolean = !diffData.isCumulative
+  override val isCumulativeChange: Boolean = diffData.isCumulative
 
   override val discussions: DiscussionsFlow = mergeRequest.discussions
     .throwFailure()

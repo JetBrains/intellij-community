@@ -21,7 +21,6 @@ import com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
-import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -40,7 +39,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
-import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
@@ -204,16 +202,6 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
     catch (IOException e) {
       return new PatchShelveDiffRequestProducer(project, shelvedChange, filePath);
     }
-  }
-
-  /**
-   * Simple way to reuse patch parser from GPA ->  apply onto empty text
-   */
-  @NotNull
-  static AppliedTextPatch createAppliedTextPatch(@NotNull TextFilePatch patch) {
-    final GenericPatchApplier applier = new GenericPatchApplier("", patch.getHunks());
-    applier.execute();
-    return AppliedTextPatch.create(applier.getAppliedInfo());
   }
 
   final static class PatchesPreloader {
@@ -394,8 +382,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
       try {
         PatchesPreloader preloader = PatchesPreloader.getPatchesPreloader(myProject, context);
         TextFilePatch patch = preloader.getPatch(myChange);
-        AppliedTextPatch appliedTextPatch = createAppliedTextPatch(patch);
-        PatchDiffRequest request = new PatchDiffRequest(appliedTextPatch, getRequestTitle(),
+        PatchDiffRequest request = new PatchDiffRequest(patch, getRequestTitle(),
                                                         VcsBundle.message("patch.apply.conflict.patch"));
         DiffUtil.addNotification(createNotificationProvider(DiffBundle.message("cannot.find.file.error", getFilePath())), request);
         return request;

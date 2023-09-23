@@ -71,5 +71,7 @@
     <staticInitializationInExtensionsVisitorProvider language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtStaticInitializationInExtensionsVisitorProvider"/>
   </extensions>
-
+  <extensions defaultExtensionNs="DevKit.lang">
+    <goodCodeRedVisitor language="kotlin" implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KotlinGoodCodeRedVisitor"/>
+  </extensions>
 </idea-plugin>

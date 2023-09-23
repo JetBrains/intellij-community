@@ -14,7 +14,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -44,8 +43,11 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     result.runRemainingContributors(parameters, true);
-    if (!Registry.is("java.completion.qualifier.as.argument") &&
-        !AdvancedSettings.getBoolean("java.completion.qualifier.as.argument")) {
+    fillQualifierAsArgumentContributor(parameters, result);
+  }
+
+  static void fillQualifierAsArgumentContributor(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+    if (!AdvancedSettings.getBoolean("java.completion.qualifier.as.argument")) {
       return;
     }
 
@@ -77,6 +79,10 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
                               @NotNull CompletionResultSet result) {
 
     PsiElement position = parameters.getPosition();
+    PsiFile file = position.getContainingFile();
+    if (file == null) {
+      return;
+    }
     GlobalSearchScope scope = position.getResolveScope();
     Project project = position.getProject();
     if (project.isDefault()) {
@@ -94,6 +100,10 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
           return true;
         }
         if (!(member instanceof PsiMethod method && method.hasModifier(JvmModifier.STATIC))) {
+          return true;
+        }
+        PsiFile currentFile = method.getContainingFile();
+        if (method.hasModifier(JvmModifier.PRIVATE) && !file.isEquivalentTo(currentFile)) {
           return true;
         }
         PsiClass containingClass = method.getContainingClass();

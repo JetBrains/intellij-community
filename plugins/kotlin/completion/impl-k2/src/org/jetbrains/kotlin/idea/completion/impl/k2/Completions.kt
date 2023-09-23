@@ -5,13 +5,16 @@ package org.jetbrains.kotlin.idea.completion
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.context.*
 import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributorFactory
 import org.jetbrains.kotlin.idea.completion.contributors.complete
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal object Completions {
@@ -38,9 +41,13 @@ internal object Completions {
             }
 
             is FirTypeNameReferencePositionContext -> {
-                complete(factory.classifierContributor(0), positionContext, weighingContext, sessionParameters)
+                if (sessionParameters.allowClassifiersAndPackagesForPossibleExtensionCallables) {
+                    complete(factory.classifierContributor(0), positionContext, weighingContext, sessionParameters)
+                }
                 complete(factory.keywordContributor(1), positionContext, weighingContext, sessionParameters)
-                complete(factory.packageCompletionContributor(2), positionContext, weighingContext, sessionParameters)
+                if (sessionParameters.allowClassifiersAndPackagesForPossibleExtensionCallables) {
+                    complete(factory.packageCompletionContributor(2), positionContext, weighingContext, sessionParameters)
+                }
                 // For `val` and `fun` completion. For example, with `val i<caret>`, the fake file contains `val iX.f`. Hence a
                 // FirTypeNameReferencePositionContext is created because `iX` is parsed as a type reference.
                 complete(factory.declarationFromUnresolvedNameContributor(1), positionContext, weighingContext, sessionParameters)
@@ -86,6 +93,7 @@ internal object Completions {
 
             is FirWithSubjectEntryPositionContext -> {
                 complete(factory.whenWithSubjectConditionContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.callableContributor(1), positionContext, weighingContext, sessionParameters)
             }
 
             is FirCallableReferencePositionContext -> {
@@ -143,6 +151,12 @@ internal object Completions {
             WeighingContext.createWeighingContext(receiver, expectedType, implicitReceivers = emptyList(), positionContext.position)
         }
 
+        is FirWithSubjectEntryPositionContext -> {
+            val subjectReference = (positionContext.subjectExpression as? KtSimpleNameExpression)?.mainReference
+            val symbolsToSkip = setOfNotNull(subjectReference?.resolveToSymbol())
+            createWeighingContextForNameReference(basicContext, positionContext, symbolsToSkip)
+        }
+
         is FirExpressionNameReferencePositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
         is FirInfixCallPositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
 
@@ -152,13 +166,14 @@ internal object Completions {
     context(KtAnalysisSession)
     private fun createWeighingContextForNameReference(
         basicContext: FirBasicCompletionContext,
-        positionContext: FirNameReferencePositionContext
+        positionContext: FirNameReferencePositionContext,
+        symbolsToSkip: Set<KtSymbol> = emptySet(),
     ): WeighingContext {
         val expectedType = positionContext.nameExpression.getExpectedType()
         val receiver = positionContext.explicitReceiver
         val implicitReceivers = basicContext.originalKtFile.getScopeContextForPosition(positionContext.nameExpression).implicitReceivers
 
-        return WeighingContext.createWeighingContext(receiver, expectedType, implicitReceivers, positionContext.position)
+        return WeighingContext.createWeighingContext(receiver, expectedType, implicitReceivers, positionContext.position, symbolsToSkip)
     }
 }
 

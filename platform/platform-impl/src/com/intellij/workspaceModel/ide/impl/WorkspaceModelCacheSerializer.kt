@@ -11,7 +11,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelCacheVersion
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
+import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.io.basicAttributesIfExists
@@ -32,11 +32,10 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
     EntityStorageSerializerImpl(
       PluginAwareEntityTypesResolver,
       vfuManager,
-      ::collectExternalCacheVersions,
       urlRelativizer
     )
 
-  internal fun loadCacheFromFile(file: Path, invalidateGlobalCachesMarkerFile: Path, invalidateCachesMarkerFile: Path): EntityStorage? {
+  internal fun loadCacheFromFile(file: Path, invalidateGlobalCachesMarkerFile: Path, invalidateCachesMarkerFile: Path): MutableEntityStorage? {
     val start = System.currentTimeMillis()
     val cacheFileAttributes = file.basicAttributesIfExists() ?: return null
 
@@ -101,7 +100,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
     val loadedSize: Long?,
   )
 
-  private fun cachePreProcess(storage: EntityStorage): EntityStorageSnapshot {
+  private fun cachePreProcess(storage: EntityStorageSnapshot): EntityStorageSnapshot {
     val builder = MutableEntityStorage.from(storage)
     val nonPersistentModules = builder.entities(ModuleEntity::class.java)
       .filter { it.entitySource == NonPersistentEntitySource }

@@ -3,6 +3,9 @@ package com.intellij.java.psi;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
+import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.formatting.MockCodeStyleSettingsModifier;
@@ -10,9 +13,11 @@ import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.scratch.ScratchRootType;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.LanguageImportStatements;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaImportOptimizer;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,8 +32,10 @@ import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 public class OptimizeImportsTest extends OptimizeImportsTestCase {
   static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/optimizeImports";
@@ -123,7 +130,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     CodeStyle.doWithTemporarySettings(getProject(), temp, () -> doTest());
   }
 
-  public void testScratch() {
+  public void testScratch() throws Exception {
     myFixture.enableInspections(new UnusedImportInspection());
     VirtualFile scratch =
       ScratchRootType.getInstance()
@@ -136,21 +143,37 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
                              class Scratch { }""", ScratchFileService.Option.create_if_missing);
     assertNotNull(scratch);
     myFixture.configureFromExistingVirtualFile(scratch);
-    myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
+    runOptimizeImports();
     myFixture.checkResult("class Scratch { }");
   }
 
-  public void testLeavesDocumentUnblocked() {
+  public void testLeavesDocumentUnblocked() throws Exception {
     myFixture.enableInspections(new UnusedImportInspection());
     myFixture.configureByText("a.java", "import static java.ut<caret>il.List.*; class Foo {}");
-    myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
+    runOptimizeImports();
 
     assertFalse(PsiDocumentManager.getInstance(getProject()).isDocumentBlockedByPsi(myFixture.getEditor().getDocument()));
 
     myFixture.checkResult("class Foo {}");
   }
 
-  public void testNoStubPsiMismatchOnRecordInsideImportList() {
+  private void runOptimizeImports() throws ExecutionException, InterruptedException {
+    myFixture.type('A'); // make file dirty
+    myFixture.type('\b');
+    IntentionAction fix = ReadAction.nonBlocking(() -> QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFixture.getFile())).submit(
+      AppExecutorUtil.getAppExecutorService()).get();
+    myFixture.doHighlighting(); // wait until highlighting is finished to .isAvailable() return true
+    boolean old = CodeInsightWorkspaceSettings.getInstance(myFixture.getProject()).isOptimizeImportsOnTheFly();
+    CodeInsightWorkspaceSettings.getInstance(myFixture.getProject()).setOptimizeImportsOnTheFly(true);
+    try {
+      myFixture.launchAction(fix);
+    }
+    finally {
+      CodeInsightWorkspaceSettings.getInstance(myFixture.getProject()).setOptimizeImportsOnTheFly(old);
+    }
+  }
+
+  public void testNoStubPsiMismatchOnRecordInsideImportList() throws Exception {
     myFixture.enableInspections(new UnusedImportInspection());
     myFixture.configureByText("a.java", """
       import java.ut<caret>il.List;
@@ -158,7 +181,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       import java.util.Collection;
 
       class Foo {}""");
-    myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
+    myFixture.launchAction(myFixture.findSingleIntention("Remove unused import"));
 
     // whatever: main thing it didn't throw
     myFixture.checkResult("""
@@ -177,13 +200,13 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       import java.util.Map;
 
       class Foo {}""");
-    myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
+    myFixture.launchAction(myFixture.findSingleIntention("Remove unused import"));
 
     // whatever: main thing it didn't throw
-    myFixture.checkResult("class Foo {}");
+    assertNotEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
   }
 
-  public void testRemovingAllUnusedImports() {
+  public void testRemovingAllUnusedImports() throws Exception {
     myFixture.enableInspections(new UnusedImportInspection());
     myFixture.configureByText("a.java", """
       package p;
@@ -192,7 +215,29 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       import java.util.Map;
 
       """);
-    myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
+    runOptimizeImports();
+    myFixture.checkResult("package p;\n\n");
+  }
+  public void testRemoveUnusedImportFix() {
+    myFixture.enableInspections(new UnusedImportInspection());
+    myFixture.configureByText("a.java", """
+      package p;
+
+      import java.<caret>util.Set;
+
+      """);
+    myFixture.launchAction(myFixture.findSingleIntention("Remove unused import"));
+    myFixture.checkResult("package p;\n\n");
+  }
+  public void testRemoveUnusedImportFixShownEvenForUnresolvedImport() {
+    myFixture.enableInspections(new UnusedImportInspection());
+    myFixture.configureByText("a.java", """
+      package p;
+
+      import java.<caret>blahblah.Set;
+
+      """);
+    myFixture.launchAction(myFixture.findSingleIntention("Remove unused import"));
     myFixture.checkResult("package p;\n\n");
   }
 

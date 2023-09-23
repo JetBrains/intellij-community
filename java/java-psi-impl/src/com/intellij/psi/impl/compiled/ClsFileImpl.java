@@ -577,7 +577,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
         try {
           FileContentPair source = new FileContentPair(file, bytes);
           StubBuildingVisitor<FileContentPair> visitor = new StubBuildingVisitor<>(source, STRATEGY, stub, 0, className);
-          reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
+          reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE | ClassReader.VISIT_LOCAL_VARIABLES);
           if (visitor.getResult() != null) return stub;
         }
         catch (OutOfOrderInnerClassException e) {
@@ -635,7 +635,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     @Override
     public void accept(FileContentPair innerClass, StubBuildingVisitor<FileContentPair> visitor) {
       try {
-        new ClassReader(innerClass.second).accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
+        new ClassReader(innerClass.second).accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE | ClassReader.VISIT_LOCAL_VARIABLES);
       }
       catch (Exception e) {  // workaround for bug in skipping annotations when a first parameter of inner class is dropped (IDEA-204145)
         VirtualFile file = innerClass.first;

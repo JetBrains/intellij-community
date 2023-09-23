@@ -6,6 +6,7 @@ import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.idea.SplashManagerKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -26,13 +27,16 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.*;
+import com.intellij.openapi.wm.impl.IdeFrameDecorator;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.reference.SoftReference;
@@ -64,6 +68,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public class DialogWrapperPeerImpl extends DialogWrapperPeer {
+  @SuppressWarnings("LoggerInitializedWithForeignClass")
   private static final Logger LOG = Logger.getInstance(DialogWrapper.class);
 
   public static boolean isHeadlessEnv() {
@@ -77,34 +82,38 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   private final List<Runnable> myDisposeActions = new ArrayList<>();
   private Project myProject;
 
-  protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent, @NotNull DialogWrapper.IdeModalityType ideModalityType) {
+  protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper,
+                                  @Nullable Project project,
+                                  boolean canBeParent,
+                                  @NotNull DialogWrapper.IdeModalityType ideModalityType) {
     boolean headless = isHeadlessEnv();
     myWrapper = wrapper;
 
-    WindowManagerEx windowManager = getWindowManager();
-
     Window window = null;
-    if (windowManager != null) {
-      if (project == null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
-        //noinspection deprecation
-        project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-      }
-
-      myProject = project;
-
-      window = windowManager.suggestParentWindow(project);
-      if (window == null) {
-        Window focusedWindow = windowManager.getMostRecentFocusedWindow();
-        if (focusedWindow instanceof IdeFrameImpl) {
-          window = focusedWindow;
+    if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
+      WindowManagerEx windowManager = getWindowManager();
+      if (windowManager != null) {
+        if (project == null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
+          //noinspection deprecation
+          project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
         }
-      }
-      if (window == null) {
-        for (ProjectFrameHelper frameHelper : windowManager.getProjectFrameHelpers()) {
-          IdeFrameImpl frame = frameHelper.getFrame();
-          if (frame.isActive()) {
-            window = frameHelper.getFrame();
-            break;
+
+        myProject = project;
+
+        window = windowManager.suggestParentWindow(project);
+        if (window == null) {
+          Window focusedWindow = windowManager.getMostRecentFocusedWindow();
+          if (focusedWindow instanceof IdeFrameImpl) {
+            window = focusedWindow;
+          }
+        }
+        if (window == null) {
+          for (ProjectFrameHelper frameHelper : windowManager.getProjectFrameHelpers()) {
+            IdeFrameImpl frame = frameHelper.getFrame();
+            if (frame.isActive()) {
+              window = frameHelper.getFrame();
+              break;
+            }
           }
         }
       }
@@ -152,7 +161,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     myCanBeParent = headless || canBeParent;
   }
 
-  protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, Window owner, boolean canBeParent, DialogWrapper.IdeModalityType ideModalityType) {
+  protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper,
+                                  Window owner,
+                                  boolean canBeParent,
+                                  DialogWrapper.IdeModalityType ideModalityType) {
     boolean headless = isHeadlessEnv();
     myWrapper = wrapper;
     myDialog = createDialog(headless, owner, wrapper, null, DialogWrapper.IdeModalityType.IDE);
@@ -168,12 +180,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   private static WindowManagerEx getWindowManager() {
-    WindowManagerEx windowManager = null;
-    Application application = LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred() ? ApplicationManager.getApplication() : null;
-    if (application != null) {
-      windowManager = WindowManagerEx.getInstanceEx();
-    }
-    return windowManager;
+    Application app = LoadingState.COMPONENTS_LOADED.isOccurred() ? ApplicationManager.getApplication() : null;
+    return app == null ? null : WindowManagerEx.getInstanceEx();
   }
 
   private static AbstractDialog createDialog(boolean headless,
@@ -237,7 +245,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   @Override
-  @SuppressWarnings("SSBasedInspection")
   protected void dispose() {
     LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
     for (Runnable runnable : myDisposeActions) {
@@ -384,7 +391,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   @Override
   public CompletableFuture<?> show() {
     LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
-    CompletableFuture<Void> result = new CompletableFuture<>();
 
     AnCancelAction anCancelAction = new AnCancelAction();
     JRootPane rootPane = getRootPane();
@@ -403,10 +409,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       ((CustomFrameDialogContent)contentPane).updateLayout();
     }
 
-    Application application = ApplicationManager.getApplication();
-    if (application != null && application.getServiceIfCreated(ActionManager.class) != null) {
-      ShortcutSet shortcutSet = ActionUtil.getShortcutSet(IdeActions.ACTION_EDITOR_ESCAPE);
-      anCancelAction.registerCustomShortcutSet(shortcutSet, rootPane);
+    Application app = LoadingState.COMPONENTS_LOADED.isOccurred() ? ApplicationManager.getApplication() : null;
+    if (app != null && app.getServiceIfCreated(ActionManager.class) != null) {
+      anCancelAction.registerCustomShortcutSet(ActionUtil.getShortcutSet(IdeActions.ACTION_EDITOR_ESCAPE), rootPane);
     }
     else {
       anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
@@ -414,25 +419,27 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     myDisposeActions.add(() -> anCancelAction.unregisterCustomShortcutSet(rootPane));
 
-    if (!myCanBeParent) {
+    if (app != null && !myCanBeParent) {
       WindowManagerEx windowManager = getWindowManager();
       if (windowManager != null) {
         windowManager.doNotSuggestAsParent(myDialog.getWindow());
       }
     }
 
-    final CommandProcessorEx commandProcessor =
-      application != null ? (CommandProcessorEx)CommandProcessor.getInstance() : null;
-    final boolean appStarted = commandProcessor != null;
+    CommandProcessorEx commandProcessor = app == null ? null : (CommandProcessorEx)CommandProcessor.getInstance();
+    boolean appStarted = commandProcessor != null;
 
-    boolean changeModalityState = appStarted && myDialog.isModal()
-                                  && !isProgressDialog(); // ProgressWindow starts a modality state itself
+    // ProgressWindow starts a modality state itself
+    boolean changeModalityState = appStarted && myDialog.isModal() && !isProgressDialog();
     Project project = myProject;
 
-    boolean perProjectModality = isPerProjectModality();
+    boolean perProjectModality = changeModalityState &&
+                                 project != null &&
+                                 !ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED &&
+                                 Registry.is("ide.perProjectModality", false);
     if (changeModalityState) {
       commandProcessor.enterModal();
-      if (perProjectModality && project != null) {
+      if (perProjectModality) {
         LaterInvocator.enterModal(project, myDialog.getWindow());
       }
       else {
@@ -444,7 +451,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       hidePopupsIfNeeded();
     }
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       final Disposable tb = TouchbarSupport.showWindowActions(myDialog.getContentPane());
       if (tb != null) {
         myDisposeActions.add(() -> Disposer.dispose(tb));
@@ -458,6 +465,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       componentToRestoreFocus = kfm.getPermanentFocusOwner();
     }
 
+    CompletableFuture<Void> result = new CompletableFuture<>();
+    SplashManagerKt.hideSplash();
     try (
       AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET);
       AccessToken ignore2 = ThreadContext.resetThreadContext()
@@ -487,7 +496,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   //hopefully this whole code will go away
   private void hidePopupsIfNeeded() {
-    if (!SystemInfo.isMac) return;
+    if (!SystemInfoRt.isMac) {
+      return;
+    }
 
     StackingPopupDispatcher.getInstance().hidePersistentPopups();
     myDisposeActions.add(() -> StackingPopupDispatcher.getInstance().restorePersistentPopups());
@@ -517,7 +528,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
     }
-    private boolean hasNoEditingTreesOrTablesUpward(Component comp) {
+
+    private static boolean hasNoEditingTreesOrTablesUpward(Component comp) {
       while (comp != null) {
         if (isEditingTreeOrTable(comp)) return false;
         comp = comp.getParent();
@@ -723,7 +735,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           if (LOG.isDebugEnabled()) {
             LOG.debug("The initial size after coercing it to be at least the packed size: " + initial);
           }
-          if (!SystemInfo.isLinux && Registry.is("ide.dialog.wrapper.resize.by.tables", false)) {
+          if (!SystemInfoRt.isLinux && Registry.is("ide.dialog.wrapper.resize.by.tables", false)) {
             // [kb] temporary workaround for IDEA-253643
             maximize(initial, getSizeForTableContainer(getContentPane()));
           }
@@ -737,9 +749,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           LOG.debug("The initial size after coercing it to be at least the minimum size: " + initial);
         }
         float hs = dialogWrapper.getHorizontalStretch();
-        initial.width *= hs;
+        initial.width *= (int)hs;
         float vs = dialogWrapper.getVerticalStretch();
-        initial.height *= vs;
+        initial.height *= (int)vs;
         if (LOG.isDebugEnabled()) {
           LOG.debug("Setting the initial size after stretching it by (" + hs + "," + vs + "): " + initial);
         }
@@ -812,7 +824,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         wrapper.beforeShowCallback();
       }
 
-      if (!SystemInfo.isMac || !WindowRoundedCornersManager.isAvailable()) {
+      if (!SystemInfoRt.isMac || !WindowRoundedCornersManager.isAvailable()) {
         setBackground(UIUtil.getPanelBackground());
       }
       if (LOG.isDebugEnabled()) {
@@ -929,7 +941,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     @Override
     public void paint(Graphics g) {
-      if (!SystemInfo.isMac) {  // avoid rendering problems with non-aqua (alloy) LaFs under mac
+      if (!SystemInfoRt.isMac) {  // avoid rendering problems with non-aqua (alloy) LaFs under mac
         // actually, it's a bad idea to globally enable this for dialog graphics since renderers, for example, may not
         // inherit graphics so rendering hints won't be applied and trees or lists may render ugly.
         UISettings.setupAntialiasing(g);
@@ -938,7 +950,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       super.paint(g);
     }
 
-    @SuppressWarnings("SSBasedInspection")
     private final class MyWindowListener extends WindowAdapter {
       @Override
       public void windowClosing(WindowEvent e) {
@@ -1128,19 +1139,5 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   public void setAutoRequestFocus(boolean b) {
     UIUtil.setAutoRequestFocus((JDialog)myDialog, b);
-  }
-
-  private static boolean isPerProjectModality() {
-    if (ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED) {
-      return false;
-    }
-
-    RegistryManager registryManager = getRegistryManager();
-    return registryManager != null && registryManager.is("ide.perProjectModality");
-  }
-
-  private static @Nullable RegistryManager getRegistryManager() {
-    Application application = ApplicationManager.getApplication();
-    return application != null ? application.getServiceIfCreated(RegistryManager.class) : null;
   }
 }

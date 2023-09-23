@@ -1,14 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor
 import com.intellij.openapi.vfs.newvfs.persistent.log.ApplicationVFileEventsTracker.VFileEventTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.PayloadSource.Companion.isInline
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadStorageIO.Companion.fillData
 import com.intellij.openapi.vfs.newvfs.persistent.log.compaction.VfsLogCompactionController
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.PersistentVar
+import com.intellij.openapi.vfs.newvfs.persistent.log.compaction.VfsLogCompactionController.Companion.OperationMode
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.AtomicDurableRecord
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.AtomicDurableRecord.Companion.RecordBuilder
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArray.Companion.IncompatibleLayoutException
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArray.Companion.OpenMode
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArray.Companion.OpenMode.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.ExtendedVfsSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
 import com.intellij.util.SystemProperties
@@ -24,7 +32,6 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.*
-import kotlin.math.max
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -49,35 +56,38 @@ import kotlin.time.Duration.Companion.milliseconds
  *        operation1. This shouldn't bother you, unless you're changing how VfsLog compaction works.
  */
 @ApiStatus.Experimental
-class VfsLogImpl(
+class VfsLogImpl private constructor(
   private val storagePath: Path,
   private val readOnly: Boolean = false,
   // TODO telemetry and logging toggle
 ) : VfsLogEx {
-  private val versionHandler = PersistentVar.integer(storagePath / "version")
-  var version by versionHandler
-    private set
-  private val properlyClosedMarkerHandler = PersistentVar.integer(storagePath / "closeMarker")
-  private var properlyClosedMarker by properlyClosedMarkerHandler
+  private val atomicState: AtomicDurableRecord<VfsLogState> = AtomicDurableRecord.open(storagePath / "state",
+                                                                                       if (readOnly) Read else ReadWrite,
+                                                                                       stateBuilder)
   val wasProperlyClosedLastSession: Boolean
 
   init {
-    updateVersionIfNeeded()
-    wasProperlyClosedLastSession = (properlyClosedMarker ?: CLOSED_PROPERLY) == CLOSED_PROPERLY
+    val state = atomicState.get()
+    if (state.version != VERSION) {
+      LOG.warn("VfsLog storage version differs from the implementation version: log ${state.version} vs implementation $VERSION")
+    }
+    wasProperlyClosedLastSession = state.closedProperly
     if (!readOnly) {
-      properlyClosedMarker = NOT_CLOSED_PROPERLY
+      atomicState.update {
+        closedProperly = false
+      }
     }
   }
 
   @ApiStatus.Internal
   inner class ContextImpl internal constructor() : VfsLogBaseContext {
     @OptIn(ExperimentalCoroutinesApi::class)
-    val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(WORKER_THREADS_COUNT))
+    val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(MAX_WORKER_THREADS_COUNT))
 
     // todo: probably need to propagate readOnly to storages to ensure safety
     override val stringEnumerator = SimpleStringPersistentEnumerator(storagePath / "stringsEnum")
     val operationLogStorage = OperationLogStorageImpl(storagePath / "operations", stringEnumerator,
-                                                      coroutineScope, WORKER_THREADS_COUNT)
+                                                      coroutineScope, MAX_WORKER_THREADS_COUNT)
     val payloadStorage = PayloadStorageImpl(storagePath / "data")
     val compactionController = VfsLogCompactionController(
       storagePath / "compacted",
@@ -85,7 +95,7 @@ class VfsLogImpl(
       { tryAcquireCompactionContext() },
       COMPACTION_DELAY_MS,
       COMPACTION_INTERVAL_MS,
-      if (COMPACTION_MODE == -1) DEFAULT_COMPACTION_MODE else VfsLogCompactionController.OperationMode.values()[COMPACTION_MODE],
+      if (COMPACTION_MODE == -1) DEFAULT_COMPACTION_MODE else OperationMode.values()[COMPACTION_MODE],
       COMPACTION_MODE != -1
     )
 
@@ -104,11 +114,20 @@ class VfsLogImpl(
 
     val compactionCancellationRequests: AtomicInteger = AtomicInteger(0)
 
+    private val recoveryPointsCollector = RecoveryPointsCollector.open(
+      storagePath / "recovery-points",
+      if (!readOnly) ReadWrite else Read,
+      this@VfsLogImpl
+    )
+
+    fun getRecoveryPoints(): List<VfsRecoveryUtils.RecoveryPoint> = recoveryPointsCollector.getRecoveryPoints()
+
     val isDisposing: AtomicBoolean = AtomicBoolean(false)
 
     fun flush() {
       payloadStorage.flush()
       operationLogStorage.flush()
+      recoveryPointsCollector.updatePersistentState()
     }
 
     fun dispose() {
@@ -120,39 +139,29 @@ class VfsLogImpl(
       compactionController.close()
 
       operationLogStorage.closeWriteQueue()
-      // Warning: there is a tiny window for a race condition here: a thread may pass the "write queue is not closed" check and be preempted,
-      // thus appending an entry after it's awakened and when write queue is already closed and when we've already awaited all pending writes.
-      // But in an ideal world there are no writes that happen concurrently with disposal, so such events, if they tend to happen,
-      // should be noticeable even with this race (and fixed?).
-      // What this race can break: the modification will be applied to VFS, but won't be written in log (meaning that after restart we won't be
-      // able to find it in log), or we won't save it at flush. We'll probably notice it with the following checks, but in case we won't,
-      // we'll say that VfsLog was correctly disposed (false-positive CLOSED_PROPERLY).
-      // We don't want to pay for synchronization regardless.
       awaitPendingWrites(
         timeout = Duration.INFINITE // we _must_ write down every pending operation, otherwise VfsLog and VFS will be out of sync.
       )
-
-      var lostAnything = false
-      if (operationLogStorage.size() != operationLogStorage.emergingSize()) {
-        LOG.error("VfsLog didn't manage to write all data before disposal. Some data about the last operations will be lost: " +
-                  "size=${operationLogStorage.size()}, emergingSize=${operationLogStorage.emergingSize()}")
-        lostAnything = true
+      check(operationLogStorage.size() == operationLogStorage.emergingSize()) {
+        "VfsLog operation storage runtime pointers didn't converge: " +
+        "size=${operationLogStorage.size()}, emergingSize=${operationLogStorage.emergingSize()}"
       }
+
       coroutineScope.cancel("dispose")
       flush()
-      if (operationLogStorage.persistentSize() != operationLogStorage.emergingSize()) {
-        // If it happens, then there are active writers at disposal (VFS is still working and interceptors enqueue operations)
-        LOG.error("after cancellation: " +
-                  "persistentSize=${operationLogStorage.persistentSize()}, emergingSize=${operationLogStorage.emergingSize()}")
-        lostAnything = true
+      check(operationLogStorage.persistentSize() == operationLogStorage.emergingSize()) {
+        "VfsLog operations storage persistent pointers didn't converge: " +
+        "persistentSize=${operationLogStorage.persistentSize()}, emergingSize=${operationLogStorage.emergingSize()}"
       }
+
       operationLogStorage.dispose()
       payloadStorage.dispose()
-      if (!readOnly && !lostAnything) {
-        properlyClosedMarker = CLOSED_PROPERLY
+      if (!readOnly) {
+        atomicState.update {
+          closedProperly = true
+        }
       }
-      versionHandler.close()
-      properlyClosedMarkerHandler.close()
+      atomicState.close()
       LOG.info("VfsLog dispose completed in ${System.currentTimeMillis() - startTime} ms")
     }
 
@@ -187,6 +196,10 @@ class VfsLogImpl(
         flush()
       }
     }
+
+    suspend fun recoveryPointsPoller() {
+      recoveryPointsCollector.poller()
+    }
   }
 
   private val context = ContextImpl()
@@ -196,8 +209,11 @@ class VfsLogImpl(
 
   init {
     if (!readOnly) {
-      context.coroutineScope.launch {
+      context.coroutineScope.launch(CoroutineName("VfsLog flush")) {
         context.flusher()
+      }
+      context.coroutineScope.launch(CoroutineName("VFS recovery points polling")) {
+        context.recoveryPointsPoller()
       }
     }
   }
@@ -244,7 +260,7 @@ class VfsLogImpl(
       }
     }
 
-  override fun query(): VfsLogQueryContext {
+  override fun query(): VfsLogQueryContextEx {
     if (context.tryAcquireQuery()) {
       return makeQueryContext(false)
     }
@@ -253,12 +269,12 @@ class VfsLogImpl(
     return makeQueryContext(true)
   }
 
-  override fun tryQuery(): VfsLogQueryContext? {
+  override fun tryQuery(): VfsLogQueryContextEx? {
     if (!context.tryAcquireQuery()) return null
     return makeQueryContext(false)
   }
 
-  private fun makeQueryContext(cancellationWasRequested: Boolean): VfsLogQueryContext = object : VfsLogQueryContext {
+  private fun makeQueryContext(cancellationWasRequested: Boolean): VfsLogQueryContextEx = object : VfsLogQueryContextEx {
     init {
       ensureLogAndCompactionAreSynced()
     }
@@ -278,6 +294,16 @@ class VfsLogImpl(
     override val stringEnumerator: DataEnumerator<String> = context.stringEnumerator
 
     private val stableRangeIterators = context.operationLogStorage.currentlyAvailableRangeIterators()
+
+    override fun operationLogEmergingSize(): Long = context.operationLogStorage.emergingSize()
+
+    override fun operationLogIterator(position: Long): OperationLogStorage.Iterator {
+      return context.operationLogStorage.iterator(position) // TODO maybe make it constrained
+    }
+
+    override fun getRecoveryPoints(): List<VfsRecoveryUtils.RecoveryPoint> {
+      return context.getRecoveryPoints()
+    }
 
     override fun begin(): OperationLogStorage.Iterator = stableRangeIterators.first.copy()
 
@@ -378,8 +404,11 @@ class VfsLogImpl(
     }
   }
 
+  override fun getRecoveryPoints(): List<VfsRecoveryUtils.RecoveryPoint> {
+    return context.getRecoveryPoints()
+  }
 
-  fun awaitPendingWrites(timeout: Duration = Duration.INFINITE) {
+  override fun awaitPendingWrites(timeout: Duration) {
     val startTime = System.currentTimeMillis()
     while (context.operationLogStorage.size() < context.operationLogStorage.emergingSize() &&
            (System.currentTimeMillis() - startTime).milliseconds < timeout) {
@@ -387,38 +416,14 @@ class VfsLogImpl(
     }
   }
 
-  private fun updateVersionIfNeeded() {
-    version.let {
-      if (it != VERSION) {
-        if (it != null) {
-          LOG.info("VfsLog storage version differs from the implementation version: log $it vs implementation $VERSION")
-        }
-        if (!readOnly) {
-          if (it != null) {
-            LOG.info("Upgrading storage")
-            versionHandler.close()
-            try {
-              if (clearStorage(storagePath)) LOG.info("VfsLog storage was cleared")
-            }
-            catch (e: IOException) {
-              LOG.error("failed to clear VfsLog storage", e)
-            }
-            versionHandler.reopen()
-          }
-          version = VERSION
-        }
-      }
-    }
-  }
-
   companion object {
     private val LOG = Logger.getInstance(VfsLogImpl::class.java)
 
-    const val VERSION = 4
+    const val VERSION = 6
 
-    private val WORKER_THREADS_COUNT = SystemProperties.getIntProperty(
-      "idea.vfs.log-vfs-operations.workers",
-      max(4, Runtime.getRuntime().availableProcessors() / 2)
+    private val MAX_WORKER_THREADS_COUNT = SystemProperties.getIntProperty(
+      "idea.vfs.log-vfs-operations.max-workers",
+      (Runtime.getRuntime().availableProcessors() / 10).coerceAtLeast(2)
     )
 
     // compaction options
@@ -433,7 +438,7 @@ class VfsLogImpl(
       "idea.vfs.log-vfs-operations.compaction-mode",
       -1
     )
-    private val DEFAULT_COMPACTION_MODE = VfsLogCompactionController.OperationMode.CompactData
+    private val DEFAULT_COMPACTION_MODE = OperationMode.CompactData
     private val LOG_MAX_SIZE: Long = SystemProperties.getLongProperty(
       "idea.vfs.log-vfs-operations.max-log-size",
       750L * 1024 * 1024 // 750 MiB, includes payload storage size
@@ -449,17 +454,213 @@ class VfsLogImpl(
 
     private const val MAX_READERS = 16
 
-    private const val NOT_CLOSED_PROPERLY: Int = 0xBADC105
-    private const val CLOSED_PROPERLY: Int = 0xC105ED
+    private interface VfsLogState {
+      var version: Int
+      var closedProperly: Boolean
+    }
 
+    private val stateBuilder: RecordBuilder<VfsLogState>.() -> VfsLogState = {
+      object : VfsLogState { // 64 bytes
+        override var version by int(VERSION)
+        private val reserved_ by bytearray(59)
+        override var closedProperly by boolean(true)
+      }
+    }
+
+    @JvmStatic
+    fun open(
+      storagePath: Path,
+      readOnly: Boolean = false,
+      // TODO telemetry and logging toggle
+    ): VfsLogImpl {
+      if (!readOnly) {
+        deleteEverythingOnVersionMismatch(storagePath)
+      }
+      return VfsLogImpl(storagePath, readOnly)
+    }
+
+    private fun deleteEverythingOnVersionMismatch(storagePath: Path) {
+      val state = AtomicDurableRecord.open(storagePath / "state", ReadWrite, stateBuilder)
+      val version = state.get().version
+      state.close()
+      if (version != VERSION) {
+        LOG.info("Upgrading storage")
+        try {
+          if (clearStorage(storagePath)) LOG.info("VfsLog storage was cleared")
+        }
+        catch (e: IOException) {
+          LOG.error("failed to clear VfsLog storage", e)
+        }
+      }
+    }
+
+    /**
+     * deletes the vfslog storage directory completely
+     */
     @JvmStatic
     @Throws(IOException::class)
     fun clearStorage(storagePath: Path): Boolean {
+      require(storagePath.name == "vfslog")
       if (storagePath.exists()) {
         storagePath.delete(true)
         return true
       }
       return false
+    }
+
+    @JvmStatic
+    fun filterOutRecoveryPoints(storagePath: Path, validRange: LongRange) {
+      val recoveryPointsPath = storagePath / "recovery-points"
+      if (recoveryPointsPath.exists()) {
+        RecoveryPointsCollector.filterOutRecoveryPoints(recoveryPointsPath, validRange)
+      }
+    }
+  }
+}
+
+private class RecoveryPointsCollector private constructor(
+  private val stateHolder: AtomicDurableRecord<RecoveryPoints>,
+  private val vfsLogEx: VfsLogEx
+) : AutoCloseable {
+  private val currentPoints: Array<RecoveryPointData>
+  private var modificationCounter: Int = 0
+  private var persistentModificationCounter: Int = 0
+
+  init {
+    synchronized(this) {
+      currentPoints = Array(MAX_RECOVERY_POINTS) { NULL_POINT }
+      stateHolder.get().points.forEachIndexed { index, recoveryPointData ->
+        currentPoints[index] = recoveryPointData
+      }
+    }
+  }
+
+  suspend fun poller() {
+    while (true) {
+      delay(RECOVERY_POINTS_POLL_INTERVAL)
+      val recoveryPointPosition = writeAction {
+        vfsLogEx.tryQuery()?.use { query ->
+          query.operationLogEmergingSize()
+        }
+      }
+      if (recoveryPointPosition != null) {
+        val timestamp = System.currentTimeMillis()
+        synchronized(this) {
+          if (currentPoints[0].logPosition == recoveryPointPosition) return@synchronized // nothing changed since last recovery point
+          // shift points to the right, last point will be dropped
+          for (i in (MAX_RECOVERY_POINTS - 1) downTo 1) currentPoints[i] = currentPoints[i - 1]
+          // add new point
+          currentPoints[0] = RecoveryPointData(timestamp, recoveryPointPosition)
+          modificationCounter++
+        }
+      }
+    }
+  }
+
+  fun updatePersistentState() {
+    val newState = synchronized(this) {
+      val data =
+        if (persistentModificationCounter != modificationCounter) currentPoints.copyOf()
+        else null
+      persistentModificationCounter = modificationCounter
+      data
+    }
+    if (newState != null) {
+      stateHolder.update {
+        points = newState
+      }
+    }
+  }
+
+  fun getRecoveryPoints(): List<VfsRecoveryUtils.RecoveryPoint> {
+    val result = ArrayList<VfsRecoveryUtils.RecoveryPoint>(MAX_RECOVERY_POINTS)
+    vfsLogEx.query().use { query ->
+      synchronized(this) {
+        for (point in currentPoints) {
+          if (point == NULL_POINT) continue
+          if (query.begin().getPosition() <= point.logPosition && point.logPosition < query.end().getPosition()) {
+            result.add(VfsRecoveryUtils.RecoveryPoint(point.timestamp, query.operationLogIterator(point.logPosition)))
+          }
+        }
+      }
+    }
+    return result
+  }
+
+  override fun close() {
+    stateHolder.close()
+  }
+
+  companion object {
+    fun open(path: Path, mode: OpenMode, vfsLogEx: VfsLogEx): RecoveryPointsCollector {
+      try {
+        val stateHolder = AtomicDurableRecord.open(path, mode, stateBuilder)
+        return RecoveryPointsCollector(stateHolder, vfsLogEx)
+      }
+      catch (e: IncompatibleLayoutException) {
+        if (path.exists() && mode == ReadWrite) {
+          logger<RecoveryPointsCollector>().warn("deleting old recovery points", e)
+          path.deleteExisting()
+        }
+        val newStateHolder = AtomicDurableRecord.open(path, mode, stateBuilder)
+        return RecoveryPointsCollector(newStateHolder, vfsLogEx)
+      }
+    }
+
+    fun filterOutRecoveryPoints(path: Path, validRange: LongRange) {
+      AtomicDurableRecord.open(path, ReadWrite, stateBuilder).use { stateHolder ->
+        stateHolder.update {
+          val newState = points.copyOf()
+          for (i in 0 until MAX_RECOVERY_POINTS) {
+            if (newState[i].logPosition !in validRange) newState[i] = NULL_POINT
+          }
+          points = newState
+        }
+      }
+    }
+
+    private val RECOVERY_POINTS_POLL_INTERVAL: Long = SystemProperties.getLongProperty(
+      "idea.vfs.log-vfs-operations.recovery-points-poll-interval",
+      30_000L
+    )
+
+    private const val MAX_RECOVERY_POINTS = 120
+
+    internal data class RecoveryPointData(val timestamp: Long, val logPosition: Long) {
+      companion object {
+        const val SIZE_BYTES = 2 * Long.SIZE_BYTES
+      }
+    }
+
+    private val NULL_POINT = RecoveryPointData(-1, -1)
+
+    private interface RecoveryPoints {
+      // array is immutable
+      var points: Array<RecoveryPointData>
+    }
+
+    private val stateBuilder: RecordBuilder<RecoveryPoints>.() -> RecoveryPoints = {
+      object : RecoveryPoints {
+        override var points: Array<RecoveryPointData> by custom(
+          MAX_RECOVERY_POINTS * RecoveryPointData.SIZE_BYTES,
+          Array(MAX_RECOVERY_POINTS) { NULL_POINT },
+          serialize = {
+            for (point in this) {
+              it.putLong(point.timestamp)
+              it.putLong(point.logPosition)
+            }
+          },
+          deserialize = {
+            val points = Array(MAX_RECOVERY_POINTS) { NULL_POINT }
+            for (i in 0 until MAX_RECOVERY_POINTS) {
+              val timestamp = it.getLong()
+              val logPosition = it.getLong()
+              points[i] = RecoveryPointData(timestamp, logPosition)
+            }
+            points
+          }
+        )
+      }
     }
   }
 }

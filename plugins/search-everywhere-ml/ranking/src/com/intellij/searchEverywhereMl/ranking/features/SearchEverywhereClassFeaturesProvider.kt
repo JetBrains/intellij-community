@@ -2,6 +2,7 @@ package com.intellij.searchEverywhereMl.ranking.features
 
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
+import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -26,6 +27,9 @@ class SearchEverywhereClassFeaturesProvider : SearchEverywhereElementFeaturesPro
                                   searchQuery: String,
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?): List<EventPair<*>> {
+    if (element is PsiItemWithSimilarity<*>) {
+      return getElementFeatures(element.value, currentTime, searchQuery, elementPriority, cache)
+    }
     val presentation = (element as? PSIPresentationBgRendererWrapper.PsiItemWithPresentation)?.presentation
     val isDeprecated = isDeprecated(presentation) ?: return emptyList()
 

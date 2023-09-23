@@ -14,7 +14,6 @@ import com.intellij.ui.seededHasher
 import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.ui.svg.loadSvgAndCacheIfApplicable
 import com.intellij.util.ArrayUtilRt
-import com.intellij.util.ResourceUtil
 import com.intellij.util.SVGLoader
 import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.StartupUiUtil
@@ -55,11 +54,8 @@ private object ImageCache {
 }
 
 @ApiStatus.Internal
-fun loadImageByClassLoader(path: String,
-                           classLoader: ClassLoader,
-                           scaleContext: ScaleContext,
-                           isDark: Boolean = StartupUiUtil.isUnderDarcula): Image? {
-  return loadImage(path = path, isDark = isDark, scaleContext = scaleContext, classLoader = classLoader)
+fun loadImageByClassLoader(path: String, classLoader: ClassLoader, scaleContext: ScaleContext): Image? {
+  return loadImage(path = path, isDark = StartupUiUtil.isDarkTheme, scaleContext = scaleContext, classLoader = classLoader)
 }
 
 @TestOnly
@@ -69,33 +65,11 @@ fun loadImageFromUrlWithoutCache(path: String): Image? {
   return loadImage(path = path, useCache = false, classLoader = null)
 }
 
-@ApiStatus.Internal
-fun findSvgData(path: String, classLoader: ClassLoader, pixScale: Float, isDark: Boolean = StartupUiUtil.isUnderDarcula): ByteArray? {
-  val loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
-  val descriptors = createImageDescriptorList(path = path, isDark = isDark, pixScale = pixScale)
-  val ext = "svg"
-  val rawPathWithoutExt = path.substring(if (path.startsWith('/')) 1 else 0, path.lastIndexOf('.'))
-  for (descriptor in descriptors) {
-    val transformedPath = descriptor.pathTransform(rawPathWithoutExt, ext)
-    val resourceLoadStart = StartUpMeasurer.getCurrentTimeIfEnabled()
-    val data = ResourceUtil.getResourceAsBytes(transformedPath, classLoader, true) ?: continue
-    if (resourceLoadStart != -1L) {
-      IconLoadMeasurer.loadFromResources.end(resourceLoadStart)
-    }
-    if (loadingStart != -1L) {
-      IconLoadMeasurer.addLoading(isSvg = descriptor.isSvg, start = loadingStart)
-    }
-
-    return data
-  }
-  return null
-}
-
 internal fun loadImage(path: String,
                        resourceClass: Class<*>? = null,
                        classLoader: ClassLoader?,
                        scaleContext: ScaleContext = ScaleContext.create(),
-                       isDark: Boolean = StartupUiUtil.isUnderDarcula,
+                       isDark: Boolean = StartupUiUtil.isDarkTheme,
                        colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider? = null,
                        filters: List<ImageFilter> = emptyList(),
                        useCache: Boolean = true): Image? {

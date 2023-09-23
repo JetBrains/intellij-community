@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.testFramework.RunAll
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.BundledMaven3
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getWindowsFile
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getWslFile
@@ -57,21 +58,21 @@ class MavenWslUtilTestCase : MavenTestCase() {
   }
 
   @Test
-  fun testShouldReturnMavenLocalDirOnWsl() {
+  fun testShouldReturnMavenLocalDirOnWsl() = runBlocking {
     TestCase.assertEquals(
       File(File(myUserHome, ".m2"), "repository"),
       myDistribution.resolveLocalRepository(null, BundledMaven3, null))
   }
 
   @Test
-  fun testShouldReturnMavenLocalSettings() {
+  fun testShouldReturnMavenLocalSettings() = runBlocking {
     TestCase.assertEquals(
       File(File(myUserHome, ".m2"), "settings.xml"),
       myDistribution.resolveUserSettingsFile(null))
   }
 
   @Test
-  fun testShouldReturnMavenRepoForOverloadedSettings() {
+  fun testShouldReturnMavenRepoForOverloadedSettings() = runBlocking {
 
     val subFile = createProjectSubFile("settings.xml",
                                        "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
@@ -84,29 +85,29 @@ class MavenWslUtilTestCase : MavenTestCase() {
   }
 
   @Test
-  fun testShouldReturnCorrectM2Dir() {
+  fun testShouldReturnCorrectM2Dir() = runBlocking {
     TestCase.assertEquals(
       File(myUserHome, ".m2"),
       myDistribution.resolveM2Dir())
   }
 
   @Test
-  fun testWindowFileMapInMnt() {
+  fun testWindowFileMapInMnt() = runBlocking {
     TestCase.assertEquals(File("c:\\somefile"), myDistribution.getWindowsFile(File("/mnt/c/somefile")))
   }
 
   @Test
-  fun testWindowFileMapInternalWsl() {
+  fun testWindowFileMapInternalWsl() = runBlocking {
     TestCase.assertEquals(File("\\\\wsl$\\${myDistribution.msId}\\somefile"), myDistribution.getWindowsFile(File("/somefile")))
   }
 
   @Test
-  fun testWslFileMapInMnt() {
+  fun testWslFileMapInMnt() = runBlocking {
     TestCase.assertEquals(File("/mnt/c/somefile"), myDistribution.getWslFile(File("c:\\somefile")))
   }
 
   @Test
-  fun testWslFileMapInternalWsl() {
+  fun testWslFileMapInternalWsl() = runBlocking {
     TestCase.assertEquals(File("/somefile"), myDistribution.getWslFile(File("\\\\wsl$\\${myDistribution.msId}\\somefile")))
   }
 }

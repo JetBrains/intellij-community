@@ -83,7 +83,7 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   }
 
   @VisibleForTesting
-  protected int loadRecordsCount(final long storageSizeBytes) throws IOException {
+  int loadRecordsCount(final long storageSizeBytes) throws IOException {
     if (storageSizeBytes == 0) {
       return 0;
     }
@@ -734,7 +734,7 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
 
   /** Without recordId bounds checking */
   @VisibleForTesting
-  protected long recordOffsetInFileUnchecked(final int recordId) {
+  long recordOffsetInFileUnchecked(final int recordId) {
     //recordId is 1-based, but 0-based is more convenient for the following:
     final int recordNo = recordId - 1;
 

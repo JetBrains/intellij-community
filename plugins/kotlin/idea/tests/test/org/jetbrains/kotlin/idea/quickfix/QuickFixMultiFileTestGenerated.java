@@ -715,6 +715,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/noFunctionImportOnSimpleName.test");
             }
 
+            @TestMetadata("noImportForCallableInConstructorCall.test")
+            public void testNoImportForCallableInConstructorCall() throws Exception {
+                runTest("testData/quickfix/autoImports/noImportForCallableInConstructorCall.test");
+            }
+
+            @TestMetadata("noImportForCallableInTypeReference.test")
+            public void testNoImportForCallableInTypeReference() throws Exception {
+                runTest("testData/quickfix/autoImports/noImportForCallableInTypeReference.test");
+            }
+
             @TestMetadata("noImportForFunInQualifiedNotFirst.before.Main.kt")
             public void testNoImportForFunInQualifiedNotFirst() throws Exception {
                 runTest("testData/quickfix/autoImports/noImportForFunInQualifiedNotFirst.before.Main.kt");

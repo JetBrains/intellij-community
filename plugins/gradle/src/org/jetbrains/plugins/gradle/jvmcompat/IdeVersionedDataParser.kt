@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.jvmcompat
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.plugins.gradle.util.Ranges
 import org.jetbrains.plugins.gradle.util.range
@@ -48,7 +49,7 @@ abstract class IdeVersionedDataParser<T : IdeVersionedDataState> {
 
       parseJson(obj)?.let {
         it.isDefault = false
-        it.ideVersion = versionInfo
+        it.ideVersion = ApplicationInfo.getInstance().fullVersion
         it.lastUpdateTime = System.currentTimeMillis()
         return it
       }

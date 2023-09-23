@@ -85,10 +85,11 @@
     <scriptTypeDetector implementation="org.jetbrains.plugins.gradle.config.GradleScriptTypeDetector"/>
     <importContributor implementation="org.jetbrains.plugins.gradle.config.GradleDefaultImportContributor"/>
     <variableEnhancer order="first" implementation="org.jetbrains.plugins.gradle.service.resolve.GradleClosureSamParameterEnhancer"/>
+    <variableEnhancer implementation="org.jetbrains.plugins.gradle.service.resolve.transformation.GradleClosureParameterEnhancer"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleSettingsScriptContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleScriptMembersContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleProjectExtensionContributor"/>
-    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.transformation.GradlePropertySetterMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.transformation.GradleSyntheticSetterMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.transformation.GradleConfigurableCallContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.transformation.GradleActionToClosureMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleProjectMembersContributor"/>
@@ -104,7 +105,6 @@
     <callTypeCalculator implementation="org.jetbrains.plugins.gradle.service.resolve.GradleArtifactCallTypeCalculator"/>
     <delegatesToProvider implementation="org.jetbrains.plugins.gradle.service.resolve.GradleTaskDeclarationClosureDelegateProvider"/>
     <delegatesToProvider implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDelegatesToProvider"/>
-    <delegatesToProvider implementation="org.jetbrains.plugins.gradle.service.resolve.GradleActionDelegatesToProvider"/>
     <elementFilter implementation="org.jetbrains.plugins.gradle.service.resolve.GradleTaskDeclarationElementFilter"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression"
                     implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleTaskDeclarationTypeCalculator"/>

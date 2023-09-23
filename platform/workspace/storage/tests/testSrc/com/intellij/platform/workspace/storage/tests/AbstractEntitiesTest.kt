@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBas
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
@@ -72,7 +73,7 @@ class AbstractEntitiesTest {
     val middleEntity = builder.addMiddleEntity()
     val leftEntity = builder.addLeftEntity(sequenceOf(middleEntity))
 
-    val anotherBuilder = MutableEntityStorage.from(builder)
+    val anotherBuilder = MutableEntityStorage.from(builder.toSnapshot())
     val anotherMiddleEntity = anotherBuilder.addMiddleEntity("Another")
     anotherBuilder.modifyEntity(leftEntity.from(anotherBuilder)) {
       this.children = listOf(middleEntity, anotherMiddleEntity)

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.applyIf
@@ -9,6 +10,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogStorage
+import com.intellij.vcs.log.graph.api.EdgeFilter
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.utils.BfsWalk
@@ -22,12 +24,14 @@ internal object IndexDiagnostic {
   private const val COMMITS_TO_CHECK = 10
   private const val INDEXED_COMMITS_ITERATIONS_LIMIT = 5_000
 
-  fun IndexDataGetter.getDiffFor(commitsIdList: List<Int>, commitDetailsList: List<VcsFullCommitDetails>): String {
+  fun IndexDataGetter.getDiffFor(commitsIdList: List<Int>, commitDetailsList: List<VcsFullCommitDetails>, checkAllCommits: Boolean = true): String {
     val report = StringBuilder()
     for ((commitId, commitDetails) in commitsIdList.zip(commitDetailsList)) {
       getDiffFor(commitId, commitDetails)?.let { commitReport ->
         report.append(commitReport).append("\n")
       }
+      if (!checkAllCommits && report.isNotBlank()) return report.toString()
+      ProgressManager.checkCanceled()
     }
     return report.toString()
   }
@@ -81,6 +85,7 @@ internal object IndexDiagnostic {
         sb.append(VcsLogBundle.message("vcs.log.index.diagnostic.error.filter", filter, details.id.toShortString()))
           .append("\n")
       }
+      ProgressManager.checkCanceled()
     }
     if (sb.isEmpty()) return null
     return sb.toString()
@@ -125,6 +130,7 @@ internal object IndexDiagnostic {
     @Suppress("UNCHECKED_CAST") val permanentGraphInfo = permanentGraph as? PermanentGraphInfo<Int> ?: return emptySet()
     for (i in 0 until COMMITS_TO_CHECK) {
       val node = i * (permanentGraphInfo.linearGraph.nodesCount() / COMMITS_TO_CHECK)
+      if (permanentGraphInfo.linearGraph.getAdjacentEdges(node, EdgeFilter.NORMAL_DOWN).size != 1) continue
       val commit = permanentGraphInfo.permanentCommitsInfo.getCommitId(node)
       if (!dataGetter.indexStorageBackend.containsCommit(commit)) continue
       val root = dataGetter.logStorage.getCommitId(commit)?.root ?: continue
@@ -136,9 +142,12 @@ internal object IndexDiagnostic {
 
     // iterate over a limited number of indexed commits to select more commits to check
     dataGetter.iterateIndexedCommits(INDEXED_COMMITS_ITERATIONS_LIMIT) { commit ->
-      val root = dataGetter.logStorage.getCommitId(commit)?.root
-      if (root != null && roots.contains(root)) {
-        result.add(commit)
+      val node = permanentGraphInfo.permanentCommitsInfo.getNodeId(commit)
+      if (node >= 0 && permanentGraphInfo.linearGraph.getAdjacentEdges(node, EdgeFilter.NORMAL_DOWN).size == 1) {
+        val root = dataGetter.logStorage.getCommitId(commit)?.root
+        if (root != null && roots.contains(root)) {
+          result.add(commit)
+        }
       }
       result.size < COMMITS_TO_CHECK
     }

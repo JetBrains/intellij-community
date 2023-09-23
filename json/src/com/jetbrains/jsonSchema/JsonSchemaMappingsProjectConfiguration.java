@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.json.JsonBundle;
@@ -24,11 +24,10 @@ import java.util.*;
 
 @State(name = "JsonSchemaMappingsProjectConfiguration", storages = @Storage("jsonSchemas.xml"))
 public class JsonSchemaMappingsProjectConfiguration implements PersistentStateComponent<JsonSchemaMappingsProjectConfiguration.MyState> {
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
   public volatile MyState myState = new MyState();
 
-  @Nullable
-  public UserDefinedJsonSchemaConfiguration findMappingBySchemaInfo(JsonSchemaInfo value) {
+  public @Nullable UserDefinedJsonSchemaConfiguration findMappingBySchemaInfo(JsonSchemaInfo value) {
     for (UserDefinedJsonSchemaConfiguration configuration : myState.myState.values()) {
       if (areSimilar(value, configuration)) return configuration;
     }
@@ -39,9 +38,8 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
     return Objects.equals(normalizePath(value.getUrl(myProject)), normalizePath(configuration.getRelativePathToSchema()));
   }
 
-  @Nullable
   @Contract("null -> null; !null -> !null")
-  public String normalizePath(@Nullable String valueUrl) {
+  public @Nullable String normalizePath(@Nullable String valueUrl) {
     if (valueUrl == null) return null;
     if (StringUtil.contains(valueUrl, "..")) {
       valueUrl = new File(valueUrl).getAbsolutePath();
@@ -49,8 +47,7 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
     return valueUrl.replace('\\', '/');
   }
 
-  @Nullable
-  public UserDefinedJsonSchemaConfiguration findMappingForFile(VirtualFile file) {
+  public @Nullable UserDefinedJsonSchemaConfiguration findMappingForFile(VirtualFile file) {
     VirtualFile projectBaseDir = myProject.getBaseDir();
     for (UserDefinedJsonSchemaConfiguration configuration : myState.myState.values()) {
       for (UserDefinedJsonSchemaConfiguration.Item pattern : configuration.patterns) {
@@ -64,7 +61,7 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
     return null;
   }
 
-  public static JsonSchemaMappingsProjectConfiguration getInstance(@NotNull final Project project) {
+  public static JsonSchemaMappingsProjectConfiguration getInstance(final @NotNull Project project) {
     return project.getService(JsonSchemaMappingsProjectConfiguration.class);
   }
 
@@ -72,15 +69,14 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
     myProject = project;
   }
 
-  @Nullable
   @Override
-  public MyState getState() {
+  public @Nullable MyState getState() {
     return myState;
   }
 
-  public void schemaFileMoved(@NotNull final Project project,
-                              @NotNull final String oldRelativePath,
-                              @NotNull final String newRelativePath) {
+  public void schemaFileMoved(final @NotNull Project project,
+                              final @NotNull String oldRelativePath,
+                              final @NotNull String newRelativePath) {
       final Optional<UserDefinedJsonSchemaConfiguration> old = myState.myState.values().stream()
         .filter(schema -> FileUtil.pathsEqual(schema.getRelativePathToSchema(), oldRelativePath))
         .findFirst();
@@ -121,7 +117,7 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
     myState = new MyState(state);
   }
 
-  static class MyState {
+  static final class MyState {
     @Tag("state")
     @XCollection
     public Map<String, UserDefinedJsonSchemaConfiguration> myState = new TreeMap<>();

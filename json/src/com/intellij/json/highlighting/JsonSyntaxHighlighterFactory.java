@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.highlighting;
 
 import com.intellij.json.JsonElementTypes;
@@ -66,17 +66,15 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   public static final TextAttributesKey JSON_PARAMETER = TextAttributesKey.createTextAttributesKey("JSON.PARAMETER", KEYWORD);
 
 
-  @NotNull
   @Override
-  public SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {
+  public @NotNull SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {
     return new MyHighlighter(virtualFile);
   }
 
-  private class MyHighlighter extends SyntaxHighlighterBase {
+  private final class MyHighlighter extends SyntaxHighlighterBase {
     private final Map<IElementType, TextAttributesKey> ourAttributes = new HashMap<>();
 
-    @Nullable
-    private final VirtualFile myFile;
+    private final @Nullable VirtualFile myFile;
 
     {
       fillMap(ourAttributes, JSON_BRACES, JsonElementTypes.L_CURLY, JsonElementTypes.R_CURLY);
@@ -102,16 +100,14 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
       myFile = file;
     }
 
-    @NotNull
     @Override
-    public Lexer getHighlightingLexer() {
+    public @NotNull Lexer getHighlightingLexer() {
       LayeredLexer layeredLexer = new LayeredLexer(getLexer());
       boolean isPermissiveDialect = isPermissiveDialect();
       layeredLexer.registerSelfStoppingLayer(new StringLiteralLexer('\"', JsonElementTypes.DOUBLE_QUOTED_STRING, isCanEscapeEol(),
                                                                     isPermissiveDialect ? PERMISSIVE_ESCAPES : "/", false, isPermissiveDialect) {
-                                               @NotNull
                                                @Override
-                                               protected IElementType handleSingleSlashEscapeSequence() {
+                                               protected @NotNull IElementType handleSingleSlashEscapeSequence() {
                                                  return isPermissiveDialect ? myOriginalLiteralToken : super.handleSingleSlashEscapeSequence();
                                                }
 
@@ -123,9 +119,8 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
                                              new IElementType[]{JsonElementTypes.DOUBLE_QUOTED_STRING}, IElementType.EMPTY_ARRAY);
       layeredLexer.registerSelfStoppingLayer(new StringLiteralLexer('\'', JsonElementTypes.SINGLE_QUOTED_STRING, isCanEscapeEol(),
                                                                     isPermissiveDialect ? PERMISSIVE_ESCAPES : "/", false, isPermissiveDialect){
-                                               @NotNull
                                                @Override
-                                               protected IElementType handleSingleSlashEscapeSequence() {
+                                               protected @NotNull IElementType handleSingleSlashEscapeSequence() {
                                                  return isPermissiveDialect ? myOriginalLiteralToken : super.handleSingleSlashEscapeSequence();
                                                }
 
@@ -154,8 +149,7 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
     }
   }
 
-  @NotNull
-  protected Lexer getLexer() {
+  protected @NotNull Lexer getLexer() {
     return new JsonLexer();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet.filters;
 
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
@@ -23,9 +23,8 @@ public class CommentZenCodingFilter extends ZenCodingFilter {
     return builder.toString();
   }
 
-  @NotNull
   @Override
-  public String filterText(@NotNull String text, @NotNull TemplateToken token) {
+  public @NotNull String filterText(@NotNull String text, @NotNull TemplateToken token) {
     XmlTag tag = token.getXmlTag();
     if (tag != null) {
       String classAttr = token.getAttributes().get(HtmlUtil.CLASS_ATTRIBUTE_NAME);
@@ -38,14 +37,12 @@ public class CommentZenCodingFilter extends ZenCodingFilter {
     return text;
   }
 
-  @NotNull
-  protected String getCommentFormat() {
+  protected @NotNull String getCommentFormat() {
     return "%s\n<!-- /%s -->";
   }
 
-  @NotNull
   @Override
-  public String getSuffix() {
+  public @NotNull String getSuffix() {
     return "c";
   }
 
@@ -55,9 +52,8 @@ public class CommentZenCodingFilter extends ZenCodingFilter {
     return parent != null && parent.getLanguage() instanceof XMLLanguage;
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return XmlBundle.message("emmet.filter.comment.tags");
   }
 }

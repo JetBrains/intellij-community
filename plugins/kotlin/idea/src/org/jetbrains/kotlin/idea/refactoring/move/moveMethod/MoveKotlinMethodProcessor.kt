@@ -88,7 +88,7 @@ class MoveKotlinMethodProcessor(
         internalUsages += method.getInternalReferencesToUpdateOnPackageNameChange(changeInfo)
         traverseOuterInstanceReferences(method) { internalUsages += it }
 
-        conflicts.putAllValues(KotlinMoveConflictCheckerSupport.getInstance().checkAllConflicts(
+        conflicts.putAllValues(checkAllConflicts(
             conflictChecker, internalUsages, methodCallUsages.filter { it is KotlinMoveRenameUsage && !it.isInternal }.toMutableSet()
         ))
 

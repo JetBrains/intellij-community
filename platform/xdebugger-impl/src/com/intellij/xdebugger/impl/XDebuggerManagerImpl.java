@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
-import com.intellij.AppTopics;
 import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
@@ -39,7 +38,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -79,12 +77,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @State(name = "XDebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class XDebuggerManagerImpl extends XDebuggerManager implements PersistentStateComponent<XDebuggerState>, Disposable {
-  /**
-   * @deprecated Use {@link #getNotificationGroup()}
-   */
-  @Deprecated(forRemoval = true)
-  public static final NotificationGroup NOTIFICATION_GROUP = getNotificationGroup();
-
   public static final DataKey<Integer> ACTIVE_LINE_NUMBER = DataKey.create("active.line.number");
 
   private final Project myProject;
@@ -97,6 +89,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   private XDebuggerState myState = new XDebuggerState();
 
+  private InlayRunToCursorEditorListener myNewRunToCursorListener = null;
+
   XDebuggerManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
 
@@ -107,7 +101,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     myPinToTopManager = new XDebuggerPinToTopManager();
     myExecutionPointManager = new XDebuggerExecutionPointManager(project, coroutineScope);
 
-    messageBusConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    messageBusConnection.subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
         myExecutionPointManager.updateExecutionPosition(file, true);
@@ -179,10 +173,23 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     eventMulticaster.addEditorMouseListener(listener, this);
     eventMulticaster.addEditorMouseMotionListener(bpPromoter, this);
     if (ExperimentalUI.isNewUI()) {
-      InlayRunToCursorEditorListener newRunToCursorListener = new InlayRunToCursorEditorListener(myProject);
-      eventMulticaster.addEditorMouseMotionListener(newRunToCursorListener, this);
-      eventMulticaster.addEditorMouseListener(newRunToCursorListener, this);
+      myNewRunToCursorListener = new InlayRunToCursorEditorListener(myProject, coroutineScope);
+      eventMulticaster.addEditorMouseMotionListener(myNewRunToCursorListener, this);
+      eventMulticaster.addEditorMouseListener(myNewRunToCursorListener, this);
+
+      myNewRunToCursorListener.installScrollListeners(this);
     }
+  }
+
+  void reshowInlayToolbar(@NotNull Editor editor) {
+    if (myNewRunToCursorListener == null) {
+      return;
+    }
+    XDebugSessionImpl session = getCurrentSession();
+    if (session == null) {
+      return;
+    }
+    myNewRunToCursorListener.scheduleInlayRunToCursor(editor, session);
   }
 
   @Override
@@ -482,7 +489,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     RangeHighlighter myCurrentHighlighter;
 
     boolean isEnabled(@NotNull EditorMouseEvent e) {
-      if (Registry.is("debugger.inlayRunToCursor") && ExperimentalUI.isNewUI()) return false;
+      if (InlayRunToCursorEditorListener.isInlayRunToCursorEnabled() && ExperimentalUI.isNewUI()) return false;
 
       Editor editor = e.getEditor();
       if (ExperimentalUI.isNewUI() && ShowBreakpointsOverLineNumbersAction.isSelected()) {

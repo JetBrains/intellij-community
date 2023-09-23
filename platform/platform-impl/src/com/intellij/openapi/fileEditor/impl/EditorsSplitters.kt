@@ -57,6 +57,7 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBRectangle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -192,6 +193,12 @@ open class EditorsSplitters internal constructor(
 
     coroutineScope.launch(CoroutineName("EditorSplitters file icon update")) {
       iconUpdateChannel.start()
+    }
+
+    coroutineScope.launch(CoroutineName("EditorSplitters frame title update")) {
+      currentCompositeFlow.collectLatest { composite ->
+        updateFrameTitle()
+      }
     }
   }
 
@@ -474,6 +481,10 @@ open class EditorsSplitters internal constructor(
       }
     }
 
+    updateFrameTitle()
+  }
+
+  private suspend fun updateFrameTitle() {
     val project = manager.project
     val frame = getFrame() ?: return
     val file = currentFile
@@ -1000,14 +1011,17 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
           }
         }
       }
-      else {
-        val window = windowDeferred.await()
-        fileEditorManager.addSelectionRecord(focusedFile, window)
-        splitters.coroutineScope.launch(Dispatchers.EDT) {
-          window.getComposite(focusedFile)?.let { composite ->
-            window.selectOpenedCompositeOnStartup(composite = composite)
-            splitters.setCurrentWindowAndComposite(window = window)
-          }
+
+      val window = windowDeferred.await()
+      splitters.coroutineScope.launch(Dispatchers.EDT) {
+        val composite = focusedFile?.let { window.getComposite(focusedFile) } ?: window.selectedComposite
+        if (composite != null) {
+          fileEditorManager.addSelectionRecord(composite.file, window)
+
+          // OPENED_IN_BULK is forcing 'JBTabsImpl.addTabWithoutUpdating',
+          // so these need to be fired even if the composite is already selected
+          window.selectOpenedCompositeOnStartup(composite = composite)
+          splitters.setCurrentWindowAndComposite(window = window)
         }
       }
     }
@@ -1037,13 +1051,8 @@ private fun enableEditorActivationOnEscape() {
 }
 
 private fun getSplitCount(component: JComponent): Int {
-  if (component.componentCount <= 0) {
-    return 0
-  }
-
-  val firstChild = component.getComponent(0)
-  if (firstChild is Splitter) {
-    return getSplitCount(firstChild.firstComponent) + getSplitCount(firstChild.secondComponent)
+  if (component is Splitter) {
+    return getSplitCount(component.firstComponent) + getSplitCount(component.secondComponent)
   }
   return 1
 }

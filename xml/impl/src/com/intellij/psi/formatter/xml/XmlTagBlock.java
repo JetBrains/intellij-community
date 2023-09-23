@@ -154,12 +154,11 @@ public class XmlTagBlock extends AbstractXmlBlock {
   }
 
   @Override
-  @Nullable
-  protected ASTNode processChild(@NotNull List<Block> result,
-                                 final @NotNull ASTNode child,
-                                 final Wrap wrap,
-                                 final Alignment alignment,
-                                 final Indent indent) {
+  protected @Nullable ASTNode processChild(@NotNull List<Block> result,
+                                           final @NotNull ASTNode child,
+                                           final Wrap wrap,
+                                           final Alignment alignment,
+                                           final Indent indent) {
     IElementType type = child.getElementType();
     if (type == XmlElementType.XML_TEXT) {
       List<Block> injections = new SmartList<>();
@@ -482,8 +481,7 @@ public class XmlTagBlock extends AbstractXmlBlock {
   }
 
   @Override
-  @NotNull
-  public ChildAttributes getChildAttributes(final int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(final int newChildIndex) {
     if (isAfterAttribute(newChildIndex)) {
       List<Block> subBlocks = getSubBlocks();
       Block subBlock = subBlocks.get(newChildIndex - 1);

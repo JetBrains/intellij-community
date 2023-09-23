@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,17 +35,13 @@ public abstract class Html5SchemaProvider {
     return CHARS_DTD_LOCATION.getValue();
   }
 
-  @NotNull
-  private static Html5SchemaProvider getInstance() {
+  private static @NotNull Html5SchemaProvider getInstance() {
     return ApplicationManager.getApplication().getService(Html5SchemaProvider.class);
   }
 
-  @NotNull
-  public abstract URL getHtmlSchemaLocation();
+  public abstract @NotNull URL getHtmlSchemaLocation();
 
-  @NotNull
-  public abstract URL getXhtmlSchemaLocation();
+  public abstract @NotNull URL getXhtmlSchemaLocation();
 
-  @NotNull
-  public abstract URL getCharsLocation();
+  public abstract @NotNull URL getCharsLocation();
 }

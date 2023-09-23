@@ -6,6 +6,7 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassInitializerStubImpl;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.PsiClassInitializerImpl;
 import com.intellij.psi.impl.source.tree.java.ClassInitializerElement;
 import com.intellij.psi.stubs.IndexSink;
@@ -18,7 +19,7 @@ import java.io.IOException;
 
 public class JavaClassInitializerElementType extends JavaStubElementType<PsiClassInitializerStub, PsiClassInitializer> {
   public JavaClassInitializerElementType() {
-    super("CLASS_INITIALIZER");
+    super("CLASS_INITIALIZER", BasicJavaElementType.BASIC_CLASS_INITIALIZER);
   }
 
   @NotNull
@@ -47,6 +48,11 @@ public class JavaClassInitializerElementType extends JavaStubElementType<PsiClas
 
   @Override
   public void serialize(@NotNull final PsiClassInitializerStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
+  }
+
+  @Override
+  public boolean isAlwaysEmpty() {
+    return true;
   }
 
   @NotNull

@@ -11,14 +11,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileFactory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenEffectivePomEvaluator
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil
-import org.jetbrains.idea.maven.utils.performInBackground
 import java.io.IOException
 
 class MavenShowEffectivePom : AnAction(), DumbAware {
@@ -26,7 +27,8 @@ class MavenShowEffectivePom : AnAction(), DumbAware {
     val project = MavenActionUtil.getProject(event.dataContext) ?: return
     val file = findPomXml(event.dataContext) ?: return
     if (!MavenServerManager.getInstance().isUseMaven2) {
-      performInBackground { actionPerformed(project, file) }
+      val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+      cs.launch { actionPerformed(project, file) }
     }
   }
 

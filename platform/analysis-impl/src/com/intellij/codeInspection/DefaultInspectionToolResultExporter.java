@@ -17,11 +17,14 @@ import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -295,27 +298,37 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   @Nullable
   @Override
   public HighlightSeverity getSeverity(@NotNull RefElement element) {
-    return ReadAction.nonBlocking(() -> {
-      PsiElement psiElement = ((RefElement)element.getRefManager().getRefinedElement(element)).getPointer().getContainingFile();
-      if (psiElement != null) {
-        GlobalInspectionContextBase context = getContext();
-        String shortName = getSeverityDelegateName();
-        Tools tools = context.getTools().get(shortName);
-        if (tools != null) {
-          for (ScopeToolState state : tools.getTools()) {
-            InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
-            if (toolWrapper == getToolWrapper()) {
-              return context.getCurrentProfile().getErrorLevel(HighlightDisplayKey.find(shortName), psiElement).getSeverity();
-            }
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      return WriteIntentReadAction
+        .compute((Computable<HighlightSeverity>)() -> doGetSeverity(element));
+    } else {
+      return ReadAction
+        .nonBlocking(() -> doGetSeverity(element))
+        .executeSynchronously();
+    }
+  }
+
+  @Nullable
+  private HighlightSeverity doGetSeverity(@NotNull RefElement element) {
+    PsiElement psiElement = ((RefElement)element.getRefManager().getRefinedElement(element)).getPointer().getContainingFile();
+    if (psiElement != null) {
+      GlobalInspectionContextBase context = getContext();
+      String shortName = getSeverityDelegateName();
+      Tools tools = context.getTools().get(shortName);
+      if (tools != null) {
+        for (ScopeToolState state : tools.getTools()) {
+          InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
+          if (toolWrapper == getToolWrapper()) {
+            return context.getCurrentProfile().getErrorLevel(HighlightDisplayKey.find(shortName), psiElement).getSeverity();
           }
         }
-
-        InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getCurrentProfile();
-        HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(shortName), psiElement);
-        return level.getSeverity();
       }
-      return null;
-    }).executeSynchronously();
+
+      InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getCurrentProfile();
+      HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(shortName), psiElement);
+      return level.getSeverity();
+    }
+    return null;
   }
 
   @Override

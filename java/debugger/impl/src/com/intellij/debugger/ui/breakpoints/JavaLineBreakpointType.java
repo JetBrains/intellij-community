@@ -34,6 +34,7 @@ import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import org.jetbrains.annotations.Nls;

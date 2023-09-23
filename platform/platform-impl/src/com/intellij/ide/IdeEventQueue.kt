@@ -10,7 +10,7 @@ import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.EventWatcher
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PerformanceWatcher
-import com.intellij.ide.MnemonicUsageCollector.Companion.logMnemonicUsed
+import com.intellij.ide.MnemonicUsageCollector.logMnemonicUsed
 import com.intellij.ide.actions.MaximizeActiveDialogAction
 import com.intellij.ide.dnd.DnDManager
 import com.intellij.ide.dnd.DnDManagerImpl
@@ -53,6 +53,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import sun.awt.AppContext
+import sun.awt.PeerEvent
 import java.awt.*
 import java.awt.event.*
 import java.lang.invoke.MethodHandle
@@ -62,6 +63,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 import javax.swing.*
 import javax.swing.plaf.basic.ComboPopup
@@ -96,6 +98,9 @@ class IdeEventQueue private constructor() : EventQueue() {
   @VisibleForTesting
   @JvmField
   val keyboardEventDispatched: AtomicInteger = AtomicInteger()
+
+  private val eventsPosted = AtomicLong()
+  private val eventsReturned = AtomicLong()
 
   private var isInInputEvent = false
   var trueCurrentEvent: AWTEvent = InvocationEvent(this, EmptyRunnable.getInstance())
@@ -391,6 +396,9 @@ class IdeEventQueue private constructor() : EventQueue() {
     finally {
       Thread.interrupted()
       if (event is WindowEvent || event is FocusEvent || event is InputEvent) {
+        // Increment the activity counter right before notifying listeners
+        // so that the listeners would get data providers with fresh data
+        incrementActivityCountIfNeeded(e)
         processIdleActivityListeners(event)
       }
       performanceWatcher?.edtEventFinished()
@@ -468,6 +476,7 @@ class IdeEventQueue private constructor() : EventQueue() {
         super.getNextEvent()
       }
     }
+    eventsReturned.incrementAndGet()
     if (isKeyboardEvent(event) && keyboardEventDispatched.incrementAndGet() > keyboardEventPosted.get()) {
       throw RuntimeException("$event; posted: $keyboardEventPosted; dispatched: $keyboardEventDispatched")
     }
@@ -546,8 +555,9 @@ class IdeEventQueue private constructor() : EventQueue() {
       return
     }
 
-    // increment the activity counter before performing the action so that they are called with data providers with fresh data
-    ActivityTracker.getInstance().inc()
+    // increment the activity counter before performing the action
+    // so that they are called with data providers with fresh data
+    incrementActivityCountIfNeeded(e)
     if (popupManager.isPopupActive && popupManager.dispatch(e)) {
       if (keyEventDispatcher.isWaitingForSecondKeyStroke) {
         keyEventDispatcher.state = KeyState.STATE_INIT
@@ -581,25 +591,26 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
-  private fun processIdleActivityListeners(e: AWTEvent) {
-    val isActivityInputEvent = KeyEvent.KEY_PRESSED == e.id ||
-                               KeyEvent.KEY_TYPED == e.id ||
-                               MouseEvent.MOUSE_PRESSED == e.id ||
-                               MouseEvent.MOUSE_RELEASED == e.id ||
-                               MouseEvent.MOUSE_CLICKED == e.id
-    if (isActivityInputEvent || e !is InputEvent) {
-      // Increment the activity counter right before notifying listeners so that the listeners would get data providers with fresh data
+  private fun isActivityInputEvent(e: AWTEvent): Boolean =
+    KeyEvent.KEY_PRESSED == e.id ||
+    KeyEvent.KEY_TYPED == e.id ||
+    MouseEvent.MOUSE_PRESSED == e.id ||
+    MouseEvent.MOUSE_RELEASED == e.id ||
+    MouseEvent.MOUSE_CLICKED == e.id
+
+  private fun incrementActivityCountIfNeeded(e: AWTEvent) {
+    if (isActivityInputEvent(e) || e is WindowEvent || e is FocusEvent) {
       ActivityTracker.getInstance().inc()
     }
+  }
 
+  private fun processIdleActivityListeners(e: AWTEvent) {
     idleTracker()
-
+    if (!isActivityInputEvent(e)) return
     synchronized(lock) {
-      if (isActivityInputEvent) {
-        lastActiveTime = System.nanoTime()
-        for (activityListener in activityListeners) {
-          activityListener.run()
-        }
+      lastActiveTime = System.nanoTime()
+      for (activityListener in activityListeners) {
+        activityListener.run()
       }
     }
   }
@@ -813,7 +824,14 @@ class IdeEventQueue private constructor() : EventQueue() {
         return false
       }
     }
-    if (event is InvocationEvent && !isCurrentlyUnderLocalId) {
+    eventsPosted.incrementAndGet()
+    // We don't 'attach' current client id to PeerEvent instances for two reasons.
+    // First, they are often posted to EventQueue indirectly (first to sun.awt.PostEventQueue, and then to the EventQueue by
+    // SunToolkit.flushPendingEvents), so current client id might be unrelated to the code that created those events.
+    // Second, just wrapping PeerEvent into a new InvocationEvent loses the information about priority kept in the former,
+    // and changes the overall events' processing order.
+    val passClientId = event is InvocationEvent && event !is PeerEvent
+    if (passClientId && !isCurrentlyUnderLocalId) {
       // only do wrapping trickery with non-local events to preserve correct behavior -
       // local events will get dispatched under local ID anyway
       val clientId = current
@@ -871,6 +889,12 @@ class IdeEventQueue private constructor() : EventQueue() {
       postEventListeners.remove(listener)
     }
   }
+
+  fun getPostedEventCount() = eventsPosted.get()
+
+  fun getReturnedEventCount() = eventsReturned.get()
+
+  fun getPostedSystemEventCount() = (AppContext.getAppContext()?.get("jb.postedSystemEventCount") as? AtomicLong)?.get() ?: -1
 }
 
 // IdeEventQueue is created before log configuration - cannot be initialized as a part of IdeEventQueue

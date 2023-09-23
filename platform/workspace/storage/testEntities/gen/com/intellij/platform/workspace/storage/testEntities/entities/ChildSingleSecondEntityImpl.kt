@@ -14,25 +14,26 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToAbstractOneParent
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractOneParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ChildSingleSecondEntityImpl(val dataSource: ChildSingleSecondEntityData) : ChildSingleSecondEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class ChildSingleSecondEntityImpl(private val dataSource: ChildSingleSecondEntityData) : ChildSingleSecondEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentSingleAbEntity::class.java,
                                                                                 ChildSingleAbstractBaseEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
     )
 
@@ -53,6 +54,7 @@ open class ChildSingleSecondEntityImpl(val dataSource: ChildSingleSecondEntityDa
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: ChildSingleSecondEntityData?) : ModifiableWorkspaceEntityBase<ChildSingleSecondEntity, ChildSingleSecondEntityData>(
     result), ChildSingleSecondEntity.Builder {
@@ -82,7 +84,7 @@ open class ChildSingleSecondEntityImpl(val dataSource: ChildSingleSecondEntityDa
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -187,8 +189,8 @@ class ChildSingleSecondEntityData : WorkspaceEntityData<ChildSingleSecondEntity>
   lateinit var commonData: String
   lateinit var secondData: String
 
-  fun isCommonDataInitialized(): Boolean = ::commonData.isInitialized
-  fun isSecondDataInitialized(): Boolean = ::secondData.isInitialized
+  internal fun isCommonDataInitialized(): Boolean = ::commonData.isInitialized
+  internal fun isSecondDataInitialized(): Boolean = ::secondData.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChildSingleSecondEntity> {
     val modifiable = ChildSingleSecondEntityImpl.Builder(null)
@@ -205,6 +207,11 @@ class ChildSingleSecondEntityData : WorkspaceEntityData<ChildSingleSecondEntity>
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.ChildSingleSecondEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -264,9 +271,5 @@ class ChildSingleSecondEntityData : WorkspaceEntityData<ChildSingleSecondEntity>
     result = 31 * result + commonData.hashCode()
     result = 31 * result + secondData.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

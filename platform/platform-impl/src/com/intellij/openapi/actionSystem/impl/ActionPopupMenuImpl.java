@@ -170,7 +170,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
     private void updateChildren(@Nullable RelativePoint point) {
       removeAll();
-      Utils.INSTANCE.fillPopUpMenu(myGroup, this, myPresentationFactory, myContext, myPlace, point);
+      Utils.fillPopupMenu(myGroup, this, myPresentationFactory, myContext, myPlace, point);
     }
 
     private void disposeMenu() {

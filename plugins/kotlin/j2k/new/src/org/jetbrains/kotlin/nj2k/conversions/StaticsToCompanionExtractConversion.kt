@@ -7,26 +7,31 @@ import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.declarationList
 import org.jetbrains.kotlin.nj2k.getOrCreateCompanionObject
 import org.jetbrains.kotlin.nj2k.tree.*
-
+import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.COMPANION
+import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.OBJECT
 
 class StaticsToCompanionExtractConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKClass) return recurse(element)
-        if (element.classKind == JKClass.ClassKind.COMPANION || element.classKind == JKClass.ClassKind.OBJECT) return element
-        val statics = element.declarationList.filter { declaration ->
+        if (element.classKind == COMPANION || element.classKind == OBJECT) return element
+
+        val staticDeclarations = element.declarationList.filter { declaration ->
             declaration is JKOtherModifiersOwner && declaration.hasOtherModifier(OtherModifier.STATIC)
                     || declaration is JKJavaStaticInitDeclaration
         }
-        if (statics.isEmpty()) return recurse(element)
-        val companion = element.getOrCreateCompanionObject()
+        if (staticDeclarations.isEmpty()) return recurse(element)
 
-        element.classBody.declarations -= statics
-        companion.classBody.declarations += statics.map { declaration ->
+        val companion = element.getOrCreateCompanionObject()
+        element.classBody.declarations -= staticDeclarations
+
+        val declarations = staticDeclarations.map { declaration ->
             when (declaration) {
                 is JKJavaStaticInitDeclaration -> declaration.toKtInitDeclaration()
                 else -> declaration
             }
-        }.onEach { declaration ->
+        }
+
+        for (declaration in declarations) {
             if (declaration is JKOtherModifiersOwner) {
                 declaration.otherModifierElements -= declaration.elementByModifier(OtherModifier.STATIC)!!
             }
@@ -34,6 +39,8 @@ class StaticsToCompanionExtractConversion(context: NewJ2kConverterContext) : Rec
                 it.isStatic = true
             }
         }
+
+        companion.classBody.declarations += declarations
         return recurse(element)
     }
 

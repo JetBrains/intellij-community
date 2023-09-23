@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -41,9 +41,9 @@ import java.util.function.Supplier;
 
 public final class EmmetPreviewHint extends LightweightHint implements Disposable {
   private static final Key<EmmetPreviewHint> KEY = new Key<>("emmet.preview");
-  @NotNull private final Editor myParentEditor;
-  @NotNull private final Editor myEditor;
-  @NotNull private final Alarm myAlarm = new Alarm(this);
+  private final @NotNull Editor myParentEditor;
+  private final @NotNull Editor myEditor;
+  private final @NotNull Alarm myAlarm = new Alarm(this);
   private boolean isDisposed = false;
 
   private EmmetPreviewHint(@NotNull JBPanel panel, @NotNull Editor editor, @NotNull Editor parentEditor) {
@@ -92,7 +92,7 @@ public final class EmmetPreviewHint extends LightweightHint implements Disposabl
     HintManagerImpl.getInstanceImpl().showEditorHint(this, myParentEditor, position.first, hintFlags, 0, false, hintHint);
   }
 
-  public void updateText(@NotNull final Supplier<String> contentProducer) {
+  public void updateText(final @NotNull Supplier<String> contentProducer) {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> {
       if (isDisposed) return;
@@ -120,13 +120,11 @@ public final class EmmetPreviewHint extends LightweightHint implements Disposabl
   }
 
   @TestOnly
-  @NotNull
-  public String getContent() {
+  public @NotNull String getContent() {
     return myEditor.getDocument().getText();
   }
 
-  @Nullable
-  public static EmmetPreviewHint getExistingHint(@NotNull Editor parentEditor) {
+  public static @Nullable EmmetPreviewHint getExistingHint(@NotNull Editor parentEditor) {
     EmmetPreviewHint emmetPreviewHint = KEY.get(parentEditor);
     if (emmetPreviewHint != null) {
       if (!emmetPreviewHint.isDisposed) {
@@ -137,10 +135,9 @@ public final class EmmetPreviewHint extends LightweightHint implements Disposabl
     return null;
   }
 
-  @NotNull
-  public static EmmetPreviewHint createHint(@NotNull final EditorEx parentEditor,
-                                            @NotNull String templateText,
-                                            @NotNull FileType fileType) {
+  public static @NotNull EmmetPreviewHint createHint(final @NotNull EditorEx parentEditor,
+                                                     @NotNull String templateText,
+                                                     @NotNull FileType fileType) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = editorFactory.createDocument(templateText);
     final EditorEx previewEditor = (EditorEx)editorFactory.createEditor(document, parentEditor.getProject(), fileType, true);
@@ -164,9 +161,8 @@ public final class EmmetPreviewHint extends LightweightHint implements Disposabl
     previewEditor.setBorder(JBUI.Borders.empty());
 
     JBPanel panel = new JBPanel(new BorderLayout()) {
-      @NotNull
       @Override
-      public Dimension getPreferredSize() {
+      public @NotNull Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
         Dimension parentEditorSize = parentEditor.getScrollPane().getSize();
         int maxWidth = (int)parentEditorSize.getWidth() / 3;
@@ -176,9 +172,8 @@ public final class EmmetPreviewHint extends LightweightHint implements Disposabl
         return new Dimension(width, height);
       }
 
-      @NotNull
       @Override
-      public Insets getInsets() {
+      public @NotNull Insets getInsets() {
         return JBUI.insets(1, 2, 0, 0);
       }
     };
@@ -211,8 +206,7 @@ public final class EmmetPreviewHint extends LightweightHint implements Disposabl
     }
   }
 
-  @NotNull
-  private Pair<Point, Short> guessPosition() {
+  private @NotNull Pair<Point, Short> guessPosition() {
     JRootPane rootPane = myParentEditor.getContentComponent().getRootPane();
     JComponent layeredPane = rootPane != null ? rootPane.getLayeredPane() : myParentEditor.getComponent();
     LogicalPosition logicalPosition = myParentEditor.getCaretModel().getLogicalPosition();

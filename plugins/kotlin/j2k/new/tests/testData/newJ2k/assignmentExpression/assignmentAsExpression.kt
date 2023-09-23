@@ -1,6 +1,7 @@
 class AssignmentAsExpression {
     private var field = 0
     private var field2 = 0
+
     fun assign(value: Int) {
         field = value
         val v = field

@@ -10,6 +10,7 @@ import de.plushnikov.intellij.plugin.language.psi.LombokConfigProperty;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigPsiUtil;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigTypes;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
+import de.plushnikov.intellij.plugin.lombokconfig.LombokNullAnnotationLibraryDefned;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -21,6 +22,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
   private static final String LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER = ConfigKey.EQUALSANDHASHCODE_CALL_SUPER.getConfigKey();
   private static final String LOMBOK_TOSTRING_CALL_SUPER = ConfigKey.TOSTRING_CALL_SUPER.getConfigKey();
   private static final String LOMBOK_ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION = ConfigKey.ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION.getConfigKey();
+  private static final String LOMBOK_ADD_NULL_ANNOTATIONS = ConfigKey.ADD_NULL_ANNOTATIONS.getConfigKey();
 
   public LombokConfigCompletionContributor() {
     final Collection<String> booleanOptions = Set.of(
@@ -60,7 +62,8 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
       ConfigKey.NONNULL_EXCEPTIONTYPE.getConfigKey(), ConfigKey.EQUALSANDHASHCODE_CALL_SUPER.getConfigKey(),
       ConfigKey.FIELD_NAME_CONSTANTS_PREFIX.getConfigKey(), ConfigKey.FIELD_NAME_CONSTANTS_SUFFIX.getConfigKey(),
       ConfigKey.FIELD_NAME_CONSTANTS_TYPENAME.getConfigKey(), ConfigKey.FIELD_NAME_CONSTANTS_UPPERCASE.getConfigKey(),
-      ConfigKey.TOSTRING_CALL_SUPER.getConfigKey(), ConfigKey.BUILDER_CLASS_NAME.getConfigKey());
+      ConfigKey.TOSTRING_CALL_SUPER.getConfigKey(), ConfigKey.BUILDER_CLASS_NAME.getConfigKey(),
+      ConfigKey.ADD_NULL_ANNOTATIONS.getConfigKey());
 
     final Collection<String> allOptions = new HashSet<>(booleanOptions);
     allOptions.addAll(flagUsageOptions);
@@ -98,6 +101,12 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
                  else if (LOMBOK_ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION.equals(configPropertyKey)) {
                    resultSet.addElement(LookupElementBuilder.create("BASIC"));
                    resultSet.addElement(LookupElementBuilder.create("BEANSPEC"));
+                 }
+                 else if (LOMBOK_ADD_NULL_ANNOTATIONS.equals(configPropertyKey)) {
+                   for (LombokNullAnnotationLibraryDefned library : LombokNullAnnotationLibraryDefned.values()) {
+                     resultSet.addElement(LookupElementBuilder.create(library.getKey()));
+                   }
+                   resultSet.addElement(LookupElementBuilder.create("CUSTOM:[TYPE_USE:]nonnull.annotation.type:nullable.annotation.type"));
                  }
                }
              }

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.PlatformUtils
 import java.nio.file.Path
 
 private class RestoreDefaultSettingsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
@@ -20,7 +21,10 @@ private class RestoreDefaultSettingsAction : DumbAwareAction(), ActionRemoteBeha
 
     CustomConfigMigrationOption.StartWithCleanConfig.writeConfigMarkerFile()
 
-    ExperimentalUI.getInstance().setNewUIInternal(false, false)
+    // if this action is invoked in JetBrains Client, 'setNewUIInternal' call would make the change on the host, which isn't expected
+    if (!PlatformUtils.isJetBrainsClient()) {
+      ExperimentalUI.getInstance().setNewUIInternal(false, false)
+    }
 
     invokeLater {
       (ApplicationManager.getApplication() as ApplicationEx).restart(true)

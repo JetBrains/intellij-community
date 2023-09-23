@@ -7,7 +7,6 @@ import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.ranking.features.FeaturesProviderCacheDataProvider
@@ -57,14 +56,13 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
       val searchReason = if (prevState == null) SearchRestartReason.SEARCH_STARTED else reason
       val nextSearchIndex = (prevState?.searchIndex ?: 0) + 1
       val experimentGroup = experimentStrategy.experimentGroup
-      val projectIsDumb = project?.let { DumbService.isDumb(it) }
       performanceTracker.start()
 
       SearchEverywhereMlSearchState(
         sessionStartTime, startTime, nextSearchIndex, searchReason,
         tabId, experimentGroup, orderByMl,
         keysTyped, backspacesTyped, searchQuery, modelProviderWithCache, providersCache,
-        projectIsDumb, searchScope, isSearchEverywhere
+        project, searchScope, isSearchEverywhere
       )
     }
 

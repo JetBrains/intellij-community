@@ -20,6 +20,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings;
 import com.intellij.util.io.DataOutputStream;
@@ -65,8 +66,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
 
   private @NotNull Collection<ThrowableRunnable<?>> initAssociatedDataForExtensions() {
     Activity activity = StartUpMeasurer.startActivity("file index extensions iteration");
-    ExtensionPointImpl<FileBasedIndexExtension<?, ?>> extPoint =
-      (ExtensionPointImpl<FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint();
+    ExtensionPointImpl<@NotNull FileBasedIndexExtension<?, ?>> extPoint =
+      (ExtensionPointImpl<@NotNull FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint();
     Iterator<FileBasedIndexExtension<?, ?>> extensions = extPoint.iterator();
     List<ThrowableRunnable<?>> tasks = new ArrayList<>(extPoint.size());
 
@@ -126,7 +127,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     };
     ApplicationManager.getApplication().addApplicationListener(new MyApplicationListener(fileBasedIndex), disposable);
     Disposer.register(fs, disposable);
-    //Generally, Index will be shutdown by Disposer -- but to be sure we'll register a shutdown task also:
+    //Generally, Index will be shutdown by Disposer -- but to be sure, we'll register a shutdown task also:
     myFileBasedIndex.setUpShutDownTask();
 
     Collection<ThrowableRunnable<?>> tasks = initAssociatedDataForExtensions();
@@ -144,6 +145,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
 
     if (myCurrentVersionCorrupted) {
       CorruptionMarker.dropIndexes();
+      ApplicationManager.getApplication().getService(AppIndexingDependenciesService.class).invalidateAllStamps();
     }
 
     return tasks;
@@ -180,7 +182,6 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     finally {
       //CorruptionMarker.markIndexesAsDirty();
       FileBasedIndexImpl.setupWritingIndexValuesSeparatedFromCounting();
-      FileBasedIndexImpl.setupWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes();
       myFileBasedIndex.addStaleIds(myStaleIds);
       myFileBasedIndex.addStaleIds(myDirtyFileIds);
       myFileBasedIndex.setUpFlusher();

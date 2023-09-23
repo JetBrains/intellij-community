@@ -12,7 +12,7 @@ class InlineCompletionLookupManagerListener : LookupManagerListener {
       override fun currentItemChanged(event: LookupEvent) {
         if (event.item == null) return
         val listener = event.lookup.editor.getUserData(InlineCompletionHandler.KEY) ?: return
-        listener.invoke(event)
+        listener.invoke(InlineCompletionEvent.LookupChange(event))
       }
     })
   }

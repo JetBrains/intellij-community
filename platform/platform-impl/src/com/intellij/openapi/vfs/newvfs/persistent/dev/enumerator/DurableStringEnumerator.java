@@ -1,21 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
-import com.intellij.openapi.Forceable;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSAsyncTaskExecutor;
-import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.InvertedFilenameHashBasedIndex.Int2IntMultimap;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLog;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
-import com.intellij.util.Processor;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
+import com.intellij.util.io.DurableDataEnumerator;
+import com.intellij.util.io.dev.StorageFactory;
+import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
-import com.intellij.util.io.VersionUpdatedException;
+import com.intellij.util.io.dev.intmultimaps.Int2IntMultimap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
@@ -28,15 +26,19 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * Persistent enumerator for strings.
  * Uses append-only log to store strings, and in-memory Map[string.hash->id*].
+ * Suitable for moderately big enumerators that are used very intensively, so
+ * increased heap consumption pays off. For general cases use {@link DurableEnumerator}
  */
-public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<String>, Forceable, Closeable {
+@ApiStatus.Internal
+public final class DurableStringEnumerator implements DurableDataEnumerator<String>,
+                                                      ScannableDataEnumeratorEx<String> {
 
   public static final int DATA_FORMAT_VERSION = 1;
 
   public static final int PAGE_SIZE = 8 << 20;
 
-  private final AppendOnlyLog valuesLog;
 
+  private final AppendOnlyLog valuesLog;
 
   private final @NotNull CompletableFuture<Int2IntMultimap> valueHashToIdFuture;
 
@@ -45,9 +47,6 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
   /** Lazily initialized in {@link #valueHashToId()} */
   //@GuardedBy("valueHashLock")
   private Int2IntMultimap valueHashToId = null;
-
-  //@GuardedBy("valueHashLock")
-  //private volatile int maxId = -1;
 
   //FIXME RC: currently .enumerate() and .tryEnumerate() execute under global lock, i.e. not scalable.
   //          It is not worse than PersistentEnumerator does, but we could do better -- we just need
@@ -65,39 +64,52 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
   //         2. Keep the set of enumerated ids, but only under feature-flag, enabled in debug versions -- and disable
   //            it in prod, there (supposingly) all mistakes are already fixed
 
-  public DurableStringEnumerator(@NotNull AppendOnlyLogOverMMappedFile valuesLog,
+  public DurableStringEnumerator(@NotNull AppendOnlyLog valuesLog,
                                  @NotNull Int2IntMultimap valueHashToId) {
     this(valuesLog, CompletableFuture.completedFuture(valueHashToId));
   }
 
-  public DurableStringEnumerator(@NotNull AppendOnlyLogOverMMappedFile valuesLog,
+  public DurableStringEnumerator(@NotNull AppendOnlyLog valuesLog,
                                  @NotNull CompletableFuture<Int2IntMultimap> valueHashToIdFuture) {
     this.valuesLog = valuesLog;
     this.valueHashToIdFuture = valueHashToIdFuture;
   }
 
-  public static @NotNull DurableStringEnumerator open(@NotNull Path storagePath) throws IOException {
-    AppendOnlyLogOverMMappedFile valuesLog = openValuesLog(storagePath);
+  private static final StorageFactory<? extends AppendOnlyLog> VALUES_LOG_FACTORY = AppendOnlyLogFactory
+    .withPageSize(PAGE_SIZE)
+    .failIfDataFormatVersionNotMatch(DATA_FORMAT_VERSION);
 
-    return new DurableStringEnumerator(
-      valuesLog,
-      buildValueToIdIndex(valuesLog)
+  public static @NotNull DurableStringEnumerator open(@NotNull Path storagePath) throws IOException {
+    return VALUES_LOG_FACTORY.wrapStorageSafely(
+      storagePath,
+      valuesLog -> new DurableStringEnumerator(
+        valuesLog,
+        buildValueToIdIndex(valuesLog)
+      )
     );
   }
 
   public static @NotNull DurableStringEnumerator openAsync(@NotNull Path storagePath,
                                                            @NotNull VFSAsyncTaskExecutor executor) throws IOException {
-    AppendOnlyLogOverMMappedFile valuesLog = openValuesLog(storagePath);
-
-    CompletableFuture<Int2IntMultimap> indexBuildingFuture = executor.async(() -> buildValueToIdIndex(valuesLog));
-    return new DurableStringEnumerator(
-      valuesLog,
-      indexBuildingFuture
-    );
+    return VALUES_LOG_FACTORY.wrapStorageSafely(
+      storagePath,
+      valuesLog -> {
+        return new DurableStringEnumerator(
+          valuesLog,
+          executor.async(() -> buildValueToIdIndex(valuesLog))
+        );
+      });
   }
 
   @Override
   public boolean isDirty() {
+    //TODO RC: with mapped files we actually don't know are there any unsaved changes,
+    //         since OS is responsible for that. We could force OS to flush the changes,
+    //         but we couldn't ask are there changes.
+    //         I think return false is +/- safe option, since the data is almost always
+    //         'safe' (as long as OS doesn't crash), but it is a bit logically inconsistent:
+    //         .isDirty() is supposed to return false if .force() has nothing to do, but
+    //         .force() still _can_ something, i.e. forcing OS to flush.
     return false;
   }
 
@@ -162,11 +174,19 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
   }
 
   @Override
-  public boolean processAllDataObjects(@NotNull Processor<? super String> processor) throws IOException {
+  public boolean forEach(@NotNull ValueReader<? super String> reader) throws IOException {
     return valuesLog.forEachRecord((recordId, buffer) -> {
+      int valueId = convertLogIdToValueId(recordId);
       String value = readString(buffer);
-      return processor.process(value);
+      return reader.read(valueId, value);
     });
+  }
+
+  @Override
+  public int recordsCount() throws IOException {
+    synchronized (valueHashLock) {
+      return valueHashToId().size();
+    }
   }
 
   @Override
@@ -243,16 +263,15 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
                                  @NotNull AppendOnlyLog valuesLog) throws IOException {
     byte[] valueBytes = value.getBytes(UTF_8);
     long appendedId = valuesLog.append(valueBytes);
-    int id = Math.toIntExact(appendedId);
-    return id;
+    return convertLogIdToValueId(appendedId);
   }
 
 
-  private static @NotNull Int2IntMultimap buildValueToIdIndex(@NotNull AppendOnlyLogOverMMappedFile valuesLog) throws IOException {
+  private static @NotNull Int2IntMultimap buildValueToIdIndex(@NotNull AppendOnlyLog valuesLog) throws IOException {
     Int2IntMultimap valueHashToId = new Int2IntMultimap();
     valuesLog.forEachRecord((logId, buffer) -> {
       String value = readString(buffer);
-      int id = Math.toIntExact(logId);
+      int id = convertLogIdToValueId(logId);
 
       int valueHash = hashOf(value);
 
@@ -262,18 +281,7 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
     return valueHashToId;
   }
 
-  private static @NotNull AppendOnlyLogOverMMappedFile openValuesLog(@NotNull Path storagePath) throws IOException {
-    AppendOnlyLogOverMMappedFile valuesLog = new AppendOnlyLogOverMMappedFile(
-      new MMappedFileStorage(storagePath, PAGE_SIZE)
-    );
-    int dataFormatVersion = valuesLog.getDataVersion();
-    if (dataFormatVersion == 0) {//FIXME RC: also check log is empty
-      valuesLog.setDataVersion(DATA_FORMAT_VERSION);
-    }
-    else if (dataFormatVersion != DATA_FORMAT_VERSION) {
-      valuesLog.close();
-      throw new VersionUpdatedException(storagePath, DATA_FORMAT_VERSION, dataFormatVersion);
-    }
-    return valuesLog;
+  private static int convertLogIdToValueId(long logId) {
+    return Math.toIntExact(logId);
   }
 }

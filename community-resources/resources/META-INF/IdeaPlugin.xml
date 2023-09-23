@@ -20,7 +20,7 @@
                         serviceImplementation="com.intellij.idea.customization.base.IntelliJIdeaExternalResourceUrls"
                         overrides="true"/>
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"
-                        serviceImplementation="com.intellij.idea.customization.base.IntelliJIdeaUpdateStrategyCustomization"
+                        serviceImplementation="com.intellij.openapi.updateSettings.base.ShowWhatIsNewPageAfterUpdateCustomization"
                         overrides="true"/>
   </extensions>
 </idea-plugin>

@@ -39,6 +39,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.animation.AlphaAnimated;
 import com.intellij.util.animation.AlphaAnimationContext;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
@@ -111,7 +112,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @ApiStatus.Internal
   public static void updateAllToolbarsImmediately(boolean includeInvisible) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     for (ActionToolbarImpl toolbar : new ArrayList<>(ourToolbars)) {
       toolbar.updateActionsImmediately(includeInvisible);
       for (Component c : toolbar.getComponents()) {
@@ -126,7 +127,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @ApiStatus.Internal
   public static void resetAllToolbars() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Utils.clearAllCachesAndUpdates();
     boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
     for (ActionToolbarImpl toolbar : new ArrayList<>(ourToolbars)) {
@@ -197,6 +198,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private @NotNull Function<? super String, ? extends Component> mySeparatorCreator = (name) -> new MySeparator(name);
 
   private @Nullable DataProvider myAdditionalDataProvider = null;
+
+  private boolean myNeedCheckHoverOnLayout = false;
 
   public ActionToolbarImpl(@NotNull String place, @NotNull ActionGroup actionGroup, boolean horizontal) {
     this(place, actionGroup, horizontal, false, true);
@@ -648,6 +651,17 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     for (int i = componentCount - 1; i >= 0; i--) {
       final Component component = getComponent(i);
       component.setBounds(myComponentBounds.get(i));
+    }
+
+    if (myNeedCheckHoverOnLayout) {
+      Point location = MouseInfo.getPointerInfo().getLocation();
+      SwingUtilities.convertPointFromScreen(location, this);
+      for (int i = componentCount - 1; i >= 0; i--) {
+        final Component component = getComponent(i);
+        if (component instanceof ActionButton actionButton && component.getBounds().contains(location)) {
+          actionButton.myRollover = true;
+        }
+      }
     }
   }
 
@@ -1336,6 +1350,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       boolean firstTimeFastTrack = !hasVisibleActions() &&
                                    getComponentCount() == 1 &&
                                    getClientProperty(SUPPRESS_FAST_TRACK) == null;
+      if (firstTimeFastTrack) {
+        putClientProperty(SUPPRESS_FAST_TRACK, true);
+      }
       CancellablePromise<List<AnAction>> promise = myLastUpdate =
         Utils.expandActionGroupAsync(adjustedGroup, myPresentationFactory, dataContext, myPlace, true, firstTimeFastTrack);
       if (promise.isSucceeded()) {
@@ -1350,9 +1367,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         actionsUpdated(true, fastActions);
       }
       else {
-        if (firstTimeFastTrack) {
-          putClientProperty(SUPPRESS_FAST_TRACK, true);
-        }
         boolean forcedActual = forced || myForcedUpdateRequested;
         promise
           .onSuccess(actions -> {
@@ -1942,6 +1956,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @ApiStatus.Internal
   public void setAdditionalDataProvider(@Nullable DataProvider additionalDataProvider) {
     myAdditionalDataProvider = additionalDataProvider;
+  }
+
+  @ApiStatus.Internal
+  public void setNeedCheckHoverOnLayout(boolean needCheckHoverOnLayout) {
+    myNeedCheckHoverOnLayout = needCheckHoverOnLayout;
   }
 
   private final class AccessibleActionToolbar extends AccessibleJPanel {

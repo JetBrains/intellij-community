@@ -27,7 +27,7 @@ public final class CodeInspectionOnEditorAction extends AnAction {
     }
   }
 
-  protected static void analyze(Project project, PsiFile psiFile) {
+  private static void analyze(Project project, PsiFile psiFile) {
     FileDocumentManager.getInstance().saveAllDocuments();
     final InspectionManagerEx inspectionManagerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final AnalysisScope scope = new AnalysisScope(psiFile);

@@ -20,14 +20,15 @@ import git4idea.fetch.GitFetchSupport
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
+import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
+import org.jetbrains.plugins.gitlab.api.getMetadata
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.nio.charset.StandardCharsets
 
 interface GitLabMergeRequestChanges {
-  val commits: List<GitLabCommitDTO>
+  val commits: List<GitLabCommit>
 
   suspend fun getParsedChanges(): GitBranchComparisonResult
 
@@ -48,7 +49,7 @@ class GitLabMergeRequestChangesImpl(
 
   private val glProject = projectMapping.repository
 
-  override val commits: List<GitLabCommitDTO> = mergeRequestDetails.commits.asReversed()
+  override val commits: List<GitLabCommit> = mergeRequestDetails.commits.asReversed()
 
   private val parsedChanges = cs.async(start = CoroutineStart.LAZY) {
     loadChanges(commits)
@@ -56,7 +57,7 @@ class GitLabMergeRequestChangesImpl(
 
   override suspend fun getParsedChanges(): GitBranchComparisonResult = parsedChanges.await()
 
-  private suspend fun loadChanges(commits: List<GitLabCommitDTO>): GitBranchComparisonResult {
+  private suspend fun loadChanges(commits: List<GitLabCommit>): GitBranchComparisonResult {
     val repository = projectMapping.remote.repository
     val baseSha = mergeRequestDetails.diffRefs.startSha
     val mergeBaseSha = mergeRequestDetails.diffRefs.baseSha ?: error("Missing merge base revision")
@@ -67,7 +68,7 @@ class GitLabMergeRequestChangesImpl(
           async {
             val commitWithParents = api.rest.loadCommit(glProject, commit.sha).body()!!
             val patches = ApiPageUtil.createPagesFlowByLinkHeader(getCommitDiffsURI(glProject, commit.sha)) {
-              api.rest.loadCommitDiffs(glProject.serverPath, it)
+              api.rest.loadCommitDiffs(it)
             }.map { it.body() }.foldToList(GitLabDiffDTO::toPatch)
             GitCommitShaWithPatches(commit.sha, commitWithParents.parentIds, patches)
           }
@@ -75,9 +76,16 @@ class GitLabMergeRequestChangesImpl(
       }
     }
     val headPatches = withContext(Dispatchers.IO) {
-      ApiPageUtil.createPagesFlowByLinkHeader(getMergeRequestDiffsURI(glProject, mergeRequestDetails.iid)) {
-        api.rest.loadMergeRequestDiffs(glProject.serverPath, it)
-      }.map { it.body() }.foldToList(GitLabDiffDTO::toPatch)
+      if (api.getMetadata().version < GitLabVersion(15, 7)) {
+        ApiPageUtil.createPagesFlowByLinkHeader(api.getMergeRequestChangesURI(glProject, mergeRequestDetails.iid)) {
+          api.rest.loadMergeRequestChanges(it)
+        }.map { it.body().changes }.foldToList(GitLabDiffDTO::toPatch)
+      }
+      else {
+        ApiPageUtil.createPagesFlowByLinkHeader(api.getMergeRequestDiffsURI(glProject, mergeRequestDetails.iid)) {
+          api.rest.loadMergeRequestDiffs(it)
+        }.map { it.body() }.foldToList(GitLabDiffDTO::toPatch)
+      }
     }
     return GitBranchComparisonResultImpl(repository.project, repository.root, baseSha, mergeBaseSha, commitsWithPatches, headPatches)
   }
@@ -119,12 +127,15 @@ class GitLabMergeRequestChangesImpl(
 }
 
 private fun GitLabDiffDTO.toPatch(): TextFilePatch {
-  val aPath = oldPath.takeIf { !newFile }?.let { "a/$it" } ?: "/dev/null"
-  val bPath = newPath.takeIf { !deletedFile }?.let { "b/$it" } ?: "/dev/null"
-  val header = """--- $aPath
-+++ $bPath
+  val beforeFilePath = oldPath.takeIf { !newFile }
+  val afterFilePath = newPath.takeIf { !deletedFile }
+  val header = """--- a/${beforeFilePath ?: "/dev/null"}
++++ b/${afterFilePath ?: "/dev/null"}
 """
 
   val patchReader = PatchReader(header + diff)
-  return patchReader.readTextPatches().firstOrNull() ?: throw IllegalStateException("Could not parse diff $this")
+  return patchReader.readTextPatches().firstOrNull()?.apply {
+    beforeName = beforeFilePath
+    afterName = afterFilePath
+  } ?: throw IllegalStateException("Could not parse diff $this")
 }

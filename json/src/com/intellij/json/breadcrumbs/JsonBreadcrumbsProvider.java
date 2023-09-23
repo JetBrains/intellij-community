@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.breadcrumbs;
 
 import com.intellij.json.JsonBundle;
@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class JsonBreadcrumbsProvider implements BreadcrumbsProvider {
+public final class JsonBreadcrumbsProvider implements BreadcrumbsProvider {
   private static final Language[] LANGUAGES = new Language[]{JsonLanguage.INSTANCE};
 
   @Override
@@ -37,9 +37,8 @@ public class JsonBreadcrumbsProvider implements BreadcrumbsProvider {
     return e instanceof JsonProperty || JsonUtil.isArrayElement(e);
   }
 
-  @NotNull
   @Override
-  public String getElementInfo(@NotNull PsiElement e) {
+  public @NotNull String getElementInfo(@NotNull PsiElement e) {
     if (e instanceof JsonProperty) {
       return ((JsonProperty)e).getName();
     }
@@ -50,15 +49,13 @@ public class JsonBreadcrumbsProvider implements BreadcrumbsProvider {
     throw new AssertionError("Breadcrumbs can be extracted only from JsonProperty elements or JsonArray child items");
   }
 
-  @Nullable
   @Override
-  public String getElementTooltip(@NotNull PsiElement e) {
+  public @Nullable String getElementTooltip(@NotNull PsiElement e) {
     return JsonSchemaDocumentationProvider.findSchemaAndGenerateDoc(e, null, true, null);
   }
 
-  @NotNull
   @Override
-  public List<? extends Action> getContextActions(@NotNull PsiElement element) {
+  public @NotNull List<? extends Action> getContextActions(@NotNull PsiElement element) {
     JsonQualifiedNameKind[] values = JsonQualifiedNameKind.values();
     List<Action> actions = new ArrayList<>(values.length);
     for (JsonQualifiedNameKind kind: values) {

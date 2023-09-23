@@ -1,71 +1,67 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import org.gradle.internal.impldep.com.google.gson.GsonBuilder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.tooling.Message.FilePosition;
-import org.jetbrains.plugins.gradle.tooling.Message.Kind;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import static com.intellij.util.ExceptionUtilRt.findCause;
-import static org.jetbrains.plugins.gradle.tooling.Message.Kind.INFO;
-import static org.jetbrains.plugins.gradle.tooling.Message.Kind.WARNING;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public final class MessageBuilder {
-  @Nullable private String myGroup;
-  @NotNull private final String myTitle;
-  @NotNull private final String myText;
-  @Nullable private Exception myException;
-  @NotNull private Kind myKind = INFO;
-  @Nullable private String myFilePath;
-  private int myLine;
-  private int myColumn;
 
-  private MessageBuilder(@NotNull String title, @NotNull String text) {
+  private @Nullable String myTitle = null;
+  private @Nullable String myText = null;
+  private @Nullable String myGroup = null;
+  private @Nullable Exception myException = null;
+  private @NotNull Message.Kind myKind = Message.Kind.INFO;
+  private @Nullable Message.FilePosition myFilePosition = null;
+
+  public @NotNull MessageBuilder withTitle(String title) {
     myTitle = title;
+    return this;
+  }
+
+  public @NotNull MessageBuilder withText(String text) {
     myText = text;
-  }
-
-  public static MessageBuilder create(@NotNull String title, @NotNull String text) {
-    return new MessageBuilder(title, text);
-  }
-
-  public MessageBuilder warning() {
-    myKind = WARNING;
     return this;
   }
 
-  public MessageBuilder error() {
-    myKind = Kind.ERROR;
+  public @NotNull MessageBuilder info() { return withKind(Message.Kind.INFO); }
+
+  public @NotNull MessageBuilder warning() { return withKind(Message.Kind.WARNING); }
+
+  public @NotNull MessageBuilder error() { return withKind(Message.Kind.ERROR); }
+
+  public @NotNull MessageBuilder withKind(Message.Kind kind) {
+    myKind = kind;
     return this;
   }
 
-  public MessageBuilder withGroup(String group) {
+  public @NotNull MessageBuilder withGroup(String group) {
     myGroup = group;
     return this;
   }
 
-  public MessageBuilder withException(Exception e) {
+  public @NotNull MessageBuilder withException(Exception e) {
     myException = e;
     return this;
   }
 
-  public MessageBuilder withLocation(String filePath, int line, int column) {
-    myFilePath = filePath;
-    myLine = line;
-    myColumn = column;
+  public @NotNull MessageBuilder withLocation(String filePath, int line, int column) {
+    myFilePosition = new Message.FilePosition(filePath, line, column);
     return this;
   }
 
-  @NotNull
-  public Message build() {
+  public @NotNull Message build() {
+    assert myTitle != null;
+    assert myText != null;
+
     String text = myText;
     if (myException != null) {
       if (myException.getStackTrace().length > 0) {
@@ -75,12 +71,7 @@ public final class MessageBuilder {
         text += ("\n\n" + myException.getMessage());
       }
     }
-    FilePosition filePosition = myFilePath == null ? null : new FilePosition(myFilePath, myLine, myColumn);
-    return new Message(myTitle, text, myGroup, myKind, filePosition);
-  }
-
-  public String buildJson() {
-    return new GsonBuilder().create().toJson(build());
+    return new Message(myTitle, text, myGroup, myKind, myFilePosition);
   }
 
   @Contract("null -> null; !null->!null")

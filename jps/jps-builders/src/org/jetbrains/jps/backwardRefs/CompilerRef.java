@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.util.io.DataInputOutputUtil;
@@ -69,8 +69,7 @@ public interface CompilerRef extends RW.Savable {
     }
 
     @Override
-    @NotNull
-    public CompilerClassHierarchyElementDef getOwner() {
+    public @NotNull CompilerClassHierarchyElementDef getOwner() {
       return new JavaCompilerClassRef(myOwner);
     }
 
@@ -129,9 +128,8 @@ public interface CompilerRef extends RW.Savable {
       return new JavaCompilerFieldRef(newOwner, myName);
     }
 
-    @NotNull
     @Override
-    public CompilerClassHierarchyElementDef getOwner() {
+    public @NotNull CompilerClassHierarchyElementDef getOwner() {
       return new JavaCompilerClassRef(myOwner);
     }
 
@@ -166,7 +164,7 @@ public interface CompilerRef extends RW.Savable {
     }
   }
 
-  class JavaCompilerAnonymousClassRef implements CompilerAnonymousClassDef {
+  final class JavaCompilerAnonymousClassRef implements CompilerAnonymousClassDef {
     private final int myName;
 
     public JavaCompilerAnonymousClassRef(int name) {myName = name;}
@@ -256,7 +254,7 @@ public interface CompilerRef extends RW.Savable {
     }
   }
 
-  class JavaCompilerFunExprDef implements CompilerFunExprDef {
+  final class JavaCompilerFunExprDef implements CompilerFunExprDef {
     private final int myId;
 
     public JavaCompilerFunExprDef(int id) {

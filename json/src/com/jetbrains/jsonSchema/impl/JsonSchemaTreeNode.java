@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.pointer.JsonPointerPosition;
@@ -10,17 +10,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class JsonSchemaTreeNode {
+public final class JsonSchemaTreeNode {
   private boolean myAny;
   private boolean myNothing;
   private int myExcludingGroupNumber = -1;
-  @NotNull private SchemaResolveState myResolveState = SchemaResolveState.normal;
+  private @NotNull SchemaResolveState myResolveState = SchemaResolveState.normal;
 
-  @Nullable private final JsonSchemaObject mySchema;
-  @NotNull private final JsonPointerPosition myPosition;
+  private final @Nullable JsonSchemaObject mySchema;
+  private final @NotNull JsonPointerPosition myPosition;
 
-  @Nullable private final JsonSchemaTreeNode myParent;
-  @NotNull private final List<JsonSchemaTreeNode> myChildren = new ArrayList<>();
+  private final @Nullable JsonSchemaTreeNode myParent;
+  private final @NotNull List<JsonSchemaTreeNode> myChildren = new ArrayList<>();
 
   public JsonSchemaTreeNode(@Nullable JsonSchemaTreeNode parent,
                             @Nullable JsonSchemaObject schema) {
@@ -72,8 +72,7 @@ public class JsonSchemaTreeNode {
     return nodes;
   }
 
-  @NotNull
-  public SchemaResolveState getResolveState() {
+  public @NotNull SchemaResolveState getResolveState() {
     return myResolveState;
   }
 
@@ -86,27 +85,23 @@ public class JsonSchemaTreeNode {
   }
 
 
-  public void setChild(@NotNull final JsonSchemaObject schema) {
+  public void setChild(final @NotNull JsonSchemaObject schema) {
     myChildren.add(new JsonSchemaTreeNode(this, schema));
   }
 
-  @Nullable
-  public JsonSchemaObject getSchema() {
+  public @Nullable JsonSchemaObject getSchema() {
     return mySchema;
   }
 
-  @NotNull
-  public JsonPointerPosition getPosition() {
+  public @NotNull JsonPointerPosition getPosition() {
     return myPosition;
   }
 
-  @Nullable
-  public JsonSchemaTreeNode getParent() {
+  public @Nullable JsonSchemaTreeNode getParent() {
     return myParent;
   }
 
-  @NotNull
-  public List<JsonSchemaTreeNode> getChildren() {
+  public @NotNull List<JsonSchemaTreeNode> getChildren() {
     return myChildren;
   }
 

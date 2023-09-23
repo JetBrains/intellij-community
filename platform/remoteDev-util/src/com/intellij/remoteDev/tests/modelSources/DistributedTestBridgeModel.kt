@@ -1,9 +1,8 @@
 package com.intellij.remoteDev.tests.modelSources
 
-import com.jetbrains.rd.generator.nova.Ext
+import com.jetbrains.rd.generator.nova.*
+import com.jetbrains.rd.generator.nova.PredefinedType.string
 import com.jetbrains.rd.generator.nova.PredefinedType.void
-import com.jetbrains.rd.generator.nova.async
-import com.jetbrains.rd.generator.nova.call
 
 /**
  * Model to bind client <-> server agents during test session
@@ -13,5 +12,7 @@ object DistributedTestBridgeModel : Ext(TestRoot) {
 
   init {
     call("syncCall", void, void).async
+    signal("sendMessage", string)
+      .doc("Send message between peers")
   }
 }

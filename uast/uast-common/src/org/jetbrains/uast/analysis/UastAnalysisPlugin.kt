@@ -4,7 +4,6 @@ package org.jetbrains.uast.analysis
 import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UExpression
 
 /**
@@ -28,17 +27,8 @@ interface UastAnalysisPlugin {
    * @return fact about given expression which is defined by the language semantics
    */
   fun <T : Any> UExpression.getExpressionFact(fact: UExpressionFact<T>): T?
-
-  /**
-   * @return fact about given declaration which is defined by the language semantics
-   */
-  fun <T : Any> UDeclaration.getDeclarationFact(fact: UDeclarationFact<T>): T? = null
 }
 
 sealed class UExpressionFact<T : Any> {
   object UNullabilityFact : UExpressionFact<UNullability>()
-}
-
-sealed class UDeclarationFact<T : Any> {
-  object UNullabilityFact : UDeclarationFact<UNullability>()
 }

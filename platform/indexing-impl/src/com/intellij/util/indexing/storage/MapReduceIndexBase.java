@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,9 +50,8 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
     );
   }
 
-  @NotNull
   @Override
-  public Map<Key, Value> getIndexedFileData(int fileId) throws StorageException {
+  public @NotNull Map<Key, Value> getIndexedFileData(int fileId) throws StorageException {
     return ConcurrencyUtil.withLock(getLock().readLock(), () -> {
       try {
         // TODO remove Collections.unmodifiableMap when ContainerUtil started to return unmodifiable map in all cases
@@ -65,8 +64,7 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
     });
   }
 
-  @Nullable
-  protected Map<Key, Value> getNullableIndexedData(int fileId) throws IOException, StorageException {
+  protected @Nullable Map<Key, Value> getNullableIndexedData(int fileId) throws IOException, StorageException {
     if (isDisposed()) {
       return null;
     }

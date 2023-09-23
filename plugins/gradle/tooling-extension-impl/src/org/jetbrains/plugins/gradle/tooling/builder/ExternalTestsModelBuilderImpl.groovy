@@ -13,7 +13,7 @@ import org.jetbrains.plugins.gradle.model.tests.ExternalTestSourceMapping
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestsModel
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
-import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
 
 @CompileStatic
 class ExternalTestsModelBuilderImpl implements ModelBuilderService {
@@ -29,14 +29,10 @@ class ExternalTestsModelBuilderImpl implements ModelBuilderService {
     if (project.plugins.hasPlugin("com.android.base")) {
       return defaultTestsModel
     }
-    if (javaPluginIsApplied(project)) {
+    if (JavaPluginUtil.isJavaPluginApplied(project)) {
       defaultTestsModel.sourceTestMappings = getMapping(project)
     }
     return defaultTestsModel
-  }
-
-  private static boolean javaPluginIsApplied(Project project) {
-    return JavaPluginUtil.getJavaPluginAccessor(project).isJavaPluginApplied()
   }
 
   private static List<ExternalTestSourceMapping> getMapping(Project project) {
@@ -45,7 +41,7 @@ class ExternalTestsModelBuilderImpl implements ModelBuilderService {
       taskToClassesDirs.put(task, getClassesDirs(task))
     })
 
-    def sourceSetContainer = JavaPluginUtil.getJavaPluginAccessor(project).sourceSetContainer
+    def sourceSetContainer = JavaPluginUtil.getSourceSetContainer(project)
     if (sourceSetContainer == null) return Collections.emptyList()
     def classesDirToSourceDirs = new LinkedHashMap<String, Set<String>>()
     for (sourceSet in sourceSetContainer) {

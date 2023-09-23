@@ -7,12 +7,11 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.notification.NotificationService
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
-import com.intellij.util.io.*
+import com.intellij.util.io.Compressor
+import com.intellij.util.io.Decompressor
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import java.io.File
 import java.io.OutputStream
-import java.lang.RuntimeException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
@@ -20,10 +19,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.function.Consumer
 import java.util.stream.Collectors
-import kotlin.io.path.div
-import kotlin.io.path.exists
-import kotlin.io.path.isRegularFile
-import kotlin.io.path.name
+import kotlin.io.path.*
 
 internal object SettingsSnapshotZipSerializer {
   private const val METAINFO = ".metainfo"
@@ -95,26 +91,31 @@ internal object SettingsSnapshotZipSerializer {
     return json.encodeToString(plugins)
   }
 
-  fun extractFromZip(zipFile: Path): SettingsSnapshot {
-    val tempDir = FileUtil.createTempDirectory("settings.sync.updates", null).toPath()
-    Decompressor.Zip(zipFile).extract(tempDir)
-    val metaInfoFolder = tempDir / METAINFO
-    val metaInfo = parseMetaInfo(metaInfoFolder)
+  fun extractFromZip(zipFile: Path): SettingsSnapshot? {
+    try {
+      val tempDir = FileUtil.createTempDirectory("settings.sync.updates", null).toPath()
+      Decompressor.Zip(zipFile).extract(tempDir)
+      val metaInfoFolder = tempDir / METAINFO
+      val metaInfo = parseMetaInfo(metaInfoFolder)
 
-    val fileStates = Files.walk(tempDir)
-      .filter { it.isRegularFile() && !it.startsWith(metaInfoFolder) }
-      .map { getFileStateFromFileWithDeletedMarker(it, tempDir) }
-      .collect(Collectors.toSet())
+      val fileStates = Files.walk(tempDir)
+        .filter { it.isRegularFile() && !it.startsWith(metaInfoFolder) }
+        .map { getFileStateFromFileWithDeletedMarker(it, tempDir) }
+        .collect(Collectors.toSet())
 
-    val (settingsFromProviders, filesFromProviders) = deserializeSettingsProviders(metaInfoFolder)
+      val (settingsFromProviders, filesFromProviders) = deserializeSettingsProviders(metaInfoFolder)
 
-    val additionalFiles = Files.walk(metaInfoFolder)
-      .filter { it.isRegularFile() && it.name != INFO && it.name != PLUGINS && !filesFromProviders.contains(it) }
-      .map { getFileStateFromFileWithDeletedMarker(it, metaInfoFolder) }
-      .collect(Collectors.toSet())
+      val additionalFiles = Files.walk(metaInfoFolder)
+        .filter { it.isRegularFile() && it.name != INFO && it.name != PLUGINS && !filesFromProviders.contains(it) }
+        .map { getFileStateFromFileWithDeletedMarker(it, metaInfoFolder) }
+        .collect(Collectors.toSet())
 
-    val plugins = deserializePlugins(metaInfoFolder)
-    return SettingsSnapshot(metaInfo, fileStates, plugins, settingsFromProviders, additionalFiles)
+      val plugins = deserializePlugins(metaInfoFolder)
+      return SettingsSnapshot(metaInfo, fileStates, plugins, settingsFromProviders, additionalFiles)
+    } catch (ex: Exception) {
+      LOG.warn("Cannot extract settings snapshot from zipFile", ex)
+      return null
+    }
   }
 
   internal fun deserializeSettingsProviders(containingFolder: Path): Pair<Map<String, Any>, Set<Path>> {

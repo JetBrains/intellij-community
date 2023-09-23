@@ -14,7 +14,7 @@ import java.beans.PropertyChangeListener;
 
 final class RunAnythingIconHandler implements PropertyChangeListener {
   private static final @NonNls String FOREGROUND_PROPERTY = "foreground";
-  protected static final String MATCHED_PROVIDER_PROPERTY = "JTextField.match";
+  static final String MATCHED_PROVIDER_PROPERTY = "JTextField.match";
 
   private final Consumer<? super ExtendableTextComponent.Extension> myConsumer;
   private final JTextComponent myComponent;

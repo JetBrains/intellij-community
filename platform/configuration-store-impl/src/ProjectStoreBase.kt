@@ -22,6 +22,7 @@ import com.intellij.util.io.Ksuid
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Files
 import java.nio.file.Path
@@ -32,7 +33,7 @@ import java.nio.file.Path
 internal val PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, false)
 private val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, true)
 
-// cannot be `internal`, used in Upsource
+@ApiStatus.Internal
 abstract class ProjectStoreBase(final override val project: Project) : ComponentStoreWithExtraComponents(), IProjectStore {
   private var dirOrFile: Path? = null
   private var dotIdea: Path? = null

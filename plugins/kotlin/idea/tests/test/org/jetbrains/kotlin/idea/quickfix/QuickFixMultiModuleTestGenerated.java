@@ -139,6 +139,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualConstExpression/");
         }
 
+        @TestMetadata("copyToActualGetter")
+        public void testCopyToActualGetter() throws Exception {
+            runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualGetter/");
+        }
+
         @TestMetadata("copyToActualNoArg")
         public void testCopyToActualNoArg() throws Exception {
             runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualNoArg/");
@@ -157,6 +162,16 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
         @TestMetadata("copyToActualSingleArg")
         public void testCopyToActualSingleArg() throws Exception {
             runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualSingleArg/");
+        }
+
+        @TestMetadata("copyToActualTypeParameter")
+        public void testCopyToActualTypeParameter() throws Exception {
+            runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualTypeParameter/");
+        }
+
+        @TestMetadata("copyToActualValueParameter")
+        public void testCopyToActualValueParameter() throws Exception {
+            runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualValueParameter/");
         }
 
         @TestMetadata("copyToActualWithImport")

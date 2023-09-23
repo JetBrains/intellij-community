@@ -161,7 +161,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     }
   }
 
-  PsiViewerDialog(@NotNull Project project, @Nullable Editor selectedEditor) {
+  public PsiViewerDialog(@NotNull Project project, @Nullable Editor selectedEditor) {
     super(project, true, IdeModalityType.MODELESS);
     myProject = project;
     myExternalDocument = selectedEditor != null;
@@ -235,6 +235,10 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
         getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(myEditor.getContentComponent(), true));
         myEditor.getCaretModel().moveToOffset(selectedEditor.getCaretModel().getOffset());
         myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+        SelectionModel selectionModel = selectedEditor.getSelectionModel();
+        if (selectionModel.hasSelection()) {
+          myEditor.getSelectionModel().setSelection(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+        }
       }, ModalityState.stateForComponent(myPanel));
     }
   }

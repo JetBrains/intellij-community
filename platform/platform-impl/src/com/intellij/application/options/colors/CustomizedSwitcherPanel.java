@@ -35,7 +35,7 @@ final class CustomizedSwitcherPanel extends CompositeColorDescriptionPanel {
     updatePreviewPanel(descriptor);
   }
 
-  protected void updatePreviewPanel(@NotNull EditorSchemeAttributeDescriptor descriptor) {
+  private void updatePreviewPanel(@NotNull EditorSchemeAttributeDescriptor descriptor) {
     if (!(myPreviewPanel instanceof SimpleEditorPreview && myPage instanceof RainbowColorSettingsPage)) return;
     UIUtil.invokeAndWaitIfNeeded(() -> ApplicationManager.getApplication().runWriteAction(() -> {
       SimpleEditorPreview simpleEditorPreview = (SimpleEditorPreview)myPreviewPanel;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.json.JsonBundle;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.TableCellEditor;
 
-class JsonMappingsTableView extends TableView<UserDefinedJsonSchemaConfiguration.Item> {
+final class JsonMappingsTableView extends TableView<UserDefinedJsonSchemaConfiguration.Item> {
   private final StatusText myEmptyText;
 
   JsonMappingsTableView(JsonSchemaMappingsView.MyAddActionButtonRunnable runnable) {
@@ -45,9 +45,8 @@ class JsonMappingsTableView extends TableView<UserDefinedJsonSchemaConfiguration
     }
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myEmptyText;
   }
 }

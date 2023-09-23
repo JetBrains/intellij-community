@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplacePutWithAssignment")
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplacePutWithAssignment", "ReplaceGetOrSet")
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bootstrap
 
@@ -11,7 +11,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
 import com.intellij.ide.ui.laf.IdeaLaf
-import com.intellij.ide.ui.laf.darcula.DarculaLaf
+import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter
 import com.intellij.idea.AppExitCodes
 import com.intellij.idea.AppStarter
 import com.intellij.idea.StartupErrorReporter
@@ -21,17 +21,15 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.ui.AppUIUtil
-import com.intellij.ui.IconManager
-import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.*
 import com.intellij.ui.icons.CoreIconManager
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import sun.awt.AWTAutoShutdown
 import java.awt.Font
@@ -39,24 +37,24 @@ import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
 import java.awt.dnd.DragSource
 import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import javax.swing.JOptionPane
+import javax.swing.LookAndFeel
 import javax.swing.RepaintManager
 import javax.swing.UIManager
+import javax.swing.plaf.basic.BasicLookAndFeel
 import kotlin.system.exitProcess
 
 internal fun CoroutineScope.scheduleInitUi(initAwtToolkitJob: Job, isHeadless: Boolean): Job {
-  val iconManagerActivateJob = launch {
+  return launch {
     // IdeaLaF uses AllIcons - icon manager must be activated
     if (!isHeadless) {
       span("icon manager activation") {
         IconManager.activate(CoreIconManager())
       }
     }
-  }
 
-  return launch {
     initAwtToolkitJob.join()
-    iconManagerActivateJob.join()
     // SwingDispatcher must be used after Toolkit init
     span("initUi", RawSwingDispatcher) {
       initLafAndScale(isHeadless)
@@ -101,11 +99,11 @@ private suspend fun initLafAndScale(isHeadless: Boolean) {
 
   // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
 
-  val baseLaF = span("base LaF creation") { DarculaLaf.createBaseLaF() }
+  val baseLaF = span("base LaF creation") { createBaseLaF() }
   span("base LaF initialization") {
     // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")
     baseLaF.initialize()
-    DarculaLaf.setPreInitializedBaseLaf(baseLaF)
+    LookAndFeelThemeAdapter.preInitializedBaseLaf.compareAndSet(null, baseLaF)
   }
 
   // to compute the system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
@@ -139,8 +137,10 @@ internal fun CoroutineScope.scheduleInitAwtToolkit(lockSystemDirsJob: Job, busyT
   launch(CoroutineName("LaF class preloading") + Dispatchers.IO) {
     val classLoader = AppStarter::class.java.classLoader
     // preload class not in EDT
-    Class.forName(DarculaLaf::class.java.name, true, classLoader)
-    Class.forName(IdeaLaf::class.java.name, true, classLoader)
+    Class.forName(LookAndFeelThemeAdapter::class.java.name, true, classLoader)
+    if (SystemInfoRt.isWindows) {
+      Class.forName(IdeaLaf::class.java.name, true, classLoader)
+    }
     Class.forName(JBUIScale::class.java.name, true, classLoader)
     Class.forName(JreHiDpiUtil::class.java.name, true, classLoader)
     Class.forName(SynchronizedClearableLazy::class.java.name, true, classLoader)
@@ -210,7 +210,7 @@ private fun blockATKWrapper() {
   if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
     // Replacing `AtkWrapper` with a fake `Object`. It'll be instantiated & garbage collected right away, a NOP.
     System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object")
-    logger<StartupUiUtil>().info("${ScreenReader.ATK_WRAPPER} is blocked, see IDEA-149219")
+    logger<AppStarter>().info("${ScreenReader.ATK_WRAPPER} is blocked, see IDEA-149219")
   }
   activity.end()
 }
@@ -253,7 +253,7 @@ internal fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(i
 
     launch(CoroutineName("update window icon")) {
       // `updateWindowIcon` should be called after `initUiJob`, because it uses computed system font data for scale context
-      if (!AppUIUtil.isWindowIconAlreadyExternallySet && !PluginManagerCore.isRunningFromSources()) {
+      if (!isWindowIconAlreadyExternallySet() && !PluginManagerCore.isRunningFromSources()) {
         // most of the time is consumed by loading SVG and can be done in parallel
         updateAppWindowIcon(JOptionPane.getRootFrame())
       }
@@ -268,4 +268,43 @@ internal fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(i
       WeakFocusStackManager.getInstance()
     }
   }
+}
+
+// used by Rider
+@ApiStatus.Internal
+fun createBaseLaF(): LookAndFeel {
+  if (SystemInfoRt.isMac) {
+    val aClass = ClassLoader.getPlatformClassLoader().loadClass("com.apple.laf.AquaLookAndFeel")
+    return MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as BasicLookAndFeel
+  }
+  else if (!SystemInfoRt.isLinux || GraphicsEnvironment.isHeadless()) {
+    return IdeaLaf(customFontDefaults = null)
+  }
+
+  val fontDefaults = HashMap<Any, Any?>()
+  // Normally, GTK LaF is considered "system" when (1) a GNOME session is active, and (2) GTK library is available.
+  // Here, we weaken the requirements to only (2) and force GTK LaF installation to let it detect the system fonts
+  // and scale them based on Xft.dpi value.
+  try {
+    @Suppress("SpellCheckingInspection")
+    val aClass = ClassLoader.getPlatformClassLoader().loadClass("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
+    val gtk = MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
+      .findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as LookAndFeel
+    // GTK is available
+    if (gtk.isSupportedLookAndFeel) {
+      // on JBR 11, overrides `SunGraphicsEnvironment#uiScaleEnabled` (sets `#uiScaleEnabled_overridden` to `false`)
+      gtk.initialize()
+      val gtkDefaults = gtk.defaults
+      for (key in gtkDefaults.keys) {
+        if (key.toString().endsWith(".font")) {
+          // `UIDefaults#get` unwraps lazy values
+          fontDefaults.put(key, gtkDefaults.get(key))
+        }
+      }
+    }
+  }
+  catch (e: Exception) {
+    logger<AppStarter>().warn(e)
+  }
+  return IdeaLaf(customFontDefaults = if (fontDefaults.isEmpty()) null else fontDefaults)
 }

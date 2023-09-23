@@ -14,6 +14,7 @@ import java.io.Reader
 import java.io.StringReader
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.net.http.HttpResponse.BodyHandler
 import java.net.http.HttpResponse.ResponseInfo
 import java.nio.ByteBuffer
 import java.util.concurrent.Flow
@@ -72,6 +73,26 @@ object HttpClientUtil {
                                          reader: (Reader) -> T): T {
     checkStatusCodeWithLogging(logger, request.logName(), responseInfo.statusCode(), bodyStream)
     return responseReaderWithLogging(logger, request.logName(), bodyStream).use(reader)
+  }
+
+  /**
+   * Shorthand for creating a body handler that inflates the incoming response body if it is zipped, checks that
+   * the status code is OK (throws [HttpStatusErrorException] otherwise), and applies the given function to read
+   * the result body and map it to some value.
+   *
+   * @param logger The logger to log non-OK status codes in.
+   * @param request The request performed, for logging purposes.
+   * @param mapToResult Maps a response to a result value. Exceptions thrown from this function are not logged by
+   * [inflateAndReadWithErrorHandlingAndLogging].
+   */
+  fun <T> inflateAndReadWithErrorHandlingAndLogging(
+    logger: Logger,
+    request: HttpRequest,
+    mapToResult: (Reader, ResponseInfo) -> T
+  ): BodyHandler<T> = InflatedStreamReadingBodyHandler { responseInfo, bodyStream ->
+    readSuccessResponseWithLogging(logger, request, responseInfo, bodyStream) { reader ->
+      mapToResult(reader, responseInfo)
+    }
   }
 
   /**

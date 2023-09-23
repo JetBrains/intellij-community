@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -43,9 +43,8 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
 
 // Implementation specific
 
-  @NotNull
   @Override
-  public IElementType getTokenType() {
+  public @NotNull IElementType getTokenType() {
     return getElementType();
   }
 

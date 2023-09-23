@@ -403,7 +403,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
       onHover(base, object : HoverListener {
         override fun onHover(event: MouseEvent, translated: Point) {
           if (hint?.isVisible != true && editor.contentComponent.isShowing) {
-            hint = showTooltip(editor, event, tooltip)
+            hint = showTooltip(event, tooltip)
           }
         }
 
@@ -414,7 +414,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
       })
     }
   }
-  private fun showTooltip(editor: Editor, e: MouseEvent, @NlsContexts.HintText text: String): LightweightHint {
+  fun showTooltip(e: MouseEvent, @NlsContexts.HintText text: String): LightweightHint {
     val hint = run {
       val label = HintUtil.createInformationLabel(text)
       label.border = JBUI.Borders.empty(6, 6, 5, 6)

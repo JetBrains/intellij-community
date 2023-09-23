@@ -45,22 +45,24 @@ internal class BreadcrumbsConfigurableUI(configurables: List<BreadcrumbsConfigur
           }
         }.bind(settings::isBreadcrumbsAbove, settings::setBreadcrumbsAbove)
 
-        row {
-          label(ApplicationBundle.message("label.breadcrumbs.languages"))
-        }
+        if (sortedList.isNotEmpty()) {
+          row {
+            label(ApplicationBundle.message("label.breadcrumbs.languages"))
+          }
 
-        panel {
-          val rowCount = (sortedList.size + 2) / 3
-          for (i in 0..rowCount - 1) {
-            row {
-              for (j in 0..2) {
-                sortedList.getOrNull(i + rowCount * j)?.let { (id, checkBox) ->
-                  cell(checkBox)
-                    .bindSelected({ settings.isBreadcrumbsShownFor(id) }, { settings.setBreadcrumbsShownFor(id, it) })
-                    .gap(RightGap.COLUMNS)
+          panel {
+            val rowCount = (sortedList.size + 2) / 3
+            for (i in 0..rowCount - 1) {
+              row {
+                for (j in 0..2) {
+                  sortedList.getOrNull(i + rowCount * j)?.let { (id, checkBox) ->
+                    cell(checkBox)
+                      .bindSelected({ settings.isBreadcrumbsShownFor(id) }, { settings.setBreadcrumbsShownFor(id, it) })
+                      .gap(RightGap.COLUMNS)
+                  }
                 }
-              }
-            }.layout(RowLayout.PARENT_GRID)
+              }.layout(RowLayout.PARENT_GRID)
+            }
           }
         }
       }.enabledIf(show.selected)

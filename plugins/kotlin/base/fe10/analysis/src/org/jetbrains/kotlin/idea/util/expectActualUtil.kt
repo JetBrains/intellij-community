@@ -6,13 +6,19 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.analyzer.moduleInfo
+import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoVariantsService
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.caches.project.allImplementingDescriptors
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny
+import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtEnumEntry
@@ -25,11 +31,17 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.multiplatform.*
 
 fun MemberDescriptor.expectedDescriptors(): List<DeclarationDescriptor> {
-    val expectedCompatibilityMap = ExpectedActualResolver.findExpectedForActual(this)
-        ?: return emptyList()
+    val moduleInfo = module.moduleInfo
+    val expectedForActual = if (moduleInfo !is LibrarySourceInfo) {
+        ExpectedActualResolver.findExpectedForActual(this)
+    } else {
+        val libraryVariants = moduleInfo.libraryVariantsDescriptors()
+        ExpectedActualResolver.findExpectedForActual(this, { it in libraryVariants })
+    }
 
-    return expectedCompatibilityMap[ExpectActualCompatibility.Compatible]
-        ?: expectedCompatibilityMap.values.flatten()
+    return expectedForActual.orEmpty().run {
+        get(ExpectActualCompatibility.Compatible) ?: values.flatten()
+    }
 }
 
 // TODO: Sort out the cases with multiple expected descriptors
@@ -39,7 +51,7 @@ fun MemberDescriptor.expectedDescriptor(): DeclarationDescriptor? {
 
 fun KtDeclaration.expectedDeclarationIfAny(): KtDeclaration? {
     val expectedDescriptor = (resolveToDescriptorIfAny() as? MemberDescriptor)?.expectedDescriptor() ?: return null
-    return DescriptorToSourceUtils.descriptorToDeclaration(expectedDescriptor) as? KtDeclaration
+    return DescriptorToSourceUtilsIde.getAnyDeclaration(project, expectedDescriptor) as? KtDeclaration
 }
 
 fun DeclarationDescriptor.liftToExpected(): DeclarationDescriptor? {
@@ -83,12 +95,18 @@ fun ModuleDescriptor.hasActualsFor(descriptor: MemberDescriptor) =
 private fun MemberDescriptor.findActualInModule(
     module: ModuleDescriptor,
     checkCompatible: Boolean = false
-): List<DeclarationDescriptor> =
-    if (checkCompatible) {
+): List<DeclarationDescriptor> {
+    val memberDescriptors = if (checkCompatible) {
         findCompatibleActualsForExpected(module, onlyFromThisModule(module))
     } else {
         findAnyActualsForExpected(module, onlyFromThisModule(module))
-    }.filter { (it as? MemberDescriptor)?.isEffectivelyActual() == true }
+    }
+
+    return memberDescriptors.filter {
+        // actual modifiers aren't present in library binaries, so we skip this check for them
+        it.isEffectivelyActual() || module.moduleInfo is BinaryModuleInfo
+    }
+}
 
 private fun MemberDescriptor.isEffectivelyActual(checkConstructor: Boolean = true): Boolean =
     isActual || isEnumEntryInActual() || isConstructorInActual(checkConstructor)
@@ -102,7 +120,17 @@ private fun MemberDescriptor.isEnumEntryInActual() =
 fun DeclarationDescriptor.actualsForExpected(): Collection<DeclarationDescriptor> {
     if (this is MemberDescriptor) {
         if (!this.isExpect) return emptyList()
-        return (module.allImplementingDescriptors + module).flatMap { module -> this.findActualInModule(module) }
+        val moduleInfo = module.moduleInfo
+        return buildList {
+            if (moduleInfo !is LibrarySourceInfo) {
+                addAll(module.allImplementingDescriptors)
+                add(module)
+            } else {
+                // filter out libraries based on intermediate source-sets because for them
+                // we can't properly navigate to the selected actual source code later
+                addAll(moduleInfo.libraryVariantsDescriptors(onlyPlatformVariants = true))
+            }
+        }.flatMap { findActualInModule(it) }
     }
 
     if (this is ValueParameterDescriptor) {
@@ -118,10 +146,13 @@ fun KtDeclaration.hasAtLeastOneActual() = actualsForExpected().isNotEmpty()
 fun KtDeclaration.actualsForExpected(module: Module? = null): Set<KtDeclaration> =
     resolveToDescriptorIfAny(BodyResolveMode.FULL)
         ?.actualsForExpected()
-        ?.filter { module == null || (it.module.getCapability(ModuleInfo.Capability) as? ModuleSourceInfo)?.module == module }
-        ?.mapNotNullTo(LinkedHashSet()) {
-            DescriptorToSourceUtils.descriptorToDeclaration(it) as? KtDeclaration
-        } ?: emptySet()
+        .orEmpty()
+        .filter { module == null || (it.module.getCapability(ModuleInfo.Capability) as? ModuleSourceInfo)?.module == module }
+        .mapNotNull {
+            DescriptorToSourceUtilsIde.getAnyDeclaration(moduleInfo.project, it) as? KtDeclaration
+        }
+        .toSet()
+
 
 fun KtDeclaration.isExpectDeclaration(): Boolean {
     return when {
@@ -183,3 +214,16 @@ fun KtDeclaration.runCommandOnAllExpectAndActualDeclaration(
         project.executeCommand(command, command = ::process)
     }
 }
+
+private fun LibrarySourceInfo.libraryVariantsDescriptors(onlyPlatformVariants: Boolean = false): List<ModuleDescriptor> {
+    val binariesModuleInfo = binariesModuleInfo as? LibraryInfo ?: return emptyList()
+    return LibraryInfoVariantsService.getInstance(project)
+        .variants(binariesModuleInfo)
+        .filter { !onlyPlatformVariants || it.isPlatformVariant() }
+        .mapNotNull {
+            KotlinCacheService.getInstance(project)
+                .getResolutionFacadeByModuleInfo(it, it.platform)?.moduleDescriptor
+        }
+}
+
+private fun LibraryInfo.isPlatformVariant() = platform.size == 1 && platform.first() !is NativePlatformUnspecifiedTarget

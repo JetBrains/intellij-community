@@ -19,6 +19,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.readText
 
 class ProjectInspectionManagerTest {
   companion object {

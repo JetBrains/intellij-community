@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -24,23 +23,35 @@ import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 /**
  * @author gregsh
  */
-public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
+public class JavaTypeProvider extends ExpressionTypeProvider<PsiElement> {
   @NotNull
   @Override
-  public String getInformationHint(@NotNull PsiExpression element) {
+  public String getInformationHint(@NotNull PsiElement element) {
     return StringUtil.escapeXmlEntities(getTypePresentation(element));
   }
 
-  private static @NotNull @NlsSafe String getTypePresentation(@NotNull PsiExpression element) {
-    PsiType type = element.getType();
+  private static @NotNull @NlsSafe String getTypePresentation(@NotNull PsiElement element) {
+    PsiType type = null;
+    PsiLocalVariable psiVariable = getPossibleLocaleVariable(element);
+    if (psiVariable != null) {
+      type = psiVariable.getType();
+    }
+    if (element instanceof PsiParameter parameter) {
+      type = parameter.getType();
+    }
+    else if (element instanceof PsiExpression psiExpression) {
+      type = psiExpression.getType();
+    }
     if (type instanceof PsiLambdaExpressionType) {
       type = ((PsiLambdaExpressionType)type).getExpression().getFunctionalInterfaceType();
     }
@@ -56,13 +67,54 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
     return JavaBundle.message("error.hint.no.expression.found");
   }
 
+  @Nullable
+  private static PsiLocalVariable getPossibleLocaleVariable(@NotNull PsiElement elementAt) {
+    if (elementAt instanceof PsiIdentifier && elementAt.getParent() instanceof PsiLocalVariable psiVariable &&
+        psiVariable.getTypeElement().isInferredType()) {
+      return psiVariable;
+    }
+    if (elementAt instanceof PsiKeyword keyword && keyword.getTokenType() == JavaTokenType.VAR_KEYWORD &&
+        keyword.getParent() != null && keyword.getParent().getParent() instanceof PsiLocalVariable psiVariable) {
+      return psiVariable;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiParameter getPossibleParameter(@NotNull PsiElement elementAt) {
+    if (elementAt instanceof PsiIdentifier identifier &&
+        identifier.getParent() instanceof PsiParameter parameter &&
+        (parameter.getTypeElement() == null || parameter.getTypeElement().isInferredType())) {
+      return parameter;
+    }
+    if (elementAt instanceof PsiKeyword keyword && keyword.getTokenType() == JavaTokenType.VAR_KEYWORD &&
+        keyword.getParent() != null && keyword.getParent().getParent() instanceof PsiParameter parameter) {
+      return parameter;
+    }
+    return null;
+  }
+
   @NotNull
   @Override
-  public List<PsiExpression> getExpressionsAt(@NotNull PsiElement elementAt) {
-    return SyntaxTraverser.psiApi().parents(elementAt)
-      .filter(PsiExpression.class)
-      .filter(JavaTypeProvider::isLargestNonTrivialExpression)
-      .toList();
+  public List<PsiElement> getExpressionsAt(@NotNull PsiElement elementAt) {
+    PsiVariable psiVariable = getPossibleLocaleVariable(elementAt);
+    if (psiVariable != null) {
+      PsiTypeElement element = psiVariable.getTypeElement();
+      if (element.isInferredType() && psiVariable.getInitializer() != null && psiVariable.getNameIdentifier() != null) {
+        return Collections.singletonList(elementAt);
+      }
+    }
+    ArrayList<PsiElement> elements = new ArrayList<>();
+    PsiParameter parameter = getPossibleParameter(elementAt);
+    if (parameter != null) {
+      elements.add(parameter);
+    }
+    elements.addAll(SyntaxTraverser.psiApi().parents(elementAt)
+                      .filter(PsiExpression.class)
+                      .filter(JavaTypeProvider::isLargestNonTrivialExpression)
+                      .map(t -> (PsiElement)t)
+                      .toList());
+    return elements;
   }
 
   private static boolean isLargestNonTrivialExpression(@NotNull PsiExpression e) {
@@ -81,9 +133,17 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
 
   @NotNull
   @Override
-  public @Nls String getAdvancedInformationHint(@NotNull PsiExpression expression) {
+  public @Nls String getAdvancedInformationHint(@NotNull PsiElement element) {
+    PsiExpression expression = null;
+    PsiVariable psiVariable = getPossibleLocaleVariable(element);
+    if (psiVariable != null) {
+      expression = psiVariable.getInitializer();
+    }
+    else if (element instanceof PsiExpression psiExpression) {
+      expression = psiExpression;
+    }
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression == null) return CodeInsightBundle.message("unknown.node.text");
+    if (expression == null) return getInformationHint(element);
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
     List<Pair<@Nls String, @Nls String>> infoLines = new ArrayList<>();
     String basicType = getTypePresentation(expression);
@@ -95,7 +155,8 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
         infoLines.add(Pair.create(
           JavaBundle.message("type.information.value"),
           StreamEx.of(values).map(DfaPsiUtil::renderValue).sorted().collect(NlsMessages.joiningOr())));
-      } else {
+      }
+      else {
         if (dfType instanceof DfAntiConstantType) {
           List<Object> nonValues = new ArrayList<>(((DfAntiConstantType<?>)dfType).getNotValues());
           nonValues.remove(null); // Nullability: not-null will be displayed, so this just duplicates nullability info

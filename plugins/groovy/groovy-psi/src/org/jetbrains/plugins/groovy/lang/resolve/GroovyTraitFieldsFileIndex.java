@@ -19,7 +19,6 @@ import org.jetbrains.org.objectweb.asm.*;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -142,7 +141,7 @@ public class GroovyTraitFieldsFileIndex
         values.add(new TraitFieldDescriptor(flags, typeString, name, annotations));
       }
 
-      private Pair<Boolean, String> parse(String prefix, String prefix2, String input) {
+      private static Pair<Boolean, String> parse(String prefix, String prefix2, String input) {
         if (input.startsWith(prefix)) {
           return Pair.create(true, input.substring(prefix.length()));
         }
@@ -154,10 +153,11 @@ public class GroovyTraitFieldsFileIndex
         }
       }
 
-      private String fieldType(String desc, String signature) {
+      private static String fieldType(String desc, String signature) {
         if (signature != null) {
           try {
-            return SignatureParsing.parseTypeString(new StringCharacterIterator(signature), StubBuildingVisitor.GUESSING_MAPPER);
+            return SignatureParsing.parseTypeStringToTypeInfo(new SignatureParsing.CharIterator(signature), 
+                                                              StubBuildingVisitor.GUESSING_PROVIDER).text();
           }
           catch (ClsFormatException ignored) { }
         }

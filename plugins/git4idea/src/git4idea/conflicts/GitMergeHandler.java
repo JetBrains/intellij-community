@@ -173,7 +173,7 @@ public class GitMergeHandler {
           LOG.error(String.format("Unexpected exception during the git operation: file - %s)", myConflict.getFilePath()), e);
         }
       }
-      VcsDirtyScopeManager.getInstance(myProject).filesDirty(singletonList(myFile), emptyList());
+      VcsDirtyScopeManager.getInstance(myProject).fileDirty(myFile);
     }
 
     @Nullable

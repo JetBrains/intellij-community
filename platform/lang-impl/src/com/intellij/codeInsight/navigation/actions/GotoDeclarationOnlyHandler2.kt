@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
@@ -49,6 +50,9 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
       DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
         CodeInsightBundle.message("popup.content.navigation.not.available.during.index.update"),
         DumbModeBlockedFunctionality.GotoDeclarationOnly)
+      return
+    }
+    catch (e: ProcessCanceledException) {
       return
     }
 

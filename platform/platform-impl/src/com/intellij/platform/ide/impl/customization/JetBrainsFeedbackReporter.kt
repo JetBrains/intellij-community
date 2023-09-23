@@ -9,9 +9,11 @@ import com.intellij.platform.ide.customization.FeedbackReporter
 import com.intellij.ui.LicensingFacade
 import com.intellij.util.Url
 import com.intellij.util.Urls
+import org.jetbrains.annotations.ApiStatus
 
-internal class JetBrainsFeedbackReporter(private val productName: String,
-                                         private val zenDeskFormData: ZenDeskFeedbackFormData?) : FeedbackReporter {
+@ApiStatus.Internal
+class JetBrainsFeedbackReporter(private val productName: String,
+                                private val zenDeskFormData: ZenDeskFeedbackFormData?) : FeedbackReporter {
   override val destinationDescription: String
     get() = "jetbrains.com"
 

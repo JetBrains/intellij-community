@@ -1,11 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -16,11 +15,11 @@ final class Component {
   @NotNull Value value;
   final EKey @NotNull [] ids;
 
-  Component(@NotNull Value value, @NotNull Set<EKey> ids) {
+  Component(@NotNull Value value, @NotNull Collection<EKey> ids) {
     this(value, ids.toArray(new EKey[0]));
   }
 
-  Component(@NotNull Value value, EKey @NotNull [] ids) {
+  Component(@NotNull Value value, EKey @NotNull ... ids) {
     this.value = value;
     this.ids = ids;
   }
@@ -119,18 +118,14 @@ class Equations {
     return 31 * results.hashCode() + (stable ? 1 : 0);
   }
 
-  @NotNull
-  Equations update(@SuppressWarnings("SameParameterValue") Direction direction, Effects newResult) {
-    List<DirectionResultPair> newPairs = StreamEx.of(this.results)
-      .map(drp -> drp.updateForDirection(direction, newResult))
-      .nonNull()
-      .toList();
-    return new Equations(newPairs, this.stable);
-  }
-
   Optional<Result> find(Direction direction) {
     int key = direction.asInt();
-    return StreamEx.of(results).findFirst(pair -> pair.directionKey == key).map(pair -> pair.result);
+    for (DirectionResultPair result : results) {
+      if (result.directionKey == key) {
+        return Optional.of(result).map(pair -> pair.result);
+      }
+    }
+    return Optional.empty();
   }
 }
 
@@ -162,16 +157,6 @@ class DirectionResultPair {
   public String toString() {
     return Direction.fromInt(directionKey) + "->" + result;
   }
-
-  @Nullable
-  DirectionResultPair updateForDirection(Direction direction, Result newResult) {
-    if (this.directionKey == direction.asInt()) {
-      return newResult == null ? null : new DirectionResultPair(direction.asInt(), newResult);
-    }
-    else {
-      return this;
-    }
-  }
 }
 
 interface Result {
@@ -180,6 +165,9 @@ interface Result {
    */
   default Stream<EKey> dependencies() {
     return Stream.empty();
+  }
+  
+  default void processDependencies(Consumer<EKey> processor) {
   }
 }
 
@@ -218,6 +206,15 @@ final class Pending implements Result {
   @Override
   public Stream<EKey> dependencies() {
     return Arrays.stream(delta).flatMap(component -> Stream.of(component.ids));
+  }
+
+  @Override
+  public void processDependencies(Consumer<EKey> processor) {
+    for (Component component : delta) {
+      for (EKey id : component.ids) {
+        processor.accept(id);
+      }
+    }
   }
 
   @Override
@@ -262,6 +259,14 @@ final class Effects implements Result {
   @Override
   public Stream<EKey> dependencies() {
     return Stream.concat(returnValue.dependencies(), effects.stream().flatMap(EffectQuantum::dependencies));
+  }
+
+  @Override
+  public void processDependencies(Consumer<EKey> processor) {
+    returnValue.processDependencies(processor);
+    for (EffectQuantum effect : effects) {
+      effect.processDependencies(processor);
+    }
   }
 
   public boolean isTop() {

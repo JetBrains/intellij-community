@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FloatingDecoratorMarker;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -258,7 +259,7 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public @NotNull DataContext getDataContext(Component component) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (ourGetDataLevel.get()[0] > 0) {
       LOG.error("DataContext shall not be created and queried inside another getData() call.");
     }

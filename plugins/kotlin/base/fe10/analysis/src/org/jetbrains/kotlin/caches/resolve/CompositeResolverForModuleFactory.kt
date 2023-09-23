@@ -219,8 +219,11 @@ class CompositeResolverForModuleFactory(
         // Shared by all PlatformConfigurators
         configureDefaultCheckers()
 
+        // In case of a common source set with multiple native targets a composite platform may duplicate platformConfigurator; we use a set
+        // to deduplicate
+        val uniquePlatformConfigurators = analyzerServices.services.mapTo(linkedSetOf()) { it.platformConfigurator as PlatformConfiguratorBase }
         // Specific for each PlatformConfigurator
-        for (configurator in analyzerServices.services.map { it.platformConfigurator as PlatformConfiguratorBase }) {
+        for (configurator in uniquePlatformConfigurators) {
             configurator.configureExtensionsAndCheckers(this)
         }
 

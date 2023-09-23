@@ -14,6 +14,7 @@ import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.TextMateService;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.preferences.Preferences;
+import org.jetbrains.plugins.textmate.language.preferences.TextMateAutoClosingPair;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateElementType;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
@@ -26,15 +27,7 @@ import java.util.Set;
 public final class TextMateEditorUtils {
   @Nullable
   public static TextMateScope getCurrentScopeSelector(@NotNull EditorEx editor) {
-    final EditorHighlighter highlighter = editor.getHighlighter();
-    SelectionModel selection = editor.getSelectionModel();
-    final int offset = selection.hasSelection() ? selection.getSelectionStart() : editor.getCaretModel().getOffset();
-    final HighlighterIterator iterator = highlighter.createIterator(offset);
-    TextMateScope result = null;
-    if (offset != 0 || !iterator.atEnd()) {
-      IElementType tokenType = iterator.getTokenType();
-      result = tokenType instanceof TextMateElementType ? ((TextMateElementType)tokenType).getScope() : null;
-    }
+    TextMateScope result = getCurrentScopeFromEditor(editor);
     //retrieve root scope of file
     if (result == null) {
       final VirtualFile file = editor.getVirtualFile();
@@ -49,13 +42,30 @@ public final class TextMateEditorUtils {
   }
 
   @Nullable
-  public static TextMateBracePair getHighlightingPairForLeftChar(char c, @Nullable TextMateScope currentScope) {
-    if (!TextMateService.getInstance().getPreferenceRegistry().isPossibleLeftHighlightingBrace(c)) {
+  private static TextMateScope getCurrentScopeFromEditor(@NotNull EditorEx editor) {
+    final EditorHighlighter highlighter = editor.getHighlighter();
+    SelectionModel selection = editor.getSelectionModel();
+    final int offset = selection.hasSelection() ? selection.getSelectionStart() : editor.getCaretModel().getOffset();
+    final HighlighterIterator iterator = highlighter.createIterator(offset);
+    TextMateScope result = null;
+    if (offset != 0 || !iterator.atEnd()) {
+      IElementType tokenType = iterator.getTokenType();
+      result = tokenType instanceof TextMateElementType ? ((TextMateElementType)tokenType).getScope() : null;
+    }
+    return result;
+  }
+
+  @Nullable
+  public static TextMateBracePair findRightHighlightingPair(int leftBraceStartOffset,
+                                                            @NotNull CharSequence fileText,
+                                                            @Nullable TextMateScope currentScope) {
+    if (!TextMateService.getInstance().getPreferenceRegistry().isPossibleLeftHighlightingBrace(fileText.charAt(leftBraceStartOffset))) {
       return null;
     }
     Set<TextMateBracePair> pairs = getAllPairsForMatcher(currentScope);
     for (TextMateBracePair pair : pairs) {
-      if (c == pair.leftChar) {
+      int endOffset = leftBraceStartOffset + pair.getLeft().length();
+      if (endOffset < fileText.length() && StringUtil.equals(pair.getLeft(), fileText.subSequence(leftBraceStartOffset, endOffset))) {
         return pair;
       }
     }
@@ -63,41 +73,16 @@ public final class TextMateEditorUtils {
   }
 
   @Nullable
-  public static TextMateBracePair getHighlightingPairForRightChar(char c, @Nullable TextMateScope currentSelector) {
-    if (!TextMateService.getInstance().getPreferenceRegistry().isPossibleRightHighlightingBrace(c)) {
+  public static TextMateBracePair findLeftHighlightingPair(int rightBraceEndOffset,
+                                                           @NotNull CharSequence fileText,
+                                                           @Nullable TextMateScope currentSelector) {
+    if (!TextMateService.getInstance().getPreferenceRegistry().isPossibleRightHighlightingBrace(fileText.charAt(rightBraceEndOffset - 1))) {
       return null;
     }
     Set<TextMateBracePair> pairs = getAllPairsForMatcher(currentSelector);
     for (TextMateBracePair pair : pairs) {
-      if (c == pair.rightChar) {
-        return pair;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static TextMateBracePair getSmartTypingPairForLeftChar(char c, @Nullable TextMateScope currentScope) {
-    if (!TextMateService.getInstance().getPreferenceRegistry().isPossibleLeftSmartTypingBrace(c)) {
-      return null;
-    }
-    Set<TextMateBracePair> pairs = getSmartTypingPairs(currentScope);
-    for (TextMateBracePair pair : pairs) {
-      if (c == pair.leftChar) {
-        return pair;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static TextMateBracePair getSmartTypingPairForRightChar(char c, @Nullable TextMateScope currentSelector) {
-    if (!TextMateService.getInstance().getPreferenceRegistry().isPossibleRightSmartTypingBrace(c)) {
-      return null;
-    }
-    Set<TextMateBracePair> pairs = getSmartTypingPairs(currentSelector);
-    for (TextMateBracePair pair : pairs) {
-      if (c == pair.rightChar) {
+      int startOffset = rightBraceEndOffset - pair.getRight().length();
+      if (startOffset >= 0 && StringUtil.equals(pair.getRight(), fileText.subSequence(startOffset, rightBraceEndOffset))) {
         return pair;
       }
     }
@@ -105,51 +90,41 @@ public final class TextMateEditorUtils {
   }
 
   private static Set<TextMateBracePair> getAllPairsForMatcher(@Nullable TextMateScope selector) {
+    if (selector == null) {
+      return Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS;
+    }
     Set<TextMateBracePair> result = new HashSet<>();
-    if (selector != null) {
-      List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferenceRegistry().getPreferences(selector);
-      for (Preferences preferences : preferencesForSelector) {
-        final Set<TextMateBracePair> highlightingPairs = preferences.getHighlightingPairs();
-        if (highlightingPairs != null) {
-          if (highlightingPairs.isEmpty()) {
-            // smart typing pairs can be defined in preferences but can be empty (in order to disable smart typing at all)
-            return Collections.emptySet();
-          }
-          else {
-            result.addAll(highlightingPairs);
-          }
+    List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferenceRegistry().getPreferences(selector);
+    for (Preferences preferences : preferencesForSelector) {
+      final Set<TextMateBracePair> highlightingPairs = preferences.getHighlightingPairs();
+      if (highlightingPairs != null) {
+        if (highlightingPairs.isEmpty()) {
+          // smart typing pairs can be defined in preferences but can be empty (in order to disable smart typing completely)
+          return Collections.emptySet();
         }
-      }
-      for (Preferences preferences : preferencesForSelector) {
-        final Set<TextMateBracePair> smartTypingPairs = preferences.getSmartTypingPairs();
-        if (smartTypingPairs != null) {
-          result.addAll(preferences.getSmartTypingPairs());
-        }
+        result.addAll(highlightingPairs);
       }
     }
-    result.addAll(Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS);
     return result;
   }
 
-  private static Set<TextMateBracePair> getSmartTypingPairs(@Nullable TextMateScope currentScope) {
-    if (currentScope != null) {
-      List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferenceRegistry().getPreferences(currentScope);
-      for (Preferences preferences : preferencesForSelector) {
-        final Set<TextMateBracePair> smartTypingPairs = preferences.getSmartTypingPairs();
-        if (smartTypingPairs != null) {
-          // smart typing pairs defined in preferences and can be empty (in order to disable smart typing at all)
-          if (smartTypingPairs.isEmpty()) {
-            return Collections.emptySet();
-          }
-          else {
-            final HashSet<TextMateBracePair> result = new HashSet<>(smartTypingPairs);
-            result.addAll(Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS);
-            return result;
-          }
+  public static Set<TextMateAutoClosingPair> getSmartTypingPairs(@Nullable TextMateScope currentScope) {
+    if (currentScope == null) {
+      return Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS;
+    }
+    List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferenceRegistry().getPreferences(currentScope);
+    final HashSet<TextMateAutoClosingPair> result = new HashSet<>();
+    for (Preferences preferences : preferencesForSelector) {
+      final @Nullable Set<TextMateAutoClosingPair> smartTypingPairs = preferences.getSmartTypingPairs();
+      if (smartTypingPairs != null) {
+        if (smartTypingPairs.isEmpty()) {
+          // smart typing pairs defined in preferences and can be empty (in order to disable smart typing completely)
+          return Collections.emptySet();
         }
+        result.addAll(smartTypingPairs);
       }
     }
-    return new HashSet<>(Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS);
+    return result;
   }
 
   private TextMateEditorUtils() {
@@ -166,7 +141,7 @@ public final class TextMateEditorUtils {
     int index = StringUtil.indexOf(fileName, '.');
     while (index >= 0) {
       CharSequence extension = fileName.subSequence(index + 1, fileName.length());
-      if (extension.length() == 0) break;
+      if (extension.isEmpty()) break;
       if (!processor.process(extension)) {
         return;
       }

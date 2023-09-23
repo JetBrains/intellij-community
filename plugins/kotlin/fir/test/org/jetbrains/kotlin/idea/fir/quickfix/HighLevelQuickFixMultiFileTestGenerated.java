@@ -625,6 +625,16 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/noFunctionImportOnSimpleName.test");
         }
 
+        @TestMetadata("noImportForCallableInConstructorCall.test")
+        public void testNoImportForCallableInConstructorCall() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/noImportForCallableInConstructorCall.test");
+        }
+
+        @TestMetadata("noImportForCallableInTypeReference.test")
+        public void testNoImportForCallableInTypeReference() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/noImportForCallableInTypeReference.test");
+        }
+
         @TestMetadata("noImportForFunInQualifiedNotFirst.before.Main.kt")
         public void testNoImportForFunInQualifiedNotFirst() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/noImportForFunInQualifiedNotFirst.before.Main.kt");

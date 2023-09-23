@@ -69,14 +69,17 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     PsiElement psiChild = getFirstChild();
     if (psiChild == null) return PsiElement.EMPTY_ARRAY;
 
-    List<PsiElement> result = new ArrayList<>();
+    List<PsiElement> result = null;
     while (psiChild != null) {
       if (psiChild.getNode() instanceof CompositeElement) {
+        if (result == null) {
+          result = new ArrayList<>();
+        }
         result.add(psiChild);
       }
       psiChild = psiChild.getNextSibling();
     }
-    return PsiUtilCore.toPsiElementArray(result);
+    return result == null ? PsiElement.EMPTY_ARRAY : PsiUtilCore.toPsiElementArray(result);
   }
 
   @Override

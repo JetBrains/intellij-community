@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.completion.ml.experiment
@@ -16,6 +16,7 @@ import java.util.*
 class ClientExperimentStatus : ExperimentStatus {
   companion object {
     private const val EXPERIMENT_DISABLED_PROPERTY_KEY = "ml.completion.experiment.disabled"
+    private const val EXPERIMENT_DISABLED_BY_EVALUATION_ENV = "EVALUATION_ML_EXPERIMENT_DISABLED"
 
     fun loadExperimentInfo(): ExperimentConfig {
       try {
@@ -51,6 +52,8 @@ class ClientExperimentStatus : ExperimentStatus {
 
   private val experimentConfig: ExperimentConfig = loadExperimentInfo()
   private val languageToGroup: MutableMap<String, ExperimentInfo> = HashMap()
+  private val isDisabledByEvaluation: Boolean = System.getenv(EXPERIMENT_DISABLED_BY_EVALUATION_ENV)?.toBooleanStrictOrNull() ?: false
+  private var experimentGroupRegistryValue: Int? = null
 
   init {
     val bucketsMapping = getBucketsMapping(experimentConfig.seed)
@@ -71,11 +74,16 @@ class ClientExperimentStatus : ExperimentStatus {
   }
 
   override fun forLanguage(language: Language): ExperimentInfo {
-    if (ApplicationManager.getApplication().isUnitTestMode) return ExperimentInfo(false, 0)
+    if (ApplicationManager.getApplication().isUnitTestMode || isDisabledByEvaluation) {
+      return ExperimentInfo(false, 0)
+    }
     val matchingLanguage = findMatchingLanguage(language) ?: return ExperimentInfo(false, experimentConfig.version)
     val experimentGroupRegistry = Registry.get("completion.ml.override.experiment.group.number")
-    if (experimentGroupRegistry.isChangedFromDefault) {
-      val group = experimentConfig.groups.find { it.number == experimentGroupRegistry.asInteger() }
+    if (experimentGroupRegistry.isChangedFromDefault && !experimentGroupRegistry.isChangedSinceAppStart) {
+      experimentGroupRegistryValue = experimentGroupRegistry.asInteger()
+    }
+    if (experimentGroupRegistryValue != null) {
+      val group = experimentConfig.groups.find { it.number == experimentGroupRegistryValue }
       if (group != null) {
         setDisabled(false)
         return ExperimentInfo(true, group.number, group.useMLRanking, group.showArrows, group.calculateFeatures, true)
@@ -91,6 +99,7 @@ class ClientExperimentStatus : ExperimentStatus {
   }
 
   override fun isDisabled(): Boolean = PropertiesComponent.getInstance().isTrueValue(EXPERIMENT_DISABLED_PROPERTY_KEY)
+                                       || isDisabledByEvaluation
 
   private fun setDisabled(value: Boolean) = PropertiesComponent.getInstance().setValue(EXPERIMENT_DISABLED_PROPERTY_KEY, value)
 

@@ -58,7 +58,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
@@ -100,7 +100,6 @@ import static com.intellij.openapi.util.io.JarUtil.loadProperties;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
 import static icons.ExternalSystemIcons.Task;
-import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.jetbrains.idea.maven.project.MavenHomeKt.resolveMavenHomeType;
 import static org.jetbrains.idea.maven.project.MavenHomeKt.staticOrBundled;
 
@@ -716,14 +715,15 @@ public class MavenUtil {
       return;
     }
     String listenerPath = MavenServerManager.getInstance().getMavenEventListener().getAbsolutePath();
-    String userExtClassPath = StringUtils.stripToEmpty(params.getVMParametersList().getPropertyValue(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH));
+    String userExtClassPath =
+      StringUtils.stripToEmpty(params.getVMParametersList().getPropertyValue(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH));
     String vmParameter = "-D" + MavenServerEmbedder.MAVEN_EXT_CLASS_PATH + "=";
     String[] userListeners = userExtClassPath.split(File.pathSeparator);
     CompositeParameterTargetedValue targetedValue = new CompositeParameterTargetedValue(vmParameter)
       .addPathPart(listenerPath);
 
     for (String path : userListeners) {
-      if(StringUtil.isEmptyOrSpaces(path)) continue;
+      if (StringUtil.isEmptyOrSpaces(path)) continue;
       targetedValue = targetedValue.addPathSeparator().addPathPart(path);
     }
     params.getVMParametersList().add(targetedValue);
@@ -806,7 +806,6 @@ public class MavenUtil {
   }
 
 
-
   @Nullable
   public static String getMavenVersion(@Nullable File mavenHome) {
     if (mavenHome == null) return null;
@@ -817,16 +816,16 @@ public class MavenUtil {
       for (File mavenLibFile : libs) {
         String lib = mavenLibFile.getName();
         if (lib.equals("maven-core.jar")) {
-          MavenLog.LOG.debug("Choosing version by maven-core.jar");
+          MavenLog.LOG.trace("Choosing version by maven-core.jar");
           return getMavenLibVersion(mavenLibFile);
         }
         if (lib.startsWith("maven-core-") && lib.endsWith(".jar")) {
-          MavenLog.LOG.debug("Choosing version by maven-core.xxx.jar");
+          MavenLog.LOG.trace("Choosing version by maven-core.xxx.jar");
           String version = lib.substring("maven-core-".length(), lib.length() - ".jar".length());
           return contains(version, ".x") ? getMavenLibVersion(mavenLibFile) : version;
         }
         if (lib.startsWith("maven-") && lib.endsWith("-uber.jar")) {
-          MavenLog.LOG.debug("Choosing version by maven-xxx-uber.jar");
+          MavenLog.LOG.trace("Choosing version by maven-xxx-uber.jar");
           return lib.substring("maven-".length(), lib.length() - "-uber.jar".length());
         }
       }
@@ -914,7 +913,21 @@ public class MavenUtil {
 
   @NotNull
   public static File resolveDefaultLocalRepository() {
-    return resolveLocalRepository(null, BundledMaven3.INSTANCE, null);
+    String forcedM2Home = System.getProperty(PROP_FORCED_M2_HOME);
+    if (forcedM2Home != null) {
+      return new File(forcedM2Home);
+    }
+    File result = doResolveLocalRepository(resolveUserSettingsFile(null), null);
+    if (result == null) {
+      result = new File(resolveM2Dir(), REPOSITORY_DIR);
+    }
+
+    try {
+      return result.getCanonicalFile();
+    }
+    catch (IOException e) {
+      return result;
+    }
   }
 
   @NotNull
@@ -957,9 +970,9 @@ public class MavenUtil {
 
   @NotNull
   public static File makeLocalRepositoryFile(MavenId id,
-                                              File localRepository,
-                                              @NotNull String extension,
-                                              @Nullable String classifier) {
+                                             File localRepository,
+                                             @NotNull String extension,
+                                             @Nullable String classifier) {
     String relPath = id.getGroupId().replace(".", "/");
 
     relPath += "/" + id.getArtifactId();
@@ -1211,9 +1224,8 @@ public class MavenUtil {
   }
 
   /**
-   *
-   * @param project Project required to restart connectors
-   * @param wait if true, then maven server(s) restarted synchronously
+   * @param project   Project required to restart connectors
+   * @param wait      if true, then maven server(s) restarted synchronously
    * @param condition only connectors satisfied for this predicate will be restarted
    */
   public static void restartMavenConnectors(@NotNull Project project, boolean wait, Predicate<MavenServerConnector> condition) {
@@ -1613,7 +1625,7 @@ public class MavenUtil {
   @NotNull
   public static String getCompilerPluginVersion(@NotNull MavenProject mavenProject) {
     MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
-    return plugin != null ? plugin.getVersion() : EMPTY;
+    return plugin != null ? plugin.getVersion() : "";
   }
 
   public static boolean isWrapper(@NotNull MavenGeneralSettings settings) {
@@ -1657,7 +1669,7 @@ public class MavenUtil {
       baseDir = getBaseDir(projects.get(0).getDirectoryFile()).toString();
     }
     if (null == baseDir) {
-      baseDir = EMPTY;
+      baseDir = "";
     }
 
     MavenEmbedderWrapper embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir);
@@ -1677,7 +1689,8 @@ public class MavenUtil {
   public static boolean isMavenizedModule(@NotNull Module m) {
     try {
       return !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized();
-    } catch (AlreadyDisposedException e) {
+    }
+    catch (AlreadyDisposedException e) {
       return false;
     }
   }

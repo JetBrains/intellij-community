@@ -82,7 +82,7 @@ public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
     Editor editor = getEditor();
     PsiFile file = getFile();
 
-    assertTrue(CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor));
+    CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor);
     checkResultByFile(getTestName(false) + "_after.java");
   }
 

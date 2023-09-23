@@ -1,4 +1,5 @@
 internal interface Cloneable
+
 internal open class C1 : Cloneable, kotlin.Cloneable {
     @Throws(CloneNotSupportedException::class)
     public override fun clone(): Any {

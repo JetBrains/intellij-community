@@ -296,7 +296,7 @@ public class HighlightUsagesHandlerTest extends DaemonAnalyzerTestCase {
   @NotNull
   List<HighlightInfo> getIdentifierHighlighters() {
     return Arrays.stream(myEditor.getMarkupModel().getAllHighlighters())
-      .map(rh -> (HighlightInfo)rh.getErrorStripeTooltip())
+      .map(rh -> HighlightInfo.fromRangeHighlighter(rh))
       .filter(Objects::nonNull)
       .filter(info -> info.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY)
       .collect(Collectors.toList());

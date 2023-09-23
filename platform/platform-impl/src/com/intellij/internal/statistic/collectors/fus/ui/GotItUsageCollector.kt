@@ -78,7 +78,7 @@ class GotItUsageCollector private constructor() {
   }
 }
 
-class GotItUsageCollectorGroup : CounterUsagesCollector() {
+object GotItUsageCollectorGroup : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   enum class CloseType(private val text: String) {
@@ -92,17 +92,17 @@ class GotItUsageCollectorGroup : CounterUsagesCollector() {
     override fun toString(): String = text
   }
 
-  companion object {
-    private val GROUP = EventLogGroup("got.it.tooltip", 2)
+  private val GROUP = EventLogGroup("got.it.tooltip", 2)
 
-    internal val showEvent: EventId2<String?, Int> = GROUP.registerEvent("show",
-                                                                         EventFields.StringValidatedByCustomRule("id_prefix", GotItIDValidator::class.java),
-                                                                         EventFields.Int("count"))
+  internal val showEvent: EventId2<String?, Int> = GROUP.registerEvent("show",
+                                                                       EventFields.StringValidatedByCustomRule("id_prefix",
+                                                                                                               GotItIDValidator::class.java),
+                                                                       EventFields.Int("count"))
 
-    internal val closeEvent: EventId2<String?, CloseType> = GROUP.registerEvent("close",
-                                                                                EventFields.StringValidatedByCustomRule("id_prefix", GotItIDValidator::class.java),
-                                                                                EventFields.Enum<CloseType>("type"))
-  }
+  internal val closeEvent: EventId2<String?, CloseType> = GROUP.registerEvent("close",
+                                                                              EventFields.StringValidatedByCustomRule("id_prefix",
+                                                                                                                      GotItIDValidator::class.java),
+                                                                              EventFields.Enum<CloseType>("type"))
 }
 
 class GotItIDValidator : CustomValidationRule() {

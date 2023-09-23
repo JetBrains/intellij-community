@@ -7,9 +7,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class MavenServerStatsCollector {
-  private static final Map<String, AtomicInteger> readCounters = new ConcurrentHashMap<String, AtomicInteger>();
-  private static final Map<String, AtomicInteger> pluginResolving = new ConcurrentHashMap<String, AtomicInteger>();
-  public static final boolean collectStatistics = Boolean.getBoolean("maven.collect.stat");
+  private static final Map<String, AtomicInteger> readCounters = new ConcurrentHashMap<>();
+  private static final Map<String, AtomicInteger> pluginResolving = new ConcurrentHashMap<>();
+  public static final boolean collectStatistics = Boolean.getBoolean("maven.collect.local.stat");
 
   private MavenServerStatsCollector() { }
 
@@ -30,17 +30,15 @@ public final class MavenServerStatsCollector {
   }
 
   private static void fill(Map<String, Integer> dest, Map<String, AtomicInteger> src) {
-    src.entrySet().forEach(e -> {
-      dest.put(e.getKey(), e.getValue().get());
-    });
+    src.forEach((key, value) -> dest.put(key, value.get()));
   }
 
-  static void pluginResolve(String mavenid) {
+  public static void pluginResolve(String mavenid) {
     if (!collectStatistics) return;
     putOrAdd(mavenid, pluginResolving);
   }
 
-  static void fill(MavenServerStatus status, boolean clean) {
+  public static void fill(MavenServerStatus status, boolean clean) {
     fill(status.fileReadAccessCount, readCounters);
     fill(status.pluginResolveCount, pluginResolving);
   }

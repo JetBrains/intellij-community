@@ -16,6 +16,7 @@ import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
+import de.plushnikov.intellij.plugin.thirdparty.LombokAddNullAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.*;
@@ -114,12 +115,12 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       if (null != existedStaticMethod) {
         if (paramTypes.isEmpty()) {
           builder.addErrorMessage("inspection.message.method.s.matched.static.constructor.name.already.defined", staticConstructorName)
-            .withLocalQuickFixes(()->new SafeDeleteFix(existedStaticMethod));
+            .withLocalQuickFixes(() -> new SafeDeleteFix(existedStaticMethod));
         }
         else {
           builder.addErrorMessage("inspection.message.method.s.with.d.parameters.matched.static.constructor.name.already.defined",
                                   staticConstructorName, paramTypes.size())
-            .withLocalQuickFixes(()->new SafeDeleteFix(existedStaticMethod));
+            .withLocalQuickFixes(() -> new SafeDeleteFix(existedStaticMethod));
         }
         result = false;
       }
@@ -147,11 +148,11 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     if (null != existedMethod) {
       if (paramTypes.isEmpty()) {
         builder.addErrorMessage("inspection.message.constructor.without.parameters.already.defined")
-          .withLocalQuickFixes(()-> new SafeDeleteFix(existedMethod));
+          .withLocalQuickFixes(() -> new SafeDeleteFix(existedMethod));
       }
       else {
         builder.addErrorMessage("inspection.message.constructor.with.d.parameters.already.defined", paramTypes.size())
-          .withLocalQuickFixes(()->new SafeDeleteFix(existedMethod));
+          .withLocalQuickFixes(() -> new SafeDeleteFix(existedMethod));
       }
       result = false;
     }
@@ -349,7 +350,8 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
         final LombokLightParameter parameter = new LombokLightParameter(parameterName, parameterField.getType(), constructorBuilder);
         parameter.setNavigationElement(parameterField);
         constructorBuilder.withParameter(parameter);
-        LombokCopyableAnnotations.copyCopyableAnnotations(parameterField, parameter.getModifierList(), LombokCopyableAnnotations.BASE_COPYABLE);
+        LombokCopyableAnnotations.copyCopyableAnnotations(parameterField, parameter.getModifierList(),
+                                                          LombokCopyableAnnotations.BASE_COPYABLE);
 
         blockText.append(String.format("this.%s = %s;\n", parameterField.getName(), parameterName));
       }
@@ -403,6 +405,8 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
     final String codeBlockText = createStaticCodeBlockText(returnType, useJavaDefaults, methodBuilder.getParameterList());
     methodBuilder.withBodyText(codeBlockText);
+
+    LombokAddNullAnnotations.createRelevantNonNullAnnotation(psiClass, methodBuilder);
 
     return methodBuilder;
   }

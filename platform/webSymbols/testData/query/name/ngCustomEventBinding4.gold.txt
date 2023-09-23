@@ -42,10 +42,12 @@
    },
    {
     name-part: "clicked",
+    display-name: "event",
     problem: UNKNOWN_SYMBOL,
    },
    {
     name-part: ".",
+    display-name: "event",
    },
    {
     name-part: "prevent",

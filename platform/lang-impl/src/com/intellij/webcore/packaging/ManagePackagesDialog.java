@@ -373,8 +373,8 @@ public class ManagePackagesDialog extends DialogWrapper {
   }
 
   private final class PackagesModel extends CollectionListModel<RepoPackage> {
-    protected final List<RepoPackage> myFilteredOut = new ArrayList<>();
-    protected List<RepoPackage> myView = new ArrayList<>();
+    private final List<RepoPackage> myFilteredOut = new ArrayList<>();
+    private List<RepoPackage> myView = new ArrayList<>();
 
     PackagesModel(List<RepoPackage> packages) {
       super(packages);
@@ -385,7 +385,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       super.add(new RepoPackage(element, urlResource));
     }
 
-    protected void filter(final String filter) {
+    private void filter(final String filter) {
       final Collection<RepoPackage> toProcess = toProcess();
 
       toProcess.addAll(myFilteredOut);
@@ -422,7 +422,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       return myView.get(index);
     }
 
-    protected ArrayList<RepoPackage> toProcess() {
+    private ArrayList<RepoPackage> toProcess() {
       return new ArrayList<>(myView);
     }
 

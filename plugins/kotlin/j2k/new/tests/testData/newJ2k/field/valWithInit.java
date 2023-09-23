@@ -3,5 +3,5 @@ class Foo {
 }
 
 class C {
-final Foo f = new Foo(1, 2);
+    final Foo f = new Foo(1, 2);
 }

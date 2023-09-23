@@ -41,22 +41,6 @@ fun <T> Tree<T>.getTreeString(): String {
   return result.toString()
 }
 
-fun <T> Tree<T>.sortedTree(): Tree<T> {
-  return toMutableTree().sortTree()
-}
-
-fun <T, MTree : MutableTree<T>> MTree.sortTree(): MTree {
-  val queue = ArrayDeque<MutableTree.Node<T>>()
-  roots.sortBy { it.name }
-  queue.addAll(roots)
-  while (queue.isNotEmpty()) {
-    val node = queue.removeFirst()
-    node.children.sortBy { it.name }
-    queue.addAll(node.children)
-  }
-  return this
-}
-
 fun <T> buildTree(roots: List<T>, nameGetter: T.() -> String, childrenGetter: T.() -> List<T>): Tree<T> {
   val tree = SimpleTree<T>()
   val queue = ArrayDeque<SimpleTree.Node<T>>()

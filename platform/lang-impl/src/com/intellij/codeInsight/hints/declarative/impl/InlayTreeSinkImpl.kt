@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.diagnostic.PluginException
+import com.intellij.openapi.util.NlsContexts
 
 
 /**
@@ -30,7 +31,7 @@ class InlayTreeSinkImpl(
 
   override fun addPresentation(position: InlayPosition,
                                payloads: List<InlayPayload>?,
-                               tooltip: String?,
+                               @NlsContexts.HintText tooltip: String?,
                                hasBackground: Boolean,
                                builder: PresentationTreeBuilder.() -> Unit) {
     val b = PresentationTreeBuilderImpl.createRoot()
@@ -75,7 +76,7 @@ class InlayTreeSinkImpl(
 
 data class InlayData(
   val position: InlayPosition,
-  val tooltip: String?,
+  @NlsContexts.HintText val tooltip: String?,
   val hasBackground: Boolean,
   val tree: TinyTree<Any?>,
   val providerId: String,

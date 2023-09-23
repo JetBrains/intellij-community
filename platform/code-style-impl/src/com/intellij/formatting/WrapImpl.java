@@ -94,7 +94,7 @@ public final class WrapImpl extends Wrap {
     return null;
   }
 
-  public final boolean getIgnoreParentWraps() {
+  public boolean getIgnoreParentWraps() {
     return (myFlags & IGNORE_PARENT_WRAPS_MASK) != 0;
   }
 
@@ -164,7 +164,7 @@ public final class WrapImpl extends Wrap {
     myFlags |= (wrapFirstElement ? WRAP_FIRST_ELEMENT_MASK:0) | (myType.ordinal() << TYPE_SHIFT);
   }
 
-  public final Type getType() {
+  public Type getType() {
     return myTypes[(myFlags & TYPE_MASK) >>> TYPE_SHIFT];
   }
 
@@ -174,7 +174,7 @@ public final class WrapImpl extends Wrap {
    *
    * @return    {@code 'wrapFirstElement'} property value
    */
-  public final boolean isWrapFirstElement() {
+  public boolean isWrapFirstElement() {
     return (myFlags & WRAP_FIRST_ELEMENT_MASK) != 0;
   }
 
@@ -184,7 +184,7 @@ public final class WrapImpl extends Wrap {
     }
   }
 
-  public final boolean isActive() {
+  public boolean isActive() {
     return (myFlags & ACTIVE_MASK) != 0;
   }
 

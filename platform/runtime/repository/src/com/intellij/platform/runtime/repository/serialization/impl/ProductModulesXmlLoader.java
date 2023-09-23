@@ -64,7 +64,7 @@ public final class ProductModulesXmlLoader {
             rootMainGroupModules.add(new IncludedRuntimeModuleImpl(repository.getModule(RuntimeModuleId.raw(moduleName)), importance, Collections.emptySet()));
           }
           else {
-            bundledPluginModuleGroups.add(new PluginModuleGroup(repository.getModule(RuntimeModuleId.raw(moduleName))));
+            bundledPluginModuleGroups.add(new PluginModuleGroup(repository.getModule(RuntimeModuleId.raw(moduleName)), repository));
           }
           moduleName = null;
           importance = null;

@@ -35,7 +35,7 @@ class ByInfoSuperFunctionsProvider(
         val functions = mutableMapOf<JKElementInfoLabel, KtNamedFunction>()
         for (element in inferenceContext.elements) {
             element.forEachDescendantOfType<KtNamedFunction> { function ->
-                val label = function.nameIdentifier?.getLabel() ?: return@forEachDescendantOfType
+                val label = function.nameIdentifier?.getInferenceLabel() ?: return@forEachDescendantOfType
                 functions += label to function
             }
         }

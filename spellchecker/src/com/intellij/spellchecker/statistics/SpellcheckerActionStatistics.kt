@@ -2,19 +2,16 @@
 package com.intellij.spellchecker.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
-import com.intellij.openapi.project.Project
 
-class SpellcheckerActionStatistics : CounterUsagesCollector() {
+object SpellcheckerActionStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
-    private val GROUP = EventLogGroup("spellchecker.events", 2)
-    @JvmField
-    val REMOVE_FROM_ACCEPTED_WORDS = GROUP.registerEvent("remove.from.accepted.words.ui")
-    @JvmField
-    val ADD_TO_ACCEPTED_WORDS = GROUP.registerEvent("add.to.accepted.words.ui")
-  }
+  private val GROUP = EventLogGroup("spellchecker.events", 2)
+
+  @JvmField
+  val REMOVE_FROM_ACCEPTED_WORDS = GROUP.registerEvent("remove.from.accepted.words.ui")
+
+  @JvmField
+  val ADD_TO_ACCEPTED_WORDS = GROUP.registerEvent("add.to.accepted.words.ui")
 }

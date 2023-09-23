@@ -21,9 +21,9 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyCharmCommunityCustomizationBundle
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.InputData
-import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.PipEnvResult
-import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.Source
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.InputData
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.PipEnvResult
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Source
 import com.jetbrains.python.sdk.pipenv.*
 import java.awt.BorderLayout
 import java.awt.Insets

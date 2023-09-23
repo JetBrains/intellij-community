@@ -25,6 +25,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.Weigher;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +68,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
     public void setCompletionPhase(@NotNull CompletionPhase phase) {
       // wrap explicitly with client id for the case when some called API depends on ClientId.current
       try (AccessToken ignored = ClientId.withClientId(myAppSession.getClientId())) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
+        ThreadingAssertions.assertEventDispatchThread();
         CompletionPhase oldPhase = getCompletionPhase();
         CompletionProgressIndicator oldIndicator = oldPhase.indicator;
         if (oldIndicator != null &&

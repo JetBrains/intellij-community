@@ -30,10 +30,11 @@ import static com.intellij.util.io.PageCacheUtils.*;
 public final class StorageLockContext {
 
   private static final FilePageCache DEFAULT_FILE_PAGE_CACHE = new FilePageCache(FILE_PAGE_CACHE_OLD_CAPACITY_BYTES);
-  private static final @Nullable FilePageCacheLockFree DEFAULT_FILE_PAGE_CACHE_NEW = LOCK_FREE_PAGE_CACHE_ENABLED
-                                                                                     ?
-                                                                                     new FilePageCacheLockFree(FILE_PAGE_CACHE_NEW_CAPACITY_BYTES) :
-                                                                                     null;
+  private static final @Nullable FilePageCacheLockFree DEFAULT_FILE_PAGE_CACHE_NEW = LOCK_FREE_PAGE_CACHE_ENABLED ?
+                                                                                     new FilePageCacheLockFree(
+                                                                                       FILE_PAGE_CACHE_NEW_CAPACITY_BYTES,
+                                                                                       (long)(FILE_PAGE_CACHE_NEW_CAPACITY_BYTES * HEAP_CAPACITY_FRACTION)
+                                                                                     ) : null;
 
   static final StorageLockContext DEFAULT_CONTEXT = new StorageLockContext(false);
 

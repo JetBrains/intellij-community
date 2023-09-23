@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
@@ -124,7 +125,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                                            @Nullable EditorColorsScheme editorColorsScheme,
                                                            @NotNull DaemonProgressIndicator progressIndicator,
                                                            @NotNull Number daemonCancelEventCount) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     TextRange fileRange = psiFile.getTextRange();
     ProperTextRange visibleRange;
     visibleRange = editor == null ? ProperTextRange.create(ObjectUtils.notNull(fileRange, TextRange.EMPTY_RANGE))
@@ -208,7 +209,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   void waitForHighlightInfosApplied() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     for (RunnableFuture<?> request : pendingFileLevelHighlightRequests) {
       request.run();
     }

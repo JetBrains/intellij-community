@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -9,6 +10,7 @@ import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightModifierList;
 import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
+import de.plushnikov.intellij.plugin.thirdparty.LombokAddNullAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
@@ -26,6 +28,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
+@Service
 public final class SetterFieldProcessor extends AbstractFieldProcessor {
   SetterFieldProcessor() {
     super(PsiMethod.class, LombokClassNames.SETTER);
@@ -143,6 +146,10 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
 
     final String codeBlockText = createCodeBlockText(psiField, psiClass, returnType, isStatic, setterParameter);
     methodBuilder.withBodyText(codeBlockText);
+
+    if (!PsiTypes.voidType().equals(returnType)) {
+      LombokAddNullAnnotations.createRelevantNonNullAnnotation(psiClass, methodBuilder);
+    }
 
     return methodBuilder;
   }

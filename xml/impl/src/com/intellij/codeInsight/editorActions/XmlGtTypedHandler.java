@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
@@ -24,9 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XmlGtTypedHandler extends TypedHandlerDelegate {
-  @NotNull
   @Override
-  public Result beforeCharTyped(final char c, @NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile editedFile, @NotNull final FileType fileType) {
+  public @NotNull Result beforeCharTyped(final char c, final @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile editedFile, final @NotNull FileType fileType) {
     final WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
     if (c == '>' && webEditorOptions != null && webEditorOptions.isAutomaticallyInsertClosingTag() && fileContainsXmlLanguage(editedFile)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();

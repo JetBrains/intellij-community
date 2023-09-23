@@ -70,12 +70,7 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
                                      @NotNull PsiElement place) {
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
 
-    if (!shouldAnalyzePatternVariablesInCaseLabel(place)) return true;
-
-    final PsiCaseLabelElementList patternsInCaseLabel = getCaseLabelElementList();
-    if (patternsInCaseLabel == null) return true;
-
-    return patternsInCaseLabel.processDeclarations(processor, state, null, place);
+    return !shouldAnalyzePatternVariablesInCaseLabel(place) || processPatternVariables(processor, state, place);
   }
 
   /**

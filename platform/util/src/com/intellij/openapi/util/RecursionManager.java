@@ -194,6 +194,22 @@ public final class RecursionManager {
     };
   }
 
+  /**
+   * Runs computation in a new context in the current thread, without any previously set guards.
+   */
+  @ApiStatus.Internal
+  @IntellijInternalApi
+  public static void runInNewContext(@NotNull Runnable runnable) {
+    CalculationStack currentContext = ourStack.get();
+    try {
+      ourStack.set(new CalculationStack());
+      runnable.run();
+    }
+    finally {
+      ourStack.set(currentContext);
+    }
+  }
+
 
   private static final class MyKey {
     final String guardId;

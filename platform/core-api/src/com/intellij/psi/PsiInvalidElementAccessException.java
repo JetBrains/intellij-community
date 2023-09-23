@@ -76,6 +76,7 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
     myDiagnostic = createAttachments(findInvalidationTrace(node));
   }
 
+  @NotNull
   public static PsiInvalidElementAccessException createByNode(@NotNull ASTNode node, @Nullable @NonNls String message) {
     return new PsiInvalidElementAccessException(node, message);
   }

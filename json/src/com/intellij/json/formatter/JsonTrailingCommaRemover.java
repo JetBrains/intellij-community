@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.formatter;
 
 import com.intellij.application.options.CodeStyle;
@@ -19,9 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class JsonTrailingCommaRemover implements PreFormatProcessor {
-  @NotNull
   @Override
-  public TextRange process(@NotNull ASTNode element, @NotNull TextRange range) {
+  public @NotNull TextRange process(@NotNull ASTNode element, @NotNull TextRange range) {
     PsiElement rootPsi = element.getPsi();
     if (rootPsi.getLanguage() != JsonLanguage.INSTANCE) {
       return range;
@@ -44,7 +43,7 @@ public final class JsonTrailingCommaRemover implements PreFormatProcessor {
     return range;
   }
 
-  private static class Visitor extends JsonRecursiveElementVisitor {
+  private static final class Visitor extends JsonRecursiveElementVisitor {
     private final Document myDocument;
     private int myOffsetDelta;
 

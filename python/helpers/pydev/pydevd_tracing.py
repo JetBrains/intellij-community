@@ -50,7 +50,7 @@ def _get_stack_str(frame):
     return msg
 
 def _internal_set_trace(tracing_func):
-    if TracingFunctionHolder._warn:
+    if TracingFunctionHolder._warn and sys.gettrace() != tracing_func:
         frame = get_frame()
         if frame is not None and frame.f_back is not None:
             filename = frame.f_back.f_code.co_filename.lower()

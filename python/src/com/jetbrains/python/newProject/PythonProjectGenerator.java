@@ -207,9 +207,9 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     configureProject(project, baseDir, settings, module, synchronizer);
     var statisticsInfo = settings.getInterpreterInfoForStatistics();
     if (statisticsInfo instanceof InterpreterStatisticsInfo interpreterStatisticsInfo) {
-      PythonNewProjectWizardCollector.Companion.logPythonNewProjectGenerated(interpreterStatisticsInfo,
-                                                                             PyStatisticToolsKt.getVersion(settings.getSdk()),
-                                                                             this.getClass());
+      PythonNewProjectWizardCollector.logPythonNewProjectGenerated(interpreterStatisticsInfo,
+                                                                   PyStatisticToolsKt.getVersion(settings.getSdk()),
+                                                                   this.getClass());
     }
   }
 

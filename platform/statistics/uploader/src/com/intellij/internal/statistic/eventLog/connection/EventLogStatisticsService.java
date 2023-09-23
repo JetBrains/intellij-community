@@ -114,7 +114,7 @@ public class EventLogStatisticsService implements StatisticsService {
 
     final boolean isInternal = info.isInternal();
     final String productCode = info.getProductCode();
-    EventLogBuildType defaultBuildType = getDefaultBuildType(info);
+    EventLogBuildType defaultBuildType = getDefaultBuildType(info.isEAP());
     LogEventFilter baseFilter = settings.getBaseEventFilter();
 
     MachineId machineId = getActualOrDisabledMachineId(config.getMachineId(), settings);
@@ -188,8 +188,8 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   @NotNull
-  private static EventLogBuildType getDefaultBuildType(EventLogApplicationInfo info) {
-    return info.isEAP() ? EventLogBuildType.EAP : EventLogBuildType.RELEASE;
+  private static EventLogBuildType getDefaultBuildType(boolean isEap) {
+    return isEap ? EventLogBuildType.EAP : EventLogBuildType.RELEASE;
   }
 
   @NotNull

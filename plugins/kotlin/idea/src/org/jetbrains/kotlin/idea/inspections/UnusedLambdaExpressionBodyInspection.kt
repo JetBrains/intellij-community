@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.inspections.UnusedLambdaExpressionBodyInspection.Util.replaceBlockExpressionWithLambdaBody
 
 class UnusedLambdaExpressionBodyInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -73,7 +74,7 @@ class UnusedLambdaExpressionBodyInspection : AbstractKotlinInspection() {
         }
     }
 
-    companion object {
+    object Util {
         fun KtDeclarationWithBody.replaceBlockExpressionWithLambdaBody(lambdaBody: KtBlockExpression?) {
             equalsToken?.let { token ->
                 val ktPsiFactory = KtPsiFactory(project)

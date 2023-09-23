@@ -21,7 +21,13 @@
         <xs:element type="iconEapType" name="icon-eap" minOccurs="0"/>
         <xs:element type="licenseeType" name="licensee" minOccurs="0"/>
         <xs:element type="namesType" name="names"/>
-        <xs:element type="productUrlType" name="productUrl" minOccurs="0"/>
+        <xs:element type="productUrlType" name="productUrl" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+              Deprecated: override ExternalProductResourceUrls.downloadPageUrl instead.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
         <xs:element type="essentialPluginType" name="essential-plugin" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element type="welcome-screenType" name="welcome-screen" minOccurs="0">
           <xs:annotation>
@@ -62,13 +68,37 @@
         </xs:element>
         <xs:element type="update-urlsType" name="update-urls" minOccurs="0"/>
         <xs:element type="helpType" name="help" minOccurs="0"/>
-        <xs:element type="urlType" name="documentation" minOccurs="0"/>
-        <xs:element type="urlType" name="support" minOccurs="0"/>
-        <xs:element type="urlType" name="youtrack" minOccurs="0"/>
+        <xs:element type="urlType" name="documentation" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+              Deprecated: override ExternalProductResourceUrls.gettingStartedPageUrl instead.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element type="urlType" name="support" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+              Deprecated: override ExternalProductResourceUrls.technicalSupportUrl instead.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element type="urlType" name="youtrack" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+              Deprecated: override ExternalProductResourceUrls.bugReportUrl instead.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
         <xs:element type="zendeskFormType" name="feedback" minOccurs="0"/>
         <xs:element type="whatsNewUrlType" name="whatsnew" minOccurs="0"/>
         <xs:element type="keymapType" name="keymap" minOccurs="0"/>
-        <xs:element type="urlType" name="jetbrains-tv" minOccurs="0"/>
+        <xs:element type="urlType" name="jetbrains-tv" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+              Deprecated: override ExternalProductResourceUrls.youTubeChannelUrl instead.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
         <xs:element type="subscriptionsType" name="subscriptions" minOccurs="0"/>
         <xs:element type="statisticsType" name="statistics" minOccurs="0">
           <xs:annotation>
@@ -382,13 +412,31 @@
         <xs:documentation>deprecated</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute type="xs:string" name="webhelp-url"/>
+    <xs:attribute type="xs:string" name="webhelp-url">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated: override ExternalProductResourceUrls.helpPageUrl instead.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute type="xs:boolean" name="has-help"/>
     <xs:attribute type="xs:boolean" name="has-context-help"/>
   </xs:complexType>
   <xs:complexType name="update-urlsType">
-    <xs:attribute type="xs:anyURI" name="check"/>
-    <xs:attribute type="xs:anyURI" name="patches"/>
+    <xs:attribute type="xs:anyURI" name="check">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated: override ExternalProductResourceUrls.updateMetadataUrl instead. 
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:anyURI" name="patches">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated: override ExternalProductResourceUrls.computePatchUrl instead.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="urlType">
     <xs:attribute type="xs:string" name="url" use="required"/>
@@ -396,14 +444,15 @@
   <xs:complexType name="whatsNewUrlType">
     <xs:attribute type="xs:anyURI" name="url">
       <xs:annotation>
-        <xs:documentation>An URL for the "Help | What's New" action. See also 'show-on-update' attribute.</xs:documentation>
+        <xs:documentation>
+          Deprecated: override ExternalProductResourceUrls.whatIsNewPageUrl instead. 
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute type="xs:boolean" name="show-on-update">
       <xs:annotation>
         <xs:documentation>
-          Set to 'true' to automatically show the URL in an editor tab after a major upgrade.
-          If the built-in (CEF) browser is not available, the IDE will display a notification instead.
+          Deprecated: override UpdateStrategyCustomization.showWhatIsNewPageAfterUpdate instead. 
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -544,7 +593,13 @@
         </xs:annotation>
       </xs:element>
     </xs:sequence>
-    <xs:attribute type="xs:string" name="url"/>
+    <xs:attribute type="xs:string" name="url">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated: override FeedbackReporter.feedbackFormUrl instead.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute type="xs:string" name="zendesk-form-id">
       <xs:annotation>
         <xs:documentation>

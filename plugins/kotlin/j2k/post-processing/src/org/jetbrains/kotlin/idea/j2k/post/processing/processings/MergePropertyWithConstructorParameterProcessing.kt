@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.LocalSearchScope
@@ -108,6 +109,8 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
                 restoreCommentsTarget = property
             }
         }
+
+        initialization.assignment.getExplicitLabelComment()?.delete()
         initialization.assignment.delete()
         commentSaver.restore(restoreCommentsTarget, forceAdjustIndent = false)
     }
@@ -119,7 +122,7 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
         parameter.addAfter(KtPsiFactory(property.project).createWhiteSpace(), parameter.valOrVarKeyword!!)
         parameter.rename(property.name!!)
         parameter.setVisibility(property.visibilityModifierTypeOrDefault())
-        val commentSaver = CommentSaver(property, saveLineBreaks = true)
+        val commentSaver = CommentSaver(property)
 
         parameter.annotationEntries.forEach {
             if (it.useSiteTarget == null) it.addUseSiteTarget(CONSTRUCTOR_PARAMETER, property.project)

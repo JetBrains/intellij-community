@@ -8,9 +8,9 @@ import com.intellij.testFramework.LightVirtualFileBase
 
 fun findOriginalFile(file: VirtualFile?) =
   file?.let {
-      var f: VirtualFile? = it
-      while (f is LightVirtualFileBase) {
-        f = f.originalFile
-      }
-      f
+    var f: VirtualFile? = it
+    while (f is LightVirtualFileBase) {
+      f = f.originalFile
     }
+    f
+  }

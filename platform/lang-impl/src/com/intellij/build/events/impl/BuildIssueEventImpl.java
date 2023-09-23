@@ -29,7 +29,7 @@ public final class BuildIssueEventImpl extends AbstractBuildEvent implements Bui
 
   @NotNull
   @Override
-  public final String getDescription() {
+  public String getDescription() {
     return myIssue.getDescription();
   }
 

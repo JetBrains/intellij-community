@@ -74,9 +74,8 @@ public abstract class IncludedXmlElement<T extends XmlElement> extends LightElem
     return element;
   }
 
-  @NotNull
   @Override
-  public T getNavigationElement() {
+  public @NotNull T getNavigationElement() {
     return getOriginal();
   }
 

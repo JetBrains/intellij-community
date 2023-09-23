@@ -138,6 +138,11 @@ class JpsBootstrapMain(args: Array<String>?) {
 
   @Throws(Throwable::class)
   private fun main() {
+    JpsBootstrapUtil.loadJpsBuildsystemProperties(
+      additionalSystemPropertiesFromPropertiesFile,
+      additionalSystemProperties,
+    )
+
     val jdkHome = downloadJdk()
     if (onlyDownloadJdk) {
       return
@@ -146,18 +151,6 @@ class JpsBootstrapMain(args: Array<String>?) {
       writeJavaArgfile(null, jarFileTarget)
       return
     }
-
-    /*
-     * Enable dependencies resolution retries while building buildscript.
-     * Don't override settings properties if they're already present in System.properties(), in additionalSystemProperties or
-     * in additionalSystemPropertiesFromPropertiesFile.
-     */
-    val resolverRetrySettingsProperties = JpsBootstrapUtil.getJpsArtifactsResolutionRetryProperties(
-      additionalSystemPropertiesFromPropertiesFile,
-      additionalSystemProperties,
-      System.getProperties()
-    )
-    resolverRetrySettingsProperties.forEach { k, v -> System.setProperty(k as String, v as String) }
 
     val kotlincHome = KotlinCompiler.downloadAndExtractKotlinCompiler(communityHome)
     val model = JpsProjectUtils.loadJpsProject(projectHome, jdkHome, kotlincHome)
@@ -182,7 +175,7 @@ class JpsBootstrapMain(args: Array<String>?) {
   @get:Throws(Exception::class)
   private val openedPackages: List<String>
     get() {
-      val openedPackagesPath = communityHome.communityRoot.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt")
+      val openedPackagesPath = communityHome.communityRoot.resolve("platform/platform-impl/resources/META-INF/OpenedPackages.txt")
       val openedPackages = openedPackagesPath.readLines().filter { it.isNotBlank() }.toMutableList()
       val unknownPackages = mutableListOf<String>()
       if (!SystemInfo.isWindows) {
@@ -243,15 +236,6 @@ class JpsBootstrapMain(args: Array<String>?) {
     systemProperties.putIfAbsent("file.encoding", "UTF-8") // just in case
     systemProperties.putIfAbsent("java.awt.headless", "true")
 
-    /*
- * Add dependencies resolution retries properties to argfile.
- * Don't override them if they're already present in additionalSystemProperties or in additionalSystemPropertiesFromPropertiesFile.
- */
-    val resolverRetrySettingsProperties = JpsBootstrapUtil.getJpsArtifactsResolutionRetryProperties(
-      additionalSystemPropertiesFromPropertiesFile,
-      additionalSystemProperties
-    )
-    systemProperties.putAll(resolverRetrySettingsProperties)
     val args: MutableList<String> = ArrayList()
     args.add("-ea")
     args.add("-Xmx$buildTargetXmx")
@@ -303,14 +287,12 @@ class JpsBootstrapMain(args: Array<String>?) {
     val modulesSubset = JpsProjectUtils.getRuntimeModulesClasspath(module)
     val jpsBuild = JpsBuild(communityHome, model, jpsBootstrapWorkDir, kotlincHome)
 
-    // Some workarounds like 'kotlinx.kotlinx-serialization-compiler-plugin-for-compilation' library (used as Kotlin compiler plugin)
-    // require that the corresponding library was downloaded. It's unclear from modules structure which libraries exactly required
-    // so download them all
-    //
-    // In case of running from read-to-use classes we need all dependent libraries as well
-    // Instead of calculating what libraries are exactly required, download them all
-    jpsBuild.resolveProjectDependencies()
     if (manifestJsonUrl != null) {
+      // In case of running from read-to-use classes we need all dependent libraries as well
+      // Instead of calculating what libraries are exactly required, download them all
+      // since downloading dependencies only for a few modules is not supported by JPS now
+      jpsBuild.resolveProjectDependencies()
+
       info("Downloading project classes from $manifestJsonUrl")
       ClassesFromCompileInc.downloadProjectClasses(model.project, communityHome, modulesSubset)
     }

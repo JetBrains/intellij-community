@@ -194,7 +194,7 @@ public final class ChangeSet {
   }
 
   @Override
-  public final boolean equals(Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
@@ -206,7 +206,7 @@ public final class ChangeSet {
   }
 
   @Override
-  public final int hashCode() {
+  public int hashCode() {
     return (int)(myId ^ (myId >>> 32));
   }
 

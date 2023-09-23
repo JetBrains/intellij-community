@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -160,7 +160,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       }
 
       @Override
-      public void templateFinished(@NotNull final Template template, boolean brokenOff) {
+      public void templateFinished(final @NotNull Template template, boolean brokenOff) {
         final int offset = editor.getCaretModel().getOffset();
 
         if (chooseAttributeName && offset > 0) {
@@ -190,11 +190,10 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     });
   }
 
-  @Nullable
-  private static StringBuilder addRequiredAttributes(XmlElementDescriptor descriptor,
-                                                     @Nullable XmlTag tag,
-                                                     Template template,
-                                                     PsiFile containingFile) {
+  private static @Nullable StringBuilder addRequiredAttributes(XmlElementDescriptor descriptor,
+                                                               @Nullable XmlTag tag,
+                                                               Template template,
+                                                               PsiFile containingFile) {
 
     Set<String> notRequiredAttributes = Collections.emptySet();
 
@@ -303,8 +302,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     return false;
   }
 
-  @NotNull
-  private static String closeTag(XmlTag tag) {
+  private static @NotNull String closeTag(XmlTag tag) {
     CodeStyleSettings settings = CodeStyle.getSettings(tag.getContainingFile());
     boolean html = HtmlUtil.isHtmlTag(tag);
     boolean needsSpace = (html && settings.getCustomSettings(HtmlCodeStyleSettings.class).HTML_SPACE_INSIDE_EMPTY_TAG) ||

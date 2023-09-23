@@ -13,18 +13,18 @@ import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 
 private val LOG = logger<ServerSemanticActionsProvider>()
 
-class ServerSemanticActionsProvider(private val model: GotoActionModel) : SemanticActionsProvider() {
+class ServerSemanticActionsProvider(model: GotoActionModel) : SemanticActionsProvider(model) {
   private val mapper = jacksonObjectMapper()
 
   private val URL_BASE = Registry.stringValue("search.everywhere.ml.semantic.actions.server.host")
 
-  override fun search(pattern: String): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
+  override fun search(pattern: String, similarityThreshold: Double?): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
     if (!SemanticSearchSettings.getInstance().enabledInActionsTab || pattern.isBlank()) return emptyList()
 
     val requestJson: String = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mapOf(
       "pattern" to pattern,
       "items_limit" to ITEMS_LIMIT,
-      "similarity_threshold" to SIMILARITY_THRESHOLD,
+      "similarity_threshold" to similarityThreshold,
       "token" to SemanticSearchSettings.getInstance().getActionsAPIToken()
     ))
 
@@ -38,14 +38,17 @@ class ServerSemanticActionsProvider(private val model: GotoActionModel) : Semant
       }
     }
 
-    return modelResponse.nearestCandidates.mapNotNull { createItemDescriptor(it.actionId, it.similarityScore, pattern, model) }
+    return modelResponse.nearestCandidates.mapNotNull { createItemDescriptor(it.actionId, it.similarityScore, pattern) }
+  }
+
+  override fun streamSearch(pattern: String, similarityThreshold: Double?): Sequence<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
+    return search(pattern, similarityThreshold).asSequence()
   }
 
   companion object {
     private const val SEARCH_ENDPOINT = "search"
 
     private const val ITEMS_LIMIT = 10
-    private const val SIMILARITY_THRESHOLD = 0.5
   }
 }
 

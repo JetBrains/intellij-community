@@ -44,7 +44,6 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -58,10 +57,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer;
-import com.intellij.openapi.vcs.ex.LineStatusTrackerBase;
 import com.intellij.openapi.vcs.ex.Range;
-import com.intellij.openapi.vcs.ex.SimpleLineStatusTracker;
+import com.intellij.openapi.vcs.ex.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
@@ -78,8 +75,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.containers.ContainerUtil.ar;
@@ -169,7 +166,6 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     ThreeSide.BASE.select(holders).getEditor().putUserData(DiffUserDataKeys.MERGE_EDITOR_FLAG, true);
     return holders;
   }
-
 
 
   @NotNull
@@ -342,17 +338,18 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     myAcceptResolveAction.setEnabled(false);
 
     BackgroundTaskUtil.executeAndTryWait(indicator -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
-      try {
-        return doPerformRediff(indicator);
-      }
-      catch (ProcessCanceledException e) {
-        return () -> myMergeContext.finishMerge(MergeResult.CANCEL);
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-        return () -> myMergeContext.finishMerge(MergeResult.CANCEL);
-      }
-    }), null, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, ApplicationManager.getApplication().isUnitTestMode());
+                                           try {
+                                             return doPerformRediff(indicator);
+                                           }
+                                           catch (ProcessCanceledException e) {
+                                             return () -> myMergeContext.finishMerge(MergeResult.CANCEL);
+                                           }
+                                           catch (Throwable e) {
+                                             LOG.error(e);
+                                             return () -> myMergeContext.finishMerge(MergeResult.CANCEL);
+                                           }
+                                         }), null, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS,
+                                         ApplicationManager.getApplication().isUnitTestMode());
   }
 
   @NotNull
@@ -574,7 +571,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       final List<InnerChunkData> data = ContainerUtil.map(scheduled, change -> new InnerChunkData(change, documents));
 
       int waitMillis = trySync ? ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
-      ProgressIndicator progress = BackgroundTaskUtil.executeAndTryWait(indicator -> performRediff(scheduled, data, indicator), null, waitMillis, false);
+      ProgressIndicator progress =
+        BackgroundTaskUtil.executeAndTryWait(indicator -> performRediff(scheduled, data, indicator), null, waitMillis, false);
 
       if (progress.isRunning()) {
         myProgress = progress;
@@ -901,7 +899,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     if (!canResolveChangeAutomatically(change, side)) return;
 
     if (change.isConflict()) {
-      List<CharSequence> texts = ThreeSide.map(it -> DiffUtil.getLinesContent(getEditor(it).getDocument(), change.getStartLine(it), change.getEndLine(it)));
+      List<CharSequence> texts =
+        ThreeSide.map(it -> DiffUtil.getLinesContent(getEditor(it).getDocument(), change.getStartLine(it), change.getEndLine(it)));
 
       CharSequence newContent = ComparisonMergeUtil.tryResolveConflict(texts.get(0), texts.get(1), texts.get(2));
       if (newContent == null) {
@@ -971,7 +970,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
     private boolean isSomeChangeSelected(@NotNull ThreeSide side) {
       EditorEx editor = getEditor(side);
-      return DiffUtil.isSomeRangeSelected(editor, lines -> ContainerUtil.exists(getAllChanges(), change -> isChangeSelected(change, lines, side)));
+      return DiffUtil.isSomeRangeSelected(editor,
+                                          lines -> ContainerUtil.exists(getAllChanges(), change -> isChangeSelected(change, lines, side)));
     }
 
     @NotNull
@@ -1277,15 +1277,12 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
   }
 
-  private class MyLineStatusMarkerRenderer extends LineStatusMarkerPopupRenderer {
-    MyLineStatusMarkerRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
-      super(tracker);
-    }
+  private class MyLineStatusMarkerRenderer extends LineStatusTrackerMarkerRenderer {
+    private final @NotNull LineStatusTrackerBase<?> myTracker;
 
-    @Nullable
-    @Override
-    protected MarkupEditorFilter getEditorFilter() {
-      return editor -> editor == getEditor();
+    MyLineStatusMarkerRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
+      super(tracker, editor -> editor == getEditor());
+      myTracker = tracker;
     }
 
     @Override
@@ -1310,20 +1307,22 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
     @NotNull
     @Override
-    protected List<AnAction> createToolbarActions(@NotNull Editor editor, @NotNull com.intellij.openapi.vcs.ex.Range range, @Nullable Point mousePosition) {
+    protected List<AnAction> createToolbarActions(@NotNull Editor editor,
+                                                  @NotNull com.intellij.openapi.vcs.ex.Range range,
+                                                  @Nullable Point mousePosition) {
       List<AnAction> actions = new ArrayList<>();
-      actions.add(new ShowPrevChangeMarkerAction(editor, range));
-      actions.add(new ShowNextChangeMarkerAction(editor, range));
+      actions.add(new LineStatusMarkerPopupActions.ShowPrevChangeMarkerAction(editor, myTracker, range, this));
+      actions.add(new LineStatusMarkerPopupActions.ShowNextChangeMarkerAction(editor, myTracker, range, this));
       actions.add(new MyRollbackLineStatusRangeAction(editor, range));
-      actions.add(new ShowLineStatusRangeDiffAction(editor, range));
-      actions.add(new CopyLineStatusRangeAction(editor, range));
-      actions.add(new ToggleByWordDiffAction(editor, range, mousePosition));
+      actions.add(new LineStatusMarkerPopupActions.ShowLineStatusRangeDiffAction(editor, myTracker, range));
+      actions.add(new LineStatusMarkerPopupActions.CopyLineStatusRangeAction(editor, myTracker, range));
+      actions.add(new LineStatusMarkerPopupActions.ToggleByWordDiffAction(editor, myTracker, range, mousePosition, this));
       return actions;
     }
 
-    private final class MyRollbackLineStatusRangeAction extends RangeMarkerAction {
+    private final class MyRollbackLineStatusRangeAction extends LineStatusMarkerPopupActions.RangeMarkerAction {
       private MyRollbackLineStatusRangeAction(@NotNull Editor editor, @NotNull com.intellij.openapi.vcs.ex.Range range) {
-        super(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK);
+        super(editor, myTracker, range, IdeActions.SELECTED_CHANGES_ROLLBACK);
       }
 
       @Override
@@ -1339,8 +1338,16 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
 
     @Override
-    protected void paint(@NotNull Editor editor, @NotNull Graphics g) {
-      LineStatusMarkerDrawUtil.paintDefault(editor, g, myTracker, DefaultFlagsProvider.DEFAULT, JBUIScale.scale(2));
+    protected void paintGutterMarkers(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull Graphics g) {
+      int framingBorder = JBUIScale.scale(2);
+      LineStatusMarkerDrawUtil.paintDefault(editor, g, ranges, DefaultFlagsProvider.DEFAULT, framingBorder);
+    }
+
+    @Override
+    public String toString() {
+      return "MergeThreesideViewer.MyLineStatusMarkerRenderer{" +
+             "myTracker=" + myTracker +
+             '}';
     }
   }
 
@@ -1394,6 +1401,5 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       });
     }
   }
-
 }
 

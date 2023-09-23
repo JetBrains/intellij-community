@@ -427,7 +427,7 @@ final class PassExecutorService implements Disposable {
             }
           }
           catch (RuntimeException | Error e) {
-            myUpdateProgress.cancel(e);
+            myUpdateProgress.cancel(e, "Error occurred");
             LOG.error(e);
             throw e;
           }

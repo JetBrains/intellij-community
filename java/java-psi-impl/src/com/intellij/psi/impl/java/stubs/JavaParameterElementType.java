@@ -9,6 +9,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.impl.PsiParameterStubImpl;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.PsiParameterImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
@@ -23,7 +24,7 @@ import java.io.IOException;
 
 public class JavaParameterElementType extends JavaStubElementType<PsiParameterStub, PsiParameter> {
   public JavaParameterElementType() {
-    super("PARAMETER");
+    super("PARAMETER", BasicJavaElementType.BASIC_PARAMETER);
   }
 
   @NotNull
@@ -48,7 +49,7 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
     TypeInfo typeInfo = TypeInfo.create(tree, node, parentStub);
     LighterASTNode id = LightTreeUtil.requiredChildOfType(tree, node, JavaTokenType.IDENTIFIER);
     String name = RecordUtil.intern(tree.getCharTable(), id);
-    return new PsiParameterStubImpl(parentStub, name, typeInfo, typeInfo.isEllipsis, false);
+    return new PsiParameterStubImpl(parentStub, name, typeInfo, typeInfo.isEllipsis(), false);
   }
 
   @Override

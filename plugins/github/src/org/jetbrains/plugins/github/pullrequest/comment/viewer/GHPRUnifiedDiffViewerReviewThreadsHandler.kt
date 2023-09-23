@@ -3,12 +3,10 @@ package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.diff.DiffMappedValue
-import com.intellij.collaboration.ui.codereview.diff.EditorComponentInlaysManager
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
@@ -31,10 +29,8 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
     get() = viewer.isContentGood
 
   init {
-    val inlaysManager = EditorComponentInlaysManager(viewer.editor as EditorImpl)
-
     val gutterIconRendererFactory = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel,
-                                                                                inlaysManager,
+                                                                                viewer.editor,
                                                                                 componentsFactory,
                                                                                 cumulative) { fileLine ->
       val (start, end) = getCommentLinesRange(viewer.editor, fileLine)
@@ -49,7 +45,7 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
     }
 
     GHPREditorCommentableRangesController(commentableRanges, gutterIconRendererFactory, viewer.editor)
-    GHPREditorReviewThreadsController(editorThreads, componentsFactory, inlaysManager)
+    GHPREditorReviewThreadsController(editorThreads, componentsFactory, viewer.editor)
   }
 
   override fun markCommentableRanges(ranges: List<Range>?) {

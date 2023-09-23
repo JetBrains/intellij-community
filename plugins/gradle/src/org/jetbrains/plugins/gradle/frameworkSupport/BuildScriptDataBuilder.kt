@@ -121,6 +121,9 @@ class BuildScriptDataBuilder(
   override fun withJava(configure: Consumer<ScriptTreeBuilder>) = apply { backend.withJava(configure) }
   override fun targetCompatibility(level: String) = apply { backend.targetCompatibility(level) }
   override fun sourceCompatibility(level: String) = apply { backend.sourceCompatibility(level) }
+
+  override fun project(name: String) = backend.project(name)
+  override fun project(name: String, configuration: String) = backend.project(name, configuration)
   // @formatter:on
 
   companion object {

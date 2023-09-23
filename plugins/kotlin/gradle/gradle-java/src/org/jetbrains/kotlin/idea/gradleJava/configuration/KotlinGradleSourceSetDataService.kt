@@ -312,9 +312,8 @@ fun configureFacetByGradleModule(
     with(kotlinFacet.configuration.settings) {
         implementedModuleNames = implementedModulesAware.implementedModuleNames
         configureOutputPaths(moduleNode, platformKind)
+        noVersionAutoAdvance()
     }
-
-    kotlinFacet.noVersionAutoAdvance()
 
     if (platformKind != null && !platformKind.isJvm) {
         migrateNonJvmSourceFolders(
@@ -348,7 +347,7 @@ fun configureFacetWithCompilerArguments(
     modelsProvider: IdeModifiableModelsProvider?,
     compilerArguments: CommonCompilerArguments,
 ) {
-    applyCompilerArgumentsToFacet(compilerArguments, kotlinFacet, modelsProvider)
+    applyCompilerArgumentsToFacetSettings(compilerArguments, kotlinFacet.configuration.settings, kotlinFacet.module, modelsProvider)
 }
 
 private fun getAdditionalVisibleModuleNames(moduleNode: DataNode<ModuleData>, sourceSetName: String): Set<String> {

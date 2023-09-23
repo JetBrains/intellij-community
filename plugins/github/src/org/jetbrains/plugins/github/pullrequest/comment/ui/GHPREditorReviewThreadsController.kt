@@ -3,11 +3,12 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.collaboration.ui.codereview.diff.EditorComponentInlaysManager
+import com.intellij.collaboration.ui.codereview.editor.insertComponentAfter
+import com.intellij.openapi.editor.ex.EditorEx
 
 class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
                                         private val componentFactory: GHPRDiffEditorReviewComponentsFactory,
-                                        private val inlaysManager: EditorComponentInlaysManager) {
+                                        private val editor: EditorEx) {
 
   private val inlayByThread = mutableMapOf<GHPRReviewThreadModel, Disposable>()
 
@@ -36,7 +37,7 @@ class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
 
   private fun insertThread(line: Int, thread: GHPRReviewThreadModel): Boolean {
     val component = componentFactory.createThreadComponent(thread)
-    val inlay = inlaysManager.insertAfter(line, component) ?: return true
+    val inlay = editor.insertComponentAfter(line, component) ?: return true
     inlayByThread[thread] = inlay
     return false
   }

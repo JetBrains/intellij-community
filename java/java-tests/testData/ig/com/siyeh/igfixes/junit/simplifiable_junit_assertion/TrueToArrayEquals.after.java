@@ -5,7 +5,6 @@ import java.util.Arrays;
 
 class ObjectEqualsToEquals {
 
-  @Test
   public void testObjectsEquals() {
       <caret>assertArrayEquals(getFoo(), getBar());
   }

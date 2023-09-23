@@ -34,6 +34,8 @@ public final class FilePathInterner extends WeakInterner<CharSequence> {
 
   @Override
   public @NotNull CharSequence intern(@NotNull CharSequence path) {
+    //FIXME check path is an absolute one (not contain '.', or '..' segments)
+    //      also check different path-separators ('/' vs '\')
     List<String> names = StringUtil.split(path.toString(), "/");
     int[] nameIds = names.stream().mapToInt(name -> vfs.getNameId(name)).toArray();
     return nameIds.length == 0 ? "" : super.intern(new FileSeparatedCharSequence(vfs, nameIds));

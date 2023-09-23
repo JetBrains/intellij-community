@@ -26,6 +26,10 @@
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider"/>
 
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableService"
+                    serviceImplementation="org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableServiceK1Impl"
+    />
+
     <lang.refactoringSupport.classMembersRefactoringSupport
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinClassMembersRefactoringSupport"/>
@@ -38,11 +42,6 @@
 
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.memberInfo.K1MemberInfoSupport"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoSupport"/>
-
-    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.move.K1MoveRefactoringSupport"
-                        serviceInterface="org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveRefactoringSupport"/>
-    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.move.K1MoveConflictCheckerSupport"
-                        serviceInterface="org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveConflictCheckerSupport"/>
 
     <refactoring.moveHandler
             id="kotlin.moveMethod"

@@ -22,7 +22,6 @@ import java.io.File
 import java.nio.file.Path
 import java.rmi.RemoteException
 import java.util.*
-import kotlin.collections.ArrayList
 
 abstract class MavenEmbedderWrapper internal constructor(private val project: Project) :
   MavenRemoteObjectWrapper<MavenServerEmbedder?>(null) {
@@ -130,6 +129,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   suspend fun resolvePlugins(mavenPluginRequests: Collection<Pair<MavenId, NativeMavenProjectHolder>>,
                              progressReporter: RawProgressReporter?,
                              syncConsole: MavenSyncConsole?,
+                             forceUpdateSnapshots: Boolean,
                              console: MavenConsole?): List<PluginResolutionResponse> {
     val pluginResolutionRequests = ArrayList<PluginResolutionRequest>()
     for (mavenPluginRequest in mavenPluginRequests) {
@@ -144,16 +144,20 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       }
     }
     return runLongRunningTask(
-      LongRunningEmbedderTask { embedder, taskId -> embedder.resolvePlugins(taskId, pluginResolutionRequests, ourToken) },
+      LongRunningEmbedderTask { embedder, taskId ->
+        embedder.resolvePlugins(taskId, pluginResolutionRequests, forceUpdateSnapshots, ourToken)
+      },
       progressReporter, syncConsole, console)
   }
 
   @Throws(MavenProcessCanceledException::class)
-  fun resolvePlugin(plugin: MavenPlugin, nativeMavenProject: NativeMavenProjectHolder): Collection<MavenArtifact> {
+  fun resolvePlugin(plugin: MavenPlugin,
+                    nativeMavenProject: NativeMavenProjectHolder,
+                    forceUpdateSnapshots: Boolean): Collection<MavenArtifact> {
     val mavenId = plugin.mavenId
     return runBlockingMaybeCancellable {
-      resolvePlugins(listOf(Pair.create(mavenId, nativeMavenProject)), null, null, null)
-      .flatMap { resolutionResult: PluginResolutionResponse -> resolutionResult.artifacts }.toSet()
+      resolvePlugins(listOf(Pair.create(mavenId, nativeMavenProject)), null, null, forceUpdateSnapshots, null)
+        .flatMap { resolutionResult: PluginResolutionResponse -> resolutionResult.artifacts }.toSet()
     }
   }
 
@@ -175,7 +179,9 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   }
 
   fun resolveRepositories(repositories: Collection<MavenRemoteRepository?>): Set<MavenRemoteRepository> {
-    return perform<Set<MavenRemoteRepository>, RuntimeException> { getOrCreateWrappee().resolveRepositories(ArrayList(repositories), ourToken) }
+    return perform<Set<MavenRemoteRepository>, RuntimeException> {
+      getOrCreateWrappee().resolveRepositories(ArrayList(repositories), ourToken)
+    }
   }
 
   fun getInnerArchetypes(catalogPath: Path): Collection<MavenArchetype> {

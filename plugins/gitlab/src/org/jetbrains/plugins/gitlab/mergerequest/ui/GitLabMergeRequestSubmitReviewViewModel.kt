@@ -50,7 +50,7 @@ internal fun GitLabMergeRequest.getSubmittableReview(currentUser: GitLabUserDTO)
     val permissions = details.userPermissions
     val approvals = details.approvedBy
     val draftComments = draftNotesResult.getOrNull()?.count() ?: return@combine null
-    val canChangeApproval = permissions.canApprove || approvals.any { it.id == currentUser.id }
+    val canChangeApproval = (permissions.canApprove ?: false) || approvals.any { it.id == currentUser.id }
     if (draftComments > 0 || canChangeApproval) SubmittableReview(draftComments)
     else null
   }

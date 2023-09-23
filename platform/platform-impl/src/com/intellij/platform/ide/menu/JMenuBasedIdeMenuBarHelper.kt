@@ -12,7 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.swing.MenuSelectionManager
 
-internal open class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: MenuBarImpl) : IdeMenuBarHelper(flavor, menuBar) {
+internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMenuBar.JMenuBarImpl) : IdeMenuBarHelper(flavor, menuBar) {
   override fun isUpdateForbidden() = MenuSelectionManager.defaultManager().selectedPath.isNotEmpty()
 
   override suspend fun postInitActions(actions: List<ActionGroup>) {
@@ -23,20 +23,8 @@ internal open class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: M
     }
   }
 
-  override suspend fun updateMenuActions(mainActionGroup: ActionGroup?, forceRebuild: Boolean, isFirstUpdate: Boolean): List<ActionGroup> {
+  override suspend fun doUpdateVisibleActions(newVisibleActions: List<ActionGroup>, forceRebuild: Boolean) {
     val menuBarComponent = menuBar.component
-    val newVisibleActions = if (mainActionGroup == null) {
-      emptyList()
-    }
-    else {
-      // null means "cancelled" (todo - reconsider when Promise will be changed to coroutine)
-      expandMainActionGroup(mainActionGroup = mainActionGroup,
-                            menuBar = menuBarComponent,
-                            frame = menuBar.frame,
-                            presentationFactory = presentationFactory,
-                            isFirstUpdate = isFirstUpdate) ?: return emptyList()
-    }
-
     if (!forceRebuild && newVisibleActions == visibleActions && !presentationFactory.isNeedRebuild) {
       val enableMnemonics = !UISettings.getInstance().disableMnemonics
       withContext(Dispatchers.EDT) {
@@ -46,7 +34,7 @@ internal open class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: M
           }
         }
       }
-      return newVisibleActions
+      return
     }
 
     // should rebuild UI
@@ -64,7 +52,7 @@ internal open class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: M
                                       group = action,
                                       presentationFactory = presentationFactory,
                                       isMnemonicEnabled = enableMnemonics,
-                                      useDarkIcons = menuBar.isDarkMenu,
+                                      useDarkIcons = (menuBar as IdeJMenuBar.JMenuBarImpl).isDarkMenu,
                                       isHeaderMenuItem = true)
           if (isCustomDecorationActive) {
             actionMenu.isOpaque = false
@@ -82,6 +70,5 @@ internal open class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: M
         menuBar.frame.validate()
       }
     }
-    return newVisibleActions
   }
 }

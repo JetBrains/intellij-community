@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex
 
 import com.intellij.openapi.vfs.VirtualFile
@@ -107,7 +107,18 @@ enum class WorkspaceFileKind {
    * referenced from [CONTENT] files. This kind was introduced mainly for compatibility with the old code, it corresponds to
    * [com.intellij.openapi.roots.ProjectFileIndex.isInLibrarySource] method. 
    */
-  EXTERNAL_SOURCE;
+  EXTERNAL_SOURCE,
+
+  /**
+   * Describes files which may be referenced by [CONTENT], [EXTERNAL], or [EXTERNAL_SOURCE] files,
+   * and aren't supposed to be edited in the IDE.
+   * The main difference between this kind and [EXTERNAL] is that these files are way more exotic, and shouldn't be included
+   * in 'Project and Libraries' scope in UI, but rather added to customized resolve scopes of certain elements, and `All` scope.
+   * Files of this kind ![com.intellij.openapi.roots.ProjectFileIndex.isInProject].
+   *
+   * This kind corresponds to files from [com.intellij.util.indexing.IndexableSetContributor] in the old API.
+   */
+  CUSTOM;
   
   val isContent: Boolean
     get() = this == CONTENT || this == TEST_CONTENT

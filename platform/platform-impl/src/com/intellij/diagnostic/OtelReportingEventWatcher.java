@@ -105,6 +105,8 @@ public final class OtelReportingEventWatcher implements EventWatcher, Disposable
     awtDispatchTime90PNs = meter.gaugeBuilder("AWTEventQueue.dispatchTime90PNs").setUnit("ns").ofLongs().buildObserver();
     awtDispatchTimeMaxNs = meter.gaugeBuilder("AWTEventQueue.dispatchTimeMaxNs").setUnit("ns").ofLongs().buildObserver();
 
+    //TODO: this metrics could be calculated as AWTEventQueue.dispatchTimeAvgNs * .eventsDispatched.
+    //      it is only needed because startup performance benchmarking needed it
     awtTotalTimeNs = meter.counterBuilder("AWTEventQueue.dispatchTimeTotalNS").setUnit("ns").build();
     //MAYBE RC: 1 minute (default batchCallback period) is quite coarse scale, it averages a lot, and short spikes of waiting
     //     time could sink in noise on that scale. But it generates small amount of data, and could be always-on.

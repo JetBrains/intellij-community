@@ -10,7 +10,8 @@ internal class LcrIconImpl : LcrCellBaseImpl() {
 
   override val component: JLabel = JLabel()
 
-  fun init(icon: Icon) {
+  fun init(icon: Icon, initParams: LcrIconInitParamsImpl) {
     component.icon = icon
+    component.accessibleContext.accessibleName = initParams.accessibleName
   }
 }

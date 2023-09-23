@@ -2,6 +2,7 @@
   "name": "Light",
   "dark": false,
   "author": "JetBrains",
+  "parentTheme": "IntelliJ",
   "editorScheme": "/themes/expUI/expUI_lightScheme.xml",
   "nameKey": "light.theme.name",
 
@@ -249,8 +250,8 @@
     "DefaultTabs.hoverBackground": "Grey12",
 
     "EditorTabs": {
-      "underlineArc": "4",
-      "unselectedBlend": "0.9",
+      "underlineArc": 4,
+      "unselectedBlend": 0.9,
       "background": "Grey14",
       "hoverBackground": "#FFFFFF00",
       "hoverInactiveBackground": "#FFFFFF00",
@@ -293,7 +294,7 @@
     },
 
     "List": {
-      "rowHeight": "24",
+      "rowHeight": 24,
       "border": "4,0,4,0",
       "Button": {
         "separatorColor": "#FFFFFFB3",
@@ -516,7 +517,7 @@
         "hoverForeground": "Grey1",
         "hoverBackground": "Grey12",
         "floatingBackground": "Grey14",
-        "chevronInset": "0"
+        "chevronInset": 0
       }
     },
 
@@ -944,7 +945,9 @@
           }
         }
       }
-    }
+    },
+
+    "DataSummary.Chart.background": "Blue4"
   },
 
   "icons": {

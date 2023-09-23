@@ -69,7 +69,7 @@ object ConvertToBlockBodyUtils {
         prevComments.filterIsInstance<PsiComment>().forEach { it.delete() }
         nextComments.forEach { it.delete() }
         val replaced = body.replace(newBody)
-        if (context.reformat) element.containingKtFile.adjustLineIndent(replaced.startOffset, replaced.endOffset)
+        if (context.reformat) element.containingFile.reformat(replaced.startOffset, replaced.endOffset)
     }
 
     private fun KtDeclarationWithBody.setTypeReferenceIfNeeded(context: ConvertToBlockBodyContext) {

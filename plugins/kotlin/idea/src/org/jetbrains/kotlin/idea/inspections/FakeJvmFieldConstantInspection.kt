@@ -10,7 +10,8 @@ import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.elements.KtLightFieldForSourceDeclarationSupport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Status.*
+import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Util.getStatus
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase.Status.*
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
@@ -72,26 +73,24 @@ class FakeJvmFieldConstantInspection : AbstractKotlinInspection() {
         val resolvedLightField = (valueExpression as? PsiReference)?.resolve() as? KtLightFieldForSourceDeclarationSupport
             ?: return
         val resolvedProperty = resolvedLightField.kotlinOrigin as? KtProperty ?: return
-        with(MayBeConstantInspection) {
-            if (resolvedProperty.annotationEntries.isEmpty()) return
-            val resolvedPropertyStatus = resolvedProperty.getStatus()
-            if (resolvedPropertyStatus == JVM_FIELD_MIGHT_BE_CONST ||
-                resolvedPropertyStatus == JVM_FIELD_MIGHT_BE_CONST_NO_INITIALIZER ||
-                resolvedPropertyStatus == JVM_FIELD_MIGHT_BE_CONST_ERRONEOUS
-            ) {
-                val resolvedPropertyType = resolvedLightField.type
-                if (!additionalTypeCheck(resolvedPropertyType)) return
-                val fixes = mutableListOf<LocalQuickFix>()
-                if (resolvedPropertyStatus == JVM_FIELD_MIGHT_BE_CONST) {
-                    fixes += IntentionWrapper(AddConstModifierFix(resolvedProperty))
-                }
-                holder.registerProblem(
-                    valueExpression,
-                    KotlinBundle.message("use.of.non.const.kotlin.property.as.java.constant.is.incorrect.will.be.forbidden.in.1.4"),
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                    *fixes.toTypedArray()
-                )
+        if (resolvedProperty.annotationEntries.isEmpty()) return
+        val resolvedPropertyStatus = resolvedProperty.getStatus()
+        if (resolvedPropertyStatus == JVM_FIELD_MIGHT_BE_CONST ||
+            resolvedPropertyStatus == JVM_FIELD_MIGHT_BE_CONST_NO_INITIALIZER ||
+            resolvedPropertyStatus == JVM_FIELD_MIGHT_BE_CONST_ERRONEOUS
+        ) {
+            val resolvedPropertyType = resolvedLightField.type
+            if (!additionalTypeCheck(resolvedPropertyType)) return
+            val fixes = mutableListOf<LocalQuickFix>()
+            if (resolvedPropertyStatus == JVM_FIELD_MIGHT_BE_CONST) {
+                fixes += IntentionWrapper(AddConstModifierFix(resolvedProperty))
             }
+            holder.registerProblem(
+                valueExpression,
+                KotlinBundle.message("use.of.non.const.kotlin.property.as.java.constant.is.incorrect.will.be.forbidden.in.1.4"),
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                *fixes.toTypedArray()
+            )
         }
     }
 }

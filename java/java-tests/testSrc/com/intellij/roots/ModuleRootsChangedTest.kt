@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots
 
-import com.intellij.ProjectTopics
 import com.intellij.java.configurationStore.saveProjectState
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import org.junit.Before
@@ -32,7 +32,7 @@ class ModuleRootsChangedTest {
   fun setUp() {
     module = projectModel.createModule("main")
     moduleRootListener = RootsChangedTest.MyModuleRootListener(projectModel.project)
-    projectModel.project.messageBus.connect(projectModel.project).subscribe(ProjectTopics.PROJECT_ROOTS, moduleRootListener)
+    projectModel.project.messageBus.connect(projectModel.project).subscribe(ModuleRootListener.TOPIC, moduleRootListener)
   }
 
   @Test

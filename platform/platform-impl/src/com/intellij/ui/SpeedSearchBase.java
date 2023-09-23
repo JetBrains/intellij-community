@@ -26,7 +26,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.text.NameUtilCore;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -45,8 +45,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.Comparator;
-import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
@@ -176,8 +174,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "control BACK_SPACE"), myComponent);
 
-    new MySearchAction().registerCustomShortcutSet(CommonShortcuts.getFind(), myComponent);
-
     installSupplyTo(myComponent);
   }
 
@@ -206,7 +202,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   @Override
   public boolean isPopupActive() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return mySearchPopup != null && mySearchPopup.isVisible() ||
            isStickySearch() &&
            Strings.isNotEmpty(myComponent == null ? null : ClientProperty.get(myComponent, SEARCH_TEXT_KEY));
@@ -443,6 +439,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   protected boolean isSpeedSearchEnabled() {
     return true;
+  }
+
+  @ApiStatus.Internal
+  public boolean isAvailable() {
+    return isSpeedSearchEnabled();
   }
 
   @Override
@@ -942,30 +943,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     @Override
     public void add(Object o) {
       throw new UnsupportedOperationException("Not implemented in: " + getClass().getCanonicalName());
-    }
-  }
-
-  private final class MySearchAction extends DumbAwareAction {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      showPopup();
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(isSpeedSearchEnabled() && !isPopupActive());
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-  }
-
-  static final class SpeedSearchActionPromoter implements ActionPromoter {
-    @Override
-    public @Nullable List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
-      return ContainerUtil.sorted(actions, Comparator.comparing(it -> it instanceof SpeedSearchBase<?>.MySearchAction ? 1 : 0));
     }
   }
 }

@@ -142,7 +142,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
 
     Computable<List<TextRange>> prepareRangesForFormat = () -> {
       List<TextRange> formattingRanges = getRangesToFormat(file, processChangedTextOnly);
-      CodeFormattingData.getOrCreate(fileToProcess).prepare(fileToProcess, formattingRanges);
+      CodeFormattingData.prepare(fileToProcess, formattingRanges);
       return formattingRanges;
     };
 

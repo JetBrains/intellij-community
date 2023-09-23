@@ -179,20 +179,14 @@ fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependencie
     downloadFileToCacheLocation(url, communityRoot, username, password)
   }
 
-suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot): Path {
-  return downloadFileToCacheLocation(url, communityRoot, token = null, username = null, password = null)
-}
+suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot): Path =
+  downloadFileToCacheLocation(url, communityRoot, token = null, username = null, password = null)
 
-suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot, token: String): Path {
-  return downloadFileToCacheLocation(url, communityRoot, token = token, username = null, password = null)
-}
+suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot, token: String): Path =
+  downloadFileToCacheLocation(url, communityRoot, token = token, username = null, password = null)
 
-suspend fun downloadFileToCacheLocation(url: String,
-                                        communityRoot: BuildDependenciesCommunityRoot,
-                                        username: String,
-                                        password: String): Path {
-  return downloadFileToCacheLocation(url, communityRoot, token = null, username = username, password = password)
-}
+suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot, username: String, password: String): Path =
+  downloadFileToCacheLocation(url, communityRoot, token = null, username = username, password = password)
 
 private suspend fun downloadFileToCacheLocation(url: String,
                                                 communityRoot: BuildDependenciesCommunityRoot,

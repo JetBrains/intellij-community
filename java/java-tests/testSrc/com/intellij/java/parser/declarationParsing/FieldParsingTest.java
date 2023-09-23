@@ -15,26 +15,10 @@
  */
 package com.intellij.java.parser.declarationParsing;
 
-import com.intellij.java.parser.JavaParsingTestCase;
+import com.intellij.java.parser.JavaParsingTestConfigurator;
 
-public class FieldParsingTest extends JavaParsingTestCase {
+public class FieldParsingTest extends AbstractBasicFieldParsingTest {
   public FieldParsingTest() {
-    super("parser-full/declarationParsing/field");
+    super(new JavaParsingTestConfigurator());
   }
-
-  public void testSimple() { doTest(true); }
-  public void testMulti() { doTest(true); }
-
-  public void testUnclosedBracket() { doTest(true); }
-  public void testMissingInitializer() { doTest(true); }
-  public void testUnclosedComma() { doTest(true); }
-  public void testUnclosedSemicolon() { doTest(true); }
-  public void testMissingInitializerExpression() { doTest(true); }
-
-  public void testMultiLineUnclosed0() { doTest(true); }
-  public void testMultiLineUnclosed1() { doTest(true); }
-
-  public void testComplexInitializer() { doTest(true); }
-
-  public void testErrors() { doTest(true); }
 }

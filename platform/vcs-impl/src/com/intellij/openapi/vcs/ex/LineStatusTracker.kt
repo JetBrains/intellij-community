@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -123,9 +122,9 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
     renderer.showAfterScroll(editor, range)
   }
 
-  protected open class LocalLineStatusMarkerRenderer(open val tracker: LocalLineStatusTrackerImpl<*>)
-    : LineStatusMarkerPopupRenderer(tracker) {
-    override fun getEditorFilter(): MarkupEditorFilter? = MarkupEditorFilterFactory.createIsNotDiffFilter()
+  protected open class LocalLineStatusMarkerRenderer(
+    protected open val tracker: LocalLineStatusTrackerImpl<*>
+  ): LineStatusTrackerMarkerRenderer(tracker, MarkupEditorFilterFactory.createIsNotDiffFilter()) {
 
     override fun shouldPaintGutter(): Boolean {
       return tracker.mode.isVisible
@@ -137,23 +136,25 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 
     override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {
       val actions = ArrayList<AnAction>()
-      actions.add(ShowPrevChangeMarkerAction(editor, range))
-      actions.add(ShowNextChangeMarkerAction(editor, range))
+      actions.add(LineStatusMarkerPopupActions.ShowPrevChangeMarkerAction(editor, tracker, range, this))
+      actions.add(LineStatusMarkerPopupActions.ShowNextChangeMarkerAction(editor, tracker, range, this))
       actions.add(RollbackLineStatusRangeAction(editor, range))
-      actions.add(ShowLineStatusRangeDiffAction(editor, range))
-      actions.add(CopyLineStatusRangeAction(editor, range))
-      actions.add(ToggleByWordDiffAction(editor, range, mousePosition))
+      actions.add(LineStatusMarkerPopupActions.ShowLineStatusRangeDiffAction(editor, tracker, range))
+      actions.add(LineStatusMarkerPopupActions.CopyLineStatusRangeAction(editor, tracker, range))
+      actions.add(LineStatusMarkerPopupActions.ToggleByWordDiffAction(editor, tracker, range, mousePosition, this))
       return actions
     }
 
     private inner class RollbackLineStatusRangeAction(editor: Editor, range: Range)
-      : RangeMarkerAction(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK), LightEditCompatible {
+      : LineStatusMarkerPopupActions.RangeMarkerAction(editor, tracker, range, IdeActions.SELECTED_CHANGES_ROLLBACK), LightEditCompatible {
       override fun isEnabled(editor: Editor, range: Range): Boolean = true
 
       override fun actionPerformed(editor: Editor, range: Range) {
         rollback(tracker, range, editor)
       }
     }
+
+    override fun toString(): String = "LocalLineStatusMarkerRenderer(tracker=$tracker)"
   }
 
   private inner class LocalDocumentTrackerHandler : DocumentTracker.Handler {

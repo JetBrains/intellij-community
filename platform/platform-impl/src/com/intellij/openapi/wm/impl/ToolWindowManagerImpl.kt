@@ -69,6 +69,7 @@ import com.intellij.util.BitUtil
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SingleAlarm
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.ui.EDT
@@ -531,7 +532,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   @Deprecated("Use {{@link #registerToolWindow(RegisterToolWindowTask)}}")
   fun initToolWindow(bean: ToolWindowEP) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     runWithModalProgressBlocking(project, "") {
       initToolWindow(bean, bean.pluginDescriptor)
     }
@@ -618,7 +619,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   open fun activateToolWindow(id: String, runnable: Runnable?, autoFocusContents: Boolean, source: ToolWindowEventSource? = null) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     val activity = UiActivity.Focus("toolWindow:$id")
     UiActivityMonitor.getInstance().addActivity(project, activity, ModalityState.nonModal())
@@ -1025,7 +1026,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   override fun registerToolWindow(task: RegisterToolWindowTask): ToolWindow {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     // Try to get a previously saved tool window pane, if possible
     val toolWindowPane = this.getLayout().getInfo(task.id)?.toolWindowPaneId?.let { getToolWindowPane(it) }
@@ -1163,7 +1164,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   private fun doUnregisterToolWindow(id: String) {
     LOG.debug { "unregisterToolWindow($id)" }
 
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     ActivateToolWindowAction.unregister(id)
 
     val entry = idToEntry.remove(id) ?: return
@@ -1250,7 +1251,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   override fun getLayout(): DesktopLayout {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     return layoutState
   }
 
@@ -1263,7 +1264,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   override fun setLayout(newLayout: DesktopLayout) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     if (idToEntry.isEmpty()) {
       layoutState = newLayout
@@ -1637,7 +1638,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       return
     }
 
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     setToolWindowAnchorImpl(entry, info, getRegisteredMutableInfoOrLogError(id), info.safeToolWindowPaneId, anchor, order, layoutState)
     getToolWindowPane(info.safeToolWindowPaneId).validateAndRepaint()
     fireStateChanged(ToolWindowManagerEventType.SetToolWindowAnchor, entry.toolWindow)
@@ -1836,7 +1837,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   fun setToolWindowType(id: String, type: ToolWindowType) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     val entry = idToEntry.get(id)!!
     if (entry.readOnlyWindowInfo.type == type) {

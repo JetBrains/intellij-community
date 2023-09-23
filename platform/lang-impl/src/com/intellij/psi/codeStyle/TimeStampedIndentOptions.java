@@ -11,7 +11,7 @@ public final class TimeStampedIndentOptions extends CommonCodeStyleSettings.Inde
   private int myOriginalIndentOptionsHash;
   private boolean myDetected;
 
-  protected TimeStampedIndentOptions(CommonCodeStyleSettings.IndentOptions toCopyFrom, long timeStamp) {
+  TimeStampedIndentOptions(CommonCodeStyleSettings.IndentOptions toCopyFrom, long timeStamp) {
     copyFrom(toCopyFrom);
     myTimeStamp = timeStamp;
     myOriginalIndentOptionsHash = toCopyFrom.hashCode();

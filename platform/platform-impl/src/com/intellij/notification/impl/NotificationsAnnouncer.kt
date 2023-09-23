@@ -16,8 +16,6 @@ import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil
-import com.intellij.util.ui.accessibility.ScreenReader
-import com.jetbrains.JBR
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Container
 import java.awt.KeyboardFocusManager
@@ -55,10 +53,7 @@ private class NotificationsAnnouncerService {
 
 @ApiStatus.Experimental
 internal fun isNotificationAnnouncerEnabled(): Boolean {
-  return isNotificationAnnouncerFeatureAvailable
-         && ScreenReader.isActive()
-         && mode != NotificationAnnouncingMode.NONE
-         && JBR.isAccessibleAnnouncerSupported()
+  return AccessibleAnnouncerUtil.isAnnouncingAvailable() && mode != NotificationAnnouncingMode.NONE
 }
 
 

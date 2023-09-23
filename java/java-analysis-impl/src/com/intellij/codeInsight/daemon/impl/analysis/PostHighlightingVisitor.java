@@ -234,11 +234,11 @@ class PostHighlightingVisitor extends JavaElementVisitor {
       HighlightInfo.Builder builder =
         UnusedSymbolUtil.createUnusedSymbolInfoBuilder(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
       for (IntentionAction fix : quickFixes) {
-        TextRange fixRange = HighlightMethodUtil.getFixRange(parent);
+        TextRange fixRange = parent instanceof PsiField ? HighlightMethodUtil.getFixRange(parent) : null;
         builder.registerFix(fix, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), fixRange, myDeadCodeKey);
       }
       for (IntentionAction fix : quickFixOptions) {
-        TextRange fixRange = HighlightMethodUtil.getFixRange(parent);
+        TextRange fixRange = parent instanceof PsiField ? HighlightMethodUtil.getFixRange(parent) : null;
         builder.registerFix(fix, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), fixRange, null);
       }
       addInfo(holder, builder);
@@ -563,8 +563,8 @@ class PostHighlightingVisitor extends JavaElementVisitor {
         .descriptionAndTooltip(description)
         .group(GeneralHighlightingPass.POST_UPDATE_ALL);
 
-    IntentionAction optimizeFix = QuickFixFactory.getInstance().createOptimizeImportsFix(false, myFile);
-    builder.registerFix(optimizeFix, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
+    IntentionAction removeFix = QuickFixFactory.getInstance().createDeleteFix(importStatement, JavaErrorBundle.message("remove.unused.import.quickfix.text"));
+    builder.registerFix(removeFix, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
 
     IntentionAction switchFix = QuickFixFactory.getInstance().createEnableOptimizeImportsOnTheFlyFix();
     builder.registerFix(switchFix, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);

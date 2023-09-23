@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,8 @@ import javax.swing.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
+
+import static com.intellij.openapi.vcs.ex.DocumentTrackerKt.countAffectedVisibleChanges;
 
 public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   @NotNull private final LocalChangeListDiffRequest myLocalRequest;
@@ -96,6 +99,37 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   protected SimpleDiffChangeUi createUi(@NotNull SimpleDiffChange change) {
     if (change instanceof MySimpleDiffChange) return new MySimpleDiffChangeUi(this, (MySimpleDiffChange)change);
     return super.createUi(change);
+  }
+
+  @Override
+  @Nullable
+  protected @Nls String getStatusTextMessage() {
+    if (myAllowExcludeChangesFromCommit) {
+      int totalCount = 0;
+      int includedIntoCommitCount = 0;
+      int excludedCount = 0;
+
+      for (SimpleDiffChange change : getDiffChanges()) {
+        RangeExclusionState exclusionState;
+        if (change instanceof MySimpleDiffChange myChange) {
+          exclusionState = myChange.getExclusionState();
+        }
+        else {
+          exclusionState = RangeExclusionState.Included.INSTANCE;
+        }
+
+        totalCount += countAffectedVisibleChanges(exclusionState, false);
+        if (change.isSkipped()) {
+          excludedCount += countAffectedVisibleChanges(exclusionState, false);
+        }
+        else {
+          includedIntoCommitCount += countAffectedVisibleChanges(exclusionState, true);
+        }
+      }
+
+      return LocalTrackerDiffUtil.getStatusText(totalCount, includedIntoCommitCount, excludedCount, myModel.isContentsEqual());
+    }
+    return super.getStatusTextMessage();
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.openapi.Disposable
@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.shelf.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.VcsBundleTag
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.ui.SimpleTextAttributes
@@ -29,6 +30,7 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
   private val shelveManager: ShelveChangesManager get() = ShelveChangesManager.getInstance(project)
 
   override val dataClass: Class<ShelvedChangeList> get() = ShelvedChangeList::class.java
+  override val tag: ChangesBrowserNode.Tag = VcsBundleTag("shelf.root.node.title")
   override val applyAction: AnAction get() = ActionManager.getInstance().getAction("Vcs.Shelf.Apply")
   override val popAction: AnAction get() = ActionManager.getInstance().getAction("Vcs.Shelf.Pop")
 
@@ -72,7 +74,7 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
 
   override fun buildPatchesTree(modelBuilder: TreeModelBuilder) {
     val shelvesList = mainLists().sortedByDescending { it.DATE }
-    val shelvesRoot = SavedPatchesTree.TagWithCounterChangesBrowserNode(VcsBundle.message("shelf.root.node.title"))
+    val shelvesRoot = SavedPatchesTree.TagWithCounterChangesBrowserNode(tag)
     modelBuilder.insertSubtreeRoot(shelvesRoot)
     modelBuilder.insertShelves(shelvesRoot, shelvesList)
 

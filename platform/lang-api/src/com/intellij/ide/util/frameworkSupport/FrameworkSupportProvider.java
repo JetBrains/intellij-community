@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.frameworkSupport;
 
@@ -24,8 +24,8 @@ public abstract class FrameworkSupportProvider {
   private final String myId;
   private final @Nls(capitalization = Nls.Capitalization.Title) String myTitle;
 
-  protected FrameworkSupportProvider(@NotNull @NonNls final String id,
-                                     @NotNull final @Nls(capitalization = Nls.Capitalization.Title) String title) {
+  protected FrameworkSupportProvider(final @NotNull @NonNls String id,
+                                     final @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
     myId = id;
     myTitle = title;
   }
@@ -36,27 +36,21 @@ public abstract class FrameworkSupportProvider {
    * @param model Model.
    * @return Configurable.
    */
-  @NotNull
-  public abstract FrameworkSupportConfigurable createConfigurable(@NotNull FrameworkSupportModel model);
+  public abstract @NotNull FrameworkSupportConfigurable createConfigurable(@NotNull FrameworkSupportModel model);
 
-  @NonNls
-  @Nullable
-  public String getUnderlyingFrameworkId() {
+  public @NonNls @Nullable String getUnderlyingFrameworkId() {
     return null;
   }
 
-  @NonNls
-  public String[] getPrecedingFrameworkProviderIds() {
+  public @NonNls String[] getPrecedingFrameworkProviderIds() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public String getTitle() {
+  public @Nls(capitalization = Nls.Capitalization.Title) String getTitle() {
     return myTitle;
   }
 
-  @Nullable @NonNls
-  public String getGroupId() {
+  public @Nullable @NonNls String getGroupId() {
     return null;
   }
 
@@ -68,8 +62,7 @@ public abstract class FrameworkSupportProvider {
     return getGroupId() == null ? FrameworkRole.UNKNOWN : new FrameworkRole[] { new FrameworkRole(getGroupId()) };
   }
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return null;
   }
 
@@ -87,8 +80,7 @@ public abstract class FrameworkSupportProvider {
     return isSupportAlreadyAdded(module);
   }
 
-  @NotNull @NonNls
-  public final String getId() {
+  public final @NotNull @NonNls String getId() {
     return myId;
   }
 }

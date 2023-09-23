@@ -7,6 +7,7 @@ import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -168,9 +169,47 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         val after = uFile.findElementByTextFromPsi<UMethod>("after", strict = false)
             .orFail("cant convert to UMethod: after")
 
+        compareDeprecatedHidden(before, after, Nullable::class.java.name)
+    }
+
+    fun checkTypesOfDeprecatedHiddenSuspend(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                interface MyInterface
+
+                interface GattClientScope {
+                    @Deprecated(level = DeprecationLevel.HIDDEN, message="no longer supported")
+                    suspend fun awaitBefore(block: () -> Unit)
+                    suspend fun awaitAfter(block: () -> Unit)
+
+                    @Deprecated(level = DeprecationLevel.HIDDEN, message="no longer supported")
+                    suspend fun readCharacteristicBefore(p: MyInterface): Result<ByteArray>
+                    suspend fun readCharacteristicAfter(p: MyInterface): Result<ByteArray>
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        val awaitBefore = uFile.findElementByTextFromPsi<UMethod>("awaitBefore", strict = false)
+            .orFail("cant convert to UMethod: awaitBefore")
+        val awaitAfter = uFile.findElementByTextFromPsi<UMethod>("awaitAfter", strict = false)
+            .orFail("cant convert to UMethod: awaitAfter")
+
+        compareDeprecatedHidden(awaitBefore, awaitAfter, NotNull::class.java.name)
+
+        val readBefore = uFile.findElementByTextFromPsi<UMethod>("readCharacteristicBefore", strict = false)
+            .orFail("cant convert to UMethod: readCharacteristicBefore")
+        val readAfter = uFile.findElementByTextFromPsi<UMethod>("readCharacteristicAfter", strict = false)
+            .orFail("cant convert to UMethod: readCharacteristicAfter")
+
+        compareDeprecatedHidden(readBefore, readAfter, NotNull::class.java.name)
+    }
+
+    private fun compareDeprecatedHidden(before: UMethod, after: UMethod, nullness: String) {
         TestCase.assertEquals("return type", after.returnType, before.returnType)
 
-        TestCase.assertEquals(after.uastParameters.size, before.uastParameters.size)
+        TestCase.assertEquals("param size", after.uastParameters.size, before.uastParameters.size)
         after.uastParameters.zip(before.uastParameters).forEach { (afterParam, beforeParam) ->
             val paramName = afterParam.name
             TestCase.assertEquals(paramName, beforeParam.name)
@@ -178,8 +217,8 @@ interface UastApiFixtureTestBase : UastPluginSelection {
             TestCase.assertEquals(paramName, afterParam.type, beforeParam.type)
             TestCase.assertEquals(
                 paramName,
-                (afterParam.javaPsi as PsiModifierListOwner).hasAnnotation(Nullable::class.java.name),
-                (beforeParam.javaPsi as PsiModifierListOwner).hasAnnotation(Nullable::class.java.name)
+                (afterParam.javaPsi as PsiModifierListOwner).hasAnnotation(nullness),
+                (beforeParam.javaPsi as PsiModifierListOwner).hasAnnotation(nullness)
             )
         }
     }

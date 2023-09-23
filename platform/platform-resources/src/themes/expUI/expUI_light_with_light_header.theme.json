@@ -2,7 +2,7 @@
   "name": "Light with Light Header",
   "dark": false,
   "author": "JetBrains",
-  "parentTheme": "Light",
+  "parentTheme": "ExperimentalLight",
   "editorScheme": "/themes/expUI/expUI_lightScheme.xml",
   "nameKey": "light.header.theme.name",
 
@@ -197,6 +197,8 @@
           "End": "#3D968B"
         }
       }
-    }
+    },
+
+    "DataSummary.Chart.background": "Blue4"
   }
 }

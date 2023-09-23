@@ -3,8 +3,11 @@ package com.intellij.util.ui
 
 import com.intellij.ui.NewUiValue
 import com.intellij.ui.paint.withTxAndClipAligned
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.AvatarUtils.generateColoredAvatar
 import com.intellij.util.ui.ImageUtil.applyQualityRenderingHints
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.font.TextAttribute
 import java.awt.geom.Area
@@ -13,19 +16,19 @@ import java.awt.image.BufferedImage
 import kotlin.math.abs
 
 
-class AvatarIcon(private val targetSize: Int,
-                 private val arcRatio: Double,
-                 private val gradientSeed: String,
-                 private val avatarName: String,
-                 private val palette: ColorPalette = AvatarPalette) : JBCachingScalableIcon<AvatarIcon>() {
+class AvatarIcon(val targetSize: Int,
+                 val arcRatio: Double,
+                 val gradientSeed: String,
+                 val avatarName: String,
+                 val palette: ColorPalette = AvatarPalette) : JBCachingScalableIcon<AvatarIcon>() {
   private var cachedImage: BufferedImage? = null
-  private var cachedImageScale: Double? = null
+  private var cachedImageScale: Float? = null
   private var cachedImageColor: Color? = null
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     g as Graphics2D
     val iconSize = getIconSize()
-    val scale = g.transform.scaleX
+    val scale = JBUIScale.scale(1f)
     val imageColor = palette.gradient(gradientSeed).first
     if (scale != cachedImageScale || imageColor != cachedImageColor) {
       cachedImage = null
@@ -79,7 +82,7 @@ object AvatarUtils {
                                      palette: ColorPalette = AvatarPalette): BufferedImage {
     val (color1, color2) = palette.gradient(gradientSeed)
 
-    val shortName = Avatars.initials(name)
+    val shortName = initials(name)
     val image = ImageUtil.createImage(gc, size, size, BufferedImage.TYPE_INT_ARGB)
     val g2 = image.createGraphics()
     applyQualityRenderingHints(g2)
@@ -118,44 +121,52 @@ object AvatarUtils {
 
     return JBFont.create(Font.getFont(attributes)).deriveFont(size.toFloat())
   }
-}
 
-internal object Avatars {
   // "John Smith" -> "JS"
-  // "John Smith-Harris" -> "JS"
   // "John-Smith-Harris" -> "JH"
-  // "John-Smith Harris" -> "JH"
   // "MyProject" -> "MP"
   // "My-Project" -> "MP"
-  // "My-Project_Strong" -> "MP"
-  // "My_Project_Strong" -> "MS"
-  // "One,Two-Four" -> "OT"
-  // "Project_" -> "P"
+  @TestOnly
+  @Internal
   fun initials(text: String): String {
     val filtered = text
       .filter { !it.isHighSurrogate() && !it.isLowSurrogate() }
       .trim()
 
+    val camelCaseInitials = generateFromCamelCase(text)
+    if (camelCaseInitials.length ==  2) return camelCaseInitials
+
     val words = (filtered.splitAtLeast2NonEmpty(' ')
                  ?: filtered.splitAtLeast2NonEmpty(',')
                  ?: filtered.splitAtLeast2NonEmpty('-')
                  ?: filtered.splitAtLeast2NonEmpty('_')
+                 ?: filtered.splitAtLeast2NonEmpty('.')
                  ?: filtered.splitAtLeast2NonEmpty('`', '\'', '\"'))
         ?.let { listOf(it.first(), it.last()) }
 
     if (words == null) {
-      return generateFromCamelCase(filtered)
+      return camelCaseInitials
     }
     return words.map { it.first() }
         .joinToString("").uppercase()
   }
 
-  private fun String.splitAtLeast2NonEmpty(vararg delimiters: Char) = split(*delimiters).filter { it.isNotEmpty() }.takeIf { it.size >= 2 }
+  private fun String.splitAtLeast2NonEmpty(vararg delimiters: Char) = split(*delimiters).map { string ->
+    string.filter { it.isLetterOrDigit() }
+  }.filter {
+    it.isNotEmpty()
+  }.takeIf {
+    it.size >= 2
+  }
 
   private fun generateFromCamelCase(text: String): String {
-    return text.filterIndexed { index, c -> index == 0 || c.isUpperCase() }
-      .take(2)
-      .uppercase()
+    return text.dropWhile {
+      !it.isLetter()
+    }.takeWhile {
+      it.isLetterOrDigit()
+    }.filterIndexed { index, c ->
+      index == 0 || c.isUpperCase()
+    }.take(2).uppercase()
   }
 
   fun initials(firstName: String, lastName: String): String {
@@ -176,7 +187,8 @@ interface ColorPalette {
   fun gradient(seed: String? = null): Pair<Color, Color> = select(gradients, seed)
 }
 
-private object AvatarPalette : ColorPalette {
+@Internal
+object AvatarPalette : ColorPalette {
   override val gradients: Array<Pair<Color, Color>>
     get() {
       return arrayOf(

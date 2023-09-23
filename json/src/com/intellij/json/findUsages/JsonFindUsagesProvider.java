@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.findUsages;
 
 import com.intellij.json.JsonBundle;
@@ -13,10 +14,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mikhail Golubev
  */
-public class JsonFindUsagesProvider implements FindUsagesProvider {
-  @Nullable
+public final class JsonFindUsagesProvider implements FindUsagesProvider {
   @Override
-  public WordsScanner getWordsScanner() {
+  public @Nullable WordsScanner getWordsScanner() {
     return new JsonWordScanner();
   }
 
@@ -25,31 +25,27 @@ public class JsonFindUsagesProvider implements FindUsagesProvider {
     return psiElement instanceof PsiNamedElement;
   }
 
-  @Nullable
   @Override
-  public String getHelpId(@NotNull PsiElement psiElement) {
+  public @Nullable String getHelpId(@NotNull PsiElement psiElement) {
     return HelpID.FIND_OTHER_USAGES;
   }
 
-  @NotNull
   @Override
-  public String getType(@NotNull PsiElement element) {
+  public @NotNull String getType(@NotNull PsiElement element) {
     if (element instanceof JsonProperty) {
       return JsonBundle.message("json.property");
     }
     return "";
   }
 
-  @NotNull
   @Override
-  public String getDescriptiveName(@NotNull PsiElement element) {
+  public @NotNull String getDescriptiveName(@NotNull PsiElement element) {
     final String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : null;
     return name != null ? name : JsonBundle.message("unnamed.desc");
   }
 
-  @NotNull
   @Override
-  public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
+  public @NotNull String getNodeText(@NotNull PsiElement element, boolean useFullName) {
     return getDescriptiveName(element);
   }
 }

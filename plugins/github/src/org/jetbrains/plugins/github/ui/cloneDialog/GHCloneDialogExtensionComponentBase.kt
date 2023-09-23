@@ -45,12 +45,9 @@ import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import git4idea.remote.GitRememberedInputs
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -207,7 +204,9 @@ internal abstract class GHCloneDialogExtensionComponentBase(
 
   protected fun getAccounts(): Set<GithubAccount> = accountListModel.itemsSet
 
-  protected abstract fun createLoginPanel(account: GithubAccount?, cancelHandler: () -> Unit): JComponent
+  protected abstract fun createLoginPanel(cs: CoroutineScope,
+                                          account: GithubAccount?,
+                                          cancelHandler: () -> Unit): JComponent
 
   private fun setupAccountsListeners() {
     accountListModel.addListDataListener(object : ListDataListener {
@@ -255,7 +254,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   }
 
   protected fun switchToLogin(account: GithubAccount?) {
-    wrapper.setContent(createLoginPanel(account) { switchToRepositories() })
+    wrapper.setContent(createLoginPanel(cs, account) { switchToRepositories() })
     wrapper.repaint()
     inLoginState = true
     updateSelectedUrl()

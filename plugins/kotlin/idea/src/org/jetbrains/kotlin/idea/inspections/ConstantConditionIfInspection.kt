@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 
 class ConstantConditionIfInspection : AbstractKotlinInspection() {
-
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return ifExpressionVisitor { expression ->
             val constantValue = expression.getConditionConstantValueIfAny() ?: return@ifExpressionVisitor
@@ -40,93 +39,93 @@ class ConstantConditionIfInspection : AbstractKotlinInspection() {
         }
     }
 
-    companion object {
-        private fun KtIfExpression.getConditionConstantValueIfAny(): Boolean? {
-            var expr = condition
-            while (expr is KtParenthesizedExpression) {
-                expr = expr.expression
-            }
-            if (expr !is KtConstantExpression) return null
-            val context = condition?.analyze(BodyResolveMode.PARTIAL_WITH_CFA) ?: return null
-            val type = expr.getType(context) ?: return null
-            val constant = ConstantExpressionEvaluator.getConstant(expr, context)?.toConstantValue(type) ?: return null
-            return constant.value as? Boolean
-        }
-
-        private fun collectFixes(
-            expression: KtIfExpression,
-            constantValue: Boolean? = expression.getConditionConstantValueIfAny()
-        ): List<ConstantConditionIfFix> {
-            if (constantValue == null) return emptyList()
-            val fixes = mutableListOf<ConstantConditionIfFix>()
-
-            if (expression.branch(constantValue) != null) {
-                val keepBraces = expression.isElseIf() && expression.branch(constantValue) is KtBlockExpression
-                fixes += SimplifyFix(
-                    constantValue,
-                    expression.isUsedAsExpression(expression.analyze(BodyResolveMode.PARTIAL_WITH_CFA)),
-                    keepBraces
-                )
-            }
-
-            if (!constantValue && expression.`else` == null) {
-                fixes += RemoveFix()
-            }
-
-            return fixes
-        }
-
+    object Util {
         fun applyFixIfSingle(ifExpression: KtIfExpression) {
             collectFixes(ifExpression).singleOrNull()?.applyFix(ifExpression)
         }
     }
+}
 
-    private interface ConstantConditionIfFix : LocalQuickFix {
-        fun applyFix(ifExpression: KtIfExpression)
+private interface ConstantConditionIfFix : LocalQuickFix {
+    fun applyFix(ifExpression: KtIfExpression)
+}
+
+private class SimplifyFix(
+    private val conditionValue: Boolean,
+    private val isUsedAsExpression: Boolean,
+    private val keepBraces: Boolean
+) : ConstantConditionIfFix {
+    override fun getFamilyName() = name
+
+    override fun getName() = KotlinBundle.message("simplify.fix.text")
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val ifExpression = descriptor.psiElement.getParentOfType<KtIfExpression>(strict = true) ?: return
+        applyFix(ifExpression)
     }
 
-    private class SimplifyFix(
-        private val conditionValue: Boolean,
-        private val isUsedAsExpression: Boolean,
-        private val keepBraces: Boolean
-    ) : ConstantConditionIfFix {
-        override fun getFamilyName() = name
+    override fun applyFix(ifExpression: KtIfExpression) {
+        val branch = ifExpression.branch(conditionValue)?.let {
+            if (keepBraces) it else it.unwrapBlockOrParenthesis()
+        } ?: return
+        ifExpression.replaceWithBranch(branch, isUsedAsExpression, keepBraces)
+    }
+}
 
-        override fun getName() = KotlinBundle.message("simplify.fix.text")
+private class RemoveFix : ConstantConditionIfFix {
+    override fun getFamilyName() = name
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val ifExpression = descriptor.psiElement.getParentOfType<KtIfExpression>(strict = true) ?: return
-            applyFix(ifExpression)
-        }
+    override fun getName() = KotlinBundle.message("remove.fix.text")
 
-        override fun applyFix(ifExpression: KtIfExpression) {
-            val branch = ifExpression.branch(conditionValue)?.let {
-                if (keepBraces) it else it.unwrapBlockOrParenthesis()
-            } ?: return
-            ifExpression.replaceWithBranch(branch, isUsedAsExpression, keepBraces)
-        }
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val ifExpression = descriptor.psiElement.getParentOfType<KtIfExpression>(strict = true) ?: return
+        applyFix(ifExpression)
     }
 
-    private class RemoveFix : ConstantConditionIfFix {
-        override fun getFamilyName() = name
-
-        override fun getName() = KotlinBundle.message("remove.fix.text")
-
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val ifExpression = descriptor.psiElement.getParentOfType<KtIfExpression>(strict = true) ?: return
-            applyFix(ifExpression)
+    override fun applyFix(ifExpression: KtIfExpression) {
+        val parent = ifExpression.parent
+        if (parent.node.elementType == KtNodeTypes.ELSE) {
+            (parent.parent as? KtIfExpression)?.elseKeyword?.delete()
+            parent.delete()
         }
 
-        override fun applyFix(ifExpression: KtIfExpression) {
-            val parent = ifExpression.parent
-            if (parent.node.elementType == KtNodeTypes.ELSE) {
-                (parent.parent as? KtIfExpression)?.elseKeyword?.delete()
-                parent.delete()
-            }
-
-            ifExpression.delete()
-        }
+        ifExpression.delete()
     }
+}
+
+private fun KtIfExpression.getConditionConstantValueIfAny(): Boolean? {
+    var expr = condition
+    while (expr is KtParenthesizedExpression) {
+        expr = expr.expression
+    }
+    if (expr !is KtConstantExpression) return null
+    val context = condition?.analyze(BodyResolveMode.PARTIAL_WITH_CFA) ?: return null
+    val type = expr.getType(context) ?: return null
+    val constant = ConstantExpressionEvaluator.getConstant(expr, context)?.toConstantValue(type) ?: return null
+    return constant.value as? Boolean
+}
+
+private fun collectFixes(
+    expression: KtIfExpression,
+    constantValue: Boolean? = expression.getConditionConstantValueIfAny()
+): List<ConstantConditionIfFix> {
+    if (constantValue == null) return emptyList()
+    val fixes = mutableListOf<ConstantConditionIfFix>()
+
+    if (expression.branch(constantValue) != null) {
+        val keepBraces = expression.isElseIf() && expression.branch(constantValue) is KtBlockExpression
+        fixes += SimplifyFix(
+            constantValue,
+            expression.isUsedAsExpression(expression.analyze(BodyResolveMode.PARTIAL_WITH_CFA)),
+            keepBraces
+        )
+    }
+
+    if (!constantValue && expression.`else` == null) {
+        fixes += RemoveFix()
+    }
+
+    return fixes
 }
 
 private fun KtIfExpression.branch(thenBranch: Boolean) = if (thenBranch) then else `else`

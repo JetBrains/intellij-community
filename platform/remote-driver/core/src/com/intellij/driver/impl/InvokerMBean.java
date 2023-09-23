@@ -14,6 +14,8 @@ import java.util.function.Supplier;
 public interface InvokerMBean {
   ProductVersion getProductVersion();
 
+  boolean isApplicationInitialized();
+
   void exit();
 
   RemoteCallResult invoke(RemoteCall call);

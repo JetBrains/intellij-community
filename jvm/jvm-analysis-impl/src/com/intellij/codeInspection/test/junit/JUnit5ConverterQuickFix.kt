@@ -76,7 +76,7 @@ class JUnit5ConverterQuickFix : LocalQuickFix, BatchQuickFix {
         file.classes.forEach { psiClass ->
           val inheritors = mutableSetOf<PsiClass>()
           ClassInheritorsSearch.search(psiClass.javaPsi).forEach(Processor { inheritor ->
-            if (!JUnit5ConverterInspection.canBeConvertedToJUnit5(inheritor)) {
+            if (!canBeConvertedToJUnit5(inheritor)) {
               inheritors.add(inheritor)
               false
             }

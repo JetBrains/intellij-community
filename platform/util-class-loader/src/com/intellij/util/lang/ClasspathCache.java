@@ -120,9 +120,9 @@ public final class ClasspathCache {
       StrippedLongToObjectMap<Loader[]> newResourceMap = resourcePackageCache == null
                                                          ? new StrippedLongToObjectMap<>(ARRAY_FACTORY, registrar.resourcePackageCount())
                                                          : new StrippedLongToObjectMap<>(resourcePackageCache);
+      addPackages(registrar.resourcePackages(), newResourceMap, loader, registrar.getKeyFilter(false));
       resourcePackageCache = newResourceMap;
       resourcePackageCacheGetter = newResourceMap;
-      addPackages(registrar.resourcePackages(), newResourceMap, loader, registrar.getKeyFilter(false));
     }
   }
 

@@ -72,10 +72,6 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
         }
       }
     }
-    PsiExpression guardExpression = getGuardExpression();
-    if (guardExpression != null) {
-      return guardExpression.processDeclarations(processor, PatternResolveState.WHEN_TRUE.putInto(state), null, place);
-    }
 
     return true;
   }
@@ -83,5 +79,17 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
   @Override
   public @Nullable PsiCaseLabelElementList getCaseLabelElementList() {
     return PsiTreeUtil.getChildOfType(this, PsiCaseLabelElementList.class);
+  }
+
+  protected boolean processPatternVariables(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, @NotNull PsiElement place) {
+    final PsiCaseLabelElementList patternsInCaseLabel = getCaseLabelElementList();
+    if (patternsInCaseLabel == null) return true;
+    if (!patternsInCaseLabel.processDeclarations(processor, state, null, place)) return false;
+
+    PsiExpression guardExpression = getGuardExpression();
+    if (guardExpression != null) {
+      return guardExpression.processDeclarations(processor, PatternResolveState.WHEN_TRUE.putInto(state), null, place);
+    }
+    return true;
   }
 }

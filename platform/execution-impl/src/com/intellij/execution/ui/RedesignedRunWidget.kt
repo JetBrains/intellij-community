@@ -96,10 +96,12 @@ class RunWidgetResumeManager(private val project: Project)  {
   }
 
   private fun isDebugStarted(): Boolean {
-    val executionManager = ExecutionManagerImpl.getInstance(project)
-    return ExecutionManagerImpl.getAllDescriptors(project).filter { isActive(it) == true }.firstOrNull {
-      executionManager.getExecutors(it).firstOrNull { executor -> executor.id == ToolWindowId.DEBUG } != null
-    } != null
+    val executionManager = ExecutionManagerImpl.getInstanceIfCreated(project) ?: return false
+
+    return ExecutionManagerImpl.getAllDescriptors(project).asSequence()
+      .filter { isActive(it) == true }
+      .flatMap { executionManager.getExecutors(it) }
+      .firstOrNull { executor -> executor.id == ToolWindowId.DEBUG } != null
   }
 
   private fun isActive(processDescriptor: RunContentDescriptor): Boolean? {
@@ -107,7 +109,6 @@ class RunWidgetResumeManager(private val project: Project)  {
       !it.isProcessTerminating && !it.isProcessTerminated
     }
   }
-
 
   private fun getStarted(configuration: RunnerAndConfigurationSettings, executorId: String): RunContentDescriptor? {
     val executionManager = ExecutionManagerImpl.getInstance(project)
@@ -179,7 +180,8 @@ private class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
       return !runningDescriptors.isEmpty()
     }
     else {
-      val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { it.isOfSameType(selectedConfiguration) }
+      val executionManager = ExecutionManagerImpl.getInstanceIfCreated(project) ?: return false
+      val runningDescriptors = executionManager.getRunningDescriptors { it.isOfSameType(selectedConfiguration) }
       return !runningDescriptors.isEmpty()
     }
   }
@@ -279,12 +281,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
       val textIcon = icon.allLayers[1]
       if (textIcon is TextIcon) {
         val text = textIcon.text
-        val provider = object : BadgeRectProvider() {
-          override fun getTop() = 0.45
-          override fun getLeft() = if (text.length == 1) 0.75 else 0.3
-          override fun getBottom() = 1.2
-          override fun getRight() = 1.2
-        }
+        val provider = BadgeRectProvider(top = 0.45, left = if (text.length == 1) 0.75 else 0.3, right = 1.2, bottom = 1.2)
         resultIcon = TextHoledIcon(icon.allLayers[0]!!, text, JBUIScale.scale(12.0f), JBUI.CurrentTheme.RunWidget.RUNNING_ICON_COLOR, provider)
       }
     }

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
-import com.intellij.ProjectTopics.PROJECT_ROOTS
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
@@ -734,7 +733,7 @@ class ModuleBridgesTest {
   fun `test disposed module doesn't appear in rootsChanged`() = WriteCommandAction.runWriteCommandAction(project) {
     val module = projectModel.createModule()
 
-    project.messageBus.connect(disposableRule.disposable).subscribe(PROJECT_ROOTS, object : ModuleRootListener {
+    project.messageBus.connect(disposableRule.disposable).subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         val modules = ModuleManager.getInstance(event.project).modules
         assertEmpty(modules)

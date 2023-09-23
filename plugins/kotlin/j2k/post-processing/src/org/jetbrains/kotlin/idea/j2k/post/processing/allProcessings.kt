@@ -114,7 +114,10 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     },
     inspectionBasedProcessing(ReplaceGetOrSetInspection()),
     intentionBasedProcessing(ObjectLiteralToLambdaIntention(), writeActionNeeded = true),
-    intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()),
+    intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()) {
+        // skip parentheses that were originally present in Java code
+        it.getExplicitLabelComment() == null
+    },
     DestructureForLoopParameterProcessing(),
     inspectionBasedProcessing(SimplifyAssertNotNullInspection()),
     LiftReturnInspectionBasedProcessing(),
@@ -148,7 +151,7 @@ private val inferringTypesPostProcessingGroup = NamedPostProcessingGroup(
         ),
         NullabilityInferenceProcessing(),
         MutabilityInferenceProcessing(),
-        ClearUnknownLabelsProcessing()
+        ClearUnknownInferenceLabelsProcessing()
     )
 )
 
@@ -167,7 +170,8 @@ private val cleaningUpCodePostProcessingGroup = NamedPostProcessingGroup(
         addOrRemoveModifiersProcessingGroup,
         inspectionLikePostProcessingGroup,
         removeRedundantElementsProcessingGroup,
-        cleaningUpDiagnosticBasedPostProcessingGroup
+        ClearExplicitLabelsProcessing(),
+        cleaningUpDiagnosticBasedPostProcessingGroup,
     )
 )
 
@@ -176,6 +180,7 @@ private val optimizingImportsAndFormattingCodePostProcessingGroup = NamedPostPro
     listOf(
         ShortenReferenceProcessing(),
         OptimizeImportsProcessing(),
+        RemoveRedundantEmptyLinesProcessing(),
         FormatCodeProcessing()
     )
 )

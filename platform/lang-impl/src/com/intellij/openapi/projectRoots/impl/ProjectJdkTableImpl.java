@@ -28,6 +28,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.util.*;
@@ -44,7 +45,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
 
   private final Map<String, ProjectJdkImpl> myCachedProjectJdks = new HashMap<>();
 
-  // constructor is public because it is accessed from Upsource
+  @VisibleForTesting
   public ProjectJdkTableImpl() {
     // support external changes to jdk libraries (Endorsed Standards Override)
     final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();

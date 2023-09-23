@@ -366,8 +366,8 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         }
 
         MavenProjectImportHandler.getInstances(module.project).forEach { it(kotlinFacet, mavenProject) }
-        setImplementedModuleName(kotlinFacet, mavenProject, module)
-        kotlinFacet.noVersionAutoAdvance()
+        setImplementedModuleName(facetSettings, mavenProject, module.project)
+        facetSettings.noVersionAutoAdvance()
 
         if ((sharedArguments.jvmTarget6IsUsed || executionArguments?.jvmTarget6IsUsed == true) &&
             module.project.getUserData(KOTLIN_JVM_TARGET_6_NOTIFICATION_DISPLAYED) != true
@@ -500,15 +500,15 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
                     }
         }.distinct()
 
-    private fun setImplementedModuleName(kotlinFacet: KotlinFacet, mavenProject: MavenProject, module: Module) {
-        if (kotlinFacet.configuration.settings.targetPlatform.isCommon()) {
-            kotlinFacet.configuration.settings.implementedModuleNames = emptyList()
+    private fun setImplementedModuleName(facetSettings: IKotlinFacetSettings, mavenProject: MavenProject, project: Project) {
+        if (facetSettings.targetPlatform.isCommon()) {
+            facetSettings.implementedModuleNames = emptyList()
         } else {
-            val manager = MavenProjectsManager.getInstance(module.project)
+            val manager = MavenProjectsManager.getInstance(project)
             val mavenDependencies = mavenProject.dependencies.mapNotNull { manager?.findProject(it) }
             val implemented = mavenDependencies.filter { detectPlatformByExecutions(it).isCommon }
 
-            kotlinFacet.configuration.settings.implementedModuleNames = implemented.map { manager.findModule(it)?.name ?: it.displayName }
+            facetSettings.implementedModuleNames = implemented.map { manager.findModule(it)?.name ?: it.displayName }
         }
     }
 }

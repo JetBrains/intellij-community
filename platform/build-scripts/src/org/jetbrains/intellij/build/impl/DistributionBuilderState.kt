@@ -4,8 +4,6 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.jps.model.library.JpsLibrary
-import org.jetbrains.jps.model.module.JpsModuleReference
 
 suspend fun createDistributionBuilderState(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
   val pluginsToPublishEffective = pluginsToPublish.toMutableSet()
@@ -78,8 +76,4 @@ internal fun filterPluginsToPublish(plugins: MutableSet<PluginLayout>, context: 
 internal fun getToolModules(): List<String> {
   return java.util.List.of("intellij.java.rt", "intellij.platform.main",
                            /*required to build searchable options index*/ "intellij.platform.updater")
-}
-
-internal fun isProjectLibraryUsedByPlugin(library: JpsLibrary, plugin: BaseLayout): Boolean {
-  return library.createReference().parentReference !is JpsModuleReference && !plugin.hasLibrary(library.name)
 }

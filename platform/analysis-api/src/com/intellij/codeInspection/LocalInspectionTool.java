@@ -133,28 +133,44 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @see PsiRecursiveVisitor
    */
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new PsiElementVisitor() {
-      @Override
-      public void visitFile(@NotNull PsiFile file) {
-        addDescriptors(checkFile(file, holder.getManager(), isOnTheFly));
-      }
+    return new PsiFileElementVisitor(holder, isOnTheFly);
+  }
 
-      private void addDescriptors(ProblemDescriptor @Nullable [] descriptors) {
-        if (descriptors != null) {
-          for (ProblemDescriptor descriptor : descriptors) {
-            if (descriptor != null) {
-              holder.registerProblem(descriptor);
-            }
-            else {
-              Class<?> inspectionToolClass = LocalInspectionTool.this.getClass();
-              LOG.error(PluginException.createByClass("Array returned from checkFile() method of " + inspectionToolClass + " contains null element: " +
-                                                      Arrays.toString(descriptors),
-                                                      null, inspectionToolClass));
-            }
+  private class PsiFileElementVisitor extends PsiElementVisitor implements HintedPsiElementVisitor {
+    private final @NotNull ProblemsHolder myHolder;
+    private final boolean myIsOnTheFly;
+
+    private PsiFileElementVisitor(@NotNull ProblemsHolder holder, boolean fly) {
+      this.myHolder = holder;
+      this.myIsOnTheFly = fly;
+    }
+
+    @Override
+    public void visitFile(@NotNull PsiFile file) {
+      addDescriptors(checkFile(file, myHolder.getManager(), myIsOnTheFly));
+    }
+
+    private void addDescriptors(ProblemDescriptor @Nullable [] descriptors) {
+      if (descriptors != null) {
+        for (ProblemDescriptor descriptor : descriptors) {
+          if (descriptor != null) {
+            myHolder.registerProblem(descriptor);
+          }
+          else {
+            Class<?> inspectionToolClass = LocalInspectionTool.this.getClass();
+            LOG.error(PluginException.createByClass(
+              "Array returned from checkFile() method of " + inspectionToolClass + " contains null element: " +
+              Arrays.toString(descriptors),
+              null, inspectionToolClass));
           }
         }
       }
-    };
+    }
+
+    @Override
+    public @NotNull List<Class<?>> getHintPsiElements() {
+      return List.of(PsiFile.class);
+    }
   }
 
   /**

@@ -16,22 +16,23 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class JavaResourceRootPropertiesEntityImpl(val dataSource: JavaResourceRootPropertiesEntityData) : JavaResourceRootPropertiesEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class JavaResourceRootPropertiesEntityImpl(private val dataSource: JavaResourceRootPropertiesEntityData) : JavaResourceRootPropertiesEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
                                                                               JavaResourceRootPropertiesEntity::class.java,
                                                                               ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       SOURCEROOT_CONNECTION_ID,
     )
 
@@ -50,6 +51,7 @@ open class JavaResourceRootPropertiesEntityImpl(val dataSource: JavaResourceRoot
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: JavaResourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<JavaResourceRootPropertiesEntity, JavaResourceRootPropertiesEntityData>(
     result), JavaResourceRootPropertiesEntity.Builder {
@@ -79,7 +81,7 @@ open class JavaResourceRootPropertiesEntityImpl(val dataSource: JavaResourceRoot
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -186,7 +188,7 @@ class JavaResourceRootPropertiesEntityData : WorkspaceEntityData<JavaResourceRoo
   lateinit var relativeOutputPath: String
 
 
-  fun isRelativeOutputPathInitialized(): Boolean = ::relativeOutputPath.isInitialized
+  internal fun isRelativeOutputPathInitialized(): Boolean = ::relativeOutputPath.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<JavaResourceRootPropertiesEntity> {
     val modifiable = JavaResourceRootPropertiesEntityImpl.Builder(null)
@@ -203,6 +205,11 @@ class JavaResourceRootPropertiesEntityData : WorkspaceEntityData<JavaResourceRoo
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -262,9 +269,5 @@ class JavaResourceRootPropertiesEntityData : WorkspaceEntityData<JavaResourceRoo
     result = 31 * result + generated.hashCode()
     result = 31 * result + relativeOutputPath.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

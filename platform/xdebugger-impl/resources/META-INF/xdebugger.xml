@@ -116,12 +116,16 @@
 
     <advancedSetting id="debugger.max.recent.expressions" default="50"
                      groupKey="group.advanced.settings.debugger" bundle="messages.XDebuggerBundle"/>
+    <advancedSetting id="debugger.inlay.run.to.cursor" default="true"
+                     groupKey="group.advanced.settings.debugger" bundle="messages.XDebuggerBundle"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerActionsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerPerformanceCollector"/>
 
     <applicationService serviceInterface="com.intellij.xdebugger.attach.XAttachRecentItemsMatcher"
                         serviceImplementation="com.intellij.xdebugger.impl.actions.DefaultAttachRecentItemsMatcher"/>
+
+    <gutterMarkPreprocessor implementation="com.intellij.xdebugger.impl.breakpoints.XBreakpointBase$BreakpointGutterIconMerge"/>
   </extensions>
 
   <actions>
@@ -183,5 +187,8 @@
             class="com.intellij.xdebugger.impl.ui.attach.dialog.AttachShowOnlyMyProcessesToggleAction">
       <add-to-group group-id="XDebugger.Attach.Dialog.Settings"/>
     </action>
+
+    <group id="XDebugger.RunToCursorInlayExtraActions">
+    </group>
   </actions>
 </idea-plugin>

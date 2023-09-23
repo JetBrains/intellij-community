@@ -15,6 +15,7 @@ import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.components.BorderLayoutPanel
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
@@ -41,8 +42,8 @@ private class GHECloneDialogExtensionComponent(project: Project, modalityState: 
 
   override fun isAccountHandled(account: GithubAccount): Boolean = account.isGHEAccount
 
-  override fun createLoginPanel(account: GithubAccount?, cancelHandler: () -> Unit): JComponent =
-    GHECloneDialogLoginPanel(account).apply {
+  override fun createLoginPanel(cs: CoroutineScope, account: GithubAccount?, cancelHandler: () -> Unit): JComponent =
+    GHECloneDialogLoginPanel(cs, account).apply {
       Disposer.register(this@GHECloneDialogExtensionComponent, this)
 
       loginPanel.isCancelVisible = getAccounts().isNotEmpty()
@@ -62,13 +63,16 @@ private class GHECloneDialogExtensionComponent(project: Project, modalityState: 
   }
 }
 
-private class GHECloneDialogLoginPanel(account: GithubAccount?) : BorderLayoutPanel(), Disposable {
+private class GHECloneDialogLoginPanel(
+  cs: CoroutineScope,
+  account: GithubAccount?
+) : BorderLayoutPanel(), Disposable {
   private val titlePanel =
     simplePanel().apply {
       val title = JBLabel(message("login.to.github.enterprise"), ComponentStyle.LARGE).apply { font = JBFont.label().biggerOn(5.0f) }
       addToLeft(title)
     }
-  val loginPanel = CloneDialogLoginPanel(account).apply {
+  val loginPanel = CloneDialogLoginPanel(cs, account).apply {
     Disposer.register(this@GHECloneDialogLoginPanel, this)
 
     if (account == null) setServer("", true)

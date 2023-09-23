@@ -23,8 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 public abstract class JavaImportStatementElementType extends JavaStubElementType<PsiImportStatementStub, PsiImportStatementBase> {
-  public JavaImportStatementElementType(@NonNls @NotNull final String id) {
-    super(id);
+  public JavaImportStatementElementType(@NonNls @NotNull final String id, @NotNull IElementType parentElementType) {
+    super(id, parentElementType);
   }
 
   @Override

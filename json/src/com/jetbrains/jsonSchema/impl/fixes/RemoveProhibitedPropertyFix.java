@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.fixes;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -12,7 +12,7 @@ import com.jetbrains.jsonSchema.impl.JsonValidationError;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class RemoveProhibitedPropertyFix implements LocalQuickFix {
+public final class RemoveProhibitedPropertyFix implements LocalQuickFix {
   @SafeFieldForPreview
   private final JsonValidationError.ProhibitedPropertyIssueData myData;
   @SafeFieldForPreview
@@ -24,17 +24,13 @@ public class RemoveProhibitedPropertyFix implements LocalQuickFix {
     myQuickFixAdapter = quickFixAdapter;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return JsonBundle.message("remove.prohibited.property");
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
     return getFamilyName() + " '" + myData.propertyName + "'";
   }
 

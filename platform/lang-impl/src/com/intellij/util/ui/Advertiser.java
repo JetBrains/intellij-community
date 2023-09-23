@@ -2,10 +2,10 @@
 package com.intellij.util.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.RelativeFont;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +79,7 @@ public class Advertiser {
   }
 
   public void clearAdvertisements() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myTexts.clear();
     myCurrentItem.set(0);
     updateAdvertisements();
@@ -92,7 +92,7 @@ public class Advertiser {
   }
 
   public void addAdvertisement(@PopupAdvertisement @NotNull String text, @Nullable Icon icon) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myTexts.add(new Item(text, icon));
     updateAdvertisements();
   }
@@ -102,7 +102,7 @@ public class Advertiser {
   }
 
   public void setForeground(@Nullable Color foreground) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     
     if (foreground != null) {
       myForeground = foreground;

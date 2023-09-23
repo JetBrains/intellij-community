@@ -328,7 +328,7 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   public @NotNull Stream<String> getClassRootUrls(Element libraryElement, @Nullable ModuleSettings moduleSettings) {
-    //todo[nik] support jar directories
+    //todo support jar directories
     Element classesChild = libraryElement.getChild("CLASSES");
     if (classesChild == null) {
       return Stream.empty();

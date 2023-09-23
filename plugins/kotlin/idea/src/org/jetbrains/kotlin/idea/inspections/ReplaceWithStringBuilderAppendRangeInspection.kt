@@ -21,14 +21,12 @@ import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.isInt
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class ReplaceWithStringBuilderAppendRangeInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
-    companion object {
-        private const val appendFunctionName = "append"
-        private const val appendRangeFunctionName = "appendRange"
-        private val appendFunctionFqName = FqName("java.lang.StringBuilder.append")
-        private val charArrayFqName = FqName("kotlin.CharArray")
-    }
+private const val appendFunctionName = "append"
+private const val appendRangeFunctionName = "appendRange"
+private val appendFunctionFqName = FqName("java.lang.StringBuilder.append")
+private val charArrayFqName = FqName("kotlin.CharArray")
 
+class ReplaceWithStringBuilderAppendRangeInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid =
         callExpressionVisitor(fun(callExpression: KtCallExpression) {
             if (!callExpression.platform.isJvm()) return

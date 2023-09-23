@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CommonLinkDestinationReferenceTest extends BasePlatformTestCase {
 
-  public static final Logger LOGGER = Logger.getInstance(CommonLinkDestinationReferenceTest.class);
+  private static final Logger LOGGER = Logger.getInstance(CommonLinkDestinationReferenceTest.class);
 
   @NotNull
   @Override

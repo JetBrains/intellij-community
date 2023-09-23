@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.LineStatusTrackerBlockOperations.Companion.isSelectedByLine
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.*
 
@@ -72,7 +73,7 @@ abstract class LineStatusTrackerBase<R : Range>(
 
   @RequiresEdt
   protected open fun setBaseRevisionContent(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (isReleased) return
 
     documentTracker.doFrozen(Side.LEFT) {
@@ -91,7 +92,7 @@ abstract class LineStatusTrackerBase<R : Range>(
 
   @RequiresEdt
   fun dropBaseRevision() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (isReleased || !isInitialized) return
 
     isInitialized = false

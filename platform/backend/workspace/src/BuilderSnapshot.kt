@@ -30,7 +30,7 @@ public class BuilderSnapshot @ApiStatus.Internal constructor(private val version
   /**
    * Returns `true` if entities in this instance differ from the original storage.
    */
-  public fun areEntitiesChanged(): Boolean = !builder.hasSameEntities(storage)
+  public fun areEntitiesChanged(): Boolean = !builder.hasSameEntities()
 
   /**
    * Prepares a replacement for the storage. 
@@ -38,7 +38,7 @@ public class BuilderSnapshot @ApiStatus.Internal constructor(private val version
    * to [WorkspaceModel.replaceProjectModel] under write-lock.
    */
   public fun getStorageReplacement(): StorageReplacement {
-    val changes = builder.collectChanges(storage)
+    val changes = builder.collectChanges()
     return StorageReplacement(version, builder, changes)
   }
 }

@@ -27,81 +27,42 @@ import org.jetbrains.kotlin.types.KotlinType
 
 class SimplifyNestedEachInScopeFunctionInspection : AbstractKotlinInspection() {
 
-    private companion object {
-        private val scopeFunctions = mapOf("also" to listOf(FqName("kotlin.also")), "apply" to listOf(FqName("kotlin.apply")))
-        private val iterateFunctions = mapOf(
-            "forEach" to listOf(FqName("kotlin.collections.forEach"), FqName("kotlin.text.forEach")),
-            "onEach" to listOf(FqName("kotlin.collections.onEach"), FqName("kotlin.text.onEach"))
-        )
+    private abstract class ReferenceTreeVisitor : KtTreeVisitorVoid() {
+        var referenced = false
+            protected set
+    }
 
-        private fun KtCallExpression.getCallingShortNameOrNull(shortNamesToFqNames: Map<String, List<FqName>>): String? {
-            val shortName = calleeExpression?.text ?: return null
-            val names = shortNamesToFqNames[shortName] ?: return null
-            val call = this.resolveToCall() ?: return null
-            return if (names.any(call::isCalling)) shortName
-            else null
+    private class LabelReferenceVisitor(val labelName: String) : ReferenceTreeVisitor() {
+        override fun visitExpressionWithLabel(expression: KtExpressionWithLabel) {
+            if (expression.getLabelName() == labelName) referenced = true
         }
+    }
 
-        private fun KtCallExpression.singleLambdaExpression(): KtLambdaExpression? =
-            this.valueArguments.singleOrNull()?.getArgumentExpression()?.unpackLabelAndLambdaExpression()?.second
+    private class ParameterReferenceTreeVisitor(
+        lambdaDescriptor: SimpleFunctionDescriptor,
+        val context: BindingContext
+    ) : ReferenceTreeVisitor() {
+        val lambdaParameter = lambdaDescriptor.valueParameters.singleOrNull()
 
-        private fun KtExpression.unpackLabelAndLambdaExpression(): Pair<KtLabeledExpression?, KtLambdaExpression?> = when (this) {
-            is KtLambdaExpression -> null to this
-            is KtLabeledExpression -> this to baseExpression?.unpackLabelAndLambdaExpression()?.second
-            is KtAnnotatedExpression -> baseExpression?.unpackLabelAndLambdaExpression() ?: (null to null)
-            else -> null to null
-        }
+        override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+            if (referenced) return
 
-        private fun KtCallExpression.getReceiverType(context: BindingContext): KotlinType? {
-            val callee = calleeExpression as? KtNameReferenceExpression ?: return null
-            val calleeDescriptor = context[REFERENCE_TARGET, callee] as? CallableMemberDescriptor ?: return null
-            return (calleeDescriptor.dispatchReceiverParameter ?: calleeDescriptor.extensionReceiverParameter)?.type
-        }
-
-        // Ignores type parameters
-        private fun KotlinType.isAssignableFrom(subtype: KotlinType) = constructor in subtype.allSupertypes().map(KotlinType::constructor)
-
-        private fun KotlinType.allSupertypes(): Set<KotlinType> = constructor.supertypes.flatMapTo(HashSet()) { it.allSupertypes() } + this
-
-        private fun KtLambdaExpression.descriptor(context: BindingContext): SimpleFunctionDescriptor? = context[FUNCTION, functionLiteral]
-
-        private abstract class ReferenceTreeVisitor : KtTreeVisitorVoid() {
-            var referenced = false
-                protected set
-        }
-
-        private class LabelReferenceVisitor(val labelName: String) : ReferenceTreeVisitor() {
-            override fun visitExpressionWithLabel(expression: KtExpressionWithLabel) {
-                if (expression.getLabelName() == labelName) referenced = true
+            if (expression.getResolvedCall(context)?.resultingDescriptor == lambdaParameter) {
+                referenced = true
             }
         }
+    }
 
-        private class ParameterReferenceTreeVisitor(
-            lambdaDescriptor: SimpleFunctionDescriptor,
-            val context: BindingContext
-        ) : ReferenceTreeVisitor() {
-            val lambdaParameter = lambdaDescriptor.valueParameters.singleOrNull()
+    private class ThisReferenceVisitor(
+        val lambdaDescriptor: SimpleFunctionDescriptor,
+        val context: BindingContext
+    ) : ReferenceTreeVisitor() {
+        override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+            if (referenced) return
 
-            override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-                if (referenced) return
-
-                if (expression.getResolvedCall(context)?.resultingDescriptor == lambdaParameter) {
-                    referenced = true
-                }
-            }
-        }
-
-        private class ThisReferenceVisitor(
-            val lambdaDescriptor: SimpleFunctionDescriptor,
-            val context: BindingContext
-        ) : ReferenceTreeVisitor() {
-            override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-                if (referenced) return
-
-                val receiver = expression.getResolvedCall(context)?.let { it.extensionReceiver ?: it.dispatchReceiver }
-                if (receiver?.getReceiverTargetDescriptor(context) == lambdaDescriptor) {
-                    referenced = true
-                }
+            val receiver = expression.getResolvedCall(context)?.let { it.extensionReceiver ?: it.dispatchReceiver }
+            if (receiver?.getReceiverTargetDescriptor(context) == lambdaDescriptor) {
+                referenced = true
             }
         }
     }
@@ -218,3 +179,42 @@ class SimplifyNestedEachInScopeFunctionInspection : AbstractKotlinInspection() {
         }
     }
 }
+
+private val scopeFunctions: Map<String, List<FqName>> =
+    mapOf("also" to listOf(FqName("kotlin.also")), "apply" to listOf(FqName("kotlin.apply")))
+
+private val iterateFunctions: Map<String, List<FqName>> = mapOf(
+    "forEach" to listOf(FqName("kotlin.collections.forEach"), FqName("kotlin.text.forEach")),
+    "onEach" to listOf(FqName("kotlin.collections.onEach"), FqName("kotlin.text.onEach"))
+)
+
+private fun KtCallExpression.getCallingShortNameOrNull(shortNamesToFqNames: Map<String, List<FqName>>): String? {
+    val shortName = calleeExpression?.text ?: return null
+    val names = shortNamesToFqNames[shortName] ?: return null
+    val call = this.resolveToCall() ?: return null
+    return if (names.any(call::isCalling)) shortName
+    else null
+}
+
+private fun KtCallExpression.singleLambdaExpression(): KtLambdaExpression? =
+    this.valueArguments.singleOrNull()?.getArgumentExpression()?.unpackLabelAndLambdaExpression()?.second
+
+private fun KtExpression.unpackLabelAndLambdaExpression(): Pair<KtLabeledExpression?, KtLambdaExpression?> = when (this) {
+    is KtLambdaExpression -> null to this
+    is KtLabeledExpression -> this to baseExpression?.unpackLabelAndLambdaExpression()?.second
+    is KtAnnotatedExpression -> baseExpression?.unpackLabelAndLambdaExpression() ?: (null to null)
+    else -> null to null
+}
+
+private fun KtCallExpression.getReceiverType(context: BindingContext): KotlinType? {
+    val callee = calleeExpression as? KtNameReferenceExpression ?: return null
+    val calleeDescriptor = context[REFERENCE_TARGET, callee] as? CallableMemberDescriptor ?: return null
+    return (calleeDescriptor.dispatchReceiverParameter ?: calleeDescriptor.extensionReceiverParameter)?.type
+}
+
+// Ignores type parameters
+private fun KotlinType.isAssignableFrom(subtype: KotlinType) = constructor in subtype.allSupertypes().map(KotlinType::constructor)
+
+private fun KotlinType.allSupertypes(): Set<KotlinType> = constructor.supertypes.flatMapTo(HashSet()) { it.allSupertypes() } + this
+
+private fun KtLambdaExpression.descriptor(context: BindingContext): SimpleFunctionDescriptor? = context[FUNCTION, functionLiteral]

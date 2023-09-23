@@ -5,9 +5,9 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.ui.HtmlRtfPane
 import com.intellij.idea.AppExitCodes
 import com.intellij.idea.hideSplashBeforeShow
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.BrowserHyperlinkListener
@@ -18,7 +18,6 @@ import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import java.awt.BorderLayout
-import java.awt.Color
 import java.awt.event.ActionListener
 import java.util.*
 import javax.swing.*
@@ -142,10 +141,7 @@ class AgreementUiBuilder internal constructor() {
       val html = SwingHelper.createHtmlLabel(text, null, null)
       html.border = JBUI.Borders.empty(10, 16, 10, 0)
       html.isOpaque = true
-      @Suppress("UseJBColor")
-      html.background = Color(0xDCE4E8)
       val eapLabelStyleSheet = (html.document as HTMLDocument).styleSheet
-      eapLabelStyleSheet.addRule("a {color:#4a78c2;}")
       eapLabelStyleSheet.addRule("a {text-decoration:none;}")
       eapPanel.add(html, BorderLayout.CENTER)
       ui.bottomPanel?.add(JBUI.Borders.empty(14, 30, 0, 30).wrap(eapPanel), BorderLayout.NORTH)
@@ -219,21 +215,18 @@ private class AgreementUi(@NlsSafe private val htmlText: String,
     val centerPanel = JPanel(BorderLayout(0, 0))
     val viewer = if (useRtfPane) {
       htmlRtfPane = HtmlRtfPane()
-      viewer = htmlRtfPane?.create(htmlText)
-      viewer!!.background = JBColor.WHITE
-      viewer!!
+      htmlRtfPane!!.create(htmlText)
     }
     else {
-      viewer = createHtmlEditorPane(htmlText = htmlText)
-      viewer!!
+      createHtmlEditorPane(htmlText = htmlText)
     }
+    this.viewer = viewer
+
     viewer.caretPosition = 0
     viewer.isEditable = false
     viewer.border = JBUI.Borders.empty(30, 30, 30, 60)
-    val scrollPane = JBScrollPane(viewer, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                  ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER)
-    val color = UIManager.getColor("DialogWrapper.southPanelDivider")
-    val line = CustomLineBorder(color ?: OnePixelDivider.BACKGROUND, 0, 0, 1, 0)
+    val scrollPane = JBScrollPane(viewer, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER)
+    val line = CustomLineBorder(UIManager.getColor("DialogWrapper.southPanelDivider") ?: JBColor.border(), 0, 0, 1, 0)
     scrollPane.border = CompoundBorder(line, JBUI.Borders.empty())
     centerPanel.add(scrollPane, BorderLayout.CENTER)
     bottomPanel = JPanel(BorderLayout())
@@ -261,19 +254,18 @@ private class AgreementUi(@NlsSafe private val htmlText: String,
     return panel
   }
 
-  override fun getPreferredFocusedComponent(): JComponent? {
-    return viewer
-  }
+  override fun getPreferredFocusedComponent() = viewer
 
   override fun doCancelAction() {
     super.doCancelAction()
+
     if (exitOnCancel) {
-      val application = ApplicationManager.getApplication()
+      val application = ApplicationManagerEx.getApplicationEx()
       if (application == null) {
         exitProcess(AppExitCodes.PRIVACY_POLICY_REJECTION)
       }
       else {
-        application.exit(true, true, false, AppExitCodes.PRIVACY_POLICY_REJECTION)
+        application.exit(ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED, AppExitCodes.PRIVACY_POLICY_REJECTION)
       }
     }
   }
@@ -289,18 +281,6 @@ private class AgreementUi(@NlsSafe private val htmlText: String,
       @Suppress("SpellCheckingInspection")
       styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}")
       styleSheet.addRule("body {font-size:${JBUI.Fonts.label()}pt;}")
-      foreground = JBColor.BLACK
-      background = JBColor.WHITE
     }
   }
-
-  //fun focusToDeclineButton(): AgreementUi {
-  //  declineButton?.requestFocus()
-  //  return this
-  //}
-  //
-  //fun enableDeclineButton(state: Boolean): AgreementUi {
-  //  declineButton?.isEnabled = state
-  //  return this
-  //}
 }

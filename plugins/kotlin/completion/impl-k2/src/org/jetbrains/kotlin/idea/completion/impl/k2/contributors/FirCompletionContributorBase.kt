@@ -38,7 +38,6 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 import org.jetbrains.kotlin.types.Variance
 
 internal class FirCompletionContributorOptions(
@@ -57,7 +56,8 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     constructor(basicContext: FirBasicCompletionContext, priority: Int) :
             this(basicContext, FirCompletionContributorOptions(priority))
 
-    protected val prefixMatcher: PrefixMatcher get() = basicContext.prefixMatcher
+    protected open val prefixMatcher: PrefixMatcher get() = basicContext.prefixMatcher
+
     protected val parameters: CompletionParameters get() = basicContext.parameters
     protected val sink: LookupElementSink = basicContext.sink.withPriority(options.priority)
     protected val originalKtFile: KtFile get() = basicContext.originalKtFile
@@ -83,8 +83,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     context(KtAnalysisSession)
     protected fun addSymbolToCompletion(expectedType: KtType?, symbol: KtSymbol) {
         if (symbol !is KtNamedSymbol) return
-        // Don't offer any hidden deprecated items.
-        if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return
+
         lookupElementFactory
             .createLookupElement(symbol, importStrategyDetector, expectedType = expectedType)
             .let(sink::addElement)
@@ -98,8 +97,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         importingStrategy: ImportStrategy = importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol),
     ) {
         if (symbol !is KtNamedSymbol) return
-        // Don't offer any deprecated items that could leads to compile errors.
-        if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return
+
         val lookup = with(lookupElementFactory) {
             when (symbol) {
                 is KtClassLikeSymbol -> createLookupElementForClassLikeSymbol(symbol, importingStrategy)
@@ -127,8 +125,6 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
             else -> null
         } ?: return
 
-        // Don't offer any deprecated items that could leads to compile errors.
-        if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return
         val lookup = lookupElementFactory.createCallableLookupElement(name, signature, options, context.expectedType)
 
         priority?.let { lookup.priority = it }

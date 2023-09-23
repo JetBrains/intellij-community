@@ -110,7 +110,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
       }
       else {
         if (((LibraryEx)myLibrary).isDisposed()) {
-          //todo[nik] disposed library should not be shown in the tree
+          //todo disposed library should not be shown in the tree
           presentationData.addText(JavaUiBundle.message("library.source.item.label.invalid.library"), SimpleTextAttributes.ERROR_ATTRIBUTES);
           return;
         }

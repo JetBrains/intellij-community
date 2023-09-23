@@ -10,9 +10,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.extensions.Extensions
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
@@ -22,6 +19,7 @@ import com.intellij.openapi.progress.withModalProgress
 import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
@@ -91,8 +89,11 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             .any { it.isFileConfigured(this) }
     }
 
-    override fun isApplicable(module: Module): Boolean =
-        module.buildSystemType == BuildSystemType.Gradle
+    override fun isApplicable(module: Module): Boolean {
+        // We should not configure buildSrc modules as they belong to a different subproject and define convention plugins.
+        return module.buildSystemType == BuildSystemType.Gradle &&
+                !module.name.contains("buildSrc")
+    }
 
     protected open fun getMinimumSupportedVersion() = "1.0.0"
 
@@ -148,15 +149,20 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
     }
 
     private fun Project.isGradleSyncPending(): Boolean {
-        val notificationVisibleProperty =
-            ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(this, ProjectSystemId("GRADLE", "Gradle"))
-        return notificationVisibleProperty.get()
+        return KotlinProjectConfigurationService.getInstance(this).isGradleSyncPending()
+    }
+
+    private fun Project.isGradleSyncInProgress(): Boolean {
+        return KotlinProjectConfigurationService.getInstance(this).isGradleSyncInProgress()
     }
 
     private fun calculateAutoConfigSettingsReadAction(module: Module): AutoConfigurationSettings? {
         val project = module.project
         val baseModule = module.toModuleGroup().baseModule
 
+        // The buildSrc folder is used to define convention plugins, which can be incredibly complex.
+        // So do not allow auto-configuration of any such projects.
+        if (module.project.modules.any { it.name.contains("buildSrc") }) return null
         if (!isAutoConfigurationEnabled() || !isApplicable(baseModule)) return null
         if (project.isGradleSyncPending() || project.isGradleSyncInProgress()) return null
 
@@ -196,8 +202,8 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         }
     }
 
-    private fun Project.scheduleGradleSync() {
-        ExternalSystemProjectTracker.getInstance(this).scheduleProjectRefresh()
+    private fun Project.queueGradleSync() {
+        KotlinProjectConfigurationService.getInstance(this).queueGradleSync()
     }
 
     override suspend fun runAutoConfig(settings: AutoConfigurationSettings) {
@@ -209,6 +215,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val jvmTargets = readAction {
             checkModuleJvmTargetCompatibility(listOf(module), settings.kotlinVersion).moduleJvmTargets
         }
+        KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project, true)
         val commandKey = "command.name.configure.kotlin.automatically"
         val result = withModalProgress(project, KotlinIdeaGradleBundle.message(commandKey)) {
             configureSilently(
@@ -231,20 +238,24 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val changedFiles: ChangedConfiguratorFiles
     )
 
-    private fun performPostAutoConfigActions(project: Project, module: Module) {
-        // Schedule Gradle sync
-        project.scheduleGradleSync()
-        // When an undo/redo happens also re-run gradle syncs and show the appropriate notifications
+    private fun addUndoListener(project: Project, modules: List<Module>, isAutoConfig: Boolean) {
+        // Auto-config only ever works on a single module
+        val firstModule = modules.firstOrNull()
         UndoManager.getInstance(project).undoableActionPerformed(object : BasicUndoableAction() {
             override fun undo() {
-                project.scheduleGradleSync()
-                KotlinAutoConfigurationNotificationHolder.getInstance(project)
-                  .showAutoConfigurationUndoneNotification(module)
+                if (isAutoConfig && firstModule != null) {
+                    project.queueGradleSync()
+                    KotlinAutoConfigurationNotificationHolder.getInstance(project)
+                        .showAutoConfigurationUndoneNotification(firstModule)
+                }
+                KotlinJ2KOnboardingFUSCollector.logConfigureKtUndone(project)
             }
 
             override fun redo() {
-                project.scheduleGradleSync()
-                KotlinAutoConfigurationNotificationHolder.getInstance(project).reshowAutoConfiguredNotification(module)
+                if (isAutoConfig && firstModule != null) {
+                    project.queueGradleSync()
+                    KotlinAutoConfigurationNotificationHolder.getInstance(project).reshowAutoConfiguredNotification(firstModule)
+                }
             }
         })
     }
@@ -279,9 +290,9 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                         val changedFiles = configureAction()
                         val firstModule = modules.firstOrNull()
                         if (isAutoConfig && firstModule != null) {
-                            // Auto-configuration only ever works on a single module
-                            performPostAutoConfigActions(project, firstModule)
+                            project.queueGradleSync()
                         }
+                        addUndoListener(project, modules, isAutoConfig)
                         progressReporter?.fraction(1.0)
                         ConfigurationResult(collector, changedFiles)
                     }
@@ -312,7 +323,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             GradleBuildScriptSupport.getManipulator(it)
                 .findKotlinPluginManagementVersion()
         }
-        var addVersionToModuleBuildScript = definedVersionInPluginSettings != kotlinVersion
+        var addVersionToModuleBuildScript = definedVersionInPluginSettings?.parsedVersion != kotlinVersion
 
         if (rootModule != null) {
             val allKotlinModules = kotlinVersionsAndModules.values.flatMap { it.values }
@@ -702,6 +713,6 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             )
         }
 
-        fun isAutoConfigurationEnabled(): Boolean = Registry.`is`("kotlin.configuration.gradle.autoConfig.enabled", false)
+        fun isAutoConfigurationEnabled(): Boolean = Registry.`is`("kotlin.configuration.gradle.autoConfig.enabled", true)
     }
 }

@@ -253,6 +253,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon CwmForceFollowMe = load("codeWithMe/cwmForceFollowMe.svg", -674675027, 2);
     /** 16x16 */ public static final @NotNull Icon CwmFullSync = load("codeWithMe/cwmFullSync.svg", -669424970, 2);
     /** 17x17 */ public static final @NotNull Icon CwmIconModificator = load("codeWithMe/cwmIconModificator.svg", 327722312, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmIconModificatorMenu = load("codeWithMe/cwmIconModificatorMenu.svg", 1065499989, 2);
     /** 16x16 */ public static final @NotNull Icon CwmInvite = load("codeWithMe/cwmInvite.svg", -728953088, 2);
     /** 16x16 */ public static final @NotNull Icon CwmJoin = load("codeWithMe/cwmJoin.svg", 161649229, 2);
     /** 16x16 */ public static final @NotNull Icon CwmJump = load("codeWithMe/cwmJump.svg", 1649603449, 2);
@@ -1176,6 +1177,7 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowProblems = load("toolwindows/toolWindowProblems.svg", 1795380210, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowProblemsEmpty = load("toolwindows/toolWindowProblemsEmpty.svg", -1113987786, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowProfiler = load("toolwindows/toolWindowProfiler.svg", 840495627, 2);
+    /** 13x13 */ public static final @NotNull Icon ToolWindowProfilerAndroid = load("toolwindows/toolWindowProfilerAndroid.svg", 252204624, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowProject = load("toolwindows/toolWindowProject.svg", 373456992, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowRun = load("toolwindows/toolWindowRun.svg", 562367487, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowRunWithCoverage = load("toolwindows/toolWindowRunWithCoverage.svg", -2005199929, 2);

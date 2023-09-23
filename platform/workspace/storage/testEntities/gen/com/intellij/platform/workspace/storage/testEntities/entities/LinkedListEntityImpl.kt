@@ -14,22 +14,22 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedListEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class LinkedListEntityImpl(private val dataSource: LinkedListEntityData) : LinkedListEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -46,6 +46,7 @@ open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedLi
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: LinkedListEntityData?) : ModifiableWorkspaceEntityBase<LinkedListEntity, LinkedListEntityData>(
     result), LinkedListEntity.Builder {
@@ -75,7 +76,7 @@ open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedLi
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -136,8 +137,8 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Linked
   lateinit var myName: String
   lateinit var next: LinkedListEntityId
 
-  fun isMyNameInitialized(): Boolean = ::myName.isInitialized
-  fun isNextInitialized(): Boolean = ::next.isInitialized
+  internal fun isMyNameInitialized(): Boolean = ::myName.isInitialized
+  internal fun isNextInitialized(): Boolean = ::next.isInitialized
 
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
@@ -191,6 +192,11 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Linked
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntity") as EntityMetadata
   }
 
   override fun symbolicId(): SymbolicEntityId<*> {
@@ -252,10 +258,5 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Linked
     result = 31 * result + myName.hashCode()
     result = 31 * result + next.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(LinkedListEntityId::class.java)
-    collector.sameForAllEntities = true
   }
 }

@@ -267,7 +267,8 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
       return Arrays.stream(markupModel.getAllHighlighters())
         .filter(h -> {
           LineMarkerInfo<?> lm;
-          return h.getErrorStripeTooltip() instanceof HighlightInfo info &&
+          HighlightInfo info = HighlightInfo.fromRangeHighlighter(h);
+          return info != null &&
                  (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0   // either warning/error or symbol type (e.g. field text attribute)
                   || info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY
                  )

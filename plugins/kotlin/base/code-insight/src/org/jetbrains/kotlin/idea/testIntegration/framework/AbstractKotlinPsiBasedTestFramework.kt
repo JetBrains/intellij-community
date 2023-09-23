@@ -52,7 +52,8 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
             (declaration.isTopLevel() && declaration is KtObjectDeclaration) && !allowTestMethodsInObject -> NO
             declaration.annotationEntries.isNotEmpty() -> UNSURE
             declaration.superTypeListEntries.any { it is KtSuperTypeCallEntry } -> UNSURE
-            declaration.declarations.any { it is KtNamedFunction && it.isPublic } -> UNSURE
+            declaration.declarations.any { it is KtNamedFunction && !it.isPrivate() } -> UNSURE
+            declaration.declarations.any { it is KtClassOrObject && !it.isPrivate() } -> UNSURE
             else -> NO
         }
 
@@ -114,7 +115,8 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
 
         for (annotationEntry in annotationEntries) {
             val shortName = annotationEntry.shortName ?: continue
-            if (checkNameMatch(file, fqNames, shortName.asString())) {
+            val fqName = annotationEntry.typeReference?.text
+            if (fqName in fqNames || checkNameMatch(file, fqNames, shortName.asString())) {
                 return true
             }
         }

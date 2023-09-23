@@ -1,99 +1,117 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab
 
-import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.components.serviceAsync
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabApiImpl
-import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabServerMetadataDTO
 import org.jetbrains.plugins.gitlab.api.request.checkIsGitLabServer
-import org.jetbrains.plugins.gitlab.api.request.getServerMetadataOrVersion
-import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.plugins.gitlab.api.request.getServerMetadata
+import org.jetbrains.plugins.gitlab.api.request.getServerVersion
+import org.jetbrains.plugins.gitlab.api.request.guessServerEdition
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics.logServerMetadataFetched
 import java.util.concurrent.ConcurrentHashMap
 
 interface GitLabServersManager {
+  val earliestSupportedVersion: GitLabVersion
+
+  /**
+   * Does some guess to whether the given server path hosts a GitLab server.
+   *
+   * `null` means no guess has been completed yet.
+   */
   suspend fun checkIsGitLabServer(server: GitLabServerPath): Boolean
 
-  suspend fun getMetadata(server: GitLabServerPath, loader: suspend (GitLabServerPath) -> Result<GitLabServerMetadataDTO>)
-    : GitLabServerMetadataDTO?
-
-  fun isVersionSupported(version: @NonNls String): Boolean
-
-  fun getEarliestSupportedVersion(): @NlsSafe String
+  /**
+   * Retrieves metadata for the given server using the given metadata fetching method.
+   * If a cached metadata can be found, it can be used.
+   *
+   * This means that when a GitLab server is updated while the IDE is running, we might not be
+   * able to detect that a new server version is deployed. If the cache is timed, we might detect
+   * a new version every so often. If no cache is used, we will request metadata from the server
+   * every time, but we know server version to be up to date.
+   *
+   * `null` an error occurred, metadata could not be fetched for whatever reason.
+   */
+  suspend fun getMetadataOrNull(
+    api: GitLabApi
+  ): GitLabServerMetadata?
 }
 
-internal class CachingGitLabServersManager(private val cs: CoroutineScope) : GitLabServersManager {
-
+internal class CachingGitLabServersManager(private val serviceCs: CoroutineScope) : GitLabServersManager {
+  /** Cache of tests whether a given server path is a GitLab server path. */
   private val testCache = ConcurrentHashMap<GitLabServerPath, Deferred<Boolean>>()
 
-  // can't use map of Deferred bc loaders can be different, since metadata acquisition requires auth
-  private val metadataCache = ConcurrentHashMap<GitLabServerPath, GitLabServerMetadataDTO>()
+  // Can't use map of Deferred bc loaders can be different, since metadata acquisition requires auth
+  private val metadataCache = ConcurrentHashMap<GitLabServerPath, GitLabServerMetadata>()
   private val metadataCacheGuard = Mutex()
+
+  override val earliestSupportedVersion: GitLabVersion = GitLabVersion(14, 0)
 
   override suspend fun checkIsGitLabServer(server: GitLabServerPath): Boolean =
     testCache.getOrPut(server) {
-      cs.async(Dispatchers.IO + CoroutineName("GitLab Server tester")) {
-        GitLabApiImpl().rest.checkIsGitLabServer(server)
+      serviceCs.async(Dispatchers.IO + CoroutineName("GitLab Server Tester")) {
+        serviceAsync<GitLabApiManager>().getUnauthenticatedClient(server).rest.checkIsGitLabServer()
       }
     }.await()
 
+  override suspend fun getMetadataOrNull(api: GitLabApi)
+    : GitLabServerMetadata? =
+    withContext(Dispatchers.IO + CoroutineName("GitLab Server Tester")) {
+      metadataCacheGuard.withLock {
+        val existing = metadataCache[api.server]
+        if (existing != null) return@withLock existing
 
-  override suspend fun getMetadata(server: GitLabServerPath, loader: suspend (GitLabServerPath) -> Result<GitLabServerMetadataDTO>)
-    : GitLabServerMetadataDTO? =
-    metadataCacheGuard.withLock {
-      val existing = metadataCache[server]
-      if (existing != null) return@withLock existing
+        val result = runCatching {
+          getServerMetadata(api)
+        }.getOrNull()
 
-      val result = loader(server).getOrNull()
-      if (result != null) {
-        metadataCache[server] = result
+        if (result != null) {
+          metadataCache[api.server] = result
+        }
+        result
       }
-      result
     }
-
-  override fun isVersionSupported(version: String): Boolean {
-    val split = version.split('.')
-    require(split.size >= 2) { GitLabBundle.message("server.version.error") }
-    val major = split[0].toInt()
-    val minor = split[1].toInt()
-
-    if (major > EARLIEST_VERSION_MAJOR) return true
-    if (major == EARLIEST_VERSION_MAJOR && minor >= EARLIEST_VERSION_MINOR) return true
-    return false
-  }
-
-  override fun getEarliestSupportedVersion(): String = "$EARLIEST_VERSION_MAJOR.$EARLIEST_VERSION_MINOR"
-
-  private companion object {
-    const val EARLIEST_VERSION_MAJOR = 15
-    const val EARLIEST_VERSION_MINOR = 10
-  }
 }
 
-suspend fun GitLabServersManager.validateServerVersion(server: GitLabServerPath, api: GitLabApi) {
-  val metadata = getMetadataCached(server, api)
-  val versionSupported = isVersionSupported(metadata.version)
-  require(versionSupported) {
-    GitLabBundle.message("server.version.unsupported", metadata.version, getEarliestSupportedVersion())
-  }
-}
+/**
+ * Note that the endpoints used and called by this function are authenticated. The GitLabApi must
+ * thus be created with authentication.
+ *
+ * @return `null` only when the server cannot be verified to be a GitLab server or no authentication
+ * is provided. A valid [GitLabServerMetadata] object otherwise.
+ */
+// Unauthenticated
+@SinceGitLab("8.13", note = "Enterprise/Community only detectable after 15.6, community is assumed by default")
+private suspend fun getServerMetadata(api: GitLabApi): GitLabServerMetadata {
+  val dto =
+    try {
+      // More recent. If it fails, use getServerVersion
+      api.graphQL.getServerMetadata().body()
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (_: Throwable) {
+      val serverVersion = api.rest.getServerVersion().body()
+      GitLabServerMetadataDTO(serverVersion.version, serverVersion.revision, null)
+    } ?: throw IllegalStateException("Cannot fetch any metadata for server: ${api.server}")
 
-suspend fun GitLabServersManager.isServerVersionSupported(server: GitLabServerPath, api: GitLabApi): Boolean {
-  val metadata = getMetadataCached(server, api)
-  return isVersionSupported(metadata.version)
-}
+  // Parse version
+  val version = GitLabVersion.fromString(dto.version)
 
-private suspend fun GitLabServersManager.getMetadataCached(server: GitLabServerPath, api: GitLabApi): GitLabServerMetadataDTO =
-  withContext(Dispatchers.IO) {
-    getMetadata(server) {
-      runCatching {
-        api.rest.getServerMetadataOrVersion(server)
-      }
-    }.let {
-      requireNotNull(it) { GitLabBundle.message("server.version.error") }
+  // Try to guess enterprise/community if no explicit edition is provided. If all else fails, guess 'Community'
+  val edition = when (dto.enterprise) {
+    true -> GitLabEdition.Enterprise
+    false -> GitLabEdition.Community
+    else -> {
+      api.rest.guessServerEdition() ?: GitLabEdition.Community
     }
   }
+
+  val metadata = GitLabServerMetadata(version, dto.revision, edition)
+  logServerMetadataFetched(metadata)
+  return metadata
+}

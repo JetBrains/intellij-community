@@ -41,7 +41,8 @@ interface ParentSingleAbEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentSingleAbEntity, modification: ParentSingleAbEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ParentSingleAbEntity,
+                                      modification: ParentSingleAbEntity.Builder.() -> Unit): ParentSingleAbEntity = modifyEntity(
   ParentSingleAbEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -111,7 +112,7 @@ interface ChildSingleFirstEntity : ChildSingleAbstractBaseEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ChildSingleFirstEntity,
-                                      modification: ChildSingleFirstEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: ChildSingleFirstEntity.Builder.() -> Unit): ChildSingleFirstEntity = modifyEntity(
   ChildSingleFirstEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -149,6 +150,6 @@ interface ChildSingleSecondEntity : ChildSingleAbstractBaseEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ChildSingleSecondEntity,
-                                      modification: ChildSingleSecondEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: ChildSingleSecondEntity.Builder.() -> Unit): ChildSingleSecondEntity = modifyEntity(
   ChildSingleSecondEntity.Builder::class.java, entity, modification)
 //endregion

@@ -122,10 +122,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
     private val imports = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerApplicator(ImportQuickFix.invisibleReferenceFactory)
-        registerApplicator(ImportQuickFix.unresolvedReferenceFactory)
         registerPsiQuickFixes(KtFirDiagnostic.ConflictingImport::class, RemovePsiElementSimpleFix.RemoveImportFactory)
-        registerPsiQuickFixes(KtFirDiagnostic.UnresolvedReference::class, AddDependencyQuickFix.Factory)
-        registerPsiQuickFixes(KtFirDiagnostic.UnresolvedImport::class, AddDependencyQuickFix.Factory)
     }
 
     private val mutability = KtQuickFixesListBuilder.registerPsiQuickFix {

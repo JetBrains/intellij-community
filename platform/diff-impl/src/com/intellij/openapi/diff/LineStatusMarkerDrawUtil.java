@@ -9,7 +9,10 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.vcs.ex.*;
+import com.intellij.openapi.vcs.ex.ChangedLines;
+import com.intellij.openapi.vcs.ex.ChangesBlock;
+import com.intellij.openapi.vcs.ex.Range;
+import com.intellij.openapi.vcs.ex.VisibleRangeMerger;
 import com.intellij.openapi.vcs.ex.VisibleRangeMerger.FlagsProvider;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.paint.LinePainter2D;
@@ -81,12 +84,9 @@ public final class LineStatusMarkerDrawUtil {
 
   public static void paintDefault(@NotNull Editor editor,
                                   @NotNull Graphics g,
-                                  @NotNull LineStatusTrackerI<?> tracker,
+                                  @NotNull List<? extends Range> ranges,
                                   @NotNull FlagsProvider<DefaultLineFlags> flagsProvider,
                                   int framingBorder) {
-    List<? extends Range> ranges = tracker.getRanges();
-    if (ranges == null) return;
-
     List<ChangesBlock<DefaultLineFlags>> blocks = VisibleRangeMerger.merge(editor, ranges, flagsProvider, g.getClipBounds());
     for (ChangesBlock<DefaultLineFlags> block : blocks) {
       paintChangedLines((Graphics2D)g, editor, block.changes, framingBorder);

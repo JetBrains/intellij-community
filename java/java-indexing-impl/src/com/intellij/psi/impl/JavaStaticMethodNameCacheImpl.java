@@ -49,7 +49,7 @@ public class JavaStaticMethodNameCacheImpl extends JavaStaticMethodNameCache {
   }
 
   @Override
-  public Class<? extends PsiShortNamesCache> replaced() {
+  public @NotNull Class<? extends PsiShortNamesCache> replaced() {
     return PsiShortNamesCacheImpl.class;
   }
 }

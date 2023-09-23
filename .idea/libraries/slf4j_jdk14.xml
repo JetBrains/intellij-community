@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="slf4j-jdk14" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.slf4j:slf4j-jdk14:1.7.36">
+    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.slf4j:slf4j-jdk14:1.7.36">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/slf4j/slf4j-jdk14/1.7.36/slf4j-jdk14-1.7.36.jar">
           <sha256sum>5bf64690af4e59876b8902bb0db3dd39c686a40abfed97d3837eeeec7a2922ac</sha256sum>

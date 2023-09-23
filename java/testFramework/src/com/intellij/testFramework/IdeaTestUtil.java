@@ -80,8 +80,8 @@ public final class IdeaTestUtil {
     JavaSdk javaSdk = JavaSdk.getInstance();
     if (javaSdk == null) {
       throw new AssertionError("The test uses classes from Java plugin but Java plugin wasn't loaded; make sure that Java plugin " +
-                               "classes are included into classpath and that the plugin isn't disabled by using 'idea.load.plugins', " +
-                               "'idea.load.plugins.id', 'idea.load.plugins.category' system properties");
+                               "classes are included into classpath and that the plugin isn't disabled " +
+                               "by 'idea.load.plugins' or 'idea.load.plugins.id' system properties");
     }
 
     MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();

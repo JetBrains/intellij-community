@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.base.analysis
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
@@ -206,7 +205,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
             connection.subscribe(LibraryInfoListener.TOPIC, this)
-            connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
+            connection.subscribe(ModuleRootListener.TOPIC, this)
             connection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
             connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
         }
@@ -269,7 +268,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         connection.subscribe(WorkspaceModelTopics.CHANGED, this)
         connection.subscribe(LibraryInfoListener.TOPIC, this)
         connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
-        connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
+        connection.subscribe(ModuleRootListener.TOPIC, this)
       }
 
       @RequiresReadLock

@@ -1,7 +1,9 @@
 package test
 
 class BaseSamePackage {
-    fun foo() {}
+    fun foo() {
+    }
+
     var i: Int = 1
 }
 

@@ -2,7 +2,6 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.StandardProgressIndicator;
@@ -13,6 +12,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -92,7 +92,7 @@ public final class SmoothProgressAdapter extends AbstractProgressIndicatorExBase
   }
 
   public void startBlocking() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     start();
     if (isModal()) {
       showDialog();

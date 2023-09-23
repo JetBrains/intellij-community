@@ -94,6 +94,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.collaborationTools.auth",
 
   "intellij.platform.markdown.utils",
+  "intellij.platform.util.commonsLangV2Shim",
 )
 
 internal val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = persistentMapOf(
@@ -184,7 +185,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   ), productLayout = productLayout, layout = layout)
   layout.withProjectLibrary(libraryName = "ion", jarName = UTIL_RT_JAR)
 
-  // JDOM is used by maven in an external process
+  // Maven uses JDOM in an external process
   addModule(UTIL_8_JAR, listOf(
     "intellij.platform.util.jdom",
     "intellij.platform.util.xmlDom",
@@ -199,6 +200,9 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   // Space plugin uses it and bundles into IntelliJ IDEA, but not bundles into DataGrip, so, or Space plugin should bundle this lib,
   // or IJ Platform. As it is a small library and consistency is important across other coroutine libs, bundle to IJ Platform.
   layout.withProjectLibrary(libraryName = "kotlinx-coroutines-slf4j", jarName = APP_JAR)
+  // make sure that all ktor libraries bundled into the platform
+  layout.withProjectLibrary(libraryName = "ktor-client-content-negotiation")
+  layout.withProjectLibrary(libraryName = "ktor-client-logging")
 
   // used by intellij.database.jdbcConsole -
   // cannot be in 3rd-party-rt.jar, because this JAR must contain classes for java versions <= 7 only
@@ -216,6 +220,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
     // Scala uses GeneralCommandLine in JPS plugin
     "intellij.platform.ide.util.io",
     "intellij.platform.extensions",
+    "intellij.platform.util.nanoxml",
   ), productLayout = productLayout, layout = layout)
   addModule("externalProcess-rt.jar", listOf(
     "intellij.platform.externalProcessAuthHelper.rt"
@@ -298,6 +303,14 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
                                    reason = "<- ${module.name}"))
       .dependentModules.computeIfAbsent("core") { mutableListOf() }.add(module.name)
   }
+
+  val platformMainModule = "intellij.platform.main"
+  if (context.isEmbeddedJetBrainsClientEnabled && layout.includedModules.none { it.moduleName == platformMainModule }) {
+    /* this module is used by JetBrains Client, but it isn't packed in commercial IDEs, so let's put it in a separate JAR which won't be
+       loaded when the IDE is started in the regular mode */
+    layout.withModule(platformMainModule, "ext/platform-main.jar")
+  }
+  
   return layout
 }
 

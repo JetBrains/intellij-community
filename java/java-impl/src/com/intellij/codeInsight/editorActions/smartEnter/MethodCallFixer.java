@@ -3,10 +3,12 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspMethodCall;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -18,20 +20,23 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodCallFixer implements Fixer {
   @Override
-  public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+  public void apply(Editor editor, AbstractBasicJavaSmartEnterProcessor processor, @NotNull ASTNode astNode) throws IncorrectOperationException {
+    PsiElement psiElement = BasicJavaAstTreeUtil.toPsi(astNode);
     PsiExpressionList argList = null;
     if (psiElement instanceof PsiMethodCallExpression && !(psiElement instanceof JspMethodCall)) {
-      argList = ((PsiMethodCallExpression) psiElement).getArgumentList();
-    } else if (psiElement instanceof PsiNewExpression) {
-      argList = ((PsiNewExpression) psiElement).getArgumentList();
+      argList = ((PsiMethodCallExpression)psiElement).getArgumentList();
+    }
+    else if (psiElement instanceof PsiNewExpression) {
+      argList = ((PsiNewExpression)psiElement).getArgumentList();
     }
 
     int caret = editor.getCaretModel().getOffset();
     if (argList != null && !hasRParenth(argList)) {
-      PsiCallExpression innermostCall = PsiTreeUtil.findElementOfClassAtOffset(psiElement.getContainingFile(), caret - 1, PsiCallExpression.class, false);
+      PsiCallExpression innermostCall =
+        PsiTreeUtil.findElementOfClassAtOffset(psiElement.getContainingFile(), caret - 1, PsiCallExpression.class, false);
 
       while (innermostCall != null && innermostCall != psiElement && hasRParenth(innermostCall.getArgumentList())
-        && innermostCall.resolveMethodGenerics().isValidResult()) {
+             && innermostCall.resolveMethodGenerics().isValidResult()) {
         innermostCall = PsiTreeUtil.getParentOfType(innermostCall, PsiCallExpression.class);
       }
       if (innermostCall == null) return;

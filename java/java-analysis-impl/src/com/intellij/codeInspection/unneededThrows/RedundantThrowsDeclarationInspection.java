@@ -102,18 +102,14 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
                                                 @NotNull final GlobalJavaInspectionContext globalContext,
                                                 @NotNull final ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull RefEntity refEntity) {
-        if (processor.getDescriptions(refEntity) != null) {
-          refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(@NotNull final RefMethod refMethod) {
-              if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
-              globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
-                processor.ignoreElement(refMethod);
-                return true;
-              });
-            }
-          });
-        }
+      @Override
+      public void visitMethod(@NotNull final RefMethod refMethod) {
+        if (processor.getDescriptions(refMethod) == null) return;
+        if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
+        globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
+          processor.ignoreElement(refMethod);
+          return true;
+        });
       }
     });
 

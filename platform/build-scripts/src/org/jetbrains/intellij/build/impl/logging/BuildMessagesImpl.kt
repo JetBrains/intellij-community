@@ -145,6 +145,10 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
   override fun reportBuildProblem(description: String, identity: String?) {
     processMessage(BuildProblemLogMessage(description = description, identity = identity))
   }
+
+  override fun cancelBuild(reason: String) {
+    logger.processMessage(LogMessage(LogMessage.Kind.BUILD_CANCEL, reason))
+  }
 }
 
 /**

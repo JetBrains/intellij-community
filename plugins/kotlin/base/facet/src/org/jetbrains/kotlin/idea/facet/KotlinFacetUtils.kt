@@ -140,24 +140,37 @@ private fun LanguageVersion.coerceAtMostVersion(version: IdeKotlinVersion): Lang
     return this.coerceAtMost(languageVersion)
 }
 
+fun parseCompilerArgumentsToFacetSettings(
+    arguments: List<String>,
+    kotlinFacetSettings: IKotlinFacetSettings,
+    modelsProvider: IdeModifiableModelsProvider?
+) {
+    val compilerArgumentsClass = kotlinFacetSettings.compilerArguments?.javaClass ?: return
+    val currentArgumentsBean = compilerArgumentsClass.newInstance()
+    val currentArgumentWithDefaults = substituteDefaults(arguments, currentArgumentsBean)
+    parseCommandLineArguments(currentArgumentWithDefaults, currentArgumentsBean)
+    applyCompilerArgumentsToFacetSettings(currentArgumentsBean, kotlinFacetSettings, null, modelsProvider)
+}
+
 fun parseCompilerArgumentsToFacet(
     arguments: List<String>,
     kotlinFacet: KotlinFacet,
-    modelsProvider: IdeModifiableModelsProvider?
+    modelsProvider: IdeModifiableModelsProvider?,
 ) {
     val compilerArgumentsClass = kotlinFacet.configuration.settings.compilerArguments?.javaClass ?: return
     val currentArgumentsBean = compilerArgumentsClass.getDeclaredConstructor().newInstance()
     val currentArgumentWithDefaults = substituteDefaults(arguments, currentArgumentsBean)
     parseCommandLineArguments(currentArgumentWithDefaults, currentArgumentsBean)
-    applyCompilerArgumentsToFacet(currentArgumentsBean, kotlinFacet, modelsProvider)
+    applyCompilerArgumentsToFacetSettings(currentArgumentsBean, kotlinFacet.configuration.settings, kotlinFacet.module, modelsProvider)
 }
 
-fun applyCompilerArgumentsToFacet(
+fun applyCompilerArgumentsToFacetSettings(
     arguments: CommonCompilerArguments,
-    kotlinFacet: KotlinFacet,
+    kotlinFacetSettings: IKotlinFacetSettings,
+    module: Module?,
     modelsProvider: IdeModifiableModelsProvider?
 ) {
-    with(kotlinFacet.configuration.settings) {
+    with(kotlinFacetSettings) {
         val compilerArguments = this.compilerArguments ?: return
         val oldPluginOptions = compilerArguments.pluginOptions
         val emptyArgs = compilerArguments::class.java.getDeclaredConstructor().newInstance()
@@ -175,8 +188,8 @@ fun applyCompilerArgumentsToFacet(
         // Retain only fields exposed (and not explicitly ignored) in facet configuration editor.
         // The rest is combined into string and stored in CompilerSettings.additionalArguments
 
-        if (modelsProvider != null)
-            kotlinFacet.module.configureSdkIfPossible(compilerArguments, modelsProvider)
+        if (modelsProvider != null && module != null)
+            module.configureSdkIfPossible(compilerArguments, modelsProvider)
 
         val allFacetFields = compilerArguments.kotlinFacetFields.allFields
 

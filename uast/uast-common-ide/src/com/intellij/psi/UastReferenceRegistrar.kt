@@ -16,6 +16,7 @@ import org.jetbrains.uast.expressions.UInjectionHost
 /**
  * Groups all UAST-based reference providers by chunks with the same priority and supported UElement types.
  */
+@JvmOverloads
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, ProcessingContext) -> Boolean,
                                                         provider: UastReferenceProvider,
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
@@ -23,6 +24,7 @@ fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, Proc
   this.registerReferenceProvider(adaptPattern(pattern, provider.supportedUElementTypes), adapter, priority)
 }
 
+@JvmOverloads
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<out UElement>,
                                                         provider: UastReferenceProvider,
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {

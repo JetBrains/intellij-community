@@ -31,6 +31,20 @@ class TerminalOutputModel(val editor: EditorEx) {
 
   @RequiresEdt
   fun createBlock(command: String?): CommandBlock {
+    closeLastBlock()
+
+    if (document.textLength > 0) {
+      document.insertString(document.textLength, "\n")
+    }
+    val marker = document.createRangeMarker(document.textLength, document.textLength)
+    marker.isGreedyToRight = true
+    val block = CommandBlock(command, marker)
+    blocks.add(block)
+    return block
+  }
+
+  @RequiresEdt
+  fun closeLastBlock() {
     val lastBlock = getLastBlock()
     // restrict previous block expansion
     if (lastBlock != null) {
@@ -41,18 +55,6 @@ class TerminalOutputModel(val editor: EditorEx) {
         (it.bottomInlay as RangeMarkerImpl).isStickingToRight = false
       }
     }
-
-    val textLength = document.textLength
-    val startOffset = if (textLength != 0) {
-      document.insertString(textLength, "\n")
-      textLength + 1
-    }
-    else 0
-    val marker = document.createRangeMarker(startOffset, startOffset)
-    marker.isGreedyToRight = true
-    val block = CommandBlock(command, marker)
-    blocks.add(block)
-    return block
   }
 
   @RequiresEdt
@@ -63,6 +65,7 @@ class TerminalOutputModel(val editor: EditorEx) {
     decorations[block]?.let {
       Disposer.dispose(it.topInlay)
       Disposer.dispose(it.bottomInlay)
+      it.commandToOutputInlay?.let { inlay -> Disposer.dispose(inlay) }
       editor.markupModel.removeHighlighter(it.backgroundHighlighter)
       editor.markupModel.removeHighlighter(it.cornersHighlighter)
     }
@@ -162,6 +165,8 @@ data class CommandBlock(val command: String?, val range: RangeMarker) {
     get() = range.startOffset
   val endOffset: Int
     get() = range.endOffset
+  val outputStartOffset: Int
+    get() = range.startOffset + if (!command.isNullOrEmpty()) command.length + 1 else 0
   val textRange: TextRange
     get() = range.textRange
 }

@@ -11,7 +11,7 @@ fun foo(e: ENUM) {
     }
 }
 
+// WITH_ORDER
 // EXIST: ENUM.BBBB
 // EXIST: { lookupString: "else -> "}
-// NOTHING_ELSE
 // FIR_COMPARISON

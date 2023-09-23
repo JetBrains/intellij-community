@@ -36,7 +36,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
-class GitStatisticsCollector : ProjectUsagesCollector() {
+internal class GitStatisticsCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
@@ -63,11 +63,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
 
     addBoolIfDiffers(set, appSettings, defaultAppSettings, { it.isStagingAreaEnabled }, STAGING_AREA)
 
-    val version = GitVcs.getInstance(project).version
-    set.add(EXECUTABLE.metric(
-      EventFields.Version with version.presentation,
-      TYPE with version.type
-    ))
+    reportVersion(project, set)
 
     for (repository in repositories) {
       val branches = repository.branches
@@ -89,6 +85,8 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       set.add(repositoryMetric)
     }
 
+    addRecentBranchesOptionMetric(set, settings, defaultSettings, repositories)
+
     addCommonBranchesMetrics(repositories, set)
 
     addCommitTemplateMetrics(project, repositories, set)
@@ -96,6 +94,26 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     addGitLogMetrics(project, set)
 
     return set
+  }
+
+  private fun reportVersion(project: Project, set: MutableSet<MetricEvent>) {
+    val executableManager = GitExecutableManager.getInstance()
+    val version = executableManager.getVersionOrIdentifyIfNeeded(project)
+
+    set.add(EXECUTABLE.metric(
+      EventFields.Version with version.presentation,
+      TYPE with version.type
+    ))
+  }
+
+  private fun addRecentBranchesOptionMetric(set: MutableSet<MetricEvent>,
+                                            settings: GitVcsSettings,
+                                            defaultSettings: GitVcsSettings,
+                                            repositories: List<GitRepository>) {
+    if (defaultSettings.showRecentBranches() == settings.showRecentBranches()) return
+
+    val maxLocalBranches = repositories.maxOf { repo -> repo.branches.localBranches.size }
+    set.add(SHOW_RECENT_BRANCHES.metric(EventFields.Enabled with settings.showRecentBranches(), MAX_LOCAL_BRANCHES with maxLocalBranches))
   }
 
   private fun addCommonBranchesMetrics(repositories: List<GitRepository>, set: MutableSet<MetricEvent>) {
@@ -144,7 +162,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("git.configuration", 14)
+    private val GROUP = EventLogGroup("git.configuration", 15)
 
     private val REPO_SYNC_VALUE: EnumEventField<Value> = EventFields.Enum("value", Value::class.java) { it.name.lowercase() }
     private val REPO_SYNC: VarargEventId = GROUP.registerVarargEvent("repo.sync", REPO_SYNC_VALUE)
@@ -198,6 +216,9 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
 
     private val SHOW_GIT_BRANCHES_IN_LOG = GROUP.registerVarargEvent("showGitBranchesInLog", EventFields.Enabled)
     private val UPDATE_BRANCH_FILTERS_ON_SELECTION = GROUP.registerVarargEvent("updateBranchesFilterInLogOnSelection", EventFields.Enabled)
+
+    private val MAX_LOCAL_BRANCHES = EventFields.RoundedInt("max_local_branches")
+    private val SHOW_RECENT_BRANCHES = GROUP.registerVarargEvent("showRecentBranches", EventFields.Enabled, MAX_LOCAL_BRANCHES)
 
     private fun getRemoteServerType(remote: GitRemote): String {
       val hosts = remote.urls.map(URLUtil::parseHostFromSshUrl).distinct()

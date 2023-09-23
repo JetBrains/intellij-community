@@ -16,7 +16,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
-@TestApplication
 class VirtualFileIndexTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
 

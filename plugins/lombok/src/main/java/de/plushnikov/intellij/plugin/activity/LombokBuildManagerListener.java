@@ -3,7 +3,10 @@ package de.plushnikov.intellij.plugin.activity;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.server.BuildManagerListener;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.SingletonNotificationManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -22,7 +25,7 @@ import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
 import java.util.UUID;
 
-public class LombokBuildManagerListener implements BuildManagerListener {
+final class LombokBuildManagerListener implements BuildManagerListener {
   private final SingletonNotificationManager myNotificationManager = new SingletonNotificationManager(Version.PLUGIN_NAME, NotificationType.ERROR);
 
   @Override

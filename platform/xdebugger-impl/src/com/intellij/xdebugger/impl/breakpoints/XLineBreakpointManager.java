@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.AppTopics;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
@@ -25,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -89,18 +89,33 @@ public final class XLineBreakpointManager {
           removeBreakpoints(myBreakpoints.get(event.getFile().getUrl()));
         }
       }));
+
+      EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
+        @Override
+        public void editorCreated(@NotNull EditorFactoryEvent event) {
+          if (!shouldShowBreakpointsInline()) return;
+
+          var file = event.getEditor().getVirtualFile();
+          if (file == null) return;
+          myBreakpoints.get(file.getUrl()).forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
+        }
+      }, project);
     }
     myBreakpointsUpdateQueue = new MergingUpdateQueue("XLine breakpoints", 300, true, null, project, null, Alarm.ThreadToUse.POOLED_THREAD);
 
     // Update breakpoints colors if global color schema was changed
     busConnection.subscribe(EditorColorsManager.TOPIC, new MyEditorColorsListener());
-    busConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    busConnection.subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
         myBreakpoints.get(file.getUrl()).stream().filter(b -> b.getHighlighter() == null)
           .forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
       }
     });
+  }
+
+  public static boolean shouldShowBreakpointsInline() {
+    return Registry.is("debugger.show.breakpoints.inline");
   }
 
   void updateBreakpointsUI() {
@@ -139,11 +154,11 @@ public final class XLineBreakpointManager {
       return;
     }
 
-    IntSet lines = new IntOpenHashSet();
+    IntSet positions = new IntOpenHashSet();
     List<XLineBreakpoint> toRemove = new SmartList<>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       breakpoint.updatePosition();
-      if (!breakpoint.isValid() || !lines.add(breakpoint.getLine())) {
+      if (!breakpoint.isValid() || !positions.add(shouldShowBreakpointsInline() ? breakpoint.getOffset() : breakpoint.getLine())) {
         toRemove.add(breakpoint);
       }
     }

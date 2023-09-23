@@ -5,6 +5,8 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Queues;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiListLikeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -21,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList {
+public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList, PsiListLikeElement {
 
   // Filters all expressions but keyword arguments
   private static final NoKeyArguments NO_KEY_ARGUMENTS = new NoKeyArguments();
@@ -285,12 +287,12 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   private static class NoKeyArguments extends NotNullPredicate<PyExpression> {
+
     @Override
     protected boolean applyNotNull(@NotNull final PyExpression input) {
       return (PsiTreeUtil.getParentOfType(input, PyKeywordArgument.class) == null) && !(input instanceof PyKeywordArgument);
     }
   }
-
   @Nullable
   @Override
   public PyExpression getValueExpressionForParam(@NotNull final FunctionParameter parameter) {
@@ -315,5 +317,10 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     }
 
     return null;
+  }
+
+  @Override
+  public @NotNull List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getArguments());
   }
 }

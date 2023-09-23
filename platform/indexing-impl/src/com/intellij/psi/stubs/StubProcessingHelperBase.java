@@ -63,8 +63,7 @@ public abstract class StubProcessingHelperBase {
     return true;
   }
 
-  @NotNull
-  private static List<StubbedSpine> getAllSpines(PsiFile psiFile) {
+  private static @NotNull List<StubbedSpine> getAllSpines(PsiFile psiFile) {
     if (!(psiFile instanceof PsiFileImpl) && psiFile instanceof PsiFileWithStubSupport) {
       return Collections.singletonList(((PsiFileWithStubSupport)psiFile).getStubbedSpine());
     }
@@ -147,7 +146,7 @@ public abstract class StubProcessingHelperBase {
                                      @NotNull PsiFileWithStubSupport psiFile,
                                      @NotNull String extraMessage) {
     try {
-      IndexStatisticGroup.INSTANCE.reportStubIndexInconsistencyRegistered$intellij_platform_indexing_impl(psiFile.getProject());
+      IndexStatisticGroup.reportStubIndexInconsistencyRegistered(psiFile.getProject());
       StubTextInconsistencyException.checkStubTextConsistency(psiFile);
       LOG.error(extraMessage + "\n" + StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, psiFile, null));
     }
@@ -158,8 +157,7 @@ public abstract class StubProcessingHelperBase {
 
   protected abstract void onInternalError(VirtualFile file);
 
-  @NotNull
-  protected static String getFileTypeInfo(@NotNull VirtualFile file, @NotNull Project project) {
+  protected static @NotNull String getFileTypeInfo(@NotNull VirtualFile file, @NotNull Project project) {
     return "file = "+file + (file.isValid() ? "" : " (invalid)") +", " +
            "file type = " + file.getFileType() + ", " +
            "indexed file type = " + FileTypeIndex.getIndexedFileType(file, project);

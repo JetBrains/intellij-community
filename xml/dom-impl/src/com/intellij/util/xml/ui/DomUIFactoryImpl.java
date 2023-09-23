@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -112,8 +112,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
   }
 
   @Override
-  @Nullable
-  public BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
+  public @Nullable BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
     final Function<DomWrapper<String>, BaseControl> factory = myCustomControlCreators.get(ClassUtil.getRawType(type));
     return factory == null ? null : factory.fun(wrapper);
   }
@@ -147,7 +146,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
   }
 
   @Override
-  public void registerCustomCellEditor(@NotNull final Class aClass, final Function<DomElement, TableCellEditor> creator) {
+  public void registerCustomCellEditor(final @NotNull Class aClass, final Function<DomElement, TableCellEditor> creator) {
     myCustomCellEditorCreators.put(aClass, creator);
   }
 

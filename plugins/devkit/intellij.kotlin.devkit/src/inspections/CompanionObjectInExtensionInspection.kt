@@ -38,7 +38,7 @@ import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -285,7 +285,7 @@ private fun KtNamedDeclaration.removeProtectedModifierIfPresent(): KtNamedDeclar
 
 private fun KtNamedDeclaration.removeJvmStaticAnnotationIfPresent(): KtNamedDeclaration {
   return apply {
-    findAnnotation(StandardClassIds.Annotations.JvmStatic)?.delete()
+    findAnnotation(JvmStandardClassIds.Annotations.JvmStatic)?.delete()
   }
 }
 

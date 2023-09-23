@@ -25,6 +25,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_DEPENDENCY_HANDLER = "org.gradle.api.artifacts.dsl.DependencyHandler";
   @NonNls public static final String GRADLE_API_COMPONENT_METADATA_HANDLER = "org.gradle.api.artifacts.dsl.ComponentMetadataHandler";
   @NonNls public static final String GRADLE_API_COMPONENT_MODULE_METADATA_HANDLER = "org.gradle.api.artifacts.dsl.ComponentModuleMetadataHandler";
+  @NonNls public static final String GRADLE_API_COMPONENT_MODULE_METADATA = "org.gradle.api.artifacts.ComponentModuleMetadata";
   @NonNls public static final String GRADLE_API_COMPONENT_MODULE_METADATA_DETAILS = "org.gradle.api.artifacts.ComponentModuleMetadataDetails";
   @NonNls public static final String GRADLE_API_ACTION = "org.gradle.api.Action";
   @NonNls public static final String GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY = "org.gradle.api.artifacts.ExternalModuleDependency";
@@ -87,9 +88,12 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_EXTRA_PROPERTIES_EXTENSION = "org.gradle.api.plugins.ExtraPropertiesExtension";
   @NonNls public static final String GRADLE_PROCESS_EXEC_SPEC = "org.gradle.process.ExecSpec";
   @NonNls public static final String GRADLE_API_PROVIDER_PROPERTY = "org.gradle.api.provider.Property";
+  @NonNls public static final String GRADLE_API_PROVIDER_MAP_PROPERTY = "org.gradle.api.provider.MapProperty";
+  @NonNls public static final String GRADLE_API_PROVIDER_HAS_MULTIPLE_VALUES = "org.gradle.api.provider.HasMultipleValues";
   @NonNls public static final String GRADLE_API_PROVIDER_PROVIDER = "org.gradle.api.provider.Provider";
   @NonNls public static final String GRADLE_API_PROVIDER_PROVIDER_CONVERTIBLE = "org.gradle.api.provider.ProviderConvertible";
   @NonNls public static final String GRADLE_PLUGIN_USE_PLUGIN_DEPENDENCY = "org.gradle.plugin.use.PluginDependency";
+  @NonNls public static final String GRADLE_API_SUPPORTS_KOTLIN_ASSIGNMENT_OVERLOADING = "org.gradle.api.SupportsKotlinAssignmentOverloading";
 
   private GradleCommonClassNames() {
   }

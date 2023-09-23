@@ -4,6 +4,7 @@ package com.intellij.execution.wsl.ijent
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -26,19 +27,19 @@ class IjentWslVerificationAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    with(e.presentation) {
-      isEnabledAndVisible = ApplicationManager.getApplication().isInternal
-      isEnabled = isEnabled && e.project != null
-    }
+    e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal
   }
 
   @OptIn(DelicateCoroutinesApi::class)  // Doesn't matter for a trivial test utility.
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
+    val modalTaskOwner =
+      e.project?.let(ModalTaskOwner::project)
+      ?: PlatformDataKeys.CONTEXT_COMPONENT.getData(e.dataContext)?.let(ModalTaskOwner::component)
+      ?: error("No ModalTaskOwner")
     val logger = thisLogger()
     GlobalScope.launch {
       logger.runAndLogException {
-        withModalProgress(ModalTaskOwner.project(project), e.presentation.text, TaskCancellation.cancellable()) {
+        withModalProgress(modalTaskOwner, e.presentation.text, TaskCancellation.cancellable()) {
           val wslDistribution = WslDistributionManager.getInstance().installedDistributions.first()
 
           coroutineScope {

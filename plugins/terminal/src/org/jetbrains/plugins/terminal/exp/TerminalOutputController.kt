@@ -2,17 +2,17 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -21,6 +21,7 @@ import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.emulator.ColorPalette
 import com.jediterm.terminal.model.CharBuffer
 import com.jediterm.terminal.ui.AwtTransformers
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
 import java.awt.Color
 import java.awt.Font
 
@@ -28,7 +29,7 @@ class TerminalOutputController(
   private val editor: EditorEx,
   private val session: TerminalSession,
   private val settings: JBTerminalSystemSettingsProviderBase
-) : TerminalModel.TerminalListener, UserDataHolder {
+) : TerminalModel.TerminalListener {
   val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
   val selectionModel: TerminalSelectionModel = TerminalSelectionModel(outputModel)
   private val terminalModel: TerminalModel = session.model
@@ -42,10 +43,13 @@ class TerminalOutputController(
     get() = settings.terminalColorPalette
 
   @Volatile
-  private var runningListenersDisposable: Disposable? = null
+  private var keyEventsListenerDisposable: Disposable? = null
+
+  @Volatile
+  private var mouseAndContentListenersDisposable: Disposable? = null
 
   init {
-    editor.putUserData(KEY, this)
+    editor.putUserData(IS_OUTPUT_EDITOR_KEY, true)
     editor.highlighter = textHighlighter
     session.model.addTerminalListener(this)
     Disposer.register(session, caretModel)
@@ -53,22 +57,42 @@ class TerminalOutputController(
 
   @RequiresEdt
   fun startCommandBlock(command: String?) {
-    outputModel.createBlock(command)
+    val block = outputModel.createBlock(command)
+    if (!command.isNullOrEmpty()) {
+      editor.document.insertString(block.endOffset, command + "\n")
+      val highlighting = createCommandHighlighting(block)
+      outputModel.putHighlightings(block, listOf(highlighting))
+      blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
+    }
+
     installRunningCommandListeners()
   }
 
   private fun installRunningCommandListeners() {
-    val disposable = Disposer.newDisposable().also { Disposer.register(session, it) }
-    runningListenersDisposable = disposable
+    val mouseAndContentDisposable = Disposer.newDisposable().also { Disposer.register(session, it) }
+    mouseAndContentListenersDisposable = mouseAndContentDisposable
+    val keyEventsDisposable = Disposer.newDisposable().also { Disposer.register(session, it) }
+    keyEventsListenerDisposable = keyEventsDisposable
+
     val eventsHandler = TerminalEventsHandler(session, settings)
-    setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, disposable)
-    setupMouseListener(editor, settings, session.model, eventsHandler, disposable)
-    setupContentListener(disposable)
+    setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, keyEventsDisposable)
+    setupMouseListener(editor, settings, session.model, eventsHandler, mouseAndContentDisposable)
+    setupContentListener(mouseAndContentDisposable)
+  }
+
+  private fun disposeRunningCommandListeners() {
+    mouseAndContentListenersDisposable?.let { Disposer.dispose(it) }
+    mouseAndContentListenersDisposable = null
+    runInEdt {
+      // Dispose at EDT, because there can be a race when focus listener trying to install TerminalEventDispatcher on EDT,
+      // and this disposable is disposed on BGT. The dispatcher won't be removed as a result.
+      keyEventsListenerDisposable?.let { Disposer.dispose(it) }
+      keyEventsListenerDisposable = null
+    }
   }
 
   fun finishCommandBlock(exitCode: Int) {
-    runningListenersDisposable?.let { Disposer.dispose(it) }
-    runningListenersDisposable = null
+    disposeRunningCommandListeners()
     invokeLater {
       val block = outputModel.getLastBlock() ?: error("No active block")
       val document = editor.document
@@ -94,11 +118,18 @@ class TerminalOutputController(
     }
   }
 
+  @RequiresEdt
+  fun insertEmptyLine() {
+    outputModel.closeLastBlock()
+    editor.document.insertString(editor.document.textLength, "\n")
+    val visibleArea = editor.scrollingModel.visibleArea
+    editor.scrollingModel.scrollVertically(editor.contentComponent.height - visibleArea.height)
+  }
+
   override fun onAlternateBufferChanged(enabled: Boolean) {
     if (enabled) {
       // stop updating the block content, because alternate buffer application will be shown in a separate component
-      runningListenersDisposable?.let { Disposer.dispose(it) }
-      runningListenersDisposable = null
+      disposeRunningCommandListeners()
     }
     else {
       installRunningCommandListeners()
@@ -117,18 +148,19 @@ class TerminalOutputController(
   }
 
   private fun updateEditorContent() {
-    val content = computeTerminalContent()
+    val output = computeCommandOutput()
     // Can not use invokeAndWait here because deadlock may happen. TerminalTextBuffer is locked at this place,
     // and EDT can be frozen now trying to acquire this lock
     invokeLater(ModalityState.any()) {
       if (!editor.isDisposed) {
-        updateEditor(content)
+        updateEditor(output)
       }
     }
   }
 
-  private fun computeTerminalContent(): TerminalContent {
-    val baseOffset = outputModel.getLastBlock()!!.startOffset
+  private fun computeCommandOutput(): CommandOutput {
+    val block = outputModel.getLastBlock()!!
+    val baseOffset = block.outputStartOffset
     val builder = StringBuilder()
     val highlightings = mutableListOf<HighlightingInfo>()
     val consumer = object : StyledTextConsumer {
@@ -163,32 +195,48 @@ class TerminalOutputController(
       }
     }
 
-    if (terminalModel.useAlternateBuffer) {
-      terminalModel.processScreenLines(0, terminalModel.screenLinesCount, consumer)
+    val commandLines = block.command?.let { command ->
+      command.split("\n").sumOf { it.length / terminalModel.width + if (it.length % terminalModel.width > 0) 1 else 0 }
+    } ?: 0
+    val historyLines = terminalModel.historyLinesCount
+    if (terminalModel.historyLinesCount > 0) {
+      if (commandLines <= historyLines) {
+        terminalModel.processHistoryAndScreenLines(commandLines - historyLines, historyLines - commandLines, consumer)
+        terminalModel.processScreenLines(0, terminalModel.cursorY, consumer)
+      }
+      else {
+        terminalModel.processHistoryAndScreenLines(-historyLines, historyLines, consumer)
+        terminalModel.processScreenLines(commandLines - historyLines, terminalModel.cursorY, consumer)
+      }
     }
     else {
-      terminalModel.processHistoryAndScreenLines(-terminalModel.historyLinesCount,
-                                                 terminalModel.historyLinesCount + terminalModel.cursorY,
-                                                 consumer)
+      terminalModel.processScreenLines(commandLines, terminalModel.cursorY - commandLines, consumer)
     }
 
     while (builder.lastOrNull() == '\n') {
       builder.deleteCharAt(builder.lastIndex)
       highlightings.removeLast()
     }
-    return TerminalContent(builder.toString(), highlightings)
+    return CommandOutput(builder.toString(), highlightings)
   }
 
-  private fun updateEditor(content: TerminalContent) {
+  private fun updateEditor(output: CommandOutput) {
     val block = outputModel.getLastBlock() ?: error("No active block")
-    editor.document.replaceString(block.startOffset, block.endOffset, content.text)
-    outputModel.putHighlightings(block, content.highlightings)
+    editor.document.replaceString(block.outputStartOffset, block.endOffset, output.text)
+    // highlightings are collected only for output, so add command highlighting in the first place
+    val command = block.command
+    val highlightings = if (command != null) {
+      val commandHighlighting = createCommandHighlighting(block)
+      output.highlightings.toMutableList().also { it.add(0, commandHighlighting) }
+    }
+    else output.highlightings
+    outputModel.putHighlightings(block, highlightings)
     // Install decorations lazily, only if there is some text.
     // ZSH prints '%' character on startup and then removing it immediately, so ignore this character to avoid blinking.
     // This hack can be solved by debouncing the update text requests.
     if (outputModel.getDecoration(block) == null
-        && content.text.isNotBlank()
-        && content.text.trim() != "%") {
+        && output.text.isNotBlank()
+        && output.text.trim() != "%") {
       blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
     }
 
@@ -233,6 +281,12 @@ class TerminalOutputController(
     else AwtTransformers.toAwtColor(foreground)!!
   }
 
+  /** It is implied that the command is not null */
+  private fun createCommandHighlighting(block: CommandBlock): HighlightingInfo {
+    val attributes = TextAttributes(TerminalUi.commandForeground, null, null, null, Font.BOLD)
+    return HighlightingInfo(block.startOffset, block.startOffset + block.command!!.length, attributes)
+  }
+
   fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {
     if (disposable != null) {
       editor.document.addDocumentListener(listener, disposable)
@@ -240,13 +294,9 @@ class TerminalOutputController(
     else editor.document.addDocumentListener(listener)
   }
 
-  override fun <T : Any?> getUserData(key: Key<T>): T? = editor.getUserData(key)
-
-  override fun <T : Any?> putUserData(key: Key<T>, value: T?) = editor.putUserData(key, value)
-
-  private data class TerminalContent(val text: String, val highlightings: List<HighlightingInfo>)
+  private data class CommandOutput(val text: String, val highlightings: List<HighlightingInfo>)
 
   companion object {
-    val KEY: Key<TerminalOutputController> = Key.create("TerminalOutputController")
+    val KEY: DataKey<TerminalOutputController> = DataKey.create("TerminalOutputController")
   }
 }

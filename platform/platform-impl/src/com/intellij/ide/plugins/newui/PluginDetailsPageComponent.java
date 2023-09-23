@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
@@ -39,6 +40,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.TabbedPaneUI;
@@ -538,7 +541,6 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     JBTabbedPane pane = new JBTabbedPane() {
       @Override
       public void setUI(TabbedPaneUI ui) {
-        putClientProperty("TabbedPane.tabBackgroundOnlyForHover", Boolean.TRUE);
         putClientProperty("TabbedPane.hoverColor", ListPluginComponent.HOVER_COLOR);
 
         boolean contentOpaque = UIManager.getBoolean("TabbedPane.contentOpaque");
@@ -560,6 +562,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     };
     pane.setOpaque(false);
     pane.setBorder(JBUI.Borders.emptyTop(6));
+    pane.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
     parent.add(pane);
     myTabbedPane = pane;
 
@@ -1610,5 +1613,30 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private @NotNull SelectionBasedPluginModelAction.UninstallAction<PluginDetailsPageComponent> createUninstallAction() {
     return new SelectionBasedPluginModelAction.UninstallAction<>(myPluginModel, false, this, List.of(this),
                                                                  PluginDetailsPageComponent::getDescriptorForActions);
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessiblePluginDetailsPageComponent();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessiblePluginDetailsPageComponent extends AccessibleJComponent {
+    @Override
+    public String getAccessibleName() {
+      if (myPlugin == null) {
+        return IdeBundle.message("plugins.configurable.plugin.details.page.accessible.name");
+      }
+      else {
+        return IdeBundle.message("plugins.configurable.plugin.details.page.accessible.name.0", myPlugin.getName());
+      }
+    }
+
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibilityUtils.GROUPED_ELEMENTS;
+    }
   }
 }

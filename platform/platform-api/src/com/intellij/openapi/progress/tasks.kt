@@ -151,6 +151,11 @@ fun <T> runWithModalProgressBlocking(
  * }
  * ```
  *
+ * ### Focus
+ *
+ * Currently, there is no guarantee that focus requests produced by [action] will be applied properly.
+ * It is highly recommended to request input focus after [runWithModalProgressBlocking].
+ *
  * @param owner in which frame the progress should be shown
  * @param cancellation controls the UI appearance, e.g. [TaskCancellation.nonCancellable] or [TaskCancellation.cancellable]
  * @throws ProcessCanceledException if the calling coroutine was cancelled,

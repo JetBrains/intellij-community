@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
 import com.intellij.execution.ExecutionBundle;
@@ -26,8 +26,7 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
 
   private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @NotNull
-  private PathMappingSettings myMappingSettings = new PathMappingSettings();
+  private @NotNull PathMappingSettings myMappingSettings = new PathMappingSettings();
 
   public PathMappingsComponent() {
     super();
@@ -49,12 +48,11 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
     new MyPathMappingsDialog(this).show();
   }
 
-  @NotNull
-  public PathMappingSettings getMappingSettings() {
+  public @NotNull PathMappingSettings getMappingSettings() {
     return myMappingSettings;
   }
 
-  public void setMappingSettings(@Nullable final PathMappingSettings mappingSettings) {
+  public void setMappingSettings(final @Nullable PathMappingSettings mappingSettings) {
     if (mappingSettings == null) {
       myMappingSettings = new PathMappingSettings();
     }
@@ -79,12 +77,12 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
   }
 
   @Override
-  public void addChangeListener(@NotNull final ChangeListener changeListener) {
+  public void addChangeListener(final @NotNull ChangeListener changeListener) {
     myListeners.add(changeListener);
   }
 
   @Override
-  public void removeChangeListener(@NotNull final ChangeListener changeListener) {
+  public void removeChangeListener(final @NotNull ChangeListener changeListener) {
     myListeners.remove(changeListener);
   }
 
@@ -112,8 +110,7 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
     }
 
     @Override
-    @Nullable
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       return myWholePanel;
     }
 

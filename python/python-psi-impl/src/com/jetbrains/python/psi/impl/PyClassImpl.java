@@ -144,6 +144,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Override
+  @Nullable
+  public PyTypeParameterList getTypeParameterList() {
+    return childToPsi(PyElementTypes.TYPE_PARAMETER_LIST);
+  }
+
+  @Override
   public PyArgumentList getSuperClassExpressionList() {
     final PyArgumentList argList = PsiTreeUtil.getChildOfType(this, PyArgumentList.class);
     if (argList != null && argList.getFirstChild() != null) {
@@ -475,6 +481,22 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public PyFunction @NotNull [] getMethods() {
     final TokenSet functionDeclarationTokens = PythonDialectsTokenSetProvider.getInstance().getFunctionDeclarationTokens();
     return getClassChildren(functionDeclarationTokens, PyFunction.class, PyFunction.ARRAY_FACTORY);
+  }
+
+  @Override
+  @NotNull
+  public Map<String, Property> getPropertiesInherited(@Nullable TypeEvalContext context) {
+    initLocalProperties();
+    Map<String, Property> propertiesHashMap = new HashMap<>(myLocalPropertyCache);
+
+    for (PyClass superClass : getAncestorClasses(context)) {
+      Map<String, Property> superClassProperties = superClass.getPropertiesInherited(context);
+      for (Map.Entry<String, Property> entry : superClassProperties.entrySet()) {
+        // Do not replace existing property in case superclass have it, keep only subclass properties
+        propertiesHashMap.putIfAbsent(entry.getKey(), entry.getValue());
+      }
+    }
+    return propertiesHashMap;
   }
 
   @Override

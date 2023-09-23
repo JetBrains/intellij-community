@@ -6,14 +6,10 @@ import com.intellij.util.ui.JBFont
 
 class UISettingsUtils(private val settings: UISettings) {
   val currentIdeScale: Float
-    get() = if (settings.presentationMode) settings.presentationModeIdeScale else settings.ideScale
+    get() = settings.currentIdeScale
 
   fun setCurrentIdeScale(scale: Float) {
-    when {
-      scale.percentValue == currentIdeScale.percentValue -> return
-      settings.presentationMode -> settings.presentationModeIdeScale = scale
-      else -> settings.ideScale = scale
-    }
+    settings.currentIdeScale = scale
   }
 
   var presentationModeFontSize: Float
@@ -40,13 +36,14 @@ class UISettingsUtils(private val settings: UISettings) {
     @JvmStatic
     fun with(settings: UISettings): UISettingsUtils = UISettingsUtils(settings)
 
-    private val globalSchemeEditorFontSize: Float get() = EditorColorsManager.getInstance().globalScheme.editorFontSize2D
+    private val globalSchemeEditorFontSize: Float
+      get() = EditorColorsManager.getInstance().globalScheme.editorFontSize2D
 
-    internal fun presentationModeIdeScaleFromFontSize(fontSize: Float): Float =
-      (fontSize / globalSchemeEditorFontSize).let {
-        if (it.percentValue == 100) 1f
-        else it
+    internal fun presentationModeIdeScaleFromFontSize(fontSize: Float): Float {
+      return (fontSize / globalSchemeEditorFontSize).let {
+        if (it.percentValue == 100) 1f else it
       }
+    }
 
     @JvmStatic
     fun scaleFontSize(fontSize: Float, scale: Float): Float = JBFont.scaleFontSize(fontSize, scale)

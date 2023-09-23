@@ -11,7 +11,6 @@ import com.intellij.testFramework.fixtures.TestFixtureRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.delete
-import com.intellij.util.io.readText
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Rule

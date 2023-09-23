@@ -28,9 +28,9 @@ data class JsonProjectScanningHistoryTimes(
   val creatingIteratorsTime: JsonDuration = JsonDuration(),
   val concurrentHandlingWallTimeWithoutPauses: JsonDuration = JsonDuration(),
   val concurrentHandlingWallTimeWithPauses: JsonDuration = JsonDuration(),
-  val concurrentHandlingCPUTimeWithPauses: JsonDuration = JsonDuration(),
-  val concurrentIterationAndScannersApplicationCPUTimeWithPauses: JsonDuration = JsonDuration(),
-  val concurrentFileCheckCPUTimeWithPauses: JsonDuration = JsonDuration(),
+  val concurrentHandlingSumOfThreadTimesWithPauses: JsonDuration = JsonDuration(),
+  val concurrentIterationAndScannersApplicationSumOfThreadTimesWithPauses: JsonDuration = JsonDuration(),
+  val concurrentFileCheckSumOfThreadTimesWithPauses: JsonDuration = JsonDuration(),
   val delayedPushPropertiesStageTime: JsonDuration = JsonDuration(),
   val indexExtensionsTime: JsonDuration = JsonDuration(),
 
@@ -51,7 +51,6 @@ data class JsonProjectDumbIndexingHistoryTimes(
   val scanningIds: Set<Long> = setOf(),
   val contentLoadingVisibleTime: JsonDuration = JsonDuration(),
   val retrievingChangedDuringIndexingFilesTime: JsonDuration = JsonDuration(),
-  val isAppliedAllValuesSeparately: Boolean = true,
   val separateApplyingIndexesVisibleTime: JsonDuration = JsonDuration(),
 
   override val updatingStart: JsonDateTime = JsonDateTime(),

@@ -11,12 +11,13 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.UsefulTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenSearchTest : MavenMultiVersionImportingTestCase() {
 
   @Test
-  fun `test searching POM files by module name`() {
+  fun `test searching POM files by module name`() = runBlocking {
     createProjectPom("""<groupId>test</groupId>
                      <artifactId>p1</artifactId>
                      <packaging>pom</packaging>
@@ -43,7 +44,7 @@ class MavenSearchTest : MavenMultiVersionImportingTestCase() {
                     <groupId>test</groupId>
                     <artifactId>module2</artifactId>
                     <version>1</version>""")
-    importProject()
+    importProjectAsync()
 
     val m1Psi = PsiManager.getInstance(myProject).findFile(m1File)
     val m2Psi = PsiManager.getInstance(myProject).findFile(m2File)

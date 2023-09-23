@@ -173,7 +173,7 @@ public final class DnDEventImpl extends UserDataHolderBase implements Transferab
     return myDropHandler != null;
   }
 
-  protected void handleDrop() {
+  void handleDrop() {
     myDropHandler.performDrop(this);
   }
 

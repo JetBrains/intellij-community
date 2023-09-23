@@ -739,7 +739,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
   RunDashboardComponentWrapper getContentWrapper() {
     if (myContentWrapper == null) {
-      myContentWrapper = new RunDashboardComponentWrapper();
+      myContentWrapper = new RunDashboardComponentWrapper(myProject);
       ClientProperty.put(myContentWrapper, ServiceViewDescriptor.ACTION_HOLDER_KEY, Boolean.TRUE);
     }
     return myContentWrapper;

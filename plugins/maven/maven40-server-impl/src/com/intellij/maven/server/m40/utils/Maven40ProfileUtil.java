@@ -181,7 +181,7 @@ public final class Maven40ProfileUtil {
   private static Model doInterpolate(StringVisitorModelInterpolator interpolator, @NotNull Model result, File basedir) {
     try {
       Properties userProperties = new Properties();
-      userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigProperties(basedir));
+      userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigPropertiesForBaseDir(basedir));
       ModelBuildingRequest request = new DefaultModelBuildingRequest();
       request.setUserProperties(userProperties);
       request.setSystemProperties(MavenServerUtil.collectSystemProperties());

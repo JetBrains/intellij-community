@@ -90,7 +90,7 @@ public final class JavaSharedImplUtil {
 
   @NotNull
   public static PsiType createTypeFromStub(@NotNull PsiModifierListOwner owner, @NotNull TypeInfo typeInfo) {
-    String typeText = TypeInfo.createTypeText(typeInfo);
+    String typeText = typeInfo.text();
     assert typeText != null : owner;
     PsiType type = JavaPsiFacade.getInstance(owner.getProject()).getParserFacade().createTypeFromText(typeText, owner);
     type = applyAnnotations(type, owner.getModifierList());

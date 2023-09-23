@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.readBytes
 import org.jetbrains.kotlin.caches.project.cacheByClass
 import org.jetbrains.kotlin.codegen.inline.SMAP
 import org.jetbrains.kotlin.codegen.inline.SMAPParser
@@ -31,6 +30,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.readBytes
 
 @Service(Service.Level.PROJECT)
 class KotlinSourceMapCache(private val project: Project) {

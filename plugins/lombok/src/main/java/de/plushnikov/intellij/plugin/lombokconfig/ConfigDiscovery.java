@@ -24,6 +24,23 @@ public class ConfigDiscovery {
     return ApplicationManager.getApplication().getService(ConfigDiscovery.class);
   }
 
+  public @NotNull LombokNullAnnotationLibrary getAddNullAnnotationLombokConfigProperty(@NotNull PsiClass psiClass) {
+    final String configProperty = getStringLombokConfigProperty(ConfigKey.ADD_NULL_ANNOTATIONS, psiClass);
+    if (StringUtil.isNotEmpty(configProperty)) {
+      for (LombokNullAnnotationLibraryDefned library : LombokNullAnnotationLibraryDefned.values()) {
+        if (library.getKey().equalsIgnoreCase(configProperty)) {
+          return library;
+        }
+      }
+
+      final LombokNullAnnotationLibrary parsedCustom = LombokNullAnnotationLibraryCustom.parseCustom(configProperty);
+      if (null != parsedCustom) {
+        return parsedCustom;
+      }
+    }
+    return LombokNullAnnotationLibraryDefned.NONE;
+  }
+
   public @NotNull Collection<String> getMultipleValueLombokConfigProperty(@NotNull ConfigKey configKey, @NotNull PsiClass psiClass) {
     return getConfigProperty(configKey, psiClass);
   }

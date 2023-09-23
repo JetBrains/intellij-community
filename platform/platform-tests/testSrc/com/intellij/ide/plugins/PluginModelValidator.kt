@@ -543,7 +543,11 @@ class PluginModelValidator(sourceModules: List<Module>) {
       return
     }
 
-    val pluginFileName = if (moduleName == "intellij.idea.community.customization") "IdeaPlugin.xml" else "plugin.xml"
+    val pluginFileName = when (moduleName) {
+      "intellij.cwm.host" -> "pluginBase.xml"
+      "intellij.idea.community.customization" -> "IdeaPlugin.xml"
+      else -> "plugin.xml"
+    }
     val pluginDescriptorFile = metaInf / pluginFileName
     val pluginDescriptor = pluginDescriptorFile.readXmlAsModel()
 

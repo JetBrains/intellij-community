@@ -14,18 +14,18 @@ import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
+import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.storage.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import com.intellij.workspaceModel.ide.toExternalSource
-import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.jps.entities.FacetEntity
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
-import com.intellij.platform.workspace.jps.entities.modifyEntity
 import org.jetbrains.jps.model.serialization.facet.FacetState
 
 class FacetManagerBridge(module: Module) : FacetManagerBase() {
@@ -71,7 +71,7 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
   override fun getModel(): FacetModel = model
   override fun getModule(): Module = module
   override fun createModifiableModel(): ModifiableFacetModel {
-    return createModifiableModel(module.entityStorage.current.toBuilder())
+    return createModifiableModel(module.entityStorage.current.toSnapshot().toBuilder())
   }
 
   fun createModifiableModel(diff: MutableEntityStorage): ModifiableFacetModel {
@@ -87,7 +87,6 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
       val name = state.name
       val facet: F = createFacet(module, type, name, configuration, underlyingFacet)
       if (facet is JDOMExternalizable && config != null) {
-        //todo[nik] remove
         facet.readExternal(config)
       }
       val externalSystemId = state.externalSystemId

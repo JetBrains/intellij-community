@@ -14,7 +14,11 @@ interface ObjModule : Obj {
 
   val types: List<ObjClass<*>>
 
+  val abstractTypes: List<ValueType.AbstractClass<*>>
+
   val extensions: List<ExtProperty<*, *>>
+
+  val explicitApiEnabled: Boolean
 
   /**
    * Example: `com.intellij.platform.workspace.storage.obj.intellijWs`

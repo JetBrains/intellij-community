@@ -4,8 +4,7 @@ import com.intellij.driver.client.Remote
 
 @Remote(value = "com.intellij.platform.diagnostic.telemetry.TelemetryManager")
 interface TelemetryManager {
-
   fun getInstance(): TelemetryManager
 
-  fun forceFlushMetrics(): Unit
+  fun forceFlushMetrics()
 }

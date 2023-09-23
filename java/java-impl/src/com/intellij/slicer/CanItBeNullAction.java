@@ -26,13 +26,13 @@ class CanItBeNullAction extends GroupByNullnessActionBase {
   @Override
   protected boolean isAvailable() {
     SliceRootNode rootNode = myTreeBuilder.getRootSliceNode();
-    PsiElement element = rootNode == null ? null : rootNode.getRootUsage().getUsageInfo().getElement();
+    PsiElement element = rootNode.getRootUsage().getUsageInfo().getElement();
     PsiType type;
-    if (element instanceof PsiVariable) {
-      type = ((PsiVariable)element).getType();
+    if (element instanceof PsiVariable variable) {
+      type = variable.getType();
     }
-    else if (element instanceof PsiExpression) {
-      type = ((PsiExpression)element).getType();
+    else if (element instanceof PsiExpression expression) {
+      type = expression.getType();
     }
     else {
       type = null;

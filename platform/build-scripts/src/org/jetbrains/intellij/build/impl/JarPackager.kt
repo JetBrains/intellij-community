@@ -22,13 +22,9 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_CLIENT_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
-import org.jetbrains.jps.model.java.JpsJavaClasspathKind
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
-import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.io.File
 import java.nio.ByteBuffer
@@ -62,7 +58,6 @@ private val libsThatUsedInJps = java.util.Set.of(
   "OroMatcher",
   "jgoodies-forms",
   "jgoodies-common",
-  "NanoXML",
   // see ArtifactRepositoryManager.getClassesFromDependencies
   "plexus-utils",
   "http-client",
@@ -125,6 +120,8 @@ class JarPackager private constructor(private val outputDir: Path,
   private val libraryEntries = ConcurrentLinkedQueue<LibraryFileEntry>()
   private val libToMetadata = HashMap<JpsLibrary, ProjectLibraryData>()
   private val copiedFiles = HashMap<Path, CopiedFor>()
+
+  private val helper = JarPackagerDependencyHelper(context)
 
   companion object {
     suspend fun pack(includedModules: Collection<ModuleItem>,
@@ -252,42 +249,36 @@ class JarPackager private constructor(private val outputDir: Path,
                  unpackedModules = unpackedModules)
     }
 
-    if (layout is PluginLayout && layout.auto) {
-      // for now, check only direct dependencies of the main plugin module
-      val module = context.findRequiredModule(layout.mainModule)
-      val javaExtensionService = JpsJavaExtensionService.getInstance()
-      val childPrefix = "${layout.mainModule}."
-      for (element in module.dependenciesList.dependencies) {
-        if (element !is JpsModuleDependency ||
-            javaExtensionService.getDependencyExtension(element)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
-          continue
-        }
+    if (layout !is PluginLayout || !layout.auto) {
+      return unpackedModules
+    }
 
-        val name = element.moduleReference.moduleName
-        if (includedModules.any { it.moduleName == name } || !name.startsWith(childPrefix)) {
-          continue
-        }
-
-        val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
-        if (platformLayout!!.includedModules.contains(moduleItem)) {
-          continue
-        }
-
-        packModule(item = moduleItem,
-                   moduleOutputPatcher = moduleOutputPatcher,
-                   layout = layout,
-                   moduleNameToSize = moduleNameToSize,
-                   unpackedModules = unpackedModules)
+    // for now, check only direct dependencies of the main plugin module
+    val childPrefix = "${layout.mainModule}."
+    for (name in helper.getModuleDependencies(layout.mainModule)) {
+      if (includedModules.any { it.moduleName == name } || !name.startsWith(childPrefix)) {
+        continue
       }
+
+      val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
+      if (platformLayout!!.includedModules.contains(moduleItem)) {
+        continue
+      }
+
+      packModule(item = moduleItem,
+                 moduleOutputPatcher = moduleOutputPatcher,
+                 layout = layout,
+                 moduleNameToSize = moduleNameToSize,
+                 unpackedModules = unpackedModules)
     }
     return unpackedModules
   }
 
-  private suspend fun JarPackager.packModule(item: ModuleItem,
-                                             moduleOutputPatcher: ModuleOutputPatcher,
-                                             layout: BaseLayout?,
-                                             moduleNameToSize: ConcurrentHashMap<String, Int>,
-                                             unpackedModules: MutableList<ModuleOutputEntry>) {
+  private suspend fun packModule(item: ModuleItem,
+                                 moduleOutputPatcher: ModuleOutputPatcher,
+                                 layout: BaseLayout?,
+                                 moduleNameToSize: ConcurrentHashMap<String, Int>,
+                                 unpackedModules: MutableList<ModuleOutputEntry>) {
     val moduleName = item.moduleName
     val patchedDirs = moduleOutputPatcher.getPatchedDir(moduleName)
     val patchedContent = moduleOutputPatcher.getPatchedContent(moduleName)
@@ -343,9 +334,7 @@ class JarPackager private constructor(private val outputDir: Path,
       val fileSystem = FileSystems.getDefault()
       commonModuleExcludes + extraExcludes.map { fileSystem.getPathMatcher("glob:$it") }
     }
-    sourceList.add(DirSource(dir = moduleOutputDir,
-                             excludes = excludes,
-                             sizeConsumer = sizeConsumer))
+    sourceList.add(DirSource(dir = moduleOutputDir, excludes = excludes, sizeConsumer = sizeConsumer))
 
     if (layout != null) {
       packModuleLibs(item = item, module = module, layout = layout, copiedFiles = copiedFiles, sources = descriptor.sources)
@@ -375,13 +364,17 @@ class JarPackager private constructor(private val outputDir: Path,
     val includeProjectLib = layout is PluginLayout && layout.auto
 
     val excluded = layout.excludedModuleLibraries.get(moduleName)
-    for (element in module.dependenciesList.dependencies) {
+    for (element in helper.getLibraryDependencies(module)) {
       var isModuleLevel = true
-      val libraryReference = (element as? JpsLibraryDependency)?.libraryReference ?: continue
+      val libraryReference = element.libraryReference
       if (libraryReference.parentReference !is JpsModuleReference) {
         if (includeProjectLib) {
           val name = element.library!!.name
           if (platformLayout!!.hasLibrary(name) || layout.hasLibrary(name)) {
+            continue
+          }
+
+          if (helper.hasLibraryInDependencyChainOfModuleDependencies(module, name, layout.includedModules)) {
             continue
           }
           isModuleLevel = false
@@ -389,11 +382,6 @@ class JarPackager private constructor(private val outputDir: Path,
         else {
           continue
         }
-      }
-
-      if (JpsJavaExtensionService.getInstance().getDependencyExtension(element)?.scope
-          ?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
-        continue
       }
 
       val library = element.library!!
@@ -604,6 +592,7 @@ private fun getLibraryFiles(library: JpsLibrary,
     val alreadyCopiedLibraryName = alreadyCopiedFor.library.name
     alreadyCopiedFor.targetFile == targetFile &&
     (alreadyCopiedLibraryName.startsWith("ktor-") ||
+     alreadyCopiedLibraryName.startsWith("commons-") ||
      alreadyCopiedLibraryName.startsWith("ai.grazie.") ||
      (isModuleLevel && alreadyCopiedLibraryName == libName))
   }
@@ -638,7 +627,6 @@ private fun isLibraryMergeable(libName: String): Boolean {
   return !excludedFromMergeLibs.contains(libName) &&
          !(libName.startsWith("kotlin-") && !libName.startsWith("kotlin-test-")) &&
          !libName.startsWith("kotlinc.") &&
-         !libName.startsWith("projector-") &&
          !libName.contains("-agent-") &&
          !libName.startsWith("rd-") &&
          !libName.contains("annotations", ignoreCase = true) &&

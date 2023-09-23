@@ -15,23 +15,23 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class WithSoftLinkEntityImpl(val dataSource: WithSoftLinkEntityData) : WithSoftLinkEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class WithSoftLinkEntityImpl(private val dataSource: WithSoftLinkEntityData) : WithSoftLinkEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -45,6 +45,7 @@ open class WithSoftLinkEntityImpl(val dataSource: WithSoftLinkEntityData) : With
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: WithSoftLinkEntityData?) : ModifiableWorkspaceEntityBase<WithSoftLinkEntity, WithSoftLinkEntityData>(
     result), WithSoftLinkEntity.Builder {
@@ -74,7 +75,7 @@ open class WithSoftLinkEntityImpl(val dataSource: WithSoftLinkEntityData) : With
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -122,7 +123,7 @@ open class WithSoftLinkEntityImpl(val dataSource: WithSoftLinkEntityData) : With
 class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(), SoftLinkable {
   lateinit var link: NameId
 
-  fun isLinkInitialized(): Boolean = ::link.isInitialized
+  internal fun isLinkInitialized(): Boolean = ::link.isInitialized
 
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
@@ -178,6 +179,11 @@ class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(), SoftLi
     }
   }
 
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.WithSoftLinkEntity") as EntityMetadata
+  }
+
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return WithSoftLinkEntity::class.java
   }
@@ -229,10 +235,5 @@ class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(), SoftLi
     var result = javaClass.hashCode()
     result = 31 * result + link.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(NameId::class.java)
-    collector.sameForAllEntities = true
   }
 }

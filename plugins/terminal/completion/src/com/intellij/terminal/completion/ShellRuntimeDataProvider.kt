@@ -3,4 +3,5 @@ package com.intellij.terminal.completion
 
 interface ShellRuntimeDataProvider {
   suspend fun getFilesFromDirectory(path: String): List<String>
+  suspend fun getShellEnvironment(): ShellEnvironment?
 }

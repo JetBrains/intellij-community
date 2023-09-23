@@ -78,7 +78,7 @@ private suspend fun generateKeyConfig(generateDescriptions: Boolean, configurati
       writeStartObject()
       if (generateDescriptions) {
         writeArrayFieldStart("description")
-        for (line in descr.lines()) {
+        for (line in descr.get().lines()) {
           writeString(line)
         }
         writeEndArray()

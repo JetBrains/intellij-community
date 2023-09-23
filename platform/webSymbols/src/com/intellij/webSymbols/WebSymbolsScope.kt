@@ -6,6 +6,7 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
+import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.utils.getDefaultCodeCompletions
 import com.intellij.webSymbols.utils.match
@@ -32,18 +33,33 @@ interface WebSymbolsScope : ModificationTracker {
   fun createPointer(): Pointer<out WebSymbolsScope>
 
   /**
-   * Returns symbols within the scope. If provided name is `null`, no pattern evaluation should happen
-   * and all symbols of a particular kind and from particular namespace should be returned.
-   *
+   * Returns symbols within the scope, which matches provided namespace, kind and name.
    * Use [WebSymbol.match] to match Web Symbols in the scope against provided name.
    *
    * If the scope contains many symbols, or results should be cached consider extending [WebSymbolsScopeWithCache].
    *
    */
+  fun getMatchingSymbols(namespace: SymbolNamespace,
+                         kind: SymbolKind,
+                         name: String,
+                         params: WebSymbolsNameMatchQueryParams,
+                         scope: Stack<WebSymbolsScope>): List<WebSymbol> =
+    getSymbols(namespace, kind,
+               WebSymbolsListSymbolsQueryParams(params.queryExecutor, expandPatterns = false, virtualSymbols = params.virtualSymbols,
+                                                abstractSymbols = params.abstractSymbols, strictScope = params.strictScope),
+               scope)
+      .filterIsInstance<WebSymbol>()
+      .flatMap { it.match(name, params, scope) }
+
+  /**
+   * Returns symbols of a particular kind and from particular namespace within the scope, including symbols with patterns.
+   * No pattern evaluation should happen on symbols.
+   *
+   * If the scope contains many symbols, or results should be cached consider extending [WebSymbolsScopeWithCache].
+   */
   fun getSymbols(namespace: SymbolNamespace,
                  kind: SymbolKind,
-                 name: String?,
-                 params: WebSymbolsNameMatchQueryParams,
+                 params: WebSymbolsListSymbolsQueryParams,
                  scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
     emptyList()
 
@@ -54,11 +70,11 @@ interface WebSymbolsScope : ModificationTracker {
    *
    * If the scope contains many symbols, or results should be cached consider extending [WebSymbolsScopeWithCache].
    *
-   * Default implementation calls `getSymbols` with `null` `name` and runs [WebSymbol.toCodeCompletionItems] on each symbol.
+   * Default implementation calls `getSymbols` and runs [WebSymbol.toCodeCompletionItems] on each symbol.
    */
   fun getCodeCompletions(namespace: SymbolNamespace,
                          kind: SymbolKind,
-                         name: String?,
+                         name: String,
                          params: WebSymbolsCodeCompletionQueryParams,
                          scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     getDefaultCodeCompletions(namespace, kind, name, params, scope)

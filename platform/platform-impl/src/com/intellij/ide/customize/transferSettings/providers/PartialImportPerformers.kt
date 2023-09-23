@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers
 
 import com.intellij.ide.RecentProjectsManagerBase
-import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.customize.transferSettings.models.*
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
@@ -45,7 +44,7 @@ class LookAndFeelImportPerformer : PartialImportPerformer {
   override fun patchSettingsAfterPluginInstallation(settings: Settings, pluginIds: Set<String>): Settings {
     (settings.laf as? PluginLookAndFeel)?.let {
       if (pluginIds.contains(it.pluginId)) {
-        settings.laf = BundledLookAndFeel.fromManager(it.installedName)
+        settings.laf = BundledLookAndFeel.fromManager(it.transferableId, it.installedName)
       }
       else {
         settings.laf = it.fallback
@@ -144,7 +143,7 @@ class KeymapSchemeImportPerformer : PartialImportPerformer {
       val parent = km.parent as? PluginKeymap
       if (parent != null) {
         if (pluginIds.contains(parent.pluginId)) {
-          km.parent = BundledKeymap.fromManager(parent.installedName, emptyList())
+          km.parent = BundledKeymap.fromManager(km.transferableId, parent.installedName, emptyList())
         }
         else {
           km.parent = parent.fallback
@@ -153,7 +152,7 @@ class KeymapSchemeImportPerformer : PartialImportPerformer {
     }
     if (km is PluginKeymap) {
       if (pluginIds.contains(km.pluginId)) {
-        settings.keymap = BundledKeymap.fromManager(km.installedName, emptyList())
+        settings.keymap = BundledKeymap.fromManager(km.transferableId, km.installedName, emptyList())
       }
       else {
         settings.keymap = km.fallback

@@ -179,7 +179,7 @@ public abstract class Compressor implements Closeable {
       super(new JarOutputStream(new BufferedOutputStream(Files.newOutputStream(file))));
     }
 
-    public final void addManifest(@NotNull Manifest manifest) throws IOException {
+    public void addManifest(@NotNull Manifest manifest) throws IOException {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       manifest.write(buffer);
       addFile(JarFile.MANIFEST_NAME, buffer.toByteArray());

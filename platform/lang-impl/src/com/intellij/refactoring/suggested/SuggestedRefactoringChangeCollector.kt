@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.suggested
 
@@ -12,6 +12,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.TestOnly
 
 class SuggestedRefactoringChangeCollector(
@@ -22,7 +23,7 @@ class SuggestedRefactoringChangeCollector(
     private set
 
   override fun editingStarted(declaration: PsiElement, refactoringSupport: SuggestedRefactoringSupport) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     require(declaration.isValid)
     state = refactoringSupport.stateChanges.createInitialState(declaration)
     updateAvailabilityIndicator()
@@ -35,7 +36,7 @@ class SuggestedRefactoringChangeCollector(
   }
 
   override fun nextSignature(anchor: PsiElement, refactoringSupport: SuggestedRefactoringSupport) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     require(anchor.isValid)
     state = state?.let { refactoringSupport.stateChanges.updateState(it, anchor) }
     updateAvailabilityIndicator()
@@ -43,19 +44,19 @@ class SuggestedRefactoringChangeCollector(
   }
 
   override fun inconsistentState() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     state = state?.withErrorLevel(ErrorLevel.INCONSISTENT)
     updateAvailabilityIndicator()
   }
 
   override fun reset() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     state = null
     updateAvailabilityIndicator()
   }
 
   fun undoToState(state: SuggestedRefactoringState) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     this.state = state
     updateAvailabilityIndicator()
     amendStateInBackground()

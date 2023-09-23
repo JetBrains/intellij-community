@@ -38,10 +38,8 @@ import com.intellij.util.ui.DeprecationStripePanel
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Async
-import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.annotations.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.LockSupport
@@ -168,7 +166,19 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
    * method's invocation context (thread).
    */
   @TestOnly
-  suspend fun <T> runInDumbMode(block: suspend () -> T): T {
+  suspend fun <T> runInDumbMode(block: suspend () -> T): T = runInDumbMode("test", block)
+
+  /**
+   * This method starts dumb mode (if not started), then runs suspend lambda, then ends dumb mode (if no other dumb tasks are running).
+   *
+   * This method can be invoked from any thread. It will switch to EDT to start/stop dumb mode. Runnable itself will be invoked from
+   * method's invocation context (thread).
+   *
+   * @param debugReason will only be printed to logs
+   */
+  @Internal
+  suspend fun <T> runInDumbMode(debugReason: @NonNls String, block: suspend () -> T): T {
+    LOG.info("[$project]: running dumb task without visible indicator: $debugReason")
     blockingContext { // because we need correct modality
       application.invokeAndWait {
         incrementDumbCounter(trace = Throwable())
@@ -179,6 +189,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     }
     finally {
       decrementDumbCounter()
+      LOG.info("[$project]: finished dumb task without visible indicator: $debugReason")
     }
   }
 

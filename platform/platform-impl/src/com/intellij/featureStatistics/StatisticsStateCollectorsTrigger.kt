@@ -3,6 +3,7 @@ package com.intellij.featureStatistics
 
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdleTracker
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
@@ -17,6 +18,7 @@ private class StatisticsStateCollectorsTrigger : AppLifecycleListener {
   @OptIn(FlowPreview::class)
   override fun welcomeScreenDisplayed() {
     val ref = WeakReference(WelcomeFrame.getInstance())
+    FUCounterUsageLogger.getInstance() // init service
 
     @Suppress("DEPRECATION")
     ApplicationManager.getApplication().coroutineScope.launch {

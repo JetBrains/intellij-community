@@ -5,7 +5,7 @@ object J {
         var shift = 0
         while (i < b.size) {
             val be = b[i]
-            result = result or (be.toInt() and 0xff shl shift)
+            result = result or ((be.toInt() and 0xff) shl shift)
             shift += 8
             i += 1
         }

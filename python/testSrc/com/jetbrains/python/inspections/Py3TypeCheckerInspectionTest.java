@@ -1468,4 +1468,16 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    #calc(literal_string, plain_string) # treat LiteralStrings as str in generic substitution todo lada uncomment
                    """);
   }
+
+  // PY-62476
+  public void testTypeGuardReturnTypeTreatedAsBool() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("""
+from typing import TypeGuard
+def foo(param: str | int) -> TypeGuard[str]:
+    return <warning descr="Expected type 'bool', got 'str | int' instead">param</warning>
+      """)
+    );
+  }
 }

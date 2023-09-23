@@ -5,10 +5,10 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.vfs.createFile
 import com.intellij.testFramework.withProjectAsync
-import com.intellij.util.io.readText
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import kotlin.io.path.readText
 
 
 class GradleRelativeConfigCalculatingTest : GradleRelativeConfigCalculatingTestCase() {

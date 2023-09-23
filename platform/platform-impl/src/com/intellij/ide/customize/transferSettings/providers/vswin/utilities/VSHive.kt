@@ -1,6 +1,7 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers.vswin.utilities
 
-import com.jetbrains.rd.util.lifetime.Lifetime
+import com.intellij.ide.customize.transferSettings.TransferableIdeVersionId
 import com.intellij.ide.customize.transferSettings.providers.vswin.parsers.VSIsolationIniParser
 import com.intellij.ide.customize.transferSettings.providers.vswin.parsers.VSRegistryParserNew
 import com.intellij.openapi.diagnostic.logger
@@ -46,6 +47,18 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
       12 -> "2013"
       11 -> "2012"
       else -> "Ver. ${version.major}.${version.minor}"
+    }
+  }
+
+  fun transferableVersion(): TransferableIdeVersionId {
+    return when (version.major) {
+      17 -> TransferableIdeVersionId.V2022
+      16 -> TransferableIdeVersionId.V2019
+      15 -> TransferableIdeVersionId.V2017
+      14 -> TransferableIdeVersionId.V2015
+      12 -> TransferableIdeVersionId.V2013
+      11 -> TransferableIdeVersionId.V2012
+      else -> TransferableIdeVersionId.Unknown
     }
   }
 

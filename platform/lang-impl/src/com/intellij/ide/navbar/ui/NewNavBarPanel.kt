@@ -164,7 +164,7 @@ internal class NewNavBarPanel(
       field = value
     }
 
-  private fun showPopup(cs: CoroutineScope, itemComponentIndex: Int, vm: NavBarPopupVm) {
+  private fun showPopup(cs: CoroutineScope, itemComponentIndex: Int, vm: NavBarPopupVm<*>) {
     NavBarShowPopup.log(project)
     val itemComponent = myItemComponents[itemComponentIndex]
     val list = navBarPopupList(vm, this, isFloating).also {

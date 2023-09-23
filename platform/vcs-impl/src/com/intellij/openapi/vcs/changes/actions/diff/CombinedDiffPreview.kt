@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor
 import com.intellij.openapi.vcs.changes.DiffRequestProcessorWithProducers
 import com.intellij.openapi.vcs.changes.EditorTabPreviewBase
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel.Companion.prepareCombinedDiffModelRequests
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vfs.VirtualFile
@@ -126,6 +127,16 @@ abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
             ?.let { CombinedPathBlockId(wrapper.filePath, wrapper.fileStatus, wrapper.tag) to it }
         }.toMap()
     }
+
+    @JvmStatic
+    fun prepareCombinedDiffModelRequestsFromProducers(changes: List<ChangeDiffRequestChain.Producer>): Map<CombinedBlockId, DiffRequestProducer> {
+      return changes
+        .asSequence()
+        .map { wrapper ->
+          CombinedPathBlockId(wrapper.filePath, wrapper.fileStatus, null) to wrapper
+        }.toMap()
+    }
+
   }
 
   override fun collectDiffProducers(selectedOnly: Boolean): ListSelection<DiffRequestProducer> {

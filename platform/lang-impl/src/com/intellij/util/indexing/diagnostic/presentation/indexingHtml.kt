@@ -5,6 +5,7 @@ package com.intellij.util.indexing.diagnostic.presentation
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
+import com.intellij.util.indexing.diagnostic.IndexStatisticGroup.IndexingActivityType
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.dto.*
 import kotlinx.html.*
@@ -46,7 +47,7 @@ private const val SECTION_INDEXING_TITLE = "Indexing"
 
 /**
  * For now, we have only Shared Indexes implementation of FileBasedIndexInfrastructureExtension,
- * so for simplicity let's use this name instead of a general "index infrastructure extensions".
+ * so for simplicity let's use this name instead of quite general name "index infrastructure extensions".
  */
 private const val INDEX_INFRA_EXTENSIONS = "shared indexes"
 
@@ -99,9 +100,9 @@ private fun getMinorDataClass(isMinor: Boolean) = if (isMinor) "minor-data" + (i
 
 fun JsonIndexingActivityDiagnostic.generateHtml(target: Appendable): String =
   when (type) {
-    IndexDiagnosticDumper.IndexingActivityType.Scanning ->
+    IndexingActivityType.Scanning ->
       (this.projectIndexingActivityHistory as JsonProjectScanningHistory).generateScanningHtml(target, appInfo, runtimeInfo)
-    IndexDiagnosticDumper.IndexingActivityType.DumbIndexing ->
+    IndexingActivityType.DumbIndexing ->
       (this.projectIndexingActivityHistory as JsonProjectDumbIndexingHistory).generateDumbIndexingHtml(target, appInfo, runtimeInfo)
   }
 
@@ -126,26 +127,7 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
     body {
       div(classes = "navigation-bar") {
         ul {
-          li {
-            a("#$SECTION_PROJECT_NAME_ID") {
-              text(SECTION_PROJECT_NAME_TITLE)
-            }
-          }
-          li {
-            a("#$SECTION_APP_INFO_ID") {
-              text(SECTION_APP_INFO_TITLE)
-            }
-          }
-          li {
-            a("#$SECTION_RUNTIME_INFO_ID") {
-              text(SECTION_RUNTIME_INFO_TITLE)
-            }
-          }
-          li {
-            a("#$SECTION_INDEXING_INFO_ID") {
-              text(SECTION_OVERVIEW_TITLE)
-            }
-          }
+          printProjectAppOverviewNavigation()
           li {
             a("#$SECTION_SCANNING_CONCURRENT_PART_ID") {
               text(SECTION_SCANNING_CONCURRENT_PART_TITLE)
@@ -157,31 +139,7 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
             }
           }
         }
-        hr("solid")
-        ul {
-          li {
-            label {
-              attributes["for"] = "id-hide-minor-data-checkbox"
-              text("Hide minor data")
-              input {
-                checked = HIDE_MINOR_DATA_INITIAL
-                id = "id-hide-minor-data-checkbox"
-                type = InputType.checkBox
-                onClick = "hideElementsHavingClass('minor-data', this.checked)"
-                style {
-                  unsafe {
-                    +"padding-left: 10px"
-                  }
-                }
-              }
-            }
-          }
-        }
-        div(classes = "jetbrains-logo") {
-          unsafe {
-            +JETBRAINS_GRAYSCALE_LOGO_SVG
-          }
-        }
+        printMinorDataCheckbox()
       }
 
       div(classes = "stats-activity-content") {
@@ -233,7 +191,7 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
         }
 
         div(id = SECTION_SCANNING_CONCURRENT_PART_ID) {
-          text("Time in this table is sum of CPU times on threads with pauses unless stated otherwise.")
+          text("Time in this table is the sum of wall times on all threads with pauses unless stated otherwise.")
           table(classes = "two-columns table-with-margin narrow-activity-table") {
             thead {
               tr { th(SECTION_SCANNING_CONCURRENT_PART_TITLE) { colSpan = "2" } }
@@ -248,16 +206,16 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
                 td(times.concurrentHandlingWallTimeWithoutPauses.presentableDuration())
               }
               tr {
-                td("Total time (sum of CPU times with pauses on many threads)")
-                td(times.concurrentHandlingCPUTimeWithPauses.presentableDuration())
+                td("Total time (sum of wall times with pauses on many threads)")
+                td(times.concurrentHandlingSumOfThreadTimesWithPauses.presentableDuration())
               }
               tr {
                 td("Time of iterating VFS and applying scanners")
-                td(times.concurrentIterationAndScannersApplicationCPUTimeWithPauses.presentableDuration())
+                td(times.concurrentIterationAndScannersApplicationSumOfThreadTimesWithPauses.presentableDuration())
               }
               tr {
                 td("Time of checking files")
-                td(times.concurrentFileCheckCPUTimeWithPauses.presentableDuration())
+                td(times.concurrentFileCheckSumOfThreadTimesWithPauses.presentableDuration())
               }
               tr {
                 td("Time of running $INDEX_INFRA_EXTENSIONS (without loading content, part of checking files)")
@@ -309,13 +267,13 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
             tbody {
               for (scanningStats in scanningStatistics) {
                 tr(classes = getMinorDataClass(
-                  scanningStats.totalCPUTimeWithPauses.milliseconds < 100 && scanningStats.numberOfScannedFiles < 1000)) {
+                  scanningStats.totalOneThreadTimeWithPauses.milliseconds < 100 && scanningStats.numberOfScannedFiles < 1000)) {
                   td(scanningStats.providerName)
                   td(scanningStats.numberOfScannedFiles.toString())
                   td(scanningStats.numberOfFilesForIndexing.toString())
                   td(scanningStats.numberOfFilesFullyIndexedByInfrastructureExtensions.toString())
                   td(scanningStats.numberOfSkippedFiles.toString())
-                  td(scanningStats.totalCPUTimeWithPauses.presentableDuration())
+                  td(scanningStats.totalOneThreadTimeWithPauses.presentableDuration())
                   td(scanningStats.iterationAndScannersApplicationTime.presentableDuration())
                   td(scanningStats.filesCheckTime.presentableDuration())
                   td(scanningStats.statusTime.presentableDuration())
@@ -350,6 +308,34 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
   }.toString()
 }
 
+private fun DIV.printMinorDataCheckbox() {
+  hr("solid")
+  ul {
+    li {
+      label {
+        attributes["for"] = "id-hide-minor-data-checkbox"
+        text("Hide minor data")
+        input {
+          checked = HIDE_MINOR_DATA_INITIAL
+          id = "id-hide-minor-data-checkbox"
+          type = InputType.checkBox
+          onClick = "hideElementsHavingClass('minor-data', this.checked)"
+          style {
+            unsafe {
+              +"padding-left: 10px"
+            }
+          }
+        }
+      }
+    }
+  }
+  div(classes = "jetbrains-logo") {
+    unsafe {
+      +JETBRAINS_GRAYSCALE_LOGO_SVG
+    }
+  }
+}
+
 private fun DIV.printDurationDescription() {
   text("All durations are wall time; they include pauses unless specified otherwise")
 }
@@ -374,26 +360,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
     body {
       div(classes = "navigation-bar") {
         ul {
-          li {
-            a("#$SECTION_PROJECT_NAME_ID") {
-              text(SECTION_PROJECT_NAME_TITLE)
-            }
-          }
-          li {
-            a("#$SECTION_APP_INFO_ID") {
-              text(SECTION_APP_INFO_TITLE)
-            }
-          }
-          li {
-            a("#$SECTION_RUNTIME_INFO_ID") {
-              text(SECTION_RUNTIME_INFO_TITLE)
-            }
-          }
-          li {
-            a("#$SECTION_INDEXING_INFO_ID") {
-              text(SECTION_OVERVIEW_TITLE)
-            }
-          }
+          printProjectAppOverviewNavigation()
           li {
             a("#$SECTION_SLOW_FILES_ID") {
               text(SECTION_SLOW_FILES_TITLE)
@@ -415,31 +382,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
             }
           }
         }
-        hr("solid")
-        ul {
-          li {
-            label {
-              attributes["for"] = "id-hide-minor-data-checkbox"
-              text("Hide minor data")
-              input {
-                checked = HIDE_MINOR_DATA_INITIAL
-                id = "id-hide-minor-data-checkbox"
-                type = InputType.checkBox
-                onClick = "hideElementsHavingClass('minor-data', this.checked)"
-                style {
-                  unsafe {
-                    +"padding-left: 10px"
-                  }
-                }
-              }
-            }
-          }
-        }
-        div(classes = "jetbrains-logo") {
-          unsafe {
-            +JETBRAINS_GRAYSCALE_LOGO_SVG
-          }
-        }
+        printMinorDataCheckbox()
       }
 
       div(classes = "stats-activity-content") {
@@ -493,11 +436,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               tr { td("Content loading time"); td(times.contentLoadingVisibleTime.presentableDuration()) }
               tr {
                 td("Index writing time")
-                td(if (times.isAppliedAllValuesSeparately)
-                     StringUtil.formatDuration(times.separateApplyingIndexesVisibleTime.milliseconds)
-                   else
-                     "Applied under read lock"
-                )
+                td(StringUtil.formatDuration(times.separateApplyingIndexesVisibleTime.milliseconds))
               }
 
               tr {
@@ -567,7 +506,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                 th("Total processing time (% of total processing time)")
                 th("Content loading time (% of total content loading time)")
                 th("Total files size")
-                th("Total processing speed (relative to CPU time)")
+                th("Total processing speed (relative to the sum of wall times of all threads)")
                 th("The biggest contributors")
               }
             }
@@ -616,7 +555,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                 th("Part of total indexing time")
                 th("Total number of files indexed by $INDEX_INFRA_EXTENSIONS")
                 th("Total files size")
-                th("Indexing speed (relative to CPU time)")
+                th("Indexing speed (relative to the sum of wall times on multiple threads)")
               }
             }
             tbody {
@@ -682,6 +621,29 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
       }
     }
   }.toString()
+}
+
+private fun UL.printProjectAppOverviewNavigation() {
+  li {
+    a("#$SECTION_PROJECT_NAME_ID") {
+      text(SECTION_PROJECT_NAME_TITLE)
+    }
+  }
+  li {
+    a("#$SECTION_APP_INFO_ID") {
+      text(SECTION_APP_INFO_TITLE)
+    }
+  }
+  li {
+    a("#$SECTION_RUNTIME_INFO_ID") {
+      text(SECTION_RUNTIME_INFO_TITLE)
+    }
+  }
+  li {
+    a("#$SECTION_INDEXING_INFO_ID") {
+      text(SECTION_OVERVIEW_TITLE)
+    }
+  }
 }
 
 private fun DIV.printProjectNameForActivity(projectName: String) {

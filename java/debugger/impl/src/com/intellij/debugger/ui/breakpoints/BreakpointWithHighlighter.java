@@ -7,6 +7,8 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.statistics.BreakpointInstallStatistic;
+import com.intellij.debugger.statistics.StatisticsStorage;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -23,6 +25,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
@@ -273,7 +276,8 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   public void processClassPrepare(DebugProcess debugProcess, ReferenceType classType) {
     DebugProcessImpl process = (DebugProcessImpl)debugProcess;
     if (shouldCreateRequest(process, true)) {
-      createRequestForPreparedClass(process, classType);
+      long timeMs = TimeoutUtil.measureExecutionTime(() -> createRequestForPreparedClass(process, classType));
+      StatisticsStorage.add(debugProcess, new BreakpointInstallStatistic(this), timeMs, 1);
       updateUI();
     }
   }

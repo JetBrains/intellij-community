@@ -26,114 +26,44 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   protected final CoverageSuitesBundle myBundle;
   protected final CoverageViewManager.StateBean myStateBean;
   private final FileStatusManager myFileStatusManager;
-  private volatile List<AbstractTreeNode<?>> myChildren;
-  private final boolean myIsLeaf;
-  private boolean myFullyCovered = false;
+  private VirtualFile myCachedFile;
 
+  /**
+   * Children are cached in order to be able to filter nodes with no (interesting) children.
+   * @see DirectoryCoverageViewExtension#getChildrenNodes(AbstractTreeNode)
+   */
+  private List<AbstractTreeNode<?>> myCachedChildren;
+
+  /**
+   * @deprecated This constructor is not used anymore.
+   */
+  @Deprecated
   public CoverageListNode(Project project,
                           @NotNull PsiNamedElement classOrPackage,
                           CoverageSuitesBundle bundle,
-                          CoverageViewManager.StateBean stateBean) {
-    this(project, classOrPackage, bundle, stateBean, false);
+                          CoverageViewManager.StateBean stateBean,
+                          boolean unused) {
+    this(project, classOrPackage, bundle, stateBean);
   }
 
   public CoverageListNode(Project project,
                           @NotNull PsiNamedElement classOrPackage,
                           CoverageSuitesBundle bundle,
-                          CoverageViewManager.StateBean stateBean,
-                          boolean isLeaf) {
+                          CoverageViewManager.StateBean stateBean) {
     super(project, classOrPackage);
 
     myName = ReadAction.compute(() -> classOrPackage.getName());
     myBundle = bundle;
     myStateBean = stateBean;
     myFileStatusManager = FileStatusManager.getInstance(myProject);
-    myIsLeaf = isLeaf;
-  }
-
-  public synchronized void reset() {
-    myChildren = null;
-  }
-
-  public boolean isLeaf() {
-    return myIsLeaf;
-  }
-
-  protected boolean isFullyCovered() {
-    return myFullyCovered;
-  }
-
-  public void setFullyCovered(boolean value) {
-    myFullyCovered = value;
-  }
-
-  private CoverageListRootNode myRoot;
-
-  CoverageListRootNode getRoot() {
-    if (myRoot == null) {
-      var parent = (CoverageListNode)getParent();
-      if (parent == null) {
-        if (this instanceof CoverageListRootNode root) {
-          myRoot = root;
-        }
-        else {
-          throw new RuntimeException("Coverage node unexpectedly has no parent " + this +
-                                     ". Each coverage node is supposed to have a parent or to be CoverageListRootNode instance.");
-        }
-      }
-      else {
-        myRoot = parent.getRoot();
-      }
-    }
-    return myRoot;
   }
 
   @NotNull
   @Override
-  public List<? extends AbstractTreeNode<?>> getChildren() {
-    return getChildrenInternal();
-  }
-
-  private synchronized List<? extends AbstractTreeNode<?>> getChildrenInternal() {
-    if (myChildren == null) {
-      final var nodes = myBundle.getCoverageEngine().createCoverageViewExtension(myProject, myBundle, myStateBean)
-        .getChildrenNodes(this);
-      myChildren = filterChildren(nodes);
-    }
-    return myChildren;
-  }
-
-  protected List<AbstractTreeNode<?>> filterChildren(List<AbstractTreeNode<?>> nodes) {
-    if (myStateBean.isShowOnlyModified() || myStateBean.isHideFullyCovered()) {
-      nodes = nodes.stream().filter((node) -> {
-        boolean filtered = true;
-        boolean isLeaf = false;
-        if (node instanceof CoverageListNode coverageNode) {
-          isLeaf = coverageNode.isLeaf();
-          final boolean fullyCovered = coverageNode.isFullyCovered();
-          if (myStateBean.isHideFullyCovered() && fullyCovered) {
-            filtered = false;
-            getRoot().setHasFullyCoveredChildren(true);
-          }
-        }
-        if (myStateBean.isShowOnlyModified() && isLeaf) {
-          final FileStatus status = node.getFileStatus();
-          final boolean isModified = status == FileStatus.MODIFIED || status == FileStatus.ADDED || status == FileStatus.UNKNOWN;
-          if (!isModified) {
-            filtered = false;
-            getRoot().setHasVCSFilteredChildren(true);
-          }
-        }
-        return filtered;
-      }).toList();
-    }
-
-    return nodes.stream().filter((node) -> {
-      if (node instanceof CoverageListNode) {
-        if (((CoverageListNode)node).isLeaf()) return true;
-      }
-      return !node.getChildren().isEmpty();
-    }).toList();
+  public synchronized List<? extends AbstractTreeNode<?>> getChildren() {
+    if (myCachedChildren != null) return myCachedChildren;
+    return myCachedChildren = myBundle.getCoverageEngine().createCoverageViewExtension(myProject, myBundle, myStateBean)
+      .getChildrenNodes(this);
   }
 
   @Override
@@ -142,7 +72,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
       final Object object = getValue();
       if (object instanceof PsiNamedElement value) {
         if (value instanceof PsiQualifiedNamedElement &&
-            (myStateBean.myFlattenPackages && value.getContainingFile() == null || getParent() instanceof CoverageListRootNode)) {
+            (myStateBean.isFlattenPackages() && value.getContainingFile() == null || getParent() instanceof CoverageListRootNode)) {
           presentation.setPresentableText(((PsiQualifiedNamedElement)value).getQualifiedName());
         }
         else {
@@ -156,6 +86,13 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
 
   @Override
   public FileStatus getFileStatus() {
+    VirtualFile virtualFile = getVirtualFileCached();
+    return virtualFile != null ? myFileStatusManager.getStatus(virtualFile) : super.getFileStatus();
+  }
+
+  @Nullable
+  private VirtualFile getVirtualFileCached() {
+    if (myCachedFile != null) return myCachedFile;
     final PsiFile containingFile = ReadAction.compute(() -> {
       Object value = getValue();
       if (value instanceof PsiElement && ((PsiElement)value).isValid()) {
@@ -163,7 +100,9 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
       }
       return null;
     });
-    return containingFile != null ? myFileStatusManager.getStatus(containingFile.getVirtualFile()) : super.getFileStatus();
+    VirtualFile virtualFile = containingFile == null ? null : containingFile.getVirtualFile();
+    myCachedFile = virtualFile;
+    return virtualFile;
   }
 
   @Override
@@ -229,7 +168,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   }
 
   private boolean contains(VirtualFile file, PsiDirectory value) {
-    if (myStateBean.myFlattenPackages) {
+    if (myStateBean.isFlattenPackages()) {
       return Comparing.equal(value.getVirtualFile(), file.getParent());
     }
 

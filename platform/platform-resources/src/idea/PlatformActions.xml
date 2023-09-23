@@ -200,6 +200,8 @@
     <action id="TestSearchContributors" class="com.intellij.ide.actions.searcheverywhere.setesting.TestSearchEverywhereAction" internal="true"/>
     <action id="SettingsEntryPoint" class="com.intellij.ide.actions.SettingsEntryPointAction" icon="AllIcons.General.GearPlain"/>
 
+    <action id="SpeedSearch" class="com.intellij.ide.actions.speedSearch.SpeedSearchAction" use-shortcut-of="Find" />
+
     <action id="RunAnything" icon="AllIcons.Actions.Run_anything" class="com.intellij.ide.actions.runAnything.RunAnythingAction"/>
     <action id="EnableNewUi" class="com.intellij.ide.actions.EnableNewUiAction" icon="AllIcons.Actions.EnableNewUi"/>
     <action id="DisableNewUi" class="com.intellij.ide.actions.DisableNewUiAction"/>
@@ -309,7 +311,10 @@
       <action id="EditorDecreaseFontSizeGlobal" class="com.intellij.openapi.editor.actions.ChangeEditorFontSizeAction$DecreaseEditorFontSizeGlobal"/>
 
       <action id="EditorScrollToCenter" class="com.intellij.openapi.editor.actions.ScrollToCenterAction"/>
-      <action id="EditorToggleCase" class="com.intellij.openapi.editor.actions.ToggleCaseAction"/>
+      <action id="EditorToggleCase" class="com.intellij.openapi.editor.actions.ToggleCaseAction">
+        <synonym key="action.EditorToggleCase.synonym.upper"/>
+        <synonym key="action.EditorToggleCase.synonym.lower"/>
+      </action>
       <action id="EditorJoinLines" class="com.intellij.openapi.editor.actions.JoinLinesAction"/>
       <action id="FillParagraph" class="com.intellij.codeInsight.editorActions.fillParagraph.FillParagraphAction"/>
       <action id="EditorSelectLine" class="com.intellij.openapi.editor.actions.ExtendLineSelectionAction"/>
@@ -926,6 +931,7 @@
     </group>
 
     <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
+    <action id="RecoverCachesFromLog" class="com.intellij.ide.actions.cache.RecoverVfsFromLogAction"/>
 
     <group id="MainToolBar">
       <reference ref="OpenFile"/>
@@ -1057,7 +1063,7 @@
               icon="AllIcons.ToolbarDecorator.Import"/>
       <action id="WelcomeScreen.Configure.Export" class="com.intellij.configurationStore.ExportSettingsAction"
               icon="AllIcons.ToolbarDecorator.Export"/>
-      <action id="WelcomeScreen.Configure.RestoreDefault" class="com.intellij.configurationStore.RestoreDefaultSettingsAction"/>
+      <reference ref="RestoreDefaultSettings"/>
 
       <reference ref="CollectZippedLogs"/>
 

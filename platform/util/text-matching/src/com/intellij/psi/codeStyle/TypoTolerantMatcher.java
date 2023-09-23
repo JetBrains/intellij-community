@@ -297,12 +297,14 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
 
       if (!myTypoAware) {
         int patternIndex = 0;
-        for (int i = 0; i < length; ++i) {
-          char c = myName.charAt(i);
-          if (c == myMeaningfulCharacters[patternIndex] || c == myMeaningfulCharacters[patternIndex + 1]) {
-            patternIndex += 2;
-            if (patternIndex >= myMeaningfulCharacters.length) {
-              break;
+        if (myMeaningfulCharacters.length > 0) {
+          for (int i = 0; i < length; ++i) {
+            char c = myName.charAt(i);
+            if (c == myMeaningfulCharacters[patternIndex] || c == myMeaningfulCharacters[patternIndex + 1]) {
+              patternIndex += 2;
+              if (patternIndex >= myMeaningfulCharacters.length) {
+                break;
+              }
             }
           }
         }

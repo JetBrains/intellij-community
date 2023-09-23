@@ -50,6 +50,7 @@ import kotlin.jvm.functions.Function0;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.*;
+import sun.awt.SunToolkit;
 
 import javax.swing.*;
 import java.awt.*;
@@ -165,7 +166,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @TestOnly
-  final ReadMostlyRWLock getRwLock() {
+  ReadMostlyRWLock getRwLock() {
     return myLock;
   }
 
@@ -187,7 +188,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public boolean isInImpatientReader() {
-    return myLock.isInImpatientReader();
+    return myLock != null && myLock.isInImpatientReader();
   }
 
   @TestOnly
@@ -231,7 +232,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public final boolean isLightEditMode() {
+  public boolean isLightEditMode() {
     return AppMode.isLightEdit();
   }
 
@@ -513,12 +514,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public final void restart(boolean exitConfirmed) {
+  public void restart(boolean exitConfirmed) {
     restart(exitConfirmed, false);
   }
 
   @Override
-  public final void restart(boolean exitConfirmed, boolean elevate) {
+  public void restart(boolean exitConfirmed, boolean elevate) {
     int flags = SAVE;
     if (exitConfirmed) {
       flags |= EXIT_CONFIRMED;
@@ -539,7 +540,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
    * quit message is shown. In that case, showing multiple messages sounds contra-intuitive as well
    */
   @Override
-  public final void exit(boolean force, boolean exitConfirmed, boolean restart, int exitCode) {
+  public void exit(boolean force, boolean exitConfirmed, boolean restart, int exitCode) {
     int flags = SAVE;
     if (force) {
       flags |= FORCE_EXIT;
@@ -551,7 +552,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public final void exit(boolean force, boolean exitConfirmed, boolean restart) {
+  public void exit(boolean force, boolean exitConfirmed, boolean restart) {
     exit(force, exitConfirmed, restart, 0);
   }
 
@@ -560,12 +561,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public final void exit(int flags, int exitCode) {
+  public void exit(int flags, int exitCode) {
     exit(flags, false, ArrayUtil.EMPTY_STRING_ARRAY, exitCode);
   }
 
   @Override
-  public final void exit(int flags) {
+  public void exit(int flags) {
     exit(flags, false, ArrayUtil.EMPTY_STRING_ARRAY, 0);
   }
 
@@ -585,7 +586,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public final boolean isExitInProgress() {
+  public boolean isExitInProgress() {
     return myExitInProgress;
   }
 
@@ -1047,13 +1048,13 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     }
 
     if (Boolean.TRUE.equals(component.getClientProperty(WAS_EVER_SHOWN))) {
-      assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
     }
     else {
       JRootPane root = component.getRootPane();
       if (root != null) {
         component.putClientProperty(WAS_EVER_SHOWN, Boolean.TRUE);
-        assertIsDispatchThread();
+        ThreadingAssertions.assertEventDispatchThread();
       }
     }
   }
@@ -1210,35 +1211,24 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       }
     }
 
-    private void markThreadNameInStackTrace() {
+    private static void markThreadNameInStackTrace() {
       String id = id();
 
-      if (id != null) {
-        Thread thread = Thread.currentThread();
-        thread.setName(thread.getName() + id);
-      }
+      Thread thread = Thread.currentThread();
+      thread.setName(thread.getName() + id);
     }
 
-    private void unmarkThreadNameInStackTrace() {
+    private static void unmarkThreadNameInStackTrace() {
       String id = id();
 
-      if (id != null) {
-        Thread thread = Thread.currentThread();
-        String name = thread.getName();
-        name = StringUtil.replace(name, id, "");
-        thread.setName(name);
-      }
+      Thread thread = Thread.currentThread();
+      String name = thread.getName();
+      name = StringUtil.replace(name, id, "");
+      thread.setName(name);
     }
 
-    private @Nullable String id() {
-      Class<?> aClass = getClass();
-      String name = aClass.getName();
-      name = name.substring(name.lastIndexOf('.') + 1);
-      name = name.substring(name.lastIndexOf('$') + 1);
-      if (!name.equals("AccessToken")) {
-        return " [" + name + "]";
-      }
-      return null;
+    private static @NotNull String id() {
+      return " [WriteAccessToken]";
     }
   }
 
@@ -1369,20 +1359,24 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public String toString() {
-    boolean writeActionPending = isWriteActionPending();
-    boolean writeActionInProgress = isWriteActionInProgress();
-    boolean writeAccessAllowed = isWriteAccessAllowed();
+    boolean hasLock = myLock != null;
+    boolean writeActionPending = hasLock && isWriteActionPending();
+    boolean writeActionInProgress = hasLock && isWriteActionInProgress();
+    boolean writeAccessAllowed = hasLock && isWriteAccessAllowed();
     return "Application"
-           +(getContainerState().get() == ContainerState.COMPONENT_CREATED ? "" : " (containerState " + getContainerStateName() + ") ")
+           + (getContainerState().get() == ContainerState.COMPONENT_CREATED ? "" : " (containerState " + getContainerStateName() + ") ")
            + (isUnitTestMode() ? " (unit test)" : "")
            + (isInternal() ? " (internal)" : "")
            + (isHeadlessEnvironment() ? " (headless)" : "")
            + (isCommandLine() ? " (command line)" : "")
-           + (writeActionPending || writeActionInProgress || writeAccessAllowed ? " (WA" +
-                                                                                  (writeActionPending ? " pending" : "") +
-                                                                                  (writeActionInProgress ? " inProgress" : "") +
-                                                                                  (writeAccessAllowed ? " allowed" : "") +
-                                                                                  ")" : "")
+           + (hasLock ?
+               (writeActionPending || writeActionInProgress || writeAccessAllowed ? " (WA" +
+                                                                                    (writeActionPending ? " pending" : "") +
+                                                                                    (writeActionInProgress ? " inProgress" : "") +
+                                                                                    (writeAccessAllowed ? " allowed" : "") +
+                                                                                    ")" : "")
+               : " (lock is not ready)"
+           )
            + (isReadAccessAllowed() ? " (RA allowed)" : "")
            + (StartupUtil.isImplicitReadOnEDTDisabled() ? " (IR on EDT disabled)" : "")
            + (isInImpatientReader() ? " (impatient reader)" : "")
@@ -1455,5 +1449,10 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         reported.set(false);
       }
     }, app);
+  }
+
+  @Override
+  public void flushNativeEventQueue() {
+    SunToolkit.flushPendingEvents();
   }
 }

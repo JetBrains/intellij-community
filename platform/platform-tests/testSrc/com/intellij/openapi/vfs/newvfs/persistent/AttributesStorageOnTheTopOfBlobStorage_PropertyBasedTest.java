@@ -4,12 +4,14 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase.AttributeRecord;
 import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase.Attributes;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.*;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
+import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
+import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
@@ -65,15 +67,18 @@ public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {
   public AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest(final boolean storage) { useLockFreeStorage = storage; }
 
   protected AttributesStorageOverBlobStorage createStorage(final Path storagePath) throws Exception {
-    final SpaceAllocationStrategy spaceAllocationStrategy = new DataLengthPlusFixedPercentStrategy(256, 64, 30);
+    final SpaceAllocationStrategy spaceAllocationStrategy = new DataLengthPlusFixedPercentStrategy(64, 256,
+                                                                                                   StreamlinedBlobStorageHelper.MAX_CAPACITY,
+                                                                                                   30
+    );
     final StreamlinedBlobStorage storage = useLockFreeStorage ?
-                                           new StreamlinedBlobStorageOverLockFreePagesStorage(
+                                           new StreamlinedBlobStorageOverLockFreePagedStorage(
                                              new PagedFileStorageWithRWLockedPageContent(
                                                storagePath, LOCK_CONTEXT, PAGE_SIZE, PageContentLockingStrategy.LOCK_PER_PAGE
                                              ),
                                              spaceAllocationStrategy
                                            ) :
-                                           new LargeSizeStreamlinedBlobStorage(
+                                           new StreamlinedBlobStorageOverPagedStorage(
                                              new PagedFileStorage(storagePath, LOCK_CONTEXT, PAGE_SIZE, true, true),
                                              spaceAllocationStrategy
                                            );

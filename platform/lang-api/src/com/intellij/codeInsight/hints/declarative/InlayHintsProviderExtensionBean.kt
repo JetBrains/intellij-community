@@ -43,11 +43,12 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   var isEnabledByDefault: Boolean = true
 
   /**
-   * key of the group, one of [com.intellij.codeInsight.hints.InlayGroup] values
+   * Key of the group, one of [com.intellij.codeInsight.hints.InlayGroup] values
    */
   @RequiredElement
   @Attribute
-  var group: String? = null
+  @JvmField
+  var group: InlayGroup? = null
 
   /**
    * Provider id, which must uniquely identify the pair (provider, language),
@@ -72,12 +73,14 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
    */
   @RequiredElement
   @Attribute
+  @Nls(capitalization = Nls.Capitalization.Title)
   var nameKey: String? = null
 
   /**
    * Description, which will be seen in the settings
    */
   @Attribute
+  @Nls
   var descriptionKey: String? = null
 
   override fun getImplementationClassName(): String? {
@@ -89,7 +92,7 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   }
 
   fun requiredGroup() : InlayGroup {
-    return InlayGroup.valueOf(group!!)
+    return group!!
   }
 
   /**
@@ -100,7 +103,7 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   }
 
   fun getProviderName() : @Nls String {
-    return getLocalizedString(bundle!!, nameKey!!)!!
+    return getLocalizedString(bundle, nameKey!!)!!
   }
 
   fun getDescription() : @Nls String? {

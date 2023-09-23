@@ -4,7 +4,6 @@ package com.intellij.usages.impl;
 import com.intellij.ide.tags.TagManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
@@ -21,6 +20,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -125,7 +125,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   void addTargetsNode(@NotNull Node node, @NotNull DefaultTreeModel treeModel) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     int index;
     synchronized (this) {
       index = getNodeIndex(node, getSwingChildren());
@@ -140,7 +140,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   @Override
   public void removeAllChildren() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     super.removeAllChildren();
     synchronized (this) {
       myChildren.clear();
@@ -167,7 +167,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
 
   int removeUsagesBulk(@NotNull Set<? extends UsageNode> usages, @NotNull DefaultTreeModel treeModel) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     int removed = 0;
     synchronized (this) {
       List<MutableTreeNode> removedNodes = new SmartList<>();
@@ -262,7 +262,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   void incrementUsageCount(int i) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     GroupNode groupNode = this;
     while (true) {
       groupNode.myRecursiveUsageCount += i;
@@ -335,7 +335,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   int getRecursiveUsageCount() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return myRecursiveUsageCount;
   }
 

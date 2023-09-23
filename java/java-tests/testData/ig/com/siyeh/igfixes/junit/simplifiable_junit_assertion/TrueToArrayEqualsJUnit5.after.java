@@ -5,7 +5,6 @@ import java.util.Arrays;
 import org.junit.jupiter.api.*;
 class ObjectEqualsToEquals {
 
-  @Test
   public void testObjectsEquals() {
       <caret>assertArrayEquals(getFoo(), getBar(), "message");
   }

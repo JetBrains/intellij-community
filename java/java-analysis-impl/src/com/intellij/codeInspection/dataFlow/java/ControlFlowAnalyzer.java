@@ -37,6 +37,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.Trap;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
@@ -698,6 +699,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if(diff >= 0 && diff <= MAX_UNROLL_SIZE) {
       // Unroll small loops
       Objects.requireNonNull(statement.getUpdate()).accept(this);
+      // It's possible that a nested loop may cause widening, dismissing our efforts to track the loop variable
+      // In this case, we should at least ensure that it's not lower than the start. 
+      addInstruction(new PushInstruction(loopVar, null));
+      DfType startBound = PsiTypes.intType().equals(counterType) ? DfTypes.intValue(Math.toIntExact(start)) : DfTypes.longValue(start);
+      addInstruction(new EnsureInstruction(null, RelationType.GE, startBound, null));
+      addInstruction(new PopInstruction());
       addInstruction(new GotoInstruction(startOffset, false));
       return true;
     }
@@ -1248,6 +1255,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     if (processor != null) {
       processor.accept(this);
+    } else {
+      pushUnknown(); // incomplete code
     }
     PsiTemplate template = expression.getTemplate();
     if (template != null) {
@@ -1286,7 +1295,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     for (int i = 0; i < count; i++) {
       PsiFragment fragment = fragments.get(i);
       Object value = fragment.getValue();
-      if (value instanceof String) {
+      if (value != null) {
         addInstruction(new PushValueInstruction(DfTypes.referenceConstant(value, stringType)));
       } else {
         pushUnknown();
@@ -1294,12 +1303,17 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (i > 0) {
         addInstruction(new StringConcatInstruction(null, constraint));
       }
-      expressions.get(i).accept(this);
+      PsiExpression embeddedExpression = expressions.get(i);
+      if (embeddedExpression instanceof PsiEmptyExpressionImpl) {
+        addInstruction(new PushValueInstruction(DfTypes.NULL));
+      } else {
+        embeddedExpression.accept(this);
+      }
       addInstruction(new StringConcatInstruction(null, constraint));
     }
     PsiFragment lastFragment = fragments.get(count);
     Object value = lastFragment.getValue();
-    if (value instanceof String) {
+    if (value != null) {
       addInstruction(new PushValueInstruction(DfTypes.referenceConstant(value, stringType)));
     } else {
       pushUnknown();

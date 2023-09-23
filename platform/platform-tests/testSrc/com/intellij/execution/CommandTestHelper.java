@@ -1,20 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public final class CommandTestHelper {
   public static final String ARG = "-arg";
   public static final String ENV = "-env";
   public static final String OUT = "-out";
-  public static final String ENC = "UTF-8";
 
   public static void main(String[] args) throws IOException {
-    String mode = null;
-    String out = null;
+    String mode = null, out = null;
     if (args.length >= 3) {
       if (ARG.equals(args[0])) mode = ARG;
       if (ENV.equals(args[0])) mode = ENV;
@@ -25,9 +24,9 @@ public final class CommandTestHelper {
       System.exit(1);
     }
 
-    try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(out), ENC)) {
+    try (var writer = Files.newBufferedWriter(Path.of(out))) {
       if (mode.equals(ENV)) {
-        for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+        for (var entry : System.getenv().entrySet()) {
           writer.write(format(entry));
           writer.write('\n');
         }
@@ -42,6 +41,6 @@ public final class CommandTestHelper {
   }
 
   public static String format(Map.Entry<String, String> entry) {
-    return entry.getKey() + "=" + entry.getValue().hashCode();
+    return entry.getKey() + "=" + entry.getValue().chars().mapToObj(Integer::toHexString).collect(Collectors.joining("_"));
   }
 }

@@ -23,8 +23,10 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.ClientProperty;
@@ -155,7 +157,7 @@ public final class ActionUtil {
       Runnable runnable = () -> {
         // init group flags from deprecated methods
         boolean isGroup = action instanceof ActionGroup;
-        boolean wasPopup = isGroup && ((ActionGroup)action).isPopup(e.getPlace());
+        boolean wasPopup = isGroup && ((ActionGroup)action).isPopup();
         boolean wasHideIfEmpty = isGroup && ((ActionGroup)action).hideIfNoVisibleChildren();
         boolean wasDisableIfEmpty = isGroup && ((ActionGroup)action).disableIfNoVisibleChildren();
         presentation.setPopupGroup(isGroup && (presentation.isPopupGroup() || wasPopup));
@@ -184,7 +186,7 @@ public final class ActionUtil {
           assertDeprecatedActionGroupFlagsNotChanged((ActionGroup)action, e, wasPopup, wasHideIfEmpty, wasDisableIfEmpty);
         }
       };
-      boolean isLikeUpdate = !beforeActionPerformed && Registry.is("actionSystem.update.actions.async");
+      boolean isLikeUpdate = !beforeActionPerformed;
       try (AccessToken ignore = SlowOperations.startSection(isLikeUpdate ? SlowOperations.ACTION_UPDATE
                                                                          : SlowOperations.ACTION_PERFORM)) {
         long startTime = System.nanoTime();
@@ -220,7 +222,7 @@ public final class ActionUtil {
 
   private static void assertDeprecatedActionGroupFlagsNotChanged(@NotNull ActionGroup group, @NotNull AnActionEvent event,
                                                                  boolean wasPopup, boolean wasHideIfEmpty, boolean wasDisableIfEmpty) {
-    boolean warnPopup = wasPopup != group.isPopup(event.getPlace());
+    boolean warnPopup = wasPopup != group.isPopup();
     boolean warnHide = wasHideIfEmpty != group.hideIfNoVisibleChildren();
     boolean warnDisable = wasDisableIfEmpty != group.disableIfNoVisibleChildren();
     if (!(warnPopup || warnHide || warnDisable)) return;
@@ -408,10 +410,6 @@ public final class ActionUtil {
 
   public static @NotNull AnActionEvent createEmptyEvent() {
     return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null);
-  }
-
-  public static void sortAlphabetically(@NotNull List<? extends AnAction> list) {
-    list.sort((o1, o2) -> Comparing.compare(o1.getTemplateText(), o2.getTemplateText()));
   }
 
   /**

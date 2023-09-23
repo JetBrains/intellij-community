@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.json5;
 
 import com.intellij.json.JsonDialectUtil;
@@ -9,7 +9,7 @@ import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 
-public class Json5PsiWalkerFactory implements JsonLikePsiWalkerFactory {
+public final class Json5PsiWalkerFactory implements JsonLikePsiWalkerFactory {
   public static final JsonLikePsiWalker WALKER_INSTANCE = new JsonOriginalPsiWalker() {
     @Override
     public boolean requiresNameQuotes() {
@@ -28,9 +28,8 @@ public class Json5PsiWalkerFactory implements JsonLikePsiWalkerFactory {
     return parent != null && JsonDialectUtil.getLanguageOrDefaultJson(parent) == Json5Language.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public JsonLikePsiWalker create(@NotNull JsonSchemaObject schemaObject) {
+  public @NotNull JsonLikePsiWalker create(@NotNull JsonSchemaObject schemaObject) {
     return WALKER_INSTANCE;
   }
 }

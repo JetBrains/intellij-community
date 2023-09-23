@@ -2,13 +2,12 @@
 package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.SettableFuture;
+import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.navigation.History;
 import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLogBundle;
@@ -116,30 +115,25 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
       return;
     }
 
-    List<NamedRunnable> runnables = new ArrayList<>();
-    runnables.add(new NamedRunnable(VcsLogBundle.message("vcs.log.commit.does.not.match.view.and.reset.link")) {
-      @Override
-      public void run() {
-        getFilterUi().clearFilters();
-        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true),
-                       pack -> pack.getFilters().isEmpty());
-      }
-    });
+    List<NotificationAction> actions = new ArrayList<>();
+    actions.add(NotificationAction.createSimple(VcsLogBundle.message("vcs.log.commit.does.not.match.view.and.reset.link"), () -> {
+      getFilterUi().clearFilters();
+      invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true),
+                     pack -> pack.getFilters().isEmpty());
+    }));
     VcsProjectLog projectLog = VcsProjectLog.getInstance(myProject);
     if (projectLog.getDataManager() == myLogData) {
-      runnables.add(new NamedRunnable(VcsLogBundle.message("vcs.log.commit.does.not.match.view.in.tab.link")) {
-        @Override
-        public void run() {
-          MainVcsLogUi ui = projectLog.openLogTab(VcsLogFilterObject.collection());
-          if (ui != null) {
-            VcsLogUtil.invokeOnChange(ui, () -> ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false, true),
-                                      pack -> pack.getFilters().isEmpty());
-          }
+      actions.add(NotificationAction.createSimple(VcsLogBundle.message("vcs.log.commit.does.not.match.view.in.tab.link"), () -> {
+        MainVcsLogUi ui = projectLog.openLogTab(VcsLogFilterObject.collection());
+        if (ui != null) {
+          VcsLogUtil.invokeOnChange(ui, () -> ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false, true),
+                                    pack -> pack.getFilters().isEmpty());
         }
-      });
+      }));
     }
-    VcsBalloonProblemNotifier.showOverChangesView(myProject, getCommitNotFoundMessage(commitId, true), MessageType.WARNING,
-                                                  runnables.toArray(new NamedRunnable[0]));
+    VcsNotifier.getInstance(myProject).notifyWarning(VcsLogNotificationIdsHolder.COMMIT_NOT_FOUND, "",
+                                                     getCommitNotFoundMessage(commitId, true),
+                                                     actions.toArray(NotificationAction[]::new));
   }
 
   public boolean isHighlighterEnabled(@NotNull String id) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.diagnostic.telemetry.otExporters.CsvMetricsExporter
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.common.AttributesBuilder
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
@@ -13,7 +14,6 @@ import io.opentelemetry.sdk.metrics.SdkMeterProvider
 import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
-import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.time.Instant
@@ -33,13 +33,13 @@ class OpenTelemetryConfigurator(private val mainScope: CoroutineScope,
   private val metricsReportingPath = if (enableMetricsByDefault) OpenTelemetryUtils.metricsReportingPath() else null
   val resource: Resource = Resource.create(
     Attributes.builder()
-      .put(ResourceAttributes.SERVICE_NAME, serviceName)
-      .put(ResourceAttributes.SERVICE_VERSION, serviceVersion)
-      .put(ResourceAttributes.SERVICE_NAMESPACE, serviceNamespace)
-      .put(ResourceAttributes.OS_TYPE, SystemInfoRt.OS_NAME)
-      .put(ResourceAttributes.OS_VERSION, SystemInfoRt.OS_VERSION)
-      .put(ResourceAttributes.HOST_ARCH, System.getProperty("os.arch"))
-      .put(ResourceAttributes.SERVICE_INSTANCE_ID, DateTimeFormatter.ISO_INSTANT.format(Instant.now()))
+      .put(AttributeKey.stringKey("service.name"), serviceName)
+      .put(AttributeKey.stringKey("service.version"), serviceVersion)
+      .put(AttributeKey.stringKey("service.namespace"), serviceNamespace)
+      .put(AttributeKey.stringKey("os.type"), SystemInfoRt.OS_NAME)
+      .put(AttributeKey.stringKey("os.version"), SystemInfoRt.OS_VERSION)
+      .put(AttributeKey.stringKey("host.arch"), System.getProperty("os.arch"))
+      .put(AttributeKey.stringKey("service.instance.id"), DateTimeFormatter.ISO_INSTANT.format(Instant.now()))
       .also {
         customResourceBuilder?.invoke(it)
       }

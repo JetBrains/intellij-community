@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
@@ -17,7 +18,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class WitherProcessor extends AbstractClassProcessor {
+@Service
+public final class WitherProcessor extends AbstractClassProcessor {
   private static final String BUILDER_DEFAULT_ANNOTATION = LombokClassNames.BUILDER_DEFAULT;
 
   public WitherProcessor() {

@@ -187,6 +187,14 @@ fun runProcessBlocking(args: List<String>, workingDir: Path? = null, timeoutMill
   }
 }
 
+suspend fun runProcess(vararg args: String,
+                       workingDir: Path? = null,
+                       timeout: Duration = DEFAULT_TIMEOUT,
+                       additionalEnvVariables: Map<String, String> = emptyMap(),
+                       inheritOut: Boolean = false) {
+  runProcess(args.toList(), workingDir, timeout, additionalEnvVariables, inheritOut)
+}
+
 suspend fun runProcess(args: List<String>,
                        workingDir: Path? = null,
                        timeout: Duration = DEFAULT_TIMEOUT,

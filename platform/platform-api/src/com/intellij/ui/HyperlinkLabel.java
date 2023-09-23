@@ -290,13 +290,6 @@ public class HyperlinkLabel extends HighlightableComponent {
     adjustSize();
   }
 
-  public static class Croppable extends HyperlinkLabel {
-    @Override
-    protected void adjustSize() {
-      // ignore, keep minimum size default
-    }
-  }
-
   @Override
   public void updateUI() {
     super.updateUI();

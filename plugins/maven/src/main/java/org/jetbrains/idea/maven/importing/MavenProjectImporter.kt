@@ -27,19 +27,19 @@ interface MavenProjectImporter {
                        modelsProvider: IdeModifiableModelsProvider,
                        importingSettings: MavenImportingSettings,
                        previewModule: Module?,
-                       importingActivity: StructuredIdeActivity): MavenProjectImporter {
+                       parentImportingActivity: StructuredIdeActivity): MavenProjectImporter {
       val importer = createImporter(project, projectsTree, projectsToImportWithChanges,
                                     modelsProvider, importingSettings, previewModule)
       return object : MavenProjectImporter {
         override fun importProject(): List<MavenProjectsProcessorTask> {
-          val activity = MavenImportStats.startApplyingModelsActivity(project, importingActivity)
+          val activity = MavenImportStats.startApplyingModelsActivity(project, parentImportingActivity)
           val startTime = System.currentTimeMillis()
           try {
             importingInProgress.incrementAndGet()
 
             val postImportTasks = importer.importProject()!!
 
-            val statsMarker = PostImportingTaskMarker(importingActivity)
+            val statsMarker = PostImportingTaskMarker(parentImportingActivity)
             return ContainerUtil.concat(listOf(statsMarker.createStartedTask()),
                                         postImportTasks,
                                         listOf(statsMarker.createFinishedTask()))

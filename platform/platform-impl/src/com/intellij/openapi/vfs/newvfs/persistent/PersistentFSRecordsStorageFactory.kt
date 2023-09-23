@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.openapi.diagnostic.Logger
@@ -31,7 +31,7 @@ object PersistentFSRecordsStorageFactory {
   }
 
   private var RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(
-    System.getProperty("vfs.records-storage-impl", RecordsStorageKind.OVER_MMAPPED_FILE.name))
+    System.getProperty("vfs.records-storage.impl", RecordsStorageKind.OVER_MMAPPED_FILE.name))
 
 
   @JvmStatic
@@ -48,7 +48,7 @@ object PersistentFSRecordsStorageFactory {
   @JvmStatic
   @JvmName("resetRecordsStorageImplementation")
   fun resetRecordsStorageImplementation() {
-    RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(System.getProperty("vfs.records-storage-impl", RecordsStorageKind.REGULAR.name))
+    RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(System.getProperty("vfs.records-storage.impl", RecordsStorageKind.REGULAR.name))
   }
 
 

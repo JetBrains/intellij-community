@@ -131,7 +131,7 @@ abstract class EditorTabPreviewBase(protected val project: Project,
 
   protected open fun skipPreviewUpdate(): Boolean = ToolWindowManager.getInstance(project).isEditorComponentActive
 
-  override fun updatePreview(fromModelRefresh: Boolean) {
+  open fun updatePreview(fromModelRefresh: Boolean) {
     if (isPreviewOpen()) {
       updatePreviewProcessor.refresh(false)
     }
@@ -223,6 +223,9 @@ private class EditorTabDiffPreviewProvider(
 ) : ChainBackedDiffPreviewProvider {
   override fun createDiffRequestProcessor(): DiffRequestProcessor {
     IJSwingUtilities.updateComponentTreeUI(diffProcessor.component)
+    if (diffProcessor is DiffPreviewUpdateProcessor) {
+      diffProcessor.refresh(false) // ensureHasContent
+    }
     return diffProcessor
   }
 

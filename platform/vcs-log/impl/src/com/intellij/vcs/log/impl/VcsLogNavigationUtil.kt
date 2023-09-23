@@ -11,12 +11,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.IntRef
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
@@ -27,6 +26,7 @@ import com.intellij.vcs.log.data.DataPack.ErrorDataPack
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.ui.MainVcsLogUi
+import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.VcsLogUiEx.JumpResult
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -268,9 +268,8 @@ object VcsLogNavigationUtil {
 
     if (!VcsLogUtil.HASH_PREFIX_REGEX.matcher(trimmedHash).matches()) {
       if (!silently) {
-        VcsBalloonProblemNotifier.showOverChangesView(logData.project,
-                                                      VcsLogBundle.message("vcs.log.string.is.not.a.hash", commitHash),
-                                                      MessageType.WARNING)
+        VcsNotifier.getInstance(logData.project).notifyWarning(VcsLogNotificationIdsHolder.NAVIGATION_ERROR, "",
+                                                               VcsLogBundle.message("vcs.log.string.is.not.a.hash", commitHash))
       }
       return Futures.immediateFuture(false)
     }

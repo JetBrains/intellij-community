@@ -102,14 +102,14 @@ public class JavaParserDefinition implements ParserDefinition {
 
     if (left.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
       String text = left.getText();
-      if (text.length() > 0 && Character.isWhitespace(text.charAt(text.length() - 1))) {
+      if (!text.isEmpty() && Character.isWhitespace(text.charAt(text.length() - 1))) {
         return SpaceRequirements.MAY;
       }
     }
 
     if (right.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
       String text = right.getText();
-      if (text.length() > 0 && Character.isWhitespace(text.charAt(0))) {
+      if (!text.isEmpty() && Character.isWhitespace(text.charAt(0))) {
         return SpaceRequirements.MAY;
       }
     }

@@ -4,9 +4,8 @@ import java.util.Arrays;
 import org.junit.jupiter.api.*;
 class ObjectEqualsToEquals {
 
-  @Test
   public void testObjectsEquals() {
-      <caret>assertTrue(Arrays.equals(getFoo(), getBar()), "message");
+      <warning descr="'assertTrue()' can be simplified to 'assertArrayEquals()'"><caret>assertTrue</warning>(Arrays.equals(getFoo(), getBar()), "message");
   }
 
   int[] getFoo() { return new int[0]; }

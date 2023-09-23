@@ -33,7 +33,7 @@ import static com.intellij.codeInsight.lookup.impl.LookupTypedHandler.CANCELLATI
 public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 18);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 20);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
   private static final EnumEventField<FinishType> FINISH_TYPE = EventFields.Enum("finish_type", FinishType.class);
@@ -85,6 +85,16 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
     lookup.addLookupListener(new MyLookupTracker(createdTimestamp, lookup));
   }
 
+  public static boolean isSelectedByTyping(@NotNull LookupImpl lookup, @NotNull LookupElement item) {
+    var cancellationChar = lookup.getUserData(CANCELLATION_CHAR);
+    String lookupString = item.getLookupString();
+    String pattern = lookup.itemPattern(item);
+    if (cancellationChar != null && lookupString.endsWith(cancellationChar.toString())) {
+      return pattern.equals(lookupString.substring(0, lookupString.length() - 1));
+    }
+    return pattern.equals(lookupString);
+  }
+
   @Override
   public EventLogGroup getGroup() {
     return GROUP;
@@ -125,16 +135,6 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
       mySelectionChangedCount += 1;
     }
 
-    private boolean isSelectedByTyping(@NotNull LookupElement item) {
-      var cancellationChar = myLookup.getUserData(CANCELLATION_CHAR);
-      String lookupString = item.getLookupString();
-      String pattern = myLookup.itemPattern(item);
-      if (cancellationChar != null && lookupString.endsWith(cancellationChar.toString())) {
-        return pattern.equals(lookupString.substring(0, lookupString.length() - 1));
-      }
-      return pattern.equals(lookupString);
-    }
-
     @Override
     public void itemSelected(@NotNull LookupEvent event) {
       LookupElement item = event.getItem();
@@ -146,7 +146,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
         myTimestampCorrectElementShown = item.getUserData(LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS);
         myTimestampCorrectElementComputed = item.getUserData(LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS);
         myOrderComputedCorrectElement = item.getUserData(LOOKUP_ELEMENT_RESULT_SET_ORDER);
-        if (isSelectedByTyping(item)) {
+        if (isSelectedByTyping(myLookup, item)) {
           triggerLookupUsed(FinishType.TYPED, item, completionChar);
         }
         else {
@@ -158,7 +158,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
     @Override
     public void lookupCanceled(@NotNull LookupEvent event) {
       LookupElement item = myLookup.getCurrentItem();
-      if (item != null && isSelectedByTyping(item)) {
+      if (item != null && isSelectedByTyping(myLookup, item)) {
         triggerLookupUsed(FinishType.TYPED, item, event.getCompletionChar());
       }
       else {

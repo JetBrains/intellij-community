@@ -51,7 +51,7 @@ private fun selectElement(
     }
 }
 
-private fun findElementAtRange(
+internal fun findElementAtRange(
     file: KtFile,
     selectionStart: Int,
     selectionEnd: Int,
@@ -85,7 +85,7 @@ private fun findElementAtRange(
         .firstOrNull()
 }
 
-private fun getSmartSelectSuggestions(
+internal fun getSmartSelectSuggestions(
     file: PsiFile,
     offset: Int,
     elementKind: ElementKind,

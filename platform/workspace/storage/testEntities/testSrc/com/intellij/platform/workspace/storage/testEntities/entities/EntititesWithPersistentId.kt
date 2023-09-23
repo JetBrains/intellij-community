@@ -45,7 +45,8 @@ interface FirstEntityWithPId : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FirstEntityWithPId, modification: FirstEntityWithPId.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: FirstEntityWithPId,
+                                      modification: FirstEntityWithPId.Builder.() -> Unit): FirstEntityWithPId = modifyEntity(
   FirstEntityWithPId.Builder::class.java, entity, modification)
 //endregion
 
@@ -80,7 +81,8 @@ interface SecondEntityWithPId : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SecondEntityWithPId, modification: SecondEntityWithPId.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: SecondEntityWithPId,
+                                      modification: SecondEntityWithPId.Builder.() -> Unit): SecondEntityWithPId = modifyEntity(
   SecondEntityWithPId.Builder::class.java, entity, modification)
 //endregion
 

@@ -111,7 +111,8 @@ private fun NewJavaToKotlinConverter.convertToKotlinNamedDeclaration(
                 elementsToKotlin(
                     inputElements = listOf(referenced),
                     processor = processor,
-                    bodyFilter = { it == referenced }
+                    bodyFilter = { it == referenced },
+                    forInlining = true
                 )
             }
 

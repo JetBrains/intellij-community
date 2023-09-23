@@ -7,15 +7,15 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.util.Key
 import java.time.Instant
 
-internal class ReadmeShownUsageCollector : CounterUsagesCollector() {
+internal object ReadmeShownUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
-}
 
-private val GROUP: EventLogGroup = EventLogGroup("readme.on.start", 1)
-private val README_CLOSED_EVENT = GROUP.registerEvent("readme.closed", EventFields.DurationMs)
+  private val GROUP: EventLogGroup = EventLogGroup("readme.on.start", 1)
+  private val README_CLOSED_EVENT = GROUP.registerEvent("readme.closed", EventFields.DurationMs)
 
-internal val README_OPENED_ON_START_TS: Key<Instant> = Key.create("readme.shown.timestamp")
+  internal val README_OPENED_ON_START_TS: Key<Instant> = Key.create("readme.shown.timestamp")
 
-internal fun logReadmeClosedIn(durationMs: Long) {
-  README_CLOSED_EVENT.log(durationMs)
+  internal fun logReadmeClosedIn(durationMs: Long) {
+    README_CLOSED_EVENT.log(durationMs)
+  }
 }

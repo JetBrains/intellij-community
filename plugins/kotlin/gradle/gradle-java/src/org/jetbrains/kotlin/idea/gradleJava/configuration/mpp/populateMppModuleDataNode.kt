@@ -169,27 +169,37 @@ private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
     if (moduleDataNode.isMppDataInitialized) return
 
 
-    /* Populate 'MPP_CONFIGURATION_ARTIFACTS' for every production source set */
+    /*
+    Populate 'artifactMap' mapping between artifacts and source modules that produce said artifacts.
+    This map is later used to resolve dependencies from a given artifact to its source modules.
+     */
     run {
         val externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java)
         if (externalProject == null) return
         moduleDataNode.isMppDataInitialized = true
 
-        // save artifacts locations.
-        val userData = projectDataNode.getUserData(KotlinMppGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS)
-            ?: HashMap<String, MutableList<String>>().apply {
-                projectDataNode.putUserData(KotlinMppGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS, this)
-            }
 
         mppModel.targets.filter { it.jar != null && it.jar!!.archiveFile != null }.forEach { target ->
             val path = ExternalSystemApiUtil.toCanonicalPath(target.jar!!.archiveFile!!.absolutePath)
-            val currentModules = userData[path] ?: ArrayList<String>().apply { userData[path] = this }
             val declaredSourceSetsOfCompilations = target.jar!!.compilations.flatMap { it.declaredSourceSets }.toSet()
             val availableViaDependsOn = declaredSourceSetsOfCompilations
                 .flatMap { it.allDependsOnSourceSets }
                 .mapNotNull { mppModel.sourceSetsByName[it] }
+
             declaredSourceSetsOfCompilations.union(availableViaDependsOn).forEach { sourceSet ->
-                currentModules.add(KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx))
+                resolverCtx.artifactsMap.storeModuleId(
+                    artifactPath = path,
+                    moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx),
+                    /*
+                    Using 'kotlin' as moduleId to mark the artifact as being owned by the Kotlin plugin.
+                    As of writing this comment, the exact moduleId is not relevant; there won't be code that will query
+                    artifacts with this ownerId. This acts more as 'tinting' this artifact to be owned by someone else than the
+                    platform. This will disable some special logic from the platform that is mostly relevant for pure java projects.
+
+                    (e.g., retaining some artifacts despite being resolved to _some_ source modules)
+                     */
+                    ownerId = "kotlin"
+                )
             }
         }
     }

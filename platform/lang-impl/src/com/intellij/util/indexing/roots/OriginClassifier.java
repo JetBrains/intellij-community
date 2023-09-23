@@ -47,7 +47,7 @@ final class OriginClassifier {
 
   private void doClassify(@NotNull WorkspaceFileIndexEx workspaceFileIndex, @NotNull VirtualFile file) {
     WorkspaceFileInternalInfo fileInfo =
-      workspaceFileIndex.getFileInfo(file, true, true, true, true);
+      workspaceFileIndex.getFileInfo(file, true, true, true, true, true);
     if (fileInfo == WorkspaceFileInternalInfo.NonWorkspace.IGNORED || fileInfo == WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED) {
       //excluded files should be ignored by indexableSetContributors
       return;

@@ -1,13 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.macro;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.macro.Macro.ExecutionCancelledException;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
@@ -93,6 +100,9 @@ public final class MacroManager {
     predefinedMacros.add(macro);
   }
 
+  /**
+   * @return all macros (built-in and provided via {@link Macro} extension point)
+   */
   @NotNull
   public Collection<Macro> getMacros() {
     return ContainerUtil.concat(predefinedMacros, Macro.EP_NAME.getExtensionList());
@@ -106,13 +116,41 @@ public final class MacroManager {
     Logger.getInstance(MacroManager.class).error("This method not needed anymore");
   }
 
+  public static DataContext getCorrectContext(DataContext dataContext) {
+    if (PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext) != null) {
+      return dataContext;
+    }
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
+      return dataContext;
+    }
+    FileEditorManager editorManager = FileEditorManager.getInstance(project);
+    if (editorManager == null) {
+      return dataContext;
+    }
+    VirtualFile[] files = editorManager.getSelectedFiles();
+    if (files.length == 0) {
+      return dataContext;
+    }
+    FileEditor fileEditor = editorManager.getSelectedEditor(files[0]);
+    return fileEditor == null ? dataContext : DataManager.getInstance().getDataContext(fileEditor.getComponent());
+  }
+
   public static boolean containsMacros(@Nullable String str) {
     if (str == null) return false;
     return MACRO_PATTERN.matcher(str).find();
   }
 
   /**
-   * Expands all macros that are found in the {@code str}.
+   * Expands macros in a string.
+   * Macros returning {@code null} from {@link Macro#expand(DataContext)} or {@link Macro#expand(DataContext, String...)}
+   * are replaced with empty strings.
+   *
+   * @param str              string possibly containing macros
+   * @param firstQueueExpand expand only macros that do not implement {@link SecondQueueExpandMacro}
+   * @param dataContext      data context used for macro expansion
+   * @return string with macros expanded
+   * @throws ExecutionCancelledException can be thrown by any macro's expand method to stop expansion
    */
   @Nullable
   public String expandMacrosInString(@Nullable String str, boolean firstQueueExpand, DataContext dataContext)
@@ -120,6 +158,18 @@ public final class MacroManager {
     return expandMacrosInString(str, firstQueueExpand, dataContext, "", false);
   }
 
+  /**
+   * Expands only macros not requiring interaction with a user (not implementing {@link PromptingMacro}).
+   * Macros requiring input from the user or returning {@code null}
+   * from {@link Macro#expand(DataContext)} or {@link Macro#expand(DataContext, String...)}
+   * are replaced with empty strings.
+   *
+   * @param str              string possibly containing macros
+   * @param firstQueueExpand expand only macros that do not implement {@link SecondQueueExpandMacro}
+   * @param dataContext      data context used for macro expansion
+   * @return string with macros expanded
+   * @throws ExecutionCancelledException can be thrown by any macro's expand method to stop expansion
+   */
   @Nullable
   public String expandSilentMacros(@Nullable String str, boolean firstQueueExpand, DataContext dataContext)
     throws ExecutionCancelledException {
@@ -127,13 +177,17 @@ public final class MacroManager {
   }
 
   /**
-   * Expand macros in a string.
-   * @param str string possibly containing macros
-   * @param firstQueueExpand expand only macros that does not implement {@link SecondQueueExpandMacro}
-   * @param dataContext data context used for macro expansion
+   * Expands macros in a string.
+   *
+   * @param str                string possibly containing macros
+   * @param firstQueueExpand   expand only macros that do not implement {@link SecondQueueExpandMacro}
+   * @param dataContext        data context used for macro expansion
    * @param defaultExpandValue if macro is expended to null, {@code defaultExpandValue} will be used instead
-   * @param onlySilent does not expand macros that may require interaction with user; {@code defaultExpandValue} will be used for such macros
-   * @return string with macros expanded or null if some macro is expanded to null and {@code defaultExpandValue} is null
+   * @param onlySilent         does not expand macros that may require interaction with a user;
+   *                           {@code defaultExpandValue} will be used for such macros
+   * @return string with macros expanded or {@code null} if some macro is expanded to {@code null}
+   * and {@code defaultExpandValue} is {@code null}
+   * @throws ExecutionCancelledException can be thrown by any macro's expand method to stop expansion
    */
   @Nullable
   public String expandMacrosInString(@Nullable String str,

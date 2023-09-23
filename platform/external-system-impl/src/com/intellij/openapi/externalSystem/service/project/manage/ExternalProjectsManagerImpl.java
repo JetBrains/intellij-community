@@ -48,7 +48,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.TASK;
 /**
  * @author Vladislav.Soroka
  */
-@State(name = "ExternalProjectsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = "ExternalProjectsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE), getStateRequiresEdt = true)
 public final class ExternalProjectsManagerImpl implements ExternalProjectsManager, PersistentStateComponent<ExternalProjectsState>, Disposable {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsManagerImpl.class);
 

@@ -92,7 +92,8 @@ fun CodeInsightTestFixture.checkLookupItems(
   renderTypeText: Boolean = false,
   renderTailText: Boolean = false,
   renderProximity: Boolean = false,
-  renderPresentedText: Boolean = false,
+  renderDisplayText: Boolean = false,
+  renderDisplayEffects: Boolean = renderPriority,
   checkDocumentation: Boolean = false,
   containsCheck: Boolean = false,
   locations: List<String> = emptyList(),
@@ -124,7 +125,8 @@ fun CodeInsightTestFixture.checkLookupItems(
     if (locations.isEmpty()) {
       completeBasic()
       checkListByFile(
-        renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderPresentedText, lookupItemFilter),
+        renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderDisplayText, renderDisplayEffects,
+                          lookupItemFilter),
         expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".txt",
         containsCheck
       )
@@ -135,7 +137,8 @@ fun CodeInsightTestFixture.checkLookupItems(
         moveToOffsetBySignature(location)
         completeBasic()
         checkListByFile(
-          renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderPresentedText, lookupItemFilter),
+          renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderDisplayText, renderDisplayEffects,
+                            lookupItemFilter),
           expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".${index + 1}.txt",
           containsCheck
         )
@@ -148,7 +151,7 @@ fun CodeInsightTestFixture.checkLookupItems(
 data class LookupElementInfo(
   val lookupElement: LookupElement,
   val lookupString: String,
-  val itemText: String?,
+  val displayText: String?,
   val tailText: String?,
   val typeText: String?,
   val priority: Double,
@@ -158,7 +161,68 @@ data class LookupElementInfo(
   val isItemTextItalic: Boolean,
   val isItemTextUnderline: Boolean,
   val isTypeGreyed: Boolean,
-)
+) {
+  fun render(renderPriority: Boolean,
+             renderTypeText: Boolean,
+             renderTailText: Boolean,
+             renderProximity: Boolean,
+             renderDisplayText: Boolean,
+             renderDisplayEffects: Boolean): String {
+    val result = StringBuilder()
+    result.append(lookupString)
+    if (renderPriority || renderTypeText || renderTailText || renderProximity || renderDisplayText || renderDisplayEffects) {
+      result.append(" (")
+
+      fun renderIf(switch: Boolean, name: String, value: String?) {
+        if (switch) {
+          if (result.last() == ';') {
+            result.append(" ")
+          }
+          result.append(name).append("=").append(value?.let { "'$it'" } ?: "null").append(";")
+        }
+      }
+
+      fun renderIf(switch: Boolean, name: String, value: Number?) {
+        if (switch) {
+          if (result.last() == ';') {
+            result.append(" ")
+          }
+          result.append(name).append("=").append(value ?: "null").append(";")
+        }
+      }
+
+      fun renderIf(switch: Boolean, name: String) {
+        if (switch) {
+          if (result.last() == ';') {
+            result.append(" ")
+          }
+          result.append(name).append(";")
+        }
+      }
+
+      renderIf(renderDisplayText, "displayText", displayText)
+      renderIf(renderTailText, "tailText", tailText)
+      renderIf(renderTypeText, "typeText", typeText)
+      renderIf(renderPriority, "priority", priority)
+      renderIf(renderProximity, "proximity", proximity)
+
+      if (renderDisplayEffects) {
+        renderIf(isStrikeout, "strikeout")
+        renderIf(isItemTextBold, "bold")
+        renderIf(isItemTextItalic, "italic")
+        renderIf(isItemTextUnderline, "underline")
+        renderIf(renderTypeText && isTypeGreyed, "typeGreyed")
+      }
+
+      if (result.last() == ';') {
+        result.setLength(result.length - 1)
+      }
+      result.append(")")
+    }
+
+    return result.toString()
+  }
+}
 
 private fun CodeInsightTestFixture.checkDocumentation(actualDocumentation: String?,
                                                       fileSuffix: String = ".expected",
@@ -187,61 +251,44 @@ private fun CodeInsightTestFixture.renderDocAtCaret(): String? =
     ?.trim()
 
 
+infix fun ((item: LookupElementInfo) -> Boolean).and(other: (item: LookupElementInfo) -> Boolean): (item: LookupElementInfo) -> Boolean =
+  {
+    this(it) && other(it)
+  }
+
 @JvmOverloads
 fun CodeInsightTestFixture.renderLookupItems(renderPriority: Boolean,
                                              renderTypeText: Boolean,
                                              renderTailText: Boolean = false,
                                              renderProximity: Boolean = false,
-                                             renderPresentedText: Boolean = false,
+                                             renderDisplayText: Boolean = false,
+                                             renderDisplayEffects: Boolean = renderPriority,
                                              lookupFilter: (item: LookupElementInfo) -> Boolean = { true }): List<String> =
   lookupElements?.asSequence()
     ?.map {
       val presentation = TestLookupElementPresentation.renderReal(it)
       LookupElementInfo(it, it.lookupString, presentation.itemText, presentation.tailText,
-                        presentation.typeText, (it as? PrioritizedLookupElement<*>)?.priority?: 0.0,
+                        presentation.typeText, (it as? PrioritizedLookupElement<*>)?.priority ?: 0.0,
                         (it as? PrioritizedLookupElement<*>)?.explicitProximity,
                         presentation.isStrikeout, presentation.isItemTextBold,
                         presentation.isItemTextItalic, presentation.isItemTextUnderlined,
                         presentation.isTypeGrayed)
     }
     ?.filter(lookupFilter)
-    ?.map { el ->
-      val result = StringBuilder()
-      if (renderPriority && el.isItemTextBold) {
-        result.append('!')
-      }
-      if (renderPriority && el.isStrikeout) {
-        result.append('~')
-      }
-      result.append(el.lookupString)
-      if (renderPresentedText) {
-        result.append('[')
-        result.append(el.itemText)
-        result.append(']')
-      }
-      if (renderTailText) {
-        result.append('%')
-        result.append(el.tailText)
-      }
-      if (renderTypeText) {
-        result.append('#')
-        result.append(el.typeText)
-      }
-      if (renderPriority) {
-        result.append('#')
-          .append(el.priority.toInt())
-      }
-      if (renderProximity) {
-        result.append("+")
-          .append(el.proximity ?: 0)
-      }
-      Pair(el, result.toString())
-    }
     ?.sortedWith(
-      Comparator.comparing { it: Pair<LookupElementInfo, String> -> -(it.first.priority ?: 0.0) }
-        .thenComparingInt { -(it.first.proximity ?: 0) }
-        .thenComparing { it: Pair<LookupElementInfo, String> -> it.first.lookupString })
-    ?.map { it.second }
+      Comparator.comparing { it: LookupElementInfo -> -it.priority }
+        .thenComparingInt { -(it.proximity ?: 0) }
+        .thenComparing { it: LookupElementInfo -> it.lookupString })
+    ?.map {
+      it.render(
+        renderPriority = renderPriority,
+        renderTypeText = renderTypeText,
+        renderTailText = renderTailText,
+        renderProximity = renderProximity,
+        renderDisplayText = renderDisplayText,
+        renderDisplayEffects = renderDisplayEffects,
+      )
+    }
     ?.toList()
   ?: emptyList()
 
@@ -542,7 +589,7 @@ fun CodeInsightTestFixture.configureAndCopyPaste(sourceFile: String, destination
 fun doCompletionItemsTest(fixture: CodeInsightTestFixture,
                           fileName: String,
                           goldFileWithExtension: Boolean = false,
-                          renderPresentedText: Boolean = false) {
+                          renderDisplayText: Boolean = false) {
   val fileNameNoExt = FileUtil.getNameWithoutExtension(fileName)
   fixture.configureByFile(fileName)
   WriteAction.runAndWait<Throwable> { WebSymbolsQueryExecutorFactory.getInstance(fixture.project) }
@@ -573,7 +620,7 @@ fun doCompletionItemsTest(fixture: CodeInsightTestFixture,
       fixture.completeBasic()
 
       fixture.checkListByFile(
-        fixture.renderLookupItems(true, true, true, renderPresentedText = renderPresentedText),
+        fixture.renderLookupItems(true, true, true, renderDisplayText = renderDisplayText),
         "gold/${if (goldFileWithExtension) fileName else fileNameNoExt}.${index}.txt", !strict)
 
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()

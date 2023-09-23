@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -37,9 +37,8 @@ public class XmlEnumeratedValueReference extends PsiReferenceBase<XmlElement> im
     return ReflectionUtil.isAssignable(XmlElement.class, elementClass);
   }
 
-  @Nullable
   @Override
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     return myDescriptor.getValueDeclaration(getElement(), getValue());
   }
 
@@ -55,9 +54,8 @@ public class XmlEnumeratedValueReference extends PsiReferenceBase<XmlElement> im
     }
   }
 
-  @NotNull
   @Override
-  public String getUnresolvedMessagePattern() {
+  public @NotNull String getUnresolvedMessagePattern() {
     String name = getElement() instanceof XmlTag ? "tag" : "attribute";
     return myDescriptor.isFixed()
            ? XmlPsiBundle.message("xml.inspections.should.have.fixed.value", StringUtil.capitalize(name), myDescriptor.getDefaultValue())

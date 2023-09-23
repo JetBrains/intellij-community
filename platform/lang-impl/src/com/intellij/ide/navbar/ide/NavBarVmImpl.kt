@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ide
 
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navbar.vm.NavBarItemVm
+import com.intellij.ide.navbar.vm.NavBarPopupVm
 import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.ide.navbar.vm.NavBarVm.SelectionShift
 import com.intellij.model.Pointer
@@ -19,8 +20,6 @@ internal class NavBarVmImpl(
   cs: CoroutineScope,
   initialItems: List<NavBarVmItem>,
   contextItems: Flow<List<NavBarVmItem>>,
-  private val requestNavigation: (NavBarVmItem) -> Unit,
-  private val itemProvider: (NavBarItem) -> List<NavBarItem>
 ) : NavBarVm {
 
   init {
@@ -33,7 +32,10 @@ internal class NavBarVmImpl(
 
   private val _popupRequests: MutableSharedFlow<Int> = MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
 
-  private val _popup: MutableStateFlow<NavBarPopupVmImpl?> = MutableStateFlow(null)
+  private val _popup: MutableStateFlow<NavBarPopupVmImpl<DefaultNavBarPopupItem>?> = MutableStateFlow(null)
+
+  private val _activationRequests: MutableSharedFlow<Pointer<out NavBarItem>> =
+    MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
 
   init {
     cs.launch {
@@ -58,13 +60,17 @@ internal class NavBarVmImpl(
 
   override val selectedIndex: StateFlow<Int> = _selectedIndex.asStateFlow()
 
-  override val popup: StateFlow<NavBarPopupVmImpl?> = _popup.asStateFlow()
+  override val popup: StateFlow<NavBarPopupVm<*>?> = _popup.asStateFlow()
+
+  override val activationRequests: Flow<Pointer<out NavBarItem>> = _activationRequests.asSharedFlow()
 
   override fun selection(): List<Pointer<out NavBarItem>> {
     EDT.assertIsEdt()
     val popup = _popup.value
     if (popup != null) {
-      return popup.selectedItems.map { it.pointer }
+      return popup.selectedItems.map {
+        it.item.pointer
+      }
     }
     else {
       val selectedIndex = _selectedIndex.value
@@ -123,21 +129,21 @@ internal class NavBarVmImpl(
       return
     }
     val items = _items.value
-    val children = childItems(items[index].item) ?: return
+    val children = items[index].item.children() ?: return
     if (children.isEmpty()) {
       return
     }
     val nextItem = items.getOrNull(index + 1)?.item
     popupLoop(items.slice(0..index).map { it.item }, NavBarPopupVmImpl(
-      items = children,
+      items = children.map(::DefaultNavBarPopupItem),
       initialSelectedItemIndex = children.indexOf(nextItem).coerceAtLeast(0),
     ))
   }
 
-  private suspend fun popupLoop(items: List<NavBarVmItem>, popup: NavBarPopupVmImpl) {
+  private suspend fun popupLoop(items: List<NavBarVmItem>, popup: NavBarPopupVmImpl<DefaultNavBarPopupItem>) {
     _popup.value = popup
     val selectedChild = try {
-      popup.result.await()
+      popup.result.await().item
     }
     catch (ce: CancellationException) {
       _popup.value = null
@@ -147,7 +153,7 @@ internal class NavBarVmImpl(
                        ?: return
     when (expandResult) {
       is ExpandResult.NavigateTo -> {
-        requestNavigation(expandResult.target)
+        _activationRequests.tryEmit(expandResult.target.pointer)
         return
       }
       is ExpandResult.NextPopup -> {
@@ -159,75 +165,11 @@ internal class NavBarVmImpl(
         _items.value = newItemVms
         _selectedIndex.value = lastIndex
         popupLoop(newItems, NavBarPopupVmImpl(
-          items = expandResult.children,
+          items = expandResult.children.map(::DefaultNavBarPopupItem),
           initialSelectedItemIndex = 0,
         ))
       }
     }
-  }
-
-  private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
-    var expanded = emptyList<NavBarVmItem>()
-    var currentItem = child
-    var (children, navigateOnClick) = childItemsAndNavigation(currentItem) ?: return null
-
-    if (children.isEmpty() || navigateOnClick) {
-      return ExpandResult.NavigateTo(currentItem)
-    }
-
-    while (true) {
-      // [currentItem] -- is being evaluated
-      // [expanded] -- list of the elements starting from [child] argument and up to [currentItem]. Both exclusively
-      // [children] -- children of the [currentItem]
-      // [showPopup] -- if [currentItem]'s children should be shown as a popup
-
-      // No automatic navigation in this cycle!
-      // It is only allowed as reaction to a users click
-      // at the popup item, i.e. at first iteration before while-cycle
-
-      when (children.size) {
-        0 -> {
-          // No children, [currentItem] is an only leaf on its branch, but no auto navigation allowed
-          // So returning the previous state
-          return ExpandResult.NextPopup(expanded, listOf(currentItem))
-        }
-        1 -> {
-          if (navigateOnClick) {
-            // [currentItem] is navigation target regardless of its children count, but no auto navigation allowed
-            // So returning the previous state
-            return ExpandResult.NextPopup(expanded, listOf(currentItem))
-          }
-          else {
-            // Performing auto-expand, keeping invariant
-            expanded = expanded + currentItem
-            currentItem = children.single()
-            val fetch = childItemsAndNavigation(currentItem) ?: return null
-            children = fetch.first
-            navigateOnClick = fetch.second
-          }
-        }
-        else -> {
-          // [currentItem] has several children, so return it with current [expanded] trace.
-          return ExpandResult.NextPopup(expanded + currentItem, children)
-        }
-      }
-    }
-  }
-
-  private suspend fun childItems(item: NavBarVmItem): List<NavBarVmItem>? {
-    return item.fetch {
-      childItems(this)
-    }
-  }
-
-  private suspend fun childItemsAndNavigation(item: NavBarVmItem): Pair<List<NavBarVmItem>, Boolean>? {
-    return item.fetch {
-      Pair(childItems(this), navigateOnClick())
-    }
-  }
-
-  private fun childItems(item: NavBarItem): List<NavBarVmItem> {
-    return itemProvider(item).toVmItems()
   }
 
   private inner class NavBarItemVmImpl(
@@ -262,7 +204,7 @@ internal class NavBarVmImpl(
     }
 
     override fun activate() {
-      requestNavigation(item)
+      _activationRequests.tryEmit(item.pointer)
     }
   }
 }
@@ -270,4 +212,52 @@ internal class NavBarVmImpl(
 private sealed interface ExpandResult {
   class NavigateTo(val target: NavBarVmItem) : ExpandResult
   class NextPopup(val expanded: List<NavBarVmItem>, val children: List<NavBarVmItem>) : ExpandResult
+}
+
+private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
+  var expanded = emptyList<NavBarVmItem>()
+  var currentItem = child
+  var (children, navigateOnClick) = currentItem.expand() ?: return null
+
+  if (children.isEmpty() || navigateOnClick) {
+    return ExpandResult.NavigateTo(currentItem)
+  }
+
+  while (true) {
+    // [currentItem] -- is being evaluated
+    // [expanded] -- list of the elements starting from [child] argument and up to [currentItem]. Both exclusively
+    // [children] -- children of the [currentItem]
+    // [showPopup] -- if [currentItem]'s children should be shown as a popup
+
+    // No automatic navigation in this cycle!
+    // It is only allowed as reaction to a users click
+    // at the popup item, i.e. at first iteration before while-cycle
+
+    when (children.size) {
+      0 -> {
+        // No children, [currentItem] is an only leaf on its branch, but no auto navigation allowed
+        // So returning the previous state
+        return ExpandResult.NextPopup(expanded, listOf(currentItem))
+      }
+      1 -> {
+        if (navigateOnClick) {
+          // [currentItem] is navigation target regardless of its children count, but no auto navigation allowed
+          // So returning the previous state
+          return ExpandResult.NextPopup(expanded, listOf(currentItem))
+        }
+        else {
+          // Performing auto-expand, keeping invariant
+          expanded = expanded + currentItem
+          currentItem = children.single()
+          val fetch = currentItem.expand() ?: return null
+          children = fetch.children
+          navigateOnClick = fetch.navigateOnClick
+        }
+      }
+      else -> {
+        // [currentItem] has several children, so return it with current [expanded] trace.
+        return ExpandResult.NextPopup(expanded + currentItem, children)
+      }
+    }
+  }
 }

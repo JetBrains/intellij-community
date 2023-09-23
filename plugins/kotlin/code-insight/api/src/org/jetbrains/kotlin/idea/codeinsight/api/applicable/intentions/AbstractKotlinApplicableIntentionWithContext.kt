@@ -13,6 +13,7 @@ import kotlin.reflect.KClass
  * Applies a fix to the PSI with [apply] given some [CONTEXT] from [prepareContext] if the intention is applicable via [isApplicableByPsi] and
  * [prepareContext].
  */
+@Deprecated("use org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext")
 abstract class AbstractKotlinApplicableIntentionWithContext<ELEMENT : KtElement, CONTEXT>(
     elementType: KClass<ELEMENT>,
 ) : AbstractKotlinApplicableIntentionBase<ELEMENT>(elementType), KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {

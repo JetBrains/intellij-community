@@ -4,15 +4,38 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.testFramework.runInEdtAndWait
+import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
+import org.jetbrains.kotlin.idea.configuration.getCanBeConfiguredModules
 import org.jetbrains.kotlin.idea.configuration.getKotlinVersionsAndModules
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
+
+    private fun runSimpleTestcase(kotlinVersion: String) {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(rootModule),
+                    IdeKotlinVersion.get(kotlinVersion),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+                checkFiles(files)
+            }
+        }
+    }
 
     @Test
     @TargetVersions("7.6+")
@@ -561,6 +584,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
                 val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+
                 configurator.configureWithVersion(
                     myProject,
                     listOf(module),
@@ -573,6 +597,166 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 checkFilesInMultimoduleProject(files, subModules)
             }
         }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testIgnoreConventionPluginKotlinGroovy() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val module = ModuleManager.getInstance(myProject).findModuleByName("conventions.javamodule")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+
+                // buildSrc Kotlin version should be ignored
+                TestCase.assertTrue(kotlinVersionsAndModules.isEmpty())
+
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(module),
+                    IdeKotlinVersion.get("1.9.0"),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+
+                val subModules = listOf("javamodule", "buildSrc")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testIgnoreConventionPluginKotlinKts() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val module = ModuleManager.getInstance(myProject).findModuleByName("conventions.javamodule")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+
+                // buildSrc Kotlin version should be ignored
+                TestCase.assertTrue(kotlinVersionsAndModules.isEmpty())
+
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(module),
+                    IdeKotlinVersion.get("1.9.0"),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+
+                val subModules = listOf("javamodule", "buildSrc")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testIgnoreConventionPluginKotlinGroovy2() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            val module = ModuleManager.getInstance(myProject).findModuleByName("conventions.javamodule")!!
+            val configurator = findGradleModuleConfigurator()
+            //buildSrc should be ignored
+            TestCase.assertTrue(getCanBeConfiguredModules(myProject, configurator).none { it.name.contains("buildSrc") })
+
+            runWriteAction {
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+
+                // buildSrc Kotlin version should be ignored
+                TestCase.assertTrue(kotlinVersionsAndModules.isEmpty())
+
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(module),
+                    IdeKotlinVersion.get("1.9.0"),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+
+                val subModules = listOf("javamodule", "buildSrc")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testIgnoreConventionPluginKotlinKts2() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            val module = ModuleManager.getInstance(myProject).findModuleByName("conventions.javamodule")!!
+            val configurator = findGradleModuleConfigurator()
+            //buildSrc should be ignored
+            TestCase.assertTrue(getCanBeConfiguredModules(myProject, configurator).none { it.name.contains("buildSrc") })
+
+            runWriteAction {
+
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+
+                // buildSrc Kotlin version should be ignored
+                TestCase.assertTrue(kotlinVersionsAndModules.isEmpty())
+
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(module),
+                    IdeKotlinVersion.get("1.9.0"),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+
+                val subModules = listOf("javamodule", "buildSrc")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testApplyFalseGroovy() {
+        runSimpleTestcase("1.8.0")
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testApplyFalseKts() {
+        runSimpleTestcase("1.8.0")
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testApplyFalseAndVersionGroovy() {
+        runSimpleTestcase("1.8.0")
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testApplyFalseAndVersionKts() {
+        runSimpleTestcase("1.8.0")
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testApplyFalseAndVersion2Groovy() {
+        runSimpleTestcase("1.8.0")
+    }
+
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testApplyFalseAndVersion2Kts() {
+        runSimpleTestcase("1.8.0")
     }
 
     /**

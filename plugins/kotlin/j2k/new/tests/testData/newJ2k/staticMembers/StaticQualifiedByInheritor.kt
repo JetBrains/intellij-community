@@ -1,10 +1,12 @@
 open class Base {
     companion object {
-        fun foo() {}
+        fun foo() {
+        }
     }
 }
 
 class Derived : Base()
+
 object User {
     fun test() {
         Base.foo()

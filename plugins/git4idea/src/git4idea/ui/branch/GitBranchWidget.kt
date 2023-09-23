@@ -6,6 +6,8 @@ import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.dvcs.ui.DvcsStatusWidget
 import com.intellij.ide.navigationToolbar.experimental.ExperimentalToolbarStateListener
 import com.intellij.ide.ui.ToolbarSettings
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -13,6 +15,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.messages.MessageBusConnection
@@ -84,6 +87,21 @@ open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(p
     }
   }
 
+  internal class SettingsListener(private val project: Project) : UISettingsListener {
+    override fun uiSettingsChanged(uiSettings: UISettings) {
+      val statusBarSettings = StatusBarWidgetSettings.getInstance()
+      if (!ExperimentalUI.isNewUI() || statusBarSettings.isExplicitlyDisabled(ID)) return
+
+      // Show/hide git branch if main toolbar is hidden/shown via settings
+      StatusBarWidgetFactory.EP_NAME.findExtension(Factory::class.java)?.let {  factory ->
+        val manager = project.service<StatusBarWidgetsManager>()
+        if (manager.wasWidgetCreated(ID) != factory.isEnabledByDefault) {
+          manager.updateWidget(factory)
+        }
+      }
+    }
+  }
+
   internal class Factory : StatusBarWidgetFactory {
     override fun getId(): String = ID
 
@@ -96,9 +114,9 @@ open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(p
     override fun createWidget(project: Project): StatusBarWidget = GitBranchWidget(project)
 
     override fun isEnabledByDefault(): Boolean {
-      // disabled by default in ExperimentalUI per designers request
       if (ExperimentalUI.isNewUI()) {
-        return false
+        // Show by default if the main toolbar is hidden via settings
+        return !UISettings.getInstance().showNewMainToolbar
       }
 
       val toolbarSettings = ToolbarSettings.getInstance()

@@ -15,23 +15,24 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ModuleCustomImlDataEntityImpl(val dataSource: ModuleCustomImlDataEntityData) : ModuleCustomImlDataEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCustomImlDataEntityData) : ModuleCustomImlDataEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleCustomImlDataEntity::class.java,
                                                                           ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
     )
 
@@ -52,6 +53,7 @@ open class ModuleCustomImlDataEntityImpl(val dataSource: ModuleCustomImlDataEnti
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: ModuleCustomImlDataEntityData?) : ModifiableWorkspaceEntityBase<ModuleCustomImlDataEntity, ModuleCustomImlDataEntityData>(
     result), ModuleCustomImlDataEntity.Builder {
@@ -81,7 +83,7 @@ open class ModuleCustomImlDataEntityImpl(val dataSource: ModuleCustomImlDataEnti
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -183,7 +185,7 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
   var rootManagerTagCustomData: String? = null
   lateinit var customModuleOptions: Map<String, String>
 
-  fun isCustomModuleOptionsInitialized(): Boolean = ::customModuleOptions.isInitialized
+  internal fun isCustomModuleOptionsInitialized(): Boolean = ::customModuleOptions.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ModuleCustomImlDataEntity> {
     val modifiable = ModuleCustomImlDataEntityImpl.Builder(null)
@@ -200,6 +202,11 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -260,10 +267,5 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
     result = 31 * result + rootManagerTagCustomData.hashCode()
     result = 31 * result + customModuleOptions.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.customModuleOptions?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

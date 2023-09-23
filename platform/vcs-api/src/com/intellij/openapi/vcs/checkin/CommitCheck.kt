@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin
 
+import com.intellij.ide.plugins.PluginUtil
 import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -14,10 +15,12 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
+import java.io.IOException
 
 /**
  * Represents some check or code modification that is performed when changes are committed into VCS.
@@ -130,11 +133,19 @@ interface CommitProblem {
 
   companion object {
     fun createError(e: Throwable): CommitProblem {
-      val err = e.message
-      val message = when {
-        err.isNullOrBlank() -> VcsBundle.message("before.checkin.error.unknown")
-        else -> VcsBundle.message("before.checkin.error.unknown.details", err)
+      val pluginUtil = PluginUtil.getInstance()
+      val pluginName = pluginUtil.findPluginId(e)?.let { pluginId -> pluginUtil.findPluginName(pluginId) }
+
+      var message = when {
+        pluginName != null -> VcsBundle.message("before.checkin.error.in.plugin", pluginName)
+        else -> VcsBundle.message("before.checkin.error.internal")
       }
+
+      val ioException = ExceptionUtil.findCause(e, IOException::class.java)
+      if (ioException != null) {
+        message += ". " + ioException.message
+      }
+
       return TextCommitProblem(message)
     }
   }

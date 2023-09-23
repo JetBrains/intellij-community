@@ -2,6 +2,7 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.Type;
 
@@ -16,10 +17,13 @@ public abstract class TypeRepr {
 
   public abstract int hashCode();
 
-  public static class PrimitiveType extends TypeRepr {
+  public Iterable<Usage> getUsages() {
+    return Collections.emptyList();
+  }
 
-    @NotNull
-    private final String myDescriptor;
+  public static final class PrimitiveType extends TypeRepr {
+
+    private final @NotNull String myDescriptor;
 
     public PrimitiveType(String descriptor) {
       myDescriptor = descriptor;
@@ -54,12 +58,21 @@ public abstract class TypeRepr {
     }
   }
 
-  public static class ClassType extends TypeRepr {
+  public static final class ClassType extends TypeRepr {
 
     private final String myJvmName;
 
     public ClassType(String jvmName) {
       myJvmName = jvmName;
+    }
+
+    public String getJvmName() {
+      return myJvmName;
+    }
+
+    @Override
+    public Iterable<Usage> getUsages() {
+      return Collections.singleton(new ClassUsage(myJvmName));
     }
 
     @Override
@@ -91,9 +104,8 @@ public abstract class TypeRepr {
     }
   }
 
-  public static class ArrayType extends TypeRepr {
-    @NotNull
-    private final TypeRepr myElementType;
+  public static final class ArrayType extends TypeRepr {
+    private final @NotNull TypeRepr myElementType;
 
     public ArrayType(@NotNull TypeRepr elementType) {
       myElementType = elementType;
@@ -102,6 +114,19 @@ public abstract class TypeRepr {
     @Override
     public @NotNull String getDescriptor() {
       return "[" + myElementType.getDescriptor();
+    }
+
+    public TypeRepr getDeepElementType() {
+      TypeRepr current = this;
+      while (current instanceof ArrayType) {
+        current = ((ArrayType)current).myElementType;
+      }
+      return current;
+    }
+
+    @Override
+    public Iterable<Usage> getUsages() {
+      return getDeepElementType().getUsages();
     }
 
     @Override

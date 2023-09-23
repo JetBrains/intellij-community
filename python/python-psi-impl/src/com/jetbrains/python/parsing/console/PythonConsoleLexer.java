@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergeFunction;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
 import com.jetbrains.python.lexer.PythonLexerKind;
@@ -62,13 +63,33 @@ public class PythonConsoleLexer extends PythonIndentingLexer {
         collectFullLine(originalLexer);
         return SHELL_COMMAND;
       }
-      if (type == PERC &&
-          (getBaseTokenStart() == 0 || (!myTokenQueue.isEmpty() && Iterables.getLast(myTokenQueue).getType() == STATEMENT_BREAK))) {
-        collectFullLine(originalLexer);
-        return MAGIC_COMMAND_LINE;
+      if (type == PERC) {
+        if (additionMagicLineCheck(originalLexer)){
+          collectFullLine(originalLexer);
+          return MAGIC_COMMAND_LINE;
+        }
       }
       return origMergeFunction.merge(type, originalLexer);
     };
+  }
+
+  private boolean additionMagicLineCheck(Lexer originalLexer) {
+    if (getBaseTokenStart() == 0 &&
+        originalLexer.getBufferEnd() >= 2 &&
+        !StringUtil.isWhiteSpace(originalLexer.getBufferSequence().charAt(1))) {
+      return true;
+    }
+    if ((getBaseTokenStart() >= 1 &&
+         originalLexer.getBufferEnd() > getBaseTokenStart() + 1 &&
+         originalLexer.getBufferSequence().charAt(getBaseTokenStart() - 1) == '\n' &&
+         !StringUtil.isWhiteSpace(originalLexer.getBufferSequence().charAt(getBaseTokenStart() + 1))) &&
+        ((!myTokenQueue.isEmpty() &&
+          (Iterables.getLast(myTokenQueue).getType() == STATEMENT_BREAK ||
+           Iterables.getLast(myTokenQueue).getType() == END_OF_LINE_COMMENT))
+         || StringUtil.isEmptyOrSpaces(originalLexer.getBufferSequence().subSequence(0, getBaseTokenStart())))) {
+      return true;
+    }
+    return false;
   }
 
   private static void collectFullLine(Lexer originalLexer) {

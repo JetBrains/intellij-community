@@ -2,6 +2,7 @@
 package com.intellij.ui.mac
 
 import com.intellij.ide.actions.DistractionFreeModeController
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
@@ -10,6 +11,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.MacUtil
@@ -20,7 +22,7 @@ import javax.swing.JFrame
  * @author Alexander Lobas
  */
 internal object MacFullScreenControlsManager {
-  fun enabled(): Boolean = Registry.`is`("apple.awt.newFullScreeControls", true)
+  fun enabled(): Boolean = ExperimentalUI.isNewUI() && Registry.`is`("apple.awt.newFullScreeControls", true)
 
   fun configureEnable(coroutineScope: CoroutineScope, block: () -> Unit) {
     val rKey = Registry.get("apple.awt.newFullScreeControls")
@@ -37,7 +39,7 @@ internal object MacFullScreenControlsManager {
       configureColors()
     }
 
-    if (DistractionFreeModeController.isDistractionFreeModeEnabled()) {
+    if (DistractionFreeModeController.isDistractionFreeModeEnabled() || !UISettings.getInstance().showNewMainToolbar) {
       updateForDistractionFreeMode(true)
     }
   }
@@ -95,7 +97,7 @@ internal object MacFullScreenControlsManager {
         configureForDistractionFreeMode(true)
       }
     }
-    else if (!DistractionFreeModeController.isDistractionFreeModeEnabled()) {
+    else if (!DistractionFreeModeController.isDistractionFreeModeEnabled() && UISettings.getInstance().showNewMainToolbar) {
       configureForDistractionFreeMode(false)
     }
   }
@@ -109,20 +111,44 @@ internal object MacFullScreenControlsManager {
     }
   }
 
+  fun updateForNewMainToolbar(show: Boolean) {
+    if (enabled()) {
+      if (show) {
+        if (!DistractionFreeModeController.isDistractionFreeModeEnabled()) {
+          configureForDistractionFreeMode(false)
+          updateFullScreenButtons(false)
+        }
+      }
+      else {
+        configureForDistractionFreeMode(true)
+        updateFullScreenButtons(true)
+      }
+    }
+  }
+
   fun updateForDistractionFreeMode(enter: Boolean) {
     if (enabled()) {
-      configureForDistractionFreeMode(enter)
+      if (enter) {
+        configureForDistractionFreeMode(true)
+        updateFullScreenButtons(true)
+      }
+      else if (UISettings.getInstance().showNewMainToolbar) {
+        configureForDistractionFreeMode(false)
+        updateFullScreenButtons(false)
+      }
+    }
+  }
 
-      ApplicationManager.getApplication().invokeLater {
-        val frames = getAllFrameWindows()
-        Foundation.executeOnMainThread(true, false) {
-          val selector = Foundation.createSelector("updateFullScreenButtons:")
-          for (frameOrTab in frames) {
-            val window = MacUtil.getWindowFromJavaWindow((frameOrTab as ProjectFrameHelper).frame)
-            val delegate = Foundation.invoke(window, "delegate")
-            if (Foundation.invoke(delegate, "respondsToSelector:", selector).booleanValue()) {
-              Foundation.invoke(delegate, "updateFullScreenButtons:", if (enter) 1 else 0)
-            }
+  private fun updateFullScreenButtons(enter: Boolean) {
+    ApplicationManager.getApplication().invokeLater {
+      val frames = getAllFrameWindows()
+      Foundation.executeOnMainThread(true, false) {
+        val selector = Foundation.createSelector("updateFullScreenButtons:")
+        for (frameOrTab in frames) {
+          val window = MacUtil.getWindowFromJavaWindow((frameOrTab as ProjectFrameHelper).frame)
+          val delegate = Foundation.invoke(window, "delegate")
+          if (Foundation.invoke(delegate, "respondsToSelector:", selector).booleanValue()) {
+            Foundation.invoke(delegate, "updateFullScreenButtons:", if (enter) 1 else 0)
           }
         }
       }

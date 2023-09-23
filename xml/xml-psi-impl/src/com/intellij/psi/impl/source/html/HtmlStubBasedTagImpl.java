@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.html;
 
 import com.intellij.lang.ASTNode;
@@ -30,9 +30,8 @@ public class HtmlStubBasedTagImpl extends XmlStubBasedTag implements HtmlTag {
     return false;
   }
 
-  @Nullable
   @Override
-  public String getRealNs(@Nullable final String value) {
+  public @Nullable String getRealNs(final @Nullable String value) {
     if (XmlUtil.XHTML_URI.equals(value)) return XmlUtil.HTML_URI;
     return value;
   }
@@ -47,9 +46,8 @@ public class HtmlStubBasedTagImpl extends XmlStubBasedTag implements HtmlTag {
     return PsiTreeUtil.getParentOfType(this, XmlTag.class);
   }
 
-  @NotNull
   @Override
-  protected XmlTagDelegate createDelegate() {
+  protected @NotNull XmlTagDelegate createDelegate() {
     return new HtmlStubBasedTagImplDelegate();
   }
 

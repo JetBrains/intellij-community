@@ -10,6 +10,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.idea.base.psi.*
 import org.jetbrains.kotlin.idea.base.psi.addTypeParameter
 import org.jetbrains.kotlin.idea.base.psi.appendDeclaration
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
+import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -88,6 +90,25 @@ fun KtLambdaArgument.getLambdaArgumentName(bindingContext: BindingContext): Name
     val resolvedCall = callExpression.getResolvedCall(bindingContext)
     return (resolvedCall?.getArgumentMapping(this) as? ArgumentMatch)?.valueParameter?.name
 }
+
+@ApiStatus.ScheduledForRemoval
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
+    ReplaceWith(
+        expression = "this.moveInsideParenthesesAndReplaceWith(replacement, if (lambdaArgumentName != null && shouldLambdaParameterBeNamed(this)) lambdaArgumentName else null)",
+        imports = [
+            "org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith",
+            "org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed"
+        ]
+    ), level = DeprecationLevel.ERROR
+)
+fun KtLambdaArgument.moveInsideParenthesesAndReplaceWith(
+    replacement: KtExpression,
+    lambdaArgumentName: Name?,
+    withNameCheck: Boolean = true,
+): KtCallExpression = this.moveInsideParenthesesAndReplaceWith(
+    replacement, if (lambdaArgumentName != null && shouldLambdaParameterBeNamed(this)) lambdaArgumentName else null
+)
 
 fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
     val valueArgument = parentOfType<KtValueArgument>()?.takeIf {

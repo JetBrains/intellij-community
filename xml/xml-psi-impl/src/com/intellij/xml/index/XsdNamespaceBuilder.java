@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xml.index;
 
@@ -54,7 +54,7 @@ public class XsdNamespaceBuilder implements Comparable<XsdNamespaceBuilder> {
 
   private class NanoBuilder implements NanoXmlBuilder {
     @Override
-    public void startElement(@NonNls final String name, @NonNls final String nsPrefix, @NonNls final String nsURI, final String systemID, final int lineNr)
+    public void startElement(final @NonNls String name, final @NonNls String nsPrefix, final @NonNls String nsURI, final String systemID, final int lineNr)
         throws Exception {
 
       if (XmlUtil.XML_SCHEMA_URI.equals(nsURI)) {
@@ -70,7 +70,7 @@ public class XsdNamespaceBuilder implements Comparable<XsdNamespaceBuilder> {
     }
 
     @Override
-    public void addAttribute(@NonNls final String key, final String nsPrefix, final String nsURI, final String value, final String type)
+    public void addAttribute(final @NonNls String key, final String nsPrefix, final String nsURI, final String value, final String type)
         throws Exception {
       if (myCurrentDepth == 1 && "schema".equals(myCurrentTag)) {
         if ("targetNamespace".equals(key)) {

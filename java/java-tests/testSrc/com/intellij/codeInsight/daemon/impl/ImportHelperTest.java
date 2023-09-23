@@ -45,6 +45,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.naming.ClassNamingConvention;
@@ -111,7 +112,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   }
 
   public static void assertResolveNotCalledInEDTDuring(@NotNull BooleanSupplier isInsideResolve, @NotNull Runnable runnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     AtomicBoolean resolveHappened = new AtomicBoolean();
     // we run the test in EDT under this fake progress which is needed for one thing only: to be able to assert that no resolve happens in EDT.
     // Since resolve calls checkCanceled() a lot, we intercept these calls and check is we are being called from outside of EDT
@@ -601,7 +602,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     doHighlighting();
     assertOneImportAdded("java.util.ArrayList");
   }
@@ -614,7 +615,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testImportHintsMustBeComputedForAllUnresolvedReferencesInVisibleAreaToBeAbleToShowPopups() throws Exception {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     @Language("JAVA")
     @NonNls final String text = "class S {{ \n" +
                                 "new ArrayList();\n".repeat(1000) +

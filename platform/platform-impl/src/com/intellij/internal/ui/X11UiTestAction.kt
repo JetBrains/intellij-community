@@ -75,8 +75,6 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
               X11UiUtil.setFullScreenMode(it, !value)
             }
           }
-
-          comment("If IDE is not in FullScreen mode, then it resets full screen on timer")
         }
         row("isMaximizedVert:") {
           lbIsMaximizedVert = label("").component

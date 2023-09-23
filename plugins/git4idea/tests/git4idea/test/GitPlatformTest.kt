@@ -215,13 +215,13 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   protected fun readDetails(hash: String) = readDetails(listOf(hash)).first()
 
-  protected fun commit(changes: Collection<Change>) {
-    val exceptions = tryCommit(changes)
+  protected fun commit(changes: Collection<Change>, commitMessage: String = "comment") {
+    val exceptions = tryCommit(changes, commitMessage)
     exceptions?.forEach { fail("Exception during executing the commit: " + it.message) }
   }
 
-  protected fun tryCommit(changes: Collection<Change>): List<VcsException>? {
-    val exceptions = vcs.checkinEnvironment!!.commit(changes.toList(), "comment", commitContext, mutableSetOf())
+  protected fun tryCommit(changes: Collection<Change>, commitMessage: String = "comment"): List<VcsException>? {
+    val exceptions = vcs.checkinEnvironment!!.commit(changes.toList(), commitMessage, commitContext, mutableSetOf())
     updateChangeListManager()
     return exceptions
   }

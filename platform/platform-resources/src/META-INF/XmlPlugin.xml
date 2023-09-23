@@ -379,6 +379,8 @@
 
     <iconProvider implementation="com.intellij.xml.util.XmlIconProvider"/>
 
+    <inspection.basicVisitor class="com.intellij.psi.XmlElementVisitor"/>
+
     <localInspection language="XML" shortName="CheckTagEmptyBody" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="xml.inspections.check.tag.empty.body"
                      groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"

@@ -66,9 +66,14 @@
 
     "Borders.ContrastBorderColor": "#323232",
 
+    "LinkButton": {
+      "UI": "com.intellij.ui.components.DefaultLinkButtonUI"
+    },
+
     "Button": {
       "arc": 6,
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter",
+      "defaultButtonFollowsFocus": false,
       "default.endBackground": "#365880",
       "default.endBorderColor": "#4c708c",
       "default.focusColor": "#43688c",
@@ -83,7 +88,7 @@
       "focusedBorderColor": "#466d94",
       "paintShadow": true,
       "shadowColor": "#36363680",
-      "shadowWidth": "2",
+      "shadowWidth": 2,
       "startBackground": "#4C5052",
       "startBorderColor": "#5e6060",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI"
@@ -137,6 +142,9 @@
         "background": "#45494a",
         "foreground": "#808080"
       },
+      "matchForeground": "#589DF6",
+      "selectionBackground": "#113A5C",
+      "selectionInactiveBackground": "#515457",
       "foreground": "#bbbbbb",
       "nonFocusedState": true
     },
@@ -211,7 +219,7 @@
     },
 
     "FileView.fileIcon": "AllIcons.FileTypes.Unknown",
-    "Focus.color": "ff0000",
+    "Focus.color": "#ff0000",
 
     "FormattedTextField": {
       "background": "#45494A",
@@ -364,7 +372,7 @@
     },
 
     "ParameterInfo": {
-      "background": "#F7F7F7",
+      "background": "#4B4D4D",
       "foreground": "#BBBBBB"
     },
 
@@ -622,6 +630,7 @@
       "forceFocusedSelectionForeground": true,
       "rightChildIndent": 11,
       "rowHeight": 20,
+      "repaintWholeRow": true,
       "UI": "com.intellij.ui.tree.ui.DefaultTreeUI"
     },
 
@@ -891,6 +900,7 @@
       "background": "#45474a",
       "Details.background": "#313335",
       "Projects.actions.selectionBackground": "#326FC1",
+      "Projects.actions.selectionBorderColor": "#3574F0",
       "Projects.actions.background": "#3C5C86",
       "SidePanel.background": "#3C3F41"
     },

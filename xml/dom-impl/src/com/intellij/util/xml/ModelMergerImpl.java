@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Pair;
@@ -259,8 +259,7 @@ public final class ModelMergerImpl implements ModelMerger {
       myClass = aClass;
     }
 
-    @NotNull
-    private InvocationStrategy findStrategy(final Object proxy, final Method method) {
+    private @NotNull InvocationStrategy findStrategy(final Object proxy, final Method method) {
       for (Pair<InvocationStrategy, Class<?>> pair : myAcceptsCache.get(method)) {
         if (Object.class.equals(pair.second) || pair.second.isInstance(proxy)) {
           return pair.first;
@@ -290,8 +289,7 @@ public final class ModelMergerImpl implements ModelMerger {
     }
   }
 
-  @Nullable
-  private static Object getPrimaryKey(Object implementation, final boolean singleValuedInvocation) {
+  private static @Nullable Object getPrimaryKey(Object implementation, final boolean singleValuedInvocation) {
     final Method method = getPrimaryKeyMethod(implementation.getClass());
     if (method != null) {
       final Object o = DomReflectionUtil.invokeMethod(method, implementation);
@@ -307,8 +305,7 @@ public final class ModelMergerImpl implements ModelMerger {
     }
   }
 
-  @Nullable
-  private static Method getPrimaryKeyMethod(final Class<?> aClass) {
+  private static @Nullable Method getPrimaryKeyMethod(final Class<?> aClass) {
     Method method = ourPrimaryKeyMethods.get(aClass);
     if (method == null) {
       if (ourPrimaryKeyMethods.containsKey(aClass)) return null;
@@ -323,8 +320,7 @@ public final class ModelMergerImpl implements ModelMerger {
     return method;
   }
 
-  @Nullable
-  private static Method findPrimaryKeyAnnotatedMethod(@NotNull Method sampleMethod, @NotNull Class<?> aClass) {
+  private static @Nullable Method findPrimaryKeyAnnotatedMethod(@NotNull Method sampleMethod, @NotNull Class<?> aClass) {
     if (sampleMethod.getParameterCount() != 0 || sampleMethod.getReturnType() == void.class) {
       return null;
     }

@@ -51,7 +51,7 @@ interface ProjectModelTestEntity : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ProjectModelTestEntity,
-                                      modification: ProjectModelTestEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: ProjectModelTestEntity.Builder.() -> Unit): ProjectModelTestEntity = modifyEntity(
   ProjectModelTestEntity.Builder::class.java, entity, modification)
 //endregion
 

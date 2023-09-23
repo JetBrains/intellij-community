@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
@@ -75,10 +76,13 @@ internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewMod
 
   fun postReview()
 
+  @SinceGitLab("13.8")
   fun setReviewers(reviewers: List<GitLabUserDTO>)
 
+  @SinceGitLab("13.8")
   fun setMyselfAsReviewer()
 
+  @SinceGitLab("13.8")
   fun removeReviewer(reviewer: GitLabUserDTO)
 
   fun reviewerRereview()
@@ -90,7 +94,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   private val project: Project,
   parentScope: CoroutineScope,
   override val currentUser: GitLabUserDTO,
-  private val projectData: GitLabProject,
+  projectData: GitLabProject,
   private val mergeRequest: GitLabMergeRequest
 ) : GitLabMergeRequestReviewFlowViewModel {
   private val scope = parentScope.childScope()
@@ -131,7 +135,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   override val shouldBeRebased: SharedFlow<Boolean> = mergeRequest.details.map { it.shouldBeRebased }
     .modelFlow(scope, LOG)
 
-  override val userCanApprove: SharedFlow<Boolean> = mergeRequest.details.map { it.userPermissions.canApprove }
+  override val userCanApprove: SharedFlow<Boolean> = mergeRequest.details.map { it.userPermissions.canApprove ?: false }
     .modelFlow(scope, LOG)
   override val userCanManage: SharedFlow<Boolean> = mergeRequest.details.map { it.userPermissions.updateMergeRequest }
     .modelFlow(scope, LOG)
@@ -229,14 +233,17 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     mergeRequest.postReview()
   }
 
+  @SinceGitLab("13.8")
   override fun setReviewers(reviewers: List<GitLabUserDTO>) = runAction {
     mergeRequest.setReviewers(reviewers) // TODO: implement via CollectionDelta
   }
 
+  @SinceGitLab("13.8")
   override fun setMyselfAsReviewer() = runAction {
     mergeRequest.setReviewers(listOf(currentUser)) // TODO: implement via CollectionDelta
   }
 
+  @SinceGitLab("13.8")
   override fun removeReviewer(reviewer: GitLabUserDTO) = runAction {
     val newReviewers = reviewers.first().toMutableList()
     newReviewers.removeIf { it.id == reviewer.id }

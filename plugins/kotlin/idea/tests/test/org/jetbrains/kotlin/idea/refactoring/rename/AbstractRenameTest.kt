@@ -55,6 +55,13 @@ enum class RenameType {
     KOTLIN_CLASS,
     KOTLIN_FUNCTION,
     KOTLIN_PROPERTY,
+
+    /**
+     * Kotlin enum entries are classes in FE10 (represented as `LazyClassDescriptor`s), but variables/callables in FIR (represented as
+     * `FirEnumEntry`, which is a `FirVariable`). Hence, they have to be treated separately from classes and callables in test data.
+     */
+    KOTLIN_ENUM_ENTRY,
+
     KOTLIN_PACKAGE,
     MARKED_ELEMENT,
     FILE,
@@ -114,6 +121,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
                 RenameType.KOTLIN_CLASS -> renameKotlinClassTest(renameObject, context)
                 RenameType.KOTLIN_FUNCTION -> renameKotlinFunctionTest(renameObject, context)
                 RenameType.KOTLIN_PROPERTY -> renameKotlinPropertyTest(renameObject, context)
+                RenameType.KOTLIN_ENUM_ENTRY -> renameKotlinEnumEntryTest(renameObject, context)
                 RenameType.KOTLIN_PACKAGE -> renameKotlinPackageTest(renameObject, context)
                 RenameType.MARKED_ELEMENT -> renameMarkedElement(renameObject, context)
                 RenameType.FILE -> renameFile(renameObject, context)
@@ -206,6 +214,11 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
 
         class Classifier(val classId: ClassId) : KotlinTarget
 
+        class EnumEntry(val enumClassId: ClassId, val enumEntryName: Name) : KotlinTarget {
+            val classId: ClassId get() = enumClassId.createNestedClassId(enumEntryName)
+            val callableId: CallableId get() = CallableId(enumClassId, enumEntryName)
+        }
+
         companion object {
             fun fromJson(renameParamsObject: JsonObject): KotlinTarget {
                 val packageFqn = renameParamsObject.getNullableString("packageFqn")?.let(::FqName)
@@ -215,6 +228,11 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
                     throw AssertionError("Both classId and packageFqn are defined. Where should I search: in class or in package?")
                 } else if (classId == null && packageFqn == null) {
                     throw AssertionError("Define classId or packageFqn")
+                }
+
+                val enumEntryName = renameParamsObject.getNullableString("enumEntryName")?.let(Name::identifier)
+                if (enumEntryName != null) {
+                    return EnumEntry(classId!!, enumEntryName)
                 }
 
                 val oldName = renameParamsObject.getNullableString("oldName")?.let(Name::identifier)
@@ -255,6 +273,13 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
     private fun renameKotlinClassTest(renameParamsObject: JsonObject, context: TestContext) {
         val target = KotlinTarget.fromJson(renameParamsObject)
         require(target is KotlinTarget.Classifier)
+
+        renameKotlinTarget(target, renameParamsObject, context)
+    }
+
+    private fun renameKotlinEnumEntryTest(renameParamsObject: JsonObject, context: TestContext) {
+        val target = KotlinTarget.fromJson(renameParamsObject)
+        require(target is KotlinTarget.EnumEntry)
 
         renameKotlinTarget(target, renameParamsObject, context)
     }
@@ -358,6 +383,8 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
                     ).first()
                 }
             }
+
+            is KotlinTarget.EnumEntry -> module.findClassAcrossModuleDependencies(target.classId)!!
         }
 
         return DescriptorToSourceUtils.descriptorToDeclaration(descriptor)!!

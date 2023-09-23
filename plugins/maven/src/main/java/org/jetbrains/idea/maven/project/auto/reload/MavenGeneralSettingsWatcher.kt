@@ -2,14 +2,18 @@
 package org.jetbrains.idea.maven.project.auto.reload
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener.Companion.subscribeOnVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
 import com.intellij.openapi.util.io.toCanonicalPath
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.concurrent.ExecutorService
 
@@ -31,8 +35,12 @@ class MavenGeneralSettingsWatcher(
 
   private fun fireSettingsChange() {
     embeddersManager.reset()
-    MavenDistributionsCache.getInstance(manager.project).cleanCaches()
-    manager.scheduleUpdateAll(MavenImportSpec.IMPLICIT_IMPORT)
+    val project = manager.project
+    MavenDistributionsCache.getInstance(project).cleanCaches()
+    val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+    cs.launch {
+      manager.updateAllMavenProjects(MavenImportSpec.IMPLICIT_IMPORT)
+    }
   }
 
   private fun fireSettingsXmlChange() {
@@ -49,6 +57,10 @@ class MavenGeneralSettingsWatcher(
       .coalesceBy(this)
       .build(backgroundExecutor)
     subscribeOnVirtualFilesChanges(false, filesProvider, object : FilesChangesListener {
+      override fun onFileChange(path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {
+        val fileChangeMessage = "File change: $path, $modificationStamp, $modificationType"
+        MavenLog.LOG.debug(fileChangeMessage)
+      }
       override fun apply() = fireSettingsXmlChange()
     }, parentDisposable)
   }

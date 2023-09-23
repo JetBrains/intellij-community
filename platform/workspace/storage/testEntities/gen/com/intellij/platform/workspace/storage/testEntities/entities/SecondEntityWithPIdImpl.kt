@@ -13,21 +13,21 @@ import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class SecondEntityWithPIdImpl(val dataSource: SecondEntityWithPIdData) : SecondEntityWithPId, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class SecondEntityWithPIdImpl(private val dataSource: SecondEntityWithPIdData) : SecondEntityWithPId, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -41,6 +41,7 @@ open class SecondEntityWithPIdImpl(val dataSource: SecondEntityWithPIdData) : Se
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: SecondEntityWithPIdData?) : ModifiableWorkspaceEntityBase<SecondEntityWithPId, SecondEntityWithPIdData>(
     result), SecondEntityWithPId.Builder {
@@ -70,7 +71,7 @@ open class SecondEntityWithPIdImpl(val dataSource: SecondEntityWithPIdData) : Se
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -117,7 +118,7 @@ open class SecondEntityWithPIdImpl(val dataSource: SecondEntityWithPIdData) : Se
 class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculableSymbolicId<SecondEntityWithPId>() {
   lateinit var data: String
 
-  fun isDataInitialized(): Boolean = ::data.isInitialized
+  internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SecondEntityWithPId> {
     val modifiable = SecondEntityWithPIdImpl.Builder(null)
@@ -134,6 +135,11 @@ class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculableSymbolicId<Sec
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.SecondEntityWithPId") as EntityMetadata
   }
 
   override fun symbolicId(): SymbolicEntityId<*> {
@@ -191,9 +197,5 @@ class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculableSymbolicId<Sec
     var result = javaClass.hashCode()
     result = 31 * result + data.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

@@ -2,7 +2,8 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.ui.popup.JBPopupListener;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class PopupUpdateProcessorBase implements JBPopupListener {
-  public abstract void updatePopup(Object lookupItemObject);
+  public abstract void updatePopup(@Nullable Object lookupItemObject);
 }

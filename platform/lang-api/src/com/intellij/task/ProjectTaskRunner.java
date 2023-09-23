@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.task;
 
 import com.intellij.execution.Executor;
@@ -54,28 +54,54 @@ public abstract class ProjectTaskRunner {
   }
 
   /**
-   * @return true if the task should be executed by this runner, false otherwise
+   * Check if the task can be executed by the task runner.
+   * This method is not used within the Platform and considered as obsolete.
+   * Please use {@link ProjectTaskRunner#canRun(Project, ProjectTask, ProjectTaskContext)}.
+   *
+   * @param projectTask to check.
+   * @return true if the task should be executed by this runner, false otherwise.
    */
+  @ApiStatus.Obsolete(since = "2023.3")
   public abstract boolean canRun(@NotNull ProjectTask projectTask);
 
+  /**
+   * Check if the task can be executed by the task runner.
+   * This method is not used within the Platform and considered as obsolete.
+   * Please use {@link ProjectTaskRunner#canRun(Project, ProjectTask, ProjectTaskContext)}.
+   *
+   * @param project     to witch the task corresponds.
+   * @param projectTask to check.
+   * @return true if the task should be executed by this runner, false otherwise.
+   */
+  @ApiStatus.Obsolete(since = "2023.3")
   public boolean canRun(@SuppressWarnings("unused") @NotNull Project project, @NotNull ProjectTask projectTask) {
     return canRun(projectTask);
+  }
+
+  /**
+   * Check if the task can be executed by the task runner.
+   *
+   * @param project     to witch the task corresponds.
+   * @param projectTask to check.
+   * @param context     of the task.
+   * @return true if the task should be executed by this runner, false otherwise.
+   */
+  public boolean canRun(@NotNull Project project, @NotNull ProjectTask projectTask, @Nullable ProjectTaskContext context) {
+    return canRun(project, projectTask);
   }
 
   /**
    * This method can be used when execution of some "Run Configuration" should be delegated to another tool.
    * E.g. delegated run of an "ApplicationConfiguration" by external tool.
    */
-  @Nullable
-  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
+  public @Nullable ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
                                                          @NotNull ExecuteRunConfigurationTask task,
                                                          @Nullable Executor executor) {
     return null;
   }
 
   @ApiStatus.Experimental
-  @Nullable
-  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, ProjectTask @NotNull ... tasks) {
+  public @Nullable ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, ProjectTask @NotNull ... tasks) {
     if (tasks.length == 0) return null;
     if (tasks.length == 1 && tasks[0] instanceof ExecuteRunConfigurationTask) {
       return createExecutionEnvironment(project, (ExecuteRunConfigurationTask)tasks[0], null);

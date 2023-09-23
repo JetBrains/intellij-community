@@ -518,6 +518,7 @@ as an example
 
       const gcCollections = extractTimeSeries("JVM.GC.collections")
       const gcTimesMs = extractTimeSeries("JVM.GC.collectionTimesMs")
+      const totalBytesAllocated = extractTimeSeries("JVM.totalBytesAllocated")
 
       const totalCpuTimesMs = extractTimeSeries("JVM.totalCpuTimeMs")
       const osLoadAverage = extractTimeSeries("OS.loadAverage")
@@ -600,6 +601,19 @@ as an example
         }],
         /*yaxis:*/ {
           title: 'ms'
+        }
+      )
+
+      plotTimeSeries(
+        'Allocations',
+        'jvmBasics_Allocations_Chart',
+        [{
+          name: 'Allocations',
+          color: 'red',
+          series: totalBytesAllocated.mulScalar(1.0/1024/1024/1024)
+        }],
+        /*yaxis:*/ {
+          title: 'Gb'
         }
       )
 
@@ -1468,6 +1482,7 @@ as an example
     <div id="jvmBasics_Threads_Chart" class="plot hideable"></div>
 
     <div id="jvmBasics_GC_Times_Chart" class="plot hideable"></div>
+    <div id="jvmBasics_Allocations_Chart" class="plot hideable"></div>
     <div id="jvmBasics_JVM_CPUTime_Chart" class="plot hideable"></div>
     <div id="jvmBasics_OS_LoadAvg_Chart" class="plot hideable"></div>
   </div>

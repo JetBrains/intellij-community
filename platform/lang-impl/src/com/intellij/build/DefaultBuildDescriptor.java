@@ -254,6 +254,12 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
     return this;
   }
 
+  @ApiStatus.Experimental
+  public DefaultBuildDescriptor withExecutionFilters(Filter @NotNull ... filters) {
+    myExecutionFilters.addAll(Arrays.asList(filters));
+    return this;
+  }
+
   public DefaultBuildDescriptor withContentDescriptor(Supplier<? extends RunContentDescriptor> contentDescriptorSupplier) {
     myContentDescriptorSupplier = contentDescriptorSupplier;
     return this;

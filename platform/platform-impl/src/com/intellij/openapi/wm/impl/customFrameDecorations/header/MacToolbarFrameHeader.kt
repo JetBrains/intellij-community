@@ -125,7 +125,7 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
   }
 
   private fun createView(isCompactHeader: Boolean): HeaderView {
-    return if (isCompactHeader) CompactHeaderView(this, frame) else ToolbarHeaderView(this, coroutineScope, frame)
+    return if (isCompactHeader) CompactHeaderView(this, frame, isFullScreen(rootPane)) else ToolbarHeaderView(this, coroutineScope, frame)
   }
 
   private fun getPreferredHeight(): Int {
@@ -262,11 +262,11 @@ private class ToolbarHeaderView(panel: JPanel, parentCoroutineScope: CoroutineSc
   }
 }
 
-private class CompactHeaderView(panel: JPanel, frame: JFrame) : HeaderView {
+private class CompactHeaderView(panel: JPanel, frame: JFrame, isFullScreen: Boolean) : HeaderView {
   private val headerTitle: SimpleCustomDecorationPath
   init {
     headerTitle = SimpleCustomDecorationPath(frame)
-    headerTitle.add(panel, if (isFullScreen(frame.rootPane) && !MacFullScreenControlsManager.enabled()) 0 else GAP_FOR_BUTTONS)
+    headerTitle.add(panel, if (isFullScreen && !MacFullScreenControlsManager.enabled()) 0 else GAP_FOR_BUTTONS)
   }
 
   override fun updateBorders(left: Int, right: Int) {

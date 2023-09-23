@@ -31,8 +31,8 @@ class InlayEditorMouseMotionListener : EditorMouseMotionListener {
     }
     if (container !is InputHandler) return
     val bounds = inlay.bounds ?: return
-    val inlayPoint = Point(bounds.x, bounds.y)
-    val translated = Point(event.x - inlayPoint.x, event.y - inlayPoint.y)
+    val translatedInlayPoint = container.translatePoint(Point(bounds.x, bounds.y))
+    val translated = Point(event.x - translatedInlayPoint.x, event.y - translatedInlayPoint.y)
     container.mouseMoved(event, translated)
   }
 

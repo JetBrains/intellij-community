@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.navigation.ItemPresentation;
@@ -19,38 +19,31 @@ public interface ServiceViewDescriptor {
   @NotNull
   ItemPresentation getPresentation();
 
-  @Nullable
-  default String getId() {
+  default @Nullable String getId() {
     return getPresentation().getPresentableText();
   }
 
-  @Nullable
-  default JComponent getContentComponent() {
+  default @Nullable JComponent getContentComponent() {
     return null;
   }
 
-  @NotNull
-  default ItemPresentation getContentPresentation() {
+  default @NotNull ItemPresentation getContentPresentation() {
     return getPresentation();
   }
 
-  @NotNull
-  default ItemPresentation getCustomPresentation(@NotNull ServiceViewOptions options, @NotNull ServiceViewItemState state) {
+  default @NotNull ItemPresentation getCustomPresentation(@NotNull ServiceViewOptions options, @NotNull ServiceViewItemState state) {
     return getPresentation();
   }
 
-  @Nullable
-  default ActionGroup getToolbarActions() {
+  default @Nullable ActionGroup getToolbarActions() {
     return null;
   }
 
-  @Nullable
-  default ActionGroup getPopupActions() {
+  default @Nullable ActionGroup getPopupActions() {
     return getToolbarActions();
   }
 
-  @Nullable
-  default DataProvider getDataProvider() {
+  default @Nullable DataProvider getDataProvider() {
     return null;
   }
 
@@ -69,18 +62,15 @@ public interface ServiceViewDescriptor {
     return false;
   }
 
-  @Nullable
-  default Object getPresentationTag(Object fragment) {
+  default @Nullable Object getPresentationTag(Object fragment) {
     return null;
   }
 
-  @Nullable
-  default Navigatable getNavigatable() {
+  default @Nullable Navigatable getNavigatable() {
     return null;
   }
 
-  @Nullable
-  default Runnable getRemover() {
+  default @Nullable Runnable getRemover() {
     return null;
   }
 

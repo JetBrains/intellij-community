@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,15 +25,12 @@ public class IncludedXmlTag extends IncludedXmlElement<XmlTag> implements XmlTag
   }
 
   @Override
-  @Nullable
-  public XmlTag getParentTag() {
+  public @Nullable XmlTag getParentTag() {
     return getParent() instanceof XmlTag ? (XmlTag)getParent() : null;
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getName() {
+  public @NotNull @NonNls String getName() {
     return getOriginal().getName();
   }
 
@@ -57,24 +40,19 @@ public class IncludedXmlTag extends IncludedXmlElement<XmlTag> implements XmlTag
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getNamespace() {
+  public @NotNull @NonNls String getNamespace() {
     XmlTag original = getOriginal();
     LOG.assertTrue(original.isValid());
     return original.getNamespace();
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getLocalName() {
+  public @NotNull @NonNls String getLocalName() {
     return getOriginal().getLocalName();
   }
 
   @Override
-  @Nullable
-  public XmlElementDescriptor getDescriptor() {
+  public @Nullable XmlElementDescriptor getDescriptor() {
     return getOriginal().getDescriptor();
   }
 
@@ -90,28 +68,24 @@ public class IncludedXmlTag extends IncludedXmlElement<XmlTag> implements XmlTag
   }
 
   @Override
-  @Nullable
-  public XmlAttribute getAttribute(@NonNls String name, @NonNls String namespace) {
+  public @Nullable XmlAttribute getAttribute(@NonNls String name, @NonNls String namespace) {
     XmlAttribute attribute = getOriginal().getAttribute(name, namespace);
     return attribute == null ? null : new IncludedXmlAttribute(attribute, this);
   }
 
   @Override
-  @Nullable
-  public XmlAttribute getAttribute(@NonNls String qname) {
+  public @Nullable XmlAttribute getAttribute(@NonNls String qname) {
     XmlAttribute attribute = getOriginal().getAttribute(qname);
     return attribute == null ? null : new IncludedXmlAttribute(attribute, this);
   }
 
   @Override
-  @Nullable
-  public String getAttributeValue(@NonNls String name, @NonNls String namespace) {
+  public @Nullable String getAttributeValue(@NonNls String name, @NonNls String namespace) {
     return getOriginal().getAttributeValue(name, namespace);
   }
 
   @Override
-  @Nullable
-  public String getAttributeValue(@NonNls String qname) {
+  public @Nullable String getAttributeValue(@NonNls String qname) {
     return getOriginal().getAttributeValue(qname);
   }
 
@@ -162,29 +136,23 @@ public class IncludedXmlTag extends IncludedXmlElement<XmlTag> implements XmlTag
   }
 
   @Override
-  @Nullable
-  public XmlTag findFirstSubTag(@NonNls String qname) {
+  public @Nullable XmlTag findFirstSubTag(@NonNls String qname) {
     XmlTag tag = getOriginal().findFirstSubTag(qname);
     return tag == null ? null : new IncludedXmlTag(tag, this);
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getNamespacePrefix() {
+  public @NotNull @NonNls String getNamespacePrefix() {
     return getOriginal().getNamespacePrefix();
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getNamespaceByPrefix(@NonNls String prefix) {
+  public @NotNull @NonNls String getNamespaceByPrefix(@NonNls String prefix) {
     return getOriginal().getNamespaceByPrefix(prefix);
   }
 
   @Override
-  @Nullable
-  public String getPrefixByNamespace(@NonNls String namespace) {
+  public @Nullable String getPrefixByNamespace(@NonNls String namespace) {
     return getOriginal().getPrefixByNamespace(namespace);
   }
 
@@ -199,20 +167,17 @@ public class IncludedXmlTag extends IncludedXmlElement<XmlTag> implements XmlTag
   }
 
   @Override
-  @NotNull
-  public Map<String, String> getLocalNamespaceDeclarations() {
+  public @NotNull Map<String, String> getLocalNamespaceDeclarations() {
     return getOriginal().getLocalNamespaceDeclarations();
   }
 
   @Override
-  @NotNull
-  public XmlTagValue getValue() {
+  public @NotNull XmlTagValue getValue() {
     return XmlTagValueImpl.createXmlTagValue(this);
   }
 
   @Override
-  @Nullable
-  public XmlNSDescriptor getNSDescriptor(@NonNls String namespace, boolean strict) {
+  public @Nullable XmlNSDescriptor getNSDescriptor(@NonNls String namespace, boolean strict) {
     return getOriginal().getNSDescriptor(namespace, strict);
   }
 
@@ -227,9 +192,7 @@ public class IncludedXmlTag extends IncludedXmlElement<XmlTag> implements XmlTag
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getSubTagText(@NonNls String qname) {
+  public @Nullable @NonNls String getSubTagText(@NonNls String qname) {
     return getOriginal().getSubTagText(qname);
   }
 

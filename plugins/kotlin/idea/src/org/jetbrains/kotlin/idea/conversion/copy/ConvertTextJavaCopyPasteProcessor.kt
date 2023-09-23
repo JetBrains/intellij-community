@@ -21,6 +21,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiUnnamedClass
 import com.intellij.refactoring.suggested.range
 import com.intellij.util.LocalTimeCounter
 import org.jetbrains.annotations.TestOnly
@@ -242,7 +244,16 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
 
     private fun isParsedAsFile(text: String, fileType: LanguageFileType, project: Project): Boolean {
         val psiFile = parseAsFile(text, fileType, project)
-        return !psiFile.anyDescendantOfType<PsiErrorElement>()
+        val hasErrors = psiFile.anyDescendantOfType<PsiErrorElement>()
+        // OK, there are some errors
+        if (hasErrors) return false
+
+        val isJavaFileWithUnnamedClass = psiFile is PsiJavaFile && psiFile.classes.any { it is PsiUnnamedClass }
+
+        // Java 21 allows to use unnamed classes
+        // before that java file like `class { void foo(){} }` is considered as error
+        // after java 21 it is a valid java file
+        return !isJavaFileWithUnnamedClass
     }
 
     private fun parseAsFile(text: String, fileType: LanguageFileType, project: Project): PsiFile {

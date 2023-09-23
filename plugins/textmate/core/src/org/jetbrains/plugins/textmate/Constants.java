@@ -3,10 +3,12 @@ package org.jetbrains.plugins.textmate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.textmate.language.preferences.TextMateAutoClosingPair;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public interface Constants {
   // KEYS
@@ -14,6 +16,8 @@ public interface Constants {
   @NonNls String VALUE_KEY = "value";
   @NonNls String TAB_TRIGGER_KEY = "tabTrigger";
   @NonNls String FILE_TYPES_KEY = "fileTypes";
+
+  @NonNls String FIRST_LINE_MATCH = "firstLineMatch";
   @NonNls String INCLUDE_KEY = "include";
   @NonNls String REPOSITORY_KEY = "repository";
   @NonNls String PATTERNS_KEY = "patterns";
@@ -27,21 +31,19 @@ public interface Constants {
   @NonNls String DESCRIPTION_KEY = "description";
 
   enum StringKey {
-    CONTENT("content", '$'),
-    NAME("name", '$'),
-    CONTENT_NAME("contentName", '$'),
-    WHILE("while", '\\'),
-    END("end", '\\'),
-    SCOPE_NAME("scopeName", '$'),
-    MATCH("match", '\\'),
-    BEGIN("begin", '\\');
+    CONTENT("content"),
+    NAME("name"),
+    CONTENT_NAME("contentName"),
+    WHILE("while"),
+    END("end"),
+    SCOPE_NAME("scopeName"),
+    MATCH("match"),
+    BEGIN("begin");
 
     public final String value;
-    public final char backReferencePrefix;
 
-    StringKey(String name, char backReferencePrefix) {
+    StringKey(String name) {
       value = name;
-      this.backReferencePrefix = backReferencePrefix;
     }
 
     @Nullable
@@ -97,7 +99,7 @@ public interface Constants {
 
 
   // PREFERENCES
-  @NonNls String HIGHLIGHTING_PAIRS_KEY = "highlightingPairs";
+  @NonNls String HIGHLIGHTING_PAIRS_KEY = "highlightPairs";
   @NonNls String SMART_TYPING_PAIRS_KEY = "smartTypingPairs";
   @NonNls String INDENTATION_RULES = "indentationRules";
 
@@ -109,17 +111,17 @@ public interface Constants {
 
   // we should depend on intellij util classes as little as possible
   @SuppressWarnings("SSBasedInspection")
-  Collection<TextMateBracePair> DEFAULT_HIGHLIGHTING_BRACE_PAIRS =
-    Arrays.asList(new TextMateBracePair('[', ']'),
-                  new TextMateBracePair('{', '}'),
-                  new TextMateBracePair('(', ')'));
+  Set<TextMateBracePair> DEFAULT_HIGHLIGHTING_BRACE_PAIRS =
+    new HashSet<>(Arrays.asList(new TextMateBracePair("[", "]"),
+                                new TextMateBracePair("{", "}"),
+                                new TextMateBracePair("(", ")")));
 
   // we should depend on intellij util classes as little as possible
   @SuppressWarnings("SSBasedInspection")
-  Collection<TextMateBracePair> DEFAULT_SMART_TYPING_BRACE_PAIRS =
-    Arrays.asList(new TextMateBracePair('"', '"'),
-                  new TextMateBracePair('\'', '\''),
-                  new TextMateBracePair('[', ']'),
-                  new TextMateBracePair('{', '}'),
-                  new TextMateBracePair('(', ')'));
+  Set<TextMateAutoClosingPair> DEFAULT_SMART_TYPING_BRACE_PAIRS =
+    new HashSet<>(Arrays.asList(new TextMateAutoClosingPair("\"", "\"", null),
+                                new TextMateAutoClosingPair("'", "'", null),
+                                new TextMateAutoClosingPair("[", "]", null),
+                                new TextMateAutoClosingPair("{", "}", null),
+                                new TextMateAutoClosingPair("(", ")", null)));
 }

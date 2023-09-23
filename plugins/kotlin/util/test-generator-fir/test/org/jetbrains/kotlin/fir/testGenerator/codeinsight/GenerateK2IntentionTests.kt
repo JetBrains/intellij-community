@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.AbstractSharedK2IntentionTest
+import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2GotoTestOrCodeActionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2IntentionTest
 import org.jetbrains.kotlin.testGenerator.model.*
 
@@ -46,8 +47,11 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("code-insight/intentions-k2/tests/testData/intentions", pattern = pattern)
             model("${idea}intentions/convertBinaryExpressionWithDemorgansLaw", pattern = pattern)
         }
-    }
 
+        testClass<AbstractK2GotoTestOrCodeActionTest> {
+            model("${idea}navigation/gotoTestOrCode", pattern = Patterns.forRegex("^(.+)\\.main\\..+\$"))
+        }
+    }
 
     testGroup("code-insight/intentions-shared/tests/k2", testDataPath = "../testData") {
         testClass<AbstractSharedK2IntentionTest> {

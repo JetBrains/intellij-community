@@ -28,6 +28,7 @@ import java.awt.event.ComponentListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.execution.services.ServiceViewDragHelper.getTheOnlyRootContributor;
@@ -36,6 +37,8 @@ final class ServiceViewActionProvider {
   @NonNls private static final String SERVICE_VIEW_ITEM_TOOLBAR = "ServiceViewItemToolbar";
   @NonNls static final String SERVICE_VIEW_ITEM_POPUP = "ServiceViewItemPopup";
   @NonNls private static final String SERVICE_VIEW_TREE_TOOLBAR = "ServiceViewTreeToolbar";
+
+  static final DataKey<List<ServiceViewItem>> SERVICES_SELECTED_ITEMS = DataKey.create("services.selected.items");
 
   private static final ServiceViewActionProvider ourInstance = new ServiceViewActionProvider();
 
@@ -123,6 +126,16 @@ final class ServiceViewActionProvider {
   @Nullable
   static ServiceView getSelectedView(@NotNull DataProvider provider) {
     return getSelectedView(ObjectUtils.tryCast(provider.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT.getName()), Component.class));
+  }
+
+  static @NotNull List<ServiceViewItem> getSelectedItems(@NotNull AnActionEvent e) {
+    List<ServiceViewItem> items = e.getData(SERVICES_SELECTED_ITEMS);
+    return items != null ? items : Collections.emptyList();
+  }
+
+  static @NotNull List<ServiceViewItem> getSelectedItems(@NotNull DataContext dataContext) {
+    List<ServiceViewItem> items = dataContext.getData(SERVICES_SELECTED_ITEMS);
+    return items != null ? items : Collections.emptyList();
   }
 
   static boolean isActionToolBarRequired(JComponent component) {
@@ -221,7 +234,7 @@ final class ServiceViewActionProvider {
     ServiceView serviceView = getSelectedView(e);
     if (serviceView == null) return AnAction.EMPTY_ARRAY;
 
-    List<ServiceViewItem> selectedItems = serviceView.getSelectedItems();
+    List<ServiceViewItem> selectedItems = getSelectedItems(e);
     if (selectedItems.isEmpty()) return AnAction.EMPTY_ARRAY;
 
     ServiceViewDescriptor descriptor;

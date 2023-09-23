@@ -152,7 +152,7 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
 
     final LinkedHashMap<Executor, ProgramRunner> availableRunners = new LinkedHashMap<>();
     for (Executor ex : new Executor[] {DefaultRunExecutor.getRunExecutorInstance(), DefaultDebugExecutor.getDebugExecutorInstance()}) {
-      final ProgramRunner runner = ProgramRunner.getRunner(ex.getId(), profile);
+      final ProgramRunner runner = ProgramRunner.getRunner(ex.getId(), profile.getPeer());
       if (runner != null) {
         availableRunners.put(ex, runner);
       }

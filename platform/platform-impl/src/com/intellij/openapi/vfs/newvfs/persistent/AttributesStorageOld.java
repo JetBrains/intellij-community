@@ -54,9 +54,9 @@ public final class AttributesStorageOld implements AbstractAttributesStorage {
   private final AtomicInteger modCount = new AtomicInteger();
 
 
-  protected AttributesStorageOld(final boolean bulkAttrReadSupport,
-                                 final boolean inlineAttributes,
-                                 final @NotNull Storage attributesBlobStorage) {
+  AttributesStorageOld(final boolean bulkAttrReadSupport,
+                       final boolean inlineAttributes,
+                       final @NotNull Storage attributesBlobStorage) {
     this.bulkAttrReadSupport = bulkAttrReadSupport;
     this.inlineAttributes = inlineAttributes;
 

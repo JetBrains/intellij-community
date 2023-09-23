@@ -5,7 +5,10 @@ package org.jetbrains.intellij.build
 
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import java.util.function.BiConsumer
@@ -97,7 +100,7 @@ class ProductModulesLayout {
 
   /**
    * Names of the modules which classpath will be used to build searchable options index <br>
-   * //todo[nik] get rid of this property and automatically include all platform and plugin modules to the classpath when building searchable options index
+   * //todo get rid of this property and automatically include all platform and plugin modules to the classpath when building searchable options index
    */
   var mainModules: List<String> = emptyList()
 

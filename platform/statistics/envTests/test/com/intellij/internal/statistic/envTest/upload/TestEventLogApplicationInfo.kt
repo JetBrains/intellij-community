@@ -15,7 +15,7 @@ internal const val RECORDER_ID = "FUS"
 internal const val PRODUCT_VERSION = "2020.1"
 internal const val PRODUCT_CODE = "IC"
 
-internal class TestEventLogApplicationInfo(private val settingsUrl: String): EventLogInternalApplicationInfo(false) {
+internal class TestEventLogApplicationInfo(private val settingsUrl: String): EventLogInternalApplicationInfo(false, false) {
   override fun getProductVersion(): String = PRODUCT_VERSION
   override fun getProductCode(): String = PRODUCT_CODE
   override fun getTemplateUrl(): String = settingsUrl

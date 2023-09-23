@@ -161,16 +161,19 @@ class CustomProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCode
         )
     }
 
-    //TODO
-    fun `_test reorder accessors`() {
-        val file = myFixture.configureByText("usage.kt", """var x: String
-    get() {
-        return ""
-    }
-    set(v: String) {
-        // test
-    }
-""") as KtFile
+    fun `test reorder accessors`() {
+        val file = myFixture.configureByText(
+            /* fileName = */ "usage.kt",
+            /* text = */ """
+            var x: String
+                get() {
+                    return ""
+                }
+                set(v: String) {
+                    // test
+                }
+        """
+        ) as KtFile
 
         val property = file.declarations.first() as KtProperty
         val getter = property.getter!!

@@ -6,7 +6,7 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.grazie.GrazieBundle
-import com.intellij.grazie.detection.toLang
+import com.intellij.grazie.detection.toLangOrNull
 import com.intellij.grazie.ide.inspection.detection.quickfix.DownloadLanguageQuickFix
 import com.intellij.grazie.ide.inspection.detection.quickfix.GrazieGoToSettingsQuickFix
 import com.intellij.grazie.ide.inspection.detection.quickfix.NeverSuggestLanguageQuickFix
@@ -15,11 +15,16 @@ import com.intellij.psi.PsiFile
 
 
 object LanguageDetectionProblemDescriptor {
-  fun create(manager: InspectionManager,
-             isOnTheFly: Boolean,
-             file: PsiFile,
-             languages: Set<Language>): ProblemDescriptor {
-    val langs = languages.map { it.toLang() }
+  fun create(
+    manager: InspectionManager,
+    isOnTheFly: Boolean,
+    file: PsiFile,
+    languages: Set<Language>
+  ): ProblemDescriptor? {
+    val langs = languages.mapNotNull { it.toLangOrNull() }
+    if (langs.isEmpty()) {
+      return null
+    }
 
     val text = when {
       langs.size in 1..3 && langs.all { it.isAvailable() } -> {

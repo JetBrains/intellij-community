@@ -810,6 +810,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         processExpression(receiver)
         val offset = DeferredOffset()
         if (expr is KtSafeQualifiedExpression) {
+            val receiverType = receiver.getKotlinType()
+            addImplicitConversion(receiverType, receiverType?.makeNullable())
             addInstruction(DupInstruction())
             addInstruction(ConditionalGotoInstruction(offset, DfTypes.NULL))
         }

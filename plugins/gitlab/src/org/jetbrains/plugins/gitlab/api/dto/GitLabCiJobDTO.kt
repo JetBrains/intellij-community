@@ -10,5 +10,5 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCiJobStatus
 data class GitLabCiJobDTO(
   val name: String,
   @SinceGitLab("13.11") val status: GitLabCiJobStatus,
-  @SinceGitLab("15.4") val webPath: String
+  @SinceGitLab("15.4") val webPath: String?
 )

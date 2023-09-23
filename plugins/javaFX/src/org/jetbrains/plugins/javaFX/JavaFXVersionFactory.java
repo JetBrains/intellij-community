@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX;
 
 import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
@@ -17,15 +17,14 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
 
-public class JavaFXVersionFactory extends ProjectTemplateParameterFactory {
+public final class JavaFXVersionFactory extends ProjectTemplateParameterFactory {
   @Override
   public String getParameterId() {
     return "IJ_JAVAFX_VERSION";
   }
 
-  @Nullable
   @Override
-  public WizardInputField<?> createField(String defaultValue) {
+  public @Nullable WizardInputField<?> createField(String defaultValue) {
     return new WizardInputField<>(getParameterId(), defaultValue) {
       @Override
       public String getLabel() {
@@ -49,9 +48,8 @@ public class JavaFXVersionFactory extends ProjectTemplateParameterFactory {
     };
   }
 
-  @Nullable
   @Override
-  public String detectParameterValue(Project project) {
+  public @Nullable String detectParameterValue(Project project) {
     return null;
   }
 
@@ -71,8 +69,7 @@ public class JavaFXVersionFactory extends ProjectTemplateParameterFactory {
     }
   }
 
-  @Nullable
-  private static JavaSdkVersion getSdkVersion(ModifiableRootModel model) {
+  private static @Nullable JavaSdkVersion getSdkVersion(ModifiableRootModel model) {
     Sdk sdk = ProjectRootManager.getInstance(model.getProject()).getProjectSdk();
     if (sdk != null) {
       SdkTypeId type = sdk.getSdkType();

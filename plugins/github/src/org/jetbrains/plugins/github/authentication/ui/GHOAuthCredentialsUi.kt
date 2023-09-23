@@ -1,21 +1,26 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory.Companion.addWarningForPersistentCredentials
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.ui.NamedColorUtil
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GHOAuthService
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.Validator
 import java.util.concurrent.CancellationException
 import javax.swing.JComponent
 
 internal class GHOAuthCredentialsUi(
+  private val cs: CoroutineScope,
   val factory: GithubApiRequestExecutor.Factory,
   private val isAccountUnique: UniqueLoginPredicate
 ) : GHCredentialsUi() {
@@ -41,6 +46,12 @@ internal class GHOAuthCredentialsUi(
         icon = AnimatedIcon.Default()
         foreground = NamedColorUtil.getInactiveTextColor()
       }
+
+      addWarningForPersistentCredentials(
+        cs,
+        service<GHAccountManager>().canPersistCredentials,
+        ::panel
+      )
     }
   }
 

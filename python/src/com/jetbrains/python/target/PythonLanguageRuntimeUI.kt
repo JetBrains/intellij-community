@@ -47,8 +47,8 @@ class PythonLanguageRuntimeUI(project: Project,
     this.introspectable = introspectable
   }
 
-  override fun createCustomTool(savedConfiguration: TargetEnvironmentConfiguration): Sdk? {
-    return panel.getOrCreateSdk(savedConfiguration)
+  override fun createCustomTool(): Sdk? {
+    return panel.getOrCreateSdk()
   }
 
   override fun validate(): Collection<ValidationInfo> = panel.doValidateAll()

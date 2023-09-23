@@ -121,7 +121,7 @@ internal fun createComment(@NlsContexts.Label text: String, maxLineLength: Int, 
 }
 
 internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
-  val mnemonic = TextWithMnemonic.fromMnemonicText(label.text)
+  val mnemonic = TextWithMnemonic.fromMnemonicText(label.text, true)
   val mnemonicExists = label.displayedMnemonic != 0 || label.displayedMnemonicIndex >= 0 || mnemonic?.hasMnemonic() == true
   if (cell !is CellImpl<*>) {
     if (mnemonicExists) {

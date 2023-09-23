@@ -8,19 +8,16 @@ import com.intellij.ide.util.gotoByName.ChooseByNameItem
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent
 import com.intellij.ide.util.gotoByName.ListChooseByNameModel
+import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.internal.statistic.config.SerializationHelper
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil
 import com.intellij.internal.statistic.eventLog.LogEventSerializer
-import com.intellij.internal.statistic.config.SerializationHelper
 import com.intellij.internal.statistic.eventLog.newLogEvent
-import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
-import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.*
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -31,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.concurrency.resolvedPromise
+import java.util.*
 
 internal class CollectFUStatisticsAction : GotoActionBase(), DumbAware {
   override fun update(e: AnActionEvent) {
@@ -43,15 +41,15 @@ internal class CollectFUStatisticsAction : GotoActionBase(), DumbAware {
   override fun gotoActionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
-    val projectCollectors = ExtensionPointName.create<Any>("com.intellij.statistics.projectUsagesCollector").extensionList
-    val applicationCollectors = ExtensionPointName.create<Any>("com.intellij.statistics.applicationUsagesCollector").extensionList
+    val projectCollectors = UsageCollectors.PROJECT_EP_NAME.extensionList
+    val applicationCollectors = UsageCollectors.APPLICATION_EP_NAME.extensionList
 
-    val collectors = (projectCollectors + applicationCollectors).filterIsInstance(FeatureUsagesCollector::class.java)
+    val collectors = (projectCollectors + applicationCollectors).map(UsageCollectorBean::getCollector)
 
-    val ids = collectors.mapTo(HashMultiset.create()) { it.groupId }
+    val ids = collectors.mapTo(HashMultiset.create()) { it.group.id }
     val items = collectors
       .map { collector ->
-        val groupId = collector.groupId
+        val groupId = collector.group.id
         val className = StringUtil.nullize(collector.javaClass.simpleName, true)
         Item(collector, groupId, className, ids.count(groupId) > 1)
       }
@@ -87,40 +85,42 @@ internal class CollectFUStatisticsAction : GotoActionBase(), DumbAware {
       is ProjectUsagesCollector -> collector.getMetrics(project, indicator)
       else -> throw IllegalArgumentException("Unsupported collector: $collector")
     }
-    val result = StringBuilder()
 
+    var result: String
     metricsPromise.onSuccess { metrics ->
       if (useExtendedPresentation) {
-        result.append("[\n")
-        for (metric in metrics) {
-          val metricData = FUStateUsagesLogger.mergeWithEventData(null, metric.data)!!.build()
-          val event = newLogEvent("test.session", "build", "bucket", System.currentTimeMillis(), collector.groupId,
-                                  collector.version.toString(), "recorder.version", "event.id", true, metricData)
-          val presentation = LogEventSerializer.toString(event)
-          result.append(presentation)
-          result.append(",\n")
-        }
-        result.append("]")
+        result = makeExtendedPresentation(metrics, collector)
       }
       else {
-        result.append("{")
-        for (metric in metrics) {
-          result.append("\"")
-          result.append(metric.eventId)
-          result.append("\" : ")
-          val presentation = SerializationHelper.serializeToSingleLine(metric.data.build())
-          result.append(presentation)
-          result.append(",\n")
-        }
-        result.append("}")
+        result = makeSimplePresentation(metrics)
       }
-
       val fileType = FileTypeManager.getInstance().getStdFileType("JSON")
-      val file = LightVirtualFile(item.groupId, fileType, result.toString())
+      val file = LightVirtualFile(item.groupId, fileType, result)
       ApplicationManager.getApplication().invokeLater {
         FileEditorManager.getInstance(project).openFile(file, true)
       }
     }
+  }
+
+  private fun makeExtendedPresentation(metrics: Set<MetricEvent>, collector: FeatureUsagesCollector): String {
+    val stringJoiner = StringJoiner(",\n", "[\n", "\n]")
+    for (metric in metrics) {
+      val metricData = FUStateUsagesLogger.mergeWithEventData(null, metric.data)!!.build()
+      val event = newLogEvent("test.session", "build", "bucket", System.currentTimeMillis(), collector.group.id,
+                              collector.group.version.toString(), "recorder.version", "event.id", true, metricData)
+      val presentation = LogEventSerializer.toString(event)
+      stringJoiner.add(presentation)
+    }
+    return stringJoiner.toString()
+  }
+
+  private fun makeSimplePresentation(metrics: Set<MetricEvent>): String {
+    val stringJoiner = StringJoiner(",\n", "{\n", "\n}")
+    for (metric in metrics) {
+      val presentation = SerializationHelper.serializeToSingleLine(metric.data.build())
+      stringJoiner.add("\"${metric.eventId}\" : $presentation")
+    }
+    return stringJoiner.toString()
   }
 
   private class Item(val usagesCollector: FeatureUsagesCollector,

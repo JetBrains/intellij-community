@@ -1,7 +1,9 @@
 enum class E {
     A,
+
     B {
-        override fun bar() {}
+        override fun bar() {
+        }
     };
 
     open fun bar() {}

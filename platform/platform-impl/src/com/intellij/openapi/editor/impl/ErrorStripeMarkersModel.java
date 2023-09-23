@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -10,6 +9,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +45,7 @@ final class ErrorStripeMarkersModel {
   }
 
   void setActive(boolean value) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (value == (myActiveDisposable != null)) return;
 
@@ -63,7 +63,7 @@ final class ErrorStripeMarkersModel {
   }
 
   void rebuild() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (myActiveDisposable == null) return;
 
@@ -87,7 +87,7 @@ final class ErrorStripeMarkersModel {
   }
 
   void fireErrorMarkerClicked(RangeHighlighter highlighter, MouseEvent e) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ErrorStripeEvent event = new ErrorStripeEvent(myEditor, e, highlighter);
     myListeners.forEach(listener -> listener.errorMarkerClicked(event));
   }

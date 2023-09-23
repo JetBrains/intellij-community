@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.SourceElement
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
@@ -19,11 +20,12 @@ import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualAnnotationsIncompatibilityType
 import org.jetbrains.kotlin.resolve.source.getPsi
+import java.util.*
 
 internal object ActualAnnotationsNotMatchExpectFixFactory : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         val castedDiagnostic = DiagnosticFactory.cast(diagnostic, Errors.ACTUAL_ANNOTATIONS_NOT_MATCH_EXPECT)
-        val incompatibilityType = castedDiagnostic.c
+        val incompatibilityType = castedDiagnostic.d
 
         val expectAnnotationEntry = incompatibilityType.expectAnnotation.source.getPsi() as? KtAnnotationEntry
             ?: return emptyList()
@@ -32,13 +34,15 @@ internal object ActualAnnotationsNotMatchExpectFixFactory : KotlinIntentionActio
             ActualAnnotationsNotMatchExpectFixFactoryCommon.createRemoveAnnotationFromExpectFix(expectAnnotationEntry)
 
         return listOfNotNull(removeAnnotationFix) +
-                createCopyAndReplaceAnnotationFixes(expectAnnotationEntry, castedDiagnostic.a, castedDiagnostic.b, incompatibilityType)
+                createCopyAndReplaceAnnotationFixes(expectAnnotationEntry, castedDiagnostic.a, castedDiagnostic.b,
+                                                    castedDiagnostic.c, incompatibilityType)
     }
 
     private fun createCopyAndReplaceAnnotationFixes(
         expectAnnotationEntry: KtAnnotationEntry,
         expectDeclarationDescriptor: DeclarationDescriptor,
         actualDeclarationDescriptor: DeclarationDescriptor,
+        actualAnnotationTargetSourceElement: Optional<SourceElement>,
         incompatibilityType: ExpectActualAnnotationsIncompatibilityType<AnnotationDescriptor>,
     ): List<QuickFixActionBase<*>> {
         val expectDeclaration = expectDeclarationDescriptor.toSourceElement.getPsi() as? KtNamedDeclaration ?: return emptyList()
@@ -51,6 +55,7 @@ internal object ActualAnnotationsNotMatchExpectFixFactory : KotlinIntentionActio
             expectDeclaration,
             actualDeclaration,
             expectAnnotationEntry,
+            actualAnnotationTargetSourceElement.orElse(null)?.getPsi(),
             mappedIncompatibilityType,
             annotationClassIdProvider = { getAnnotationClassId(expectAnnotationEntry) }
         )

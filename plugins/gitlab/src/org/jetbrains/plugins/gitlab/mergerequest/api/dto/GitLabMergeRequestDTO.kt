@@ -27,7 +27,7 @@ class GitLabMergeRequestDTO(
   @SinceGitLab("14.3", editions = [Enterprise]) val approved: Boolean?,
   @SinceGitLab("13.4") val conflicts: Boolean,
   val headPipeline: GitLabPipelineDTO?,
-  @SinceGitLab("14.0") val mergeStatusEnum: GitLabMergeStatus,
+  @SinceGitLab("14.0") val mergeStatusEnum: GitLabMergeStatus?,
   @SinceGitLab("13.7") val mergeable: Boolean,
   val state: GitLabMergeRequestState,
   @SinceGitLab("13.12") val draft: Boolean,
@@ -40,7 +40,7 @@ class GitLabMergeRequestDTO(
   @SinceGitLab("13.5") approvedBy: UserCoreConnection,
   @SinceGitLab("12.4") assignees: AssigneeConnection,
   @SinceGitLab("13.8") reviewers: ReviewerConnection,
-  @SinceGitLab("14.7") commits: CommitConnection,
+  @SinceGitLab("14.7") commits: CommitConnection?,
   @SinceGitLab("12.4") labels: LabelConnection
 ) {
   val approvedBy: List<GitLabUserDTO> = approvedBy.nodes
@@ -49,7 +49,8 @@ class GitLabMergeRequestDTO(
 
   val reviewers: List<GitLabReviewerDTO> = reviewers.nodes
 
-  val commits: List<GitLabCommitDTO> = commits.nodes
+  @SinceGitLab("14.7")
+  val commits: List<GitLabCommitDTO>? = commits?.nodes
 
   val labels: List<GitLabLabelDTO> = labels.nodes
 

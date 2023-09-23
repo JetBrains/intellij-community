@@ -128,27 +128,23 @@ object UpdateChecker {
   }
 
   @JvmStatic
-  fun getNotificationGroup(): NotificationGroup {
-    return NotificationGroupManager.getInstance().getNotificationGroup("IDE and Plugin Updates")
-  }
+  fun getNotificationGroup(): NotificationGroup =
+    NotificationGroupManager.getInstance().getNotificationGroup("IDE and Plugin Updates")
 
   @JvmStatic
-  fun getNotificationGroupForPluginUpdateResults(): NotificationGroup {
-    return NotificationGroupManager.getInstance().getNotificationGroup("Plugin Update Results")
-  }
+  fun getNotificationGroupForPluginUpdateResults(): NotificationGroup =
+    NotificationGroupManager.getInstance().getNotificationGroup("Plugin Update Results")
 
   @JvmStatic
-  fun getNotificationGroupForIdeUpdateResults(): NotificationGroup {
-    return NotificationGroupManager.getInstance().getNotificationGroup("IDE Update Results")
-  }
+  fun getNotificationGroupForIdeUpdateResults(): NotificationGroup =
+    NotificationGroupManager.getInstance().getNotificationGroup("IDE Update Results")
 
   /**
    * For scheduled update checks.
    */
   @JvmStatic
-  fun updateAndShowResult(): ActionCallback {
-    return service<UpdateCheckerHelper>().updateAndShowResult()
-  }
+  fun updateAndShowResult(): ActionCallback =
+    service<UpdateCheckerHelper>().updateAndShowResult()
 
   /**
    * For manual update checks (Help | Check for Updates, Settings | Updates | Check Now)
@@ -195,11 +191,8 @@ object UpdateChecker {
       }
     }
     catch (e: Exception) {
-      LOG.infoWithDebug(e)
-      return when (e) {
-        is JDOMException -> PlatformUpdates.Empty  // corrupted content, don't bother telling users
-        else -> PlatformUpdates.ConnectionError(e)
-      }
+      LOG.info("failed to load update data (${e.javaClass.name}: ${e.message})", if (e !is IOException || LOG.isDebugEnabled) e else null)
+      return PlatformUpdates.ConnectionError(e)
     }
   }
 
@@ -209,7 +202,7 @@ object UpdateChecker {
     productDataLock.withLock {
       val cached = productDataCache?.get()
       if (cached != null) return@withLock cached.getOrThrow()
-      val url = ExternalProductResourceUrls.getInstance().updatesMetadataXmlUrl ?: return@withLock null
+      val url = ExternalProductResourceUrls.getInstance().updateMetadataUrl ?: return@withLock null
 
       val result = runCatching {
         LOG.debug { "loading ${url}" }
@@ -299,10 +292,7 @@ object UpdateChecker {
         }
       }
       catch (e: Exception) {
-        LOG.info(
-          "failed to load plugins from ${host ?: "default repository"}: ${e.message}",
-          if (LOG.isDebugEnabled) e else null,
-        )
+        LOG.info("failed to load plugins from ${host ?: "default repository"}: ${e.message}", if (LOG.isDebugEnabled) e else null)
         errors[host] = e
       }
     }

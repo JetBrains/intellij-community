@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.index;
 
 import com.intellij.ide.highlighter.DTDFileType;
@@ -38,8 +38,7 @@ import java.util.*;
 public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
   private static final String LOCAL_SCHEMA_ID = "$LOCAL_SCHEMA$";
 
-  @Nullable
-  public static String getNamespace(@NotNull VirtualFile file, @NotNull Project project) {
+  public static @Nullable String getNamespace(@NotNull VirtualFile file, @NotNull Project project) {
     if (DumbService.isDumb(project) || XmlUtil.isStubBuilding()) {
       return computeNamespace(file);
     }
@@ -51,8 +50,7 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     return namespace != null ? namespace : file.getUrl();
   }
 
-  @Nullable
-  public static String computeNamespace(@NotNull VirtualFile file) {
+  public static @Nullable String computeNamespace(@NotNull VirtualFile file) {
     try (InputStream stream = file.getInputStream()) {
       return XsdNamespaceBuilder.computeNamespace(stream);
     }
@@ -61,10 +59,9 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     }
   }
 
-  @NotNull
-  public static List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getResourcesByNamespace(@NotNull String namespace,
-                                                                                                   @NotNull Project project,
-                                                                                                   @Nullable Module module) {
+  public static @NotNull List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getResourcesByNamespace(@NotNull String namespace,
+                                                                                                            @NotNull Project project,
+                                                                                                            @Nullable Module module) {
     List<IndexedRelevantResource<String, XsdNamespaceBuilder>> resources = IndexedRelevantResource.getResources(NAME, namespace, module, project, null);
     resources.addAll(getDtdResources(namespace, module, project));
     ContainerUtil.addIfNotNull(resources, getResourceByLocalFile(namespace, project, module));
@@ -72,10 +69,9 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     return resources;
   }
 
-  @Nullable
-  private static IndexedRelevantResource<String, XsdNamespaceBuilder> getResourceByLocalFile(@NotNull String namespace,
-                                                                                             @NotNull Project project,
-                                                                                             @Nullable Module module) {
+  private static @Nullable IndexedRelevantResource<String, XsdNamespaceBuilder> getResourceByLocalFile(@NotNull String namespace,
+                                                                                                       @NotNull Project project,
+                                                                                                       @Nullable Module module) {
     String protocol = VirtualFileManager.extractProtocol(namespace);
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
     if (virtualFileManager.getFileSystem(protocol) instanceof LocalFileSystem) {
@@ -91,8 +87,7 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     return null;
   }
 
-  @Nullable
-  private static XsdNamespaceBuilder getFileNamespace(@NotNull VirtualFile file, @NotNull Project project) {
+  private static @Nullable XsdNamespaceBuilder getFileNamespace(@NotNull VirtualFile file, @NotNull Project project) {
     if (FileTypeRegistry.getInstance().isFileOfType(file, DTDFileType.INSTANCE)) {
       return new XsdNamespaceBuilder(file.getName(), "", Collections.emptyList(), Collections.emptyList());
     }
@@ -100,17 +95,16 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     return ContainerUtil.getFirstItem(data.values());
   }
 
-  public static List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getAllResources(@Nullable final Module module,
+  public static List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getAllResources(final @Nullable Module module,
                                                                                            @NotNull Project project) {
     List<IndexedRelevantResource<String, XsdNamespaceBuilder>> xmlResources = IndexedRelevantResource.getAllResources(NAME, module, project, null);
     List<IndexedRelevantResource<String, XsdNamespaceBuilder>> dtdResources = getDtdResources(null, module, project);
     return ContainerUtil.concat(xmlResources, dtdResources);
   }
 
-  @NotNull
-  private static List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getDtdResources(@Nullable String namespace,
-                                                                                            @Nullable Module module,
-                                                                                            @NotNull Project project) {
+  private static @NotNull List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getDtdResources(@Nullable String namespace,
+                                                                                                     @Nullable Module module,
+                                                                                                     @NotNull Project project) {
     AdditionalIndexedRootsScope scope = new AdditionalIndexedRootsScope(GlobalSearchScope.allScope(project));
     ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     Function<VirtualFile, IndexedRelevantResource<String, XsdNamespaceBuilder>> resourceFunction = f -> {
@@ -129,29 +123,25 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
   public static final ID<String,XsdNamespaceBuilder> NAME = ID.create("XmlNamespaces");
 
   @Override
-  @NotNull
-  public ID<String, XsdNamespaceBuilder> getName() {
+  public @NotNull ID<String, XsdNamespaceBuilder> getName() {
     return NAME;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE) {
       @Override
-      public boolean acceptInput(@NotNull final VirtualFile file) {
+      public boolean acceptInput(final @NotNull VirtualFile file) {
         return "xsd".equals(file.getExtension());
       }
     };
   }
 
   @Override
-  @NotNull
-  public DataIndexer<String, XsdNamespaceBuilder, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, XsdNamespaceBuilder, FileContent> getIndexer() {
     return new DataIndexer<>() {
       @Override
-      @NotNull
-      public Map<String, XsdNamespaceBuilder> map(@NotNull final FileContent inputData) {
+      public @NotNull Map<String, XsdNamespaceBuilder> map(final @NotNull FileContent inputData) {
         XsdNamespaceBuilder builder =
           XsdNamespaceBuilder.computeNamespace(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
         String namespace = builder.getNamespace();
@@ -162,9 +152,8 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
 
   private static final String NULL_STRING = "\"\"";
 
-  @NotNull
   @Override
-  public DataExternalizer<XsdNamespaceBuilder> getValueExternalizer() {
+  public @NotNull DataExternalizer<XsdNamespaceBuilder> getValueExternalizer() {
     return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, XsdNamespaceBuilder value) throws IOException {
@@ -194,13 +183,12 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     return 8;
   }
 
-  @Nullable
-  public static IndexedRelevantResource<String, XsdNamespaceBuilder> guessSchema(String namespace,
-                                                                                 @Nullable final String tagName,
-                                                                                 @Nullable final String version,
-                                                                                 @Nullable String schemaLocation,
-                                                                                 @Nullable Module module,
-                                                                                 @NotNull Project project) {
+  public static @Nullable IndexedRelevantResource<String, XsdNamespaceBuilder> guessSchema(String namespace,
+                                                                                           final @Nullable String tagName,
+                                                                                           final @Nullable String version,
+                                                                                           @Nullable String schemaLocation,
+                                                                                           @Nullable Module module,
+                                                                                           @NotNull Project project) {
 
     final List<IndexedRelevantResource<String, XsdNamespaceBuilder>>
       resources = getResourcesByNamespace(namespace, project, module);
@@ -228,12 +216,11 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     return resource;
   }
 
-  @Nullable
-  public static XmlFile guessSchema(String namespace,
-                                    @Nullable final String tagName,
-                                    @Nullable final String version,
-                                    @Nullable String schemaLocation,
-                                    @NotNull PsiFile file) {
+  public static @Nullable XmlFile guessSchema(String namespace,
+                                              final @Nullable String tagName,
+                                              final @Nullable String version,
+                                              @Nullable String schemaLocation,
+                                              @NotNull PsiFile file) {
 
     if (DumbService.isDumb(file.getProject()) || XmlUtil.isStubBuilding()) return null;
 
@@ -243,14 +230,12 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     return findSchemaFile(resource.getFile(), file);
   }
 
-  @Nullable
-  private static XmlFile findSchemaFile(VirtualFile resourceFile, PsiFile baseFile) {
+  private static @Nullable XmlFile findSchemaFile(VirtualFile resourceFile, PsiFile baseFile) {
     PsiFile psiFile = baseFile.getManager().findFile(resourceFile);
     return psiFile instanceof XmlFile ? (XmlFile)psiFile : null;
   }
 
-  @Nullable
-  public static XmlFile guessDtd(String dtdUri, @NotNull PsiFile baseFile) {
+  public static @Nullable XmlFile guessDtd(String dtdUri, @NotNull PsiFile baseFile) {
 
     if (!dtdUri.endsWith(".dtd") ||
         DumbService.isDumb(baseFile.getProject()) ||

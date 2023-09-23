@@ -22,7 +22,7 @@ public final class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
     this(EMPTY_MODULE);
   }
 
-  protected EmptyModuleType(@NonNls String id) {
+  private EmptyModuleType(@NonNls String id) {
     super(id);
   }
 

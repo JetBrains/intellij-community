@@ -1,6 +1,7 @@
 internal class IteratorTest {
     var mutableMap1: MutableMap<String, String> = HashMap()
     var mutableMap2: MutableMap<String, String> = HashMap()
+
     fun testFields() {
         mutableMap1.values.add("")
         mutableMap2.entries.iterator().remove()

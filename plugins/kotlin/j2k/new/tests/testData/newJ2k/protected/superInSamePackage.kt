@@ -9,6 +9,8 @@ internal open class BaseSuperSamePackage {
 }
 
 internal class DerivedSuperSamePackage : BaseSuperSamePackage() {
-    fun foo() {}
+    fun foo() {
+    }
+
     var i: Int = 1
 }

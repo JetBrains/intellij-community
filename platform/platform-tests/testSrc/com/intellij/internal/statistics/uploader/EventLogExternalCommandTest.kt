@@ -17,7 +17,7 @@ class EventLogExternalCommandTest : BasePlatformTestCase() {
   private fun createCommand(configs: List<EventLogSendConfig>,
                             classPath: String = "/test/path1:/test/path2",
                             tempDir: File = File(PathManager.getTempPath(), "statistics-uploader")): Array<out String> {
-    val appInfo = EventLogInternalApplicationInfo(false)
+    val appInfo = EventLogInternalApplicationInfo(false, false)
     return EventLogExternalUploader.createExternalUploadCommand(appInfo, configs, classPath, tempDir)
   }
 

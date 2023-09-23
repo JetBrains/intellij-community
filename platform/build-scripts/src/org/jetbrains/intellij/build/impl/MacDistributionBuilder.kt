@@ -32,7 +32,7 @@ import kotlin.io.path.nameWithoutExtension
 class MacDistributionBuilder(override val context: BuildContext,
                              private val customizer: MacDistributionCustomizer,
                              private val ideaProperties: Path?) : OsSpecificDistributionBuilder {
-  private companion object {
+  internal companion object {
     const val NO_RUNTIME_SUFFIX = "-no-jdk"
   }
 
@@ -122,9 +122,7 @@ class MacDistributionBuilder(override val context: BuildContext,
 
     context.executeStep(spanBuilder("build macOS artifacts").setAttribute("arch", arch.name), BuildOptions.MAC_ARTIFACTS_STEP) {
       setLastModifiedTime(osAndArchSpecificDistPath, context)
-      val runtimeDist = context.bundledRuntime.extract(prefix = BundledRuntimeImpl.getProductPrefix(context),
-                                                       os = OsFamily.MACOS,
-                                                       arch = arch)
+      val runtimeDist = context.bundledRuntime.extract(os = OsFamily.MACOS, arch = arch)
 
       if (context.isMacCodeSignEnabled) {
         /**
@@ -246,7 +244,7 @@ class MacDistributionBuilder(override val context: BuildContext,
 
     val fullName = context.applicationInfo.productName
 
-    //todo[nik] improve
+    //todo improve
     val minor = context.applicationInfo.minorVersion
     val isNotRelease = context.applicationInfo.isEAP && !minor.contains("RC") && !minor.contains("Beta")
     val version = if (isNotRelease) "EAP ${context.fullBuildNumber}" else "${context.applicationInfo.majorVersion}.${minor}"

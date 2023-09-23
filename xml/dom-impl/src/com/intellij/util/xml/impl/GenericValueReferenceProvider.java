@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.application.AccessToken;
@@ -18,10 +18,10 @@ import java.util.Collections;
 import java.util.List;
 
 public final class GenericValueReferenceProvider extends PsiReferenceProvider {
-  private final static Logger LOG = Logger.getInstance(GenericValueReferenceProvider.class);
+  private static final Logger LOG = Logger.getInstance(GenericValueReferenceProvider.class);
 
   @Override
-  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement psiElement, final @NotNull ProcessingContext context) {
     final DomManagerImpl domManager = DomManagerImpl.getDomManager(psiElement.getProject());
 
     final DomInvocationHandler handler;

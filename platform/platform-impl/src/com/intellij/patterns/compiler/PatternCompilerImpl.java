@@ -514,7 +514,7 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
   private static final class FalsePattern extends InitialPatternCondition<Object> implements ElementPattern<Object> {
     private final ElementPatternCondition<Object> myCondition = new ElementPatternCondition<>(this);
 
-    protected FalsePattern() {
+    private FalsePattern() {
       super(Object.class);
     }
 

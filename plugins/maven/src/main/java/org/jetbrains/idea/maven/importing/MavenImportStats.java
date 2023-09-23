@@ -45,4 +45,13 @@ public final class MavenImportStats {
 
   public static class ConfiguringProjectsTask {
   }
+
+  public static class MavenSyncProjectTask {
+  }
+
+  public static class MavenReapplyModelOnlyProjectTask {
+  }
+
+  public static class MavenBackgroundActivities {
+  }
 }

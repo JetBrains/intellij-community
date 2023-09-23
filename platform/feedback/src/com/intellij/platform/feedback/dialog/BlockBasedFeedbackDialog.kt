@@ -3,13 +3,13 @@ package com.intellij.platform.feedback.dialog
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
+import com.intellij.platform.feedback.dialog.uiBlocks.NoEmailAgreementBlock
 import com.intellij.platform.feedback.impl.FEEDBACK_REPORT_ID_KEY
 import com.intellij.platform.feedback.impl.FeedbackRequestData
 import com.intellij.platform.feedback.impl.FeedbackRequestType
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
-import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
-import com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
-import com.intellij.platform.feedback.dialog.uiBlocks.NoEmailAgreementBlock
 import com.intellij.platform.feedback.impl.submitFeedback
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.Align
@@ -53,7 +53,6 @@ abstract class BlockBasedFeedbackDialog<T : SystemDataJsonSerializable>(
   }
 
   init {
-    setTitle()
     isResizable = false
   }
 
@@ -62,6 +61,8 @@ abstract class BlockBasedFeedbackDialog<T : SystemDataJsonSerializable>(
   }
 
   override fun createCenterPanel(): JComponent {
+    setTitle()
+
     val mainPanel = panel {
       for (block in myBlocks) {
         block.addToPanel(this)

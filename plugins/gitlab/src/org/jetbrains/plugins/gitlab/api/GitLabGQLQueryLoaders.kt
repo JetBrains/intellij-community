@@ -6,15 +6,44 @@ import com.intellij.collaboration.api.graphql.GraphQLQueryLoader
 
 internal object GitLabGQLQueryLoaders {
   private val sharedFragmentsCache = CachingGraphQLQueryLoader.createFragmentCache()
+  private val loaderCache = mutableMapOf<GitLabServerMetadata, CachingGraphQLQueryLoader>()
+
+  private val fragmentVersions = listOf(
+    GitLabVersion(14, 0),
+    GitLabVersion(14, 3),
+    GitLabVersion(14, 5),
+    GitLabVersion(14, 7),
+    GitLabVersion(15, 4),
+    GitLabVersion(15, 9),
+  )
 
   val default: GraphQLQueryLoader by lazy {
-    CachingGraphQLQueryLoader({ GitLabGQLQueryLoaders::class.java.classLoader.getResourceAsStream(it) },
-                              sharedFragmentsCache)
+    CachingGraphQLQueryLoader(
+      { GitLabGQLQueryLoaders::class.java.classLoader.getResourceAsStream(it) },
+      sharedFragmentsCache
+    )
   }
-  val community: GraphQLQueryLoader by lazy {
-    CachingGraphQLQueryLoader({ GitLabGQLQueryLoaders::class.java.classLoader.getResourceAsStream(it) },
-                              sharedFragmentsCache,
-                              fragmentsDirectories = listOf("graphql/fragment/community",
-                                                            "graphql/fragment"))
-  }
+
+  /**
+   * Gets a query loader for specific metadata of a GitLab server.
+   */
+  fun forMetadata(metadata: GitLabServerMetadata): GraphQLQueryLoader =
+    loaderCache.getOrPut(metadata) {
+      // Highly specific and annoying piece of code:
+      // The version associated to a directory is the version it was changed in, but the fragments in that directory
+      // should only be used in versions before that version, not in the version itself.
+      // The order of resolution should be community before enterprise and lower version change before higher version change.
+      val directories = fragmentVersions
+                          .filter { metadata.version < it }
+                          .map { "graphql/fragment/${it.major}_${it.minor}" } +
+                        listOf("graphql/fragment")
+      val directoriesIncludingCommunity =
+        if (metadata.edition == GitLabEdition.Community) directories.flatMap { listOf("$it/community", it) }
+        else directories
+
+      CachingGraphQLQueryLoader(
+        { GitLabGQLQueryLoaders::class.java.classLoader.getResourceAsStream(it) },
+        fragmentsDirectories = directoriesIncludingCommunity
+      )
+    }
 }

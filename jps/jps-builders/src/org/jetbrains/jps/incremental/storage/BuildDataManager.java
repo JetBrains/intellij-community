@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,7 +30,7 @@ import java.util.function.Consumer;
 /**
  * @author Eugene Zhuravlev
  */
-public class BuildDataManager {
+public final class BuildDataManager {
   private static final int VERSION = 39 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
   private static final Logger LOG = Logger.getInstance(BuildDataManager.class);
   private static final String SRC_TO_FORM_STORAGE = "src-form";
@@ -48,15 +48,13 @@ public class BuildDataManager {
   private final PathRelativizerService myRelativizer;
 
   private final StorageProvider<SourceToOutputMappingImpl> SRC_TO_OUT_MAPPING_PROVIDER = new StorageProvider<>() {
-    @NotNull
     @Override
-    public SourceToOutputMappingImpl createStorage(File targetDataDir) throws IOException {
+    public @NotNull SourceToOutputMappingImpl createStorage(File targetDataDir) throws IOException {
       return createStorage(targetDataDir, myRelativizer);
     }
 
-    @NotNull
     @Override
-    public SourceToOutputMappingImpl createStorage(File targetDataDir, PathRelativizerService relativizer) throws IOException {
+    public @NotNull SourceToOutputMappingImpl createStorage(File targetDataDir, PathRelativizerService relativizer) throws IOException {
       return new SourceToOutputMappingImpl(new File(new File(targetDataDir, SRC_TO_OUTPUT_STORAGE), SRC_TO_OUTPUT_FILE_NAME), relativizer);
     }
   };
@@ -88,8 +86,7 @@ public class BuildDataManager {
     return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(targetType, targetId), SRC_TO_OUTPUT_FILE_NAME), myRelativizer);
   }
 
-  @NotNull
-  public <S extends StorageOwner> S getStorage(@NotNull BuildTarget<?> target, @NotNull StorageProvider<S> provider) throws IOException {
+  public @NotNull <S extends StorageOwner> S getStorage(@NotNull BuildTarget<?> target, @NotNull StorageProvider<S> provider) throws IOException {
     final BuildTargetStorages targetStorages = myTargetStorages.computeIfAbsent(target, t -> new BuildTargetStorages(t, myDataPaths));
     return targetStorages.getOrCreateStorage(provider, myRelativizer);
   }
@@ -360,14 +357,12 @@ public class BuildDataManager {
     }
 
     @Override
-    @NotNull
-    public Collection<String> getSources() throws IOException {
+    public @NotNull Collection<String> getSources() throws IOException {
       return myDelegate.getSources();
     }
 
     @Override
-    @Nullable
-    public Collection<String> getOutputs(@NotNull String srcPath) throws IOException {
+    public @Nullable Collection<String> getOutputs(@NotNull String srcPath) throws IOException {
       return myDelegate.getOutputs(srcPath);
     }
 
@@ -377,14 +372,12 @@ public class BuildDataManager {
     }
 
     @Override
-    @NotNull
-    public Iterator<String> getSourcesIterator() throws IOException {
+    public @NotNull Iterator<String> getSourcesIterator() throws IOException {
       return myDelegate.getSourcesIterator();
     }
   }
 
-  @NotNull
-  private StorageOwner allTargetStorages() {
+  private @NotNull StorageOwner allTargetStorages() {
     return allTargetStorages(f -> {});
   }
   

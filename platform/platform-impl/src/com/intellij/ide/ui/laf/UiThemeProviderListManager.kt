@@ -3,6 +3,7 @@
 
 package com.intellij.ide.ui.laf
 
+import com.intellij.diagnostic.runActivity
 import com.intellij.ide.ui.TargetUIType
 import com.intellij.ide.ui.UITheme
 import com.intellij.ide.ui.UIThemeProvider
@@ -10,94 +11,136 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
-import com.intellij.util.graph.DFSTBuilder
-import com.intellij.util.graph.OutboundSemiGraph
+import com.intellij.util.concurrency.SynchronizedClearableLazy
+import java.util.function.Supplier
 
 // separate service to avoid using LafManager in the EditorColorsManagerImpl initialization
 @Service(Service.Level.APP)
-internal class UiThemeProviderListManager {
+class UiThemeProviderListManager {
   companion object {
     fun getInstance(): UiThemeProviderListManager = service()
+
     internal const val DEFAULT_DARK_PARENT_THEME = "Darcula"
     internal const val DEFAULT_LIGHT_PARENT_THEME = "IntelliJ"
   }
 
   @Volatile
-  private var lafMap: Map<UIThemeLookAndFeelInfo, TargetUIType> = computeMap()
+  private lateinit var themeDescriptors: List<LafEntry>
 
-  private val lafList: Set<UIThemeLookAndFeelInfo>
-    get() = lafMap.keys
+  init {
+    themeDescriptors = java.util.List.copyOf(runActivity("compute LaF list") {
+      UIThemeProvider.EP_NAME.extensionList.map { provider ->
+        val supplier = SynchronizedClearableLazy {
+          val theme = when (provider.id) {
+            DEFAULT_DARK_PARENT_THEME -> provider.createTheme(parentTheme = null, defaultDarkParent = null, defaultLightParent = null)
+            DEFAULT_LIGHT_PARENT_THEME -> provider.createTheme(
+              parentTheme = findThemeBeanHolderById(DEFAULT_DARK_PARENT_THEME),
+              defaultDarkParent = null,
+              defaultLightParent = null,
+            )
+            else -> {
+              val parentTheme = findParentTheme(themes = themeDescriptors, parentId = provider.parentTheme)
+              provider.createTheme(
+                parentTheme = parentTheme,
+                defaultDarkParent = { findThemeBeanHolderById(DEFAULT_DARK_PARENT_THEME) },
+                defaultLightParent = { findThemeBeanHolderById(DEFAULT_LIGHT_PARENT_THEME) },
+              )
+            }
+          }
+          theme?.let { UIThemeLookAndFeelInfoImpl(/* theme = */ it) }
+        }
 
-  fun getLaFs(): List<UIThemeLookAndFeelInfo> = lafList.toList()
+        LafEntry(
+          theme = supplier,
+          targetUiType = provider.targetUI,
+          id = provider.id!!,
+        )
+      }
+    })
+  }
 
-  fun getLaFsWithUITypes(): Map<UIThemeLookAndFeelInfo, TargetUIType> = lafMap
+  fun getLaFs(): Sequence<UIThemeLookAndFeelInfo> = themeDescriptors.asSequence().mapNotNull { it.theme.get() }
 
-  fun findJetBrainsLightTheme(): UIThemeLookAndFeelInfo? = findLaFById(DEFAULT_LIGHT_THEME_ID)
+  fun getLaFListSize(): Int = themeDescriptors.size
 
-  fun themeProviderAdded(provider: UIThemeProvider): UIThemeLookAndFeelInfo? {
+  fun findThemeByName(name: String): UIThemeLookAndFeelInfo? {
+    return getLaFs().firstOrNull { it.name == name }
+  }
+
+  fun findThemeById(id: String): UIThemeLookAndFeelInfo? {
+    return themeDescriptors.firstOrNull { it.id == id }?.theme?.get()
+  }
+
+  private fun findThemeBeanHolderById(id: String): UITheme? {
+    return themeDescriptors.firstOrNull { it.id == id }?.theme?.get()?.theme
+  }
+
+  internal fun findDefaultParent(isDark: Boolean, themeId: String): UITheme? {
+    if (isDark) {
+      if (themeId != DEFAULT_DARK_PARENT_THEME) {
+        return findThemeBeanHolderById(DEFAULT_DARK_PARENT_THEME)
+      }
+    }
+    else {
+      if (themeId != DEFAULT_LIGHT_PARENT_THEME) {
+        return findThemeBeanHolderById(DEFAULT_LIGHT_PARENT_THEME)
+      }
+    }
+    return null
+  }
+
+  fun findThemeSupplierById(id: String): Supplier<out UIThemeLookAndFeelInfo?>? {
+    return themeDescriptors.firstOrNull { it.id == id }?.theme
+  }
+
+  internal fun getLaFsWithUITypes(): List<LafEntry> = themeDescriptors
+
+  fun getThemeListForTargetUI(targetUI: TargetUIType): Sequence<UIThemeLookAndFeelInfo> {
+    return themeDescriptors.asSequence()
+      .filter { it.targetUiType == targetUI }
+      .mapNotNull { it.theme.get() }
+  }
+
+  internal fun themeProviderAdded(provider: UIThemeProvider): UIThemeLookAndFeelInfo? {
     if (findLaFByProviderId(provider) != null) {
       // provider is already registered
       return null
     }
 
-    val parentTheme = findParentTheme(lafList, provider.parentTheme)
-    val theme = provider.createTheme(parentTheme,
-                                     lafMap.keys.single { it.theme.id == DEFAULT_DARK_PARENT_THEME }.theme,
-                                     lafMap.keys.single { it.theme.id == DEFAULT_LIGHT_PARENT_THEME }.theme) ?: return null
-    editorColorManager().handleThemeAdded(theme)
+    val parentTheme = findParentTheme(themes = themeDescriptors, parentId = provider.parentTheme)
+    val theme = provider.createTheme(
+      parentTheme = parentTheme,
+      defaultDarkParent = { themeDescriptors.single { it.id == DEFAULT_DARK_PARENT_THEME }.theme.get()?.theme },
+      defaultLightParent = { themeDescriptors.single { it.id == DEFAULT_LIGHT_PARENT_THEME }.theme.get()?.theme },
+    ) ?: return null
+    editorColorManager.handleThemeAdded(theme)
     val newLaF = UIThemeLookAndFeelInfoImpl(theme)
-    lafMap = lafMap + Pair(newLaF, provider.targetUI)
+    themeDescriptors = themeDescriptors + LafEntry(Supplier { newLaF }, provider.targetUI, provider.id!!)
     return newLaF
   }
 
   fun themeProviderRemoved(provider: UIThemeProvider): UIThemeLookAndFeelInfo? {
     val oldLaF = findLaFByProviderId(provider) ?: return null
-    lafMap = lafMap - oldLaF
-    editorColorManager().handleThemeRemoved(oldLaF.theme)
-    return oldLaF
+    themeDescriptors = themeDescriptors - oldLaF
+    val theme = oldLaF.theme.get() ?: return null
+    editorColorManager.handleThemeRemoved(theme.theme)
+    return theme
   }
 
-  private fun findLaFById(id: String) = lafList.find { it.theme.id == id }
+  private fun findLaFById(id: String) = themeDescriptors.firstOrNull { it.id == id }
 
-  private fun findLaFByProviderId(provider: UIThemeProvider) = findLaFById(provider.id)
+  private fun findLaFByProviderId(provider: UIThemeProvider) = provider.id?.let { findLaFById(it) }
 }
 
-private fun computeMap(): Map<UIThemeLookAndFeelInfo, TargetUIType> {
-  val map = LinkedHashMap<UIThemeLookAndFeelInfo, TargetUIType>()
-  val orderedProviders = sortTopologically(UIThemeProvider.EP_NAME.extensionList, { it.id }, { it.parentTheme })
-  val darcula = orderedProviders.single{ it.id == UiThemeProviderListManager.DEFAULT_DARK_PARENT_THEME }
-    .createTheme(null, null, null)
-  val intelliJ = orderedProviders.single{ it.id == UiThemeProviderListManager.DEFAULT_LIGHT_PARENT_THEME }
-    .createTheme(darcula, null, null)
-  for (provider in orderedProviders) {
-    val parentTheme = findParentTheme(map.keys, provider.parentTheme)
-    val theme = UIThemeLookAndFeelInfoImpl(provider.createTheme(parentTheme, darcula, intelliJ) ?: continue)
-    map.put(theme, provider.targetUI)
-  }
-  return map
+internal data class LafEntry(
+  @JvmField val theme: Supplier<UIThemeLookAndFeelInfoImpl?>,
+  @JvmField val targetUiType: TargetUIType,
+  @JvmField val id: String,
+)
+
+private fun findParentTheme(themes: Collection<LafEntry>, parentId: String?): UITheme? {
+  return if (parentId == null) null else themes.firstOrNull { it.id == parentId }?.theme?.get()?.theme
 }
 
-private fun findParentTheme(themes: Collection<UIThemeLookAndFeelInfo>, parentId: String?): UITheme? {
-  if (parentId == null) {
-    return null
-  }
-  return themes.asSequence().map { it.theme }.find { it.id == parentId }
-}
-
-private fun <T, K> sortTopologically(list: List<T>, idFun: (T) -> K, parentIdFun: (T) -> K?): List<T> {
-  val mapById = list.associateBy(idFun)
-  val graph = object : OutboundSemiGraph<T> {
-    override fun getNodes(): Collection<T> = list
-
-    override fun getOut(n: T): Iterator<T> {
-      val parent = mapById.get(parentIdFun(n))
-      return listOfNotNull(parent).iterator()
-    }
-  }
-
-  return DFSTBuilder(graph).sortedNodes.reversed()
-}
-
-private const val DEFAULT_LIGHT_THEME_ID = "JetBrainsLightTheme"
-
-private fun editorColorManager() = EditorColorsManager.getInstance() as EditorColorsManagerImpl
+private val editorColorManager: EditorColorsManagerImpl
+  get() = EditorColorsManager.getInstance() as EditorColorsManagerImpl

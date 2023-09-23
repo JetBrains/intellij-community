@@ -4,5 +4,6 @@ class J {
         doSomething(pojo.fieldB)
     }
 
-    private fun doSomething(myString: String) {}
+    private fun doSomething(myString: String) {
+    }
 }

@@ -29,7 +29,7 @@ public enum LanguageLevel {
   JDK_21(21), JDK_21_PREVIEW(21),
   JDK_X(22);
 
-  public static final LanguageLevel HIGHEST = JDK_20;
+  public static final LanguageLevel HIGHEST = JDK_21;
 
   private final JavaVersion myVersion;
 

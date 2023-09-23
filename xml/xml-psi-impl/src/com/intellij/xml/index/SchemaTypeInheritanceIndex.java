@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.index;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -82,19 +82,16 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
     return 2;
   }
 
-  @NotNull
   @Override
-  public ID<String, Set<SchemaTypeInfo>> getName() {
+  public @NotNull ID<String, Set<SchemaTypeInfo>> getName() {
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<String, Set<SchemaTypeInfo>, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, Set<SchemaTypeInfo>, FileContent> getIndexer() {
     return new DataIndexer<>() {
-      @NotNull
       @Override
-      public Map<String, Set<SchemaTypeInfo>> map(@NotNull FileContent inputData) {
+      public @NotNull Map<String, Set<SchemaTypeInfo>> map(@NotNull FileContent inputData) {
         final Map<String, Set<SchemaTypeInfo>> map = new HashMap<>();
         final MultiMap<SchemaTypeInfo, SchemaTypeInfo> multiMap =
           XsdComplexTypeInfoBuilder.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
@@ -106,9 +103,8 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
     };
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<Set<SchemaTypeInfo>> getValueExternalizer() {
+  public @NotNull DataExternalizer<Set<SchemaTypeInfo>> getValueExternalizer() {
     return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, Set<SchemaTypeInfo> value) throws IOException {
@@ -136,8 +132,8 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
   }
 
   private static class NsPlusTag {
-    private final static NsPlusTag INSTANCE = new NsPlusTag();
-    private final static char ourSeparator = ':';
+    private static final NsPlusTag INSTANCE = new NsPlusTag();
+    private static final char ourSeparator = ':';
 
     public String encode(Pair<String, String> pair) {
       return pair.getFirst() + ourSeparator + pair.getSecond();

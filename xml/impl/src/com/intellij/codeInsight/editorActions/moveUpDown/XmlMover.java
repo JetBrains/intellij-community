@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -38,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class XmlMover extends LineMover {
   @Override
-  public boolean checkAvailable(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down) {
+  public boolean checkAvailable(final @NotNull Editor editor, final @NotNull PsiFile file, final @NotNull MoveInfo info, final boolean down) {
     if (!super.checkAvailable(editor, file, info, down)) return false;
 
     // updated moved range end to cover multiline tag start
@@ -164,21 +150,18 @@ public class XmlMover extends LineMover {
     return true;
   }
 
-  @Nullable
-  protected XmlElement getSourceElement(@NotNull PsiFile file, int offset, boolean forward) {
+  protected @Nullable XmlElement getSourceElement(@NotNull PsiFile file, int offset, boolean forward) {
     return getMeaningfulElementAtOffset(file, offset, forward, t -> t instanceof XmlTag || t instanceof XmlAttribute);
   }
 
-  @Nullable
-  protected XmlElement getDestinationElement(@NotNull PsiFile file, @NotNull XmlElement sourceElement, int offset, boolean forward) {
+  protected @Nullable XmlElement getDestinationElement(@NotNull PsiFile file, @NotNull XmlElement sourceElement, int offset, boolean forward) {
     return getMeaningfulElementAtOffset(file, offset, forward, t -> sourceElement instanceof XmlAttribute
                                                                     ? t instanceof XmlAttribute
                                                                     : t instanceof XmlTag);
   }
 
-  @Nullable
-  protected static XmlElement getMeaningfulElementAtOffset(@NotNull PsiFile file, int offset, boolean forward,
-                                                           @NotNull Condition<? super PsiElement> condition) {
+  protected static @Nullable XmlElement getMeaningfulElementAtOffset(@NotNull PsiFile file, int offset, boolean forward,
+                                                                     @NotNull Condition<? super PsiElement> condition) {
     PsiElement element = file.findElementAt(offset);
     if (element instanceof PsiWhiteSpace) {
       element = forward ? PsiTreeUtil.nextLeaf(element) : PsiTreeUtil.prevLeaf(element);
@@ -186,8 +169,7 @@ public class XmlMover extends LineMover {
     return ObjectUtils.tryCast(PsiTreeUtil.findFirstParent(element, false, condition), XmlElement.class);
   }
 
-  @NotNull
-  protected TextRange getTagContentRange(@NotNull XmlTag parent) {
+  protected @NotNull TextRange getTagContentRange(@NotNull XmlTag parent) {
     return parent.getValue().getTextRange();
   }
 
@@ -239,7 +221,7 @@ public class XmlMover extends LineMover {
     return false;
   }
 
-  private static void updatedMovedIntoEnd(final Document document, @NotNull final MoveInfo info, final int offset) {
+  private static void updatedMovedIntoEnd(final Document document, final @NotNull MoveInfo info, final int offset) {
     if (offset + 1 < document.getTextLength()) {
       final int line = document.getLineNumber(offset + 1);
       final LineRange toMove2 = info.toMove2;
@@ -251,7 +233,7 @@ public class XmlMover extends LineMover {
   private static int updateMovedRegionStart(final Document document,
                                             int movedLineStart,
                                             final int offset,
-                                            @NotNull final MoveInfo info,
+                                            final @NotNull MoveInfo info,
                                             final boolean down) {
     final int line = document.getLineNumber(offset);
     final LineRange toMove = info.toMove;
@@ -270,7 +252,7 @@ public class XmlMover extends LineMover {
   private static int updateMovedRegionEnd(final Document document,
                                           int movedLineStart,
                                           final int valueStart,
-                                          @NotNull final MoveInfo info,
+                                          final @NotNull MoveInfo info,
                                           final boolean down) {
     final int line = document.getLineNumber(valueStart);
     final LineRange toMove = info.toMove;

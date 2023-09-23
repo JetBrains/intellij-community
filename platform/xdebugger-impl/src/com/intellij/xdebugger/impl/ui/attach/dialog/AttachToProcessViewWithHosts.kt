@@ -8,7 +8,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.ActionLink
-import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.attach.XAttachDebuggerProvider
@@ -146,7 +146,7 @@ abstract class AttachToProcessViewWithHosts(
     fun getSelectedItem(): AttachHostItem = selectedHost ?: throw IllegalStateException("At least one host should be selected")
 
     fun updateState(newHosts: List<AttachHostItem>): Boolean {
-      application.assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
 
       val newHostsAsSet = newHosts.toSet()
       val addedHosts = newHostsAsSet.filter { !hosts.contains(it) }

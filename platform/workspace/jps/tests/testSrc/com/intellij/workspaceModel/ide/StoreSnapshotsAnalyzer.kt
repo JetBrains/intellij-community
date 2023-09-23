@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
+import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.impl.MatchedEntitySource
 import com.intellij.platform.workspace.storage.impl.SimpleEntityTypesResolver
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
@@ -61,7 +61,7 @@ fun main(args: Array<String>) {
       patternFilter(file.resolve("Replace_By_Source").readText(), sortedSources)
     }
 
-    val expectedResult = leftStore.toBuilder()
+    val expectedResult = leftStore.toSnapshot().toBuilder()
     expectedResult.replaceBySource(pattern, rightStore)
 
     // Set a breakpoint and check
@@ -70,7 +70,7 @@ fun main(args: Array<String>) {
   else {
     val rightStore = serializer.deserializeCacheAndDiffLog(rightFile.toPath(), rightDiffLogFile.toPath())!!
 
-    val expectedResult = leftStore.toBuilder()
+    val expectedResult = leftStore.toSnapshot().toBuilder()
     expectedResult.addDiff(rightStore)
 
     // Set a breakpoint and check

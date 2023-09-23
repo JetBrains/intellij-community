@@ -19,6 +19,10 @@ public abstract class LafManager {
     return ApplicationManager.getApplication().getService(LafManager.class);
   }
 
+  /**
+   * @deprecated Do not use.
+   */
+  @Deprecated
   public abstract UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels();
 
   @ApiStatus.Internal
@@ -49,14 +53,14 @@ public abstract class LafManager {
    */
   @Deprecated(forRemoval = true)
   public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
-    setCurrentLookAndFeel(lookAndFeelInfo, false);
+    setCurrentLookAndFeel((UIThemeLookAndFeelInfo)lookAndFeelInfo, false);
   }
 
   public void setCurrentUIThemeLookAndFeel(@NotNull UIThemeLookAndFeelInfo lookAndFeelInfo) {
     setCurrentLookAndFeel(lookAndFeelInfo, false);
   }
 
-  public abstract void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme);
+  public abstract void setCurrentLookAndFeel(@NotNull UIThemeLookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme);
 
   public abstract void updateUI();
 
@@ -74,9 +78,6 @@ public abstract class LafManager {
   public abstract void setPreferredDarkLaf(@NotNull UIThemeLookAndFeelInfo value);
 
   public abstract void setPreferredLightLaf(@NotNull UIThemeLookAndFeelInfo value);
-
-  @ApiStatus.Internal
-  public abstract @Nullable EditorColorsScheme getPreviousSchemeForLaf(@NotNull UIThemeLookAndFeelInfo lookAndFeelInfo);
 
   @ApiStatus.Internal
   public abstract void setRememberSchemeForLaf(boolean rememberSchemeForLaf);

@@ -80,30 +80,27 @@ public class UseCoupleInspection extends DevKitUastInspectionBase implements Cle
 
       @Override
       public boolean visitCallExpression(@NotNull UCallExpression expression) {
-        if (expression.getKind() == UastCallKind.METHOD_CALL) {
-          if (isPairFactoryMethodWithTheSameArgumentTypes(expression)) {
-            PsiElement sourcePsi = getMethodCallSourcePsi(expression);
-            if (sourcePsi != null) {
-              holder.registerProblem(sourcePsi, DevKitBundle.message("inspections.use.couple.of"), new ConvertToCoupleFactoryMethodFix());
-            }
+        if (isPairFactoryMethodWithTheSameArgumentTypes(expression)) {
+          PsiElement sourcePsi = getMethodCallSourcePsi(expression);
+          if (sourcePsi != null) {
+            holder.registerProblem(sourcePsi, DevKitBundle.message("inspections.use.couple.of"), new ConvertToCoupleFactoryMethodFix());
           }
         }
         return super.visitCallExpression(expression);
       }
 
       private static boolean isPairFactoryMethodWithTheSameArgumentTypes(@NotNull UCallExpression methodExpression) {
-        String methodName = methodExpression.getMethodName();
-        if ("create".equals(methodName) || "pair".equals(methodName)) {
-          PsiMethod method = methodExpression.resolve();
-          if (method == null) return false;
-          PsiClass psiClass = method.getContainingClass();
-          if (psiClass != null && PAIR_CLASS_NAME.equals(psiClass.getQualifiedName()) && methodExpression.getValueArgumentCount() == 2) {
-            List<UExpression> arguments = methodExpression.getValueArguments();
-            PsiType type1 = arguments.get(0).getExpressionType();
-            if (type1 == null) return false;
-            PsiType type2 = arguments.get(1).getExpressionType();
-            return Objects.equals(type1, type2);
-          }
+        if (!methodExpression.isMethodNameOneOf(List.of("create", "pair"))) return false;
+        if (methodExpression.getKind() != UastCallKind.METHOD_CALL) return false;
+        PsiMethod method = methodExpression.resolve();
+        if (method == null) return false;
+        PsiClass psiClass = method.getContainingClass();
+        if (psiClass != null && PAIR_CLASS_NAME.equals(psiClass.getQualifiedName()) && methodExpression.getValueArgumentCount() == 2) {
+          List<UExpression> arguments = methodExpression.getValueArguments();
+          PsiType type1 = arguments.get(0).getExpressionType();
+          if (type1 == null) return false;
+          PsiType type2 = arguments.get(1).getExpressionType();
+          return Objects.equals(type1, type2);
         }
         return false;
       }
@@ -149,7 +146,7 @@ public class UseCoupleInspection extends DevKitUastInspectionBase implements Cle
       }
       if (expression instanceof UQualifiedReferenceExpression qualifiedReferenceExpression) {
         UExpression selector = qualifiedReferenceExpression.getSelector();
-        if (selector instanceof  UCallExpression callExpression) {
+        if (selector instanceof UCallExpression callExpression) {
           return callExpression;
         }
       }

@@ -115,15 +115,13 @@ sealed class ValueType<T> {
     val javaSuperClasses: kotlin.collections.List<kotlin.String>,
   ) : ValueType<T>()
 
-  class DataClass<T>(
+  class FinalClass<T>(
     javaClassName: kotlin.String,
     javaSuperClasses: kotlin.collections.List<kotlin.String>,
-    val properties: kotlin.collections.List<DataClassProperty>
+    val properties: kotlin.collections.List<ClassProperty<*>>
   ) : JvmClass<T>(javaClassName, javaSuperClasses)
 
-  data class DataClassProperty(val name: kotlin.String, val type: ValueType<*>)
-
-  class SealedClass<T>(
+  class AbstractClass<T>(
     javaClassName: kotlin.String,
     javaSuperClasses: kotlin.collections.List<kotlin.String>,
     val subclasses: kotlin.collections.List<JvmClass<*>>
@@ -136,12 +134,21 @@ sealed class ValueType<T> {
 
   class Enum<T>(
     javaClassName: kotlin.String,
-  ) : JvmClass<T>(javaClassName, emptyList())
+    javaSuperClasses: kotlin.collections.List<kotlin.String>,
+    val values: kotlin.collections.List<kotlin.String>,
+    val properties: kotlin.collections.List<ClassProperty<*>>
+  ) : JvmClass<T>(javaClassName, javaSuperClasses)
 
   class Object<T>(
     javaClassName: kotlin.String,
     javaSuperClasses: kotlin.collections.List<kotlin.String>,
+    val properties: kotlin.collections.List<ClassProperty<*>>
   ) : JvmClass<T>(javaClassName, javaSuperClasses)
+
+  data class ClassProperty<V>(
+    override val name: kotlin.String,
+    override val valueType: ValueType<V>
+  ): TypeProperty<V>
 
   /**
    * Tuple of fields with fixed [ValueType]s.

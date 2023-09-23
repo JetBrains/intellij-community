@@ -25,6 +25,11 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("AfterAsInImport.kt")
+        public void testAfterAsInImport() throws Exception {
+            runTest("../completion/testData/keywords/AfterAsInImport.kt");
+        }
+
         @TestMetadata("AfterClassName.kt")
         public void testAfterClassName() throws Exception {
             runTest("../completion/testData/keywords/AfterClassName.kt");
@@ -63,6 +68,11 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
         @TestMetadata("AfterIf.kt")
         public void testAfterIf() throws Exception {
             runTest("../completion/testData/keywords/AfterIf.kt");
+        }
+
+        @TestMetadata("AfterImportDirective.kt")
+        public void testAfterImportDirective() throws Exception {
+            runTest("../completion/testData/keywords/AfterImportDirective.kt");
         }
 
         @TestMetadata("AfterSafeDot.kt")
@@ -168,6 +178,11 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
         @TestMetadata("FixingLayoutAndReturn.kt")
         public void testFixingLayoutAndReturn() throws Exception {
             runTest("../completion/testData/keywords/FixingLayoutAndReturn.kt");
+        }
+
+        @TestMetadata("FunInterface.kt")
+        public void testFunInterface() throws Exception {
+            runTest("../completion/testData/keywords/FunInterface.kt");
         }
 
         @TestMetadata("GlobalPropertyAccessors.kt")
@@ -390,6 +405,11 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
             runTest("../completion/testData/keywords/NoContinue.kt");
         }
 
+        @TestMetadata("NoExistingClassifier.kt")
+        public void testNoExistingClassifier() throws Exception {
+            runTest("../completion/testData/keywords/NoExistingClassifier.kt");
+        }
+
         @TestMetadata("NoFinalInParameterList.kt")
         public void testNoFinalInParameterList() throws Exception {
             runTest("../completion/testData/keywords/NoFinalInParameterList.kt");
@@ -458,6 +478,11 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
         @TestMetadata("PropertyAccessors2.kt")
         public void testPropertyAccessors2() throws Exception {
             runTest("../completion/testData/keywords/PropertyAccessors2.kt");
+        }
+
+        @TestMetadata("PropertyAccessorsSameLine.kt")
+        public void testPropertyAccessorsSameLine() throws Exception {
+            runTest("../completion/testData/keywords/PropertyAccessorsSameLine.kt");
         }
 
         @TestMetadata("PropertyAccessors_ExplicitBackingFieldsEnabled.kt")

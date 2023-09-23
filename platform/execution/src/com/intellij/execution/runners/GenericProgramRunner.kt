@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners
 
 import com.intellij.execution.ExecutionException
@@ -40,6 +40,11 @@ abstract class GenericProgramRunner<Settings : RunnerSettings> : ProgramRunner<S
   }
 }
 
+/**
+ * An async variant of [ProgramRunner].
+ * It allows starting a process and preparing [RunContentDescriptor] in a background thread.
+ * It should be used to not block UI thread when preparing an execution or starting a process is slow.
+ */
 abstract class AsyncProgramRunner<Settings : RunnerSettings> : ProgramRunner<Settings> {
   @Throws(ExecutionException::class)
   final override fun execute(environment: ExecutionEnvironment) {

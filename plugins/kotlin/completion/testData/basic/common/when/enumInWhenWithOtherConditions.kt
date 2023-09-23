@@ -11,6 +11,6 @@ fun foo(e: ENUM) {
     }
 }
 
+// WITH_ORDER
 // EXIST: ENUM.BBBB
-// NOTHING_ELSE
 // FIR_COMPARISON

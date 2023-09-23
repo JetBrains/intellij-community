@@ -1,13 +1,18 @@
 package test
 
 class BaseProtectedConstructor {
-    fun usageInConstructor() {}
+    fun usageInConstructor() {
+    }
+
     fun usageInPropertyInitializer(): Int {
         return 1
     }
 
-    fun usageInStaticInit() {}
-    fun usageInMethod() {}
+    fun usageInStaticInit() {
+    }
+
+    fun usageInMethod() {
+    }
 }
 
 internal class DerivedSamePackage {

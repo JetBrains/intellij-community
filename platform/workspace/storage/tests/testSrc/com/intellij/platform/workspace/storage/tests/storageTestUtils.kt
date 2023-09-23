@@ -21,11 +21,11 @@ fun EntityStorage.checkConsistency() {
 }
 
 internal fun createEmptyBuilder(): MutableEntityStorageImpl {
-  return MutableEntityStorageImpl.create()
+  return MutableEntityStorageImpl(EntityStorageSnapshotImpl.EMPTY)
 }
 
 internal fun createBuilderFrom(storage: EntityStorage): MutableEntityStorageImpl {
-  return MutableEntityStorageImpl.from(storage)
+  return MutableEntityStorageImpl(storage.toSnapshot() as EntityStorageSnapshotImpl)
 }
 
 internal inline fun makeBuilder(from: EntityStorage? = null, action: MutableEntityStorage.() -> Unit): MutableEntityStorageImpl {

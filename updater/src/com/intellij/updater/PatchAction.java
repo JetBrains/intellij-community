@@ -117,14 +117,6 @@ public abstract class PatchAction {
     return types[value];
   }
 
-  public boolean calculate(File olderDir, File newerDir) throws IOException {
-    return doCalculate(getFile(olderDir), getFile(newerDir));
-  }
-
-  protected boolean doCalculate(File olderFile, File newerFile) throws IOException {
-    return true;
-  }
-
   public void buildPatchFile(File olderDir, File newerDir, ZipOutputStream patchOutput) throws IOException {
     doBuildPatchFile(getFile(olderDir), getFile(newerDir), patchOutput);
   }
@@ -192,12 +184,14 @@ public abstract class PatchAction {
       if (isModified(toFile)) {
         ValidationResult.Option[] options = calculateOptions();
         String details = "expected 0x" + Long.toHexString(myChecksum) + ", actual 0x" + Long.toHexString(myPatch.digestFile(toFile));
-        return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.MODIFIED_MESSAGE, details, options);
+        ValidationResult.Kind kind = isCritical() ? ValidationResult.Kind.CONFLICT : ValidationResult.Kind.ERROR;
+        return new ValidationResult(kind, getReportPath(), action, ValidationResult.MODIFIED_MESSAGE, details, options);
       }
     }
     else if (!isOptional()) {
       ValidationResult.Option[] options = calculateOptions();
-      return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.ABSENT_MESSAGE, options);
+      ValidationResult.Kind kind = isCritical() ? ValidationResult.Kind.CONFLICT : ValidationResult.Kind.ERROR;
+      return new ValidationResult(kind, getReportPath(), action, ValidationResult.ABSENT_MESSAGE, options);
     }
 
     return null;

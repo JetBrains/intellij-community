@@ -45,10 +45,7 @@ private class KtScriptModuleByModuleInfo(
         return moduleInfo.hashCode()
     }
 
-    override fun equals(other: Any?): Boolean {
-        return other is KtScriptModuleByModuleInfo
-               && moduleInfo == other.moduleInfo
-    }
+    override fun equals(other: Any?): Boolean = this === other || other is KtScriptModuleByModuleInfo && moduleInfo == other.moduleInfo
 }
 
 private class KtScriptDependencyModuleByModuleInfo(
@@ -89,6 +86,8 @@ private class KtScriptDependencyModuleByModuleInfo(
     }
 
     override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+
         if (other !is KtScriptDependencyModuleByModuleInfo || moduleInfo != other.moduleInfo) {
             return false
         }
@@ -126,8 +125,7 @@ private class KtScriptDependencySourceModuleByModuleInfo(
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is KtScriptDependencySourceModuleByModuleInfo
-               && moduleInfo == other.moduleInfo
+        return this === other || other is KtScriptDependencySourceModuleByModuleInfo && moduleInfo == other.moduleInfo
     }
 }
 

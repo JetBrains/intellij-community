@@ -43,7 +43,7 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
                                            private val existingSdks: List<Sdk>,
                                            private val context: UserDataHolderBase,
                                            private val targetSupplier: Supplier<TargetEnvironmentConfiguration>? = null,
-                                           config: PythonLanguageRuntimeConfiguration? = null) : PyAddSdkPanel(), PyAddTargetBasedSdkView {
+                                           config: PythonLanguageRuntimeConfiguration? = null) : PyAddSdkPanel() {
   private val project: Project?
     get() = _project ?: module?.project
 
@@ -109,14 +109,13 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
 
   override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox, this))
 
-  override fun getOrCreateSdk(): Sdk? = getOrCreateSdk(targetEnvironmentConfiguration = null)
-
-  override fun getOrCreateSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? {
+  override fun getOrCreateSdk(): Sdk? {
     contentPanel.apply()
 
-    applyOptionalTargetSpecificFields(targetEnvironmentConfiguration)
+    targetPanelExtension?.applyToTargetConfiguration()
 
-    if (targetEnvironmentConfiguration == null) {
+    val currentTargetEnvironmentConfiguration = targetEnvironmentConfiguration
+    if (currentTargetEnvironmentConfiguration == null) {
       // this is the local machine case
       return when (val sdk = installSdkIfNeeded(sdkComboBox.selectedSdk, module, existingSdks, context)) {
         is PyDetectedSdk -> sdk.setup(existingSdks)
@@ -125,12 +124,8 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
     }
     else {
       val interpreterPath = sdkComboBox.selectedSdk?.homePath!!
-      return createSdkForTarget(project, targetEnvironmentConfiguration, interpreterPath, existingSdks, targetPanelExtension)
+      return createSdkForTarget(project, currentTargetEnvironmentConfiguration, interpreterPath, existingSdks, targetPanelExtension)
     }
-  }
-
-  private fun applyOptionalTargetSpecificFields(targetConfiguration: TargetEnvironmentConfiguration?) {
-    if (targetConfiguration != null) targetPanelExtension?.apply(targetConfiguration)
   }
 
   override fun addChangeListener(listener: Runnable) {

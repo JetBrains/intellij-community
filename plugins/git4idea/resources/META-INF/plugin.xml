@@ -210,6 +210,7 @@
     <group id="Git.Branches.Popup.Settings" class="git4idea.ui.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
       <action class="git4idea.ui.branch.popup.GitBranchesTreePopupGroupByPrefixAction"/>
       <action class="git4idea.ui.branch.popup.GitBranchesTreePopupTrackReposSynchronouslyAction"/>
+      <action class="git4idea.ui.branch.popup.GitBranchesTreePopupShowRecentBranchesAction"/>
       <action class="git4idea.ui.branch.popup.GitBranchesTreePopupResizeAction"/>
     </group>
 
@@ -342,9 +343,10 @@
       <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="CheckinProject"/>
       <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="CheckinProject"/>
     </action>
-    <action id="Git.Stage.Enable" class="git4idea.index.actions.GitEnableStagingAreaAction">
+    <action id="Git.Stage.Enable" class="git4idea.index.actions.GitEnableStagingAreaAction" icon="AllIcons.Ide.Gift">
       <add-to-group group-id="ChangesViewToolbar" anchor="last"/>
     </action>
+    <action id="Git.Stage.Disable" class="git4idea.index.actions.GitDisableStagingAreaAction" icon="AllIcons.Vcs.Changelist"/>
     <action id="Git.Stage.Add" class="git4idea.index.actions.GitAddAction" use-shortcut-of="ChangesView.AddUnversioned"/>
     <action id="Git.Stage.Add.No.Content" class="git4idea.index.actions.GitAddWithoutContent"/>
     <action id="Git.Stage.Reset" class="git4idea.index.actions.GitResetAction" use-shortcut-of="ChangesView.Revert"/>
@@ -365,6 +367,7 @@
     <action id="Git.Stage.Compare.Staged.Local" class="git4idea.index.actions.GitStageCompareStagedWithLocalAction"/>
     <action id="Git.Stage.Compare.Staged.Head" class="git4idea.index.actions.GitStageCompareStagedWithHeadAction"/>
     <action id="Git.Stage.Compare.Three.Versions" class="git4idea.index.actions.GitStageCompareThreeVersionsAction"/>
+    <action id="Git.Stage.Stash.Files" class="git4idea.index.actions.GitStageStashFilesAction"/>
 
     <group id="Git.ChangesView.Conflicts">
       <action id="Git.ChangesView.Merge" class="git4idea.merge.GitMergeConflictAction"/>
@@ -387,7 +390,7 @@
         <separator key="separator.show"/>
         <reference id="Git.Stage.ToggleIgnored"/>
       </group>
-      <reference id="Git.Stage.Enable"/>
+      <reference id="Git.Stage.Disable"/>
     </group>
     <group id="Git.Stage.Tree.Menu">
       <reference id="Git.Stage.Merge"/>
@@ -396,6 +399,7 @@
       <reference id="Git.Stage.Add"/>
       <reference id="Git.Stage.Add.No.Content"/>
       <reference id="Git.Stage.Reset"/>
+      <reference ref="Git.Stage.Stash.Files"/>
       <reference id="Git.Stage.Revert"/>
       <reference id="$Delete"/>
       <reference id="Git.Ignore.File"/>
@@ -591,9 +595,9 @@
                  description="If true, then tree nodes will be expanded on single click, otherwise expand as usual JTree"/>
     <registryKey key="git.do.not.swap.merge.conflict.sides" defaultValue="false"
                  description="Do not inverse 'ours' and 'theirs' conflict sides during rebase"/>
-    <registryKey key="git.recent.checkout.branches.reflog.entries.max.count" defaultValue="50"
+    <registryKey key="git.recent.checkout.branches.reflog.entries.count" defaultValue="50"
                  restartRequired="true"
-                 description="Amount of entry to process from Git reflog to parse recently checkout branches"/>
+                 description="Max amount of entry to process from Git reflog to parse recently checkout branches"/>
     <registryKey key="git.show.recent.checkout.branches" defaultValue="5"
                  description="Max count of recently checkout branches to show (e.g. in branches tree popup)"/>
 
@@ -796,6 +800,13 @@
                         preloaderClassName="git4idea.conflicts.GitConflictsToolWindowManager$ContentPreloader"
                         displayNameSupplierClassName="git4idea.conflicts.GitConflictsToolWindowManager$DisplayNameSupplier"
                         isInCommitToolWindow="true"/>
+
+    <registryKey os="windows" key="git.version.check.minutes" defaultValue="1"
+                 restartRequired="true"
+                 description="Amount of time in minutes to check new Git version after IDE inactivity.\n
+                             -1 to disable check."/>
+    <postStartupActivity os="windows" implementation="git4idea.config.GitNewVersionChecker$Starter"/>
+    <settingsEntryPointActionProvider os="windows" implementation="git4idea.config.GitVersionUpdateSettingsEntryProvider"/>
   </extensions>
 
   <extensionPoints>
@@ -828,5 +839,8 @@
     <listener class="git4idea.ui.branch.GitBranchWidget$MyExperimentalToolbarStateListener"
               topic="com.intellij.ide.navigationToolbar.experimental.ExperimentalToolbarStateListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="git4idea.ui.branch.GitBranchWidget$SettingsListener"
+              activeInHeadlessMode="false" activeInTestMode="false"
+              topic="com.intellij.ide.ui.UISettingsListener"/>
   </projectListeners>
 </idea-plugin>

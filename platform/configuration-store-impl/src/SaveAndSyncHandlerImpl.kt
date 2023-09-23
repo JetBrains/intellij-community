@@ -27,8 +27,8 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.project.stateStore
-import com.intellij.util.application
 import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
@@ -55,7 +55,9 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   private val saveQueue = ArrayDeque<SaveTask>()
   private val currentJob = AtomicReference<Job?>()
 
-  private val eventPublisher = application.messageBus.syncPublisher(SaveAndSyncHandlerListener.TOPIC)
+  private val eventPublisher: SaveAndSyncHandlerListener
+    get() = ApplicationManager.getApplication().messageBus.syncPublisher(SaveAndSyncHandlerListener.TOPIC)
+
   private val forceExecuteImmediatelyState = AtomicBoolean()
 
   init {
@@ -65,6 +67,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
         refreshRequests
           .debounce(300.milliseconds)
           .collect {
+            val eventPublisher = eventPublisher
             withContext(Dispatchers.EDT) {
               blockingContext {
                 eventPublisher.beforeRefresh()
@@ -131,6 +134,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   }
 
   private suspend fun processTasks(forceExecuteImmediately: Boolean) {
+    val eventPublisher = eventPublisher
     while (true) {
       if (blockSaveOnFrameDeactivationCount.get() != 0) {
         return
@@ -245,7 +249,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean {
     // saveSettingsUnderModalProgress is intended to be called only in EDT because
     // otherwise wrapping into a modal progress task is not required and `saveSettings` should be called directly
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
 
     var isSavedSuccessfully = true
     var isAutoSaveCancelled = false
@@ -267,11 +271,10 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
       }
 
       val project = (componentManager as? Project)?.takeIf { !it.isDefault }
-      runBlockingModalWithRawProgressReporter(owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
-                                              title = getProgressTitle(componentManager),
-                                              cancellation = TaskCancellation.nonCancellable()
-      ) {
-        // ensure that is fully cancelled
+      runWithModalProgressBlocking(owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
+                                   title = getProgressTitle(componentManager),
+                                   cancellation = TaskCancellation.nonCancellable()) {
+        // ensure that is fully canceled
         currentJob?.join()
 
         isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)

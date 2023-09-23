@@ -689,6 +689,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     return DvcsBranchesDivergedBanner.create("reference.VersionControl.Git.SynchronousBranchControl", text)
   }
 
+  fun refresh() {
+    applySearchPattern()
+  }
+
   private inner class BranchesTree(model: TreeModel) : Tree(model) {
 
     override fun convertValueToText(value: Any?,

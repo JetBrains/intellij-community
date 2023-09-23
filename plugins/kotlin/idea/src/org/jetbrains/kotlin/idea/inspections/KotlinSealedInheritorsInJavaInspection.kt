@@ -14,29 +14,6 @@ import org.jetbrains.kotlin.idea.refactoring.memberInfo.getClassDescriptorIfAny
 
 
 class KotlinSealedInheritorsInJavaInspection : LocalInspectionTool() {
-    companion object {
-        private fun PsiClass.listSealedParentReferences(): List<PsiReference> {
-            if (this is PsiAnonymousClass && baseClassType.isKotlinSealed())
-                return listOf(baseClassReference)
-
-            val sealedBaseClasses = extendsList?.listSealedMembers()
-            val sealedBaseInterfaces = implementsList?.listSealedMembers()
-
-            return sealedBaseClasses.orEmpty() + sealedBaseInterfaces.orEmpty()
-        }
-
-        private fun PsiReferenceList.listSealedMembers(): List<PsiReference> = referencedTypes
-            .filter { it.isKotlinSealed() }
-            .mapNotNull { it as? PsiClassReferenceType }
-            .map { it.reference }
-
-        private fun PsiClassType.isKotlinSealed(): Boolean = resolve()?.isKotlinSealed() == true
-
-        private fun PsiClass.isKotlinSealed(): Boolean {
-            return this is KtLightClass && (getClassDescriptorIfAny()?.isSealed() ?: false)
-        }
-    }
-
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return object : JavaElementVisitor() {
             override fun visitClass(aClass: PsiClass) {
@@ -50,4 +27,25 @@ class KotlinSealedInheritorsInJavaInspection : LocalInspectionTool() {
             }
         }
     }
+}
+
+private fun PsiClass.listSealedParentReferences(): List<PsiReference> {
+    if (this is PsiAnonymousClass && baseClassType.isKotlinSealed())
+        return listOf(baseClassReference)
+
+    val sealedBaseClasses = extendsList?.listSealedMembers()
+    val sealedBaseInterfaces = implementsList?.listSealedMembers()
+
+    return sealedBaseClasses.orEmpty() + sealedBaseInterfaces.orEmpty()
+}
+
+private fun PsiReferenceList.listSealedMembers(): List<PsiReference> = referencedTypes
+    .filter { it.isKotlinSealed() }
+    .mapNotNull { it as? PsiClassReferenceType }
+    .map { it.reference }
+
+private fun PsiClassType.isKotlinSealed(): Boolean = resolve()?.isKotlinSealed() == true
+
+private fun PsiClass.isKotlinSealed(): Boolean {
+    return this is KtLightClass && (getClassDescriptorIfAny()?.isSealed() ?: false)
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.java.JavaBundle;
@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,7 @@ public final class SuperMethodWarningUtil {
   private SuperMethodWarningUtil() {}
 
   public static PsiMethod @NotNull [] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return checkSuperMethods(method, actionString, Collections.emptyList());
   }
 
@@ -61,7 +62,7 @@ public final class SuperMethodWarningUtil {
   public static PsiMethod @NotNull [] checkSuperMethods(@NotNull PsiMethod method,
                                                         @NlsSafe @Nullable String actionString,
                                                         @NotNull Collection<? extends PsiElement> ignore) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     PsiMethod[] methodTargetCandidates = getTargetMethodCandidates(method, ignore);
     if (methodTargetCandidates.length == 1 && methodTargetCandidates[0] == method) return methodTargetCandidates;
 
@@ -93,7 +94,7 @@ public final class SuperMethodWarningUtil {
 
   @NotNull
   static Collection<PsiMethod> getSuperMethods(@NotNull PsiMethod method, PsiClass aClass, @NotNull Collection<? extends PsiElement> ignore) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     final Collection<PsiMethod> superMethods = DeepestSuperMethodsSearch.search(method).findAll();
     superMethods.removeAll(ignore);
@@ -118,7 +119,7 @@ public final class SuperMethodWarningUtil {
 
 
   public static PsiMethod checkSuperMethod(@NotNull PsiMethod method) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return method;
 
@@ -148,7 +149,7 @@ public final class SuperMethodWarningUtil {
   public static void checkSuperMethod(@NotNull PsiMethod method,
                                       @NotNull final PsiElementProcessor<? super PsiMethod> processor,
                                       @NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) {
       processor.execute(method);

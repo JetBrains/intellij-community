@@ -3,6 +3,10 @@ package com.intellij.internal.statistic.actions.devkit.scheme
 
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.devkit.actions.scheme.EventsTestSchemeGroupConfiguration
+import com.intellij.internal.statistic.eventLog.events.scheme.EventDescriptor
+import com.intellij.internal.statistic.eventLog.events.scheme.FieldDescriptor
+import com.intellij.internal.statistic.eventLog.events.scheme.GroupDescriptor
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
@@ -14,6 +18,17 @@ class EventsTestSchemeGroupConfigurationTest : BasePlatformTestCase() {
   override fun setUp() {
     super.setUp()
     System.setProperty("fus.internal.test.mode", "true")
+  }
+
+  fun testEventsSchemeSeparators() {
+    val fieldDescriptor = FieldDescriptor("plugin", setOf("{util#class_name}", "{util#plugin}"))
+    val eventDescriptor = EventDescriptor("testEvent", setOf(fieldDescriptor))
+    val groupDescriptor = GroupDescriptor("testId", "counter", 1, setOf(eventDescriptor),
+                                          "classNameTest", "recorderTest", "pluginIdTest")
+
+    val scheme = EventsTestSchemeGroupConfiguration.createEventsScheme(listOf(groupDescriptor))
+
+    scheme["testId"]?.let { StringUtil.assertValidSeparators(it) }
   }
 
   fun testNotValidJson() {

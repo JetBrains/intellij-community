@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
@@ -19,9 +19,8 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
     super(XML_COMMENT);
   }
 
-  @NotNull
   @Override
-  public IElementType getTokenType() {
+  public @NotNull IElementType getTokenType() {
     return XML_COMMENT;
   }
 
@@ -70,13 +69,12 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
   }
 
   @Override
-  @Nullable
-  public PsiMetaData getMetaData() {
+  public @Nullable PsiMetaData getMetaData() {
     return MetaRegistry.getMetaBase(this);
   }
 
   @Override
-  public PsiLanguageInjectionHost updateText(@NotNull final String text) {
+  public PsiLanguageInjectionHost updateText(final @NotNull String text) {
     final PsiFile psiFile = getContainingFile();
 
     final XmlDocument document =
@@ -92,14 +90,12 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
   }
 
   @Override
-  @NotNull
-  public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
+  public @NotNull LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
     return new XmlCommentLiteralEscaper(this);
   }
 
-  @NotNull
   @Override
-  public String getCommentText() {
+  public @NotNull String getCommentText() {
     ASTNode node = getNode().findChildByType(XmlTokenType.XML_COMMENT_CHARACTERS);
     return node == null ? "" : node.getText();
   }

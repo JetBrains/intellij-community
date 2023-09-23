@@ -11,6 +11,7 @@ object TerminalUi {
   const val blockLeftInset = 12
   const val blockRightInset = 12
   const val cornerToBlockInset = 7
+  const val commandToOutputInset = 2
   const val blockArc = 8
   const val blocksGap = 6
 
@@ -19,6 +20,8 @@ object TerminalUi {
   const val promptToCommandInset = 2
 
   const val alternateBufferLeftInset = 4
+
+  const val searchComponentWidth = 500
 
   // todo: create color keys
   val terminalBackground: Color
@@ -35,8 +38,20 @@ object TerminalUi {
     get() = JBColor(0xFFF2F3, 0x402929)
   val errorBlockStrokeColor: Color
     get() = JBColor(0xED99A1, 0x9C4E4E)
+
   val outputForeground: Color
     get() = JBColor(0x080808, 0xBDC0C9)
+  val commandForeground: Color
+    get() = JBColor(0x000000, 0xFFFFFF)
   val promptForeground: Color
     get() = JBColor(0x6C707E, 0x868A91)
+
+  val searchEntryBackground: Color
+    get() = JBColor(0xFFEA00, 0xFFEA00)
+  val searchEntryForeground: Color
+    get() = JBColor(0x000000, 0x000000)
+  val currentSearchEntryBackground: Color
+    get() = JBColor(0xFF941A, 0xFF941A)
+  val currentSearchEntryForeground: Color
+    get() = JBColor(0x000000, 0x000000)
 }

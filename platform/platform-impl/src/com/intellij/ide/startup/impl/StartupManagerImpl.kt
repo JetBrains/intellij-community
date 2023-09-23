@@ -36,6 +36,7 @@ import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.ModalityUiUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -469,7 +470,7 @@ private fun launchActivity(activity: ProjectActivity, project: Project, pluginId
 
 // allow `invokeAndWait` inside startup activities
 private suspend fun waitAndProcessInvocationEventsInIdeEventQueue(startupManager: StartupManagerImpl) {
-  ApplicationManager.getApplication().assertIsDispatchThread()
+  ThreadingAssertions.assertEventDispatchThread()
   val eventQueue = IdeEventQueue.getInstance()
   if (startupManager.postStartupActivityPassed()) {
     withContext(Dispatchers.EDT) {

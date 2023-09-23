@@ -21,6 +21,7 @@ import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
+import com.intellij.webSymbols.utils.asSingleSymbol
 
 class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBase<XmlElement>() {
 
@@ -80,8 +81,9 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
 
             val fullName = name.substring(0, item.offset) + item.name
             val match = freshRegistry.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, fullName, scope = symbols)
+              .asSingleSymbol() ?: return@withInsertHandlerAdded
             val info = WebSymbolHtmlAttributeInfo.create(fullName, freshRegistry, match)
-            if (info != null && info.acceptsValue && !info.acceptsNoValue) {
+            if (info.acceptsValue && !info.acceptsNoValue) {
               XmlAttributeInsertHandler.INSTANCE.handleInsert(insertionContext, lookupItem)
             }
           }

@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.log;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.psi.PsiClass;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import org.jetbrains.annotations.NotNull;
@@ -7,7 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class FloggerProcessor extends AbstractSimpleLogProcessor {
+@Service
+public final class FloggerProcessor extends AbstractSimpleLogProcessor {
   private static final String LOGGER_TYPE = "com.google.common.flogger.FluentLogger";
   private static final String LOGGER_INITIALIZER = "com.google.common.flogger.FluentLogger.forEnclosingClass()";
 

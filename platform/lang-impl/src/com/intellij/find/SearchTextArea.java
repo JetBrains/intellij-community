@@ -74,6 +74,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
   private final JBScrollPane myScrollPane;
   private final ActionButton myHistoryPopupButton;
   private boolean myMultilineEnabled = true;
+  private boolean myShowNewLineButton = true;
 
   /**
    * @deprecated infoMode is not used. Use the other constructor.
@@ -220,7 +221,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     }
 
     boolean showClearIcon = !StringUtil.isEmpty(myTextArea.getText());
-    boolean showNewLine = myMultilineEnabled;
+    boolean showNewLine = myMultilineEnabled && myShowNewLineButton;
     boolean wrongVisibility =
       ((myClearButton.getParent() == null) == showClearIcon) || ((myNewLineButton.getParent() == null) == showNewLine);
 
@@ -229,10 +230,9 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       myIconsPanel.removeAll();
       myIconsPanel.setLayout(new BorderLayout());
       myIconsPanel.add(myClearButton, BorderLayout.CENTER);
-      myIconsPanel.add(myNewLineButton, BorderLayout.EAST);
+      if (showNewLine) myIconsPanel.add(myNewLineButton, BorderLayout.EAST);
       resetPreferredSize(myIconsPanel);
       if (!showClearIcon) myIconsPanel.remove(myClearButton);
-      if (!showNewLine) myIconsPanel.remove(myNewLineButton);
       myIconsPanel.revalidate();
       myIconsPanel.repaint();
     }
@@ -306,6 +306,11 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     updateIconsLayout();
   }
 
+  public void setShowNewLineButton(boolean show) {
+    myShowNewLineButton = show;
+    updateIconsLayout();
+  }
+
   @NotNull
   public JTextArea getTextArea() {
     return myTextArea;
@@ -351,6 +356,8 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       Dimension size = historyList.getPreferredSize();
       size.width = Math.min(size.width, getWidth() + 200);
       historyList.setPreferredSize(size);
+      historyList.getAccessibleContext()
+        .setAccessibleName(FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"));
       Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null);
     }
   }

@@ -210,9 +210,9 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
     private final List<ColorSchemeItem> mySchemeItems;
     private JBList<ColorSchemeItem> mySchemeList;
 
-    protected ImportSchemeChooserDialog(@NotNull Component parent,
-                                        @NotNull Component componentAbove,
-                                        @NotNull List<ColorSchemeItem> schemeItems) {
+    private ImportSchemeChooserDialog(@NotNull Component parent,
+                                      @NotNull Component componentAbove,
+                                      @NotNull List<ColorSchemeItem> schemeItems) {
       super(parent, false);
       setTitle(ApplicationBundle.message("settings.editor.scheme.import.chooser.title"));
       setOKButtonText(ApplicationBundle.message("settings.editor.scheme.import.chooser.button"));

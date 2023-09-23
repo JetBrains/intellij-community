@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet.generators;
 
 import com.intellij.application.options.emmet.EmmetOptions;
@@ -24,15 +10,10 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
@@ -52,11 +33,10 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   }
 
   @Override
-  @NotNull
-  public String toString(@NotNull XmlTag tag,
-                         @NotNull Map<String, String> attributes,
-                         boolean hasChildren,
-                         @NotNull PsiElement context) {
+  public @NotNull String toString(@NotNull XmlTag tag,
+                                  @NotNull Map<String, String> attributes,
+                                  boolean hasChildren,
+                                  @NotNull PsiElement context) {
     FileType fileType = context.getContainingFile().getFileType();
     PsiFile file = tag.getContainingFile();
     if (isTrueXml(fileType)) {
@@ -67,11 +47,10 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   }
 
   @Override
-  @NotNull
-  public String buildAttributesString(@NotNull Map<String, String> attributes,
-                                      boolean hasChildren,
-                                      int numberInIteration,
-                                      int totalIterations, @Nullable String surroundedText) {
+  public @NotNull String buildAttributesString(@NotNull Map<String, String> attributes,
+                                               boolean hasChildren,
+                                               int numberInIteration,
+                                               int totalIterations, @Nullable String surroundedText) {
     StringBuilder result = new StringBuilder();
     for (Map.Entry<String, String> entry : attributes.entrySet()) {
       String name = entry.getKey();

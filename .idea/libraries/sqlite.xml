@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="sqlite" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.xerial:sqlite-jdbc:3.42.0.1">
+    <properties jar-repository-id="central-proxy" maven-id="org.xerial:sqlite-jdbc:3.43.0.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.42.0.1/sqlite-jdbc-3.42.0.1.jar">
-          <sha256sum>a3078076bbadf5f2bd68a6f6974c2d278edfdce9ff24a2d061da8007ecf91943</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.43.0.0/sqlite-jdbc-3.43.0.0.jar">
+          <sha256sum>50524b16b649fb03f81df6e61dec69911b8849e6943c61b85faa24e49bfd98fc</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.42.0.1/sqlite-jdbc-3.42.0.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.43.0.0/sqlite-jdbc-3.43.0.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.42.0.1/sqlite-jdbc-3.42.0.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.43.0.0/sqlite-jdbc-3.43.0.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.maven.testFramework.MavenTestCase
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.importing.workspaceModel.ContentRootCollector.collect
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -11,7 +12,7 @@ import org.junit.Test
 
 class ContentRootCollectorTest : MavenTestCase() {
   @Test
-  fun `test simple content root`() {
+  fun `test simple content root`() = runBlocking {
     val baseContentRoot = "/home/a/b/c/maven"
     val sourceMain = "/home/a/b/c/maven/src/main/java"
     val resourceMain = "/home/a/b/c/maven/src/main/resources"
@@ -41,7 +42,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test source root points at the content root`() {
+  fun `test source root points at the content root`() = runBlocking {
     val contentRoot = "/home/source"
     val contentRoots = collect(projectRoots = listOf(contentRoot),
                                mainSourceFolders = listOf(contentRoot))
@@ -53,7 +54,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test do not register nested sources`() {
+  fun `test do not register nested sources`() = runBlocking {
     val baseContentRoot = "/home"
     val source = "/home/source"
     val nestedSource = "/home/source/dir/nested"
@@ -68,7 +69,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test inner source folders overwrite outer with lower rank`() {
+  fun `test inner source folders overwrite outer with lower rank`() = runBlocking {
     val baseContentRoot = "/home"
 
     // main overwrites test
@@ -130,7 +131,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test do not register nested test and resources`() {
+  fun `test do not register nested test and resources`() = runBlocking {
     val baseContentRoot = "/home"
     val source = "/home/source"
     val nestedResource = "/home/source/nested-resource"
@@ -150,7 +151,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test normalizing relative paths`() {
+  fun `test normalizing relative paths`() = runBlocking {
     val contentRoots = collect(projectRoots = listOf("/home", "/home/../home"),
                                mainSourceFolders = listOf("/home/dir/../source", "/home/../source"))
 
@@ -163,7 +164,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test skip main resource folders that are ancestors of root`() {
+  fun `test skip main resource folders that are ancestors of root`() = runBlocking {
     val root = "/home/project/modules/m1"
     val parentResource = "/home/project/modules"
     val grandParentResource = "/home/project"
@@ -180,7 +181,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test skip main source folders that are ancestors of root`() {
+  fun `test skip main source folders that are ancestors of root`() = runBlocking {
     val root = "/home/project/modules/m1"
     val parentResource = "/home/project/modules"
     val grandParentResource = "/home/project"
@@ -197,7 +198,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test skip test resource folders that are ancestors of root`() {
+  fun `test skip test resource folders that are ancestors of root`() = runBlocking {
     val root = "/home/project/modules/m1"
     val parentResource = "/home/project/modules"
     val grandParentResource = "/home/project"
@@ -214,7 +215,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test skip test source folders that are ancestors of root`() {
+  fun `test skip test source folders that are ancestors of root`() = runBlocking {
     val root = "/home/project/modules/m1"
     val parentResource = "/home/project/modules"
     val grandParentResource = "/home/project"
@@ -231,7 +232,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test source folders override resource folders`() {
+  fun `test source folders override resource folders`() = runBlocking {
     val root = "/home"
     val sourceMain = "/home/main/source"
     val sourceTest = "/home/test/source"
@@ -253,7 +254,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test source folders override test folders`() {
+  fun `test source folders override test folders`() = runBlocking {
     val root = "/home"
     val sourceMain = "/home/main/source"
     val resourceMain = "/home/main/resource"
@@ -280,7 +281,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test do not register nested content root`() {
+  fun `test do not register nested content root`() = runBlocking {
     val root1 = "/home"
     val source1 = "/home/source"
     val root2 = "/home/source/dir/nested"
@@ -296,7 +297,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test do not register nested generated folder under a source folder`() {
+  fun `test do not register nested generated folder under a source folder`() = runBlocking {
     val root = "/project"
 
     val source = "/project/source"
@@ -314,7 +315,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test do not register generated folder when there is a nested source or generated folder`() {
+  fun `test do not register generated folder when there is a nested source or generated folder`() = runBlocking {
     val root = "/project"
 
     val generatedWithNestedSourceFolder = "/project/generated-with-sources"
@@ -342,7 +343,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test register generated folder when there is a nested generated annotation folder`() {
+  fun `test register generated folder when there is a nested generated annotation folder`() = runBlocking {
     val root = "/project"
 
     val mainGeneratedFolder = "/project/generated"
@@ -368,7 +369,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test do not register generated folder with a nested source, but create a root`() {
+  fun `test do not register generated folder with a nested source, but create a root`() = runBlocking {
     val root = "/root1"
 
     val generatedWithNestedSourceFolder = "/generated-with-sources"
@@ -399,7 +400,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test folders outside of the content root`() {
+  fun `test folders outside of the content root`() = runBlocking {
     val baseContentRoot = "/home/content"
     val source = "/home/source"
     val generated = "/home/generated"
@@ -418,7 +419,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test exclude folders`() {
+  fun `test exclude folders`() = runBlocking {
     val contentRoots = collect(projectRoots = listOf("/home"),
                                mainSourceFolders = listOf("/home/src",
                                                           "/home/exclude1/src",
@@ -452,7 +453,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test do not register content root for a single exclude folder`() {
+  fun `test do not register content root for a single exclude folder`() = runBlocking {
     val contentRoots = collect(projectRoots = listOf(),
                                mainSourceFolders = listOf("/root/src"),
                                mainGeneratedSourceFolders = listOf("/root/generated"),
@@ -473,7 +474,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test do not register nested exclude folder`() {
+  fun `test do not register nested exclude folder`() = runBlocking {
     val root = "/root"
     val exclude = "/root/exclude"
     val nestedExclude = "/root/exclude/exclude"
@@ -499,7 +500,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test do not register exclude folder pointing to a root`() {
+  fun `test do not register exclude folder pointing to a root`() = runBlocking {
     val contentRoots = collect(projectRoots = listOf("/root"),
                                mainSourceFolders = listOf("/root/src"),
                                mainGeneratedSourceFolders = listOf("/root/generated"),
@@ -516,7 +517,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test exclude and prevent nested folders`() {
+  fun `test exclude and prevent nested folders`() = runBlocking {
     val root = "/home"
 
     val excludeWithSource = "/home/exclude-with-source"
@@ -550,7 +551,7 @@ class ContentRootCollectorTest : MavenTestCase() {
 
 
   @Test
-  fun `test multiple content roots and empty exclude root and generated sources`() {
+  fun `test multiple content roots and empty exclude root and generated sources`() = runBlocking {
     val baseContentRoot = "/home/src/main"
     val sourceMain = "/home/src/main/java"
     val sourceMain2 = "/home/java2"
@@ -576,7 +577,7 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
-  fun `test multiple source and resources content roots and generated sources`() {
+  fun `test multiple source and resources content roots and generated sources`() = runBlocking {
     val baseContentRoot = "/home/a/b/c/maven/src/main"
     val sourceMain = "/home/a/b/c/maven/src/main/java"
     val sourceMain2 = "/home/a/b/c/maven/java2"

@@ -35,7 +35,6 @@ import com.intellij.util.indexing.diagnostic.dump.paths.hasPresentablePathMatchi
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex.IndexerIdHolder
-import com.intellij.util.io.readText
 import com.intellij.util.progress.ConcurrentTasksProgressManager
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
@@ -49,6 +48,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.io.path.readText
 
 internal const val PREFIX = AbstractCommand.CMD_PREFIX + "compareIndices"
 private val LOG = logger<CompareIndices>()

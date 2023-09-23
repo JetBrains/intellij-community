@@ -7,6 +7,7 @@ internal class Activity {
 
 class Foo {
     private val activity: Activity? = null
+
     fun foo() {
         synchronized(this) {
             activity!!.runOnUiThread { }

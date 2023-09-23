@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -27,16 +12,43 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
+/**
+ * Represents a macro and allows to register custom macros in {@code com.intellij.macro} extension point.
+ * <p>
+ * A macro is an expandable variable, which can be used in various places,
+ * e.g., command-line arguments for external tools and run configurations.
+ * <p>
+ * Example:
+ * <p>
+ * Macro with a name {@code ProjectFileDir} can be referenced as
+ * {@code $ProjectFileDir$} in a run configuration command line and
+ * is expanded to the absolute path of the current project directory,
+ * when the run configuration is executed by a user.
+ *
+ * @see MacroManager
+ * @see PathMacro
+ * @see PathListMacro
+ * @see MacroWithParams
+ * @see SecondQueueExpandMacro
+ */
 public abstract class Macro {
   public static final ExtensionPointName<Macro> EP_NAME = ExtensionPointName.create("com.intellij.macro");
 
   public static final class ExecutionCancelledException extends Exception {
   }
 
+  /**
+   * @return the name that this macro is referenced by (without wrapping '$' characters).
+   * If the name is {@code MyMacroName}, then it is referenced as {@code $MyMacroName$}.
+   */
   @NonNls
   @NotNull
   public abstract String getName();
 
+  /**
+   * @return a short macro description presented in the macro selection dialog.
+   * The description is displayed in a single line, next to the macro name on the macro list.
+   */
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   public abstract String getDescription();
@@ -49,6 +61,9 @@ public abstract class Macro {
     return expand(dataContext);
   }
 
+  /**
+   * @return preview of the expanded value displayed in the macro selection dialog.
+   */
   public @Nullable String preview(@NotNull DataContext dataContext) {
     try {
       return expand(dataContext);

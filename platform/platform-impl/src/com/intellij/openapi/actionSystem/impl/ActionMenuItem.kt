@@ -130,6 +130,14 @@ class ActionMenuItem internal constructor(action: AnAction,
       screenMenuItemPeer.setLabel(text, accelerator)
       screenMenuItemPeer.setEnabled(isEnabled)
     }
+    val shortcutSuffix = presentation.getClientProperty(Presentation.PROP_KEYBOARD_SHORTCUT_SUFFIX)
+    val shortcut = defaultFirstShortcutText
+    firstShortcutTextFromPresentation = if (!shortcut.isNullOrEmpty() && !shortcutSuffix.isNullOrEmpty()) {
+      shortcut + shortcutSuffix
+    }
+    else {
+      null
+    }
   }
 
   @Throws(IllegalArgumentException::class)
@@ -172,8 +180,13 @@ class ActionMenuItem internal constructor(action: AnAction,
     showDescriptionInStatusBar(isIncluded = isIncluded, component = this, description = description)
   }
 
-  val firstShortcutText: @NlsSafe String
+  private var firstShortcutTextFromPresentation: @NlsSafe String? = null
+
+  private val defaultFirstShortcutText: @NlsSafe String
     get() = KeymapUtil.getFirstKeyboardShortcutText(actionRef.getAction())
+
+  val firstShortcutText: @NlsSafe String
+    get() = firstShortcutTextFromPresentation ?: defaultFirstShortcutText
 
   private fun updateIcon(presentation: Presentation) {
     isToggled = isToggleable && Toggleable.isSelected(presentation)

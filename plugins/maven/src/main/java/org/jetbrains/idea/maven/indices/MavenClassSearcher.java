@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
@@ -37,8 +36,8 @@ public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResu
 
   private static String preparePattern(String pattern) {
     pattern = pattern.toLowerCase();
-    if (pattern.trim().length() == 0) {
-      return StringUtils.EMPTY;
+    if (pattern.trim().isEmpty()) {
+      return "";
     }
 
     List<String> parts = StringUtil.split(pattern, ".");
@@ -59,7 +58,7 @@ public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResu
   }
 
   private static Collection<MavenClassSearchResult> processResults(Set<MavenArtifactInfo> infos, String pattern, int maxResult) {
-    if (pattern.length() == 0 || pattern.equals("*")) {
+    if (pattern.isEmpty() || pattern.equals("*")) {
       pattern = "^/(.*)$";
     }
     else {

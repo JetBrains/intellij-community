@@ -54,6 +54,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
@@ -490,7 +491,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private void changeStatus(@NotNull AnalyzerStatus newStatus) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (!isErrorStripeVisible() || resourcesDisposable.isDisposed()) {
       return;
     }
@@ -564,7 +565,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
   // true if tooltip shown
   private boolean showToolTipByMouseMove(@NotNull MouseEvent e) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     LightweightHint currentHint = getCurrentHint();
     if (currentHint != null && (myKeepHint || myMouseMovementTracker.isMovingTowards(e, getBoundsOnScreen(currentHint)))) {
       return true;
@@ -775,7 +776,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   @Override
   public void setErrorPanelPopupHandler(@NotNull PopupHandler handler) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     MyErrorPanel errorPanel = getErrorPanel();
     if (errorPanel != null) {
       errorPanel.setPopupHandler(handler);
@@ -799,7 +800,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   @Override
   public void setErrorStripeRenderer(@Nullable ErrorStripeRenderer renderer) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myErrorStripeRenderer instanceof Disposable) {
       Disposer.dispose((Disposable)myErrorStripeRenderer);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.util.Processor;
@@ -12,7 +12,7 @@ public final class MatchResult {
   public final List<JsonSchemaObject> mySchemas;
   public final List<Collection<? extends JsonSchemaObject>> myExcludingSchemas;
 
-  private MatchResult(@NotNull final List<JsonSchemaObject> schemas, @NotNull final List<Collection<? extends JsonSchemaObject>> excludingSchemas) {
+  private MatchResult(final @NotNull List<JsonSchemaObject> schemas, final @NotNull List<Collection<? extends JsonSchemaObject>> excludingSchemas) {
     mySchemas = Collections.unmodifiableList(schemas);
     myExcludingSchemas = Collections.unmodifiableList(excludingSchemas);
   }
@@ -42,7 +42,7 @@ public final class MatchResult {
   }
 
   public static void iterateTree(@NotNull JsonSchemaTreeNode root,
-                                 @NotNull final Processor<? super JsonSchemaTreeNode> processor) {
+                                 final @NotNull Processor<? super JsonSchemaTreeNode> processor) {
     final ArrayDeque<JsonSchemaTreeNode> queue = new ArrayDeque<>(root.getChildren());
     while (!queue.isEmpty()) {
       final JsonSchemaTreeNode node = queue.removeFirst();

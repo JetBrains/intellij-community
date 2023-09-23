@@ -17,10 +17,23 @@ public abstract class JavaStaticMethodNameCache {
   public static final ExtensionPointName<JavaStaticMethodNameCache> EP_NAME =
     ExtensionPointName.create("com.intellij.java.staticMethodNamesCache");
 
+  /**
+   * Processes visible outside static methods with a specified name.
+   *
+   * @param namePredicate the predicate used to filter method names
+   * @param processor the processor to handle each matched PsiMethod
+   * @param scope the search scope to limit the search
+   * @param filter the optional filter to refine the search
+   * @return true if all methods were successfully processed (processor return true for all methods), false otherwise
+   */
   public abstract boolean processMethodsWithName(@NotNull Predicate<String> namePredicate,
                                                  @NotNull final Processor<? super PsiMethod> processor,
                                                  @NotNull GlobalSearchScope scope,
                                                  @Nullable IdFilter filter);
 
+  /**
+   * @return the subclass of PsiShortNamesCache that can be replaced by current class for static methods.
+   */
+  @NotNull
   public abstract Class<? extends PsiShortNamesCache> replaced();
 }

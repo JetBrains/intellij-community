@@ -25,7 +25,7 @@ public final class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractP
   private JPanel myIndentOptionsPanel;
   private JPanel myTopPanel;
 
-  protected OtherFileTypesCodeStyleOptionsForm(@NotNull CodeStyleSettings settings) {
+  OtherFileTypesCodeStyleOptionsForm(@NotNull CodeStyleSettings settings) {
     super(settings);
     myIndentOptionsEditor = new IndentOptionsEditorWithSmartTabs();
     myIndentOptionsPanel.add(myIndentOptionsEditor.createPanel(), BorderLayout.CENTER);

@@ -44,7 +44,7 @@ final class ProjectViewNodeVisitor extends AbstractTreeNodeVisitor<PsiElement> {
    * @return a virtual file corresponding to searching element or {@code null} if it is not set
    */
   @Nullable
-  public final VirtualFile getFile() {
+  public VirtualFile getFile() {
     return file;
   }
 

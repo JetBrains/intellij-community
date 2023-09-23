@@ -95,7 +95,7 @@ public abstract class FileBasedIndex {
   public abstract VirtualFile findFileById(Project project, int id);
 
   public void requestRebuild(@NotNull ID<?, ?> indexId) {
-    requestRebuild(indexId, new Throwable());
+    requestRebuild(indexId, new RebuildRequestedByUserAction());
   }
 
   @NotNull
@@ -186,6 +186,10 @@ public abstract class FileBasedIndex {
    */
   public abstract void requestRebuild(@NotNull ID<?, ?> indexId, @NotNull Throwable throwable);
 
+  /**
+   * @deprecated use {@link #requestRebuild(ID)} or {@link #requestRebuild(ID, Throwable)}
+   */
+  @Deprecated
   public abstract <K> void scheduleRebuild(@NotNull ID<K, ?> indexId, @NotNull Throwable e);
 
   public abstract void requestReindex(@NotNull VirtualFile file);
@@ -273,18 +277,6 @@ public abstract class FileBasedIndex {
 
   public void invalidateCaches() {
     throw new IncorrectOperationException();
-  }
-
-  /**
-   * @return true if input file:
-   * <ul>
-   * <li> was scanned before indexing of some project in current IDE session </li>
-   * <li> contains up-to-date indexed state </li>
-   * </ul>
-   */
-  @ApiStatus.Experimental
-  public boolean isFileIndexedInCurrentSession(@NotNull VirtualFile file, @NotNull ID<?, ?> indexId) {
-    throw new UnsupportedOperationException();
   }
 
   @ApiStatus.Experimental
@@ -393,5 +385,8 @@ public abstract class FileBasedIndex {
 
   @ApiStatus.Internal
   public void loadIndexes() {
+  }
+
+  private static class RebuildRequestedByUserAction extends Throwable {
   }
 }

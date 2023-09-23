@@ -92,7 +92,7 @@ public final class AppFontPanel implements Disposable {
     return label;
   }
 
-  protected void navigateToColorSchemeFontConfigurable() {
+  private void navigateToColorSchemeFontConfigurable() {
     Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myTopPanel));
     if (allSettings != null) {
       final Configurable colorSchemeConfigurable = allSettings.find(ColorAndFontOptions.ID);

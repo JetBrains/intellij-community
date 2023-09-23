@@ -37,7 +37,7 @@ internal class GitLabMergeRequestsListLoader(
       api.rest.loadMergeRequests(project, searchQuery)
     }
     else {
-      api.rest.loadList(project.serverPath, GitLabApiRequestName.REST_GET_MERGE_REQUESTS, nextUri)
+      api.rest.loadList(GitLabApiRequestName.REST_GET_MERGE_REQUESTS, nextUri)
     }
     val linkHeader = response.headers().firstValue(LinkHttpHeaderValue.HEADER_NAME).orElse(null)?.let(LinkHttpHeaderValue::parse)
     val result = response.body().map(GitLabMergeRequestDetails.Companion::fromRestDTO)

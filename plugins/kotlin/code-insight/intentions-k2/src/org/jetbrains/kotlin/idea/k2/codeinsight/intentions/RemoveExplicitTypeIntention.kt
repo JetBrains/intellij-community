@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.utils.getClassId
@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableIntention<KtDeclaration>(KtDeclaration::class) {
+internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandIntention<KtDeclaration>(KtDeclaration::class) {
     override fun getFamilyName(): String = KotlinBundle.message("remove.explicit.type.specification")
     override fun getActionName(element: KtDeclaration): String = familyName
 
@@ -51,7 +51,7 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableIntention<K
         else -> !explicitTypeMightBeNeededForCorrectTypeInference(element)
     }
 
-    override fun apply(element: KtDeclaration, project: Project, editor: Editor?) {
+    override fun invoke(context: ActionContext, element: KtDeclaration, updater: ModPsiUpdater) {
         element.removeTypeReference()
     }
 

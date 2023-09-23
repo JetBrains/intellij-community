@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -36,11 +36,11 @@ final class UsageRepr {
 
   }
 
-  public static abstract class Usage implements RW.Savable, Streamable {
+  public abstract static class Usage implements RW.Savable, Streamable {
     public abstract int getOwner();
   }
 
-  public static abstract class FMUsage extends Usage {
+  public abstract static class FMUsage extends Usage {
     public final int myName;
     public final int myOwner;
 
@@ -264,7 +264,7 @@ final class UsageRepr {
     }
   }
 
-  public static class MetaMethodUsage extends FMUsage {
+  public static final class MetaMethodUsage extends FMUsage {
 
     public MetaMethodUsage(final int n, final int o) {
       super(n, o);
@@ -285,7 +285,7 @@ final class UsageRepr {
     }
   }
 
-  public static class ImportStaticMemberUsage extends FMUsage {
+  public static final class ImportStaticMemberUsage extends FMUsage {
 
     public ImportStaticMemberUsage(final int n, final int o) {
       super(n, o);
@@ -465,7 +465,7 @@ final class UsageRepr {
     }
   }
 
-  public static class ClassAsGenericBoundUsage extends ClassUsage {
+  public static final class ClassAsGenericBoundUsage extends ClassUsage {
     public ClassAsGenericBoundUsage(int className) {
       super(className);
     }
@@ -551,7 +551,7 @@ final class UsageRepr {
     }
   }
 
-  public static class ClassNewUsage extends ClassExtendsUsage {
+  public static final class ClassNewUsage extends ClassExtendsUsage {
     public ClassNewUsage(int className) {
       super(className);
     }
@@ -585,12 +585,12 @@ final class UsageRepr {
   public static final class AnnotationUsage extends Usage {
     public static final DataExternalizer<ElemType> elementTypeExternalizer = new DataExternalizer<ElemType>() {
       @Override
-      public void save(@NotNull final DataOutput out, final ElemType value) throws IOException {
+      public void save(final @NotNull DataOutput out, final ElemType value) throws IOException {
         DataInputOutputUtil.writeINT(out, value.ordinal());
       }
 
       @Override
-      public ElemType read(@NotNull final DataInput in) throws IOException {
+      public ElemType read(final @NotNull DataInput in) throws IOException {
         final int ordinal = DataInputOutputUtil.readINT(in);
         for (ElemType value : ElemType.values()) {
           if (value.ordinal() == ordinal) {
@@ -605,6 +605,7 @@ final class UsageRepr {
     final IntSet myUsedArguments;
     final Set<ElemType> myUsedTargets;
 
+    // this method is only relevant when the AnnotationUsage object is used as a query (annotation usage selector)
     public boolean satisfies(final AnnotationUsage annotationUsage) {
       if (!myType.equals(annotationUsage.myType)) {
         return false;
@@ -614,7 +615,7 @@ final class UsageRepr {
 
       if (myUsedArguments != null) {
         IntSet arguments = new IntOpenHashSet(myUsedArguments);
-        arguments.removeAll(annotationUsage.myUsedArguments);
+        arguments.removeAll(annotationUsage.myUsedArguments);  // need to find annotation usages that do not mention arguments this annotation uses
         argumentsSatisfy = !arguments.isEmpty();
       }
 
@@ -622,9 +623,7 @@ final class UsageRepr {
 
       if (myUsedTargets != null) {
         final Collection<ElemType> targets = EnumSet.copyOf(myUsedTargets);
-
         targets.retainAll(annotationUsage.myUsedTargets);
-
         targetsSatisfy = !targets.isEmpty();
       }
 
@@ -779,7 +778,7 @@ final class UsageRepr {
   public static DataExternalizer<Usage> externalizer(final DependencyContext context) {
     return new DataExternalizer<Usage>() {
       @Override
-      public void save(@NotNull final DataOutput out, final Usage value) {
+      public void save(final @NotNull DataOutput out, final Usage value) {
         value.save(out);
       }
 

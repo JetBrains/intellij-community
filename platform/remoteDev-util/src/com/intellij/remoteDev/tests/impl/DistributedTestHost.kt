@@ -2,9 +2,11 @@ package com.intellij.remoteDev.tests.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
-import com.intellij.diagnostic.DebugLogManager
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.enableCoroutineDump
+import com.intellij.diagnostic.logs.LogCategory
+import com.intellij.diagnostic.logs.DebugLogLevel
+import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -38,8 +40,7 @@ import java.awt.Window
 import java.awt.image.BufferedImage
 import java.io.File
 import java.net.InetAddress
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.time.LocalTime
 import javax.imageio.ImageIO
 import kotlin.reflect.full.createInstance
 import kotlin.time.Duration.Companion.milliseconds
@@ -238,10 +239,9 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         }
 
         // Initialize loggers
-        DebugLogManager.getInstance().applyCategories(
-          session.traceCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.TRACE) } +
-          session.debugCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.DEBUG) }
-        )
+        LogLevelConfigurationManager.getInstance().addCategories(session.traceCategories.map { LogCategory(it, DebugLogLevel.TRACE) } +
+                                                                 session.debugCategories.map { LogCategory(it, DebugLogLevel.DEBUG) })
+
         LOG.info("Test session ready!")
         session.ready.value = true
       }
@@ -294,18 +294,9 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     }
   }
 
-  private fun screenshotFile(actionName: String, suffix: String? = null, timeStampString: String): File {
-    var fileName = getActionNameAsFileNameSubstring(actionName)
+  private fun screenshotFile(actionName: String, suffix: String, timeStamp: LocalTime): File {
+    var fileName = getArtifactsFileName(actionName, suffix, "png", timeStamp)
 
-    if (suffix != null) {
-      fileName += suffix
-    }
-
-    fileName += "_at_$timeStampString"
-
-    if (!fileName.endsWith(".png")) {
-      fileName += ".png"
-    }
     return File(PathManager.getLogPath()).resolve(fileName)
   }
 
@@ -333,17 +324,16 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
     return runLogged("'$actionName': Making screenshot") {
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) { // even if there is a modal window opened
-        val timeNow = LocalDateTime.now()
-        val timeStampString = timeNow.format(DateTimeFormatter.ofPattern("HHmmss"))
+        val timeStamp = LocalTime.now()
 
         return@withContext try {
           val windows = Window.getWindows().filter { it.height != 0 && it.width != 0 }.filter { it.isShowing }
           windows.forEachIndexed { index, window ->
             val screenshotFile = if (window.isFocusAncestor()) {
-              screenshotFile(actionName, "_${index}_focusedWindow", timeStampString)
+              screenshotFile(actionName, "_${index}_focusedWindow", timeStamp)
             }
             else {
-              screenshotFile(actionName, "_$index", timeStampString)
+              screenshotFile(actionName, "_$index", timeStamp)
             }
             makeScreenshotOfComponent(screenshotFile, window)
           }

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,11 +44,10 @@ public final class DefaultHighlightInfoProcessor extends HighlightInfoProcessor 
     Document document = session.getDocument();
     long modificationStamp = document.getModificationStamp();
     TextRange priorityIntersection = priorityRange.intersection(restrictRange);
-    List<HighlightInfo> infoCopy = new ArrayList<>(infos);
     TextEditorHighlightingPass showAutoImportPass = editor == null ? null : getOrCreateShowAutoImportPass(editor, psiFile, session.getProgressIndicator());
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     if (priorityIntersection != null) {
-      BackgroundUpdateHighlightersUtil.setHighlightersInRange(priorityIntersection, infoCopy, markupModel, groupId, session);
+      BackgroundUpdateHighlightersUtil.setHighlightersInRange(priorityIntersection, new ArrayList<HighlightInfo>(infos), markupModel, groupId, session);
     }
     ApplicationManager.getApplication().invokeLater(() -> {
       if (editor != null && !editor.isDisposed() && modificationStamp == document.getModificationStamp()) {
@@ -61,8 +61,9 @@ public final class DefaultHighlightInfoProcessor extends HighlightInfoProcessor 
     });
   }
 
-  private void showAutoImportHints(@NotNull ProgressIndicator progressIndicator, @Nullable TextEditorHighlightingPass showAutoImportPass) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  private static void showAutoImportHints(@NotNull ProgressIndicator progressIndicator,
+                                          @Nullable TextEditorHighlightingPass showAutoImportPass) {
+    ThreadingAssertions.assertEventDispatchThread();
     if (showAutoImportPass != null) {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> showAutoImportPass.doApplyInformationToEditor(), progressIndicator);
     }

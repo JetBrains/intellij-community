@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviders;
@@ -76,6 +75,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
@@ -235,7 +235,7 @@ public final class DaemonListeners implements Disposable {
 
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(new PsiChangeHandler(myProject, connection, this), this);
 
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         stopDaemonAndRestartAllFiles("Project roots changed");
@@ -412,8 +412,8 @@ public final class DaemonListeners implements Disposable {
       return;
     }
     for (RangeHighlighter highlighter : model.getAllHighlighters()) {
-      Object tooltip = highlighter.getErrorStripeTooltip();
-      if (tooltip instanceof HighlightInfo) {
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+      if (info != null) {
         highlighter.dispose();
       }
     }
@@ -506,7 +506,7 @@ public final class DaemonListeners implements Disposable {
    */
   public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file, boolean isInContent,
                                               @NotNull ThreeState extensionsAllowToChangeFileSilently) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Project project = file.getProject();
     DaemonListeners listeners = getInstance(project);
     if (listeners == null) {
@@ -737,10 +737,9 @@ public final class DaemonListeners implements Disposable {
       return true;
     }
 
-    Object errorStripeTooltip = highlighter.getErrorStripeTooltip();
-    if (errorStripeTooltip instanceof HighlightInfo) {
-      IntentionAction quickFixFromPlugin =
-        ((HighlightInfo)errorStripeTooltip).findRegisteredQuickFix((descriptor, range) -> {
+    HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+    if (info != null) {
+      IntentionAction quickFixFromPlugin = info.findRegisteredQuickFix((descriptor, range) -> {
           IntentionAction intentionAction = IntentionActionDelegate.unwrap(descriptor.getAction());
           if (intentionAction.getClass().getClassLoader() == pluginClassLoader) {
             return intentionAction;
@@ -754,8 +753,8 @@ public final class DaemonListeners implements Disposable {
       if (quickFixFromPlugin != null) return true;
     }
 
-    LineMarkerInfo<?> info = LineMarkersUtil.getLineMarkerInfo(highlighter);
-    return info != null && info.getClass().getClassLoader() == pluginClassLoader;
+    LineMarkerInfo<?> lmInfo = LineMarkersUtil.getLineMarkerInfo(highlighter);
+    return lmInfo != null && lmInfo.getClass().getClassLoader() == pluginClassLoader;
   }
 
   boolean isEscapeJustPressed() {

@@ -21,11 +21,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
-class ReplaceReadLineWithReadlnInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
-    companion object {
-        private val readLineFqName = FqName("kotlin.io.readLine")
-    }
+private val readLineFqName = FqName("kotlin.io.readLine")
 
+class ReplaceReadLineWithReadlnInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = callExpressionVisitor(fun(callExpression) {
         if (callExpression.languageVersionSettings.apiVersion < KOTLIN_1_6) return
         if (!callExpression.isCalling(readLineFqName)) return

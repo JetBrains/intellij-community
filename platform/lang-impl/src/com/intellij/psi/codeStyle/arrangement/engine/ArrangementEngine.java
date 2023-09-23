@@ -844,7 +844,7 @@ public final class ArrangementEngine {
       updateAllWrapperRanges(parentWrapper, lineFeedsDiff);
     }
 
-    protected void updateAllWrapperRanges(@Nullable ArrangementEntryWrapper<E> parentWrapper, int lineFeedsDiff) {
+    private void updateAllWrapperRanges(@Nullable ArrangementEntryWrapper<E> parentWrapper, int lineFeedsDiff) {
       // Update wrapper ranges.
       if (lineFeedsDiff == 0 || parentWrapper == null) {
         return;

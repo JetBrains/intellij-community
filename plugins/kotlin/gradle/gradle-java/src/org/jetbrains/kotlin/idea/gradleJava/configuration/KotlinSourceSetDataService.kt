@@ -212,12 +212,11 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             )
 
             if (compilerArguments != null) {
-                applyCompilerArgumentsToFacet(compilerArguments, kotlinFacet, modelsProvider)
+                applyCompilerArgumentsToFacetSettings(compilerArguments, kotlinFacet.configuration.settings, kotlinFacet.module, modelsProvider)
             }
 
-            kotlinFacet.noVersionAutoAdvance()
-
             with(kotlinFacet.configuration.settings) {
+                noVersionAutoAdvance()
                 kind = kotlinSourceSet.kotlinComponent.kind
 
                 isTestModule = kotlinSourceSet.isTestModule

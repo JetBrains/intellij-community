@@ -163,9 +163,69 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/HiddenDeclarations/");
     }
 
-    @TestMetadata("InImport")
-    public void testInImport() throws Exception {
-        runTest("../testData/basic/multifile/InImport/");
+    @TestMetadata("HiddenDeclarationsInWhenCondition")
+    public void testHiddenDeclarationsInWhenCondition() throws Exception {
+        runTest("../testData/basic/multifile/HiddenDeclarationsInWhenCondition/");
+    }
+
+    @TestMetadata("InImportClassifiers")
+    public void testInImportClassifiers() throws Exception {
+        runTest("../testData/basic/multifile/InImportClassifiers/");
+    }
+
+    @TestMetadata("InImportCompanionObjectMembers")
+    public void testInImportCompanionObjectMembers() throws Exception {
+        runTest("../testData/basic/multifile/InImportCompanionObjectMembers/");
+    }
+
+    @TestMetadata("InImportExtension")
+    public void testInImportExtension() throws Exception {
+        runTest("../testData/basic/multifile/InImportExtension/");
+    }
+
+    @TestMetadata("InImportExtensionNoAttributes")
+    public void testInImportExtensionNoAttributes() throws Exception {
+        runTest("../testData/basic/multifile/InImportExtensionNoAttributes/");
+    }
+
+    @TestMetadata("InImportHighOrderTopLevelFun")
+    public void testInImportHighOrderTopLevelFun() throws Exception {
+        runTest("../testData/basic/multifile/InImportHighOrderTopLevelFun/");
+    }
+
+    @TestMetadata("InImportHighOrderTopLevelFunNoTailText")
+    public void testInImportHighOrderTopLevelFunNoTailText() throws Exception {
+        runTest("../testData/basic/multifile/InImportHighOrderTopLevelFunNoTailText/");
+    }
+
+    @TestMetadata("InImportJavaClass")
+    public void testInImportJavaClass() throws Exception {
+        runTest("../testData/basic/multifile/InImportJavaClass/");
+    }
+
+    @TestMetadata("InImportJavaStatic")
+    public void testInImportJavaStatic() throws Exception {
+        runTest("../testData/basic/multifile/InImportJavaStatic/");
+    }
+
+    @TestMetadata("InImportNestedClassifiers")
+    public void testInImportNestedClassifiers() throws Exception {
+        runTest("../testData/basic/multifile/InImportNestedClassifiers/");
+    }
+
+    @TestMetadata("InImportNoClassMembers")
+    public void testInImportNoClassMembers() throws Exception {
+        runTest("../testData/basic/multifile/InImportNoClassMembers/");
+    }
+
+    @TestMetadata("InImportObjectMembers")
+    public void testInImportObjectMembers() throws Exception {
+        runTest("../testData/basic/multifile/InImportObjectMembers/");
+    }
+
+    @TestMetadata("InImportTopLevelVal")
+    public void testInImportTopLevelVal() throws Exception {
+        runTest("../testData/basic/multifile/InImportTopLevelVal/");
     }
 
     @TestMetadata("InImportedFunctionLiteralParameter")

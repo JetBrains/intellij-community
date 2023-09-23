@@ -125,9 +125,8 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun getDescriptorPath(): String? = descriptorPath
 
-  override fun getDependencies(): List<IdeaPluginDependency> {
-    return if (pluginDependencies.isEmpty()) Collections.emptyList() else Collections.unmodifiableList(pluginDependencies)
-  }
+  override fun getDependencies(): List<IdeaPluginDependency> =
+    if (pluginDependencies.isEmpty()) Collections.emptyList() else Collections.unmodifiableList(pluginDependencies)
 
   override fun getPluginPath(): Path = path
 
@@ -516,38 +515,22 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun isRequireRestart(): Boolean = isRestartRequired
 
-  override fun equals(other: Any?): Boolean {
-    if (this === other) {
-      return true
-    }
-    if (other !is IdeaPluginDescriptorImpl) {
-      return false
-    }
-    return id == other.id && descriptorPath == other.descriptorPath
-  }
+  override fun equals(other: Any?): Boolean =
+    this === other || other is IdeaPluginDescriptorImpl && id == other.id && descriptorPath == other.descriptorPath
 
-  override fun hashCode(): Int {
-    return 31 * id.hashCode() + (descriptorPath?.hashCode() ?: 0)
-  }
+  override fun hashCode(): Int =
+    31 * id.hashCode() + (descriptorPath?.hashCode() ?: 0)
 
-  override fun toString(): String {
-    return "PluginDescriptor(" +
-           "name=$name, " +
-           "id=$id, " +
-           (if (moduleName == null) "" else "moduleName=$moduleName, ") +
-           "descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
-           "path=${pluginPathToUserString(path)}, " +
-           "version=$version, " +
-           "package=$packagePrefix, " +
-           "isBundled=$isBundled" +
-           ")"
-  }
+  override fun toString(): String =
+    "PluginDescriptor(name=$name, id=$id, " +
+    (if (moduleName == null) "" else "moduleName=$moduleName, ") +
+    "descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
+    "path=${pluginPathToUserString(path)}, version=$version, package=$packagePrefix, isBundled=$isBundled)"
 }
 
 // don't expose user home in error messages
-internal fun pluginPathToUserString(file: Path): String {
-  return file.toString().replace("${System.getProperty("user.home")}${File.separatorChar}", "~${File.separatorChar}")
-}
+internal fun pluginPathToUserString(file: Path): String =
+  file.toString().replace("${System.getProperty("user.home")}${File.separatorChar}", "~${File.separatorChar}")
 
 private fun checkCycle(descriptor: IdeaPluginDescriptorImpl, configFile: String, visitedFiles: List<String>) {
   var i = 0

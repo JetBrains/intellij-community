@@ -1,5 +1,6 @@
 package com.intellij.remoteDev.downloader
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -10,8 +11,10 @@ import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.remoteDev.downloader.exceptions.CodeWithMeDownloaderExceptionHandler
 import com.intellij.remoteDev.util.UrlUtil
@@ -21,6 +24,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.pathString
 
 @ApiStatus.Experimental
 object CodeWithMeGuestLauncher {
@@ -55,52 +59,79 @@ object CodeWithMeGuestLauncher {
       return
     }
 
-    ProgressManager.getInstance().run(object : Backgroundable(project, RemoteDevUtilBundle.message("launcher.title"), true) {
+    ProgressManager.getInstance().run(DownloadAndLaunchClientTask(project, uri, lifetime, url, product, onDone))
+  }
 
-      private var clientLifetime : Lifetime = Lifetime.Terminated
+  private class DownloadAndLaunchClientTask(
+    private val project: Project?,
+    private val uri: URI,
+    private val lifetime: Lifetime?,
+    private val url: String,
+    private val product: @NlsContexts.DialogTitle String,
+    private val onDone: (Lifetime) -> Unit
+  ) : Backgroundable(project, RemoteDevUtilBundle.message("launcher.title"), true) {
 
-      override fun run(progressIndicator: ProgressIndicator) {
-        try {
-          val sessionInfo = when (uri.scheme) {
-            "tcp", "gwws" -> {
-              val clientBuild = uri.fragmentParameters["cb"] ?: error("there is no client build in url")
-              val jreBuild = uri.fragmentParameters["jb"] ?: error("there is no jre build in url")
-              val unattendedMode = isUnattendedModeUri(uri)
+    private var clientLifetime : Lifetime = Lifetime.Terminated
 
-              CodeWithMeClientDownloader.createSessionInfo(clientBuild, jreBuild, unattendedMode)
+    override fun run(progressIndicator: ProgressIndicator) {
+      try {
+        val sessionInfo = when (uri.scheme) {
+          "tcp", "gwws" -> {
+            val clientBuild = uri.fragmentParameters["cb"] ?: error("there is no client build in url")
+            val jreBuild = uri.fragmentParameters["jb"] ?: error("there is no jre build in url")
+            val unattendedMode = isUnattendedModeUri(uri)
+
+            CodeWithMeClientDownloader.createSessionInfo(clientBuild, jreBuild, unattendedMode)
+          }
+          "http", "https" -> {
+            progressIndicator.text = RemoteDevUtilBundle.message("launcher.get.client.info")
+            ThinClientSessionInfoFetcher.getSessionUrl(uri)
+          }
+          else -> {
+            error("scheme '${uri.scheme} is not supported'")
+          }
+        }
+
+        val parentLifetime = lifetime ?: project?.createLifetime() ?: Lifetime.Eternal
+        if (Registry.`is`("rdct.use.embedded.client")) {
+          val hostBuildNumber = BuildNumber.fromStringOrNull(sessionInfo.hostBuildNumber)?.withoutProductCode()
+          val currentIdeBuildNumber = ApplicationInfo.getInstance().build.withoutProductCode()
+          LOG.debug("Host build number: $hostBuildNumber, current IDE build number: $currentIdeBuildNumber")
+          if (hostBuildNumber == currentIdeBuildNumber) {
+            val embeddedClientLauncher = EmbeddedClientLauncher.create()
+            if (embeddedClientLauncher != null) {
+              LOG.debug("Launching client process from current IDE")
+              val lifetime = embeddedClientLauncher.launch(url, parentLifetime, project)
+              onDone(lifetime)
+              return
             }
-            "http", "https" -> {
-              progressIndicator.text = RemoteDevUtilBundle.message("launcher.get.client.info")
-              ThinClientSessionInfoFetcher.getSessionUrl(uri)
-            }
-            else -> {
-              error("scheme '${uri.scheme} is not supported'")
+            else {
+              LOG.debug("Cannot launch client process from the current IDE because information about runtime modules isn't available")
             }
           }
+        }
+        
+        val extractedJetBrainsClientData = CodeWithMeClientDownloader.downloadClientAndJdk(sessionInfo, progressIndicator)
 
-          val extractedJetBrainsClientData = CodeWithMeClientDownloader.downloadClientAndJdk(sessionInfo, progressIndicator)
-          if (extractedJetBrainsClientData == null) return
-
-          clientLifetime = runDownloadedClient(
-            lifetime = lifetime ?: project?.createLifetime() ?: Lifetime.Eternal,
-            extractedJetBrainsClientData = extractedJetBrainsClientData,
-            urlForThinClient = url,
-            product = product,
-            progressIndicator = progressIndicator
-          )
-        }
-        catch (t: Throwable) {
-          LOG.warn(t)
-          CodeWithMeDownloaderExceptionHandler.handle(product, t)
-        }
-        finally {
-          alreadyDownloading.remove(url)
-        }
+        clientLifetime = runDownloadedClient(
+          lifetime = parentLifetime,
+          extractedJetBrainsClientData = extractedJetBrainsClientData,
+          urlForThinClient = url,
+          product = product,
+          progressIndicator = progressIndicator
+        )
       }
+      catch (t: Throwable) {
+        LOG.warn(t)
+        CodeWithMeDownloaderExceptionHandler.handle(product, t)
+      }
+      finally {
+        alreadyDownloading.remove(url)
+      }
+    }
 
-      override fun onSuccess() = onDone.invoke(clientLifetime)
-      override fun onCancel() = Unit
-    })
+    override fun onSuccess() = onDone.invoke(clientLifetime)
+    override fun onCancel() = Unit
   }
 
   private fun runAlreadyDownloadedClient(
@@ -140,7 +171,7 @@ object CodeWithMeGuestLauncher {
     // todo: offer to connect as-is?
     try {
       progressIndicator?.text = RemoteDevUtilBundle.message("launcher.launch.client")
-      progressIndicator?.text2 = extractedJetBrainsClientData.clientDir.toString()
+      progressIndicator?.text2 = extractedJetBrainsClientData.clientDir.pathString
       val thinClientLifetime = CodeWithMeClientDownloader.runCwmGuestProcessFromDownload(lifetime, urlForThinClient, extractedJetBrainsClientData)
 
       // Wait a bit until process will be launched and only after that finish task

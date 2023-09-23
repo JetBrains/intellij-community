@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector;
@@ -118,7 +118,7 @@ final class RefreshSessionImpl extends RefreshSession {
     ((RefreshQueueImpl)RefreshQueue.getInstance()).execute(this);
   }
 
-  void scan(long timeInQueue, RefreshWorkerHelper helper) {
+  void scan(long timeInQueue) {
     if (myWorkQueue.isEmpty()) return;
     var workQueue = myWorkQueue;
     myWorkQueue = new ArrayList<>();
@@ -162,7 +162,7 @@ final class RefreshSessionImpl extends RefreshSession {
     do {
       if (LOG.isTraceEnabled()) LOG.trace("try=" + count);
 
-      var worker = new RefreshWorker(refreshRoots, myIsRecursive, helper);
+      var worker = new RefreshWorker(refreshRoots, myIsRecursive);
       myWorker = worker;
       myEvents.addAll(worker.scan());
       myWorker = null;
@@ -225,7 +225,7 @@ final class RefreshSessionImpl extends RefreshSession {
   }
 
   private void fireEventsInWriteAction(List<CompoundVFileEvent> events, List<AsyncFileListener.ChangeApplier> appliers, boolean asyncProcessing) {
-    VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
+    var manager = (VirtualFileManagerImpl)VirtualFileManager.getInstance();
 
     manager.fireBeforeRefreshStart(myIsAsync);
     try {

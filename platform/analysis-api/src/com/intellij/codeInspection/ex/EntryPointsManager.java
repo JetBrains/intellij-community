@@ -23,7 +23,7 @@ public abstract class EntryPointsManager implements Disposable {
 
   public abstract void removeEntryPoint(@NotNull RefElement anEntryPoint);
 
-  public abstract RefElement @NotNull [] getEntryPoints(RefManager refManager);
+  public abstract RefElement @NotNull [] getEntryPoints(@NotNull RefManager refManager);
 
   public abstract void cleanup();
 
@@ -47,5 +47,5 @@ public abstract class EntryPointsManager implements Disposable {
   /**
    * Returns {@code true} for fields, annotated with "write" annotations
    */
-  public abstract boolean isImplicitWrite(PsiElement element);
+  public abstract boolean isImplicitWrite(@NotNull PsiElement element);
 }

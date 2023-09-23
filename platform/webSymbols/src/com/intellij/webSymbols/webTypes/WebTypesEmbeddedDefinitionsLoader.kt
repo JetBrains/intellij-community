@@ -13,7 +13,6 @@ import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.text.SemVer
 import com.intellij.webSymbols.webTypes.impl.WebTypesDefinitionsEP
 import com.intellij.webSymbols.webTypes.json.WebTypes
-import java.util.*
 
 @Service(Service.Level.PROJECT)
 class WebTypesEmbeddedDefinitionsLoader(private val project: Project) : Disposable {

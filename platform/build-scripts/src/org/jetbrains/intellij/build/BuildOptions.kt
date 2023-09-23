@@ -8,7 +8,6 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.intellij.build.SoftwareBillOfMaterials
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
 import java.util.*
@@ -365,14 +364,15 @@ class BuildOptions(
    * the distribution (IJPL-109), and launchers will use it to start the IDE (IJPL-128).
    */
   @ApiStatus.Experimental
-  var useModularLoader = SystemProperties.getBooleanProperty("intellij.build.use.modular.loader", false)
+  var useModularLoader = SystemProperties.getBooleanProperty("intellij.build.use.modular.loader", true)
   
   /**
-   * If `true`, a [runtime module repository][com.intellij.platform.runtime.repository.RuntimeModuleRepository] will be generated in the distribution.
-   * This option doesn't make sense if [useModularLoader] is set to `true`, in this case the generation is enabled automatically. 
+   * If this option is set to `true` and [enableEmbeddedJetBrainsClient] is enabled, a [runtime module repository][com.intellij.platform.runtime.repository.RuntimeModuleRepository] 
+   * will be generated in the distribution.
+   * This option doesn't make sense if [modular loader][BuildContext.useModularLoader] is used, in this case the generation is enabled automatically. 
    */
   @ApiStatus.Experimental
-  var generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", false)
+  var generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", true)
   
   /**
    * If `true` and [ProductProperties.embeddedJetBrainsClientMainModule] is not null, the JAR files in the distribution will be adjusted
@@ -429,11 +429,6 @@ class BuildOptions(
   @set:TestOnly
   @ApiStatus.Internal
   var useReleaseCycleRelatedBundlingRestrictionsForContentReport: Boolean = true
-
-  /**
-   * See [SoftwareBillOfMaterials]
-   */
-  val sbomOptions = SoftwareBillOfMaterials.Options()
 
   init {
     val targetOsId = System.getProperty(TARGET_OS_PROPERTY, OS_ALL).lowercase()

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +41,7 @@ public final class AnalyzeStacktraceUtil {
   }
 
   public static void printStacktrace(@NotNull ConsoleView consoleView, @NotNull String unscrambledTrace) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     consoleView.clear();
     consoleView.print(unscrambledTrace + "\n", ConsoleViewContentType.ERROR_OUTPUT);
     consoleView.scrollTo(0);

@@ -2,22 +2,24 @@
 package com.intellij.webSymbols.query.impl
 
 import com.intellij.model.Pointer
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.SymbolKind
+import com.intellij.webSymbols.SymbolNamespace
+import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizer
 
 internal class WebSymbolsCompoundQueryResultsCustomizer(private val customizers: List<WebSymbolsQueryResultsCustomizer>) : WebSymbolsQueryResultsCustomizer {
 
   override fun apply(matches: List<WebSymbol>, strict: Boolean,
-                     namespace: SymbolNamespace?,
+                     namespace: SymbolNamespace,
                      kind: SymbolKind,
-                     name: String?): List<WebSymbol> =
+                     name: String): List<WebSymbol> =
     customizers.foldRight(matches) { scope, list ->
       scope.apply(list, strict, namespace, kind, name)
     }
 
   override fun apply(item: WebSymbolCodeCompletionItem,
-                     namespace: SymbolNamespace?,
+                     namespace: SymbolNamespace,
                      kind: SymbolKind): WebSymbolCodeCompletionItem? =
     customizers.foldRight(item as WebSymbolCodeCompletionItem?) { scope, i ->
       i?.let { scope.apply(it, namespace, kind) }

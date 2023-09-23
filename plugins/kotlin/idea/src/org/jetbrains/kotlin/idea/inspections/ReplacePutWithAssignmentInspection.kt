@@ -90,10 +90,8 @@ class ReplacePutWithAssignmentInspection : AbstractApplicabilityBasedInspection<
         KotlinBundle.message("map.put.should.be.converted.to.assignment")
 
     override val defaultFixText get() = KotlinBundle.message("convert.put.to.assignment")
-
-    companion object {
-        private val compatibleNames = setOf("put")
-        private val collectionsSetFqName = FqName("kotlin.collections.set")
-        private val mutableMapPutFqName = FqName("kotlin.collections.MutableMap.put")
-    }
 }
+
+private val compatibleNames = setOf("put")
+private val collectionsSetFqName = FqName("kotlin.collections.set")
+private val mutableMapPutFqName = FqName("kotlin.collections.MutableMap.put")

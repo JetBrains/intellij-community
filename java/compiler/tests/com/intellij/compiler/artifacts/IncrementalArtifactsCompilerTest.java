@@ -379,7 +379,7 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
   }
 
   /*
-  //todo[nik] move to IncrementalArtifactBuildingTest
+  //todo move to IncrementalArtifactBuildingTest
   public void testDeleteOutputWhenOutputPathIsChanged() throws Exception {
     final VirtualFile file = createFile("a.txt");
     final Artifact a = addArtifact("a", root().file(file));
@@ -394,7 +394,7 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     assertOutput(a, fs().file("a.txt"));
   }
 
-  //todo[nik] this test sometimes fails on server
+  //todo this test sometimes fails on server
   public void _testChangeFileInArchive() throws Exception {
     final VirtualFile file = createFile("a.txt", "a");
     final Artifact a = addArtifact("a", root().archive("a.jar").file(file));

@@ -5,7 +5,6 @@ import java.util.Objects;
 
 class ObjectEqualsToEquals {
 
-  @Test
   public void testObjectsEquals() {
       assertEquals(getFoo(), getBar());
   }

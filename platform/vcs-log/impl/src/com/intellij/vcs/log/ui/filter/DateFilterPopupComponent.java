@@ -21,9 +21,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.function.Supplier;
 
-class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter, FilterModel<VcsLogDateFilter>> {
+public class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter, FilterModel<VcsLogDateFilter>> {
 
-  DateFilterPopupComponent(FilterModel<VcsLogDateFilter> filterModel) {
+  public DateFilterPopupComponent(FilterModel<VcsLogDateFilter> filterModel) {
     super(VcsLogBundle.messagePointer("vcs.log.date.filter.label"), filterModel);
   }
 

@@ -3,7 +3,6 @@
 
 package com.intellij.ui
 
-import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.ide.ui.VirtualFileAppearanceListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -13,13 +12,11 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.SameThreadExecutor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
-import java.util.concurrent.atomic.LongAdder
+import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
 internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer() {
@@ -39,12 +36,11 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
     }
   }
 
-  private val iconCache = Caffeine.newBuilder()
-    .maximumSize(SystemProperties.getLongProperty("ide.icons.deferrerCacheSize", 1000))
-    .executor(SameThreadExecutor.INSTANCE)
-    .build<Any, Icon>()
-
-  private val lastClearTimestamp = LongAdder()
+  // Due to a critical bug (https://youtrack.jetbrains.com/issue/IDEA-320644/Improve-Smart-PSI-pointer-equals-implementation),
+  // we are not using "caffeine".
+  // Furthermore, a size-bounded cache is unnecessary for us because our application has frequent cache clearances,
+  // such as during PSI modifications.
+  private val iconCache = ConcurrentHashMap<Any, Icon>()
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
@@ -70,26 +66,22 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
   }
 
   override fun clearCache() {
-    lastClearTimestamp.increment()
-    iconCache.invalidateAll()
+    iconCache.clear()
   }
 
-  override fun <T> defer(base: Icon?, param: T, evaluator: (T) -> Icon?): Icon {
+  override fun <T : Any> defer(base: Icon?, param: T, evaluator: (T) -> Icon?): Icon {
     if (isEvaluationInProgress.get()) {
       return evaluator(param) ?: DeferredIconImpl.EMPTY_ICON
     }
 
-    return iconCache.get(param) {
-      val started = lastClearTimestamp.sum()
+    return iconCache.computeIfAbsent(param) {
       DeferredIconImpl(baseIcon = base,
                        param = param,
                        needReadAction = true,
                        evaluator = evaluator,
                        listener = { source, icon ->
-                         // check if our result is not outdated yet
-                         if (started == lastClearTimestamp.sum()) {
-                           iconCache.put(source.param!!, icon)
-                         }
+                         // use `replace` instead of `put` to ensure that our result is not outdated yet
+                         iconCache.replace(source.param, icon)
                        })
     }
   }

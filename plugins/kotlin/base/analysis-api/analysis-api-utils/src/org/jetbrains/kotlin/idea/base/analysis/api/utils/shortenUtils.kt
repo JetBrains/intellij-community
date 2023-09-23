@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.analyzeInDependedAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenOption
 import org.jetbrains.kotlin.analysis.api.components.ShortenOption.Companion.defaultCallableShortenOption
@@ -32,7 +33,7 @@ fun shortenReferences(
     classShortenOption: (KtClassLikeSymbol) -> ShortenOption = defaultClassShortenOption,
     callableShortenOption: (KtCallableSymbol) -> ShortenOption = defaultCallableShortenOption
 ): PsiElement? = shortenReferencesInRange(
-    element.containingKtFile,
+    element,
     element.textRange,
     classShortenOption,
     callableShortenOption
@@ -62,6 +63,34 @@ fun shortenReferencesInRange(
             }
         }
     }
+
+    return shortenCommand.invokeShortening().firstOrNull()
+}
+
+@OptIn(KtAllowAnalysisOnEdt::class)
+fun shortenReferencesInRange(
+    elementToReanalyze: KtElement,
+    range: TextRange = elementToReanalyze.containingFile.originalFile.textRange,
+    classShortenOption: (KtClassLikeSymbol) -> ShortenOption = defaultClassShortenOption,
+    callableShortenOption: (KtCallableSymbol) -> ShortenOption = defaultCallableShortenOption
+): PsiElement? {
+    val ktFile = elementToReanalyze.containingFile as KtFile
+    val originalFile = ktFile.originalFile as KtFile
+    val shortenCommand =
+        if (!elementToReanalyze.isPhysical && originalFile.isPhysical) {
+            analyzeInDependedAnalysisSession(originalFile, elementToReanalyze) {
+                collectPossibleReferenceShortenings(elementToReanalyze.containingKtFile, range, classShortenOption, callableShortenOption)
+            }
+        } else {
+            allowAnalysisOnEdt {
+                @OptIn(KtAllowAnalysisFromWriteAction::class)
+                allowAnalysisFromWriteAction {
+                    analyze(ktFile) {
+                        collectPossibleReferenceShortenings(ktFile, range, classShortenOption, callableShortenOption)
+                    }
+                }
+            }
+        }
 
     return shortenCommand.invokeShortening().firstOrNull()
 }

@@ -46,13 +46,15 @@ public final class DiffDividerDrawUtil {
                                      @NotNull Editor editor1,
                                      @NotNull Editor editor2,
                                      @NotNull DividerSeparatorPaintable paintable) {
-    List<DividerSeparator> polygons = createVisibleSeparators(editor1, editor2, paintable);
+    ReadAction.run(() -> {
+      List<DividerSeparator> polygons = createVisibleSeparators(editor1, editor2, paintable);
 
-    GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
-    for (DividerSeparator polygon : polygons) {
-      polygon.paint(gg, width);
-    }
-    config.restore();
+      GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
+      for (DividerSeparator polygon : polygons) {
+        polygon.paint(gg, width);
+      }
+      config.restore();
+    });
   }
 
   public static void paintPolygons(@NotNull Graphics2D gg,
@@ -69,13 +71,15 @@ public final class DiffDividerDrawUtil {
                                    @NotNull Editor editor1,
                                    @NotNull Editor editor2,
                                    @NotNull DividerPaintable paintable) {
-    List<DividerPolygon> polygons = createVisiblePolygons(editor1, editor2, paintable);
+    ReadAction.run(() -> {
+      List<DividerPolygon> polygons = createVisiblePolygons(editor1, editor2, paintable);
 
-    GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
-    for (DividerPolygon polygon : polygons) {
-      polygon.paint(gg, width, curved);
-    }
-    config.restore();
+      GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
+      for (DividerPolygon polygon : polygons) {
+        polygon.paint(gg, width, curved);
+      }
+      config.restore();
+    });
   }
 
   @NotNull
@@ -98,6 +102,8 @@ public final class DiffDividerDrawUtil {
   public static List<DividerSeparator> createVisibleSeparators(@NotNull Editor editor1,
                                                                @NotNull Editor editor2,
                                                                @NotNull DividerSeparatorPaintable paintable) {
+    if (editor1.isDisposed() || editor2.isDisposed()) return Collections.emptyList();
+
     final List<DividerSeparator> separators = new ArrayList<>();
 
     final LineRange leftInterval = getVisibleInterval(editor1);
@@ -505,10 +511,12 @@ public final class DiffDividerDrawUtil {
       int delta = (myEnd2 - myStart2) - (myEnd1 - myStart1);
       if (delta == 0) return this;
 
-      if (myStart2 == myEnd1 && myEnd1 == myEnd2) { //correspond to the last line DELETED change (e.g. last line deleted)
+      if (myStart2 == myEnd1 && myEnd1 == myEnd2) {
+        //correspond to the last line DELETED change (e.g. last line deleted)
         return new DividerPolygon(myStart1, myStart2 - (myEnd2 - myStart1), myEnd1, myEnd2, myFillColor, myBorderColor, myDottedBorder);
       }
-      else if (myEnd1 == myEnd2 && myStart1 == myEnd1) { //correspond to the last line INSERTED change (e.g. added new lines after last line)
+      else if (myEnd1 == myEnd2 && myStart1 == myEnd1) {
+        //correspond to the last line INSERTED change (e.g. added new lines after last line)
         return new DividerPolygon(myStart1 - (myEnd2 - myStart2), myStart2, myEnd1, myEnd2, myFillColor, myBorderColor, myDottedBorder);
       }
       if (delta < 0) {

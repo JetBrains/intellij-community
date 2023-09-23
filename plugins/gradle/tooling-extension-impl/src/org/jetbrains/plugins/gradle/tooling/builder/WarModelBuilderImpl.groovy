@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.builder
 
+
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.FileVisitDetails
 import org.gradle.api.java.archives.Manifest
+import org.gradle.api.java.archives.internal.ManifestInternal
 import org.gradle.api.plugins.WarPlugin
 import org.gradle.api.tasks.bundling.War
 import org.gradle.util.GradleVersion
@@ -18,9 +20,9 @@ import org.jetbrains.plugins.gradle.tooling.internal.web.WarModelImpl
 import org.jetbrains.plugins.gradle.tooling.internal.web.WebConfigurationImpl
 import org.jetbrains.plugins.gradle.tooling.internal.web.WebResourceImpl
 
-import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.reportModelBuilderFailure
-import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveCall
-
+import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getTaskArchiveFile
+import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getTaskArchiveFileName
+import static com.intellij.gradle.toolingExtension.impl.modelBuilder.ExtraModelBuilder.reportModelBuilderFailure
 /**
  * @author Vladislav.Soroka
  */
@@ -29,7 +31,6 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
   private static final String WEB_APP_DIR_PROPERTY = "webAppDir"
   private static final String WEB_APP_DIR_NAME_PROPERTY = "webAppDirName"
   private static is4OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("4.0")
-  private static is6OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("6.0")
   private static is82OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("8.2")
 
 
@@ -62,11 +63,7 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
                                  (File)project.property(WEB_APP_DIR_PROPERTY)
         }
 
-
-        final WarModelImpl warModel =
-          is6OrBetter ? new WarModelImpl(task.getArchiveFileName().get(), webAppDirName, webAppDir) :
-          new WarModelImpl(reflectiveCall(task, "getArchiveName", String), webAppDirName, webAppDir)
-
+        final WarModelImpl warModel = new WarModelImpl(getTaskArchiveFileName(task), webAppDirName, webAppDir)
 
         final List<WebConfiguration.WebResource> webResources = []
         final War warTask = task as War
@@ -99,13 +96,12 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
         }
 
         warModel.webResources = webResources
-        warModel.archivePath = is6OrBetter ? warTask.archiveFile.get().asFile
-                                           : warTask.archivePath
+        warModel.archivePath = getTaskArchiveFile(warTask)
 
         Manifest manifest = warTask.manifest
         if (manifest != null) {
           if(is4OrBetter) {
-            if(manifest instanceof org.gradle.api.java.archives.internal.ManifestInternal) {
+            if(manifest instanceof ManifestInternal) {
               ByteArrayOutputStream baos = new ByteArrayOutputStream()
               manifest.writeTo(baos)
               warModel.manifestContent = baos.toString(manifest.contentCharset)

@@ -11,6 +11,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils
+import com.intellij.util.indexing.diagnostic.IndexStatisticGroup
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.*
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
@@ -19,6 +20,7 @@ import java.io.BufferedReader
 import java.io.StringReader
 import java.nio.file.Files
 import java.time.ZonedDateTime
+import kotlin.io.path.createTempDirectory
 
 /**
  * Tests for [IndexDiagnosticDumper].
@@ -27,7 +29,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
   private var previousLogDir: String? = null
 
   override fun setUp() {
-    previousLogDir = System.setProperty(PathManager.PROPERTY_LOG_PATH, createTempDir().path)
+    previousLogDir = System.setProperty(PathManager.PROPERTY_LOG_PATH, createTempDirectory().toString())
     IndexDiagnosticDumper.shouldDumpInUnitTestMode = true
     super.setUp()
   }
@@ -78,7 +80,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
     val indexDiagnostic = JsonIndexingActivityDiagnostic(
       JsonIndexDiagnosticAppInfo.create(),
       JsonRuntimeInfo.create(),
-      IndexDiagnosticDumper.IndexingActivityType.Scanning,
+      IndexStatisticGroup.IndexingActivityType.Scanning,
       JsonProjectScanningHistory(
         projectName = "projectName",
         times = JsonProjectScanningHistoryTimes(
@@ -144,14 +146,13 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
     val indexDiagnostic = JsonIndexingActivityDiagnostic(
       JsonIndexDiagnosticAppInfo.create(),
       JsonRuntimeInfo.create(),
-      IndexDiagnosticDumper.IndexingActivityType.DumbIndexing,
+      IndexStatisticGroup.IndexingActivityType.DumbIndexing,
       JsonProjectDumbIndexingHistory(
         projectName = "projectName",
         times = JsonProjectDumbIndexingHistoryTimes(
           setOf(3, 4),
           JsonDuration(123),
           JsonDuration(456),
-          true,
           JsonDuration(789),
           JsonDateTime(ZonedDateTime.now()),
           JsonDateTime(ZonedDateTime.now()),
@@ -214,7 +215,6 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
                 wasFullyIndexedByExtensions = true
               )
             ),
-            isAppliedAllValuesSeparately = true,
             separateApplyingIndexesVisibleTime = JsonDuration(362)
           )
         )

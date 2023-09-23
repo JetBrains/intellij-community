@@ -3,13 +3,16 @@ package com.intellij.webSymbols.customElements.impl
 
 import com.intellij.model.Pointer
 import com.intellij.util.containers.Stack
+import com.intellij.webSymbols.SymbolKind
 import com.intellij.webSymbols.SymbolNamespace
+import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.webSymbols.customElements.CustomElementsManifestScopeBase
 import com.intellij.webSymbols.customElements.json.CustomElementsContribution
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
+import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import java.util.*
 
@@ -20,24 +23,33 @@ abstract class CustomElementsContainerSymbolBase<Container : CustomElementsContr
   private val rootScope: CustomElementsManifestScopeBase,
 ) : CustomElementsContributionSymbol<Container>(name, container, origin) {
 
+  override fun getMatchingSymbols(namespace: SymbolNamespace,
+                                  kind: String,
+                                  name: String,
+                                  params: WebSymbolsNameMatchQueryParams,
+                                  scope: Stack<WebSymbolsScope>): List<WebSymbol> =
+    rootScope
+      .getMatchingSymbols(contribution, this.origin, namespace,
+                          kind, name, params, scope)
+      .toList()
+
   override fun getSymbols(namespace: SymbolNamespace,
-                          kind: String,
-                          name: String?,
-                          params: WebSymbolsNameMatchQueryParams,
+                          kind: SymbolKind,
+                          params: WebSymbolsListSymbolsQueryParams,
                           scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
     rootScope
-      .getSymbols(contribution, this.namespace, this.origin,
-                  namespace, kind, name, params, scope)
+      .getSymbols(contribution, this.origin, namespace,
+                  kind, params)
       .toList()
 
   override fun getCodeCompletions(namespace: SymbolNamespace,
                                   kind: String,
-                                  name: String?,
+                                  name: String,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     rootScope
-      .getCodeCompletions(contribution, this.namespace, this.origin,
-                          namespace, kind, name, params, scope)
+      .getCodeCompletions(contribution, this.origin, namespace,
+                          kind, name, params, scope)
       .toList()
 
   protected abstract fun getConstructor():

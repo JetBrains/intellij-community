@@ -12,6 +12,7 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
@@ -347,6 +348,21 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
     @Override
     public boolean removeIf(@NotNull Predicate<? super Transferable> predicate) {
       return false;
+    }
+
+    @Override
+    public void addContentChangedListener(CopyPasteManager.@NotNull ContentChangedListener listener) {
+
+    }
+
+    @Override
+    public void addContentChangedListener(CopyPasteManager.@NotNull ContentChangedListener listener, @NotNull Disposable parentDisposable) {
+
+    }
+
+    @Override
+    public void removeContentChangedListener(CopyPasteManager.@NotNull ContentChangedListener listener) {
+
     }
 
     @Nullable

@@ -784,7 +784,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       super.handleSelect(handleFinalChoices, e);
     }
 
-    protected void handleShiftClick(boolean handleFinalChoices, final InputEvent inputEvent, final RunListPopup popup) {
+    private void handleShiftClick(boolean handleFinalChoices, final InputEvent inputEvent, final RunListPopup popup) {
       myCurrentExecutor = myAlternativeExecutor;
       popup._handleSelect(handleFinalChoices, inputEvent);
     }

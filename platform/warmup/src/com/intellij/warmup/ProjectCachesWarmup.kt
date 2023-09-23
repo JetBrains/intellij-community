@@ -30,13 +30,14 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
     get() = "warmup"
 
   override fun premain(args: List<String>) {
+    System.setProperty("ide.warmup.use.predicates", true.toString())
     if (System.getProperty("caches.indexerThreadsCount") == null) {
       System.setProperty("caches.indexerThreadsCount", max(1, Runtime.getRuntime().availableProcessors() - 1).toString())
     }
     //IDEA-241709
     System.setProperty("ide.browser.jcef.enabled", false.toString())
-    //disable vcs log
-    System.setProperty("vcs.log.index.git", false.toString())
+    //disable vcs log indexes
+    System.setProperty("vcs.log.index.enable", false.toString())
     //disable slow edt access assertions
     System.setProperty("ide.slow.operations.assertion", false.toString())
 
@@ -139,7 +140,7 @@ Exiting the application...""")
 }
 
 private fun configureVcsIndexing(commandArgs: WarmupProjectArgs) {
-  System.setProperty("vcs.log.index.git", commandArgs.indexGitLog.toString())
+  System.setProperty("vcs.log.index.enable", commandArgs.indexGitLog.toString())
 }
 
 private class InvalidWarmupArgumentsException(errorMessage: String) : Exception(errorMessage)

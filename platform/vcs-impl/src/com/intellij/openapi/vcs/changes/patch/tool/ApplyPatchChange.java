@@ -58,7 +58,7 @@ class ApplyPatchChange {
 
   private boolean myResolved;
 
-  ApplyPatchChange(@NotNull PatchChangeBuilder.Hunk hunk, int index, @NotNull ApplyPatchViewer viewer) {
+  ApplyPatchChange(@NotNull PatchChangeBuilder.AppliedHunk hunk, int index, @NotNull ApplyPatchViewer viewer) {
     myIndex = index;
     myViewer = viewer;
     myPatchDeletionRange = hunk.getPatchDeletionRange();

@@ -553,7 +553,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   private static final class MyDialogWrapper extends DialogWrapper {
     private final @NotNull CreatePatchConfigurationPanel myPanel;
 
-    protected MyDialogWrapper(@Nullable Project project, @NotNull CreatePatchConfigurationPanel centralPanel) {
+    private MyDialogWrapper(@Nullable Project project, @NotNull CreatePatchConfigurationPanel centralPanel) {
       super(project, true);
       myPanel = centralPanel;
       init();

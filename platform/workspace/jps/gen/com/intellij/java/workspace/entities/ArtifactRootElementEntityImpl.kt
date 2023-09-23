@@ -18,7 +18,6 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
@@ -29,14 +28,16 @@ import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractManyChildrenOfParent
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractManyParentOfChild
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractOneParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEntityData) : ArtifactRootElementEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class ArtifactRootElementEntityImpl(private val dataSource: ArtifactRootElementEntityData) : ArtifactRootElementEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
                                                                                 PackagingElementEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
@@ -47,7 +48,7 @@ open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEnti
                                                                             PackagingElementEntity::class.java,
                                                                             ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
       ARTIFACT_CONNECTION_ID,
       CHILDREN_CONNECTION_ID,
@@ -70,6 +71,7 @@ open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEnti
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: ArtifactRootElementEntityData?) : ModifiableWorkspaceEntityBase<ArtifactRootElementEntity, ArtifactRootElementEntityData>(
     result), ArtifactRootElementEntity.Builder {
@@ -99,7 +101,7 @@ open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEnti
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -279,6 +281,10 @@ class ArtifactRootElementEntityData : WorkspaceEntityData<ArtifactRootElementEnt
     }
   }
 
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.java.workspace.entities.ArtifactRootElementEntity") as EntityMetadata
+  }
+
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ArtifactRootElementEntity::class.java
   }
@@ -328,9 +334,5 @@ class ArtifactRootElementEntityData : WorkspaceEntityData<ArtifactRootElementEnt
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

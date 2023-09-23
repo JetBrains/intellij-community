@@ -22,6 +22,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfigurator
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
@@ -30,7 +31,7 @@ import org.junit.Test
 
 class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
-  fun testImportAnnotationProcessorProfiles() {
+  fun testImportAnnotationProcessorProfiles() = runBlocking {
     createModulePom("module1", """
 <groupId>test</groupId>
 <artifactId>module1</artifactId>
@@ -113,7 +114,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   </build>
 """)
 
-    importProject("""
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -150,8 +151,8 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testOverrideGeneratedOutputDir() {
-    importProject("""
+  fun testOverrideGeneratedOutputDir() = runBlocking {
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -180,8 +181,8 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testImportAnnotationProcessorOptions() {
-    importProject("""
+  fun testImportAnnotationProcessorOptions() = runBlocking {
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -217,8 +218,8 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testMavenProcessorPlugin() {
-    importProject("""
+  fun testMavenProcessorPlugin() = runBlocking {
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -281,8 +282,8 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testMavenProcessorPluginDefault() {
-    importProject("""
+  fun testMavenProcessorPluginDefault() = runBlocking {
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -342,8 +343,8 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testProcessorsViaBscMavenPlugin() {
-    importProject("""
+  fun testProcessorsViaBscMavenPlugin() = runBlocking {
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -390,8 +391,8 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testExternalDependencyPath() {
-    importProject("""<groupId>test</groupId>
+  fun testExternalDependencyPath() = runBlocking {
+    importProjectAsync("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
 <build>
@@ -410,7 +411,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     </plugin>
   </plugins>
 </build>""")
-    val mavenProject = myProjectsManager.findProject(getModule("project"))
+    val mavenProject = projectsManager.findProject(getModule("project"))
     assertNotNull(mavenProject)
 
     val annotationProcessors = mavenProject!!.externalAnnotationProcessors
@@ -429,8 +430,8 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testExternalDependencyAnnotationPath() {
-    importProject("""<groupId>test</groupId>
+  fun testExternalDependencyAnnotationPath() = runBlocking {
+    importProjectAsync("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
 <build>
@@ -450,7 +451,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   </plugins>
 </build>""")
 
-    val mavenProject = myProjectsManager.findProject(getModule("project"))
+    val mavenProject = projectsManager.findProject(getModule("project"))
     assertNotNull(mavenProject)
 
     val annotationProcessors = mavenProject!!.externalAnnotationProcessors
@@ -470,7 +471,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testLocalDependency() {
+  fun testLocalDependency() = runBlocking {
     createProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -511,12 +512,12 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   </plugins>
 </build>""")
     createProjectSubFile("m1/src/main/java/A.java", "public class A{}")
-    importProject()
+    importProjectAsync()
 
     val module = getModule("m2")
     assertNotNull(module)
 
-    val mavenProject = myProjectsManager.findProject(module)
+    val mavenProject = projectsManager.findProject(module)
     assertNotNull(mavenProject)
 
     val annotationProcessors = mavenProject!!.externalAnnotationProcessors
@@ -539,8 +540,8 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDisabledAnnotationProcessor() {
-    importProject("""
+  fun testDisabledAnnotationProcessor() = runBlocking {
+    importProjectAsync("""
   <groupId>test</groupId>
   <artifactId>project</artifactId>
   <version>1</version>
@@ -562,7 +563,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     Assert.assertNotNull(profile)
     Assert.assertFalse(profile!!.isEnabled)
 
-    importProject()
+    importProjectAsync()
     profile = compilerConfiguration.findModuleProcessorProfile(
       MavenAnnotationProcessorConfigurator.MAVEN_DEFAULT_ANNOTATION_PROFILE)
     Assert.assertNotNull(profile)
@@ -570,7 +571,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testNotRemoveEmptyUserProfile() {
+  fun testNotRemoveEmptyUserProfile() = runBlocking {
     val compilerConfiguration = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     WriteAction.runAndWait<RuntimeException> {
       val moduleProfile: ProcessorConfigProfile = ProcessorConfigProfileImpl("test-profile")
@@ -579,7 +580,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     }
     Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile("test-profile"))
 
-    importProject("<groupId>test</groupId>" +
+    importProjectAsync("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<packaging>pom</packaging>" +
                   "<version>1</version>")
@@ -588,7 +589,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testRemoveEmptyInnerProfile() {
+  fun testRemoveEmptyInnerProfile() = runBlocking {
     val compilerConfiguration = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     val profileName = MavenAnnotationProcessorConfigurator.getModuleProfileName("test-profile")
     WriteAction.runAndWait<RuntimeException> {
@@ -598,7 +599,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     }
     Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile(profileName))
 
-    importProject("<groupId>test</groupId>" +
+    importProjectAsync("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<packaging>pom</packaging>" +
                   "<version>1</version>")

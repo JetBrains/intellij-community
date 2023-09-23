@@ -36,6 +36,7 @@ import com.intellij.vcs.log.history.FileHistoryUtil
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.MergedChange
 import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider
+import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import com.intellij.vcs.log.ui.VcsLogActionIds
@@ -54,7 +55,7 @@ import javax.swing.tree.DefaultTreeModel
  * Change browser for commits in the Log. For merge commits, can display changes to the commits parents in separate groups.
  */
 class VcsLogChangesBrowser internal constructor(project: Project,
-                                                private val uiProperties: MainVcsLogUiProperties,
+                                                private val uiProperties: VcsLogUiProperties,
                                                 private val dataGetter: (CommitId) -> VcsShortCommitDetails,
                                                 isWithEditorDiffPreview: Boolean,
                                                 parent: Disposable) : AsyncChangesBrowserBase(project, false, false), Disposable {
@@ -99,6 +100,8 @@ class VcsLogChangesBrowser internal constructor(project: Project,
 
     hideViewerBorder()
     setup(viewerScrollPane, Side.TOP)
+
+    getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.changes.accessible.name"))
 
     myViewer.setEmptyText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"))
     myViewer.rebuildTree()
@@ -361,7 +364,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
   }
 
   private fun createDiffPreviewController(): DiffPreviewController = DiffPreviewControllerImpl(
-    simpleDiffPreviewBuilder = { VcsLogEditorDiffPreview(myProject, this@VcsLogChangesBrowser)},
+    simpleDiffPreviewBuilder = { VcsLogEditorDiffPreview(myProject, this@VcsLogChangesBrowser) },
     combinedDiffPreviewBuilder = { VcsLogCombinedDiffPreview(this@VcsLogChangesBrowser) },
   )
 

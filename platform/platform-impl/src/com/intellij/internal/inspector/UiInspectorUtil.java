@@ -134,7 +134,8 @@ public final class UiInspectorUtil {
     return clazz.getSimpleName();
   }
 
-  public static @NotNull String getClassPresentation(@NotNull Object value) {
+  public static @NotNull String getClassPresentation(@Nullable Object value) {
+    if (value == null) return "[null]";
     return getClassPresentation(value.getClass());
   }
 

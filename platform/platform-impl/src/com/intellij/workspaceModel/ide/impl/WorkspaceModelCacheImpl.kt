@@ -13,8 +13,8 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.isConsistent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -123,14 +123,14 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
   fun getUnloadedEntitiesCacheFilePath(): Path = unloadedEntitiesCacheFile
 
   @OptIn(ExperimentalTime::class)
-  override fun loadCache(): EntityStorage? {
+  override fun loadCache(): MutableEntityStorage? {
     val (cache, time) = measureTimedValue {
       cacheSerializer.loadCacheFromFile(cacheFile, invalidateCachesMarkerFile, invalidateProjectCacheMarkerFile)
     }
     WorkspaceModelFusLogger.logCacheLoading(if (cache != null) time.inWholeMilliseconds else -1)
     return cache
   }
-  override fun loadUnloadedEntitiesCache(): EntityStorage? {
+  override fun loadUnloadedEntitiesCache(): MutableEntityStorage? {
     return cacheSerializer.loadCacheFromFile(unloadedEntitiesCacheFile, invalidateCachesMarkerFile,
                                              invalidateProjectCacheMarkerFile)
   }

@@ -7,14 +7,14 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.MultiMap;
@@ -158,7 +158,7 @@ public class VcsLogManager implements Disposable {
   private @NotNull <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory,
                                                         @NotNull VcsLogTabLocation location,
                                                         boolean isClosedOnDispose) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (isDisposed()) {
       LOG.error("Trying to create new VcsLogUi on a disposed VcsLogManager instance");
       throw new ProcessCanceledException();
@@ -233,7 +233,7 @@ public class VcsLogManager implements Disposable {
   @RequiresEdt
   void disposeUi() {
     myDisposed = true;
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myTabsLogRefresher != null) Disposer.dispose(myTabsLogRefresher);
     Disposer.dispose(myStatusBarProgress);
   }
@@ -297,7 +297,7 @@ public class VcsLogManager implements Disposable {
 
     @Override
     public void displayMessage(@Nls @NotNull String message) {
-      VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
+      VcsNotifier.getInstance(myProject).notifyError(VcsLogNotificationIdsHolder.FATAL_ERROR, "", message);
     }
   }
 
@@ -324,9 +324,7 @@ public class VcsLogManager implements Disposable {
     @Override
     public T createLogUi(@NotNull Project project, @NotNull VcsLogData logData) {
       MainVcsLogUiProperties properties = myUiProperties.createProperties(myLogId);
-      VcsLogFiltererImpl vcsLogFilterer = new VcsLogFiltererImpl(logData.getLogProviders(), logData.getStorage(),
-                                                                 logData.getTopCommitsCache(),
-                                                                 logData.getCommitDetailsGetter(), logData.getIndex());
+      VcsLogFiltererImpl vcsLogFilterer = new VcsLogFiltererImpl(logData);
       PermanentGraph.SortType initialSortType = properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE);
       VcsLogFilterCollection initialFilters = myFilters == null ? VcsLogFilterObject.collection() : myFilters;
       VisiblePackRefresherImpl refresher = new VisiblePackRefresherImpl(project, logData, initialFilters, initialSortType,

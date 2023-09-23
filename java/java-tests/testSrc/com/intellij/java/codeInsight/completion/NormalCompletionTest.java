@@ -2916,6 +2916,39 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   }
 
   @NeedsIndex.Full
+  public void testTagAddWithoutStatic() {
+    Registry.get("java.completion.methods.use.tags").setValue(true, getTestRootDisposable());
+    myFixture.configureByText("Test.java", """
+      import java.util.HashSet;
+                                        
+      public abstract class SuperClass {
+            
+          void run() {
+              HashSet<Object> objects = new HashSet<>();
+              objects.len<caret>;
+          }
+          
+          static void len(HashSet<Object> o){}
+      }
+      """);
+    myFixture.complete(CompletionType.BASIC, 2);
+    myFixture.type('\n');
+    myFixture.checkResult("""
+                            import java.util.HashSet;
+                                                              
+                            public abstract class SuperClass {
+                                  
+                                void run() {
+                                    HashSet<Object> objects = new HashSet<>();
+                                    objects.size();
+                                }
+                                
+                                static void len(HashSet<Object> o){}
+                            }
+                            """);
+  }
+
+  @NeedsIndex.Full
   public void testTagAddInvocationCount2() {
     Registry.get("java.completion.methods.use.tags").setValue(true, getTestRootDisposable());
     myFixture.configureByText("Test.java", """

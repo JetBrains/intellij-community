@@ -1,4 +1,4 @@
-// FILE: test/ChangeImport.kt
+// FILE: test/ImportReference.kt
 // BIND_TO test.bar.A
 package test
 

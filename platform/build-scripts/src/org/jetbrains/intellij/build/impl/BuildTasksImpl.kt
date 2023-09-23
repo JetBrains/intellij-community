@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("BlockingMethodInNonBlockingContext")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -30,6 +32,7 @@ import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.includedModules
 import org.jetbrains.intellij.build.impl.projectStructureMapping.writeProjectStructureReport
+import org.jetbrains.intellij.build.impl.sbom.SoftwareBillOfMaterialsImpl
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.logFreeDiskSpace
 import org.jetbrains.intellij.build.io.writeNewFile
@@ -138,8 +141,7 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
       val propertiesFile = patchIdeaPropertiesFile(context)
       val builder = getOsDistributionBuilder(os = currentOs, ideaProperties = propertiesFile, context = context)!!
       builder.copyFilesForOsDistribution(targetDirectory, arch)
-      context.bundledRuntime.extractTo(prefix = BundledRuntimeImpl.getProductPrefix(context),
-                                       os = currentOs,
+      context.bundledRuntime.extractTo(os = currentOs,
                                        destinationDir = targetDirectory.resolve("jbr"),
                                        arch = arch)
       updateExecutablePermissions(targetDirectory, builder.generateExecutableFilesMatchers(includeRuntime = true, arch).keys)
@@ -195,7 +197,7 @@ private fun patchIdeaPropertiesFile(buildContext: BuildContext): Path {
     builder.append('\n').append(Files.readString(it))
   }
 
-  //todo[nik] introduce special systemSelectorWithoutVersion instead?
+  //todo introduce special systemSelectorWithoutVersion instead?
   val settingsDir = buildContext.systemSelector.replaceFirst("\\d+(\\.\\d+)?".toRegex(), "")
   val temp = builder.toString()
   builder.setLength(0)
@@ -662,7 +664,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
     val distDirs = buildOsSpecificDistributions(context)
     launch(Dispatchers.IO) {
       context.executeStep(spanBuilder("generate software bill of materials"), SoftwareBillOfMaterials.STEP_ID) {
-        SoftwareBillOfMaterials(context, distDirs, distEntries).generate()
+        SoftwareBillOfMaterialsImpl(context, distDirs, distEntries).generate()
       }
     }
     @Suppress("SpellCheckingInspection")
@@ -1044,13 +1046,11 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
 
 private suspend fun checkClassFiles(root: Path, context: BuildContext, isDistAll: Boolean) {
   // version checking patterns are only for dist all (all non-os and non-arch specific files)
-  val versionCheckerConfig = if (context.isStepSkipped(BuildOptions.VERIFY_CLASS_FILE_VERSIONS) || !isDistAll) {
-    emptyMap()
-  }
-  else {
-    context.productProperties.versionCheckerConfig
+  if (context.isStepSkipped(BuildOptions.VERIFY_CLASS_FILE_VERSIONS) || !isDistAll) {
+    return
   }
 
+  val versionCheckerConfig = context.productProperties.versionCheckerConfig
   val forbiddenSubPaths = context.productProperties.forbiddenClassFileSubPaths
   val forbiddenSubPathExceptions = context.productProperties.forbiddenClassFileSubPathExceptions
   if (forbiddenSubPaths.isNotEmpty()) {
@@ -1193,6 +1193,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
         relPath != "bin/idea.properties" &&
         !relPath.startsWith("help/") &&
         relPath != "license/launcher-third-party-libraries.html" &&
+        relPath != MODULE_DESCRIPTORS_JAR_PATH && //todo merge module-descriptors.jar for different OS into a single one instead
         !relPath.startsWith("bin/remote-dev-server") &&
         relPath != "license/remote-dev-server.html"
       }

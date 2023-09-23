@@ -26,13 +26,13 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.sun.jdi.ThreadReference;
 import org.jetbrains.annotations.NotNull;
@@ -282,7 +282,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
   protected abstract void build(DebuggerContextImpl context);
 
   public void rebuild(final DebuggerContextImpl context) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     final DebugProcessImpl process = context.getDebugProcess();
     if (process == null) {
       return; // empty context, no process available yet

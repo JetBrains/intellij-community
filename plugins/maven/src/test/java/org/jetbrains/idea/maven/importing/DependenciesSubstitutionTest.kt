@@ -3,14 +3,14 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.idea.maven.project.MavenProjectResolver
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = false
 
   @Test
-  fun `simple library substitution`() {
+  fun `simple library substitution`() = runBlocking {
     val value = Registry.get("external.system.substitute.library.dependencies")
     try {
       value.setValue(true)
@@ -31,32 +31,13 @@ open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
                            "    <version>1.0</version>" +
                            "  </dependency>" +
                            "</dependencies>")
-      importNewProject(p1Pom)
-      importNewProject(p2Pom)
+      importProjectAsync(p1Pom)
+      importProjectAsync(p2Pom)
       assertModules("p1", "p2")
       assertModuleModuleDeps("p2", "p1")
     }
     finally {
       value.resetToDefault()
     }
-  }
-
-  protected fun importNewProject(file: VirtualFile) {
-    if (isNewImportingProcess) {
-      importProject(file)
-    }
-    else {
-      importNewProjectLegacyWay(file)
-    }
-
-  }
-
-  protected fun importNewProjectLegacyWay(file: VirtualFile) {
-    val files = listOf(file)
-
-    myProjectsManager.initForTests()
-    myProjectResolver = MavenProjectResolver.getInstance(myProject)
-
-    myProjectsManager.addManagedFiles(files)
   }
 }

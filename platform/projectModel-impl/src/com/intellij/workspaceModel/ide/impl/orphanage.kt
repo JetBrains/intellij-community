@@ -32,7 +32,7 @@ class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
 
     updater(builder)
 
-    val changes = builder.collectChanges(before)
+    val changes = builder.collectChanges()
 
     checkIfParentsAlreadyExist(changes, builder)
 

@@ -54,9 +54,11 @@ class TestTypeCast {
 class TestInheritance1 : @TypeUseAnon1 C()
 class TestInheritance2 : @TypeUseAnon1 I1
 class TestInheritance3 : @TypeUseAnon1 C(), @TypeUseAnon2 I1, @TypeUseAnon2 @TypeUseAnon3 I2
+
 open class C
 interface I1
 interface I2
+
 class TestCatch {
     fun foo() {
         try {
@@ -77,6 +79,7 @@ class TestForLoopParameter {
 }
 
 class TestPrimaryConstructorProperty(private val foo: @TypeUseAnon1 @TypeUseAnon2 String?)
+
 class TestStandardMethods : Cloneable {
     override fun toString(): @TypeUseAnon1 String {
         return ""
@@ -103,8 +106,9 @@ interface TestTypeParameter<@TypeUseAnon1 F : @TypeUseAnon1 File?> {
 
 class TestTypeArgument {
     fun f1() {
-        f2<@TypeUseAnon1 String?>("")
+        this.f2<@TypeUseAnon1 String?>("")
     }
 
-    fun <T> f2(t: T) {}
+    fun <T> f2(t: T) {
+    }
 }

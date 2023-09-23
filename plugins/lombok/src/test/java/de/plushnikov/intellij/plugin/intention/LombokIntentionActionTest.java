@@ -25,10 +25,13 @@ public abstract class LombokIntentionActionTest extends AbstractLombokLightCodeI
     PsiFile psiFile = loadToPsiFile(getTestName(false) + ".java");
     IntentionAction intentionAction = getIntentionAction();
 
+    boolean isActuallyAvailable = intentionAction.isAvailable(myFixture.getProject(), myFixture.getEditor(), psiFile);
     assertEquals("Intention \"" + intentionAction.getFamilyName() + "\" was not available at caret",
-                 intentionAvailable, intentionAction.isAvailable(myFixture.getProject(), myFixture.getEditor(), psiFile));
+                 intentionAvailable, isActuallyAvailable);
 
-    myFixture.launchAction(intentionAction);
+    if (isActuallyAvailable) {
+      myFixture.launchAction(intentionAction);
+    }
 
     assertTrue("Intention \"" + intentionAction.getFamilyName() + "\" was not properly invoked",
       wasInvocationSuccessful());

@@ -13,7 +13,7 @@ import kotlinx.collections.immutable.toPersistentSet
 import java.io.OutputStream
 
 object InlinedPayloadStorage : PayloadStorageIO {
-  override val sourcesDeclaration: PersistentSet<PayloadSource> = PayloadSource.values().filter { it.isInline }.toPersistentSet()
+  override val sourcesDeclaration: PersistentSet<PayloadSource> = PayloadSource.entries.filter { it.isInline }.toPersistentSet()
 
   fun isSuitableForInlining(sizeBytes: Long) = sizeBytes <= 7
 
@@ -48,7 +48,7 @@ object InlinedPayloadStorage : PayloadStorageIO {
         packedOffset = packedOffset.setInt(byte.toUByte().toInt(), index * Byte.SIZE_BITS, Byte.SIZE_BITS)
       }
     }
-    return PayloadRef(packedOffset.toLong(), PayloadSource.VALUES[data.size])
+    return PayloadRef(packedOffset.toLong(), PayloadSource.entries[data.size])
   }
 
   private fun PayloadRef.unInlineData(): ByteArray {

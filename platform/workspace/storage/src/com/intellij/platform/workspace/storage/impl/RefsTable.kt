@@ -59,8 +59,8 @@ public class ConnectionId private constructor(
   }
 
   override fun toString(): String {
-    return "Connection(parent=${ClassToIntConverter.INSTANCE.getClassOrDie(parentClass).simpleName} " +
-           "child=${ClassToIntConverter.INSTANCE.getClassOrDie(childClass).simpleName} $connectionType)"
+    return "Connection(parent=${ClassToIntConverter.getInstance().getClassOrDie(parentClass).simpleName} " +
+           "child=${ClassToIntConverter.getInstance().getClassOrDie(childClass).simpleName} $connectionType)"
   }
 
   public fun debugStr(): String = """

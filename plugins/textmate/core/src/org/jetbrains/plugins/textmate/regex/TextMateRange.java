@@ -34,4 +34,9 @@ public final class TextMateRange {
   public int hashCode() {
     return Objects.hash(start, end);
   }
+
+  @Override
+  public String toString() {
+    return "TextMateRange[" + start + ", " + end + ']';
+  }
 }

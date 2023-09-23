@@ -25,7 +25,8 @@ interface WorkspaceFileIndex {
   /**
    * Returns `true` if [file] is included to the workspace. 
    * I.e., it's located under a registered file set of any [kind][WorkspaceFileKind], and isn't excluded or ignored.
-   * Currently, this function is equivalent to [com.intellij.openapi.roots.ProjectFileIndex.isInProject].
+   * This function is not equivalent to [com.intellij.openapi.roots.ProjectFileIndex.isInProject]:
+   * files with [WorkspaceFileKind.CUSTOM] kind are considered in workspace but not in project
    */
   @RequiresReadLock
   fun isInWorkspace(file: VirtualFile): Boolean
@@ -67,12 +68,14 @@ interface WorkspaceFileIndex {
    * @param includeContentSets if `true` file sets of [content][WorkspaceFileKind.isContent] kind will be processed
    * @param includeExternalSets if `true` file sets of [WorkspaceFileKind.EXTERNAL] kind will be processed
    * @param includeExternalSourceSets if `true` file sets of [WorkspaceFileKind.EXTERNAL_SOURCE] kind will be processed
+   * @param includeCustomKindSets if `true` file sets of [WorkspaceFileKind.CUSTOM] kind will be processed
    */
   fun findFileSet(file: VirtualFile,
                   honorExclusion: Boolean,
                   includeContentSets: Boolean,
                   includeExternalSets: Boolean,
-                  includeExternalSourceSets: Boolean
+                  includeExternalSourceSets: Boolean,
+                  includeCustomKindSets: Boolean
   ): WorkspaceFileSet?
 
   /**
@@ -85,6 +88,7 @@ interface WorkspaceFileIndex {
     includeContentSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
+    includeCustomKindSets: Boolean,
     customDataClass: Class<out D>
   ): WorkspaceFileSetWithCustomData<D>?
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTFactory;
@@ -51,8 +51,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   }
 
   @Override
-  @Nullable
-  public XmlText split(int displayIndex) {
+  public @Nullable XmlText split(int displayIndex) {
     try {
       return _splitText(displayIndex);
     }
@@ -353,7 +352,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   }
 
   @Override
-  public PsiLanguageInjectionHost updateText(@NotNull final String text) {
+  public PsiLanguageInjectionHost updateText(final @NotNull String text) {
     try {
       var policy = getPolicy();
       // CDATAOnAnyEncodedPolicy is a default policy for XML elements.
@@ -379,8 +378,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
                           : super.getLanguage();
   }
 
-  @Nullable
-  private XmlText _splitText(final int displayOffset) throws IncorrectOperationException{
+  private @Nullable XmlText _splitText(final int displayOffset) throws IncorrectOperationException{
     final XmlTag xmlTag = (XmlTag)getParent();
     if(displayOffset == 0) return this;
     final int length = getValue().length();
@@ -454,8 +452,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   }
 
   @Override
-  @NotNull
-  public LiteralTextEscaper<XmlTextImpl> createLiteralTextEscaper() {
+  public @NotNull LiteralTextEscaper<XmlTextImpl> createLiteralTextEscaper() {
     return getParentTag() instanceof HtmlTag ?
            LiteralTextEscaper.createSimple(this, false) :
            new XmlTextLiteralEscaper(this);

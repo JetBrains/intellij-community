@@ -177,13 +177,13 @@ public class Alarm implements Disposable {
   }
 
   public void addComponentRequest(@NotNull Runnable request, int delayMillis) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assert myActivationComponent != null;
     _addRequest(request, delayMillis, ModalityState.stateForComponent(myActivationComponent));
   }
 
   public void addComponentRequest(@NotNull Runnable request, long delayMillis) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assert myActivationComponent != null;
     _addRequest(request, delayMillis, ModalityState.stateForComponent(myActivationComponent));
   }
@@ -220,7 +220,7 @@ public class Alarm implements Disposable {
   }
 
   private boolean isActivationComponentShowing() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assert myActivationComponent != null;
     return myActivationComponent.isShowing();
   }
@@ -429,7 +429,7 @@ public class Alarm implements Disposable {
   @Deprecated(forRemoval = true)
   public @NotNull Alarm setActivationComponent(@NotNull JComponent component) {
     PluginException.reportDeprecatedUsage("Alarm#setActivationComponent", "Please use `#Alarm(JComponent, Disposable)` instead");
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myActivationComponent = component;
     //noinspection ResultOfObjectAllocationIgnored
     UiNotifyConnector.installOn(component, new Activatable() {

@@ -228,7 +228,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
     VersionedEntityStorage storage = WorkspaceModel.getInstance(myProject).getEntityStorage();
     LOG.info("Ide modifiable models provider, create builder from version " + storage.getVersion());
     var initialStorage = storage.getCurrent();
-    return diff = MutableEntityStorage.from(initialStorage);
+    return diff = MutableEntityStorage.from(initialStorage.toSnapshot());
   }
 
   private void setIdeModelsProviderForModule(@NotNull Module module) {

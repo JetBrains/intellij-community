@@ -13,6 +13,7 @@ class J {
         println(b.toInt() xor b.toInt())
         println(5 /*operand '5'*/ shl  /* left shift */b.toInt() /*operand 'b'*/)
         println( /*operand 'b'*/b.toInt() xor  /* xor */b.toInt() /*operand 'b'*/)
+
         println(c.code shr i)
         println(c.code ushr i)
         println(c.code shl i)
@@ -24,6 +25,7 @@ class J {
         println(c.code or c.code)
         println(0x01 or c.code)
         println(c.code xor c.code)
+
         println(s.toInt() shr i)
         println(s.toInt() ushr i)
         println(s.toInt() shl i)
@@ -35,6 +37,7 @@ class J {
         println(s.toInt() or s.toInt())
         println(0x01 or s.toInt())
         println(s.toInt() xor s.toInt())
+
         println(i shr i)
         println(i ushr i)
         println(i shl i)
@@ -46,6 +49,7 @@ class J {
         println(i or i)
         println(0x01 or i)
         println(i xor i)
+
         println(l shr i)
         println(l ushr i)
         println(l shl i)

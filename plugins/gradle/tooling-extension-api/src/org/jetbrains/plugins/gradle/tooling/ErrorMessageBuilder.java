@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.tooling;
 
 import org.gradle.api.Project;
-import org.gradle.internal.impldep.com.google.gson.GsonBuilder;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -11,11 +10,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Intended to be used only for reporting of custom {@link ModelBuilderService}s unhandled failures.
  * <p>
- * Use {@link ModelBuilderContext#report} for errors, warnings detected by your {@link ModelBuilderService}.
+ * Use {@link MessageReporter} for errors, warnings detected by your {@link ModelBuilderService}.
  *
  * @author Vladislav.Soroka
  * @see MessageBuilder
- * @see ModelBuilderContext#report
+ * @see MessageReporter
  */
 public final class ErrorMessageBuilder {
   @NotNull private final Project myProject;
@@ -42,19 +41,20 @@ public final class ErrorMessageBuilder {
     return this;
   }
 
-  /**
-   * @deprecated use {@link ModelBuilderContext#report} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public String build() {
-    Message message = buildMessage();
-    return new GsonBuilder().create().toJson(message);
-  }
-
   @ApiStatus.Internal
   public Message buildMessage() {
-    String message = myDescription != null ? myDescription : "";
+    return new MessageBuilder()
+      .withTitle(getMessageTitle())
+      .withText(myDescription != null ? myDescription : "")
+      // custom model builders failures often not so critical to the import results and reported as warnings to avoid useless distraction
+      .withKind(Message.Kind.WARNING)
+      .withException(myException)
+      .withGroup(myGroup)
+      .withLocation(myProject.getBuildFile().getPath(), 0, 0)
+      .build();
+  }
+
+  private @NotNull String getMessageTitle() {
     String projectDisplayName = getDisplayName(myProject);
     String title = null;
     if (myException != null) {
@@ -63,13 +63,7 @@ public final class ErrorMessageBuilder {
     if (title == null) {
       title = myDescription != null ? myDescription : myGroup;
     }
-    title = projectDisplayName + ": " + title;
-    return MessageBuilder.create(title, message)
-      .warning() // custom model builders failures often not so critical to the import results and reported as warnings to avoid useless distraction
-      .withException(myException)
-      .withGroup(myGroup)
-      .withLocation(myProject.getBuildFile().getPath(), 0, 0)
-      .build();
+    return projectDisplayName + ": " + title;
   }
 
   @NotNull

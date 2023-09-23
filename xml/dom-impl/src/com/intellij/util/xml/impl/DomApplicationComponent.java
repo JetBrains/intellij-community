@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
@@ -114,8 +114,7 @@ public final class DomApplicationComponent {
     return allMetas().filter(m -> m.hasStubs()).collect(Collectors.toList());
   }
 
-  @Nullable
-  public synchronized DomFileMetaData findMeta(DomFileDescription<?> description) {
+  public synchronized @Nullable DomFileMetaData findMeta(DomFileDescription<?> description) {
     return allMetas().filter(m -> m.lazyInstance == description).findFirst().orElse(null);
   }
 
@@ -188,7 +187,7 @@ public final class DomApplicationComponent {
   }
 
   public void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass,
-                                     @Nullable final Disposable parentDisposable) {
+                                     final @Nullable Disposable parentDisposable) {
     myCachedImplementationClasses.registerImplementation(domElementClass, implementationClass, parentDisposable);
   }
 

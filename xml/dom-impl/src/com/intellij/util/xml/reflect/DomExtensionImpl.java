@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.reflect;
 
 import com.intellij.openapi.util.Key;
@@ -57,14 +57,12 @@ public class DomExtensionImpl implements DomExtension {
     myAttributesDescriptor = attributesDescriptor;
   }
 
-  @NotNull
-  public XmlName getXmlName() {
+  public @NotNull XmlName getXmlName() {
     return myXmlName;
   }
 
   @Override
-  @NotNull
-  public Type getType() {
+  public @NotNull Type getType() {
     return myType;
   }
 
@@ -92,14 +90,14 @@ public class DomExtensionImpl implements DomExtension {
   }
 
   @Override
-  public final DomExtension setConverter(@NotNull final Converter converter, final boolean soft) {
+  public final DomExtension setConverter(final @NotNull Converter converter, final boolean soft) {
     myConverter = converter;
     mySoft = soft;
     return this;
   }
 
   @Override
-  public DomExtension addCustomAnnotation(@NotNull final Annotation anno) {
+  public DomExtension addCustomAnnotation(final @NotNull Annotation anno) {
     myCustomAnnotations.add(anno);
     return this;
   }

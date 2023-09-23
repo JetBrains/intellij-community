@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.*
-import com.intellij.psi.impl.cache.TypeInfo
 import com.intellij.psi.impl.compiled.ClsTypeElementImpl
 import com.intellij.psi.impl.compiled.SignatureParsing
 import com.intellij.psi.impl.compiled.StubBuildingVisitor
@@ -70,7 +69,6 @@ import org.jetbrains.uast.kotlin.internal.KotlinUastTypeMapper
 import org.jetbrains.uast.kotlin.psi.UastFakeDescriptorLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
-import java.text.StringCharacterIterator
 
 val kotlinUastPlugin: UastLanguagePlugin by lz {
     UastLanguagePlugin.getInstances().find { it.language == KotlinLanguage.INSTANCE }
@@ -169,11 +167,10 @@ internal fun KotlinType.toPsiType(
         }
     KotlinUastTypeMapper.mapType(approximatedType, signatureWriter, typeMappingMode)
 
-    val signature = StringCharacterIterator(signatureWriter.toString())
+    val signature = SignatureParsing.CharIterator(signatureWriter.toString())
 
-    val javaType = SignatureParsing.parseTypeString(signature, StubBuildingVisitor.GUESSING_MAPPER)
-    val typeInfo = TypeInfo.fromString(javaType, false)
-    val typeText = TypeInfo.createTypeText(typeInfo) ?: return UastErrorType
+    val typeInfo = SignatureParsing.parseTypeStringToTypeInfo(signature, StubBuildingVisitor.GUESSING_PROVIDER)
+    val typeText = typeInfo.text() ?: return UastErrorType
 
     val psiTypeParent: PsiElement = containingLightDeclaration ?: context
     if (psiTypeParent.containingFile == null) {

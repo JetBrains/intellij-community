@@ -17,7 +17,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
-public class PluginDescriptorDomFileSearchScopeProvider implements SearchScopeProvider {
+final class PluginDescriptorDomFileSearchScopeProvider implements SearchScopeProvider {
 
   @Nullable
   @Override
@@ -28,7 +28,7 @@ public class PluginDescriptorDomFileSearchScopeProvider implements SearchScopePr
   @NotNull
   @Override
   public List<SearchScope> getSearchScopes(@NotNull Project project, @NotNull DataContext dataContext) {
-    if (DumbService.isDumb(project) || !PsiUtil.isIdeaProject(project)) return Collections.emptyList();
+    if (!PsiUtil.isIdeaProject(project)) return Collections.emptyList();
 
     GlobalSearchScope scope = GlobalSearchScope.filesScope(project, () ->
       DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, GlobalSearchScopesCore.projectProductionScope(project))

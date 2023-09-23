@@ -21,7 +21,7 @@ public final class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClass
         return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
       }
       return ContainerUtil.map2Array(types, PsiJavaCodeReferenceElement.class, info ->
-        new ClsJavaCodeReferenceElementImpl(this, info.text, info.getTypeAnnotations()));
+        new ClsJavaCodeReferenceElementImpl(this, info.text(), info.getTypeAnnotations()));
     });
   }
 

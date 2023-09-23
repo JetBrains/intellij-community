@@ -451,15 +451,24 @@ fun LessonContext.toggleBreakpointTask(sample: LessonSample?,
                                        logicalPosition: () -> LogicalPosition,
                                        checkLine: Boolean = true,
                                        breakpointXRange: (width: Int) -> IntRange = LessonUtil.breakpointXRange,
+                                       useCheckByTimerInsteadOfStateCheck: Boolean = false,
                                        textContent: TaskContext.() -> Unit) {
   highlightBreakpointGutter(breakpointXRange, logicalPosition)
 
   task {
     transparentRestore = true
     textContent()
-    stateCheck {
+
+    val checkLambda: TaskRuntimeContext.() -> Boolean = {
       lineWithBreakpoints() == setOf(logicalPosition().line)
     }
+    if (useCheckByTimerInsteadOfStateCheck) {
+      timerCheck(checkState = checkLambda)
+    }
+    else {
+      stateCheck(checkLambda)
+    }
+
     proposeRestore {
       val breakpoints = lineWithBreakpoints()
       checkExpectedStateOfEditor(sample ?: previous.sample, checkPosition = checkLine)

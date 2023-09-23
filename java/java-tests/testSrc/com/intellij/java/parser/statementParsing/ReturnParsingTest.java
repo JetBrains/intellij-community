@@ -15,16 +15,10 @@
  */
 package com.intellij.java.parser.statementParsing;
 
-import com.intellij.java.parser.JavaParsingTestCase;
+import com.intellij.java.parser.JavaParsingTestConfigurator;
 
-public class ReturnParsingTest extends JavaParsingTestCase {
+public class ReturnParsingTest extends AbstractBasicReturnParsingTest {
   public ReturnParsingTest() {
-    super("parser-full/statementParsing/return");
+    super(new JavaParsingTestConfigurator());
   }
-
-  public void testNormalNoResult() { doTest(true); }
-  public void testNormalWithResult() { doTest(true); }
-
-  public void testUncomplete1() { doTest(true); }
-  public void testUncomplete2() { doTest(true); }
 }

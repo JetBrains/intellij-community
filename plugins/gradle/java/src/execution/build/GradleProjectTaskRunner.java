@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.scratch.JavaScratchConfiguration;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -36,7 +37,10 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -268,6 +272,14 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
   }
 
   @Override
+  public boolean canRun(@NotNull Project project, @NotNull ProjectTask projectTask, @Nullable ProjectTaskContext context) {
+    if (context != null && context.getRunConfiguration() instanceof JavaScratchConfiguration) {
+      return false;
+    }
+    return canRun(projectTask);
+  }
+
+  @Override
   public boolean canRun(@NotNull ProjectTask projectTask) {
     if (projectTask instanceof ModuleBuildTask) {
       Module module = ((ModuleBuildTask)projectTask).getModule();
@@ -282,6 +294,9 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
     if (projectTask instanceof ExecuteRunConfigurationTask) {
       RunProfile runProfile = ((ExecuteRunConfigurationTask)projectTask).getRunProfile();
+      if (runProfile instanceof JavaScratchConfiguration) {
+        return false;
+      }
       if (runProfile instanceof ModuleBasedConfiguration) {
         RunConfigurationModule module = ((ModuleBasedConfiguration<?, ?>)runProfile).getConfigurationModule();
         if (!isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module.getModule()) ||

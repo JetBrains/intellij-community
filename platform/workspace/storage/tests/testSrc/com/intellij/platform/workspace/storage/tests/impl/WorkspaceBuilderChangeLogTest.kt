@@ -1,13 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.tests.impl
 
-import com.intellij.platform.workspace.storage.impl.AbstractEntityStorage
 import com.intellij.platform.workspace.storage.impl.ChangeEntry
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
+import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.testFramework.assertInstanceOf
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -589,7 +590,7 @@ class WorkspaceBuilderChangeLogTest {
     val original = builder.toSnapshot()
     builder.removeEntity(entity)
     builder addEntity SourceEntity("one", oldSource)
-    assertTrue(builder.hasSameEntities(original as AbstractEntityStorage))
+    assertTrue(builder.hasSameEntities())
   }
 
   @Test
@@ -600,13 +601,12 @@ class WorkspaceBuilderChangeLogTest {
       )
     }
     builder.addEntity(moduleTestEntity)
-    builder.changeLog.clear()
-    val original = builder.toSnapshot()
-    builder.removeEntity(builder.entities(ModuleTestEntity::class.java).single().contentRoots.single())
-    builder.addEntity(ContentRootTestEntity(MySource) {
+    val newBuilder = builder.toSnapshot().toBuilder()
+    newBuilder.removeEntity(newBuilder.entities(ModuleTestEntity::class.java).single().contentRoots.single())
+    newBuilder.addEntity(ContentRootTestEntity(MySource) {
       module = moduleTestEntity
     })
-    assertTrue(builder.hasSameEntities(original as AbstractEntityStorage))
+    assertTrue(newBuilder.hasSameEntities())
   }
 
   @Test
@@ -625,7 +625,7 @@ class WorkspaceBuilderChangeLogTest {
     builder.addEntity(ContentRootTestEntity(MySource) {
       module = moduleTestEntity
     })
-    assertFalse(builder.hasSameEntities(original as AbstractEntityStorage))
+    assertFalse(builder.hasSameEntities())
   }
 
   @Test
@@ -645,7 +645,7 @@ class WorkspaceBuilderChangeLogTest {
     }
     builder.addEntity(newContentRoot)
     builder.getMutableExternalMapping<Any>("data").addMapping(newContentRoot, 1)
-    assertFalse(builder.hasSameEntities(original as AbstractEntityStorage))
+    assertFalse(builder.hasSameEntities())
   }
 
   // ------------- Testing events collapsing end ----

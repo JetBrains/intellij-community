@@ -73,7 +73,7 @@ interface IconManager {
    * @param param Unique key that WILL BE USED to cache the icon instance.
    * Prefer passing unique objects over [String] or [Integer] to avoid accidental clashes with another module.
    */
-  fun <T> createDeferredIcon(base: Icon?, param: T, iconProducer: (T) -> Icon?): Icon
+  fun <T : Any> createDeferredIcon(base: Icon?, param: T, iconProducer: (T) -> Icon?): Icon
 
   fun createLayeredIcon(instance: Iconable, icon: Icon, flags: Int): RowIcon
 
@@ -115,7 +115,7 @@ private object DummyIconManager : IconManager {
 
   override fun tooltipOnlyIfComposite(icon: Icon): Icon = icon
 
-  override fun <T> createDeferredIcon(base: Icon?, param: T, iconProducer: (T) -> Icon?): Icon = base!!
+  override fun <T : Any> createDeferredIcon(base: Icon?, param: T, iconProducer: (T) -> Icon?): Icon = base!!
 
   override fun createRowIcon(iconCount: Int, alignment: RowIcon.Alignment): RowIcon = DummyRowIcon(iconCount)
 

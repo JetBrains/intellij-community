@@ -8,6 +8,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.gitlab.GitlabIcons
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.messagePointer
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.CREATE_OPEN_DIALOG
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics.logSnippetActionExecuted
 
 class GitLabCreateSnippetAction : DumbAwareAction(messagePointer("snippet.create.action.title"),
                                                   messagePointer("snippet.create.action.description"),
@@ -18,6 +20,8 @@ class GitLabCreateSnippetAction : DumbAwareAction(messagePointer("snippet.create
     val editor = e.getData(CommonDataKeys.EDITOR)
     val selectedFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
     val selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
+    
+    logSnippetActionExecuted(project, CREATE_OPEN_DIALOG)
 
     project.service<GitLabSnippetService>().performCreateSnippetAction(editor, selectedFile, selectedFiles)
   }

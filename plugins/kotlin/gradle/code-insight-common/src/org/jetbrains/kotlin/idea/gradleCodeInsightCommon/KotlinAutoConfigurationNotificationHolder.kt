@@ -13,14 +13,15 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.vcs.changes.Change
+import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 import org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider
 import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
 import org.jetbrains.kotlin.idea.configuration.ui.changes.KotlinConfiguratorChangesDialog
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
+import java.awt.Desktop
+import java.net.URI
 
 @Service(Service.Level.PROJECT)
 class KotlinAutoConfigurationNotificationHolder(private val project: Project) : Disposable {
@@ -58,21 +59,21 @@ class KotlinAutoConfigurationNotificationHolder(private val project: Project) : 
                 content = notificationText,
                 type = NotificationType.INFORMATION,
             )
+        notification.addAction(undoAction(project))
         if (changes != null) {
             notification.addAction(viewAppliedChangesAction(changes))
         }
-        notification.addAction(undoAction(project))
         notification.notify(project)
         shownNotification = notification
-        notification.expireShownNotificationsOnClose()
     }
 
-    private fun Notification.expireShownNotificationsOnClose() {
-        balloon?.addListener(object : JBPopupListener {
-            override fun onClosed(event: LightweightWindowEvent) {
-                expireShownNotification()
-            }
-        })
+    private val browseKotlinGradleConfiguration = NotificationAction.create(
+        KotlinProjectConfigurationBundle.message("auto.configure.kotlin.documentation.gradle")
+    ) { _, _ ->
+        if (Desktop.isDesktopSupported()) {
+            val url = KotlinProjectConfigurationBundle.message("auto.configure.kotlin.documentation.gradle.url")
+            Desktop.getDesktop().browse(URI(url))
+        }
     }
 
     fun showAutoConfigurationUndoneNotification(module: Module?) {
@@ -83,17 +84,17 @@ class KotlinAutoConfigurationNotificationHolder(private val project: Project) : 
             .getNotificationGroup("Configure Kotlin")
             .createNotification(
                 title = KotlinProjectConfigurationBundle.message("auto.configure.kotlin.undone"),
-                content = KotlinProjectConfigurationBundle.message("auto.configure.kotlin.undone.notification"),
+                content = "",
                 type = NotificationType.INFORMATION,
             )
         module?.let {
             notification.addAction(configureKotlinManuallyAction(it))
         }
+        notification.addAction(browseKotlinGradleConfiguration)
         notification.notify(project)
         shownNotification = notification
         // Needs to be set again because the other notification might expire, which will set the notificationData to null
         notificationData = existingNotificationData
-        notification.expireShownNotificationsOnClose()
     }
 
     fun reshowAutoConfiguredNotification(module: Module?) {
@@ -107,6 +108,15 @@ class KotlinAutoConfigurationNotificationHolder(private val project: Project) : 
     private fun configureKotlinManuallyAction(module: Module) = NotificationAction.create(
         KotlinProjectConfigurationBundle.message("configure.kotlin.manually")
     ) { e, notification ->
+        if (KotlinProjectConfigurationService.getInstance(project).isGradleSyncInProgress()) {
+            Messages.showWarningDialog(
+                project,
+                KotlinProjectConfigurationBundle.message("auto.configure.kotlin.wait.gradle.sync.finished"),
+                KotlinProjectConfigurationBundle.message("auto.configure.kotlin.wait.gradle.sync.finished.title")
+            )
+            return@create
+        }
+
         val configurators = getAbleToRunConfigurators(module).toList()
         if (configurators.size > 1) {
             KotlinSetupEnvironmentNotificationProvider.createConfiguratorsPopup(project, configurators).showInBestPositionFor(e.dataContext)

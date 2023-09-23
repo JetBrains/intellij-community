@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +37,8 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.ex.DocumentTrackerKt.countAffectedVisibleChanges;
 
 public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
   @NotNull private final LocalChangeListDiffRequest myLocalRequest;
@@ -92,6 +95,39 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
   protected UnifiedDiffChangeUi createUi(@NotNull UnifiedDiffChange change) {
     if (change instanceof MyUnifiedDiffChange) return new MyUnifiedDiffChangeUi(this, (MyUnifiedDiffChange)change);
     return super.createUi(change);
+  }
+
+  @Override
+  @Nullable
+  protected @Nls String getStatusTextMessage() {
+    List<UnifiedDiffChange> allChanges = getDiffChanges();
+    if (myAllowExcludeChangesFromCommit && allChanges != null) {
+      int totalCount = 0;
+      int includedIntoCommitCount = 0;
+      int excludedCount = 0;
+
+      for (UnifiedDiffChange change : allChanges) {
+        RangeExclusionState exclusionState;
+        if (change instanceof MyUnifiedDiffChange myChange) {
+          exclusionState = myChange.getExclusionState();
+        }
+        else {
+          exclusionState = RangeExclusionState.Included.INSTANCE;
+        }
+
+        totalCount += countAffectedVisibleChanges(exclusionState, false);
+        if (change.isSkipped()) {
+          excludedCount += countAffectedVisibleChanges(exclusionState, false);
+        }
+        else {
+          includedIntoCommitCount += countAffectedVisibleChanges(exclusionState, true);
+        }
+      }
+
+      return LocalTrackerDiffUtil.getStatusText(totalCount, includedIntoCommitCount, excludedCount, myModel.isContentsEqual());
+    }
+
+    return super.getStatusTextMessage();
   }
 
   @NotNull

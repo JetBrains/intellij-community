@@ -9,7 +9,7 @@ import com.intellij.cce.util.getAs
 import com.intellij.cce.util.getIfExists
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
 import com.intellij.cce.workspace.filter.SessionsFilter
-import org.apache.commons.lang.text.StrSubstitutor
+import org.apache.commons.lang3.text.StrSubstitutor
 import java.lang.reflect.Type
 import java.nio.file.Files
 import java.nio.file.Path

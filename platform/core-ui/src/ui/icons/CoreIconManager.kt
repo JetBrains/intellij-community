@@ -113,7 +113,7 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
 
   override fun createEmptyIcon(icon: Icon): Icon = EmptyIcon.create(icon)
 
-  override fun <T> createDeferredIcon(base: Icon?, param: T, iconProducer: (T) -> Icon?): Icon {
+  override fun <T : Any> createDeferredIcon(base: Icon?, param: T, iconProducer: (T) -> Icon?): Icon {
     return IconDeferrer.getInstance().defer(base = base, param = param, evaluator = iconProducer)
   }
 

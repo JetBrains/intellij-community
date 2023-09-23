@@ -9,12 +9,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.highlighting.HighlightingFactory
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
-import org.jetbrains.kotlin.idea.highlighting.KotlinRefsHolder
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 
 context(KtAnalysisSession)
-internal class TypeHighlighter(private val kotlinRefsHolder: KotlinRefsHolder, holder: HighlightInfoHolder) : KotlinSemanticAnalyzer(holder) {
+internal class TypeHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnalyzer(holder) {
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         highlightSimpleNameExpression(expression)
     }
@@ -28,14 +27,11 @@ internal class TypeHighlighter(private val kotlinRefsHolder: KotlinRefsHolder, h
             return
         }
         if (expression.isConstructorCallReference()) {
-            kotlinRefsHolder.registerLocalRef((expression.mainReference.resolveToSymbol() as? KtConstructorSymbol)?.psi, expression)
             // Do not highlight constructor call as class reference
             return
         }
 
         val symbol = expression.mainReference.resolveToSymbol() as? KtClassifierSymbol ?: return
-
-        kotlinRefsHolder.registerLocalRef(symbol.psi, expression)
 
         if (isAnnotationCall(expression, symbol)) {
             // higlighted by AnnotationEntryHiglightingVisitor
@@ -88,10 +84,10 @@ internal class TypeHighlighter(private val kotlinRefsHolder: KotlinRefsHolder, h
     }
 }
 
-private fun KtSimpleNameExpression.isCalleeExpression() =
+fun KtSimpleNameExpression.isCalleeExpression() =
     (parent as? KtCallExpression)?.calleeExpression == this
 
-private fun KtSimpleNameExpression.isConstructorCallReference(): Boolean {
+fun KtSimpleNameExpression.isConstructorCallReference(): Boolean {
     val type = parent as? KtUserType ?: return false
     val typeReference = type.parent as? KtTypeReference ?: return false
     val constructorCallee = typeReference.parent as? KtConstructorCalleeExpression ?: return false

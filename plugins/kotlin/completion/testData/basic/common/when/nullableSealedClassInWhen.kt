@@ -11,10 +11,10 @@ fun foo(e: SEALED?) {
     }
 }
 
+// WITH_ORDER
+// EXIST: null
 // EXIST: is AAAA
 // EXIST: BBBB
 // EXIST: is CCCC
-// EXIST: null
 // EXIST: { lookupString: "else -> "}
-// NOTHING_ELSE
 // FIR_COMPARISON

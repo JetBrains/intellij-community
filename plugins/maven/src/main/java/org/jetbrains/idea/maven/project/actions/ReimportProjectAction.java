@@ -43,7 +43,7 @@ public class ReimportProjectAction extends MavenProjectsAction {
   protected void perform(@NotNull MavenProjectsManager manager, List<MavenProject> mavenProjects, AnActionEvent e) {
     if (MavenUtil.isProjectTrustedEnoughToImport(manager.getProject())) {
       FileDocumentManager.getInstance().saveAllDocuments();
-      manager.forceUpdateProjects(mavenProjects);
+      manager.scheduleForceUpdateMavenProjects(mavenProjects);
     }
   }
 }

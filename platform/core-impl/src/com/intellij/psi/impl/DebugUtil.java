@@ -66,6 +66,12 @@ public final class DebugUtil {
     return buffer.toString();
   }
 
+  public static @NotNull String nodeTreeAsElementTypeToString(@NotNull ASTNode root, boolean showWhitespaces) {
+    StringBuilder buffer = new StringBuilder();
+    treeToBuffer(buffer, root, 0, showWhitespaces, false, false, false, false, true, null);
+    return buffer.toString();
+  }
+
   public static @NotNull String treeToString(@NotNull ASTNode root, boolean showWhitespaces, boolean showRanges) {
     StringBuilder buffer = new StringBuilder();
     treeToBuffer(buffer, root, 0, showWhitespaces, showRanges, false, false, true);
@@ -92,8 +98,21 @@ public final class DebugUtil {
                                    boolean showClassNames,
                                    boolean usePsi,
                                    @Nullable PairConsumer<? super PsiElement, ? super Consumer<? super PsiElement>> extra) {
+    treeToBuffer(buffer, root, indent, showWhitespaces, showRanges, showChildrenRanges, showClassNames, usePsi, false, extra);
+  }
+
+  private static void treeToBuffer(Appendable buffer,
+                                   ASTNode root,
+                                   int indent,
+                                   boolean showWhitespaces,
+                                   boolean showRanges,
+                                   boolean showChildrenRanges,
+                                   boolean showClassNames,
+                                   boolean usePsi,
+                                   boolean useElementType,
+                                   @Nullable PairConsumer<? super PsiElement, ? super Consumer<? super PsiElement>> extra) {
     ((TreeElement)root).acceptTree(
-      new TreeToBuffer(buffer, indent, showWhitespaces, showRanges, showChildrenRanges, showClassNames, usePsi, extra));
+      new TreeToBuffer(buffer, indent, showWhitespaces, showRanges, showChildrenRanges, showClassNames, usePsi, useElementType, extra));
   }
 
   private static class TreeToBuffer extends RecursiveTreeElementWalkingVisitor {
@@ -103,6 +122,7 @@ public final class DebugUtil {
     private final boolean showClassNames;
     private final boolean showChildrenRanges;
     private final boolean usePsi;
+    private final boolean useElementType;
     private final PairConsumer<? super PsiElement, ? super Consumer<? super PsiElement>> extra;
     private int indent;
 
@@ -113,6 +133,7 @@ public final class DebugUtil {
                          boolean showChildrenRanges,
                          boolean showClassNames,
                          boolean usePsi,
+                         boolean useElementType,
                          PairConsumer<? super PsiElement, ? super Consumer<? super PsiElement>> extra) {
       this.buffer = buffer;
       this.showWhitespaces = showWhitespaces;
@@ -120,6 +141,7 @@ public final class DebugUtil {
       this.showChildrenRanges = showChildrenRanges;
       this.showClassNames = showClassNames;
       this.usePsi = usePsi;
+      this.useElementType = useElementType;
       this.extra = extra;
       this.indent = indent;
     }
@@ -144,12 +166,22 @@ public final class DebugUtil {
             }
           }
           else {
-            buffer.append(root.toString());
+            if (useElementType) {
+              buffer.append(root.getElementType().toString());
+            }
+            else {
+              buffer.append(root.toString());
+            }
           }
         }
         else {
-          String text = fixWhiteSpaces(root.getText());
-          buffer.append(root.toString()).append("('").append(text).append("')");
+          if (useElementType) {
+            buffer.append(root.getElementType().toString());
+          }
+          else {
+            String text = fixWhiteSpaces(root.getText());
+            buffer.append(root.toString()).append("('").append(text).append("')");
+          }
         }
         if (showRanges) buffer.append(root.getTextRange().toString());
         if (showClassNames) buffer.append("[").append(getPsiClassName(root.getPsi())).append("]");
@@ -355,7 +387,7 @@ public final class DebugUtil {
   public static @NotNull String psiToStringIgnoringNonCode(@NotNull PsiElement element) {
     StringBuilder buffer = new StringBuilder();
     ((TreeElement)element.getNode()).acceptTree(
-      new TreeToBuffer(buffer, 0, false, false, false, false, false, null) {
+      new TreeToBuffer(buffer, 0, false, false, false, false, false, false,null) {
         @Override
         protected boolean shouldShowNode(TreeElement node) {
           return super.shouldShowNode(node) &&

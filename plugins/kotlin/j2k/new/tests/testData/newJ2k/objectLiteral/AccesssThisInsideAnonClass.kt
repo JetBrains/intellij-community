@@ -1,4 +1,5 @@
 interface Foo
+
 class Bar {
     fun test() {
         object : Foo {
@@ -8,5 +9,6 @@ class Bar {
         }
     }
 
-    fun bug(foo: Foo?) {}
+    fun bug(foo: Foo?) {
+    }
 }

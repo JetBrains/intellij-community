@@ -6,6 +6,7 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterListStubImpl;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl;
 import com.intellij.psi.impl.source.tree.java.TypeParameterListElement;
 import com.intellij.psi.stubs.IndexSink;
@@ -18,7 +19,7 @@ import java.io.IOException;
 
 public class JavaTypeParameterListElementType extends JavaStubElementType<PsiTypeParameterListStub, PsiTypeParameterList> {
   public JavaTypeParameterListElementType() {
-    super("TYPE_PARAMETER_LIST", true);
+    super("TYPE_PARAMETER_LIST", true, BasicJavaElementType.BASIC_TYPE_PARAMETER_LIST);
   }
 
   @NotNull
@@ -53,6 +54,11 @@ public class JavaTypeParameterListElementType extends JavaStubElementType<PsiTyp
   @Override
   public PsiTypeParameterListStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PsiTypeParameterListStubImpl(parentStub);
+  }
+
+  @Override
+  public boolean isAlwaysEmpty() {
+    return true;
   }
 
   @Override

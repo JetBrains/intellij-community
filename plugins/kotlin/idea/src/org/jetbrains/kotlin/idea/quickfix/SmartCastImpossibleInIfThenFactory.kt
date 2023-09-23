@@ -26,15 +26,15 @@ object SmartCastImpossibleInIfThenFactory : KotlinIntentionActionsFactory() {
         return listOf(
             createQuickFix(
                 ifExpression,
-                { IfThenToSafeAccessInspection.fixTextFor(it) },
-                { IfThenToSafeAccessInspection.isApplicableTo(it, expressionShouldBeStable = false) },
-                { ifExpr, _, editor -> IfThenToSafeAccessInspection.convert(ifExpr, editor, inlineWithPrompt = true) }
+                { IfThenToSafeAccessInspection.Util.fixTextFor(it) },
+                { IfThenToSafeAccessInspection.Util.isApplicableTo(it, expressionShouldBeStable = false) },
+                { ifExpr, _, editor -> IfThenToSafeAccessInspection.Util.convert(ifExpr, editor, inlineWithPrompt = true) }
             ),
             createQuickFix(
                 ifExpression,
-                { IfThenToElvisInspection.INTENTION_TEXT },
-                { IfThenToElvisInspection.isApplicableTo(it, expressionShouldBeStable = false) },
-                { ifExpr, _, editor -> IfThenToElvisInspection.convert(ifExpr, editor, inlineWithPrompt = true) }
+                { IfThenToElvisInspection.Util.INTENTION_TEXT },
+                { IfThenToElvisInspection.Util.isApplicableTo(it, expressionShouldBeStable = false) },
+                { ifExpr, _, editor -> IfThenToElvisInspection.Util.convert(ifExpr, editor, inlineWithPrompt = true) }
             )
         )
     }

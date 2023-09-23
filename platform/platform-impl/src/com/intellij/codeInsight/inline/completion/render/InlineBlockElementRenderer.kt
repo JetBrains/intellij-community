@@ -12,7 +12,7 @@ import java.awt.Graphics
 import java.awt.Rectangle
 
 @ApiStatus.Experimental
-class InlineBlockElementRenderer(private val editor: Editor, val lines: List<String>) : EditorCustomElementRenderer {
+class InlineBlockElementRenderer(private val editor: Editor, val lines: List<String>) : EditorCustomElementRenderer, InlineCompletionElementRenderer {
 
   private val width = editor.contentComponent.getFontMetrics(InlineFontUtils.font(editor)).stringWidth(lines.maxBy { it.length })
 
@@ -27,7 +27,7 @@ class InlineBlockElementRenderer(private val editor: Editor, val lines: List<Str
   }
 
   override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
-    g.color = InlineFontUtils.color
+    g.color = InlineFontUtils.color(editor)
     g.font = InlineFontUtils.font(editor)
     val lineSpacing = editor.getColorsScheme().getLineSpacing()
     val fontMetrics: FontMetrics = g.fontMetrics

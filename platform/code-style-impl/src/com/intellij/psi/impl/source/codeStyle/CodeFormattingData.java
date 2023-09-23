@@ -38,11 +38,12 @@ public final class CodeFormattingData {
     target.putUserData(CODE_FORMATTING_DATA_KEY, source.getUserData(CODE_FORMATTING_DATA_KEY));
   }
 
-  public void prepare(@NotNull PsiFile file, @NotNull List<TextRange> ranges) {
+  public static @NotNull CodeFormattingData prepare(@NotNull PsiFile file, @NotNull List<TextRange> ranges) {
     CodeFormattingData formattingData = getOrCreate(file);
     for (TextRange range : ranges) {
       formattingData.getInjectedRanges(range);
     }
+    return formattingData;
   }
 
   public void dispose() {

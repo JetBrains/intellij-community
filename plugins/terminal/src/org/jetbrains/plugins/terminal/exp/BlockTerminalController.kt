@@ -1,26 +1,35 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.find.FindManager
+import com.intellij.find.FindModel
+import com.intellij.find.FindUtil
+import com.intellij.find.SearchSession
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
+import org.jetbrains.plugins.terminal.exp.BlockTerminalSearchSession.Companion.isSearchInBlock
+import java.util.concurrent.CopyOnWriteArrayList
 
 class BlockTerminalController(
+  private val project: Project,
   private val session: TerminalSession,
-  focusModel: TerminalFocusModel,
   private val outputController: TerminalOutputController,
-  private val promptController: TerminalPromptController
+  private val promptController: TerminalPromptController,
+  private val selectionController: TerminalSelectionController,
+  private val focusModel: TerminalFocusModel
 ) : ShellCommandListener {
-  private val selectionController: TerminalSelectionController = TerminalSelectionController(focusModel,
-                                                                                             outputController.selectionModel,
-                                                                                             outputController.outputModel)
+  private val listeners: MutableList<BlockTerminalControllerListener> = CopyOnWriteArrayList()
+
+  var searchSession: BlockTerminalSearchSession? = null
+    private set
 
   init {
     session.addCommandListener(this)
-
-    outputController.putUserData(TerminalSelectionController.KEY, selectionController)
-    promptController.putUserData(TerminalSelectionController.KEY, selectionController)
 
     // Show initial terminal output (prior to the first prompt) in a separate block.
     // `initialized` event will finish the block.
@@ -33,23 +42,19 @@ class BlockTerminalController(
     session.postResize(newSize)
   }
 
+  @RequiresEdt
   fun startCommandExecution(command: String) {
-    ApplicationManager.getApplication().executeOnPooledThread {
-      val model = session.model
-      if (model.commandExecutionSemaphore.waitFor(3000)) {
-        model.commandExecutionSemaphore.down()
-      }
-      else {
-        thisLogger().error("Failed to acquire the command execution lock to execute command: '$command'\n" +
-                           "Text buffer:\n" + model.withContentLock { model.getAllText() })
-      }
-
-      invokeLater {
-        outputController.startCommandBlock(command)
-        promptController.promptIsVisible = false
-        session.executeCommand(command)
-      }
+    if (command.isBlank()) {
+      outputController.insertEmptyLine()
+      promptController.reset()
     }
+    else startCommand(command)
+  }
+
+  private fun startCommand(command: String) {
+    outputController.startCommandBlock(command)
+    promptController.promptIsVisible = false
+    session.executeCommand(command)
   }
 
   override fun commandStarted(command: String) {
@@ -75,11 +80,65 @@ class BlockTerminalController(
       model.clearAllExceptPrompt()
     }
 
-    model.commandExecutionSemaphore.up()
-
     invokeLater {
       promptController.reset()
       promptController.promptIsVisible = true
     }
+  }
+
+  @RequiresEdt
+  fun startSearchSession() {
+    val findModel = FindModel()
+    findModel.copyFrom(FindManager.getInstance(project).findInFileModel)
+    findModel.isWholeWordsOnly = false
+    findModel.isSearchInBlock = selectionController.primarySelection != null
+    val editor = outputController.outputModel.editor
+    FindUtil.configureFindModel(false, editor, findModel, false)
+    findModel.isGlobal = false
+    val session = BlockTerminalSearchSession(project, editor, findModel, outputController.outputModel, outputController.selectionModel,
+                                             closeCallback = this::onSearchClosed)
+    searchSession = session
+    listeners.forEach { it.searchSessionStarted(session) }
+    session.component.requestFocusInTheSearchFieldAndSelectContent(project)
+  }
+
+  @RequiresEdt
+  fun activateSearchSession() {
+    val session = searchSession ?: return
+    val editor = outputController.outputModel.editor
+    session.component.requestFocusInTheSearchFieldAndSelectContent(project)
+    FindUtil.configureFindModel(false, editor, session.findModel, false)
+    session.findModel.isSearchInBlock = selectionController.primarySelection != null
+    session.findModel.isGlobal = false
+  }
+
+  @RequiresEdt
+  fun finishSearchSession() {
+    searchSession?.close()
+  }
+
+  private fun onSearchClosed() {
+    searchSession?.let { session -> listeners.forEach { it.searchSessionFinished(session) } }
+    searchSession = null
+    if (selectionController.primarySelection != null || session.model.isCommandRunning) {
+      focusModel.focusOutput()
+    }
+    else focusModel.focusPrompt()
+  }
+
+  fun addListener(listener: BlockTerminalControllerListener, disposable: Disposable? = null) {
+    listeners.add(listener)
+    if (disposable != null) {
+      Disposer.register(disposable) { listeners.remove(listener) }
+    }
+  }
+
+  interface BlockTerminalControllerListener {
+    fun searchSessionStarted(session: SearchSession) {}
+    fun searchSessionFinished(session: SearchSession) {}
+  }
+
+  companion object {
+    val KEY: DataKey<BlockTerminalController> = DataKey.create("BlockTerminalController")
   }
 }

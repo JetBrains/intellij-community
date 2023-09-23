@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,9 +31,8 @@ public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardI
     myIndex = NotNullLazyValue.volatileLazy(() -> fileBasedIndex.getIndex((ID<Integer, V>)name));
   }
 
-  @NotNull
   @Override
-  public final InputDataDiffBuilder<Integer, V> getDiffBuilder(int inputId, @Nullable ByteArraySequence sequence) throws IOException {
+  public final @NotNull InputDataDiffBuilder<Integer, V> getDiffBuilder(int inputId, @Nullable ByteArraySequence sequence) throws IOException {
     Map<Integer, V> data;
     try {
       data = ProgressManager.getInstance().computeInNonCancelableSection(() -> myIndex.getValue().getIndexedFileData(inputId));
@@ -44,9 +43,8 @@ public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardI
     return createDiffBuilderByMap(inputId, data);
   }
 
-  @Nullable
   @Override
-  public Void convertToDataType(@NotNull InputData<Integer, V> data) {
+  public @Nullable Void convertToDataType(@NotNull InputData<Integer, V> data) {
     return null;
   }
 
@@ -56,9 +54,8 @@ public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardI
     return new SingleValueDiffBuilder<>(inputId, ContainerUtil.notNullize(map));
   }
 
-  @Nullable
   @Override
-  public final ByteArraySequence serializeIndexedData(@NotNull InputData<Integer, V> data) {
+  public final @Nullable ByteArraySequence serializeIndexedData(@NotNull InputData<Integer, V> data) {
     return null;
   }
 
@@ -72,10 +69,9 @@ public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardI
     }
   }
 
-  public static class SingleValueDiffBuilder<V> extends DirectInputDataDiffBuilder<Integer, V> {
+  public static final class SingleValueDiffBuilder<V> extends DirectInputDataDiffBuilder<Integer, V> {
     private final boolean myContainsValue;
-    @Nullable
-    private final V myCurrentValue;
+    private final @Nullable V myCurrentValue;
 
     public SingleValueDiffBuilder(int inputId, @NotNull Map<Integer, V> currentData) {
       this(inputId, !currentData.isEmpty(), ContainerUtil.getFirstItem(currentData.values()));

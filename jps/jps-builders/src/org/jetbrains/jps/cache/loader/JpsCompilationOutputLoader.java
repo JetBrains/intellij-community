@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.loader;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,7 +30,7 @@ import java.util.stream.Collectors;
 
 import static org.jetbrains.jps.cache.JpsCachesLoaderUtil.EXECUTOR_SERVICE;
 
-class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResult>> {
+final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResult>> {
   private static final Logger LOG = Logger.getInstance(JpsCompilationOutputLoader.class);
   private static final String RESOURCES_PRODUCTION = ResourcesTargetType.PRODUCTION.getTypeId();
   private static final String JAVA_PRODUCTION = JavaModuleBuildTargetType.PRODUCTION.getTypeId();
@@ -156,10 +157,9 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
     myContext = context;
   }
 
-  @NotNull
-  private List<AffectedModule> calculateAffectedModules(@Nullable Map<String, Map<String, BuildTargetState>> currentModulesState,
-                                                        @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState,
-                                                        boolean checkExistance) {
+  private @NotNull List<AffectedModule> calculateAffectedModules(@Nullable Map<String, Map<String, BuildTargetState>> currentModulesState,
+                                                                 @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState,
+                                                                 boolean checkExistance) {
     long start = System.currentTimeMillis();
 
     List<AffectedModule> affectedModules = new ArrayList<>();
@@ -249,9 +249,8 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
     return result;
   }
 
-  @NotNull
-  private static List<AffectedModule> mergeAffectedModules(List<AffectedModule> affectedModules,
-                                                           @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState) {
+  private static @NotNull List<AffectedModule> mergeAffectedModules(List<AffectedModule> affectedModules,
+                                                                    @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState) {
     Set<AffectedModule> result = new HashSet<>();
     affectedModules.forEach(affectedModule -> {
       if (affectedModule.getType().equals(JAVA_PRODUCTION)) {

@@ -17,7 +17,7 @@ class PayloadStorageImpl(
   storagePath: Path,
 ) : PayloadStorage {
   override val sourcesDeclaration: PersistentSet<PayloadSource> = persistentSetOf(PayloadSource.PayloadStorage)
-  private val appendLogStorage: AppendLogStorage = AppendLogStorage(storagePath, Mode.ReadWrite, CHUNK_SIZE)
+  private val appendLogStorage: AppendLogStorage = AppendLogStorage(storagePath, Mode.ReadWrite, PAGE_SIZE)
 
   override fun appendPayload(sizeBytes: Long): PayloadStorageIO.PayloadAppendContext {
     require(sizeBytes >= 0)
@@ -116,6 +116,6 @@ class PayloadStorageImpl(
 
   companion object {
     private const val MiB = 1024 * 1024
-    private const val CHUNK_SIZE = 32 * MiB
+    private const val PAGE_SIZE = 32 * MiB
   }
 }

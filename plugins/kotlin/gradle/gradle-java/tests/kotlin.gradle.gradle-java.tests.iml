@@ -63,5 +63,6 @@
     <orderEntry type="module" module-name="kotlin.base.indices" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" scope="TEST" />
+    <orderEntry type="library" name="assertJ" level="project" />
   </component>
 </module>

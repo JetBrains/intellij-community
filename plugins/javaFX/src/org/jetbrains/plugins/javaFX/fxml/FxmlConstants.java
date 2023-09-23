@@ -1,45 +1,43 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public final class FxmlConstants {
-  @NonNls public static final String FX_CONTROLLER = "fx:controller";
-  @NonNls public static final String FX_ID = "fx:id";
-  @NonNls public static final String VALUE = "value";
-  @NonNls public static final String FX_VALUE = "fx:value";
-  @NonNls public static final String FX_FACTORY = "fx:factory";
-  @NonNls public static final String FX_CONSTANT = "fx:constant";
+  public static final @NonNls String FX_CONTROLLER = "fx:controller";
+  public static final @NonNls String FX_ID = "fx:id";
+  public static final @NonNls String VALUE = "value";
+  public static final @NonNls String FX_VALUE = "fx:value";
+  public static final @NonNls String FX_FACTORY = "fx:factory";
+  public static final @NonNls String FX_CONSTANT = "fx:constant";
 
-  @NonNls public static final String FX_REFERENCE = "fx:reference";
-  @NonNls public static final String FX_COPY = "fx:copy";
-  @NonNls public static final String FX_DEFINE = "fx:define";
-  @NonNls public static final String FX_SCRIPT = "fx:script";
-  @NonNls public static final String FX_INCLUDE = "fx:include";
-  @NonNls public static final String FX_ROOT = "fx:root";
-  @NonNls public static final String TYPE = "type";
-  @NonNls public static final String RESOURCES = "resources";
-  @NonNls public static final String CHARSET = "charset";
-  @NonNls public static final String CONTROLLER = "controller";
-  @NonNls public static final String CONTROLLER_SUFFIX = "Controller";
+  public static final @NonNls String FX_REFERENCE = "fx:reference";
+  public static final @NonNls String FX_COPY = "fx:copy";
+  public static final @NonNls String FX_DEFINE = "fx:define";
+  public static final @NonNls String FX_SCRIPT = "fx:script";
+  public static final @NonNls String FX_INCLUDE = "fx:include";
+  public static final @NonNls String FX_ROOT = "fx:root";
+  public static final @NonNls String TYPE = "type";
+  public static final @NonNls String RESOURCES = "resources";
+  public static final @NonNls String CHARSET = "charset";
+  public static final @NonNls String CONTROLLER = "controller";
+  public static final @NonNls String CONTROLLER_SUFFIX = "Controller";
 
-  @NonNls public static final String STYLE_CLASS = "styleClass";
-  @NonNls public static final String STYLESHEETS = "stylesheets";
-  @NonNls public static final String URL_ATTR = "url";
-  @NonNls public static final String URL_TAG = "URL";
+  public static final @NonNls String STYLE_CLASS = "styleClass";
+  public static final @NonNls String STYLESHEETS = "stylesheets";
+  public static final @NonNls String URL_ATTR = "url";
+  public static final @NonNls String URL_TAG = "URL";
 
-  @NonNls public static final String SOURCE = "source";
+  public static final @NonNls String SOURCE = "source";
 
-  @NonNls public static final String NULL_EXPRESSION = "${null}";
-  @NonNls private static final String NULL_VALUE = "$null";
+  public static final @NonNls String NULL_EXPRESSION = "${null}";
+  private static final @NonNls String NULL_VALUE = "$null";
 
   public static final Set<String> FX_BUILT_IN_ATTRIBUTES = Set.of(FX_ID, FX_CONTROLLER, VALUE, FX_VALUE, FX_FACTORY, FX_CONSTANT);
 

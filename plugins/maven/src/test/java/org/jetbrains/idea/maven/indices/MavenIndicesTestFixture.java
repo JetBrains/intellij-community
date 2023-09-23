@@ -21,7 +21,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
@@ -67,8 +66,8 @@ public class MavenIndicesTestFixture {
     setUpAfterImport();
   }
 
-  public void setUpAfterImport() throws Exception {
-    MavenIndexerWrapper.setTestIndicesDir(myDir.resolve("MavenIndices"));
+  public void setUpAfterImport() {
+    MavenSystemIndicesManager.getInstance().setTestIndicesDir(myDir.resolve("MavenIndices"));
     getIndicesManager().scheduleUpdateIndicesList(null);
     getIndicesManager().waitForBackgroundTasksInTests();
     UIUtil.dispatchAllInvocationEvents();

@@ -10,30 +10,23 @@ import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public class MavenProjectWatcherContributor implements ExternalSystemProjectsWatcherImpl.Contributor {
 
   @Override
   public void markDirtyAllExternalProjects(@NotNull Project project) {
-    runWhenFullyOpen(project, (manager) -> manager.scheduleUpdateProjects(List.of(), new MavenImportSpec(true, false, false)));
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+    manager.scheduleUpdateAllMavenProjects(new MavenImportSpec(true, false, false));
   }
 
   @Override
   public void markDirty(@NotNull Module module) {
-    runWhenFullyOpen(module.getProject(), (manager) -> {
-      MavenProject mavenProject = manager.findProject(module);
-      if (mavenProject != null) {
-        manager.scheduleUpdateProjects(Collections.singletonList(mavenProject), new MavenImportSpec(true, false, false));
-      }
-    });
-  }
-
-  private static void runWhenFullyOpen(@NotNull Project project, @NotNull Consumer<MavenProjectsManager> consumer) {
-    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-    manager.runWhenFullyOpen(() -> consumer.accept(manager));
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(module.getProject());
+    MavenProject mavenProject = manager.findProject(module);
+    if (mavenProject != null) {
+      manager.scheduleUpdateMavenProjects(new MavenImportSpec(true, false, false), List.of(mavenProject.getFile()), List.of());
+    }
   }
 }

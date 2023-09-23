@@ -157,12 +157,17 @@ public final class TypesDistinctProver {
         if (rejectInconsistentRaw && level > 0 &&
             extendsBound1 instanceof PsiClassType && extendsBound2 instanceof PsiClassType &&
             (((PsiClassType)extendsBound1).isRaw() ^ ((PsiClassType)extendsBound2).isRaw())) return true;
+        if (type1.equals(type2)) return false;
+        if (level > 1) return true;
         return proveExtendsBoundsDistinct(type1, type2, boundClass1, boundClass2);
       }
       return provablyDistinct(extendsBound1, extendsBound2, 1);
     }
     if (type2.isExtends()) return provablyDistinct(type2, type1, rejectInconsistentRaw, level);
-    if (type1.isExtends() && !type2.isBounded() && level > 1) return PsiUtil.resolveClassInType(type1.getExtendsBound()) instanceof PsiTypeParameter;
+    if (type1.isExtends() && !type2.isBounded() && level > 1) {
+      PsiType bound = type1.getExtendsBound();
+      return bound instanceof PsiClassType || bound instanceof PsiArrayType;
+    }
     if (type1.isExtends() && type2.isSuper()) {
       final PsiType extendsBound = type1.getExtendsBound();
       final PsiType superBound = type2.getSuperBound();

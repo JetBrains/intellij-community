@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.concurrency.Semaphore
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.RequestOrigin
@@ -17,8 +16,6 @@ import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
 
 class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: StyleState) {
-  val commandExecutionSemaphore: Semaphore = Semaphore()
-
   val width: Int
     get() = textBuffer.width
   val height: Int
@@ -265,15 +262,7 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
   private val cursorListeners: MutableList<CursorListener> = CopyOnWriteArrayList()
 
   fun addContentListener(listener: ContentListener, parentDisposable: Disposable? = null) {
-    val terminalListener = object : TerminalModelListenerEx {
-      override fun modelChanged() {
-        listener.onContentChanged()
-      }
-
-      override fun textWritten(x: Int, y: Int, text: String) {
-        listener.onTextWritten(x, y, text)
-      }
-    }
+    val terminalListener = TerminalModelListener { listener.onContentChanged() }
     textBuffer.addModelListener(terminalListener)
     if (parentDisposable != null) {
       Disposer.register(parentDisposable) {
@@ -302,8 +291,6 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
 
   interface ContentListener {
     fun onContentChanged() {}
-
-    fun onTextWritten(x: Int, y: Int, text: String) {}
   }
 
   interface TerminalListener {

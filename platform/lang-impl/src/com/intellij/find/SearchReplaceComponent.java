@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -90,6 +89,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   private final DataProvider myDataProviderDelegate;
 
   private final boolean myMultilineEnabled;
+  private final boolean myShowNewLineButton;
   private boolean myMultilineMode;
   private final boolean myAddSearchResultsToGlobalSearch;
   private final SearchComponentMode myMode;
@@ -122,6 +122,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                  boolean showOnlySearchPanel,
                                  boolean maximizeLeftPanelOnResize,
                                  boolean multilineEnabled,
+                                 boolean showNewLineButton,
                                  boolean addSearchResultsToGlobalSearch,
                                  SearchComponentMode mode,
                                  boolean showSeparator) {
@@ -132,6 +133,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     myReplaceRunnable = replaceRunnable;
     myCloseRunnable = closeRunnable;
     myMultilineEnabled = multilineEnabled;
+    myShowNewLineButton = showNewLineButton;
     myAddSearchResultsToGlobalSearch = addSearchResultsToGlobalSearch;
     myMode = mode;
 
@@ -594,17 +596,18 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       ((JBTextArea)innerTextComponent).setRows(isMultiline() ? 2 : 1);
       ((JBTextArea)innerTextComponent).setColumns(12);
       innerTextComponent.setMinimumSize(new Dimension(150, 0));
-      outerComponent = new SearchTextArea(((JBTextArea)innerTextComponent), search);
+
+      SearchTextArea searchTextArea = new SearchTextArea(((JBTextArea)innerTextComponent), search);
+      searchTextArea.setShowNewLineButton(myShowNewLineButton);
+      outerComponent = searchTextArea;
       if (search) {
         myExtraSearchButtons.clear();
-        myExtraSearchButtons
-          .addAll(((SearchTextArea)outerComponent).setExtraActions(myEmbeddedSearchActions.toArray(AnAction.EMPTY_ARRAY)));
-        ((SearchTextArea)outerComponent).setMultilineEnabled(myMultilineEnabled);
+        myExtraSearchButtons.addAll(searchTextArea.setExtraActions(myEmbeddedSearchActions.toArray(AnAction.EMPTY_ARRAY)));
+        searchTextArea.setMultilineEnabled(myMultilineEnabled);
       }
       else {
         myExtraReplaceButtons.clear();
-        myExtraReplaceButtons
-          .addAll(((SearchTextArea)outerComponent).setExtraActions(myEmbeddedReplaceActions.toArray(AnAction.EMPTY_ARRAY)));
+        myExtraReplaceButtons.addAll(searchTextArea.setExtraActions(myEmbeddedReplaceActions.toArray(AnAction.EMPTY_ARRAY)));
       }
     }
 
@@ -724,11 +727,11 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
   public interface Listener extends EventListener {
-    void searchFieldDocumentChanged();
+    default void searchFieldDocumentChanged() {}
 
-    void replaceFieldDocumentChanged();
+    default void replaceFieldDocumentChanged() {}
 
-    void multilineStateChanged();
+    default void multilineStateChanged() {}
 
     default void toggleSearchReplaceMode() {}
   }
@@ -754,6 +757,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     private boolean myShowOnlySearchPanel = false;
     private boolean myMaximizeLeftPanelOnResize = false;
     private boolean myMultilineEnabled = true;
+    private boolean myShowNewLineButton = true;
     private boolean myAddSearchResultsToGlobalSearch = true;
     private boolean myShowSeparator = true;
 
@@ -855,6 +859,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                         myShowOnlySearchPanel,
                                         myMaximizeLeftPanelOnResize,
                                         myMultilineEnabled,
+                                        myShowNewLineButton,
                                         myAddSearchResultsToGlobalSearch,
                                         myMode,
                                         myShowSeparator);
@@ -863,6 +868,12 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     @NotNull
     public Builder withMultilineEnabled(boolean b) {
       myMultilineEnabled = b;
+      return this;
+    }
+
+    @NotNull
+    public Builder withNewLineButton(boolean b) {
+      myShowNewLineButton = b;
       return this;
     }
 

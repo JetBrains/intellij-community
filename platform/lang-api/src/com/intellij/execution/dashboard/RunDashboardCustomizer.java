@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -32,18 +32,15 @@ public abstract class RunDashboardCustomizer {
    * @param node dashboard node
    * @return node's status. Returned status is used for grouping nodes by status.
    */
-  @Nullable
-  public RunDashboardRunConfigurationStatus getStatus(@NotNull RunDashboardRunConfigurationNode node) {
+  public @Nullable RunDashboardRunConfigurationStatus getStatus(@NotNull RunDashboardRunConfigurationNode node) {
     return null;
   }
 
-  @Nullable
-  public PsiElement getPsiElement(@NotNull RunDashboardRunConfigurationNode node) {
+  public @Nullable PsiElement getPsiElement(@NotNull RunDashboardRunConfigurationNode node) {
     return null;
   }
 
-  @Nullable
-  public Collection<? extends AbstractTreeNode<?>> getChildren(@NotNull RunDashboardRunConfigurationNode node) {
+  public @Nullable Collection<? extends AbstractTreeNode<?>> getChildren(@NotNull RunDashboardRunConfigurationNode node) {
     return null;
   }
 

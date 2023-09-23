@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.updater
 
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.lightEdit.LightEdit
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.internal.statistic.service.fus.collectors.ProjectFUStateUsagesLogger
 import com.intellij.openapi.application.ApplicationManager
@@ -37,6 +38,7 @@ internal class StatisticsStateCollectorsScheduler : ApplicationInitializedListen
         return
       }
 
+      FUCounterUsageLogger.getInstance() // init service
       project.service<ProjectFUStateUsagesLogger>() // init service
 
       if (allowExecution.get()) {

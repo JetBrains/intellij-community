@@ -37,10 +37,8 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.RunnableCallable;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.ChildContext;
-import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import io.opentelemetry.api.metrics.Meter;
@@ -225,8 +223,14 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     return new Submission<>(this, SYNC_DUMMY_EXECUTOR, outerIndicator).executeSynchronously();
   }
 
+  @SuppressWarnings("unused")
+  private void schedule(@Async.Schedule Callable<? extends T> computation) {
+    // dummy method to capture the original computation object, see org.jetbrains.annotations.Async.Schedule
+  }
+
   @Override
   public @NotNull CancellablePromise<T> submit(@NotNull Executor backgroundThreadExecutor) {
+    schedule(myOriginalComputation);
     Submission<T> submission = new Submission<>(this, backgroundThreadExecutor, myProgressIndicator);
     if (myCoalesceEquality == null) {
       submission.transferToBgThread();
@@ -461,7 +465,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           try {
             boolean computationSuccessful;
             if (AppExecutorUtil.propagateContextOrCancellation()) {
-              try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), false)) {
+              try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
                 computationSuccessful = attemptComputation();
               }
             } else {
@@ -739,7 +743,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
    */
   @TestOnly
   public static void waitForAsyncTaskCompletion() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     for (Submission<?> task : ourTasks) {
       waitForTask(task);
@@ -748,7 +752,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   @TestOnly
   private static void waitForTask(@NotNull Submission<?> task) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     for (ContextConstraint constraint : task.builder.myConstraints) {
       if (constraint instanceof InSmartMode && !constraint.isCorrectContext()) {
         return;
@@ -830,7 +834,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     @Contract(pure = true)
-    private <V> V callWrapped(@NotNull Callable<V> computation) throws Exception {
+    private <V> V callWrapped(@Async.Execute @NotNull Callable<V> computation) throws Exception {
       long startedAtNs = System.nanoTime();
       try {
         V result = computation.call();

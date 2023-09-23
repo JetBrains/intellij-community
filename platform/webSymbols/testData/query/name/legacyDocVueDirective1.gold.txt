@@ -66,6 +66,7 @@
    },
    {
     name-part: "foo",
+    display-name: "argument",
     matchScore: 0,
     symbol: {
      matchedName: "html/argument/<pattern>",
@@ -109,6 +110,7 @@
    },
    {
     name-part: "ba456",
+    display-name: "modifier",
     matchScore: 2,
     symbol: {
      matchedName: "html/modifiers/<pattern>",

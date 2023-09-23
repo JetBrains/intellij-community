@@ -4,14 +4,14 @@ package com.intellij.java.devkit.psiViewer;
 import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.*;
 
-final class JavaPsiViewerBundle {
+final public class JavaPsiViewerBundle {
   private static final @NonNls String BUNDLE_FQN = "messages.JavaPsiViewerBundle";
   private static final DynamicBundle BUNDLE = new DynamicBundle(JavaPsiViewerBundle.class, BUNDLE_FQN);
 
   private JavaPsiViewerBundle() {
   }
 
-  static @Nls @NotNull String message(
+  public static @Nls @NotNull String message(
     @PropertyKey(resourceBundle = BUNDLE_FQN) @NotNull String key,
     @Nullable Object @NotNull ... params) {
     return BUNDLE.getMessage(key, params);

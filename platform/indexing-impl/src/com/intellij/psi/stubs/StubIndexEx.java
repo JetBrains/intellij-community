@@ -126,8 +126,7 @@ public abstract class StubIndexEx extends StubIndex {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  @NotNull
-  public abstract Logger getLogger();
+  public abstract @NotNull Logger getLogger();
 
   @Override
   public <Key, Psi extends PsiElement> boolean processElements(@NotNull StubIndexKey<Key, Psi> indexKey,
@@ -508,5 +507,5 @@ public abstract class StubIndexEx extends StubIndex {
   }
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  abstract public @NotNull FileUpdateProcessor getPerFileElementTypeModificationTrackerUpdateProcessor();
+  public abstract @NotNull FileUpdateProcessor getPerFileElementTypeModificationTrackerUpdateProcessor();
 }

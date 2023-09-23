@@ -7,7 +7,7 @@ import com.intellij.facet.FacetManager
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 
-class KotlinFacet(
+open class KotlinFacet(
     module: Module,
     name: String,
     configuration: KotlinFacetConfiguration

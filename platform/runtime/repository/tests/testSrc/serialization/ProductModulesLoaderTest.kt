@@ -3,12 +3,14 @@ package com.intellij.platform.runtime.repository.serialization
 
 import com.intellij.platform.runtime.repository.ModuleImportance
 import com.intellij.platform.runtime.repository.createRepository
+import com.intellij.platform.runtime.repository.writePluginXml
 import com.intellij.platform.runtime.repository.xml
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.util.io.directoryContent
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import kotlin.io.path.div
 
 private const val FILE_NAME = "product-modules.xml"
 
@@ -22,8 +24,9 @@ class ProductModulesLoaderTest {
     val repository = createRepository(tempDirectory.rootPath, 
       RawRuntimeModuleDescriptor("util", emptyList(), emptyList()),
       RawRuntimeModuleDescriptor("root", emptyList(), listOf("util")),
-      RawRuntimeModuleDescriptor("plugin", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor("plugin", listOf("plugin"), emptyList()),
     )
+    writePluginXml(tempDirectory.rootPath / "plugin", "<idea-plugin><id>plugin</id></idea-plugin>")
     val xml = directoryContent { 
       xml(FILE_NAME, """
         <product-modules>

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -18,13 +18,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-public class JsonTypedHandler extends TypedHandlerDelegate {
+public final class JsonTypedHandler extends TypedHandlerDelegate {
 
   private boolean myWhitespaceAdded;
 
-  @NotNull
   @Override
-  public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (file instanceof JsonFile) {
       processPairedBracesComma(c, editor, file);
       addWhiteSpaceAfterColonIfNeeded(c, editor, file);
@@ -102,13 +101,12 @@ public class JsonTypedHandler extends TypedHandlerDelegate {
     myWhitespaceAdded = false;
   }
 
-  @NotNull
   @Override
-  public Result beforeCharTyped(char c,
-                                @NotNull Project project,
-                                @NotNull Editor editor,
-                                @NotNull PsiFile file,
-                                @NotNull FileType fileType) {
+  public @NotNull Result beforeCharTyped(char c,
+                                         @NotNull Project project,
+                                         @NotNull Editor editor,
+                                         @NotNull PsiFile file,
+                                         @NotNull FileType fileType) {
     if (file instanceof JsonFile) {
       addPropertyNameQuotesIfNeeded(c, editor, file);
     }

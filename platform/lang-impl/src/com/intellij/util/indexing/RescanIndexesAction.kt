@@ -3,6 +3,7 @@ package com.intellij.util.indexing
 
 import com.intellij.ide.actions.cache.*
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.FilesScanningTask
@@ -10,7 +11,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.stubs.StubTreeBuilder
 import com.intellij.psi.stubs.StubUpdatingIndex
-import com.intellij.util.BooleanFunction
+import com.intellij.util.application
+import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.roots.IndexableFilesIterator
@@ -19,6 +22,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.function.Predicate
 
 @ApiStatus.Internal
 class RescanIndexesAction : RecoveryAction {
@@ -39,9 +43,12 @@ class RescanIndexesAction : RecoveryAction {
       predefinedIndexableFilesIterators = recoveryScope.files.map { ProjectIndexableFilesIteratorImpl(it) }
       if (predefinedIndexableFilesIterators.isEmpty()) return emptyList()
     }
+    application.service<AppIndexingDependenciesService>().invalidateAllStamps()
+    val rescan = project.service<ProjectIndexingDependenciesService>().getLatestIndexingRequestToken()
     object : UnindexedFilesScanner(project, false, false,
                                    predefinedIndexableFilesIterators, null, "Rescanning indexes recovery action",
-                                   if(predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED) {
+                                   if(predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED,
+                                   rescan) {
       private val stubIndex =
         runCatching { (FileBasedIndex.getInstance() as FileBasedIndexImpl).getIndex(StubUpdatingIndex.INDEX_ID) }
         .onFailure { logger<RescanIndexesAction>().error(it) }.getOrNull()
@@ -51,15 +58,15 @@ class RescanIndexesAction : RecoveryAction {
           get() = "`$path` should have already indexed stub but it's not present"
       }
 
-      override fun getForceReindexingTrigger(): BooleanFunction<IndexedFile>? {
+      override fun getForceReindexingTrigger(): Predicate<IndexedFile>? {
         if (stubIndex != null) {
-          return BooleanFunction<IndexedFile> {
+          return Predicate<IndexedFile> {
             val fileId = (it.file as VirtualFileWithId).id
             if (stubIndex.getIndexingStateForFile(fileId, it) == FileIndexingState.UP_TO_DATE &&
                 stubIndex.getIndexedFileData(fileId).isEmpty() &&
                 isAbleToBuildStub(it.file)) {
               stubAndIndexingStampInconsistencies.add(StubAndIndexStampInconsistency(it.file.path))
-              return@BooleanFunction true
+              return@Predicate true
             }
             false
           }
@@ -74,7 +81,6 @@ class RescanIndexesAction : RecoveryAction {
       override fun performScanningAndIndexing(indicator: CheckCancelOnlyProgressIndicator,
                                               progressReporter: IndexingProgressReporter): ProjectScanningHistory {
         try {
-          IndexingFlag.cleanupProcessedFlag()
           val history = super.performScanningAndIndexing(indicator, progressReporter)
           historyFuture.complete(history)
           return history

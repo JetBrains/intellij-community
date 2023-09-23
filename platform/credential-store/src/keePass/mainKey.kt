@@ -5,7 +5,6 @@ import com.intellij.credentialStore.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.io.delete
-import com.intellij.util.io.readBytes
 import com.intellij.util.io.safeOutputStream
 import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.composer.Composer
@@ -16,6 +15,7 @@ import org.yaml.snakeyaml.resolver.Resolver
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.readBytes
 
 internal const val MAIN_KEY_FILE_NAME = "c.pwd"
 private const val OLD_MAIN_PASSWORD_FILE_NAME = "pdb.pwd"

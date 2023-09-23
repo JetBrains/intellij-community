@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
  * Aether-based repository manager and dependency resolver using maven implementation of this functionality.
  * <p>
  * instance of this component should be managed by the code which requires dependency resolution functionality
- * all necessary params like path to local repo should be passed in constructor
+ * all necessary params like a path to local repo should be passed in constructor
  */
 public final class ArtifactRepositoryManager {
   private static final VersionScheme ourVersioning = new GenericVersionScheme();
@@ -281,7 +281,7 @@ public final class ArtifactRepositoryManager {
       org.slf4j.impl.JDK14LoggerFactory.class, // slf4j-jdk14 - required for aether resolver at runtime
       org.apache.commons.codec.binary.Base64.class // commons-codec
     ));
-    result.addAll(Arrays.asList(ClassPathUtil.getUtilClasses())); // intellij.platform.util module
+    result.addAll(List.of(ClassPathUtil.getUtilClasses())); // intellij.platform.util module
 
     return result.toArray(ArrayUtil.EMPTY_CLASS_ARRAY);
   }
@@ -330,7 +330,7 @@ public final class ArtifactRepositoryManager {
     VersionConstraint originalConstraints = asVersionConstraint(versionConstraint);
     for (ArtifactKind kind : artifactKinds) {
       // RepositorySystem.resolveDependencies() ignores classifiers, so we need to set classifiers explicitly for discovered dependencies.
-      // Because of that we have to first discover deps and then resolve corresponding artifacts
+      // Because of that, we have to first discover deps and then resolve corresponding artifacts
       try {
         List<ArtifactRequest> requests = new ArrayList<>();
         Set<VersionConstraint> constraints;
@@ -362,7 +362,7 @@ public final class ArtifactRepositoryManager {
           }
           catch (ArtifactResolutionException e) {
             if (kind != ArtifactKind.ARTIFACT) {
-              // for sources and javadocs try to process requests one-by-one and fetch at least something
+              // for sources and javadocs, try to process requests one-by-one and fetch at least something
               if (requests.size() > 1) {
                 for (ArtifactRequest request : requests) {
                   try {
@@ -463,7 +463,7 @@ public final class ArtifactRepositoryManager {
    * Modify version constraint to look for applicable "annotations" artifact.
    * <p>
    * "Annotations" artifact for a given library is matched by Group ID, Artifact ID, and classifier "annotations".
-   * "Annotations" version is selected using following rules:
+   * "Annotations" version is selected using the following rules:
    * <ul>
    *   <li>it is larger or equal to major component of library version (or lower constraint bound).
    *   E.g., annotations artifact ver 3.1 is applicable to library ver 3.6.5 (3.1 > 3.0)</li>
@@ -471,7 +471,7 @@ public final class ArtifactRepositoryManager {
    *   E.g., annotations artifact ver 3.2-an3 is applicable to library ver 3.2</li>
    * </ul>
    * This allows to re-use existing annotations artifacts across different library versions
-   * @param constraint - version or range constraint of original library
+   * @param constraint - version or range constraint of an original library
    * @return resulting relaxed constraint to select "annotations" artifact.
    */
   private static Set<VersionConstraint> relaxForAnnotations(VersionConstraint constraint) {

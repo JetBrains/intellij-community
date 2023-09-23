@@ -604,6 +604,16 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
   //DS-4478
   public void testSpaceShellCommandsPathJupyter() { doTest(false, "formatter/jupyter/", ".ipynb"); }
 
+  //DS-5427
+  public void testMagicPath() { doTest(false, "formatter/jupyter/", ".ipynb"); }
+
+  //DS-5427
+  public void testMagicPathEmptyCells() { doTest(false, "formatter/jupyter/", ".ipynb"); }
+
+  //DS-5427
+  public void testMagicPathComment() { doTest(false, "formatter/jupyter/", ".ipynb"); }
+
+
   /**
    * This test merely checks that call to {@link com.intellij.psi.codeStyle.CodeStyleManager#reformat(com.intellij.psi.PsiElement)}
    * is possible for Python sources.
@@ -1324,6 +1334,31 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
 
   // PY-24792
   public void testNoAlignmentForSplitByBackslashesTupleInYieldStatement() {
+    doTest();
+  }
+
+  // PY-61854
+  public void testSpaceAfterTypeKeywordInTypeAliasStatement() {
+    doTest();
+  }
+
+  // PY-61854
+  public void testSpaceAfterCommaInTypeParameterList() {
+    doTest();
+  }
+
+  // PY-61854
+  public void testAlignmentInMultilineTypeParameterListInTypeAliasStatement() {
+    doTest();
+  }
+
+  // PY-61854
+  public void testAlignmentInMultilineTypeParameterListInFunctionDefinition() {
+    doTest();
+  }
+
+  // PY-61854
+  public void testAlignmentInMultilineTypeParameterListInClassDefinition() {
     doTest();
   }
 }

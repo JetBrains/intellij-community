@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
@@ -9,7 +10,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class AnnotateMethodInGeneratedFilesTest extends LightJavaCodeInsightFixtureTestCase {
   private final GeneratedSourcesFilter myGeneratedSourcesFilter = new GeneratedSourcesFilter() {
@@ -34,11 +38,11 @@ public class AnnotateMethodInGeneratedFilesTest extends LightJavaCodeInsightFixt
   }
 
   public void testAnnotateOverriddenMethod() {
-    doTest("Annotate overridden methods");
+    doTest("Annotate overriding methods");
   }
 
   public void testAnnotateOverriddenParameters() {
-    doTest("Annotate overridden method parameters");
+    doTest("Annotate overriding method parameters");
   }
 
   private void doTest(String quickFixName) {
@@ -47,7 +51,10 @@ public class AnnotateMethodInGeneratedFilesTest extends LightJavaCodeInsightFixt
     String generatedTextBefore = generated.getText();
 
     myFixture.configureByFile("before" + getTestName(false) + ".java");
-    myFixture.launchAction(myFixture.findSingleIntention(quickFixName));
+    List<IntentionAction> intentions = myFixture.getAvailableIntentions();
+    IntentionAction action = ContainerUtil.find(intentions, i -> i.getText().startsWith(quickFixName));
+    assertNotNull(action);
+    myFixture.launchAction(action);
     myFixture.checkResultByFile("after" + getTestName(false) + ".java");
     assertEquals(generatedTextBefore, generated.getText());
   }

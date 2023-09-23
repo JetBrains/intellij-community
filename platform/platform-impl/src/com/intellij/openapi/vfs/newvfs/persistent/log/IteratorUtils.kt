@@ -233,7 +233,7 @@ object IteratorUtils {
       skipPrevious()
     }
     if (getPosition() != position) {
-      throw IllegalStateException("impossible to reach position $position from $initialPosition, current position is $position")
+      throw IllegalStateException("impossible to reach position $position from $initialPosition, current position is ${getPosition()}")
     }
   }
 }

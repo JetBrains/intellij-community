@@ -1,17 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic;
 
-import com.intellij.platform.diagnostic.telemetry.IJTracer;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.MathUtil;
 import com.intellij.util.indexing.IndexId;
 import io.opentelemetry.api.metrics.BatchCallback;
@@ -36,7 +35,8 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationAggregatesCollector.MAX_TRACKABLE_DURATION_MS;
 import static java.util.Objects.requireNonNull;
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toSet;
 
 /**
@@ -59,7 +59,7 @@ public final class IndexLookupTimingsReporting {
    * See {@link #REPORT_TO_FUS_INDIVIDUAL_LOOKUPS_ONLY_LONGER_THAN_MS}
    */
   private static final boolean REPORT_INDIVIDUAL_LOOKUPS_TO_FUS = getBooleanProperty(
-    "IndexLookupTimingsReporting.REPORT_INDIVIDUAL_LOOKUPS_TO_FUS", ApplicationManager.getApplication().isEAP()
+    "IndexLookupTimingsReporting.REPORT_INDIVIDUAL_LOOKUPS_TO_FUS", false
   );
 
   /**
@@ -204,7 +204,7 @@ public final class IndexLookupTimingsReporting {
    * </ol>
    * Specific lookups also have their own fields, see apt. _EVENT fields
    */
-  public static class IndexOperationFusCollector extends CounterUsagesCollector {
+  public static final class IndexOperationFusCollector extends CounterUsagesCollector {
 
     private static final VarargEventId EVENT_INDEX_ALL_KEYS_LOOKUP = INDEX_USAGE_GROUP.registerVarargEvent(
       "lookup.all_keys",
@@ -262,7 +262,7 @@ public final class IndexLookupTimingsReporting {
 
     //========================== CLASSES:
 
-    protected static abstract class LookupTraceBase<T extends LookupTraceBase<T>> implements AutoCloseable,
+    protected abstract static class LookupTraceBase<T extends LookupTraceBase<T>> implements AutoCloseable,
                                                                                              Cloneable {
       /**
        * In case of re-entrant lookup (i.e. lookup invoked inside another lookup's callback) this field
@@ -313,8 +313,8 @@ public final class IndexLookupTimingsReporting {
         return typeSafeThis();
       }
 
-      protected void setupTraceBeforeStart(@NotNull final IndexId<?, ?> indexId,
-                                           @Nullable final T parentTrace) {
+      protected void setupTraceBeforeStart(final @NotNull IndexId<?, ?> indexId,
+                                           final @Nullable T parentTrace) {
         this.indexId = indexId;
         this.project = null;
         this.lookupFailed = false;
@@ -436,9 +436,8 @@ public final class IndexLookupTimingsReporting {
         }
       }
 
-      @NotNull
       @SuppressWarnings("unchecked")
-      private T typeSafeThis() {
+      private @NotNull T typeSafeThis() {
         return (T)this;
       }
 
@@ -488,10 +487,10 @@ public final class IndexLookupTimingsReporting {
      * Holds a trace (timestamps, pieces of data) for a 'lookup entries' index query. To be used as thread-local
      * object.
      */
-    public static class LookupAllKeysTrace extends LookupTraceBase<LookupAllKeysTrace> {
+    public static final class LookupAllKeysTrace extends LookupTraceBase<LookupAllKeysTrace> {
       private long indexValidationFinishedAtMs;
 
-      protected LookupAllKeysTrace(final ThreadLocal<LookupAllKeysTrace> current) {
+      private LookupAllKeysTrace(final ThreadLocal<LookupAllKeysTrace> current) {
         super(current);
       }
 
@@ -575,7 +574,7 @@ public final class IndexLookupTimingsReporting {
      * Holds a trace (timestamps, pieces of data) for a 'lookup entries' index query. To be used as thread-local
      * object.
      */
-    public static class LookupEntriesByKeysTrace extends LookupTraceBase<LookupEntriesByKeysTrace> {
+    public static final class LookupEntriesByKeysTrace extends LookupTraceBase<LookupEntriesByKeysTrace> {
       private long indexValidationFinishedAtMs;
 
       /**
@@ -584,7 +583,7 @@ public final class IndexLookupTimingsReporting {
       private int lookupKeysCount = -1;
       private LookupOperation lookupOperation = LookupOperation.UNKNOWN;
 
-      protected LookupEntriesByKeysTrace(final ThreadLocal<LookupEntriesByKeysTrace> current) {
+      private LookupEntriesByKeysTrace(final ThreadLocal<LookupEntriesByKeysTrace> current) {
         super(current);
       }
 
@@ -690,12 +689,12 @@ public final class IndexLookupTimingsReporting {
      * Holds a trace (timestamps, pieces of data) for a 'lookup entries' stub-index query. To be used as thread-local
      * object.
      */
-    public static class LookupStubEntriesByKeyTrace extends LookupTraceBase<LookupStubEntriesByKeyTrace> {
+    public static final class LookupStubEntriesByKeyTrace extends LookupTraceBase<LookupStubEntriesByKeyTrace> {
       //total lookup time = (upToDateCheck time) + (pure index lookup time) + (Stub Trees deserializing time)
       private long indexValidationFinishedAtMs;
       private long stubTreesDeserializingStarted;
 
-      protected LookupStubEntriesByKeyTrace(final ThreadLocal<LookupStubEntriesByKeyTrace> current) {
+      private LookupStubEntriesByKeyTrace(final ThreadLocal<LookupStubEntriesByKeyTrace> current) {
         super(current);
       }
 
@@ -787,7 +786,7 @@ public final class IndexLookupTimingsReporting {
   }
 
   /** Collects and reports aggregated performance data (averages, %-iles) about index lookup timings to FUS */
-  public static class IndexOperationAggregatesCollector extends ApplicationUsagesCollector {
+  public static final class IndexOperationAggregatesCollector extends ApplicationUsagesCollector {
 
     public static final int MAX_TRACKABLE_DURATION_MS = getIntProperty("IndexLookupTimingsReporting.MAX_TRACKABLE_DURATION_MS", 5000);
 
@@ -848,8 +847,7 @@ public final class IndexLookupTimingsReporting {
 
     //FIXME RC: OTel reporting is implicitly guarded by REPORT_AGGREGATED_STATS, which is not obvious. Better to separate FUS and
     //          OTel reporting to independent branches
-    @Nullable
-    private static final IndexLookupTimingsReporting.IndexOperationToOTelMetricsReporter otelReporter =
+    private static final @Nullable IndexLookupTimingsReporting.IndexOperationToOTelMetricsReporter otelReporter =
       REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY ?
       new IndexOperationToOTelMetricsReporter() :
       null;
@@ -929,9 +927,8 @@ public final class IndexLookupTimingsReporting {
       }
     }
 
-    @NotNull
     @Override
-    public Set<MetricEvent> getMetrics() {
+    public @NotNull Set<MetricEvent> getMetrics() {
       if (REPORT_AGGREGATED_STATS_TO_FUS) {
         final Set<MetricEvent> allKeysLookupStats = allKeysLookupDurationsMsByIndexId.entrySet().stream().map(e -> {
           final IndexId<?, ?> indexId = e.getKey();
@@ -1006,7 +1003,7 @@ public final class IndexLookupTimingsReporting {
   }
 
   /** Collects and reports aggregated performance data (averages, %-iles) about index lookup timings to OpenTelemetry */
-  private static class IndexOperationToOTelMetricsReporter implements AutoCloseable {
+  private static final class IndexOperationToOTelMetricsReporter implements AutoCloseable {
 
     // 2 digits =~ 1% accuracy
     private static final Recorder allKeysLookupDurationMsHisto = new Recorder(MAX_TRACKABLE_DURATION_MS, /* significant digits = */ 2);

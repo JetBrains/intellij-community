@@ -12,6 +12,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -55,7 +56,8 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     if (myValues != null) {
       String oldText = getText();
       Icon oldIcon = getIcon();
-      for (T v : myValues) {
+      for (int i = 0, limit = getPreferredSizeMaxValues(); i < myValues.length && i < limit; i++) {
+        T v = myValues[i];
         setText(getTextFor(v));
         setIcon(getIconFor(v));
 
@@ -69,6 +71,10 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     }
 
     return size;
+  }
+
+  protected int getPreferredSizeMaxValues() {
+    return Integer.MAX_VALUE;
   }
 
   @Override
@@ -178,6 +184,11 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   private void stopCellEditing(T value) {
     myValue = value;
     stopCellEditing();
+  }
+
+  @TestOnly
+  public void chooseItem(int idx) {
+    stopCellEditing(myValues[idx]);
   }
 
   @Override

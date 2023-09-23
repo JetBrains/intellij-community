@@ -20,10 +20,6 @@ data class JsonFileProviderIndexStatistics(
   val numberOfTooLargeForIndexingFiles: Int = 0,
   val slowIndexedFiles: List<JsonSlowIndexedFile> = emptyList(),
   val filesFullyIndexedByExtensions: List<String> = emptyList(),
-  val isAppliedAllValuesSeparately: Boolean = true,
-  /**
-   * Is 0 when [isAppliedAllValuesSeparately] <=> [!FileBasedIndexImpl.isWritingIndexValuesSeparatedFromCounting]
-   */
   val separateApplyingIndexesVisibleTime: JsonDuration = JsonDuration(0),
   /**
    * Available only if [com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles] is enabled.

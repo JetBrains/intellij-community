@@ -51,7 +51,7 @@ public class TypeMayBeWeakened {
         foo(new WeakBoolean());
     }
 
-    void foo(WeakBoolean <warning descr="Type of parameter 'b' may be weakened to 'java.lang.Object'">b</warning>) {
+    void foo(WeakBoolean b) {
         System.out.println("b: " + b);
     }
 
@@ -59,11 +59,11 @@ public class TypeMayBeWeakened {
         return s + 1;
     }
 
-    String foo1(String <warning descr="Type of parameter 's' may be weakened to 'java.lang.Object'">s</warning>) {
+    String foo1(String s) {
       return s + "1";
     }
 
-    String foo2(String <warning descr="Type of parameter 's' may be weakened to 'java.lang.Object'">s</warning>) {
+    String foo2(String s) {
       return 1 + "2" + 3 + s;
     }
 
@@ -71,7 +71,7 @@ public class TypeMayBeWeakened {
       return 1 + s;
     }
 
-    boolean equals(String <warning descr="Type of parameter 's' may be weakened to 'java.lang.Object'">s</warning>, String <warning descr="Type of parameter 't' may be weakened to 'java.lang.Object'">t</warning>) {
+    boolean equals(String s, String t) {
         return s == t;
     }
 
@@ -210,7 +210,7 @@ class MethodReference2 {
     Object o = myTransform();
   }
 
-  private static String <warning descr="Return type of method 'myTransform()' may be weakened to 'java.lang.Object'">myTransform</warning>() {
+  private static String myTransform() {
     return "Integer.toString(in)";
   }
 }

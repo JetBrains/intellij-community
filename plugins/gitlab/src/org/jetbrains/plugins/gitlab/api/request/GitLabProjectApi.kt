@@ -23,8 +23,8 @@ fun GitLabApi.GraphQL.createAllProjectLabelsFlow(project: GitLabProjectCoordinat
     val parameters = page.asParameters() + mapOf(
       "fullPath" to project.projectPath.fullPath()
     )
-    val request = gitLabQuery(project.serverPath, GitLabGQLQuery.GET_PROJECT_LABELS, parameters)
-    withErrorStats(project.serverPath, GitLabGQLQuery.GET_PROJECT_LABELS) {
+    val request = gitLabQuery(GitLabGQLQuery.GET_PROJECT_LABELS, parameters)
+    withErrorStats(GitLabGQLQuery.GET_PROJECT_LABELS) {
       loadResponse<LabelConnection>(request, "project", "labels").body()
     }
   }.map { it.nodes }
@@ -33,9 +33,9 @@ fun GitLabApi.GraphQL.createAllProjectLabelsFlow(project: GitLabProjectCoordinat
 fun getProjectUsersURI(project: GitLabProjectCoordinates) = project.restApiUri.resolveRelative("users")
 
 @SinceGitLab("7.0", note = "No exact version")
-suspend fun GitLabApi.Rest.getProjectUsers(serverPath: GitLabServerPath, uri: URI): HttpResponse<out List<GitLabUserRestDTO>> {
+suspend fun GitLabApi.Rest.getProjectUsers(uri: URI): HttpResponse<out List<GitLabUserRestDTO>> {
   val request = request(uri).GET().build()
-  return withErrorStats(serverPath, GitLabApiRequestName.REST_GET_PROJECT_USERS) {
+  return withErrorStats(GitLabApiRequestName.REST_GET_PROJECT_USERS) {
     loadJsonList(request)
   }
 }

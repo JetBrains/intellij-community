@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import javax.swing.*;
@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings({"UseJBColor", "UseDPIAwareBorders", "HardCodedStringLiteral"})
+@SuppressWarnings("HardCodedStringLiteral")
 public class SwingUpdaterUI implements UpdaterUI {
   private static final EmptyBorder FRAME_BORDER = new EmptyBorder(8, 8, 8, 8);
   private static final EmptyBorder LABEL_BORDER = new EmptyBorder(0, 0, 5, 0);
@@ -159,7 +159,8 @@ public class SwingUpdaterUI implements UpdaterUI {
   }
 
   @Override
-  public Map<String, ValidationResult.Option> askUser(List<? extends ValidationResult> validationResults) throws OperationCancelledException {
+  @SuppressWarnings({"SSBasedInspection", "ExtractMethodRecommender"})
+  public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
     boolean canProceed = validationResults.stream().noneMatch(r -> r.options.contains(ValidationResult.Option.NONE));
     Map<String, ValidationResult.Option> result = new HashMap<>();
 
@@ -262,7 +263,7 @@ public class SwingUpdaterUI implements UpdaterUI {
 
     private final List<Item> myItems = new ArrayList<>();
 
-    MyTableModel(List<? extends ValidationResult> validationResults) {
+    MyTableModel(List<ValidationResult> validationResults) {
       for (ValidationResult each : validationResults) {
         myItems.add(new Item(each, each.options.get(0)));
       }

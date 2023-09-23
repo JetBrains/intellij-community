@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.psi.xml.XmlTag;
@@ -26,8 +26,7 @@ final class XmlContentDFAImpl extends XmlContentDFA {
   private int myOccurs;
   private XmlContentDFAImpl myLastChild;
 
-  @Nullable
-  public static XmlContentDFA createContentDFA(XmlTag parentTag) {
+  public static @Nullable XmlContentDFA createContentDFA(XmlTag parentTag) {
     XmlElementDescriptor descriptor = parentTag.getDescriptor();
     if (descriptor == null) {
       return null;
@@ -120,8 +119,7 @@ final class XmlContentDFAImpl extends XmlContentDFA {
     }
   }
 
-  @Nullable
-  private XmlContentDFAImpl getNextSubGroup() {
+  private @Nullable XmlContentDFAImpl getNextSubGroup() {
     List<XmlElementsGroup> subGroups = myGroup.getSubGroups();
     int i = subGroups.indexOf(myLastChild.myGroup) + 1;
     return i == subGroups.size() ? null : new XmlContentDFAImpl(subGroups.get(i));

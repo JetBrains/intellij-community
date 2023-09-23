@@ -32,9 +32,11 @@ internal class Test {
 }
 
 internal class Test2
+
 internal class Java8Class {
     private val field: Java8Class = TODO("_root_ide_package_")
     private val h: MethodReferenceHelperClass = TODO("_root_ide_package_")
+
     fun testStaticFunction() {
         TODO("_root_ide_package_")
     }

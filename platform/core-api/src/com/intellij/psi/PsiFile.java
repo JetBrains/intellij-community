@@ -29,8 +29,12 @@ public interface PsiFile extends PsiFileSystemItem {
 
   /**
    * Returns the virtual file corresponding to the PSI file.
+   * <p>
+   * If you want to get a non-null virtual file consider using {@link FileViewProvider#getVirtualFile()}<br>
+   * ({@code psiFile.getViewProvider().getVirtualFile()})
    *
-   * @return the virtual file, or {@code null} if the file exists only in memory.
+   * @return the virtual file, or {@code null} if the file exists only in memory
+   * @see FileViewProvider#getVirtualFile()
    */
   @Override
   VirtualFile getVirtualFile();

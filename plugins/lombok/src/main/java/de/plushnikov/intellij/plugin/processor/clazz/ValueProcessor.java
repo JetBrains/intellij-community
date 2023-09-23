@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -22,7 +23,8 @@ import java.util.List;
 /**
  * @author twillouer
  */
-public class ValueProcessor extends AbstractClassProcessor {
+@Service
+public final class ValueProcessor extends AbstractClassProcessor {
 
   public ValueProcessor() {
     super(PsiMethod.class, LombokClassNames.VALUE);

@@ -430,6 +430,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/ExactMatchForKeyword.kt");
         }
 
+        @TestMetadata("ImportDirective.kt")
+        public void testImportDirective() throws Exception {
+            runTest("../testData/weighers/basic/ImportDirective.kt");
+        }
+
         @TestMetadata("ImportedFirst.kt")
         public void testImportedFirst() throws Exception {
             runTest("../testData/weighers/basic/ImportedFirst.kt");
@@ -623,6 +628,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @TestMetadata("UnavailableDslReceiver.kt")
         public void testUnavailableDslReceiver() throws Exception {
             runTest("../testData/weighers/basic/UnavailableDslReceiver.kt");
+        }
+
+        @TestMetadata("WhenWithSubject.kt")
+        public void testWhenWithSubject() throws Exception {
+            runTest("../testData/weighers/basic/WhenWithSubject.kt");
         }
     }
 }

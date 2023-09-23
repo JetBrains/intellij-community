@@ -27,7 +27,7 @@ import java.util.function.Supplier
 abstract class PyAddSdkPanelBase(protected val project: Project?,
                                  protected val module: Module?,
                                  private val targetSupplier: Supplier<TargetEnvironmentConfiguration>?)
-  : PyAddSdkPanel(), PyAddTargetBasedSdkView {
+  : PyAddSdkPanel() {
   protected val defaultProject: Project
     get() = ProjectManager.getInstance().defaultProject
 
@@ -62,7 +62,7 @@ abstract class PyAddSdkPanelBase(protected val project: Project?,
       val data = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, virtualEnvSdkFlavor)).also {
         it.interpreterPath = interpreterPath
         it.targetEnvironmentConfiguration = environmentConfiguration
-        targetPanelExtension?.apply(it)
+        targetPanelExtension?.applyToAdditionalData(it)
       }
 
       val sdkVersion: String? = data.getInterpreterVersion(project, interpreterPath)

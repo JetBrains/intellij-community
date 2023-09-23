@@ -24,7 +24,7 @@ fun ScanningStatistics.toJsonStatistics(): JsonScanningStatistics {
     numberOfFilesFullyIndexedByInfrastructureExtensions = numberOfFilesFullyIndexedByInfrastructureExtension,
     filesFullyIndexedByInfrastructureExtensions = listOfFilesFullyIndexedByInfrastructureExtension,
     statusTime = JsonDuration(statusTime),
-    totalCPUTimeWithPauses = JsonDuration(totalCPUTimeWithPauses),
+    totalOneThreadTimeWithPauses = JsonDuration(totalOneThreadTimeWithPauses),
     iterationAndScannersApplicationTime = JsonDuration(timeConcurrentVfsIterationAndScanningApplication),
     filesCheckTime = JsonDuration(timeConcurrentFilesChecking),
     timeProcessingUpToDateFiles = JsonDuration(timeProcessingUpToDateFiles),
@@ -63,7 +63,6 @@ fun IndexingFileSetStatistics.toJsonStatistics(visibleTimeToAllThreadsTimeRatio:
     contentLoadingVisibleTime = convertAllThreadsTimeToVisibleDuration(contentLoadingTimeInAllThreads, visibleTimeToAllThreadsTimeRatio),
     numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles,
     slowIndexedFiles = slowIndexedFiles.biggestElements.map { it.toJson() },
-    isAppliedAllValuesSeparately = allValuesAppliedSeparately,
     separateApplyingIndexesVisibleTime = convertAllThreadsTimeToVisibleDuration(allSeparateApplicationTimeInAllThreads,
                                                                                 visibleTimeToAllThreadsTimeRatio),
     indexedFiles = jsonIndexedFiles
@@ -94,10 +93,10 @@ fun ScanningTimes.toJson(): JsonProjectScanningHistoryTimes =
     creatingIteratorsTime = JsonDuration(creatingIteratorsDuration.toNanos()),
     concurrentHandlingWallTimeWithoutPauses = JsonDuration(concurrentHandlingWallTimeWithoutPauses.toNanos()),
     concurrentHandlingWallTimeWithPauses = JsonDuration(concurrentHandlingWallTimeWithPauses.toNanos()),
-    concurrentHandlingCPUTimeWithPauses = JsonDuration(concurrentHandlingCPUTimeWithPauses.toNanos()),
-    concurrentIterationAndScannersApplicationCPUTimeWithPauses =
-    JsonDuration(concurrentIterationAndScannersApplicationCPUTimeWithPauses.toNanos()),
-    concurrentFileCheckCPUTimeWithPauses = JsonDuration(concurrentFileCheckCPUTimeWithPauses.toNanos()),
+    concurrentHandlingSumOfThreadTimesWithPauses = JsonDuration(concurrentHandlingSumOfThreadTimesWithPauses.toNanos()),
+    concurrentIterationAndScannersApplicationSumOfThreadTimesWithPauses =
+    JsonDuration(concurrentIterationAndScannersApplicationSumOfThreadTimesWithPauses.toNanos()),
+    concurrentFileCheckSumOfThreadTimesWithPauses = JsonDuration(concurrentFileCheckSumOfThreadTimesWithPauses.toNanos()),
     delayedPushPropertiesStageTime = JsonDuration(delayedPushPropertiesStageDuration.toNanos()),
     indexExtensionsTime = JsonDuration(indexExtensionsDuration.toNanos()),
     updatingStart = JsonDateTime(updatingStart),
@@ -115,7 +114,6 @@ fun DumbIndexingTimes.toJson(): JsonProjectDumbIndexingHistoryTimes =
     totalWallTimeWithPauses = JsonDuration(totalUpdatingTime),
     contentLoadingVisibleTime = JsonDuration(contentLoadingVisibleDuration.toNanos()),
     retrievingChangedDuringIndexingFilesTime = JsonDuration(retrievingChangedDuringIndexingFilesDuration.toNanos()),
-    isAppliedAllValuesSeparately = appliedAllValuesSeparately,
     separateApplyingIndexesVisibleTime = JsonDuration(separateValueApplicationVisibleTime),
     updatingStart = JsonDateTime(updatingStart),
     updatingEnd = JsonDateTime(updatingEnd),
@@ -136,20 +134,13 @@ private fun ProjectScanningHistoryImpl.changeToJson(): JsonProjectScanningHistor
   projectName = project.name,
   times = times.toJson(),
   fileCount = getFileCount(),
-  scanningStatistics = scanningStatistics.sortedByDescending { it.totalCPUTimeWithPauses.nano }
+  scanningStatistics = scanningStatistics.sortedByDescending { it.totalOneThreadTimeWithPauses.nano }
 )
 
 private fun ProjectDumbIndexingHistoryImpl.changeToJson(): JsonProjectDumbIndexingHistory {
   val timesImpl = times as ProjectDumbIndexingHistoryImpl.DumbIndexingTimesImpl
   timesImpl.contentLoadingVisibleDuration = Duration.ofNanos(providerStatistics.sumOf { it.contentLoadingVisibleTime.nano })
-  if (providerStatistics.all { it.isAppliedAllValuesSeparately }) {
-    timesImpl.appliedAllValuesSeparately = true
-    timesImpl.separateValueApplicationVisibleTime = providerStatistics.sumOf { it.separateApplyingIndexesVisibleTime.nano }
-  }
-  else {
-    timesImpl.appliedAllValuesSeparately = false
-    timesImpl.separateValueApplicationVisibleTime = 0
-  }
+  timesImpl.separateValueApplicationVisibleTime = providerStatistics.sumOf { it.separateApplyingIndexesVisibleTime.nano }
   val (statsPerFileType, statsPerParentLanguage) = aggregateStatsPerFileTypeAndLanguage()
   return JsonProjectDumbIndexingHistory(
     projectName = project.name,
@@ -193,7 +184,7 @@ private fun ProjectDumbIndexingHistoryImpl.aggregateStatsPerFileTypeAndLanguage(
   }
 
   data class LanguageData(var totalNumberOfFiles: Int,
-                          var totalBytes: BytesNumber,
+                          var totalBytes: NumberOfBytes,
                           var totalProcessingTimeInAllThreads: TimeNano,
                           val totalContentLoadingTime: TimeNano) {
     fun plus(fileTypeStats: ProjectDumbIndexingHistoryImpl.StatsPerFileTypeImpl): LanguageData =

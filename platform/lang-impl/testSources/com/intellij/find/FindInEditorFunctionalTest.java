@@ -69,7 +69,7 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
     assertEquals(ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_FIND_IN_SELECTION_ONLY).getShortcutSet(), shortcuts);
 
     model.setStringToFind("foo");
-    assertEquals(ApplicationBundle.message("editorsearch.matches", 2), component.getStatusText());
+    assertEquals(ApplicationBundle.message("editorsearch.current.cursor.position", 1, 2), component.getStatusText());
     checkResultByText(origText);
 
     model.setGlobal(true);

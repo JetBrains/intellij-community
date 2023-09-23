@@ -7,7 +7,6 @@ import com.intellij.codeInsight.highlighting.BraceMatchingUtil.BraceHighlighting
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -36,6 +35,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -112,7 +112,7 @@ public final class BraceHighlightingHandler {
   }
 
   void updateBraces() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     clearBraceHighlighters();
 
@@ -389,7 +389,7 @@ public final class BraceHighlightingHandler {
   }
 
   private static void removeLineMarkers(@NotNull EditorEx editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     RangeHighlighter marker = editor.getUserData(LINE_MARKER_IN_EDITOR_KEY);
     if (marker != null && editor.getMarkupModel().containsHighlighter(marker)) {
       marker.dispose();

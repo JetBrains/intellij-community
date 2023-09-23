@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import org.jetbrains.annotations.NonNls
 
@@ -54,7 +59,7 @@ interface FacetEntity: ModuleSettingsBase {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FacetEntity, modification: FacetEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: FacetEntity, modification: FacetEntity.Builder.() -> Unit): FacetEntity = modifyEntity(
   FacetEntity.Builder::class.java, entity, modification)
 
 var FacetEntity.Builder.childrenFacets: @Child List<FacetEntity>

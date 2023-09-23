@@ -7,6 +7,7 @@ import com.intellij.collaboration.api.page.SequentialListLoader
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -20,6 +21,7 @@ import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestIidDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.findMergeRequestsByBranch
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.getMergeRequestCommits
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabMergeRequestsListLoader
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -85,11 +87,16 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
         .filter { requestedId -> requestedId == iid }
         .withInitial(iid)
         .mapScoped { mrId ->
-          runCatching {
+          runCatchingUser {
             // TODO: create from cached details
             val cs = this
             val mrData = loadMergeRequest(mrId)
-            LoadedGitLabMergeRequest(project, cs, api, projectMapping, mrData)
+            val commits =
+              if (mrData.commits == null)
+                api.rest.getMergeRequestCommits(projectMapping.repository, mrId).body() ?: listOf()
+              else listOf()
+
+            LoadedGitLabMergeRequest(project, cs, api, projectMapping, mrData, commits)
           }
         }.shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
       // this the model will only be alive while it's needed
@@ -113,7 +120,7 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
     return withContext(Dispatchers.IO) {
       val body = api.graphQL.loadMergeRequest(glProject, iid).body()
       if (body == null) {
-        api.rest.getCurrentUser(glProject.serverPath) // Exception is generated automatically if status code >= 400
+        api.rest.getCurrentUser() // Exception is generated automatically if status code >= 400
         error(CollaborationToolsBundle.message("graphql.errors", "empty response"))
       }
       if (body.sourceProject == null) {

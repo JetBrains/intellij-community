@@ -20,12 +20,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
-import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.*
 import com.intellij.psi.impl.file.PsiPackageBase
 import com.intellij.psi.impl.light.LightElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -214,6 +209,15 @@ private fun popupPresentationProvider() = object : PsiTargetPresentationRenderer
             }
             getDeclarationKeyword()?.text?.let(list::add)
             name?.let(list::add)
+            StringUtil.shortenTextWithEllipsis(list.joinToString(separator = " "), 53, 0)
+        }
+        is KtNamedFunction -> {
+            val list = mutableListOf<String>()
+            for (child in allChildren) {
+                if (child is PsiComment || child is PsiWhiteSpace) continue
+                if (child is KtBlockExpression) break
+                list.add(child.text)
+            }
             StringUtil.shortenTextWithEllipsis(list.joinToString(separator = " "), 53, 0)
         }
         else -> {

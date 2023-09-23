@@ -95,9 +95,9 @@ final class AutoCompletionProvider {
 
   private static final class CommandRenderer extends SimpleColoredComponent implements ListCellRenderer<AutoCompletionCommand> {
 
-    protected boolean mySelected;
-    protected Color myForeground;
-    protected Color mySelectionForeground;
+    private boolean mySelected;
+    private Color myForeground;
+    private Color mySelectionForeground;
 
     @Override
     public Component getListCellRendererComponent(JList<? extends AutoCompletionCommand> list,
@@ -129,7 +129,7 @@ final class AutoCompletionProvider {
     }
 
     @Override
-    public final void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
+    public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
       if (mySelected) {
         super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), mySelectionForeground), isMainText);
       }

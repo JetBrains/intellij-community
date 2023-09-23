@@ -66,7 +66,7 @@ internal class ResetIdeScaleAction : ZoomIdeAction() {
   }
 }
 
-private class SwitchIdeScaleAction : AnAction(), DumbAware {
+private class SwitchIdeScaleAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

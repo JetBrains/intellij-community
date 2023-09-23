@@ -162,7 +162,7 @@ public final class ExternalDependenciesConfigurable implements SearchableConfigu
       myPluginNameById = new HashMap<>();
       for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
         String idString = descriptor.getPluginId().getIdString();
-        //todo[nik] change 'name' tag of the core plugin instead
+        //todo change 'name' tag of the core plugin instead
         String name = PluginManagerCore.CORE_PLUGIN_ID.equals(idString) ? "IDE Core" : descriptor.getName();
         myPluginNameById.put(idString, name);
       }

@@ -64,7 +64,7 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
     val vFile = formattingContext.virtualFile ?: return null
     val project = formattingContext.project
     val blackConfig = BlackFormatterConfiguration.getBlackConfiguration(project)
-    val sdk = blackConfig.getSdk(project)
+    val sdk = blackConfig.getSdk()
 
     if (sdk == null) {
       val message = PyBundle.message("black.sdk.not.configured.error", project.name)
@@ -83,10 +83,8 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
 
     val text = document.text
 
-    val formattingRange = if (formattingRequest.formattingRanges.size > 1)
-      TextRange(0, document.textLength)
-    else
-      formattingRequest.formattingRanges.first()
+    // Expand the formatting range to the whole file until we find a reliable way to reformat fragment. See PY-62111
+    val formattingRange = TextRange(0, document.textLength)
 
     val fragment = runCatching { document.getText(formattingRange) }.getOrNull()
     if (fragment.isNullOrBlank()) return null

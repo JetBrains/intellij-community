@@ -21,9 +21,11 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.indexing.CustomizingIndexingPresentationContributor
 import com.intellij.util.indexing.ReincludedRootsUtil
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder
+import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createCustomKindEntityIterators
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createGenericContentEntityIterators
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createModuleAwareContentEntityIterators
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl.Companion.createIterator
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forCustomKindEntity
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forExternalEntity
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forGenericContentEntity
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forLibraryEntity
@@ -95,6 +97,18 @@ internal data class EntityExternalRootsDescription<E : WorkspaceEntity>(val enti
 
   fun createIterators(): Collection<IndexableFilesIterator> {
     return IndexableEntityProviderMethods.createExternalEntityIterators(entityReference, roots, presentation)
+  }
+}
+
+internal data class EntityCustomKindRootsDescription<E : WorkspaceEntity>(val entityReference: EntityReference<E>,
+                                                                          val roots: IndexingRootHolder,
+                                                                          val presentation: IndexableIteratorPresentation?) : IndexingRootsDescription {
+  override fun createBuilders(): Collection<IndexableIteratorBuilder> {
+    return forCustomKindEntity(entityReference, roots, presentation)
+  }
+
+  fun createIterators(): Collection<IndexableFilesIterator> {
+    return createCustomKindEntityIterators(entityReference, roots, presentation)
   }
 }
 
@@ -227,6 +241,9 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
       descriptions.add(EntityExternalRootsDescription(entityReference, roots, rootData.customizationValues[entityReference]))
     }
 
+    for ((entityReference, roots) in rootData.customKindRoots.entries) {
+      descriptions.add(EntityCustomKindRootsDescription(entityReference, roots, rootData.customizationValues[entityReference]))
+    }
     reincludedRoots.addAll(rootData.excludedRoots)
   }
 
@@ -263,6 +280,7 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
           }
         }
         is EntityExternalRootsDescription<*> -> iterators.addAll(description.createIterators())
+        is EntityCustomKindRootsDescription<*> -> iterators.addAll(description.createIterators())
       }
     }
     iterators.addAll(0, initialIterators)
@@ -339,6 +357,7 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
   val contentRoots = mutableMapOf<EntityReference<E>, MutableIndexingRootHolder>()
   val libraryRoots = mutableMapOf<LibraryEntity, MutableIndexingSourceRootHolder>()
   val externalRoots = mutableMapOf<EntityReference<E>, MutableIndexingSourceRootHolder>()
+  val customKindRoots = mutableMapOf<EntityReference<E>, MutableIndexingRootHolder>()
   val excludedRoots = mutableListOf<VirtualFile>()
 
   val customizationValues = mutableMapOf<EntityReference<*>, IndexableIteratorPresentation>()
@@ -394,6 +413,9 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
     else if (contributor is LibraryRootFileIndexContributor) {
       addRoot(libraryRoots, entity as LibraryEntity, kind === WorkspaceFileKind.EXTERNAL_SOURCE)
     }
+    else if (kind == WorkspaceFileKind.CUSTOM) {
+      addRoot(customKindRoots, entityReference)
+    }
     else {
       addRoot(externalRoots, entityReference, kind === WorkspaceFileKind.EXTERNAL_SOURCE)
     }
@@ -422,6 +444,7 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
     contentRoots.clear()
     libraryRoots.clear()
     externalRoots.clear()
+    customKindRoots.clear()
     customizationValues.clear()
   }
 

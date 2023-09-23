@@ -1,6 +1,7 @@
 {
   "name": "IntelliJ",
   "dark": false,
+  "parentTheme": "Darcula",
   "author": "JetBrains",
 
   "colors": {
@@ -246,7 +247,7 @@
       "changedValueForeground": "#0000ff",
       "collectingDataForeground": "grey04",
       "errorMessageForeground":  "#ff0000",
-      "evaluatingExpressionForeground": "#grey04",
+      "evaluatingExpressionForeground": "grey04",
       "exceptionForeground":  "#ff0000",
       "modifyingValueForeground": "#0000ff",
       "valueForeground":  "#800000"
@@ -320,7 +321,7 @@
     },
 
     "GotItTooltip": {
-      "Button.foreground": "white",
+      "Button.foreground": "#000000",
       "Header.foreground": "#000000",
       "background": "grey17",
       "borderColor": "grey05",
@@ -646,7 +647,7 @@
     "RadioButton": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonBorder",
       "borderInsets": "2,2,2,0",
-      "darcula.selectionDisabledColor": "#grey03",
+      "darcula.selectionDisabledColor": "grey03",
       "darcula.selectionDisabledShadowColor": "#00000020",
       "darcula.selectionEnabledColor": "white",
       "darcula.selectionEnabledShadowColor": "#00000040",
@@ -981,7 +982,7 @@
       "background": "contentBackground",
       "foreground": "black",
       "errorForeground": "#ff0000",
-      "hash": "#grey13",
+      "hash": "grey13",
       "hoverBackground": "#edf5fc",
       "hoverInactiveBackground": "grey16",
       "modifiedItemForeground": "#005ad9",
@@ -1039,10 +1040,11 @@
     "Window.undecorated.border" : "1,1,1,1,#5A5D6B",
 
     "WelcomeScreen": {
-      "background": "#f7f7f7",
-      "Details.background": "white",
-      "SidePanel.background": "panel",
+      "background": "#F7F7F7",
+      "Details.background": "#ffffff",
+      "SidePanel.background": "#F2F2F2",
       "Projects.actions.selectionBackground": "#3587E5",
+      "Projects.actions.selectionBorderColor": "#3574F0",
       "Projects.actions.background": "#DCEDFE",
       "separatorColor": "border"
     },
