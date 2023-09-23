@@ -5,18 +5,18 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.BindingContext
 
-internal class KotlinCodeFragmentEditor(val codeFragment: KtCodeFragment) {
+private class KotlinCodeFragmentPatcher(val codeFragment: KtCodeFragment) {
     companion object {
-        private val LOG = Logger.getInstance(KotlinCodeFragmentEditor::class.java)
+        private val LOG = Logger.getInstance(KotlinCodeFragmentPatcher::class.java)
     }
 
     private val expressionWrappers = mutableListOf<KotlinExpressionWrapper>()
 
-    fun addWrapper(wrapper: KotlinExpressionWrapper): KotlinCodeFragmentEditor {
+    fun addWrapper(wrapper: KotlinExpressionWrapper): KotlinCodeFragmentPatcher {
         expressionWrappers.add(wrapper)
         return this
     }
@@ -26,10 +26,12 @@ internal class KotlinCodeFragmentEditor(val codeFragment: KtCodeFragment) {
 
         var expressionWasWrapped = false
         var newExpressionText = expressionText
-        for (wrapper in expressionWrappers) {
-            if (wrapper.isApplicable(expression)) {
-                expressionWasWrapped = true
-                newExpressionText = wrapper.createWrappedExpressionText(newExpressionText)
+        runReadAction {
+            for (wrapper in expressionWrappers) {
+                if (wrapper.isApplicable(expression)) {
+                    expressionWasWrapped = true
+                    newExpressionText = wrapper.createWrappedExpressionText(newExpressionText)
+                }
             }
         }
 
@@ -72,19 +74,14 @@ internal class KotlinCodeFragmentEditor(val codeFragment: KtCodeFragment) {
         }
 }
 
-internal fun KotlinCodeFragmentEditor.withToStringWrapper(bindingContext: BindingContext) =
-    addWrapper(KotlinToStringWrapper(bindingContext))
-
-internal fun KotlinCodeFragmentEditor.withSuspendFunctionWrapper(
-    bindingContext: BindingContext,
-    executionContext: ExecutionContext,
-    isCoroutineScopeAvailable: Boolean
-) =
-    addWrapper(
-        KotlinSuspendFunctionWrapper(
-            bindingContext,
-            executionContext,
-            codeFragment.context,
-            isCoroutineScopeAvailable
-        )
-    )
+internal fun patchCodeFragment(context: ExecutionContext, codeFragment: KtCodeFragment) {
+    KotlinCodeFragmentPatcher(codeFragment)
+        .addWrapper(KotlinToStringWrapper())
+        .addWrapper(
+            KotlinSuspendFunctionWrapper(
+                context,
+                codeFragment.context,
+                (context.frameProxy as? CoroutineStackFrameProxyImpl)?.isCoroutineScopeAvailable() ?: false
+            )
+        ).editCodeFragment()
+}

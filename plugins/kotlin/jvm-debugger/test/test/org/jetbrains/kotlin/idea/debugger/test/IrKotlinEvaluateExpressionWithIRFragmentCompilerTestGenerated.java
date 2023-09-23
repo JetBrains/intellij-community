@@ -272,6 +272,16 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/coroutines/functionCallWithSuspendFunctionInside.kt");
             }
 
+            @TestMetadata("infixSuspendCall.kt")
+            public void testInfixSuspendCall() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/infixSuspendCall.kt");
+            }
+
+            @TestMetadata("operatorSuspendCall.kt")
+            public void testOperatorSuspendCall() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/operatorSuspendCall.kt");
+            }
+
             @TestMetadata("primitivesCoertion.kt")
             public void testPrimitivesCoertion() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/coroutines/primitivesCoertion.kt");
