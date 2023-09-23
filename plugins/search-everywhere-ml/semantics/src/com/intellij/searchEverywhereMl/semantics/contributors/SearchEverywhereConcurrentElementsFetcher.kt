@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.searchEverywhereMl.semantics.providers.StreamSemanticItemsProvider
 import com.intellij.util.Processor
+import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -27,7 +28,8 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
 
   fun prepareSemanticDescriptor(descriptor: FoundItemDescriptor<I>,
                                 knownItems: MutableList<FoundItemDescriptor<I>>,
-                                mutex: ReentrantLock): FoundItemDescriptor<E>
+                                mutex: ReentrantLock,
+                                durationMs: Long): FoundItemDescriptor<E>?
 
   fun FoundItemDescriptor<I>.findPriority(): DescriptorPriority
 
@@ -44,6 +46,7 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
     var standardContributorStarted = false
     val standardContributorStartedCondition = standardContributorStartedMutex.newCondition()
 
+    val searchStart = System.nanoTime()
     ApplicationManager.getApplication().apply {
       executeOnPooledThread {
         var foundItemsCount = 0
@@ -66,8 +69,12 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
                 cachedDescriptors.add(descriptor)
                 continue
               }
-              consumer.process(prepareSemanticDescriptor(descriptor, knownItems, mutex))
-              foundItemsCount++
+
+              val durationMs = TimeoutUtil.getDurationMillis(searchStart)
+              prepareSemanticDescriptor(descriptor, knownItems, mutex, durationMs)?.let {
+                consumer.process(it)
+                foundItemsCount++
+              }
               if (priority != DescriptorPriority.HIGH && foundItemsCount >= getDesiredResultsCount()) break
             }
             if (progressIndicator.isCanceled || foundItemsCount >= getDesiredResultsCount()) break
