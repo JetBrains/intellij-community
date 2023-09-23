@@ -56,6 +56,19 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
   }
 
   @Test
+  public void mapIsEmpty_Initially() throws IOException {
+    assertTrue(multimap.isEmpty(),
+               "Map is just created, must be empty");
+  }
+
+  @Test
+  public void mapIsNotEmpty_AfterInsertedValue() throws IOException {
+    multimap.put(1, 2);
+    assertFalse(multimap.isEmpty(),
+                "(1,2) record was put, map must NOT be empty anymore");
+  }
+
+  @Test
   public void manyKeyValuesPut_AreAllExistInTheMap() throws IOException {
     long[] packedKeysValues = generateUniqueKeyValues(entriesCountToTest);
 
