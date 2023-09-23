@@ -233,14 +233,16 @@ public class VFSInitializationTest {
 
         fsRecords.dispose();
 
-        Path[] vfsFiles = Files.list(cachesDir)
+        Path[] vfsFilesToTryDeleting = Files.list(cachesDir)
           .filter(path -> Files.isRegularFile(path))
-          //ResizableMappedFile _is_ able to recover .len file, so don't waste time deleting it
+          //ResizableMappedFile recovers .len file, so don't waste time deleting it:
           .filter(path -> !path.getFileName().toString().endsWith(".len"))
+          //DurableEnumerator recovers hashToId mapping from valuesLog content:
+          .filter(path -> !path.getFileName().toString().endsWith(".hashToId"))
           .sorted()
           .toArray(Path[]::new);
-        vfsFilesCount = vfsFiles.length;
-        Path fileToDelete = vfsFiles[i];
+        vfsFilesCount = vfsFilesToTryDeleting.length;
+        Path fileToDelete = vfsFilesToTryDeleting[i];
 
         FileUtil.delete(fileToDelete);
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
@@ -13,6 +14,8 @@ import java.nio.file.Path;
 
 @ApiStatus.Internal
 public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
+  private static final Logger LOG = Logger.getInstance(ExtendibleMapFactory.class);
+
   private final int pageSize;
   private final int segmentSize;
   private final @NotNull NotClosedProperlyAction notClosedProperlyAction;
@@ -90,23 +93,29 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
     }
     catch (CorruptedException e) {
       if (notClosedProperlyAction == NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP) {
-        //TODO RC: removing of mmapped file is tricky on Windows, hence it is better to implement MMappedFileStorage.truncate(),
-        //         and reuse already opened and truncated mapped storage for the new EHMap
+        LOG.info("[" + storagePath + "]: map is not closed properly, factory strategy[" + notClosedProperlyAction + "]" +
+                 " -> trying to drop & re-create map from 0");
+        //TODO RC: removing of mmapped file is tricky/unreliable on Windows.
+        //         It is better to implement MMappedFileStorage.truncate(), and reuse already opened and truncated mapped
+        //         storage for the new EHMap
         FileUtil.delete(storagePath);
         return mappedStorageFactory.wrapStorageSafely(
           storagePath,
           mappedStorage -> new ExtendibleHashMap(mappedStorage, segmentSize)
         );
       }
-      else {
+      else {//if (notClosedProperlyAction == FAIL)
         throw e;
       }
     }
   }
 
   public enum NotClosedProperlyAction {
+    /** Ignore possible inconsistencies -- allow clients to deal with them. Map will have .wasClosedProperly=false */
     IGNORE_AND_HOPE_FOR_THE_BEST,
+    /** Throw {@link com.intellij.util.io.CorruptionException} */
     FAIL_SPECTACULARLY,
+    /** Drop all the map content, return an empty map. Empty map will have .wasClosedProperly=true (by definition) */
     DROP_AND_CREATE_EMPTY_MAP
   }
 }

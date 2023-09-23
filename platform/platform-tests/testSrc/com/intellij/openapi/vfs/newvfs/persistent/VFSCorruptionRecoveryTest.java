@@ -21,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
- * Test VFS ability to recover from various corruptions
+ * Tests VFS ability to recover from various corruptions
  */
 public class VFSCorruptionRecoveryTest {
 
@@ -34,17 +34,19 @@ public class VFSCorruptionRecoveryTest {
    * All the data files VFS contains, which is worth to mess up for testing corruptions
    * (i.e. some files could be excluded if they aren't worth the efforts)
    */
-  private List<String> vfsDataFileNames;
+  private List<String> vfsCrucialDataFilesNames;
 
   @Before
   public void setup() throws Exception {
     Path cachesDir = temporaryDirectory.createDir();
 
     setupVFSFillSomeDataAndClose(cachesDir);
-    vfsDataFileNames = Files.list(cachesDir)
+    vfsCrucialDataFilesNames = Files.list(cachesDir)
       .filter(path -> Files.isRegularFile(path))
       //ResizableMappedFile _is_ able to recover .len file, so don't waste time deleting it
       .filter(path -> !path.getFileName().toString().endsWith(".len"))
+      //DurableEnumerator recovers hashToId mapping from valuesLog content:
+      .filter(path -> !path.getFileName().toString().endsWith(".hashToId"))
       .sorted()
       .map(path -> path.getFileName().toString())
       .toList();
@@ -54,7 +56,7 @@ public class VFSCorruptionRecoveryTest {
   public void VFS_init_WithoutRecoverers_Fails_If_AnyStorageFileRemoved() throws Exception {
     //We want to verify that initialization quick-checks are able to detect corruptions.
     // The verification is very rough: just remove one of the data files and see if VFS
-    // init fails. Missed data file is nowhere a typical corruption, but it helps at
+    // init fails. Missed data file is by no means a typical corruption, but it helps at
     // least verify the main quick-check logic.
     // Ideally, we should introduce random corruptions to data files, and see if VFS init
     // is able to detect _that_ -- but this is a much larger task, especially since we know
@@ -64,9 +66,9 @@ public class VFSCorruptionRecoveryTest {
 
 
     List<String> filesNotLeadingToVFSRebuild = new ArrayList<>();
-    int vfsFilesCount = vfsDataFileNames.size();
+    int vfsFilesCount = vfsCrucialDataFilesNames.size();
     for (int i = 0; i < vfsFilesCount; i++) {
-      String dataFileNameToDelete = vfsDataFileNames.get(i);
+      String dataFileNameToDelete = vfsCrucialDataFilesNames.get(i);
 
       Path cachesDir = temporaryDirectory.createDir();
 
@@ -108,7 +110,7 @@ public class VFSCorruptionRecoveryTest {
 
   @Test
   public void VFS_init_WithContentStoragesRecoverer_DoesntFail_If_ContentHashesStorageFilesRemoved() throws Exception {
-    List<String> contentHashesDataFilesNames = vfsDataFileNames.stream().filter(name -> name.contains("contentHashes")).toList();
+    List<String> contentHashesDataFilesNames = vfsCrucialDataFilesNames.stream().filter(name -> name.contains("contentHashes")).toList();
     for (int i = 0; i < contentHashesDataFilesNames.size(); i++) {
       String contentHashesDataFileNameToDelete = contentHashesDataFilesNames.get(i);
 
@@ -140,7 +142,7 @@ public class VFSCorruptionRecoveryTest {
 
   @Test
   public void VFS_init_WithContentStoragesRecoverer_DoesntFail_If_ContentStorageFilesRemoved() throws Exception {
-    List<String> contentStorageDataFilesNames = vfsDataFileNames.stream().filter(name -> name.contains("content.dat")).toList();
+    List<String> contentStorageDataFilesNames = vfsCrucialDataFilesNames.stream().filter(name -> name.contains("content.dat")).toList();
     for (int i = 0; i < contentStorageDataFilesNames.size(); i++) {
       String contentStorageDataFileNameToDelete = contentStorageDataFilesNames.get(i);
 

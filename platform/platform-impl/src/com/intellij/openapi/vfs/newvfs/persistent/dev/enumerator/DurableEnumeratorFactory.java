@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.util.io.dev.StorageFactory;
@@ -20,6 +21,8 @@ import static com.intellij.util.io.IOUtil.MiB;
 
 @ApiStatus.Internal
 public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumerator<V>> {
+  private static final Logger LOG = Logger.getInstance(DurableEnumeratorFactory.class);
+
   public static final int DEFAULT_PAGE_SIZE = 8 * MiB;
 
   public static final StorageFactory<DurableIntToMultiIntMap> DEFAULT_IN_MEMORY_MAP_FACTORY =
@@ -107,6 +110,7 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
             // wasn't properly closed...)' -- then this branch rebuilds such a map, hence provides a recovery even for
             // durable maps
             if (!valuesLog.isEmpty() && valueHashToId.isEmpty()) {
+              LOG.info("[" + name + "]: rebuild .valueToId map since it is out-of-sync with valuesLog data");
               //TODO RC: valueHashToId could be loaded async -- to not delay initialization (see DurableStringEnumerator)
               fillValueHashToIdMap(valuesLog, valueDescriptor, valueHashToId);
             }
@@ -122,7 +126,6 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
             //MAYBE separate 'always rebuild map' and 'rebuild map if inconsistent'
             //      (both requires .open(path,CREATE_NEW) method)
           }
-
 
 
           return new DurableEnumerator<>(
