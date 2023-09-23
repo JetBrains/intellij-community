@@ -108,7 +108,6 @@ final class XMLEntityResolver implements IXMLEntityResolver {
     }
   }
 
-
   /**
    * Returns true if an entity is external.
    *
@@ -120,7 +119,6 @@ final class XMLEntityResolver implements IXMLEntityResolver {
     return !(obj instanceof String);
   }
 
-
   /**
    * Opens an external entity.
    *
@@ -131,7 +129,6 @@ final class XMLEntityResolver implements IXMLEntityResolver {
    */
   private static Reader openExternalEntity(StdXMLReader xmlReader, String publicID, String systemID) throws XMLParseException {
     String parentSystemID = xmlReader.getSystemID();
-
     try {
       return xmlReader.openStream(publicID, systemID);
     }

@@ -57,7 +57,7 @@ public final class NanoXmlUtil {
   }
 
   public static void parse(StdXMLReader r, @NotNull IXMLBuilder builder, @Nullable IXMLValidator validator) {
-    final StdXMLParser parser = XMLParserFactory.createDefaultXMLParser();
+    StdXMLParser parser = new StdXMLParser();
     parser.setReader(r);
     parser.setBuilder(builder);
     parser.setValidator(validator == null ? new EmptyValidator() : validator);
@@ -153,37 +153,8 @@ public final class NanoXmlUtil {
   }
 
   public static class EmptyValidator extends NonValidator {
-    private IXMLEntityResolver myParameterEntityResolver;
-
-    @Override
-    public void parseDTD(String publicID, StdXMLReader reader, IXMLEntityResolver entityResolver, boolean external) throws Exception {
-      if (!external) {
-        //super.parseDTD(publicID, reader, entityResolver, external);
-        int cnt = 1;
-        for (char ch = reader.read(); !(ch == ']' && --cnt == 0); ch = reader.read()) {
-          if (ch == '[') cnt ++;
-        }
-      }
-      else {
-        int origLevel = reader.getStreamLevel();
-
-        while (true) {
-          char ch = reader.read();
-
-          if (reader.getStreamLevel() < origLevel) {
-            reader.unread(ch);
-            return; // end external DTD
-          }
-        }
-      }
-    }
-
     @Override
     public void elementStarted(String name, String systemId, int lineNr) {
-    }
-
-    @Override
-    public void elementEnded(String name, String systemId, int lineNr) {
     }
 
     @Override
@@ -192,10 +163,6 @@ public final class NanoXmlUtil {
 
     @Override
     public void elementAttributesProcessed(String name, Properties extraAttributes, String systemId, int lineNr) {
-    }
-
-    @Override
-    public void PCDataAdded(String systemId, int lineNr)  {
     }
   }
 

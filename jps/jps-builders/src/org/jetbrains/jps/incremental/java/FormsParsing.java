@@ -69,7 +69,7 @@ public final class FormsParsing {
   }
 
   public static void parse(final StdXMLReader r, final IXMLBuilder builder) {
-    final StdXMLParser parser = XMLParserFactory.createDefaultXMLParser();
+    StdXMLParser parser = new StdXMLParser();
     parser.setReader(r);
     parser.setBuilder(builder);
     parser.setValidator(new EmptyValidator());
@@ -86,31 +86,6 @@ public final class FormsParsing {
   }
 
   private static final class EmptyValidator extends NonValidator {
-    private IXMLEntityResolver myParameterEntityResolver;
-
-    @Override
-    public void parseDTD(String publicID, StdXMLReader reader, IXMLEntityResolver entityResolver, boolean external) throws Exception {
-      if (!external) {
-        //super.parseDTD(publicID, reader, entityResolver, external);
-        int cnt = 1;
-        for (char ch = reader.read(); !(ch == ']' && --cnt == 0); ch = reader.read()) {
-          if (ch == '[') cnt ++;
-        }
-      }
-      else {
-        int origLevel = reader.getStreamLevel();
-
-        while (true) {
-          char ch = reader.read();
-
-          if (reader.getStreamLevel() < origLevel) {
-            reader.unread(ch);
-            return; // end external DTD
-          }
-        }
-      }
-    }
-
     @Override
     public void elementStarted(String name, String systemId, int lineNr) {
     }

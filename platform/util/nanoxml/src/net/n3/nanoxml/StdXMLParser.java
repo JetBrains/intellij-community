@@ -302,7 +302,6 @@ public final class StdXMLParser {
       XMLUtil.errorExpectedInput(reader.getSystemID(), reader.getLineNr(), "<![[CDATA[");
     }
 
-    validator.PCDataAdded(reader.getSystemID(), reader.getLineNr());
     Reader reader = new CDATAReader(this.reader);
     builder.addPCData(reader, this.reader.getSystemID(), this.reader.getLineNr());
     reader.close();
@@ -461,8 +460,6 @@ public final class StdXMLParser {
         XMLUtil.errorExpectedInput(reader.getSystemID(), reader.getLineNr(), "`>'");
       }
 
-      validator.elementEnded(name, reader.getSystemID(), reader.getLineNr());
-
       if (prefix == null) {
         builder.endElement(name, prefix, defaultNamespace);
       }
@@ -508,7 +505,6 @@ public final class StdXMLParser {
             XMLUtil.errorClosingTagNotEmpty(reader.getSystemID(), reader.getLineNr());
           }
 
-          validator.elementEnded(fullName, reader.getSystemID(), reader.getLineNr());
           if (prefix == null) {
             builder.endElement(name, prefix, defaultNamespace);
           }
@@ -531,7 +527,6 @@ public final class StdXMLParser {
         else {
           reader.unread(str.charAt(0));
         }
-        validator.PCDataAdded(reader.getSystemID(), reader.getLineNr());
         Reader r = new ContentReader(reader, entityResolver, buffer.toString());
         builder.addPCData(r, reader.getSystemID(), reader.getLineNr());
         r.close();
