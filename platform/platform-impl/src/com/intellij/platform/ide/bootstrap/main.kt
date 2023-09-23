@@ -29,7 +29,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryConfigurator
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
-import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.bootstrap.*
 import com.intellij.ui.*
@@ -63,7 +62,6 @@ import java.util.function.BiFunction
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import javax.swing.*
-import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.deleteIfExists
 import kotlin.system.exitProcess
 
@@ -101,17 +99,6 @@ fun CoroutineScope.startApplication(args: List<String>,
                                     appStarterDeferred: Deferred<AppStarter>,
                                     mainScope: CoroutineScope,
                                     busyThread: Thread) {
-  CoroutineTracerShim.coroutineTracer = object : CoroutineTracerShim {
-    override suspend fun getTraceActivity() = com.intellij.platform.diagnostic.telemetry.impl.getTraceActivity()
-    override fun rootTrace(): CoroutineContext = rootTask()
-
-    override suspend fun <T> span(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T {
-      return com.intellij.platform.diagnostic.telemetry.impl.span(name = name, context = context, action = action)
-    }
-  }
-
-  scheduleEnableCoroutineDumpAndJstack()
-
   val appInfoDeferred = async {
     mainClassLoaderDeferred.await()
     span("app info") {
@@ -319,26 +306,6 @@ private fun CoroutineScope.scheduleSvgIconCacheInitAndPreloadPhm(logDeferred: De
     if (!isHeadless) {
       span("SvgCache creation") {
         SvgCacheManager.svgCache = SvgCacheManager.createSvgCacheManager()
-      }
-    }
-  }
-}
-
-private fun CoroutineScope.scheduleEnableCoroutineDumpAndJstack() {
-  if (!System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
-    return
-  }
-
-  launch {
-    span("coroutine debug probes init") {
-      enableCoroutineDump()
-    }
-    span("coroutine jstack configuration") {
-      JBR.getJstack()?.includeInfoFrom {
-        """
-$COROUTINE_DUMP_HEADER
-${dumpCoroutines(stripDump = false)}
-"""
       }
     }
   }

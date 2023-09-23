@@ -59,7 +59,7 @@ import kotlin.system.exitProcess
 
 @Suppress("SSBasedInspection")
 private val LOG: Logger
-  get() = Logger.getInstance("#com.intellij.ide.bootstrap.ApplicationLoader")
+  get() = Logger.getInstance("#com.intellij.platform.ide.bootstrap.ApplicationLoader")
 
 fun initApplication(context: InitAppContext) {
   context.appRegistered.complete(Unit)

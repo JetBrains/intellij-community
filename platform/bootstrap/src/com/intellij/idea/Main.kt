@@ -5,7 +5,7 @@
 package com.intellij.idea
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.*
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.BytecodeTransformer
 import com.intellij.ide.plugins.ProductLoadingStrategy
@@ -60,31 +60,7 @@ internal fun mainImpl(rawArgs: Array<String>, startupTimings: ArrayList<Any>, st
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler() + rootTask()) {
         addBootstrapTiming("init scope creating", startupTimings)
         StartUpMeasurer.addTimings(startupTimings, "bootstrap", startTimeUnixNano)
-        span("startApplication") {
-          val mainClassLoaderDeferred = async(CoroutineName("main class loader initializing")) {
-            val classLoader = AppStarter::class.java.classLoader
-            ProductLoadingStrategy.strategy.addMainModuleGroupToClassPath(classLoader)
-            return@async classLoader
-          }
-          
-          // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
-          val appStarterDeferred = async(CoroutineName("main class loading")) {
-            val aClass = mainClassLoaderDeferred.await().loadClass("com.intellij.idea.MainImpl")
-            MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
-          }
-
-          launch(CoroutineName("ForkJoin CommonPool configuration")) {
-            IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
-          }
-
-          if (AppMode.isRemoteDevHost()) {
-            span("cwm host init") {
-              initRemoteDev()
-            }
-          }
-
-          startApplication(args = args, mainClassLoaderDeferred = mainClassLoaderDeferred, appStarterDeferred = appStarterDeferred, mainScope = this@runBlocking, busyThread = busyThread)
-        }
+        startApp(args, this@runBlocking, busyThread)
       }
 
       awaitCancellation()
@@ -93,6 +69,69 @@ internal fun mainImpl(rawArgs: Array<String>, startupTimings: ArrayList<Any>, st
   catch (e: Throwable) {
     StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), e)
     exitProcess(AppExitCodes.STARTUP_EXCEPTION)
+  }
+}
+
+private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busyThread: Thread) {
+  span("startApplication") {
+    val mainClassLoaderDeferred = async(CoroutineName("main class loader initializing")) {
+      val classLoader = AppStarter::class.java.classLoader
+      ProductLoadingStrategy.strategy.addMainModuleGroupToClassPath(classLoader)
+      return@async classLoader
+    }
+
+    // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
+    val appStarterDeferred = async(CoroutineName("main class loading")) {
+      val aClass = mainClassLoaderDeferred.await().loadClass("com.intellij.idea.MainImpl")
+      MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
+    }
+
+    launch(CoroutineName("ForkJoin CommonPool configuration")) {
+      IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
+    }
+
+    if (AppMode.isRemoteDevHost()) {
+      span("cwm host init") {
+        initRemoteDev()
+      }
+    }
+
+    CoroutineTracerShim.coroutineTracer = object : CoroutineTracerShim {
+      override suspend fun getTraceActivity() = com.intellij.platform.diagnostic.telemetry.impl.getTraceActivity()
+      override fun rootTrace(): CoroutineContext = rootTask()
+
+      override suspend fun <T> span(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T {
+        return com.intellij.platform.diagnostic.telemetry.impl.span(name = name, context = context, action = action)
+      }
+    }
+
+    scheduleEnableCoroutineDumpAndJstack()
+
+    startApplication(args = args,
+                     mainClassLoaderDeferred = mainClassLoaderDeferred,
+                     appStarterDeferred = appStarterDeferred,
+                     mainScope = mainScope,
+                     busyThread = busyThread)
+  }
+}
+
+private fun CoroutineScope.scheduleEnableCoroutineDumpAndJstack() {
+  if (!System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
+    return
+  }
+
+  launch {
+    span("coroutine debug probes init") {
+      enableCoroutineDump()
+    }
+    span("coroutine jstack configuration") {
+      JBR.getJstack()?.includeInfoFrom {
+        """
+$COROUTINE_DUMP_HEADER
+${dumpCoroutines(stripDump = false)}
+"""
+      }
+    }
   }
 }
 

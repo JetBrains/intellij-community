@@ -110,7 +110,7 @@ private fun disableInputMethodsImpl() {
 
 @Suppress("SSBasedInspection")
 private val LOG: Logger
-  get() = Logger.getInstance("#com.intellij.ide.bootstrap.ApplicationLoader")
+  get() = Logger.getInstance("#com.intellij.platform.ide.bootstrap.ApplicationLoader")
 
 // releases resources of input-methods support
 private fun freeIMRecursively(c: Component) {
