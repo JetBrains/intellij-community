@@ -41,7 +41,7 @@ import java.util.stream.Collectors
 class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvider>,
                          internal val storage: VcsLogStorage,
                          private val topCommitsDetailsCache: TopCommitsCache,
-                         private val commitDetailsGetter: DataGetter<out VcsFullCommitDetails>,
+                         private val commitDetailsGetter: VcsLogCommitDataCache<out VcsFullCommitDetails>,
                          internal val index: VcsLogIndex) : VcsLogFilterer {
 
   constructor(logData: VcsLogData) : this(logData.logProviders, logData.storage, logData.topCommitsCache, logData.commitDetailsGetter,
