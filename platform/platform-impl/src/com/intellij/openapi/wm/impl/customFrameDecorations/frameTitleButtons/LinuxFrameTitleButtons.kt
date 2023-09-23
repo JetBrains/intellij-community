@@ -3,8 +3,10 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.frameTitleButtons
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.LafManager
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.customFrameDecorations.LinuxLookAndFeel
 import com.intellij.openapi.wm.impl.customFrameDecorations.TitleButtonsPanel
+import com.intellij.openapi.wm.impl.customFrameDecorations.WindowToolbarIcons
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.HOVER_KEY
 import com.intellij.util.ui.JBUI
 import java.awt.*
@@ -28,19 +30,19 @@ class LinuxFrameTitleButtons(
 
 
 
-  val restore = LinuxLookAndFeel.getLinuxIcon("window-restore-symbolic.svg") ?: AllIcons.Windows.Restore
+  val restore = LinuxLookAndFeel.getLinuxIcon(WindowToolbarIcons.RESTORE) ?: AllIcons.Windows.Restore
   override val restoreIcon = restore
   override val restoreInactiveIcon = restore
 
-  val maximize = LinuxLookAndFeel.getLinuxIcon("window-maximize-symbolic.svg") ?: AllIcons.Windows.Maximize
+  val maximize = LinuxLookAndFeel.getLinuxIcon(WindowToolbarIcons.MAXIMIZE) ?: AllIcons.Windows.Maximize
   override val maximizeIcon = maximize
   override val maximizeInactiveIcon = maximize
 
-  val minimize = LinuxLookAndFeel.getLinuxIcon("window-minimize-symbolic.svg") ?: AllIcons.Windows.Minimize
+  val minimize = LinuxLookAndFeel.getLinuxIcon(WindowToolbarIcons.MINIMIZE) ?: AllIcons.Windows.Minimize
   override val minimizeIcon = minimize
   override val minimizeInactiveIcon = minimize
 
-  val close = LinuxLookAndFeel.getLinuxIcon("window-close-symbolic.svg") ?: AllIcons.Windows.CloseActive
+  val close = LinuxLookAndFeel.getLinuxIcon(WindowToolbarIcons.CLOSE) ?: AllIcons.Windows.CloseActive
   override val closeIcon = close
   override val closeInactiveIcon = close
   override val closeHoverIcon = close
@@ -48,7 +50,7 @@ class LinuxFrameTitleButtons(
   override fun createButton(accessibleName: String, action: Action): JButton {
     val button = object : JButton() {
       init {
-        super.setUI(HoveredCircleButtonUI())
+        super.setUI(HoveredCircleButtonUI(accessibleName))
       }
 
       override fun setUI(ui: ButtonUI?) {
@@ -63,6 +65,9 @@ class LinuxFrameTitleButtons(
 
   override fun fillButtonPane(panel: TitleButtonsPanel) {
     var linuxButtonsLayout = LinuxLookAndFeel.getHeaderLayout()
+    if (linuxButtonsLayout.isEmpty()) {
+      linuxButtonsLayout = listOf("minimize", "maximize", "close")
+    }
     if (!linuxButtonsLayout.contains("close")) {
       linuxButtonsLayout = linuxButtonsLayout.plus("close")
     }
@@ -88,26 +93,46 @@ class LinuxFrameTitleButtons(
 
 // Can not use JBColor because title frame can use a dark background in Light theme
 @Suppress("UseJBColor")
-private class HoveredCircleButtonUI : BasicButtonUI() {
+private class HoveredCircleButtonUI(val accessibleName: String) : BasicButtonUI() {
   private val circleDiameter = 24
 
-  // Adwaita background circle:
+  // Adwaita GTK background circle:
   // - light theme: rgba(0, 0, 0, 0.08) -> 20.40
   // - dark theme: rgba(255, 255, 255, 0.1) -> 25.5
   private val circleLightBackground = Color(1f, 1f, 1f, 0.08f)
   private val circleDarkBackground = Color(0f, 0f, 0f, 0.1f)
 
+  // Breeze KDE background circle
+  private val circleTransparent = Color(0f, 0f, 0f, 0f)
+  private val circleRedHover = Color(1f, 0.572f, 0.638f, 1f)
+  private val circleDarkHover = Color(0.114f, 0.129f, 0.144f, 1f)
+  private val circleLightHover = Color(0.989f, 0.989f, 0.989f, 1f)
+
   override fun paint(g: Graphics, c: JComponent) {
-    val isLightBackground = with(LafManager.getInstance().currentLookAndFeel.name) {
+    val isLightBackground = with(LafManager.getInstance().currentUIThemeLookAndFeel.name) {
       this == "Light with Light Header" || this == "IntelliJ Light"
     }
-    val backgroundColor = if (isLightBackground) circleDarkBackground else circleLightBackground
+    if (SystemInfo.isKDE) {
+      g.color = circleTransparent
+      getHoverColor(c)?.let {
+        g.color = if (accessibleName == "Close") {
+          circleRedHover
+        } else {
+          if (isLightBackground) {
+            circleDarkHover
+          } else {
+            circleLightHover
+          }
+        }
+      }
+    } else {
+      val backgroundColor = if (isLightBackground) circleDarkBackground else circleLightBackground
 
-    g.color = backgroundColor
-    getHoverColor(c)?.let {
-      g.color = alterAlpha(backgroundColor, 0.05f)
+      g.color = backgroundColor
+      getHoverColor(c)?.let {
+        g.color = alterAlpha(backgroundColor, 0.05f)
+      }
     }
-
     if (g is Graphics2D) {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g.fillRoundRect((c.width / 2) - (circleDiameter / 2), (c.height / 2) - (circleDiameter / 2), circleDiameter, circleDiameter, c.width, c.height)

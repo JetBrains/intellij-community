@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.impl.X11UiUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameTitleButtons.FrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameTitleButtons.LinuxFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameTitleButtons.WindowsFrameTitleButtons
@@ -39,10 +40,15 @@ internal open class CustomFrameTitleButtons(private val myCloseAction: Action,
 
   private val isLinuxThemingEnabled = Registry.`is`("ide.linux.mimic.system.theme", false)
 
-  private val buttons: FrameTitleButtons = if (SystemInfo.isWindows || !isLinuxThemingEnabled)
-    WindowsFrameTitleButtons(myCloseAction, myRestoreAction, myIconifyAction, myMaximizeAction)
-  else
+  private val buttons: FrameTitleButtons = if (
+    SystemInfo.isLinux &&
+    (SystemInfo.isGNOME || SystemInfo.isKDE) &&
+    isLinuxThemingEnabled &&
+    !X11UiUtil.isWSL()
+  )
     LinuxFrameTitleButtons(myCloseAction, myRestoreAction, myIconifyAction, myMaximizeAction)
+  else
+    WindowsFrameTitleButtons(myCloseAction, myRestoreAction, myIconifyAction, myMaximizeAction)
 
   private val baseStyle = ComponentStyle.ComponentStyleBuilder<JComponent> {
     isOpaque = false

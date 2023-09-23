@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.IconManager
 import com.intellij.ui.JBColor
 import com.intellij.util.IconUtil
@@ -15,11 +16,30 @@ import kotlin.concurrent.thread
 class LinuxLookAndFeel {
   companion object {
     val linuxIconPath = "/usr/share/icons"
-    fun getLinuxIcon(iconName: String): Icon? {
-      val iconPath = findIconAbsolutePath(iconName)
-      if (iconPath.isNullOrEmpty())
-        return null
+    fun getLinuxIcon(name: WindowToolbarIcons): Icon? {
+      val iconName: String
+      var iconPath: String? = null
+      if (SystemInfo.isGNOME) {
+        iconName = when (name) {
+          WindowToolbarIcons.CLOSE -> "window-close-symbolic.svg"
+          WindowToolbarIcons.MAXIMIZE -> "window-maximize-symbolic.svg"
+          WindowToolbarIcons.RESTORE -> "window-restore-symbolic.svg"
+          WindowToolbarIcons.MINIMIZE -> "window-minimize-symbolic.svg"
+        }
+        iconPath = findIconAbsolutePath(iconName)
+      }
+      else if (SystemInfo.isKDE) {
+        iconName = when (name) {
+          WindowToolbarIcons.CLOSE -> "close-normal.svg"
+          WindowToolbarIcons.MAXIMIZE -> "maximize-normal.svg"
+          WindowToolbarIcons.RESTORE -> "maximized-normal.svg"
+          WindowToolbarIcons.MINIMIZE -> "minimize-normal.svg"
+        }
+        iconPath = "\$HOME/.config/gtk-3.0/assets/$iconName"
+      }
 
+
+      if (iconPath.isNullOrEmpty()) return null
       var icon = IconManager.getInstance().getIcon("file:$iconPath",
                                                    AllIcons::class.java.classLoader)
       icon = IconUtil.colorizeReplace(icon, JBColor(0x6c7080, 0xcfd1d8))
@@ -59,7 +79,7 @@ class LinuxLookAndFeel {
     }
 
     fun getInheritedIconThemes(themeName: String): List<String> {
-      try{
+      try {
         val themePath = "$linuxIconPath/$themeName"
         val themeConfigFile = File("$themePath/index.theme")
         val inheritanceString = "Inherits="
@@ -67,26 +87,47 @@ class LinuxLookAndFeel {
           val lines = themeConfigFile.readLines()
           for (line in lines) {
             if (line.startsWith(inheritanceString)) {
-              return line.substringAfter(inheritanceString).split(",").map{it.trim()}
+              return line.substringAfter(inheritanceString).split(",").map { it.trim() }
             }
           }
         }
         return listOf()
-      } catch (error: Exception) {
+      }
+      catch (exception: Exception) {
         return listOf()
       }
     }
 
     fun getCurrentIconTheme(): String? {
-      return getDconfEntry("/org/gnome/desktop/interface/icon-theme")?.drop(1)?.dropLast(1)
+      return getDconfEntry("/org/gnome/desktop/interface/icon-theme")?.drop(1)?.dropLast(1) // Remove double quotes
     }
 
     fun getHeaderLayout(): List<String> {
-      // Next line returns something like appmenu:minimize,maximize,close
-      var elementsString = getDconfEntry("/org/gnome/desktop/wm/preferences/button-layout")
-      elementsString = elementsString?.drop(1)?.dropLast(1)
-      val elements = elementsString?.split(":", ",")
-      return elements ?: emptyList()
+      try {
+        if (SystemInfo.isGNOME) {
+          // Next line returns something like appmenu:minimize,maximize,close
+          var elementsString = getDconfEntry("/org/gnome/desktop/wm/preferences/button-layout")
+          elementsString = elementsString?.drop(1)?.dropLast(1) // Remove double quotes
+          return elementsString?.split(":", ",") ?: emptyList()
+        }
+        else if (SystemInfo.isKDE) {
+          val gtk3ConfigFile = File("\$HOME/.config/gtk-3.0/settings.ini")
+          val paramName = "gtk-decoration-layout="
+          if (gtk3ConfigFile.exists()) {
+            val lines = gtk3ConfigFile.readLines()
+            for (line in lines) {
+              if (line.startsWith(paramName)) {
+                // Next line returns something like icon:minimize,maximize,close
+                return line.substringAfter(paramName).split(":", ",").map { it.trim() }
+              }
+            }
+          }
+        }
+      }
+      catch (exception: Exception) {
+        exception.printStackTrace()
+      }
+      return emptyList()
     }
 
     private fun getDconfEntry(key: String): String? {
@@ -94,16 +135,22 @@ class LinuxLookAndFeel {
     }
 
     private fun execute(command: String): String? {
-      val processBuilder = ProcessBuilder(command.split(" "))
-      processBuilder.redirectErrorStream(true)
+      try {
+        val processBuilder = ProcessBuilder(command.split(" "))
+        processBuilder.redirectErrorStream(true)
 
-      val process = processBuilder.start()
-      val reader = BufferedReader(InputStreamReader(process.inputStream))
+        val process = processBuilder.start()
+        val reader = BufferedReader(InputStreamReader(process.inputStream))
 
-      val line: String? = reader.readLine()
-      process.waitFor()
+        val line: String? = reader.readLine()
+        process.waitFor()
 
-      return line
+        return line
+      }
+      catch (exception: Exception) {
+        exception.printStackTrace()
+      }
+      return null
     }
 
     private var isListeningIconThemeChanges = false
@@ -129,7 +176,7 @@ class LinuxLookAndFeel {
           line = reader.readLine()
           if (line.contains("/org/gnome/desktop/interface/icon-theme")) {
             println("Theme changed!!!")
-            subscribers.forEach {it()}
+            subscribers.forEach { it() }
           }
         }
       }
@@ -141,4 +188,8 @@ class LinuxLookAndFeel {
       subscribers.add(callback)
     }
   }
+}
+
+enum class WindowToolbarIcons {
+  MAXIMIZE, MINIMIZE, RESTORE, CLOSE
 }
