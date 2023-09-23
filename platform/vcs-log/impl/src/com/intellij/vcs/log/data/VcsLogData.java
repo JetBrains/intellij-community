@@ -281,6 +281,10 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @Override
   public @Nullable CommitId getCommitId(int commitIndex) {
+    VcsCommitMetadata cachedData = myMiniDetailsGetter.getCommitDataIfAvailable(commitIndex);
+    if (cachedData != null) {
+      return new CommitId(cachedData.getId(), cachedData.getRoot());
+    }
     return myStorage.getCommitId(commitIndex);
   }
 
