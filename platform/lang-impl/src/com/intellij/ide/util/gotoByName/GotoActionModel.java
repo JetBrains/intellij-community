@@ -204,12 +204,13 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
     @Override
     public MergeableElement mergeWith(MergeableElement other) {
+      MatchedValue mergedValue = new MatchedValue(value, pattern, matchingDegree, type);
       if (other instanceof MatchedValue otherMatchedValue) {
         if (otherMatchedValue.type == MatchedValueType.SEMANTIC) {
-          similarityScore = otherMatchedValue.similarityScore;
+          mergedValue.similarityScore = otherMatchedValue.similarityScore;
         }
       }
-      return this;
+      return mergedValue;
     }
 
     @Override
