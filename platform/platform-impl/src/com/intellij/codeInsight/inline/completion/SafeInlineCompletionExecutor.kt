@@ -9,6 +9,22 @@ import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicLong
 
+
+internal class InlineCompletionJob(scope: CoroutineScope) {
+
+  private val job = scope.coroutineContext.job
+
+  val isCancelled: Boolean
+    get() = job.isCancelled
+
+  val isCompleted: Boolean
+    get() = job.isCompleted
+
+  fun cancel() {
+    job.cancel()
+  }
+}
+
 internal class SafeInlineCompletionExecutor(private val scope: CoroutineScope) {
 
   // Timestamps of jobs are required to understand whether we waited for all requests by some moment

@@ -45,7 +45,7 @@ class InlineCompletionContext internal constructor(val editor: Editor) {
 
   /**
    * Indicates that this context cannot be used anymore, meaning that this context cannot be used to access any elements.
-   * Any such operation with context after invalidation results into throwing [InlineCompletionContextInvalidatedException].
+   * Any such operation with context after invalidation results into throwing an exception.
    *
    * * The only operation you can safely use is [isInvalidated]. Always check it before accessing any elements.
    * * If this context was already invalidated, this method does nothing.
@@ -62,12 +62,15 @@ class InlineCompletionContext internal constructor(val editor: Editor) {
   }
 
   companion object {
+
+    @RequiresEdt
     fun getOrNull(editor: Editor): InlineCompletionContext? = InlineCompletionSession.getOrNull(editor)?.context
 
     @Deprecated(
       "Resetting completion context is unsafe now. Use direct get/reset/remove~InlineCompletionContext instead",
       ReplaceWith("getInlineCompletionContextOrNull()"), DeprecationLevel.ERROR
     )
+    @RequiresEdt
     fun Editor.initOrGetInlineCompletionContext(): InlineCompletionContext {
       return getOrNull(this)!!
     }
@@ -76,6 +79,7 @@ class InlineCompletionContext internal constructor(val editor: Editor) {
       "Use direct InlineCompletionContext.getOrNull instead",
       ReplaceWith("InlineCompletionContext.getOrNull(this)"), DeprecationLevel.ERROR
     )
+    @RequiresEdt
     fun Editor.getInlineCompletionContextOrNull(): InlineCompletionContext? = getOrNull(this)
   }
 }

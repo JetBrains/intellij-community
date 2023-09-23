@@ -79,47 +79,50 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     LOG.trace("Start processing inline event $event")
 
     val provider = getProvider(event)
-
     val request = event.toRequest() ?: return
     if (updateContextOrInvalidate(request, provider) || provider == null) {
       return
     }
 
+    // At this point, the previous session must be removed, otherwise, `init` will throw.
+    val newSession = InlineCompletionSession.init(request.editor, provider)
     executor.switchJobSafely {
+      newSession.assignJob(InlineCompletionJob(this@switchJobSafely))
+
       val newRequest = actualizeRequestOrNull(request)
       if (newRequest != null) {
+        assert(newRequest.editor === request.editor)
         withContext(Dispatchers.EDT) {
           hide(newRequest.editor, false)
         }
       }
       val actualRequest = newRequest ?: request
-      forbidModifications(this@switchJobSafely, actualRequest) {
-        invokeRequest(actualRequest, provider)
+      forbidModifications(actualRequest) {
+        invokeRequest(actualRequest, newSession)
       }
     }
   }
 
-  private suspend fun invokeRequest(request: InlineCompletionRequest, provider: InlineCompletionProvider) {
+  private suspend fun invokeRequest(request: InlineCompletionRequest, session: InlineCompletionSession) {
     currentCoroutineContext().ensureActive()
 
+    val context = session.context
     val editor = request.editor
     val offset = request.endOffset
 
     val resultFlow = try {
-      request(provider, request) // .flowOn(Dispatchers.IO)
+      request(session.provider, request) // .flowOn(Dispatchers.IO)
     } catch (e: Throwable) {
       LOG.errorIfNotCancellation(e)
       emptyFlow()
     }
-
-    val context = InlineCompletionSession.getOrInit(editor, provider).context
 
     // If you write a test and observe an infinite hang here, set [UsefulTestCase.runInDispatchThread] to false.
     withContext(Dispatchers.EDT) {
       resultFlow
         .onEmpty {
           trace(InlineCompletionEventType.Empty)
-          InlineCompletionSession.remove(editor)
+          hide(editor, false)
         }
         .onCompletion {
           complete(currentCoroutineContext().isActive, editor, it, context)
@@ -174,6 +177,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
 
   @RequiresEdt
   fun hide(editor: Editor, explicit: Boolean, context: InlineCompletionContext) {
+    assert(!context.isInvalidated)
     if (context.isCurrentlyDisplayingInlays) {
       trace(InlineCompletionEventType.Hide(explicit))
     }
@@ -213,6 +217,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   ): Boolean {
     val session = InlineCompletionSession.getOrNull(request.editor) ?: return false
     if (provider == null && !session.context.isCurrentlyDisplayingInlays) {
+      session.invalidate()
       return true // Fast fall to not slow down editor
     }
     if ((provider != null && session.provider != provider) || session.provider.requiresInvalidation(request.event)) {
@@ -238,9 +243,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
 
   @RequiresEdt
   private fun InlineCompletionSession.invalidate() {
-    if (context.isCurrentlyDisplayingInlays) {
-      hide(context.editor, false, context)
-    }
+    hide(context.editor, false, context)
   }
 
   /**
@@ -267,10 +270,9 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     )
   }
 
-  private suspend fun forbidModifications(scope: CoroutineScope, request: InlineCompletionRequest, block: suspend () -> Unit) {
+  private suspend fun forbidModifications(request: InlineCompletionRequest, block: suspend () -> Unit) {
     fun cancelExecution() {
       hide(request.editor, false)
-      scope.cancel()
     }
 
     val documentListener = object : DocumentListener {

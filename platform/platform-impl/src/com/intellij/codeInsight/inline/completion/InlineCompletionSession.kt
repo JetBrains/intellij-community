@@ -4,32 +4,46 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
-internal data class InlineCompletionSession(val context: InlineCompletionContext, val provider: InlineCompletionProvider) {
+internal class InlineCompletionSession private constructor(val context: InlineCompletionContext, val provider: InlineCompletionProvider) {
+
+  var job: InlineCompletionJob? = null
+    private set
+
+  fun assignJob(job: InlineCompletionJob) {
+    check(this.job == null) { "Job is already assigned to a session." }
+    this.job = job
+  }
 
   companion object {
     private val LOG = thisLogger()
     private val INLINE_COMPLETION_SESSION = Key.create<InlineCompletionSession>("inline.completion.session")
 
-    internal fun getOrNull(editor: Editor): InlineCompletionSession? = editor.getUserData(INLINE_COMPLETION_SESSION)
+    @RequiresEdt
+    fun getOrNull(editor: Editor): InlineCompletionSession? = editor.getUserData(INLINE_COMPLETION_SESSION)
 
-    internal fun getOrInit(editor: Editor, provider: InlineCompletionProvider): InlineCompletionSession {
+    @RequiresEdt
+    fun init(editor: Editor, provider: InlineCompletionProvider): InlineCompletionSession {
       val currentSession = getOrNull(editor)
-      if (currentSession != null && currentSession.provider == provider) {
-        return currentSession
-      }
+      check(currentSession == null) { "Inline completion session already exists." }
       return InlineCompletionSession(InlineCompletionContext(editor), provider).also {
         editor.putUserData(INLINE_COMPLETION_SESSION, it)
       }
     }
 
-    internal fun remove(editor: Editor) {
-      getOrNull(editor)?.context?.let {
-        it.clear()
-        it.invalidate()
+    @RequiresEdt
+    fun remove(editor: Editor) {
+      val currentSession = getOrNull(editor)?.apply {
+        context.clear()
+        context.invalidate()
+        job?.cancel()
       }
-      editor.putUserData(INLINE_COMPLETION_SESSION, null)
-      LOG.trace("Remove inline completion session")
+
+      if (currentSession != null) {
+        editor.putUserData(INLINE_COMPLETION_SESSION, null)
+        LOG.trace("Remove inline completion session")
+      }
     }
   }
 }
