@@ -3,7 +3,6 @@ import os
 import sys
 import threading
 import traceback
-from functools import cached_property
 from os.path import splitext, basename
 
 from _pydev_bundle import pydev_log
@@ -469,8 +468,12 @@ class PyRaiseCallback(PEP669CallbackBase):
     filename_to_lines_where_exceptions_are_ignored = {}
     filename_to_stat_info = {}
 
-    @cached_property
-    def _top_level_frame(self):
+    _top_level_frame = None
+
+    def _get_top_level_frame(self):
+        if self._top_level_frame is not None:
+            return self._top_level_frame
+
         f_unhandled = sys._getframe()
 
         while f_unhandled:
@@ -481,6 +484,8 @@ class PyRaiseCallback(PEP669CallbackBase):
                     break
             f_unhandled = f_unhandled.f_back
 
+        self._top_level_frame = f_unhandled
+
         return f_unhandled
 
     def __call__(self, code, instruction_offset, exception):
@@ -489,7 +494,7 @@ class PyRaiseCallback(PEP669CallbackBase):
 
         frame = self.frame
 
-        if frame is self._top_level_frame:
+        if frame is self._get_top_level_frame():
             self._stop_on_unhandled_exception(exc_info)
             return
 
