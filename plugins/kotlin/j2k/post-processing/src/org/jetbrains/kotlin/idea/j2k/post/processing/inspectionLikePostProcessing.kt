@@ -37,7 +37,7 @@ internal class InspectionLikeProcessingGroup(
     fun priority(processing: InspectionLikeProcessing): Int = processingsToPriorityMap.getValue(processing)
     override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext) {
         do {
-            var modificationStamp: Long? = file.modificationStamp
+            var modificationStamp: Long? = runReadAction { file.modificationStamp }
             val elementToActions = runReadAction {
                 collectAvailableActions(file, converterContext, rangeMarker)
             }
@@ -53,7 +53,7 @@ internal class InspectionLikeProcessingGroup(
                 }
             }
             if (runSingleTime) break
-        } while (modificationStamp != file.modificationStamp && elementToActions.isNotEmpty())
+        } while (modificationStamp != runReadAction { file.modificationStamp } && elementToActions.isNotEmpty())
     }
 
     private enum class RangeFilterResult {
