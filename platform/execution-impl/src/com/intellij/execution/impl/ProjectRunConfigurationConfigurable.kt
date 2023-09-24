@@ -16,7 +16,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.tree.DefaultMutableTreeNode
 
-open class ProjectRunConfigurationConfigurable(project: Project, runDialog: RunDialogBase? = null) : RunConfigurable(project, runDialog) {
+open class ProjectRunConfigurationConfigurable(project: Project) : RunConfigurable(project) {
   override fun createLeftPanel(): JComponent {
 
     if (project.isDefault) {

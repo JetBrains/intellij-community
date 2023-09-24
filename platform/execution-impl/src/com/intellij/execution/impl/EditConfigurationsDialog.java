@@ -10,10 +10,12 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,12 +23,13 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
-public class EditConfigurationsDialog extends SingleConfigurableEditor implements RunDialogBase {
+public class EditConfigurationsDialog extends SingleConfigurableEditor {
   protected Executor myExecutor;
   private final @NotNull Project myProject;
   private @Nullable Action myRunAction;
@@ -54,7 +57,11 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
     myProject = project;
     myDataContext = dataContext;
 
-    getConfigurable().setRunDialog(this);
+    getConfigurable().getTree().registerKeyboardAction((event) -> {
+      clickDefaultButton();
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
+    getConfigurable().setDialogUpdateCallback(() -> updateDialog());
+
     getConfigurable().initTreeSelectionListener(getDisposable());
     setTitle(ExecutionBundle.message("run.debug.dialog.title"));
     setHorizontalStretch(1.3F);
@@ -93,11 +100,6 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
       // if configurable was not modified, apply was not called and Run Configurable has not called 'updateActiveConfigurationFromSelected'
       configurable.updateActiveConfigurationFromSelected();
     }
-  }
-
-  @Override
-  public @Nullable Executor getExecutor() {
-    return myExecutor;
   }
 
   @Override
@@ -148,13 +150,17 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
                                    @NotNull Runnable onFail, RunnerAndConfigurationSettings runnerAndConfigurationSettings) {
     AppExecutorUtil.getAppExecutorService().execute(() -> {
       for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
-        if (ExecutorRegistryImpl.RunnerHelper.canRun(myProject, executor, runnerAndConfigurationSettings.getConfiguration())) {
+        if (canRun(runnerAndConfigurationSettings, executor)) {
           onRunnableExecutor.accept(runnerAndConfigurationSettings, executor);
           return;
         }
       }
       onFail.run();
     });
+  }
+
+  private boolean canRun(@Nullable RunnerAndConfigurationSettings settings, Executor executor) {
+    return settings != null && ExecutorRegistryImpl.RunnerHelper.canRun(myProject, executor, settings.getConfiguration());
   }
 
   public void updateRunAction() {
@@ -181,4 +187,29 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
       }, ModalityState.any());
     });
  }
+
+  private void updateDialog() {
+    if (myExecutor != null) {
+      updateDialogForSingleExecutor(myExecutor);
+    }
+    else {
+      updateRunAction();
+    }
+  }
+
+  private void updateDialogForSingleExecutor(Executor executor) {
+    @Nls StringBuilder buffer = new StringBuilder();
+    buffer.append(executor.getId());
+    SingleConfigurationConfigurable<RunConfiguration> configuration = getConfigurable().getSelectedConfiguration();
+    if (configuration != null) {
+      buffer.append(" - ");
+      buffer.append(configuration.getNameText());
+
+      ReadAction.nonBlocking(() -> canRun(configuration.getSettings(), executor))
+        .finishOnUiThread(ModalityState.current(), b -> setOKActionEnabled(b))
+        .expireWith(getDisposable())
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
+    setTitle(buffer.toString());
+  }
 }
