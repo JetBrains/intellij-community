@@ -163,23 +163,22 @@ internal class ActionUpdater @JvmOverloads constructor(
     checkCancelled()
     if (isEDT || !shallEDT) {
       return computeWithSpan(Utils.getTracer(true), operationName) { span: Span ->
-        val start = System.nanoTime()
-        try {
-          val adjustedCall = {
+        val adjustedCall = {
+          val start = System.nanoTime()
+          try {
             ProhibitAWTEvents.start(operationName).use {
               call()
             }
           }
-          if (isEDT) adjustedCall()
-          else readActionUndispatched(adjustedCall)
-        }
-        finally {
-          val elapsed = TimeoutUtil.getDurationMillis(start)
-          span.end()
-          if (elapsed > 1000) {
-            LOG.warn(elapsedReport(elapsed, isEDT, operationName))
+          finally {
+            val elapsed = TimeoutUtil.getDurationMillis(start)
+            if (elapsed > 1000) {
+              LOG.warn(elapsedReport(elapsed, isEDT, operationName))
+            }
           }
         }
+        if (isEDT) adjustedCall()
+        else readActionUndispatched(adjustedCall)
       }
     }
     if (PopupMenuPreloader.isToSkipComputeOnEDT(place)) {
@@ -552,6 +551,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       }
     }
     catch (_: ComputeOnEDTSkipped) {
+      return null
     }
     return null
   }
@@ -629,7 +629,7 @@ private enum class Op { Update, GetChildren }
 private data class UpdateStrategy(@JvmField val update: suspend (AnAction) -> Presentation?,
                                   @JvmField val getChildren: suspend (ActionGroup) -> Array<AnAction>)
 
-private class ComputeOnEDTSkipped : ProcessCanceledException() {
+private class ComputeOnEDTSkipped : RuntimeException() {
   override fun fillInStackTrace(): Throwable = this
 }
 
@@ -672,6 +672,7 @@ private fun elapsedReport(elapsed: Long, isEDT: Boolean, operationName: String):
 private fun handleException(action: AnAction, op: Op, event: AnActionEvent?, ex: Throwable) {
   if (ex is ProcessCanceledException) throw ex
   if (ex is AwaitSharedData) throw ex
+  if (ex is ComputeOnEDTSkipped) throw ex
   val id = ActionManager.getInstance().getId(action)
   val place = event?.place
   val text = event?.presentation?.text
@@ -713,7 +714,7 @@ private suspend inline fun <R> retryOnAwaitSharedData(block: suspend () -> R): R
   }
 }
 
-private class AwaitSharedData(val job: Job): CancellationException()
+private class AwaitSharedData(val job: Job): RuntimeException()
 
 private class ForcedActionUpdateThreadElement(val updateThread: ActionUpdateThread)
   : AbstractCoroutineContextElement(ForcedActionUpdateThreadElement) {
