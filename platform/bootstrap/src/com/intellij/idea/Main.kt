@@ -1,11 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Main")
-@file:Suppress("RAW_RUN_BLOCKING", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+@file:Suppress("RAW_RUN_BLOCKING", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+@file:OptIn(ExperimentalCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 
 package com.intellij.idea
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
+import com.intellij.diagnostic.CoroutineTracerShim
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.BytecodeTransformer
 import com.intellij.ide.plugins.StartupAbortedException
@@ -24,6 +28,7 @@ import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
+import kotlinx.coroutines.debug.DebugProbes
 import sun.font.FontManagerFactory
 import java.awt.Toolkit
 import java.io.IOException
@@ -56,7 +61,31 @@ internal fun mainImpl(rawArgs: Array<String>,
   AppMode.setFlags(args)
   addBootstrapTiming("AppMode.setFlags", startupTimings)
   try {
-    bootstrap(startupTimings)
+    PathManager.loadProperties()
+    addBootstrapTiming("properties loading", startupTimings)
+    PathManager.customizePaths()
+    addBootstrapTiming("customizePaths", startupTimings)
+    // this check must be performed before system directories are locked
+    if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
+      val configImportNeeded = !AppMode.isHeadless() && !Files.exists(Path.of(PathManager.getConfigPath()))
+      if (!configImportNeeded) {
+        // Consider following steps:
+        // - user opens settings, and installs some plugins;
+        // - the plugins are downloaded and saved somewhere;
+        // - IDE prompts for restart;
+        // - after restart, the plugins are moved to proper directories ("installed") by the next line.
+        // TODO get rid of this: plugins should be installed before restarting the IDE
+        installPluginUpdates()
+      }
+      addBootstrapTiming("plugin updates installation", startupTimings)
+    }
+    initMarketplace()
+    addBootstrapTiming("classloader init", startupTimings)
+
+    // runBlocking will load DebugProbes anyway, so, that's ok to call it here so early
+    DebugProbes.enableCreationStackTraces = false
+    addBootstrapTiming("coroutine debug probes configuration", startupTimings)
+
     runBlocking {
       addBootstrapTiming("main scope creating", startupTimings)
       val busyThread = Thread.currentThread()
@@ -81,7 +110,7 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
     val mainClassLoaderDeferred: Deferred<ClassLoader>?
     if (changeClassPath == null) {
       appStarterDeferred = async(CoroutineName("main class loading")) {
-        val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
+        val aClass = AppMode::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
         MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
       }
       mainClassLoaderDeferred = null
@@ -135,7 +164,16 @@ private fun CoroutineScope.scheduleEnableCoroutineDumpAndJstack() {
 
   launch {
     span("coroutine debug probes init") {
-      enableCoroutineDump()
+      try {
+        DebugProbes.install()
+      }
+      catch (ignore: NoClassDefFoundError) {
+        // if for some reason, class loader has ByteBuddy in the classpath
+        // (it is an error, and should be fixed - our dev mode and production behaves correctly)
+      }
+      catch (e: Exception) {
+        e.printStackTrace()
+      }
     }
     span("coroutine jstack configuration") {
       JBR.getJstack()?.includeInfoFrom {
@@ -191,33 +229,7 @@ private fun initLux() {
   System.setProperty("sun.font.fontmanager", IdeFontManager::class.java.canonicalName)
 }
 
-private fun bootstrap(startupTimings: MutableList<Any>) {
-  PathManager.loadProperties()
-  addBootstrapTiming("properties loading", startupTimings)
-
-  PathManager.customizePaths()
-  addBootstrapTiming("customizePaths", startupTimings)
-
-  // this check must be performed before system directories are locked
-  if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
-    val configImportNeeded = !AppMode.isHeadless() && !Files.exists(Path.of(PathManager.getConfigPath()))
-    if (!configImportNeeded) {
-      // Consider following steps:
-      // - user opens settings, and installs some plugins;
-      // - the plugins are downloaded and saved somewhere;
-      // - IDE prompts for restart;
-      // - after restart, the plugins are moved to proper directories ("installed") by the next line.
-      // TODO get rid of this: plugins should be installed before restarting the IDE
-      installPluginUpdates()
-    }
-    addBootstrapTiming("plugin updates installation", startupTimings)
-  }
-
-  initClassLoader()
-  addBootstrapTiming("classloader init", startupTimings)
-}
-
-fun initClassLoader() {
+private fun initMarketplace() {
   val distDir = Path.of(PathManager.getHomePath())
   val classLoader = AppMode::class.java.classLoader as? PathClassLoader
                     ?: throw RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
@@ -234,38 +246,33 @@ fun initClassLoader() {
     marketPlaceBootDir = BootstrapClassLoaderUtil.findMarketplaceBootDir(pluginDir)
     mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR)
     installMarketplace = BootstrapClassLoaderUtil.isMarketplacePluginCompatible(distDir, pluginDir, mpBoot)
-  }
 
-  val classpath = LinkedHashSet<Path>()
-  if (installMarketplace) {
-    val marketplaceImpl = marketPlaceBootDir.resolve("marketplace-impl.jar")
-    if (Files.exists(marketplaceImpl)) {
-      classpath.add(marketplaceImpl)
-    }
-    else {
-      installMarketplace = false
+    if (!installMarketplace) {
+      return
     }
   }
 
-  if (!classpath.isEmpty()) {
-    classLoader.classPath.addFiles(classpath)
+  val marketplaceImpl = marketPlaceBootDir.resolve("marketplace-impl.jar")
+  if (Files.exists(marketplaceImpl)) {
+    classLoader.classPath.addFiles(listOf(marketplaceImpl))
+  }
+  else {
+    return
   }
 
-  if (installMarketplace) {
-    try {
-      val spiLoader = PathClassLoader(UrlClassLoader.build().files(listOf(mpBoot)).parent(classLoader))
-      val transformers = ServiceLoader.load(BytecodeTransformer::class.java, spiLoader).iterator()
-      if (transformers.hasNext()) {
-        classLoader.setTransformer(BytecodeTransformerAdapter(transformers.next()))
-      }
+  try {
+    val spiLoader = PathClassLoader(UrlClassLoader.build().files(listOf(mpBoot)).parent(classLoader))
+    val transformers = ServiceLoader.load(BytecodeTransformer::class.java, spiLoader).iterator()
+    if (transformers.hasNext()) {
+      classLoader.setTransformer(BytecodeTransformerAdapter(transformers.next()))
     }
-    catch (e: Throwable) {
-      // at this point, logging is not initialized yet, so reporting the error directly
-      val path = pluginDir.resolve(BootstrapClassLoaderUtil.MARKETPLACE_PLUGIN_DIR).toString()
-      val message = "As a workaround, you may uninstall or update JetBrains Marketplace Support plugin at $path"
-      StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.jetbrains.marketplace.boot.failure"),
-                                       Exception(message, e))
-    }
+  }
+  catch (e: Throwable) {
+    // at this point, logging is not initialized yet, so reporting the error directly
+    val path = pluginDir.resolve(BootstrapClassLoaderUtil.MARKETPLACE_PLUGIN_DIR).toString()
+    val message = "As a workaround, you may uninstall or update JetBrains Marketplace Support plugin at $path"
+    StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.jetbrains.marketplace.boot.failure"),
+                                     Exception(message, e))
   }
 }
 
