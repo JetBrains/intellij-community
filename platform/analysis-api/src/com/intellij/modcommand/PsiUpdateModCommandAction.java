@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Predicate;
+import java.util.function.BiFunction;
 
 /**
  * A convenient abstract class to implement {@link ModCommandAction}
@@ -42,7 +42,7 @@ public abstract class PsiUpdateModCommandAction<E extends PsiElement> extends Ps
    * @param elementClass element class
    * @param filter       predicate to check the elements: elements that don't satisfy will be skipped
    */
-  protected PsiUpdateModCommandAction(@NotNull Class<E> elementClass, @NotNull Predicate<? super E> filter) {
+  protected PsiUpdateModCommandAction(@NotNull Class<E> elementClass, @NotNull BiFunction<? super E, ActionContext, Boolean> filter) {
     super(elementClass, filter);
   }
 
