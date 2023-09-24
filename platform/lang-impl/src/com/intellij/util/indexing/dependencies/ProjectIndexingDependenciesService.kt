@@ -155,7 +155,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
       val next = current.requestId + 1
       IndexingRequestTokenImpl(if (next + appCurrent.toInt() != NULL_INDEXING_STAMP) next else next + 1, appCurrent)
     }.also {
-      // don't use `it`: current.get() will return just updated value or more up-to-date value
+      // don't use `it`: current.get() will return just updated value or more up-to-date value which might has already been persisted by another thread
       storage.writeRequestId(current.get().requestId)
     }
   }

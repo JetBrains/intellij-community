@@ -19,9 +19,17 @@ import java.util.concurrent.atomic.AtomicReference
  * 1. Configuration. Extensions in plugin may depend on configuration. In the case of configuration change plugins must
  *    request (full) scanning (e.g. change in project language level). Full rescan counter also contributes to the fingerprint.
  *    It is not clear at the moment if partial rescans should contribute or not.
- * 1. VFS. VFS has its own means to track changed files. VFS is not in the scope of the fingerprint. // TODO
- * 1. Project model. TODO
- * 1. Shared indexes TODO
+ * 1. VFS. VFS has its own means to track changed files. VFS is not in the scope of the fingerprint. We assume that each time VFS
+ *    file changes, its `modificationCounter` changes as well. This counter is considered by [FileIndexingStamp], so changed file
+ *    has modified file indexing stamp even though indexing dependencies fingerprint stays the same. We might include VFS creation stamp
+ *    into the fingerprint, but we don't do it at the moment. Invalidation of VFS creation stamp is currently possible due to
+ *    VFS re-create. In this case all the [FileIndexingStamp] are reset to default `UNINDEXED` state. (see "invalidate cache" notes
+ *    for [com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService])
+ * 1. Project model. Platform indexes tracks project model state by, and request full or partial scanning if project model changes.
+ * 1. Shared indexes. Shared indexes track their state by themself, and should request full scanning if previously indexed files
+ *    might become invalid. Specifically, on project open shared indexes tiy to re-attach all the chunks from previous session,
+ *    and request full scanning if they could not attach some of them.
+ *    See [com.intellij.indexing.shared.platform.impl.SharedIndexProjectActivity]
  * 1. JVM options and registry. They are kind of settings, but they do not trigger any rescanning - they usually require APP restart. TODO
  * 1. Did I miss something? Please contact me (e.g. by filing a YouTrack ticket).
  */
