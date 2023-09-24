@@ -571,7 +571,7 @@ internal class ActionUpdater @JvmOverloads constructor(
             }
           })
         }
-      } ?: cur.complete(supplier.get()) // GotoAction
+      } ?: cur.completeWith(runCatching { supplier.get() }) // GotoAction
       cur
     }
     if (deferred.isCompleted) {
