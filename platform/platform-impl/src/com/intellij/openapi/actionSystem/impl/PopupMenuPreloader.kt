@@ -1,173 +1,213 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.actionSystem.impl;
+package com.intellij.openapi.actionSystem.impl
 
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdleTracker;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.platform.ide.menu.IdeJMenuBar;
-import com.intellij.ui.PopupHandler;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.TimeoutUtil;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.CancellablePromise;
+import com.intellij.ide.DataManager
+import com.intellij.ide.IdleTracker
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.impl.Utils.createAsyncDataContext
+import com.intellij.openapi.actionSystem.impl.Utils.freezeDataContext
+import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.EditorComponentImpl
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.platform.ide.menu.IdeJMenuBar
+import com.intellij.ui.PopupHandler
+import com.intellij.util.ArrayUtil
+import com.intellij.util.IJSwingUtilities
+import com.intellij.util.TimeoutUtil
+import com.intellij.util.application
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.update.UiNotifyConnector
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.awt.Component
+import java.awt.event.*
+import java.lang.ref.WeakReference
+import java.util.function.Supplier
+import javax.swing.JComponent
+import javax.swing.JMenuBar
+import javax.swing.SwingUtilities
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.HierarchyEvent;
-import java.awt.event.HierarchyListener;
-import java.lang.ref.WeakReference;
-import java.util.List;
-import java.util.function.Supplier;
+private val LOG = logger<PopupMenuPreloader>()
+
+private val MODE = Registry.get("actionSystem.update.actions.preload.menus").getSelectedOption()
+private val PRELOADER_PLACE_SUFFIX = "(preload-$MODE)"
+
+private const val MAX_RETRIES = 5
+private const val MAX_EDITOR_PRELOADS = 4
+private const val IDLE_LISTENER_DELAY = 2000
+private const val MAX_PRELOAD_TIME = 60_000L
+
+private var ourEditorContextMenuPreloadCount = 0
+
 
 /**
  * Expands an action group for a warm-up as less intrusive as possible:
  * in an "idle" listener, on a UI-only data-context, with a dedicated action-place.
+ *
+ * Runs preloading with retries on first show, and on first focusGained.
  */
-public final class PopupMenuPreloader implements HierarchyListener {
-  private static final Logger LOG = Logger.getInstance(PopupMenuPreloader.class);
+@Internal
+class PopupMenuPreloader private constructor(component: JComponent,
+                                             actionPlace: String,
+                                             popupHandler: PopupHandler?,
+                                             groupSupplier: () -> ActionGroup?) : HierarchyListener {
+  private val myPlace: String
+  private val myGroupSupplier: () -> ActionGroup?
+  private val myComponentRef = WeakReference(component)
+  private val myPopupHandlerRef = if (popupHandler == null) null else WeakReference(popupHandler)
+  private val myStarted = System.nanoTime()
 
-  private static final String MODE = Registry.get("actionSystem.update.actions.preload.menus").getSelectedOption();
-  private static final String PRELOADER_PLACE_SUFFIX = "(preload-" + MODE + ")";
+  private var myRetries = 0
+  private var myJob: Job? = null
+  private var myDisposed = false
 
-  private static int ourEditorContextMenuPreloadCount;
+  private var removeIdleListener: AccessToken? = null
 
-  private final Supplier<? extends ActionGroup> myGroupSupplier;
-  private final String myPlace;
-  private final WeakReference<JComponent> myComponentRef;
-  private final WeakReference<PopupHandler> myPopupHandlerRef;
-  private final long myStarted = System.nanoTime();
-  private int myRetries;
-  private boolean myDisposed;
-
-  private AccessToken removeIdleListener;
-
-  public static void install(@NotNull JComponent component,
-                             @NotNull String actionPlace,
-                             @Nullable PopupHandler popupHandler,
-                             @NotNull Supplier<? extends ActionGroup> groupSupplier) {
-    if (ApplicationManager.getApplication().isUnitTestMode() || "none".equals(MODE)) {
-      return;
-    }
-    if (component instanceof EditorComponentImpl && ourEditorContextMenuPreloadCount > 4 ||
-        component instanceof IdeJMenuBar && SwingUtilities.getWindowAncestor(component) instanceof IdeFrame.Child) {
-      return;
-    }
-    Runnable runnable = () -> {
-      if (popupHandler != null && !ArrayUtil.contains(popupHandler, component.getMouseListeners()) ||
-          component instanceof EditorComponentImpl && !EditorUtil.isRealFileEditor(((EditorComponentImpl)component).getEditor())) {
-        return;
-      }
-      PopupMenuPreloader preloader = new PopupMenuPreloader(component, actionPlace, popupHandler, groupSupplier);
-      preloader.removeIdleListener = IdleTracker.getInstance().addIdleListener(2_000, preloader::onIdle);
-    };
-    UiNotifyConnector.doWhenFirstShown(component, runnable);
-    if (component instanceof JMenuBar) return;
-    // second-time preloading for a hopefully non-trivial selection
-    component.addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        component.removeFocusListener(this);
-        runnable.run();
-      }
-    });
+  init {
+    myPlace = actionPlace
+    myGroupSupplier = groupSupplier
+    component.addHierarchyListener(this)
   }
 
-  private PopupMenuPreloader(@NotNull JComponent component,
-                             @NotNull String actionPlace,
-                             @Nullable PopupHandler popupHandler,
-                             @NotNull Supplier<? extends ActionGroup> groupSupplier) {
-    myComponentRef = new WeakReference<>(component);
-    myPopupHandlerRef = popupHandler == null ? null : new WeakReference<>(popupHandler);
-
-    myGroupSupplier = groupSupplier;
-    myPlace = actionPlace + PRELOADER_PLACE_SUFFIX;
-    component.addHierarchyListener(this);
+  override fun hierarchyChanged(e: HierarchyEvent) {
+    LOG.assertTrue(!myDisposed, "already disposed")
+    if ((e.changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) <= 0) return
+    dispose("hierarchy changed")
   }
 
-  static boolean isToSkipComputeOnEDT(@NotNull String place) {
-    return place.endsWith(PRELOADER_PLACE_SUFFIX) && "bgt".equals(MODE);
-  }
-
-  @Override
-  public void hierarchyChanged(HierarchyEvent e) {
-    LOG.assertTrue(!myDisposed, "already disposed");
-    if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) <= 0) return;
-    dispose(-1);
-  }
-
-  private void onIdle() {
-    JComponent component = myComponentRef.get();
-    PopupHandler popupHandler = myPopupHandlerRef == null ? null : myPopupHandlerRef.get();
+  private fun onIdle() {
+    val component = myComponentRef.get()
+    val popupHandler = myPopupHandlerRef?.get()
     if (component == null || !component.isShowing() ||
-        myPopupHandlerRef != null && (popupHandler == null || !ArrayUtil.contains(popupHandler, component.getMouseListeners()))) {
-      dispose(-1);
-      return;
+        myPopupHandlerRef != null && (
+          popupHandler == null ||
+          !ArrayUtil.contains(popupHandler, *component.mouseListeners))) {
+      dispose("popupHandler removed")
+      return
     }
-    ActionGroup actionGroup = myGroupSupplier.get();
+    val actionGroup = myGroupSupplier()
     if (actionGroup == null) {
-      dispose(-1);
-      return;
+      dispose("action group not found")
+      return
     }
-    Component contextComponent = ActionPlaces.MAIN_MENU.equals(myPlace) ?
-                                 IJSwingUtilities.getFocusedComponentInWindowOrSelf(component) : component;
-    DataContext dataContext = Utils.freezeDataContext(
-      Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(contextComponent)), null);
-    long start = System.nanoTime();
-    myRetries ++;
-    CancellablePromise<List<AnAction>> promise = Utils.expandActionGroupAsync(
-      actionGroup, new PresentationFactory(), dataContext, myPlace, false, false);
-    promise.onSuccess(__ -> dispose(TimeoutUtil.getDurationMillis(start)));
-    promise.onError(__ -> {
-      int retries = 3;
-      if (myRetries > retries) {
-        UIUtil.invokeLaterIfNeeded(() -> dispose(-1));
+    if (myJob?.isActive == true) {
+      return
+    }
+    if (myRetries++ > MAX_RETRIES) {
+      dispose("no retries left")
+      return
+    }
+    val contextComponent: Component =
+      if (ActionPlaces.MAIN_MENU == myPlace) IJSwingUtilities.getFocusedComponentInWindowOrSelf(component)
+      else component
+    val dataContext = DataManager.getInstance().getDataContext(contextComponent)
+    myJob = application.coroutineScope.launch(Dispatchers.EDT) {
+      withTimeout(MAX_PRELOAD_TIME) {
+        doPreload(actionGroup, dataContext)
       }
-    });
+    }
+  }
+
+  private suspend fun doPreload(actionGroup: ActionGroup, dataContext: DataContext) {
+    val dataContext = freezeDataContext(createAsyncDataContext(dataContext), null)
+    val start = System.nanoTime()
+    try {
+      Utils.expandActionGroupSuspend(
+        actionGroup, PresentationFactory(), dataContext,
+        "$myPlace$PRELOADER_PLACE_SUFFIX", false, false)
+      dispose(TimeoutUtil.getDurationMillis(start))
+    }
+    catch (ex: Throwable) {
+      throw ex
+    }
   }
 
   @RequiresEdt
-  private void dispose(long millis) {
+  private fun dispose(reason: Any) {
     if (myDisposed) {
-      return;
+      return
+    }
+    val millis = reason as? Long ?: -1
+    val success = millis > 0
+
+    myDisposed = true
+    myJob?.apply {
+      myJob = null
+      cancel()
+    }
+    removeIdleListener?.apply {
+      removeIdleListener = null
+      close()
+    }
+    myComponentRef.get()?.apply {
+      removeHierarchyListener(this@PopupMenuPreloader)
+      if (success && this is EditorComponentImpl) {
+        ourEditorContextMenuPreloadCount++
+      }
+    }
+    val group = myGroupSupplier()
+    val text = if (group == null) "" else
+      (group.templateText ?: ActionManager.getInstance().getId(group) ?: "")
+    if (success) {
+      LOG.info("'$text' at '$myPlace' is preloaded in $millis ms " +
+               "(${TimeoutUtil.getDurationMillis(myStarted)} ms since showing)")
+    }
+    else {
+      LOG.info("'$text' at '$myPlace' failed to preloaded: $reason " +
+               "(${TimeoutUtil.getDurationMillis(myStarted)} ms since showing)")
+    }
+  }
+
+  companion object {
+
+    @JvmStatic
+    fun install(component: JComponent,
+                actionPlace: String,
+                popupHandler: PopupHandler?,
+                groupSupplier: Supplier<out ActionGroup>) {
+      if (ApplicationManager.getApplication().isUnitTestMode() || "none" == MODE) {
+        return
+      }
+      if (component is EditorComponentImpl && ourEditorContextMenuPreloadCount > MAX_EDITOR_PRELOADS ||
+          component is IdeJMenuBar && SwingUtilities.getWindowAncestor(component) is IdeFrame.Child) {
+        return
+      }
+      val runnable = Runnable {
+        if (popupHandler != null && !component.mouseListeners.contains(popupHandler) ||
+            component is EditorComponentImpl && !EditorUtil.isRealFileEditor(component.editor)) {
+          return@Runnable
+        }
+        val preloader = PopupMenuPreloader(component, actionPlace, popupHandler, groupSupplier::get)
+        preloader.removeIdleListener = IdleTracker.getInstance().addIdleListener(IDLE_LISTENER_DELAY) {
+          preloader.onIdle()
+        }
+      }
+      // first-time preloading on first show
+      UiNotifyConnector.doWhenFirstShown(component, runnable)
+      if (component is JMenuBar) return
+      // second-time preloading for a hopefully non-trivial selection
+      component.addFocusListener(object : FocusAdapter() {
+        override fun focusGained(e: FocusEvent) {
+          component.removeFocusListener(this)
+          runnable.run()
+        }
+      })
     }
 
-    myDisposed = true;
-    if (removeIdleListener != null) {
-      removeIdleListener.close();
-      removeIdleListener = null;
+    @JvmStatic
+    fun isToSkipComputeOnEDT(place: String): Boolean {
+      return place.endsWith(PRELOADER_PLACE_SUFFIX) && "bgt" == MODE
     }
-
-    JComponent component = myComponentRef.get();
-    if (component != null) {
-      component.removeHierarchyListener(this);
-    }
-    if (millis == -1) {
-      return;
-    }
-    if (component instanceof EditorComponentImpl) {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ourEditorContextMenuPreloadCount ++;
-    }
-    ActionGroup group = myGroupSupplier.get();
-    String text = group == null ? null : group.getTemplateText();
-    LOG.info(TimeoutUtil.getDurationMillis(myStarted) + " ms since showing to preload popup menu " +
-             (text == null ? "" : "'" + text + "' ") + "at '" + myPlace + "' in " + millis + " ms");
   }
 }
