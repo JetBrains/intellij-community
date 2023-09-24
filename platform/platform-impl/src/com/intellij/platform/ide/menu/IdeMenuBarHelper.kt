@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
+import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
@@ -54,7 +55,7 @@ internal interface IdeMenuFlavor {
 }
 
 internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
-                                       @JvmField internal val menuBar: MenuBarImpl) : ActionAwareIdeMenuBar {
+                                       @JvmField val menuBar: MenuBarImpl) : ActionAwareIdeMenuBar {
   protected abstract fun isUpdateForbidden(): Boolean
 
   @JvmField
@@ -157,6 +158,11 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
   }
 
   protected open suspend fun postInitActions(actions: List<ActionGroup>) {
+    withContext(Dispatchers.EDT) {
+      for (action in actions) {
+        PopupMenuPreloader.install(menuBar.component, ActionPlaces.MAIN_MENU, null) { action }
+      }
+    }
   }
 
   abstract suspend fun doUpdateVisibleActions(newVisibleActions: List<ActionGroup>, forceRebuild: Boolean)

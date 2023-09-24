@@ -5,7 +5,6 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.ActionMenu
-import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import kotlinx.coroutines.Dispatchers
@@ -14,14 +13,6 @@ import javax.swing.MenuSelectionManager
 
 internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMenuBar.JMenuBarImpl) : IdeMenuBarHelper(flavor, menuBar) {
   override fun isUpdateForbidden() = MenuSelectionManager.defaultManager().selectedPath.isNotEmpty()
-
-  override suspend fun postInitActions(actions: List<ActionGroup>) {
-    withContext(Dispatchers.EDT) {
-      for (action in actions) {
-        PopupMenuPreloader.install(menuBar.component, ActionPlaces.MAIN_MENU, null) { action }
-      }
-    }
-  }
 
   override suspend fun doUpdateVisibleActions(newVisibleActions: List<ActionGroup>, forceRebuild: Boolean) {
     val menuBarComponent = menuBar.component
