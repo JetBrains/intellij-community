@@ -35,7 +35,7 @@ public final class ClassPath {
   static final boolean recordLoadingTime = recordLoadingInfo || Boolean.getBoolean("idea.record.classloading.stats");
   static final boolean logLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
 
-  private static final boolean enableCoroutineDump = Boolean.parseBoolean(System.getProperty("idea.enable.coroutine.dump", "true"));
+  private static final boolean enableCoroutineDump = Boolean.parseBoolean(System.getProperty("idea.enable.coroutine.dump", "false"));
 
   // DCEVM support
   private static final boolean isNewClassLoadingEnabled = false;
