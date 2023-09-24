@@ -217,7 +217,8 @@ object CodeWriter {
     val implementationClassText = code.implementationClass
     if (implementationClassText != null) {
       val sourceFile = apiClass.containingFile.virtualFile
-      val packageFolder = createPackageFolderIfMissing(sourceFolder, sourceFile.parent.path, genFolder)
+      val relativePath = VfsUtil.getRelativePath(sourceFile.parent, sourceFolder, '/')
+      val packageFolder = VfsUtil.createDirectoryIfMissing(genFolder, "$relativePath")
       val targetDirectory = PsiManager.getInstance(project).findDirectory(packageFolder)!!
       val implImports = Imports(apiFile.packageFqName.asString())
       val implFile = psiFactory.createFile("${code.target.name}Impl.kt", implImports.findAndRemoveFqns(implementationClassText))
