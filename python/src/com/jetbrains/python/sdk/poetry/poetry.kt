@@ -53,12 +53,12 @@ import com.jetbrains.python.packaging.IndicatedProcessOutputListener
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagerUI
-import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel
-import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
+import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel
+import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.modules
 import icons.PythonIcons
@@ -498,7 +498,7 @@ private fun VirtualFile.getModule(project: Project): Module? =
 
 private val LOCK_NOTIFICATION_GROUP by lazy { NotificationGroupManager.getInstance().getNotificationGroup("pyproject.toml Watcher") }
 
-private val Module.poetryLock: VirtualFile?
+val Module.poetryLock: VirtualFile?
   get() = baseDir?.findChild(POETRY_LOCK)
 
 fun runPoetryInBackground(module: Module, args: List<String>, @NlsSafe description: String) {
