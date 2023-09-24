@@ -31,7 +31,7 @@ class JavaUClassLiteralExpression(
 
   // TODO: return type JavaUTypeReferenceExpression doesn't have anything special,
   //  so UTypeReferenceExpression should be good enough (or checking if the underlying sourcePsi is from Java).
-  override val expression: JavaUTypeReferenceExpression by lazyPub {
+  override val expression: JavaUTypeReferenceExpression by lazyUnsafe {
     JavaUTypeReferenceExpression(sourcePsi.operand, this)
   }
 }

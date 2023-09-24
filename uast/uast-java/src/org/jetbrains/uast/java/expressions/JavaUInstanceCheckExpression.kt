@@ -25,8 +25,8 @@ class JavaUInstanceCheckExpression(
   override val sourcePsi: PsiInstanceOfExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBinaryExpressionWithType {
-  override val operand: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.operand, this) }
-  override val typeReference: JavaUTypeReferenceExpression? by lazyPub { sourcePsi.checkType?.let { JavaUTypeReferenceExpression(it, this) } }
+  override val operand: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.operand, this) }
+  override val typeReference: JavaUTypeReferenceExpression? by lazyUnsafe { sourcePsi.checkType?.let { JavaUTypeReferenceExpression(it, this) } }
 
   override val type: PsiType
     get() = sourcePsi.checkType?.type ?: UastErrorType

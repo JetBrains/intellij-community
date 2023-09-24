@@ -30,5 +30,5 @@ class JavaUReturnExpression(
   override val label: String?
     get() = null
 
-  override val returnExpression: UExpression? by lazyPub { JavaConverter.convertOrNull(sourcePsi.returnValue, this) }
+  override val returnExpression: UExpression? by lazyUnsafe { JavaConverter.convertOrNull(sourcePsi.returnValue, this) }
 }

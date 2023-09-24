@@ -28,8 +28,8 @@ class JavaUWhileExpression(
   override val sourcePsi: PsiWhileStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UWhileExpression {
-  override val condition: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.condition, this) }
-  override val body: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.body, this) }
+  override val condition: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.condition, this) }
+  override val body: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.body, this) }
 
   override val whileIdentifier: UIdentifier
     get() = UIdentifier(sourcePsi.getChildByRole(ChildRole.WHILE_KEYWORD), this)

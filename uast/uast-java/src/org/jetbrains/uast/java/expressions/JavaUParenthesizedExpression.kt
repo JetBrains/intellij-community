@@ -26,6 +26,6 @@ class JavaUParenthesizedExpression(
   override val sourcePsi: PsiParenthesizedExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UParenthesizedExpression {
-  override val expression: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.expression, this) }
+  override val expression: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.expression, this) }
   override fun evaluate(): Any? = expression.evaluate()
 }

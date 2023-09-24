@@ -74,5 +74,5 @@ class LazyJavaUTypeReferenceExpression(
   givenParent: UElement?,
   private val typeSupplier: () -> PsiType
 ) : JavaAbstractUExpression(givenParent), UTypeReferenceExpression {
-  override val type: PsiType by lazyPub { typeSupplier() }
+  override val type: PsiType by lazyUnsafe { typeSupplier() }
 }

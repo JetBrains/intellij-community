@@ -28,8 +28,8 @@ class JavaUDoWhileExpression(
   override val sourcePsi: PsiDoWhileStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UDoWhileExpression {
-  override val condition: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.condition, this) }
-  override val body: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.body, this) }
+  override val condition: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.condition, this) }
+  override val body: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.body, this) }
 
   override val doIdentifier: UIdentifier
     get() = UIdentifier(sourcePsi.getChildByRole(ChildRole.DO_KEYWORD), this)

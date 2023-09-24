@@ -27,11 +27,11 @@ class JavaUQualifiedReferenceExpression(
   override val sourcePsi: PsiJavaCodeReferenceElement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UQualifiedReferenceExpression, UMultiResolvable {
-  override val receiver: UExpression by lazyPub {
+  override val receiver: UExpression by lazyUnsafe {
     sourcePsi.qualifier?.let { JavaConverter.convertPsiElement(it, this, UElement::class.java) as? UExpression } ?: UastEmptyExpression(this)
   }
 
-  override val selector: USimpleNameReferenceExpression by lazyPub {
+  override val selector: USimpleNameReferenceExpression by lazyUnsafe {
     JavaUSimpleNameReferenceExpression(sourcePsi.referenceNameElement, sourcePsi.referenceName ?: "<error>", this, sourcePsi)
   }
 

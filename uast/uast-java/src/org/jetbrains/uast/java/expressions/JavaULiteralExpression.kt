@@ -27,7 +27,7 @@ class JavaULiteralExpression(
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), ULiteralExpression, UInjectionHost {
   override fun evaluate(): Any? = sourcePsi.value
-  override val value: Any? by lazyPub { evaluate() }
+  override val value: Any? by lazyUnsafe { evaluate() }
 
   override val isString: Boolean
     get() = super<UInjectionHost>.isString

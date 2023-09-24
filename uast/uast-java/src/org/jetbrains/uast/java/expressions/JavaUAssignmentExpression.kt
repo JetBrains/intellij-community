@@ -24,9 +24,9 @@ class JavaUAssignmentExpression(
   override val sourcePsi: PsiAssignmentExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBinaryExpression {
-  override val leftOperand: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.lExpression, this) }
-  override val rightOperand: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.rExpression, this) }
-  override val operator: UastBinaryOperator by lazyPub { sourcePsi.operationTokenType.getOperatorType() }
+  override val leftOperand: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.lExpression, this) }
+  override val rightOperand: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.rExpression, this) }
+  override val operator: UastBinaryOperator by lazyUnsafe { sourcePsi.operationTokenType.getOperatorType() }
 
   override fun resolveOperator(): Nothing? = null
 

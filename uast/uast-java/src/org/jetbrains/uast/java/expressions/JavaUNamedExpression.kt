@@ -23,7 +23,7 @@ import org.jetbrains.uast.UNamedExpression
 import org.jetbrains.uast.UastEmptyExpression
 import org.jetbrains.uast.java.JavaAbstractUExpression
 import org.jetbrains.uast.java.JavaConverter
-import org.jetbrains.uast.java.lazyPub
+import org.jetbrains.uast.java.lazyUnsafe
 
 @ApiStatus.Internal
 class JavaUNamedExpression(
@@ -35,7 +35,7 @@ class JavaUNamedExpression(
   override val name: String?
     get() = sourcePsi.name
 
-  override val expression: UExpression by lazyPub {
+  override val expression: UExpression by lazyUnsafe {
     sourcePsi.value?.let { value -> JavaConverter.convertPsiElement(value, this, UElement::class.java) } as? UExpression ?: UastEmptyExpression(this)
   }
 }

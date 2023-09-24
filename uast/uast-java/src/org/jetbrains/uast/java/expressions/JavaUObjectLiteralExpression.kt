@@ -27,9 +27,9 @@ class JavaUObjectLiteralExpression(
   override val sourcePsi: PsiNewExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UObjectLiteralExpression, UCallExpression, UMultiResolvable {
-  override val declaration: UClass by lazyPub { JavaUClass.create(sourcePsi.anonymousClass!!, this) }
+  override val declaration: UClass by lazyUnsafe { JavaUClass.create(sourcePsi.anonymousClass!!, this) }
 
-  override val classReference: UReferenceExpression? by lazyPub {
+  override val classReference: UReferenceExpression? by lazyUnsafe {
     sourcePsi.classReference?.let { ref ->
       JavaConverter.convertReference(ref, this, UElement::class.java) as? UReferenceExpression
     }
@@ -38,13 +38,13 @@ class JavaUObjectLiteralExpression(
   override val valueArgumentCount: Int
     get() = sourcePsi.argumentList?.expressions?.size ?: 0
 
-  override val valueArguments: List<UExpression> by lazyPub {
+  override val valueArguments: List<UExpression> by lazyUnsafe {
     sourcePsi.argumentList?.expressions?.map { JavaConverter.convertOrEmpty(it, this) } ?: emptyList()
   }
 
   override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
-  override val typeArgumentCount: Int by lazyPub { sourcePsi.classReference?.typeParameters?.size ?: 0 }
+  override val typeArgumentCount: Int by lazyUnsafe { sourcePsi.classReference?.typeParameters?.size ?: 0 }
 
   override val typeArguments: List<PsiType>
     get() = sourcePsi.classReference?.typeParameters?.toList() ?: emptyList()

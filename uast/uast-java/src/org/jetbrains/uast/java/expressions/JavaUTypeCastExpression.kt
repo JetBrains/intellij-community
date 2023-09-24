@@ -25,12 +25,12 @@ class JavaUTypeCastExpression(
   override val sourcePsi: PsiTypeCastExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBinaryExpressionWithType {
-  override val operand: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.operand, this) }
+  override val operand: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.operand, this) }
 
   override val type: PsiType
     get() = sourcePsi.castType?.type ?: UastErrorType
 
-  override val typeReference: UTypeReferenceExpression? by lazyPub { sourcePsi.castType?.let { JavaUTypeReferenceExpression(it, this) } }
+  override val typeReference: UTypeReferenceExpression? by lazyUnsafe { sourcePsi.castType?.let { JavaUTypeReferenceExpression(it, this) } }
 
   override val operationKind: UastBinaryExpressionWithTypeKind
     get() = UastBinaryExpressionWithTypeKind.TypeCast.INSTANCE

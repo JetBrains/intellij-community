@@ -27,8 +27,8 @@ class JavaUArrayAccessExpression(
   override val sourcePsi: PsiArrayAccessExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UArrayAccessExpression {
-  override val receiver: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.arrayExpression, this) }
-  override val indices: List<UExpression> by lazyPub { singletonListOrEmpty(JavaConverter.convertOrNull(sourcePsi.indexExpression, this)) }
+  override val receiver: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.arrayExpression, this) }
+  override val indices: List<UExpression> by lazyUnsafe { singletonListOrEmpty(JavaConverter.convertOrNull(sourcePsi.indexExpression, this)) }
 
   // No operator overloading in Java (yet?)
   override fun resolve(): PsiElement? = null

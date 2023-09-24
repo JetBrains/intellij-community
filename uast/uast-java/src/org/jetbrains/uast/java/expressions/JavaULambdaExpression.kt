@@ -28,11 +28,11 @@ class JavaULambdaExpression(
   override val functionalInterfaceType: PsiType?
     get() = sourcePsi.functionalInterfaceType
 
-  override val valueParameters: List<UParameter> by lazyPub {
+  override val valueParameters: List<UParameter> by lazyUnsafe {
     sourcePsi.parameterList.parameters.map { JavaUParameter(it, this) }
   }
 
-  override val body: UExpression by lazyPub {
+  override val body: UExpression by lazyUnsafe {
     when (val b = sourcePsi.body) {
       is PsiCodeBlock -> JavaConverter.convertBlock(b, this)
       is PsiExpression -> wrapLambdaBody(this, b)

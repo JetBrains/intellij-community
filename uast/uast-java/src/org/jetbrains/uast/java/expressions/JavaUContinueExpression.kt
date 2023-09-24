@@ -30,7 +30,7 @@ class JavaUContinueExpression(
   override val label: String?
     get() = sourcePsi.labelIdentifier?.text
 
-  override val jumpTarget: UElement? by lazyPub {
+  override val jumpTarget: UElement? by lazyUnsafe {
     sourcePsi.findContinuedStatement().takeIf { it !== sourcePsi }?.let { JavaConverter.convertStatement(it, null, UExpression::class.java) }
   }
 }

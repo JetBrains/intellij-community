@@ -35,8 +35,8 @@ class JavaUForEachExpression(
       return JavaUParameter(psiParameter, this)
     }
 
-  override val iteratedValue: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.iteratedValue, this) }
-  override val body: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.body, this) }
+  override val iteratedValue: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.iteratedValue, this) }
+  override val body: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.body, this) }
 
   override val forIdentifier: UIdentifier
     get() = UIdentifier(sourcePsi.getChildByRole(ChildRole.FOR_KEYWORD), this)

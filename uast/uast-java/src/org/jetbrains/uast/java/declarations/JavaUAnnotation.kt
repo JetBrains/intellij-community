@@ -33,7 +33,7 @@ class JavaUAnnotation(
   override val qualifiedName: String?
     get() = sourcePsi.qualifiedName
 
-  override val attributeValues: List<UNamedExpression> by lazyPub {
+  override val attributeValues: List<UNamedExpression> by lazyUnsafe {
     val attributes = sourcePsi.parameterList.attributes
 
     attributes.map { attribute -> JavaUNamedExpression(attribute, this) }

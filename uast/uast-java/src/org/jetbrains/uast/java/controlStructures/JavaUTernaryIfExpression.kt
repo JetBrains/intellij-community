@@ -13,9 +13,9 @@ class JavaUTernaryIfExpression(
   override val sourcePsi: PsiConditionalExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UIfExpression {
-  override val condition: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.condition, this) }
-  override val thenExpression: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.thenExpression, this) }
-  override val elseExpression: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.elseExpression, this) }
+  override val condition: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.condition, this) }
+  override val thenExpression: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.thenExpression, this) }
+  override val elseExpression: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.elseExpression, this) }
 
   override val isTernary: Boolean
     get() = true

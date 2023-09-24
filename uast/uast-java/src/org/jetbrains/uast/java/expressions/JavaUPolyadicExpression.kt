@@ -31,5 +31,5 @@ class JavaUPolyadicExpression(
 
   override val operands: List<UExpression> = PsiArrayToUElementListMappingView(sourcePsi.operands) { JavaConverter.convertOrEmpty(it, this) }
 
-  override val operator: UastBinaryOperator by lazyPub { sourcePsi.operationTokenType.getOperatorType() }
+  override val operator: UastBinaryOperator by lazyUnsafe { sourcePsi.operationTokenType.getOperatorType() }
 }

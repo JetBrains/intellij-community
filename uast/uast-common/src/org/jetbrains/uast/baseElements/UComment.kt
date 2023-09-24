@@ -27,7 +27,7 @@ open class UComment(override val sourcePsi: PsiComment, private val givenParent:
   @Deprecated("see the base property description", ReplaceWith("sourcePsi"))
   override val psi: PsiComment get() = sourcePsi
 
-  override val uastParent: UElement? by lazy {
+  override val uastParent: UElement? by lazy(LazyThreadSafetyMode.NONE) {
     givenParent ?: sourcePsi.parent?.toUElement()
   }
 

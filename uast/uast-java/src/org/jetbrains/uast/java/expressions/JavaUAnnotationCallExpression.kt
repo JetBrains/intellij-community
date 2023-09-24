@@ -12,7 +12,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.java.JavaAbstractUExpression
 import org.jetbrains.uast.java.JavaConverter
 import org.jetbrains.uast.java.JavaUAnnotation
-import org.jetbrains.uast.java.lazyPub
+import org.jetbrains.uast.java.lazyUnsafe
 import org.jetbrains.uast.visitor.UastVisitor
 
 @ApiStatus.Internal
@@ -23,7 +23,7 @@ class JavaUAnnotationCallExpression(
 
   // TODO: once there is no more external usage, this property can be `private`.
   @get:ApiStatus.Internal
-  val uAnnotation: JavaUAnnotation by lazyPub {
+  val uAnnotation: JavaUAnnotation by lazyUnsafe {
     JavaUAnnotation(sourcePsi, this)
   }
 
@@ -44,7 +44,7 @@ class JavaUAnnotationCallExpression(
   override val methodIdentifier: UIdentifier?
     get() = null
 
-  override val classReference: UReferenceExpression? by lazyPub {
+  override val classReference: UReferenceExpression? by lazyUnsafe {
     sourcePsi.nameReferenceElement?.let { ref ->
       JavaConverter.convertReference(ref, this, UElement::class.java) as? UReferenceExpression
     }
@@ -53,7 +53,7 @@ class JavaUAnnotationCallExpression(
   override val valueArgumentCount: Int
     get() = sourcePsi.parameterList.attributes.size
 
-  override val valueArguments: List<UNamedExpression> by lazyPub {
+  override val valueArguments: List<UNamedExpression> by lazyUnsafe {
     uAnnotation.attributeValues
   }
 

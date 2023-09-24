@@ -30,7 +30,7 @@ class JavaUImportStatement(
 ) : JavaAbstractUElement(uastParent), UImportStatement, UMultiResolvable {
   override val isOnDemand: Boolean
     get() = sourcePsi.isOnDemand
-  override val importReference: UElement? by lazyPub { sourcePsi.importReference?.let { JavaDumbUElement(it, this, it.qualifiedName) } }
+  override val importReference: UElement? by lazyUnsafe { sourcePsi.importReference?.let { JavaDumbUElement(it, this, it.qualifiedName) } }
   override fun resolve(): PsiElement? = sourcePsi.resolve()
   override fun multiResolve(): Iterable<ResolveResult> =
     sourcePsi.importReference?.multiResolve(false)?.asIterable() ?: emptyList()

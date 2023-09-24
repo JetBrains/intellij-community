@@ -19,7 +19,7 @@ class JavaULabeledExpression(
   override val labelIdentifier: UIdentifier
     get() = UIdentifier(sourcePsi.labelIdentifier, this)
 
-  override val expression: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.statement, this) }
+  override val expression: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.statement, this) }
 
   override fun evaluate(): Any? = expression.evaluate()
 }

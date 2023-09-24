@@ -12,14 +12,14 @@ class JavaUYieldExpression(
   override val sourcePsi: PsiYieldStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UYieldExpression {
-  override val expression: UExpression? by lazyPub {
+  override val expression: UExpression? by lazyUnsafe {
     JavaConverter.convertOrEmpty(sourcePsi.expression, this)
   }
 
   override val label: String?
     get() = null
 
-  override val jumpTarget: UElement? by lazyPub {
+  override val jumpTarget: UElement? by lazyUnsafe {
     sourcePsi.findEnclosingExpression().takeIf { sourcePsi !== it }?.let { JavaConverter.convertExpression(it, null, UExpression::class.java) }
   }
 }

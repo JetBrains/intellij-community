@@ -17,7 +17,7 @@ class JavaUFile(
   override val packageName: String
     get() = sourcePsi.packageName
 
-  override val imports: List<UImportStatement> by lazyPub {
+  override val imports: List<UImportStatement> by lazyUnsafe {
     sourcePsi.importList?.allImportStatements?.map { JavaUImportStatement(it, this) } ?: listOf()
   }
 
@@ -27,9 +27,9 @@ class JavaUFile(
   override val uAnnotations: List<UAnnotation>
     get() = sourcePsi.packageStatement?.annotationList?.annotations?.map { JavaUAnnotation(it, this) } ?: emptyList()
 
-  override val classes: List<UClass> by lazyPub { sourcePsi.classes.map { JavaUClass.create(it, this) } }
+  override val classes: List<UClass> by lazyUnsafe { sourcePsi.classes.map { JavaUClass.create(it, this) } }
 
-  override val allCommentsInFile: ArrayList<UComment> by lazyPub {
+  override val allCommentsInFile: ArrayList<UComment> by lazyUnsafe {
     val comments = ArrayList<UComment>(0)
     sourcePsi.accept(object : PsiRecursiveElementWalkingVisitor() {
       override fun visitComment(comment: PsiComment) {

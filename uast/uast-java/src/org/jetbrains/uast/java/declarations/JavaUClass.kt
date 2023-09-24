@@ -20,7 +20,7 @@ abstract class AbstractJavaUClass(
   @Suppress("OverridingDeprecatedMember")
   override val psi: PsiClass get() = javaPsi
 
-  override val uastDeclarations: List<UDeclaration> by lazyPub {
+  override val uastDeclarations: List<UDeclaration> by lazyUnsafe {
     mutableListOf<UDeclaration>().apply {
       addAll(fields)
       addAll(initializers)
@@ -106,7 +106,7 @@ class JavaUAnonymousClass(
 
   override fun convertParent(): UElement? = sourcePsi.parent.toUElementOfType<UObjectLiteralExpression>() ?: super.convertParent()
 
-  override val uastAnchor: UIdentifier? by lazyPub {
+  override val uastAnchor: UIdentifier? by lazyUnsafe {
     when (javaPsi) {
       is PsiEnumConstantInitializer ->
         (javaPsi.parent as? PsiEnumConstant)?.let { UIdentifier(it.nameIdentifier, this) }
@@ -118,9 +118,9 @@ class JavaUAnonymousClass(
   override fun getFields(): Array<UField> = super<AbstractJavaUClass>.getFields()
   override fun getInitializers(): Array<UClassInitializer> = super<AbstractJavaUClass>.getInitializers()
 
-  private val fakeConstructor: JavaUMethod? by lazyPub {
+  private val fakeConstructor: JavaUMethod? by lazyUnsafe {
     val psiClass = this.javaPsi
-    val physicalNewExpression = psiClass.parent.asSafely<PsiNewExpression>() ?: return@lazyPub null
+    val physicalNewExpression = psiClass.parent.asSafely<PsiNewExpression>() ?: return@lazyUnsafe null
     val superConstructor = physicalNewExpression.resolveMethod()
     val lightMethodBuilder = object : LightMethodBuilder(psiClass.manager, psiClass.language, "<anon-init>") {
       init {

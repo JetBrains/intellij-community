@@ -28,8 +28,8 @@ class JavaUAssertExpression(
   override val sourcePsi: PsiAssertStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UCallExpression, UMultiResolvable {
-  val condition: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.assertCondition, this) }
-  val message: UExpression? by lazyPub { JavaConverter.convertOrNull(sourcePsi.assertDescription, this) }
+  val condition: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.assertCondition, this) }
+  val message: UExpression? by lazyUnsafe { JavaConverter.convertOrNull(sourcePsi.assertDescription, this) }
 
   @Suppress("OverridingDeprecatedMember")
   override val psi: PsiAssertStatement
@@ -53,7 +53,7 @@ class JavaUAssertExpression(
   override val valueArgumentCount: Int
     get() = if (message != null) 2 else 1
 
-  override val valueArguments: List<UExpression> by lazyPub {
+  override val valueArguments: List<UExpression> by lazyUnsafe {
     val message = this.message
     if (message != null) listOf(condition, message) else listOf(condition)
   }

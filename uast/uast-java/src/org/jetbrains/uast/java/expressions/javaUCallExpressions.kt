@@ -38,7 +38,7 @@ class JavaUCallExpression(
       return UastCallKind.METHOD_CALL
     }
 
-  override val methodIdentifier: UIdentifier? by lazyPub {
+  override val methodIdentifier: UIdentifier? by lazyUnsafe {
     nameReferenceElement?.let { UIdentifier(it, this) }
   }
 
@@ -51,7 +51,7 @@ class JavaUCallExpression(
   override val valueArgumentCount: Int
     get() = sourcePsi.argumentList.expressionCount
 
-  override val valueArguments: List<UExpression> by lazyPub {
+  override val valueArguments: List<UExpression> by lazyUnsafe {
     PsiArrayToUElementListMappingView(sourcePsi.argumentList.expressions) { JavaConverter.convertOrEmpty(it, this@JavaUCallExpression) }
   }
 
@@ -69,7 +69,7 @@ class JavaUCallExpression(
     return null
   }
 
-  override val typeArgumentCount: Int by lazyPub { sourcePsi.typeArguments.size }
+  override val typeArgumentCount: Int by lazyUnsafe { sourcePsi.typeArguments.size }
 
   override val typeArguments: List<PsiType>
     get() = sourcePsi.typeArguments.toList()
@@ -134,7 +134,7 @@ class JavaConstructorUCallExpression(
   override val sourcePsi: PsiNewExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UCallExpression, UMultiResolvable {
-  override val kind: UastCallKind by lazyPub {
+  override val kind: UastCallKind by lazyUnsafe {
     when {
       sourcePsi.arrayInitializer != null -> UastCallKind.NEW_ARRAY_WITH_INITIALIZER
       sourcePsi.arrayDimensions.isNotEmpty() -> UastCallKind.NEW_ARRAY_WITH_DIMENSIONS
@@ -151,7 +151,7 @@ class JavaConstructorUCallExpression(
   override val methodIdentifier: UIdentifier?
     get() = null
 
-  override val classReference: UReferenceExpression? by lazyPub {
+  override val classReference: UReferenceExpression? by lazyUnsafe {
     sourcePsi.classReference?.let { ref ->
       JavaConverter.convertReference(ref, this, UElement::class.java) as? UReferenceExpression
     }
@@ -167,7 +167,7 @@ class JavaConstructorUCallExpression(
       }
     }
 
-  override val valueArguments: List<UExpression> by lazyPub {
+  override val valueArguments: List<UExpression> by lazyUnsafe {
     val initializer = sourcePsi.arrayInitializer
     when {
       initializer != null -> initializer.initializers.map { JavaConverter.convertOrEmpty(it, this) }
@@ -178,7 +178,7 @@ class JavaConstructorUCallExpression(
 
   override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
-  override val typeArgumentCount: Int by lazyPub { sourcePsi.classReference?.typeParameters?.size ?: 0 }
+  override val typeArgumentCount: Int by lazyUnsafe { sourcePsi.classReference?.typeParameters?.size ?: 0 }
 
   override val typeArguments: List<PsiType>
     get() = sourcePsi.classReference?.typeParameters?.toList() ?: emptyList()
@@ -216,8 +216,8 @@ class JavaArrayInitializerUCallExpression(
   override val methodName: String?
     get() = null
 
-  override val valueArgumentCount: Int by lazyPub { sourcePsi.initializers.size }
-  override val valueArguments: List<UExpression> by lazyPub { sourcePsi.initializers.map { JavaConverter.convertOrEmpty(it, this) } }
+  override val valueArgumentCount: Int by lazyUnsafe { sourcePsi.initializers.size }
+  override val valueArguments: List<UExpression> by lazyUnsafe { sourcePsi.initializers.map { JavaConverter.convertOrEmpty(it, this) } }
 
   override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
@@ -263,9 +263,9 @@ class JavaAnnotationArrayInitializerUCallExpression(
   override val methodName: String?
     get() = null
 
-  override val valueArgumentCount: Int by lazyPub { sourcePsi.initializers.size }
+  override val valueArgumentCount: Int by lazyUnsafe { sourcePsi.initializers.size }
 
-  override val valueArguments: List<UExpression> by lazyPub {
+  override val valueArguments: List<UExpression> by lazyUnsafe {
     sourcePsi.initializers.map {
       JavaConverter.convertPsiElement(it, this, UElement::class.java) as? UExpression ?: UnknownJavaExpression(it, this)
     }

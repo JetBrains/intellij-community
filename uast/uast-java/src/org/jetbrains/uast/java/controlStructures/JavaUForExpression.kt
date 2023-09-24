@@ -28,10 +28,10 @@ class JavaUForExpression(
   override val sourcePsi: PsiForStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UForExpression {
-  override val declaration: UExpression? by lazyPub { sourcePsi.initialization?.let { JavaConverter.convertStatement(it, this, UExpression::class.java) } }
-  override val condition: UExpression? by lazyPub { sourcePsi.condition?.let { JavaConverter.convertExpression(it, this, UExpression::class.java) } }
-  override val update: UExpression? by lazyPub { sourcePsi.update?.let { JavaConverter.convertStatement(it, this, UExpression::class.java) } }
-  override val body: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.body, this) }
+  override val declaration: UExpression? by lazyUnsafe { sourcePsi.initialization?.let { JavaConverter.convertStatement(it, this, UExpression::class.java) } }
+  override val condition: UExpression? by lazyUnsafe { sourcePsi.condition?.let { JavaConverter.convertExpression(it, this, UExpression::class.java) } }
+  override val update: UExpression? by lazyUnsafe { sourcePsi.update?.let { JavaConverter.convertStatement(it, this, UExpression::class.java) } }
+  override val body: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.body, this) }
 
   override val forIdentifier: UIdentifier
     get() = UIdentifier(sourcePsi.getChildByRole(ChildRole.FOR_KEYWORD), this)

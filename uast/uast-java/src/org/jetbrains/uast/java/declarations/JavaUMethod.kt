@@ -25,14 +25,14 @@ open class JavaUMethod(
       // hah, there is a Lombok and Enums and also Records, so we have fake PsiElements even in Java (IDEA-216248)
       javaPsi.takeIf { it !is LightElement }
 
-  override val uastBody: UExpression? by lazyPub {
-    val body = sourcePsi.asSafely<PsiMethod>()?.body ?: return@lazyPub null
+  override val uastBody: UExpression? by lazyUnsafe {
+    val body = sourcePsi.asSafely<PsiMethod>()?.body ?: return@lazyUnsafe null
     UastFacade.findPlugin(body)?.convertElement(body, this) as? UExpression
   }
 
-  override val uAnnotations: List<UAnnotation> by lazyPub { javaPsi.annotations.map { JavaUAnnotation(it, this) } }
+  override val uAnnotations: List<UAnnotation> by lazyUnsafe { javaPsi.annotations.map { JavaUAnnotation(it, this) } }
 
-  override val uastParameters: List<UParameter> by lazyPub {
+  override val uastParameters: List<UParameter> by lazyUnsafe {
     javaPsi.parameterList.parameters.mapNotNull { convertOrReport(it, this) }
   }
 
@@ -69,7 +69,7 @@ open class JavaUMethod(
     }
   }
 
-  override val returnTypeReference: UTypeReferenceExpression? by lazyPub {
+  override val returnTypeReference: UTypeReferenceExpression? by lazyUnsafe {
     javaPsi.returnTypeElement?.let { JavaUTypeReferenceExpression(it, this) }
   }
 
@@ -100,8 +100,8 @@ class JavaUAnnotationMethod(
   override val psi: PsiAnnotationMethod
     get() = javaPsi
 
-  override val uastDefaultValue: UExpression? by lazyPub {
-    val defaultValue = javaPsi.defaultValue ?: return@lazyPub null
+  override val uastDefaultValue: UExpression? by lazyUnsafe {
+    val defaultValue = javaPsi.defaultValue ?: return@lazyUnsafe null
     languagePlugin.convertElement(defaultValue, this, null) as? UExpression
   }
 }

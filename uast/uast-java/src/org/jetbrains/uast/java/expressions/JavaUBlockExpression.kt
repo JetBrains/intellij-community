@@ -26,5 +26,5 @@ class JavaUBlockExpression(
   override val sourcePsi: PsiBlockStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBlockExpression {
-  override val expressions: List<UExpression> by lazyPub { sourcePsi.codeBlock.statements.map { JavaConverter.convertOrEmpty(it, this) } }
+  override val expressions: List<UExpression> by lazyUnsafe { sourcePsi.codeBlock.statements.map { JavaConverter.convertOrEmpty(it, this) } }
 }

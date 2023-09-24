@@ -24,7 +24,7 @@ import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.java.JavaAbstractUExpression
 import org.jetbrains.uast.java.JavaConverter
-import org.jetbrains.uast.java.lazyPub
+import org.jetbrains.uast.java.lazyUnsafe
 import org.jetbrains.uast.visitor.UastVisitor
 
 @ApiStatus.Internal
@@ -32,11 +32,11 @@ class JavaUSynchronizedExpression(
   override val sourcePsi: PsiSynchronizedStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBlockExpression {
-  override val expressions: List<UExpression> by lazyPub {
+  override val expressions: List<UExpression> by lazyUnsafe {
     sourcePsi.body?.statements?.map { JavaConverter.convertOrEmpty(it, this) } ?: listOf()
   }
 
-  private val lockExpression: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.lockExpression, this) }
+  private val lockExpression: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.lockExpression, this) }
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitBlockExpression(this)) return

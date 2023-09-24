@@ -25,11 +25,11 @@ class JavaUTryExpression(
   override val sourcePsi: PsiTryStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UTryExpression {
-  override val tryClause: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.tryBlock, this) }
-  override val catchClauses: List<UCatchClause> by lazyPub { sourcePsi.catchSections.map { JavaUCatchClause(it, this) } }
-  override val finallyClause: UBlockExpression? by lazyPub { sourcePsi.finallyBlock?.let { JavaConverter.convertBlock(it, this) } }
+  override val tryClause: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.tryBlock, this) }
+  override val catchClauses: List<UCatchClause> by lazyUnsafe { sourcePsi.catchSections.map { JavaUCatchClause(it, this) } }
+  override val finallyClause: UBlockExpression? by lazyUnsafe { sourcePsi.finallyBlock?.let { JavaConverter.convertBlock(it, this) } }
 
-  override val resourceVariables: List<UVariable> by lazyPub {
+  override val resourceVariables: List<UVariable> by lazyUnsafe {
     sourcePsi.resourceList
       ?.filterIsInstance<PsiResourceVariable>()
       ?.map { JavaUVariable.create(it, this) }
@@ -51,14 +51,14 @@ class JavaUCatchClause(
   override val sourcePsi: PsiCatchSection,
   givenParent: UElement?
 ) : JavaAbstractUElement(givenParent), UCatchClause {
-  override val body: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.catchBlock, this) }
+  override val body: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.catchBlock, this) }
 
-  override val parameters: List<UParameter> by lazyPub {
+  override val parameters: List<UParameter> by lazyUnsafe {
     (sourcePsi.parameter?.let { listOf(it) } ?: emptyList()).map { JavaUParameter(it, this) }
   }
 
-  override val typeReferences: List<UTypeReferenceExpression> by lazyPub {
-    val typeElement = sourcePsi.parameter?.typeElement ?: return@lazyPub emptyList<UTypeReferenceExpression>()
+  override val typeReferences: List<UTypeReferenceExpression> by lazyUnsafe {
+    val typeElement = sourcePsi.parameter?.typeElement ?: return@lazyUnsafe emptyList<UTypeReferenceExpression>()
     if (typeElement.type is PsiDisjunctionType) {
       typeElement.children.filterIsInstance<PsiTypeElement>().map { JavaUTypeReferenceExpression(it, this) }
     }

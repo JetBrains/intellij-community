@@ -13,9 +13,9 @@ class JavaUSwitchExpression(
   override val sourcePsi: PsiSwitchBlock,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), USwitchExpression {
-  override val expression: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.expression, this) }
+  override val expression: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.expression, this) }
 
-  override val body: JavaUSwitchEntryList by lazyPub { JavaUSwitchEntryList(sourcePsi, this) }
+  override val body: JavaUSwitchEntryList by lazyUnsafe { JavaUSwitchEntryList(sourcePsi, this) }
 
   override val switchIdentifier: UIdentifier
     get() = UIdentifier(sourcePsi.getChildByRole(ChildRole.SWITCH_KEYWORD), this)
@@ -35,8 +35,8 @@ class JavaUSwitchEntryList(
     it.asRenderString().withMargin
   }
 
-  private val switchEntries: Lazy<List<JavaUSwitchEntry>> = lazyPub {
-    val statements = sourcePsi.body?.statements ?: return@lazyPub emptyList<JavaUSwitchEntry>()
+  private val switchEntries: Lazy<List<JavaUSwitchEntry>> = lazyUnsafe {
+    val statements = sourcePsi.body?.statements ?: return@lazyUnsafe emptyList<JavaUSwitchEntry>()
     var currentLabels = listOf<PsiSwitchLabelStatementBase>()
     var currentBody = listOf<PsiStatement>()
     val result = mutableListOf<JavaUSwitchEntry>()
@@ -113,7 +113,7 @@ class JavaUSwitchEntry(
 ) : JavaAbstractUExpression(givenParent), USwitchClauseExpressionWithBody {
   override val sourcePsi: PsiSwitchLabelStatementBase = labels.first()
 
-  override val caseValues: List<UExpression> by lazyPub {
+  override val caseValues: List<UExpression> by lazyUnsafe {
     labels.flatMap {
       if (it.isDefaultCase) {
         listOf(JavaUDefaultCaseExpression(it, this))
@@ -127,7 +127,7 @@ class JavaUSwitchEntry(
     }
   }
 
-  override val body: UExpressionList by lazyPub {
+  override val body: UExpressionList by lazyUnsafe {
     object : JavaUExpressionList(sourcePsi, JavaSpecialExpressionKinds.SWITCH_ENTRY, this) {
 
       override val expressions: List<UExpression>
@@ -170,7 +170,7 @@ internal class DummyYieldExpression(
   override val uAnnotations: List<UAnnotation>
     get() = emptyList()
 
-  override val expression: UExpression? by lazyPub { JavaConverter.convertExpression(expressionPsi, this, UExpression::class.java) }
+  override val expression: UExpression? by lazyUnsafe { JavaConverter.convertExpression(expressionPsi, this, UExpression::class.java) }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

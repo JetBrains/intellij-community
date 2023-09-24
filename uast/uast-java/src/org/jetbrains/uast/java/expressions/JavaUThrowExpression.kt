@@ -27,5 +27,5 @@ class JavaUThrowExpression(
   override val sourcePsi: PsiThrowStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UThrowExpression {
-  override val thrownExpression: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.exception, this) }
+  override val thrownExpression: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.exception, this) }
 }

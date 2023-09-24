@@ -11,7 +11,7 @@ class JavaUPostfixExpression(
   override val sourcePsi: PsiPostfixExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UPostfixExpression {
-  override val operand: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.operand, this) }
+  override val operand: UExpression by lazyUnsafe { JavaConverter.convertOrEmpty(sourcePsi.operand, this) }
 
   override val operatorIdentifier: UIdentifier
     get() = UIdentifier(sourcePsi.operationSign, this)

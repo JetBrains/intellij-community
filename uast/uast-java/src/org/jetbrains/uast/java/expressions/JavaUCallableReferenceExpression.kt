@@ -27,7 +27,7 @@ class JavaUCallableReferenceExpression(
   override val sourcePsi: PsiMethodReferenceExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UCallableReferenceExpression, UMultiResolvable {
-  override val qualifierExpression: UExpression? by lazyPub { JavaConverter.convertOrNull(sourcePsi.qualifierExpression, this) }
+  override val qualifierExpression: UExpression? by lazyUnsafe { JavaConverter.convertOrNull(sourcePsi.qualifierExpression, this) }
 
   override val qualifierType: PsiType?
     get() = sourcePsi.qualifierType?.type
@@ -42,8 +42,7 @@ class JavaUCallableReferenceExpression(
   override val resolvedName: String?
     get() = (sourcePsi.resolve() as? PsiNamedElement)?.name
 
-  override val referenceNameElement: UElement? by lazyPub {
+  override val referenceNameElement: UElement? by lazyUnsafe {
     sourcePsi.referenceNameElement?.let { JavaUSimpleNameReferenceExpression(it, callableName, this, it.reference) }
   }
-
 }
