@@ -8,25 +8,27 @@ import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 
-internal class InlineCompletionSession private constructor(
+@ApiStatus.Experimental
+class InlineCompletionSession private constructor(
   val context: InlineCompletionContext,
   val provider: InlineCompletionProvider
 ) {
   private var disposable: Disposable? = null
   private val myJob = AtomicReference<InlineCompletionJob?>()
 
-  val job: InlineCompletionJob?
+  internal val job: InlineCompletionJob?
     get() = myJob.get()
 
-  fun assignJob(job: InlineCompletionJob) {
+  internal fun assignJob(job: InlineCompletionJob) {
     val currentJob = myJob.getAndSet(job)
     check(currentJob == null) { "Job is already assigned to a session." }
   }
 
   @RequiresEdt
-  fun whenDisposed(block: () -> Unit) {
+  internal fun whenDisposed(block: () -> Unit) {
     // TODO change semantics after starting truly listening to typing events: we shouldn't replace dispose, we need to collect them
     disposable?.let(Disposer::dispose)
     disposable = Disposer.newDisposable().also { it.whenDisposed(block) }
@@ -40,7 +42,7 @@ internal class InlineCompletionSession private constructor(
     fun getOrNull(editor: Editor): InlineCompletionSession? = editor.getUserData(INLINE_COMPLETION_SESSION)
 
     @RequiresEdt
-    fun init(editor: Editor, provider: InlineCompletionProvider): InlineCompletionSession {
+    internal fun init(editor: Editor, provider: InlineCompletionProvider): InlineCompletionSession {
       val currentSession = getOrNull(editor)
       check(currentSession == null) { "Inline completion session already exists." }
       return InlineCompletionSession(InlineCompletionContext(editor), provider).also {
@@ -49,7 +51,7 @@ internal class InlineCompletionSession private constructor(
     }
 
     @RequiresEdt
-    fun remove(editor: Editor) {
+    internal fun remove(editor: Editor) {
       val currentSession = getOrNull(editor)?.apply {
         disposable?.let(Disposer::dispose)
         context.clear()
