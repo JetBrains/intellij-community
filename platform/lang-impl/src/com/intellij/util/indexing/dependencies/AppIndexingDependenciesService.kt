@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.application
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.dependencies.IndexingDependenciesFingerprint.Companion.NULL_FINGERPRINT
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -80,19 +81,23 @@ class AppIndexingDependenciesService @NonInjectable @VisibleForTesting construct
   }
 
   private fun migrateV0toV1() {
-    storage.writeAppFingerprint(NULL_FINGERPRINT);
+    storage.writeAppFingerprint(NULL_FINGERPRINT)
     storage.completeMigration()
   }
 
   private fun requestVfsRebuildAndResetStorage(reason: IOException) {
     try {
+      // TODO-ank: we don't need VFS rebuild. It's enough to rebuild indexing stamp attribute storage
       requestVfsRebuildDueToError(reason)
     }
     finally {
       storage.resetStorage()
+      current.set(AppIndexingDependenciesTokenImpl(0))
+      latestFingerprint.set(NULL_FINGERPRINT)
     }
   }
 
+  @RequiresBackgroundThread
   internal fun getCurrent(): AppIndexingDependenciesToken {
     val fingerprint = application.service<IndexingDependenciesFingerprint>().getFingerprint()
     if (latestFingerprint.get() == NULL_FINGERPRINT) {
@@ -110,11 +115,19 @@ class AppIndexingDependenciesService @NonInjectable @VisibleForTesting construct
   }
 
   fun invalidateAllStamps() {
-    current.updateAndGet {
+    val next = current.updateAndGet {
       AppIndexingDependenciesTokenImpl(it.appIndexingRequestId + 1)
     }
-    // current.get() will return just updated value or more up-to-date value
-    storage.writeRequestId(current.get().appIndexingRequestId)
+
+    // Assumption is that projectStamp >=0 and appStamp >=0. Their sum can be negative and this is fine (think of it as of unsigned int).
+    if (next.appIndexingRequestId < 0) {
+      requestVfsRebuildAndResetStorage(IOException("App indexing stamp overflow"))
+    }
+    else {
+      // don't use `next`: current.get() will return just updated value or more up-to-date value which might has already
+      // been persisted by another thread
+      storage.writeRequestId(current.get().appIndexingRequestId)
+    }
   }
 
   override fun dispose() {

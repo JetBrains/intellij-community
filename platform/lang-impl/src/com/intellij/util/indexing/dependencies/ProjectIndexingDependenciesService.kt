@@ -13,10 +13,11 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.application
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.IntConsumer
 import kotlin.io.path.deleteIfExists
 
@@ -100,7 +101,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     }
   }
 
-  private val current = AtomicReference(IndexingRequestTokenImpl(0, appIndexingDependenciesService.getCurrent()))
+  private val currentRequestId = AtomicInteger(0)
 
   private val storage: ProjectIndexingDependenciesStorage = openOrInitStorage(storagePath)
 
@@ -114,8 +115,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
                                                      "$actualVersion to $expectedVersion"))
       }
 
-      val requestId = storage.readRequestId()
-      current.set(IndexingRequestTokenImpl(requestId, appIndexingDependenciesService.getCurrent()))
+      currentRequestId.set(storage.readRequestId())
     }
     catch (e: IOException) {
       requestVfsRebuildAndResetStorage(e)
@@ -125,32 +125,32 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
 
   private fun requestVfsRebuildAndResetStorage(reason: IOException) {
     try {
+      // TODO-ank: we don't need VFS rebuild. It's enough to rebuild indexing stamp attribute storage
       requestVfsRebuildDueToError(reason)
     }
     finally {
       storage.resetStorage()
+      currentRequestId.set(0)
     }
   }
 
+  @RequiresBackgroundThread
   fun getLatestIndexingRequestToken(): IndexingRequestToken {
-    val projectCurrent = current.get()
     val appCurrent = appIndexingDependenciesService.getCurrent()
-    return if (appCurrent == projectCurrent.appIndexingRequest) {
-      projectCurrent
+    return IndexingRequestTokenImpl(currentRequestId.get(), appCurrent)
+  }
+
+  fun invalidateAllStamps() {
+    val next = currentRequestId.incrementAndGet()
+
+    // Assumption is that projectStamp >=0 and appStamp >=0. Their sum can be negative and this is fine (think of it as of unsigned int).
+    if (next < 0) {
+      requestVfsRebuildAndResetStorage(IOException("Project indexing stamp overflow"))
     }
     else {
-      current.updateAndGet { IndexingRequestTokenImpl(it.requestId, appCurrent) }
-    }
-  }
-
-  fun invalidateAllStamps(): IndexingRequestToken {
-    val appCurrent = appIndexingDependenciesService.getCurrent()
-    return current.updateAndGet { current ->
-      val next = current.requestId + 1
-      IndexingRequestTokenImpl(if (next + appCurrent.toInt() != NULL_INDEXING_STAMP) next else next + 1, appCurrent)
-    }.also {
-      // don't use `it`: current.get() will return just updated value or more up-to-date value which might has already been persisted by another thread
-      storage.writeRequestId(current.get().requestId)
+      // don't use `next`: currentRequestId.get() will return just updated value or more up-to-date value which might has already
+      // been persisted by another thread
+      storage.writeRequestId(currentRequestId.get())
     }
   }
 
