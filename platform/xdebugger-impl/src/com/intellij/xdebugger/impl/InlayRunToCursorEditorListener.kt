@@ -152,7 +152,7 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
       }
     }
     else {
-      val hoverPosition = XSourcePositionImpl.create(FileDocumentManager.getInstance().getFile(editor.getDocument()), lineNumber)
+      val hoverPosition = XSourcePositionImpl.create(FileDocumentManager.getInstance().getFile(editor.getDocument()), lineNumber) ?: return
       coroutineScope.launch(Dispatchers.EDT) {
         val hasGeneralBreakpoint = readAction {
           val types = XBreakpointUtil.getAvailableLineBreakpointTypes(project, hoverPosition, editor)
