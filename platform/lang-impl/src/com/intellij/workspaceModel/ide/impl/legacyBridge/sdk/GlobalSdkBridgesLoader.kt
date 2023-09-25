@@ -65,18 +65,7 @@ class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
     }
   }
 
-  override fun handleBeforeChangeEvents(event: VersionedStorageChange) {
-    val removeChanges = event.getChanges(SdkMainEntity::class.java).filterIsInstance<EntityChange.Removed<SdkMainEntity>>()
-
-    if (removeChanges.isEmpty()) return
-    for (change in removeChanges) {
-      val sdkBridge = event.storageBefore.sdkMap.getDataByEntity(change.entity)
-      LOG.debug { "Fire 'jdkRemoved' event for ${change.entity.name}, sdk = $sdkBridge" }
-      if (sdkBridge != null) {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectJdkTable.JDK_TABLE_TOPIC).jdkRemoved(sdkBridge)
-      }
-    }
-  }
+  override fun handleBeforeChangeEvents(event: VersionedStorageChange) { }
 
   override fun handleChangedEvents(event: VersionedStorageChange) {
     // Since the listener is not deprecated, it will be better to keep the order of events as remove -> replace -> add
@@ -102,7 +91,13 @@ class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
             }
           }
         }
-        is EntityChange.Removed -> { }
+        is EntityChange.Removed -> {
+          val sdkBridge = event.storageBefore.sdkMap.getDataByEntity(change.entity)
+          LOG.debug { "Fire 'jdkRemoved' event for ${change.entity.name}, sdk = $sdkBridge" }
+          if (sdkBridge != null) {
+            ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectJdkTable.JDK_TABLE_TOPIC).jdkRemoved(sdkBridge)
+          }
+        }
       }
     }
   }

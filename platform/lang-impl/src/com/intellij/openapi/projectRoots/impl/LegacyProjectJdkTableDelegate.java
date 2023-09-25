@@ -203,8 +203,8 @@ public class LegacyProjectJdkTableDelegate implements SdkTableImplementationDele
 
   @Override
   public void removeSdk(@NotNull Sdk sdk) {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(JDK_TABLE_TOPIC).jdkRemoved(sdk);
     mySdks.remove(sdk);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(JDK_TABLE_TOPIC).jdkRemoved(sdk);
   }
 
   @Override
