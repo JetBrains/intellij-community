@@ -9,7 +9,6 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -101,7 +100,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
     final String clazzName = clazz.getQualifiedName();
     if (clazzName == null) return false;
     final PsiClass assertClass = JavaPsiFacade.getInstance(expression.getProject())
-      .findClass(clazzName, GlobalSearchScope.allScope(expression.getProject()));
+      .findClass(clazzName, clazz.getResolveScope());
     if (assertClass == null) return false;
     final JvmMethod[] methods = assertClass.findMethodsByName("assertInstanceOf");
     final JvmParameter[] originalParameters = assertHint.getMethod().getParameters();
