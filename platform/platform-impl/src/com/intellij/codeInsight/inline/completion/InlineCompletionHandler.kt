@@ -135,9 +135,6 @@ class InlineCompletionHandler(scope: CoroutineScope) {
         }
         .collectIndexed { index, it ->
           ensureActive()
-          if (context.isInvalidated) {
-            return@collectIndexed
-          }
           showInlineElement(it, index, offset, context)
         }
     }
