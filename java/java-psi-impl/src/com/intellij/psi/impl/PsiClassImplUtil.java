@@ -313,15 +313,16 @@ public final class PsiClassImplUtil {
   }
 
   public static boolean isMainOrPremainMethod(@NotNull PsiMethod method) {
+    if (PsiMethodUtil.isMainMethod(method)) {
+      return true;
+    }
     String name = method.getName();
-    if (!("main".equals(name) || "premain".equals(name) || "agentmain".equals(name))) return false;
+    if ("premain".equals(name) || "agentmain".equals(name)) return false;
     if (!PsiTypes.voidType().equals(method.getReturnType())) return false;
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
     try {
-      MethodSignature main = createSignatureFromText(factory, "void main(String[] args);");
-      if (MethodSignatureUtil.areSignaturesEqual(signature, main)) return true;
       MethodSignature premain = createSignatureFromText(factory, "void premain(String args, java.lang.instrument.Instrumentation i);");
       if (MethodSignatureUtil.areSignaturesEqual(signature, premain)) return true;
       MethodSignature agentmain = createSignatureFromText(factory, "void agentmain(String args, java.lang.instrument.Instrumentation i);");
