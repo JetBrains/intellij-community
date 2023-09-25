@@ -6,6 +6,7 @@ import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.idea.SplashManagerKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -463,6 +464,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       componentToRestoreFocus = kfm.getPermanentFocusOwner();
     }
 
+    SplashManagerKt.hideSplash();
     try (
       AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET);
       AccessToken ignore2 = ThreadContext.resetThreadContext()
