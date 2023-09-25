@@ -501,6 +501,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
+  @Deprecated
   public List<VirtualFile> getDetailedVcsMappings(@NotNull AbstractVcs vcs) {
     return MappingsToRoots.getDetailedVcsMappings(myProject, myMappings, vcs);
   }

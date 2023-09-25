@@ -48,8 +48,11 @@ public final class MappingsToRoots {
   /**
    * @return mapped roots and all modules inside: modules might have different settings
    * @see com.intellij.openapi.vcs.VcsRootSettings
+   *
+   * @deprecated To be removed
    */
   @NotNull
+  @Deprecated(forRemoval = true)
   public static List<VirtualFile> getDetailedVcsMappings(@NotNull Project project, @NotNull NewMappings newMappings, @NotNull AbstractVcs vcs) {
     // same as above, but no compression
     List<VirtualFile> roots = new ArrayList<>(newMappings.getMappingsAsFilesUnderVcs(vcs));

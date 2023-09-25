@@ -174,7 +174,10 @@ public abstract class ProjectLevelVcsManager {
 
   /**
    * Also includes into list all modules under roots
+   *
+   * @deprecated To be removed
    */
+  @Deprecated(forRemoval = true)
   public abstract List<VirtualFile> getDetailedVcsMappings(final AbstractVcs vcs);
 
   public abstract VirtualFile[] getAllVersionedRoots();
