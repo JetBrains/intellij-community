@@ -19,10 +19,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   protected final CoverageAnnotator myAnnotator;
@@ -44,10 +41,13 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   @Override
   public String getPercentage(int columnIdx, @NotNull AbstractTreeNode node) {
     final Object value = node.getValue();
-    if (value instanceof PsiFile) {
-      return myAnnotator.getFileCoverageInformationString((PsiFile)value, mySuitesBundle, myCoverageDataManager);
+    if (value instanceof PsiFile file) {
+      return myAnnotator.getFileCoverageInformationString(file, mySuitesBundle, myCoverageDataManager);
     }
-    return value != null ? myAnnotator.getDirCoverageInformationString((PsiDirectory)value, mySuitesBundle, myCoverageDataManager) : null;
+    else if (value instanceof PsiDirectory dir) {
+      return myAnnotator.getDirCoverageInformationString(dir, mySuitesBundle, myCoverageDataManager);
+    }
+    return null;
   }
 
 
@@ -62,13 +62,14 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
 
   @NotNull
   @Override
-  public AbstractTreeNode createRootNode() {
+  public AbstractTreeNode<?> createRootNode() {
     VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
     if (baseDir == null) {
       final VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentRoots();
       baseDir = VfsUtil.getCommonAncestor(Arrays.asList(roots));
     }
-    return new CoverageListRootNode(myProject, PsiManager.getInstance(myProject).findDirectory(baseDir), mySuitesBundle, myStateBean);
+    PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(Objects.requireNonNull(baseDir));
+    return new CoverageListRootNode(myProject, Objects.requireNonNull(directory), mySuitesBundle, myStateBean);
   }
 
   @Override

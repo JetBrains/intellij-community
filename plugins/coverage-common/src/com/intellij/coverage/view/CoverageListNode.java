@@ -95,8 +95,8 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
     if (myCachedFile != null) return myCachedFile;
     final PsiFile containingFile = ReadAction.compute(() -> {
       Object value = getValue();
-      if (value instanceof PsiElement && ((PsiElement)value).isValid()) {
-        return ((PsiElement)value).getContainingFile();
+      if (value instanceof PsiElement element && element.isValid()) {
+        return element.getContainingFile();
       }
       return null;
     });
@@ -118,7 +118,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   @Override
   public boolean canNavigate() {
     final Object value = getValue();
-    return value instanceof PsiElement && ((PsiElement)value).isValid() && ((PsiElement)value).getContainingFile() != null;
+    return value instanceof PsiElement element && element.isValid() && element.getContainingFile() != null;
   }
 
   @Override
@@ -133,8 +133,8 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
       if (requestFocus) {
         NavigationUtil.activateFileWithPsiElement(value, true);
       }
-      else if (value instanceof NavigationItem) {
-        ((NavigationItem)value).navigate(false);
+      else if (value instanceof NavigationItem navigationItem) {
+        navigationItem.navigate(false);
       }
     }
   }
@@ -144,22 +144,22 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
     return ReadAction.compute(() -> {
       //todo weighted
       final Object value = getValue();
-      if (value instanceof PsiElement && ((PsiElement)value).getContainingFile() != null) return 40;
+      if (value instanceof PsiElement element && element.getContainingFile() != null) return 40;
       return 30;
     });
   }
 
   public boolean contains(VirtualFile file) {
     final Object value = getValue();
-    if (value instanceof PsiElement) {
-      final boolean equalContainingFile = Comparing.equal(PsiUtilCore.getVirtualFile((PsiElement)value), file);
+    if (value instanceof PsiElement element) {
+      final boolean equalContainingFile = Comparing.equal(PsiUtilCore.getVirtualFile(element), file);
       if (equalContainingFile) return true;
     }
-    if (value instanceof PsiDirectory) {
-      return contains(file, (PsiDirectory)value);
+    if (value instanceof PsiDirectory directory) {
+      return contains(file, directory);
     }
-    else if (value instanceof PsiDirectoryContainer) {
-      final PsiDirectory[] directories = ((PsiDirectoryContainer)value).getDirectories();
+    else if (value instanceof PsiDirectoryContainer container) {
+      final PsiDirectory[] directories = container.getDirectories();
       for (PsiDirectory directory : directories) {
         if (contains(file, directory)) return true;
       }
