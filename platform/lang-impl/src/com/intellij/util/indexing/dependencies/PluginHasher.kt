@@ -4,6 +4,7 @@ package com.intellij.util.indexing.dependencies
 import com.google.common.hash.HashCode
 import com.google.common.hash.Hashing
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.charset.StandardCharsets
@@ -43,6 +44,7 @@ class PluginHasher {
       classLoader.files // TODO: parallel stream
         .sorted() // not sure if we really want to sort, because order may change class resolution.
         .forEach { path ->
+          ProgressManager.checkCanceled()
           // if path is not a directory, only "this" file will be visited
           // if path is a directory, all the regular files will be visited
           // note, that symlinks are not followed

@@ -5,6 +5,7 @@ import com.google.common.hash.HashCode
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
@@ -55,6 +56,7 @@ class IndexingDependenciesFingerprint {
     PluginManager.getLoadedPlugins()
       .sortedBy { plugin -> plugin.pluginId.idString } // this will produce a copy of the list
       .forEach { plugin ->
+        ProgressManager.checkCanceled()
         hasher.addPluginFingerprint(plugin)
       }
 
