@@ -14,7 +14,7 @@ import com.intellij.execution.multilaunch.design.actions.ManageExecutableAction
 import com.intellij.execution.multilaunch.design.actions.ManageExecutableGroup
 import com.intellij.execution.multilaunch.design.popups.TableSelectorPopupController
 import com.intellij.execution.multilaunch.design.tooltips.TableTooltipsController
-import icons.RiderIcons
+import com.intellij.util.ui.EmptyIcon
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.Point
@@ -62,7 +62,7 @@ class ExecutablesTable(
         resizable = false
         maxWidth = JBUI.scale(thirdColumnWidth)
         setHeaderRenderer { _, _, _, _, _, _ ->
-          JLabel(RiderIcons.General.DebugDisabled)
+          JLabel(EmptyIcon.ICON_16 /*RiderIcons.General.DebugDisabled*/)
         }
       }
     }

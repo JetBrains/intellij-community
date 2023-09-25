@@ -27,7 +27,7 @@ import com.intellij.execution.multilaunch.design.popups.SelectorPopupsContainer
 import com.intellij.execution.multilaunch.design.tooltips.TooltipProvider
 import com.intellij.execution.multilaunch.design.tooltips.TooltipProvidersContainer
 import com.intellij.execution.multilaunch.execution.executables.Executable
-import icons.RiderIcons
+import com.intellij.util.ui.EmptyIcon
 import java.awt.*
 import java.awt.event.ActionEvent
 import javax.swing.*
@@ -177,7 +177,7 @@ class ExecutableNameColumn(
       override fun getSelectorPopupProviders() = listOf<SelectorPopupProvider>(this)
     }
 
-    class DraggerLabel : JLabel(" ", RiderIcons.General.Drag, SwingConstants.LEFT), TooltipProvider {
+    class DraggerLabel : JLabel(" ", EmptyIcon.ICON_16 /*RiderIcons.General.Drag*/, SwingConstants.LEFT), TooltipProvider {
       override val tooltipTarget get() = this
       override val tooltipText get() = ExecutionBundle.message("run.configurations.multilaunch.dragger.tooltip")
     }

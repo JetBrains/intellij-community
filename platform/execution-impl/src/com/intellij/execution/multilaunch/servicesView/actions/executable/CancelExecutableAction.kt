@@ -5,13 +5,13 @@ import com.intellij.execution.multilaunch.execution.ExecutionStatus
 import com.intellij.execution.multilaunch.execution.MultiLaunchExecutionModel
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
-import com.jetbrains.rider.actions.RiderActionsBundle
 import com.intellij.execution.multilaunch.execution.*
+import com.intellij.idea.ActionsBundle
 
 class CancelExecutableAction(
   private val configurationModel: MultiLaunchExecutionModel,
   private val executableModel: ExecutableExecutionModel
-) : AnAction(RiderActionsBundle.message("action.multilaunch.CancelExecutableAction.text"), null, AllIcons.RunConfigurations.TestTerminated) {
+) : AnAction(ActionsBundle.message("action.multilaunch.CancelExecutableAction.text"), null, AllIcons.RunConfigurations.TestTerminated) {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

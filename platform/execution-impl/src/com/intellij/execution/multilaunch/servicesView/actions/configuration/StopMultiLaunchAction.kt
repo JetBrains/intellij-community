@@ -3,13 +3,13 @@ package com.intellij.execution.multilaunch.servicesView.actions.configuration
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
-import com.jetbrains.rider.actions.RiderActionsBundle
 import com.intellij.execution.multilaunch.execution.ExecutionEngine
 import com.intellij.execution.multilaunch.execution.MultiLaunchExecutionModel
+import com.intellij.idea.ActionsBundle
 
 internal class StopMultiLaunchAction(
   private val model: MultiLaunchExecutionModel
-) : AnAction(RiderActionsBundle.message("action.multilaunch.StopMultiLaunchAction.text"), null, AllIcons.Actions.Suspend) {
+) : AnAction(ActionsBundle.message("action.multilaunch.StopMultiLaunchAction.text"), null, AllIcons.Actions.Suspend) {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
