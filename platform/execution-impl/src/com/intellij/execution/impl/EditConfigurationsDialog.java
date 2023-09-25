@@ -2,15 +2,19 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.*;
+import com.intellij.execution.actions.RunConfigurationsComboBoxAction;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.Nls;
@@ -22,6 +26,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class EditConfigurationsDialog extends SingleConfigurableEditor {
@@ -126,6 +131,11 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
     return ArrayUtil.prepend(myRunAction, actions);
   }
 
+  @Override
+  protected JButton createJButtonForAction(Action action) {
+    return action == myRunAction ? new JBOptionButton(action, null) : super.createJButtonForAction(action);
+  }
+
   private void updateSelectedExecutor(@Nullable RunnerAndConfigurationSettings selected) {
     if (myRunAction == null) return;
     Executor executor = null;
@@ -135,22 +145,40 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
     if (executor == null) {
       executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
     }
-    updateRunButton(executor);
+    updateRunButton(executor, selected);
   }
 
   private boolean canRun(@Nullable RunnerAndConfigurationSettings settings, Executor executor) {
     return settings != null && ExecutorRegistryImpl.RunnerHelper.canRun(myProject, executor, settings.getConfiguration());
   }
 
-  private void updateRunButton(@Nullable Executor executor) {
+  private void updateRunButton(@Nullable Executor executor, @Nullable RunnerAndConfigurationSettings selected) {
     myExecutor = executor;
-    JButton button = Objects.requireNonNull(getButton(Objects.requireNonNull(myRunAction)));
+    JBOptionButton button = (JBOptionButton)Objects.requireNonNull(getButton(Objects.requireNonNull(myRunAction)));
     button.setVisible(executor != null && myDataContext != null);
     button.setEnabled(executor != null && myDataContext != null);
     if (executor != null) {
       myRunAction.putValue(Action.NAME, executor.getActionName());
       button.setText(executor.getActionName());
       button.setIcon(executor.getIcon());
+      if (selected != null) {
+        DefaultActionGroup group = new DefaultActionGroup();
+        RunConfigurationsComboBoxAction.addExecutorActions(group,
+                                                           exec -> new ExecutorRegistryImpl.ExecutorAction(exec) {
+                                                             @Override
+                                                             public void actionPerformed(@NotNull AnActionEvent e) {
+                                                               run(myProject, selected, Objects.requireNonNull(myDataContext));
+                                                               doOKAction();
+                                                             }
+
+                                                             @Override
+                                                             protected boolean hideDisabledExecutorButtons() {
+                                                               return true;
+                                                             }
+                                                           },
+                                                           exec -> exec != executor);
+        button.setOptions(Arrays.asList(group.getChildren(null)));
+      }
     }
   }
 
