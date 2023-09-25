@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.internal.statistic.FUCollectorTestCase;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -20,27 +21,33 @@ public class DaemonFusReporterTest extends BasePlatformTestCase {
         }
       }""");
     List<LogEvent> events = collectFUSEvents(() -> assertEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR)));
-    boolean entireFileHighlightedExists = events.stream()
+
+    boolean highlightingCompletedExists = events.stream()
       .filter(e -> e.getGroup().getId().equals(DaemonFusCollector.GROUP.getId()))
       .filter(e -> e.getEvent().getId().equals(DaemonFusCollector.FINISHED.getEventId()))
-      .filter(e -> e.getEvent().getData().get(DaemonFusCollector.CANCELED.getName()) == Boolean.FALSE)
-      .anyMatch(e -> e.getEvent().getData().get(DaemonFusCollector.ENTIRE_FILE_HIGHLIGHTED.getName()) == Boolean.TRUE);
-    assertTrue("There must be an event with entireFileHighlighted=true", entireFileHighlightedExists);
+      .anyMatch(e -> e.getEvent().getData().get(DaemonFusCollector.HIGHLIGHTING_COMPLETED.getName()) == Boolean.TRUE);
+    assertTrue("There must be an event with highlighting_completed=true", highlightingCompletedExists);
     List<LogEvent> events2 = collectFUSEvents(() -> {
       myFixture.type("xxx//");
       assertNotEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
     });
-    boolean daemonSuccessfullyFinishedExists = events2.stream()
-      .filter(e -> e.getGroup().getId().equals(DaemonFusCollector.GROUP.getId()))
-      .filter(e -> e.getEvent().getId().equals(DaemonFusCollector.FINISHED.getEventId()))
-      .anyMatch(e -> e.getEvent().getData().get(DaemonFusCollector.CANCELED.getName()) == Boolean.FALSE);
-    assertTrue("There must be an event with canceled=false after typing", daemonSuccessfullyFinishedExists);
 
-    boolean entireFileHighlightedIsFalseForCodeBlockModifications = events2.stream()
+    boolean highlightingCompletedExistsAfterTyping = events.stream()
       .filter(e -> e.getGroup().getId().equals(DaemonFusCollector.GROUP.getId()))
       .filter(e -> e.getEvent().getId().equals(DaemonFusCollector.FINISHED.getEventId()))
-      .allMatch(e -> e.getEvent().getData().get(DaemonFusCollector.ENTIRE_FILE_HIGHLIGHTED.getName()) == Boolean.FALSE);
-    assertTrue("entireFileHighlighted must be false for inside code-block modifications", entireFileHighlightedIsFalseForCodeBlockModifications);
+      .anyMatch(e -> e.getEvent().getData().get(DaemonFusCollector.HIGHLIGHTING_COMPLETED.getName()) == Boolean.TRUE);
+    assertTrue("There must be an event with highlighting_completed=true after typing", highlightingCompletedExistsAfterTyping);
+
+    List<LogEvent> events3 = collectFUSEvents(() -> {
+      DaemonCodeAnalyzer.getInstance(myFixture.getProject()).restart();
+      assertNotEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
+    });
+
+    boolean highlightingIsNotReportedAfterMeaninglessRestart = events3.stream()
+      .filter(e -> e.getGroup().getId().equals(DaemonFusCollector.GROUP.getId()))
+      .filter(e -> e.getEvent().getId().equals(DaemonFusCollector.FINISHED.getEventId()))
+      .noneMatch(e -> e.getEvent().getData().get(DaemonFusCollector.HIGHLIGHTING_COMPLETED.getName()) == Boolean.TRUE);
+    assertTrue("highlighting_completed=true should not be reported after meaningless restart", highlightingIsNotReportedAfterMeaninglessRestart);
   }
 
   @NotNull
