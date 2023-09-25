@@ -10,7 +10,7 @@ abstract class ElementDecoratingPolicy(private val base: ElementsAddingPolicy) :
     base.addElement(result, element)
   }
 
-  override fun addAllElements(result: CompletionResultSet, elements: MutableIterable<LookupElement>) {
+  override fun addAllElements(result: CompletionResultSet, elements: Iterable<LookupElement>) {
     elements.forEach { decorate(it) }
     base.addAllElements(result, elements)
   }

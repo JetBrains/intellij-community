@@ -1216,6 +1216,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("kdoc", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
         }
 
+        testClass<AbstractK1MLPerformanceCompletionTest> {
+            model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
+        }
+
         testClass<AbstractJava8BasicCompletionTest> {
             model("basic/java8")
         }
