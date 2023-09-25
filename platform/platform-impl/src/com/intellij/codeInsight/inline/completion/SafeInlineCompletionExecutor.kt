@@ -10,16 +10,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicLong
 
 
-internal class InlineCompletionJob(scope: CoroutineScope) {
-
-  private val job = scope.coroutineContext.job
-
-  val isCancelled: Boolean
-    get() = job.isCancelled
-
-  val isCompleted: Boolean
-    get() = job.isCompleted
-
+internal class InlineCompletionJob(private val job: Job) {
   fun cancel() {
     job.cancel()
   }
@@ -48,13 +39,14 @@ internal class SafeInlineCompletionExecutor(private val scope: CoroutineScope) {
   }
 
   @RequiresEdt
-  fun switchJobSafely(block: suspend CoroutineScope.() -> Unit) {
+  fun switchJobSafely(onJob: (InlineCompletionJob) -> Unit, block: suspend CoroutineScope.() -> Unit) {
     if (checkNotCancelled()) {
       return
     }
 
     // create a new lazy job
     val nextJob = scope.launch(start = CoroutineStart.LAZY, block = block)
+    onJob(InlineCompletionJob(nextJob))
     val jobWithTimestamp = JobWithTimestamp(nextJob, lastRequestedJobTimestamp.incrementAndGet())
     val sendResult = nextTask.trySend(jobWithTimestamp)
     if (!sendResult.isSuccess) {

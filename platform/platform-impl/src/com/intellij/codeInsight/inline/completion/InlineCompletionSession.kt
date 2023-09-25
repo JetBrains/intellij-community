@@ -49,9 +49,9 @@ internal class InlineCompletionSession private constructor(
     @RequiresEdt
     fun remove(editor: Editor) {
       val currentSession = getOrNull(editor)?.apply {
+        toDispose?.invoke()
         context.clear()
         context.invalidate()
-        toDispose?.invoke()
         job?.cancel()
       }
 

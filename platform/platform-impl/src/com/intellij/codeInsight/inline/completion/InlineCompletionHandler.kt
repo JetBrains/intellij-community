@@ -92,13 +92,13 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     // At this point, the previous session must be removed, otherwise, `init` will throw.
     val newSession = InlineCompletionSession.init(request.editor, provider)
     newSession.guardCaretModifications(request)
-    executor.switchJobSafely {
-      newSession.assignJob(InlineCompletionJob(this@switchJobSafely))
-
+    executor.switchJobSafely(newSession::assignJob) {
       val newRequest = actualizeRequestOrNull(request)
       if (newRequest != null) {
         LOG.assertTrue(newRequest.editor === request.editor)
-        newSession.guardCaretModifications(newRequest)
+        withContext(Dispatchers.EDT) {
+          newSession.guardCaretModifications(newRequest)
+        }
       }
       invokeRequest(newRequest ?: request, newSession)
     }
