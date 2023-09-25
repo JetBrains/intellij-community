@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui
 
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.childScope
 import kotlinx.coroutines.CancellationException
@@ -11,9 +12,8 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModel.SubmittableReview
-import com.intellij.collaboration.util.SingleCoroutineLauncher
 
-internal interface GitLabMergeRequestSubmitReviewViewModel {
+interface GitLabMergeRequestSubmitReviewViewModel {
   val isBusy: Flow<Boolean>
   val error: Flow<Throwable?>
 
@@ -55,7 +55,7 @@ internal fun GitLabMergeRequest.getSubmittableReview(currentUser: GitLabUserDTO)
     else null
   }
 
-class GitLabMergeRequestSubmitReviewViewModelImpl(
+internal class GitLabMergeRequestSubmitReviewViewModelImpl(
   parentCs: CoroutineScope,
   private val mergeRequest: GitLabMergeRequest,
   private val currentUser: GitLabUserDTO,

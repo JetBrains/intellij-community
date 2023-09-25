@@ -87,7 +87,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
             reviewVm?.getFileVm(file)?.collectLatest { fileVm ->
               if (fileVm != null) {
                 try {
-                  editor.putUserData(GitLabMergeRequestReviewViewModel.KEY, reviewVm)
+                  editor.putUserData(GitLabMergeRequestEditorReviewViewModel.KEY, reviewVm)
                   reviewVm.isReviewModeEnabled.collectLatest {
                     if (it) supervisorScope {
                       showGutterMarkers(fileVm, editor, lst)
@@ -97,7 +97,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
                   }
                 }
                 finally {
-                  editor.putUserData(GitLabMergeRequestReviewViewModel.KEY, null)
+                  editor.putUserData(GitLabMergeRequestEditorReviewViewModel.KEY, null)
                 }
               }
             }

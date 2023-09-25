@@ -35,7 +35,7 @@ private class ReviewModeActionGroup(private val editor: Editor) : ActionGroup(),
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    val vm = editor.getUserData(GitLabMergeRequestReviewViewModel.KEY)
+    val vm = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY)
     e.presentation.isEnabledAndVisible = vm != null
   }
 
@@ -55,12 +55,12 @@ private class ReviewModeActionGroup(private val editor: Editor) : ActionGroup(),
       }
 
     override fun actionPerformed(e: AnActionEvent) {
-      val vm = editor.getUserData(GitLabMergeRequestReviewViewModel.KEY) ?: return
+      val vm = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY) ?: return
       vm.toggleReviewMode()
     }
 
     override fun update(e: AnActionEvent) {
-      val selected = editor.getUserData(GitLabMergeRequestReviewViewModel.KEY)?.isReviewModeEnabled?.value ?: false
+      val selected = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY)?.isReviewModeEnabled?.value ?: false
       val presentation = e.presentation
       with(presentation) {
         if (selected) {

@@ -25,7 +25,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class GitLabMergeRequestReviewViewModel internal constructor(
+class GitLabMergeRequestEditorReviewViewModel internal constructor(
   private val project: Project,
   parentCs: CoroutineScope,
   private val projectMapping: GitLabProjectMapping,
@@ -118,6 +118,6 @@ class GitLabMergeRequestReviewViewModel internal constructor(
   }
 
   companion object {
-    val KEY: Key<GitLabMergeRequestReviewViewModel> = Key.create("GitLab.MergeRequest.Review.ViewModel")
+    val KEY: Key<GitLabMergeRequestEditorReviewViewModel> = Key.create("GitLab.MergeRequest.Review.ViewModel")
   }
 }

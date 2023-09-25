@@ -34,7 +34,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffView
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesController
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesControllerImpl
-import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestReviewViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersHistoryModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsPersistentFiltersHistory
@@ -168,7 +168,7 @@ private constructor(parentCs: CoroutineScope,
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  val currentMergeRequestReviewVm: Flow<GitLabMergeRequestReviewViewModel?> =
+  val currentMergeRequestReviewVm: Flow<GitLabMergeRequestEditorReviewViewModel?> =
     mergeRequestOnCurrentBranch.flatMapLatest { id ->
       id?.let { connection.projectData.mergeRequests.getShared(it) } ?: flowOf(null)
     }.distinctUntilChanged { old, new ->
@@ -176,9 +176,9 @@ private constructor(parentCs: CoroutineScope,
     }.transformLatest { newValue ->
       coroutineScope {
         val vm = newValue?.getOrNull()?.let {
-          GitLabMergeRequestReviewViewModel(project, this, connection.projectData.projectMapping,
-                                            it, this@GitLabToolWindowProjectViewModel,
-                                            connection.currentUser, avatarIconProvider)
+          GitLabMergeRequestEditorReviewViewModel(project, this, connection.projectData.projectMapping,
+                                                  it, this@GitLabToolWindowProjectViewModel,
+                                                  connection.currentUser, avatarIconProvider)
         }
         emit(vm)
         awaitCancellation()

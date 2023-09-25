@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffInlayComponentsFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiffDiscussionViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -58,7 +59,7 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
     val change = request.getUserData(ChangeDiffRequestProducer.CHANGE_KEY) ?: return
 
     val dataProvider = GenericDataProvider().apply {
-      putData(GitLabMergeRequestDiffViewModel.DATA_KEY, reviewVm)
+      putData(GitLabMergeRequestReviewViewModel.DATA_KEY, reviewVm)
     }
     context.putUserData(DiffUserDataKeys.DATA_PROVIDER, dataProvider)
     context.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS,
