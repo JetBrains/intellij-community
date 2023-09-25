@@ -294,7 +294,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
 
       boolean priorityIntersectionHasElements = myPriorityRange.intersectsStrict(myRestrictRange);
-      if ((!elements1.isEmpty() || !insideResult.isEmpty()) && priorityIntersectionHasElements) { // do not apply when there were no elements to highlight
+      if ((!elements1.isEmpty() || !insideResult.isEmpty()) || priorityIntersectionHasElements) { // do not apply when there were no elements to highlight
         myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), insideResult, myPriorityRange, myRestrictRange, getId());
       }
       runVisitors(elements2, ranges2, chunkSize, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
