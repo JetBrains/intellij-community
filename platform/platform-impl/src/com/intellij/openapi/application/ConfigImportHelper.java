@@ -146,12 +146,12 @@ public final class ConfigImportHelper {
           log.error("Couldn't backup current config or delete current config directory", e);
         }
       }
-      else if (shouldAskForConfig()) {
-        oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
-        importScenarioStatistics = SHOW_DIALOG_REQUESTED_BY_PROPERTY;
-      }
       else if (!IdeStartupWizardKt.isStartupWizardEnabled()) {
-        if (guessedOldConfigDirs.isEmpty()) {
+        if (shouldAskForConfig()) {
+          oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
+          importScenarioStatistics = SHOW_DIALOG_REQUESTED_BY_PROPERTY;
+        }
+        else if (guessedOldConfigDirs.isEmpty()) {
           boolean importedFromCloud = false;
           CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
           if (configProvider != null) {
@@ -346,7 +346,7 @@ public final class ConfigImportHelper {
 
   private static boolean shouldAskForConfig() {
     String showImportDialog = System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
-    if ("default-production".equals(showImportDialog) || "never".equals(showImportDialog) || IdeStartupWizardKt.isStartupWizardEnabled()) {
+    if ("default-production".equals(showImportDialog) || "never".equals(showImportDialog)) {
       return false;
     }
     return PluginManagerCore.isRunningFromSources() ||
