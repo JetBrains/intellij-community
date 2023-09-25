@@ -9,15 +9,14 @@ import junit.framework.JUnit4TestAdapterCache;
 import junit.framework.TestResult;
 import junit.framework.TestSuite;
 import org.junit.platform.engine.DiscoverySelector;
+import org.junit.platform.engine.Filter;
 import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.discovery.ClassNameFilter;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.MethodSource;
-import org.junit.platform.launcher.Launcher;
-import org.junit.platform.launcher.TestExecutionListener;
-import org.junit.platform.launcher.TestIdentifier;
-import org.junit.platform.launcher.TestPlan;
+import org.junit.platform.launcher.*;
 import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
@@ -34,19 +33,39 @@ import java.io.StringWriter;
 import java.util.*;
 
 // Used to run JUnit 3/4 tests via JUnit 5 runtime
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class JUnit5TeamCityRunnerForTestAllSuite {
   public static void main(String[] args) throws ClassNotFoundException {
+    if (args.length != 1 && args.length != 2) {
+      System.err.printf("Expected one or two arguments, got %d: %s%n", args.length, Arrays.toString(args));
+      System.exit(1);
+    }
     try {
       Launcher launcher = LauncherFactory.create(LauncherConfig.builder().enableLauncherSessionListenerAutoRegistration(false).build());
-      DiscoverySelector selector;
+      List<? extends DiscoverySelector> selectors;
+      List<Filter<?>> filters = new ArrayList<>(0);
       if (args.length == 1) {
-        selector = DiscoverySelectors.selectClass(args[0]);
+        selectors = Collections.singletonList(DiscoverySelectors.selectClass(args[0]));
+      }
+      else if (args[0].equals("__package__")) {
+        selectors = Collections.singletonList(DiscoverySelectors.selectPackage(args[1]));
+        // exclude subpackages
+        filters.add(ClassNameFilter.excludeClassNamePatterns("\\Q" + args[1] + "\\E\\.[^.]+\\..*"));
+      }
+      else if (args[0].equals("__classes__")) {
+        String[] classes = args[1].split(";");
+        selectors = Arrays.stream(classes).map(DiscoverySelectors::selectClass).toList();
       }
       else {
-        selector = DiscoverySelectors.selectMethod(args[0], args[1]);
+        selectors = Collections.singletonList(DiscoverySelectors.selectMethod(args[0], args[1]));
       }
+      LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder.request()
+        .selectors(selectors)
+        .filters(filters.toArray(new Filter[0]))
+        .build();
       TCExecutionListener listener = new TCExecutionListener();
-      launcher.execute(LauncherDiscoveryRequestBuilder.request().selectors(selector).build(), listener);
+      TestPlan testPlan = launcher.discover(discoveryRequest);
+      launcher.execute(testPlan, listener);
       if (!listener.smthExecuted()) {
         //see org.jetbrains.intellij.build.impl.TestingTasksImpl.NO_TESTS_ERROR
         System.exit(42);
@@ -97,7 +116,6 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     };
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static class TCExecutionListener implements TestExecutionListener {
     /**
      * The same constant as com.intellij.rt.execution.TestListenerProtocol.CLASS_CONFIGURATION

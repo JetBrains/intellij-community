@@ -12,20 +12,19 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.vintage.engine.descriptor.VintageTestDescriptor;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.ServiceLoader;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 // Used to run JUnit 5 tests via JUnit 5 runtime
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public final class JUnit5TeamCityRunnerForTestsOnClasspath {
+  private static final String ourCollectTestsFile = System.getProperty("intellij.build.test.list.classes");
 
   public static void main(String[] args) {
     try {
@@ -67,6 +66,10 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
         .filters(nameFilter, postDiscoveryFilter, EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID)).build();
       TestPlan testPlan = launcher.discover(discoveryRequest);
       if (testPlan.containsTests()) {
+        if (ourCollectTestsFile != null) {
+          saveListOfTestClasses(testPlan);
+          return;
+        }
         launcher.execute(testPlan, new JUnit5TeamCityRunnerForTestAllSuite.TCExecutionListener());
       }
       else {
@@ -160,5 +163,28 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
         return FilterResult.included("Unknown source type " + source.getClass());
       }
     };
+  }
+
+  private static void saveListOfTestClasses(TestPlan testPlan) {
+    ArrayList<String> testClasses = new ArrayList<>(0);
+    for (TestIdentifier root : testPlan.getRoots()) {
+      Set<TestIdentifier> firstLevel = testPlan.getChildren(root);
+      for (TestIdentifier identifier : firstLevel) {
+        identifier.getSource()
+          .filter(source -> source instanceof ClassSource)
+          .map(source -> ((ClassSource)source).getClassName())
+          .ifPresent(name -> testClasses.add(name));
+      }
+    }
+    Path path = Path.of(ourCollectTestsFile);
+    try {
+      Files.createDirectories(path.getParent());
+      Files.write(path, testClasses);
+    }
+    catch (IOException e) {
+      System.err.printf("Cannot save list of test classes to '%s': %s%n", path.toAbsolutePath(), e);
+      e.printStackTrace();
+      System.exit(1);
+    }
   }
 }
