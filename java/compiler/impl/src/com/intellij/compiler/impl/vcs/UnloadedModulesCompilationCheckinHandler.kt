@@ -41,13 +41,14 @@ class UnloadedModulesCompilationCheckinHandler(private val project: Project,
   }
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? = withContext(Dispatchers.Default) {
+    val files = commitInfo.committedVirtualFiles
     val unloadedModulesCompileScope = readAction {
       if (ModuleManager.getInstance(project).unloadedModuleDescriptions.isEmpty()) {
         return@readAction null
       }
       val fileIndex = ProjectFileIndex.getInstance(project)
       val compilerManager = CompilerManager.getInstance(project)
-      val affectedModules = checkinPanel.getVirtualFiles()
+      val affectedModules = files
         .filter { compilerManager.isCompilableFileType(it.fileType) }
         .mapNotNullTo(LinkedHashSet()) { fileIndex.getModuleForFile(it) }
       val affectedUnloadedModules = affectedModules.flatMapTo(LinkedHashSet()) {
