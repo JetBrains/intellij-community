@@ -93,7 +93,9 @@ fun showExternalGitLogInToolwindow(project: Project,
   val showContent = {
     if (!selectProjectLog(project, vcs, roots) && !selectAlreadyOpened(toolWindow.contentManager, roots)) {
       ProgressManager.getInstance().run(ShowLogTask(project, roots, vcs, false) { disposable ->
-        showLogInToolWindow(roots, toolWindow, tabTitle, tabDescription, disposable)
+        val isToolWindowTab = toolWindow.id == ChangesViewContentManager.TOOLWINDOW_ID
+        val component = createContent(this, roots, isToolWindowTab, disposable)
+        toolWindow.addLogContent(project, component, tabTitle, tabDescription, disposable)
       })
     }
   }
@@ -130,25 +132,21 @@ private class ShowLogTask(project: Project,
   }
 }
 
-private fun VcsLogManager.showLogInToolWindow(roots: List<VirtualFile>,
-                                              toolWindow: ToolWindow,
-                                              tabTitle: @NlsContexts.TabTitle String,
-                                              tabDescription: @NlsContexts.Tooltip String,
-                                              disposable: Disposable) {
-  val cm = toolWindow.contentManager
-  val isToolWindowTab = toolWindow.id == ChangesViewContentManager.TOOLWINDOW_ID
-
-  val component = createContent(this, roots, isToolWindowTab, disposable)
-
+private fun ToolWindow.addLogContent(project: Project,
+                                     component: JComponent,
+                                     tabTitle: @NlsContexts.TabTitle String,
+                                     tabDescription: @NlsContexts.Tooltip String,
+                                     disposable: Disposable) {
   val content = ContentFactory.getInstance().createContent(component, tabTitle, false)
   content.setDisposer(disposable)
   content.description = tabDescription
   content.isCloseable = true
 
+  val cm = contentManager
   cm.addContent(content)
   cm.setSelectedContent(content)
 
-  doOnProviderRemoval(dataManager.project, disposable) { cm.removeContent(content, true) }
+  doOnProviderRemoval(project, disposable) { cm.removeContent(content, true) }
 }
 
 private fun VcsLogManager.showLogInDialog(roots: List<VirtualFile>, @DialogTitle title: String, disposable: Disposable) {
