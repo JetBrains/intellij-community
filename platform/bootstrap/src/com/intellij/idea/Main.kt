@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Main")
 @file:Suppress("RAW_RUN_BLOCKING", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-//@file:OptIn(ExperimentalCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 
 package com.intellij.idea
 
@@ -25,6 +24,7 @@ import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
+import kotlinx.coroutines.debug.internal.DebugProbesImpl
 import sun.font.FontManagerFactory
 import java.awt.Toolkit
 import java.io.IOException
@@ -79,8 +79,8 @@ internal fun mainImpl(rawArgs: Array<String>,
     addBootstrapTiming("classloader init", startupTimings)
 
     // runBlocking will load DebugProbes anyway, so, that's ok to call it here so early
-    //DebugProbes.enableCreationStackTraces = false
-    //addBootstrapTiming("coroutine debug probes configuration", startupTimings)
+    DebugProbesImpl.enableCreationStackTraces = false
+    addBootstrapTiming("coroutine debug probes configuration", startupTimings)
 
     runBlocking {
       addBootstrapTiming("main scope creating", startupTimings)
