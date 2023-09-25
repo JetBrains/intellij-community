@@ -51,14 +51,21 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
       }
 
       val trimmed = logCategory.category.trimStart('#')
-      val logger = java.util.logging.Logger.getLogger(trimmed)
-      logger.level = loggerLevel
-      synchronized(lock) {
-        customizedLoggers.add(logger)
-      }
-      LOG.info("Level ${level.name} is set for the following category: $trimmed")
+
+      // IDEA-297747 Convention for categories naming is not clear, so set logging for both with '#' and without '#'
+      addLogger("#$trimmed", loggerLevel, level)
+      addLogger(trimmed, loggerLevel, level)
     }
     return filteredCategories
+  }
+
+  private fun addLogger(trimmed: String, loggerLevel: Level?, level: DebugLogLevel) {
+    val logger = java.util.logging.Logger.getLogger(trimmed)
+    logger.level = loggerLevel
+    synchronized(lock) {
+      customizedLoggers.add(logger)
+    }
+    LOG.info("Level ${level.name} is set for the following category: $trimmed")
   }
 
   private fun filteredCategories(categories: List<LogCategory>): List<LogCategory> {
