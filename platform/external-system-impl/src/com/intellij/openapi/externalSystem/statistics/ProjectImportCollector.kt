@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector.EXTERNAL_SYSTEM_ID
 
 object ProjectImportCollector : CounterUsagesCollector() {
-  val GROUP = EventLogGroup("project.import", 8)
+  val GROUP = EventLogGroup("project.import", 9)
 
   @JvmField
   val TASK_CLASS = EventFields.Class("task_class")
@@ -27,9 +27,34 @@ object ProjectImportCollector : CounterUsagesCollector() {
                                                   finishEventAdditionalFields = arrayOf(SUBMODULES_COUNT, LINKED_PROJECTS))
 
   @JvmField
+  val REAPPLY_MODEL_ACTIVITY = GROUP.registerIdeActivity("reapply_model_import_project", startEventAdditionalFields = arrayOf(EXTERNAL_SYSTEM_ID, TASK_CLASS,
+                                                                                                         EventFields.PluginInfo),
+                                                  finishEventAdditionalFields = arrayOf(SUBMODULES_COUNT, LINKED_PROJECTS))
+
+  @JvmField
   val IMPORT_STAGE = GROUP.registerIdeActivity("stage", startEventAdditionalFields = arrayOf(TASK_CLASS),
                                                parentActivity = IMPORT_ACTIVITY)
 
+
+
+  @JvmField
+  val READ_STAGE = GROUP.registerIdeActivity("read",
+                                               parentActivity = IMPORT_ACTIVITY)
+  @JvmField
+  val RESOLVE_STAGE = GROUP.registerIdeActivity("resolve",
+                                             parentActivity = IMPORT_ACTIVITY)
+
+  @JvmField
+  val WORKSPACE_APPLY_STAGE = GROUP.registerIdeActivity("workspace_import",
+                                                parentActivity = IMPORT_ACTIVITY)
+
+  @JvmField
+  val PROJECT_CONFIGURATION_STAGE = GROUP.registerIdeActivity("configure",
+                                                        parentActivity = IMPORT_ACTIVITY)
+
+  @JvmField
+  val PLUGIN_RESOLVE_PROCESS = GROUP.registerIdeActivity("resolve_plugins",
+                                                              parentActivity = null)
 
   override fun getGroup(): EventLogGroup = GROUP
 }
