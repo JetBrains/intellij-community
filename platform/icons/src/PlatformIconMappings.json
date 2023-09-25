@@ -289,9 +289,11 @@
       "collapseAll.svg": "actions/collapseall.svg",
       "copy.svg": "actions/copy.svg",
       "cut.svg": "actions/menu-cut.svg",
+      "debugDisabled.svg": "general/debugDisabled.svg",
       "delete.svg": "actions/gc.svg",
       "down.svg": "actions/nextOccurence.svg",
       "download.svg": "actions/download.svg",
+      "drag.svg": "general/drag.svg",
       "dropdown.svg": "general/dropdown.svg",
       "dropdownGutter.svg": "general/dropdownGutter.svg",
       "edit.svg": [
@@ -705,6 +707,7 @@
       "invalidConfigurationLayer.svg": "runConfigurations/invalidConfigurationLayer.svg",
       "junit.svg": "runConfigurations/junit.svg",
       "junitTestMark.svg": "runConfigurations/testMark.svg",
+      "multiLaunch.svg": "runConfigurations/multiLaunch.svg",
       "sortByDuration.svg": "runConfigurations/sortbyDuration.svg",
       "webApp.svg": "runConfigurations/web_app.svg"
     },
