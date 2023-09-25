@@ -313,7 +313,7 @@ public final class MMappedFileStorage implements Closeable {
       //    event, so this lock is mostly uncontended, so the cost is negligible.
       long channelSize = channel.size();
       if ((channelSize & pageSizeMask) != 0) {
-        throw new AssertionError("Bug: channelSize(=" + channelSize + ") is not pageSize(=" + pageSize + ")-aligned");
+        throw new AssertionError("Bug: [" + storagePath + "].channelSize(=" + channelSize + ") is not pageSize(=" + pageSize + ")-aligned");
       }
       return channelSize;
     }

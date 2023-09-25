@@ -159,6 +159,7 @@ public final class IndexingStamp {
 
         //and after is just a set of ints -- Index IDs from ID class
         while (buffer.hasRemaining()) {
+          //RC: .findById() takes 1/4 of total the method time -- mostly spent on CHMap lookup.
           ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(buffer));
           if (id != null && !(id instanceof StubIndexKey)) {
             long stamp = IndexVersion.getIndexCreationStamp(id);
