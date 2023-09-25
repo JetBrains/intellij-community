@@ -71,13 +71,15 @@ class CodeVisionPass(
         JobLauncher.getInstance().invokeConcurrentlyUnderProgress(providers, progress, Processor { provider ->
             span.useWithScope {
               computeWithSpan(tracer, provider.javaClass.simpleName) {
-                val results: List<Pair<TextRange, CodeVisionEntry>>
+                val results: List<Pair<TextRange, CodeVisionEntry>>?
                 val duration = measureTimeMillis {
                   results = provider.computeForEditor(editor, file)
                 }
-                CodeVisionFusCollector.reportCodeVisionProviderDuration(editor, file.language, duration, provider::class.java)
-                providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results,
-                                                                                                        modificationTracker.modificationCount)
+                if (results != null) {
+                  CodeVisionFusCollector.reportCodeVisionProviderDuration(editor, file.language, duration, provider::class.java)
+                  providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results,
+                                                                                                          modificationTracker.modificationCount)
+                }
               }
             }
             true

@@ -50,9 +50,9 @@ abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
    */
   open fun logClickToFUS(element: PsiElement, hint: String) {}
 
-  override fun computeForEditor(editor: Editor, file: PsiFile): List<Pair<TextRange, CodeVisionEntry>> {
-    if (file.project.isDefault) return emptyList()
-    if (!acceptsFile(file)) return emptyList()
+  override fun computeForEditor(editor: Editor, file: PsiFile): List<Pair<TextRange, CodeVisionEntry>>? {
+    if (file.project.isDefault) return null
+    if (!acceptsFile(file)) return null
 
     // we want to let this provider work only in tests dedicated for code vision, otherwise they harm performance
     if (ApplicationManager.getApplication().isUnitTestMode && !CodeVisionHost.isCodeLensTest()) return emptyList()
