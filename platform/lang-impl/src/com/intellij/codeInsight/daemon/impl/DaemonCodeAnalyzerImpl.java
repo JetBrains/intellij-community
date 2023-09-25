@@ -70,6 +70,7 @@ import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.EDT;
+import java.awt.Window;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -1226,14 +1227,20 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
     // editors in modal context
     List<? extends Editor> editors = EditorTracker.getInstance(myProject).getActiveEditors();
-    Collection<TextEditor> activeTextEditors;
-    if (editors.isEmpty()) {
-      activeTextEditors = Collections.emptyList();
-    }
-    else {
+    Collection<FileEditor> activeTextEditors = new HashSet<>(editors.size());
+    Set<VirtualFile> files = new HashSet<>(editors.size());
+    if (!editors.isEmpty()) {
       TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
-      activeTextEditors = ContainerUtil.map2SetNotNull(editors,
-                                                       editor -> editor.isDisposed() ? null: textEditorProvider.getTextEditor(editor));
+      for (Editor editor : editors) {
+        if (!editor.isDisposed()) {
+          TextEditor textEditor = textEditorProvider.getTextEditor(editor);
+          VirtualFile virtualFile = textEditor.getFile();
+          if (textEditor.isValid() && virtualFile != null && virtualFile.isValid() && isInActiveProject(textEditor)) {
+            activeTextEditors.add(textEditor);
+            files.add(virtualFile);
+          }
+        }
+      }
     }
 
     if (ModalityState.current() != ModalityState.nonModal()) {
@@ -1241,13 +1248,15 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
 
     // tests usually care about just one explicitly configured editor
-    Collection<FileEditor> tabEditors = application.isUnitTestMode() ? Collections.emptyList() : getFileEditorManager().getSelectedEditorWithRemotes();
+    Collection<FileEditor> tabEditors = ApplicationManager.getApplication().isUnitTestMode() ? Collections.emptyList() : getFileEditorManager().getSelectedEditorWithRemotes();
+    for (FileEditor tabEditor : tabEditors) {
+      VirtualFile tabFile = tabEditor.getFile();
+      if (tabFile != null && tabFile.isValid() && files.add(tabFile) && isInActiveProject(tabEditor)) {
+        activeTextEditors.add(tabEditor);
+      }
+    }
 
-    return ContainerUtil.filter(ContainerUtil.union(activeTextEditors, tabEditors),
-                         fileEditor -> fileEditor.isValid()
-                                       && fileEditor.getFile() != null
-                                       && fileEditor.getFile().isValid()
-                                       && isInActiveProject(fileEditor));
+    return activeTextEditors;
   }
 
   private static boolean isInActiveProject(@NotNull FileEditor editor) {
