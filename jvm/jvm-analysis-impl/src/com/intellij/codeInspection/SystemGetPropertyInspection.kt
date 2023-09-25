@@ -2,11 +2,13 @@
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
-import com.intellij.codeInspection.fix.CallableExpression
-import com.intellij.codeInspection.fix.Method
-import com.intellij.codeInspection.fix.QualifiedReference
+import com.intellij.codeInspection.fix.CallReplacementInfo
+import com.intellij.codeInspection.fix.MethodReplacementInfo
 import com.intellij.codeInspection.fix.ReplaceCallableExpressionQuickFix
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiType
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.uast.UCallExpression
@@ -16,21 +18,29 @@ private val SYSTEM_GET_PROPERTY = CallMatcher.staticCall("java.lang.System", "ge
   .parameterTypes("java.lang.String")
 
 private val PROPERTIES_TO_OPTIMIZE = mapOf(
-  "file.separator" to CallableExpression(QualifiedReference("java.nio.file.FileSystems"),
+  "file.separator" to CallableExpression("java.nio.file.FileSystems",
                                          listOf(Method("getDefault",
                                                        "java.nio.file.FileSystem"),
                                                 Method("getSeparator",
                                                        "java.lang.String"))),
-  "path.separator" to CallableExpression(QualifiedReference("java.io.File.pathSeparator"),
-                                         emptyList()),
-  "line.separator" to CallableExpression(QualifiedReference("java.lang.System"),
+  "path.separator" to CallableExpression("java.io.File.pathSeparator", emptyList()),
+  "line.separator" to CallableExpression("java.lang.System",
                                          listOf(Method("lineSeparator",
                                                        "java.lang.String"))),
-  "file.encoding" to CallableExpression(QualifiedReference("java.nio.charset.Charset"),
+  "file.encoding" to CallableExpression("java.nio.charset.Charset",
                                         listOf(Method("defaultCharset",
                                                       "java.nio.charset.Charset"),
                                                Method("displayName",
                                                       "java.lang.String"))))
+
+private class CallableExpression(val qualifiedReference: String, val methods: List<Method>) {
+  fun toCallReplacementInfo(project: Project, scope: GlobalSearchScope): CallReplacementInfo =
+    CallReplacementInfo(qualifiedReference, methods.map {
+      MethodReplacementInfo(it.name, PsiType.getTypeByName(it.returnType, project, scope))
+    })
+}
+
+private class Method(val name: String, val returnType: String)
 
 class SystemGetPropertyInspection : AbstractBaseUastLocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder,
@@ -45,9 +55,10 @@ class SystemGetPropertyInspection : AbstractBaseUastLocalInspectionTool() {
       if (propertyValue !in PROPERTIES_TO_OPTIMIZE.keys) return true
       val message = JvmAnalysisBundle.message("jvm.inspections.system.get.property.problem.descriptor", propertyValue)
       val qualifiedReference = PROPERTIES_TO_OPTIMIZE[propertyValue] ?: error("Unknown property!")
-      holder.registerUProblem(node, message, ReplaceCallableExpressionQuickFix(qualifiedReference))
+      val scope = node.sourcePsi?.resolveScope ?: return true
+      holder.registerUProblem(node, message,
+                              ReplaceCallableExpressionQuickFix(qualifiedReference.toCallReplacementInfo(holder.project, scope)))
       return true
     }
   }
-
 }

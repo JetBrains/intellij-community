@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection
 
-import com.intellij.codeInspection.fix.CallableExpression
-import com.intellij.codeInspection.fix.Method
+import com.intellij.codeInspection.fix.CallReplacementInfo
+import com.intellij.codeInspection.fix.MethodReplacementInfo
 import com.intellij.codeInspection.fix.ReplaceCallableExpressionQuickFix
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter
@@ -24,8 +24,8 @@ class ThreadRunInspection : AbstractBaseUastLocalInspectionTool() {
       if (node.receiver is USuperExpression) return true
       val message = InspectionGadgetsBundle.message("thread.run.problem.descriptor")
       holder.registerUProblem(node, message, ReplaceCallableExpressionQuickFix(
-        CallableExpression(null,
-                           listOf(Method("start")))))
+        CallReplacementInfo(null,
+                            listOf(MethodReplacementInfo("start")))))
       return true
     }
   }
