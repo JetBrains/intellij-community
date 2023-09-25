@@ -3,9 +3,11 @@ package org.intellij.plugins.markdown.ui.split
 
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.application
 import org.jdom.Element
 
 private const val FIRST_EDITOR = "first_editor"
@@ -119,6 +121,11 @@ private fun createEditorBuilder(
   file: VirtualFile
 ): AsyncFileEditorProvider.Builder {
   if (provider is AsyncFileEditorProvider) {
+    if (application.isDispatchThread) {
+      return runWithModalProgressBlocking(project, title = "Creating Markdown Editor") {
+        provider.createEditorBuilder(project, file)
+      }
+    }
     return runBlockingCancellable {
       provider.createEditorBuilder(project, file)
     }
