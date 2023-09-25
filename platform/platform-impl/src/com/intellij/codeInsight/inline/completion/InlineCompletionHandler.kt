@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
+import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCaretListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
@@ -13,8 +14,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.CaretEvent
-import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -281,23 +280,12 @@ class InlineCompletionHandler(scope: CoroutineScope) {
 
   @RequiresEdt
   private fun InlineCompletionSession.guardCaretModifications(request: InlineCompletionRequest) {
-    fun cancelExecution() = hide(context.editor, false)
-
-    val caretListener = object : CaretListener {
-      override fun caretPositionChanged(event: CaretEvent) {
-        val newOffset = context.editor.logicalPositionToOffset(event.newPosition)
-        val expectedOffset = context.startOffset ?: request.endOffset
-        if (newOffset != expectedOffset) {
-          cancelExecution()
-        }
-      }
-      override fun caretAdded(event: CaretEvent) = cancelExecution()
-      override fun caretRemoved(event: CaretEvent) = cancelExecution()
-    }
-    request.editor.caretModel.addCaretListener(caretListener)
-    whenDisposed {
-      request.editor.caretModel.removeCaretListener(caretListener)
-    }
+    val editor = request.editor
+    val expectedOffset = { context.startOffset ?: request.endOffset }
+    val cancel = { hide(editor, false, context) }
+    val listener = InlineSessionWiseCaretListener(expectedOffset, cancel)
+    editor.caretModel.addCaretListener(listener)
+    whenDisposed { editor.caretModel.removeCaretListener(listener) }
   }
 
   @RequiresBlockingContext

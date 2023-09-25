@@ -11,11 +11,9 @@ import com.intellij.codeWithMe.isCurrent
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.BulkAwareDocumentListener
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.EditorMouseEvent
-import com.intellij.openapi.editor.event.EditorMouseListener
+import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -111,5 +109,27 @@ class InlineEditorMouseListener : EditorMouseListener {
 
   companion object {
     private val LOG = thisLogger()
+  }
+}
+
+/**
+ * Cancels inline completion (via [cancel]) as soon as one of the following happens:
+ * * A caret added/removed.
+ * * A new caret offset doesn't correspond to [expectedOffset].
+ */
+class InlineSessionWiseCaretListener(
+  @RequiresEdt private val expectedOffset: () -> Int,
+  @RequiresEdt private val cancel: () -> Unit
+) : CaretListener {
+
+  override fun caretAdded(event: CaretEvent) = cancel()
+
+  override fun caretRemoved(event: CaretEvent) = cancel()
+
+  override fun caretPositionChanged(event: CaretEvent) {
+    val newOffset = event.editor.logicalPositionToOffset(event.newPosition)
+    if (newOffset != expectedOffset()) {
+      cancel()
+    }
   }
 }
