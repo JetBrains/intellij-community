@@ -57,6 +57,7 @@ public final class QuickChangeKeymapAction extends QuickSwitchSchemeAction imple
 
   @Override
   protected boolean isEnabled() {
-    return getUnsortedKeymaps().size() > 1;
+    // simply show it always instead of asking for keymaps on EDT during update()
+    return true;
   }
 }
