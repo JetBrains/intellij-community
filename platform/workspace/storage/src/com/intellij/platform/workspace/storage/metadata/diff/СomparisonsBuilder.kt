@@ -120,74 +120,75 @@ internal class ComparisonsBuilder(private val log: MetadataComparatorLog) {
   }
 }
 
-internal fun compareAndPrintToLog(areComparing: String, comparisons: ComparisonsBuilder.() -> Unit): ComparisonResult {
-  val log = EntitiesComparatorLog.newInstance()
-  val comparisonsBuilder = ComparisonsBuilder(log)
+public object ComparisonUtil {
+  internal fun compareAndPrintToLog(areComparing: String, comparisons: ComparisonsBuilder.() -> Unit): ComparisonResult {
+    val log = EntitiesComparatorLog.newInstance()
+    val comparisonsBuilder = ComparisonsBuilder(log)
 
-  log.startComparing(areComparing)
-  comparisonsBuilder.comparisons()
-  log.endComparing(areComparing, comparisonsBuilder.result)
-
-  logIfNotEqual(areComparing, comparisonsBuilder.result)
-
-  LOG.debug(log.printLog()) // Print to log
-
-  return comparisonsBuilder.result
-}
-
-
-internal fun compareMetadata(cacheMetadata: StorageMetadata, cacheMetadataName: String,
-                             currentMetadata: StorageMetadata, currentMetadataName: String,
-                             comparisons: ComparisonsBuilder.() -> Unit): ComparisonResult {
-  return compareMetadata(
-    areComparingText(
-      "${cacheMetadata.metadataType} \"$cacheMetadataName\"",
-      "${currentMetadata.metadataType} \"$currentMetadataName\""
-    ),
-    currentMetadata, cacheMetadata, comparisons
-  )
-}
-
-internal fun compareMetadata(cacheMetadata: StorageMetadata, currentMetadata: StorageMetadata, comparisons: ComparisonsBuilder.() -> Unit): ComparisonResult {
-  return compareMetadata(
-    areComparingText(cacheMetadata.metadataType, currentMetadata.metadataType),
-    currentMetadata, cacheMetadata, comparisons
-  )
-}
-
-private fun compareMetadata(areComparing: String, cacheMetadata: StorageMetadata, currentMetadata: StorageMetadata,
-                            comparisons: ComparisonsBuilder.() -> Unit): ComparisonResult {
-  val log = EntitiesComparatorLog.INSTANCE
-  val comparisonsBuilder = ComparisonsBuilder(log)
-
-  log.startComparing(areComparing)
-  comparisonsBuilder.compare("type", cacheMetadata.metadataType, currentMetadata.metadataType)
-  if (comparisonsBuilder.result.areEquals) {
+    log.startComparing(areComparing)
     comparisonsBuilder.comparisons()
-  }
-  log.endComparing(areComparing, comparisonsBuilder.result)
+    log.endComparing(areComparing, comparisonsBuilder.result)
 
-  logIfNotEqual(areComparing, comparisonsBuilder.result)
+    logIfNotEqual(areComparing, comparisonsBuilder.result)
 
-  return comparisonsBuilder.result
-}
+    LOG.debug(log.printLog()) // Print to log
 
-
-private fun logIfNotEqual(areComparing: String, result: ComparisonResult) {
-  if (result.areEquals) {
-    return
+    return comparisonsBuilder.result
   }
 
-  result as NotEqual
 
-  result.log.startComparing(areComparing)
-  result.log.endComparing(areComparing, result)
+  internal fun compareMetadata(cacheMetadata: StorageMetadata, cacheMetadataName: String,
+                               currentMetadata: StorageMetadata, currentMetadataName: String,
+                               comparisons: ComparisonsBuilder.() -> Unit): ComparisonResult {
+    return compareMetadata(
+      areComparingText(
+        "${cacheMetadata.metadataType} \"$cacheMetadataName\"",
+        "${currentMetadata.metadataType} \"$currentMetadataName\""
+      ),
+      currentMetadata, cacheMetadata, comparisons
+    )
+  }
+
+  internal fun compareMetadata(cacheMetadata: StorageMetadata,
+                               currentMetadata: StorageMetadata,
+                               comparisons: ComparisonsBuilder.() -> Unit): ComparisonResult {
+    return compareMetadata(
+      areComparingText(cacheMetadata.metadataType, currentMetadata.metadataType),
+      currentMetadata, cacheMetadata, comparisons
+    )
+  }
+
+  private fun compareMetadata(areComparing: String, cacheMetadata: StorageMetadata, currentMetadata: StorageMetadata,
+                              comparisons: ComparisonsBuilder.() -> Unit): ComparisonResult {
+    val log = EntitiesComparatorLog.INSTANCE
+    val comparisonsBuilder = ComparisonsBuilder(log)
+
+    log.startComparing(areComparing)
+    comparisonsBuilder.compare("type", cacheMetadata.metadataType, currentMetadata.metadataType)
+    if (comparisonsBuilder.result.areEquals) {
+      comparisonsBuilder.comparisons()
+    }
+    log.endComparing(areComparing, comparisonsBuilder.result)
+
+    logIfNotEqual(areComparing, comparisonsBuilder.result)
+
+    return comparisonsBuilder.result
+  }
+
+
+  private fun logIfNotEqual(areComparing: String, result: ComparisonResult) {
+    if (result.areEquals) {
+      return
+    }
+
+    result as NotEqual
+
+    result.log.startComparing(areComparing)
+    result.log.endComparing(areComparing, result)
+  }
+
+
+  private fun areComparingText(cacheText: String, currentText: String): String =
+    "cache: $cacheText     with current: $currentText"
+
 }
-
-
-private fun areComparingText(cacheText: String, currentText: String): String =
-  "cache: $cacheText     with current: $currentText"
-
-
-
-
