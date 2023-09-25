@@ -26,7 +26,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   protected final CoverageSuitesBundle myBundle;
   protected final CoverageViewManager.StateBean myStateBean;
   private final FileStatusManager myFileStatusManager;
-  private VirtualFile myCachedFile;
+  private final VirtualFile myFile;
 
   /**
    * Children are cached in order to be able to filter nodes with no (interesting) children.
@@ -39,23 +39,31 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
    */
   @Deprecated
   public CoverageListNode(Project project,
-                          @NotNull PsiNamedElement classOrPackage,
+                          @NotNull PsiNamedElement element,
                           CoverageSuitesBundle bundle,
                           CoverageViewManager.StateBean stateBean,
                           boolean unused) {
-    this(project, classOrPackage, bundle, stateBean);
+    this(project, element, bundle, stateBean);
   }
 
   public CoverageListNode(Project project,
-                          @NotNull PsiNamedElement classOrPackage,
+                          @NotNull PsiNamedElement element,
                           CoverageSuitesBundle bundle,
                           CoverageViewManager.StateBean stateBean) {
-    super(project, classOrPackage);
+    super(project, element);
 
-    myName = ReadAction.compute(() -> classOrPackage.getName());
+    myName = ReadAction.compute(() -> element.getName());
     myBundle = bundle;
     myStateBean = stateBean;
     myFileStatusManager = FileStatusManager.getInstance(myProject);
+    myFile = ReadAction.compute(() -> {
+      VirtualFile file = PsiUtilCore.getVirtualFile(element);
+      if (file != null) {
+        VirtualFile canonical = file.getCanonicalFile();
+        if (canonical != null) return canonical;
+      }
+      return file;
+    });
   }
 
   @NotNull
@@ -84,25 +92,14 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
     });
   }
 
-  @Override
-  public FileStatus getFileStatus() {
-    VirtualFile virtualFile = getVirtualFileCached();
-    return virtualFile != null ? myFileStatusManager.getStatus(virtualFile) : super.getFileStatus();
+  public VirtualFile getFile() {
+    return myFile;
   }
 
-  @Nullable
-  private VirtualFile getVirtualFileCached() {
-    if (myCachedFile != null) return myCachedFile;
-    final PsiFile containingFile = ReadAction.compute(() -> {
-      Object value = getValue();
-      if (value instanceof PsiElement element && element.isValid()) {
-        return element.getContainingFile();
-      }
-      return null;
-    });
-    VirtualFile virtualFile = containingFile == null ? null : containingFile.getVirtualFile();
-    myCachedFile = virtualFile;
-    return virtualFile;
+  @Override
+  public FileStatus getFileStatus() {
+    VirtualFile virtualFile = myFile;
+    return virtualFile != null ? myFileStatusManager.getStatus(virtualFile) : super.getFileStatus();
   }
 
   @Override

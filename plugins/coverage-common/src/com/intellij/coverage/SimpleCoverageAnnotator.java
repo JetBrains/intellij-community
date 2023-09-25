@@ -47,14 +47,11 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   @Nullable
-  protected DirCoverageInfo getDirCoverageInfo(@NotNull final PsiDirectory directory,
-                                               @NotNull final CoverageSuitesBundle currentSuite) {
-    final VirtualFile dir = directory.getVirtualFile();
-
+  protected DirCoverageInfo getDirCoverageInfo(@NotNull VirtualFile dir,
+                                               @NotNull CoverageSuitesBundle currentSuite) {
     final String path = normalizeFilePath(dir.getPath());
 
     final boolean isInTestContent = myTestDirectories.contains(path);
-
     if (!currentSuite.isTrackTestFolders() && isInTestContent) {
       return null;
     }
@@ -64,10 +61,19 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
 
   @Override
   @Nullable
+  @Nls
   public String getDirCoverageInformationString(@NotNull final PsiDirectory directory,
                                                 @NotNull final CoverageSuitesBundle currentSuite,
                                                 @NotNull final CoverageDataManager manager) {
-    DirCoverageInfo coverageInfo = getDirCoverageInfo(directory, currentSuite);
+    return getDirCoverageInformationString(directory.getVirtualFile(), currentSuite, manager);
+  }
+
+  @Nullable
+  @Nls
+  public String getDirCoverageInformationString(@NotNull VirtualFile dir,
+                                                @NotNull CoverageSuitesBundle currentSuite,
+                                                @NotNull CoverageDataManager manager) {
+    DirCoverageInfo coverageInfo = getDirCoverageInfo(dir, currentSuite);
     if (coverageInfo == null) {
       return null;
     }
@@ -108,6 +114,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
 
   @Override
   @Nullable
+  @Nls
   public String getFileCoverageInformationString(@NotNull final PsiFile psiFile,
                                                  @NotNull final CoverageSuitesBundle currentSuite,
                                                  @NotNull final CoverageDataManager manager) {
@@ -117,6 +124,12 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     }
 
     assert file != null;
+    return getFileCoverageInformationString(file, manager);
+  }
+
+  @Nullable
+  @Nls
+  public String getFileCoverageInformationString(@NotNull VirtualFile file, @NotNull CoverageDataManager manager) {
     final String path = normalizeFilePath(file.getPath());
 
     final FileCoverageInfo coverageInfo = myFileCoverageInfos.get(path);

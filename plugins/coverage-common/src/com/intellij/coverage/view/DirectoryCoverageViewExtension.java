@@ -1,10 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.view;
 
-import com.intellij.coverage.BaseCoverageAnnotator;
-import com.intellij.coverage.CoverageAnnotator;
-import com.intellij.coverage.CoverageBundle;
-import com.intellij.coverage.CoverageSuitesBundle;
+import com.intellij.coverage.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -18,6 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -39,13 +37,32 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public String getPercentage(int columnIdx, @NotNull AbstractTreeNode node) {
+  public String getPercentage(int columnIdx, @NotNull AbstractTreeNode<?> node) {
+    if (myAnnotator instanceof SimpleCoverageAnnotator annotator) {
+      // A fast path to avoid long-running 'getValue' call
+      VirtualFile file = extractFile(node);
+      if (file == null) return null;
+      if (file.isDirectory()) {
+        return annotator.getDirCoverageInformationString(file, mySuitesBundle, myCoverageDataManager);
+      }
+      else {
+        return annotator.getFileCoverageInformationString(file, myCoverageDataManager);
+      }
+    }
     final Object value = node.getValue();
     if (value instanceof PsiFile file) {
       return myAnnotator.getFileCoverageInformationString(file, mySuitesBundle, myCoverageDataManager);
     }
     else if (value instanceof PsiDirectory dir) {
       return myAnnotator.getDirCoverageInformationString(dir, mySuitesBundle, myCoverageDataManager);
+    }
+    return null;
+  }
+
+  @Nullable
+  protected VirtualFile extractFile(@NotNull AbstractTreeNode<?> node) {
+    if (node instanceof CoverageListNode coverageNode) {
+      return coverageNode.getFile();
     }
     return null;
   }
