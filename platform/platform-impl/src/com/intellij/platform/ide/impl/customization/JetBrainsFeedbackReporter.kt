@@ -8,13 +8,13 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.feedback.evaluation.dialog.EvaluationFeedbackDialog
 import com.intellij.platform.ide.customization.FeedbackReporter
 import com.intellij.ui.LicensingFacade
-import com.intellij.util.PlatformUtils.isIntelliJ
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class JetBrainsFeedbackReporter(private val productName: String,
+                                private val useNewEvaluationFeedbackForm: Boolean,
                                 private val zenDeskFormData: ZenDeskFeedbackFormData?) : FeedbackReporter {
   override val destinationDescription: String
     get() = "jetbrains.com"
@@ -37,7 +37,7 @@ class JetBrainsFeedbackReporter(private val productName: String,
       return false
     }
 
-    if (requestedForEvaluation && isIntelliJ()) {
+    if (requestedForEvaluation && useNewEvaluationFeedbackForm) {
       EvaluationFeedbackDialog(project, false).show()
       return true
     }

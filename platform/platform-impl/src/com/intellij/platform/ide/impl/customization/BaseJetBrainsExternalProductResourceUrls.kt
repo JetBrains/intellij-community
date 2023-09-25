@@ -56,6 +56,12 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
   open val zenDeskFeedbackFormData: ZenDeskFeedbackFormData?
     get() = null
 
+  /**
+   * Whether to use the new Evaluation Feedback Form to collect evaluation feedback from users.
+   */
+  open val useNewEvaluationFeedbackForm: Boolean
+    get() = false
+
   override val updateMetadataUrl: Url
     get() {
       val customUrl = System.getProperty("idea.updates.url")
@@ -93,7 +99,7 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
 
   override val feedbackReporter: FeedbackReporter?
     get() = shortProductNameUsedInForms?.let { productName ->
-      JetBrainsFeedbackReporter(productName, zenDeskFeedbackFormData)
+      JetBrainsFeedbackReporter(productName, useNewEvaluationFeedbackForm, zenDeskFeedbackFormData)
     }
 
   override val downloadPageUrl: Url?

@@ -40,6 +40,9 @@ class IntelliJIdeaExternalResourceUrls : BaseJetBrainsExternalProductResourceUrl
       }
     }
 
+  override val useNewEvaluationFeedbackForm: Boolean
+    get() = true
+
   override val youTubeChannelUrl: Url
     get() = Urls.newFromEncoded("https://www.youtube.com/user/intellijideavideo")
 
