@@ -141,14 +141,14 @@ private fun VcsLogManager.showLogInToolWindow(roots: List<VirtualFile>,
   val component = createContent(this, roots, isToolWindowTab, disposable)
 
   val content = ContentFactory.getInstance().createContent(component, tabTitle, false)
-  content.setDisposer(component.disposable)
+  content.setDisposer(disposable)
   content.description = tabDescription
   content.isCloseable = true
 
   cm.addContent(content)
   cm.setSelectedContent(content)
 
-  doOnProviderRemoval(dataManager.project, component.disposable) { cm.removeContent(content, true) }
+  doOnProviderRemoval(dataManager.project, disposable) { cm.removeContent(content, true) }
 }
 
 private fun VcsLogManager.showLogInDialog(roots: List<VirtualFile>, @DialogTitle title: String, disposable: Disposable) {
@@ -159,8 +159,8 @@ private fun VcsLogManager.showLogInDialog(roots: List<VirtualFile>, @DialogTitle
     .setPreferredFocusedComponent(content)
     .setDimensionServiceKey(GitShowExternalLogAction::class.java.name)
     .build()
-  Disposer.register(window, content.disposable)
-  doOnProviderRemoval(dataManager.project, content.disposable) { window.close() }
+  Disposer.register(window, disposable)
+  doOnProviderRemoval(dataManager.project, disposable) { window.close() }
   window.show()
 }
 
@@ -172,7 +172,7 @@ private fun createContent(manager: VcsLogManager,
   val ui = manager.createLogUi(calcLogId(roots),
                                if (isToolWindowTab) VcsLogTabLocation.TOOL_WINDOW else VcsLogTabLocation.STANDALONE)
   Disposer.register(disposable, ui)
-  return MyContentComponent(VcsLogPanel(manager, ui), roots, disposable)
+  return MyContentComponent(VcsLogPanel(manager, ui), roots)
 }
 
 @RequiresBackgroundThread
@@ -190,10 +190,7 @@ private fun createLogManager(project: Project,
   return manager
 }
 
-private class MyContentComponent(actualComponent: JComponent,
-                                 val roots: Collection<VirtualFile>,
-                                 val disposable: Disposable) : JPanel(BorderLayout()) {
-
+private class MyContentComponent(actualComponent: JComponent, val roots: Collection<VirtualFile>) : JPanel(BorderLayout()) {
   init {
     add(actualComponent)
   }
