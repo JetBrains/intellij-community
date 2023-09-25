@@ -229,12 +229,13 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UElementAsPsiInspection"
                      key="inspection.u.element.as.psi.display.name"/>
-    <localInspection  language="JSON" shortName="UnknownIdInMetaInformation"
+    <!--suppress PluginXmlCapitalization -->
+    <localInspection language="JSON"
                      projectType="INTELLIJ_PLUGIN"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.description.file"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.metaInformation.UnknownIdInMetaInformationInspection"
-                     key="inspection.unknown.inspection.id.name"/>
+                     key="inspection.unknown.id.in.meta.information.name"/>
     <localInspection language="UAST" shortName="UsePrimitiveTypes"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"

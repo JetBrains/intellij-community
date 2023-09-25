@@ -31,8 +31,7 @@ public class UnknownIdInMetaInformationInspectionTest extends JavaCodeInsightFix
   }
 
   public void testUnknownIds() {
-    myFixture.copyDirectoryToProject("resources", "resources");
-    myFixture.copyDirectoryToProject("inspectionDescriptions", "inspectionDescriptions");
+    myFixture.copyDirectoryToProject("", "");
     myFixture.testHighlighting("inspectionDescriptions/metaInformation.json");
   }
 }

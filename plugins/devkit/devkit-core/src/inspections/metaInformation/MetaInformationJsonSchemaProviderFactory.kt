@@ -2,7 +2,6 @@
 package org.jetbrains.idea.devkit.inspections.metaInformation
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory
@@ -24,8 +23,7 @@ class MetaInformationJsonSchemaProviderFactory : JsonSchemaProviderFactory {
     }
 
     override fun getSchemaFile(): VirtualFile? {
-      val schemaFileUrl = javaClass.getResource("/schemas/meta-information-schema.json") ?: return null
-      return VfsUtil.findFileByURL(schemaFileUrl)
+      return JsonSchemaProviderFactory.getResourceFile(MetaInformationJsonSchemaProviderFactory::class.java, "/schemas/meta-information-schema.json")
     }
   }
 }

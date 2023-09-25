@@ -33,7 +33,7 @@ class UnknownIdInMetaInformationInspection : LocalInspectionTool() {
         if (id !in knownIds) {
           holder.registerProblem(
             valueElement,
-            DevKitBundle.message("inspection.message.unknown.inspection.id", id),
+            DevKitBundle.message("inspections.meta.information.unknown.inspection.id", id),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING
           )
         }
