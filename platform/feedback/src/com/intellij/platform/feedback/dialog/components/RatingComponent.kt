@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.feedback
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.feedback.dialog.components
 
 import com.intellij.icons.AllIcons
 import org.jetbrains.annotations.Nls
@@ -7,7 +7,6 @@ import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.event.*
 import javax.swing.*
-
 
 class RatingComponent : JComponent() {
   private val myIconSize = 32

@@ -50,16 +50,11 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
   open val intellijSupportFormId: Int
     get() = 66731
 
-  /**
-   * Return a non-null value from this property to enable the in-product form for "Submit Feedback" action and evaluation feedback
-   */
-  open val zenDeskFeedbackFormData: ZenDeskFeedbackFormData?
-    get() = null
 
   /**
-   * Whether to use the new Evaluation Feedback Form to collect evaluation feedback from users.
+   * Use in-product forms for Help | Submit Feedback... and evaluation feedback
    */
-  open val useNewEvaluationFeedbackForm: Boolean
+  open val useInIdeFeedback: Boolean
     get() = false
 
   override val updateMetadataUrl: Url
@@ -99,7 +94,7 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
 
   override val feedbackReporter: FeedbackReporter?
     get() = shortProductNameUsedInForms?.let { productName ->
-      JetBrainsFeedbackReporter(productName, useNewEvaluationFeedbackForm, zenDeskFeedbackFormData)
+      JetBrainsFeedbackReporter(productName, useInIdeFeedback)
     }
 
   override val downloadPageUrl: Url?
