@@ -10,7 +10,8 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicLong
 
 
-internal class InlineCompletionJob(private val job: Job) {
+@JvmInline
+internal value class InlineCompletionJob(private val job: Job) {
   fun cancel() {
     job.cancel()
   }
