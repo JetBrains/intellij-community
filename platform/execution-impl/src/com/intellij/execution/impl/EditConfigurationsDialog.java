@@ -1,19 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistryImpl;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -24,12 +22,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
-import java.util.function.BiConsumer;
 
 public class EditConfigurationsDialog extends SingleConfigurableEditor {
+  private static final Logger LOG = Logger.getInstance(EditConfigurationsDialog.class);
   protected Executor myExecutor;
   private final @NotNull Project myProject;
   private @Nullable Action myRunAction;
@@ -43,7 +39,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
     this(project, RunConfigurableKt.createRunConfigurationConfigurable(project), null, dataContext);
   }
 
-  public EditConfigurationsDialog(@NotNull Project project, @Nullable RunConfigurable configurable, @Nullable DataContext dataContext) {
+  public EditConfigurationsDialog(@NotNull Project project, @NotNull RunConfigurable configurable, @Nullable DataContext dataContext) {
     this(project, configurable, null, dataContext);
   }
 
@@ -51,7 +47,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
     this(project, RunConfigurableKt.createRunConfigurationConfigurable(project), factory, null);
   }
 
-  private EditConfigurationsDialog(@NotNull Project project, RunConfigurable runConfigurable, @Nullable ConfigurationFactory factory, @Nullable DataContext dataContext) {
+  private EditConfigurationsDialog(@NotNull Project project, @NotNull RunConfigurable runConfigurable, @Nullable ConfigurationFactory factory, @Nullable DataContext dataContext) {
     super(project, runConfigurable, "#com.intellij.execution.impl.EditConfigurationsDialog", IdeModalityType.IDE);
 
     myProject = project;
@@ -65,11 +61,14 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
     getConfigurable().initTreeSelectionListener(getDisposable());
     setTitle(ExecutionBundle.message("run.debug.dialog.title"));
     setHorizontalStretch(1.3F);
+    RunnerAndConfigurationSettings initial = null;
     if (factory != null) {
       addRunConfiguration(factory);
     } else {
       getConfigurable().selectConfigurableOnShow();
+      initial = getConfigurable().getInitialSelectedConfiguration();
     }
+    updateSelectedExecutor(initial);
   }
 
   @Override
@@ -109,103 +108,71 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
 
   @Override
   protected Action @NotNull [] createActions() {
-    List<Action> actions = new ArrayList<>(List.of(super.createActions()));
+    Action[] actions = super.createActions();
+    if (myExecutor != null) {
+      return actions;
+    }
     myRunAction = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        performRunFromConfig((runnerAndConfigurationSettings, executor) -> {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            RunConfiguration configuration = runnerAndConfigurationSettings.getConfiguration();
-            DataContext context = Objects.requireNonNull(myDataContext);
-            ExecutorRegistryImpl.RunnerHelper.run(myProject, configuration, runnerAndConfigurationSettings, context, executor);
-            doOKAction();
-          }, ModalityState.any());
-        }, () -> {
-          Logger.getInstance(EditConfigurationsDialog.class).error("Should not be possible to click it when nothing can be run");
-        });
+        SingleConfigurationConfigurable<RunConfiguration> selected = getConfigurable().getSelectedConfiguration();
+        LOG.assertTrue(selected != null, "No configuration selected");
+        LOG.assertTrue(myExecutor != null, "No executor selected");
+        ExecutorRegistryImpl.RunnerHelper.run(myProject, selected.getConfiguration(), selected.getSettings(),
+                                              Objects.requireNonNull(myDataContext), myExecutor);
+        doOKAction();
       }
     };
-    actions.add(0, myRunAction);
-    return actions.toArray(new Action[0]);
+    return ArrayUtil.prepend(myRunAction, actions);
   }
 
-  @Override
-  protected JButton createJButtonForAction(Action action) {
-    JButton button = super.createJButtonForAction(action);
-    button.setVisible(myRunAction != action || getConfigurable().getInitialSelectedConfiguration() != null);
-    return button;
-  }
-
-  private void performRunFromConfig(@NotNull BiConsumer<@NotNull RunnerAndConfigurationSettings, @NotNull Executor> onRunnableExecutor,
-                                    @NotNull Runnable onFail) {
-    SingleConfigurationConfigurable<RunConfiguration> configurable = getConfigurable().getSelectedConfiguration();
-    if (configurable != null) {
-      processInBackground(onRunnableExecutor, onFail, configurable.getSettings());
-    } else {
-      onFail.run();
+  private void updateSelectedExecutor(@Nullable RunnerAndConfigurationSettings selected) {
+    if (myRunAction == null) return;
+    Executor executor = null;
+    if (selected != null) {
+      executor = ExecutionManagerImpl.getInstance(myProject).getRecentExecutor(selected);
     }
-  }
-
-  private void processInBackground(@NotNull BiConsumer<@NotNull RunnerAndConfigurationSettings, @NotNull Executor> onRunnableExecutor,
-                                   @NotNull Runnable onFail, RunnerAndConfigurationSettings runnerAndConfigurationSettings) {
-    AppExecutorUtil.getAppExecutorService().execute(() -> {
-      for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
-        if (canRun(runnerAndConfigurationSettings, executor)) {
-          onRunnableExecutor.accept(runnerAndConfigurationSettings, executor);
-          return;
-        }
-      }
-      onFail.run();
-    });
+    if (executor == null) {
+      executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
+    }
+    updateRunButton(executor);
   }
 
   private boolean canRun(@Nullable RunnerAndConfigurationSettings settings, Executor executor) {
     return settings != null && ExecutorRegistryImpl.RunnerHelper.canRun(myProject, executor, settings.getConfiguration());
   }
 
-  public void updateRunAction() {
-    if (myRunAction == null) {
-      return;
-    }
-    JButton button = Objects.requireNonNull(getButton(myRunAction));
-    if (myDataContext == null) {
-      button.setEnabled(false);
-      button.setVisible(false);
-    }
-
-    performRunFromConfig((runnerAndConfigurationSettings, executor) -> {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        button.setVisible(true);
-        button.setEnabled(true);
-        myRunAction.putValue(Action.NAME, executor.getActionName());
-        button.setText(executor.getActionName());
-      }, ModalityState.any());
-    }, () -> {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        button.setEnabled(false);
-        button.setVisible(false);
-      }, ModalityState.any());
-    });
- }
-
-  private void updateDialog() {
-    if (myExecutor != null) {
-      updateDialogForSingleExecutor(myExecutor);
-    }
-    else {
-      updateRunAction();
+  private void updateRunButton(@Nullable Executor executor) {
+    myExecutor = executor;
+    JButton button = Objects.requireNonNull(getButton(Objects.requireNonNull(myRunAction)));
+    button.setVisible(executor != null && myDataContext != null);
+    button.setEnabled(executor != null && myDataContext != null);
+    if (executor != null) {
+      myRunAction.putValue(Action.NAME, executor.getActionName());
+      button.setText(executor.getActionName());
+      button.setIcon(executor.getIcon());
     }
   }
 
-  private void updateDialogForSingleExecutor(Executor executor) {
+  private void updateDialog() {
+    if (myExecutor != null && myRunAction == null) {
+      updateDialogForSingleExecutor();
+    }
+    else {
+      SingleConfigurationConfigurable<RunConfiguration> configurable = getConfigurable().getSelectedConfiguration();
+      updateSelectedExecutor(configurable == null ? null : configurable.getSettings());
+    }
+  }
+
+  private void updateDialogForSingleExecutor() {
     @Nls StringBuilder buffer = new StringBuilder();
-    buffer.append(executor.getId());
+    buffer.append(myExecutor.getId());
     SingleConfigurationConfigurable<RunConfiguration> configuration = getConfigurable().getSelectedConfiguration();
     if (configuration != null) {
       buffer.append(" - ");
       buffer.append(configuration.getNameText());
 
-      ReadAction.nonBlocking(() -> canRun(configuration.getSettings(), executor))
+      ReadAction.nonBlocking(() -> canRun(configuration.getSettings(), myExecutor))
         .finishOnUiThread(ModalityState.current(), b -> setOKActionEnabled(b))
         .expireWith(getDisposable())
         .submit(AppExecutorUtil.getAppExecutorService());
