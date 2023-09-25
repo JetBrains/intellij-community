@@ -24,6 +24,7 @@ import com.intellij.ui.JBColor
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
@@ -145,6 +146,7 @@ class ProjectWindowCustomizerService : Disposable {
   fun getCurrentProjectColorIndex(project: Project): Int? =  storageFor(project)?.let { getProjectColor(it).index }
 
   private fun getProjectColor(colorStorage: ProjectColorStorage): ProjectColors {
+    ThreadingAssertions.assertEventDispatchThread()
     val projectPath = colorStorage.projectPath ?: return defaultColors
 
     // Get calculated earlier color or calculate the next color

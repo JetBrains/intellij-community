@@ -43,7 +43,7 @@ class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware {
 class ChangeProjectColorAction(val projectPath: String, val name: @NlsSafe String, val index: Int):
   AnAction(name, "", RecentProjectIconHelper.generateProjectIcon(projectPath, true, size = 16, colorIndex = index)), DumbAware
 {
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     val project = e.project ?: return
