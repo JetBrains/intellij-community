@@ -48,7 +48,11 @@ public abstract class DefaultVcsRootPolicy {
     }
   }
 
-  protected void scheduleRootsChangeProcessing(Set<VirtualFile> removed, Set<VirtualFile> added) {
+  /**
+   * Schedules new scan for vcs in content roots. Should be called
+   * when {@link DefaultVcsRootPolicy#getDefaultVcsRoots()} collection is changed
+   */
+  protected void scheduleRootsChangeProcessing(Collection<VirtualFile> removed, Collection<VirtualFile> added) {
     myProject.getService(ModuleVcsDetector.class).scheduleScanForNewContentRoots(removed, added);
   }
 }

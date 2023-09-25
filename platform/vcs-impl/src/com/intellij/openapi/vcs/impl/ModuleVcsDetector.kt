@@ -29,7 +29,6 @@ internal class ModuleVcsDetector(private val project: Project) {
 
   private fun startDetection() {
     MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.startDetection")
-    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, MyWorkspaceModelChangeListener())
 
     if (vcsManager.needAutodetectMappings() &&
         vcsManager.haveDefaultMapping() == null &&
@@ -129,12 +128,6 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
 
     autoDetectForContentRoots(contentRoots)
-  }
-
-  private inner class MyWorkspaceModelChangeListener : ContentRootChangeListener(skipFileChanges = true) {
-    override fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
-      scheduleScanForNewContentRoots(removed, added)
-    }
   }
 
   internal class MyStartUpActivity : VcsStartupActivity {
