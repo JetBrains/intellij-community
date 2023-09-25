@@ -4,7 +4,6 @@ package com.intellij.ide.browsers
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.GeneralLocalSettings
@@ -21,6 +20,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
+import kotlinx.coroutines.*
 import java.awt.Desktop
 import java.io.File
 import java.io.IOException
@@ -50,17 +50,24 @@ open class BrowserLauncherAppless : BrowserLauncher() {
           showError(IdeBundle.message("error.file.does.not.exist", file.path))
           return
         }
-        try {
-          LOG.debug { "trying Desktop#open on [${url}]" }
-          Desktop.getDesktop().open(file)
-          return
-        }
-        catch (e: IOException) {
-          LOG.warn("[$url]", e)
-        }
+        openWithDesktopApi(url, file)
       }
+      else {
+        browse(file)
+      }
+    }
+  }
 
-      browse(file)
+  private fun BrowserLauncherAppless.openWithDesktopApi(url: String, file: File) {
+    getScope(null).launch {
+      try {
+        LOG.debug { "trying Desktop#open on [${url}]" }
+        Desktop.getDesktop().open(file)
+      }
+      catch (e: IOException) {
+        LOG.warn("[$url]", e)
+        browse(file)
+      }
     }
   }
 
@@ -91,7 +98,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       return
     }
 
-    if (processMailToUrl(signedUrl)) {
+    if (processMailToUrl(signedUrl, project)) {
       return
     }
 
@@ -124,14 +131,16 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     }
   }
 
-  private fun processMailToUrl(url: String): Boolean {
+  private fun processMailToUrl(url: String, project: Project?): Boolean {
     if (url.startsWith("mailto:") && isDesktopActionSupported(Desktop.Action.MAIL)) {
-      try {
-        LOG.debug("trying Desktop#mail")
-        Desktop.getDesktop().mail(URI(url))
-      }
-      catch (e: Exception) {
-        LOG.warn("[${url}]", e)
+      getScope(project).launch {
+        try {
+          LOG.debug("trying Desktop#mail")
+          Desktop.getDesktop().mail(URI(url))
+        }
+        catch (e: Exception) {
+          LOG.warn("[${url}]", e)
+        }
       }
       return true
     }
@@ -159,17 +168,19 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   }
 
   private fun openWithDesktopApi(uri: URI, project: Project?) {
-    try {
-      LOG.debug("trying Desktop#browse")
-      Desktop.getDesktop().browse(uri)
-    }
-    catch (e: Exception) {
-      LOG.warn("[${uri}]", e)
-      if (SystemInfo.isMac && e.message!!.contains("Error code: -10814")) {
-        // if "No application knows how to open" the URL, there is no sense in retrying with 'open' command
-        return
+    getScope(project).launch {
+      try {
+        LOG.debug("trying Desktop#browse")
+        Desktop.getDesktop().browse(uri)
       }
-      openWithDefaultBrowserCommand(uri.toString(), project)
+      catch (e: Exception) {
+        LOG.warn("[${uri}]", e)
+        if (SystemInfo.isMac && e.message!!.contains("Error code: -10814")) {
+          // if "No application knows how to open" the URL, there is no sense in retrying with 'open' command
+          return@launch
+        }
+        openWithDefaultBrowserCommand(uri.toString(), project)
+      }
     }
   }
 
@@ -200,7 +211,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
   private fun spawn(command: GeneralCommandLine, project: Project?, browser: WebBrowser? = null, retry: (() -> Unit)? = null) {
     LOG.debug { "starting [${command.commandLineString}]" }
-    ProcessIOExecutorService.INSTANCE.execute {
+    getScope(project).launch {
       try {
         val output = CapturingProcessHandler.Silent(command).runProcess(10000, false)
         if (!output.checkSuccess(LOG) && output.exitCode == 1) {
@@ -242,4 +253,8 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       SystemInfo.hasXdgOpen() -> listOf("xdg-open")
       else -> null
     }
+
+  @Suppress("DEPRECATION")
+  private fun getScope(project: Project?): CoroutineScope =
+    (project?.coroutineScope ?: ApplicationManager.getApplication()?.coroutineScope ?: MainScope()) + Dispatchers.IO
 }
