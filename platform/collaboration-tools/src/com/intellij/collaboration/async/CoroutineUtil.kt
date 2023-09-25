@@ -227,15 +227,12 @@ fun <T> Flow<Collection<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>
 /**
  * Treats 'this' flow as representing a single list of results. Meaning each emitted value is accumulated
  * with the previous ones into a single list and re-emitted.
- *
- * This emits the same mutable list every time, new results in upstream flow will thus modify the previously
- * emitted list. Take note of this when using the emitted list directly.
  */
 fun <T> Flow<List<T>>.collectBatches(): Flow<List<T>> {
   val result = mutableListOf<T>()
   return transform {
     result.addAll(it)
-    emit(result)
+    emit(result.toList())
   }
 }
 
