@@ -453,7 +453,9 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon CollapseComponentHover = load("general/collapseComponentHover.svg", 304417159, 0);
     /** 16x16 */ public static final @NotNull Icon ContextHelp = load("general/contextHelp.svg", -495733641, 0);
     /** 16x16 */ public static final @NotNull Icon CopyHovered = load("general/copyHovered.svg", 1241014029, 0);
+    /** 16x16 */ public static final @NotNull Icon DebugDisabled = load("general/debugDisabled.svg", 1625755911, 2);
     /** 2x19 */ public static final @NotNull Icon Divider = load("general/divider.svg", 1530070674, 2);
+    /** 16x16 */ public static final @NotNull Icon Drag = load("general/drag.svg", -525257541, 0);
     /** 16x16 */ public static final @NotNull Icon Dropdown = load("general/dropdown.svg", -533882060, 2);
     /** 13x13 */ public static final @NotNull Icon DropdownGutter = load("general/dropdownGutter.svg", 1280408843, 2);
     /** 2x20 */ public static final @NotNull Icon DropPlace = load("general/dropPlace.svg", 1169886511, 2);
@@ -1060,6 +1062,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon IgnoredTest = load("runConfigurations/ignoredTest.svg", -668295495, 2);
     /** 16x16 */ public static final @NotNull Icon InvalidConfigurationLayer = load("runConfigurations/invalidConfigurationLayer.svg", -1278168787, 0);
     /** 16x16 */ public static final @NotNull Icon Junit = load("runConfigurations/junit.svg", 1196565689, 0);
+    /** 16x16 */ public static final @NotNull Icon MultiLaunch = load("runConfigurations/multiLaunch.svg", -971893714, 0);
     /** 16x16 */ public static final @NotNull Icon Remote = load("runConfigurations/remote.svg", -1946031837, 2);
     /** 16x16 */ public static final @NotNull Icon RemoteDebug = load("runConfigurations/remoteDebug.svg", 1740316749, 2);
     /** 16x16 */ public static final @NotNull Icon RerunFailedTests = load("runConfigurations/rerunFailedTests.svg", 1872352548, 2);

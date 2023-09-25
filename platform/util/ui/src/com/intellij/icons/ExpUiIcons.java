@@ -257,9 +257,11 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon CollapseAll = load("expui/general/collapseAll.svg", 497603787, 2);
     /** 16x16 */ public static final @NotNull Icon Copy = load("expui/general/copy.svg", -960424066, 2);
     /** 16x16 */ public static final @NotNull Icon Cut = load("expui/general/cut.svg", 469658744, 2);
+    /** 16x16 */ public static final @NotNull Icon DebugDisabled = load("expui/general/debugDisabled.svg", -2117038454, 2);
     /** 16x16 */ public static final @NotNull Icon Delete = load("expui/general/delete.svg", -262115518, 2);
     /** 16x16 */ public static final @NotNull Icon Down = load("expui/general/down.svg", 992595664, 2);
     /** 16x16 */ public static final @NotNull Icon Download = load("expui/general/download.svg", 1773838891, 2);
+    /** 16x16 */ public static final @NotNull Icon Drag = load("expui/general/drag.svg", 197434247, 2);
     /** 16x16 */ public static final @NotNull Icon Dropdown = load("expui/general/dropdown.svg", -1543337746, 2);
     /** 15x15 */ public static final @NotNull Icon DropdownGutter = load("expui/general/dropdownGutter.svg", 1563216643, 2);
     /** 16x16 */ public static final @NotNull Icon Edit = load("expui/general/edit.svg", -1146382909, 2);
@@ -600,6 +602,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon InvalidConfigurationLayer = load("expui/runConfigurations/invalidConfigurationLayer.svg", 388730648, 2);
     /** 16x16 */ public static final @NotNull Icon Junit = load("expui/runConfigurations/junit.svg", 1991312793, 2);
     /** 16x16 */ public static final @NotNull Icon JunitTestMark = load("expui/runConfigurations/junitTestMark.svg", 443577354, 2);
+    /** 16x16 */ public static final @NotNull Icon MultiLaunch = load("expui/runConfigurations/multiLaunch.svg", -1888357590, 2);
     /** 16x16 */ public static final @NotNull Icon SortByDuration = load("expui/runConfigurations/sortByDuration.svg", 1598664663, 2);
     /** 16x16 */ public static final @NotNull Icon WebApp = load("expui/runConfigurations/webApp.svg", 1312982107, 2);
   }
