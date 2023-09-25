@@ -81,6 +81,18 @@ public interface ModPsiUpdater extends ModPsiNavigator {
   void rename(@NotNull PsiNameIdentifierOwner element, @NotNull List<@NotNull String> suggestedNames);
 
   /**
+   * Tracks subsequent changes in a given declaration (e.g., method) and produce a command to 
+   * update the references to the declaration (maybe displaying UI).
+   * The current file may be changed if the declaration is located in the different file.
+   * <p>
+   *   This method must be called before you actually update the declaration (e.g., change method parameters).
+   * </p>
+   * 
+   * @param declaration declaration to track
+   */
+  void trackDeclaration(@NotNull PsiElement declaration);
+
+  /**
    * @return a builder that allows you to create a template.
    */
   @NotNull ModTemplateBuilder templateBuilder();

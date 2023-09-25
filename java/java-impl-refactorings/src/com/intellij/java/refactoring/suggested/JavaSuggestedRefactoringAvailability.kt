@@ -48,6 +48,20 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
     }
   }
 
+  override fun isAvailable(state: SuggestedRefactoringState): Boolean {
+    val method = state.declaration as? PsiMethod
+    val declarationCopy = state.restoredDeclarationCopy()
+    if (method != null && method.canHaveOverrides(state.oldSignature)) {
+      val restoredMethod = declarationCopy as PsiMethod
+      if (OverridingMethodsSearch.search(restoredMethod, false).findFirst() != null) return true
+    }
+    if (declarationCopy != null) {
+      if (ReferencesSearch.search(declarationCopy, LocalSearchScope(declarationCopy.containingFile)).findFirst() != null) return true
+      if (ReferencesSearch.search(declarationCopy, declarationCopy.useScope).findFirst() != null) return true
+    }
+    return false
+  }
+
   private fun callStateToDeclarationState(state: SuggestedRefactoringState): SuggestedRefactoringState? {
     val anchor = state.anchor as? PsiCallExpression ?: return null
     val resolveResult = anchor.resolveMethodGenerics()

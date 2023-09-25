@@ -219,6 +219,7 @@ final class PsiUpdateImpl {
     private final List<ModHighlight.HighlightInfo> myHighlightInfos = new ArrayList<>();
     private final List<ModStartTemplate.TemplateField> myTemplateFields = new ArrayList<>();
     private @Nullable ModRenameSymbol myRenameSymbol;
+    private final List<ModUpdateReferences> myTrackedDeclarations = new ArrayList<>();
     private boolean myPositionUpdated = false;
     private @NlsContexts.Tooltip String myErrorMessage;
     private @NlsContexts.Tooltip String myInfoMessage;
@@ -427,6 +428,16 @@ final class PsiUpdateImpl {
     }
 
     @Override
+    public void trackDeclaration(@NotNull PsiElement declaration) {
+      TextRange range = getRange(declaration);
+      if (range == null) {
+        throw new IllegalArgumentException("Element disappeared after postponed operations: " + declaration);
+      }
+      String oldText = myTracker.myCopyFile.getText();
+      myTrackedDeclarations.add(new ModUpdateReferences(myNavigationFile, oldText, range, range));
+    }
+
+    @Override
     public void cancel(@NotNull @NlsContexts.Tooltip String errorMessage) {
       if (myErrorMessage != null) {
         throw new IllegalStateException("Update is already cancelled");
@@ -481,6 +492,7 @@ final class PsiUpdateImpl {
       mySelection = updateRange(event, mySelection);
       myHighlightInfos.replaceAll(info -> info.withRange(updateRange(event, info.range())));
       myTemplateFields.replaceAll(info -> info.withRange(updateRange(event, info.range())));
+      myTrackedDeclarations.replaceAll(range -> range.withNewRange(updateRange(event, range.newRange())));
       if (myRenameSymbol != null) {
         myRenameSymbol = myRenameSymbol.withRange(updateRange(event, myRenameSymbol.symbolRange()));
       }
@@ -513,11 +525,13 @@ final class PsiUpdateImpl {
       if (myErrorMessage != null) {
         return error(myErrorMessage);
       }
-      return myChangedFiles.values().stream().map(FileTracker::getUpdateCommand).reduce(nop(), ModCommand::andThen)
+      return myChangedFiles.values().stream()
+        .map(fileTracker -> fileTracker.getUpdateCommand()).reduce(nop(), ModCommand::andThen)
         .andThen(myChangedDirectories.values().stream()
                    .flatMap(info -> info.createFileCommands(myTracker.myProject))
                    .reduce(nop(), ModCommand::andThen))
         .andThen(getNavigateCommand()).andThen(getHighlightCommand()).andThen(getTemplateCommand())
+        .andThen(myTrackedDeclarations.stream().<ModCommand>map(c -> c).reduce(nop(), ModCommand::andThen))
         .andThen(myRenameSymbol == null ? nop() : myRenameSymbol)
         .andThen(myInfoMessage == null ? nop() : ModCommand.info(myInfoMessage));
     }
@@ -554,7 +568,7 @@ final class PsiUpdateImpl {
       private final TextRange myRange;
       private final @NotNull PsiElement myElement;
 
-      public DummyContext(TextRange range, @NotNull PsiElement element) {
+      private DummyContext(TextRange range, @NotNull PsiElement element) {
         myRange = range;
         myElement = element;
       }

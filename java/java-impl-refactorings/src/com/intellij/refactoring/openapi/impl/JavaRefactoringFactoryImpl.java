@@ -151,7 +151,7 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
                                                                    Set<PsiMethod> propagateParametersMethods,
                                                                    Set<PsiMethod> propagateExceptionsMethods,
                                                                    Consumer<? super List<ParameterInfo>> callback) {
-    JavaChangeInfo changeInfo = JavaChangeInfoImpl.generateChangeInfo(method, generateDelegate, newVisibility,
+    JavaChangeInfo changeInfo = JavaChangeInfoImpl.generateChangeInfo(method, generateDelegate, true, newVisibility,
                                                                       newName, newReturnType != null ? CanonicalTypes.createTypeWrapper(newReturnType) : null,
                                                                       (ParameterInfoImpl[])parameterInfo,
                                                                       thrownExceptions, propagateParametersMethods, propagateExceptionsMethods);

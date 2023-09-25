@@ -24,6 +24,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.modcommand.*;
 import com.intellij.modcommand.ModChooseMember.SelectionMode;
 import com.intellij.modcommand.ModUpdateFileText.Fragment;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -52,6 +53,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
+import com.intellij.refactoring.suggested.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -162,6 +164,9 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     if (command instanceof ModUpdateFileText upd) {
       return executeUpdate(project, upd);
     }
+    if (command instanceof ModUpdateReferences decl) {
+      return !executeTrackDeclaration(context, decl, editor);
+    }
     if (command instanceof ModCompositeCommand cmp) {
       return executeComposite(context, cmp, editor);
     }
@@ -205,6 +210,54 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
       return executeUpdateInspectionOptions(context, updateOptions);
     }
     throw new IllegalArgumentException("Unknown command: " + command);
+  }
+
+  @Nullable
+  private static PsiElement findElementAtRange(PsiFile psiFile, TextRange declarationRange) {
+    PsiElement element = psiFile.findElementAt(declarationRange.getStartOffset());
+    while (element != null && !element.getTextRange().contains(declarationRange)) {
+      element = element.getParent();
+    }
+    if (element == null || !element.getTextRange().equals(declarationRange)) return null;
+    return element;
+  }
+
+  private static boolean executeTrackDeclaration(@NotNull ActionContext context, @NotNull ModUpdateReferences decl, @Nullable Editor editor) {
+    // TODO: properly support multiple tracked declarations
+    VirtualFile file = decl.file();
+    Project project = context.project();
+    Callable<SuggestedRefactoringState> computeNewState = () -> {
+      PsiFile psiFile = PsiManagerEx.getInstanceEx(project).findFile(file);
+      if (psiFile == null) return null;
+      SuggestedRefactoringSupport support = SuggestedRefactoringSupport.Companion.forLanguage(psiFile.getLanguage());
+      if (support == null) return null;
+      PsiElement newElement = findElementAtRange(psiFile, decl.newRange());
+      if (newElement == null || !support.isAnchor(newElement)) return null;
+      SuggestedRefactoringStateChanges stateChanges = support.getStateChanges();
+      PsiFile fileCopy = (PsiFile)psiFile.copy();
+      Document documentCopy = fileCopy.getViewProvider().getDocument();
+      documentCopy.replaceString(0, documentCopy.getTextLength(), decl.oldText());
+      PsiDocumentManager.getInstance(project).commitDocument(documentCopy);
+      PsiElement element = findElementAtRange(fileCopy, decl.oldRange());
+      if (element == null) return null;
+      if (!support.isAnchor(element) || stateChanges.findDeclaration(element) != element) return null;
+      SuggestedRefactoringState state = stateChanges.createInitialState(element);
+      if (state == null) return null;
+      SuggestedRefactoringAvailability availability = support.getAvailability();
+      SuggestedRefactoringState newState = stateChanges.updateState(state, newElement);
+      if (newState.getErrorLevel() != SuggestedRefactoringState.ErrorLevel.NO_ERRORS) return null;
+      if (availability.detectAvailableRefactoring(newState) != null && availability.isAvailable(newState)) return newState;
+      return null;
+    };
+    SuggestedRefactoringState finalState = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.nonBlocking(computeNewState).executeSynchronously(), 
+      LangBundle.message("dialog.title.searching.for.usages"), true, project);
+    if (finalState == null) return false;
+    Editor finalEditor = getEditor(project, editor, decl.file());
+    if (finalEditor == null) return false;
+    PerformSuggestedRefactoringKt.performSuggestedRefactoring(
+       finalState, finalEditor, project, ActionPlaces.INTENTION_MENU, true, null, null);
+    return true;
   }
 
   private static boolean executeUpdateInspectionOptions(@NotNull ActionContext context, @NotNull ModUpdateInspectionOptions options) {

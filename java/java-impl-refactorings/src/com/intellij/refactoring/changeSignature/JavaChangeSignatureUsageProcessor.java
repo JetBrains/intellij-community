@@ -1031,7 +1031,12 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       final List<PsiParameter> newParameters = ContainerUtil.map(newElements, element -> (PsiParameter)element.variable());
       final List<String> newParameterNames = ContainerUtil.map(newElements, VariableWrapper::getName);
       final boolean[] toRemove = myChangeInfo.toRemoveParm();
-      resolveVariableVsFieldsConflicts(newParameters, newParameterNames, myParent, toRemove, myMethodBody, ParameterList.INSTANCE);
+      if (myChangeInfo.isFixFieldConflicts()) {
+        resolveVariableVsFieldsConflicts(newParameters, newParameterNames, myParent, toRemove, myMethodBody, ParameterList.INSTANCE);
+      } else {
+        ChangeSignatureUtil.synchronizeList(myParent, newParameters, ParameterList.INSTANCE, toRemove);
+        JavaCodeStyleManager.getInstance(myParent.getProject()).shortenClassReferences(myParent);
+      }
     }
   }
 
