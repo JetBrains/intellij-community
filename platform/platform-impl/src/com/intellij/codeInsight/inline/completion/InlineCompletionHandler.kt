@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
@@ -112,7 +113,8 @@ class InlineCompletionHandler(scope: CoroutineScope) {
 
     val resultFlow = try {
       request(session.provider, request) // .flowOn(Dispatchers.IO)
-    } catch (e: Throwable) {
+    }
+    catch (e: Throwable) {
       LOG.errorIfNotCancellation(e)
       emptyFlow()
     }
@@ -121,12 +123,14 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     withContext(Dispatchers.EDT) {
       resultFlow
         .onEmpty {
-          trace(InlineCompletionEventType.Empty)
-          ensureActive()
-          hide(editor, false, context)
+          coroutineToIndicator {
+            trace(InlineCompletionEventType.Empty)
+            hide(editor, false, context)
+          }
         }
         .onCompletion {
-          complete(currentCoroutineContext().isActive, editor, it, context)
+          val isActive = currentCoroutineContext().isActive
+          coroutineToIndicator { complete(isActive, editor, it, context) }
           LOG.errorIfNotCancellation(it)
         }
         .collectIndexed { index, it ->
@@ -140,18 +144,22 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   }
 
   suspend fun request(provider: InlineCompletionProvider, request: InlineCompletionRequest): Flow<InlineCompletionElement> {
-    trace(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java))
+    withContext(Dispatchers.EDT) {
+      coroutineToIndicator {
+        trace(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java))
+      }
+    }
     return provider.getProposals(request)
   }
 
   @RequiresEdt
-  private fun showInlineElement(
+  private suspend fun showInlineElement(
     element: InlineCompletionElement,
     index: Int,
     offset: Int,
     context: InlineCompletionContext
   ) {
-    trace(InlineCompletionEventType.Show(element, index))
+    coroutineToIndicator { trace(InlineCompletionEventType.Show(element, index)) }
     context.renderElement(element, offset)
   }
 
@@ -162,6 +170,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   }
 
   @RequiresEdt
+  @RequiresBlockingContext
   fun insert(editor: Editor) {
     val context = InlineCompletionContext.getOrNull(editor) ?: return
     trace(InlineCompletionEventType.Insert)
@@ -177,6 +186,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   }
 
   @RequiresEdt
+  @RequiresBlockingContext
   fun hide(editor: Editor, explicit: Boolean, context: InlineCompletionContext) {
     LOG.assertTrue(!context.isInvalidated)
     if (context.isCurrentlyDisplayingInlays) {
@@ -194,6 +204,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   }
 
   @RequiresEdt
+  @RequiresBlockingContext
   fun complete(isActive: Boolean, editor: Editor, cause: Throwable?, context: InlineCompletionContext) {
     trace(InlineCompletionEventType.Completion(cause, isActive))
     if (cause != null && !context.isInvalidated) {
@@ -292,6 +303,8 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     }
   }
 
+  @RequiresBlockingContext
+  @RequiresEdt
   private fun trace(event: InlineCompletionEventType) {
     eventListeners.getMulticaster().on(event)
   }
