@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.util.JavaUnnamedClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -279,6 +280,9 @@ public final class JVMNameUtil {
   public static String getNonAnonymousClassName(@NotNull PsiClass aClass) {
     if (PsiUtil.isLocalOrAnonymousClass(aClass)) {
       return null;
+    }
+    if (aClass instanceof PsiUnnamedClass a) {
+      return JavaUnnamedClassUtil.getJvmName(a);
     }
     String name = aClass.getName();
     if (name == null) {

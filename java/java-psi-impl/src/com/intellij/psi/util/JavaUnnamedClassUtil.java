@@ -27,6 +27,19 @@ public final class JavaUnnamedClassUtil {
     return null;
   }
 
+  /**
+   * @return JVM name if the file name is a valid class identifier (e.g., contains no space)
+   */
+  public static @Nullable String getJvmName(@NotNull PsiUnnamedClass unnamedClass) {
+    PsiFile containingFile = unnamedClass.getContainingFile();
+    if (containingFile == null) return null;
+    String name = containingFile.getName();
+    int extensionIndex = name.lastIndexOf(".java");
+    if (extensionIndex == -1) return null;
+    // TODO check that the name is valid identifier
+    return name.substring(0, extensionIndex);
+  }
+
   public static String trimJavaExtension(String name) {
     return StringUtil.trimEnd(name, ".java", true);
   }
