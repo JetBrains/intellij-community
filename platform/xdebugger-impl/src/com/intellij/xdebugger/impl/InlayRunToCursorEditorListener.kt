@@ -121,23 +121,27 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
     scheduleInlayRunToCursor(editor, logicalPosition.line, session)
   }
 
-  private fun scheduleInlayRunToCursor(editor: Editor, lineNumber: Int, session: XDebugSessionImpl) {
+  private fun getFirstNonSpacePos(editor: Editor, lineNumber: Int): Point? {
     var firstNonSpaceSymbol = editor.getDocument().getLineStartOffset(lineNumber)
     val charsSequence = editor.getDocument().charsSequence
     while (true) {
       if (firstNonSpaceSymbol >= charsSequence.length) {
-        return //end of file
+        return null //end of file
       }
       val c = charsSequence[firstNonSpaceSymbol]
       if (c == '\n') {
-        return // empty line
+        return null // empty line
       }
       if (!Character.isWhitespace(c)) {
         break
       }
       firstNonSpaceSymbol++
     }
-    val firstNonSpacePos = editor.offsetToXY(firstNonSpaceSymbol)
+    return editor.offsetToXY(firstNonSpaceSymbol)
+  }
+
+  private fun scheduleInlayRunToCursor(editor: Editor, lineNumber: Int, session: XDebugSessionImpl) {
+    val firstNonSpacePos = getFirstNonSpacePos(editor, lineNumber) ?: return
     if (firstNonSpacePos.x < JBUI.scale(MINIMAL_TEXT_OFFSET)) {
       return
     }
