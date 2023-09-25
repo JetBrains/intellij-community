@@ -1,30 +1,35 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
+import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.codeInsight.daemon.impl.IntentionsUIImpl
-import com.intellij.codeInsight.hint.*
+import com.intellij.codeInsight.hint.HintManager
+import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.codeInsight.hint.PriorityQuestionAction
+import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils.createImmediatelyUpdatedToolbar
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.*
-import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
-import com.intellij.openapi.editor.ex.FocusChangeListener
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.view.IterationState
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.HintHint
+import com.intellij.ui.JBColor
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBDimension
@@ -35,17 +40,20 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.awt.MouseInfo
-import java.awt.Point
+import java.awt.*
 import java.lang.ref.WeakReference
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
+import kotlin.math.sqrt
 
 private const val NEGATIVE_INLAY_PANEL_SHIFT = -6 // it is needed to fit into 2-space tabulation
 private const val MINIMAL_TEXT_OFFSET = 16
 private const val ACTION_BUTTON_SIZE = 22
 private const val ACTION_BUTTON_GAP = 2
+
+private val inlayToolbarStrokeColor = Color.WHITE
 
 internal class InlayRunToCursorEditorListener(private val project: Project, private val coroutineScope: CoroutineScope) : EditorMouseMotionListener, EditorMouseListener {
   companion object {
@@ -204,6 +212,11 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
     toolbarImpl.setNeedCheckHoverOnLayout(true)
     toolbarImpl.setBorder(null)
     toolbarImpl.setOpaque(false)
+    val hoverColor = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).backgroundColor
+    val effectiveHoverColor = getEditorBackgroundColorForTheLineStart(editor, lineNumber)?.let {
+      ColorUtil.alphaBlending(ColorUtil.withAlpha(hoverColor, HintRenderer.BACKGROUND_ALPHA.toDouble()), it)
+    } ?: hoverColor
+    toolbarImpl.setCustomButtonLook(InlayPopupButtonLook(effectiveHoverColor))
     toolbarImpl.setAdditionalDataProvider { dataId: String? ->
       if (XDebuggerUtilImpl.LINE_NUMBER.`is`(dataId)) {
         return@setAdditionalDataProvider lineNumber
@@ -227,6 +240,14 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
     HintManagerImpl.getInstanceImpl().showQuestionHint(editor, position, offset, offset, hint, questionAction, HintManager.RIGHT)
   }
 
+  private fun getEditorBackgroundColorForTheLineStart(editor: Editor, lineNumber: Int): Color? {
+    val lineStartOffset = editor.getDocument().getLineStartOffset(lineNumber)
+    val editorEx = editor as? EditorEx ?: return null
+    val iterationState = IterationState(editorEx, lineStartOffset, lineStartOffset + 1, null, false, false, true, false)
+    val mergedAttributes = iterationState.mergedAttributes
+    return mergedAttributes.backgroundColor
+  }
+
   private class RunToCursorHint(component: JComponent, private val listener: InlayRunToCursorEditorListener) : LightweightHint(component) {
     override fun show(parentComponent: JComponent, x: Int, y: Int, focusBackComponent: JComponent, hintHint: HintHint) {
       listener.currentHint = WeakReference(this)
@@ -238,4 +259,38 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
       super.hide(ok)
     }
   }
+}
+
+private class InlayPopupButtonLook(val effectiveHoverColor: Color) : IdeaActionButtonLook() {
+  val useStrokeVariants = colorDistance(effectiveHoverColor, JBColor.PanelBackground) > 50
+                          && colorDistance(effectiveHoverColor, inlayToolbarStrokeColor) > 250
+
+  override fun getStateBackground(component: JComponent?, state: Int): Color? {
+    if (state == ActionButtonComponent.POPPED) {
+      return effectiveHoverColor
+    }
+    return super.getStateBackground(component, state)
+  }
+
+  override fun paintIcon(g: Graphics, actionButton: ActionButtonComponent, icon: Icon, x: Int, y: Int) {
+    val resultIcon = if (useStrokeVariants) toStrokeIcon(icon, inlayToolbarStrokeColor) else icon
+    super.paintIcon(g, actionButton, resultIcon, x, y)
+  }
+
+  override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {
+    //do nothing
+  }
+}
+
+// copy-pasted from com.android.tools.idea.ui.MaterialColorUtils for now
+@Suppress("SameParameterValue")
+private fun colorDistance(c1: Color, c2: Color): Float {
+  val rmean = (c1.red + c2.red) / 2.0
+  val r = c1.red - c2.red
+  val g = c1.green - c2.green
+  val b = c1.blue - c2.blue
+  val weightR = 2 + rmean / 256
+  val weightG = 4.0
+  val weightB = 2 + (255 - rmean) / 256
+  return sqrt(weightR * r * r + weightG * g * g + weightB * b * b).toFloat()
 }

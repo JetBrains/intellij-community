@@ -269,7 +269,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     }
 
     private val HINT_FONT_METRICS = Key.create<MyFontMetrics>("ParameterHintFontMetrics")
-    private const val BACKGROUND_ALPHA = 0.55f
+    const val BACKGROUND_ALPHA = 0.55f
   }
 
   // workaround for KT-12063 "IllegalAccessError when accessing @JvmStatic protected member of a companion object from a subclass"
