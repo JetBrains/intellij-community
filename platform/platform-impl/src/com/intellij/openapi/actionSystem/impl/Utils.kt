@@ -682,11 +682,9 @@ object Utils {
                              presentationFactory: PresentationFactory,
                              onUpdate: Runnable) {
     checkAsyncDataContext(dataContext, place)
-    val actionGroup = DefaultActionGroup()
-    for (action in actions) {
-      actionGroup.add(action)
-    }
-    runBlockingForActionExpand(CoroutineName("updateComponentActions")) {
+    val actionGroup = DefaultActionGroup(actions.toList())
+    ApplicationManager.getApplication().coroutineScope.async(
+      Dispatchers.EDT + ModalityState.any().asContextElement(), CoroutineStart.UNDISPATCHED) {
       try {
         expandActionGroupSuspend(actionGroup, presentationFactory, dataContext, place, false, true)
         onUpdate.run()
