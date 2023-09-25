@@ -133,7 +133,12 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
 
   @Override
   protected JButton createJButtonForAction(Action action) {
-    return action == myRunAction ? new JBOptionButton(action, null) : super.createJButtonForAction(action);
+    if (action == myRunAction) {
+      JBOptionButton button = new JBOptionButton(action, null);
+      button.setAddSeparator(false);
+      return button;
+    }
+    return super.createJButtonForAction(action);
   }
 
   private void updateSelectedExecutor(@Nullable RunnerAndConfigurationSettings selected) {
