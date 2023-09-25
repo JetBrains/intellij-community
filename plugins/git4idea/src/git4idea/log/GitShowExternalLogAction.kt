@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.WindowWrapperBuilder
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
@@ -74,7 +73,8 @@ class GitShowExternalLogAction : DumbAwareAction() {
     val window = getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
     if (project.isDefault || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss() || window == null) {
       ProgressManager.getInstance().run(ShowLogTask(project, roots, vcs, true) { disposable ->
-        showLogInDialog(roots, GitBundle.message("git.log.external.window.title"), disposable)
+        val content = createContent(this, roots, false, disposable)
+        showLogContentWindow(project, content, GitBundle.message("git.log.external.window.title"), disposable)
       })
     }
     else {
@@ -149,16 +149,15 @@ private fun ToolWindow.addLogContent(project: Project,
   doOnProviderRemoval(project, disposable) { cm.removeContent(content, true) }
 }
 
-private fun VcsLogManager.showLogInDialog(roots: List<VirtualFile>, @DialogTitle title: String, disposable: Disposable) {
-  val content = createContent(this, roots, false, disposable)
+private fun showLogContentWindow(project: Project, content: JComponent, @NlsContexts.DialogTitle title: String, disposable: Disposable) {
   val window = WindowWrapperBuilder(WindowWrapper.Mode.FRAME, content)
-    .setProject(dataManager.project)
+    .setProject(project)
     .setTitle(title)
     .setPreferredFocusedComponent(content)
     .setDimensionServiceKey(GitShowExternalLogAction::class.java.name)
     .build()
   Disposer.register(window, disposable)
-  doOnProviderRemoval(dataManager.project, disposable) { window.close() }
+  doOnProviderRemoval(project, disposable) { window.close() }
   window.show()
 }
 
