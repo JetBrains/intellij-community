@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -443,6 +444,13 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     myModel.replaceChange(change.getIndex(), newContent);
 
     markChangeResolved(change);
+  }
+
+  public void copyChangeToClipboard(@NotNull ApplyPatchChange change) {
+    LineRange patchRange = change.getPatchInsertionRange();
+    CharSequence newContent = DiffUtil.getLinesContent(myPatchEditor.getDocument(), patchRange.start, patchRange.end);
+
+    CopyPasteManager.copyTextToClipboard(newContent.toString());
   }
 
   private final class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
