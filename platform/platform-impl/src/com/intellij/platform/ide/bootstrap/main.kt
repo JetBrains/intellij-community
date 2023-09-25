@@ -22,6 +22,7 @@ import com.intellij.openapi.application.impl.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ShutDownTracker
@@ -186,8 +187,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
 
-  val pluginSetDeferred = async {
-    // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
+  val configImportDeferred = async {
     if (!isHeadless && configImportNeededDeferred.await()) {
       initLafJob.join()
       val log = logDeferred.await()
@@ -204,7 +204,17 @@ fun CoroutineScope.startApplication(args: List<String>,
           EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true"))
         }.getOrLogException(log)
       }
+
+      if (isStartupWizardEnabled && ConfigImportHelper.isNewUser()) {
+        log.info("Will enter initial app wizard flow.")
+        ApplicationManagerEx.setInitialStart()
+      }
     }
+  }
+
+  val pluginSetDeferred = async {
+    // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
+    configImportDeferred.await()
 
     PluginManagerCore.scheduleDescriptorLoading(coroutineScope = this@startApplication,
                                                 zipFilePoolDeferred = zipFilePoolDeferred,
@@ -259,7 +269,12 @@ fun CoroutineScope.startApplication(args: List<String>,
                           logDeferred = logDeferred,
                           appRegisteredJob = appRegisteredJob,
                           args = args.filterNot { CommandLineArgs.isKnownArgument(it) })
-    if (!isStartupWizardEnabled) {
+    if (isStartupWizardEnabled) {
+      // Initial startup wizard relies on config import being performed before this async ends.
+      configImportDeferred.await()
+    }
+    else {
+      // In case of startup wizard, this will be executed at a stage separated from app loading.
       executeApplicationStarter(starter, args)
     }
     return@async starter
@@ -268,7 +283,8 @@ fun CoroutineScope.startApplication(args: List<String>,
   if (isStartupWizardEnabled) {
     launch {
       val starter = appLoaded.await()
-      runStartupWizard()
+      val log = logDeferred.await()
+      log.runAndLogException { runStartupWizard() }
       executeApplicationStarter(starter, args)
     }
   }

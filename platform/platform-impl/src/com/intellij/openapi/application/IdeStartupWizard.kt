@@ -4,7 +4,6 @@ package com.intellij.openapi.application
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.runAndLogException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
@@ -15,26 +14,27 @@ private val LOG: Logger
   get() = logger<IdeStartupWizard>()
 
 internal val isStartupWizardEnabled: Boolean =
-  System.getProperty(INTELLIJ_STARTUP_WIZARD_CLASS_PROPERTY).isNotBlank()
+  !System.getProperty(INTELLIJ_STARTUP_WIZARD_CLASS_PROPERTY).isNullOrBlank()
 
 internal suspend fun runStartupWizard() {
   if (!isStartupWizardEnabled) return
   if (!ConfigImportHelper.isNewUser()) return
 
-  LOG.runAndLogException {
-    waitForAppManagerInitialState()
+  LOG.info("Entering startup wizard workflow.")
 
-    val className = System.getProperty(INTELLIJ_STARTUP_WIZARD_CLASS_PROPERTY)
-    val wizardClass = Class.forName(className)
-    val instance = wizardClass.getDeclaredConstructor().newInstance() as IdeStartupWizard
-    instance.run()
-  }
+  waitForAppManagerInitialState()
+
+  val className = System.getProperty(INTELLIJ_STARTUP_WIZARD_CLASS_PROPERTY)
+  LOG.info("Passing execution control to $className.")
+  val wizardClass = Class.forName(className)
+  val instance = wizardClass.getDeclaredConstructor().newInstance() as IdeStartupWizard
+  instance.run()
 }
 
 private suspend fun waitForAppManagerInitialState() {
-  ApplicationManagerEx.setInitialStart()
   val latch = ApplicationManagerEx.getInitialStartState()
   if (latch == null) error("Cannot get initial startup state")
+  LOG.info("Waiting for app manager initial state.")
   withContext(Dispatchers.IO) {
     runInterruptible {
       latch.await()
