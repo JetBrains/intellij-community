@@ -16,6 +16,7 @@ import kotlin.concurrent.thread
 class LinuxLookAndFeel {
   companion object {
     val linuxIconPath = "/usr/share/icons"
+    val linuxHomePath = System.getenv("HOME")
     fun getLinuxIcon(name: WindowToolbarIcons): Icon? {
       val iconName: String
       var iconPath: String? = null
@@ -35,7 +36,7 @@ class LinuxLookAndFeel {
           WindowToolbarIcons.RESTORE -> "maximized-normal.svg"
           WindowToolbarIcons.MINIMIZE -> "minimize-normal.svg"
         }
-        iconPath = "\$HOME/.config/gtk-3.0/assets/$iconName"
+        iconPath = "$linuxHomePath/.config/gtk-3.0/assets/$iconName"
       }
 
 
@@ -111,7 +112,7 @@ class LinuxLookAndFeel {
           return elementsString?.split(":", ",") ?: emptyList()
         }
         else if (SystemInfo.isKDE) {
-          val gtk3ConfigFile = File("\$HOME/.config/gtk-3.0/settings.ini")
+          val gtk3ConfigFile = File("$linuxHomePath/.config/gtk-3.0/settings.ini")
           val paramName = "gtk-decoration-layout="
           if (gtk3ConfigFile.exists()) {
             val lines = gtk3ConfigFile.readLines()
@@ -151,41 +152,6 @@ class LinuxLookAndFeel {
         exception.printStackTrace()
       }
       return null
-    }
-
-    private var isListeningIconThemeChanges = false
-    private fun listenIconThemeChanges() {
-      if (isListeningIconThemeChanges) return
-      isListeningIconThemeChanges = true
-      thread(start = true) {
-        val processBuilder = ProcessBuilder(listOf("dbus-monitor", "member='Notify'"))
-        processBuilder.redirectErrorStream(true)
-
-        val process = processBuilder.start()
-        val reader = BufferedReader(InputStreamReader(process.inputStream))
-
-
-        Runtime.getRuntime().addShutdownHook(Thread {
-          reader.close()
-          process.destroy()
-        })
-
-        var line: String
-
-        while (true) {
-          line = reader.readLine()
-          if (line.contains("/org/gnome/desktop/interface/icon-theme")) {
-            println("Theme changed!!!")
-            subscribers.forEach { it() }
-          }
-        }
-      }
-    }
-
-    private val subscribers = mutableListOf<() -> Unit>()
-    fun onIconThemeChanges(callback: () -> Unit) {
-      listenIconThemeChanges()
-      subscribers.add(callback)
     }
   }
 }

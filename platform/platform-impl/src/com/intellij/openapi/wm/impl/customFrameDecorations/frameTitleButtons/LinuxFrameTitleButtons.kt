@@ -29,7 +29,6 @@ class LinuxFrameTitleButtons(
   override val minimizeButton: JButton? = myIconifyAction?.let { createButton("Iconify", it) }
 
 
-
   val restore = LinuxLookAndFeel.getLinuxIcon(WindowToolbarIcons.RESTORE) ?: AllIcons.Windows.Restore
   override val restoreIcon = restore
   override val restoreInactiveIcon = restore
@@ -86,6 +85,9 @@ class LinuxFrameTitleButtons(
 
 
   override fun setScaledPreferredSize(size: Dimension): Dimension {
+    if (SystemInfo.isKDE) {
+      return Dimension(24, size.height)
+    }
     return Dimension(38, size.height)
   }
 }
