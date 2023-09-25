@@ -26,6 +26,7 @@ import com.intellij.ui.icons.ReplaceableIcon;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -326,6 +327,10 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
         }
         myPopFrameIcon.setSelected(selected && hasFocus);
       }
+
+      // Without this call, speed search will select the matching item, but the matching part won't be highlighted.
+      // Note that speed search is enabled for the whole frames in `XFramesView`
+      SpeedSearchUtil.applySpeedSearchHighlighting(list, this, true, selected);
     }
 
     private static boolean canDropSelectedFrame(JList list) {

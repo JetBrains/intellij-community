@@ -29,6 +29,7 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
@@ -136,6 +137,9 @@ public final class XFramesView extends XDebugView {
         return session.getFrameSourcePosition(frame);
       }
     };
+
+    installSpeedSearch(myFramesList, session);
+
     myFrameSelectionHandler.install(myFramesList);
     EditSourceOnDoubleClickHandler.install(myFramesList);
 
@@ -223,6 +227,43 @@ public final class XFramesView extends XDebugView {
     myMainPanel.setFocusCycleRoot(true);
     myMainPanel.setFocusTraversalPolicy(new MyFocusPolicy());
     addFramesNavigationAd(myMainPanel);
+  }
+
+  private static void installSpeedSearch(XDebuggerFramesList framesList, @NotNull XDebugSessionImpl session) {
+    //noinspection unchecked
+    TreeUIHelper.getInstance().installListSpeedSearch(framesList, obj -> {
+      if (obj instanceof XStackFrame frame) {
+        // Get the exact text which is used for the UI node representing the frame
+        // NOTE: this logic is called only when user types in the frames list.
+        // So the performance of the default case is not affected, but when the user types in the speedsearch field,
+        // the nodes are effectively rendered twice: 1) for presentation in UI 2) for speedsearch
+        StringBuilderTextContainer builder = new StringBuilderTextContainer();
+        frame.customizePresentation(builder);
+        return builder.getText();
+      }
+      else {
+        return null;
+      }
+    });
+  }
+
+  /**
+   * @implNote this class is not thread safe
+   * @implNote this class could be extracted somewhere in `com.intellij.ui` package as it's quite simple.
+   * Similar minimalistic implementations can be found in {@link SimpleColoredText} and {@link TextTransferable.ColoredStringBuilder}.
+   * However, those are not as minimalistic as this one.
+   */
+  private static class StringBuilderTextContainer implements ColoredTextContainer {
+    private final StringBuilder builder = new StringBuilder();
+
+    @Override
+    public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
+      builder.append(fragment);
+    }
+
+    public String getText() {
+      return builder.toString();
+    }
   }
 
   public void onFrameSelectionKeyPressed(@NotNull Consumer<? super XStackFrame> handler) {
