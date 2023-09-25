@@ -40,10 +40,10 @@ fun locateExtensionsByExtensionPointAndId(extensionPoint: ExtensionPoint,
 /**
  * A synchronized collection should be used as an accumulator in callbacks.
  */
-internal fun processExtensionDeclarations(name: String,
-                                          project: Project,
-                                          strictMatch: Boolean = true,
-                                          callback: (Extension, XmlTag) -> Boolean) {
+fun processExtensionDeclarations(name: String,
+                                 project: Project,
+                                 strictMatch: Boolean = true,
+                                 callback: (Extension, XmlTag) -> Boolean) {
   val scope = PluginRelatedLocatorsUtils.getCandidatesScope(project)
   val searchWord = name.substringBeforeLast('$')
   if (searchWord.isEmpty()) return

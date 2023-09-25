@@ -7,6 +7,9 @@
     <localInspection groupPath="Java" language="JAVA" displayName="Example inspection"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="MyRegisteredCorrectlyInspection" />
+    <localInspection groupPath="Java" language="JAVA" displayName="Example inspection"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="package.MyRegisteredWithPackageInspection" />
     <globalInspection groupPath="Java" language="JAVA" displayName="Example inspection"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="MyGlobalInspection" />

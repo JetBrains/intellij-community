@@ -9,6 +9,10 @@
       "cweIds": [476]
     },
     {
+      "id" : "MyRegisteredWithPackage",
+      "cweIds": [476]
+    },
+    {
       "id" : "MyGlobal",
       "cweIds": [3334]
     },
