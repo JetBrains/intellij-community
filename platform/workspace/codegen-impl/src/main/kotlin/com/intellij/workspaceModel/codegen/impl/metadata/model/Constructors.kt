@@ -15,9 +15,9 @@ internal fun getCollectionConstructor(any: Any?): String {
   }
   if (any is Iterable<*>) {
     val constructor = when (any) {
-      is List<*> -> "listOf"
-      is Set<*> -> "setOf"
-      else -> "mapOf"
+      is List<*> -> "arrayListOf"
+      is Set<*> -> "hashSetOf"
+      else -> "hashMapOf"
     }
     return "$constructor(${any.joinToString(",\n") { getCollectionConstructor(it) }})"
   }
