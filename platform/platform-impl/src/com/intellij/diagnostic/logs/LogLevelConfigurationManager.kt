@@ -53,6 +53,7 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
       val trimmed = logCategory.category.trimStart('#')
 
       // IDEA-297747 Convention for categories naming is not clear, so set logging for both with '#' and without '#'
+      addLogger(logCategory.category, loggerLevel, level)
       addLogger("#$trimmed", loggerLevel, level)
       addLogger(trimmed, loggerLevel, level)
     }
@@ -104,5 +105,10 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
 
   @Serializable
   data class State(@JvmField val categories: List<LogCategory> = listOf())
+
+  override fun loadState(state: State) {
+    super.loadState(state)
+    applyCategories(state.categories)
+  }
 }
 
