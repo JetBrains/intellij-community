@@ -59,6 +59,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
           LOG.warn("[$url]", e)
         }
       }
+
       browse(file)
     }
   }
@@ -96,19 +97,46 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
     val settings = generalSettings
     if (settings.useDefaultBrowser) {
-      openWithDefaultBrowser(signedUrl, project)
+      if (!canBrowse(project, signedUrl)) {
+        return
+      }
+      if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
+        val uri = VfsUtil.toUri(signedUrl)
+        if (uri == null) {
+          showError(IdeBundle.message("error.malformed.url", signedUrl), project)
+          return
+        }
+        openWithDesktopApi(uri, project)
+      }
+      else {
+        openWithDefaultBrowserCommand(signedUrl, project)
+      }
     }
     else {
       val browserPath = settings.browserPath
       val substitutedBrowser = substituteBrowser(browserPath)
       if (substitutedBrowser != null) {
-        openWithBrowser(url, substitutedBrowser, project)
+        openWithBrowser(signedUrl, substitutedBrowser, project)
       }
       else {
-        val command = GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(browserPath, url, emptyList(), false))
-        doLaunch(command, project)
+        spawn(GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(browserPath, signedUrl, emptyList(), false)), project)
       }
     }
+  }
+
+  private fun processMailToUrl(url: String): Boolean {
+    if (url.startsWith("mailto:") && isDesktopActionSupported(Desktop.Action.MAIL)) {
+      try {
+        LOG.debug("trying Desktop#mail")
+        Desktop.getDesktop().mail(URI(url))
+      }
+      catch (e: Exception) {
+        LOG.warn("[${url}]", e)
+      }
+      return true
+    }
+
+    return false
   }
 
   private fun processWithUrlOpener(browser: WebBrowser?, url: String, project: Project?): Boolean {
@@ -130,56 +158,29 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     return false
   }
 
-  private fun processMailToUrl(url: String): Boolean {
-    if (url.startsWith("mailto:") && isDesktopActionSupported(Desktop.Action.MAIL)) {
-      try {
-        LOG.debug("trying Desktop#mail")
-        Desktop.getDesktop().mail(URI(url))
-      }
-      catch (e: Exception) {
-        LOG.warn("[${url}]", e)
-      }
-      return true
-    }
-
-    return false
-  }
-
-  private fun openWithDefaultBrowser(url: String, project: Project?) {
-    if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
-      val uri = VfsUtil.toUri(url)
-      if (uri == null) {
-        showError(IdeBundle.message("error.malformed.url", url), project = project)
-        return
-      }
-      if (!canBrowse(project, uri)) {
-        return
-      }
-      if (openWithDesktopApi(uri)) {
-        return
-      }
-    }
-
-    val command = defaultBrowserCommand
-    if (command == null) {
-      showError(IdeBundle.message("browser.default.not.supported"), project = project)
-      return
-    }
-
-    doLaunch(GeneralCommandLine(command).withParameters(url), project)
-  }
-
-  private fun openWithDesktopApi(uri: URI): Boolean {
+  private fun openWithDesktopApi(uri: URI, project: Project?) {
     try {
       LOG.debug("trying Desktop#browse")
       Desktop.getDesktop().browse(uri)
-      return true
     }
     catch (e: Exception) {
       LOG.warn("[${uri}]", e)
-      // if "No application knows how to open" the URL, there is no sense in retrying with 'open' command
-      return SystemInfo.isMac && e.message!!.contains("Error code: -10814")
+      if (SystemInfo.isMac && e.message!!.contains("Error code: -10814")) {
+        // if "No application knows how to open" the URL, there is no sense in retrying with 'open' command
+        return
+      }
+      openWithDefaultBrowserCommand(uri.toString(), project)
     }
+  }
+
+  private fun openWithDefaultBrowserCommand(url: String, project: Project?) {
+    val command = defaultBrowserCommand
+    if (command == null) {
+      showError(IdeBundle.message("browser.default.not.supported"), project)
+      return
+    }
+
+    spawn(GeneralCommandLine(command).withParameters(url), project)
   }
 
   private fun openWithBrowser(url: String, browser: WebBrowser, project: Project?) {
@@ -187,17 +188,17 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
     val browserPath = PathUtil.toSystemDependentName(browser.path)
     if (browserPath.isNullOrBlank()) {
-      showError(browser.browserNotFoundMessage, project, browser, retry = retry)
+      showError(browser.browserNotFoundMessage, project, browser, retry)
       return
     }
 
     val parameters = browser.specificSettings?.additionalParameters ?: emptyList()
     val environment = browser.specificSettings?.environmentVariables ?: emptyMap()
     val command = GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(browserPath, url, parameters, false)).withEnvironment(environment)
-    doLaunch(command, project, browser, retry)
+    spawn(command, project, browser, retry)
   }
 
-  private fun doLaunch(command: GeneralCommandLine, project: Project?, browser: WebBrowser? = null, retry: (() -> Unit)? = null) {
+  private fun spawn(command: GeneralCommandLine, project: Project?, browser: WebBrowser? = null, retry: (() -> Unit)? = null) {
     LOG.debug { "starting [${command.commandLineString}]" }
     ProcessIOExecutorService.INSTANCE.execute {
       try {
@@ -219,7 +220,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
   protected open fun getDefaultBrowser(): WebBrowser? = null
 
-  protected open fun canBrowse(project: Project?, uri: URI): Boolean = true
+  protected open fun canBrowse(project: Project?, uri: String): Boolean = true
 
   protected open fun substituteBrowser(browserPath: String): WebBrowser? = null
 
