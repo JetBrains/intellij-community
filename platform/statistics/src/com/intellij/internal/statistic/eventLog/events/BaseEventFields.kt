@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
+import java.security.InvalidParameterException
 import kotlin.reflect.KProperty
 
 sealed class EventField<T> {
@@ -101,6 +102,24 @@ data class RoundedIntEventField(override val name: String) : PrimitiveEventField
   }
 }
 
+/**
+ * @throws InvalidParameterException if bounds parameter is empty or not sorted in ascending order or contains non-unique values
+ * */
+internal data class BoundedIntEventField(override val name: String, val bounds: IntArray) : PrimitiveEventField<Int>() {
+  init {
+    if (bounds.isEmpty()) throw InvalidParameterException("Bounds array should not be empty")
+    if ((1..<bounds.size).any { bounds[it] <= bounds[it - 1] })
+      throw InvalidParameterException("Bounds array should be sorted in ascending order and all values should be unique")
+  }
+
+  override val validationRule: List<String>
+    get() = listOf("{regexp#integer}")
+
+  override fun addData(fuData: FeatureUsageData, value: Int) {
+    fuData.addData(name, StatisticsUtil.roundToUpperBoundInternal(value, bounds))
+  }
+}
+
 data class LongEventField(override val name: String) : PrimitiveEventField<Long>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
@@ -116,6 +135,24 @@ data class RoundedLongEventField(override val name: String) : PrimitiveEventFiel
 
   override fun addData(fuData: FeatureUsageData, value: Long) {
     fuData.addData(name, StatisticsUtil.roundToPowerOfTwo(value))
+  }
+}
+
+/**
+ * @throws InvalidParameterException if bounds parameter is empty or not sorted in ascending order or contains non-unique values
+ * */
+internal data class BoundedLongEventField(override val name: String, val bounds: LongArray) : PrimitiveEventField<Long>() {
+  init {
+    if (bounds.isEmpty()) throw InvalidParameterException("Bounds array should not be empty")
+    if ((1..<bounds.size).any { bounds[it] <= bounds[it - 1] })
+      throw InvalidParameterException("Bounds array should be sorted in ascending order and all values should be unique")
+  }
+
+  override val validationRule: List<String>
+    get() = listOf("{regexp#integer}")
+
+  override fun addData(fuData: FeatureUsageData, value: Long) {
+    fuData.addData(name, StatisticsUtil.roundToUpperBoundInternal(value, bounds))
   }
 }
 

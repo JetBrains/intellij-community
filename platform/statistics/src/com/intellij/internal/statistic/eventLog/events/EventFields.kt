@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Version
 import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.security.InvalidParameterException
 import org.intellij.lang.annotations.Language as InjectedLanguage
 
 internal object EventFieldIds {
@@ -111,6 +112,18 @@ object EventFields {
   @JvmStatic
   fun RoundedInt(@NonNls name: String): RoundedIntEventField = RoundedIntEventField(name)
 
+  /**
+   * Rounds integer value to the upper bound from provided bounds.
+   * If value is greater than upper bound from provided list - upper bound will be returned.
+   * Use it to anonymize sensitive information like the number of files in a project.
+   * @see com.intellij.internal.statistic.utils.StatisticsUtil.roundToUpperBoundInternal
+   *
+   * @param bounds non-empty array of unique sorted in ascending order integer values
+   * @throws InvalidParameterException if bounds parameter is empty or not sorted in ascending order or contains non-unique values
+   */
+  @JvmStatic
+  fun BoundedInt(@NonNls name: String, bounds: IntArray): PrimitiveEventField<Int> = BoundedIntEventField(name, bounds)
+
   @JvmStatic
   fun Long(@NonNls name: String): LongEventField = LongEventField(name)
 
@@ -121,6 +134,18 @@ object EventFields {
    */
   @JvmStatic
   fun RoundedLong(@NonNls name: String): RoundedLongEventField = RoundedLongEventField(name)
+
+  /**
+   * Rounds long value to the upper bound from provided bounds.
+   * If value is greater than upper bound from provided list - upper bound will be returned.
+   * Use it to anonymize sensitive information like the number of files in a project.
+   * @see com.intellij.internal.statistic.utils.StatisticsUtil.roundToUpperBoundInternal
+   *
+   * @param bounds non-empty array of unique sorted in ascending order long values
+   * @throws InvalidParameterException if bounds parameter is empty or not sorted in ascending order or contains non-unique values
+   */
+  @JvmStatic
+  fun BoundedLong(@NonNls name: String, bounds: LongArray): PrimitiveEventField<Long> = BoundedLongEventField(name, bounds)
 
   @JvmStatic
   fun Float(@NonNls name: String): FloatEventField = FloatEventField(name)

@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.utils
 
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+import org.jetbrains.annotations.TestOnly
 import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.util.*
@@ -26,15 +27,6 @@ object StatisticsUtil {
       data["plugin_version"] = version
     }
   }
-
-  /**
-   * Anonymizes sensitive project properties by rounding it to the next power of two
-   * See `com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector`
-   */
-  @JvmStatic
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(message = "Use roundToPowerOfTwo instead", replaceWith = ReplaceWith("roundToPowerOfTwo"))
-  fun getNextPowerOfTwo(value: Int): Int = if (value <= 1) 1 else Integer.highestOneBit(value - 1) shl 1
 
   /**
    * Anonymizes sensitive project properties by rounding it to the next power of two.
@@ -140,13 +132,57 @@ object StatisticsUtil {
    * @return value upper bound or next power of two if no bounds were provided (as fallback)
    * */
   @JvmStatic
+  @Deprecated(message = "Use com.intellij.internal.statistic.eventLog.events.EventFields.BoundedInt instead", replaceWith = ReplaceWith("roundToUpperBoundInternal"))
+  @ScheduledForRemoval
   fun roundToUpperBound(value: Int, bounds: IntArray): Int {
-    if (bounds.isEmpty()) return roundToPowerOfTwo(value)
-
-    for (bound in bounds)
-      if (value <= bound) return bound
-    return bounds.last()
+    return roundToUpperBoundInternal(value, bounds)
   }
+
+  /**
+   * Anonymizes value by finding upper bound in provided bounds.
+   * Allows to have better precision then [com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo]
+   * but requires manual maintaining.
+   *
+   * Empty bounds and ordering aren't checked - secured with check in [com.intellij.internal.statistic.eventLog.events.BoundedIntEventField]
+   *
+   * @param bounds is a non-empty integer array sorted in ascending order (required, but not checked)
+   * @return value upper bound
+   * */
+  @JvmStatic
+  internal fun roundToUpperBoundInternal(value: Int, bounds: IntArray): Int {
+    val insertIndex = bounds.binarySearch(value, 0, bounds.size)
+    return if (insertIndex >= 0) bounds[insertIndex]
+    else {
+      val revertedIndex = -(insertIndex + 1)
+      if(revertedIndex < bounds.size) bounds[revertedIndex] else bounds.last()
+    }
+  }
+
+  @TestOnly
+  fun roundToUpperBoundInternalTest(value: Int, bounds: IntArray): Int = roundToUpperBoundInternal(value, bounds)
+
+  /**
+   * Anonymizes value by finding upper bound in provided bounds.
+   * Allows to have better precision then [com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo]
+   * but requires manual maintaining.
+   *
+   * Empty bounds and ordering aren't checked - secured with check in [com.intellij.internal.statistic.eventLog.events.BoundedLongEventField]
+   *
+   * @param bounds is a non-empty integer array sorted in ascending order (required, but not checked)
+   * @return value upper bound
+   * */
+  @JvmStatic
+  internal fun roundToUpperBoundInternal(value: Long, bounds: LongArray): Long {
+    val insertIndex = bounds.binarySearch(value, 0, bounds.size)
+    return if (insertIndex >= 0) bounds[insertIndex]
+    else {
+      val revertedIndex = -(insertIndex + 1)
+      if(revertedIndex < bounds.size) bounds[revertedIndex] else bounds.last()
+    }
+  }
+
+  @TestOnly
+  fun roundToUpperBoundInternalTest(value: Long, bounds: LongArray): Long = roundToUpperBoundInternal(value, bounds)
 
   /**
    * Anonymizes sensitive project properties by rounding it to the next value in steps list.
