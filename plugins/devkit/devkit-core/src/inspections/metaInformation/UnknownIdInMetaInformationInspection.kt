@@ -40,10 +40,12 @@ class UnknownIdInMetaInformationInspection : LocalInspectionTool() {
   fun isAllowed(holder: ProblemsHolder): Boolean {
     return DevKitInspectionUtil.isAllowed(holder.file) && isMetaInformationFile(holder.file)
   }
+
   private fun isKnownId(id: String, holder: ProblemsHolder): Boolean {
     val className = getShortName(id) + "Inspection"
     return isKnownId(id, id, holder) || isKnownId(id, className, holder)
   }
+
   private fun isKnownId(id: String, textToSearch: String, holder: ProblemsHolder): Boolean {
     val project = holder.project
     val manager = DomManager.getDomManager(project)
