@@ -265,7 +265,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return Unit.INSTANCE;
   });
   private VirtualFile myVirtualFile;
-  private @Nullable Color myForcedBackground;
   private @Nullable Dimension myPreferredSize;
 
   private final Alarm myMouseSelectionStateAlarm = new Alarm();
@@ -550,6 +549,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         case EditorState.isEmbeddedIntoDialogWrapperPropertyName -> isEmbeddedIntoDialogWrapperChanged(event);
         case EditorState.verticalScrollBarOrientationPropertyName -> verticalScrollBarOrientationChanged(event);
         case EditorState.isStickySelectionPropertyName -> isStickySelectionChanged(event);
+        case EditorState.myForcedBackgroundPropertyName -> forcedBackgroundChanged(event);
       }
     }, myDisposable);
   }
@@ -2058,14 +2058,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setBackgroundColor(Color color) {
-    myScrollPane.setBackground(color);
-
     if (getBackgroundIgnoreForced().equals(color)) {
-      myForcedBackground = null;
+      myState.setMyForcedBackground(null);
     }
     else {
-      myForcedBackground = color;
+      myState.setMyForcedBackground(color);
     }
+  }
+
+  private void forcedBackgroundChanged(ObservableStateListener.PropertyChangeEvent event) {
+    myScrollPane.setBackground(getBackgroundColor());
   }
 
   @NotNull
@@ -2075,7 +2077,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Color getBackgroundColor() {
-    return myForcedBackground == null ? getBackgroundIgnoreForced() : myForcedBackground;
+    Color forcedBackground = myState.getMyForcedBackground();
+    return forcedBackground == null ? getBackgroundIgnoreForced() : forcedBackground;
   }
 
   @Override
@@ -2944,7 +2947,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myState.setEmbeddedIntoDialogWrapper(b);
   }
 
-  private void isEmbeddedIntoDialogWrapperChanged(ObservableStateListener.PropertyChangeEvent  event) {
+  private void isEmbeddedIntoDialogWrapperChanged(ObservableStateListener.PropertyChangeEvent event) {
     assertIsDispatchThread();
 
     Object newValue = event.getNewValue();
@@ -2964,7 +2967,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myState.setOneLineMode(isOneLineMode);
   }
 
-  private void isOneLineModeChanged(ObservableStateListener.PropertyChangeEvent  event) {
+  private void isOneLineModeChanged(ObservableStateListener.PropertyChangeEvent event) {
     Object newValue = event.getNewValue();
     if (!(newValue instanceof Boolean)) {
       LOG.error("newValue is not Boolean. property name = " + event.getPropertyName() + ", newValue = " + newValue);
@@ -3459,7 +3462,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myState.setVerticalScrollBarOrientation(type);
   }
 
-  private void verticalScrollBarOrientationChanged(ObservableStateListener.PropertyChangeEvent  event) {
+  private void verticalScrollBarOrientationChanged(ObservableStateListener.PropertyChangeEvent event) {
     assertIsDispatchThread();
 
     Object newValue = event.getNewValue();
