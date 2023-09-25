@@ -259,6 +259,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   }
 
   private void adjustBraceLevel() {
+    boolean insideFStringFragment = !myFStringStack.isEmpty() && !myFStringStack.peek().fragments.isEmpty();
     final IElementType tokenType = getTokenType();
     if (PyTokenTypes.OPEN_BRACES.contains(tokenType)) {
       myBraceLevel++;
@@ -266,8 +267,11 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     else if (PyTokenTypes.CLOSE_BRACES.contains(tokenType)) {
       myBraceLevel--;
     }
-    else if (myBraceLevel != 0 && RECOVERY_TOKENS.contains(tokenType)) {
+    else if ((myBraceLevel != 0 || insideFStringFragment) && RECOVERY_TOKENS.contains(tokenType)) {
       myBraceLevel = 0;
+      if (insideFStringFragment) {
+        myFStringStack.clear();
+      }
       final int pos = getTokenStart();
       pushToken(PyTokenTypes.STATEMENT_BREAK, pos, pos);
       final int indents = myIndentStack.size();
