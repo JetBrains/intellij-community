@@ -226,7 +226,14 @@ private fun initLux() {
   System.setProperty("sun.font.fontmanager", IdeFontManager::class.java.canonicalName)
 }
 
-private fun initMarketplace() {
+/**
+ * Initializes the marketplace by adding necessary classloaders and resolving required files.
+ * If the marketplace is not compatible, or the required files are not found, the method returns
+ * without performing any further action.
+ *
+ * Currently used in Rider
+ */
+fun initMarketplace() {
   val distDir = Path.of(PathManager.getHomePath())
   val classLoader = AppMode::class.java.classLoader as? PathClassLoader
                     ?: throw RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
