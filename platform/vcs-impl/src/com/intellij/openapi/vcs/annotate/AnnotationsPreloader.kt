@@ -110,9 +110,6 @@ internal class AnnotationsPreloader(private val project: Project) {
       return enabledInSettings || AdvancedSettings.getBoolean("vcs.annotations.preload")
     }
 
-    internal fun canPreload(project: Project, file: VirtualFile): Boolean =
-      getAnnotationProvider(project, file) != null
-
     private fun getAnnotationProvider(project: Project, file: VirtualFile): CacheableAnnotationProvider? {
       val status = ChangeListManager.getInstance(project).getStatus(file)
       if (status == FileStatus.UNKNOWN || status == FileStatus.ADDED || status == FileStatus.IGNORED) return null
