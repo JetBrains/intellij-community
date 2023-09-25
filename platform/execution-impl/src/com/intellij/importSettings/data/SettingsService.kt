@@ -27,7 +27,8 @@ interface SyncService : BaseJbService {
     NO_SYNC,
     GENERAL
   }
-
+  override val configurable: Boolean
+    get() = false
 
   val syncState: SYNC_STATE
   fun tryToLogin(): String?
@@ -53,6 +54,9 @@ interface BaseJbService : BaseService {
 }
 
 interface BaseService {
+  val configurable: Boolean
+    get() = true
+
   fun products(): List<Product>
   fun getSettings(itemId: String): List<BaseSetting>
 
