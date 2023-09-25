@@ -79,13 +79,13 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
           comboBox(
             model = EnumComboBoxModel(TextEditorWithPreview.Layout::class.java),
             renderer = SimpleListCellRenderer.create("") { it?.getName() ?: "" }
-          ).bindItem(settings::splitLayout.toNullableProperty())
+          ).bindItem(settings::splitLayout.toNullableProperty()).widthGroup(comboBoxWidthGroup)
         }
         row(MarkdownBundle.message("markdown.settings.preview.layout.label")) {
           comboBox(
             model = DefaultComboBoxModel(arrayOf(false, true)),
             renderer = SimpleListCellRenderer.create("", ::presentSplitLayout)
-          ).bindItem(settings::isVerticalSplit.toNullableProperty())
+          ).bindItem(settings::isVerticalSplit.toNullableProperty()).widthGroup(comboBoxWidthGroup)
         }.bottomGap(BottomGap.SMALL)
         row {
           checkBox(MarkdownBundle.message("markdown.settings.preview.auto.scroll.checkbox"))
@@ -149,6 +149,7 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
       val providers = MarkdownHtmlPanelProvider.getProviders().map { it.providerInfo }
       comboBox(model = DefaultComboBoxModel(providers.toTypedArray()))
         .bindItem(settings::previewPanelProviderInfo.toNullableProperty())
+        .widthGroup(comboBoxWidthGroup)
     }
   }
 
@@ -341,6 +342,7 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
 
   companion object {
     const val ID = "Settings.Markdown"
+    private const val comboBoxWidthGroup = "Markdown.ComboBoxWidthGroup"
 
     private fun presentSplitLayout(splitLayout: Boolean?): @Nls String {
       return when (splitLayout) {
