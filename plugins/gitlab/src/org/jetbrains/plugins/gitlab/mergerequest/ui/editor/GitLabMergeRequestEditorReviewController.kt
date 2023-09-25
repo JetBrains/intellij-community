@@ -69,7 +69,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
   }
 
   private fun setupReview(editor: Editor) {
-    if (editor.editorKind != EditorKind.MAIN_EDITOR) return
+    if (!isPotentialEditor(editor)) return
     val file = editor.virtualFile ?: return
 
     val editorDisposable = Disposer.newDisposable().also {
@@ -83,14 +83,22 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
         project.service<GitLabToolWindowViewModel>().projectVm
           .flatMapLatest {
             it?.currentMergeRequestReviewVm ?: flowOf(null)
-          }.flatMapLatest {
-            it?.getFileVm(file) ?: flowOf(null)
-          }.collectLatest {
-            if (it != null) {
-              supervisorScope {
-                showGutterMarkers(it, editor, lst)
-                showGutterControls(it, editor, lst)
-                showInlays(it, editor, lst)
+          }.collectLatest { reviewVm ->
+            reviewVm?.getFileVm(file)?.collectLatest { fileVm ->
+              if (fileVm != null) {
+                try {
+                  editor.putUserData(GitLabMergeRequestReviewViewModel.KEY, reviewVm)
+                  reviewVm.isReviewModeEnabled.collectLatest {
+                    if (it) supervisorScope {
+                      showGutterMarkers(fileVm, editor, lst)
+                      showGutterControls(fileVm, editor, lst)
+                      showInlays(fileVm, editor, lst)
+                    }
+                  }
+                }
+                finally {
+                  editor.putUserData(GitLabMergeRequestReviewViewModel.KEY, null)
+                }
               }
             }
           }
@@ -196,6 +204,10 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
       Disposer.dispose(renderer)
       highlighter.dispose()
     }
+  }
+
+  companion object {
+    fun isPotentialEditor(editor: Editor): Boolean = editor.editorKind == EditorKind.MAIN_EDITOR && editor.virtualFile != null
   }
 }
 

@@ -7,6 +7,7 @@ import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.diff.util.Side
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
@@ -70,6 +71,9 @@ class GitLabMergeRequestReviewViewModel internal constructor(
     changesRequest.tryEmit(Unit)
   }
 
+  private val _isReviewModeEnabled = MutableStateFlow(true)
+  val isReviewModeEnabled: StateFlow<Boolean> = _isReviewModeEnabled.asStateFlow()
+
   /**
    * Show merge request details in a standard view
    */
@@ -101,11 +105,19 @@ class GitLabMergeRequestReviewViewModel internal constructor(
     }
   }
 
+  fun toggleReviewMode() {
+    _isReviewModeEnabled.update { !it }
+  }
+
   sealed interface ChangesState {
     object NotLoaded : ChangesState
     object Loading: ChangesState
     object Error: ChangesState
     object OutOfSync: ChangesState
     class Loaded(val changes: GitBranchComparisonResult): ChangesState
+  }
+
+  companion object {
+    val KEY: Key<GitLabMergeRequestReviewViewModel> = Key.create("GitLab.MergeRequest.Review.ViewModel")
   }
 }

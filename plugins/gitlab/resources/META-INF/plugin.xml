@@ -82,6 +82,7 @@
       order="after org.jetbrains.plugins.github.ui.cloneDialog.GHECloneDialogExtension"/>
 
     <editorFactoryListener implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewController$InstallerListener"/>
+    <iw.actionProvider implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewModeActionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
