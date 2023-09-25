@@ -46,8 +46,8 @@ class JKResolver(val project: Project, module: Module?, private val contextEleme
 
     private fun resolveFqNameOfKtClassByIndex(fqName: FqName): KtDeclaration? {
         val fqNameString = fqName.asString()
-        val classesPsi = KotlinFullClassNameIndex.get(fqNameString, project, scope)
-        val typeAliasesPsi = KotlinTopLevelTypeAliasFqNameIndex.get(fqNameString, project, scope)
+        val classesPsi = KotlinFullClassNameIndex[fqNameString, project, scope]
+        val typeAliasesPsi = KotlinTopLevelTypeAliasFqNameIndex[fqNameString, project, scope]
 
         return selectNearest(classesPsi, typeAliasesPsi)
     }
@@ -61,10 +61,10 @@ class JKResolver(val project: Project, module: Module?, private val contextEleme
     }
 
     private fun resolveFqNameOfKtFunctionByIndex(fqName: FqName, filter: (KtNamedFunction) -> Boolean = { true }): KtNamedFunction? =
-        KotlinTopLevelFunctionFqnNameIndex.get(fqName.asString(), project, scope).firstOrNull { filter(it) }
+        KotlinTopLevelFunctionFqnNameIndex[fqName.asString(), project, scope].firstOrNull { filter(it) }
 
     private fun resolveFqNameOfKtPropertyByIndex(fqName: FqName): KtProperty? =
-        KotlinTopLevelPropertyFqnNameIndex.get(fqName.asString(), project, scope).firstOrNull()
+        KotlinTopLevelPropertyFqnNameIndex[fqName.asString(), project, scope].firstOrNull()
 
 
     private fun resolveFqName(fqName: FqName): PsiElement? {

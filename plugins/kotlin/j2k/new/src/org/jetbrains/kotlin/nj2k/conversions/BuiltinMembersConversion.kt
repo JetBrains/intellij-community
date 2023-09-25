@@ -834,7 +834,4 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
 
     private fun List<JKLiteralExpression>.containsNull(): Boolean =
         any { it.isNull() }
-
-    private fun JKExpression?.isDoubleType(): Boolean =
-        this?.calculateType(typeFactory) == JKJavaPrimitiveType.DOUBLE
 }
