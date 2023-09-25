@@ -19,7 +19,6 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.IntConsumer
 import kotlin.io.path.deleteIfExists
-import kotlin.math.max
 
 /**
  * Service that tracks FileIndexingStamp.
@@ -90,11 +89,6 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
       if (file !is VirtualFileWithId) return NULL_STAMP
       val fileStamp = PersistentFS.getInstance().getModificationCount(file)
       return getFileIndexingStamp(fileStamp)
-    }
-
-    override fun mergeWith(other: IndexingRequestToken): IndexingRequestToken {
-      return IndexingRequestTokenImpl(max(requestId, (other as IndexingRequestTokenImpl).requestId),
-                                      appIndexingRequest.mergeWith(other.appIndexingRequest))
     }
 
     @VisibleForTesting

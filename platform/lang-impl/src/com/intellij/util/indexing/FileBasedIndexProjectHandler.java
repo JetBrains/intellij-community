@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
-import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -23,8 +22,8 @@ public final class FileBasedIndexProjectHandler {
         mightHaveManyChangedFilesInProject(project)) {
 
       String indexingReason = "On refresh of files in " + project.getName();
-      IndexingRequestToken rescan = project.getService(ProjectIndexingDependenciesService.class).invalidateAllStamps();
-      new UnindexedFilesIndexer(project, indexingReason, rescan).queue(project);
+      project.getService(ProjectIndexingDependenciesService.class).invalidateAllStamps(); // TODO-ank: do we need to invalidate explicitly?
+      new UnindexedFilesIndexer(project, indexingReason).queue(project);
     }
   }
 

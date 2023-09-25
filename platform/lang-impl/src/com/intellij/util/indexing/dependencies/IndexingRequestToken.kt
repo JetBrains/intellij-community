@@ -8,5 +8,4 @@ interface IndexingRequestToken {
    * Monotonically increasing number representing IndexingStamp
    */
   fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp
-  fun mergeWith(other: IndexingRequestToken): IndexingRequestToken
 }
