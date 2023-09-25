@@ -25,6 +25,7 @@ internal suspend fun loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx
 }
 
 internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Document?,
+                                                appInfoDeferred: Deferred<ApplicationInfoEx>,
                                                 asyncScope: CoroutineScope): (suspend () -> Boolean)? {
   val updateCached = asyncScope.launch(CoroutineName("eua cache updating") + Dispatchers.IO) {
     EndUserAgreement.updateCachedContentToLatestBundledVersion()
@@ -38,25 +39,24 @@ internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Docum
   }
 
   return span("eua showing") {
-    when {
-      document != null -> {
-        return@span {
-          prepareAndExecuteInEdt {
-            showEndUserAndDataSharingAgreements(document)
-          }
-          true
+    if (document != null) {
+      return@span {
+        prepareAndExecuteInEdt {
+          showEndUserAndDataSharingAgreements(document)
         }
+        true
       }
-      ConsentOptions.needToShowUsageStatsConsent() -> {
-        updateCached.join()
-        return@span {
-          prepareAndExecuteInEdt {
-            showDataSharingAgreement()
-          }
-          false
-        }
-      }
-      else -> null
     }
+    appInfoDeferred.await() //ConsentOptions uses ApplicationInfo inside, so we need to load it first
+    if (ConsentOptions.needToShowUsageStatsConsent()) {
+      updateCached.join()
+      return@span {
+        prepareAndExecuteInEdt {
+          showDataSharingAgreement()
+        }
+        false
+      }
+    }
+    else null
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.idea.*
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -70,6 +71,7 @@ fun initApplication(context: InitAppContext) {
 
 internal suspend fun loadApp(app: ApplicationImpl,
                              pluginSetDeferred: Deferred<Deferred<PluginSet>>,
+                             appInfoDeferred: Deferred<ApplicationInfoEx>,
                              euaDocumentDeferred: Deferred<EndUserAgreement.Document?>,
                              asyncScope: CoroutineScope,
                              initLafJob: Job,
@@ -102,7 +104,7 @@ internal suspend fun loadApp(app: ApplicationImpl,
     }
     else {
       async(CoroutineName("eua document")) {
-        prepareShowEuaIfNeededTask(document = euaDocumentDeferred.await(), asyncScope = asyncScope)
+        prepareShowEuaIfNeededTask(document = euaDocumentDeferred.await(), appInfoDeferred = appInfoDeferred, asyncScope = asyncScope)
       }
     }
 
