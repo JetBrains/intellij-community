@@ -1,8 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.concurrent.atomic.AtomicReference
@@ -11,8 +14,7 @@ internal class InlineCompletionSession private constructor(
   val context: InlineCompletionContext,
   val provider: InlineCompletionProvider
 ) {
-
-  private var toDispose: (() -> Unit)? = null
+  private var disposable: Disposable? = null
   private val myJob = AtomicReference<InlineCompletionJob?>()
 
   val job: InlineCompletionJob?
@@ -26,8 +28,8 @@ internal class InlineCompletionSession private constructor(
   @RequiresEdt
   fun whenDisposed(block: () -> Unit) {
     // TODO change semantics after starting truly listening to typing events: we shouldn't replace dispose, we need to collect them
-    toDispose?.invoke()
-    toDispose = block
+    disposable?.let(Disposer::dispose)
+    disposable = Disposer.newDisposable().also { it.whenDisposed(block) }
   }
 
   companion object {
@@ -49,7 +51,7 @@ internal class InlineCompletionSession private constructor(
     @RequiresEdt
     fun remove(editor: Editor) {
       val currentSession = getOrNull(editor)?.apply {
-        toDispose?.invoke()
+        disposable?.let(Disposer::dispose)
         context.clear()
         context.invalidate()
         job?.cancel()
