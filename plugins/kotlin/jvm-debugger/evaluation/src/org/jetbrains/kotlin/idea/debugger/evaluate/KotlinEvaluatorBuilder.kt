@@ -73,6 +73,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.AnalyzingUtils
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.util.*
@@ -534,7 +535,10 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                     Errors.MISSING_DEPENDENCY_SUPERCLASS,
                     Errors.IR_WITH_UNSTABLE_ABI_COMPILED_CLASS,
                     Errors.FIR_COMPILED_CLASS,
-                    Errors.ILLEGAL_SUSPEND_FUNCTION_CALL
+                    Errors.ILLEGAL_SUSPEND_FUNCTION_CALL,
+                    ErrorsJvm.JAVA_MODULE_DOES_NOT_DEPEND_ON_MODULE,
+                    ErrorsJvm.JAVA_MODULE_DOES_NOT_READ_UNNAMED_MODULE,
+                    ErrorsJvm.JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE
                 )
 
         private val DEFAULT_METHOD_MARKERS = listOf(AsmTypes.OBJECT_TYPE, AsmTypes.DEFAULT_CONSTRUCTOR_MARKER)
