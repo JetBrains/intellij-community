@@ -174,7 +174,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Restart = load("actions/restart.svg", -1074337097, 2);
     /** 16x16 */ public static final @NotNull Icon RestartDebugger = load("actions/restartDebugger.svg", 893306448, 10);
     /** 16x16 */ public static final @NotNull Icon RestartFrame = load("actions/restartFrame.svg", 251948842, 2);
-    /** 16x16 */ public static final @NotNull Icon Resume = load("actions/resume.svg", 1214638615, 2);
+    /** 16x16 */ public static final @NotNull Icon Resume = load("actions/resume.svg", 1214638615, 10);
     /** 16x16 */ public static final @NotNull Icon Rollback = load("actions/rollback.svg", 2087548212, 2);
     /** 16x16 */ public static final @NotNull Icon Run_anything = load("actions/run_anything.svg", -1562827983, 2);
     /** 16x16 */ public static final @NotNull Icon RunAll = load("actions/runAll.svg", -398248691, 2);

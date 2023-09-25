@@ -298,7 +298,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
   public static final Key<ExecutorActionStatus> EXECUTOR_ACTION_STATUS = Key.create("EXECUTOR_ACTION_STATUS");
 
-  public static class ExecutorAction extends AnAction implements DumbAware {
+  public static class ExecutorAction extends AnAction implements DumbAware, RunWidgetExecutionActionMarker {
     private static final Key<RunCurrentFileInfo> CURRENT_FILE_RUN_CONFIGS_KEY = Key.create("CURRENT_FILE_RUN_CONFIGS");
 
     protected final Executor myExecutor;

@@ -287,7 +287,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
     }
 
     if (resultIcon !is PreparedIcon) {
-      val executionAction = (actionButton as? ActionButton)?.action is ExecutorRegistryImpl.ExecutorAction
+      val executionAction = (actionButton as? ActionButton)?.action is RunWidgetExecutionActionMarker
       val iconWithBackground = executionAction && buttonIsRunning(actionButton) || isStopButton(actionButton)
       val resultColor = if (iconWithBackground) {
         JBUI.CurrentTheme.RunWidget.RUNNING_ICON_COLOR
