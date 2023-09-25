@@ -68,6 +68,7 @@ import java.awt.event.FocusEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
@@ -323,7 +324,7 @@ object Utils {
     if (!async && !isUnitTestMode) {
       checkAsyncDataContext(wrapped, place)
     }
-    val maxLoops = max(2.0, Registry.intValue("actionSystem.update.actions.async.max.nested.loops", 20).toDouble()).toInt()
+    val maxLoops = max(2, Registry.intValue("actionSystem.update.actions.async.max.nested.loops", 20))
     if (ourExpandActionGroupImplEDTLoopLevel >= maxLoops) {
       LOG.warn("Maximum number of recursive EDT loops reached ($maxLoops) at '$place'")
       cancelAllUpdates("recursive EDT loops limit reached at '$place'")
@@ -850,24 +851,23 @@ object Utils {
                                                 place: String,
                                                 actionProcessor: ActionProcessor,
                                                 factory: PresentationFactory,
-                                                eventTracker: ((AnActionEvent) -> Unit)?,
-                                                function: (UpdateSession, List<AnAction>) -> T): T? = withContext(
+                                                function: suspend (List<AnAction>,
+                                                                   suspend (AnAction) -> Presentation,
+                                                                   Map<Presentation, AnActionEvent>) -> T): T? = withContext(
     CoroutineName("runUpdateSessionForInputEvent")) {
     checkAsyncDataContext(dataContext, place)
     val start = System.nanoTime()
+    val events = ConcurrentHashMap<Presentation, AnActionEvent>()
     val actionUpdater = ActionUpdater(factory, dataContext, place, false, false, this) {
-      actionProcessor.createEvent(inputEvent, it.dataContext, it.place, it.presentation, it.actionManager)
-        .also { event ->
-          eventTracker?.invoke(event)
-        }
+      val event = actionProcessor.createEvent(inputEvent, it.dataContext, it.place, it.presentation, it.actionManager)
+      events.put(event.presentation, event)
+      event
     }
     cancelAllUpdates("'$place' invoked")
 
-    val adjusted = rearrangeByPromoters(actions, dataContext)
+    val rearranged = rearrangeByPromoters(actions, dataContext)
     val result = withContext(shortcutUpdateDispatcher) {
-      readActionUndispatched {
-        function(actionUpdater.asUpdateSession(), adjusted)
-      }
+      function(rearranged, actionUpdater::presentation, events)
     }
     actionUpdater.applyPresentationChanges()
     val elapsed = TimeoutUtil.getDurationMillis(start)

@@ -27,7 +27,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbService.Companion.getInstance
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
@@ -49,7 +48,6 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 import javax.swing.JComponent
 import kotlin.collections.component1
@@ -81,7 +79,7 @@ internal class ActionUpdater @JvmOverloads constructor(
   @Volatile private var bgtScope: CoroutineScope? = null
   private val application: Application = com.intellij.util.application
   private val project = CommonDataKeys.PROJECT.getData(dataContext)
-  private val userDataHolder = UserDataHolderBase()
+  private val sessionData = ConcurrentHashMap<Pair<String, Any?>, Deferred<*>>()
   private val updatedPresentations = ConcurrentHashMap<AnAction, Presentation>()
   private val groupChildren = ConcurrentHashMap<ActionGroup, List<AnAction>>()
   private val realUpdateStrategy = UpdateStrategy(
@@ -106,10 +104,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     else Registry.intValue("actionSystem.update.actions.async.test.delay", 0)
   private val threadDumpService = ThreadDumpService.getInstance()
 
-  private val preCacheSlowDataKeys: AtomicReference<Deferred<Unit>>? =
-    if (Utils.isAsyncDataContext(dataContext) &&
-        !Registry.`is`("actionSystem.update.actions.suppress.dataRules.on.edt")) AtomicReference()
-    else null
+  private val preCacheSlowDataKeys = !Registry.`is`("actionSystem.update.actions.suppress.dataRules.on.edt")
 
   private var edtCallsCount: Int = 0 // used only in EDT
   private var edtWaitNanos: Long = 0 // used only in EDT
@@ -306,35 +301,27 @@ internal class ActionUpdater @JvmOverloads constructor(
   }
 
   private suspend fun ensureSlowDataKeysPreCached(action: Any, targetOperationName: String) {
-    if (preCacheSlowDataKeys == null) return
-    val deferred = preCacheSlowDataKeys.get() ?: CompletableDeferred<Unit>().let { cur ->
-      val existing = preCacheSlowDataKeys.compareAndExchange(null, cur)
-      if (existing != null) return@let existing
-      cur.completeWith(runCatching {
-        readActionUndispatched {
-          precacheSlowDataKeys(action, targetOperationName)
-        }
-      })
-      cur
-    }
-    deferred.await()
+    if (!preCacheSlowDataKeys) return
+    getSessionDataDeferred(Pair("precache-slow-data@$targetOperationName", null)) {
+      readActionUndispatched {
+        precacheSlowDataKeys(action, targetOperationName)
+      }
+    }.await()
   }
 
   private fun precacheSlowDataKeys(action: Any, targetOperationName: String) {
     val operationName = "precache-slow-data@$targetOperationName"
     val start = System.nanoTime()
     try {
-      runWithSpan(Utils.getTracer(true), operationName) { span: Span ->
-        for (key in DataKey.allKeys()) {
-          try {
-            dataContext.getData(key)
-          }
-          catch (ex: ProcessCanceledException) {
-            throw ex
-          }
-          catch (ex: Throwable) {
-            LOG.error(ex)
-          }
+      for (key in DataKey.allKeys()) {
+        try {
+          dataContext.getData(key)
+        }
+        catch (ex: ProcessCanceledException) {
+          throw ex
+        }
+        catch (ex: Throwable) {
+          LOG.error(ex)
         }
       }
     }
@@ -508,10 +495,12 @@ internal class ActionUpdater @JvmOverloads constructor(
     val tree: suspend (AnAction) -> List<AnAction>? = tree@ { o ->
       if (o === group) return@tree null
       if (isDumb && !o.isDumbAware()) return@tree null
+      // in all clients the next call is `update`
+      // let's update both actions and groups
+      val presentation = update(o, strategy)
       if (o !is ActionGroup) {
         return@tree null
       }
-      val presentation = update(o, strategy)
       if (presentation == null ||
           !presentation.isVisible ||
           presentation.isPopupGroup ||
@@ -538,6 +527,10 @@ internal class ActionUpdater @JvmOverloads constructor(
       .filter { !isDumb || it.isDumbAware()  }
   }
 
+  suspend fun presentation(action: AnAction): Presentation {
+    return update(action, realUpdateStrategy) ?: initialBgtPresentation(action)
+  }
+
   private suspend fun update(action: AnAction, strategy: UpdateStrategy): Presentation? {
     val cached = updatedPresentations[action]
     if (cached != null) {
@@ -556,28 +549,32 @@ internal class ActionUpdater @JvmOverloads constructor(
     return null
   }
 
+  @Suppress("UNCHECKED_CAST")
+  fun <T : Any?> getSessionDataDeferred(key: Pair<String, Any?>, supplier: suspend () -> T): Deferred<T> {
+    sessionData[key]?.let { return it as Deferred<T> }
+    val result = CompletableDeferred<T>()
+    sessionData.putIfAbsent(key, result)?.let { return it as Deferred<T> }
+    bgtScope?.async(Context.current().asContextElement()) {
+      runWithSpan(Utils.getTracer(true), "${key.first}@$place") {
+        result.completeWith(runCatching {
+          supplier()
+        })
+      }
+    } ?: result.completeWith(runCatching {
+      runBlockingForActionExpand {
+        supplier()
+      }
+    })
+    return result
+  }
+
   @OptIn(ExperimentalCoroutinesApi::class)
-  fun <T> computeSharedData(key: Key<T>, supplier: Supplier<out T>): T {
-    @Suppress("UNCHECKED_CAST")
-    key as Key<Deferred<T>> // reuse the key, ignore the generics
-    val deferred = userDataHolder.getUserData(key) ?: CompletableDeferred<T>().let { cur ->
-      val existing = userDataHolder.putUserDataIfAbsent(key, cur)
-      if (existing != cur) return@let existing
-      bgtScope?.async(Context.current().asContextElement()) {
-        runWithSpan(Utils.getTracer(true), "Key($key)#sharedData@$place") {
-          cur.completeWith(runCatching {
-            readActionUndispatched {
-              supplier.get()
-            }
-          })
-        }
-      } ?: cur.completeWith(runCatching { supplier.get() }) // GotoAction
-      cur
-    }
+  fun <T: Any?> computeSessionDataOrThrow(key: Pair<String, Any?>, supplier: suspend () -> T): T {
+    val deferred = getSessionDataDeferred(key, supplier)
     if (deferred.isCompleted) {
       return deferred.getCompleted()
     }
-    throw AwaitSharedData(deferred)
+    throw AwaitSharedData(deferred, key.first)
   }
 
   companion object {
@@ -598,21 +595,27 @@ internal class ActionUpdater @JvmOverloads constructor(
   }
 
   private class UpdateSessionImpl(val updater: ActionUpdater, val strategy: UpdateStrategy) : UpdateSession {
-    override fun expandedChildren(actionGroup: ActionGroup): Iterable<AnAction> = runBlockingForActionExpand {
-      updater.iterateGroupChildren(actionGroup, strategy).toCollection(ArrayList())
-    }
+    override fun expandedChildren(actionGroup: ActionGroup): Iterable<AnAction> =
+      updater.computeSessionDataOrThrow(Pair("expandedChildren", actionGroup)) {
+        updater.iterateGroupChildren(actionGroup, strategy).toCollection(ArrayList())
+      }
 
-    override fun children(actionGroup: ActionGroup): List<AnAction> = runBlockingForActionExpand {
-      updater.getGroupChildren(actionGroup, strategy)
-    }
+    override fun children(actionGroup: ActionGroup): List<AnAction> =
+      updater.groupChildren[actionGroup] ?: updater.computeSessionDataOrThrow(Pair("children", actionGroup)) {
+        updater.getGroupChildren(actionGroup, strategy)
+      }
 
-    override fun presentation(action: AnAction): Presentation = runBlockingForActionExpand {
-      updater.update(action, strategy) ?: updater.initialBgtPresentation(action)
-    }
+    override fun presentation(action: AnAction): Presentation =
+      updater.updatedPresentations[action] ?: updater.computeSessionDataOrThrow(Pair("presentation", action)) {
+        updater.update(action, strategy) ?: updater.initialBgtPresentation(action)
+      }
 
-    override fun <T : Any> sharedData(key: Key<T>, supplier: Supplier<out T>): T {
-      return updater.computeSharedData(key, supplier)
-    }
+    override fun <T : Any> sharedData(key: Key<T>, supplier: Supplier<out T>): T =
+      updater.computeSessionDataOrThrow(Pair(key.toString(), key)) {
+        readActionUndispatched {
+          supplier.get()
+        }
+      }
 
     override fun <T> compute(action: Any,
                              operationName: String,
@@ -714,7 +717,9 @@ private suspend inline fun <R> retryOnAwaitSharedData(block: suspend () -> R): R
   }
 }
 
-private class AwaitSharedData(val job: Job): RuntimeException()
+private class AwaitSharedData(val job: Job, val key: String): RuntimeException(key) {
+  override fun fillInStackTrace(): Throwable = this
+}
 
 private class ForcedActionUpdateThreadElement(val updateThread: ActionUpdateThread)
   : AbstractCoroutineContextElement(ForcedActionUpdateThreadElement) {

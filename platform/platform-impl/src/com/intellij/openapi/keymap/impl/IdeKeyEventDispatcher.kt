@@ -63,8 +63,6 @@ import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Function
 import javax.swing.*
 import javax.swing.plaf.basic.ComboPopup
 import javax.swing.text.JTextComponent
@@ -136,7 +134,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     fun isModalContext(component: Component): Boolean = isModalContextOrNull(component) ?: true
 
     /**
-     * Check whether the `component` represents a modal context.
+     * Check whether the `component` represents a modal context.https://jetbrains.team/blog/OpenTelemetry_in_IntelliJ%3A_Technical_Guide
      * @return `null` if it's impossible to deduce.
      */
     @ApiStatus.Internal
@@ -524,19 +522,22 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       return false
     }
     val contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context)
-    val wrappedContext = Utils.wrapDataContext(context)
+    val wrappedContext = Utils.createAsyncDataContext(context)
     val project = CommonDataKeys.PROJECT.getData(wrappedContext)
     val dumb = project != null && DumbService.getInstance(project).isDumb
-    fireBeforeShortcutTriggered(shortcut = shortcut, actions = actions, context = context)
     val wouldBeEnabledIfNotDumb = ContainerUtil.createLockFreeCopyOnWriteList<AnAction>()
 
-    val chosenPair = Utils.runWithInputEventEdtDispatcher(contextComponent) {
-      val events = ConcurrentHashMap<Presentation, AnActionEvent>()
+    fireBeforeShortcutTriggered(shortcut, actions, context)
+
+    val (chosen, doPerform) = Utils.runWithInputEventEdtDispatcher(contextComponent) block@ {
       val chosen = Utils.runUpdateSessionForInputEvent(
-        actions, e, wrappedContext, place, processor, presentationFactory,
-        { event -> events.put(event.presentation, event) }) { session, adjusted ->
-        doUpdateActionsInner(session, adjusted, dumb, wouldBeEnabledIfNotDumb) { key -> events.get(key) }
-      } ?: return@runWithInputEventEdtDispatcher null
+        actions, e, wrappedContext, place,
+        processor, presentationFactory) { rearranged, updater, events ->
+        doUpdateActionsInner(rearranged, updater, events, dumb, wouldBeEnabledIfNotDumb)
+      }
+      if (chosen == null) {
+        return@block null
+      }
       if (!this@IdeKeyEventDispatcher.context.secondStrokeActions.contains(chosen.action)) {
         if (!ActionUtil.lastUpdateAndCheckDumb(chosen.action, chosen.event, false)) {
           LOG.warn("Action '${chosen.event.presentation.text}' (${chosen.action.javaClass}) has become disabled" +
@@ -544,41 +545,36 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
           logTimeMillis(chosen.startedAt, chosen.action)
         }
         else {
-          return@runWithInputEventEdtDispatcher Pair(chosen, true)
+          return@block Pair(chosen, true)
         }
       }
       Pair(chosen, false)
-    }
-    val chosen = chosenPair?.first
-    val doPerform = chosen != null && chosenPair.second
+    } ?: Pair(null, false)
     val hasSecondStroke = chosen != null && this.context.secondStrokeActions.contains(chosen.action)
     if (e.id == KeyEvent.KEY_PRESSED && !hasSecondStroke && (chosen != null || !wouldBeEnabledIfNotDumb.isEmpty())) {
       ignoreNextKeyTypedEvent = true
     }
 
-    if (doPerform) {
-      chosen!!
+    if (doPerform && chosen != null) {
       doPerformActionInner(e, processor, context, chosen.action, chosen.event)
       logTimeMillis(chosen.startedAt, chosen.action)
     }
-    else if (hasSecondStroke) {
-      chosen!!
+    else if (hasSecondStroke && chosen != null) {
       waitSecondStroke(chosen.action, chosen.event.presentation)
     }
     else if (!wouldBeEnabledIfNotDumb.isEmpty()) {
       val actionManager = ActionManager.getInstance()
       showDumbModeBalloonLater(project = project,
                                message = getActionUnavailableMessage(wouldBeEnabledIfNotDumb),
-                               retryRunnable = {
-                                 // invokeLater to make sure correct dataContext is taken from focus
-                                 ApplicationManager.getApplication().invokeLater {
-                                   DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
-                                     processAction(e, place, dataContext, actions, processor, presentationFactory, shortcut)
-                                   }
-                                 }
-                               },
                                expired = { e.isConsumed },
-                               actionIds = actions.mapNotNull { action -> actionManager.getId(action) })
+                               actionIds = actions.mapNotNull { action -> actionManager.getId(action) }) {
+        // invokeLater to make sure correct dataContext is taken from focus
+        ApplicationManager.getApplication().invokeLater {
+          DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
+            processAction(e, place, dataContext, actions, processor, presentationFactory, shortcut)
+          }
+        }
+      }
     }
     return chosen != null
   }
@@ -795,14 +791,14 @@ private fun hasMnemonicInBalloons(container: Container?, code: Int): Boolean {
 
 private data class UpdateResult(val action: AnAction, val event: AnActionEvent, val startedAt: Long)
 
-private fun doUpdateActionsInner(session: UpdateSession,
-                                 actions: List<AnAction>,
-                                 dumb: Boolean,
-                                 wouldBeEnabledIfNotDumb: MutableList<in AnAction>,
-                                 events: Function<in Presentation, out AnActionEvent?>): UpdateResult? {
+private suspend fun doUpdateActionsInner(actions: List<AnAction>,
+                                         updater: suspend (AnAction) -> Presentation,
+                                         events: Map<Presentation, AnActionEvent>,
+                                         dumb: Boolean,
+                                         wouldBeEnabledIfNotDumb: MutableList<in AnAction>): UpdateResult? {
   for (action in actions) {
     val startedAt = System.currentTimeMillis()
-    val presentation = session.presentation(action)
+    val presentation = updater(action)
     if (dumb && !action.isDumbAware) {
       if (presentation.getClientProperty(ActionUtil.WOULD_BE_ENABLED_IF_NOT_DUMB_MODE) != false) {
         wouldBeEnabledIfNotDumb.add(action)
@@ -811,7 +807,7 @@ private fun doUpdateActionsInner(session: UpdateSession,
       continue
     }
 
-    val event = events.apply(presentation)
+    val event = events[presentation]
     if (event == null || !presentation.isEnabled) {
       logTimeMillis(startedAt, action)
       continue
@@ -841,9 +837,9 @@ private fun doPerformActionInner(e: InputEvent,
 
 private fun showDumbModeBalloonLater(project: Project?,
                                      message: @Nls String,
-                                     retryRunnable: Runnable,
                                      expired: Condition<Any?>,
-                                     actionIds: List<String>) {
+                                     actionIds: List<String>,
+                                     retryRunnable: Runnable) {
   if (project == null || expired.value(null)) {
     return
   }
