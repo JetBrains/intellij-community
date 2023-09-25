@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.intellij.images.vfs.IfsUtil
 
-@Service(Service.Level.APP)
+@Service(Service.Level.PROJECT)
 internal class ImageFileService(
   private val coroutineScope: CoroutineScope,
 ) {
