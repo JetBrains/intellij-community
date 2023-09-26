@@ -76,7 +76,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
         continue
       }
 
-      var file: Path? = if (os == OsFamily.LINUX || signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {
+      var file: Path? = if (os == OsFamily.LINUX || fileName == "icudtl.dat" || signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {
         null
       }
       else {
@@ -101,7 +101,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
           }
         }
 
-        if (os != OsFamily.LINUX) {
+        if (os != OsFamily.LINUX && fileName != "icudtl.dat") {
           unsignedFiles.computeIfAbsent(os) { mutableListOf() }.add(file)
         }
       }

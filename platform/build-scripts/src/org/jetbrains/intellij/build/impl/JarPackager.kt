@@ -680,7 +680,10 @@ private suspend fun buildJars(descriptors: Collection<JarDescriptor>,
 
               // we allow to use .so for macOS binraries (binaries/macos/libasyncProfiler.so), but removing obvious linux binaries
               // (binaries/linux-aarch64/libasyncProfiler.so) to avoid detecting by binary content
-              if (name.endsWith(".dll") || name.endsWith(".exe") || name.contains("/linux/") || name.contains("/linux-")) {
+              if (
+                name.endsWith(".dll") || name.endsWith(".exe") || name.contains("/linux/") || name.contains("/linux-") ||
+                name.contains("icudtl.dat")
+              ) {
                 return null
               }
 
