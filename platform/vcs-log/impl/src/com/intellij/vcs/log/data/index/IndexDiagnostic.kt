@@ -21,7 +21,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 
 internal object IndexDiagnostic {
-  private const val FILTERED_PATHS_LIMIT = 1000
+  private const val FILTERED_PATHS_LIMIT = 15
   private const val COMMITS_TO_CHECK = 10
   private const val INDEXED_COMMITS_ITERATIONS_LIMIT = 5_000
 
