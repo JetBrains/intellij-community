@@ -45,9 +45,9 @@ class VfsLogCompactionController(
   }
 
   private val compactionModelDir get() = storagePath / "model"
-  private val atomicState: AtomicDurableRecord<ControllerState> = AtomicDurableRecord.open(storagePath / "state",
-                                                                                           if (readOnly) OpenMode.Read else OpenMode.ReadWrite,
-                                                                                           stateBuilder(defaultOperationMode))
+  private val atomicState: AtomicDurableRecord<ControllerMode> = AtomicDurableRecord.open(storagePath / "state",
+                                                                                          if (readOnly) OpenMode.Read else OpenMode.ReadWrite,
+                                                                                          stateBuilder(defaultOperationMode))
 
   @Volatile
   private var scheduledCompaction: ScheduledFuture<*>? = null
@@ -348,12 +348,12 @@ class VfsLogCompactionController(
       Corrupted
     }
 
-    private interface ControllerState {
+    private interface ControllerMode {
       var operationMode: OperationMode
     }
 
-    private fun stateBuilder(defaultOperationMode: OperationMode): RecordBuilder<ControllerState>.() -> ControllerState = {
-      object : ControllerState { // 32 bytes
+    private fun stateBuilder(defaultOperationMode: OperationMode): RecordBuilder<ControllerMode>.() -> ControllerMode = {
+      object : ControllerMode { // 32 bytes
         override var operationMode: OperationMode by custom(4, defaultOperationMode,
                                                             serialize = { it.putInt(this.ordinal) },
                                                             deserialize = { OperationMode.entries[it.getInt()] })
