@@ -50,8 +50,9 @@ fun getIdeSystemProperties(runDir: Path): Map<String, String> {
       "jna.nosys" to "true",
       "jna.noclasspath" to "true",
       "jb.vmOptionsFile" to "${runDir.parent.listDirectoryEntries(glob = "*.vmoptions").singleOrNull()}",
-      "skiko.library.path" to "$libDir/skiko-awt-runtime-all",
-    ))
+    "skiko.library.path" to "$libDir/skiko-awt-runtime-all",
+    "compose.swing.render.on.graphics" to "true",
+  ))
 }
 
 /** Returns IDE installation directory */
