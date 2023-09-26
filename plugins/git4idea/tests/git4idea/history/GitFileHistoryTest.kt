@@ -56,7 +56,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     commits.reverse()
 
     updateChangeListManager()
-    val history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(commits.first().file))
+    val history = collectFileHistory(commits.first().file)
     assertSameHistory(commits, history)
   }
 
@@ -75,7 +75,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
 
     commits.reverse()
 
-    val history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(commits.first().file))
+    val history = collectFileHistory(commits.first().file)
     assertSameHistory(commits, history)
   }
 
@@ -95,7 +95,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     commits.reverse()
 
     val history = ArrayList<GitFileRevision>()
-    GitFileHistory.loadHistory(myProject, VcsUtil.getFilePath(commits.first().file), null, CollectConsumer(history),
+    GitFileHistory.loadHistory(myProject, VcsUtil.getFilePath(commits.first().file, false), null, CollectConsumer(history),
                                { exception: VcsException ->
                                  TestCase.fail("No exception expected " + ExceptionUtil.getThrowableText(exception))
                                })
@@ -122,7 +122,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     commits.add(rename(commits.last().file, File(mkdir("dir"), "b.txt")))
     commits.reverse()
 
-    val history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(commits.first().file))
+    val history = collectFileHistory(commits.first().file)
     assertSameHistory(commits, history)
   }
 
@@ -148,7 +148,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     commits.add(commit(file, "merge commit"))
     commits.reverse()
 
-    val history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(commits.first().file))
+    val history = collectFileHistory(commits.first().file)
     assertSameHistory(commits, history)
   }
 
@@ -170,7 +170,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
 
     commits.reverse()
 
-    val history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(file))
+    val history = collectFileHistory(file)
     assertSameHistory(commits, history)
   }
 
@@ -196,7 +196,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
 
     commits.reverse()
 
-    val history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(file))
+    val history = collectFileHistory(file)
     assertSameHistory(commits, history)
   }
 
@@ -227,8 +227,12 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     repo1Commits.add(TestCommit(monorepoMerge, monorepoMergeMessage, repo1MovedFile))
     repo2Commits.add(TestCommit(monorepoMerge, monorepoMergeMessage, repo2MovedFile))
 
-    assertSameHistory(repo1Commits.asReversed(), GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(repo1MovedFile)))
-    assertSameHistory(repo2Commits.asReversed(), GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(repo2MovedFile)))
+    assertSameHistory(repo1Commits.asReversed(), collectFileHistory(repo1MovedFile))
+    assertSameHistory(repo2Commits.asReversed(), collectFileHistory(repo2MovedFile))
+  }
+
+  private fun collectFileHistory(file: File): List<VcsFileRevision> {
+    return GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(file, false))
   }
 
   private fun assertSameHistory(expected: List<TestCommit>, actual: List<VcsFileRevision>) {
