@@ -25,7 +25,7 @@ public final class DvcsBranchUtil {
   private static boolean repoAndSourceAreEqual(@Nullable Repository repository,
                                                @NotNull String sourceBranch,
                                                @NotNull DvcsBranchInfo targetInfo) {
-    return getPathFor(repository).equals(targetInfo.repoPath) && StringUtil.equals(targetInfo.sourceName, sourceBranch);
+    return StringUtil.equals(targetInfo.sourceName, sourceBranch) && getPathFor(repository).equals(targetInfo.repoPath);
   }
 
   @NotNull

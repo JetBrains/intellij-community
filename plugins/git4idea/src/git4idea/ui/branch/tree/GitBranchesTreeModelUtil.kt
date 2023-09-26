@@ -3,7 +3,6 @@ package git4idea.ui.branch.tree
 
 import com.intellij.dvcs.branch.BranchType
 import com.intellij.dvcs.getCommonCurrentBranch
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.codeStyle.MinusculeMatcher
@@ -15,7 +14,6 @@ import git4idea.GitLocalBranch
 import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.GitBranchManager
 import javax.swing.tree.TreePath
 
 private typealias PathAndBranch = Pair<List<String>, GitBranch>
@@ -29,25 +27,34 @@ internal val GitRepository.recentCheckoutBranches
 
 internal val emptyBranchComparator = Comparator<GitBranch> { _, _ -> 0 }
 
-private fun getBranchComparator(repositories: List<GitRepository>, isPrefixGrouping: () -> Boolean) = compareBy<GitBranch> {
-  it.isNotCurrentBranch(repositories)
-} then compareBy {
-  it.isNotFavorite(repositories)
-} then compareBy {
-  !(isPrefixGrouping() && it.name.contains('/'))
-} then compareBy { it.name }
+private fun getBranchComparator(repositories: List<GitRepository>,
+                                favoriteBranches: Map<GitRepository, Collection<String>>,
+                                isPrefixGrouping: () -> Boolean): Comparator<GitBranch> {
+  return compareBy<GitBranch> {
+    it.isNotCurrentBranch(repositories)
+  } then compareBy {
+    it.isNotFavorite(favoriteBranches, repositories)
+  } then compareBy {
+    !(isPrefixGrouping() && it.name.contains('/'))
+  } then compareBy { it.name }
+}
 
-internal fun getSubTreeComparator(repositories: List<GitRepository>) = compareBy<Any> {
-  it is GitBranch && it.isNotCurrentBranch(repositories) && it.isNotFavorite(repositories)
-} then compareBy {
-  it is GitBranchesTreeModel.BranchesPrefixGroup
+internal fun getSubTreeComparator(favoriteBranches: Map<GitRepository, Collection<String>>,
+                                  repositories: List<GitRepository>): Comparator<Any> {
+  return compareBy<Any> {
+    it is GitBranch && it.isNotCurrentBranch(repositories) && it.isNotFavorite(favoriteBranches, repositories)
+  } then compareBy {
+    it is GitBranchesTreeModel.BranchesPrefixGroup
+  }
 }
 
 private fun GitBranch.isNotCurrentBranch(repositories: List<GitRepository>) =
   !repositories.any { repo -> repo.currentBranch == this }
 
-private fun GitBranch.isNotFavorite(repositories: List<GitRepository>) =
-  !repositories.all { repo -> repo.project.service<GitBranchManager>().isFavorite(GitBranchType.of(this), repo, name) }
+private fun GitBranch.isNotFavorite(favoriteBranches: Map<GitRepository, Collection<String>>,
+                                    repositories: List<GitRepository>): Boolean {
+  return repositories.any { repo -> !favoriteBranches[repo]!!.contains(this.name) }
+}
 
 internal fun buildBranchTreeNodes(branchType: BranchType,
                                   branchesMap: Map<String, Any>,
@@ -168,12 +175,15 @@ internal fun getLocalAndRemoteTopLevelNodes(localBranchesTree: LazyBranchesSubtr
 }
 
 internal class LazyBranchesSubtreeHolder(
-  unsortedBranches: Collection<GitBranch>,
   repositories: List<GitRepository>,
+  unsortedBranches: Collection<GitBranch>,
+  favoriteBranches: Map<GitRepository, Collection<String>>,
   private val matcher: MinusculeMatcher?,
   private val isPrefixGrouping: () -> Boolean,
   private val exceptBranchFilter: (GitBranch) -> Boolean = { false },
-  private val branchComparatorGetter: () -> Comparator<GitBranch> = { getBranchComparator(repositories, isPrefixGrouping) }
+  private val branchComparatorGetter: () -> Comparator<GitBranch> = {
+    getBranchComparator(repositories, favoriteBranches, isPrefixGrouping)
+  }
 ) {
 
   private val initiallyEmpty = unsortedBranches.isEmpty()
