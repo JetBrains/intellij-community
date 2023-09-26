@@ -117,6 +117,8 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   private static int ourShowPopupGroupingTime = 300;
   private static int ourShowPopupAfterFirstItemGroupingTime = 100;
 
+  private static int ourMinDelayTime = 10;
+
   private volatile int myCount;
   private volatile boolean myHasPsiElements;
   private boolean myLookupUpdated;
@@ -128,6 +130,10 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   private final Object myLock = ObjectUtils.sentinel("CompletionProgressIndicator");
 
   private final EmptyCompletionNotifier myEmptyCompletionNotifier;
+
+  // Unfreeze immediately after N-th item is added to the lookup.
+  // -1 means this functionality is disabled.
+  private int myUnfreezeAfterNItems = -1;
 
   CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount,
                               CodeCompletionHandlerBase handler, @NotNull OffsetMap offsetMap, @NotNull OffsetsInFile hostOffsets,
@@ -469,11 +475,21 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     //noinspection NonAtomicOperationOnVolatileField
     myCount++; // invoked from a single thread
 
-    if (myCount == 1) {
+    if (myCount == myUnfreezeAfterNItems) {
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(myFreezeSemaphore::up, ourMinDelayTime, TimeUnit.MILLISECONDS);
+    }
+    else if (myCount == 1) {
       AppExecutorUtil.getAppScheduledExecutorService().schedule(myFreezeSemaphore::up, ourInsertSingleItemTimeSpan, TimeUnit.MILLISECONDS);
     }
     myQueue.queue(myUpdate);
   }
+
+  // In certain cases we add the first batch of items almost at once and want to show lookup directly after they are added.
+  // Example: ClangdCodeCompletionProviderBase receives first 100 items at once and adds them all together.
+  public void unfreezeImmediatelyAfterFirstNItems(int number) {
+    myUnfreezeAfterNItems = number;
+  }
+
 
   void addDelayedMiddleMatches() {
     ArrayList<CompletionResult> delayed;
