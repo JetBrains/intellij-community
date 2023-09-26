@@ -124,6 +124,21 @@ object EventFields {
   @JvmStatic
   fun BoundedInt(@NonNls name: String, bounds: IntArray): PrimitiveEventField<Int> = BoundedIntEventField(name, bounds)
 
+  /**
+   * Reports values from range and lower or upper bound of range if reported value is out of range.
+   * Use it to anonymize sensitive information by avoiding report of extreme values.
+   *
+   * @param range non-empty range of possible values not bigger than 500 elements
+   * @throws InvalidParameterException if range parameter is empty or contains more than 500 values
+  * */
+  fun LimitedInt(@NonNls name: String, range: IntRange): PrimitiveEventField<Int> = LimitedIntEventField(name, range)
+
+  /**
+   * Rounds values in logarithmic scale.
+   * Use it to anonymize sensitive information like the number of files in a project.
+   * */
+  fun LogarithmicInt(@NonNls name: String): PrimitiveEventField<Int> = LogarithmicIntEventField(name)
+
   @JvmStatic
   fun Long(@NonNls name: String): LongEventField = LongEventField(name)
 
@@ -146,6 +161,12 @@ object EventFields {
    */
   @JvmStatic
   fun BoundedLong(@NonNls name: String, bounds: LongArray): PrimitiveEventField<Long> = BoundedLongEventField(name, bounds)
+
+  /**
+   * Rounds values in logarithmic scale.
+   * Use it to anonymize sensitive information like the number of files in a project.
+   * */
+  fun LogarithmicLong(@NonNls name: String): PrimitiveEventField<Long> = LogarithmicLongEventField(name)
 
   @JvmStatic
   fun Float(@NonNls name: String): FloatEventField = FloatEventField(name)

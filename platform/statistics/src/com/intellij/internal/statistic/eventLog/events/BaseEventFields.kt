@@ -4,12 +4,15 @@ package com.intellij.internal.statistic.eventLog.events
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.utils.StatisticsUtil
+import com.intellij.internal.statistic.utils.StatisticsUtil.roundLogarithmic
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import java.security.InvalidParameterException
 import kotlin.reflect.KProperty
+
+// region Base low level fields
 
 sealed class EventField<T> {
   abstract val name: String
@@ -30,6 +33,8 @@ abstract class ListEventField<T> : EventField<List<T>>() {
 data class EventPair<T>(val field: EventField<T>, val data: T) {
   fun addData(featureUsageData: FeatureUsageData): Unit = field.addData(featureUsageData, data)
 }
+
+// endregion Base low level fields
 
 abstract class StringEventField(override val name: String) : PrimitiveEventField<String?>() {
   override fun addData(fuData: FeatureUsageData, value: String?) {
@@ -74,6 +79,10 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
       get() = listOf("{regexp:$regexp}")
   }
 }
+
+// region Numeric fields
+
+// region Int fields
 
 data class IntEventField(override val name: String) : PrimitiveEventField<Int>() {
   override val validationRule: List<String>
@@ -120,6 +129,37 @@ internal data class BoundedIntEventField(override val name: String, val bounds: 
   }
 }
 
+/**
+ * @throws InvalidParameterException if range parameter is empty or contains more than 500 values
+ * */
+internal data class LimitedIntEventField(override val name: String, val range: IntRange) : PrimitiveEventField<Int>() {
+  init {
+    if (range.isEmpty()) throw InvalidParameterException("Range should not be empty")
+    if (range.last - range.first - 1 > 500) throw InvalidParameterException("Range should not contain more than 500 elements")
+  }
+
+  override val validationRule: List<String>
+    get() = listOf("{regexp#integer}")
+
+  override fun addData(fuData: FeatureUsageData, value: Int) {
+    val boundedValue = value.coerceIn(range.first, range.last)
+    fuData.addData(name, boundedValue)
+  }
+}
+
+internal data class LogarithmicIntEventField(override val name: String) : PrimitiveEventField<Int>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp#integer}")
+
+  override fun addData(fuData: FeatureUsageData, value: Int) {
+    fuData.addData(name, value.roundLogarithmic())
+  }
+}
+
+// endregion Int fields
+
+// region Long fields
+
 data class LongEventField(override val name: String) : PrimitiveEventField<Long>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
@@ -156,6 +196,17 @@ internal data class BoundedLongEventField(override val name: String, val bounds:
   }
 }
 
+internal data class LogarithmicLongEventField(override val name: String) : PrimitiveEventField<Long>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp#integer}")
+
+  override fun addData(fuData: FeatureUsageData, value: Long) {
+    fuData.addData(name, value.roundLogarithmic())
+  }
+}
+
+// endregion Long fields
+
 data class FloatEventField(override val name: String) : PrimitiveEventField<Float>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#float}")
@@ -173,6 +224,8 @@ data class DoubleEventField(override val name: String) : PrimitiveEventField<Dou
     fuData.addData(name, value)
   }
 }
+
+// endregion Numeric fields
 
 data class BooleanEventField(override val name: String) : PrimitiveEventField<Boolean>() {
   override val validationRule: List<String>

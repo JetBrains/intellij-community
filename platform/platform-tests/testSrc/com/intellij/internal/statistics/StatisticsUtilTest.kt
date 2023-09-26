@@ -6,11 +6,13 @@ import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.StatisticsUtil.getCurrentHourInUTC
 import com.intellij.internal.statistic.utils.StatisticsUtil.getTimestampDateInUTC
+import com.intellij.internal.statistic.utils.StatisticsUtil.roundLogarithmicTest
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundToHighestDigit
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundToUpperBoundInternalTest
 import com.intellij.testFramework.LightPlatformTestCase
 import junit.framework.TestCase
+import org.assertj.core.api.Assertions
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -341,5 +343,46 @@ class StatisticsUtilTest : LightPlatformTestCase() {
   private fun assertRoundedValue(raw: Int, expected: Long) {
     val rounded = StatisticsUtil.roundDuration(raw.toLong())
     assertEquals("Failed rounding for '$raw'", expected, rounded)
+  }
+
+  @Test
+  fun roundLogarithmic_exact() {
+    1.roundLogarithmicTest() mustBe 1
+    2.roundLogarithmicTest() mustBe 2
+    5.roundLogarithmicTest() mustBe 5
+    1_000.roundLogarithmicTest() mustBe 1_000
+    2_000_000_000.roundLogarithmicTest() mustBe 2_000_000_000
+  }
+
+  @Test
+  fun roundLogarithmic_rounded() {
+    4.roundLogarithmicTest() mustBe 5
+    101.roundLogarithmicTest() mustBe 100
+    123_456_789.roundLogarithmicTest() mustBe 100_000_000
+    2_000_000_000.roundLogarithmicTest() mustBe 2_000_000_000
+  }
+
+  @Test
+  fun roundLogarithmic_zero() {
+    0.roundLogarithmicTest() mustBe 0
+  }
+
+  @Test
+  fun roundLogarithmic_negative() {
+    (-1).roundLogarithmicTest() mustBe -1
+    Int.MIN_VALUE.roundLogarithmicTest() mustBe -2_000_000_000
+  }
+
+  @Test
+  fun roundLogarithmic_huge() {
+    2_000_000_001.roundLogarithmicTest() mustBe 2_000_000_000
+    Int.MAX_VALUE.roundLogarithmicTest() mustBe 2_000_000_000
+  }
+
+  private infix fun <S> S?.mustBe(expected: S): S {
+    Assertions.assertThat(this).isNotNull()
+    this!!
+    Assertions.assertThat(this).isEqualTo(expected)
+    return this
   }
 }

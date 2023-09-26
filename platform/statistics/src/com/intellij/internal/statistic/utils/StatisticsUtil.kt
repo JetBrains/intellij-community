@@ -6,9 +6,7 @@ import org.jetbrains.annotations.TestOnly
 import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.util.*
-import kotlin.math.abs
-import kotlin.math.roundToInt
-import kotlin.math.roundToLong
+import kotlin.math.*
 
 object StatisticsUtil {
   private const val kilo = 1000
@@ -245,5 +243,43 @@ object StatisticsUtil {
       return (durationMs / 100) * 100
     }
     return if (durationMs >= 50) 50 else 0
+  }
+
+  internal fun Int.roundLogarithmic() = decomposed10 { s, m, base ->
+    s * m.roundMantis().toInt() * base.roundToInt()
+  }
+
+  @TestOnly
+  fun Int.roundLogarithmicTest() = roundLogarithmic()
+
+  internal fun Long.roundLogarithmic() = decomposed10 { s, m, base ->
+    s * m.roundMantis().toLong() * base.roundToLong()
+  }
+
+  @TestOnly
+  fun Long.roundLogarithmicTest() = roundLogarithmic()
+
+  private val roundValues: Array<Double> = arrayOf(1.0, 2.0, 5.0, 10.0)
+
+  private fun Double.roundMantis(): Double {
+    var prev = 0.0
+    roundValues.forEach {
+      if (this < (it + prev) / 2.0) {
+        return prev
+      }
+      prev = it
+    }
+    return 10.0
+  }
+
+  private inline fun <T> Number.decomposed10(processor: (sign: Int, m: Double, base: Double) -> T): T {
+    val v = toDouble()
+    val lg = v.intLog10()
+    val base = 10.0.pow(lg)
+    return processor(v.sign.toInt(), v.absoluteValue / base, base)
+  }
+
+  private fun Double.intLog10(): Int = absoluteValue.let {
+    if (it < 10) 0 else truncate(log10(it)).toInt()
   }
 }
