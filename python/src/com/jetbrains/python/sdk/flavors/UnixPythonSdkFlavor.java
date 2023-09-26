@@ -21,12 +21,11 @@ import java.util.regex.Pattern;
 
 
 public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
+  private final static String[] NAMES = new String[]{"jython", "pypy"};
   private final static Pattern PYTHON_3_RE = Pattern.compile("(python-?3\\.(\\d){1,2})|(python-?3)");
 
   private UnixPythonSdkFlavor() {
   }
-
-  private final static String[] NAMES = new String[]{"jython", "pypy"};
 
   public static UnixPythonSdkFlavor getInstance() {
     return PythonSdkFlavor.EP_NAME.findExtension(UnixPythonSdkFlavor.class);
