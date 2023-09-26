@@ -41,25 +41,32 @@ public class DataPack extends DataPackBase {
                                         @NotNull Map<VirtualFile, VcsLogProvider> providers,
                                         @NotNull VcsLogStorage storage,
                                         boolean full) {
-    RefsModel refsModel;
+    RefsModel refsModel = new RefsModel(refs, getHeads(commits), storage, providers);
+    PermanentGraph<Integer> permanentGraph = buildPermanentGraph(commits, refsModel, providers, storage);
+
+    return new DataPack(refsModel, permanentGraph, providers, full);
+  }
+
+  protected static @NotNull PermanentGraph<Integer> buildPermanentGraph(@NotNull List<? extends GraphCommit<Integer>> commits,
+                                                                        @NotNull RefsModel refsModel,
+                                                                        @NotNull Map<VirtualFile, VcsLogProvider> providers,
+                                                                        @NotNull VcsLogStorage storage) {
     PermanentGraph<Integer> permanentGraph;
     if (commits.isEmpty()) {
-      refsModel = new RefsModel(refs, new HashSet<>(), storage, providers);
       permanentGraph = EmptyPermanentGraph.getInstance();
     }
     else {
-      refsModel = new RefsModel(refs, getHeads(commits), storage, providers);
       Comparator<Integer> headCommitdComparator = new HeadCommitsComparator(refsModel, getRefManagerMap(providers),
                                                                             VcsLogStorageImpl.createHashGetter(storage));
       Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), storage);
 
       permanentGraph =
         computeWithSpan(TelemetryManager.getInstance().getTracer(VcsScopeKt.VcsScope), LogData.BuildingGraph.getName(), (span) -> {
-        return PermanentGraphImpl.newInstance(commits, new GraphColorManagerImpl(refsModel), headCommitdComparator, branches);
-      });
+          return PermanentGraphImpl.newInstance(commits, new GraphColorManagerImpl(refsModel), headCommitdComparator, branches);
+        });
     }
 
-    return new DataPack(refsModel, permanentGraph, providers, full);
+    return permanentGraph;
   }
 
   private static @NotNull Set<Integer> getHeads(@NotNull List<? extends GraphCommit<Integer>> commits) {
@@ -103,6 +110,24 @@ public class DataPack extends DataPackBase {
   @Override
   public @NonNls String toString() {
     return "{DataPack. " + myPermanentGraph.getAllCommits().size() + " commits in " + myLogProviders.keySet().size() + " roots}";
+  }
+
+  public static class SmallDataPack extends DataPack {
+    private SmallDataPack(@NotNull RefsModel refsModel,
+                  @NotNull PermanentGraph<Integer> permanentGraph,
+                  @NotNull Map<VirtualFile, VcsLogProvider> providers) {
+      super(refsModel, permanentGraph, providers, false);
+    }
+
+    public static @NotNull DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
+                                          @NotNull Map<VirtualFile, CompressedRefs> refs,
+                                          @NotNull Map<VirtualFile, VcsLogProvider> providers,
+                                          @NotNull VcsLogStorage storage) {
+      RefsModel refsModel = new RefsModel(refs, getHeads(commits), storage, providers);
+      PermanentGraph<Integer> permanentGraph = buildPermanentGraph(commits, refsModel, providers, storage);
+
+      return new SmallDataPack(refsModel, permanentGraph, providers);
+    }
   }
 
   public static class ErrorDataPack extends DataPack {

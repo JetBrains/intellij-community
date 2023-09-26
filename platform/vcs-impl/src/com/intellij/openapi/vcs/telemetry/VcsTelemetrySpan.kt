@@ -41,6 +41,14 @@ interface VcsTelemetrySpan {
     },
 
     /**
+     * Partial refresh of the VCS Log.
+     * @see Refreshing
+     */
+    PartialRefreshing {
+      override fun getName() = "vcs-log-partial-refreshing"
+    },
+
+    /**
      * Loading full VCS Log (all commits and references).
      */
     LoadingFullLog {

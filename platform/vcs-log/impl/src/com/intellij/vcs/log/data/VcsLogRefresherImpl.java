@@ -10,12 +10,14 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogData;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.DataPack.SmallDataPack;
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.GraphCommitImpl;
@@ -40,6 +42,8 @@ import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.runWi
 public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogRefresherImpl.class);
 
+  private static final int SMALL_DATA_PACK_COMMITS_COUNT = Registry.intValue("vcs.log.small.data.pack.commits.count");
+
   private final @NotNull Project myProject;
   private final @NotNull VcsLogStorage myStorage;
   private final @NotNull Map<VirtualFile, VcsLogProvider> myProviders;
@@ -55,6 +59,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   private volatile @NotNull DataPack myDataPack = DataPack.EMPTY;
 
   private final @NotNull Tracer myTracer = TelemetryManager.getInstance().getTracer(VcsScope);
+
+  private final @NotNull Consumer<? super DataPack> myDataPackUpdateHandler;
 
   public VcsLogRefresherImpl(@NotNull Project project,
                              @NotNull VcsLogStorage storage,
@@ -73,9 +79,12 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     myTopCommitsDetailsCache = topCommitsDetailsCache;
     myRecentCommitCount = recentCommitsCount;
     myProgress = progress;
+    myDataPackUpdateHandler = dataPackUpdateHandler;
 
     mySingleTaskController = new SingleTaskController<>("permanent", this, dataPack -> {
-      myDataPack = dataPack;
+      if (!(dataPack instanceof SmallDataPack)) {
+        myDataPack = dataPack;
+      }
       dataPackUpdateHandler.accept(dataPack);
     }) {
       @Override
@@ -101,12 +110,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   @Override
   public void readFirstBlock() {
     try {
-      LogInfo data = loadRecentData(new CommitCountRequirements(myRecentCommitCount).asMap(myProviders.keySet()));
-      Collection<List<GraphCommit<Integer>>> commits = data.getCommits();
-      Map<VirtualFile, CompressedRefs> refs = data.getRefs();
-      List<GraphCommit<Integer>> compoundList = multiRepoJoin(commits);
-      compoundList = ContainerUtil.getFirstItems(compoundList, myRecentCommitCount);
-      myDataPack = DataPack.build(compoundList, refs, myProviders, myStorage, false);
+      myDataPack =
+        buildMultiRepoDataPack(new CommitCountRequirements(myRecentCommitCount).asMap(myProviders.keySet()), myRecentCommitCount, false);
       mySingleTaskController.request(RefreshRequest.RELOAD_ALL); // build/rebuild the full log in background
     }
     catch (ProcessCanceledException e) {
@@ -116,6 +121,20 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       LOG.info(e);
       myDataPack = new DataPack.ErrorDataPack(e);
     }
+  }
+
+  @NotNull
+  private DataPack buildMultiRepoDataPack(@NotNull Map<VirtualFile, VcsLogProvider.Requirements> requirements,
+                                          int commitCount, boolean isSmallPack) throws VcsException {
+    LogInfo data = loadRecentData(requirements);
+    Collection<List<GraphCommit<Integer>>> commits = data.getCommits();
+    Map<VirtualFile, CompressedRefs> refs = data.getRefs();
+    List<GraphCommit<Integer>> compoundList = multiRepoJoin(commits);
+    compoundList = ContainerUtil.getFirstItems(compoundList, commitCount);
+
+    return isSmallPack
+           ? SmallDataPack.build(compoundList, refs, myProviders, myStorage)
+           : DataPack.build(compoundList, refs, myProviders, myStorage, false);
   }
 
   private @NotNull LogInfo loadRecentData(final @NotNull Map<VirtualFile, VcsLogProvider.Requirements> requirements) throws VcsException {
@@ -219,6 +238,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       LOG.debug("Refresh task started");
       indicator.setIndeterminate(true);
       DataPack dataPack = myCurrentDataPack;
+      DataPack smallDataPack;
       while (true) {
         List<RefreshRequest> requests = mySingleTaskController.popRequests();
         Collection<VirtualFile> rootsToRefresh = getRootsToRefresh(requests);
@@ -229,6 +249,12 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
         }
 
         try {
+          smallDataPack = buildSmallDataPack();
+
+          if (smallDataPack != DataPack.EMPTY) {
+            myDataPackUpdateHandler.accept(smallDataPack);
+          }
+
           dataPack = doRefresh(rootsToRefresh);
         }
         catch (ProcessCanceledException e) {
@@ -385,6 +411,26 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
         return logInfo;
       });
     }
+
+    private @NotNull DataPack buildSmallDataPack() {
+      return computeWithSpanThrows(myTracer, LogData.PartialRefreshing.getName(), span -> {
+        try {
+          int commitCount = SMALL_DATA_PACK_COMMITS_COUNT;
+          Map<VirtualFile, CompressedRefs> currentRefs = myCurrentDataPack.getRefsModel().getAllRefsByRoot();
+          Map<VirtualFile, VcsLogProvider.Requirements> requirements = prepareRequirements(myProviders.keySet(), commitCount, currentRefs);
+          return buildMultiRepoDataPack(requirements, commitCount, true);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.info(e);
+        }
+
+        return DataPack.EMPTY;
+      });
+    }
+
   }
 
   private static class RefreshRequest {

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
@@ -30,7 +31,7 @@ public final class PostponableLogRefresher {
     myLogData.addDataPackChangeListener(dataPack -> {
       LOG.debug("Refreshing log windows " + myLogWindows);
       for (VcsLogWindow window : myLogWindows) {
-        dataPackArrived(window.getRefresher(), window.isVisible());
+        dataPackArrived(window.getRefresher(), window.isVisible(), dataPack);
       }
     });
   }
@@ -80,8 +81,8 @@ public final class PostponableLogRefresher {
     }
   }
 
-  private static void dataPackArrived(@NotNull VisiblePackRefresher refresher, boolean visible) {
-    refresher.setValid(visible, true);
+  private static void dataPackArrived(@NotNull VisiblePackRefresher refresher, boolean visible, @NotNull DataPack newDataPack) {
+    refresher.setDataPack(visible, newDataPack);
   }
 
   @RequiresEdt
