@@ -69,7 +69,24 @@ val svgLoader = service<SwingBridgeService>().svgLoader
 val painterProvider = retrieveStatelessIcon("icons/bot-toolwindow.svg", svgLoader, iconData)
 ```
 
-### Need help?
+### Swing interoperability
+
+As this is Compose for Desktop, you get a good degree of interoperability with Swing. To avoid glitches and z-order
+issues, you should enable the
+[experimental Swing rendering pipeline](https://blog.jetbrains.com/kotlin/2023/08/compose-multiplatform-1-5-0-release/#enhanced-swing-interop)
+before you initialize Compose content.
+
+The `ToolWindow.addComposeTab()` extension function provided by the `ide-laf-bridge` module will take care of that for
+you, but if you want to also enable it in other scenarios and in standalone applications, you can call the
+`enableNewSwingCompositing()` function in your Compose entry points (that is, right before creating a `ComposePanel`).
+
+> [!NOTE]
+> The new Swing rendering pipeline is experimental and may have performance repercussions when using infinitely
+> repeating animations. This is a known issue by the Compose Multiplatform team, that requires changes in the Java
+> runtime to fix. Once the required changes are made in the JetBrains Runtime, we'll remove this notice.
+
+## Need help?
+
 You can find help on the [`#jewel`](https://app.slack.com/client/T09229ZC6/C05T8U2C31T) channel on the Kotlin Slack.
 If you don't already have access to the Kotlin Slack, you can request it
 [here](https://surveys.jetbrains.com/s3/kotlin-slack-sign-up).
