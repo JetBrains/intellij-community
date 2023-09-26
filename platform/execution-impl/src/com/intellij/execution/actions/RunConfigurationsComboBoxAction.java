@@ -46,6 +46,8 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements.*;
+
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
   private static final String BUTTON_MODE = "ButtonMode";
 
@@ -563,7 +565,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       if (myConfiguration.isTemporary()) {
         String actionName = ExecutionBundle.message("choose.run.popup.save");
         String description = ExecutionBundle.message("choose.run.popup.save.description");
-        addAction(new AnAction(actionName, description, !ExperimentalUI.isNewUI() ? AllIcons.Actions.MenuSaveall : null) {
+        addAction(new ActionWithWriteAccess(actionName, description, !ExperimentalUI.isNewUI() ? AllIcons.Actions.MenuSaveall : null) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             RunManager.getInstance(myProject).makeStable(myConfiguration);
@@ -573,7 +575,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
       String actionName = ExecutionBundle.message("choose.run.popup.delete");
       String description = ExecutionBundle.message("choose.run.popup.delete.description");
-      addAction(new AnAction(actionName, description, !ExperimentalUI.isNewUI() ? AllIcons.Actions.Cancel : null) {
+      addAction(new ActionWithWriteAccess(actionName, description, !ExperimentalUI.isNewUI() ? AllIcons.Actions.Cancel : null) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           ChooseRunConfigurationPopup.deleteConfiguration(myProject, myConfiguration, null);

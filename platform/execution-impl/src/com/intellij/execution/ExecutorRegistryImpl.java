@@ -23,6 +23,7 @@ import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
+import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -298,7 +299,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
   public static final Key<ExecutorActionStatus> EXECUTOR_ACTION_STATUS = Key.create("EXECUTOR_ACTION_STATUS");
 
-  public static class ExecutorAction extends AnAction implements DumbAware, RunWidgetExecutionActionMarker {
+  public static class ExecutorAction extends AnAction implements DumbAware, RunWidgetExecutionActionMarker,
+                                                                 ActionRemotePermissionRequirements.RunAccess {
     private static final Key<RunCurrentFileInfo> CURRENT_FILE_RUN_CONFIGS_KEY = Key.create("CURRENT_FILE_RUN_CONFIGS");
 
     protected final Executor myExecutor;

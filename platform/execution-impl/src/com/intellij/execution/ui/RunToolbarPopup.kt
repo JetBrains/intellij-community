@@ -16,6 +16,7 @@ import com.intellij.ide.dnd.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements
 import com.intellij.openapi.components.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -320,7 +321,7 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
   val wasPinned = pinned.contains(conf)
   val text = if (wasPinned) ExecutionBundle.message("run.toolbar.widget.dropdown.unpin.action.text")
   else ExecutionBundle.message("run.toolbar.widget.dropdown.pin.action.text")
-  result.addAction(object : AnAction(text) {
+  result.addAction(object : ActionRemotePermissionRequirements.ActionWithWriteAccess(text) {
     override fun actionPerformed(e: AnActionEvent) {
       RunConfigurationStartHistory.getInstance(project).togglePin(conf)
     }
