@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
 package com.intellij.platform.ide.bootstrap
 
@@ -43,6 +43,7 @@ import com.intellij.util.lang.ZipFilePool
 import com.jetbrains.JBR
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import kotlinx.coroutines.*
+import kotlinx.coroutines.debug.internal.DebugProbesImpl
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
@@ -62,7 +63,6 @@ import java.util.function.BiFunction
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import javax.swing.*
-import kotlin.io.path.deleteIfExists
 import kotlin.system.exitProcess
 
 internal const val IDE_STARTED: String = "------------------------------------------------------ IDE STARTED ------------------------------------------------------"
@@ -95,6 +95,8 @@ internal var shellEnvDeferred: Deferred<Boolean?>? = null
 
 // the main thread's dispatcher is sequential - use it with care
 fun CoroutineScope.startApplication(args: List<String>,
+                                    configImportNeededDeferred: Deferred<Boolean>,
+                                    targetDirectoryToImportConfig: Path?,
                                     mainClassLoaderDeferred: Deferred<ClassLoader>?,
                                     appStarterDeferred: Deferred<AppStarter>,
                                     mainScope: CoroutineScope,
@@ -108,15 +110,6 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   val isHeadless = AppMode.isHeadless()
-
-  val configImportNeededDeferred = if (isHeadless) {
-    CompletableDeferred(false)
-  }
-  else {
-    async(Dispatchers.IO) {
-      isConfigImportNeeded(PathManager.getConfigDir())
-    }
-  }
 
   val lockSystemDirsJob = launch {
     // the "import-needed" check must be performed strictly before IDE directories are locked
@@ -200,6 +193,7 @@ fun CoroutineScope.startApplication(args: List<String>,
       val log = logDeferred.await()
       importConfig(
         args = args,
+        targetDirectoryToImportConfig = targetDirectoryToImportConfig ?: PathManager.getConfigDir(),
         log = log,
         appStarter = appStarterDeferred.await(),
         euaDocumentDeferred = euaDocumentDeferred,
@@ -229,6 +223,8 @@ fun CoroutineScope.startApplication(args: List<String>,
       Disposer.setDebugMode(true)
     }
   }
+
+  scheduleEnableCoroutineDumpAndJstack()
 
   val appRegisteredJob = CompletableDeferred<Unit>()
 
@@ -287,6 +283,35 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 }
 
+private fun CoroutineScope.scheduleEnableCoroutineDumpAndJstack() {
+  if (!System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
+    return
+  }
+
+  launch {
+    span("coroutine debug probes init") {
+      try {
+        DebugProbesImpl.install()
+      }
+      catch (ignore: NoClassDefFoundError) {
+        // if for some reason, class loader has ByteBuddy in the classpath
+        // (it is an error, and should be fixed - our dev mode and production behaves correctly)
+      }
+      catch (e: Exception) {
+        e.printStackTrace()
+      }
+    }
+    span("coroutine jstack configuration") {
+      JBR.getJstack()?.includeInfoFrom {
+        """
+$COROUTINE_DUMP_HEADER
+${dumpCoroutines(stripDump = false)}
+"""
+      }
+    }
+  }
+}
+
 private fun CoroutineScope.scheduleSvgIconCacheInitAndPreloadPhm(logDeferred: Deferred<Logger>, isHeadless: Boolean) {
   launch {
     // PHM wants logger
@@ -311,20 +336,6 @@ private fun CoroutineScope.scheduleSvgIconCacheInitAndPreloadPhm(logDeferred: De
     }
   }
 }
-
-internal fun isConfigImportNeeded(configPath: Path): Boolean {
-  return !Files.exists(configPath) ||
-         Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)) ||
-         customTargetDirectoryToImportConfig != null
-}
-
-/**
- * Directory where the configuration files should be imported to.
- * This property is used to override the default target directory ([PathManager.getConfigPath]) when a custom way to read and write
- * configuration files is implemented.
- */
-@JvmField
-internal var customTargetDirectoryToImportConfig: Path? = null
 
 @Suppress("SpellCheckingInspection")
 private fun CoroutineScope.scheduleLoadSystemLibsAndLogInfoAndInitMacApp(logDeferred: Deferred<Logger>,
@@ -397,6 +408,7 @@ private suspend fun runPreAppClass(args: List<String>, classBeforeAppProperty: S
 }
 
 private suspend fun importConfig(args: List<String>,
+                                 targetDirectoryToImportConfig: Path,
                                  log: Logger,
                                  appStarter: AppStarter,
                                  euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
@@ -408,13 +420,12 @@ private suspend fun importConfig(args: List<String>,
 
   span("config importing") {
     appStarter.beforeImportConfigs()
-    val newConfigDir = customTargetDirectoryToImportConfig ?: PathManager.getConfigDir()
 
     val veryFirstStartOnThisComputer = euaDocumentDeferred.await() != null
     withContext(RawSwingDispatcher) {
-      ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, newConfigDir, args, log)
+      ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, targetDirectoryToImportConfig, args, log)
     }
-    appStarter.importFinished(newConfigDir)
+    appStarter.importFinished(targetDirectoryToImportConfig)
     EarlyAccessRegistryManager.invalidate()
     IconLoader.clearCache()
   }
@@ -508,7 +519,7 @@ private fun checkDirectory(directory: Path, kind: String, property: String, chec
   }
   finally {
     try {
-      tempFile?.deleteIfExists()
+      tempFile?.let { Files.deleteIfExists(tempFile) }
     }
     catch (_: Exception) {
     }

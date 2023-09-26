@@ -25,5 +25,11 @@ fun getServer(): BuiltInServer? {
               "kotlinx.coroutines.CompletableDeferred"))
 fun CoroutineScope.startApplication(args: List<String>, appStarterDeferred: Deferred<AppStarter>, mainScope: CoroutineScope,
                                     busyThread: Thread) {
-  startApplication(args, CompletableDeferred(AppStarter::class.java.classLoader), appStarterDeferred, mainScope, busyThread)
+  startApplication(args = args,
+                   configImportNeededDeferred = CompletableDeferred(false),
+                   targetDirectoryToImportConfig = null,
+                   mainClassLoaderDeferred = CompletableDeferred(AppStarter::class.java.classLoader),
+                   appStarterDeferred = appStarterDeferred,
+                   mainScope = mainScope,
+                   busyThread = busyThread)
 }

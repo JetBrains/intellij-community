@@ -4,7 +4,6 @@ package com.intellij.platform.ide.impl.startup.multiProcess;
 import com.intellij.openapi.application.PathCustomizer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.platform.ide.bootstrap.StartupUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +14,9 @@ import java.nio.channels.FileLock;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+
+import static com.intellij.idea.Main.customTargetDirectoryToImportConfig;
+import static com.intellij.idea.Main.isConfigImportNeeded;
 
 /**
  * An implementation of {@link PathCustomizer} which configures separate config, system and log paths for each process started from the IDE
@@ -40,8 +42,8 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
     }
     
     Path oldConfigPath = PathManager.getConfigDir();
-    if (StartupUtil.isConfigImportNeeded(oldConfigPath)) {
-      StartupUtil.customTargetDirectoryToImportConfig = oldConfigPath;
+    if (isConfigImportNeeded(oldConfigPath)) {
+      customTargetDirectoryToImportConfig = oldConfigPath;
     }
 
     Path newConfig;
