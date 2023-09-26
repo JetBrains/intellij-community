@@ -144,7 +144,7 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
     val byNewlines = text.lines()
     val byCommas = text.split(',')
     if (byCommas.size > 1 && byNewlines.size > 1) {
-      error("Do not mix commas and newlines as category separators: $text")
+      LOG.error("Mixed commas and newlines as category separators: $text")
     }
     val categories = if (byCommas.size > byNewlines.size) byCommas else byNewlines
     return categories.mapNotNull { if (it.isBlank()) null else LogCategory(it, level) }
