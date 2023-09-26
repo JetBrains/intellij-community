@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.idea
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.ide.bootstrap
 
-object CommandLineArgs {
+import com.intellij.idea.AppMode
+
+internal object CommandLineArgs {
   private const val SPLASH = "splash"
   private const val NO_SPLASH = "nosplash"
 
