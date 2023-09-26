@@ -181,6 +181,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
       "action" -> mainButton.action = optionButton.action
       TEXT_CHANGED_PROPERTY -> mainButton.text = optionButton.text
       ICON_CHANGED_PROPERTY -> mainButton.icon = optionButton.icon
+      "iconTextGap" -> mainButton.iconTextGap = optionButton.iconTextGap
       MNEMONIC_CHANGED_PROPERTY -> mainButton.mnemonic = optionButton.mnemonic
       TOOL_TIP_TEXT_KEY, PROP_OPTION_TOOLTIP -> updateTooltip()
       PROP_OPTIONS -> {

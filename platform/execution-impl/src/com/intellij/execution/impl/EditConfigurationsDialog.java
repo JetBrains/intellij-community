@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,6 +137,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
     if (action == myRunAction) {
       JBOptionButton button = new JBOptionButton(action, null);
       button.setAddSeparator(false);
+      button.setIconTextGap(JBUI.CurrentTheme.ActionsList.elementIconGap());
       return button;
     }
     return super.createJButtonForAction(action);
