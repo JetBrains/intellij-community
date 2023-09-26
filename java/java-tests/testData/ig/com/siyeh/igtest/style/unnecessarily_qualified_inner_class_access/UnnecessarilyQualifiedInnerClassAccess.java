@@ -27,6 +27,15 @@ public class UnnecessarilyQualifiedInnerClassAccess<T> {
     static class Y<T> {
         T t;
     }
+
+  static void x() {
+    class A {
+      class B {
+        class C {}
+      }
+    }
+    A.B.C c;
+  }
 }
 @interface Y {
     Class value();
@@ -107,3 +116,16 @@ class HiearchyWithDefaults {
  * {@link java.util.concurrent.ConcurrentHashMap.SearchValuesTask}
  */
 class InaccessibleClassReferencedInsideJavadocLink { }
+class RecordQualifierInside {
+
+  private record CalcResult(<warning descr="'Inside' is unnecessarily qualified with 'CalcResult'" textAttributesKey="NOT_USED_ELEMENT_ATTRIBUTES">CalcResult</warning>.Inside.Type type) {
+
+
+    private record Inside(){
+      enum Type {
+        OK, ERROR
+      }
+    }
+
+  }
+}

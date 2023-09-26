@@ -27,7 +27,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
  */
 public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreReferencesNeedingImport = false;
 
   @NotNull
@@ -110,8 +110,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
         return;
       }
       final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
-      if (parameterList != null &&
-          parameterList.getTypeParameterElements().length > 0) {
+      if (parameterList != null && parameterList.getTypeParameterElements().length > 0) {
         return;
       }
       final PsiElement qualifierTarget = referenceElement.resolve();
@@ -122,27 +121,25 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
       if (referenceClass == null) {
         return;
       }
+      final PsiElement target = reference.resolve();
+      if (!(target instanceof PsiClass aClass) || !PsiUtil.isAccessible(aClass, referenceClass, null)) {
+        return;
+      }
       ProblemHighlightType highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-      if (!referenceClass.equals(qualifierTarget) || !ClassUtils.isInsideClassBody(reference, referenceClass)) {
-        if (ignoreReferencesNeedingImport &&
-            (PsiTreeUtil.isAncestor(referenceClass, qualifierTarget, true) ||
-             !PsiTreeUtil.isAncestor(qualifierTarget, referenceClass, true))) {
+      final boolean needsImport =
+        (!referenceClass.equals(qualifierTarget) || !ClassUtils.isInsideClassBody(reference, referenceClass)) &&
+        (PsiTreeUtil.isAncestor(referenceClass, qualifierTarget, true) || !PsiTreeUtil.isAncestor(qualifierTarget, referenceClass, true));
+      if (needsImport) {
+        if (ignoreReferencesNeedingImport) {
           if (!isOnTheFly()) return;
           highlightType = ProblemHighlightType.INFORMATION;
         }
-      }
-      final PsiElement target = reference.resolve();
-      if (!(target instanceof PsiClass aClass)) {
-        return;
-      }
-      if (!PsiUtil.isAccessible(aClass, referenceClass, null)) {
-        return;
+        if (!canBeImported(aClass)) {
+          return;
+        }
       }
       final PsiClass containingClass = aClass.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      if (!containingClass.equals(qualifierTarget)) {
+      if (containingClass == null || !containingClass.equals(qualifierTarget)) {
         return;
       }
       final String shortName = aClass.getName();
@@ -155,6 +152,22 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       visitReferenceElement(expression);
+    }
+  }
+
+  private static boolean canBeImported(@NotNull PsiClass aClass) {
+    while (true) {
+      if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return false;
+      }
+      PsiElement parent = aClass.getParent();
+      if (parent == null || parent instanceof PsiDeclarationStatement) {
+        return false;
+      }
+      if (parent instanceof PsiJavaFile) {
+        return true;
+      }
+      aClass = (PsiClass)parent;
     }
   }
 }
