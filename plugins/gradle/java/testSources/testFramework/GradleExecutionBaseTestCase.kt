@@ -21,7 +21,7 @@ import org.jetbrains.plugins.gradle.testFramework.fixture.TestExecutionConsoleEv
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
-import org.jetbrains.plugins.gradle.testFramework.util.tree.TreeAssertion
+import org.jetbrains.plugins.gradle.testFramework.util.tree.SimpleTreeAssertion
 import org.jetbrains.plugins.gradle.testFramework.util.tree.buildTree
 import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyExecution
 import org.jetbrains.plugins.gradle.testFramework.util.waitForGradleEventDispatcherClosing
@@ -117,10 +117,10 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     }
   }
 
-  fun assertBuildExecutionTree(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
+  fun assertBuildExecutionTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
     buildViewFixture.assertBuildViewTreeEquals { treeString ->
       val actualTree = buildTree(treeString!!)
-      TreeAssertion.assertTree(actualTree) {
+      SimpleTreeAssertion.assertTree(actualTree) {
         assertNode("", assert = assert)
       }
     }
@@ -134,19 +134,19 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     executionConsoleFixture.assertTestConsoleDoesNotContain(expected)
   }
 
-  fun TreeAssertion.Node<AbstractTestProxy>.assertTestConsoleContains(expectedTextSample: String) {
+  fun SimpleTreeAssertion.Node<AbstractTestProxy>.assertTestConsoleContains(expectedTextSample: String) {
     executionConsoleFixture.assertTestConsoleContains(this, expectedTextSample)
   }
 
-  fun TreeAssertion.Node<AbstractTestProxy>.assertTestConsoleDoesNotContain(unexpectedTextSample: String) {
+  fun SimpleTreeAssertion.Node<AbstractTestProxy>.assertTestConsoleDoesNotContain(unexpectedTextSample: String) {
     executionConsoleFixture.assertTestConsoleDoesNotContain(this, unexpectedTextSample)
   }
 
-  fun assertRunTreeView(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
+  fun assertRunTreeView(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
     executionConsoleFixture.assertRunTreeView(assert)
   }
 
-  fun assertTestTreeView(assert: TreeAssertion<AbstractTestProxy>.() -> Unit) {
+  fun assertTestTreeView(assert: SimpleTreeAssertion<AbstractTestProxy>.() -> Unit) {
     executionConsoleFixture.assertTestTreeView(assert)
   }
 
@@ -158,7 +158,7 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     executionConsoleFixture.assertTestTreeViewIsEmpty()
   }
 
-  fun TreeAssertion.Node<AbstractTestProxy>.assertPsiLocation(
+  fun SimpleTreeAssertion.Node<AbstractTestProxy>.assertPsiLocation(
     className: String,
     methodName: String? = null,
     parameterName: String? = null

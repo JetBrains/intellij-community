@@ -3,9 +3,9 @@ package org.jetbrains.plugins.gradle.testFramework.util.tree
 
 import org.junit.jupiter.api.AssertionFailureBuilder
 
-internal class TreeAssertionImpl<T> private constructor(
+internal class SimpleTreeAssertionImpl<T> private constructor(
   private val expectedChildren: MutableList<SimpleTree.Node<NodeAssertionOptions<T>>>
-) : TreeAssertion.Node<T> {
+) : SimpleTreeAssertion.Node<T> {
 
   private var valueAssertion: (T) -> Unit = {}
 
@@ -14,13 +14,13 @@ internal class TreeAssertionImpl<T> private constructor(
   }
 
   // @formatter:off
-  override fun assertNode(name: String, flattenIf: Boolean, skipIf: Boolean, isUnordered: Boolean, assert: TreeAssertion.Node<T>.() -> Unit) =
+  override fun assertNode(name: String, flattenIf: Boolean, skipIf: Boolean, isUnordered: Boolean, assert: SimpleTreeAssertion.Node<T>.() -> Unit) =
     assertNode(NodeAssertionOptions(NodeMatcher.Name(name), flattenIf, skipIf, isUnordered), assert)
-  override fun assertNode(regex: Regex, flattenIf: Boolean, skipIf: Boolean, isUnordered: Boolean, assert: TreeAssertion.Node<T>.() -> Unit) =
+  override fun assertNode(regex: Regex, flattenIf: Boolean, skipIf: Boolean, isUnordered: Boolean, assert: SimpleTreeAssertion.Node<T>.() -> Unit) =
     assertNode(NodeAssertionOptions(NodeMatcher.NameRegex(regex), flattenIf, skipIf, isUnordered), assert)
   // @formatter:on
 
-  private fun assertNode(options: NodeAssertionOptions<T>, assert: TreeAssertion.Node<T>.() -> Unit) {
+  private fun assertNode(options: NodeAssertionOptions<T>, assert: SimpleTreeAssertion.Node<T>.() -> Unit) {
     if (options.skipIf) {
       return
     }
@@ -73,7 +73,7 @@ internal class TreeAssertionImpl<T> private constructor(
 
   companion object {
 
-    fun <T> assertTree(actualTree: SimpleTree<T>, isUnordered: Boolean, assert: TreeAssertion<T>.() -> Unit) {
+    fun <T> assertTree(actualTree: SimpleTree<T>, isUnordered: Boolean, assert: SimpleTreeAssertion<T>.() -> Unit) {
       val actualMutableTree = actualTree.deepCopyTree()
       val expectedMutableTree = SimpleTree<NodeAssertionOptions<T>>()
       addAssertionNodes(expectedMutableTree.roots, assert)
@@ -83,9 +83,9 @@ internal class TreeAssertionImpl<T> private constructor(
 
     private fun <T> addAssertionNodes(
       assertionNodes: MutableList<SimpleTree.Node<NodeAssertionOptions<T>>>,
-      assert: TreeAssertion.Node<T>.() -> Unit
+      assert: SimpleTreeAssertion.Node<T>.() -> Unit
     ) {
-      val assertion = TreeAssertionImpl(assertionNodes)
+      val assertion = SimpleTreeAssertionImpl(assertionNodes)
       assertion.assert()
     }
 

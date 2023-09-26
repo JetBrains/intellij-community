@@ -19,7 +19,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
 import org.jetbrains.plugins.gradle.testFramework.util.tree.SimpleTree
-import org.jetbrains.plugins.gradle.testFramework.util.tree.TreeAssertion
+import org.jetbrains.plugins.gradle.testFramework.util.tree.SimpleTreeAssertion
 import org.jetbrains.plugins.gradle.testFramework.util.tree.buildTree
 import org.junit.jupiter.api.AssertionFailureBuilder
 import org.junit.jupiter.api.Assertions
@@ -96,31 +96,31 @@ class GradleExecutionViewFixture(
     assertDoesNotContain(unexpectedTextSample, getTestConsoleText())
   }
 
-  fun assertTestConsoleContains(testAssertion: TreeAssertion.Node<AbstractTestProxy>, expectedTextSample: String) {
+  fun assertTestConsoleContains(testAssertion: SimpleTreeAssertion.Node<AbstractTestProxy>, expectedTextSample: String) {
     testAssertion.assertValue { testProxy ->
       assertContains(expectedTextSample, getTestConsoleText(testProxy))
     }
   }
 
-  fun assertTestConsoleDoesNotContain(testAssertion: TreeAssertion.Node<AbstractTestProxy>, unexpectedTextSample: String) {
+  fun assertTestConsoleDoesNotContain(testAssertion: SimpleTreeAssertion.Node<AbstractTestProxy>, unexpectedTextSample: String) {
     testAssertion.assertValue { testProxy ->
       assertDoesNotContain(unexpectedTextSample, getTestConsoleText(testProxy))
     }
   }
 
-  fun assertRunTreeView(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
-    TreeAssertion.assertTree(getSimplifiedRunTreeView()) {
+  fun assertRunTreeView(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
+    SimpleTreeAssertion.assertTree(getSimplifiedRunTreeView()) {
       assertNode("", assert = assert)
     }
   }
 
-  fun assertTestTreeView(assert: TreeAssertion<AbstractTestProxy>.() -> Unit) {
+  fun assertTestTreeView(assert: SimpleTreeAssertion<AbstractTestProxy>.() -> Unit) {
     val testExecutionConsole = getTestExecutionConsole()
     val resultsViewer = testExecutionConsole.resultsViewer
     val roots = resultsViewer.root.children
     val tree = buildTree(roots, { name }, { children })
     runReadAction { // all navigation tests requires read action
-      TreeAssertion.assertTree(tree, isUnordered = true, assert)
+      SimpleTreeAssertion.assertTree(tree, isUnordered = true, assert)
     }
   }
 
@@ -133,7 +133,7 @@ class GradleExecutionViewFixture(
   }
 
   fun assertPsiLocation(
-    testAssertion: TreeAssertion.Node<AbstractTestProxy>,
+    testAssertion: SimpleTreeAssertion.Node<AbstractTestProxy>,
     className: String,
     methodName: String?,
     parameterName: String?

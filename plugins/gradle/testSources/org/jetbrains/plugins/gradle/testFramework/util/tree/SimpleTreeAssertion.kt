@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.util.tree
 
-interface TreeAssertion<T> {
+interface SimpleTreeAssertion<T> {
 
   /**
    * Defines assertion for next child node.
@@ -39,7 +39,7 @@ interface TreeAssertion<T> {
     assert: Node<T>.() -> Unit = {}
   )
 
-  interface Node<T> : TreeAssertion<T> {
+  interface Node<T> : SimpleTreeAssertion<T> {
 
     /**
      * Postpones value assertion after assertion of tree structure.
@@ -50,7 +50,7 @@ interface TreeAssertion<T> {
 
   companion object {
 
-    fun <T> assertTree(actualTree: SimpleTree<T>, isUnordered: Boolean = false, assert: TreeAssertion<T>.() -> Unit) =
-      TreeAssertionImpl.assertTree(actualTree, isUnordered, assert)
+    fun <T> assertTree(actualTree: SimpleTree<T>, isUnordered: Boolean = false, assert: SimpleTreeAssertion<T>.() -> Unit) =
+      SimpleTreeAssertionImpl.assertTree(actualTree, isUnordered, assert)
   }
 }
