@@ -651,6 +651,9 @@ public final class PersistentFSLoader {
         int pageSize = 1 << 24;//16Mb
         blobStorage = MMappedFileStorageFactory.defaults()
           .pageSize(pageSize)
+          //mmapped and !mmapped storages have the same binary layout, so mmapped storage could inherit all the
+          // data from non-mmapped -- the only 'migration' needed is to page-align the file:
+          .expandFileIfNotPageAligned(true)
           .wrapStorageSafely(
             attributesFile,
             storage -> new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy)
