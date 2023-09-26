@@ -88,7 +88,7 @@ public final class PostponableLogRefresher {
   @RequiresEdt
   public void refresh(@NotNull VirtualFile root) {
     if (canRefreshNow()) {
-      myLogData.refresh(Collections.singleton(root));
+      myLogData.refresh(Collections.singleton(root), true);
     }
     else {
       LOG.debug("Postponed refresh for " + root);

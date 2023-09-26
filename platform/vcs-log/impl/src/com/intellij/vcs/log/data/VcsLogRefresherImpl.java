@@ -162,9 +162,9 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   }
 
   @Override
-  public void refresh(@NotNull Collection<VirtualFile> rootsToRefresh) {
+  public void refresh(@NotNull Collection<VirtualFile> rootsToRefresh, boolean optimize) {
     if (!rootsToRefresh.isEmpty()) {
-      mySingleTaskController.request(new RefreshRequest(rootsToRefresh));
+      mySingleTaskController.request(new RefreshRequest(rootsToRefresh, optimize));
     }
   }
 
@@ -241,6 +241,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       DataPack smallDataPack;
       while (true) {
         List<RefreshRequest> requests = mySingleTaskController.popRequests();
+        boolean optimize = ContainerUtil.exists(requests, request -> request.myOptimize);
         Collection<VirtualFile> rootsToRefresh = getRootsToRefresh(requests);
         LOG.debug("Requests: " + requests + ". roots to refresh: " + rootsToRefresh);
         if (rootsToRefresh.isEmpty()) {
@@ -249,7 +250,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
         }
 
         try {
-          smallDataPack = buildSmallDataPack();
+          smallDataPack = optimize ? buildSmallDataPack() : DataPack.EMPTY;
 
           if (smallDataPack != DataPack.EMPTY) {
             myDataPackUpdateHandler.accept(smallDataPack);
@@ -271,7 +272,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
           myCurrentDataPack = DataPack.EMPTY;
           return myProviders.keySet();
         }
-        rootsToRefresh.addAll(request.rootsToRefresh);
+        rootsToRefresh.addAll(request.myRootsToRefresh);
       }
       return rootsToRefresh;
     }
@@ -434,21 +435,24 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   }
 
   private static class RefreshRequest {
-    private static final RefreshRequest RELOAD_ALL = new RefreshRequest(Collections.emptyList()) {
+    private static final RefreshRequest RELOAD_ALL = new RefreshRequest(Collections.emptyList(), false) {
       @Override
       public @NonNls String toString() {
         return "RELOAD_ALL";
       }
     };
-    private final Collection<VirtualFile> rootsToRefresh;
+    private final Collection<VirtualFile> myRootsToRefresh;
 
-    RefreshRequest(@NotNull Collection<VirtualFile> rootsToRefresh) {
-      this.rootsToRefresh = rootsToRefresh;
+    private final boolean myOptimize;
+
+    RefreshRequest(@NotNull Collection<VirtualFile> rootsToRefresh, boolean optimize) {
+      this.myRootsToRefresh = rootsToRefresh;
+      this.myOptimize = optimize;
     }
 
     @Override
     public String toString() {
-      return "{" + rootsToRefresh + "}";
+      return "{" + myRootsToRefresh + "}";
     }
   }
 

@@ -113,7 +113,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
 
     String newCommit = "4|-a3|-a2";
     myLogProvider.appendHistory(log(newCommit));
-    myLoader.refresh(Collections.singletonList(getProjectRoot()));
+    myLoader.refresh(Collections.singletonList(getProjectRoot()), false);
     DataPack result = myDataWaiter.get();
 
     List<String> allCommits = new ArrayList<>();
@@ -126,7 +126,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     initAndWaitForFirstRefresh();
 
     myLogProvider.resetReadFirstBlockCounter();
-    myLoader.refresh(Collections.singletonList(getProjectRoot()));
+    myLoader.refresh(Collections.singletonList(getProjectRoot()), false);
     myDataWaiter.get();
     assertEquals("Unexpected first block read count", 1, myLogProvider.getReadFirstBlockCounter());
   }
@@ -136,7 +136,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
 
     // initiate the refresh and make it hang
     myLogProvider.blockRefresh();
-    myLoader.refresh(Collections.singletonList(getProjectRoot()));
+    myLoader.refresh(Collections.singletonList(getProjectRoot()), false);
 
     // initiate reinitialize; the full log will await because the Task is busy waiting for the refresh
     myLoader.readFirstBlock();
@@ -163,8 +163,8 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     throws InterruptedException, ExecutionException, TimeoutException {
     initAndWaitForFirstRefresh();
     myLogProvider.blockRefresh();
-    myLoader.refresh(Collections.singletonList(getProjectRoot())); // this refresh hangs in VcsLogProvider.readFirstBlock()
-    myLoader.refresh(Collections.singletonList(getProjectRoot())); // this refresh is queued
+    myLoader.refresh(Collections.singletonList(getProjectRoot()), false); // this refresh hangs in VcsLogProvider.readFirstBlock()
+    myLoader.refresh(Collections.singletonList(getProjectRoot()), false); // this refresh is queued
     myLogProvider.unblockRefresh(); // this will make the first one complete, and then perform the second as well
 
     myDataWaiter.get();

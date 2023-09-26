@@ -328,10 +328,15 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   /**
    * Makes the log perform refresh for the given root.
    * This refresh can be optimized, i.e. it can query VCS just for the part of the log.
+   * @param optimized - if request should be optimized see {@link VcsLogRefresher#refresh}
    */
-  public void refresh(@NotNull Collection<VirtualFile> roots) {
+  public void refresh(@NotNull Collection<VirtualFile> roots, boolean optimized) {
     initialize();
-    myRefresher.refresh(roots);
+    myRefresher.refresh(roots, optimized);
+  }
+
+  public void refresh(@NotNull Collection<VirtualFile> roots) {
+    refresh(roots, false);
   }
 
   public @NotNull CommitDetailsGetter getCommitDetailsGetter() {
