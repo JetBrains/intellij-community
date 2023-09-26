@@ -18,7 +18,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
-import org.jetbrains.plugins.gradle.testFramework.util.tree.Tree
+import org.jetbrains.plugins.gradle.testFramework.util.tree.SimpleTree
 import org.jetbrains.plugins.gradle.testFramework.util.tree.TreeAssertion
 import org.jetbrains.plugins.gradle.testFramework.util.tree.buildTree
 import org.junit.jupiter.api.AssertionFailureBuilder
@@ -51,7 +51,7 @@ class GradleExecutionViewFixture(
     return testExecutionConsole
   }
 
-  private fun getSimplifiedRunTreeView(): Tree<Nothing?> {
+  private fun getSimplifiedRunTreeView(): SimpleTree<Nothing?> {
     val executionEnvironment = executionEnvironmentFixture.getExecutionEnvironment()
     val buildView = executionEnvironment.contentToReuse!!.executionConsole!! as BuildView
     val eventView = buildView.getView(BuildTreeConsoleView::class.java.name, BuildTreeConsoleView::class.java)
