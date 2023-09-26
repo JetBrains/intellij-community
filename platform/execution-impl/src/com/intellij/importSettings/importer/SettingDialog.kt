@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.importSettings.importer
 
+import com.intellij.importSettings.chooser.ui.BaseSettingPane
 import com.intellij.importSettings.chooser.ui.createSettingPane
 import com.intellij.importSettings.data.ActionsDataProvider
 import com.intellij.importSettings.data.IconProductSize
@@ -23,7 +24,9 @@ import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 import javax.swing.border.LineBorder
 
-class SettingSyncDialog(val provider: ActionsDataProvider, val product: ImportItem) : DialogWrapper(null) {
+open class SettingDialog(private val provider: ActionsDataProvider, val product: ImportItem) : DialogWrapper(null) {
+  open val configurable = true
+  protected val settingPanes = mutableListOf<BaseSettingPane>()
 
   private val pane = JPanel(HorizontalLayout(0)).apply {
     add(panel {
@@ -61,7 +64,9 @@ class SettingSyncDialog(val provider: ActionsDataProvider, val product: ImportIt
     val listPane = JPanel().apply {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
       settingList.forEach {
-        add(createSettingPane(it, productService.configurable).apply {
+        val st = createSettingPane(it, configurable)
+        settingPanes.add(st)
+        add(st.component().apply {
           maximumWidth = 420
         })
       }

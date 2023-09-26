@@ -3,7 +3,7 @@ package com.intellij.importSettings.chooser.actions
 
 import com.intellij.importSettings.data.JBrActionsDataProvider
 import com.intellij.importSettings.data.SettingsService
-import com.intellij.importSettings.importer.SettingSyncDialog
+import com.intellij.importSettings.importer.SettingDialog
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
@@ -26,7 +26,7 @@ class ConfigAction(val callback: (Int) -> Unit) : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     callback(DialogWrapper.OK_EXIT_CODE)
 
-    val dialog = SettingSyncDialog(JBrActionsDataProvider.getInstance(), config)
+    val dialog = SettingDialog(JBrActionsDataProvider.getInstance(), config)
     dialog.isModal = false
     dialog.isResizable = false
     dialog.show()

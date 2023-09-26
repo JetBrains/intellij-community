@@ -8,7 +8,7 @@ import com.intellij.openapi.project.DumbAwareAction
 
 class SettingSyncAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val dialog = SettingSyncDialog(JBrActionsDataProvider.getInstance(), TestJbService.main)
+    val dialog = SettingDialog(JBrActionsDataProvider.getInstance(), TestJbService.main)
     dialog.isModal = false
     dialog.isResizable = false
     dialog.show()

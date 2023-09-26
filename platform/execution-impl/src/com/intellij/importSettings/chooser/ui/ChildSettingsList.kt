@@ -13,7 +13,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
 
-class ChildSettingsList(val settings: List<SettingItem>, val configurable: Boolean) : JBList<SettingItem>(createDefaultListModel(settings)) {
+class ChildSettingsList(val settings: List<ChildItem>, val configurable: Boolean) : JBList<ChildItem>(createDefaultListModel(settings)) {
 
   init {
     cellRenderer = CBRenderer(configurable)
@@ -34,7 +34,7 @@ class ChildSettingsList(val settings: List<SettingItem>, val configurable: Boole
   }
 }
 
-private class CBRenderer(val configurable: Boolean) : ListCellRenderer<SettingItem> {
+private class CBRenderer(val configurable: Boolean) : ListCellRenderer<ChildItem> {
   private lateinit var ch: JBCheckBox
   private lateinit var txt: JEditorPane
   private lateinit var addTxt: JEditorPane
@@ -71,8 +71,8 @@ private class CBRenderer(val configurable: Boolean) : ListCellRenderer<SettingIt
     add(line)
   }
 
-  override fun getListCellRendererComponent(list: JList<out SettingItem>,
-                                            value: SettingItem,
+  override fun getListCellRendererComponent(list: JList<out ChildItem>,
+                                            value: ChildItem,
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
@@ -96,4 +96,4 @@ private class CBRenderer(val configurable: Boolean) : ListCellRenderer<SettingIt
   }
 }
 
-class SettingItem(val child: ChildSetting, var separatorNeeded: Boolean = false, var choosed: Boolean = true )
+data class ChildItem(val child: ChildSetting, var separatorNeeded: Boolean = false, var choosed: Boolean = true )

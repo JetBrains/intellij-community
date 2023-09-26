@@ -6,6 +6,7 @@ import com.intellij.importSettings.data.Configurable
 import com.intellij.importSettings.data.Multiple
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Panel
@@ -18,15 +19,34 @@ import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-fun createSettingPane(setting: BaseSetting, configurable: Boolean): JComponent {
+fun createSettingPane(setting: BaseSetting, configurable: Boolean): BaseSettingPane {
   return if(setting is Multiple) {
-    MultipleSettingPane(setting, configurable)
+    MultipleSettingPane(createMultipleItem(setting, configurable))
   } else {
-    BaseSettingPane(setting, configurable)
-  }.component()
+    BaseSettingPane(SettingItem(setting, configurable))
+  }
 }
 
-open class BaseSettingPane(open val setting: BaseSetting, configurable: Boolean) {
+private fun createMultipleItem(setting: Multiple, configurable: Boolean): SettingItem {
+  val list: MutableList<ChildItem> = mutableListOf()
+
+  setting.list.forEach { cs ->
+    if (cs.isNotEmpty()) {
+      val elements = cs.map { ChildItem(it) }
+
+      if (list.isNotEmpty()) {
+        elements[0].separatorNeeded = true
+      }
+      list.addAll(elements)
+    }
+  }
+
+  return SettingItem(setting, configurable, true, list)
+}
+
+open class BaseSettingPane(val item: SettingItem) {
+  val setting = item.setting
+  private var cb: JBCheckBox? = null
 
   private val pane by lazy {
     panel {
@@ -35,8 +55,11 @@ open class BaseSettingPane(open val setting: BaseSetting, configurable: Boolean)
         panel {
           row {
             text(setting.name).customize(UnscaledGaps(0, 0, 2, 0)).resizableColumn()
-            if (configurable) {
-              checkBox("").customize(UnscaledGaps(0, 0, 2, 0))
+            if (item.configurable) {
+              checkBox("").customize(UnscaledGaps(0, 0, 2, 0)).applyToComponent {
+                isSelected = true
+                cb = this
+              }
             }
           }
 
@@ -52,9 +75,7 @@ open class BaseSettingPane(open val setting: BaseSetting, configurable: Boolean)
     }.apply {
       border = JBUI.Borders.empty(6, 18)
     }
-
   }
-
 
   open fun addComponents(pn: Panel) {
 
@@ -66,16 +87,16 @@ open class BaseSettingPane(open val setting: BaseSetting, configurable: Boolean)
 }
 
 
-class MultipleSettingPane(override val setting: Multiple, configurable_: Boolean): BaseSettingPane(setting, configurable_) {
+class MultipleSettingPane(item: SettingItem): BaseSettingPane(item) {
 
-  val configurable = configurable_ && setting is Configurable
+  val configurable = item.configurable && setting is Configurable
 
-  private val list = convertList()
   private lateinit var actionLink: ActionLink
 
   override fun addComponents(pn: Panel) {
+    item.childItems ?: return
 
-    if (list.isNotEmpty()) {
+    if (item.childItems.isNotEmpty()) {
       pn.row {
         val text = if (configurable) {
           "Configure"
@@ -98,7 +119,9 @@ class MultipleSettingPane(override val setting: Multiple, configurable_: Boolean
   }
 
   private fun showPopup() {
-    val component = ChildSettingsList(list, configurable)
+    item.childItems ?: return
+
+    val component = ChildSettingsList(item.childItems, configurable)
 
     val panel = JPanel(BorderLayout())
     panel.border = JBUI.Borders.empty()
@@ -109,21 +132,6 @@ class MultipleSettingPane(override val setting: Multiple, configurable_: Boolean
     val chooserBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, component)
     chooserBuilder.createPopup().showUnderneathOf(actionLink)
   }
-
-  private fun convertList(): List<SettingItem> {
-    val list: MutableList<SettingItem> = mutableListOf()
-
-    setting.list.forEach { cs ->
-      if (cs.isNotEmpty()) {
-        val elements = cs.map { SettingItem(it) }
-
-        if (list.isNotEmpty()) {
-          elements[0].separatorNeeded = true
-        }
-        list.addAll(elements)
-      }
-    }
-
-    return list
-  }
 }
+
+data class SettingItem(val setting: BaseSetting, val configurable: Boolean, val selected: Boolean = true, val childItems: List<ChildItem>? = null)
