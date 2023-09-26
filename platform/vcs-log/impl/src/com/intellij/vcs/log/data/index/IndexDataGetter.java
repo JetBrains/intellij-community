@@ -42,7 +42,7 @@ import static com.intellij.vcs.log.history.FileHistoryKt.FILE_PATH_HASHING_STRAT
 
 public final class IndexDataGetter {
   private static final Logger LOG = Logger.getInstance(IndexDataGetter.class);
-  private final @NotNull Project myProject;
+  protected final @NotNull Project myProject;
   private final @NotNull Map<VirtualFile, VcsLogProvider> myProviders;
   private final @NotNull VcsLogStorageBackend myIndexStorageBackend;
   private final @NotNull VcsLogStorage myLogStorage;
