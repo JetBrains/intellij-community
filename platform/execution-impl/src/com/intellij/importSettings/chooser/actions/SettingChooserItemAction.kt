@@ -3,11 +3,10 @@ package com.intellij.importSettings.chooser.actions
 
 import com.intellij.importSettings.data.ActionsDataProvider
 import com.intellij.importSettings.data.Product
-import com.intellij.importSettings.importer.SettingSyncDialog
+import com.intellij.importSettings.importer.SettingDialog
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
-import javax.swing.Icon
 
 class SettingChooserItemAction(val product: Product, val provider: ActionsDataProvider, val callback: (Int) -> Unit) : DumbAwareAction() {
 
@@ -24,7 +23,7 @@ class SettingChooserItemAction(val product: Product, val provider: ActionsDataPr
   override fun actionPerformed(e: AnActionEvent) {
     callback(DialogWrapper.OK_EXIT_CODE)
 
-    val dialog = SettingSyncDialog(provider, product)
+    val dialog = SettingDialog(provider, product)
     dialog.isModal = false
     dialog.isResizable = false
     dialog.show()
