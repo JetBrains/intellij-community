@@ -105,7 +105,9 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
           beforeIndexTasksStarted?.run()
           cleanupProcessedFlag()
           for (project in ProjectUtil.getOpenProjects()) {
-            UnindexedFilesScanner(project, reason).queue()
+            object : UnindexedFilesScanner(project, reason) {
+              override fun shouldHideProgressInSmartMode(): Boolean = true
+            }.queue()
           }
           LOG.info("Index rescanning has been started after `$reason`")
         }
