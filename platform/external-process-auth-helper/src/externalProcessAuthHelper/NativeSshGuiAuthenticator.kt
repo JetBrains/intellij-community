@@ -22,81 +22,125 @@ class NativeSshGuiAuthenticator(private val project: Project,
                                 private val authenticationMode: AuthenticationMode,
                                 private val doNotRememberPasswords: Boolean) : NativeSshAskPassAppHandler {
 
-  private var lastAskedKeyPath: String? = null
-  private var lastAskedUserName: String? = null
-  private var lastAskedConfirmationInput: String? = null
+  private val passwordHandlers = listOf(
+    KeyPassphrasePromptHandler(),
+    SshPasswordPromptHandler(),
+    ConfirmationPromptHandler()
+  )
 
   override fun handleInput(description: @NlsSafe String): String? {
-    if (authenticationMode == AuthenticationMode.NONE) return null
-    return authenticationGate.waitAndCompute {
-      when {
-        isKeyPassphrase(description) -> askKeyPassphraseInput(description)
-        isSshPassword(description) -> askSshPasswordInput(description)
-        isConfirmation(description) -> askConfirmationInput(description)
-        else -> askGenericInput(description)
+    if (authenticationMode == AuthenticationMode.NONE) {
+      return null
+    }
+    return authenticationGate.waitAndCompute { doHandleInput(description) }
+  }
+
+  private fun doHandleInput(description: @NlsSafe String): String? {
+    for (passwordHandler in passwordHandlers) {
+      val answer = passwordHandler.handleInput(description)
+      if (answer is PromptAnswer.Answer) {
+        return answer.value
+      }
+    }
+
+    return askGenericInput(description)
+  }
+
+  private inner class KeyPassphrasePromptHandler : PromptHandler {
+    private var lastAskedKeyPath: String? = null
+
+    override fun handleInput(description: String): PromptAnswer {
+      if (isKeyPassphrase(description)) {
+        val answer = askKeyPassphraseInput(description)
+        return PromptAnswer.Answer(answer)
+      }
+      return PromptAnswer.NotHandled
+    }
+
+    private fun askKeyPassphraseInput(description: String): String? {
+      val matcher = SSHUtil.PASSPHRASE_PROMPT.matcher(description)
+      check(matcher.matches()) { description }
+      val keyPath = SSHUtil.extractKeyPath(matcher)
+      val resetPassword = keyPath == lastAskedKeyPath
+      lastAskedKeyPath = keyPath
+
+      if (doNotRememberPasswords) {
+        return askUserOnEdt {
+          val message = ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath))
+          Messages.showPasswordDialog(project, message,
+                                      ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.title"), null)
+        }
+      }
+      else {
+        return askPassphrase(project, keyPath, resetPassword, authenticationMode)
       }
     }
   }
 
-  private fun askKeyPassphraseInput(description: String): String? {
-    val matcher = SSHUtil.PASSPHRASE_PROMPT.matcher(description)
-    check(matcher.matches()) { description }
-    val keyPath = SSHUtil.extractKeyPath(matcher)
-    val resetPassword = keyPath == lastAskedKeyPath
-    lastAskedKeyPath = keyPath
+  private inner class SshPasswordPromptHandler : PromptHandler {
+    private var lastAskedUserName: String? = null
 
-    if (doNotRememberPasswords) {
+    override fun handleInput(description: String): PromptAnswer {
+      if (isSshPassword(description)) {
+        val answer = askSshPasswordInput(description)
+        return PromptAnswer.Answer(answer)
+      }
+      return PromptAnswer.NotHandled
+    }
+
+    private fun askSshPasswordInput(description: String): String? {
+      val matcher = SSHUtil.PASSWORD_PROMPT.matcher(description)
+      check(matcher.matches()) { description }
+      val username = SSHUtil.extractUsername(matcher)
+      val resetPassword = username == lastAskedUserName
+      lastAskedUserName = username
+
+      if (doNotRememberPasswords) {
+        return askUserOnEdt {
+          val message = ExternalProcessAuthHelperBundle.message("ssh.password.message", username)
+          Messages.showPasswordDialog(project, message,
+                                      ExternalProcessAuthHelperBundle.message("ssh.password.title"), null)
+        }
+      }
+      else {
+        return askPassword(project, username, resetPassword, authenticationMode)
+      }
+    }
+  }
+
+  private inner class ConfirmationPromptHandler : PromptHandler {
+    private var lastAskedConfirmationInput: String? = null
+
+    override fun handleInput(description: String): PromptAnswer {
+      if (isConfirmation(description)) {
+        val answer = askConfirmationInput(description)
+        return PromptAnswer.Answer(answer)
+      }
+      return PromptAnswer.NotHandled
+    }
+
+    private fun askConfirmationInput(description: @NlsSafe String): String? {
       return askUserOnEdt {
-        val message = ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath))
-        Messages.showPasswordDialog(project, message,
-                                    ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.title"), null)
+        val message: @NlsSafe String = StringUtil.replace(description,
+                                                          SSHUtil.CONFIRM_CONNECTION_PROMPT + " (yes/no)?",
+                                                          SSHUtil.CONFIRM_CONNECTION_PROMPT + "?")
+
+        val knownAnswer = authenticationGate.getSavedInput(message)
+        if (knownAnswer != null && lastAskedConfirmationInput == null) {
+          lastAskedConfirmationInput = knownAnswer
+          return@askUserOnEdt knownAnswer
+        }
+
+        val answer = Messages.showYesNoDialog(project, message, ExternalProcessAuthHelperBundle.message("title.ssh.confirmation"), null)
+        val textAnswer = when (answer) {
+          Messages.YES -> "yes"
+          Messages.NO -> "no"
+          else -> throw AssertionError(answer)
+        }
+
+        authenticationGate.saveInput(message, textAnswer)
+        return@askUserOnEdt textAnswer
       }
-    }
-    else {
-      return askPassphrase(project, keyPath, resetPassword, authenticationMode)
-    }
-  }
-
-  private fun askSshPasswordInput(description: String): String? {
-    val matcher = SSHUtil.PASSWORD_PROMPT.matcher(description)
-    check(matcher.matches()) { description }
-    val username = SSHUtil.extractUsername(matcher)
-    val resetPassword = username == lastAskedUserName
-    lastAskedUserName = username
-
-    if (doNotRememberPasswords) {
-      return askUserOnEdt {
-        val message = ExternalProcessAuthHelperBundle.message("ssh.password.message", username)
-        Messages.showPasswordDialog(project, message,
-                                    ExternalProcessAuthHelperBundle.message("ssh.password.title"), null)
-      }
-    }
-    else {
-      return askPassword(project, username, resetPassword, authenticationMode)
-    }
-  }
-
-  private fun askConfirmationInput(description: @NlsSafe String): String? {
-    return askUserOnEdt {
-      val message: @NlsSafe String = StringUtil.replace(description,
-                                                        SSHUtil.CONFIRM_CONNECTION_PROMPT + " (yes/no)?",
-                                                        SSHUtil.CONFIRM_CONNECTION_PROMPT + "?")
-
-      val knownAnswer = authenticationGate.getSavedInput(message)
-      if (knownAnswer != null && lastAskedConfirmationInput == null) {
-        lastAskedConfirmationInput = knownAnswer
-        return@askUserOnEdt knownAnswer
-      }
-
-      val answer = Messages.showYesNoDialog(project, message, ExternalProcessAuthHelperBundle.message("title.ssh.confirmation"), null)
-      val textAnswer = when (answer) {
-        Messages.YES -> "yes"
-        Messages.NO -> "no"
-        else -> throw AssertionError(answer)
-      }
-
-      authenticationGate.saveInput(message, textAnswer)
-      return@askUserOnEdt textAnswer
     }
   }
 
@@ -174,4 +218,16 @@ class NativeSshGuiAuthenticator(private val project: Project,
       return CredentialAttributes(serviceName, key)
     }
   }
+
+  private interface PromptHandler {
+    fun handleInput(description: String): PromptAnswer
+  }
+
+  private sealed interface PromptAnswer {
+    data object NotHandled : PromptAnswer
+    data class Answer(val value: String?) : PromptAnswer
+  }
+
+  private data class Prompt(val askedKey: @NonNls String,
+                            val promptMessage: @Nls String)
 }
