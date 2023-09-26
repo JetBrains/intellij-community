@@ -90,7 +90,7 @@ class RescanIndexesAction : RecoveryAction {
 
       override fun tryMergeWith(taskFromQueue: FilesScanningTask): UnindexedFilesScanner? =
         if (taskFromQueue.javaClass == javaClass) this else null
-    }.queue(project)
+    }.queue()
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(historyFuture).extractConsistencyProblems() +
              stubAndIndexingStampInconsistencies

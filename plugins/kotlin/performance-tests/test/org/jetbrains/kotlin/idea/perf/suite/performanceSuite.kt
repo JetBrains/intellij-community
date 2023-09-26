@@ -22,7 +22,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.usages.Usage
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.toArray
-import com.intellij.util.indexing.UnindexedFilesUpdater
+import com.intellij.util.indexing.UnindexedFilesScanner
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.perf.util.ExternalProject
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.disableAllInspections
@@ -332,7 +332,7 @@ class PerformanceSuite {
 
                 dispatchAllInvocationEvents()
                 with(DumbService.getInstance(project)) {
-                    UnindexedFilesUpdater(project).queue()
+                    UnindexedFilesScanner(project).queue()
                     completeJustSubmittedTasks()
                 }
                 dispatchAllInvocationEvents()
