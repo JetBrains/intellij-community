@@ -13,15 +13,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
@@ -50,35 +47,21 @@ public final class MacPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empt
 
   @Override
   public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
-    Set<String> candidates = new HashSet<>();
-    collectPythonInstallations("/Library/Frameworks/Python.framework/Versions", candidates);
-    collectPythonInstallations("/System/Library/Frameworks/Python.framework/Versions", candidates);
-    collectPythonInstallations("/usr/local/Cellar/python", candidates);
-    UnixPythonSdkFlavor.collectUnixPythons("/usr/local/bin", candidates);
+    Set<Path> candidates = new HashSet<>();
+    collectPythonInstallations(Path.of("/Library/Frameworks/Python.framework/Versions"), candidates);
+    collectPythonInstallations(Path.of("/System/Library/Frameworks/Python.framework/Versions"), candidates);
+    collectPythonInstallations(Path.of("/usr/local/Cellar/python"), candidates);
+    UnixPythonSdkFlavor.collectUnixPythons(Path.of("/usr/local/bin"), candidates);
     if (areCommandLineDeveloperToolsAvailable()) {
-      UnixPythonSdkFlavor.collectUnixPythons("/usr/bin", candidates);
+      UnixPythonSdkFlavor.collectUnixPythons(Path.of("/usr/bin"), candidates);
     }
-    return ContainerUtil.map(candidates, Path::of);
+    return candidates;
   }
 
-  private static void collectPythonInstallations(String pythonPath, Set<String> candidates) {
-    VirtualFile rootVDir = LocalFileSystem.getInstance().findFileByPath(pythonPath);
-    if (rootVDir != null) {
-      if (rootVDir instanceof NewVirtualFile) {
-        ((NewVirtualFile)rootVDir).markDirty();
-      }
-      rootVDir.refresh(true, false);
-      for (VirtualFile dir : rootVDir.getChildren()) {
-        if (dir.isDirectory()) {
-          final VirtualFile binDir = dir.findChild("bin");
-          if (binDir != null && binDir.isDirectory()) {
-            final VirtualFile child = binDir.findChild("python3");
-            if (child != null && !child.isDirectory()) {
-              candidates.add(child.getPath());
-            }
-          }
-        }
-      }
+  private static void collectPythonInstallations(@NotNull Path pythonHomePath, @NotNull Set<Path> candidates) {
+    Path pythonBinaryPath = pythonHomePath.resolve(Path.of("bin", "python3"));
+    if (Files.isRegularFile(pythonBinaryPath)) {
+      candidates.add(pythonBinaryPath);
     }
   }
 
