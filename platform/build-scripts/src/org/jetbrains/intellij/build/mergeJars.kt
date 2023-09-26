@@ -246,7 +246,8 @@ fun isNative(name: String): Boolean {
          name.endsWith(".exe") ||
          name.endsWith(".dll") ||
          name.endsWith(".node") ||
-         name.endsWith(".tbd")
+         name.endsWith(".tbd") ||
+         name == "icudtl.dat" // needed for skiko (Compose backend) on Windows
 }
 
 @Suppress("SpellCheckingInspection")
