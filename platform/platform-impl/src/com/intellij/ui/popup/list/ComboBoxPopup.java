@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComboBoxPopupState;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
+import com.intellij.openapi.ui.NewUIComboBoxRenderer;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -141,6 +142,11 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     return new MyDelegateRenderer();
   }
 
+  public static boolean isRendererWithInsets(ListCellRenderer<?> comboRenderer) {
+    return comboRenderer instanceof NewUIComboBoxRenderer
+           || comboRenderer instanceof ComboBoxWithWidePopup<?>.AdjustingListCellRenderer r && r.delegate instanceof NewUIComboBoxRenderer;
+  }
+
   private void configurePopup() {
     setMaxRowCount(myContext.getMaximumRowCount());
     setRequestFocus(false);
@@ -155,8 +161,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     final var renderer = ((MyBasePopupState<?>)myStep).myGetRenderer.get();
-    if (renderer instanceof GroupedComboBoxRenderer<?> ||
-        renderer instanceof ComboBoxWithWidePopup<?>.AdjustingListCellRenderer r && r.delegate instanceof GroupedComboBoxRenderer<?>) {
+    if (isRendererWithInsets(renderer)) {
       list.setBorder(JBUI.Borders.empty(PopupUtil.getListInsets(false, false)));
       mySpeedSearch.addChangeListener(x -> {
         list.setBorder(JBUI.Borders.empty(PopupUtil.getListInsets(!mySpeedSearch.getFilter().isBlank(), false)));
