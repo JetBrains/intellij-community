@@ -57,6 +57,7 @@ public abstract class GitHandler {
   private final GitCommand myCommand;
 
   private boolean myPreValidateExecutable = true;
+  private boolean myEnableInteractiveCallbacks = true;
 
   protected final GeneralCommandLine myCommandLine;
   private final Map<String, String> myCustomEnv = new HashMap<>();
@@ -395,6 +396,20 @@ public abstract class GitHandler {
    */
   boolean isPreValidateExecutable() {
     return myPreValidateExecutable;
+  }
+
+  /**
+   * See {@link GitImplBase#run(Computable, Computable)}
+   */
+  public boolean isEnableInteractiveCallbacks() {
+    return myEnableInteractiveCallbacks;
+  }
+
+  /**
+   * See {@link GitImplBase#run(Computable, Computable)}
+   */
+  public void setEnableInteractiveCallbacks(boolean enableInteractiveCallbacks) {
+    myEnableInteractiveCallbacks = enableInteractiveCallbacks;
   }
 
   void runInCurrentThread() throws IOException {

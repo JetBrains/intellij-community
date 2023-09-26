@@ -12,13 +12,16 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.EnvironmentUtil;
 import externalApp.nativessh.NativeSshAskPassAppHandler;
 import git4idea.GitUtil;
-import git4idea.config.GitExecutable;
-import git4idea.config.GitVcsApplicationSettings;
-import git4idea.config.GitVersion;
-import git4idea.config.GitVersionSpecialty;
+import git4idea.config.*;
 import git4idea.http.GitAskPassAppHandler;
+import git4idea.repo.GitProjectConfigurationCache;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -177,12 +180,53 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
   private void addHandlerPathToEnvironment(@NotNull String env,
                                            @NotNull ExternalProcessHandlerService<?> service) throws IOException {
     GitExecutable executable = myHandler.getExecutable();
-    boolean useBatchFile = SystemInfo.isWindows &&
-                           executable.isLocal() &&
-                           (!Registry.is("git.use.shell.script.on.windows") ||
-                            !GitVersionSpecialty.CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS.existsIn(myVersion));
-    File scriptFile = service.getCallbackScriptPath(executable.getId(), new GitScriptGenerator(executable), useBatchFile);
+    File scriptFile = service.getCallbackScriptPath(executable.getId(),
+                                                    new GitScriptGenerator(executable),
+                                                    shouldUseBatchScript(executable));
     String scriptPath = executable.convertFilePath(scriptFile);
     myHandler.addCustomEnvironmentVariable(env, scriptPath);
+  }
+
+  private boolean shouldUseBatchScript(@NotNull GitExecutable executable) {
+    if (!SystemInfo.isWindows) return false;
+    if (!executable.isLocal()) return false;
+    if (Registry.is("git.use.shell.script.on.windows") &&
+        GitVersionSpecialty.CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS.existsIn(myVersion)) {
+      return isCustomSshExecutableConfigured();
+    }
+    return true;
+  }
+
+  private boolean isCustomSshExecutableConfigured() {
+    String sshCommand = readSshCommand();
+    String command = StringUtil.trim(StringUtil.unquoteString(StringUtil.notNullize(sshCommand)));
+    // do not treat 'ssh -vvv' as custom executable
+    return !command.isEmpty() && !command.startsWith("ssh ");
+  }
+
+  @Nullable
+  private String readSshCommand() {
+    String sshCommand = EnvironmentUtil.getValue(GitCommand.GIT_SSH_COMMAND_ENV);
+    if (sshCommand != null) return sshCommand;
+
+    sshCommand = EnvironmentUtil.getValue(GitCommand.GIT_SSH_ENV);
+    if (sshCommand != null) return sshCommand;
+
+    VirtualFile root = myHandler.getExecutableContext().getRoot();
+    if (root == null) return null;
+
+    GitRepository repo = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
+    if (repo != null) {
+      return GitProjectConfigurationCache.getInstance(myProject).readRepositoryConfig(repo, GitConfigUtil.CORE_SSH_COMMAND);
+    }
+    else {
+      try {
+        return GitConfigUtil.getValue(myProject, root, GitConfigUtil.CORE_SSH_COMMAND);
+      }
+      catch (VcsException e) {
+        LOG.warn(e);
+        return null;
+      }
+    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.openapi.project.Project;
@@ -28,6 +28,7 @@ public final class GitConfigUtil {
   public static final @NlsSafe String USER_EMAIL = "user.email";
   public static final @NlsSafe String CORE_AUTOCRLF = "core.autocrlf";
   public static final @NlsSafe String CREDENTIAL_HELPER = "credential.helper";
+  public static final @NlsSafe String CORE_SSH_COMMAND = "core.sshCommand";
   public static final @NlsSafe String LOG_OUTPUT_ENCODING = "i18n.logoutputencoding";
   public static final @NlsSafe String COMMIT_ENCODING = "i18n.commitencoding";
   public static final @NlsSafe String COMMIT_TEMPLATE = "commit.template";
@@ -43,6 +44,7 @@ public final class GitConfigUtil {
                                @Nullable @NonNls String keyMask,
                                @NotNull Map<String, String> result) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
+    h.setEnableInteractiveCallbacks(false);
     h.setSilent(true);
     h.addParameters("--null");
     if (keyMask != null) {
@@ -66,12 +68,15 @@ public final class GitConfigUtil {
   }
 
 
-  public static @Nullable String getValue(@NotNull Project project, @NotNull VirtualFile root, @NotNull @NonNls String key) throws VcsException {
+  @Nullable
+  public static String getValue(@NotNull Project project, @NotNull VirtualFile root, @NotNull @NonNls String key) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     return getValue(h, key);
   }
 
-  private static @Nullable String getValue(@NotNull GitLineHandler h, @NotNull @NonNls String key) throws VcsException {
+  @Nullable
+  private static String getValue(@NotNull GitLineHandler h, @NotNull @NonNls String key) throws VcsException {
+    h.setEnableInteractiveCallbacks(false);
     h.setSilent(true);
     h.addParameters("--null", "--get", key);
     GitCommandResult result = Git.getInstance().runCommand(h);
@@ -87,7 +92,8 @@ public final class GitConfigUtil {
    * Converts the git config boolean value (which can be specified in various ways) to Java Boolean.
    * @return true if the value represents "true", false if the value represents "false", null if the value doesn't look like a boolean value.
    */
-  public static @Nullable Boolean getBooleanValue(@Nullable @NonNls String value) {
+  @Nullable
+  public static Boolean getBooleanValue(@Nullable @NonNls String value) {
     if (value == null) return null;
     value = StringUtil.toLowerCase(value);
     if (ContainerUtil.newHashSet("true", "yes", "on", "1").contains(value)) return true;
@@ -98,7 +104,8 @@ public final class GitConfigUtil {
   /**
    * Get commit encoding for the specified root, or UTF-8 if the encoding is note explicitly specified
    */
-  public static @NotNull String getCommitEncoding(@NotNull Project project, @NotNull VirtualFile root) {
+  @NotNull
+  public static String getCommitEncoding(@NotNull Project project, @NotNull VirtualFile root) {
     String encoding = null;
     try {
       encoding = getValue(project, root, COMMIT_ENCODING);

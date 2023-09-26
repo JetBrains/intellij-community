@@ -14,6 +14,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.vcs.VcsLocaleHelper
 import git4idea.commands.GitHandler
 import git4idea.i18n.GitBundle
+import git4idea.repo.GitConfigKey
 import git4idea.repo.GitConfigurationCache
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -195,7 +196,7 @@ sealed class GitExecutable {
 
 private data class WslSupportedLocaleKey(
   val distribution: WSLDistribution
-) : GitConfigurationCache.ConfigKey<Map<String, String>?>
+) : GitConfigKey<Map<String, String>?>
 
 private fun computeWslSupportedLocaleKey(distribution: WSLDistribution): Map<String, String>? {
   val knownLocales = listOf(VcsLocaleHelper.EN_UTF_LOCALE, VcsLocaleHelper.C_UTF_LOCALE)

@@ -154,7 +154,7 @@ public abstract class GitImplBase implements Git {
       throw new ProcessCanceledException();
     }
 
-    if (project != null) {
+    if (project != null && handler.isEnableInteractiveCallbacks()) {
       try (GitHandlerAuthenticationManager authenticationManager = GitHandlerAuthenticationManager.prepare(project, handler, version)) {
         try (GitHandlerRebaseEditorManager ignored = prepareGeneralPurposeEditor(project, handler)) {
           GitCommandResult result = doRun(handler, version, outputCollector);
