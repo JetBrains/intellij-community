@@ -201,6 +201,11 @@ public class CompositeElement extends TreeElement {
     return TreeUtil.findSibling(anchor, typesSet);
   }
 
+  /**
+   * @implNote Optimization. Instead of just calling new {@code String(textToCharArray())} we try to delegate the text computation to the
+   * first child, if there's only one, in hope it has optimized its own {@code getText()} and we thus can skip allocating buffer in
+   * {@link AstBufferUtil}
+   */
   @Override
   public @NotNull String getText() {
     TreeElement firstChildNode = getFirstChildNode();
