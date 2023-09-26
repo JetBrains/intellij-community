@@ -6,6 +6,7 @@ import com.google.common.base.CharMatcher;
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.execution.ConsoleFolding;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.ClearConsoleAction;
@@ -212,6 +213,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         ConsoleTokenUtil.updateAllTokenTextAttributes(getEditor(), project);
       });
     if (usePredefinedMessageFilter) {
+      if (!ClientId.isCurrentlyUnderLocalId() && myPredefinedFilters.isEmpty()) {
+        updatePredefinedFiltersLater(ModalityState.defaultModalityState());
+      }
       addAncestorListener(new AncestorListenerAdapter() {
         @Override
         public void ancestorAdded(AncestorEvent event) {
@@ -241,10 +245,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void updatePredefinedFiltersLater() {
+    updatePredefinedFiltersLater(null);
+  }
+
+  private void updatePredefinedFiltersLater(@Nullable ModalityState modalityState) {
     ReadAction
       .nonBlocking(() -> ConsoleViewUtil.computeConsoleFilters(myProject, this, mySearchScope))
       .expireWith(this)
-      .finishOnUiThread(ModalityState.stateForComponent(this), filters -> {
+      .finishOnUiThread(modalityState != null ? modalityState : ModalityState.stateForComponent(this), filters -> {
         myPredefinedFilters = filters;
         rehighlightHyperlinksAndFoldings();
       }).submit(AppExecutorUtil.getAppExecutorService());
