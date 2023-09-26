@@ -11,6 +11,7 @@ import java.util.Collection;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public final class PyQuotesUtil {
+
   private PyQuotesUtil() {
   }
 
@@ -20,7 +21,7 @@ public final class PyQuotesUtil {
       PyFormattedStringElement parentFString = PsiTreeUtil.getParentOfType(stringElement, PyFormattedStringElement.class, true,
                                                                            PyStatement.class);
       char targetQuote = PyStringLiteralUtil.flipQuote(stringElement.getQuote().charAt(0));
-      if (parentFString != null) {
+      if (parentFString != null && LanguageLevel.forElement(stringElement).isOlderThan(LanguageLevel.PYTHON312)) {
         boolean parentFStringUsesTargetQuotes = parentFString.getQuote().equals(Character.toString(targetQuote));
         if (parentFStringUsesTargetQuotes) return false;
         boolean conversionIntroducesBackslashEscapedQuote = stringElement.textContains(targetQuote);
@@ -51,11 +52,17 @@ public final class PyQuotesUtil {
       processStringElementText(builder, stringElement.getText(), originalQuote);
     }
     else {
+      boolean fStringCanIncludeArbitraryStringLiterals = LanguageLevel.forElement(stringElement).isAtLeast(LanguageLevel.PYTHON312);
       stringElement.acceptChildren(new PyRecursiveElementVisitor() {
         @Override
         public void visitElement(@NotNull PsiElement element) {
           if (element instanceof PyStringElement) {
-            processStringElement(builder, (PyStringElement)element);
+            if (fStringCanIncludeArbitraryStringLiterals) {
+              builder.append(element.getText());
+            }
+            else {
+              processStringElement(builder, (PyStringElement)element);
+            }
           }
           else if (PyTokenTypes.FSTRING_TOKENS.contains(element.getNode().getElementType())) {
             processStringElementText(builder, element.getText(), originalQuote);
