@@ -34,6 +34,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.isTertiary
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
@@ -108,7 +111,10 @@ internal fun TabImpl(
                         cap = StrokeCap.Round,
                     )
                 }
-                .padding(tabStyle.metrics.tabPadding),
+                .padding(tabStyle.metrics.tabPadding)
+                .onPointerEvent(PointerEventType.Release) {
+                    if (it.button.isTertiary) tabData.onClose()
+                },
             horizontalArrangement = Arrangement.spacedBy(tabStyle.metrics.closeContentGap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
