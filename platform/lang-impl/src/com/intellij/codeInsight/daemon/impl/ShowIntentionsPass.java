@@ -313,7 +313,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor highestPriorityInfoFinder = new DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor(true);
     List<HighlightInfo> infos = new ArrayList<>();
     List<HighlightInfo> additionalInfos = new ArrayList<>();
-    @NotNull Document document = hostEditor.getDocument();
+    Document document = hostEditor.getDocument();
     int line = document.getLineNumber(offset);
     DaemonCodeAnalyzerEx.processHighlights(document, hostFile.getProject(), HighlightSeverity.INFORMATION, 0, document.getTextLength(), info -> {
       if (info.containsOffset(offset, true)) {
