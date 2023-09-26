@@ -26,11 +26,11 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Short name of inspection(inspection id). Should be unique in array. E.g: ConstantValue, unused ..."
+          "description": "Short name of inspection (inspection id). Should be unique in array. E.g: ConstantValue, NullableProblems ..."
         },
         "cweIds": {
           "type": "array",
-          "description": "Array of CWE IDs associated with the inspection. Values of array should present on https://cwe.mitre.org/data/index.html. E.g. [570, 571]",
+          "description": "Array of CWE IDs associated with the inspection. Values of array must be present on https://cwe.mitre.org/data/index.html. E.g. [570, 571]",
           "items": {
             "type": "integer"
           }

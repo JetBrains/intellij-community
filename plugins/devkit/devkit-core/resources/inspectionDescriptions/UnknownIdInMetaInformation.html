@@ -2,10 +2,10 @@
 <body>
 Reports unknown inspection ids in <code>metaInformation.json</code> files.
 
-File metaInformation.json contains additional information about inspections declared in current plugin.
-Presence of inspections in file is optional. An example for such information - list of corresponding CWE IDs.
+It contains additional information about inspections declared in the current plugin.
+The presence of inspections in this file is optional. An example of such information is a list of corresponding CWE IDs.
 
-Elements of metaInformation.json with unknown inspection id will make no difference in runtime.
-Presence of such elements could be a bug or outdated information.
+Entries in <code>metaInformation.json</code> with unknown inspection ID will be ignored at runtime.
+The presence of such elements could be a bug or outdated information.
 </body>
 </html>
