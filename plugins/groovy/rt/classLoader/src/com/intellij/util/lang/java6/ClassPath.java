@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang.java6;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -15,7 +15,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.jar.Attributes;
 
 public final class ClassPath {
   private static final ResourceStringLoaderIterator ourResourceIterator = new ResourceStringLoaderIterator();
@@ -45,8 +44,6 @@ public final class ClassPath {
   private final boolean myAcceptUnescapedUrls;
   final boolean myCanHavePersistentIndex;
   final boolean myLazyClassloadingCaches;
-  private final @Nullable CachePoolImpl myCachePool;
-  private final @Nullable UrlClassLoader.CachingCondition myCachingCondition;
   final boolean myLogErrorOnMissingJar;
 
   static {
@@ -66,19 +63,14 @@ public final class ClassPath {
   public ClassPath(List<URL> urls,
                    boolean canLockJars,
                    boolean canUseCache,
-                   boolean acceptUnescapedUrls,
                    boolean canHavePersistentIndex,
-                   @Nullable CachePoolImpl cachePool,
-                   @Nullable UrlClassLoader.CachingCondition cachingCondition,
                    boolean logErrorOnMissingJar,
                    boolean lazyClassloadingCaches,
                    @NotNull Set<URL> urlsWithProtectionDomain) {
     myLazyClassloadingCaches = lazyClassloadingCaches;
     myCanLockJars = canLockJars;
     myCanUseCache = canUseCache && !myLazyClassloadingCaches;
-    myAcceptUnescapedUrls = acceptUnescapedUrls;
-    myCachePool = cachePool;
-    myCachingCondition = cachingCondition;
+    myAcceptUnescapedUrls = false;
     myCanHavePersistentIndex = canHavePersistentIndex;
     myLogErrorOnMissingJar = logErrorOnMissingJar;
     myURLsWithProtectionDomain = urlsWithProtectionDomain;
@@ -179,10 +171,12 @@ public final class ClassPath {
         url = myUrls.remove(size - 1);
       }
 
-      if (myLoadersMap.containsKey(url)) continue;
+      if (myLoadersMap.containsKey(url)) {
+        continue;
+      }
 
       try {
-        initLoaders(url, myLoaders.size());
+        initLoaders(url);
       }
       catch (IOException e) {
         LoggerRt.getInstance(ClassPath.class).info("url: " + url, e);
@@ -192,17 +186,8 @@ public final class ClassPath {
     return myLoaders.get(i);
   }
 
-  @NotNull
-  public List<URL> getBaseUrls() {
-    List<URL> result = new ArrayList<>();
-    for (Loader loader : myLoaders) {
-      result.add(loader.getBaseURL());
-    }
-    return result;
-  }
-
   @ReviseWhenPortedToJDK(value = "7", description = "use URL -> URI -> Path conversion")
-  private void initLoaders(@NotNull URL url, int index) throws IOException {
+  private void initLoaders(@NotNull URL url) throws IOException {
     String path;
 
     if (myAcceptUnescapedUrls) {
@@ -262,13 +247,7 @@ public final class ClassPath {
 
   private void initLoader(@NotNull URL url, @NotNull Loader loader) throws IOException {
     if (myCanUseCache) {
-      ClasspathCache.LoaderData data = myCachePool == null ? null : myCachePool.getCachedData(url);
-      if (data == null) {
-        data = loader.buildData();
-        if (myCachePool != null && myCachingCondition != null && myCachingCondition.shouldCacheData(url)) {
-          myCachePool.cacheData(url, data);
-        }
-      }
+      ClasspathCache.LoaderData data = loader.buildData();
       myCache.applyLoaderData(data, loader);
 
       boolean lastOne;
@@ -283,16 +262,6 @@ public final class ClassPath {
     myLoaders.add(loader);
     myLoadersMap.put(url, loader);
     myLastLoaderProcessed.incrementAndGet(); // volatile write
-  }
-
-  Attributes getManifestData(@NotNull URL url) {
-    return myCanUseCache && myCachePool != null ? myCachePool.getManifestData(url) : null;
-  }
-
-  void cacheManifestData(@NotNull URL url, @NotNull Attributes manifestAttributes) {
-    if (myCanUseCache && myCachePool != null && myCachingCondition != null && myCachingCondition.shouldCacheData(url)) {
-      myCachePool.cacheManifestData(url, manifestAttributes);
-    }
   }
 
   private final class MyEnumeration implements Enumeration<URL> {
