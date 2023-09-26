@@ -9,20 +9,19 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
+import com.intellij.platform.testFramework.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.LocalTimeCounter
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionEnvironmentFixture
 import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionOutputFixture
 import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionViewFixture
 import org.jetbrains.plugins.gradle.testFramework.fixture.TestExecutionConsoleEventFixture
-import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
-import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
-import com.intellij.platform.testFramework.treeAssertion.SimpleTreeAssertion
-import com.intellij.platform.testFramework.treeAssertion.buildTree
 import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyExecution
 import org.jetbrains.plugins.gradle.testFramework.util.waitForGradleEventDispatcherClosing
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -118,12 +117,7 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
   }
 
   fun assertBuildExecutionTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
-    buildViewFixture.assertBuildViewTreeEquals { treeString ->
-      val actualTree = buildTree(treeString!!)
-      SimpleTreeAssertion.assertTree(actualTree) {
-        assertNode("", assert = assert)
-      }
-    }
+    buildViewFixture.assertBuildViewTree(assert)
   }
 
   fun assertTestConsoleContains(expected: String) {

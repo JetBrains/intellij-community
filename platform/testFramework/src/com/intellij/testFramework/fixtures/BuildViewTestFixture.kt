@@ -8,6 +8,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.testFramework.treeAssertion.SimpleTreeAssertion
+import com.intellij.platform.testFramework.treeAssertion.buildTree
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.ThrowableRunnable
@@ -45,6 +47,10 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
     ThrowableRunnable { runInEdtAndWait { Disposer.dispose(fixtureDisposable) } }
   ).run()
 
+  fun assertSyncViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
+    assertExecutionTree(syncViewManager, assert)
+  }
+
   fun assertSyncViewTreeEquals(executionTreeText: String) {
     assertExecutionTree(syncViewManager, executionTreeText, false)
   }
@@ -55,6 +61,10 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
 
   fun assertSyncViewTreeEquals(treeTestPresentationChecker: (String?) -> Unit) {
     assertExecutionTree(syncViewManager, treeTestPresentationChecker)
+  }
+
+  fun assertBuildViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
+    assertExecutionTree(buildViewManager, assert)
   }
 
   fun assertBuildViewTreeEquals(executionTree: String) {
@@ -104,6 +114,16 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
     val recentBuild = viewManager.getRecentBuild()
     val buildView = viewManager.getBuildsMap()[recentBuild]
     assertExecutionTree(buildView!!, expected, ignoreTasksOrder)
+  }
+
+  @JvmName("assertSimpleExecutionTree")
+  private fun assertExecutionTree(viewManager: TestViewManager, assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
+    assertExecutionTree(viewManager) { treeString ->
+      val actualTree = buildTree(treeString!!)
+      SimpleTreeAssertion.assertTree(actualTree) {
+        assertNode("", assert = assert)
+      }
+    }
   }
 
   private fun assertExecutionTree(viewManager: TestViewManager, treeTestPresentationChecker: (String?) -> Unit) {
