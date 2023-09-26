@@ -57,6 +57,10 @@ class NativeSshGuiAuthenticator(private val project: Project,
       return PromptAnswer.NotHandled
     }
 
+    private fun isKeyPassphrase(description: String): Boolean {
+      return SSHUtil.PASSPHRASE_PROMPT.matcher(description).matches()
+    }
+
     private fun askKeyPassphraseInput(description: String): String? {
       val matcher = SSHUtil.PASSPHRASE_PROMPT.matcher(description)
       check(matcher.matches()) { description }
@@ -75,6 +79,30 @@ class NativeSshGuiAuthenticator(private val project: Project,
         return askPassphrase(project, keyPath, resetPassword, authenticationMode)
       }
     }
+
+    private fun askPassphrase(project: Project?,
+                              keyPath: @NlsSafe String,
+                              resetPassword: Boolean,
+                              authenticationMode: AuthenticationMode): @NonNls String? {
+      if (authenticationMode == AuthenticationMode.NONE) return null
+      val newAttributes = passphraseCredentialAttributes(keyPath)
+      val credentials = PasswordSafe.instance.get(newAttributes)
+      if (credentials != null && !resetPassword) {
+        val password = credentials.getPasswordAsString()
+        if (!password.isNullOrEmpty()) return password
+      }
+      if (authenticationMode == AuthenticationMode.SILENT) return null
+      return askPassword(project,
+                         ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.title"),
+                         ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.message",
+                                                                 PathUtil.getFileName(keyPath)),
+                         newAttributes, true)
+    }
+
+    private fun passphraseCredentialAttributes(key: @Nls String): CredentialAttributes {
+      val serviceName = generateServiceName(ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.passphrase"), key)
+      return CredentialAttributes(serviceName, key)
+    }
   }
 
   private inner class SshPasswordPromptHandler : PromptHandler {
@@ -86,6 +114,10 @@ class NativeSshGuiAuthenticator(private val project: Project,
         return PromptAnswer.Answer(answer)
       }
       return PromptAnswer.NotHandled
+    }
+
+    private fun isSshPassword(description: String): Boolean {
+      return SSHUtil.PASSWORD_PROMPT.matcher(description).matches()
     }
 
     private fun askSshPasswordInput(description: String): String? {
@@ -106,6 +138,29 @@ class NativeSshGuiAuthenticator(private val project: Project,
         return askPassword(project, username, resetPassword, authenticationMode)
       }
     }
+
+    private fun askPassword(project: Project?,
+                            username: @NlsSafe String,
+                            resetPassword: Boolean,
+                            authenticationMode: AuthenticationMode): @NonNls String? {
+      if (authenticationMode == AuthenticationMode.NONE) return null
+      val newAttributes = passwordCredentialAttributes(username)
+      val credentials = PasswordSafe.instance.get(newAttributes)
+      if (credentials != null && !resetPassword) {
+        val password = credentials.getPasswordAsString()
+        if (password != null) return password
+      }
+      if (authenticationMode == AuthenticationMode.SILENT) return null
+      return askPassword(project,
+                         ExternalProcessAuthHelperBundle.message("ssh.password.title"),
+                         ExternalProcessAuthHelperBundle.message("ssh.password.message", username),
+                         newAttributes, true)
+    }
+
+    private fun passwordCredentialAttributes(key: @Nls String): CredentialAttributes {
+      val serviceName = generateServiceName(ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.password"), key)
+      return CredentialAttributes(serviceName, key)
+    }
   }
 
   private inner class ConfirmationPromptHandler : PromptHandler {
@@ -117,6 +172,10 @@ class NativeSshGuiAuthenticator(private val project: Project,
         return PromptAnswer.Answer(answer)
       }
       return PromptAnswer.NotHandled
+    }
+
+    private fun isConfirmation(description: @NlsSafe String): Boolean {
+      return description.contains(SSHUtil.CONFIRM_CONNECTION_PROMPT)
     }
 
     private fun askConfirmationInput(description: @NlsSafe String): String? {
@@ -156,67 +215,6 @@ class NativeSshGuiAuthenticator(private val project: Project,
     if (authenticationMode != AuthenticationMode.FULL) return null
 
     return invokeAndWaitIfNeeded(ModalityState.any(), query)
-  }
-
-  companion object {
-    private fun isKeyPassphrase(description: String): Boolean {
-      return SSHUtil.PASSPHRASE_PROMPT.matcher(description).matches()
-    }
-
-    private fun isSshPassword(description: String): Boolean {
-      return SSHUtil.PASSWORD_PROMPT.matcher(description).matches()
-    }
-
-    private fun isConfirmation(description: @NlsSafe String): Boolean {
-      return description.contains(SSHUtil.CONFIRM_CONNECTION_PROMPT)
-    }
-
-    private fun askPassphrase(project: Project?,
-                              keyPath: @NlsSafe String,
-                              resetPassword: Boolean,
-                              authenticationMode: AuthenticationMode): @NonNls String? {
-      if (authenticationMode == AuthenticationMode.NONE) return null
-      val newAttributes = passphraseCredentialAttributes(keyPath)
-      val credentials = PasswordSafe.instance.get(newAttributes)
-      if (credentials != null && !resetPassword) {
-        val password = credentials.getPasswordAsString()
-        if (!password.isNullOrEmpty()) return password
-      }
-      if (authenticationMode == AuthenticationMode.SILENT) return null
-      return askPassword(project,
-                         ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.title"),
-                         ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.message",
-                                                                 PathUtil.getFileName(keyPath)),
-                         newAttributes, true)
-    }
-
-    private fun askPassword(project: Project?,
-                            username: @NlsSafe String,
-                            resetPassword: Boolean,
-                            authenticationMode: AuthenticationMode): @NonNls String? {
-      if (authenticationMode == AuthenticationMode.NONE) return null
-      val newAttributes = passwordCredentialAttributes(username)
-      val credentials = PasswordSafe.instance.get(newAttributes)
-      if (credentials != null && !resetPassword) {
-        val password = credentials.getPasswordAsString()
-        if (password != null) return password
-      }
-      if (authenticationMode == AuthenticationMode.SILENT) return null
-      return askPassword(project,
-                         ExternalProcessAuthHelperBundle.message("ssh.password.title"),
-                         ExternalProcessAuthHelperBundle.message("ssh.password.message", username),
-                         newAttributes, true)
-    }
-
-    private fun passphraseCredentialAttributes(key: @Nls String): CredentialAttributes {
-      val serviceName = generateServiceName(ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.passphrase"), key)
-      return CredentialAttributes(serviceName, key)
-    }
-
-    private fun passwordCredentialAttributes(key: @Nls String): CredentialAttributes {
-      val serviceName = generateServiceName(ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.password"), key)
-      return CredentialAttributes(serviceName, key)
-    }
   }
 
   private interface PromptHandler {
