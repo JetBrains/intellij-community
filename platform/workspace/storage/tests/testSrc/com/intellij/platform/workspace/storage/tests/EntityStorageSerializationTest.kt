@@ -7,7 +7,7 @@ import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -72,7 +72,7 @@ class EntityStorageSerializationTest {
     builder.addEntity(CollectionFieldEntity(setProperty, listOf("one", "two", "three"), MySource))
     builder.addEntity(CollectionFieldEntity(setOf(1, 2, 3, 3, 4), listOf("one", "two", "three"), MySource))
 
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl())
 
     withTempFile { file ->
       val result = serializer.serializeCache(file, builder.toSnapshot())
@@ -99,8 +99,8 @@ class EntityStorageSerializationTest {
     builder addEntity SampleEntity(false, "MyEntity", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
                                    SampleEntitySource("test"))
 
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
-    val deserializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl())
+    val deserializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl())
       .also { it.serializerDataFormatVersion = "XYZ" }
 
     withTempFile { file ->
@@ -113,7 +113,7 @@ class EntityStorageSerializationTest {
 
   @Test
   fun `serializer version`() {
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl())
 
     val (kryo, _) = serializer.createKryo()
 
@@ -126,7 +126,7 @@ class EntityStorageSerializationTest {
   @Test
   fun `serialize empty lists`() {
     val virtualFileManager = VirtualFileUrlManagerImpl()
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
 
     val builder = createEmptyBuilder()
 
@@ -141,7 +141,7 @@ class EntityStorageSerializationTest {
   @Test
   fun `serialize abstract`() {
     val virtualFileManager = VirtualFileUrlManagerImpl()
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
 
     val builder = createEmptyBuilder()
 
@@ -157,7 +157,7 @@ class EntityStorageSerializationTest {
   @Test
   fun `serialize rider like`() {
     val virtualFileManager = VirtualFileUrlManagerImpl()
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
 
     val builder = createEmptyBuilder()
 
@@ -172,7 +172,7 @@ class EntityStorageSerializationTest {
   @Test
   fun `read broken cache`() {
     val virtualFileManager = VirtualFileUrlManagerImpl()
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
 
     val builder = createEmptyBuilder()
 
