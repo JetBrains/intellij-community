@@ -125,5 +125,5 @@ interface WorkspaceFileSetVisitor {
 
 @ApiStatus.Internal
 interface VfsChangeApplier: AsyncFileListener.ChangeApplier {
-  val entitiesToReindex: List<EntityReference<WorkspaceEntity>>
+  val entitiesToReindex: Set<EntityReference<WorkspaceEntity>>
 }
