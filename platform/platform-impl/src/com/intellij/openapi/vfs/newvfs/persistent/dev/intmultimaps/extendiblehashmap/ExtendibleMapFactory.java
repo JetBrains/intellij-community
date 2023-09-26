@@ -72,7 +72,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
 
   @Override
   public @NotNull ExtendibleHashMap open(@NotNull Path storagePath) throws IOException {
-    MMappedFileStorageFactory mappedStorageFactory = MMappedFileStorageFactory.DEFAULT
+    MMappedFileStorageFactory mappedStorageFactory = MMappedFileStorageFactory.defaults()
       .pageSize(pageSize);
 
     try {

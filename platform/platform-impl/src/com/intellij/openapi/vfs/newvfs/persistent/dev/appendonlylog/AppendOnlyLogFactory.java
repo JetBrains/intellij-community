@@ -26,6 +26,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
   private final int expectedDataVersion;
   private final boolean ensureDataVersion;
 
+  /** Fail if recovery was needed */
   private final boolean prohibitRecovery;
 
   private AppendOnlyLogFactory(int pageSize,
@@ -58,13 +59,14 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
     return new AppendOnlyLogFactory(pageSize, /*ensureDataVersion: */false, /*expectedDataVersion: */0, prohibitRecovery);
   }
 
+  /** Fail if recovery was needed */
   public AppendOnlyLogFactory prohibitRecovery() {
     return new AppendOnlyLogFactory(pageSize, ensureDataVersion, expectedDataVersion, /*prohibitRecovery: */true);
   }
 
   @Override
   public @NotNull AppendOnlyLogOverMMappedFile open(@NotNull Path storagePath) throws IOException {
-    return MMappedFileStorageFactory.DEFAULT
+    return MMappedFileStorageFactory.defaults()
       .pageSize(pageSize)
       .wrapStorageSafely(
         storagePath,

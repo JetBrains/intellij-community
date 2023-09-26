@@ -28,7 +28,8 @@ public class StreamlinedBlobStorageOverMMappedFileTest extends StreamlinedBlobSt
     //    pages array. So I just make all pageSize >= 1Mb. This hack could be removed as soon as MMappedFileStorage.pages
     //    become re-sizeable
     int pageSize = Math.max(this.pageSize, 1 << 20);
-    return MMappedFileStorageFactory.withPageSize(pageSize)
+    return MMappedFileStorageFactory.defaults()
+      .pageSize(pageSize)
       .wrapStorageSafely(
         pathToStorage,
         storage -> new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy)

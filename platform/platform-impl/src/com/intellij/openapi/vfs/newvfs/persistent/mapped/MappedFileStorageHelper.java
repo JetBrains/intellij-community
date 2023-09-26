@@ -89,7 +89,8 @@ public final class MappedFileStorageHelper implements Closeable {
         return alreadyExistingHelper;
       }
 
-      return MMappedFileStorageFactory.withPageSize(DEFAULT_PAGE_SIZE)
+      return MMappedFileStorageFactory.defaults()
+        .pageSize(DEFAULT_PAGE_SIZE)
         .wrapStorageSafely(
           storagePath,
           mappedFileStorage -> {

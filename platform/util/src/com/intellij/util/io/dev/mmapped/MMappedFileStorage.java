@@ -61,7 +61,8 @@ public final class MMappedFileStorage implements Closeable {
   /** total time (nanos) spent inside {@link Page#map(FileChannel, int)} call */
   private static final AtomicLong totalTimeForPageMapNs = new AtomicLong();
 
-  //@GuardedBy(storagesRegistry)
+  /** Track opened storages to prevent open the same file more than once: Map[absolutePath -> storage] */
+  //@GuardedBy(openedStorages)
   private static final Map<Path, MMappedFileStorage> openedStorages = new HashMap<>();
 
   /** Log warn if > PAGES_TO_WARN_THRESHOLD pages were mapped */

@@ -15,11 +15,12 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
 
   public static final int DEFAULT_PAGE_SIZE = IOUtil.MiB;
 
-  public static final MMappedFileStorageFactory DEFAULT = new MMappedFileStorageFactory(DEFAULT_PAGE_SIZE);
+  private static final MMappedFileStorageFactory DEFAULTS = new MMappedFileStorageFactory(DEFAULT_PAGE_SIZE);
 
-  public static MMappedFileStorageFactory withPageSize(int pageSize) {
-    return DEFAULT.pageSize(pageSize);
+  public static MMappedFileStorageFactory defaults(){
+    return DEFAULTS;
   }
+
 
   private final int pageSize;
 

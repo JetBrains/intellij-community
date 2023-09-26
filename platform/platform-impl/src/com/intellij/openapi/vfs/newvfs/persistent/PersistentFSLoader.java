@@ -649,8 +649,8 @@ public final class PersistentFSLoader {
       else if (FSRecordsImpl.USE_ATTRIBUTES_OVER_MMAPPED_FILE) {
         LOG.info("VFS uses streamlined attributes storage (over mmapped file)");
         int pageSize = 1 << 24;//16Mb
-        blobStorage = MMappedFileStorageFactory
-          .withPageSize(pageSize)
+        blobStorage = MMappedFileStorageFactory.defaults()
+          .pageSize(pageSize)
           .wrapStorageSafely(
             attributesFile,
             storage -> new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy)
