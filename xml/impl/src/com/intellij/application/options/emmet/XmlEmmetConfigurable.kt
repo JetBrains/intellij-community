@@ -1,175 +1,102 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.application.options.emmet;
+package com.intellij.application.options.emmet
 
-import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBTextField;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.XmlBundle;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter
+import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.selected
+import com.intellij.xml.XmlBundle
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.List;
-import java.util.*;
+class XmlEmmetConfigurable : BoundSearchableConfigurable(XmlBundle.message("configurable.XmlEmmetConfigurable.display.name"),
+                                                         "reference.idesettings.emmet.xml") {
 
-public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable, Configurable.NoScroll {
-  private JPanel myPanel;
-  private JBCheckBox myEnableEmmetJBCheckBox;
-  private JBCheckBox myEnablePreviewJBCheckBox;
-  private JPanel myFiltersListPanel;
-  private JBCheckBox myEnableHrefAutodetectJBCheckBox;
-  private JBCheckBox myAddEditPointAtTheEndOfTemplateJBCheckBox;
-  private JBTextField myBemElementSeparatorTextField;
-  private JBTextField myBemModifierSeparatorTextField;
-  private JBTextField myBemShortElementPrefixTextField;
-  private JPanel myBemPanel;
+  private val filtersCheckBoxes = mutableMapOf<String, JBCheckBox>()
 
-  private Map<String, JBCheckBox> myFilterCheckboxes = new HashMap<>();
-
-  public XmlEmmetConfigurable() {
-    myEnableEmmetJBCheckBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        boolean selected = myEnableEmmetJBCheckBox.isSelected();
-        myEnablePreviewJBCheckBox.setEnabled(selected);
-        myFiltersListPanel.setEnabled(selected);
-        myEnableHrefAutodetectJBCheckBox.setEnabled(selected);
-        myAddEditPointAtTheEndOfTemplateJBCheckBox.setEnabled(selected);
-        UIUtil.setEnabled(myBemPanel, selected, true);
-        for (JBCheckBox checkBox : myFilterCheckboxes.values()) {
-          checkBox.setEnabled(selected);
+  override fun createPanel(): DialogPanel {
+    return panel {
+      val settings = EmmetOptions.getInstance()
+      lateinit var cbEmmetEnabled: JBCheckBox
+      row {
+        cbEmmetEnabled = checkBox(XmlBundle.message("emmet.enable.label"))
+          .bindSelected(settings::isEmmetEnabled, settings::setEmmetEnabled)
+          .component
+      }
+      rowsRange {
+        row {
+          checkBox(XmlBundle.message("emmet.enable.preview"))
+            .bindSelected(settings::isPreviewEnabled, settings::setPreviewEnabled)
         }
-      }
-    });
-    myFiltersListPanel.setBorder(IdeBorderFactory.createTitledBorder(XmlBundle.message("emmet.filters.enabled.by.default")));
-    myBemPanel.setBorder(IdeBorderFactory.createTitledBorder(XmlBundle.message("emmet.bem.title")));
-    createFiltersCheckboxes();
+        row {
+          checkBox(XmlBundle.message("emmet.href.autodetect"))
+            .bindSelected(settings::isHrefAutoDetectEnabled, settings::setHrefAutoDetectEnabled)
+        }
+        row {
+          checkBox(XmlBundle.message("emmet.add.edit.point.at.the.end.of.template"))
+            .bindSelected(settings::isAddEditPointAtTheEndOfTemplate, settings::setAddEditPointAtTheEndOfTemplate)
+        }
 
-  }
+        group(XmlBundle.message("xml.options.border.title.bem")) {
+          row(XmlBundle.message("emmet.bem.class.name.element.separator.label")) {
+            textField()
+              .bindText(settings::getBemElementSeparator, settings::setBemElementSeparator)
+              .columns(COLUMNS_TINY)
+          }
+          row(XmlBundle.message("emmet.bem.class.name.modifier.separator.label")) {
+            textField()
+              .bindText(settings::getBemModifierSeparator, settings::setBemModifierSeparator)
+              .columns(COLUMNS_TINY)
+          }
+          row(XmlBundle.message("emmet.bem.short.element.prefix.label")) {
+            textField()
+              .bindText(settings::getBemShortElementPrefix, settings::setBemShortElementPrefix)
+              .columns(COLUMNS_TINY)
+          }
+        }
 
-  public void createFiltersCheckboxes() {
-    final List<ZenCodingFilter> filters = ZenCodingFilter.getInstances();
-    final GridBagLayout layoutManager = new GridBagLayout();
-    final GridBagConstraints constraints = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                                  JBInsets.emptyInsets(), 0, 0);
-    myFiltersListPanel.setLayout(layoutManager);
-    int added = 0;
-    for (ZenCodingFilter filter : filters) {
-      if (filter.isSystem()) continue;
+        group(XmlBundle.message("emmet.filters.enabled.by.default")) {
+          val filters = ZenCodingFilter.getInstances()
+          for (filter in filters) {
+            if (filter.isSystem || filtersCheckBoxes.containsKey(filter.getSuffix())) {
+              continue
+            }
 
-      if (myFilterCheckboxes.containsKey(filter.getSuffix())) continue;
-      final JBCheckBox checkBox = new JBCheckBox(filter.getDisplayName());
-      myFilterCheckboxes.put(filter.getSuffix(), checkBox);
-      constraints.gridy = added;
-      myFiltersListPanel.add(checkBox, constraints);
-      added++;
-    }
-    myFiltersListPanel.revalidate();
-  }
-
-  @Override
-  public void dispose() {
-    myFilterCheckboxes.clear();
-    myFilterCheckboxes = null;
-  }
-
-  @Override
-  public @Nullable JComponent createComponent() {
-    return myPanel;
-  }
-
-  @Override
-  public boolean isModified() {
-    EmmetOptions emmetOptions = EmmetOptions.getInstance();
-    return emmetOptions.isEmmetEnabled() != myEnableEmmetJBCheckBox.isSelected() ||
-           emmetOptions.isPreviewEnabled() != myEnablePreviewJBCheckBox.isSelected() ||
-           emmetOptions.isHrefAutoDetectEnabled() != myEnableHrefAutodetectJBCheckBox.isSelected() ||
-           emmetOptions.isAddEditPointAtTheEndOfTemplate() != myAddEditPointAtTheEndOfTemplateJBCheckBox.isSelected() ||
-           !emmetOptions.getFiltersEnabledByDefault().equals(enabledFilters()) ||
-           !emmetOptions.getBemElementSeparator().equals(myBemElementSeparatorTextField.getText()) ||
-           !emmetOptions.getBemModifierSeparator().equals(myBemModifierSeparatorTextField.getText()) ||
-           !emmetOptions.getBemShortElementPrefix().equals(myBemShortElementPrefixTextField.getText());
-  }
-
-  @Override
-  public void apply() throws ConfigurationException {
-    EmmetOptions emmetOptions = EmmetOptions.getInstance();
-    emmetOptions.setEmmetEnabled(myEnableEmmetJBCheckBox.isSelected());
-    emmetOptions.setPreviewEnabled(myEnablePreviewJBCheckBox.isSelected());
-    emmetOptions.setHrefAutoDetectEnabled(myEnableHrefAutodetectJBCheckBox.isSelected());
-    emmetOptions.setAddEditPointAtTheEndOfTemplate(myAddEditPointAtTheEndOfTemplateJBCheckBox.isSelected());
-    emmetOptions.setFiltersEnabledByDefault(enabledFilters());
-    emmetOptions.setBemElementSeparator(myBemElementSeparatorTextField.getText());
-    emmetOptions.setBemModifierSeparator(myBemModifierSeparatorTextField.getText());
-    emmetOptions.setBemShortElementPrefix(myBemShortElementPrefixTextField.getText());
-  }
-
-  @Override
-  public void reset() {
-    EmmetOptions emmetOptions = EmmetOptions.getInstance();
-    myEnableEmmetJBCheckBox.setSelected(emmetOptions.isEmmetEnabled());
-    myEnablePreviewJBCheckBox.setEnabled(emmetOptions.isEmmetEnabled());
-    myEnablePreviewJBCheckBox.setSelected(emmetOptions.isPreviewEnabled());
-    myEnableHrefAutodetectJBCheckBox.setEnabled(emmetOptions.isEmmetEnabled());
-    myEnableHrefAutodetectJBCheckBox.setSelected(emmetOptions.isHrefAutoDetectEnabled());
-    myAddEditPointAtTheEndOfTemplateJBCheckBox.setEnabled(emmetOptions.isEmmetEnabled());
-    myAddEditPointAtTheEndOfTemplateJBCheckBox.setSelected(emmetOptions.isAddEditPointAtTheEndOfTemplate());
-
-    myBemElementSeparatorTextField.setText(emmetOptions.getBemElementSeparator());
-    myBemModifierSeparatorTextField.setText(emmetOptions.getBemModifierSeparator());
-    myBemShortElementPrefixTextField.setText(emmetOptions.getBemShortElementPrefix());
-
-    Set<String> enabledByDefault = emmetOptions.getFiltersEnabledByDefault();
-    for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {
-      if (filter.isSystem()) continue;
-      final String filterSuffix = filter.getSuffix();
-      final JBCheckBox checkBox = myFilterCheckboxes.get(filterSuffix);
-      if (checkBox != null) {
-        checkBox.setEnabled(emmetOptions.isEmmetEnabled());
-        checkBox.setSelected(enabledByDefault.contains(filterSuffix));
-      }
+            row {
+              val checkBox = checkBox(filter.getDisplayName()).component
+              filtersCheckBoxes[filter.getSuffix()] = checkBox
+            }
+          }
+        }
+      }.enabledIf(cbEmmetEnabled.selected)
     }
   }
 
-  @Override
-  public void disposeUIResources() {
-    Disposer.dispose(this);
+  override fun disposeUIResources() {
+    filtersCheckBoxes.clear()
+    super.disposeUIResources()
   }
 
-  private @NotNull Set<String> enabledFilters() {
-    Set<String> result = new HashSet<>();
-    for (Map.Entry<String, JBCheckBox> checkbox : myFilterCheckboxes.entrySet()) {
-      if (checkbox.getValue().isSelected()) {
-        result.add(checkbox.getKey());
-      }
+  override fun isModified(): Boolean {
+    return super.isModified() || EmmetOptions.getInstance().filtersEnabledByDefault != enabledFilters()
+  }
+
+  override fun apply() {
+    super.apply()
+    EmmetOptions.getInstance().filtersEnabledByDefault = enabledFilters()
+  }
+
+  override fun reset() {
+    super.reset()
+
+    val enabledByDefault = EmmetOptions.getInstance().filtersEnabledByDefault
+    for (filter in ZenCodingFilter.getInstances()) {
+      if (filter.isSystem) continue
+      filtersCheckBoxes[filter.getSuffix()]?.setSelected(enabledByDefault.contains(filter.getSuffix()))
     }
-    return result;
   }
 
-  @Override
-  public @Nls String getDisplayName() {
-    return XmlBundle.message("configurable.XmlEmmetConfigurable.display.name");
-  }
-
-  @Override
-  public @Nullable String getHelpTopic() {
-    return getId();
-  }
-
-  @Override
-  public @NotNull String getId() {
-    return "reference.idesettings.emmet.xml";
+  private fun enabledFilters(): Set<String> {
+    return filtersCheckBoxes.filterValues { it.isSelected }.keys
   }
 }
