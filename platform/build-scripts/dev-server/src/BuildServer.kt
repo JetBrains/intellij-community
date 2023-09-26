@@ -49,7 +49,8 @@ fun getIdeSystemProperties(runDir: Path): Map<String, String> {
       // require bundled JNA dispatcher lib
       "jna.nosys" to "true",
       "jna.noclasspath" to "true",
-      "jb.vmOptionsFile" to "${runDir.parent.listDirectoryEntries(glob = "*.vmoptions").singleOrNull()}"
+      "jb.vmOptionsFile" to "${runDir.parent.listDirectoryEntries(glob = "*.vmoptions").singleOrNull()}",
+      "skiko.library.path" to "$libDir/skiko-awt-runtime-all",
     ))
 }
 

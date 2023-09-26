@@ -289,6 +289,8 @@ class BuildContextImpl(
     // https://youtrack.jetbrains.com/issue/IDEA-269280
     jvmArgs.add("-Daether.connector.resumeDownloads=false")
 
+    jvmArgs.add("-Dskiko.library.path=${macroName}/lib/skiko-awt-runtime-all".let { if (isScript) '"' + it + '"' else it })
+
     jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(this, os))
 
     return jvmArgs
