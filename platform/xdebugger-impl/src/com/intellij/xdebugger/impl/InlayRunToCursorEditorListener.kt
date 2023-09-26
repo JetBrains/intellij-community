@@ -262,8 +262,8 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
 }
 
 private class InlayPopupButtonLook(val effectiveHoverColor: Color) : IdeaActionButtonLook() {
-  val useStrokeVariants = colorDistance(effectiveHoverColor, JBColor.PanelBackground) > 50
-                          && colorDistance(effectiveHoverColor, inlayToolbarStrokeColor) > 250
+  val useStrokeVariants = ColorUtil.getColorDistance(effectiveHoverColor, JBColor.PanelBackground) > 50
+                          && ColorUtil.getColorDistance(effectiveHoverColor, inlayToolbarStrokeColor) > 250
 
   override fun getStateBackground(component: JComponent?, state: Int): Color? {
     if (state == ActionButtonComponent.POPPED) {
@@ -280,17 +280,4 @@ private class InlayPopupButtonLook(val effectiveHoverColor: Color) : IdeaActionB
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {
     //do nothing
   }
-}
-
-// copy-pasted from com.android.tools.idea.ui.MaterialColorUtils for now
-@Suppress("SameParameterValue")
-private fun colorDistance(c1: Color, c2: Color): Float {
-  val rmean = (c1.red + c2.red) / 2.0
-  val r = c1.red - c2.red
-  val g = c1.green - c2.green
-  val b = c1.blue - c2.blue
-  val weightR = 2 + rmean / 256
-  val weightG = 4.0
-  val weightB = 2 + (255 - rmean) / 256
-  return sqrt(weightR * r * r + weightG * g * g + weightB * b * b).toFloat()
 }
