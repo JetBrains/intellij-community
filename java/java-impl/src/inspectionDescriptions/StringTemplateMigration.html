@@ -2,23 +2,17 @@
 <body>
 Reports <code>String</code> concatenations that can be simplified by replacing them with the string template.
 <p>Requirements:</p>
-<ul>
-  <li>Concatenation involves multiple variables or literals.</li>
-  <li>Concatenation is not yet in template form.</li>
-</ul>
 
 <p><b>Example:</b></p>
 <pre><code>
-  String name = "world";
-  long age = 13_750_000_000L;
-  String greeting = "Hello, " + name + ". You are " + age + " years old.";
+  String name = "Bob";
+  String greeting = "Hello, " + name + ". You are " + 29 + " years old.";
 </code></pre>
 
 <p>After the quick-fix is applied:</p>
 <pre><code>
-  String name = "world";
-  long age = 13_750_000_000L;
-  String greeting = STR."Hello, \{name}. You are \{age} years old.";
+  String name = "Bob";
+  String greeting = STR."Hello, \{name}. You are 29 years old.";
 </code></pre>
 
 <!-- tooltip end -->

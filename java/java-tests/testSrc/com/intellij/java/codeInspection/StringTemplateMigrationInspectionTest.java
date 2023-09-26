@@ -36,7 +36,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""", """
              class StringTemplateMigration {
                void test() {
-                 String test = STR."\\{1} = number";
+                 String test = STR."1 = number";
                }
              }""");
   }
@@ -50,7 +50,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""", """
              class StringTemplateMigration {
                void test() {
-                 String test = STR."\\{1 + 2} = number = \\{1}\\{2}";
+                 String test = STR."\\{1 + 2} = number = 12";
                }
              }""");
   }
@@ -177,7 +177,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
-  public void testNumberTypes() {
+  public void testNumberTypesBeforeString() {
     doTest("""
              class StringTemplateMigration {
                void test() {
@@ -190,6 +190,21 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
                }
              }""");
   }
+
+  public void testNumberTypesAfterString() {
+    doTest("""
+             class StringTemplateMigration {
+               void test() {
+                 System.out.println("number = "<caret> + 1+1.1+2+7+0.2f+1_000_000+7l+0x0f+012+0b11+1.2+1.3+1.4+1.5);
+               }
+             }""", """
+             class StringTemplateMigration {
+               void test() {
+                 System.out.println(STR."number = 11.127\\{0.2f}\\{1_000_000}\\{7l}\\{0x0f}\\{012}\\{0b11}1.21.31.41.5");
+               }
+             }""");
+  }
+
 
   public void testOnlyVars() {
     doTest("""
@@ -242,17 +257,30 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              class StringTemplateMigration {
                void test() {
                  int quote = "\\"";
-                 System.out.println(quote <caret> + "\\n \\\\ \\" \\t \\b \\r \\f \\' \\u00A9" + quote);
+                 System.out.println(quote <caret> + "\\n \\\\ \\" \\t \\b \\r \\f \\' \\u00A9" + "\\u00A9" + quote);
                }
              }""", """
              class StringTemplateMigration {
                void test() {
                  int quote = "\\"";
-                 System.out.println(STR."\\{quote}\\n \\\\ \\" \\t \\b \\r \\f \\' \\u00A9\\{quote}");
+                 System.out.println(STR."\\{quote}\\n \\\\ \\" \\t \\b \\r \\f \\' \\u00A9\\u00A9\\{quote}");
                }
              }""");
   }
 
+  public void testNullValue() {
+    doTest("""
+             class StringTemplateMigration {
+               void test() {
+                 System.out.println("text is "<caret> + (String)null + "" + null);
+               }
+             }""", """
+             class StringTemplateMigration {
+               void test() {
+                 System.out.println(STR."text is \\{(String) null}null");
+               }
+             }""");
+  }
 
   private void doTest(@NotNull @Language("Java") String before, @NotNull @Language("Java") String after) {
     myFixture.configureByText("Template.java", before);
