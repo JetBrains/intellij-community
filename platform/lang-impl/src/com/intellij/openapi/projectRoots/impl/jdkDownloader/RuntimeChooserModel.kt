@@ -77,8 +77,8 @@ class RuntimeChooserModel {
       if (customJdks.isNotEmpty()) {
         newList += customJdks
       }
-      newList += RuntimeChooserAddCustomItem
     }
+    newList += RuntimeChooserAddCustomItem
 
     if (advancedDownloadItems.isNotEmpty()) {
       newList += advancedDownloadItems
