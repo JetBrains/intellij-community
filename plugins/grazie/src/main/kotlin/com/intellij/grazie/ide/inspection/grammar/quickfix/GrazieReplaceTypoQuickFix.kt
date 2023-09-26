@@ -149,7 +149,7 @@ object GrazieReplaceTypoQuickFix {
     val spm = SmartPointerManager.getInstance(file.project)
     val familyName: @IntentionFamilyName String = familyName(problem)
     val result = arrayListOf<LocalQuickFix>(ReplaceTypoTitleAction(familyName, problem.shortMessage))
-    val suggestions = problem.suggestions.asSequence().take(5)
+    val suggestions = problem.suggestions.asSequence().take(15)
     suggestions.forEachIndexed { index, suggestion ->
       val changes = suggestion.changes
       val replacements = changes.flatMap { toFileReplacements(it.range, it.replacement, problem.text) }
