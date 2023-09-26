@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
@@ -11,8 +12,9 @@ import java.util.concurrent.atomic.AtomicLong
 
 
 @JvmInline
-internal value class InlineCompletionJob(private val job: Job) {
-  fun cancel() {
+internal value class InlineCompletionJob(private val job: Job) : Disposable {
+  @RequiresEdt
+  override fun dispose() {
     job.cancel()
   }
 }

@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Experimental
-class InlineCompletionHandler(scope: CoroutineScope) {
+class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposable: Disposable) {
   private val executor = SafeInlineCompletionExecutor(scope)
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
   private val requestManager = InlineCompletionRequestManager()
@@ -97,7 +98,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     }
 
     // At this point, the previous session must be removed, otherwise, `init` will throw.
-    val newSession = InlineCompletionSession.init(request.editor, provider)
+    val newSession = InlineCompletionSession.init(request.editor, provider, parentDisposable)
     newSession.guardCaretModifications(request)
     executor.switchJobSafely(newSession::assignJob) {
       invokeRequest(request, newSession)
@@ -185,7 +186,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   @RequiresEdt
   @RequiresBlockingContext
   fun hide(editor: Editor, explicit: Boolean, context: InlineCompletionContext) {
-    LOG.assertTrue(!context.isInvalidated)
+    LOG.assertTrue(!context.isDisposed)
     if (context.isCurrentlyDisplayingInlays) {
       trace(InlineCompletionEventType.Hide(explicit))
     }
@@ -204,7 +205,7 @@ class InlineCompletionHandler(scope: CoroutineScope) {
   @RequiresBlockingContext
   fun complete(isActive: Boolean, editor: Editor, cause: Throwable?, context: InlineCompletionContext) {
     trace(InlineCompletionEventType.Completion(cause, isActive))
-    if (cause != null && !context.isInvalidated) {
+    if (cause != null && !context.isDisposed) {
       hide(editor, false, context)
     }
   }

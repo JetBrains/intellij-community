@@ -1,26 +1,30 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-class InlineCompletionContext internal constructor(val editor: Editor) {
+class InlineCompletionContext internal constructor(val editor: Editor) : Disposable {
 
   /**
-   * @see invalidate
+   * @see dispose
    */
-  var isInvalidated = false
+  var isDisposed = false
     @RequiresEdt
     get
     private set
 
-  private val myState = InlineState()
+  private val myState = InlineState().also {
+    Disposer.register(this, it)
+  }
 
   val state: InlineState
     @RequiresEdt
-    get() = assureNotInvalidated { myState }
+    get() = assureNotDisposed { myState }
 
   val isCurrentlyDisplayingInlays: Boolean
     @RequiresEdt
@@ -40,24 +44,23 @@ class InlineCompletionContext internal constructor(val editor: Editor) {
 
   @RequiresEdt
   fun clear() {
-    assureNotInvalidated { state.clear() }
+    assureNotDisposed { state.clear() }
   }
 
   /**
    * Indicates that this context cannot be used anymore, meaning that this context cannot be used to access any elements.
-   * Any such operation with context after invalidation results into throwing an exception.
-   *
-   * * The only operation you can safely use is [isInvalidated]. Always check it before accessing any elements.
-   * * If this context was already invalidated, this method does nothing.
-   * * Invalidation of a context guarantees that all elements were cleared.
+   * Any such operation with context after disposing results into throwing an exception.
+   * * The only operation you can safely use is [isDisposed]. Always check it before accessing any elements.
+   * * Disposing of a context guarantees that all elements were cleared.
    */
   @RequiresEdt
-  internal fun invalidate() {
-    isInvalidated = true
+  override fun dispose() {
+    clear()
+    isDisposed = true
   }
 
-  private inline fun <T> assureNotInvalidated(block: () -> T): T {
-    check(!isInvalidated) { "Context is invalidated. Cannot access elements." }
+  private inline fun <T> assureNotDisposed(block: () -> T): T {
+    check(!isDisposed) { "Context is disposed. Cannot access elements." }
     return block()
   }
 
