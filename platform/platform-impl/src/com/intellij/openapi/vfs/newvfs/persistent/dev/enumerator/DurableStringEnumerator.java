@@ -76,7 +76,8 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
   }
 
   private static final StorageFactory<? extends AppendOnlyLog> VALUES_LOG_FACTORY = AppendOnlyLogFactory
-    .withPageSize(PAGE_SIZE)
+    .withDefaults()
+    .pageSize(PAGE_SIZE)
     .failIfDataFormatVersionNotMatch(DATA_FORMAT_VERSION);
 
   public static @NotNull DurableStringEnumerator open(@NotNull Path storagePath) throws IOException {

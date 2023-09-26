@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 
 import static java.nio.file.StandardOpenOption.*;
 
@@ -22,7 +21,7 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
 
   private static final MMappedFileStorageFactory DEFAULTS = new MMappedFileStorageFactory(DEFAULT_PAGE_SIZE, false);
 
-  public static MMappedFileStorageFactory defaults() {
+  public static MMappedFileStorageFactory withDefaults() {
     return DEFAULTS;
   }
 

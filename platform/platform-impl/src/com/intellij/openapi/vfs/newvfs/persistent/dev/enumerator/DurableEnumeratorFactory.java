@@ -29,7 +29,8 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
     (storagePath) -> new NonDurableNonParallelIntToMultiIntMap();
 
   public static final StorageFactory<? extends AppendOnlyLog> DEFAULT_VALUES_LOG_FACTORY = AppendOnlyLogFactory
-    .withPageSize(DEFAULT_PAGE_SIZE)
+    .withDefaults()
+    .pageSize(DEFAULT_PAGE_SIZE)
     .failIfDataFormatVersionNotMatch(DurableEnumerator.DATA_FORMAT_VERSION);
 
   public static final StorageFactory<? extends DurableIntToMultiIntMap> DEFAULT_DURABLE_MAP_FACTORY = ExtendibleMapFactory.defaults()

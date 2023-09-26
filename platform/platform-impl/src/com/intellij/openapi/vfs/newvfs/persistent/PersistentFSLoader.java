@@ -649,7 +649,7 @@ public final class PersistentFSLoader {
       else if (FSRecordsImpl.USE_ATTRIBUTES_OVER_MMAPPED_FILE) {
         LOG.info("VFS uses streamlined attributes storage (over mmapped file)");
         int pageSize = 1 << 24;//16Mb
-        blobStorage = MMappedFileStorageFactory.defaults()
+        blobStorage = MMappedFileStorageFactory.withDefaults()
           .pageSize(pageSize)
           //mmapped and !mmapped storages have the same binary layout, so mmapped storage could inherit all the
           // data from non-mmapped -- the only 'migration' needed is to page-align the file:
