@@ -64,7 +64,13 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
   }
 
   public static AppendOnlyLogFactory withDefaults() {
-    return new AppendOnlyLogFactory(DEFAULT_PAGE_SIZE, false, 0, false, true, false);
+    return new AppendOnlyLogFactory(
+      DEFAULT_PAGE_SIZE,
+      /* ensureDataVersion:         */ false, 0,
+      /* failInsteadOfRecovery:     */ false,
+      /* eagerlyCheckCompatibility: */ true,
+      /* cleanIncompatibleFiles:    */ false
+    );
   }
 
   public AppendOnlyLogFactory pageSize(int pageSize) {
@@ -78,7 +84,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
   public AppendOnlyLogFactory failIfDataFormatVersionNotMatch(int expectedDataVersion) {
     return new AppendOnlyLogFactory(
       pageSize,
-      /*ensureDataVersion: */true, expectedDataVersion,
+      /*ensureDataVersion: */ true, expectedDataVersion,
       failInsteadOfRecovery, eagerlyCheckFileCompatibility, cleanFileIfIncompatible
     );
   }
@@ -86,7 +92,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
   public AppendOnlyLogFactory ignoreDataFormatVersion() {
     return new AppendOnlyLogFactory(
       pageSize,
-      /*ensureDataVersion: */false, /*expectedDataVersion: */0,
+      /*ensureDataVersion: */ false, /*expectedDataVersion: */ 0,
       failInsteadOfRecovery, eagerlyCheckFileCompatibility, cleanFileIfIncompatible
     );
   }
@@ -101,9 +107,9 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
     );
   }
 
-  public AppendOnlyLogFactory eagerlyCheckFileType(boolean eagerlyCheckFileType) {
+  public AppendOnlyLogFactory checkIfFileCompatibleEagerly(boolean eagerlyCheckCompatibility) {
     return new AppendOnlyLogFactory(
-      pageSize, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery, eagerlyCheckFileType,
+      pageSize, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery, eagerlyCheckCompatibility,
       cleanFileIfIncompatible
     );
   }
@@ -113,6 +119,14 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
       pageSize, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery,
       /* eagerlyCheckFileCompatibility: */ true,
       /* cleanFileIfIncompatible:       */ true
+    );
+  }
+
+  public AppendOnlyLogFactory failFileIfIncompatible() {
+    return new AppendOnlyLogFactory(
+      pageSize, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery,
+      /* eagerlyCheckFileCompatibility: */ true,
+      /* cleanFileIfIncompatible:       */ false
     );
   }
 
@@ -153,33 +167,33 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
       }
     }
 
-    return MMappedFileStorageFactory.withDefaults()
-      .pageSize(pageSize)
-      .wrapStorageSafely(
-        storagePath,
-        storage -> {
-          AppendOnlyLogOverMMappedFile appendOnlyLog = new AppendOnlyLogOverMMappedFile(storage);
+    MMappedFileStorageFactory mappedFileStorageFactory = MMappedFileStorageFactory.withDefaults()
+      .pageSize(pageSize);
+    return mappedFileStorageFactory.wrapStorageSafely(
+      storagePath,
+      storage -> {
+        AppendOnlyLogOverMMappedFile appendOnlyLog = new AppendOnlyLogOverMMappedFile(storage);
 
-          if (failInsteadOfRecovery) {
-            if (appendOnlyLog.wasRecoveryNeeded()) {
-              throw new CorruptedException("[" + storagePath.toAbsolutePath() + "] wasn't properly closed, " +
-                                           "and recovery is prohibited -> fail");
-            }
+        if (failInsteadOfRecovery) {
+          if (appendOnlyLog.wasRecoveryNeeded()) {
+            throw new CorruptedException("[" + storagePath.toAbsolutePath() + "] wasn't properly closed, " +
+                                         "and recovery is prohibited -> fail");
           }
-
-          if (ensureDataVersion) {
-            int dataFormatVersion = appendOnlyLog.getDataVersion();
-            if (dataFormatVersion == 0 && appendOnlyLog.isEmpty()) {
-              appendOnlyLog.setDataVersion(expectedDataVersion);
-            }
-            else if (dataFormatVersion != expectedDataVersion) {
-              throw new VersionUpdatedException(storagePath, expectedDataVersion, dataFormatVersion);
-            }
-          }
-
-          return appendOnlyLog;
         }
-      );
+
+        if (ensureDataVersion) {
+          int dataFormatVersion = appendOnlyLog.getDataVersion();
+          if (dataFormatVersion == 0 && appendOnlyLog.isEmpty()) {
+            appendOnlyLog.setDataVersion(expectedDataVersion);
+          }
+          else if (dataFormatVersion != expectedDataVersion) {
+            throw new VersionUpdatedException(storagePath, expectedDataVersion, dataFormatVersion);
+          }
+        }
+
+        return appendOnlyLog;
+      }
+    );
   }
 
   @Override
