@@ -40,10 +40,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import java.awt.*
 import java.lang.ref.WeakReference
-import javax.swing.Icon
-import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.SwingUtilities
+import javax.swing.*
 
 private const val NEGATIVE_INLAY_PANEL_SHIFT = -6 // it is needed to fit into 2-space tabulation
 private const val MINIMAL_TEXT_OFFSET = 16
@@ -95,9 +92,6 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
   private fun scheduleInlayRunToCursor(e: EditorMouseEvent): Boolean {
     val editor = e.editor
     if (editor.getEditorKind() != EditorKind.MAIN_EDITOR) {
-      return true
-    }
-    if (editor.getScrollingModel().getHorizontalScrollOffset() != 0) {
       return true
     }
     val session = XDebuggerManager.getInstance(project).getCurrentSession() as XDebugSessionImpl?
@@ -205,11 +199,17 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
     }
     if (group.childrenCount == 0) return
 
+    val editorContentComponent = editor.contentComponent
     val position = SwingUtilities.convertPoint(
-      editor.getContentComponent(),
-      Point(JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT)/* - (group.childrenCount - 1) * JBUI.scale(ACTION_BUTTON_SIZE)*/, lineY + (editor.lineHeight - JBUI.scale(ACTION_BUTTON_SIZE))/2),
+      editorContentComponent,
+      Point(0, lineY + (editor.lineHeight - JBUI.scale(ACTION_BUTTON_SIZE))/2),
       rootPane.layeredPane
     )
+
+    // so  some floating tool window is likely overlay our editor
+    if (isOutOfVisibleEditor(rootPane, position.x, position.y, JBUI.scale(ACTION_BUTTON_SIZE), editorContentComponent)) return
+
+    position.x += JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT)
 
     val initIsCompleted = Mutex(true)
     val toolbarImpl = createImmediatelyUpdatedToolbar(group, ActionPlaces.EDITOR_HINT, editor.getComponent(), true) {
@@ -248,6 +248,11 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
 
     initIsCompleted.lock()
     HintManagerImpl.getInstanceImpl().showQuestionHint(editor, position, offset, offset, hint, questionAction, HintManager.RIGHT)
+  }
+
+  private fun isOutOfVisibleEditor(rootPane: JRootPane, x: Int, y: Int, h: Int, editorContentComponent: JComponent): Boolean {
+    return SwingUtilities.getDeepestComponentAt(rootPane.layeredPane, x, y) != editorContentComponent ||
+          SwingUtilities.getDeepestComponentAt(rootPane.layeredPane, x, y + h) != editorContentComponent
   }
 
   private fun getEditorBackgroundColorForTheLineStart(editor: Editor, lineNumber: Int): Color? {
