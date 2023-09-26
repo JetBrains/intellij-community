@@ -177,6 +177,11 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
                                                              }
 
                                                              @Override
+                                                             protected RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull AnActionEvent e) {
+                                                               return selected;
+                                                             }
+
+                                                             @Override
                                                              protected boolean hideDisabledExecutorButtons() {
                                                                return true;
                                                              }
