@@ -101,6 +101,11 @@ public final class JUnit5TestFrameworkSetupUtil {
                        }
                        """);
     fixture.addClass("package org.junit.jupiter.api; public @interface Nested{}");
+    fixture.addClass("""
+                       package org.junit.jupiter.api.io;
+                       @Target({ ElementType.ANNOTATION_TYPE, ElementType.FIELD, ElementType.PARAMETER })
+                       public @interface TempDir {}
+                       """);
     return fixture;
   }
 }
