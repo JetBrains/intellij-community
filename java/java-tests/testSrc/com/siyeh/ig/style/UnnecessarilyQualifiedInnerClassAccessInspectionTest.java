@@ -1,11 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.siyeh.ig.fixes.style;
+package com.siyeh.ig.style;
 
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.LightJavaInspectionTestCase;
-import com.siyeh.ig.style.UnnecessarilyQualifiedInnerClassAccessInspection;
 
-public class UnnecessarilyQualifiedInnerClassAccessFixTest extends LightJavaInspectionTestCase {
+public class UnnecessarilyQualifiedInnerClassAccessInspectionTest extends LightJavaInspectionTestCase {
 
   public void testRemoveQualifier() {
     doTest("""
