@@ -11,6 +11,7 @@ import com.intellij.util.CollectConsumer
 import com.intellij.util.ExceptionUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitFileRevision
+import git4idea.GitRevisionNumber
 import git4idea.test.*
 import junit.framework.TestCase
 import org.apache.commons.lang3.RandomStringUtils
@@ -232,8 +233,62 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     assertSameHistory(repo2Commits.asReversed(), collectFileHistory(repo2MovedFile))
   }
 
-  private fun collectFileHistory(file: File): List<VcsFileRevision> {
-    return GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(file, false))
+  @Throws(Exception::class)
+  fun `test history through submodule merge`() {
+    val commits = ArrayList<TestCommit>()
+
+    val fileName = "file.txt"
+    commits.add(add(fileName, ourCurrentDir()))
+    val file = commits.last().file
+
+    repo.checkout("--orphan", "submodule-master")
+    rm(file)
+    commits.add(add(fileName, ourCurrentDir()))
+
+    repo.checkout("master")
+    git.merge(repo, "submodule-master", mutableListOf("--allow-unrelated-histories"))
+
+    val submoduleMerge = "monorepo merge"
+    val monorepoMerge = repo.addCommit(submoduleMerge)
+    commits.add(TestCommit(monorepoMerge, submoduleMerge, repo.root, file))
+
+    assertSameHistory(commits.asReversed(), collectFileHistory(file, full = true))
+  }
+
+  @Throws(Exception::class)
+  fun `test history through parallel renames`() {
+    val commits = ArrayList<TestCommit>()
+
+    val fileName = "file.txt"
+    commits.add(add(fileName, ourCurrentDir()))
+    val file = commits.last().file
+
+    val renamedFileName = "renamed.txt"
+
+    repo.checkout("-b", "other")
+    commits.add(modify(file, appendContent = RandomStringUtils.randomAlphanumeric(20)))
+    commits.add(rename(file, renamedFileName))
+
+    repo.checkout("master")
+    commits.add(modify(file, appendContent = RandomStringUtils.randomAlphanumeric(20)))
+    commits.add(rename(file, renamedFileName))
+
+    val renamedFile = commits.last().file
+
+    git.merge(repo, "other", mutableListOf("--no-ff"))
+    echo(renamedFile.path, RandomStringUtils.randomAlphanumeric(20))
+    repo.add(renamedFile.path)
+    commits.add(commit(renamedFile, "merge other branch"))
+
+    assertSameHistory(commits.sortedBy { it.hash },
+                      collectFileHistory(renamedFile, full = true).sortedBy { it.revisionNumber.asString() })
+  }
+
+  private fun collectFileHistory(file: File, full: Boolean = false): List<VcsFileRevision> {
+    val path = VcsUtil.getFilePath(file, false)
+    return buildList {
+      GitFileHistory(myProject, repo.root, path, GitRevisionNumber.HEAD, full).load(::add)
+    }
   }
 
   private fun assertSameHistory(expected: List<TestCommit>, actual: List<VcsFileRevision>) {
@@ -259,6 +314,11 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   private fun rename(file: File, newFile: File): TestCommit {
     repo.mv(file, newFile)
     return commit(newFile, "Renamed ${file.relativePath()} to ${newFile.relativePath()}")
+  }
+
+  private fun rename(file: File, newFileName: String): TestCommit {
+    val newFile = File(file.parentFile, newFileName)
+    return rename(file, newFile)
   }
 
   @Throws(IOException::class)

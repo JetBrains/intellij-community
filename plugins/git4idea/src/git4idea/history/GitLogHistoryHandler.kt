@@ -48,7 +48,7 @@ class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistoryHand
   override fun collectHistory(root: VirtualFile, filePath: FilePath, hash: Hash?, consumer: (VcsFileRevision) -> Unit) {
     val args = GitHistoryProvider.getHistoryLimitArgs(project)
     val revisionNumber = if (hash != null) VcsLogUtil.convertToRevisionNumber(hash) else GitRevisionNumber.HEAD
-    GitFileHistory(project, root, filePath, revisionNumber).load(consumer, *args)
+    GitFileHistory(project, root, filePath, revisionNumber, true).load(consumer, *args)
   }
 
   @Throws(VcsException::class)
