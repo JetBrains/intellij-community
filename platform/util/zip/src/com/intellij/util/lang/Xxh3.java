@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.xxh3;
+package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +14,6 @@ import java.nio.charset.StandardCharsets;
 /**
  * Characters are encoded using UTF-8. Not optimized for non-ASCII string.
  */
-@SuppressWarnings("CommentedOutCode")
 @ApiStatus.Internal
 @ApiStatus.Experimental
 public final class Xxh3 {
@@ -51,16 +50,8 @@ public final class Xxh3 {
     return Xxh3Impl.hash(data, ByteArrayAccess.INSTANCE, 0, data.length, 0);
   }
 
-  public static long hashUnencodedChars(@NotNull CharSequence input) {
-    return Xxh3Impl.hash(input, CharSequenceAccess.INSTANCE, 0, input.length() * 2, 0);
-  }
-
   public static long hashLongs(long @NotNull [] input) {
-    return hashLongs(input, 0);
-  }
-
-  public static long hashLongs(long @NotNull [] input, long seed) {
-    return Xxh3Impl.hash(input, LongArrayAccessForLongs.INSTANCE, 0, input.length * Long.BYTES, seed);
+    return Xxh3Impl.hash(input, LongArrayAccessForLongs.INSTANCE, 0, input.length * Long.BYTES, 0);
   }
 
   private static final class ByteBufferAccess implements Access<ByteBuffer> {
@@ -109,9 +100,4 @@ public final class Xxh3 {
       throw new UnsupportedOperationException();
     }
   }
-
-  //private static long stringLongHash(String s, int offset, int length) {
-  //  byte[] data = s.substring(offset, offset + length).getBytes(StandardCharsets.UTF_8);
-  //  return Xxh3Impl.hash(data, ByteArrayAccess.INSTANCE, 0, data.length, 0);
-  //}
 }
