@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.xxh3;
+package com.intellij.util.lang;
 
 import java.nio.ByteOrder;
 
-final class CharSequenceAccess {
+public final class CharSequenceAccess {
   static final Access<CharSequence> INSTANCE = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN
                                              ? LittleEndianCharSequenceAccess.INSTANCE
                                              : BigEndianCharSequenceAccess.INSTANCE;

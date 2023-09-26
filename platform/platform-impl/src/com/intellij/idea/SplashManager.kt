@@ -2,6 +2,7 @@
 @file:Suppress("UndesirableClassUsage", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.idea
 
+import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ApplicationInfo
@@ -23,7 +24,6 @@ import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.lang.ByteBufferCleaner
 import com.intellij.util.ui.ImageUtil
 import kotlinx.coroutines.*
-import org.jetbrains.xxh3.Xxh3
 import sun.awt.image.SunWritableRaster
 import java.awt.*
 import java.awt.event.WindowAdapter
@@ -317,40 +317,39 @@ private fun loadImageFromCache(file: Path, scale: Float, isJreHiDPIEnabled: Bool
 }
 
 private fun getCacheFile(scale: Float, appInfo: ApplicationInfo, path: String): Path {
-  // for dev run build data is equal to run time
-  val key: Long = if (appInfo.build.isSnapshot) {
+  val buildTime = appInfo.buildUnixTimeInMillis
+  if (buildTime == 0L) {
+    val hasher = Hashing.komihash5_0().hashStream()
     val appInfoData = ApplicationNamesInfo.getAppInfoData()
     if (appInfoData.isEmpty()) {
       try {
-        Splash::class.java.classLoader.getResourceAsStream(path)?.use { it.available() }?.toLong() ?: 0L
+        hasher.putInt(Splash::class.java.classLoader.getResourceAsStream(path)?.use { it.available() } ?: 0)
+        hasher.putString("")
       }
       catch (e: Throwable) {
         logger<Splash>().warn("Failed to read splash image", e)
-        0L
       }
     }
     else {
-      Xxh3.hashUnencodedChars(appInfoData)
+      hasher.putInt(0)
+      hasher.putChars(appInfoData)
     }
+    hasher.putChars(path)
+
+    val fileName = java.lang.Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX) +
+                   Integer.toUnsignedString(scale.toBits(), Character.MAX_RADIX) +
+                   ".v2.ij"
+    return Path.of(PathManager.getSystemPath(), "splash", fileName)
   }
   else {
-    appInfo.buildDate.timeInMillis
+    val fileName = java.lang.Long.toUnsignedString(buildTime, Character.MAX_RADIX) +
+                   "-" +
+                   Integer.toUnsignedString(path.hashCode(), Character.MAX_RADIX) +
+                   "-" +
+                   Integer.toUnsignedString(scale.toBits(), Character.MAX_RADIX) +
+                   ".ij"
+    return Path.of(PathManager.getSystemPath(), "splash", fileName)
   }
-
-  // the path for EAP and release builds is the same, but content maybe different
-  val hashSource = longArrayOf(
-    Xxh3.hashUnencodedChars(path),
-    Xxh3.hashUnencodedChars(appInfo.build.asString()),
-    if (appInfo.isEAP) 1 else 0,
-    1 /* cache format version */,
-    scale.toBits().toLong(),
-    key,
-  )
-  val fileName = java.lang.Long.toUnsignedString(Xxh3.hashLongs(hashSource), Character.MAX_RADIX) +
-                 "-" +
-                 java.lang.Long.toUnsignedString(Xxh3.hashLongs(hashSource, 4355994828026564186), Character.MAX_RADIX) +
-                 ".ij"
-  return Path.of(PathManager.getSystemPath(), "splash", fileName)
 }
 
 private fun readImage(file: Path, scale: Float, isJreHiDPIEnabled: Boolean): BufferedImage? {

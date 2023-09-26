@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.devServer
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import com.intellij.util.PathUtilRt
+import com.intellij.util.io.sha3_256
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.trace.Span
@@ -14,9 +15,9 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.jps.model.artifact.JpsArtifactService
-import org.jetbrains.xxh3.Xx3UnencodedString
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
+import java.math.BigInteger
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -321,12 +322,8 @@ fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String
   if (additionalModules.isEmpty()) {
     return ""
   }
-
-  val string = additionalModules.sorted().joinToString(",")
-  val result = Xx3UnencodedString.hashUnencodedString(string, 0).toString(26) +
-               Xx3UnencodedString.hashUnencodedString(string, 301236010888646397L).toString(36)
-  // - maybe here due to a negative number
-  return if (result.startsWith('-')) result else "-$result"
+  return BigInteger(1, sha3_256().digest(additionalModules.sorted().joinToString(separator = ",").toByteArray()))
+    .toString(Character.MAX_RADIX)
 }
 
 private fun CoroutineScope.prepareExistingRunDirForProduct(runDir: Path, usePluginCache: Boolean) {

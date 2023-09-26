@@ -3,7 +3,6 @@ package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.xxh3.Xx3UnencodedString;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -426,7 +425,7 @@ final class FileLoader implements Loader {
 
       int lastIndex = name.length() - 1;
       int end = name.charAt(lastIndex) == '/' ? lastIndex : name.length();
-      return filter.mightContain(Xx3UnencodedString.hashUnencodedStringRange(name, 0, end));
+      return filter.mightContain(Xx3UnencodedString.hashUnencodedStringRange(name, end));
     }
   }
 }

@@ -23,6 +23,13 @@ public abstract class ApplicationInfo {
 
   public abstract Calendar getBuildDate();
 
+  /**
+   * Retrieves the Unix timestamp in milliseconds of when the build was created.
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public abstract long getBuildUnixTimeInMillis();
+
   public abstract @NotNull BuildNumber getBuild();
 
   public abstract @NotNull String getApiVersion();

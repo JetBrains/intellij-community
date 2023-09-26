@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.util.lang.Xxh3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -18,7 +19,6 @@ import org.jetbrains.jps.cache.model.AffectedModule;
 import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
 import org.jetbrains.jps.cache.model.OutputLoadResult;
-import org.jetbrains.xxh3.Xxh3;
 
 import java.io.File;
 import java.io.IOException;

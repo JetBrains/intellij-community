@@ -328,6 +328,15 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
+  public long getBuildUnixTimeInMillis() {
+    Calendar buildDate = myBuildDate;
+    if (buildDate == null) {
+      return 0;
+    }
+    return buildDate.getTimeInMillis();
+  }
+
+  @Override
   public Calendar getMajorReleaseBuildDate() {
     return myMajorReleaseBuildDate != null ? myMajorReleaseBuildDate : myBuildDate;
   }

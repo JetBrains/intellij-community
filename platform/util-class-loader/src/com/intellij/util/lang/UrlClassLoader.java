@@ -213,11 +213,10 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     // then it gets defined twice, which leads to CCEs later.
     // To avoid double-loading, the loading of a select number of packages is delegated to AppClassLoader.
     //
-    // com.intellij.util.lang, org.jetbrains.xxh3, org.jetbrains.ikv
+    // com.intellij.util.lang org.jetbrains.ikv
     // see XxHash3Test.packages
-    if (isSystemClassLoader &&
-        (packageNameHash == -9217824570049207139L || packageNameHash == -1976620678582843062L || packageNameHash == 4571982292824530778L)) {
-      //these two classes from com.intellij.util.lang are located in intellij.platform.util module, which shouldn't be loaded by appClassLoader (IDEA-331043)
+    if (isSystemClassLoader && (packageNameHash == -9217824570049207139L || packageNameHash == -1976620678582843062L)) {
+      // these two classes from com.intellij.util.lang are located in intellij.platform.util module, which shouldn't be loaded by appClassLoader (IDEA-331043)
       if (!fileNameWithoutExtension.endsWith("/CompoundRuntimeException") && !fileNameWithoutExtension.endsWith("/JavaVersion")) {
         return appClassLoader.loadClass(name);
       }

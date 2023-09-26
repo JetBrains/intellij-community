@@ -255,7 +255,9 @@ public final class BuildTargetSourcesState implements BuildListener {
   private List<Long> sourceRootHash(BuildRootDescriptor rootDescriptor, BuildTarget<?> target) {
     try {
       File rootFile = rootDescriptor.getRootFile();
-      if (!rootFile.exists() || rootFile.getAbsolutePath().startsWith(myOutputFolderPath)) return null;
+      if (!rootFile.exists() || rootFile.getAbsolutePath().startsWith(myOutputFolderPath)) {
+        return null;
+      }
 
       List<Long> targetRootHashes = new ArrayList<>();
       Files.walkFileTree(rootFile.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
