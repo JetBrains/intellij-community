@@ -18,16 +18,17 @@ import com.intellij.util.ui.JBPoint
 class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val projectPath = e?.project?.let { ProjectWindowCustomizerService.projectPath(it) } ?: return emptyArray()
+    val projectName = e.project?.name
 
-    return arrayOf(ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Amber.title"), 0),
-                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Rust.title"), 1),
-                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Olive.title"), 2),
-                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Grass.title"), 8),
-                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Ocean.title"), 7),
-                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Sky.title"), 3),
-                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Cobalt.title"), 4),
-                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Violet.title"), 6),
-                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Plum.title"), 5),
+    return arrayOf(ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Amber.title"), 0, projectName),
+                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Rust.title"), 1, projectName),
+                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Olive.title"), 2, projectName),
+                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Grass.title"), 8, projectName),
+                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Ocean.title"), 7, projectName),
+                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Sky.title"), 3, projectName),
+                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Cobalt.title"), 4, projectName),
+                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Violet.title"), 6, projectName),
+                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Plum.title"), 5, projectName),
                    Separator(),
                    ChooseCustomProjectColorAction()
                    )
@@ -40,7 +41,7 @@ class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware {
   }
 }
 
-class ChangeProjectColorAction(val projectPath: String, val name: @NlsSafe String, val index: Int):
+class ChangeProjectColorAction(val projectPath: String, val name: @NlsSafe String, val index: Int, val projectName: String?):
   AnAction(name, "", RecentProjectIconHelper.generateProjectIcon(projectPath, true, size = 16, colorIndex = index)), DumbAware
 {
   override fun getActionUpdateThread() = ActionUpdateThread.EDT

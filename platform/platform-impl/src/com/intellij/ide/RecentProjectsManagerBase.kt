@@ -221,8 +221,8 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return projectIconHelper.getProjectIcon(path, isProjectValid)
   }
 
-  fun getProjectIcon(path: String, isProjectValid: Boolean, iconSize: Int): Icon {
-    return projectIconHelper.getProjectIcon(path, isProjectValid, iconSize)
+  fun getProjectIcon(path: String, isProjectValid: Boolean, iconSize: Int, name: String? = null): Icon {
+    return projectIconHelper.getProjectIcon(path, isProjectValid, iconSize, name)
   }
 
   @Suppress("OVERRIDE_DEPRECATION")

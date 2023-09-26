@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectNameListener
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupManager
@@ -175,7 +176,9 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     }
 
     cachedName = value
+
     if (!ApplicationManager.getApplication().isUnitTestMode) {
+      messageBus.syncPublisher(ProjectNameListener.TOPIC).nameChanged(value)
       StartupManager.getInstance(this).runAfterOpened {
         ApplicationManager.getApplication().invokeLater(Runnable {
           val frame = WindowManager.getInstance().getFrame(this) ?: return@Runnable
