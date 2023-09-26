@@ -205,11 +205,11 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
     if (myModel.getSize() > 0) {
       int fullMatchIndex = mySpeedSearch.isHoldingFilter() ? myModel.getClosestMatchIndex() : myModel.getElementIndex(prevSelection);
       if (fullMatchIndex != -1) {
-        myList.setSelectedIndex(fullMatchIndex);
+        ScrollingUtil.selectItem(myList, fullMatchIndex);
       }
 
       if (myModel.getSize() <= myList.getSelectedIndex() || !myModel.contains(myList.getSelectedValue())) {
-        myList.setSelectedIndex(0);
+        ScrollingUtil.selectItem(myList, 0);
       }
     }
     else {
