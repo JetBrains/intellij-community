@@ -32,8 +32,11 @@ data class InlineCompletionRequest(
   val lookupElement: LookupElement? = null,
 ) : UserDataHolderBase()
 
+/**
+ * Be aware that creating your own event is unsafe for a while and might face compatibility issues
+ */
 @ApiStatus.Experimental
-sealed interface InlineCompletionEvent {
+interface InlineCompletionEvent {
 
   @RequiresBlockingContext
   fun toRequest(): InlineCompletionRequest?
