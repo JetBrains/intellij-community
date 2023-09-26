@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.projectRoots.impl;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.OrderRootType;
@@ -101,7 +102,8 @@ public class RootsAsVirtualFilePointers implements RootProvider {
 
   void copyRootsFrom(@NotNull RootProvider rootContainer) {
     removeAllRoots();
-    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
+    List<OrderRootType> rootTypes = Lists.asList(OrderRootType.DOCUMENTATION, OrderRootType.getAllTypes());
+    for (OrderRootType rootType : rootTypes) {
       final String[] newRoots = rootContainer.getUrls(rootType);
       for (String newRoot : newRoots) {
         addRoot(newRoot, rootType);
