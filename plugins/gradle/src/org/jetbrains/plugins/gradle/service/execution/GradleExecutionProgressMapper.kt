@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.execution
 import com.intellij.build.events.impl.ProgressBuildEventImpl
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
 import com.intellij.openapi.util.NlsSafe
 import org.gradle.tooling.events.FinishEvent
@@ -21,10 +22,12 @@ import java.util.*
 
 class GradleExecutionProgressMapper {
 
-  private var states: LinkedList<State> = LinkedList()
+  private val states: LinkedList<State> = LinkedList()
+  private var phasedEventReceived: Boolean = false
 
   fun map(taskId: ExternalSystemTaskId, event: ProgressEvent): ExternalSystemTaskNotificationEvent? = when (event) {
     is BuildPhaseStartEvent -> {
+      phasedEventReceived = true
       states.addLast(event.asState())
       null
     }
@@ -41,6 +44,9 @@ class GradleExecutionProgressMapper {
   }
 
   fun mapLegacyEvent(taskId: ExternalSystemTaskId, eventDescription: String): ExternalSystemTaskNotificationEvent? {
+    if (phasedEventReceived && taskId.type == ExternalSystemTaskType.EXECUTE_TASK) {
+      return null
+    }
     if (states.isNotEmpty()) {
       return mapLegacyEventToEsEvent(taskId, eventDescription)
     }
