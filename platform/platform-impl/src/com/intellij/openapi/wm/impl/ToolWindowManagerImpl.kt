@@ -1971,19 +1971,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     floatingDecorator.apply(info)
 
     entry.floatingDecorator = floatingDecorator
-    val bounds = info.floatingBounds
-    if (bounds != null && isValidBounds(bounds)) {
-      floatingDecorator.bounds = Rectangle(bounds)
-    }
-    else {
-      // place a new frame at the center of the current frame if there are no floating bounds
-      var size = decorator.size
-      if (size.width == 0 || size.height == 0) {
-        size = decorator.preferredSize
-      }
-      floatingDecorator.size = size
-      floatingDecorator.setLocationRelativeTo(frame)
-    }
+    setExternalDecoratorBounds(info, floatingDecorator, decorator, frame)
 
     @Suppress("DEPRECATION")
     floatingDecorator.show()
@@ -2003,20 +1991,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     MnemonicHelper.init((window as RootPaneContainer).contentPane)
 
     val shouldBeMaximized = info.isMaximized
-    val bounds = info.floatingBounds
-    if (bounds != null && isValidBounds(bounds)) {
-      window.bounds = Rectangle(bounds)
-    }
-    else {
-      // place a new frame at the center of the current frame if there are no floating bounds
-      val currentFrame = getToolWindowPane(entry.toolWindow).frame
-      var size = decorator.size
-      if (size.width == 0 || size.height == 0) {
-        size = decorator.preferredSize
-      }
-      window.size = size
-      window.setLocationRelativeTo(currentFrame)
-    }
+    setExternalDecoratorBounds(info, windowedDecorator, decorator, getToolWindowPane(entry.toolWindow).frame)
     entry.windowedDecorator = windowedDecorator
     Disposer.register(windowedDecorator) {
       if (idToEntry.get(id)?.windowedDecorator != null) {
@@ -2039,6 +2014,28 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     window.setSize(2 * windowBounds.width - rootPaneBounds.width, 2 * windowBounds.height - rootPaneBounds.height)
     if (shouldBeMaximized && window is Frame) {
       window.extendedState = Frame.MAXIMIZED_BOTH
+    }
+  }
+
+  private fun setExternalDecoratorBounds(
+    info: WindowInfo,
+    externalDecorator: ToolWindowExternalDecorator,
+    internalDecorator: InternalDecoratorImpl,
+    parentFrame: JFrame,
+  ) {
+    val bounds = info.floatingBounds
+    if (bounds != null && isValidBounds(bounds)) {
+      externalDecorator.bounds = Rectangle(bounds)
+    }
+    else {
+      // place a new frame at the center of the current frame if there are no floating bounds
+      var size = internalDecorator.size
+      if (size.width == 0 || size.height == 0) {
+        val preferredSize = internalDecorator.preferredSize
+        size = preferredSize
+      }
+      externalDecorator.bounds = Rectangle(externalDecorator.bounds.location, size)
+      externalDecorator.setLocationRelativeTo(parentFrame)
     }
   }
 

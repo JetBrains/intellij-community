@@ -4,15 +4,15 @@ package com.intellij.openapi.wm.impl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.ToolWindowExternalDecorator.Companion.DECORATOR_PROPERTY
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.ClientProperty
+import java.awt.Component
+import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import javax.swing.JFrame
 
 internal class WindowedDecorator(
   project: Project,
@@ -39,5 +39,15 @@ internal class WindowedDecorator(
       getFrame().bounds = bounds
     }
   }
+
+  override fun setLocationRelativeTo(parentFrame: Component?) {
+    getFrame().setLocationRelativeTo(parentFrame)
+  }
+
+  override var bounds: Rectangle
+    get() = getFrame().bounds
+    set(value) {
+      getFrame().bounds = value
+    }
 
 }
