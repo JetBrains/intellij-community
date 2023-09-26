@@ -67,6 +67,8 @@ import javax.swing.*
 import javax.swing.plaf.basic.ComboPopup
 import javax.swing.text.JTextComponent
 
+private val LOG = logger<IdeKeyEventDispatcher>()
+
 /**
  * This class is automaton with a finite number of states.
  */
@@ -134,7 +136,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     fun isModalContext(component: Component): Boolean = isModalContextOrNull(component) ?: true
 
     /**
-     * Check whether the `component` represents a modal context.https://jetbrains.team/blog/OpenTelemetry_in_IntelliJ%3A_Technical_Guide
+     * Check whether the `component` represents a modal context.
      * @return `null` if it's impossible to deduce.
      */
     @ApiStatus.Internal
@@ -354,7 +356,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
 
     val originalKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e) ?: return false
     val keyStroke = getKeyStrokeWithoutMouseModifiers(originalKeyStroke)
-    updateCurrentContext(component = context.foundComponent, shortcut = KeyboardShortcut(firstKeyStroke!!, keyStroke))
+    updateCurrentContext(context.foundComponent, KeyboardShortcut(firstKeyStroke!!, keyStroke))
 
     // consume the wrong second stroke and keep on waiting
     return when {
@@ -447,7 +449,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
   }
 
   private fun waitSecondStroke(chosenAction: AnAction, presentation: Presentation) {
-    set(text = getSecondStrokeMessage(chosenAction = chosenAction, presentation = presentation), project = context.project)
+    set(text = getSecondStrokeMessage(chosenAction, presentation), project = context.project)
     check(secondStrokeTimeout.tryEmit(Unit))
     state = KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE
   }
@@ -495,20 +497,18 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       }
       finally {
         if (Registry.`is`("actionSystem.fixLostTyping", true)) {
-          IdeEventQueue.getInstance().doWhenReady { IdeEventQueue.getInstance().keyEventDispatcher.resetState() }
+          IdeEventQueue.getInstance().doWhenReady {
+            IdeEventQueue.getInstance().keyEventDispatcher.resetState()
+          }
         }
       }
     }
   }
 
   fun processAction(event: InputEvent, processor: ActionProcessor): Boolean {
-    return processAction(e = event,
-                         place = ActionPlaces.KEYBOARD_SHORTCUT,
-                         context = context.dataContext,
-                         actions = context.actions.toList(),
-                         processor = processor,
-                         presentationFactory = presentationFactory,
-                         shortcut = context.shortcut)
+    return processAction(event, ActionPlaces.KEYBOARD_SHORTCUT, context.dataContext,
+                         context.actions.toList(), processor,
+                         presentationFactory, context.shortcut)
   }
 
   internal fun processAction(e: InputEvent,
@@ -617,7 +617,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       }
 
       for (action in listOfActions) {
-        addAction(action = action, shortcut = shortcut)
+        addAction(action, shortcut)
       }
       // once we've found a proper local shortcut(s), we continue with non-local shortcuts
       if (!context.actions.isEmpty()) {
@@ -690,8 +690,6 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     }
   }
 }
-
-private val LOG = logger<IdeKeyEventDispatcher>()
 
 private val F10 = KeyStroke.getKeyStroke(KeyEvent.VK_F10, 0)
 
@@ -770,8 +768,7 @@ private fun hasMnemonicInWindow(focusOwner: Component?, keyCode: Int): Boolean {
 private fun hasMnemonic(container: Container?, keyCode: Int): Boolean {
   val component = UIUtil.uiTraverser(container)
     .traverse()
-    .filter { it.isEnabled }
-    .filter { it.isShowing }
+    .filter { it.isEnabled && it.isShowing }
     .find { it !is ActionMenu && MnemonicHelper.hasMnemonic(it, keyCode) }
   return component != null
 }
