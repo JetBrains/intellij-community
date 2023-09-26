@@ -4,7 +4,6 @@ package com.intellij.ide.actions.cache
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.RecoverVfsFromOperationsLogDialog
 import com.intellij.ide.actions.SuggestAutomaticVfsRecoveryDialog
-import com.intellij.idea.hideSplash
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.EDT
@@ -28,6 +27,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogQueryContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogQueryContextEx
+import com.intellij.platform.ide.bootstrap.hideSplash
 import com.intellij.util.io.delete
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -91,7 +91,7 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
           CANCEL_EXIT_CODE -> {}
           OK_EXIT_CODE -> {
             val rpList = recoveryPoints.take(2).toList()
-            // choose second recovery point because it should be safer
+            // choose a second recovery point because it should be safer
             val recoveryPoint = if (rpList.size > 1) rpList[1] else rpList.first()
             queryContext.transferLock().launchRecovery(null, recoveryPoint, restart)
           }

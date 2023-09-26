@@ -4,7 +4,6 @@ package com.intellij.ide.gdpr
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.ui.HtmlRtfPane
 import com.intellij.idea.AppExitCodes
-import com.intellij.idea.hideSplashBeforeShow
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.ui.DialogWrapper
@@ -150,7 +149,6 @@ class AgreementUiBuilder internal constructor() {
     title?.let { ui.title = it }
     ui.setSize(JBUI.scale(600), JBUI.scale(460))
     ui.isModal = true
-    hideSplashBeforeShow(ui.window)
     return ui.showAndGet()
   }
 

@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UndesirableClassUsage", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
-package com.intellij.idea
+package com.intellij.platform.ide.bootstrap
 
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.idea.AppMode
+import com.intellij.idea.CommandLineArgs
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
@@ -14,7 +16,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.FrameBoundsConverter
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.platform.ide.bootstrap.AppStarter
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.Splash
 import com.intellij.ui.icons.HiDPIImage

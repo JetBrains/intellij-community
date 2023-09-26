@@ -7,8 +7,6 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.IdeTooltipManager
 import com.intellij.ide.dnd.DnDAware
 import com.intellij.idea.AppMode
-import com.intellij.idea.hasSplash
-import com.intellij.idea.hideSplash
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -27,6 +25,8 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.Weighted
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeGlassPaneUtil
+import com.intellij.platform.ide.bootstrap.hasSplash
+import com.intellij.platform.ide.bootstrap.hideSplash
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.awaitCancellationAndInvoke
