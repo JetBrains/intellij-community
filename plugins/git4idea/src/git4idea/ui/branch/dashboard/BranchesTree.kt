@@ -290,14 +290,14 @@ internal class FilteringBranchesTree(
       override fun matchingFragments(text: String): Iterable<TextRange?>? {
         val allTextRanges = super.matchingFragments(text)
         if (customWordMatchers.isEmpty()) return allTextRanges
-        val wordRanges = arrayListOf<TextRange>()
+
+        val candidates = arrayListOf<List<TextRange>>()
+        allTextRanges?.let { candidates.add(it.toList()) }
         for (wordMatcher in customWordMatchers) {
-          wordMatcher.matchingFragments(text)?.let(wordRanges::addAll)
+          wordMatcher.matchingFragments(text)?.let { candidates.add(it.toList()) }
         }
-        return when {
-          allTextRanges != null -> allTextRanges + wordRanges
-          wordRanges.isNotEmpty() -> wordRanges
-          else -> null
+        return candidates.maxByOrNull { fragments ->
+          fragments.sumOf { textRange -> textRange.endOffset - textRange.startOffset }
         }
       }
 
