@@ -584,7 +584,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     sourceSetContainer.all { SourceSet ss -> outputFiles.addAll(ss.output.files) }
     for (Object path: getArchiveTaskSourcePaths(archiveTask)) {
       if (isSafeToResolve(path, project) || isResolvableFileCollection(path, project)) {
-        def files = project.files(path).files
+        def files = new HashSet<>(project.files(path).files)
         files.removeAll(outputFiles)
         if (files.any { it.isDirectory() || (it.isFile() && it.name.endsWith(".class"))}) {
           return true
