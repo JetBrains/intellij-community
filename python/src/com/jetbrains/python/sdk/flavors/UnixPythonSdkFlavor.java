@@ -66,12 +66,16 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
       VirtualFile[] suspects = rootDir.getChildren();
       for (VirtualFile child : suspects) {
         if (!child.isDirectory()) {
-          final String childName = StringUtil.toLowerCase(child.getName());
-          if (ArrayUtil.contains(childName, NAMES) || PYTHON_3_RE.matcher(childName).matches()) {
+          if (looksLikePythonBinaryFilename(child.getName())) {
             candidates.add(child.getPath());
           }
         }
       }
     }
+  }
+
+  private static boolean looksLikePythonBinaryFilename(@NotNull String filename) {
+    String childName = StringUtil.toLowerCase(filename);
+    return ArrayUtil.contains(childName, NAMES) || PYTHON_3_RE.matcher(childName).matches();
   }
 }
