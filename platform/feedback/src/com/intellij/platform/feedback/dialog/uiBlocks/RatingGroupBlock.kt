@@ -25,7 +25,7 @@ class RatingGroupBlock(@Nls private val topLabel: String,
       row {
         label(topLabel).bold().errorOnApply(CommonFeedbackBundle.message("dialog.feedback.block.required")) {
           allRatings.any { it.myRating == 0 }
-        }
+        }.validationRequestor { validate -> validate() }
 
         myHint?.let { rowComment(it) }
       }.bottomGap(BottomGap.NONE)
