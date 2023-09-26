@@ -407,9 +407,9 @@ public class VFSInitializationTest {
 
 
   @Test
-  public void benchmarkVfsInitializationTime() throws Exception {
+  public void benchmarkVfsInitializationTime_CreateVfsFromScratch() throws Exception {
     PlatformTestUtil.startPerformanceTest(
-        "create VFS from scratch", 300,
+        "create VFS from scratch", 500,
         () -> {
           Path cachesDir = temporaryDirectory.createDir();
           int version = 1;
@@ -423,6 +423,32 @@ public class VFSInitializationTest {
         })
       .ioBound()
       .warmupIterations(1)
+      .attempts(4)
+      .assertTiming();
+  }
+
+  @Test
+  public void benchmarkVfsInitializationTime_OpenExistingVfs() throws Exception {
+    Path cachesDir = temporaryDirectory.createDir();
+    int version = 1;
+    VFSInitializationResult result = PersistentFSConnector.connectWithoutVfsLog(
+      cachesDir,
+      version
+    );
+    PersistentFSConnector.disconnect(result.connection);
+    
+    PlatformTestUtil.startPerformanceTest(
+        "open existing VFS files", 200,
+        () -> {
+          VFSInitializationResult initResult = PersistentFSConnector.connectWithoutVfsLog(
+            cachesDir,
+            version
+          );
+          assertFalse("Must open existing", initResult.vfsCreatedAnew);
+          PersistentFSConnector.disconnect(initResult.connection);
+        })
+      .ioBound()
+      //.warmupIterations(1)
       .attempts(4)
       .assertTiming();
   }
