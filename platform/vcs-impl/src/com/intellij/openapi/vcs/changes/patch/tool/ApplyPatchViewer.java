@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.diff.*;
 import com.intellij.diff.actions.ProxyUndoRedoAction;
 import com.intellij.diff.actions.impl.FocusOppositePaneAction;
@@ -451,6 +452,9 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     CharSequence newContent = DiffUtil.getLinesContent(myPatchEditor.getDocument(), patchRange.start, patchRange.end);
 
     CopyPasteManager.copyTextToClipboard(newContent.toString());
+
+    myPatchEditor.getCaretModel().moveToOffset(myPatchEditor.getDocument().getLineStartOffset(patchRange.start));
+    HintManager.getInstance().showInformationHint(myPatchEditor, DiffBundle.message("patch.dialog.copy.change.command.balloon"), HintManager.UNDER);
   }
 
   private final class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
