@@ -54,12 +54,6 @@ public final class LombokLibraryUtil {
           for (VirtualFile libraryFile : libraryFiles) {
             if (libraryFile.getFileSystem() != jarFileSystem) continue;
 
-            String nameWithoutExtension = libraryFile.getNameWithoutExtension();
-            if (nameWithoutExtension.contains("lombok")) {
-              exists.set(true);
-              return false;
-            }
-
             // look into every JAR for top level package entry
             if (libraryFile.findChild("lombok") != null) {
               exists.set(true);
