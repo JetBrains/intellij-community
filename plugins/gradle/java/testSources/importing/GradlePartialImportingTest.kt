@@ -18,6 +18,7 @@ import org.jetbrains.plugins.gradle.model.Project
 import org.jetbrains.plugins.gradle.model.ProjectImportAction
 import org.jetbrains.plugins.gradle.service.project.*
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectPropertiesTestModelBuilder.ProjectProperties
@@ -49,11 +50,10 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
       .externalProjectStructure!!
       .graphCopy()
 
-    createProjectSubFile(
-      "gradle.properties",
-      "prop_loaded_1=val1_inc\n" +
-      "prop_finished_2=val2_inc\n"
-    )
+    createProjectSubFile("gradle.properties", """
+      |prop_loaded_1=val1_inc
+      |prop_finished_2=val2_inc
+    """.trimMargin())
 
     cleanupBeforeReImport()
     ExternalSystemUtil.refreshProject(
@@ -127,16 +127,14 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
       .externalProjectStructure!!
       .graphCopy()
 
-    createProjectSubFile(
-      "gradle.properties",
-      "prop_loaded_1=val1_inc\n" +
-      "prop_finished_2=val2_inc\n"
-    )
-    createProjectSubFile(
-      "includedBuild/gradle.properties",
-      "prop_loaded_included=val1_1\n" +
-      "prop_finished_included=val2_2\n"
-    )
+    createProjectSubFile("gradle.properties", """
+      |prop_loaded_1=val1_inc
+      |prop_finished_2=val2_inc
+    """.trimMargin())
+    createProjectSubFile("includedBuild/gradle.properties", """
+      |prop_loaded_included=val1_1
+      |prop_finished_included=val2_2
+    """.trimMargin())
 
     cleanupBeforeReImport()
     ExternalSystemUtil.refreshProject(
@@ -190,24 +188,30 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
       addImplementationDependency(code("gradleApi()"))
       addImplementationDependency(code("localGroovy()"))
     }
-    createProjectSubFile(
-      "gradle.properties",
-      "prop_loaded_1=val1\n" +
-      "prop_finished_2=val2\n"
-    )
-    createProjectSubFile("includedBuild/settings.gradle", "include 'subProject'")
+    createProjectSubFile("gradle.properties", """
+      |prop_loaded_1=val1
+      |prop_finished_2=val2
+    """.trimMargin())
+    createSettingsFile {
+      setProjectName("project")
+      includeBuild("includedBuild")
+    }
+
+    createSettingsFile("includedBuild") {
+      setProjectName("includedBuild")
+      include("subProject")
+    }
     createProjectSubDir("includedBuild/subProject")
     createBuildFile("includedBuild/buildSrc") {
       withGroovyPlugin()
       addImplementationDependency(code("gradleApi()"))
       addImplementationDependency(code("localGroovy()"))
     }
-    createSettingsFile("includeBuild 'includedBuild'")
-    createProjectSubFile(
-      "includedBuild/gradle.properties",
-      "prop_loaded_included=val1\n" +
-      "prop_finished_included=val2\n"
-    )
+    createProjectSubFile("includedBuild/gradle.properties", """
+      |prop_loaded_included=val1
+      |prop_finished_included=val2
+    """.trimMargin())
+
     importProject("")
   }
 
@@ -219,11 +223,10 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
                          mapOf("name" to "project", "prop_finished_2" to "val2")
     )
 
-    createProjectSubFile(
-      "gradle.properties",
-      "prop_loaded_1=error\n" +
-      "prop_finished_2=val22\n"
-    )
+    createProjectSubFile("gradle.properties", """
+      |prop_loaded_1=error
+      |prop_finished_2=val22
+    """.trimMargin())
 
     cleanupBeforeReImport()
     ExternalSystemUtil.refreshProject(projectPath, ImportSpecBuilder(myProject, SYSTEM_ID).use(ProgressExecutionMode.MODAL_SYNC))
@@ -272,12 +275,10 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
   }
 
   private fun createAndImportTestProject() {
-    createProjectSubFile(
-      "gradle.properties",
-      "prop_loaded_1=val1\n" +
-      "prop_finished_2=val2\n"
-    )
-
+    createProjectSubFile("gradle.properties", """
+      |prop_loaded_1=val1
+      |prop_finished_2=val2
+    """.trimMargin())
     importProject {
       withJavaPlugin()
     }
@@ -328,18 +329,20 @@ class TestPartialProjectResolverExtension : AbstractProjectResolverExtension() {
       throw ProcessCanceledException(RuntimeException("buildFinishedModel should not be available for projectsLoaded callback"))
     }
 
-    val projectLoadedModel = models?.getModel(ProjectLoadedModel::class.java)
-    if (projectLoadedModel == null) {
+    val rootProjectLoadedModel = models?.getModel(ProjectLoadedModel::class.java)
+    if (rootProjectLoadedModel == null) {
       throw ProcessCanceledException(RuntimeException("projectLoadedModel should be available for projectsLoaded callback"))
     }
 
-    if (projectLoadedModel.map.containsValue("error")) {
-      val modelConsumer = resolverCtx.externalSystemTaskId.findProject()!!.getService(ModelConsumer::class.java)
+    if (rootProjectLoadedModel.map.containsValue("error")) {
+      val project = resolverCtx.externalSystemTaskId.findProject()!!
+      val modelConsumer = project.getService(ModelConsumer::class.java)
       val build = (models as ProjectImportAction.AllModels).mainBuild
-      for (project in build.projects) {
-        modelConsumer.projectLoadedModels.add(project to models.getModel(project, ProjectLoadedModel::class.java)!!)
+      for (gradleProject in build.projects) {
+        val projectLoadedModel = models.getModel(gradleProject, ProjectLoadedModel::class.java)!!
+        modelConsumer.projectLoadedModels.add(gradleProject to projectLoadedModel)
       }
-      throw ProcessCanceledException(RuntimeException(projectLoadedModel.map.toString()))
+      throw ProcessCanceledException(RuntimeException(rootProjectLoadedModel.map.toString()))
     }
   }
 
@@ -355,7 +358,8 @@ internal class TestProjectModelContributor : ProjectModelContributor {
     toolingModelsProvider: ToolingModelsProvider,
     resolverContext: ProjectResolverContext
   ) {
-    val modelConsumer = resolverContext.externalSystemTaskId.findProject()!!.getService(ModelConsumer::class.java)
+    val project = resolverContext.externalSystemTaskId.findProject()!!
+    val modelConsumer = project.getService(ModelConsumer::class.java)
     toolingModelsProvider.projects().forEach {
       modelConsumer.projectLoadedModels.add(it to toolingModelsProvider.getProjectModel(it, ProjectLoadedModel::class.java)!!)
       modelConsumer.buildFinishedModels.add(it to toolingModelsProvider.getProjectModel(it, BuildFinishedModel::class.java)!!)
