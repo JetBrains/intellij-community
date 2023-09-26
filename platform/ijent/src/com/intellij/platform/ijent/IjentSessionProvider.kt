@@ -105,7 +105,7 @@ interface IjentSessionProvider {
           process.errorReader().use { errorReader ->
             for (line in errorReader.lineSequence()) {
               // TODO It works incorrectly with multiline log messages.
-              when (line.splitToSequence(' ').drop(1).take(1).firstOrNull()) {
+              when (line.splitToSequence(Regex(" +")).drop(1).take(1).firstOrNull()) {
                 "TRACE" -> LOG.trace { "$label log: $line" }
                 "DEBUG" -> LOG.debug { "$label log: $line" }
                 "INFO" -> LOG.info("$label log: $line")
@@ -124,7 +124,12 @@ interface IjentSessionProvider {
 }
 
 interface IjentApi {
-  suspend fun executeProcess(exe: String, vararg args: String, env: Map<String, String> = emptyMap()): ExecuteProcessResult
+  suspend fun executeProcess(
+    exe: String,
+    vararg args: String,
+    env: Map<String, String> = emptyMap(),
+    pty: Pty? = null,
+  ): ExecuteProcessResult
 
   suspend fun fetchLoginShellEnvVariables(): Map<String, String>
 
@@ -169,6 +174,8 @@ interface IjentApi {
     /** When [directory] is empty, the usual tmpdir is used. */
     data class MkTemp(val directory: String = "", val prefix: String = "", val suffix: String = "") : CreateFilePath
   }
+
+  data class Pty(val columns: Int, val rows: Int, val echo: Boolean)
 }
 
 interface IjentChildProcess {
