@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildE
 import com.intellij.openapi.util.NlsSafe
 import org.gradle.tooling.events.FinishEvent
 import org.gradle.tooling.events.ProgressEvent
-import org.gradle.tooling.events.StartEvent
 import org.gradle.tooling.events.configuration.ProjectConfigurationProgressEvent
 import org.gradle.tooling.events.lifecycle.BuildPhaseFinishEvent
 import org.gradle.tooling.events.lifecycle.BuildPhaseProgressEvent
@@ -35,12 +34,11 @@ class GradleExecutionProgressMapper {
       states.pollLast()
       null
     }
-    is StartEvent -> event.toEsEvent(taskId)
     is FinishEvent -> {
       states.lastOrNull()?.increment()
       event.toEsEvent(taskId)
     }
-    else -> GradleProgressEventConverter.convertProgressBuildEvent(taskId, taskId, event)
+    else -> event.toEsEvent(taskId)
   }
 
   fun mapLegacyEvent(taskId: ExternalSystemTaskId, eventDescription: String): ExternalSystemTaskNotificationEvent? {
@@ -48,44 +46,35 @@ class GradleExecutionProgressMapper {
       return null
     }
     if (states.isNotEmpty()) {
-      return mapLegacyEventToEsEvent(taskId, eventDescription)
+      return mapLegacyEventToStateKeepingEsEvent(taskId, eventDescription, states.last)
     }
     return GradleProgressEventConverter.legacyConvertProgressBuildEvent(taskId, taskId, eventDescription)
   }
 
   private fun ProgressEvent.toEsEvent(taskId: ExternalSystemTaskId): ExternalSystemTaskNotificationEvent? {
-    var currentActionItem = getBuildEventActionItem(this)
-    if (currentActionItem.isNullOrEmpty()) {
-      return null
-    }
+    val actionItem = getBuildEventActionItem(this) ?: return null
     val state = states.lastOrNull()
-    if (state != null) {
-      currentActionItem = "${getPhaseName(state)}: '$currentActionItem'"
-    }
-    val progress = ProgressBuildEventImpl(taskId, null, eventTime, currentActionItem, state?.totalItems ?: -1, state?.currentItem ?: -1, "items")
+    val description = "${getPhaseName(state)}: '$actionItem'"
+    val progress = ProgressBuildEventImpl(taskId, null, eventTime, description, state?.totalItems ?: -1, state?.currentItem ?: -1, "items")
     return ExternalSystemBuildEvent(taskId, progress)
   }
 
-  private fun mapLegacyEventToEsEvent(id: ExternalSystemTaskId, eventDescription: String): ExternalSystemBuildEvent? {
-    var description: String = getLegacyEventActionItem(eventDescription) ?: return null
-    val state = states.lastOrNull()
-    if (state != null) {
-      description = "${getPhaseName(state)}: '$description'"
-    }
-    val progress = ProgressBuildEventImpl(id, null, System.currentTimeMillis(), description, state?.totalItems ?: -1,
-                                          state?.currentItem ?: -1, "items")
+  private fun mapLegacyEventToStateKeepingEsEvent(id: ExternalSystemTaskId,
+                                                  eventDescription: String,
+                                                  state: State): ExternalSystemBuildEvent? {
+    val description: String = getLegacyEventActionItem(eventDescription)?.let { "${getPhaseName(state)}: '$it'" } ?: return null
+    val progress = ProgressBuildEventImpl(id, null, System.currentTimeMillis(), description, state.totalItems, state.currentItem, "items")
     return ExternalSystemBuildEvent(id, progress)
   }
 
   @NlsSafe
-  private fun getPhaseName(state: State): String = when (state.phase) {
+  private fun getPhaseName(state: State?): String = when (state?.phase) {
     "CONFIGURE_ROOT_BUILD", "CONFIGURE_BUILD" -> GradleBundle.message("progress.title.configure.build")
     "RUN_MAIN_TASKS", "RUN_WORK" -> GradleBundle.message("progress.title.run.task")
     else -> GradleBundle.message("progress.title.build")
   }
 
-  @NlsSafe
-  private fun getLegacyEventActionItem(eventDescription: String): String? = when {
+  private fun getLegacyEventActionItem(eventDescription: String): @NlsSafe String? = when {
     eventDescription.startsWith("Build model ")
       .and(eventDescription.contains(" for project ") || eventDescription.contains(" for root project "))
     -> trimLegacyEventActionItem(eventDescription)?.replace("'", "")
@@ -98,7 +87,6 @@ class GradleExecutionProgressMapper {
     else -> GradleProgressEventConverter.legacyConvertBuildEventDisplayName(eventDescription)
   }
 
-  @NlsSafe
   private fun getBuildEventActionItem(event: ProgressEvent): @NlsSafe String? = when (event) {
     is TaskProgressEvent, is TestProgressEvent -> event.descriptor.name
     is ProjectConfigurationProgressEvent -> event.descriptor.project.projectPath
@@ -106,7 +94,7 @@ class GradleExecutionProgressMapper {
     else -> null
   }
 
-  private fun trimLegacyEventActionItem(eventDescription: String): String? {
+  private fun trimLegacyEventActionItem(eventDescription: String): @NlsSafe String? {
     val index = eventDescription.indexOf(':')
     if (index < 0) {
       return null

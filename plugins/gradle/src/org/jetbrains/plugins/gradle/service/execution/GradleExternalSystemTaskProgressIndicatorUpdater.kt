@@ -28,7 +28,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 class GradleExternalSystemTaskProgressIndicatorUpdater : ExternalSystemTaskProgressIndicatorUpdater() {
 
-  private val inFlightDownloadIndicators: MutableMap<ExternalSystemTaskId, MutableMap<String, DownloadProgressIndicator>> = ConcurrentHashMap()
+  private val inFlightDownloadIndicators: MutableMap<ExternalSystemTaskId, MutableMap<String /*URI*/, DownloadProgressIndicator>> = ConcurrentHashMap()
 
   override fun canUpdate(externalSystemId: ProjectSystemId): Boolean = GradleConstants.SYSTEM_ID == externalSystemId
 
