@@ -25,6 +25,7 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
 import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.PotemkinOverlayProgress
@@ -889,7 +890,7 @@ suspend fun rearrangeByPromoters(actions: List<AnAction>, dataContext: DataConte
     try {
       service<ActionUpdaterInterceptor>().rearrangeByPromoters(actions, frozenContext) {
         withContext(shortcutUpdateDispatcher) {
-          readActionUndispatched {
+          readActionUndispatchedForActionExpand {
             rearrangeByPromotersImpl(actions, frozenContext)
           }
         }
@@ -1075,6 +1076,7 @@ private object AltEdtDispatcher : CoroutineDispatcher() {
   }
 }
 
+// to avoid platform assertions
 @Suppress("NOTHING_TO_INLINE")
 internal inline fun <R> runBlockingForActionExpand(context: CoroutineContext = EmptyCoroutineContext,
                                                    noinline block: suspend CoroutineScope.() -> R): R = prepareThreadContext { ctx ->
@@ -1086,3 +1088,8 @@ internal inline fun <R> runBlockingForActionExpand(context: CoroutineContext = E
     throw CeProcessCanceledException(ce)
   }
 }
+
+// to avoid platform assertions
+internal suspend inline fun <R> readActionUndispatchedForActionExpand(noinline block: () -> R): R =
+  if (!EDT.isCurrentThreadEdt()) readActionUndispatched(block)
+  else blockingContext { ReadAction.compute<R, Throwable> { block() } }
