@@ -21,8 +21,8 @@ import org.jetbrains.plugins.gradle.testFramework.fixture.TestExecutionConsoleEv
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
-import org.jetbrains.plugins.gradle.testFramework.util.tree.SimpleTreeAssertion
-import org.jetbrains.plugins.gradle.testFramework.util.tree.buildTree
+import com.intellij.platform.testFramework.treeAssertion.SimpleTreeAssertion
+import com.intellij.platform.testFramework.treeAssertion.buildTree
 import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyExecution
 import org.jetbrains.plugins.gradle.testFramework.util.waitForGradleEventDispatcherClosing
 import org.jetbrains.plugins.gradle.util.GradleConstants

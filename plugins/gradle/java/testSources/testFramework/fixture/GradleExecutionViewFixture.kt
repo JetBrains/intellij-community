@@ -18,9 +18,9 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
-import org.jetbrains.plugins.gradle.testFramework.util.tree.SimpleTree
-import org.jetbrains.plugins.gradle.testFramework.util.tree.SimpleTreeAssertion
-import org.jetbrains.plugins.gradle.testFramework.util.tree.buildTree
+import com.intellij.platform.testFramework.treeAssertion.SimpleTree
+import com.intellij.platform.testFramework.treeAssertion.SimpleTreeAssertion
+import com.intellij.platform.testFramework.treeAssertion.buildTree
 import org.junit.jupiter.api.AssertionFailureBuilder
 import org.junit.jupiter.api.Assertions
 
