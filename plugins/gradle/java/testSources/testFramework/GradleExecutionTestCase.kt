@@ -1,9 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.execution.test.events
+package org.jetbrains.plugins.gradle.testFramework
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJunit5Supported
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatJunit5IsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatSpockIsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile

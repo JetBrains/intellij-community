@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.execution.test.events.fixture
+package org.jetbrains.plugins.gradle.testFramework.fixture
 
 import com.intellij.build.BuildTreeConsoleView
 import com.intellij.build.BuildView

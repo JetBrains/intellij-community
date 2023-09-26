@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import junit.framework.ComparisonFailure
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatJunit5IsSupported

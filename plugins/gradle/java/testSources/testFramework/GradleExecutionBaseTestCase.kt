@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.execution.test.events
+package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.RunManager
@@ -14,14 +14,12 @@ import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.LocalTimeCounter
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.execution.test.events.fixture.GradleExecutionEnvironmentFixture
-import org.jetbrains.plugins.gradle.execution.test.events.fixture.GradleExecutionOutputFixture
-import org.jetbrains.plugins.gradle.execution.test.events.fixture.GradleExecutionViewFixture
-import org.jetbrains.plugins.gradle.execution.test.events.fixture.TestExecutionConsoleEventFixture
+import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionEnvironmentFixture
+import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionOutputFixture
+import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionViewFixture
+import org.jetbrains.plugins.gradle.testFramework.fixture.TestExecutionConsoleEventFixture
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
-import org.jetbrains.plugins.gradle.testFramework.GradleProjectTestCase
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 import org.jetbrains.plugins.gradle.testFramework.util.tree.assertion.TreeAssertion
 import org.jetbrains.plugins.gradle.testFramework.util.tree.buildTree

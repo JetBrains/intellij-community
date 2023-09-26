@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.testFramework.TestActionEvent
 import org.jetbrains.plugins.gradle.action.GradleRerunFailedTestsAction
+import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.junit.jupiter.api.Assertions
 
 abstract class GradleRerunFailedTestsTestCase : GradleExecutionTestCase() {

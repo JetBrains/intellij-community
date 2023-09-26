@@ -12,6 +12,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
+import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatConfigurationCacheIsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast

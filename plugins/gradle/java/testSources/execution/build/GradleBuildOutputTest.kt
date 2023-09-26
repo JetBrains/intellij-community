@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.execution.build
 import com.intellij.openapi.externalSystem.test.compileModules
 import com.intellij.testFramework.utils.module.assertModules
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.execution.test.events.GradleExecutionTestCase
+import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
