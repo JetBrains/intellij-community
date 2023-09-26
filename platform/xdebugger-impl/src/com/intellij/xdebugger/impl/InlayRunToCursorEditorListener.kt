@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils.createImmediatelyUpdatedToolbar
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.*
@@ -37,16 +36,14 @@ import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
 import java.awt.*
 import java.lang.ref.WeakReference
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
-import kotlin.math.sqrt
 
 private const val NEGATIVE_INLAY_PANEL_SHIFT = -6 // it is needed to fit into 2-space tabulation
 private const val MINIMAL_TEXT_OFFSET = 16
@@ -62,6 +59,8 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
       Registry.`is`("debugger.inlayRunToCursor") ||
       AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor") && (PlatformUtils.isIntelliJ() || PlatformUtils.isRider())
   }
+
+  private var currentJob: Job? = null
 
   private var currentHint = WeakReference<RunToCursorHint?>(null)
   private var currentEditor = WeakReference<Editor?>(null)
@@ -129,6 +128,15 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
     scheduleInlayRunToCursor(editor, logicalPosition.line, session)
   }
 
+  private fun scheduleInlayRunToCursor(editor: Editor, lineNumber: Int, session: XDebugSessionImpl) {
+    currentJob?.cancel()
+    coroutineScope.launch(Dispatchers.EDT) {
+      currentJob = coroutineContext.job
+      scheduleInlayRunToCursorAsync(editor, lineNumber, session)
+      currentJob = null
+    }
+  }
+
   private fun getFirstNonSpacePos(editor: Editor, lineNumber: Int): Point? {
     var firstNonSpaceSymbol = editor.getDocument().getLineStartOffset(lineNumber)
     val charsSequence = editor.getDocument().charsSequence
@@ -148,7 +156,8 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
     return editor.offsetToXY(firstNonSpaceSymbol)
   }
 
-  private fun scheduleInlayRunToCursor(editor: Editor, lineNumber: Int, session: XDebugSessionImpl) {
+  @RequiresEdt
+  private suspend fun scheduleInlayRunToCursorAsync(editor: Editor, lineNumber: Int, session: XDebugSessionImpl) {
     val firstNonSpacePos = getFirstNonSpacePos(editor, lineNumber) ?: return
     if (firstNonSpacePos.x < JBUI.scale(MINIMAL_TEXT_OFFSET)) {
       return
@@ -159,32 +168,28 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
     val pausePosition = session.currentPosition
     if (pausePosition != null && pausePosition.getFile() == editor.virtualFile && pausePosition.getLine() == lineNumber) {
       group.add(ActionManager.getInstance().getAction(XDebuggerActions.RESUME))
-      ApplicationManager.getApplication().invokeLater {
-        showHint(editor, lineNumber, firstNonSpacePos, group, lineY)
-      }
+      showHint(editor, lineNumber, firstNonSpacePos, group, lineY)
     }
     else {
       val hoverPosition = XSourcePositionImpl.create(FileDocumentManager.getInstance().getFile(editor.getDocument()), lineNumber) ?: return
-      coroutineScope.launch(Dispatchers.EDT) {
-        val hasGeneralBreakpoint = readAction {
-          val types = XBreakpointUtil.getAvailableLineBreakpointTypes(project, hoverPosition, editor)
-          types.any { it.enabledIcon === AllIcons.Debugger.Db_set_breakpoint }
-        }
-
-        if (hasGeneralBreakpoint) {
-          group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR))
-        }
-
-        val extraActions = ActionManager.getInstance().getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup
-        group.addAll(extraActions)
-
-        showHint(editor, lineNumber, firstNonSpacePos, group, lineY)
+      val hasGeneralBreakpoint = readAction {
+        val types = XBreakpointUtil.getAvailableLineBreakpointTypes(project, hoverPosition, editor)
+        types.any { it.enabledIcon === AllIcons.Debugger.Db_set_breakpoint }
       }
+
+      if (hasGeneralBreakpoint) {
+        group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR))
+      }
+
+      val extraActions = ActionManager.getInstance().getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup
+      group.addAll(extraActions)
+
+      showHint(editor, lineNumber, firstNonSpacePos, group, lineY)
     }
   }
 
   @RequiresEdt
-  private fun showHint(editor: Editor, lineNumber: Int, firstNonSpacePos: Point, group: DefaultActionGroup, lineY: Int) {
+  private suspend fun showHint(editor: Editor, lineNumber: Int, firstNonSpacePos: Point, group: DefaultActionGroup, lineY: Int) {
     val rootPane = editor.getComponent().rootPane
     if (rootPane == null) {
       currentEditor.clear()
@@ -206,7 +211,10 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
       rootPane.layeredPane
     )
 
-    val toolbarImpl = createImmediatelyUpdatedToolbar(group, ActionPlaces.EDITOR_HINT, editor.getComponent(), true) {} as ActionToolbarImpl
+    val initIsCompleted = Mutex(true)
+    val toolbarImpl = createImmediatelyUpdatedToolbar(group, ActionPlaces.EDITOR_HINT, editor.getComponent(), true) {
+      initIsCompleted.unlock()
+    } as ActionToolbarImpl
     toolbarImpl.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY)
     toolbarImpl.setActionButtonBorder(JBUI.Borders.empty(0, ACTION_BUTTON_GAP))
     toolbarImpl.setNeedCheckHoverOnLayout(true)
@@ -237,6 +245,8 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
       }
     }
     val offset = editor.getCaretModel().offset
+
+    initIsCompleted.lock()
     HintManagerImpl.getInstanceImpl().showQuestionHint(editor, position, offset, offset, hint, questionAction, HintManager.RIGHT)
   }
 
