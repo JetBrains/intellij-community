@@ -1,12 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.state
 
-import com.intellij.ui.JBColor
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.junit.jupiter.api.fail
-import java.awt.Color
 
 class TransferablePropertiesTest {
 
@@ -51,10 +49,6 @@ class TransferablePropertiesTest {
       var mutableListInt1 by property(mutableListOf(1, 2, 3))
       var mutableListIntNullable1 by property(mutableListOf(1, 2, 3, null as Int?))
       var mutableListIntNullable2: List<Int?> by property(mutableListOf(1, 2, 3, null))
-
-      var colorProp1 by property(null, customPropertySerializer = ColorPropertySerializer)
-      var colorProp2 by property(Color(1,2,3), customPropertySerializer = ColorPropertySerializer)
-      var colorProp3 by property(JBColor(Color(1,2,3), Color(4,5,6)), customPropertySerializer = ColorPropertySerializer)
     }.init()
 
     for (property in state.__getProperties()) {

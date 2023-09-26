@@ -285,10 +285,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final @NotNull IndentsModel myIndentsModel;
 
-  private @Nullable CharSequence myPlaceholderText;
-  private @Nullable TextAttributes myPlaceholderAttributes;
-  private boolean myShowPlaceholderWhenFocused;
-
   private int myStickySelectionStart;
   private boolean myPurePaintingMode;
 
@@ -2088,29 +2084,29 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setPlaceholder(@Nullable CharSequence text) {
-    myPlaceholderText = text;
+     myState.setMyPlaceholderText(text);
   }
 
   @Override
   public void setPlaceholderAttributes(@Nullable TextAttributes attributes) {
-    myPlaceholderAttributes = attributes;
+     myState.setMyPlaceholderAttributes(attributes);
   }
 
   public @Nullable TextAttributes getPlaceholderAttributes() {
-    return myPlaceholderAttributes;
+    return myState.getMyPlaceholderAttributes();
   }
 
   public CharSequence getPlaceholder() {
-    return myPlaceholderText;
+    return myState.getMyPlaceholderText();
   }
 
   @Override
   public void setShowPlaceholderWhenFocused(boolean show) {
-    myShowPlaceholderWhenFocused = show;
+    myState.setMyShowPlaceholderWhenFocused(show);
   }
 
   public boolean getShowPlaceholderWhenFocused() {
-    return myShowPlaceholderWhenFocused;
+    return myState.getMyShowPlaceholderWhenFocused();
   }
 
   Color getBackgroundColor(@NotNull TextAttributes attributes) {
