@@ -17,8 +17,8 @@ import javax.swing.tree.DefaultMutableTreeNode
 internal class ContextMenuActionGroup(private val tree: JTree) : DumbAware, ActionGroup() {
 
   override fun getChildren(event: AnActionEvent?): Array<AnAction> {
-    val paths = tree.selectionPaths.nullize()?.apply {
-      if (any { TreeUtil.findObjectInPath(it.parentPath, FolderNode::class.java) == null}) null else this
+    val folderPaths = tree.selectionPaths.nullize()?.let { selectionPaths ->
+      if (selectionPaths.any { TreeUtil.findObjectInPath(it.parentPath, FolderNode::class.java) == null }) null else this
     }
     val actions = mutableListOf<AnAction>()
 
@@ -27,7 +27,7 @@ internal class ContextMenuActionGroup(private val tree: JTree) : DumbAware, Acti
       if (group != null) actions.add(group)
     }
 
-    if (paths != null) {
+    if (folderPaths != null) {
       // Sub-item of a folder bookmark
       val projectActions = (CustomActionsSchema.getInstance().getCorrectedAction("ProjectViewPopupMenu") as? ActionGroup)?.getChildren(event) ?: AnAction.EMPTY_ARRAY
       actions.addAll(projectActions)
