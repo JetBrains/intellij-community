@@ -29,6 +29,8 @@
       implementationClass="com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.platform.feedback.evaluation.statistics.EvaluationFeedbackCountCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.platform.feedback.general.statistics.GeneralFeedbackCountCollector"/>
 
 
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoInIdeFeedbackSurvey"/>

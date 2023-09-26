@@ -5,6 +5,7 @@ package com.intellij.platform.feedback.general.dialog
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.general.bundle.GeneralFeedbackBundle
+import com.intellij.platform.feedback.general.statistics.GeneralFeedbackCountCollector
 
 class GeneralFeedbackDialog(project: Project?,
                             forTest: Boolean
@@ -21,5 +22,24 @@ class GeneralFeedbackDialog(project: Project?,
 
   init {
     init()
+    GeneralFeedbackCountCollector.logGeneralFeedbackDialogShown()
+  }
+
+  override fun doCancelAction() {
+    super.doCancelAction()
+    GeneralFeedbackCountCollector.logGeneralFeedbackDialogCanceled()
+  }
+
+  override fun doOKAction() {
+    super.doOKAction()
+
+    val collectedData = collectDataToJsonObject()
+    GeneralFeedbackCountCollector.logGeneralFeedbackSent(
+      collectedData[interfaceJsonElementName].toString().toInt(),
+      collectedData[priceJsonElementName].toString().toInt(),
+      collectedData[stabilityJsonElementName].toString().toInt(),
+      collectedData[featureSetJsonElementName].toString().toInt(),
+      collectedData[performanceJsonElementName].toString().toInt()
+    )
   }
 }
