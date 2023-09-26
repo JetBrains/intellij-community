@@ -3,7 +3,7 @@ package com.intellij.codeInsight.inline.completion.listeners
 
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
-import com.intellij.codeInsight.inline.completion.InlineCompletionContext
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 import com.intellij.codeInsight.inline.completion.SimpleTypingEvent

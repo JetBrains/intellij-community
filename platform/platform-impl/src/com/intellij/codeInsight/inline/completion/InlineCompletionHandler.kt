@@ -5,6 +5,10 @@ import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCar
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
+import com.intellij.codeInsight.inline.completion.session.UpdateContextResult
+import com.intellij.codeInsight.inline.completion.session.updateContext
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
