@@ -237,6 +237,23 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  public void testEscapeChars() {
+    doTest("""
+             class StringTemplateMigration {
+               void test() {
+                 int quote = "\\"";
+                 System.out.println(quote <caret> + "\\n \\\\ \\" \\t \\b \\r \\f \\' \\u00A9" + quote);
+               }
+             }""", """
+             class StringTemplateMigration {
+               void test() {
+                 int quote = "\\"";
+                 System.out.println(STR."\\{quote}\\n \\\\ \\" \\t \\b \\r \\f \\' \\u00A9\\{quote}");
+               }
+             }""");
+  }
+
+
   private void doTest(@NotNull @Language("Java") String before, @NotNull @Language("Java") String after) {
     myFixture.configureByText("Template.java", before);
 
