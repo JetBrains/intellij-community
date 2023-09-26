@@ -10,7 +10,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 
 @ApiStatus.Internal
-public final class LocalCopyPasteManager extends CopyPasteManagerWithHistory {
+public class LocalCopyPasteManager extends CopyPasteManagerWithHistory {
   @Override
   public void lostOwnership(Clipboard clipboard, Transferable contents) {
     ClipboardSynchronizer.getInstance().resetContent();
