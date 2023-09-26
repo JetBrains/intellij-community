@@ -18,7 +18,7 @@ object Launcher {
   fun launch(paths: PathsProvider,
              modules: ModulesProvider,
              options: LauncherOptions,
-             logClasspath: Boolean): Process {
+             logClasspath: Boolean): Pair<Process, String?> {
     val classPathBuilder = ClassPathBuilder(paths, modules)
     logger.info("Building classpath")
     val classPathArgFile = classPathBuilder.build(logClasspath)
@@ -29,7 +29,7 @@ object Launcher {
 
   fun launch(paths: PathsProvider,
              classPathArgFile: File,
-             options: LauncherOptions): Process {
+             options: LauncherOptions): Pair<Process, String?> {
 
     val cmd = mutableListOf(
       paths.javaExecutable.canonicalPath,
@@ -72,12 +72,12 @@ object Launcher {
     val straceValue = System.getProperty(STRACE_PROPERTY_KEY, "false")?.lowercase(Locale.ROOT) ?: "false"
     if (straceValue == "true" || straceValue == "1") {
       cmd.addAll(0,
-         listOf(
-           "strace",
-           "-f",
-           "-e", "trace=file",
-           "-o", paths.logFolder.resolve("strace.log").canonicalPath,
-         )
+                 listOf(
+                   "strace",
+                   "-f",
+                   "-e", "trace=file",
+                   "-o", paths.logFolder.resolve("strace.log").canonicalPath,
+                 )
       )
     }
 
@@ -94,7 +94,7 @@ object Launcher {
       val port = options.debugPort
 
       // changed in Java 9, now we have to use *: to listen on all interfaces
-      val host = if (options.runInDocker) "*:" else ""
+      val host = if (options is DockerLauncherOptions) "*:" else ""
       cmd.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspendOnStart,address=$host$port")
     }
 
@@ -109,16 +109,8 @@ object Launcher {
       cmd.add(arg.trim('"'))
     }
 
-    /*
-    println("Starting cmd:")
-    for (arg in cmd) {
-      println("  $arg")
-    }
-    println("-- END")
-*/
-
-    return if (options.runInDocker) {
-      val docker = DockerLauncher(paths, options as DockerLauncherOptions)
+    return if (options is DockerLauncherOptions) {
+      val docker = DockerLauncher(paths, options)
       docker.assertCanRun()
 
       docker.runInContainer(cmd)
@@ -128,9 +120,13 @@ object Launcher {
 
       processBuilder.affixIO(options.redirectOutputIntoParentProcess, paths.logFolder)
       processBuilder.environment().putAll(options.environment)
-      options.beforeProcessStart.invoke(processBuilder)
+      options.beforeProcessStart()
 
-      processBuilder.start()
+      logger.info("Starting cmd:")
+      logger.info(processBuilder.command().joinToString("\n"))
+      logger.info("-- END")
+
+      processBuilder.start() to null
     }
   }
 
