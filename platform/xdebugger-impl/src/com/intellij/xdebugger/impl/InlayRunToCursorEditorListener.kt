@@ -76,6 +76,8 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
   }
 
   override fun mouseMoved(e: EditorMouseEvent) {
+    if (e.editor.project != project) return
+
     if (!isInlayRunToCursorEnabled) {
       IntentionsUIImpl.DISABLE_INTENTION_BULB[project] = false
       return
