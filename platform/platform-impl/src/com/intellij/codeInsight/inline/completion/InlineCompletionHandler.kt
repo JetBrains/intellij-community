@@ -7,8 +7,7 @@ import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
-import com.intellij.codeInsight.inline.completion.session.UpdateContextResult
-import com.intellij.codeInsight.inline.completion.session.updateContext
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessionManager
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
@@ -38,7 +37,8 @@ import org.jetbrains.annotations.TestOnly
 class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposable: Disposable) {
   private val executor = SafeInlineCompletionExecutor(scope)
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
-  private val requestManager = InlineCompletionRequestManager()
+  private val sessionManager = createSessionManager()
+  private val requestManager = InlineCompletionRequestManager(sessionManager::invalidate)
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener())
@@ -94,16 +94,16 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
     LOG.trace("Start processing inline event $event")
 
     val provider = getProvider(event)
-
-    val (request, invalidate) = requestManager.getRequest(event)
-    invalidate.invalidateIfRequired()
-    if (request == null || updateContextOrInvalidate(request, provider) || provider == null) {
+    val request = requestManager.getRequest(event)
+    if (request == null || sessionManager.updateSession(request, provider) || provider == null) {
       return
     }
 
     // At this point, the previous session must be removed, otherwise, `init` will throw.
-    val newSession = InlineCompletionSession.init(request.editor, provider, parentDisposable)
-    newSession.guardCaretModifications(request)
+    val newSession = InlineCompletionSession.init(request.editor, provider, parentDisposable).apply {
+      sessionManager.sessionCreated(this)
+      guardCaretModifications(request)
+    }
     executor.switchJobSafely(newSession::assignJob) {
       invokeRequest(request, newSession)
     }
@@ -196,12 +196,15 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
     }
 
     InlineCompletionSession.remove(editor)
+    sessionManager.sessionRemoved()
   }
 
   fun cancel(editor: Editor) {
     executor.cancel()
     application.invokeAndWait {
-      hide(editor, false)
+      InlineCompletionContext.getOrNull(editor)?.let {
+        hide(editor, false, it)
+      }
     }
   }
 
@@ -214,62 +217,24 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
     }
   }
 
-  @RequiresEdt
-  private fun hide(editor: Editor, explicit: Boolean) {
-    InlineCompletionContext.getOrNull(editor)?.let {
-      hide(editor, explicit, it)
-    }
-  }
-
-  /**
-   * @return `true` if update was successful. Otherwise, [hide] is invoked to invalidate the current context.
-   */
-  @RequiresEdt
-  @RequiresBlockingContext
-  private fun updateContextOrInvalidate(
-    request: InlineCompletionRequest,
-    provider: InlineCompletionProvider?
-  ): Boolean {
-    val session = InlineCompletionSession.getOrNull(request.editor) ?: return false
-
-    if (session.provider.requiresInvalidation(request.event)) {
-      session.invalidate()
-      return false
-    }
-    if (provider == null && !session.context.isCurrentlyDisplayingInlays) {
-      return true // Fast fall to not slow down editor
-    }
-    if (provider != null && session.provider != provider) {
-      session.invalidate()
-      return false
-    }
-
-    val context = session.context
-    val result = updateContext(context, request.event)
-    when (result) {
-      is UpdateContextResult.Changed -> {
-        context.editor.inlayModel.execute(true) {
-          context.clear()
-          trace(InlineCompletionEventType.Change(result.truncateTyping))
-          result.newElements.forEach { context.renderElement(it, request.endOffset) }
+  private fun createSessionManager(): InlineCompletionSessionManager {
+    return object : InlineCompletionSessionManager() {
+      override fun onUpdate(session: InlineCompletionSession, result: UpdateSessionResult) {
+        val context = session.context
+        when (result) {
+          is UpdateSessionResult.Changed -> {
+            context.editor.inlayModel.execute(true) {
+              context.clear()
+              trace(InlineCompletionEventType.Change(result.truncateTyping))
+              result.newElements.forEach { context.renderElement(it, context.lastOffset ?: result.reason.endOffset) }
+            }
+          }
+          UpdateSessionResult.Same -> Unit
+          UpdateSessionResult.Invalidated -> {
+            hide(session.context.editor, false, session.context)
+          }
         }
       }
-      is UpdateContextResult.Same -> Unit
-      is UpdateContextResult.Invalidated -> session.invalidate()
-    }
-    return result != UpdateContextResult.Invalidated
-  }
-
-  @RequiresEdt
-  private fun InlineCompletionSession.invalidate() {
-    hide(context.editor, false, context)
-  }
-
-  @RequiresEdt
-  private fun InlineCompletionRequestManager.InvalidateRequest.invalidateIfRequired() {
-    when (this) {
-      is InlineCompletionRequestManager.InvalidateRequest.Invalidate -> InlineCompletionSession.getOrNull(editor)?.invalidate()
-      is InlineCompletionRequestManager.InvalidateRequest.Ignore -> Unit
     }
   }
 
