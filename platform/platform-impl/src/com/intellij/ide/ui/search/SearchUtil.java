@@ -9,6 +9,7 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.*;
 import com.intellij.util.CollectConsumer;
@@ -530,7 +531,7 @@ public final class SearchUtil {
       appendFragments(filter, text, style, foreground, background, textRenderer);
     }
 
-    if (filter == null || filter.length() == 0){
+    if (StringUtil.isEmpty(filter)){
       textRenderer.setDynamicSearchMatchHighlighting(false);
       textRenderer.append(text, new SimpleTextAttributes(background, foreground, JBColor.RED, style));
       return;
