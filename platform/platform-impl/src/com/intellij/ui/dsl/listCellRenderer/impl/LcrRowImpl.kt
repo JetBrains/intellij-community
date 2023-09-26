@@ -188,9 +188,8 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
           selectablePanel.isOpaque = true
           selectionArc = 8
           if (isComboBox) {
-            // todo borders for comboBox mode should be updated with implementation of IDEA-316042 Fix lists that open from dropdowns and combo boxes
-            selectionInsets = JBInsets.create(0, 0)
-            border = JBUI.Borders.empty(0, 8)
+            selectionInsets = JBInsets.create(0, 12)
+            border = JBUI.Borders.empty(2, 20)
           }
           else {
             selectionInsets = JBInsets.create(0, 12)
