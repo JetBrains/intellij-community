@@ -371,6 +371,9 @@ public abstract class AbstractBasicJavaSmartEnterProcessor extends SmartEnterPro
         BasicJavaAstTreeUtil.is(block.getTreeParent().getTreeParent(), BASIC_FOR_STATEMENT)) {
       reformat(block.getTreeParent().getTreeParent().getPsi());
     }
+    if (block != null && BasicJavaAstTreeUtil.is(block.getTreeParent(), BASIC_SWITCH_EXPRESSION)) {
+      reformat(block.getTreeParent().getPsi());
+    }
   }
 
   public void registerUnresolvedError(int offset) {
