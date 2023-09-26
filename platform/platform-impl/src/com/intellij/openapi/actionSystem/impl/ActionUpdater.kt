@@ -18,7 +18,6 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.ALWAYS_VISIBL
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.SUPPRESS_SUBMENU
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
@@ -172,8 +171,7 @@ internal class ActionUpdater @JvmOverloads constructor(
             }
           }
         }
-        if (isEDT) adjustedCall()
-        else readActionUndispatched(adjustedCall)
+        readActionUndispatchedForActionExpand(adjustedCall)
       }
     }
     if (PopupMenuPreloader.isToSkipComputeOnEDT(place)) {
@@ -303,7 +301,7 @@ internal class ActionUpdater @JvmOverloads constructor(
   private suspend fun ensureSlowDataKeysPreCached(action: Any, targetOperationName: String) {
     if (!preCacheSlowDataKeys) return
     getSessionDataDeferred(Pair("precache-slow-data@$targetOperationName", null)) {
-      readActionUndispatched {
+      readActionUndispatchedForActionExpand {
         precacheSlowDataKeys(action, targetOperationName)
       }
     }.await()
@@ -612,7 +610,7 @@ internal class ActionUpdater @JvmOverloads constructor(
 
     override fun <T : Any> sharedData(key: Key<T>, supplier: Supplier<out T>): T =
       updater.computeSessionDataOrThrow(Pair(key.toString(), key)) {
-        readActionUndispatched {
+        readActionUndispatchedForActionExpand {
           supplier.get()
         }
       }
