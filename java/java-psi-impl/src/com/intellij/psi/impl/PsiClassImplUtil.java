@@ -313,7 +313,7 @@ public final class PsiClassImplUtil {
   }
 
   public static boolean isMainOrPremainMethod(@NotNull PsiMethod method) {
-    if (PsiMethodUtil.isMainMethod(method)) {
+    if ("main".equals(method.getName()) && PsiMethodUtil.isMainMethod(method)) {
       return true;
     }
     String name = method.getName();

@@ -123,7 +123,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   private static boolean isAppMain(PsiMethod psiMethod, RefMethod refMethod) {
-    if (PsiMethodUtil.isMainMethod(psiMethod)) return true;
+    if ("main".equals(psiMethod.getName()) && PsiMethodUtil.isMainMethod(psiMethod)) return true;
 
     if (!refMethod.isStatic()) return false;
     if (!PsiTypes.voidType().equals(psiMethod.getReturnType())) return false;
