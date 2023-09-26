@@ -466,7 +466,7 @@ open class CodeVisionHost(val project: Project) {
         }.toMutableList()
       }
 
-      if (!everyProviderReadyToUpdate && !ApplicationManager.getApplication().isUnitTestMode) {
+      if (!everyProviderReadyToUpdate) {
         editor.lensContext.discardPending()
         return@executeOnPooledThread
       }
