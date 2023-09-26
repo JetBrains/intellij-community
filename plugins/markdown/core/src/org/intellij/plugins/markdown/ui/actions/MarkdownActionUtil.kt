@@ -64,16 +64,6 @@ internal object MarkdownActionUtil {
     return checkNotNull(editor) { "Markdown editor was expected to be found in data context" }
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(
-    message = "Use findMarkdownEditor instead",
-    replaceWith = ReplaceWith("findMarkdownEditor")
-  )
-  @JvmStatic
-  fun findMarkdownTextEditor(event: AnActionEvent): Editor? {
-    return findMarkdownEditor(event)
-  }
-
   @RequiresEdt
   @JvmStatic
   fun getElementsUnderCaretOrSelection(file: PsiFile, caret: Caret): Pair<PsiElement, PsiElement> {
