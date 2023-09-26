@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative
 
 import com.intellij.AbstractBundle
@@ -22,14 +22,14 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   }
 
   /**
-   * Inheritor of [com.intellij.codeInsight.hints.declarative.InlayHintsProvider]
+   * Inheritor of [com.intellij.codeInsight.hints.declarative.InlayHintsProvider].
    */
   @Attribute
   @RequiredElement
   var implementationClass: String? = null
 
   /**
-   * Language ID
+   * Language ID.
    */
   @RequiredElement
   @Attribute
@@ -43,7 +43,7 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   var isEnabledByDefault: Boolean = true
 
   /**
-   * Key of the group, one of [com.intellij.codeInsight.hints.InlayGroup] values
+   * Key of the group, one of [com.intellij.codeInsight.hints.InlayGroup] values.
    */
   @RequiredElement
   @Attribute
@@ -62,14 +62,14 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   @get:XCollection(elementName = "option")
   var options: List<InlayProviderOption> = ArrayList()
 
+  /**
+   * Bundle for [nameKey] and [descriptionKey]. If not specified, default for plugin will be used.
+   */
   @Attribute
-    /**
-     * Bundle for name and description. If not specified, default for plugin will be used
-     */
   var bundle: String? = null
 
   /**
-   * Name will be displayed in settings and in some other actions (e.g., to enable/disable)
+   * Name will be displayed in settings and in some other actions (e.g., to enable/disable).
    */
   @RequiredElement
   @Attribute
@@ -77,7 +77,7 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   var nameKey: String? = null
 
   /**
-   * Description, which will be seen in the settings
+   * Description, which will be seen in the settings.
    */
   @Attribute
   @Nls
@@ -91,22 +91,22 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
     return language!!
   }
 
-  fun requiredGroup() : InlayGroup {
+  fun requiredGroup(): InlayGroup {
     return group!!
   }
 
   /**
    * Must not contain #
    */
-  fun requiredProviderId() : String {
+  fun requiredProviderId(): String {
     return providerId!!
   }
 
-  fun getProviderName() : @Nls String {
+  fun getProviderName(): @Nls String {
     return getLocalizedString(bundle, nameKey!!)!!
   }
 
-  fun getDescription() : @Nls String? {
+  fun getDescription(): @Nls String? {
     val bundleName = bundle ?: return null
     val descriptionKey = descriptionKey ?: return null
     return getLocalizedString(bundleName, descriptionKey)!!
