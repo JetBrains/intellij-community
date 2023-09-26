@@ -296,6 +296,7 @@ public final class ExpUiIcons {
       /** 16x16 */ public static final @NotNull Icon InspectionsWarningEmpty = load("expui/general/inspections/inspectionsWarningEmpty.svg", 57350527, 0);
     }
 
+    /** 16x16 */ public static final @NotNull Icon Keyboard = load("expui/general/keyboard.svg", 1621148328, 2);
     /** 16x16 */ public static final @NotNull Icon Layout = load("expui/general/layout.svg", 1425337863, 2);
     /** 16x16 */ public static final @NotNull Icon Left = load("expui/general/left.svg", -1406674628, 2);
     /** 16x16 */ public static final @NotNull Icon ListFiles = load("expui/general/listFiles.svg", 1446717573, 2);
