@@ -36,8 +36,11 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
 
 
     importProject("subprojects { apply plugin: 'java' }")
-    assertSyncViewTreeEquals("-\n" +
-                             " finished")
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+      }
+    }
 
     var expectedExecutionTree: String
     when {
@@ -105,8 +108,11 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
 
     // get successfully imported project
     importProject(buildScript.generate())
-    assertSyncViewTreeEquals("-\n" +
-                             " finished")
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+      }
+    }
     compileModules("project.test")
     assertBuildViewTreeEquals("-\n" +
                               " -successful\n" +

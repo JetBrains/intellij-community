@@ -6,6 +6,7 @@ import com.intellij.platform.testFramework.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 abstract class BuildViewMessagesImportingTestCase : GradleImportingTestCase() {
@@ -25,6 +26,12 @@ abstract class BuildViewMessagesImportingTestCase : GradleImportingTestCase() {
     ThrowableRunnable { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() },
     ThrowableRunnable { super.tearDown() }
   ).run()
+
+  protected fun SimpleTreeAssertion.Node<Nothing?>.assertNodeWithDeprecatedGradleWarning() {
+    if (GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentGradleVersion)) {
+      assertNode("Gradle ${currentGradleVersion.version} support can be dropped in the next release")
+    }
+  }
 
   protected fun assertSyncViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
     buildViewTestFixture.assertSyncViewTree(assert)

@@ -157,15 +157,21 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
 
     // check sunny case
     importProject(buildScript.generate())
-    assertSyncViewTreeEquals("-\n" +
-                             " finished")
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+      }
+    }
 
     // check unresolved dependency w/o repositories
     buildScript.addTestImplementationDependency("junit:junit:4.12")
     importProject(buildScript.generate())
-    assertSyncViewTreeEquals("-\n" +
-                             " -finished\n" +
-                             "  Could not resolve junit:junit:4.12 for project:test")
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode("Could not resolve junit:junit:4.12 for project:test")
+      }
+    }
     assertSyncViewSelectedNode("Could not resolve junit:junit:4.12 for project:test",
                                "project:test: Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.\n" +
                                when {
@@ -181,16 +187,22 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     // successful import when repository is added
     buildScript.withMavenCentral(isGradleNewerOrSameAs("6.0"))
     importProject(buildScript.generate())
-    assertSyncViewTreeEquals("-\n" +
-                             " finished")
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+      }
+    }
 
     // check unresolved dependency for offline mode
     GradleSettings.getInstance(myProject).isOfflineWork = true
     buildScript.addTestImplementationDependency("junit:junit:99.99")
     importProject(buildScript.generate())
-    assertSyncViewTreeEquals("-\n" +
-                             " -finished\n" +
-                             "  Could not resolve junit:junit:99.99 for project:test")
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode("Could not resolve junit:junit:99.99 for project:test")
+      }
+    }
     assertSyncViewSelectedNode("Could not resolve junit:junit:99.99 for project:test",
                                when {
                                  isNewDependencyResolutionApplicable -> "project:test: No cached version of junit:junit:99.99 available for offline mode.\n"
@@ -205,9 +217,12 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     GradleSettings.getInstance(myProject).isOfflineWork = true
     currentExternalProjectSettings.isResolveModulePerSourceSet = false
     importProject(buildScript.generate())
-    assertSyncViewTreeEquals("-\n" +
-                             " -finished\n" +
-                             "  Could not resolve junit:junit:99.99 for project")
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode("Could not resolve junit:junit:99.99 for project")
+      }
+    }
     assertSyncViewSelectedNode("Could not resolve junit:junit:99.99 for project",
                                "project: Could not resolve junit:junit:99.99.\n" +
                                "\n" +
@@ -219,9 +234,12 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     // check unresolved dependency for disabled offline mode
     GradleSettings.getInstance(myProject).isOfflineWork = false
     importProject(buildScript.generate())
-    assertSyncViewTreeEquals("-\n" +
-                             " -finished\n" +
-                             "  Could not resolve junit:junit:99.99 for project:test")
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode("Could not resolve junit:junit:99.99 for project:test")
+      }
+    }
     assertSyncViewSelectedNode("Could not resolve junit:junit:99.99 for project:test",
                                "project:test: Could not find junit:junit:99.99.\n" +
                                "Searched in the following locations:\n" +
@@ -268,8 +286,11 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     // successful import when repository is added
     buildScript.withBuildScriptMavenCentral(isGradleNewerOrSameAs("6.0"))
     importProject(buildScript.generate())
-    assertSyncViewTreeEquals("-\n" +
-                             " finished")
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+      }
+    }
 
     // check unresolved dependency for offline mode
     GradleSettings.getInstance(myProject).isOfflineWork = true
@@ -418,9 +439,11 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
       print "${escapeJava(scriptOutputTextWOEol)}"
     """.trimIndent())
 
-    assertSyncViewTreeEquals("-\n" +
-                             " finished")
-
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+      }
+    }
     assertSyncViewSelectedNode("finished", false) {
       val text = it!!.lineSequence()
         .dropWhile { s -> s == "Starting Gradle Daemon..."
@@ -443,8 +466,11 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
       println("=================")
     """.trimIndent())
 
-    assertSyncViewTreeEquals("-\n" +
-                             " finished")
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+      }
+    }
 
     assertSyncViewSelectedNode("finished", false) {
       assertThat(it)

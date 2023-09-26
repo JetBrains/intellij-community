@@ -55,10 +55,11 @@ class GradlePartialImportingTest : GradlePartialImportingTestCase() {
         )
     )
 
-    assertSyncViewTreeEquals(
-      "-\n" +
-      " finished"
-    )
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+      }
+    }
 
     assertReceivedModels(
       projectPath, "project",
@@ -209,9 +210,10 @@ class GradlePartialImportingTest : GradlePartialImportingTestCase() {
       withJavaPlugin()
     }
 
-    assertReceivedModels(projectPath, "project",
-                         mapOf("name" to "project", "prop_loaded_1" to "val1"),
-                         mapOf("name" to "project", "prop_finished_2" to "val2")
+    assertReceivedModels(
+      projectPath, "project",
+      mapOf("name" to "project", "prop_loaded_1" to "val1"),
+      mapOf("name" to "project", "prop_finished_2" to "val2")
     )
 
     createProjectSubFile("gradle.properties", """
@@ -247,16 +249,22 @@ class GradlePartialImportingTest : GradlePartialImportingTestCase() {
           )
         }
       }
-      assertReceivedModels(projectPath, "project", mapOf("name" to "project", "prop_loaded_1" to "error"))
+      assertReceivedModels(
+        projectPath, "project",
+        mapOf("name" to "project", "prop_loaded_1" to "error")
+      )
     }
     else {
-      assertSyncViewTreeEquals(
-        "-\n" +
-        " finished"
+      assertSyncViewTree {
+        assertNode("finished") {
+          assertNodeWithDeprecatedGradleWarning()
+        }
+      }
+      assertReceivedModels(
+        projectPath, "project",
+        mapOf("name" to "project", "prop_loaded_1" to "error"),
+        mapOf("name" to "project", "prop_finished_2" to "val22")
       )
-      assertReceivedModels(projectPath, "project",
-                           mapOf("name" to "project", "prop_loaded_1" to "error"),
-                           mapOf("name" to "project", "prop_finished_2" to "val22"))
     }
   }
 }
