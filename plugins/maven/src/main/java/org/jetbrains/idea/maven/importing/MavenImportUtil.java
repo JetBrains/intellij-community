@@ -243,16 +243,6 @@ public final class MavenImportUtil {
    * @deprecated only used for experimental tree importer. Not used in Workpsace import
    */
   @NotNull
-  @Deprecated(forRemoval = true)
-  public static String getModuleName(@NotNull MavenProject mavenProject, @NotNull Project project) {
-    MavenProjectsTree projectsTree = MavenProjectsManager.getInstance(project).getProjectsTree();
-    return getModuleName(mavenProject, projectsTree, new HashMap<>());
-  }
-
-  /**
-   * @deprecated only used for experimental tree importer. Not used in Workpsace import
-   */
-  @NotNull
   @Deprecated
   public static String getModuleName(@NotNull MavenProject project,
                                       @NotNull MavenProjectsTree projectsTree,
