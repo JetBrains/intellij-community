@@ -40,7 +40,7 @@ public interface ObjectStubSerializer<T extends Stub, P extends Stub> {
    * Note that if you override this and return true, you should update the index version,
    * as the serialized representation will change.
    */
-  default boolean isAlwaysLeaf(StubBase<?> root) {
+  default boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
     return false;
   }
 
