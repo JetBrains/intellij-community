@@ -79,7 +79,7 @@ class GradlePartialImportingTest : GradlePartialImportingTestCase() {
   @TargetVersions("3.3+")
   fun `test composite project partial re-import`() {
     createBuildFile("buildSrc") {
-      withGroovyPlugin()
+      withPlugin("groovy")
       addImplementationDependency(code("gradleApi()"))
       addImplementationDependency(code("localGroovy()"))
     }
@@ -97,7 +97,7 @@ class GradlePartialImportingTest : GradlePartialImportingTestCase() {
     }
     createProjectSubDir("includedBuild/subProject")
     createBuildFile("includedBuild/buildSrc") {
-      withGroovyPlugin()
+      withPlugin("groovy")
       addImplementationDependency(code("gradleApi()"))
       addImplementationDependency(code("localGroovy()"))
     }
