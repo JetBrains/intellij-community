@@ -182,18 +182,17 @@ public abstract class AppendableObjectStorageTestBase<V> {
   }
 
   @Test
-  public void storage_isDirty_afterEachAppend_AndBecomeNotDirtyAfterFlush() throws Exception {
+  public void storage_becomeNotDirty_AfterFlush() throws Exception {
     List<V> valuesAppended = generateValues(ENOUGH_VALUES);
 
     appendableStorage.lockWrite();
     try {
       for (V valueToAppend : valuesAppended) {
         appendableStorage.append(valueToAppend);
-        assertThat(
-          "Storage must be .dirty since value was just appended to it",
-          appendableStorage.isDirty(),
-          is(true)
-        );
+        //It seems natural to check appendableStorage.isDirty here, but it is not guaranteed to be dirty,
+        // because underlying PagedStorage/FilePageCache could flush the pages just because they need
+        // room for the new pages to cache. Hence appendableStorage.isDirty in 99+% of cases, but sometimes
+        // it is !dirty even though something was just appended to it.
 
         appendableStorage.force();
 
