@@ -56,7 +56,7 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
     return candidates;
   }
 
-  public static void collectUnixPythons(String path, Set<? super String> candidates) {
+  public static void collectUnixPythons(@NotNull String path, @NotNull Set<? super String> candidates) {
     VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath(path);
     if (rootDir != null) {
       if (rootDir instanceof NewVirtualFile) {
