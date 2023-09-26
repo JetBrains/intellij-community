@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 
 
 public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
+  private static final String[] BIN_DIRECTORIES = new String[]{"/usr/bin", "/usr/local/bin"};
   private static final String[] NAMES = new String[]{"jython", "pypy"};
   private static final Pattern PYTHON_3_RE = Pattern.compile("(python-?3\\.(\\d){1,2})|(python-?3)");
 
@@ -49,7 +50,7 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
   @NotNull
   public static Set<String> getDefaultUnixPythons(@Nullable String rootPrefix) {
     Set<String> candidates = new HashSet<>();
-    for (var prefix : new String[]{"/usr/bin", "/usr/local/bin"}) {
+    for (var prefix : BIN_DIRECTORIES) {
       collectUnixPythons((rootPrefix != null ? rootPrefix : "") + prefix, candidates);
     }
     return candidates;
