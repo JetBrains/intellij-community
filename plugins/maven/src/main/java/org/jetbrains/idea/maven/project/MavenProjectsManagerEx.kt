@@ -557,15 +557,6 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
 
-  private fun <T> runMavenImportActivitySync(project: Project,
-                                             parentActivity: StructuredIdeActivity,
-                                             taskClass: Class<*>,
-                                             action: () -> T): T {
-    logDebug("Import activity started: ${taskClass.simpleName}")
-    val result = runImportActivitySync(project, parentActivity, taskClass, action)
-    logDebug("Import activity finished: ${taskClass.simpleName}, result: ${resultSummary(result)}")
-    return result
-  }
 
   private fun logDebug(debugMessage: String) {
     MavenLog.LOG.debug(debugMessage)

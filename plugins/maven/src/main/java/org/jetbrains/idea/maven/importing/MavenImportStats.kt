@@ -14,10 +14,7 @@ object MavenImportStats {
   // Hacky way to measure report import stages speed.
   // The better way would be to use StructuredIdeActivity.stageStared in MavenImportingManager.doImport with the new importing Flow
   fun startApplyingModelsActivity(project: Project?, importingActivity: StructuredIdeActivity?): StructuredIdeActivity {
-    return ProjectImportCollector.IMPORT_STAGE.startedWithParent(project, importingActivity!!) {
-      listOf(
-        ProjectImportCollector.TASK_CLASS.with(ApplyingModelTask::class.java))
-    }
+    return ProjectImportCollector.WORKSPACE_APPLY_STAGE.startedWithParent(project, importingActivity!!)
   }
 
 
@@ -65,21 +62,6 @@ fun <T> runImportActivitySync(project: Project,
                               taskClass: Class<*>,
                               action: () -> T): T {
   val activity = importActivityStarted(project, externalSystemId)
-  try {
-    return action()
-  }
-  finally {
-    activity.finished()
-  }
-}
-
-fun <T> runImportActivitySync(project: Project,
-                              parent: StructuredIdeActivity,
-                              taskClass: Class<*>,
-                              action: () -> T): T {
-  val activity = ProjectImportCollector.IMPORT_STAGE.startedWithParent(project, parent) {
-    listOf(ProjectImportCollector.TASK_CLASS.with(taskClass))
-  }
   try {
     return action()
   }
