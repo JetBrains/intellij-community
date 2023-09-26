@@ -373,7 +373,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitJavaFile(@NotNull PsiJavaFile file) {
     super.visitJavaFile(file);
-    if (!hasErrorResults()) add(HighlightUnnamedClassUtil.checkUnnamedClssHasMainMethod(file));
+    if (!hasErrorResults()) add(HighlightUnnamedClassUtil.checkUnnamedClassHasMainMethod(file));
   }
 
   @Override
