@@ -28,6 +28,7 @@ class NativeSshGuiAuthenticator(private val project: Project,
   private val passwordHandlers = listOf(
     KeyPassphrasePromptHandler(),
     SshPasswordPromptHandler(),
+    SshPinPromptHandler(),
     ConfirmationPromptHandler()
   )
 
@@ -76,6 +77,19 @@ class NativeSshGuiAuthenticator(private val project: Project,
 
       val username = SSHUtil.extractUsername(matcher)
       val promptMessage = ExternalProcessAuthHelperBundle.message("ssh.password.message", username)
+      return Prompt(username, promptMessage)
+    }
+  }
+
+  private inner class SshPinPromptHandler : PasswordPromptHandler() {
+    override val title: String = ExternalProcessAuthHelperBundle.message("ssh.ask.pin.title")
+    override val serviceName: String = ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.pin")
+    override fun parseDescription(description: String): Prompt? {
+      val matcher = SSHUtil.PKCS_PIN_TOKEN_PROMPT.matcher(description)
+      if (!matcher.matches()) return null
+
+      val username = SSHUtil.extractPkcsTokenLabel(matcher)
+      val promptMessage = ExternalProcessAuthHelperBundle.message("ssh.ask.pin.message", username)
       return Prompt(username, promptMessage)
     }
   }
