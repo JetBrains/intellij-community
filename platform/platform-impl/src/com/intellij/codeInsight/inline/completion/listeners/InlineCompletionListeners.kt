@@ -127,9 +127,15 @@ class InlineSessionWiseCaretListener(
   override fun caretRemoved(event: CaretEvent) = cancel()
 
   override fun caretPositionChanged(event: CaretEvent) {
+    if (event.oldPosition == event.newPosition) {
+      // ML-1341
+      // It means that we moved caret from the state 'before inline completion' to `after inline completion`
+      // In such a case, the actual caret position does not change
+      return cancel()
+    }
     val newOffset = event.editor.logicalPositionToOffset(event.newPosition)
     if (newOffset != expectedOffset()) {
-      cancel()
+      return cancel()
     }
   }
 }
