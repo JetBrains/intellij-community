@@ -15,6 +15,10 @@ class SpeedSearchAction : DumbAwareAction(
   AllIcons.Actions.Find,
 ) {
 
+  init {
+    isEnabledInModalContext = true
+  }
+
   companion object {
     const val ID = "SpeedSearch"
   }
