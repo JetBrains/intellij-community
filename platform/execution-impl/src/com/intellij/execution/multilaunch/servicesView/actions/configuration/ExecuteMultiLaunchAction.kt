@@ -5,10 +5,10 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.rd.util.launchBackground
 import com.intellij.openapi.util.NlsActions
-import com.jetbrains.rd.platform.util.lifetime
 import com.intellij.execution.multilaunch.MultiLaunchConfiguration
 import com.intellij.execution.multilaunch.execution.ExecutionMode
 import com.intellij.execution.multilaunch.execution.ExecutionEngine
+import com.intellij.openapi.rd.util.lifetime
 import javax.swing.Icon
 
 abstract class ExecuteMultiLaunchAction(

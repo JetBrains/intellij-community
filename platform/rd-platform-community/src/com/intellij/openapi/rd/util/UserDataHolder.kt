@@ -1,11 +1,17 @@
 package com.intellij.openapi.rd.util
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.jetbrains.rd.util.assert
 import com.jetbrains.rd.util.lifetime.Lifetime
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
+
+val <T> T.lifetime: Lifetime where T : UserDataHolder, T : Disposable by userData(Key("com.jetbrains.rd.platform.util.lifetime")) {
+  it.createLifetime()
+}
 
 inline fun <T> UserDataHolder.getOrCreateUserData(key: Key<T>, producer: () -> T): T {
   val existing = getUserData(key)
@@ -53,8 +59,6 @@ fun <T> userData(name: String? = null): ReadWriteProperty<UserDataHolder, T?> {
     }
   }
 }
-
-
 
 fun <TThis : UserDataHolder, TValue> userData(lazyDefaultValue: (TThis) -> TValue): ReadWriteProperty<TThis, TValue> {
   return object : ReadWriteProperty<TThis, TValue> {

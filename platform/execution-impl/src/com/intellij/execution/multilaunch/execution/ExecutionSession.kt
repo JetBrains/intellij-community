@@ -1,10 +1,9 @@
 package com.intellij.execution.multilaunch.execution
 
 import com.intellij.openapi.project.Project
-import com.jetbrains.rd.platform.util.lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
-import com.intellij.execution.multilaunch.execution.MultiLaunchExecutionModel
 import com.intellij.execution.multilaunch.execution.executables.Executable
+import com.intellij.openapi.rd.util.lifetime
 import kotlinx.coroutines.CompletableDeferred
 
 class ExecutionSession(project: Project, val model: MultiLaunchExecutionModel) {

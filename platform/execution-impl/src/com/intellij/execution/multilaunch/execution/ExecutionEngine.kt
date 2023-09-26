@@ -8,7 +8,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.util.launchBackground
 import com.intellij.util.messages.MessageBusConnection
-import com.jetbrains.rd.platform.util.lifetime
 import com.jetbrains.rd.util.concurrentMapOf
 import com.jetbrains.rd.util.reactive.AddRemove
 import com.intellij.execution.multilaunch.MultiLaunchConfiguration
@@ -19,6 +18,7 @@ import com.intellij.execution.multilaunch.execution.messaging.ExecutableNotifier
 import com.intellij.execution.multilaunch.execution.messaging.ExecutionEventsBus
 import com.intellij.execution.multilaunch.execution.messaging.ExecutionNotifier
 import com.intellij.execution.multilaunch.servicesView.MultiLaunchServicesRefresher
+import com.intellij.openapi.rd.util.lifetime
 
 @Service(Service.Level.PROJECT)
 class ExecutionEngine(private val project: Project) {

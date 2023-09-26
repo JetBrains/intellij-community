@@ -7,9 +7,9 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.util.launchBackground
 import com.intellij.openapi.wm.ToolWindowId
-import com.jetbrains.rd.platform.util.lifetime
 import com.intellij.execution.multilaunch.execution.ExecutionMode
 import com.intellij.execution.multilaunch.execution.ExecutionEngine
+import com.intellij.openapi.rd.util.lifetime
 
 class MultiLaunchProfileState(
   private val configuration: MultiLaunchConfiguration,
