@@ -480,29 +480,34 @@ class VfsLogImpl private constructor(
     }
 
     @JvmStatic
+    @JvmOverloads
     fun open(
       storagePath: Path,
       readOnly: Boolean = false,
+      throwOnVersionMismatch: Boolean = false,
+      deleteOnVersionMismatch: Boolean = !readOnly
       // TODO telemetry and logging toggle
     ): VfsLogImpl {
-      if (!readOnly) {
-        deleteEverythingOnVersionMismatch(storagePath)
-      }
+      checkVersion(storagePath, throwOnVersionMismatch, deleteOnVersionMismatch)
       return VfsLogImpl(storagePath, readOnly)
     }
 
-    private fun deleteEverythingOnVersionMismatch(storagePath: Path) {
+    private fun checkVersion(storagePath: Path, throwOnMismatch: Boolean, deleteOnMismatch: Boolean) {
       val state = AtomicDurableRecord.open(storagePath / "state", ReadWrite, stateBuilder)
       val version = state.get().version
       state.close()
       if (version != VERSION) {
-        LOG.info("Upgrading storage")
-        try {
-          if (clearStorage(storagePath)) LOG.info("VfsLog storage was cleared")
+        if (throwOnMismatch) throw IllegalStateException("VfsLog version mismatch: impl=$VERSION vs stored=$version")
+        else if (deleteOnMismatch) {
+          LOG.info("Clearing storage")
+          try {
+            if (clearStorage(storagePath)) LOG.info("VfsLog storage was cleared")
+          }
+          catch (e: IOException) {
+            LOG.error("failed to clear VfsLog storage", e)
+          }
         }
-        catch (e: IOException) {
-          LOG.error("failed to clear VfsLog storage", e)
-        }
+        else LOG.warn("VfsLog version mismatch: impl=$VERSION vs stored=$version")
       }
     }
 
