@@ -6,6 +6,7 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.CopyProvider;
+import com.intellij.ide.ui.RegistryBooleanOptionDescriptor;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.internal.inspector.ComponentPropertiesCollector;
 import com.intellij.internal.inspector.PropertyBean;
@@ -26,6 +27,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -425,7 +427,19 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
     private void fillPreviewComponent(String property, Object value, String renderedValue) {
       String strValue = String.valueOf(value);
       if (property.equals("added-at")) {
-        printToPreview(strValue, ERROR_OUTPUT);
+        if (value == null) {
+          printToPreview("Stacktrace is not available. Added-at stacktraces are collected after first invocation of UI Inspector.\n" +
+                         "So, please reopen the UI needed to inspect. Or ", NORMAL_OUTPUT);
+          printHyperlinkToPreview("click", project -> {
+            Registry.get("ui.inspector.save.stacktraces").setValue(true);
+            RegistryBooleanOptionDescriptor.suggestRestart(InspectorTable.this.getRootPane());
+          });
+          printToPreview(" to enable stacktraces saving right after startup (requires restart).\n" +
+                         "Note that saving stacktraces for each UI component can consume significant amount of memory.", NORMAL_OUTPUT);
+        }
+        else {
+          printToPreview(strValue, ERROR_OUTPUT);
+        }
       }
       else if (property.equals("text")) {
         printToPreview(strValue, NORMAL_OUTPUT);
