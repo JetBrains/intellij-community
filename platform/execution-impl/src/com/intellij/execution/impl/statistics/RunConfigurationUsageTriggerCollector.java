@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl.statistics;
 
+import com.intellij.execution.EnvFilesOptions;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -32,7 +33,7 @@ import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesC
 
 public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
   public static final String GROUP_NAME = "run.configuration.exec";
-  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 71);
+  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 72);
   public static final IntEventField ALTERNATIVE_JRE_VERSION = EventFields.Int("alternative_jre_version");
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP_NAME, "started");
   private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor",
@@ -47,6 +48,8 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
    */
   private static final StringEventField TARGET =
     EventFields.StringValidatedByCustomRule("target", RunTargetValidator.class);
+  private static final IntEventField ENV_FILES_COUNT =
+    EventFields.Int("env_files_count");
   private static final EnumEventField<RunConfigurationFinishType> FINISH_TYPE =
     EventFields.Enum("finish_type", RunConfigurationFinishType.class);
 
@@ -56,7 +59,8 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
                                                                                           TARGET,
                                                                                           RunConfigurationTypeUsagesCollector.FACTORY_FIELD,
                                                                                           RunConfigurationTypeUsagesCollector.ID_FIELD,
-                                                                                          EventFields.PluginInfo},
+                                                                                          EventFields.PluginInfo,
+                                                                                          ENV_FILES_COUNT},
                                                                                         new EventField<?>[]{FINISH_TYPE});
 
   public static final VarargEventId UI_SHOWN_STAGE = ACTIVITY_GROUP.registerStage("ui.shown");
@@ -95,6 +99,9 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     String targetTypeId = getTargetTypeId(project, runConfiguration);
     if (targetTypeId != null) {
       eventPairs.add(TARGET.with(targetTypeId));
+    }
+    if (runConfiguration instanceof EnvFilesOptions envFilesOptions) {
+      eventPairs.add(ENV_FILES_COUNT.with(envFilesOptions.getEnvFilePaths().size()));
     }
     return eventPairs;
   }
