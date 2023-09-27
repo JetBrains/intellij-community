@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.toolingExtension.impl.util;
+package com.intellij.gradle.toolingExtension.util;
 
-import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
@@ -26,7 +25,7 @@ public final class GradleNegotiationUtil {
    * Right now, there is no public API available to get this identityPath
    * Agreement with Gradle: We can use ProjectInternal for now.
    * This identity path will get a public tooling API which will replace the cast.
-   * Until then, this API will be kept stable as agreement between Gradle and JetBrains
+   * Until then, this API will be kept stable as an agreement between Gradle and JetBrains
    * <p>
    * Note: a project identity path was introduced with Gradle 3.3 in commit
    * <a href="https://github.com/gradle/gradle/commit/2c009b27b97c1564344f3cc93258ce5a0e18a03f">2c009b27b97c1564344f3cc93258ce5a0e18a03f</a>
