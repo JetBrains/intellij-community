@@ -167,7 +167,7 @@ class ConstructorReferencesSearchHelper {
     }
     for (PsiMethod method : constructors) {
       PsiCodeBlock body = method.getBody();
-      if (body == null || method == constructor && isStrictSignatureSearch || !method.isPhysical()) {
+      if (body == null || method == constructor && isStrictSignatureSearch || method instanceof SyntheticElement) {
         continue;
       }
       PsiStatement[] statements = body.getStatements();
