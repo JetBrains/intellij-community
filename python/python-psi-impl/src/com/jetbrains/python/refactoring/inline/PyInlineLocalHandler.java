@@ -83,6 +83,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
 
   private static boolean stringContentCanBeInlinedIntoFString(@NotNull PyStringElement inlinedStringElement, 
                                                               @NotNull PyFormattedStringElement targetFString) {
+    if (LanguageLevel.forElement(targetFString).isAtLeast(LanguageLevel.PYTHON312)) return true;
     String content = inlinedStringElement.getContent();
     if (targetFString.isTripleQuoted()) {
       return !content.contains("\\");
@@ -124,7 +125,8 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       return true;
     }
 
-    if (!targetFString.isTripleQuoted() && value.textContains('\n')) {
+    boolean fStringCanContainArbitraryStrings = LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON312);
+    if (!fStringCanContainArbitraryStrings && !targetFString.isTripleQuoted() && value.textContains('\n')) {
       CommonRefactoringUtil.showErrorHint(project, editor, PyPsiBundle.message("refactoring.inline.can.not.multiline.string.to.f.string"),
                                           getRefactoringName(), HELP_ID);
       return false;
@@ -134,7 +136,8 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     List<PyStringElement> valueStringElements = getStringElements(value);
     boolean entireValueIsSingleNonInterpolatedString = value instanceof PyStringLiteralExpression && valueStringElements.size() == 1;
     if (entireValueIsSingleNonInterpolatedString && element.getParent() instanceof PyFStringFragment fStringFragment
-        && fStringFragment.getTypeConversion() == null && fStringFragment.getFormatPart() == null) {
+        && fStringFragment.getTypeConversion() == null && fStringFragment.getFormatPart() == null
+        && !(value.textContains('\n') && !targetFString.isTripleQuoted())) {
       if (intoNestedFString && !stringContentCanBeInlinedIntoFString(valueStringElements.get(0), targetFString)) {
         CommonRefactoringUtil.showErrorHint(project, editor,
                                             PyPsiBundle.message("refactoring.inline.can.not.string.with.backslashes.or.quotes.to.f.string"),
@@ -150,7 +153,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       }
     }
 
-    if (intoNestedFString) {
+    if (!fStringCanContainArbitraryStrings && intoNestedFString) {
       CommonRefactoringUtil.showErrorHint(project, editor, PyPsiBundle.message("refactoring.inline.can.not.string.to.nested.f.string"),
                                           getRefactoringName(), HELP_ID);
       return false;
@@ -164,8 +167,9 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       }
     }
 
-    var valueReplacedQuotes = replaceQuotesInExpression(value, PyStringLiteralUtil.flipQuote(targetFString.getQuote().charAt(0)));
-    simpleReplacements.put(element, valueReplacedQuotes);
+    char newQuote = PyStringLiteralUtil.flipQuote(targetFString.getQuote().charAt(0));
+    var quoteSafeValue = fStringCanContainArbitraryStrings ? value.copy() : replaceQuotesInExpression(value, newQuote);
+    simpleReplacements.put(element, quoteSafeValue);
     return true;
   }
 

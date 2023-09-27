@@ -1,0 +1,1 @@
+fstr = f'\\...{'\\'<caret>.upper()}'
