@@ -294,8 +294,8 @@ public class CFGBuilder {
    * @param anchor element to bind this instruction to
    * @return this builder
    */
-  public CFGBuilder isInstance(PsiMethodCallExpression anchor) {
-    return add(new InstanceofInstruction(new JavaExpressionAnchor(anchor), true));
+  public CFGBuilder isInstance(@Nullable PsiMethodCallExpression anchor) {
+    return add(new InstanceofInstruction(anchor == null ? null : new JavaExpressionAnchor(anchor), true));
   }
 
   /**

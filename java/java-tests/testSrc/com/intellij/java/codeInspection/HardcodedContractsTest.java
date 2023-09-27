@@ -209,4 +209,17 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
                          }""");
     checkHighlighting();
   }
+  
+  public void testAssertInstanceOf() {
+    myFixture.addClass("""
+                         package org.junit.jupiter.api;
+                         import java.util.function.Supplier;
+                         public final class Assertions {
+                           public static native <T> T assertInstanceOf(Class<T> expectedType, Object actualValue);
+                           public static <T> T assertInstanceOf(Class<T> expectedType, Object actualValue, String message);
+                           public static <T> T assertInstanceOf(Class<T> expectedType, Object actualValue, Supplier<String> messageSupplier);
+                         }
+                         """);
+    checkHighlighting();
+  }
 }
