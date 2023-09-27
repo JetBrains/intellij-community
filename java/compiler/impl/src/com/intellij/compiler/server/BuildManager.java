@@ -2053,6 +2053,12 @@ public final class BuildManager implements Disposable {
               final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
               try {
                 for (Module module : ReadAction.nonBlocking(() -> compileContext.getCompileScope().getAffectedModules()).executeSynchronously()) {
+                  if (project.isDisposed()) {
+                    return;
+                  }
+                  if (module.isDisposed()) {
+                    continue;
+                  }
                   if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
                     final String productionPath = CompilerPaths.getAnnotationProcessorsGenerationPath(module, false);
                     if (productionPath != null) {
