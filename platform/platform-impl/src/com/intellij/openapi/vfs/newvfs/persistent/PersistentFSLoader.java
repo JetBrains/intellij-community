@@ -191,6 +191,8 @@ public final class PersistentFSLoader {
     //Initiate async scanning of the recordsStorage to fill both invertedNameIndex and reusableFileIds,
     //  and create lazy-accessors for both.
     collectDeletedFileRecordsTask = executorService.async(() -> {
+      //TODO RC: limit max number of reusable fileIds -- i.e. what if there are millions of them?
+      //         5-10_000 max should be enough.
       IntList reusableFileIds = new IntArrayList(1024);
       //fill up reusable (=deleted) records:
       PersistentFSRecordsStorage storage = recordsStorageFuture.join();

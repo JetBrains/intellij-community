@@ -101,7 +101,7 @@ public final class StreamlinedBlobStorageOverLockFreePagedStorage extends Stream
           final int version = getStorageVersion();
           if (version != STORAGE_VERSION_CURRENT) {
             throw new IOException(
-              "Can't read file[" + pagedStorage + "]: file version(" + version + ") != current impl version (" + STORAGE_VERSION_CURRENT + ")");
+              "[" + pagedStorage.getFile() + "]: file version(" + version + ") != current impl version (" + STORAGE_VERSION_CURRENT + ")");
           }
 
           final int filePageSize = readHeaderInt(HeaderLayout.PAGE_SIZE_OFFSET);

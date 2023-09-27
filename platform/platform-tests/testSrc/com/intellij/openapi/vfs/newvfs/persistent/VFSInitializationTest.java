@@ -406,6 +406,7 @@ public class VFSInitializationTest {
   }
 
 
+  //================ kind-of benchmarks ============================================================
   @Test
   public void benchmarkVfsInitializationTime_CreateVfsFromScratch() throws Exception {
     PlatformTestUtil.startPerformanceTest(
