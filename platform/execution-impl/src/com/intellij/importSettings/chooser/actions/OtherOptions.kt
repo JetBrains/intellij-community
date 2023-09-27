@@ -55,7 +55,7 @@ class OtherOptions(val callback: (Int) -> Unit) : ProductChooserAction(), LinkAc
     return arr.toTypedArray()
   }
 
-  private fun addActionList(products: List<Product>, provider: ActionsDataProvider, title: String? = null): MutableList<AnAction> {
+  private fun addActionList(products: List<Product>, provider: ActionsDataProvider<*>, title: String? = null): MutableList<AnAction> {
     val list = mutableListOf<AnAction>()
     if (products.isNotEmpty()) {
       title?.let {

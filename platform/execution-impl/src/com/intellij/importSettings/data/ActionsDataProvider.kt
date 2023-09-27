@@ -3,7 +3,7 @@ package com.intellij.importSettings.data
 
 import javax.swing.Icon
 
-interface ActionsDataProvider {
+interface ActionsDataProvider<T : BaseService> {
   enum class popUpPlace {
     MAIN,
     OTHER
@@ -30,7 +30,7 @@ interface ActionsDataProvider {
   val settingsService
     get() = SettingsService.getInstance()
 
-  val productService: BaseService
+  val productService: T
   fun getProductIcon(productId: String, size: IconProductSize = IconProductSize.SMALL): Icon?
   fun getText(importItem: ImportItem): String
   val title: String
@@ -40,7 +40,7 @@ interface ActionsDataProvider {
   val other: List<Product>?
 }
 
-class JBrActionsDataProvider private constructor(): ActionsDataProvider {
+class JBrActionsDataProvider private constructor(): ActionsDataProvider<JbService> {
   companion object {
     private val provider = JBrActionsDataProvider()
     fun getInstance() = provider
@@ -82,7 +82,7 @@ class JBrActionsDataProvider private constructor(): ActionsDataProvider {
 
 }
 
-class SyncActionsDataProvider private constructor() : ActionsDataProvider {
+class SyncActionsDataProvider private constructor() : ActionsDataProvider<SyncService> {
   companion object {
     private val provider = SyncActionsDataProvider()
     fun getInstance() = provider
@@ -117,8 +117,8 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider {
     map = ActionsDataProvider.prepareMap(service)
   }
 
-  override fun getProductIcon(importItem: String, size: IconProductSize): Icon? {
-    return productService.getProductIcon(importItem, size)
+  override fun getProductIcon(itemId: String, size: IconProductSize): Icon? {
+    return productService.getProductIcon(itemId, size)
   }
 
   override fun getText(importItem: ImportItem): String {
@@ -152,7 +152,7 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider {
 
 }
 
-class ExtActionsDataProvider private constructor() : ActionsDataProvider {
+class ExtActionsDataProvider private constructor() : ActionsDataProvider<ExternalService> {
   companion object {
     private val provider = ExtActionsDataProvider()
     fun getInstance() = provider

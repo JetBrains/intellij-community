@@ -6,20 +6,17 @@ import com.intellij.openapi.ui.DialogWrapper
 import java.awt.event.ActionEvent
 import javax.swing.Action
 
-fun createDialog(provider: ActionsDataProvider, product: ImportItem): DialogWrapper {
-  when(provider) {
+fun createDialog(provider: ActionsDataProvider<*>, product: ImportItem): DialogWrapper {
+  return when (provider) {
     is SyncActionsDataProvider -> return SyncSettingDialog(provider, product)
     is JBrActionsDataProvider -> return ImportSettingDialog(provider, product)
     is ExtActionsDataProvider -> return ImportSettingDialog(provider, product)
-    else -> throw Exception("unexpected provider type")
+    else -> SettingDialog(provider, product)
   }
 }
 
-fun createDialog(provider: SyncActionsDataProvider, product: ImportItem): DialogWrapper {
-  return SyncSettingDialog(provider, product)
-}
-
-class ImportSettingDialog(val provider: ActionsDataProvider, product: ImportItem): SettingDialog(provider, product)  {
+class ImportSettingDialog<T>(val provider: ActionsDataProvider<T>, product: ImportItem) : SettingDialog(provider,
+                                                                                                        product) where T : BaseService, T : ConfigurableImport {
   override fun createActions(): Array<Action> {
     return arrayOf(okAction, cancelAction)
   }
@@ -33,9 +30,12 @@ class ImportSettingDialog(val provider: ActionsDataProvider, product: ImportItem
   override fun applyFields() {
     super.applyFields()
     val productService = provider.productService
-/*    if(productService is ConfigurableImport) {
-      //productService.importSettings(product.id)
-    }*/
+
+    val dataForSaves = settingPanes.map { it.item }.filter { it.configurable && it.selected }.map {
+      val chs = it.childItems?.filter { it.selected }?.map { it.child.id }?.toList()
+      DataForSave(it.setting.id, chs)
+    }.toList()
+    productService.importSettings(product.id, dataForSaves)
   }
 
   override fun getCancelAction(): Action {

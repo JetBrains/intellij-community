@@ -24,7 +24,7 @@ class ChildSettingsList(val settings: List<ChildItem>, val configurable: Boolean
           val index = locationToIndex(e.point)
           if (settings.size > index) {
             val settingItem = settings[index]
-            settingItem.choosed = !settingItem.choosed
+            settingItem.selected = !settingItem.selected
             repaint()
           }
         }
@@ -80,7 +80,7 @@ private class CBRenderer(val configurable: Boolean) : ListCellRenderer<ChildItem
     val child = value.child
 
     ch.isVisible = configurable
-    ch.isSelected = value.choosed
+    ch.isSelected = value.selected
     ch.text = child.name
 
     txt.isVisible = !configurable
@@ -96,4 +96,4 @@ private class CBRenderer(val configurable: Boolean) : ListCellRenderer<ChildItem
   }
 }
 
-data class ChildItem(val child: ChildSetting, var separatorNeeded: Boolean = false, var choosed: Boolean = true )
+data class ChildItem(val child: ChildSetting, var separatorNeeded: Boolean = false, var selected: Boolean = true )

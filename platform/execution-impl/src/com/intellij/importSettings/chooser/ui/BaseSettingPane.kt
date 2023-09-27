@@ -6,10 +6,10 @@ import com.intellij.importSettings.data.Configurable
 import com.intellij.importSettings.data.Multiple
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
@@ -41,12 +41,11 @@ private fun createMultipleItem(setting: Multiple, configurable: Boolean): Settin
     }
   }
 
-  return SettingItem(setting, configurable, true, list)
+  return SettingItem(setting, configurable, childItems = list )
 }
 
 open class BaseSettingPane(val item: SettingItem) {
   val setting = item.setting
-  private var cb: JBCheckBox? = null
 
   private val pane by lazy {
     panel {
@@ -56,10 +55,7 @@ open class BaseSettingPane(val item: SettingItem) {
           row {
             text(setting.name).customize(UnscaledGaps(0, 0, 2, 0)).resizableColumn()
             if (item.configurable) {
-              checkBox("").customize(UnscaledGaps(0, 0, 2, 0)).applyToComponent {
-                isSelected = true
-                cb = this
-              }
+              checkBox("").bindSelected(item::selected) { item.selected = it }.customize(UnscaledGaps(0, 0, 2, 0))
             }
           }
 
@@ -134,4 +130,4 @@ class MultipleSettingPane(item: SettingItem): BaseSettingPane(item) {
   }
 }
 
-data class SettingItem(val setting: BaseSetting, val configurable: Boolean, val selected: Boolean = true, val childItems: List<ChildItem>? = null)
+data class SettingItem(val setting: BaseSetting, val configurable: Boolean, var selected: Boolean = true, val childItems: List<ChildItem>? = null)
