@@ -251,11 +251,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
   protected List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<>();
 
-    if (isEditable(Side.RIGHT, false)) {
-      group.add(new ReplaceSelectedChangesAction(Side.LEFT));
-      group.add(new ReplaceSelectedChangesAction(Side.RIGHT));
-    }
-
+    group.add(new ReplaceSelectedChangesAction(Side.LEFT));
+    group.add(new ReplaceSelectedChangesAction(Side.RIGHT));
     group.add(Separator.getInstance());
     group.addAll(TextDiffViewerUtil.createEditorPopupActions());
 
