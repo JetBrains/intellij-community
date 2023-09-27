@@ -286,6 +286,7 @@ public final class FSRecords {
     return implOrFail().supportsRawAttributesAccess();
   }
 
+  /** BEWARE: ByteBuffer passed into a reader could have ByteOrder different from JVM-default BIG_ENDIAN! */
   @ApiStatus.Internal
   public static <R> @Nullable R readAttributeRawWithLock(int fileId,
                                                          @NotNull FileAttribute attribute,

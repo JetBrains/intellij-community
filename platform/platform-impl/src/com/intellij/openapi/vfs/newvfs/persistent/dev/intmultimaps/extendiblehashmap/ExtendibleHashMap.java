@@ -108,7 +108,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
       bufferSource = (offsetInFile, length) -> {
         ByteBuffer buffer = storage.pageByOffset(offsetInFile).rawPageBuffer();
         int offsetInPage = storage.toOffsetInPage(offsetInFile);
-        return buffer.slice(offsetInPage, length);
+        return buffer.slice(offsetInPage, length)
+          .order(buffer.order());
       };
 
       header = new HeaderLayout(bufferSource, segmentSize);

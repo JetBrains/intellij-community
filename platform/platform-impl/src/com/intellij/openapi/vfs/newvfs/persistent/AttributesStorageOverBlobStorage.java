@@ -554,7 +554,8 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
 
     public ByteBuffer inlinedValueAsSlice() {
       final int valueLength = inlinedValueLength();
-      return buffer.slice(inlinedValueStartOffset(), valueLength);
+      return buffer.slice(inlinedValueStartOffset(), valueLength)
+        .order(buffer.order());
     }
 
     @Override
@@ -746,7 +747,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
   }
 
   @VisibleForTesting
-  //@GuardedBy("lock")
+    //@GuardedBy("lock")
   int updateAttribute(final int attributesRecordId,
                       final int fileId,
                       final int attributeId,
@@ -925,7 +926,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
 
 
   @VisibleForTesting
-  //@GuardedBy("lock")
+    //@GuardedBy("lock")
   byte[] readAttributeValue(final int attributesRecordId,
                             final int fileId,
                             final int attributeId) throws IOException {
@@ -955,7 +956,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
   }
 
   @VisibleForTesting
-  //@GuardedBy("lock")
+    //@GuardedBy("lock")
   <R> R readAttributeValue(final int attributesRecordId,
                            final int fileId,
                            final int attributeId,
@@ -989,7 +990,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
 
 
   @VisibleForTesting
-  //@GuardedBy("lock")
+    //@GuardedBy("lock")
   boolean hasAttribute(final int attributesRecordId,
                        final int fileId,
                        final int attributeId) throws IOException {
@@ -1020,7 +1021,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
   }
 
   @VisibleForTesting
-  //@GuardedBy("lock")
+    //@GuardedBy("lock")
   boolean deleteAttributes(final int attributesRecordId,
                            final int fileId) throws IOException {
     if (attributesRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
@@ -1104,7 +1105,8 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
                                                "!= backref attributeId(" + backRefAttributeId + ")";
 
     final int valueLength = dedicatedRecordBuffer.remaining() - AttributesRecord.DEDICATED_RECORD_HEADER_SIZE;
-    return dedicatedRecordBuffer.slice(AttributesRecord.DEDICATED_RECORD_HEADER_SIZE, valueLength);
+    return dedicatedRecordBuffer.slice(AttributesRecord.DEDICATED_RECORD_HEADER_SIZE, valueLength)
+      .order(dedicatedRecordBuffer.order());
   }
 
 
@@ -1128,7 +1130,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
    * use {@link #ensureLimitAndData(ByteBuffer, int)} for that.
    */
   private static @NotNull ByteBuffer ensureLimit(final ByteBuffer buffer,
-                                        final int requiredLimit) {
+                                                 final int requiredLimit) {
     if (buffer.capacity() >= requiredLimit) {
       return buffer.limit(Math.max(buffer.limit(), requiredLimit));
     }

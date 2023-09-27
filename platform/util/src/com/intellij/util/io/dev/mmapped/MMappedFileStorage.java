@@ -345,8 +345,7 @@ public final class MMappedFileStorage implements Closeable {
       this.pageIndex = pageIndex;
       this.pageSize = pageSize;
       this.offsetInFile = pageIndex * (long)pageSize;
-      this.pageBuffer = map(channel, pageSize);
-      pageBuffer.order(byteOrder);
+      this.pageBuffer = map(channel, pageSize).order(byteOrder);
     }
 
     private MappedByteBuffer map(FileChannel channel,

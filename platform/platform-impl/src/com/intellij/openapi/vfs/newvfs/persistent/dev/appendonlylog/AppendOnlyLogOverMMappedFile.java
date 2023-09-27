@@ -160,7 +160,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
                                      int payloadSize,
                                      ByteBufferWriter writer) throws IOException {
       INT32_OVER_BYTE_BUFFER.setVolatile(buffer, offsetInBuffer + HEADER_OFFSET, dataRecordHeader(payloadSize, /*commited: */false));
-      writer.write(buffer.slice(offsetInBuffer + DATA_OFFSET, payloadSize));
+      ByteBuffer writableRegionSlice = buffer.slice(offsetInBuffer + DATA_OFFSET, payloadSize).order(buffer.order());
+      writer.write(writableRegionSlice);
       INT32_OVER_BYTE_BUFFER.setVolatile(buffer, offsetInBuffer + HEADER_OFFSET, dataRecordHeader(payloadSize, /*commited: */true));
     }
 
@@ -456,7 +457,9 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
                             (ADD_LOG_CONTENT ? "\n" + dumpContentAroundId(recordId, 1024) : "")
       );
     }
-    ByteBuffer recordDataSlice = pageBuffer.slice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength);
+    ByteBuffer recordDataSlice = pageBuffer.slice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength)
+      //.asReadOnlyBuffer()
+      .order(pageBuffer.order());
     return reader.read(recordDataSlice);
   }
 
@@ -510,7 +513,9 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
                                   " is incorrect: page[0.." + pageBuffer.limit() + "]" +
                                   moreDiagnosticInfo(recordOffsetInFile));
           }
-          ByteBuffer recordDataSlice = pageBuffer.slice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength);
+          ByteBuffer recordDataSlice = pageBuffer.slice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength)
+            //.asReadOnlyBuffer()
+            .order(pageBuffer.order());
 
           boolean shouldContinue = reader.read(recordId, recordDataSlice);
           if (!shouldContinue) {

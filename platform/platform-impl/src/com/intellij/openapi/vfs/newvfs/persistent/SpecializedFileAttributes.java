@@ -9,10 +9,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.function.IntUnaryOperator;
 import java.util.function.LongUnaryOperator;
+
+import static java.nio.ByteOrder.BIG_ENDIAN;
 
 /**
  * Experimental API for faster access of file attribute if the attribute value is simple
@@ -42,7 +45,11 @@ public final class SpecializedFileAttributes {
       @Override
       public long read(int fileId,
                        long defaultValue) throws IOException {
-        Long value = vfs.readAttributeRaw(fileId, attribute, ByteBuffer::getLong);
+
+        Long value = vfs.readAttributeRaw(fileId, attribute, buffer -> {
+          //stream.writeLong() writes in BIG_ENDIAN (default byte order for JVM)
+          return buffer.order(BIG_ENDIAN).getLong();
+        });
         return value == null ? defaultValue : value.longValue();
       }
 
@@ -69,7 +76,10 @@ public final class SpecializedFileAttributes {
     return new IntFileAttributeAccessor() {
       @Override
       public int read(int fileId, int defaultValue) {
-        Integer value = vfs.readAttributeRaw(fileId, attribute, ByteBuffer::getInt);
+        Integer value = vfs.readAttributeRaw(fileId, attribute, buffer -> {
+          //stream.writeInt() writes in BIG_ENDIAN (default byte order for JVM)
+          return buffer.order(BIG_ENDIAN).getInt();
+        });
         return value == null ? defaultValue : value.intValue();
       }
 
