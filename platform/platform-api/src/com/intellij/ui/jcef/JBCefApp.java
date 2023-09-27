@@ -247,7 +247,8 @@ public final class JBCefApp {
   }
 
   @Contract(pure = true)
-  @NotNull Integer getRemoteDebuggingPort() {
+  @NotNull
+  public Integer getRemoteDebuggingPort() {
     return myCefSettings.remote_debugging_port;
   }
 
