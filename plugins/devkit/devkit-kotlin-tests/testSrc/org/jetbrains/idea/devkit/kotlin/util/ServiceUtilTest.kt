@@ -102,8 +102,8 @@ class ServiceUtilTest : LightJavaCodeInsightFixtureTestCase() {
       """
       package com.intellij.openapi.application;
       
-      public class ApplicationManager {
-        protected static Application ourApplication;
+      public final class ApplicationManager {
+        private static Application ourApplication;
       
         public static Application getApplication() {
           return ourApplication;
