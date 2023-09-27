@@ -263,7 +263,7 @@ private sealed class IconData(val iconSize: Int = unscaledProjectIconSize()) {
 private class SvgIconData(private val file: Path, iconSize: Int = unscaledProjectIconSize()) : IconData(iconSize) {
   override fun getScaledIcon(sysScale: Float, pixScale: Float): Icon {
     val userSize = JBUIScale.scale(iconSize)
-    return JBImageIcon(loadWithSizes(sizes = listOf(userSize), data = Files.readAllBytes(file), scale = pixScale).first())
+    return JBImageIcon(loadWithSizes(sizes = listOf(userSize), data = Files.readAllBytes(file), scale = sysScale).first())
   }
 
   override fun toString() = "SvgIconData(file=$file, iconSize=$iconSize)"
