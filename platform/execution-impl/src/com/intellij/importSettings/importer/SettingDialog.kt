@@ -24,7 +24,7 @@ import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 import javax.swing.border.LineBorder
 
-open class SettingDialog(private val provider: ActionsDataProvider, val product: ImportItem) : DialogWrapper(null) {
+open class SettingDialog(private val provider: ActionsDataProvider<*>, val product: ImportItem) : DialogWrapper(null) {
   open val configurable = true
   protected val settingPanes = mutableListOf<BaseSettingPane>()
 
@@ -59,11 +59,10 @@ open class SettingDialog(private val provider: ActionsDataProvider, val product:
     })
 
     val productService = provider.productService
-    val settingList = productService.getSettings(product.id)
 
     val listPane = JPanel().apply {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
-      settingList.forEach {
+      productService.getSettings(product.id).forEach {
         val st = createSettingPane(it, configurable)
         settingPanes.add(st)
         add(st.component().apply {

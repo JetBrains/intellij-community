@@ -2,11 +2,12 @@
 package com.intellij.importSettings.chooser.actions
 
 import com.intellij.importSettings.data.ActionsDataProvider
+import com.intellij.importSettings.data.BaseService
 import com.intellij.importSettings.data.Product
 import com.intellij.openapi.actionSystem.*
 import javax.swing.Icon
 
-open class MainChooserAction(val provider: ActionsDataProvider, val callback: (Int) -> Unit) : ProductChooserAction() {
+open class MainChooserAction<T : BaseService>(val provider: ActionsDataProvider<T>, val callback: (Int) -> Unit) : ProductChooserAction() {
   private var array: Array<AnAction> = emptyArray()
 
   override fun displayTextInToolbar(): Boolean {

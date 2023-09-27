@@ -14,7 +14,7 @@ import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 
 open class ProductChooserAction() : DefaultActionGroup() {
-  protected fun productsToActions(products: List<Product>, provider: ActionsDataProvider, callback: (Int) -> Unit): List<AnAction> {
+  protected fun productsToActions(products: List<Product>, provider: ActionsDataProvider<*>, callback: (Int) -> Unit): List<AnAction> {
     return products.map { pr -> SettingChooserItemAction(pr, provider, callback) }
   }
 

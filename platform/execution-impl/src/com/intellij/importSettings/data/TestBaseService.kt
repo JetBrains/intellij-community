@@ -29,9 +29,7 @@ class TestBaseService : SettingsService {
   }
 
   override fun skipImport() {
-    if (LOG.isTraceEnabled) {
-      LOG.trace("$IMPORT_SERVICE skipImport")
-    }
+    LOG.info("$IMPORT_SERVICE skipImport")
   }
 }
 
@@ -74,90 +72,6 @@ class TestJbService : JbService {
              TestChildrenSettings("Find Usages", null, "⇧F12"),
              TestChildrenSettings("Build Solution", null, "⇧F12"),
              TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
-             TestChildrenSettings("Find Usages", null, "⇧F12"),
-             TestChildrenSettings("Build Solution", null, "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
-             TestChildrenSettings("Find Usages", null, "⇧F12"),
-             TestChildrenSettings("Build Solution", null, "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
-             TestChildrenSettings("Find Usages", null, "⇧F12"),
-             TestChildrenSettings("Build Solution", null, "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
-             TestChildrenSettings("Find Usages", null, "⇧F12"),
-             TestChildrenSettings("Build Solution", null, "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
-             TestChildrenSettings("Find Usages", null, "⇧F12"),
-             TestChildrenSettings("Build Solution", null, "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in" )),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
-             TestChildrenSettings("Find Usages", null, "⇧F12"),
-             TestChildrenSettings("Build Solution", null, "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
-             TestChildrenSettings("Find Usages", null, "⇧F12"),
-             TestChildrenSettings("Build Solution", null, "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
-             TestChildrenSettings("Find Usages", null, "⇧F12"),
-             TestChildrenSettings("Build Solution", null, "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
-             TestChildrenSettings("Find Usages", null, "⇧F12"),
-             TestChildrenSettings("Build Solution", null, "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
-             TestChildrenSettings("Find Usages", null, "⇧F12"),
-             TestChildrenSettings("Build Solution", null, "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
     )
 
     val settings = listOf(
@@ -194,10 +108,8 @@ class TestJbService : JbService {
 
   }
 
-  override fun importSettings(productId: String, ids: DataForSave) {
-    if (LOG.isTraceEnabled) {
-      LOG.trace("${TestBaseService.IMPORT_SERVICE} importSettings")
-    }
+  override fun importSettings(productId: String, data: List<DataForSave>) {
+    LOG.info("${TestBaseService.IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
   }
 
   override fun products(): List<Product> {
@@ -208,7 +120,7 @@ class TestJbService : JbService {
     return old
   }
 
-  override fun getSettings(productId: String): List<BaseSetting> {
+  override fun getSettings(itemId: String): List<BaseSetting> {
     return settings
   }
 
@@ -235,11 +147,6 @@ class TestExternalService : ExternalService {
     return listOf(TestJbService.main2)
   }
 
-  override fun importSettings(productId: String) {
-    if (LOG.isTraceEnabled) {
-      LOG.trace("${TestBaseService.IMPORT_SERVICE} importSettings")
-    }
-  }
 
   override fun getProductIcon(itemId: String, size: IconProductSize): Icon {
     return TestJbService.getProductIcon(size)
@@ -249,6 +156,9 @@ class TestExternalService : ExternalService {
     return TestJbService.settings
   }
 
+  override fun importSettings(productId: String, data: List<DataForSave>) {
+    LOG.info("${TestBaseService.IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
+  }
 }
 
 class TestSyncService : SyncService {
@@ -261,32 +171,24 @@ class TestSyncService : SyncService {
 
 
   override fun tryToLogin(): String? {
-    if (LOG.isTraceEnabled) {
-      LOG.trace("${TestBaseService.IMPORT_SERVICE} tryToLogin")
-    }
+    LOG.info("${TestBaseService.IMPORT_SERVICE} tryToLogin")
     return null
   }
 
   override fun syncSettings(productId: String) {
-    if (LOG.isTraceEnabled) {
-      LOG.trace("${TestBaseService.IMPORT_SERVICE} syncSettings id: '$productId' ")
-    }
-  }
-
-  override fun importSettings(productId: String) {
-    if (LOG.isTraceEnabled) {
-      LOG.trace("${TestBaseService.IMPORT_SERVICE} importSettings id: '$productId' ")
-    }
+    LOG.info("${TestBaseService.IMPORT_SERVICE} syncSettings id: '$productId' ")
   }
 
   override fun generalSync() {
-    if (LOG.isTraceEnabled) {
-      LOG.trace("${TestBaseService.IMPORT_SERVICE} generalSync")
-    }
+    LOG.info("${TestBaseService.IMPORT_SERVICE} generalSync")
   }
 
   override fun getMainProduct(): Product? {
     return TestJbService.main2
+  }
+
+  override fun importSettings(productId: String) {
+    LOG.info("${TestBaseService.IMPORT_SERVICE} importSettings product: $productId")
   }
 
   override fun products(): List<Product> {

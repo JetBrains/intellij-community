@@ -27,25 +27,18 @@ interface SyncService : BaseJbService {
     NO_SYNC,
     GENERAL
   }
-  override val configurable: Boolean
-    get() = false
 
   val syncState: SYNC_STATE
   fun tryToLogin(): String?
   fun syncSettings(productId: String)
-  fun importSettings(productId: String)
   fun getMainProduct(): Product?
+  fun importSettings(productId: String)
 
   fun generalSync()
 }
 
-interface ExternalService : BaseService {
-  fun importSettings(productId: String)
-}
-
-interface JbService: BaseJbService {
-  fun importSettings(productId: String, ids: DataForSave)
-
+interface ExternalService : BaseService, ConfigurableImport
+interface JbService: BaseJbService, ConfigurableImport {
   fun getConfig(): Config
 }
 
@@ -54,13 +47,15 @@ interface BaseJbService : BaseService {
 }
 
 interface BaseService {
-  val configurable: Boolean
-    get() = true
 
   fun products(): List<Product>
   fun getSettings(itemId: String): List<BaseSetting>
 
   fun getProductIcon(itemId: String, size: IconProductSize = IconProductSize.SMALL): Icon?
+}
+
+interface ConfigurableImport {
+  fun importSettings(productId: String, data: List<DataForSave>)
 }
 
 enum class IconProductSize(val int: Int) {
@@ -116,4 +111,4 @@ interface ChildSetting {
   val rightComment: String? /* hotkey скетч https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=961%3A169735&mode=dev*/
 }
 
-data class DataForSave(val id: String, val childIds: List<String>?)
+data class DataForSave(val id: String, val childIds: List<String>? = null)
