@@ -3,8 +3,11 @@ package com.intellij.terminal
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
+import com.jediterm.terminal.Terminal
+import com.jediterm.terminal.model.TerminalApplicationTitleListener
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -74,4 +77,18 @@ class TerminalTitle {
                    var applicationTitle: @Nls String? = null,
                    var tag: @Nls String? = null,
                    var defaultTitle: @Nls String? = null)
+}
+
+fun TerminalTitle.bindApplicationTitle(terminal: Terminal, parentDisposable: Disposable) {
+  val listener = TerminalApplicationTitleListener { newApplicationTitle ->
+    if (AdvancedSettings.getBoolean("terminal.show.application.title")) {
+      change {
+        applicationTitle = newApplicationTitle
+      }
+    }
+  }
+  terminal.addApplicationTitleListener(listener)
+  Disposer.register(parentDisposable) {
+    terminal.removeApplicationTitleListener(listener)
+  }
 }

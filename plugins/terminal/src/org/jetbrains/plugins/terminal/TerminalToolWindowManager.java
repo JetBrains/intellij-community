@@ -17,12 +17,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,8 +50,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
-import com.jediterm.terminal.RequestOrigin;
-import com.jediterm.terminal.ui.TerminalPanelListener;
 import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -356,21 +352,6 @@ public final class TerminalToolWindowManager implements Disposable {
     }, content);
     JBTerminalWidget terminalWidget = JBTerminalWidget.asJediTermWidget(widget);
     if (terminalWidget == null) return;
-    terminalWidget.setTerminalPanelListener(new TerminalPanelListener() {
-      @Override
-      public void onPanelResize(@NotNull RequestOrigin origin) { }
-
-      @Override
-      public void onTitleChanged(@NlsSafe String title) {
-        if (AdvancedSettings.getBoolean("terminal.show.application.title")) {
-          TerminalTitle terminalTitle = terminalWidget.getTerminalTitle();
-          terminalTitle.change(terminalTitleState -> {
-            terminalTitleState.setApplicationTitle(title);
-            return null;
-          });
-        }
-      }
-    });
 
     terminalWidget.setListener(new JBTerminalWidgetListener() {
       @Override

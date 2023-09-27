@@ -34,10 +34,7 @@ import com.intellij.util.ui.RegionPainter;
 import com.jediterm.core.compatibility.Point;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.*;
-import com.jediterm.terminal.model.SelectionUtil;
-import com.jediterm.terminal.model.StyleState;
-import com.jediterm.terminal.model.TerminalSelection;
-import com.jediterm.terminal.model.TerminalTextBuffer;
+import com.jediterm.terminal.model.*;
 import com.jediterm.terminal.model.hyperlinks.LinkInfo;
 import com.jediterm.terminal.model.hyperlinks.LinkResult;
 import com.jediterm.terminal.model.hyperlinks.LinkResultItem;
@@ -89,6 +86,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
         return getTerminalPanel();
       }
     });
+    TerminalTitleKt.bindApplicationTitle(myTerminalTitle, getTerminal(), this);
   }
 
   private @Nullable LinkResult runFilters(@NotNull Project project, @NotNull String line) {

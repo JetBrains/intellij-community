@@ -11,6 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.TerminalTitle
+import com.intellij.terminal.bindApplicationTitle
 import com.intellij.ui.util.preferredHeight
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
@@ -27,7 +29,8 @@ import javax.swing.JPanel
 class BlockTerminalView(
   private val project: Project,
   private val session: TerminalSession,
-  private val settings: JBTerminalSystemSettingsProviderBase
+  private val settings: JBTerminalSystemSettingsProviderBase,
+  terminalTitle: TerminalTitle
 ) : TerminalContentView, TerminalCommandExecutor {
   private val controller: BlockTerminalController
   private val selectionController: TerminalSelectionController
@@ -84,6 +87,8 @@ class BlockTerminalView(
         }
       }
     })
+
+    terminalTitle.bindApplicationTitle(session.controller, this)
 
     controller.addListener(object : BlockTerminalControllerListener {
       override fun searchSessionStarted(session: SearchSession) {

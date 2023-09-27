@@ -54,10 +54,10 @@ class TerminalWidgetImpl(private val project: Project,
     view = if (options.shellIntegration?.withCommandBlocks == true) {
       val session = TerminalSession(settings, options.shellIntegration)
       Disposer.register(this, session)
-      BlockTerminalView(project, session, settings)
+      BlockTerminalView(project, session, settings, terminalTitle)
     }
     else {
-      OldPlainTerminalView(project, settings)
+      OldPlainTerminalView(project, settings, terminalTitle)
     }
     oldView.asSafely<TerminalPlaceholder>()?.moveTerminationCallbacksTo(view)
     Disposer.dispose(oldView)
