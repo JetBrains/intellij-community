@@ -347,6 +347,18 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
   }
 
   val propertiesFile = patchIdeaPropertiesFile(context)
+
+  spanBuilder("Adjust executable permissions on common dist").useWithScope {
+    val matchers = SUPPORTED_DISTRIBUTIONS.mapNotNull {
+      getOsDistributionBuilder(it.os, null, context)
+    }.flatMap { builder ->
+      JvmArchitecture.entries.flatMap { arch ->
+        builder.generateExecutableFilesMatchers(true, arch).keys
+      }
+    }
+    updateExecutablePermissions(context.paths.distAllDir, matchers)
+  }
+
   return supervisorScope {
     SUPPORTED_DISTRIBUTIONS.mapNotNull { (os, arch) ->
       if (!context.shouldBuildDistributionForOS(os, arch)) {

@@ -7,7 +7,6 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
@@ -70,6 +69,8 @@ class LinuxDistributionBuilder(override val context: BuildContext,
   override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
     setLastModifiedTime(osAndArchSpecificDistPath, context)
+    val executableFileMatchers = generateExecutableFilesMatchers(true, arch).keys
+    updateExecutablePermissions(osAndArchSpecificDistPath, executableFileMatchers)
     context.executeStep(spanBuilder("build linux .tar.gz").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildArtifactWithoutRuntime) {
         launch {
@@ -84,6 +85,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
       }
 
       val runtimeDir = context.bundledRuntime.extract(os = OsFamily.LINUX, arch = arch)
+      updateExecutablePermissions(runtimeDir, executableFileMatchers)
       val tarGzPath = buildTarGz(arch = arch, runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, suffix = suffix(arch))
       launch {
         if (arch == JvmArchitecture.x64) {
@@ -247,14 +249,6 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           |# </${snapcraftConfig.name}>
         """.trimMargin())
 
-        coroutineScope {
-          val executableFilesMatchers = generateExecutableFilesMatchers(includeRuntime = true, arch).keys
-          for (distPath in listOf(unixSnapDistPath, context.paths.distAllDir, runtimeDir)) {
-            launch {
-              updateExecutablePermissions(distPath, executableFilesMatchers)
-            }
-          }
-        }
         val jsonText = generateProductJson(unixSnapDistPath, context, arch)
         validateProductJson(jsonText = jsonText,
                             relativePathToProductJson = "",
