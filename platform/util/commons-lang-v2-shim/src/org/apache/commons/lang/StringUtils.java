@@ -64,4 +64,32 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
   public static int getLevenshteinDistance(String s, String t) {
     return org.apache.commons.lang3.StringUtils.getLevenshteinDistance(s, t);
   }
+
+  public static int indexOf(String seq, String searchSeq) {
+    return org.apache.commons.lang3.StringUtils.indexOf(seq, searchSeq);
+  }
+
+  public static int indexOf(String seq, char c) {
+    return org.apache.commons.lang3.StringUtils.indexOf(seq, c);
+  }
+
+  public static int indexOf(String seq, String searchSeq, int i) {
+    return org.apache.commons.lang3.StringUtils.indexOf(seq, searchSeq, i);
+  }
+
+  public static int indexOf(String seq, char c, int i) {
+    return org.apache.commons.lang3.StringUtils.indexOf(seq, c, i);
+  }
+
+  public static int indexOfAny(String seq, String[] strings) {
+    return org.apache.commons.lang3.StringUtils.indexOfAny(seq, strings);
+  }
+
+  public static int indexOfAny(String seq, char[] chars) {
+    return org.apache.commons.lang3.StringUtils.indexOfAny(seq, chars);
+  }
+
+  public static int indexOfDifference(String seq, String s2) {
+    return org.apache.commons.lang3.StringUtils.indexOfDifference(seq, s2);
+  }
 }
