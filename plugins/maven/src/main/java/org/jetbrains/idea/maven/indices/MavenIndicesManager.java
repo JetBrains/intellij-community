@@ -91,7 +91,7 @@ public final class MavenIndicesManager implements Disposable {
           localIndex.closeAndClean();
         }
       }
-      Path dir = getIndicesDir();
+      Path dir = MavenSystemIndicesManager.getInstance().getIndicesDir();
       try {
         PathKt.delete(dir);
       }
@@ -126,7 +126,7 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   void updateIndicesListSync() {
-    myMavenIndices.updateIndicesList(myProject);
+    myMavenIndices.updateRepositoriesList();
   }
 
   public boolean isInit() {
@@ -167,11 +167,6 @@ public final class MavenIndicesManager implements Disposable {
         scheduleUpdateIndicesList(null);
       }
     }, this);
-  }
-
-  @NotNull
-  Path getIndicesDir() {
-    return MavenSystemIndicesManager.getInstance().getIndicesDir();
   }
 
   public void addArchetype(@NotNull MavenArchetype archetype) {
@@ -251,7 +246,7 @@ public final class MavenIndicesManager implements Disposable {
 
   @NotNull
   private Path getUserArchetypesFile() {
-    return getIndicesDir().resolve("UserArchetypes.xml");
+    return MavenSystemIndicesManager.getInstance().getIndicesDir().resolve("UserArchetypes.xml");
   }
 
   private final class IndexFixer {

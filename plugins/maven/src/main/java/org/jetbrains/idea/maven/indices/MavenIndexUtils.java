@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.maven.model.IndexKind;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -101,10 +102,12 @@ public final class MavenIndexUtils {
   }
 
   @Nullable
-  public static RepositoryInfo getLocalRepository(Project project) {
+  public static MavenRepositoryInfo getLocalRepository(Project project) {
     if (project.isDisposed()) return null;
     File repository = MavenProjectsManager.getInstance(project).getLocalRepository();
-    return repository == null ? null : new RepositoryInfo(LOCAL_REPOSITORY_ID, repository.getPath());
+    return repository == null
+           ? null
+           : new MavenRepositoryInfo(LOCAL_REPOSITORY_ID, LOCAL_REPOSITORY_ID, repository.getPath(), IndexKind.LOCAL);
   }
 
   private static Map<String, Set<String>> getRemoteRepositoriesMap(Project project) {
@@ -121,8 +124,8 @@ public final class MavenIndexUtils {
   @VisibleForTesting
   static Map<String, Set<String>> groupRemoteRepositoriesByUrl(Collection<MavenRemoteRepository> remoteRepositories) {
     return remoteRepositories.stream()
-      .map(r -> new RepositoryInfo(r.getId(), r.getUrl().toLowerCase(Locale.ROOT)))
-      .collect(groupingBy(r -> r.url, mapping(r -> r.id, Collectors.toSet())));
+      .map(r -> new MavenRepositoryInfo(r.getId(), normalizePathOrUrl(r.getUrl().toLowerCase(Locale.ROOT)), IndexKind.REMOTE))
+      .collect(groupingBy(r -> r.getUrl(), mapping(r -> r.getId(), Collectors.toSet())));
   }
 
   @NotNull
@@ -165,16 +168,6 @@ public final class MavenIndexUtils {
                         Set<String> repositoryIds,
                         String url) {
       this(dir, kind, repositoryIds, url, -1, null, null);
-    }
-  }
-
-  static class RepositoryInfo {
-    @NotNull final String id;
-    @NotNull final String url;
-
-    RepositoryInfo(@NotNull String id, @NotNull String url) {
-      this.id = id;
-      this.url = normalizePathOrUrl(url);
     }
   }
 }

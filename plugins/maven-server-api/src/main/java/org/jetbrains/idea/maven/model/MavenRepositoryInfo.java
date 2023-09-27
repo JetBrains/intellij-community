@@ -30,6 +30,10 @@ public class MavenRepositoryInfo implements Serializable {
     myKind = kind;
   }
 
+  public MavenRepositoryInfo(String id, String url, IndexKind kind) {
+    this(id, id, url, kind);
+  }
+
   public String getId() {
     return myId;
   }

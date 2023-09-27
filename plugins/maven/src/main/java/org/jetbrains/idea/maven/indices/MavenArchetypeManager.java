@@ -270,8 +270,8 @@ public class MavenArchetypeManager {
   }
 
   @NotNull
-  private Path getUserArchetypesFile() {
-    return MavenIndicesManager.getInstance(myProject).getIndicesDir().resolve("UserArchetypes.xml");
+  private static Path getUserArchetypesFile() {
+    return MavenSystemIndicesManager.getInstance().getIndicesDir().resolve("UserArchetypes.xml");
   }
 
   private static void saveUserArchetypes(List<MavenArchetype> userArchetypes, @NotNull Path userArchetypesPath) {

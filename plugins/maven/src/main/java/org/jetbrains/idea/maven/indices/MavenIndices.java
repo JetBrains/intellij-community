@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.maven.model.IndexKind;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -50,6 +51,7 @@ public class MavenIndices implements Disposable {
 
   private final MavenIndexerWrapper myIndexer;
   private final File myIndicesDir;
+  private final Project myProject;
 
   private volatile @NotNull MavenIndexHolder myIndexHolder = new MavenIndexHolder(Collections.emptyList(), null);
   private volatile boolean indicesInit;
@@ -57,22 +59,23 @@ public class MavenIndices implements Disposable {
 
   private final ReentrantLock updateIndicesLock = new ReentrantLock();
 
-  public MavenIndices(MavenIndexerWrapper indexer, File indicesDir) {
+  public MavenIndices(MavenIndexerWrapper indexer, File indicesDir, Project project) {
     myIndexer = indexer;
     myIndicesDir = indicesDir;
+    myProject = project;
   }
 
-  void updateIndicesList(@NotNull Project project) {
+  void updateRepositoriesList() {
     if (isDisposed) return;
     updateIndicesLock.lock();
     try {
-      Map<String, Set<String>> remoteRepositoryIdsByUrl = MavenIndexUtils.getRemoteRepositoryIdsByUrl(project);
-      MavenIndexUtils.RepositoryInfo localRepository = MavenIndexUtils.getLocalRepository(project);
-      if (localRepository == null || project.isDisposed()) {
+      Map<String, Set<String>> remoteRepositoryIdsByUrl = MavenIndexUtils.getRemoteRepositoryIdsByUrl(myProject);
+      MavenRepositoryInfo localRepository = MavenIndexUtils.getLocalRepository(myProject);
+      if (localRepository == null || myProject.isDisposed()) {
         return;
       }
 
-      if (myIndexHolder.isEquals(remoteRepositoryIdsByUrl.keySet(), localRepository.url)) return;
+      if (myIndexHolder.isEquals(remoteRepositoryIdsByUrl.keySet(), localRepository.getUrl())) return;
 
       MavenLog.LOG.debug("start update indices " + myIndexHolder);
 
@@ -93,7 +96,7 @@ public class MavenIndices implements Disposable {
       indicesInit = true;
 
       closeIndices(getOldIndices(localDiff, remoteDiff));
-      clearDependencySearchCache(project);
+      clearDependencySearchCache(myProject);
     }
     catch (AlreadyDisposedException | IncorrectOperationException e) {
       myIndexHolder = new MavenIndexHolder(Collections.emptyList(), null);
@@ -205,10 +208,10 @@ public class MavenIndices implements Disposable {
 
   @VisibleForTesting
   @NotNull
-  static RepositoryDiff<MavenIndex> getLocalDiff(@NotNull MavenIndexUtils.RepositoryInfo localRepo,
+  static RepositoryDiff<MavenIndex> getLocalDiff(@NotNull MavenRepositoryInfo localRepo,
                                                  @NotNull RepositoryDiffContext context,
                                                  @Nullable MavenIndex currentLocalIndex) {
-    if (currentLocalIndex != null && FileUtil.pathsEqual(localRepo.url, currentLocalIndex.getRepositoryPathOrUrl())) {
+    if (currentLocalIndex != null && FileUtil.pathsEqual(localRepo.getUrl(), currentLocalIndex.getRepositoryPathOrUrl())) {
       return new RepositoryDiff<>(currentLocalIndex, null);
     }
 
@@ -216,12 +219,12 @@ public class MavenIndices implements Disposable {
     context.indexPropertyHolders = indexPropertyHolders;
 
     MavenIndex index = indexPropertyHolders.stream()
-      .filter(iph -> iph.kind == IndexKind.LOCAL && FileUtil.pathsEqual(iph.repositoryPathOrUrl, localRepo.url))
+      .filter(iph -> iph.kind == IndexKind.LOCAL && FileUtil.pathsEqual(iph.repositoryPathOrUrl, localRepo.getUrl()))
       .findFirst()
       .map(iph -> createMavenIndex(iph, context))
       .orElseGet(() -> {
         MavenIndexUtils.IndexPropertyHolder propertyHolder = new MavenIndexUtils.IndexPropertyHolder(
-          createNewIndexDir(context.indicesDir), IndexKind.LOCAL, Collections.singleton(LOCAL_REPOSITORY_ID), localRepo.url
+          createNewIndexDir(context.indicesDir), IndexKind.LOCAL, Collections.singleton(LOCAL_REPOSITORY_ID), localRepo.getUrl()
         );
         return createMavenIndex(propertyHolder, context);
       });

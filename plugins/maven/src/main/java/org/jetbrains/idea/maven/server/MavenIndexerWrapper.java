@@ -26,11 +26,6 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<MavenServerIndexer> {
-  private static volatile Path ourTestIndicesDir;
-
-  private MavenIndices myIndices;
-
-
 
 
   public MavenIndexerWrapper(@Nullable RemoteObjectWrapper<?> parent) {
@@ -123,18 +118,9 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
 
   @ApiStatus.Internal
   public MavenIndices getOrCreateIndices(Project project) {
-    if (myIndices != null) {
-      return myIndices;
-    }
-    synchronized (this) {
-      if (myIndices == null) {
-        myIndices = createMavenIndices();
-      }
-      
-      return myIndices;
-    }
+    return createMavenIndices(project);
   }
 
-  protected abstract MavenIndices createMavenIndices();
+  protected abstract MavenIndices createMavenIndices(Project project);
 }
 
