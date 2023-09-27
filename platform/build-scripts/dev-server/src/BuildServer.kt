@@ -16,6 +16,7 @@ import org.jetbrains.intellij.build.closeKtorClient
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.listDirectoryEntries
 
 @Serializable
 internal data class Configuration(@JvmField val products: Map<String, ProductConfiguration>)
@@ -40,6 +41,7 @@ fun getIdeSystemProperties(runDir: Path): Map<String, String> {
     // require bundled JNA dispatcher lib
     "jna.nosys" to "true",
     "jna.noclasspath" to "true",
+    "jb.vmOptionsFile" to "${runDir.parent.listDirectoryEntries(glob = "*.vmoptions").singleOrNull()}"
   )
 }
 

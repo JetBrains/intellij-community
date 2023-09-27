@@ -62,7 +62,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         if (iconPngPath != null) {
           Files.copy(iconPngPath, distBinDir.resolve("${context.productProperties.baseFileName}.png"), StandardCopyOption.REPLACE_EXISTING)
         }
-        generateVMOptions(distBinDir)
+        writeVmOptions(distBinDir)
         generateScripts(distBinDir, arch)
         generateReadme(targetPath)
         generateVersionMarker(targetPath, context)
@@ -119,14 +119,16 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     generateProductJson(targetDir, context, arch)
   }
 
-  private fun generateVMOptions(distBinDir: Path) {
-    val fileName = "${context.productProperties.baseFileName}64.vmoptions"
+  override fun writeVmOptions(distBinDir: Path): Path {
+    val vmOptionsPath = distBinDir.resolve("${context.productProperties.baseFileName}64.vmoptions")
 
     @Suppress("SpellCheckingInspection")
     val vmOptions = VmOptionsGenerator.computeVmOptions(context) +
                     listOf("-Dsun.tools.attach.tmp.only=true",
                            "-Dawt.lock.fair=true")
-    VmOptionsGenerator.writeVmOptions(distBinDir.resolve(fileName), vmOptions, "\n")
+    VmOptionsGenerator.writeVmOptions(vmOptionsPath, vmOptions, "\n")
+
+    return vmOptionsPath
   }
 
   private fun generateReadme(unixDistPath: Path) {

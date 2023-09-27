@@ -63,7 +63,7 @@ internal class WindowsDistributionBuilder(
       if (customizer.includeBatchLaunchers) {
         generateScripts(distBinDir, arch)
       }
-      generateVMOptions(distBinDir)
+      writeVmOptions(distBinDir)
       buildWinLauncher(targetPath, arch)
       customizer.copyAdditionalFiles(context, targetPath, arch)
     }
@@ -246,10 +246,12 @@ internal class WindowsDistributionBuilder(
       }
   }
 
-  private fun generateVMOptions(distBinDir: Path) {
-    val fileName = "${context.productProperties.baseFileName}64.exe.vmoptions"
+  override fun writeVmOptions(distBinDir: Path) : Path {
+    val vmOptionsPath = distBinDir.resolve("${context.productProperties.baseFileName}64.exe.vmoptions")
     val vmOptions = VmOptionsGenerator.computeVmOptions(context)
-    VmOptionsGenerator.writeVmOptions(distBinDir.resolve(fileName), vmOptions, "\r\n")
+    VmOptionsGenerator.writeVmOptions(vmOptionsPath, vmOptions, "\r\n")
+
+    return vmOptionsPath
   }
 
   private suspend fun buildWinLauncher(winDistPath: Path, arch: JvmArchitecture) {

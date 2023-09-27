@@ -21,6 +21,7 @@ import java.math.BigInteger
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import kotlin.io.path.copyTo
 import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.seconds
 
@@ -88,7 +89,10 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     launch {
       launch(Dispatchers.IO) {
         // PathManager.getBinPath() is used as a working dir for maven
-        Files.createDirectories(runDir.resolve("bin"))
+        Files.createDirectories(runDir.resolve("bin")).also { distBinDir ->
+          getOsDistributionBuilder(os = OsFamily.currentOs, context = context)!!.writeVmOptions(distBinDir)
+            .apply { this.copyTo(distBinDir.parent.parent.resolve(this.fileName), overwrite = true) }
+        }
         Files.writeString(runDir.resolve("build.txt"), context.fullBuildNumber)
       }
 
@@ -202,9 +206,9 @@ private suspend fun createBuildContext(productConfiguration: ProductConfiguratio
 
     BuildContextImpl(compilationContext = compilationContext.await(),
                      productProperties = productProperties.await(),
-                     windowsDistributionCustomizer = null,
-                     linuxDistributionCustomizer = null,
-                     macDistributionCustomizer = null,
+                     windowsDistributionCustomizer = object : WindowsDistributionCustomizer() {},
+                     linuxDistributionCustomizer = object : LinuxDistributionCustomizer() {},
+                     macDistributionCustomizer = object : MacDistributionCustomizer() {},
                      proprietaryBuildTools = ProprietaryBuildTools.DUMMY)
   }
 }

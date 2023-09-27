@@ -1075,7 +1075,7 @@ private suspend fun checkClassFiles(root: Path, context: BuildContext, isDistAll
   }
 }
 
-private fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null, context: BuildContext): OsSpecificDistributionBuilder? {
+fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null, context: BuildContext): OsSpecificDistributionBuilder? {
   return when (os) {
     OsFamily.WINDOWS -> WindowsDistributionBuilder(context = context,
                                                    customizer = context.windowsDistributionCustomizer ?: return null,

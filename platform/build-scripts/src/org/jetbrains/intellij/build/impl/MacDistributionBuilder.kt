@@ -102,8 +102,7 @@ class MacDistributionBuilder(override val context: BuildContext,
                  platformProperties = platformProperties,
                  docTypes = getDocTypes(),
                  macDistDir = macDistDir,
-                 arch = arch,
-                 context = context)
+                 arch = arch)
 
     generateBuildTxt(context, macDistDir.resolve("Resources"))
 
@@ -201,12 +200,21 @@ class MacDistributionBuilder(override val context: BuildContext,
     }
   }
 
+  override fun writeVmOptions(distBinDir: Path): Path {
+    val executable = context.productProperties.baseFileName
+    val fileVmOptions = VmOptionsGenerator.computeVmOptions(context) +
+                        listOf("-Dapple.awt.application.appearance=system")
+    val vmOptionsPath = distBinDir.resolve("$executable.vmoptions")
+    VmOptionsGenerator.writeVmOptions(vmOptionsPath, fileVmOptions, "\n")
+
+    return vmOptionsPath
+  }
+
   private suspend fun layoutMacApp(ideaPropertiesFile: Path,
                                    platformProperties: List<String>,
                                    docTypes: String?,
                                    macDistDir: Path,
-                                   arch: JvmArchitecture,
-                                   context: BuildContext) {
+                                   arch: JvmArchitecture) {
     val macCustomizer = customizer
     copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"), macDistDir.resolve("bin"), customizer.binFilesFilter)
     copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
@@ -257,9 +265,7 @@ class MacDistributionBuilder(override val context: BuildContext,
     val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
     val classPath = context.bootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
 
-    val fileVmOptions = VmOptionsGenerator.computeVmOptions(context) +
-                        listOf("-Dapple.awt.application.appearance=system")
-    VmOptionsGenerator.writeVmOptions(macDistDir.resolve("bin/${executable}.vmoptions"), fileVmOptions, "\n")
+    writeVmOptions(macDistDir.resolve("bin"))
 
     val errorFilePath = "-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log"
     val heapDumpPath = "-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof"
