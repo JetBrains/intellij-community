@@ -1164,12 +1164,7 @@ public final class ListPluginComponent extends JPanel {
   private final class PluginIdUiInspectorContextProvider implements UiInspectorContextProvider {
     @Override
     public @NotNull List<PropertyBean> getUiInspectorContext() {
-      ArrayList<PropertyBean> result = new ArrayList<>();
-      result.add(new PropertyBean("Plugin ID", myPlugin.getPluginId(), true));
-      result.add(new PropertyBean("Plugin Dependencies",
-                                  StringUtil.join(myPlugin.getDependencies(),
-                                                  it -> it.getPluginId() + (it.isOptional() ? " (optional)" : ""), ", "), true));
-      return result;
+      return PluginUtilsKt.getUiInspectorContextFor(myPlugin);
     }
   }
 
