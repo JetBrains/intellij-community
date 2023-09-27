@@ -284,7 +284,7 @@ private class ParameterValuesPage(
       c.gridx++
 
       c.weightx = 0.0
-      panel.add(JLabel("=").apply { font = editorFont })
+      panel.add(JLabel(" = ").apply { font = editorFont }, c)
       c.gridx++
 
       c.weightx = 1.0
