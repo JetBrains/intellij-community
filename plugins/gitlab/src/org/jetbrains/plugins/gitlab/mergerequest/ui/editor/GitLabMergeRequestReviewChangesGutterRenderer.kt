@@ -5,8 +5,12 @@ import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.LineRange
+import com.intellij.icons.AllIcons
+import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diff.DefaultFlagsProvider
 import com.intellij.openapi.diff.LineStatusMarkerColorScheme
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
@@ -14,28 +18,32 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel
-import com.intellij.openapi.vcs.ex.LineStatusMarkerRangesSource
-import com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopup
-import com.intellij.openapi.vcs.ex.Range
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.ex.*
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.EditorTextField
+import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModel
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Point
+import java.awt.datatransfer.StringSelection
 
 /**
  * Draws and handles review changes markers in gutter
  */
 internal class GitLabMergeRequestReviewChangesGutterRenderer(private val fileVm: GitLabMergeRequestChangeViewModel,
                                                              rangesSource: LineStatusMarkerRangesSource<*>,
-                                                             editor: Editor,
+                                                             private val editor: Editor,
                                                              disposable: Disposable)
   : LineStatusMarkerRendererWithPopup(editor.project, editor.document, rangesSource, disposable, { it === editor }) {
   private val colorScheme = object : LineStatusMarkerColorScheme() {
@@ -63,16 +71,29 @@ internal class GitLabMergeRequestReviewChangesGutterRenderer(private val fileVm:
                                 disposable: Disposable): LineStatusMarkerPopupPanel {
     val vcsContent = fileVm.getOriginalContent(LineRange(range.vcsLine1, range.vcsLine2))
 
+    val preferences = project?.service<GitLabMergeRequestsPreferences>()
+
     val editorComponent = if (!vcsContent.isNullOrEmpty()) {
       val popupEditor = createPopupEditor(project, editor, vcsContent, disposable)
-      showLineDiff(editor, popupEditor, range, vcsContent, disposable)
+      if (preferences != null) {
+        showLineDiff(preferences, editor, popupEditor, range, vcsContent, disposable)
+      }
       LineStatusMarkerPopupPanel.createEditorComponent(editor, popupEditor.component)
     }
     else {
       null
     }
 
-    val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, listOf(), disposable)
+    val actions = mutableListOf<AnAction>(
+      ShowPrevChangeMarkerAction(range),
+      ShowNextChangeMarkerAction(range),
+      CopyLineStatusRangeAction(range)
+    )
+    if (preferences != null) {
+      actions.add(ToggleByWordDiffAction(preferences))
+    }
+
+    val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable)
     return LineStatusMarkerPopupPanel.create(editor, toolbar, editorComponent, null)
   }
 
@@ -108,21 +129,117 @@ internal class GitLabMergeRequestReviewChangesGutterRenderer(private val fileVm:
     return editor
   }
 
-  private fun showLineDiff(editor: Editor,
+  private fun showLineDiff(preferences: GitLabMergeRequestsPreferences,
+                           editor: Editor,
                            popupEditor: Editor,
                            range: Range, vcsContent: CharSequence,
                            disposable: Disposable) {
-    if (vcsContent.isEmpty()) return
+    var highlightersDisposable: Disposable? = null
+    fun update(show: Boolean) {
+      if (show && highlightersDisposable == null) {
+        if (vcsContent.isEmpty()) return
 
-    val currentContent = DiffUtil.getLinesContent(editor.document, range.line1, range.line2)
-    if (currentContent.isEmpty()) return
+        val currentContent = DiffUtil.getLinesContent(editor.document, range.line1, range.line2)
+        if (currentContent.isEmpty()) return
 
-    val lineDiff = BackgroundTaskUtil.tryComputeFast({ indicator: ProgressIndicator? ->
-                                                       ComparisonManager.getInstance().compareLines(vcsContent, currentContent,
-                                                                                                    ComparisonPolicy.DEFAULT, indicator!!)
-                                                     }, 200)
-    if (lineDiff == null) return
-    LineStatusMarkerPopupPanel.installMasterEditorWordHighlighters(editor, range.line1, range.line2, lineDiff, disposable)
-    LineStatusMarkerPopupPanel.installEditorDiffHighlighters(popupEditor, lineDiff)
+        val newDisposable = Disposer.newDisposable().also {
+          Disposer.register(disposable, it)
+        }
+        highlightersDisposable = newDisposable
+
+        val lineDiff = BackgroundTaskUtil.tryComputeFast({ indicator: ProgressIndicator? ->
+                                                           ComparisonManager.getInstance().compareLines(vcsContent, currentContent,
+                                                                                                        ComparisonPolicy.DEFAULT,
+                                                                                                        indicator!!)
+                                                         }, 200)
+        if (lineDiff == null) return
+        LineStatusMarkerPopupPanel.installMasterEditorWordHighlighters(editor, range.line1, range.line2, lineDiff, newDisposable)
+        LineStatusMarkerPopupPanel.installEditorDiffHighlighters(popupEditor, lineDiff).also {
+          newDisposable.whenDisposed {
+            it.forEach(RangeHighlighter::dispose)
+          }
+        }
+      }
+      else {
+        highlightersDisposable?.let(Disposer::dispose)
+        highlightersDisposable = null
+      }
+    }
+
+    preferences.addListener(disposable) { state: GitLabMergeRequestsPreferences.SettingsState ->
+      update(state.highlightDiffLinesInEditor)
+    }
+    update(preferences.highlightDiffLinesInEditor)
   }
+
+  private inner class ShowNextChangeMarkerAction(range: Range)
+    : LineStatusMarkerPopupActions.RangeMarkerAction(editor, rangesSource, range, "VcsShowNextChangeMarker"), LightEditCompatible {
+
+    override fun isEnabled(editor: Editor, range: Range): Boolean = getNextRange(range.line1) != null
+
+    override fun actionPerformed(editor: Editor, range: Range) {
+      val targetRange = getNextRange(range.line1)
+      if (targetRange != null) {
+        scrollAndShow(editor, targetRange)
+      }
+    }
+
+    private fun getNextRange(line: Int): Range? {
+      val ranges = rangesSource.getRanges() ?: return null
+      return getNextRange(ranges, line)
+    }
+  }
+
+  private inner class ShowPrevChangeMarkerAction(range: Range)
+    : LineStatusMarkerPopupActions.RangeMarkerAction(editor, rangesSource, range, "VcsShowPrevChangeMarker"), LightEditCompatible {
+
+    override fun isEnabled(editor: Editor, range: Range): Boolean = getPrevRange(range.line1) != null
+
+    override fun actionPerformed(editor: Editor, range: Range) {
+      val targetRange = getPrevRange(range.line1)
+      if (targetRange != null) {
+        scrollAndShow(editor, targetRange)
+      }
+    }
+
+    private fun getPrevRange(line: Int): Range? {
+      val ranges = rangesSource.getRanges()?.reversed() ?: return null
+      return getNextRange(ranges, line)
+    }
+  }
+
+  private inner class CopyLineStatusRangeAction(range: Range)
+    : LineStatusMarkerPopupActions.RangeMarkerAction(editor, rangesSource, range, IdeActions.ACTION_COPY), LightEditCompatible {
+    override fun isEnabled(editor: Editor, range: Range): Boolean = range.hasVcsLines()
+    override fun actionPerformed(editor: Editor, range: Range) {
+      val content = fileVm.getOriginalContent(LineRange(range.vcsLine1, range.vcsLine2)) + "\n"
+      CopyPasteManager.getInstance().setContents(StringSelection(content))
+    }
+  }
+
+  private class ToggleByWordDiffAction(private val preferences: GitLabMergeRequestsPreferences)
+    : ToggleAction(GitLabBundle.message("action.highlight.lines.text"), null, AllIcons.Actions.Highlighting),
+      DumbAware, LightEditCompatible {
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    override fun isSelected(e: AnActionEvent): Boolean = preferences.highlightDiffLinesInEditor
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      preferences.highlightDiffLinesInEditor = state
+    }
+  }
+}
+
+private fun getNextRange(ranges: List<Range>, line: Int): Range? {
+  var found = false
+  for (range in ranges) {
+    if (DiffUtil.isSelectedByLine(line, range.line1, range.line2)) {
+      found = true
+    }
+    else if (found) {
+      return range
+    }
+  }
+  return null
 }

@@ -1,24 +1,30 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import com.intellij.util.EventDispatcher
 import git4idea.remote.hosting.knownRepositories
 import kotlinx.serialization.Serializable
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import java.util.*
 
 @Service(Service.Level.PROJECT)
 @State(name = "GitLabMergeRequestsSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
 class GitLabMergeRequestsPreferences(private val project: Project)
   : SerializablePersistentStateComponent<GitLabMergeRequestsPreferences.SettingsState>(SettingsState()) {
 
+  private val listeners = EventDispatcher.create(Listener::class.java)
+
   @Serializable
   data class SettingsState(
     val selectedUrlAndAccountId: Pair<String, String>? = null,
-    val showEventsInTimeline: Boolean = true
+    val showEventsInTimeline: Boolean = true,
+    val highlightDiffLinesInEditor: Boolean = true
   )
 
   var selectedRepoAndAccount: Pair<GitLabProjectMapping, GitLabAccount>?
@@ -33,17 +39,35 @@ class GitLabMergeRequestsPreferences(private val project: Project)
       return repo to account
     }
     set(value) {
-      updateState {
+      val state = updateState {
         val saved = value?.let { (repo, account) -> repo.remote.url to account.id }
         SettingsState(saved)
       }
+      listeners.multicaster.onSettingsChange(state)
     }
 
   var showEventsInTimeline: Boolean
     get() = state.showEventsInTimeline
     set(value) {
-      updateState {
+      val state = updateState {
         it.copy(showEventsInTimeline = value)
       }
+      listeners.multicaster.onSettingsChange(state)
     }
+
+  var highlightDiffLinesInEditor: Boolean
+    get() = state.highlightDiffLinesInEditor
+    set(value) {
+      val state = updateState {
+        it.copy(highlightDiffLinesInEditor = value)
+      }
+      listeners.multicaster.onSettingsChange(state)
+    }
+
+
+  fun addListener(disposable: Disposable, listener: Listener) = listeners.addListener(listener, disposable)
+
+  fun interface Listener : EventListener {
+    fun onSettingsChange(settings: SettingsState)
+  }
 }
