@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -21,10 +22,20 @@ interface VFSAsyncTaskExecutor {
 }
 
 @Service
-internal class ExecuteOnCoroutine(private val coroutineScope: CoroutineScope) : VFSAsyncTaskExecutor {
-  private val dispatcherAndName = CoroutineName("PersistentFsLoader") + Dispatchers.IO
+internal class ExecuteOnCoroutine(coroutineScope: CoroutineScope) : VFSAsyncTaskExecutor {
+  /**
+   * We need tasks to be independent -- i.e. cancellation/fail of one task must not affect others.
+   * This is important because:
+   * a) other implementations behave that way
+   * b) resource management become quite complex with implicit task cancellation
+   */
+  private val supervisorScope = coroutineScope.childScope(
+    context = CoroutineName("PersistentFsLoader") + Dispatchers.IO,
+    supervisor = true //default, but to be explicit -- this is the main reason to create .childScope
+  )
+
   override fun <T> async(task: Callable<T>): CompletableFuture<T> {
-    return coroutineScope.async(dispatcherAndName) {
+    return supervisorScope.async {
       blockingContext {
         task.call()
       }
