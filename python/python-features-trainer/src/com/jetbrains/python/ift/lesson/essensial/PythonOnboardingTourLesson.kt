@@ -216,7 +216,7 @@ class PythonOnboardingTourLesson :
     }
   }
 
-  private fun getCallBackActionId(@Suppress("SameParameterValue") actionId: String): Int {
+  private fun getCallBackActionId(@Suppress("SameParameterValue") actionId: String): String {
     val action = getActionById(actionId)
     return LearningUiManager.addCallback { invokeActionForFocusContext(action) }
   }
