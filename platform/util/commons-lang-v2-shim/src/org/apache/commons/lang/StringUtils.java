@@ -71,8 +71,16 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
     return org.apache.commons.lang3.StringUtils.indexOf(seq, searchSeq);
   }
 
+  public static int lastIndexOf(String seq, String searchSeq) {
+    return org.apache.commons.lang3.StringUtils.lastIndexOf(seq, searchSeq);
+  }
+
   public static int indexOf(String seq, char c) {
     return org.apache.commons.lang3.StringUtils.indexOf(seq, c);
+  }
+
+  public static int lastIndexOf(String seq, char c) {
+    return org.apache.commons.lang3.StringUtils.lastIndexOf(seq, c);
   }
 
   public static int indexOf(String seq, String searchSeq, int i) {
@@ -133,5 +141,13 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 
   public static String join(Collection collection, char separator) {
     return org.apache.commons.lang3.StringUtils.join(collection, separator);
+  }
+
+  public static int length(String seq) {
+    return org.apache.commons.lang3.StringUtils.length(seq);
+  }
+
+  public static int ordinalIndexOf(String str, String searchStr, int ordinal) {
+    return org.apache.commons.lang3.StringUtils.ordinalIndexOf(str, searchStr, ordinal);
   }
 }
