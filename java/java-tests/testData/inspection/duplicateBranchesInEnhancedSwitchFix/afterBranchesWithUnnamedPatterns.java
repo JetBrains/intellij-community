@@ -4,11 +4,10 @@ class C {
 
   void fooCopy(Object o) {
     switch (o) {
-      case Integer _, String _:
+      case Integer _, String _: //can be merged
         System.out.println(1);
         break;
-        //can be merged
-      default:
+        default:
         System.out.println(2);
         break;
     }
@@ -17,12 +16,11 @@ class C {
   void foo(Object o) {
     switch (o) {
       case Float _:
-      case Integer _:
+      case Integer _: //can be merged
         case String _:
             System.out.println(1);
         break;
-        //can be merged
-      default:
+        default:
         System.out.println(2);
         break;
     }
@@ -30,12 +28,11 @@ class C {
 
   void foo2(Object o) {
     switch (o) {
-      case Integer _ when o.hashCode() == 1:
+      case Integer _ when o.hashCode() == 1 //can be merged
         case String _:
             System.out.println(1);
         break;
-        //can be merged
-      default:
+        default:
         System.out.println(2);
         break;
     }
@@ -43,11 +40,10 @@ class C {
 
   void foo3Copy(Object o) {
     switch (o) {
-      case Integer _, String _ when o.hashCode() == 1:
+      case Integer _, String _ when o.hashCode() == 1: //can be merged
         System.out.println(1);
         break;
-        //can be merged
-      default:
+        default:
         System.out.println(2);
         break;
     }
@@ -55,14 +51,13 @@ class C {
 
   void foo4Copy(Object o) {
     switch (o) {
-      case Integer _, String _ when o.hashCode() == 1:
+      case Integer _, String _ when o.hashCode() == 1: //can be merged
         System.out.println(1);
         break;
       case Number s:
         System.out.println(3);
         break;
-        //can be merged
-      default:
+        default:
         System.out.println(2);
         break;
     }
@@ -70,16 +65,14 @@ class C {
 
   void foo5(Object o) {
     switch (o) {
-      case Integer _ when o.hashCode() == 1:
+      case Integer _ when o.hashCode() == 1: //can be merged
         case String _ when o.hashCode() == 2:
             System.out.println(1);
         break;
-      //can be merged
       case Number s:
         System.out.println(3);
         break;
-        //can be merged
-      default:
+        default:
         System.out.println(2);
         break;
     }
@@ -120,11 +113,10 @@ class C {
 
   void foo8(Object o) {
     switch (o) {
-      case Integer _, String _:
+      case Integer _, String _: //can be merged
         System.out.println(1);
         break;
-        //can be merged
-      default:
+        default:
         System.out.println(2);
         break;
     }
@@ -132,14 +124,13 @@ class C {
 
   void foo9(Object o) {
     switch (o) {
-      case Integer _, CharSequence _ when o.hashCode() == 1:
+      case Integer _, CharSequence _ when o.hashCode() == 1: //can be merged
         System.out.println(1);
         break;
       case Number s:
         System.out.println(3);
         break;
-        //can be merged
-      default:
+        default:
         System.out.println(2);
         break;
     }
