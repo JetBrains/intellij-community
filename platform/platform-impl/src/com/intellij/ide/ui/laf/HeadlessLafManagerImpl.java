@@ -10,6 +10,8 @@ import com.intellij.ui.components.BasicOptionButtonUI;
 import com.intellij.ui.components.DarculaSearchFieldWithExtensionUI;
 import com.intellij.ui.components.DefaultLinkButtonUI;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
+import kotlin.sequences.Sequence;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,6 +29,11 @@ final class HeadlessLafManagerImpl extends LafManager {
   @Override
   public UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels() {
     return new UIManager.LookAndFeelInfo[0];
+  }
+
+  @Override
+  public Sequence<UIThemeLookAndFeelInfo> getInstalledThemes() {
+    return SequencesKt.emptySequence();
   }
 
   @Override

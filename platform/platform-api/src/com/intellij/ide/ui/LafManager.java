@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.CollectionComboBoxModel;
+import kotlin.sequences.Sequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,9 @@ public abstract class LafManager {
    */
   @Deprecated
   public abstract UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels();
+
+  @ApiStatus.Experimental
+  public abstract Sequence<UIThemeLookAndFeelInfo> getInstalledThemes();
 
   @ApiStatus.Internal
   public abstract @NotNull CollectionComboBoxModel<LafReference> getLafComboBoxModel();

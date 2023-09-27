@@ -365,6 +365,10 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     return UiThemeProviderListManager.getInstance().getLaFs().map { it as UIThemeLookAndFeelInfoImpl }.toList().toTypedArray()
   }
 
+  override fun getInstalledThemes(): Sequence<UIThemeLookAndFeelInfo> {
+    return UiThemeProviderListManager.getInstance().getLaFs()
+  }
+
   override fun getLafComboBoxModel(): CollectionComboBoxModel<LafReference> = lafComboBoxModel.value
 
   private val allReferences: List<LafReference>
