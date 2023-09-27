@@ -9,15 +9,11 @@ import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterListStubImpl;
 import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl;
 import com.intellij.psi.impl.source.tree.java.TypeParameterListElement;
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
-public class JavaTypeParameterListElementType extends JavaStubElementType<PsiTypeParameterListStub, PsiTypeParameterList> {
+public class JavaTypeParameterListElementType extends JavaStubElementType<PsiTypeParameterListStub, PsiTypeParameterList>
+  implements EmptyStubSerializer<PsiTypeParameterListStub> {
   public JavaTypeParameterListElementType() {
     super("TYPE_PARAMETER_LIST", true, BasicJavaElementType.BASIC_TYPE_PARAMETER_LIST);
   }
@@ -46,19 +42,10 @@ public class JavaTypeParameterListElementType extends JavaStubElementType<PsiTyp
     return new PsiTypeParameterListStubImpl(parentStub);
   }
 
-  @Override
-  public void serialize(@NotNull final PsiTypeParameterListStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
-  }
-
   @NotNull
   @Override
-  public PsiTypeParameterListStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public PsiTypeParameterListStub instantiate(final StubElement parentStub) {
     return new PsiTypeParameterListStubImpl(parentStub);
-  }
-
-  @Override
-  public boolean isAlwaysEmpty() {
-    return true;
   }
 
   @Override

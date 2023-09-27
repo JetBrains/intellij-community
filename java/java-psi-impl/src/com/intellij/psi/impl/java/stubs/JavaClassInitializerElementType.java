@@ -9,15 +9,11 @@ import com.intellij.psi.impl.java.stubs.impl.PsiClassInitializerStubImpl;
 import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.PsiClassInitializerImpl;
 import com.intellij.psi.impl.source.tree.java.ClassInitializerElement;
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
-public class JavaClassInitializerElementType extends JavaStubElementType<PsiClassInitializerStub, PsiClassInitializer> {
+public class JavaClassInitializerElementType extends JavaStubElementType<PsiClassInitializerStub, PsiClassInitializer>
+  implements EmptyStubSerializer<PsiClassInitializerStub> {
   public JavaClassInitializerElementType() {
     super("CLASS_INITIALIZER", BasicJavaElementType.BASIC_CLASS_INITIALIZER);
   }
@@ -47,17 +43,7 @@ public class JavaClassInitializerElementType extends JavaStubElementType<PsiClas
   }
 
   @Override
-  public void serialize(@NotNull final PsiClassInitializerStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
-  }
-
-  @Override
-  public boolean isAlwaysEmpty() {
-    return true;
-  }
-
-  @NotNull
-  @Override
-  public PsiClassInitializerStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public @NotNull PsiClassInitializerStub instantiate(StubElement<?> parentStub) {
     return new PsiClassInitializerStubImpl(parentStub);
   }
 
