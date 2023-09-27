@@ -5,18 +5,24 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
 import com.intellij.testFramework.TemporaryDirectory;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
+import static java.nio.file.StandardOpenOption.READ;
+import static java.nio.file.StandardOpenOption.WRITE;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -50,6 +56,82 @@ public class VFSCorruptionRecoveryTest {
       .sorted()
       .map(path -> path.getFileName().toString())
       .toList();
+  }
+
+  @Test
+  public void VFS_init_WithDefaultRecoverers_Fails_If_FileHeaderCorrupted() throws Exception {
+    //We want to verify that initialization quick-checks are able to detect corruptions.
+    // The verification is very rough: we modify random byte from the first 8 bytes of data
+    // file and see if
+    // 1) VFS initializes OK 2) but only on 2nd attempt -- i.e. first attempt must fail
+    //
+    // Single corrupted byte is not very generic 'corruption model', but it helps to verify
+    // the simplest file-type checks most storages do on open.
+    // And the whole scenario is actually quite similar to a real scenario there we open IDE
+    // with storage type/format changed -- so even being not general enough, the test +/-
+    // directly models (checks) at least one useful real-life scenario.
+    //
+    // Ideally, we should introduce random corruptions _everywhere_ in data files, and see if
+    // VFS init is able to detect _that_ -- but this is a much larger task. And also we don't
+    // _aim_ to detect all types of corruptions -- VFS does not use CRC/ECC for consistency
+    // checks, and we don't plan to. I.e. we know we won't be able to detect all random corruptions,
+    // so such test will fail anyway.
+
+
+    List<String> vfsFilesToTryCorrupt = vfsCrucialDataFilesNames.stream()
+      .filter(name -> !name.startsWith("content.dat"))
+      .filter(name -> !name.startsWith("attributes_enums.dat"))
+      .filter(name -> !name.startsWith("records.dat"))
+      .toList();
+
+    List<String> filesCorruptionsVFSCantOvercome = new ArrayList<>();
+    List<String> filesCorruptionsVFSCantDetect = new ArrayList<>();
+    int vfsFilesCount = vfsFilesToTryCorrupt.size();
+    for (int i = 0; i < vfsFilesCount; i++) {
+      String dataFileNameToCorrupt = vfsFilesToTryCorrupt.get(i);
+
+      Path cachesDir = temporaryDirectory.createDir();
+
+      setupVFSFillSomeDataAndClose(cachesDir);
+
+      Path fileToCorrupt = Files.list(cachesDir)
+        .filter(path -> Files.isRegularFile(path))
+        .filter(path -> path.getFileName().toString().equals(dataFileNameToCorrupt))
+        .findFirst().orElse(null);
+      if (fileToCorrupt == null) {
+        fail("Can't corrupt[" + dataFileNameToCorrupt + "] -- there is no such file amongst \n" + Files.list(cachesDir).toList());
+      }
+
+      corruptFileHeader(fileToCorrupt);
+
+      try {
+        //try reopen:
+        FSRecordsImpl vfs = FSRecordsImpl.connect(cachesDir);
+        boolean noRecovery = vfs.connection().recoveryInfo().recoveredErrors.isEmpty();
+        boolean notCreatedAnew = !vfs.initializationResult().vfsCreatedAnew;
+        boolean noFailedAttempts = vfs.initializationResult().attemptsFailures.isEmpty();
+        if (noFailedAttempts && noRecovery && notCreatedAnew) {
+          System.out.println(fileToCorrupt.getFileName() + " corrupted, but VFS init-ed as-if not");
+          filesCorruptionsVFSCantDetect.add(fileToCorrupt.getFileName().toString());
+        }
+        vfs.dispose();
+      }
+      catch (Throwable t) {
+        System.out.println(fileToCorrupt.getFileName() + " corrupted -> " + t);
+        t.printStackTrace();
+        filesCorruptionsVFSCantOvercome.add(fileToCorrupt.getFileName().toString());
+      }
+    }
+
+    assertTrue(
+      "VFS init must not fail if any of " + filesCorruptionsVFSCantOvercome + " is corrupted",
+      filesCorruptionsVFSCantOvercome.isEmpty()
+    );
+
+    assertTrue(
+      "VFS must detect if any of " + filesCorruptionsVFSCantDetect + " is corrupted",
+      filesCorruptionsVFSCantDetect.isEmpty()
+    );
   }
 
   @Test
@@ -175,7 +257,25 @@ public class VFSCorruptionRecoveryTest {
     }
   }
 
+
+
   //================ infrastructure: ================================================================
+
+  private static void corruptFileHeader(@NotNull Path fileToCorrupt) throws IOException {
+    ByteBuffer header = ByteBuffer.allocate(8).clear();
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    try (FileChannel channel = FileChannel.open(fileToCorrupt, READ, WRITE)) {
+      int bytesRead = channel.read(header, 0);
+      int byteIndexToCorrupt = rnd.nextInt(bytesRead);
+      byte byteToCorrupt = header.get(byteIndexToCorrupt);
+      header.put(byteIndexToCorrupt, (byte)(byteToCorrupt + 1));
+      header.rewind();
+      int bytesWritten = channel.write(header, 0);
+      assert bytesWritten == bytesRead : bytesWritten + " <> " + bytesRead;
+      System.out.println(
+        "[" + fileToCorrupt.getFileName() + "]: header[" + byteIndexToCorrupt + "]{" + byteToCorrupt + " -> " + (byteToCorrupt + 1) + "}");
+    }
+  }
 
 
   private static void setupVFSFillSomeDataAndClose(Path cachesDir) throws IOException {
