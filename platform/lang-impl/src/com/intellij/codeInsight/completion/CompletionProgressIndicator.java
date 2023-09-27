@@ -117,8 +117,6 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   private static int ourShowPopupGroupingTime = 300;
   private static int ourShowPopupAfterFirstItemGroupingTime = 100;
 
-  private static int ourMinDelayTime = 10;
-
   private volatile int myCount;
   private volatile boolean myHasPsiElements;
   private boolean myLookupUpdated;
@@ -131,9 +129,11 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   private final EmptyCompletionNotifier myEmptyCompletionNotifier;
 
-  // Unfreeze immediately after N-th item is added to the lookup.
-  // -1 means this functionality is disabled.
-  private int myUnfreezeAfterNItems = -1;
+  /**
+   * Unfreeze immediately after N-th item is added to the lookup.
+   * -1 means this functionality is disabled.
+   */
+  private volatile int myUnfreezeAfterNItems = -1;
 
   CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount,
                               CodeCompletionHandlerBase handler, @NotNull OffsetMap offsetMap, @NotNull OffsetsInFile hostOffsets,
@@ -476,7 +476,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     myCount++; // invoked from a single thread
 
     if (myCount == myUnfreezeAfterNItems) {
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(myFreezeSemaphore::up, ourMinDelayTime, TimeUnit.MILLISECONDS);
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(myFreezeSemaphore::up, 0, TimeUnit.MILLISECONDS);
     }
     else if (myCount == 1) {
       AppExecutorUtil.getAppScheduledExecutorService().schedule(myFreezeSemaphore::up, ourInsertSingleItemTimeSpan, TimeUnit.MILLISECONDS);
@@ -484,8 +484,18 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     myQueue.queue(myUpdate);
   }
 
-  // In certain cases we add the first batch of items almost at once and want to show lookup directly after they are added.
-  // Example: ClangdCodeCompletionProviderBase receives first 100 items at once and adds them all together.
+  /**
+   * In certain cases we add the first batch of items almost at once and want to show lookup directly after they are added.
+   * It makes sense to set this number when you get all your items from one contributor, and you have full control over the completion
+   * process. So you can, for example, set this number in the beginning of `addCompletions()` in your completion provider and reset it
+   * when the completion is over.
+   * Example: Completion provider receives first 100 items at once after significant delay (200+ ms) and adds them all together. If you
+   * don't set this value, and you continue adding results in your completion provider (for example you get your next batch of results in
+   * 500ms) the popup might be shown with significant delay.
+   *
+   * @param number The Number of items in lookup which trigger the popup. -1 means this functionality is disabled. Also specifying 0 makes
+   *               no sense since we can't add 0 items.
+   */
   public void unfreezeImmediatelyAfterFirstNItems(int number) {
     myUnfreezeAfterNItems = number;
   }
