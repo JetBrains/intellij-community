@@ -15,12 +15,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -30,6 +32,8 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private final Project myProject;
   private final PyPluginCommonOptionsPanel content;
   private JComponent labelAnchor;
+  @NotNull
+  private List<String> myEnvPaths = Collections.emptyList();
 
   private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = new ArrayList<>();
 
@@ -263,5 +267,16 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   @Override
   public void setAddSourceRoots(boolean flag) {
     content.addSourceRootsCheckbox.setSelected(flag);
+  }
+
+  @NotNull
+  @Override
+  public List<String> getEnvFilePaths() {
+    return myEnvPaths;
+  }
+
+  @Override
+  public void setEnvFilePaths(@NotNull List<String> strings) {
+    myEnvPaths = strings;
   }
 }

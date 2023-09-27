@@ -65,7 +65,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
 
   private void browseForEnvFile() {
     if (myEnvFilePaths.isEmpty()) {
-      EnvFilesDialogKt.addEnvFile(getTextField(), s -> {
+      EnvFilesDialogKt.addEnvFile(getTextField(), null, s -> {
         myEnvFilePaths.add(s);
         updateText();
         return null;

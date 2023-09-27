@@ -77,5 +77,4 @@ abstract class PyCommonFragmentsBuilder {
     fragment.actionHint = ExecutionBundle.message("set.custom.environment.variables.for.the.process")
     return fragment
   }
-
 }

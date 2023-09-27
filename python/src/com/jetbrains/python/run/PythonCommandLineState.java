@@ -26,6 +26,7 @@ import com.intellij.execution.target.*;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -85,6 +86,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
+import static com.intellij.execution.util.EnvFilesUtilKt.configureEnvsFromFiles;
 import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
 
 /**
@@ -668,6 +670,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                       @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
                                       @Nullable Sdk sdk) {
     Map<String, String> env = Maps.newHashMap();
+    var envParameters = configureEnvsFromFiles(runParams, true);
+    env.putAll(envParameters);
     if (runParams.getEnvs() != null) {
       env.putAll(runParams.getEnvs());
     }

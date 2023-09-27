@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
+import com.intellij.execution.EnvFilesOptions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.PathMappingSettings;
@@ -8,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public interface PythonRunParams {
+public interface PythonRunParams extends EnvFilesOptions {
   String getInterpreterOptions();
 
   void setInterpreterOptions(String interpreterOptions);
