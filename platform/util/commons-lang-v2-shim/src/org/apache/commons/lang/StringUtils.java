@@ -7,5 +7,5 @@ package org.apache.commons.lang;
  * Or consider using the corresponding API from IJ Platform.
  */
 @Deprecated(forRemoval = true)
-public final class StringUtils extends org.apache.commons.lang3.StringUtils {
+public class StringUtils extends org.apache.commons.lang3.StringUtils {
 }
