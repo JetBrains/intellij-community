@@ -22,7 +22,9 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.copyTo
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
+import kotlin.io.path.listDirectoryEntries
 import kotlin.time.Duration.Companion.seconds
 
 internal const val UNMODIFIED_MARK_FILE_NAME = ".unmodified"
@@ -90,6 +92,9 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
       launch(Dispatchers.IO) {
         // PathManager.getBinPath() is used as a working dir for maven
         Files.createDirectories(runDir.resolve("bin")).also { distBinDir ->
+          // cleanup previously copied vm options since current directory structure doesn't allow to run multiple IDE's
+          distBinDir.parent.parent.listDirectoryEntries(glob = "*.vmoptions").forEach { it.deleteIfExists() }
+
           getOsDistributionBuilder(os = OsFamily.currentOs, context = context)!!.writeVmOptions(distBinDir)
             .apply { this.copyTo(distBinDir.parent.parent.resolve(this.fileName), overwrite = true) }
         }
