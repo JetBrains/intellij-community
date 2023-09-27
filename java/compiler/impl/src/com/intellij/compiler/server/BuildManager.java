@@ -2085,21 +2085,24 @@ public final class BuildManager implements Disposable {
             CompilerUtil.refreshOutputRoots(candidates);
 
             LocalFileSystem lfs = LocalFileSystem.getInstance();
-            Set<VirtualFile> toRefresh = ReadAction.compute(() -> {
-              if (project.isDisposed()) {
-                return Collections.emptySet();
-              }
-              else {
+            try {
+              Collection<VirtualFile> toRefresh = ReadAction.nonBlocking(() -> {
+                if (project.isDisposed()) {
+                  return Collections.<VirtualFile>emptySet();
+                }
                 ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-                return candidates.stream()
-                  .map(lfs::findFileByPath)
-                  .filter(root -> root != null && fileIndex.isInSourceContent(root))
-                  .collect(Collectors.toSet());
-              }
-            });
+                return candidates.stream().map(lfs::findFileByPath).filter(root -> root != null && fileIndex.isInSourceContent(root)).collect(Collectors.toSet());
 
-            if (!toRefresh.isEmpty()) {
-              lfs.refreshFiles(toRefresh, true, true, null);
+              }).executeSynchronously();
+              
+              if (!toRefresh.isEmpty()) {
+                lfs.refreshFiles(toRefresh, true, true, null);
+              }
+            }
+            catch (ProcessCanceledException ignored) {
+            }
+            catch (Throwable e) {
+              LOG.info(e);
             }
           });
         }
