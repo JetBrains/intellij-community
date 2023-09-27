@@ -12,14 +12,22 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 
 public class MarkFileDirtyAction extends AnAction implements DumbAware {
   @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabled(e.getProject() != null &&
+                                   e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) != null);
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (file != null) {
-      VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    if (files != null) {
+      VcsDirtyScopeManager.getInstance(project).filesDirty(Arrays.asList(files), null);
     }
   }
 
