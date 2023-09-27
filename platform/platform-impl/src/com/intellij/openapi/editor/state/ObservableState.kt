@@ -7,8 +7,10 @@ import com.intellij.util.EventDispatcher
 import kotlinx.serialization.serializer
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
+import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.typeOf
 
 fun <T : ObservableState> T.init(): T {
@@ -79,7 +81,8 @@ abstract class ObservableState {
     if (customPropertySerializer != null)
       return TransferableObjectStateProperty(clazz, initialValue, defaultValueCalculator, outValueModifier, customPropertySerializer)
 
-    val defaultSerializer = try {
+    val defaultSerializer = if (isNotRecommendedForSerialization(clazz)) null
+    else try {
       serializer(clazz)
     }
     catch (e: Exception) {
@@ -90,6 +93,16 @@ abstract class ObservableState {
       TransferableObjectStateProperty(clazz, initialValue, defaultValueCalculator, outValueModifier, null)
     else
       ObjectStateProperty(initialValue, defaultValueCalculator, outValueModifier)
+  }
+
+  private fun isNotRecommendedForSerialization(clazz: KType): Boolean {
+    val classifier = clazz.classifier
+    if (classifier !is KClass<*>) return true
+
+    // Lists work fine, CharSequences - no
+    if (classifier.isSubclassOf(List::class)) return false
+
+    return classifier.isAbstract
   }
 
   fun refreshAll() {

@@ -67,6 +67,7 @@ class TransferablePropertiesTest {
       var prop1: Any by property(42)
       var list2: List<Any> by property(listOf(1, 2, 3))
       var list4: MutableList<Any> by property(mutableListOf(1, 2, 3))
+      var chars: CharSequence by property("text")  // CharSequence interface shouldn't be serializable
     }
 
     for (property in state.__getProperties()) {
