@@ -268,7 +268,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   @NotNull
   private VcsInvalidated calculateInvalidated(@NotNull DirtBuilder dirt, @NotNull ActionCallback callback) {
     boolean isEverythingDirty = dirt.isEverythingDirty();
-    List<VcsDirtyScopeImpl> scopes = dirt.buildScopes(myProject);
+    List<VcsModifiableDirtyScope> scopes = dirt.buildScopes(myProject);
     return new VcsInvalidated(scopes, isEverythingDirty, callback);
   }
 

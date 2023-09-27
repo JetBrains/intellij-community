@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
+public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope implements VcsDirtyScopeBuilder {
   private final Map<VirtualFile, Set<FilePath>> myDirtyFiles = new HashMap<>();
   private final Map<VirtualFile, RecursiveFilePathSet> myDirtyDirectoriesRecursively = new HashMap<>();
   private final Set<FilePath> myAllVcsRoots = new HashSet<>();
@@ -31,20 +31,15 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   @NotNull private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final AbstractVcs myVcs;
-  private final boolean myWasEverythingDirty;
+  private boolean myWasEverythingDirty;
 
   private final @Nullable HashingStrategy<FilePath> myHashingStrategy;
   private final boolean myCaseSensitive;
 
   public VcsDirtyScopeImpl(@NotNull AbstractVcs vcs) {
-    this(vcs, false);
-  }
-
-  public VcsDirtyScopeImpl(@NotNull AbstractVcs vcs, boolean wasEverythingDirty) {
     myVcs = vcs;
     myProject = vcs.getProject();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    myWasEverythingDirty = wasEverythingDirty;
     myHashingStrategy = VcsDirtyScopeManagerImpl.getDirtyScopeHashingStrategy(myVcs);
     myCaseSensitive = myVcs.needsCaseSensitiveDirtyScope() || SystemInfo.isFileSystemCaseSensitive;
     myAllVcsRoots.addAll(ContainerUtil.map(myVcsManager.getRootsUnderVcsWithoutFiltering(myVcs), root -> VcsUtil.getFilePath(root)));
@@ -110,6 +105,7 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
    * <p>
    * Use {@link #addDirtyFile} / {@link #addDirtyDirRecursively} to add file path and remove duplicates.
    */
+  @Override
   public void addDirtyPathFast(@NotNull VirtualFile vcsRoot, @NotNull FilePath filePath, boolean recursively) {
     myAffectedVcsRoots.add(vcsRoot);
 
@@ -133,12 +129,19 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     }
   }
 
+  @Override
+  public void markEverythingDirty() {
+    myWasEverythingDirty = true;
+  }
+
   /**
    * @return VcsDirtyScope with trimmed duplicated paths from the sets.
    */
+  @Override
   @NotNull
   public VcsDirtyScopeImpl pack() {
-    VcsDirtyScopeImpl copy = new VcsDirtyScopeImpl(myVcs, myWasEverythingDirty);
+    VcsDirtyScopeImpl copy = new VcsDirtyScopeImpl(myVcs);
+    copy.myWasEverythingDirty = myWasEverythingDirty;
     for (VirtualFile root : myAffectedVcsRoots) {
       RecursiveFilePathSet rootDirs = myDirtyDirectoriesRecursively.get(root);
       Set<FilePath> rootFiles = ContainerUtil.notNullize(myDirtyFiles.get(root));

@@ -490,7 +490,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
       }
 
       final boolean wasEverythingDirty = invalidated.isEverythingDirty();
-      final List<VcsDirtyScope> scopes = invalidated.getScopes();
+      final List<VcsModifiableDirtyScope> scopes = invalidated.getScopes();
 
       boolean isInitialUpdate;
       ChangesViewEx changesView = ChangesViewManager.getInstanceEx(myProject);
@@ -608,7 +608,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   private void iterateScopes(DataHolder dataHolder,
-                             List<? extends VcsDirtyScope> scopes,
+                             List<? extends VcsModifiableDirtyScope> scopes,
                              @NotNull ProgressIndicator indicator) {
     final ChangeListUpdater updater = dataHolder.getChangeListUpdater();
     // do actual requests about file statuses
@@ -618,7 +618,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
     dataHolder.notifyStart();
     try {
-      for (final VcsDirtyScope scope : scopes) {
+      for (VcsModifiableDirtyScope scope : scopes) {
         indicator.checkCanceled();
 
         actualUpdate(builder, scope, scope.getVcs(), dataHolder, updater, indicator);
@@ -699,12 +699,12 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   private void actualUpdate(@NotNull UpdatingChangeListBuilder builder,
-                            @NotNull VcsDirtyScope scope,
+                            @NotNull VcsModifiableDirtyScope scope,
                             @NotNull AbstractVcs vcs,
                             @NotNull DataHolder dataHolder,
                             @NotNull ChangeListManagerGate gate,
                             @NotNull ProgressIndicator indicator) {
-    dataHolder.notifyStartProcessingChanges((VcsModifiableDirtyScope)scope);
+    dataHolder.notifyStartProcessingChanges(scope);
     try {
       final ChangeProvider changeProvider = vcs.getChangeProvider();
       if (changeProvider != null) {

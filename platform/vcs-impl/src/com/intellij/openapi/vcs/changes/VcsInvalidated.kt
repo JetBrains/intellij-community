@@ -6,7 +6,7 @@ import com.intellij.openapi.vcs.FilePath
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class VcsInvalidated(val scopes: List<VcsDirtyScope>, val isEverythingDirty: Boolean, val callback: ActionCallback) {
+class VcsInvalidated(val scopes: List<VcsModifiableDirtyScope>, val isEverythingDirty: Boolean, val callback: ActionCallback) {
   fun isEmpty(): Boolean = scopes.isEmpty()
 
   fun isFileDirty(path: FilePath): Boolean = isEverythingDirty || scopes.any { it.belongsTo(path) }
