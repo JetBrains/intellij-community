@@ -15,7 +15,7 @@ internal class ModelUpdatingTerminalDisplay(private val model: TerminalModel,
                                             private val settings: JBTerminalSystemSettingsProviderBase) : TerminalDisplay {
 
   override fun setCursor(x: Int, y: Int) {
-    model.setCursor(x, y - 1)
+    model.setCursor(x, y)
   }
 
   override fun setCursorShape(cursorShape: CursorShape) {
