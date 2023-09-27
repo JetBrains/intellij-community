@@ -57,6 +57,7 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
     GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
     putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS,
                       UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS) ?: RenderingHints.VALUE_FRACTIONALMETRICS_OFF)
+    recomputeSize()
   }
 
   override fun getFont(): Font = Companion.getFont()
