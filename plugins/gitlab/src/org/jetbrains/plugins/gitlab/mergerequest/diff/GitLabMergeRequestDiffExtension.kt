@@ -40,7 +40,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffInlayComponentsFactory
+import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestDiscussionInlayRenderer
+import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestNewDiscussionInlayRenderer
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiffDiscussionViewModel
@@ -79,17 +80,11 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
 
           coroutineScope {
             viewer.controlInlaysIn(this, changeVm.discussions, GitLabMergeRequestDiffDiscussionViewModel::id) {
-              val inlayCs = this
-              GitLabMergeRequestDiffInlayComponentsFactory.createDiscussion(
-                project, inlayCs, reviewVm.avatarIconsProvider, it
-              )
+              GitLabMergeRequestDiscussionInlayRenderer(this, project, it, reviewVm.avatarIconsProvider)
             }
 
             viewer.controlInlaysIn(this, changeVm.draftDiscussions, GitLabMergeRequestDiffDiscussionViewModel::id) {
-              val inlayCs = this
-              GitLabMergeRequestDiffInlayComponentsFactory.createDiscussion(
-                project, inlayCs, reviewVm.avatarIconsProvider, it
-              )
+              GitLabMergeRequestDiscussionInlayRenderer(this, project, it, reviewVm.avatarIconsProvider)
             }
 
             val newDiscussions = changeVm.newDiscussions.map {
@@ -98,10 +93,7 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
               }
             }
             viewer.controlInlaysIn(this, newDiscussions, NewNoteDiffInlayViewModel::id) {
-              val inlayCs = this
-              GitLabMergeRequestDiffInlayComponentsFactory.createNewDiscussion(
-                project, inlayCs, reviewVm.avatarIconsProvider, it.editVm, it::cancel
-              )
+              GitLabMergeRequestNewDiscussionInlayRenderer(this, project, it.editVm, reviewVm.avatarIconsProvider, it::cancel)
             }
 
             launch {

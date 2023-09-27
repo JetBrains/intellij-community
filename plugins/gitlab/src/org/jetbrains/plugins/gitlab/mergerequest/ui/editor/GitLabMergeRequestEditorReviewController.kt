@@ -28,7 +28,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.supervisorScope
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffInlayComponentsFactory
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Service(Service.Level.PROJECT)
@@ -104,20 +103,16 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
     editor as EditorEx
 
     editor.controlInlaysIn(cs, model.discussions, { it.vm.id }) {
-      GitLabMergeRequestDiffInlayComponentsFactory.createDiscussion(
-        project, this, model.avatarIconsProvider, it.vm
-      )
+      GitLabMergeRequestDiscussionInlayRenderer(this, project, it.vm, model.avatarIconsProvider)
     }
 
     editor.controlInlaysIn(cs, model.draftDiscussions, { it.vm.id }) {
-      GitLabMergeRequestDiffInlayComponentsFactory.createDiscussion(
-        project, this, model.avatarIconsProvider, it.vm
-      )
+      GitLabMergeRequestDiscussionInlayRenderer(this, project, it.vm, model.avatarIconsProvider)
     }
 
     editor.controlInlaysIn(cs, model.newDiscussions, { "NEW_${it.location}" }) {
-      GitLabMergeRequestDiffInlayComponentsFactory.createNewDiscussion(
-        project, this, model.avatarIconsProvider, it.vm
+      GitLabMergeRequestNewDiscussionInlayRenderer(
+        this, project, it.vm, model.avatarIconsProvider
       ) { model.cancelNewDiscussion(it.location) }
     }
   }
