@@ -132,7 +132,7 @@ private fun GitLabDiffDTO.toPatch(): TextFilePatch {
   val afterFilePath = newPath.takeIf { !deletedFile }
   val headerFileBefore = beforeFilePath?.let { "a/$it" } ?: "/dev/null"
   val headerFileAfter = afterFilePath?.let { "b/$it" } ?: "/dev/null"
-  val header = "--- $headerFileBefore\n+++ $headerFileAfter"
+  val header = "--- $headerFileBefore\n+++ $headerFileAfter\n"
 
   val fileStatus = when {
     newFile -> FileStatus.ADDED
