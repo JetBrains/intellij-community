@@ -1,11 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.editor.repaintGutterForLine
-import com.intellij.diff.comparison.iterables.DiffIterableUtil
-import com.intellij.diff.util.DiffUtil
-import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
@@ -18,8 +16,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.markup.ActiveGutterRenderer
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx
-import com.intellij.openapi.vcs.ex.LocalLineStatusTracker
-import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModel
+import kotlinx.coroutines.CoroutineScope
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
@@ -27,36 +24,37 @@ import java.awt.event.MouseEvent
 /**
  * Draws and handles review controls in gutter
  */
-internal class GitLabMergeRequestReviewControlsGutterRenderer(private val editor: EditorEx,
-                                                              private val vm: GitLabMergeRequestChangeViewModel,
-                                                              lst: LocalLineStatusTracker<*>)
+internal class GitLabMergeRequestReviewControlsGutterRenderer(cs: CoroutineScope,
+                                                              private val model: GitLabMergeRequestEditorReviewUIModel,
+                                                              private val editor: EditorEx)
   : LineMarkerRenderer, LineMarkerRendererEx, ActiveGutterRenderer, Disposable {
 
-  private var targetRanges: List<Range> = emptyList()
+  private var hoveredLineInRangeIdx: Int = -1
+  private var iconHovered: Boolean = false
 
   init {
-    LineStatusTrackerRangesHandler.install(this, lst) { lstRanges ->
-      targetRanges = DiffIterableUtil.create(lstRanges.map { Range(it.vcsLine1, it.vcsLine2, it.line1, it.line2) },
-                                             DiffUtil.getLineCount(lst.vcsDocument), DiffUtil.getLineCount(lst.document))
-        .iterateUnchanged().toList()
-      hoveredLineInRangeIdx = -1
-      iconHovered = false
-
-      val xRange = getIconColumnXRange(editor)
-      with(editor.gutterComponentEx) {
-        repaint(xRange.first, 0, xRange.last - xRange.first, height)
+    cs.launchNow {
+      model.commentableRanges.collect {
+        onRangesChanged()
       }
     }
   }
 
-  private var hoveredLineInRangeIdx: Int = -1
-  private var iconHovered: Boolean = false
+  private fun onRangesChanged() {
+    hoveredLineInRangeIdx = -1
+    iconHovered = false
+
+    val xRange = getIconColumnXRange(editor)
+    with(editor.gutterComponentEx) {
+      repaint(xRange.first, 0, xRange.last - xRange.first, height)
+    }
+  }
 
   private val mouseListener = object : EditorMouseListener, EditorMouseMotionListener {
     override fun mouseMoved(e: EditorMouseEvent) {
       editor.repaintGutterForLine(hoveredLineInRangeIdx)
       val line = e.logicalPosition.line
-      if (targetRanges.any { line in it.start2 until it.end2 }) {
+      if (model.commentableRanges.value.any { line in it.start2 until it.end2 }) {
         hoveredLineInRangeIdx = line
         iconHovered = isIconColumnHovered(editor, e.mouseEvent)
         editor.repaintGutterForLine(e.logicalPosition.line)
@@ -111,7 +109,7 @@ internal class GitLabMergeRequestReviewControlsGutterRenderer(private val editor
   override fun doAction(editor: Editor, e: MouseEvent) {
     val hoveredLineIdx = hoveredLineInRangeIdx
     if (hoveredLineIdx < 0 || !iconHovered) return
-    vm.requestNewDiscussion(DiffLineLocation(Side.RIGHT, hoveredLineIdx), true)
+    model.requestNewDiscussion(DiffLineLocation(Side.RIGHT, hoveredLineIdx), true)
     e.consume()
   }
 

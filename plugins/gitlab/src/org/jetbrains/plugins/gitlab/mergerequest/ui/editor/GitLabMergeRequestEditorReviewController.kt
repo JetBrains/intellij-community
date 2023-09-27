@@ -2,12 +2,8 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.editor.EditorMapped
 import com.intellij.collaboration.ui.codereview.editor.controlInlaysIn
-import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 import com.intellij.diff.util.DiffDrawUtil
-import com.intellij.diff.util.Side
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -20,7 +16,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.ex.LineStatusMarkerRangesSource
 import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.LocalLineStatusTracker
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
@@ -34,10 +29,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.supervisorScope
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffInlayComponentsFactory
-import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiffDiscussionViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
-import com.intellij.openapi.vcs.ex.Range as LstRange
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Service(Service.Level.PROJECT)
@@ -72,9 +63,10 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
                   editor.putUserData(GitLabMergeRequestEditorReviewViewModel.KEY, reviewVm)
                   reviewVm.isReviewModeEnabled.collectLatest {
                     if (it) supervisorScope {
-                      showGutterMarkers(fileVm, editor, lst)
-                      showGutterControls(fileVm, editor, lst)
-                      showInlays(fileVm, editor, lst)
+                      val model = GitLabMergeRequestEditorReviewUIModel(this, fileVm, lst)
+                      showGutterMarkers(model, editor)
+                      showGutterControls(model, editor)
+                      showInlays(model, editor)
                     }
                   }
                 }
@@ -88,25 +80,14 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
     }.cancelOnDispose(editorDisposable)
   }
 
-  private fun CoroutineScope.showGutterMarkers(fileVm: GitLabMergeRequestChangeViewModel,
-                                               editor: Editor,
-                                               lst: LocalLineStatusTracker<*>) {
+  private fun CoroutineScope.showGutterMarkers(model: GitLabMergeRequestEditorReviewUIModel, editor: Editor) {
     val disposable = Disposer.newDisposable()
-    val rangesSource = object : LineStatusMarkerRangesSource<LstRange> {
-      var shiftedRanges: List<LstRange>? = null
+    val renderer = GitLabMergeRequestReviewChangesGutterRenderer(model, editor, disposable)
 
-      override fun isValid(): Boolean = shiftedRanges != null
-      override fun getRanges(): List<LstRange>? = shiftedRanges
-      override fun findRange(range: LstRange): LstRange? = shiftedRanges?.find {
-        it.vcsLine1 == range.vcsLine1 && it.vcsLine2 == range.vcsLine2 &&
-        it.line1 == range.line1 && it.line2 == range.line2
+    launchNow {
+      model.shiftedReviewRanges.collect {
+        renderer.scheduleUpdate()
       }
-    }
-    val renderer = GitLabMergeRequestReviewChangesGutterRenderer(fileVm, rangesSource, editor, disposable)
-    LineStatusTrackerRangesHandler.install(disposable, lst) { lstRanges ->
-      val reviewRanges = fileVm.changedRanges.map { LstRange(it.start2, it.end2, it.start1, it.end1) }
-      rangesSource.shiftedRanges = ExcludingApproximateChangedRangesShifter.shift(reviewRanges, lstRanges)
-      renderer.scheduleUpdate()
     }
 
     awaitCancellationAndInvoke {
@@ -117,63 +98,34 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
   /**
    * Show new and existing comments as editor inlays
    * Only comments located on the right diff side are shown
-   * Comment locations are shifted to approximate position using [lst] ranges
    */
-  private fun CoroutineScope.showInlays(fileVm: GitLabMergeRequestChangeViewModel, editor: Editor, lst: LocalLineStatusTracker<*>) {
+  private fun CoroutineScope.showInlays(model: GitLabMergeRequestEditorReviewUIModel, editor: Editor) {
     val cs = this
     editor as EditorEx
-    val disposable = Disposer.newDisposable()
 
-    val ranges = MutableStateFlow<List<LstRange>>(emptyList())
-    LineStatusTrackerRangesHandler.install(disposable, lst) { lstRanges ->
-      ranges.value = lstRanges
-    }
-
-    class MappedDiscussion(val vm: GitLabMergeRequestDiffDiscussionViewModel) : EditorMapped {
-      override val isVisible: Flow<Boolean> = vm.isVisible
-      override val line: Flow<Int?> = ranges.combine(vm.location) { ranges, location -> location?.let { mapLocation(ranges, it) } }
-    }
-
-    val discussions = fileVm.discussions.map { it.map(::MappedDiscussion) }
-    editor.controlInlaysIn(cs, discussions, { it.vm.id }) {
+    editor.controlInlaysIn(cs, model.discussions, { it.vm.id }) {
       GitLabMergeRequestDiffInlayComponentsFactory.createDiscussion(
-        project, this, fileVm.avatarIconsProvider, it.vm
+        project, this, model.avatarIconsProvider, it.vm
       )
     }
 
-    val draftDiscussions = fileVm.draftDiscussions.map { it.map(::MappedDiscussion) }
-    editor.controlInlaysIn(cs, draftDiscussions, { it.vm.id }) {
+    editor.controlInlaysIn(cs, model.draftDiscussions, { it.vm.id }) {
       GitLabMergeRequestDiffInlayComponentsFactory.createDiscussion(
-        project, this, fileVm.avatarIconsProvider, it.vm
+        project, this, model.avatarIconsProvider, it.vm
       )
     }
 
-
-    class MappedNewDiscussion(val location: DiffLineLocation, val vm: NewGitLabNoteViewModel) : EditorMapped {
-      override val isVisible: Flow<Boolean> = flowOf(true)
-      override val line: Flow<Int?> = ranges.map { ranges -> mapLocation(ranges, location) }
-    }
-
-    val newDiscussions = fileVm.newDiscussions.map {
-      it.map { (location, vm) -> MappedNewDiscussion(location, vm) }
-    }
-    editor.controlInlaysIn(cs, newDiscussions, { "NEW_${it.location}" }) {
+    editor.controlInlaysIn(cs, model.newDiscussions, { "NEW_${it.location}" }) {
       GitLabMergeRequestDiffInlayComponentsFactory.createNewDiscussion(
-        project, this, fileVm.avatarIconsProvider, it.vm
-      ) { fileVm.cancelNewDiscussion(it.location) }
-    }
-
-    awaitCancellationAndInvoke {
-      Disposer.dispose(disposable)
+        project, this, model.avatarIconsProvider, it.vm
+      ) { model.cancelNewDiscussion(it.location) }
     }
   }
 
-  private fun CoroutineScope.showGutterControls(fileVm: GitLabMergeRequestChangeViewModel,
-                                                editor: Editor,
-                                                lst: LocalLineStatusTracker<*>) {
+  private fun CoroutineScope.showGutterControls(model: GitLabMergeRequestEditorReviewUIModel, editor: Editor) {
     editor as EditorEx
 
-    val renderer = GitLabMergeRequestReviewControlsGutterRenderer(editor, fileVm, lst)
+    val renderer = GitLabMergeRequestReviewControlsGutterRenderer(cs, model, editor)
 
     val highlighter = editor.markupModel.addRangeHighlighter(null, 0, editor.document.textLength,
                                                              DiffDrawUtil.LST_LINE_MARKER_LAYER,
@@ -191,28 +143,6 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
   companion object {
     fun isPotentialEditor(editor: Editor): Boolean = editor.editorKind == EditorKind.MAIN_EDITOR && editor.virtualFile != null
   }
-}
-
-private fun mapLocation(ranges: List<LstRange>, location: DiffLineLocation): Int? {
-  val (side, line) = location
-  return if (side == Side.RIGHT) transferLine(ranges, line).takeIf { it >= 0 } else null
-}
-
-private fun transferLine(ranges: List<LstRange>, line: Int): Int {
-  if (ranges.isEmpty()) return line
-  var result = line
-  for (range in ranges) {
-    if (line in range.vcsLine1 until range.vcsLine2) {
-      return (range.line2 - 1).coerceAtLeast(0)
-    }
-
-    if (range.vcsLine2 > line) return result
-
-    val length1 = range.vcsLine2 - range.vcsLine1
-    val length2 = range.line2 - range.line1
-    result += length2 - length1
-  }
-  return result
 }
 
 private fun Editor.getLineStatusTrackerFlow(): Flow<LineStatusTracker<*>?> =

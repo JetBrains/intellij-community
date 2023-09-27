@@ -27,11 +27,13 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.ex.*
+import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions
+import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel
+import com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopup
+import com.intellij.openapi.vcs.ex.Range
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.EditorTextField
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
-import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Color
 import java.awt.Graphics
@@ -41,11 +43,10 @@ import java.awt.datatransfer.StringSelection
 /**
  * Draws and handles review changes markers in gutter
  */
-internal class GitLabMergeRequestReviewChangesGutterRenderer(private val fileVm: GitLabMergeRequestChangeViewModel,
-                                                             rangesSource: LineStatusMarkerRangesSource<*>,
+internal class GitLabMergeRequestReviewChangesGutterRenderer(private val model: GitLabMergeRequestEditorReviewUIModel,
                                                              private val editor: Editor,
                                                              disposable: Disposable)
-  : LineStatusMarkerRendererWithPopup(editor.project, editor.document, rangesSource, disposable, { it === editor }) {
+  : LineStatusMarkerRendererWithPopup(editor.project, editor.document, model, disposable, { it === editor }) {
   private val colorScheme = object : LineStatusMarkerColorScheme() {
     // TODO: extract color
     private val reviewChangesColor = ColorUtil.fromHex("#A177F4")
@@ -69,7 +70,7 @@ internal class GitLabMergeRequestReviewChangesGutterRenderer(private val fileVm:
                                 range: Range,
                                 mousePosition: Point?,
                                 disposable: Disposable): LineStatusMarkerPopupPanel {
-    val vcsContent = fileVm.getOriginalContent(LineRange(range.vcsLine1, range.vcsLine2))
+    val vcsContent = model.getOriginalContent(LineRange(range.vcsLine1, range.vcsLine2))
 
     val preferences = project?.service<GitLabMergeRequestsPreferences>()
 
@@ -212,7 +213,7 @@ internal class GitLabMergeRequestReviewChangesGutterRenderer(private val fileVm:
     : LineStatusMarkerPopupActions.RangeMarkerAction(editor, rangesSource, range, IdeActions.ACTION_COPY), LightEditCompatible {
     override fun isEnabled(editor: Editor, range: Range): Boolean = range.hasVcsLines()
     override fun actionPerformed(editor: Editor, range: Range) {
-      val content = fileVm.getOriginalContent(LineRange(range.vcsLine1, range.vcsLine2)) + "\n"
+      val content = model.getOriginalContent(LineRange(range.vcsLine1, range.vcsLine2)) + "\n"
       CopyPasteManager.getInstance().setContents(StringSelection(content))
     }
   }
