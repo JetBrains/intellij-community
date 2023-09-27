@@ -46,7 +46,7 @@ internal class ActionsTabTypoFixSuggestionProvider(private val project: Project)
 
       suggestionRanker?.score(word.lowercase(), correctionSuggestions)
         ?.asSequence()
-        ?.maxBy { it.value }
+        ?.maxByOrNull { it.value }
         ?.let { (correction, confidence) -> correction.capitalizeBasedOn(word) to confidence }
         ?.let { (word, confidence) -> WordSpellCheckResult.Correction(word, confidence) }
     } ?: WordSpellCheckResult.NoCorrection(word)
