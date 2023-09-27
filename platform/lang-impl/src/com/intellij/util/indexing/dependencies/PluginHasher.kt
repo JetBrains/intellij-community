@@ -23,7 +23,9 @@ class PluginHasher {
     val pluginFingerprint = if (plugin.version.contains("SNAPSHOT", ignoreCase = true)) {
       when (val classLoader = plugin.classLoader) {
         is UrlClassLoader -> {
-          fingerprintFromFilesContent(plugin, classLoader)
+          fingerprintWithCurrentTimestamp(plugin)
+          // TODO: Temporary, I hope
+          // fingerprintFromFilesContent(plugin, classLoader)
         }
         else -> {
           fingerprintWithCurrentTimestamp(plugin)
