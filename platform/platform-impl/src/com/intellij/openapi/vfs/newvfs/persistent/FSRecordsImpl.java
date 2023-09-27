@@ -420,8 +420,8 @@ public final class FSRecordsImpl {
   }
 
   public long getCreationTimestamp() {
+    checkNotDisposed();
     try {
-      checkNotDisposed();
       return connection.getTimestamp();
     }
     catch (IOException e) {
@@ -454,8 +454,8 @@ public final class FSRecordsImpl {
 
   @TestOnly
   void force() {
+    checkNotDisposed();
     try {
-      checkNotDisposed();
       connection.doForce();
     }
     catch (IOException e) {
@@ -477,6 +477,7 @@ public final class FSRecordsImpl {
   //========== record allocations: ========================================
 
   int createRecord() {
+    checkNotDisposed();
     try {
       return recordAccessor.createRecord();
     }
@@ -544,6 +545,7 @@ public final class FSRecordsImpl {
   //========== FS roots manipulation: ========================================
 
   int @NotNull [] listRoots() {
+    checkNotDisposed();
     try {
       return treeAccessor.listRoots();
     }
@@ -553,6 +555,7 @@ public final class FSRecordsImpl {
   }
 
   int findOrCreateRootRecord(@NotNull String rootUrl) {
+    checkNotDisposed();
     try {
       return treeAccessor.findOrCreateRootRecord(rootUrl);
     }
@@ -562,6 +565,7 @@ public final class FSRecordsImpl {
   }
 
   void forEachRoot(@NotNull ObjIntConsumer<? super String> rootConsumer) {
+    checkNotDisposed();
     try {
       treeAccessor.forEachRoot((rootId, rootUrlId) -> {
         String rootUrl = getNameByNameId(rootUrlId);
