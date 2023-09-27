@@ -195,7 +195,9 @@ internal class LessonExecutor(val lesson: KLesson,
   inline fun taskInvokeLater(modalityState: ModalityState? = null, crossinline runnable: () -> Unit) {
     invokeLater(modalityState) {
       try {
-        runnable()
+        if (!hasBeenStopped) {
+          runnable()
+        }
       }
       catch (e: Throwable) {
         thisLogger().error(getLessonInfoString(), e)
@@ -395,7 +397,9 @@ internal class LessonExecutor(val lesson: KLesson,
     taskContext.steps.forEach { step ->
       step.thenAccept {
         try {
-          stepHasBeenCompleted(taskContext, taskActions[currentTaskIndex])
+          if (!hasBeenStopped) {
+            stepHasBeenCompleted(taskContext, taskActions[currentTaskIndex])
+          }
         }
         catch (e: Throwable) {
           thisLogger().error("Step exception: ", e)
