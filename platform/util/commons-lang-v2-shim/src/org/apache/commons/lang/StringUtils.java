@@ -51,8 +51,16 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
     return org.apache.commons.lang3.StringUtils.endsWith(seq, s2);
   }
 
+  public static boolean startsWith(String seq, String s2) {
+    return org.apache.commons.lang3.StringUtils.startsWith(seq, s2);
+  }
+
   public static boolean endsWithIgnoreCase(String seq, String s2) {
     return org.apache.commons.lang3.StringUtils.endsWithIgnoreCase(seq, s2);
+  }
+
+  public static boolean startsWithIgnoreCase(String seq, String s2) {
+    return org.apache.commons.lang3.StringUtils.startsWithIgnoreCase(seq, s2);
   }
 
   public static boolean equals(String seq, String s2) {
