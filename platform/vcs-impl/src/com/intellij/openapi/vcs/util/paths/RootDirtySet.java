@@ -29,7 +29,11 @@ public class RootDirtySet {
   private boolean myEverythingDirty;
 
   public RootDirtySet(@NotNull FilePath root, boolean caseSensitive) {
-    myRoot = root.getPath();
+    this(root.getPath(), caseSensitive);
+  }
+
+  private RootDirtySet(@NotNull String root, boolean caseSensitive) {
+    myRoot = root;
     myCaseSensitive = caseSensitive;
 
     myPaths = caseSensitive ? new HashSet<>() : CollectionFactory.createCaseInsensitiveStringSet();
@@ -49,6 +53,11 @@ public class RootDirtySet {
       return;
     }
 
+    int startIndex = myRoot.length() + 1;
+    markDirtyRelative(path, startIndex);
+  }
+
+  private void markDirtyRelative(@NotNull String path, int startIndex) {
     if (myPaths.size() > DIRTY_SCOPE_SIZE_THRESHOLD) {
       // Avoid performance issues for specific 'poorly mergeable' dirty path configurations.
       // This should not happen in practice.
@@ -56,8 +65,6 @@ public class RootDirtySet {
       return;
     }
 
-
-    int startIndex = myRoot.length() + 1;
     int index = startIndex;
     int previousPrefixHash = 0;
 
@@ -164,12 +171,46 @@ public class RootDirtySet {
     myEverythingDirty = true;
   }
 
+  public boolean isEmpty() {
+    return !myEverythingDirty && myPathHashCounters.isEmpty();
+  }
+
+  public boolean isEverythingDirty() {
+    return myEverythingDirty;
+  }
+
   public @NotNull List<FilePath> collectFilePaths() {
     if (myEverythingDirty) {
       return Collections.singletonList(VcsUtil.getFilePath(myRoot, true));
     }
     List<String> result = removeCommonParents(myPaths, myCaseSensitive);
     return ContainerUtil.map(result, path -> VcsUtil.getFilePath(myRoot + "/" + path, true));
+  }
+
+  public @NotNull RootDirtySet copy() {
+    RootDirtySet copy = new RootDirtySet(myRoot, myCaseSensitive);
+    if (myEverythingDirty) {
+      copy.markEverythingDirty();
+    }
+    else {
+      for (String filePath : myPaths) {
+        copy.markDirtyRelative(filePath, 0);
+      }
+    }
+    return copy;
+  }
+
+  public @NotNull RootDirtySet compact() {
+    RootDirtySet copy = new RootDirtySet(myRoot, myCaseSensitive);
+    if (myEverythingDirty) {
+      copy.markEverythingDirty();
+    }
+    else {
+      for (String filePath : removeCommonParents(myPaths, myCaseSensitive)) {
+        copy.markDirtyRelative(filePath, 0);
+      }
+    }
+    return copy;
   }
 
   private static @NotNull List<String> removeCommonParents(@NotNull Collection<String> paths, boolean caseSensitive) {

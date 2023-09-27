@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.util.paths.RootDirtySet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
@@ -54,13 +55,12 @@ public final class GitChangeProvider implements ChangeProvider {
       List<FilePath> newDirtyPaths = new ArrayList<>();
       NonChangedHolder holder = new NonChangedHolder(project, addGate);
 
-      Map<VirtualFile, List<FilePath>> dirtyPaths = GitStagingAreaHolder.collectDirtyPathsPerRoot(dirtyScope);
+      Map<VirtualFile, RootDirtySet> dirtyPaths = GitStagingAreaHolder.collectDirtyPathsPerRoot(dirtyScope);
       LOG.debug("after adding nested vcs roots to dirt: ", dirtyPaths);
 
-      for (Map.Entry<VirtualFile, List<FilePath>> entry : dirtyPaths.entrySet()) {
+      for (Map.Entry<VirtualFile, RootDirtySet> entry : dirtyPaths.entrySet()) {
         VirtualFile root = entry.getKey();
-        List<FilePath> rootDirtyPaths = entry.getValue();
-        if (rootDirtyPaths.isEmpty()) continue;
+        RootDirtySet rootDirtyPaths = entry.getValue();
 
         LOG.debug("checking root: ", root);
         GitRepository repo = repositoryManager.getRepositoryForRoot(root);

@@ -5,15 +5,16 @@ import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
-import com.intellij.openapi.vcs.util.paths.RecursiveFilePathSet;
+import com.intellij.openapi.vcs.util.paths.RootDirtySet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitRefreshUsageCollector;
+import git4idea.GitVcsDirtyScope;
 import git4idea.commands.GitHandler;
 import git4idea.index.GitFileStatus;
 import git4idea.index.GitIndexStatusUtilKt;
@@ -24,7 +25,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class GitStagingAreaHolder {
   private static final Logger LOG = Logger.getInstance(GitStagingAreaHolder.class);
@@ -91,20 +94,16 @@ public class GitStagingAreaHolder {
    * untracked/ignored files are processed separately in {@link git4idea.repo.GitUntrackedFilesHolder} and {@link git4idea.ignore.GitRepositoryIgnoredFilesHolder}
    */
   @ApiStatus.Internal
-  public @NotNull List<GitFileStatus> refresh(@NotNull List<FilePath> dirtyPaths) throws VcsException {
+  public @NotNull List<GitFileStatus> refresh(@NotNull RootDirtySet dirtyPaths) throws VcsException {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     VirtualFile root = myRepository.getRoot();
 
-    RecursiveFilePathSet dirtyScope = new RecursiveFilePathSet(true); // GitVcs#needsCaseSensitiveDirtyScope is true
-    dirtyScope.addAll(dirtyPaths);
-
-    boolean everythingDirty = dirtyScope.contains(VcsUtil.getFilePath(root));
-    StructuredIdeActivity activity = GitRefreshUsageCollector.logStatusRefresh(myProject, everythingDirty);
-    List<GitFileStatus> rootRecords = GitIndexStatusUtilKt.getStatus(myProject, root, dirtyPaths, true, false, false);
+    StructuredIdeActivity activity = GitRefreshUsageCollector.logStatusRefresh(myProject, dirtyPaths.isEverythingDirty());
+    List<GitFileStatus> rootRecords = GitIndexStatusUtilKt.getStatus(myProject, root, dirtyPaths.collectFilePaths(), true, false, false);
     activity.finished();
 
     rootRecords.removeIf(record -> {
-      boolean isUnderDirtyScope = isUnder(record, dirtyScope);
+      boolean isUnderDirtyScope = isUnder(record, dirtyPaths);
       if (!isUnderDirtyScope) return true;
 
       VirtualFile recordRoot = vcsManager.getVcsRootFor(record.getPath());
@@ -118,7 +117,7 @@ public class GitStagingAreaHolder {
     });
 
     synchronized (LOCK) {
-      myRecords.removeIf(record -> isUnder(record, dirtyScope));
+      myRecords.removeIf(record -> isUnder(record, dirtyPaths));
       myRecords.addAll(rootRecords);
     }
 
@@ -127,9 +126,9 @@ public class GitStagingAreaHolder {
     return rootRecords;
   }
 
-  private static boolean isUnder(@NotNull GitFileStatus record, @NotNull RecursiveFilePathSet dirtyScope) {
-    return dirtyScope.hasAncestor(record.getPath()) ||
-           record.getOrigPath() != null && dirtyScope.hasAncestor(record.getOrigPath());
+  private static boolean isUnder(@NotNull GitFileStatus record, @NotNull RootDirtySet dirtySet) {
+    return dirtySet.belongsTo(record.getPath()) ||
+           record.getOrigPath() != null && dirtySet.belongsTo(record.getOrigPath());
   }
 
   private static boolean isSubmoduleStatus(@NotNull GitFileStatus record, @Nullable VirtualFile candidateRoot) {
@@ -146,91 +145,35 @@ public class GitStagingAreaHolder {
    * The paths will be automatically collapsed later if the summary length more than limit, see {@link GitHandler#isLargeCommandLine()}.
    */
   @ApiStatus.Internal
-  public static @NotNull Map<VirtualFile, List<FilePath>> collectDirtyPathsPerRoot(@NotNull VcsDirtyScope dirtyScope) {
+  public static @NotNull Map<VirtualFile, RootDirtySet> collectDirtyPathsPerRoot(@NotNull VcsDirtyScope dirtyScope) {
     Project project = dirtyScope.getProject();
-    AbstractVcs vcs = dirtyScope.getVcs();
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-
-    Map<VirtualFile, List<FilePath>> result = new HashMap<>();
-    for (FilePath p : dirtyScope.getRecursivelyDirtyDirectories()) {
-      addToPaths(p, result, vcs, vcsManager);
-    }
-    for (FilePath p : dirtyScope.getDirtyFilesNoExpand()) {
-      addToPaths(p, result, vcs, vcsManager);
-    }
-
-    // do not use belongsTo to skip non-recursively dirty directories
-    RecursiveFilePathSet recursivelyDirtyDirectories = new RecursiveFilePathSet(true);
-    recursivelyDirtyDirectories.addAll(dirtyScope.getRecursivelyDirtyDirectories());
-
-    // process nested vcs roots
-    for (VirtualFile root : vcsManager.getRootsUnderVcs(vcs)) {
-      FilePath rootPath = VcsUtil.getFilePath(root);
-      if (recursivelyDirtyDirectories.hasAncestor(rootPath)) {
-        LOG.debug("adding git root for check. root: ", root);
-        List<FilePath> paths = result.computeIfAbsent(root, key -> new ArrayList<>());
-        paths.add(rootPath);
-      }
-    }
+    Map<VirtualFile, RootDirtySet> dirtySetPerRoot = ((GitVcsDirtyScope)dirtyScope).getDirtySetsPerRoot();
 
     // Git will not detect renames unless both affected paths are passed to the 'git status' command.
     // Thus, we are forced to pass all deleted/added files in a repository to ensure all renames are detected.
-    for (VirtualFile root : result.keySet()) {
+    for (VirtualFile root : dirtySetPerRoot.keySet()) {
+      RootDirtySet rootPaths = dirtySetPerRoot.get(root);
+      if (rootPaths.isEverythingDirty()) continue;
+
       GitRepository gitRepository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
       if (gitRepository == null) continue;
-
-      List<FilePath> rootPaths = result.get(root);
 
       List<GitFileStatus> records = gitRepository.getStagingAreaHolder().getAllRecords();
       for (GitFileStatus record : records) {
         FilePath filePath = record.getPath();
         FilePath origPath = record.getOrigPath();
         if (origPath != null) {
-          rootPaths.add(origPath);
-          rootPaths.add(filePath);
+          rootPaths.markDirty(origPath);
+          rootPaths.markDirty(filePath);
         }
         else if (isStatusCodeForPotentialRename(record.getIndex()) ||
                  isStatusCodeForPotentialRename(record.getWorkTree())) {
-          rootPaths.add(filePath);
+          rootPaths.markDirty(filePath);
         }
       }
     }
 
-    for (VirtualFile root : result.keySet()) {
-      List<FilePath> paths = result.get(root);
-      removeCommonParents(paths);
-    }
-
-    return result;
-  }
-
-  private static void addToPaths(@NotNull FilePath filePath,
-                                 @NotNull Map<VirtualFile, List<FilePath>> result,
-                                 @NotNull AbstractVcs vcs,
-                                 @NotNull ProjectLevelVcsManager vcsManager) {
-    VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(filePath);
-    if (vcsRoot != null && vcs.equals(vcsRoot.getVcs())) {
-      VirtualFile root = vcsRoot.getPath();
-      List<FilePath> paths = result.computeIfAbsent(root, key -> new ArrayList<>());
-      paths.add(filePath);
-    }
-  }
-
-  private static void removeCommonParents(List<FilePath> paths) {
-    paths.sort(Comparator.comparing(FilePath::getPath));
-
-    FilePath prevPath = null;
-    Iterator<FilePath> it = paths.iterator();
-    while (it.hasNext()) {
-      FilePath path = it.next();
-      // the file is under previous file, so enough to check the parent
-      if (prevPath != null && FileUtil.startsWith(path.getPath(), prevPath.getPath(), true)) {
-        it.remove();
-      }
-      else {
-        prevPath = path;
-      }
-    }
+    return dirtySetPerRoot;
   }
 
   private static boolean isStatusCodeForPotentialRename(char statusCode) {
