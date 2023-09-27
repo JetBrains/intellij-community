@@ -229,7 +229,9 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     var runConfigurationExtensionManager = ExternalSystemRunConfigurationExtensionManager.getInstance();
     runConfigurationExtensionManager.attachExtensionsToProcess(myConfiguration, processHandler, runnerSettings);
     var title = ExternalSystemBundle.message("progress.run.text", executionName);
-    ProgressExecutionMode executionMode = ProgressExecutionMode.IN_BACKGROUND_ASYNC;
+    ProgressExecutionMode executionMode = ApplicationManager.getApplication().isUnitTestMode()
+                                          ? ProgressExecutionMode.NO_PROGRESS_ASYNC
+                                          : ProgressExecutionMode.IN_BACKGROUND_ASYNC;
     ExternalSystemTaskUnderProgress.executeTaskUnderProgress(myProject, title, executionMode, new ExternalSystemTaskUnderProgress() {
 
       @Override
