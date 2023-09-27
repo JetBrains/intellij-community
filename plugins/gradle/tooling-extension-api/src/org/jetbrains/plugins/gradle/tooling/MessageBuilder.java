@@ -4,10 +4,7 @@ package org.jetbrains.plugins.gradle.tooling;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import org.gradle.api.Project;
 import org.gradle.util.GradleVersion;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -25,42 +22,48 @@ public final class MessageBuilder {
   private @Nullable Message.FilePosition myFilePosition = null;
   private @Nullable Project myProject = null;
 
+  @CheckReturnValue
   public @NotNull MessageBuilder withTitle(String title) {
     myTitle = title;
     return this;
   }
 
+  @CheckReturnValue
   public @NotNull MessageBuilder withText(String text) {
     myText = text;
     return this;
   }
 
-  public @NotNull MessageBuilder info() { return withKind(Message.Kind.INFO); }
-
-  public @NotNull MessageBuilder warning() { return withKind(Message.Kind.WARNING); }
-
-  public @NotNull MessageBuilder error() { return withKind(Message.Kind.ERROR); }
-
+  @CheckReturnValue
   public @NotNull MessageBuilder withKind(Message.Kind kind) {
     myKind = kind;
     return this;
   }
 
+  @CheckReturnValue
   public @NotNull MessageBuilder withGroup(String group) {
     myGroup = group;
     return this;
   }
 
+  @CheckReturnValue
   public @NotNull MessageBuilder withException(Exception e) {
     myException = e;
     return this;
   }
 
-  public @NotNull MessageBuilder withLocation(String filePath, int line, int column) {
-    myFilePosition = new Message.FilePosition(filePath, line, column);
+  @CheckReturnValue
+  public @NotNull MessageBuilder withLocation(Message.FilePosition filePosition) {
+    myFilePosition = filePosition;
     return this;
   }
 
+  @CheckReturnValue
+  public @NotNull MessageBuilder withLocation(String filePath, int line, int column) {
+    return withLocation(new Message.FilePosition(filePath, line, column));
+  }
+
+  @CheckReturnValue
   public @NotNull MessageBuilder withProject(Project project) {
     myProject = project;
     return this;
