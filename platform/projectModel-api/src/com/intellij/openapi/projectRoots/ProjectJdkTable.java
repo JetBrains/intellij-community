@@ -43,8 +43,10 @@ public abstract class ProjectJdkTable {
   @TestOnly
   public void addJdk(@NotNull Sdk jdk, @NotNull Disposable parentDisposable) {
     Sdk existingJdk = findJdk(jdk.getName(), jdk.getSdkType().getName());
-    if (existingJdk != null && existingJdk.getSdkAdditionalData() == jdk.getSdkAdditionalData()) return;
-    addJdk(jdk);
+    if (existingJdk == null || existingJdk.getSdkAdditionalData() != jdk.getSdkAdditionalData()) {
+      addJdk(jdk);
+    }
+    // Anyway we need to call remove method otherwise the created VirtualFilePonters will not be removed
     Disposer.register(parentDisposable, () -> WriteAction.runAndWait(()-> removeJdk(jdk)));
   }
 
