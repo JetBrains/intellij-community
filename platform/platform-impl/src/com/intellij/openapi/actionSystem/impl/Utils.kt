@@ -166,7 +166,11 @@ object Utils {
     else -> dataContext
   }
 
-  private fun newPreCachedDataContext(component: Component?): DataContext = PreCachedDataContext(component)
+  private fun newPreCachedDataContext(component: Component?): DataContext {
+    val result = PreCachedDataContext(component)
+    if (result.cachesAllKnownDataKeys()) return result
+    return PreCachedDataContext(component) // recache!
+  }
 
   @JvmStatic
   @Deprecated("Use `createAsyncDataContext` instead")
