@@ -1,13 +1,36 @@
 package org.jetbrains.jewel.foundation.tree
 
+import org.jetbrains.jewel.foundation.tree.Tree.Element.Node
+
 @Suppress("UNCHECKED_CAST")
 fun <T> emptyTree() = Tree.EMPTY as Tree<T>
 
-class Tree<T> internal constructor(internal val roots: List<Element<T>>) {
+class Tree<T> internal constructor(val roots: List<Element<T>>) {
 
     companion object {
         internal val EMPTY = Tree(roots = emptyList<Element<Any?>>())
     }
+
+    fun isEmpty() = roots.isEmpty()
+
+    private fun walk(breathFirst: Boolean) = sequence {
+        val queue = roots.toMutableList()
+        while (queue.isNotEmpty()) {
+            val next = queue.removeFirst()
+            yield(next)
+            if (next is Node) {
+                next.open()
+                if (breathFirst) {
+                    queue.addAll(next.children.orEmpty())
+                } else {
+                    queue.addAll(0, next.children.orEmpty())
+                }
+            }
+        }
+    }
+
+    fun walkBreadthFirst() = walk(true)
+    fun walkDepthFirst() = walk(false)
 
     sealed interface Element<T> {
 
