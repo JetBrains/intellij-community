@@ -1,4 +1,4 @@
-print(f'''{"""
+print(f'''{'''
 foo
 bar
-""".upper()}''')
+'''.upper()}''')

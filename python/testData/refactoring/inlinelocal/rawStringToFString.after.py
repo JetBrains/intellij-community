@@ -1,1 +1,1 @@
-print(f'''{r".".upper()}''')
+print(f'''{r'.'.upper()}''')
