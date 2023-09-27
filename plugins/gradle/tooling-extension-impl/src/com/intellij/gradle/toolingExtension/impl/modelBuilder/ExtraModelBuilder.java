@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.modelBuilder;
 
 import com.intellij.gradle.toolingExtension.impl.model.projectModel.ExternalProjectBuilderImpl;
+import com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
@@ -157,7 +158,7 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
     @NotNull String modelName,
     long timeInMs
   ) {
-    String projectName = project.getDisplayName();
+    String projectName = GradleNegotiationUtil.getProjectDisplayName(project);
     String serviceName = service.getClass().getSimpleName();
     String msg = String.format("%s: service %s imported '%s' in %d ms", projectName, serviceName, modelName, timeInMs);
     project.getLogger().error(msg);

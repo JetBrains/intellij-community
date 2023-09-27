@@ -51,6 +51,16 @@ public final class GradleNegotiationUtil {
     return identifier.getProjectPath();
   }
 
+  public static @NotNull String getProjectDisplayName(@NotNull Project project) {
+    if (is33OrBetter) {
+      return project.getDisplayName();
+    }
+    if (project.getParent() == null && project.getGradle().getParent() == null) {
+      return "root project '" + project.getName() + "'";
+    }
+    return "project '" + project.getPath() + "'";
+  }
+
   public static @Nullable File getTaskArchiveFile(@NotNull AbstractArchiveTask task) {
     if (is51OrBetter) {
       return GradleReflectionUtil.reflectiveGetProperty(task, "getArchiveFile", RegularFile.class).getAsFile();

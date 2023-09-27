@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling;
 
+import com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import org.gradle.api.Project;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.*;
 
 import java.io.PrintWriter;
@@ -74,7 +74,7 @@ public final class MessageBuilder {
 
     String title = myTitle;
     if (myProject != null) {
-      String projectDisplayName = getProjectDisplayName(myProject);
+      String projectDisplayName = GradleNegotiationUtil.getProjectDisplayName(myProject);
       title = projectDisplayName + ": " + title;
     }
     return title;
@@ -121,28 +121,5 @@ public final class MessageBuilder {
       sw.append("\nCaused by: ").append(esException.getOriginalReason());
     }
     return sw.toString();
-  }
-
-  @NotNull
-  private static String getProjectDisplayName(@NotNull Project project) {
-    String projectDisplayName;
-    if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("3.3")) < 0) {
-      StringBuilder builder = new StringBuilder();
-      if (project.getParent() == null && project.getGradle().getParent() == null) {
-        builder.append("root project '");
-        builder.append(project.getName());
-        builder.append('\'');
-      }
-      else {
-        builder.append("project '");
-        builder.append(project.getPath());
-        builder.append("'");
-      }
-      projectDisplayName = builder.toString();
-    }
-    else {
-      projectDisplayName = project.getDisplayName();
-    }
-    return projectDisplayName;
   }
 }
