@@ -20,6 +20,7 @@ import com.intellij.util.JavaModuleOptions
 import com.intellij.util.SystemProperties
 import com.intellij.util.system.OS
 import com.jetbrains.rd.util.lifetime.Lifetime
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.Path
@@ -27,7 +28,8 @@ import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
-internal class EmbeddedClientLauncher private constructor(private val moduleRepository: RuntimeModuleRepository, 
+@ApiStatus.Internal
+class EmbeddedClientLauncher private constructor(private val moduleRepository: RuntimeModuleRepository, 
                                                  private val moduleRepositoryPath: Path) {
   companion object {
     fun create(): EmbeddedClientLauncher? {
