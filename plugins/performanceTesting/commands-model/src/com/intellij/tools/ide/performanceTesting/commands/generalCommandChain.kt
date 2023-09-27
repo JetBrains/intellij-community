@@ -76,6 +76,11 @@ private fun <T : CommandChain> T.appendRawLine(line: String): T {
   return this
 }
 
+fun <T : CommandChain> T.reloadFromDisk(relativePaths: List<String>): T {
+  addCommand("${CMD_PREFIX}reloadFromDisk ${relativePaths.joinToString(" ")}")
+  return this
+}
+
 fun <T : CommandChain> T.openFile(relativePath: String,
                                   timeoutInSeconds: Long = 0,
                                   suppressErrors: Boolean = false,
