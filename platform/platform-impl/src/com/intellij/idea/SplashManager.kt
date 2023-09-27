@@ -99,7 +99,17 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferr
         return@span
       }
 
-      val splash = Splash(image)
+      val splash = try {
+        Splash(image)
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        logger<Splash>().warn(e)
+        return@span
+      }
+
       StartUpMeasurer.addInstantEvent("splash shown")
       try {
         ensureActive()
