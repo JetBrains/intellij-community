@@ -7,6 +7,11 @@ public object SimpleEntityTypesResolver : EntityTypesResolver {
   override fun getPluginId(clazz: Class<*>): String? = null
 
   override fun resolveClass(name: String, pluginId: String?): Class<*> {
-    return loadClassByName(name, javaClass.classLoader)
+    val classLoader = getClassLoader(pluginId) ?: error("Class loader isn't found")
+    return loadClassByName(name, classLoader)
+  }
+
+  override fun getClassLoader(pluginId: String?): ClassLoader? {
+    return javaClass.classLoader
   }
 }

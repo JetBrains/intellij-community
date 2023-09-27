@@ -47,7 +47,7 @@ public class EntityStorageSerializerImpl(
   private val urlRelativizer: UrlRelativizer? = null
 ) : EntityStorageSerializer {
   public companion object {
-    public const val STORAGE_SERIALIZATION_VERSION: String = "v1"
+    public const val STORAGE_SERIALIZATION_VERSION: String = "v2"
   }
 
   private val interner: StorageInterner = StorageInternerImpl()
@@ -71,7 +71,8 @@ public class EntityStorageSerializerImpl(
         interner,
         urlRelativizer,
         classCache
-      )
+      ),
+      typesResolver
     )
 
     registrar.registerClasses(kryo)

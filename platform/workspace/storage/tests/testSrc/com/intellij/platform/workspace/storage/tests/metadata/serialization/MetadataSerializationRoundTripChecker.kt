@@ -24,6 +24,10 @@ object MetadataDiffTestResolver: EntityTypesResolver {
     )
   }
 
+  override fun getClassLoader(pluginId: String?): ClassLoader? {
+    return javaClass.classLoader
+  }
+
   fun resolveClass(name: String): Class<*> {
     if (name.startsWith("[")) return Class.forName(name)
     return javaClass.classLoader.loadClass(name)

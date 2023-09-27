@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.kryo5.objenesis.instantiator.ObjectInstantiator
 import com.esotericsoftware.kryo.kryo5.serializers.DefaultSerializers
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
+import com.intellij.platform.workspace.storage.EntityTypesResolver
 import com.intellij.util.SmartList
 import com.intellij.util.containers.*
 import com.intellij.platform.workspace.storage.impl.*
@@ -42,13 +43,21 @@ import kotlin.collections.ArrayDeque
 import kotlin.collections.HashSet
 import kotlin.collections.LinkedHashMap
 import kotlin.collections.LinkedHashSet
-import kotlin.enums.EnumEntries
 
 internal interface StorageRegistrar {
   fun registerClasses(kryo: Kryo)
 }
 
-internal class StorageClassesRegistrar(private val serializerUtil: StorageSerializerUtil): StorageRegistrar {
+internal class StorageClassesRegistrar(
+  private val serializerUtil: StorageSerializerUtil,
+  private val typesResolver: EntityTypesResolver
+): StorageRegistrar {
+
+  private val kotlinPluginId = "org.jetbrains.kotlin"
+
+  private val kotlinCollectionsToRegistrar: List<Class<*>> = listOf(
+    ArrayDeque::class.java, emptyList<Any>()::class.java, emptyMap<Any, Any>()::class.java, emptySet<Any>()::class.java
+  )
 
   override fun registerClasses(kryo: Kryo) {
     registerDefaultSerializers(kryo)
@@ -115,9 +124,14 @@ internal class StorageClassesRegistrar(private val serializerUtil: StorageSerial
     kryo.register(MutableSet::class.java)
     kryo.register(MutableMap::class.java)
 
+    kryo.register(Array::class.java)
+
+    registerKotlinCollections(kryo)
+
+    registerKotlinCollectionsInKotlinPlugin(kryo)
+
     kryo.register(ArrayList::class.java)
     kryo.register(LinkedList::class.java)
-    kryo.register(ArrayDeque::class.java)
     kryo.register(Stack::class.java)
     kryo.register(Vector::class.java)
 
@@ -150,6 +164,20 @@ internal class StorageClassesRegistrar(private val serializerUtil: StorageSerial
     kryo.register(MutableWorkspaceSet::class.java)
     //register java.util.Arrays.ArrayList
     kryo.register(Arrays.asList<Int>()::class.java)
+  }
+
+  private fun registerKotlinCollections(kryo: Kryo) {
+    kotlinCollectionsToRegistrar.forEach { kryo.register(it) }
+  }
+
+  private fun registerKotlinCollectionsInKotlinPlugin(kryo: Kryo) {
+    val classLoader = typesResolver.getClassLoader(kotlinPluginId)
+    if (classLoader != null) {
+      kotlinCollectionsToRegistrar.forEach {
+        val classInKotlinPlugin = classLoader.loadClass(it.name)
+        kryo.register(classInKotlinPlugin)
+      }
+    }
   }
 
   private fun registerRefsTableClasses(kryo: Kryo) {
