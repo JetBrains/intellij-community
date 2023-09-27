@@ -65,7 +65,7 @@ internal object BranchesDashboardActions {
 
   class MultipleLocalBranchActions : ActionGroup(), DumbAware {
     override fun getChildren(e: AnActionEvent?): Array<AnAction> =
-      arrayOf(ShowArbitraryBranchesDiffAction(), UpdateSelectedBranchAction(), DeleteBranchAction())
+      arrayOf(ShowArbitraryBranchesDiffAction(), ShowArbitraryBranchesFileDiffAction(), UpdateSelectedBranchAction(), DeleteBranchAction())
   }
 
   class CurrentBranchActions(project: Project,
@@ -338,15 +338,16 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class ShowArbitraryBranchesDiffAction : BranchesActionBase(text = messagePointer("action.Git.Compare.Selected.title"),
-                                                             icon = AllIcons.Actions.Diff) {
+  internal abstract class BranchesPairActionBase(text: () -> @Nls(capitalization = Nls.Capitalization.Title) String = { "" },
+                                                 description: @Nls(capitalization = Nls.Capitalization.Sentence) () -> String = { "" },
+                                                 icon: Icon? = null) : BranchesActionBase(text = text, description = description,
+                                                                                          icon = icon) {
     override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
       if (branches.size != 2) {
         e.presentation.isEnabledAndVisible = false
         e.presentation.description = ""
       }
       else {
-        e.presentation.description = message("action.Git.Compare.Selected.description")
         val branchOne = branches.elementAt(0)
         val branchTwo = branches.elementAt(1)
         val controller = e.getData(BRANCHES_UI_CONTROLLER)!!
@@ -365,11 +366,37 @@ internal object BranchesDashboardActions {
       val branchTwo = branches.elementAt(1)
       val commonRepositories = controller.commonRepositories(branchOne, branchTwo)
 
-      GitBrancher.getInstance(e.project!!).compareAny(branchOne.branchName, branchTwo.branchName, commonRepositories.toList())
+      performAction(e.project!!, branchOne, branchTwo, commonRepositories)
     }
 
     private fun BranchesDashboardController.commonRepositories(branchOne: BranchInfo, branchTwo: BranchInfo): Collection<GitRepository> {
       return getSelectedRepositories(branchOne) intersect getSelectedRepositories(branchTwo)
+    }
+
+    abstract fun performAction(project: Project,
+                               branchOne: BranchInfo,
+                               branchTwo: BranchInfo,
+                               commonRepositories: Collection<GitRepository>)
+  }
+
+  class ShowArbitraryBranchesDiffAction : BranchesPairActionBase(text = messagePointer("action.Git.Compare.Selected.title"),
+                                                                 description = messagePointer("action.Git.Compare.Selected.description"),
+                                                                 icon = AllIcons.Actions.Diff) {
+    override fun performAction(project: Project,
+                               branchOne: BranchInfo,
+                               branchTwo: BranchInfo,
+                               commonRepositories: Collection<GitRepository>) {
+      GitBrancher.getInstance(project).compareAny(branchOne.branchName, branchTwo.branchName, commonRepositories.toList())
+    }
+  }
+
+  class ShowArbitraryBranchesFileDiffAction : BranchesPairActionBase(text = messagePointer("action.Git.Compare.Selected.Heads.title"),
+                                                                     description = messagePointer("action.Git.Compare.Selected.Heads.description")) {
+    override fun performAction(project: Project,
+                               branchOne: BranchInfo,
+                               branchTwo: BranchInfo,
+                               commonRepositories: Collection<GitRepository>) {
+      GitBrancher.getInstance(project).showDiff(branchOne.branchName, branchTwo.branchName, commonRepositories.toList())
     }
   }
 

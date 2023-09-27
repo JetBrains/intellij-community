@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.openapi.project.Project;
@@ -181,9 +181,14 @@ public interface GitBrancher {
                   @NotNull List<? extends @NotNull GitRepository> repositories);
 
   /**
-   * Compares the current working tree with its state in the selected branch.
+   * Compares the current working tree with its state in the selected branch HEAD.
    */
   void showDiffWithLocal(@NotNull String branchName, @NotNull List<? extends @NotNull GitRepository> repositories);
+
+  /**
+   * Compares working tree states in the selected branch HEADs.
+   */
+  void showDiff(@NotNull String branchName, @NotNull String otherBranchName, @NotNull List<? extends @NotNull GitRepository> repositories);
 
   /**
    * <p>Merges the given branch to the HEAD.</p>
