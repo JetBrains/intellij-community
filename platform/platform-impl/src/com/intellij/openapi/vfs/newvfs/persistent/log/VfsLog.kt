@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor
 import com.intellij.util.SystemProperties
@@ -31,7 +33,11 @@ interface VfsLog {
   fun isCompactionRunning(): Boolean
 
   companion object {
-    private val LOG_VFS_OPERATIONS_ENABLED: Boolean = SystemProperties.getBooleanProperty("idea.vfs.log-vfs-operations.enabled", false)
+    private val LOG_VFS_OPERATIONS_ENABLED: Boolean = SystemProperties.getBooleanProperty("idea.vfs.log-vfs-operations.enabled",
+                                                                                          ApplicationManager.getApplication().isEAP &&
+                                                                                          !ApplicationManager.getApplication().isUnitTestMode &&
+                                                                                          !ApplicationManagerEx.isInStressTest() &&
+                                                                                          !ApplicationManagerEx.isInIntegrationTest())
 
     @JvmStatic
     val isVfsTrackingEnabled: Boolean get() = LOG_VFS_OPERATIONS_ENABLED
