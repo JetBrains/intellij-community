@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.tooling;
 
 import org.gradle.api.Project;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,43 +49,22 @@ public final class ErrorMessageBuilder {
       .withKind(Message.Kind.WARNING)
       .withException(myException)
       .withGroup(myGroup)
-      .withLocation(myProject.getBuildFile().getPath(), 0, 0)
+      .withProject(myProject)
       .build();
   }
 
   private @NotNull String getMessageTitle() {
-    String projectDisplayName = getDisplayName(myProject);
     String title = null;
     if (myException != null) {
       title = getRootCauseMessage(myException);
     }
     if (title == null) {
-      title = myDescription != null ? myDescription : myGroup;
+      title = myDescription;
     }
-    return projectDisplayName + ": " + title;
-  }
-
-  @NotNull
-  private static String getDisplayName(@NotNull Project project) {
-    String projectDisplayName;
-    if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("3.3")) < 0) {
-      StringBuilder builder = new StringBuilder();
-      if (project.getParent() == null && project.getGradle().getParent() == null) {
-        builder.append("root project '");
-        builder.append(project.getName());
-        builder.append('\'');
-      }
-      else {
-        builder.append("project '");
-        builder.append(project.getPath());
-        builder.append("'");
-      }
-      projectDisplayName = builder.toString();
+    if (title == null) {
+      title = myGroup;
     }
-    else {
-      projectDisplayName = project.getDisplayName();
-    }
-    return projectDisplayName;
+    return title;
   }
 
   @Nullable

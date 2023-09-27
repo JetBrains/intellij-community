@@ -68,7 +68,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
   @NotNull
   @Override
   ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(project, e, "Gradle source set model error")
+    return ErrorMessageBuilder.create(project, e, "Source set model error")
   }
 
   @NotNull

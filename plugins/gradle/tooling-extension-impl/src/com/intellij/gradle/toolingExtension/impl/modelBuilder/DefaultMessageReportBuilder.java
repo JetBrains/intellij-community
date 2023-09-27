@@ -57,6 +57,6 @@ public class DefaultMessageReportBuilder implements MessageReportBuilder {
 
   @Override
   public void reportMessage(@NotNull Project project) {
-    myMessageReporter.reportMessage(project, myMessageBuilder.build());
+    myMessageReporter.reportMessage(project, myMessageBuilder.withProject(project).build());
   }
 }

@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.gradle.tooling;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import org.gradle.api.Project;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +23,7 @@ public final class MessageBuilder {
   private @Nullable Exception myException = null;
   private @NotNull Message.Kind myKind = Message.Kind.INFO;
   private @Nullable Message.FilePosition myFilePosition = null;
+  private @Nullable Project myProject = null;
 
   public @NotNull MessageBuilder withTitle(String title) {
     myTitle = title;
@@ -58,8 +61,23 @@ public final class MessageBuilder {
     return this;
   }
 
-  public @NotNull Message build() {
+  public @NotNull MessageBuilder withProject(Project project) {
+    myProject = project;
+    return this;
+  }
+
+  private @NotNull String buildTitle() {
     assert myTitle != null;
+
+    String title = myTitle;
+    if (myProject != null) {
+      String projectDisplayName = getProjectDisplayName(myProject);
+      title = projectDisplayName + ": " + title;
+    }
+    return title;
+  }
+
+  private @NotNull String buildText() {
     assert myText != null;
 
     String text = myText;
@@ -71,7 +89,23 @@ public final class MessageBuilder {
         text += ("\n\n" + myException.getMessage());
       }
     }
-    return new Message(myTitle, text, myGroup, myKind, myFilePosition);
+    return text;
+  }
+
+  private @Nullable Message.FilePosition buildFilePosition() {
+    Message.FilePosition filePosition = myFilePosition;
+    if (filePosition == null && myProject != null) {
+      String buildScriptPath = myProject.getBuildFile().getPath();
+      filePosition = new Message.FilePosition(buildScriptPath, 0, 0);
+    }
+    return filePosition;
+  }
+
+  public @NotNull Message build() {
+    String title = buildTitle();
+    String text = buildText();
+    Message.FilePosition filePosition = buildFilePosition();
+    return new Message(title, text, myGroup, myKind, filePosition);
   }
 
   @Contract("null -> null; !null->!null")
@@ -84,5 +118,28 @@ public final class MessageBuilder {
       sw.append("\nCaused by: ").append(esException.getOriginalReason());
     }
     return sw.toString();
+  }
+
+  @NotNull
+  private static String getProjectDisplayName(@NotNull Project project) {
+    String projectDisplayName;
+    if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("3.3")) < 0) {
+      StringBuilder builder = new StringBuilder();
+      if (project.getParent() == null && project.getGradle().getParent() == null) {
+        builder.append("root project '");
+        builder.append(project.getName());
+        builder.append('\'');
+      }
+      else {
+        builder.append("project '");
+        builder.append(project.getPath());
+        builder.append("'");
+      }
+      projectDisplayName = builder.toString();
+    }
+    else {
+      projectDisplayName = project.getDisplayName();
+    }
+    return projectDisplayName;
   }
 }
