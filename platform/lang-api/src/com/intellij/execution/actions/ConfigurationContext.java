@@ -47,7 +47,7 @@ public class ConfigurationContext {
   private static final Logger LOG = Logger.getInstance(ConfigurationContext.class);
   public static final Key<ConfigurationContext> SHARED_CONTEXT = Key.create("SHARED_CONTEXT");
 
-  private final Location<? extends PsiElement> myLocation;
+  private Location<PsiElement> myLocation;
   private final Editor myEditor;
   private RunnerAndConfigurationSettings myConfiguration;
   private boolean myInitialized;
@@ -96,7 +96,6 @@ public class ConfigurationContext {
       sharedContext = new ConfigurationContext(dataContext, location, module, isMultipleSelection, place);
       dataManager.saveInDataContext(dataContext, SHARED_CONTEXT, sharedContext);
     }
-
     return sharedContext;
   }
 
@@ -165,7 +164,7 @@ public class ConfigurationContext {
     myPlace = null;
   }
 
-  private ConfigurationContext(@NotNull Location<? extends PsiElement> location) {
+  private ConfigurationContext(@NotNull Location<PsiElement> location) {
     myLocation = location;
     myModule = location.getModule();
     myEditor = null;
@@ -222,7 +221,14 @@ public class ConfigurationContext {
    *
    * @return the source code location, or null if no source code fragment is currently selected.
    */
-  public @Nullable Location getLocation() {
+  public @Nullable Location<PsiElement> getLocation() {
+    if (myLocation == null || !myLocation.getPsiElement().isValid()) {
+      if (myLocation != null) {
+        myConfigurationsFromContext = null;
+        myExistingConfiguration = null;
+      }
+      myLocation = calcLocation(myDataContext, myModule);
+    }
     return myLocation;
   }
 
@@ -254,16 +260,17 @@ public class ConfigurationContext {
       }
     }
     myExistingConfiguration = new Ref<>();
-    if (myLocation == null) {
+    Location<? extends PsiElement> location = getLocation();
+    if (location == null) {
       return null;
     }
 
-    final PsiElement psiElement = myLocation.getPsiElement();
+    final PsiElement psiElement = location.getPsiElement();
     if (!psiElement.isValid()) {
       return null;
     }
 
-    if (MultipleRunLocationsProvider.findAlternativeLocations(myLocation) != null) {
+    if (MultipleRunLocationsProvider.findAlternativeLocations(location) != null) {
       myExistingConfiguration.set(null);
       return null;
     }
@@ -272,7 +279,7 @@ public class ConfigurationContext {
     List<ExistingConfiguration> existingConfigurations = new ArrayList<>();
     if (producers != null) {
       for (RuntimeConfigurationProducer producer : producers) {
-        RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
+        RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(location, this);
         if (configuration != null) {
           existingConfigurations.add(new ExistingConfiguration(configuration, null));
         }
