@@ -173,6 +173,7 @@ internal class FixTrackedBranchDialog(private val project: Project) : DialogWrap
         updateRemoteField(e.item as GitRepository)
       }
     }
+    ComboboxSpeedSearch.installOn(this)
   }
 
   private fun showRepositoryField() = repositories.size > 1
