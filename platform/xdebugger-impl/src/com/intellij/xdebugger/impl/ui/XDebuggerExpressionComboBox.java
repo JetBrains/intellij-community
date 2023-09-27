@@ -2,7 +2,7 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeWithMe.RemoteTransferUIManager;
+import com.intellij.codeWithMe.TransferUIManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -202,7 +202,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
         @Override
         protected void onEditorCreate(EditorEx editor) {
           editor.putUserData(DebuggerCopyPastePreprocessor.REMOVE_NEWLINES_ON_PASTE, true);
-          RemoteTransferUIManager.forbidBeControlizationInLux(editor, "debugger");   // TODO(GTW-6142): Remove after RDCT-543 is done
+          TransferUIManager.getInstance().forbidBeControlizationInLux(editor, "debugger");   // TODO(GTW-6142): Remove after RDCT-543 is done
           prepareEditor(editor);
           if (showMultiline) {
             setExpandable(editor);
