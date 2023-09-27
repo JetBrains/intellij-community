@@ -16,7 +16,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExpandedItemListCellRendererWrapper;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
@@ -52,14 +52,12 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
   public static final Key<Point> CLICK_INFO_POINT = Key.create("CLICK_INFO_POINT");
   public static final Key<Throwable> ADDED_AT_STACKTRACE = Key.create("uiInspector.addedAt");
 
-  private static boolean ourGlobalInstanceInitialized = false;
+  private static boolean ourStacktracesSavingInitialized = false;
 
-  public static synchronized void initGlobalInspector() {
-    if (!ourGlobalInstanceInitialized) {
-      ourGlobalInstanceInitialized = true;
-      AppUIUtil.invokeOnEdt(() -> {
-        new UiInspector(null);
-      });
+  public static synchronized void initStacktracesSaving() {
+    if (!ourStacktracesSavingInitialized) {
+      ourStacktracesSavingInitialized = true;
+      AddedAtStacktracesCollector.init();
     }
   }
 
@@ -94,17 +92,15 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
     }
   }
 
-  public static final class UiInspector implements AWTEventListener, Disposable {
+  public static final class UiInspector implements Disposable {
     UiInspector(@Nullable Project project) {
       if (project != null) {
         Disposer.register(project, this);
       }
-      Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.CONTAINER_EVENT_MASK);
     }
 
     @Override
     public void dispose() {
-      Toolkit.getDefaultToolkit().removeAWTEventListener(this);
       for (Window window : Window.getWindows()) {
         if (window instanceof InspectorWindow) {
           ((InspectorWindow)window).close();
@@ -120,13 +116,6 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
       }
       window.setVisible(true);
       window.toFront();
-    }
-
-    @Override
-    public void eventDispatched(AWTEvent event) {
-      if (event instanceof ContainerEvent) {
-        processContainerEvent((ContainerEvent)event);
-      }
     }
 
     private void processMouseEvent(Project project, MouseEvent me) {
@@ -310,11 +299,22 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
 
       return Collections.emptyList();
     }
+  }
 
-    private static void processContainerEvent(ContainerEvent event) {
-      Component child = event.getID() == ContainerEvent.COMPONENT_ADDED ? event.getChild() : null;
-      if (child instanceof JComponent && !(event.getSource() instanceof CellRendererPane)) {
-        ((JComponent)child).putClientProperty(ADDED_AT_STACKTRACE, new Throwable());
+  private static class AddedAtStacktracesCollector implements AWTEventListener {
+    private AddedAtStacktracesCollector() { }
+
+    public static void init() {
+      Toolkit.getDefaultToolkit().addAWTEventListener(new AddedAtStacktracesCollector(), AWTEvent.CONTAINER_EVENT_MASK);
+    }
+
+    @Override
+    public void eventDispatched(AWTEvent event) {
+      if (event instanceof ContainerEvent containerEvent) {
+        Component child = event.getID() == ContainerEvent.COMPONENT_ADDED ? containerEvent.getChild() : null;
+        if (child instanceof JComponent jComponent && !(event.getSource() instanceof CellRendererPane)) {
+          ClientProperty.put(jComponent, ADDED_AT_STACKTRACE, new Throwable());
+        }
       }
     }
   }

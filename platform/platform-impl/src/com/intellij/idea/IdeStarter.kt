@@ -106,7 +106,7 @@ open class IdeStarter : ModernApplicationStarter() {
 
       if (app.isInternal) {
         asyncCoroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          UiInspectorAction.initGlobalInspector()
+          UiInspectorAction.initStacktracesSaving()
         }
       }
 
