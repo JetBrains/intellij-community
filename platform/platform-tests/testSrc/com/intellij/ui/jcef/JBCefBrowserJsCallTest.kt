@@ -132,7 +132,7 @@ class AsyncJBCefBrowserJsCallTest : JBCefBrowserJsCallTest() {
   @Test
   fun `execute the same call twice and simultaneously`() {
     val browser = prepareBrowser()
-    val jsCall = JBCefBrowserJsCall("""2+2""", browser)
+    val jsCall = JBCefBrowserJsCall("""2+2""", browser, 0)
     val latch = CountDownLatch(2)
 
     var r1: String? = null
