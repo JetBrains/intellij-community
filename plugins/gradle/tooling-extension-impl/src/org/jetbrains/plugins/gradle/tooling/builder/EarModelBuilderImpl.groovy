@@ -27,8 +27,8 @@ import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getTaskArchiveFile
 import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getTaskArchiveFileName
 import static com.intellij.gradle.toolingExtension.impl.modelBuilder.ExtraModelBuilder.reportModelBuilderFailure
-import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveCall
-import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveGetProperty
+import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.reflectiveCall
+import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.reflectiveGetProperty
 /**
  * @author Vladislav.Soroka
  */

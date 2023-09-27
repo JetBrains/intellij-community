@@ -15,7 +15,7 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
-import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil;
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil;
 
 import java.io.File;
 import java.util.*;
@@ -125,14 +125,14 @@ public class GradleSourceSetCachedFinder {
   }
 
   private static @NotNull Set<Project> getProjectsWithReflection(@NotNull DefaultIncludedBuild build) {
-    GradleInternal gradleInternal = ReflectionUtil.reflectiveCall(build, "getConfiguredBuild", GradleInternal.class);
+    GradleInternal gradleInternal = GradleReflectionUtil.reflectiveCall(build, "getConfiguredBuild", GradleInternal.class);
     return gradleInternal.getRootProject().getAllprojects();
   }
 
   private static @NotNull Object maybeUnwrapIncludedBuildInternal(@NotNull IncludedBuild includedBuild) {
-    Class<?> includedBuildInternalClass = ReflectionUtil.findClassForName("org.gradle.internal.composite.IncludedBuildInternal");
+    Class<?> includedBuildInternalClass = GradleReflectionUtil.findClassForName("org.gradle.internal.composite.IncludedBuildInternal");
     if (includedBuildInternalClass != null && includedBuildInternalClass.isAssignableFrom(includedBuild.getClass())) {
-      return ReflectionUtil.reflectiveCall(includedBuild, "getTarget", Object.class);
+      return GradleReflectionUtil.reflectiveCall(includedBuild, "getTarget", Object.class);
     }
     return includedBuild;
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.util;
 
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
@@ -10,7 +11,6 @@ import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil;
 
 import java.io.File;
 
@@ -54,15 +54,15 @@ public final class GradleNegotiationUtil {
 
   public static @Nullable File getTaskArchiveFile(@NotNull AbstractArchiveTask task) {
     if (is51OrBetter) {
-      return ReflectionUtil.reflectiveGetProperty(task, "getArchiveFile", RegularFile.class).getAsFile();
+      return GradleReflectionUtil.reflectiveGetProperty(task, "getArchiveFile", RegularFile.class).getAsFile();
     }
-    return ReflectionUtil.reflectiveCall(task, "getArchivePath", File.class);
+    return GradleReflectionUtil.reflectiveCall(task, "getArchivePath", File.class);
   }
 
   public static @Nullable String getTaskArchiveFileName(@NotNull AbstractArchiveTask task) {
     if (is51OrBetter) {
-      return ReflectionUtil.reflectiveGetProperty(task, "getArchiveFileName", String.class);
+      return GradleReflectionUtil.reflectiveGetProperty(task, "getArchiveFileName", String.class);
     }
-    return ReflectionUtil.reflectiveCall(task, "getArchiveName", String.class);
+    return GradleReflectionUtil.reflectiveCall(task, "getArchiveName", String.class);
   }
 }
