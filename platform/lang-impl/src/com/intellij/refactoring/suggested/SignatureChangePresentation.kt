@@ -93,14 +93,11 @@ class SignatureChangePresentation(
   }
 
   fun paint(g: Graphics2D, bounds: Rectangle) {
+    UISettings.setupAntialiasing(g)
     renderAll(g, g.fontRenderContext, bounds)
   }
 
   private fun renderAll(g: Graphics2D?, fontRenderContext: FontRenderContext, bounds: Rectangle): ConnectionRouter {
-    if (g != null) {
-      UISettings.setupAntialiasing(g)
-    }
-
     val lineHeight = lineHeight(fontRenderContext)
     val oldSignatureSize = signatureDimensions(model.oldSignature, fontRenderContext)
     val newSignatureSize = signatureDimensions(model.newSignature, fontRenderContext)
