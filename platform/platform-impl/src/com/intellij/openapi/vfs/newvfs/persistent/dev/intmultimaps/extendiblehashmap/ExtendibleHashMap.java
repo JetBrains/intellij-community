@@ -31,10 +31,11 @@ import java.util.Objects;
  */
 @ApiStatus.Internal
 public class ExtendibleHashMap implements DurableIntToMultiIntMap {
-  private static final int VERSION = 1;
+  /** Version of binary format used by this class */
+  public static final int IMPLEMENTATION_VERSION = 1;
 
   /** First header int32 to recognize this file type */
-  private static final int MAGIC_WORD = IOUtil.asciiToMagicWord("EHMM");
+  public static final int MAGIC_WORD = IOUtil.asciiToMagicWord("EHMM");
 
   //Binary layout: (header segment) (data segment)+
   //  Header segment: (fixed header fields) (segments table)
@@ -114,7 +115,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
 
       if (fileIsEmpty) {
         header.magicWord(MAGIC_WORD);
-        header.version(VERSION);
+        header.version(IMPLEMENTATION_VERSION);
         header.segmentSize(segmentSize);
         header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
         wasProperlyClosed = true;//new storage is by definition 'correct'
@@ -133,9 +134,9 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
             ".magicWord(=" + magicWord + ", '" + IOUtil.magicWordToASCII(magicWord) + "') != " + MAGIC_WORD + " expected");
         }
 
-        if (header.version() != VERSION) {
+        if (header.version() != IMPLEMENTATION_VERSION) {
           throw new IOException(
-            "[" + storage.storagePath() + "]: version(=" + header.version() + ") != current impl version(=" + VERSION + ")");
+            "[" + storage.storagePath() + "]: version(=" + header.version() + ") != current impl version(=" + IMPLEMENTATION_VERSION + ")");
         }
 
         if (header.segmentSize() != segmentSize) {
@@ -488,33 +489,33 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
   }
 
 
-  @VisibleForTesting
   static final class HeaderLayout {
     //@formatter:off
-    private static final int MAGIC_WORD_OFFSET               = 0;   //int32
-    private static final int VERSION_OFFSET                  = 4;   //int32
-    private static final int SEGMENT_SIZE_OFFSET             = 8;   //int32
-    private static final int ACTUAL_SEGMENTS_COUNT_OFFSET    = 12;  //int32
-    private static final int GLOBAL_HASH_SUFFIX_DEPTH_OFFSET = 16;  //int8
+    public static final int MAGIC_WORD_OFFSET               =  0;  //int32
+    public static final int VERSION_OFFSET                  =  4;  //int32
+    public static final int SEGMENT_SIZE_OFFSET             =  8;  //int32
+    public static final int ACTUAL_SEGMENTS_COUNT_OFFSET    = 12;  //int32
+    public static final int GLOBAL_HASH_SUFFIX_DEPTH_OFFSET = 16;  //int8
 
-    private static final int FILE_STATUS_OFFSET              = 17;  //int8
+    public static final int FILE_STATUS_OFFSET              = 17;  //int8
 
-    private static final int FIRST_FREE_OFFSET               = 18;
+    public static final int FIRST_FREE_OFFSET               = 18;
     // region [18..79] is reserved for the generations to come
-    private static final int STATIC_HEADER_SIZE              = 80;
+    public static final int STATIC_HEADER_SIZE              = 80;
 
     private static final int SEGMENTS_TABLE_OFFSET = STATIC_HEADER_SIZE; //int16[N]
     //@formatter:on
 
-    private static final byte FILE_STATUS_PROPERLY_CLOSED = 1;
-    private static final byte FILE_STATUS_OPENED = 0;
+    public static final byte FILE_STATUS_PROPERLY_CLOSED = 1;
+    public static final byte FILE_STATUS_OPENED = 0;
 
     //TODO RC: segmentSize is 2^N, and segmentsTable also must have 2^M entries -- but since we use few bytes
     // for static header, this means M <= N-1 -- i.e. we waste _almost half_ of header segment space because
-    // segmentsTable must have power-of-2 size. We could solve that by using some compression -- we need to
-    // win just 80 bytes out of 32-64k, it seems quite doable, and we could cache uncompressed segmentsTable
-    // in memory -- 32-64k heap usage is OK given it makes hashtable almost 2x larger for same segmentSize,
-    // and likely also speeds up segmentTable lookup a bit.
+    // segmentsTable must have power-of-2 size.
+    // We could solve that by using some compression -- we need to win just 80 bytes out of 32-64k, it seems
+    // quite doable, and we could cache uncompressed segmentsTable in memory -- 32-64k heap usage is OK given
+    // it makes hashtable almost 2x larger for same segmentSize, and likely also speeds up segmentTable lookup
+    // a bit.
     // Alternative solution would be to break (headerSegment.size == dataSegment.size) constraint: i.e. allow
     // header to be (80 + dataSegment.size) bytes. Such change of layout means we can't align segments to the
     // first page anymore -- so there will be (dataSegment.size-80) wasted bytes at the end of the first page.
@@ -570,6 +571,23 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
                            byte connectionStatus) {
       headerBuffer.put(FILE_STATUS_OFFSET, connectionStatus);
     }
+
+    public static int magicWord(@NotNull ByteBuffer headerBuffer) {
+      return headerBuffer.getInt(MAGIC_WORD_OFFSET);
+    }
+
+    public static int version(@NotNull ByteBuffer headerBuffer) {
+      return headerBuffer.getInt(VERSION_OFFSET);
+    }
+
+    public static int segmentSize(@NotNull ByteBuffer headerBuffer) {
+      return headerBuffer.getInt(SEGMENT_SIZE_OFFSET);
+    }
+
+    public static byte fileStatus(@NotNull ByteBuffer headerBuffer) {
+      return headerBuffer.get(FILE_STATUS_OFFSET);
+    }
+
 
     public int actualSegmentsCount() {
       return headerBuffer.getInt(ACTUAL_SEGMENTS_COUNT_OFFSET);
