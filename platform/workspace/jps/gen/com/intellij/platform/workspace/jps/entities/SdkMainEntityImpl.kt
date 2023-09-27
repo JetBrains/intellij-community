@@ -13,23 +13,23 @@ import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.io.Serializable
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class SdkMainEntityImpl(val dataSource: SdkMainEntityData) : SdkMainEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class SdkMainEntityImpl(private val dataSource: SdkMainEntityData) : SdkMainEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -59,6 +59,7 @@ open class SdkMainEntityImpl(val dataSource: SdkMainEntityData) : SdkMainEntity,
     return connections
   }
 
+
   class Builder(result: SdkMainEntityData?) : ModifiableWorkspaceEntityBase<SdkMainEntity, SdkMainEntityData>(
     result), SdkMainEntity.Builder {
     constructor() : this(SdkMainEntityData())
@@ -83,13 +84,12 @@ open class SdkMainEntityImpl(val dataSource: SdkMainEntityData) : SdkMainEntity,
       this.currentEntityData = null
 
       index(this, "homePath", this.homePath)
-      indexSdkRoots(roots)
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -133,11 +133,6 @@ open class SdkMainEntityImpl(val dataSource: SdkMainEntityData) : SdkMainEntity,
       if (this.roots != dataSource.roots) this.roots = dataSource.roots.toMutableList()
       if (this.additionalData != dataSource.additionalData) this.additionalData = dataSource.additionalData
       updateChildToParentReferences(parents)
-    }
-
-    private fun indexSdkRoots(sdkRoots: List<SdkRoot>) {
-      val sdkRootList = sdkRoots.map { it.url }.toHashSet()
-      index(this, "roots", sdkRootList)
     }
 
 
@@ -186,11 +181,6 @@ open class SdkMainEntityImpl(val dataSource: SdkMainEntityData) : SdkMainEntity,
 
     private val rootsUpdater: (value: List<SdkRoot>) -> Unit = { value ->
 
-      val _diff = diff
-      if (_diff != null) {
-        indexSdkRoots(value)
-      }
-
       changedProperty.add("roots")
     }
     override var roots: MutableList<SdkRoot>
@@ -231,11 +221,11 @@ class SdkMainEntityData : WorkspaceEntityData.WithCalculableSymbolicId<SdkMainEn
   lateinit var roots: MutableList<SdkRoot>
   lateinit var additionalData: String
 
-  fun isNameInitialized(): Boolean = ::name.isInitialized
-  fun isTypeInitialized(): Boolean = ::type.isInitialized
-  fun isHomePathInitialized(): Boolean = ::homePath.isInitialized
-  fun isRootsInitialized(): Boolean = ::roots.isInitialized
-  fun isAdditionalDataInitialized(): Boolean = ::additionalData.isInitialized
+  internal fun isNameInitialized(): Boolean = ::name.isInitialized
+  internal fun isTypeInitialized(): Boolean = ::type.isInitialized
+  internal fun isHomePathInitialized(): Boolean = ::homePath.isInitialized
+  internal fun isRootsInitialized(): Boolean = ::roots.isInitialized
+  internal fun isAdditionalDataInitialized(): Boolean = ::additionalData.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SdkMainEntity> {
     val modifiable = SdkMainEntityImpl.Builder(null)
@@ -252,6 +242,10 @@ class SdkMainEntityData : WorkspaceEntityData.WithCalculableSymbolicId<SdkMainEn
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.SdkMainEntity") as EntityMetadata
   }
 
   override fun clone(): SdkMainEntityData {
@@ -337,13 +331,5 @@ class SdkMainEntityData : WorkspaceEntityData.WithCalculableSymbolicId<SdkMainEn
     result = 31 * result + roots.hashCode()
     result = 31 * result + additionalData.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(SdkRoot::class.java)
-    collector.add(SdkRootTypeId::class.java)
-    this.homePath?.let { collector.add(it::class.java) }
-    this.roots?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }
