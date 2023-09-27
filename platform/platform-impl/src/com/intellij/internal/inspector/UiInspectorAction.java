@@ -7,11 +7,12 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.inspector.components.HierarchyTree;
 import com.intellij.internal.inspector.components.InspectorWindow;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPromoter;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFrame;
@@ -314,46 +315,6 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
       Component child = event.getID() == ContainerEvent.COMPONENT_ADDED ? event.getChild() : null;
       if (child instanceof JComponent && !(event.getSource() instanceof CellRendererPane)) {
         ((JComponent)child).putClientProperty(ADDED_AT_STACKTRACE, new Throwable());
-      }
-    }
-  }
-
-  static final class ToggleHierarchyTraceAction extends ToggleAction implements AWTEventListener {
-
-    private boolean myEnabled = false;
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setText(isSelected(e) ?
-                                  ActionsBundle.message("action.ToggleUiInspectorHierarchyTrace.text.disable") :
-                                  ActionsBundle.message("action.ToggleUiInspectorHierarchyTrace.text.enable"));
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return myEnabled;
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      if (state) {
-        Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.CONTAINER_EVENT_MASK);
-      }
-      else {
-        Toolkit.getDefaultToolkit().removeAWTEventListener(this);
-      }
-      myEnabled = state;
-    }
-
-    @Override
-    public void eventDispatched(AWTEvent event) {
-      if (event instanceof ContainerEvent) {
-        UiInspector.processContainerEvent((ContainerEvent)event);
       }
     }
   }
