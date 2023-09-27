@@ -40,4 +40,8 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
   public static int countMatches(String str, String s2) {
     return org.apache.commons.lang3.StringUtils.countMatches(str, s2);
   }
+
+  public static String defaultIfEmpty(String str, String defaultStr) {
+    return isEmpty(str) ? defaultStr : str;
+  }
 }
