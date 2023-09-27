@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.apache.commons.lang;
 
+import java.util.Collection;
+
 /**
  * @deprecated To continue using the functionality offered by commons-lang2,
  * please consider migrating to either the commons-lang3 or commons-text libraries and bundling them with your plugin.
  * Or consider using the corresponding API from IJ Platform.
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "rawtypes"})
 @Deprecated(forRemoval = true)
 public class StringUtils extends org.apache.commons.lang3.StringUtils {
   public static boolean contains(String seq, String searchSeq) {
@@ -91,5 +93,45 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 
   public static int indexOfDifference(String seq, String s2) {
     return org.apache.commons.lang3.StringUtils.indexOfDifference(seq, s2);
+  }
+
+  public static boolean isAlpha(String seq) {
+    return org.apache.commons.lang3.StringUtils.isAlpha(seq);
+  }
+
+  public static boolean isAlphanumeric(String seq) {
+    return org.apache.commons.lang3.StringUtils.isAlphanumeric(seq);
+  }
+
+  public static boolean isBlank(String seq) {
+    return org.apache.commons.lang3.StringUtils.isBlank(seq);
+  }
+
+  public static boolean isEmpty(String seq) {
+    return org.apache.commons.lang3.StringUtils.isEmpty(seq);
+  }
+
+  public static boolean isNotBlank(String seq) {
+    return org.apache.commons.lang3.StringUtils.isNotBlank(seq);
+  }
+
+  public static boolean isNotEmpty(String seq) {
+    return org.apache.commons.lang3.StringUtils.isNotEmpty(seq);
+  }
+
+  public static boolean isNumeric(String seq) {
+    return org.apache.commons.lang3.StringUtils.isNumeric(seq);
+  }
+
+  public static boolean isWhitespace(String seq) {
+    return org.apache.commons.lang3.StringUtils.isWhitespace(seq);
+  }
+
+  public static String join(Collection collection, String separator) {
+    return org.apache.commons.lang3.StringUtils.join(collection, separator);
+  }
+
+  public static String join(Collection collection, char separator) {
+    return org.apache.commons.lang3.StringUtils.join(collection, separator);
   }
 }
