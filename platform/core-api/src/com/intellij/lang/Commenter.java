@@ -2,6 +2,8 @@
 
 package com.intellij.lang;
 
+import com.intellij.codeInsight.generation.CommenterWithLineSuffix;
+import com.intellij.codeInsight.generation.IndentedCommenter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +14,10 @@ import java.util.List;
  * Defines the support for "Comment with Line Comment" and "Comment with Block Comment"
  * actions in a custom language.
  *
+ * @see CodeDocumentationAwareCommenter
+ * @see CommenterWithLineSuffix
+ * @see com.intellij.codeInsight.generation.EscapingCommenter
+ * @see IndentedCommenter
  * @see com.intellij.codeInsight.generation.SelfManagingCommenter
  */
 public interface Commenter {
