@@ -50,7 +50,8 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
 
   private fun applyCategories(categories: List<LogCategory>): List<LogCategory> {
     val filteredCategories = filteredCategories(categories)
-    filteredCategories.map { logCategory ->
+    val resultCategories = mutableListOf<LogCategory>()
+    for (logCategory in filteredCategories) {
       val level = logCategory.level
       val loggerLevel = when (level) {
         DebugLogLevel.DEBUG -> Level.FINE
@@ -58,14 +59,14 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
         DebugLogLevel.ALL -> Level.ALL
       }
 
-      val trimmed = logCategory.category.trim('#').split(':')[0]
+      val trimmed = logCategory.category.trim('#')
       // IDEA-297747 Convention for categories naming is not clear, so set logging for both with '#' and without '#'
       addLogger(logCategory.category, loggerLevel, level)
       addLogger("#$trimmed", loggerLevel, level)
       addLogger(trimmed, loggerLevel, level)
-      logCategory.category = trimmed
+      resultCategories.add(LogCategory(trimmed, level))
     }
-    return filteredCategories
+    return resultCategories
   }
 
   private fun addLogger(trimmed: String, loggerLevel: Level?, level: DebugLogLevel) {
@@ -125,9 +126,8 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
     categories.addAll(fromString(System.getProperty(LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.DEBUG))
     categories.addAll(fromString(System.getProperty(LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.TRACE))
     categories.addAll(fromString(System.getProperty(LOG_ALL_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.ALL))
-    addCategories(categories)
+    applyCategories(categories)
   }
-
 
   private fun getSavedCategories(): List<LogCategory> {
     val properties = PropertiesComponent.getInstance()
