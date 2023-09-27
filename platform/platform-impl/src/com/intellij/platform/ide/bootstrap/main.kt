@@ -291,7 +291,12 @@ private fun CoroutineScope.scheduleEnableCoroutineDumpAndJstack() {
   launch {
     span("coroutine debug probes init") {
       try {
-        DebugProbesImpl.install()
+        if (System.getProperty("idea.enable.coroutine.dump.using.classloader", "false").toBoolean()) {
+          DebugProbesImpl.install()
+        }
+        else {
+          enableCoroutineDump()
+        }
       }
       catch (ignore: NoClassDefFoundError) {
         // if for some reason, class loader has ByteBuddy in the classpath

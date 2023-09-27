@@ -147,7 +147,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
     isSystemClassLoader = builder.isSystemClassLoader;
 
-    enableCoroutineDump = Boolean.parseBoolean(System.getProperty("idea.enable.coroutine.dump", "true"));
+    enableCoroutineDump = Boolean.parseBoolean(System.getProperty("idea.enable.coroutine.dump.using.classloader", "false"));
     classPath = new ClassPath(builder.files, builder, resourceFileFactory, mimicJarUrlConnection);
 
     isBootstrapResourcesAllowed = builder.isBootstrapResourcesAllowed;
