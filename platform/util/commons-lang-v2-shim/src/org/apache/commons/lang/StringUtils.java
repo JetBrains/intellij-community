@@ -44,4 +44,24 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
   public static String defaultIfEmpty(String str, String defaultStr) {
     return isEmpty(str) ? defaultStr : str;
   }
+
+  public static boolean endsWith(String seq, String s2) {
+    return org.apache.commons.lang3.StringUtils.endsWith(seq, s2);
+  }
+
+  public static boolean endsWithIgnoreCase(String seq, String s2) {
+    return org.apache.commons.lang3.StringUtils.endsWithIgnoreCase(seq, s2);
+  }
+
+  public static boolean equals(String seq, String s2) {
+    return org.apache.commons.lang3.StringUtils.equals(seq, s2);
+  }
+
+  public static boolean equalsIgnoreCase(String seq, String s2) {
+    return org.apache.commons.lang3.StringUtils.equalsIgnoreCase(seq, s2);
+  }
+
+  public static int getLevenshteinDistance(String s, String t) {
+    return org.apache.commons.lang3.StringUtils.getLevenshteinDistance(s, t);
+  }
 }
