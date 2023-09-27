@@ -85,7 +85,7 @@
                      key="markdown.no.table.borders.inspection.name"
                      groupKey="markdown.inspection.group.ruby.name"
                      enabledByDefault="true"
-                     level="ERROR"
+                     level="WARNING"
                      implementationClass="org.intellij.plugins.markdown.editor.tables.inspections.MarkdownNoTableBordersInspection"/>
 
     <intentionAction>
