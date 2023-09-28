@@ -14,13 +14,19 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
 
   log.info("Entering startup wizard workflow.")
 
+  val point = app.extensionArea
+    .getExtensionPoint<IdeStartupWizard>("com.intellij.ideStartupWizard") as ExtensionPointImpl<IdeStartupWizard>
+  val sortedAdapters = point.sortedAdapters
+  if (sortedAdapters.isEmpty()) {
+    log.info("No IdeStartupWizard implementations")
+    return
+  }
+
   span("app manager initial state waiting") {
     isInitialStart.join()
   }
 
-  val point = app.extensionArea
-    .getExtensionPoint<IdeStartupWizard>("com.intellij.ideStartupWizard") as ExtensionPointImpl<IdeStartupWizard>
-  for (adapter in point.sortedAdapters) {
+  for (adapter in sortedAdapters) {
     val pluginDescriptor = adapter.pluginDescriptor
     if (!pluginDescriptor.isBundled) {
       log.error(PluginException("ideStartupWizard extension can be implemented only by a bundled plugin", pluginDescriptor.pluginId))
