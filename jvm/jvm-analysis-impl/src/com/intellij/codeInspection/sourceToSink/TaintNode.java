@@ -47,6 +47,9 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
 
   private final boolean myNext;
 
+  @NotNull
+  private final PresentationData data  = new PresentationData();
+
   TaintNode(@Nullable TaintNode parent,
             @Nullable PsiElement psiElement,
             @Nullable PsiElement ref,
@@ -59,6 +62,7 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
     int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
     myIcon = psiElement == null ? null : psiElement.getIcon(flags);
     myNext = next;
+    appendPsiElement(psiElement);
   }
 
   @Override
@@ -130,7 +134,8 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
       append(data, UsageViewBundle.message("node.invalid"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       return data;
     }
-    appendPsiElement(data, psiElement);
+    data.setIcon(myIcon);
+    data.applyFrom(this.data);
     if (!this.isTaintFlowRoot) return data;
     String unsafeFlow = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.unsafe.flow");
     SimpleTextAttributes attributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, UIUtil.getLabelInfoForeground());
@@ -143,9 +148,11 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
     data.addText(message, attributes);
   }
 
-  private void appendPsiElement(@NotNull PresentationData data, @NotNull PsiElement psiElement) {
+  private void appendPsiElement(@Nullable PsiElement psiElement) {
+    if (psiElement == null) {
+      return;
+    }
     TaintNode taintNode = this;
-    data.setIcon(myIcon);
     int style = taintNode.isExcluded() ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN;
     Color color = taintNode.myTaintValue == TaintValue.TAINTED ? NamedColorUtil.getErrorForeground() : null;
     SimpleTextAttributes attributes = new SimpleTextAttributes(style, color);
