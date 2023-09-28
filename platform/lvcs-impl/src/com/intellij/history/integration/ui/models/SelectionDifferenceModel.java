@@ -74,7 +74,7 @@ public final class SelectionDifferenceModel extends FileDifferenceModel {
   }
 
   @Override
-  protected @Nullable DiffContent doGetLeftDiffContent(RevisionProcessingProgress p) {
+  protected @Nullable DiffContent getReadOnlyLeftDiffContent(RevisionProcessingProgress p) {
     return getDiffContent(myLeftRevision, p);
   }
 

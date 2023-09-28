@@ -43,7 +43,7 @@ public final class EntireFileDifferenceModel extends FileDifferenceModel {
   }
 
   @Override
-  protected @Nullable DiffContent doGetLeftDiffContent(RevisionProcessingProgress p) {
+  protected @Nullable DiffContent getReadOnlyLeftDiffContent(RevisionProcessingProgress p) {
     return getDiffContent(myLeft);
   }
 

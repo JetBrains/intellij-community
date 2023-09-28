@@ -79,7 +79,7 @@ public abstract class FileDifferenceModel {
     Entry leftEntry = getLeftEntry();
     if (leftEntry == null) return DiffContentFactory.getInstance().createEmpty();
     if (isLeftContentAvailable(p)) {
-      DiffContent content = doGetLeftDiffContent(p);
+      DiffContent content = getReadOnlyLeftDiffContent(p);
       if (content != null) return content;
     }
     return DiffContentFactory.getInstance().create(LocalHistoryBundle.message("content.not.available"));
@@ -99,7 +99,7 @@ public abstract class FileDifferenceModel {
 
   protected abstract boolean isRightContentAvailable(RevisionProcessingProgress p);
 
-  protected abstract @Nullable DiffContent doGetLeftDiffContent(RevisionProcessingProgress p);
+  protected abstract @Nullable DiffContent getReadOnlyLeftDiffContent(RevisionProcessingProgress p);
 
   protected abstract @Nullable DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p);
 
