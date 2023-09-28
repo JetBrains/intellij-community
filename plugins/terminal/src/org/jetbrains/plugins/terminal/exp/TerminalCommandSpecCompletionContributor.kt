@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
-import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -43,18 +42,9 @@ class TerminalCommandSpecCompletionContributor : CompletionContributor() {
       val element = LookupElementBuilder.create(this, realInsertValue ?: name)
         .withPresentableText(displayName ?: name)
         .withTypeText(description)
-        .withInsertHandler { context, item ->
-          val editor = context.editor
+        .withInsertHandler { context, _ ->
           if (cursorOffset != null && cursorOffset != -1) {
-            editor.caretModel.moveToOffset(context.startOffset + cursorOffset)
-          }
-          else {
-            if (!item.lookupString.endsWith('/')) {
-              // insert space only if not a filepath was completed
-              editor.document.insertString(context.tailOffset, " ")
-              editor.caretModel.moveToOffset(context.tailOffset + 1)
-            }
-            AutoPopupController.getInstance(context.project).scheduleAutoPopup(editor)
+            context.editor.caretModel.moveToOffset(context.startOffset + cursorOffset)
           }
         }
       PrioritizedLookupElement.withPriority(element, priority / 100.0)
