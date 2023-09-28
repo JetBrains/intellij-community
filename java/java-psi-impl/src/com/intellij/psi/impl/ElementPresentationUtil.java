@@ -53,8 +53,8 @@ public final class ElementPresentationUtil {
   private static final int CLASS_KIND_ASPECT        = 60;
   public static final int CLASS_KIND_JSP            = 70;
   public static final int CLASS_KIND_EXCEPTION      = 80;
-  private static final int CLASS_KIND_JUNIT_TEST    = 90;
-  private static final int CLASS_KIND_RUNNABLE      = 100;
+  public static final int CLASS_KIND_JUNIT_TEST    = 90;
+  public static final int CLASS_KIND_RUNNABLE      = 100;
   private static final int CLASS_KIND_RECORD        = 110;
 
   //NOTE: these flags can be used in other plugins (e.g. Scala Plugin)
