@@ -58,6 +58,31 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     importProjectAsync(pom())
     assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isFile)
+
+  }
+
+  @Test
+  fun testDownloadSourcesFromRepository() = runBlocking {
+    val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
+    val remoteRepoPath = helper.getTestDataPath("remote")
+    val localRepoPath = helper.getTestDataPath("local1")
+    httpServerFixture.startRepositoryFor(remoteRepoPath)
+    repositoryPath = localRepoPath
+    val settingsXml = createProjectSubFile(
+      "settings.xml",
+      """
+       <settings>
+          <localRepository>$localRepoPath</localRepository>
+       </settings>
+       """.trimIndent())
+    mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
+    mavenImporterSettings.isDownloadSourcesAutomatically = true
+    removeFromLocalRepository("org/mytest/myartifact/")
+    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    importProjectAsync(pom())
+    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isFile)
   }
 
   @Test

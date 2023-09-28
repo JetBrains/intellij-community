@@ -364,7 +364,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     pluginResolutionJobs.add(pluginResolutionJob)
     cs.launch {
       downloadArtifacts(projectsToImport.map { it.key },
-                        listOf(),
+                        null,
                         importingSettings.isDownloadSourcesAutomatically,
                         importingSettings.isDownloadDocsAutomatically)
     }
