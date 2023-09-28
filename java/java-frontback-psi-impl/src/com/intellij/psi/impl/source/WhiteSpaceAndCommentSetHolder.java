@@ -10,7 +10,7 @@ import com.intellij.psi.tree.TokenSet;
 import java.util.List;
 
 import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_PLAIN_COMMENT_BIT_SET;
-import static com.intellij.psi.impl.source.BasicJavaDocElementType.DOC_COMMENT;
+import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_COMMENT;
 import static com.intellij.psi.tree.ParentAwareTokenSet.create;
 import static com.intellij.psi.tree.ParentAwareTokenSet.orSet;
 
@@ -65,7 +65,7 @@ public class WhiteSpaceAndCommentSetHolder {
 
       // 1. bind doc comment
       for (int idx = tokens.size() - 1; idx >= 0; idx--) {
-        if (BasicJavaAstTreeUtil.is(tokens.get(idx), DOC_COMMENT)) return idx;
+        if (BasicJavaAstTreeUtil.is(tokens.get(idx), BASIC_DOC_COMMENT)) return idx;
       }
 
       // 2. bind plain comments

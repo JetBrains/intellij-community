@@ -25,8 +25,8 @@ import java.util.Set;
 import static com.intellij.psi.JavaTokenType.JAVA_TOKEN_TYPE_SET;
 import static com.intellij.psi.JavaTokenType.RPARENTH;
 import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_KEYWORD_BIT_SET;
-import static com.intellij.psi.impl.source.BasicJavaDocElementType.DOC_COMMENT;
-import static com.intellij.psi.impl.source.BasicJavaDocElementType.DOC_SNIPPET_ATTRIBUTE_VALUE;
+import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_COMMENT;
+import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_SNIPPET_ATTRIBUTE_VALUE;
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
 public final class BasicJavaAstTreeUtil {
@@ -226,7 +226,7 @@ public final class BasicJavaAstTreeUtil {
 
   @Nullable
   public static ASTNode getDocComment(@Nullable ASTNode element) {
-    return findChildByType(element, DOC_COMMENT);
+    return findChildByType(element, BASIC_DOC_COMMENT);
   }
 
   @Nullable
@@ -367,7 +367,7 @@ public final class BasicJavaAstTreeUtil {
     return
       element != null &&
       element.getElementType().getClass().equals(IJavaDocElementType.class) &&
-      !is(element, DOC_SNIPPET_ATTRIBUTE_VALUE);
+      !is(element, BASIC_DOC_SNIPPET_ATTRIBUTE_VALUE);
   }
 
   @Nullable

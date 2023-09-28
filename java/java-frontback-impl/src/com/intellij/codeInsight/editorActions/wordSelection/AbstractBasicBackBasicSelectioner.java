@@ -39,7 +39,7 @@ public abstract class AbstractBasicBackBasicSelectioner extends ExtendWordSelect
       !BasicJavaAstTreeUtil.is(node, JAVA_CODE_REFERENCE_ELEMENT_SET) &&
       !(BasicJavaAstTreeUtil.isJavaToken(node) &&
         !BasicJavaAstTreeUtil.isKeyword(node)) &&
-      !BasicJavaAstTreeUtil.is(node, DOC_TAG, DOC_SNIPPET_TAG, DOC_INLINE_TAG) &&
+      !BasicJavaAstTreeUtil.is(node, BASIC_DOC_TAG, BASIC_DOC_SNIPPET_TAG, BASIC_DOC_INLINE_TAG) &&
       getElementPredicate().test(e);
   }
 }

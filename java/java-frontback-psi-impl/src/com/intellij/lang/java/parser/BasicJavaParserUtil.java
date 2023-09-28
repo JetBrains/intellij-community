@@ -31,7 +31,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static com.intellij.psi.impl.source.BasicJavaDocElementType.DOC_COMMENT;
+import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_COMMENT;
 
 @ApiStatus.Experimental
 public final class BasicJavaParserUtil {
@@ -198,7 +198,7 @@ public final class BasicJavaParserUtil {
     final Project project = psi.getProject();
 
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
-    final Lexer lexer = BasicJavaAstTreeUtil.is(chameleon, DOC_COMMENT) ? javaDocLexer.apply(level) : javaLexer.apply(level);
+    final Lexer lexer = BasicJavaAstTreeUtil.is(chameleon, BASIC_DOC_COMMENT) ? javaDocLexer.apply(level) : javaLexer.apply(level);
     final PsiBuilder builder =
       factory.createBuilder(project, chameleon, lexer, chameleon.getElementType().getLanguage(), chameleon.getChars());
     setLanguageLevel(builder, level);

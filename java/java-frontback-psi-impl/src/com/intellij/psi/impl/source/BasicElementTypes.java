@@ -18,7 +18,7 @@ public interface BasicElementTypes extends JavaTokenType, JavaDocTokenType, Basi
 
   TokenSet BASIC_JAVA_PLAIN_COMMENT_BIT_SET = TokenSet.create(END_OF_LINE_COMMENT, C_STYLE_COMMENT);
   ParentAwareTokenSet BASIC_JAVA_COMMENT_BIT_SET =
-    ParentAwareTokenSet.orSet(ParentAwareTokenSet.create(BASIC_JAVA_PLAIN_COMMENT_BIT_SET), ParentAwareTokenSet.create(DOC_COMMENT));
+    ParentAwareTokenSet.orSet(ParentAwareTokenSet.create(BASIC_JAVA_PLAIN_COMMENT_BIT_SET), ParentAwareTokenSet.create(BASIC_DOC_COMMENT));
   ParentAwareTokenSet BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET =
     ParentAwareTokenSet.orSet(ParentAwareTokenSet.create(WHITE_SPACE), BASIC_JAVA_COMMENT_BIT_SET);
   TokenSet BASIC_KEYWORD_BIT_SET = TokenSet.create(

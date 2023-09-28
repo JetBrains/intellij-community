@@ -69,7 +69,7 @@ public abstract class AbstractBasicJavaFileHighlighter extends SyntaxHighlighter
     ourMap1.put(JavaTokenType.SEMICOLON, JavaHighlightingColors.JAVA_SEMICOLON);
 
     ourMap1.put(JavaTokenType.C_STYLE_COMMENT, JavaHighlightingColors.JAVA_BLOCK_COMMENT);
-    ourMap1.put(DOC_COMMENT, JavaHighlightingColors.DOC_COMMENT);
+    ourMap1.put(BASIC_DOC_COMMENT, JavaHighlightingColors.DOC_COMMENT);
     ourMap1.put(JavaTokenType.END_OF_LINE_COMMENT, JavaHighlightingColors.LINE_COMMENT);
     ourMap1.put(TokenType.BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
 

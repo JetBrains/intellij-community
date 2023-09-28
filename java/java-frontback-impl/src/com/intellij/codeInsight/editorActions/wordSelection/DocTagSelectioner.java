@@ -18,7 +18,7 @@ public class DocTagSelectioner extends WordSelectioner {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     ASTNode node = BasicJavaAstTreeUtil.toNode(e);
-    return BasicJavaAstTreeUtil.is(node, DOC_TAG, DOC_SNIPPET_TAG, DOC_INLINE_TAG);
+    return BasicJavaAstTreeUtil.is(node, BASIC_DOC_TAG, BASIC_DOC_SNIPPET_TAG, BASIC_DOC_INLINE_TAG);
   }
 
   @Override

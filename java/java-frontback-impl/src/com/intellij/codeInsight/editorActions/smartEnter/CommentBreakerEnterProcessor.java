@@ -29,12 +29,12 @@ import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
 import com.intellij.psi.tree.ParentAwareTokenSet;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.impl.source.BasicJavaDocElementType.DOC_COMMENT;
+import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_COMMENT;
 
 public class CommentBreakerEnterProcessor implements ASTNodeEnterProcessor {
 
   private final ParentAwareTokenSet myCommentTypes = ParentAwareTokenSet.orSet(
-    ParentAwareTokenSet.create(BasicElementTypes.BASIC_JAVA_PLAIN_COMMENT_BIT_SET), ParentAwareTokenSet.create(DOC_COMMENT)
+    ParentAwareTokenSet.create(BasicElementTypes.BASIC_JAVA_PLAIN_COMMENT_BIT_SET), ParentAwareTokenSet.create(BASIC_DOC_COMMENT)
   );
 
   @Override

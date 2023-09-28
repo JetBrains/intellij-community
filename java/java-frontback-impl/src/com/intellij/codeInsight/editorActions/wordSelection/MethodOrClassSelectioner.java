@@ -16,7 +16,7 @@ import java.util.List;
 
 import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_BIT_SET;
 import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET;
-import static com.intellij.psi.impl.source.BasicJavaDocElementType.DOC_COMMENT;
+import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_COMMENT;
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
 public class MethodOrClassSelectioner extends AbstractBasicBackBasicSelectioner {
@@ -43,7 +43,7 @@ public class MethodOrClassSelectioner extends AbstractBasicBackBasicSelectioner 
     List<ASTNode> children = BasicJavaAstTreeUtil.getChildren(node);
     int i = 1;
 
-    if (BasicJavaAstTreeUtil.is(firstChild, DOC_COMMENT)) {
+    if (BasicJavaAstTreeUtil.is(firstChild, BASIC_DOC_COMMENT)) {
       while (BasicJavaAstTreeUtil.isWhiteSpace(children.get(i))) {
         i++;
       }
