@@ -16,7 +16,7 @@ import org.junit.platform.suite.api.Suite;
   DataFlowInspectionTest.class,
   DataFlowInspection8Test.class,
   DataFlowInspection9Test.class,
-  DataFlowInspection10Test.class,
+  DataFlowInspection11Test.class,
   DataFlowInspection16Test.class,
   DataFlowInspection20Test.class,
   DataFlowInspection21Test.class,

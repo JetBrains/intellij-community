@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.completion.test
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
@@ -41,5 +42,9 @@ object KotlinJdkAndLibraryProjectDescriptorOnJdk8 : KotlinJdkAndLibraryProjectDe
     libraryFiles = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance().libraryFiles,
     librarySourceFiles = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance().librarySourceFiles,
 ) {
+    override fun addDefaultLibraries(model: ModifiableRootModel) {
+        // Skip adding JetBrains annotation for completion tests
+    }
+    
     override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk18()
 }

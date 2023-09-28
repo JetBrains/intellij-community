@@ -90,7 +90,8 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
 
             }
 
-            assertEquals("no library dependencies have to be recalculated",0, resolverTracker.librariesComputed.size)
+            assertEquals("no library dependencies have to be recalculated",0, 
+                         resolverTracker.librariesComputed.filterNot { it.name?.startsWith("org.jetbrains:annotations") ?: false }.size)
         }
     }
 

@@ -59,7 +59,7 @@ abstract class AbstractJvmDecompiledTextTest : AbstractDecompiledTextTest("/deco
 
 fun findTestLibraryRoot(module: Module): VirtualFile? {
     for (orderEntry in ModuleRootManager.getInstance(module).orderEntries) {
-        if (orderEntry is LibraryOrderEntry) {
+        if (orderEntry is LibraryOrderEntry && orderEntry.libraryName?.startsWith("org.jetbrains:annotations") != true) {
             return orderEntry.getRootFiles(OrderRootType.CLASSES)[0]
         }
     }

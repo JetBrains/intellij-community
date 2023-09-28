@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class DefaultLightProjectDescriptor extends LightProjectDescriptor {
-
+  private static final String JETBRAINS_ANNOTATIONS_COORDINATES = "org.jetbrains:annotations-java5:24.0.0";
   private @Nullable Supplier<? extends Sdk> customSdk;
   private final List<RequiredLibrary> mavenLibraries = new ArrayList<>();
 
@@ -79,6 +79,20 @@ public class DefaultLightProjectDescriptor extends LightProjectDescriptor {
   public DefaultLightProjectDescriptor withRepositoryLibrary(@NotNull String library, boolean includeTransitive) {
     mavenLibraries.add(new RequiredLibrary(library, includeTransitive));
     return this;
+  }
+  
+  public DefaultLightProjectDescriptor withJetBrainsAnnotations() {
+    return withRepositoryLibrary(JETBRAINS_ANNOTATIONS_COORDINATES);
+  }
+
+  /**
+   * Adds old non-type-use JetBrains annotations as a module dependency.
+   * Currently, many tests assume that this dependency is present.
+   * 
+   * @param model model to modify
+   */
+  public static void addJetBrainsAnnotations(@NotNull ModifiableRootModel model) {
+    MavenDependencyUtil.addFromMaven(model, JETBRAINS_ANNOTATIONS_COORDINATES);
   }
 
   private static class RequiredLibrary {

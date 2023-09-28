@@ -40,6 +40,7 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
     myFixture.setUp();
     Module myModule = builder.getFixture().getModule();
     ModuleRootModificationUtil.updateModel(myModule, model -> {
+      DefaultLightProjectDescriptor.addJetBrainsAnnotations(model);
       String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath());
       model.addContentEntry(contentUrl).addSourceFolder(contentUrl + "/src", false);
       final JavaModuleExternalPaths extension = model.getModuleExtension(JavaModuleExternalPaths.class);

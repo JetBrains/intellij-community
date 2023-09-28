@@ -2,10 +2,12 @@
 package com.siyeh.ig.fixes.migration;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.migration.IfCanBeSwitchInspection;
 
@@ -18,6 +20,7 @@ public class IfCanBePatternSwitchFixTest extends IGQuickFixesTestCase {
     myFixture.enableInspections(inspection);
     myRelativePath = "migration/if_can_be_switch";
     myDefaultHint = CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.IF, PsiKeyword.SWITCH);
+    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotations);
   }
 
   @Override
