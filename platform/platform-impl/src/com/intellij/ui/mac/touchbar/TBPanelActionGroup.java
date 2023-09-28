@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -21,7 +20,6 @@ import javax.swing.Timer;
 import java.util.*;
 
 final class TBPanelActionGroup extends TBPanel {
-  private static final boolean DISABLE_ASYNC_UPDATE = Boolean.getBoolean("touchbar.actions.disable.async.update");
   private static final boolean USE_CACHED_PRESENTATIONS = Boolean.getBoolean("touchbar.actions.use.cached.presentations");
   private static final int DELAY_FOR_CACHED_PRESENTATIONS_MS = Integer.getInteger("touchbar.actions.delay.for.cached.presentations", 750);
   private static final long DELAY_FOR_CACHED_PRESENTATIONS_NS = DELAY_FOR_CACHED_PRESENTATIONS_MS*1000000L;
@@ -428,22 +426,10 @@ final class TBPanelActionGroup extends TBPanel {
 
     // NOTE: some of buttons (from dialogs for example) has custom component (used in _performAction, as event source (i.e. DataContext))
     // but here we expand actions with current-focus-component (theoretically it can cause that some actions will be updated incorrectly)
-    DataContext dataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(Helpers.getCurrentFocusComponent()));
-    if (!DISABLE_ASYNC_UPDATE && Utils.isAsyncDataContext(dataContext)) {
-      if (myLastUpdate != null) myLastUpdate.cancel();
-      myLastUpdate = Utils.expandActionGroupAsync(myActionGroup, myFactory, dataContext, ActionPlaces.TOUCHBAR_GENERAL);
-      myLastUpdate.onSuccess(actions -> _applyPresentationChanges(actions)).onProcessed(__ -> myLastUpdate = null);
-    }
-    else {
-      List<AnAction> actions = Utils.expandActionGroupWithTimeout(
-        myActionGroup,
-        myFactory, dataContext,
-        ActionPlaces.TOUCHBAR_GENERAL,
-        false,
-        Registry.intValue("actionSystem.update.touchbar.timeout.ms"));
-      _applyPresentationChanges(actions);
-    }
-
+    DataContext dataContext = Utils.createAsyncDataContext(DataManager.getInstance().getDataContext(Helpers.getCurrentFocusComponent()));
+    if (myLastUpdate != null) myLastUpdate.cancel();
+    myLastUpdate = Utils.expandActionGroupAsync(myActionGroup, myFactory, dataContext, ActionPlaces.TOUCHBAR_GENERAL);
+    myLastUpdate.onSuccess(actions -> _applyPresentationChanges(actions)).onProcessed(__ -> myLastUpdate = null);
     if (myStats != null) {
       myStats.incrementCounter(StatsCounters.totalUpdateDurationNs, System.nanoTime() - timeNs);
     }

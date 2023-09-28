@@ -1341,48 +1341,43 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
     ActionGroup adjustedGroup = myHideDisabled ? ActionGroupUtil.forceHideDisabledChildren(myActionGroup) : myActionGroup;
-    DataContext dataContext = Utils.wrapDataContext(getDataContext());
-    if (Utils.isAsyncDataContext(dataContext) && !isUnitTestMode) {
-      CancellablePromise<List<AnAction>> lastUpdate = myLastUpdate;
-      myLastUpdate = null;
-      if (lastUpdate != null) lastUpdate.cancel();
+    DataContext dataContext = Utils.createAsyncDataContext(getDataContext());
 
-      boolean firstTimeFastTrack = !hasVisibleActions() &&
-                                   getComponentCount() == 1 &&
-                                   getClientProperty(SUPPRESS_FAST_TRACK) == null;
-      if (firstTimeFastTrack) {
-        putClientProperty(SUPPRESS_FAST_TRACK, true);
+    CancellablePromise<List<AnAction>> lastUpdate = myLastUpdate;
+    myLastUpdate = null;
+    if (lastUpdate != null) lastUpdate.cancel();
+
+    boolean firstTimeFastTrack = !hasVisibleActions() &&
+                                 getComponentCount() == 1 &&
+                                 getClientProperty(SUPPRESS_FAST_TRACK) == null;
+    if (firstTimeFastTrack) {
+      putClientProperty(SUPPRESS_FAST_TRACK, true);
+    }
+    CancellablePromise<List<AnAction>> promise = myLastUpdate = Utils.expandActionGroupAsync(
+      adjustedGroup, myPresentationFactory, dataContext, myPlace, true, firstTimeFastTrack || isUnitTestMode);
+    if (promise.isSucceeded()) {
+      myLastUpdate = null;
+      List<AnAction> fastActions;
+      try {
+        fastActions = promise.get(0, TimeUnit.MILLISECONDS);
       }
-      CancellablePromise<List<AnAction>> promise = myLastUpdate =
-        Utils.expandActionGroupAsync(adjustedGroup, myPresentationFactory, dataContext, myPlace, true, firstTimeFastTrack);
-      if (promise.isSucceeded()) {
-        myLastUpdate = null;
-        List<AnAction> fastActions;
-        try {
-          fastActions = promise.get(0, TimeUnit.MILLISECONDS);
-        }
-        catch (Throwable th) {
-          throw new AssertionError(th);
-        }
-        actionsUpdated(true, fastActions);
+      catch (Throwable th) {
+        throw new AssertionError(th);
       }
-      else {
-        boolean forcedActual = forced || myForcedUpdateRequested;
-        promise
-          .onSuccess(actions -> {
-            if (myLastUpdate == promise) myLastUpdate = null;
-            actionsUpdated(forcedActual, actions);
-          })
-          .onError(ex -> {
-            if (!(ex instanceof ControlFlowException || ex instanceof CancellationException)) {
-              LOG.error(ex);
-            }
-          });
-      }
+      actionsUpdated(true, fastActions);
     }
     else {
       boolean forcedActual = forced || myForcedUpdateRequested;
-      actionsUpdated(forcedActual, Utils.expandActionGroupWithTimeout(adjustedGroup, myPresentationFactory, dataContext, myPlace, true, -1));
+      promise
+        .onSuccess(actions -> {
+          if (myLastUpdate == promise) myLastUpdate = null;
+          actionsUpdated(forcedActual, actions);
+        })
+        .onError(ex -> {
+          if (!(ex instanceof ControlFlowException || ex instanceof CancellationException)) {
+            LOG.error(ex);
+          }
+        });
     }
     if (mySecondaryActionsButton != null) {
       mySecondaryActionsButton.update();

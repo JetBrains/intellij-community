@@ -82,22 +82,6 @@ internal class ActionUpdater @JvmOverloads constructor(
   private val sessionData = ConcurrentHashMap<Pair<String, Any?>, Deferred<*>>()
   private val updatedPresentations = ConcurrentHashMap<AnAction, Presentation>()
   private val groupChildren = ConcurrentHashMap<ActionGroup, List<AnAction>>()
-  private val realUpdateStrategy = UpdateStrategy(
-    update = { action ->
-      retryOnAwaitSharedData {
-        updateActionReal(action)
-      }
-    },
-    getChildren = { group ->
-      retryOnAwaitSharedData {
-        callAction(group, Op.GetChildren) {
-          doGetChildren(group, createActionEvent(updatedPresentations[group] ?: initialBgtPresentation(group)))
-        }
-      }
-    })
-  private val cheapStrategy = UpdateStrategy(
-    update = { action -> presentationFactory.getPresentation(action) },
-    getChildren = { group  -> doGetChildren(group, null) })
 
   private val testDelayMillis =
     if (ActionPlaces.ACTION_SEARCH == place || ActionPlaces.isShortcutPlace(place)) 0
@@ -248,30 +232,6 @@ internal class ActionUpdater @JvmOverloads constructor(
   /**
    * @return actions from the given and nested non-popup groups that are visible after updating
    */
-  private suspend fun expandActionGroup(group: ActionGroup, hideDisabled: Boolean, strategy: UpdateStrategy): List<AnAction> {
-    return removeUnnecessarySeparators(doExpandActionGroup(group, hideDisabled, strategy))
-  }
-
-  /**
-   * @return actions from the given and nested non-popup groups that are visible after updating
-   */
-  suspend fun expandActionGroupWithTimeout(group: ActionGroup,
-                                           hideDisabled: Boolean,
-                                           timeoutMs: Int = -1): List<AnAction> = coroutineScope {
-    bgtScope = null
-    val adjustedMs = if (timeoutMs <= 0) Registry.intValue("actionSystem.update.timeout.ms") else timeoutMs
-    val result = try {
-      withTimeout(adjustedMs.toLong()) {
-        expandActionGroup(group, hideDisabled, realUpdateStrategy)
-      }
-    }
-    catch (_ : TimeoutCancellationException) {
-      expandActionGroup(group, hideDisabled, cheapStrategy)
-    }
-    applyPresentationChanges()
-    result
-  }
-
   suspend fun expandActionGroup(group: ActionGroup, hideDisabled: Boolean): List<AnAction> = withContext(CoroutineName("doExpandActionGroup")) {
     bgtScope = this
     edtCallsCount = 0
@@ -283,7 +243,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       if (testDelayMillis > 0) {
         delay(testDelayMillis.toLong())
       }
-      val result = expandActionGroup(group, hideDisabled, realUpdateStrategy)
+      val result = removeUnnecessarySeparators(doExpandActionGroup(group, hideDisabled))
       computeOnEdt {
         applyPresentationChanges()
       }
@@ -341,18 +301,18 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
   }
 
-  private suspend fun doExpandActionGroup(group: ActionGroup, hideDisabled: Boolean, strategy: UpdateStrategy): List<AnAction> = coroutineScope {
+  private suspend fun doExpandActionGroup(group: ActionGroup, hideDisabled: Boolean): List<AnAction> = coroutineScope {
     if (group is ActionGroupStub) {
       throw IllegalStateException("ActionGroupStub cannot be expanded")
     }
     checkCancelled()
-    val presentation = update(group, strategy)
+    val presentation = update(group)
     if (presentation == null || !presentation.isVisible) {
       // don't process invisible groups
       return@coroutineScope emptyList()
     }
 
-    val children = getGroupChildren(group, strategy)
+    val children = getGroupChildren(group)
     // parallel update execution can break some existing caching
     // the preferred way to do caching now is `updateSession.sharedData`
     val result = withContext(if (group is ActionUpdateThreadAware.Recursive) ForcedActionUpdateThreadElement(group.getActionUpdateThread())
@@ -360,27 +320,31 @@ internal class ActionUpdater @JvmOverloads constructor(
       children
         .map {
           async(Context.current().asContextElement()) {
-            expandGroupChild(it, hideDisabled, strategy)
+            expandGroupChild(it, hideDisabled)
           }
         }
         .awaitAll()
         .flatten()
     }
-    val actions = group.postProcessVisibleChildren(result, asUpdateSession(strategy))
+    val actions = group.postProcessVisibleChildren(result, asUpdateSession())
     for (action in actions) {
       if (action is InlineActionsHolder) {
         for (inlineAction in action.getInlineActions()) {
-          update(inlineAction, strategy)
+          update(inlineAction)
         }
       }
     }
     actions
   }
 
-  private suspend fun getGroupChildren(group: ActionGroup, strategy: UpdateStrategy): List<AnAction> {
+  private suspend fun getGroupChildren(group: ActionGroup): List<AnAction> {
     return groupChildren.getOrPut(group) {
       val children = try {
-        strategy.getChildren(group)
+        retryOnAwaitSharedData {
+          callAction(group, Op.GetChildren) {
+            doGetChildren(group, createActionEvent(updatedPresentations[group] ?: initialBgtPresentation(group)))
+          }
+        }
       }
       catch (_: ComputeOnEDTSkipped) {
         emptyArray()
@@ -398,11 +362,11 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
   }
 
-  private suspend fun expandGroupChild(child: AnAction, hideDisabledBase: Boolean, strategy: UpdateStrategy): List<AnAction> {
+  private suspend fun expandGroupChild(child: AnAction, hideDisabledBase: Boolean): List<AnAction> {
     if (application.isDisposed()) {
       return emptyList()
     }
-    val presentation = update(child, strategy)
+    val presentation = update(child)
     if (presentation == null) {
       return emptyList()
     }
@@ -426,10 +390,10 @@ internal class ActionUpdater @JvmOverloads constructor(
     var hasEnabled = false
     var hasVisible = false
     if (checkChildren) {
-      val childrenFlow = iterateGroupChildren(child, strategy)
+      val childrenFlow = iterateGroupChildren(child)
       childrenFlow.take(100).takeWhile { action ->
         if (action is Separator) return@takeWhile true
-        val p = update(action, strategy)
+        val p = update(action)
         if (p == null) return@takeWhile true
         hasVisible = hasVisible or p.isVisible
         hasEnabled = hasEnabled or p.isEnabled
@@ -455,7 +419,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         hideDisabledChildren && child !is CompactActionGroup -> listOf(ActionGroupUtil.forceHideDisabledChildren(child))
         else -> listOf(child)
       }
-      else -> doExpandActionGroup(child, hideDisabledChildren, strategy)
+      else -> doExpandActionGroup(child, hideDisabledChildren)
     }
   }
 
@@ -482,21 +446,17 @@ internal class ActionUpdater @JvmOverloads constructor(
   }
 
   fun asUpdateSession(): UpdateSession {
-    return asUpdateSession(realUpdateStrategy)
+    return UpdateSessionImpl(this)
   }
 
-  private fun asUpdateSession(strategy: UpdateStrategy): UpdateSession {
-    return UpdateSessionImpl(this, strategy)
-  }
-
-  private suspend fun iterateGroupChildren(group: ActionGroup, strategy: UpdateStrategy): Flow<AnAction> {
+  private suspend fun iterateGroupChildren(group: ActionGroup): Flow<AnAction> {
     val isDumb = project != null && getInstance(project).isDumb
     val tree: suspend (AnAction) -> List<AnAction>? = tree@ { o ->
       if (o === group) return@tree null
       if (isDumb && !o.isDumbAware()) return@tree null
       // in all clients the next call is `update`
       // let's update both actions and groups
-      val presentation = update(o, strategy)
+      val presentation = update(o)
       if (o !is ActionGroup) {
         return@tree null
       }
@@ -507,10 +467,10 @@ internal class ActionUpdater @JvmOverloads constructor(
         null
       }
       else {
-        getGroupChildren(o, strategy)
+        getGroupChildren(o)
       }
     }
-    val roots = getGroupChildren(group, strategy)
+    val roots = getGroupChildren(group)
     return channelFlow {
       val set = HashSet<AnAction>()
       val queue = ArrayDeque(roots)
@@ -527,16 +487,18 @@ internal class ActionUpdater @JvmOverloads constructor(
   }
 
   suspend fun presentation(action: AnAction): Presentation {
-    return update(action, realUpdateStrategy) ?: initialBgtPresentation(action)
+    return update(action) ?: initialBgtPresentation(action)
   }
 
-  private suspend fun update(action: AnAction, strategy: UpdateStrategy): Presentation? {
+  private suspend fun update(action: AnAction): Presentation? {
     val cached = updatedPresentations[action]
     if (cached != null) {
       return cached
     }
     try {
-      val presentation = strategy.update(action)
+      val presentation = retryOnAwaitSharedData {
+        updateActionReal(action)
+      }
       if (presentation != null) {
         updatedPresentations[action] = presentation
         return presentation
@@ -598,20 +560,20 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
   }
 
-  private class UpdateSessionImpl(val updater: ActionUpdater, val strategy: UpdateStrategy) : UpdateSession {
+  private class UpdateSessionImpl(val updater: ActionUpdater) : UpdateSession {
     override fun expandedChildren(actionGroup: ActionGroup): Iterable<AnAction> =
       updater.computeSessionDataOrThrow(Pair("expandedChildren", actionGroup)) {
-        updater.iterateGroupChildren(actionGroup, strategy).toCollection(ArrayList())
+        updater.iterateGroupChildren(actionGroup).toCollection(ArrayList())
       }
 
     override fun children(actionGroup: ActionGroup): List<AnAction> =
       updater.groupChildren[actionGroup] ?: updater.computeSessionDataOrThrow(Pair("children", actionGroup)) {
-        updater.getGroupChildren(actionGroup, strategy)
+        updater.getGroupChildren(actionGroup)
       }
 
     override fun presentation(action: AnAction): Presentation =
       updater.updatedPresentations[action] ?: updater.computeSessionDataOrThrow(Pair("presentation", action)) {
-        updater.update(action, strategy) ?: updater.initialBgtPresentation(action)
+        updater.update(action) ?: updater.initialBgtPresentation(action)
       }
 
     override fun <T : Any> sharedData(key: Key<T>, supplier: Supplier<out T>): T =
@@ -633,9 +595,6 @@ internal class ActionUpdater @JvmOverloads constructor(
 
 private enum class Op { Update, GetChildren }
 
-private data class UpdateStrategy(@JvmField val update: suspend (AnAction) -> Presentation?,
-                                  @JvmField val getChildren: suspend (ActionGroup) -> Array<AnAction>)
-
 private class ComputeOnEDTSkipped : RuntimeException() {
   override fun fillInStackTrace(): Throwable = this
 }
@@ -654,10 +613,8 @@ private fun cancelAllUpdates(jobs: MutableCollection<Job>, reason: String) {
   jobs.clear()
 }
 
-internal fun waitForAllUpdatesToFinish() {
-  runBlockingForActionExpand {
-    (ourToolbarJobs + ourOtherJobs).joinAll()
-  }
+internal suspend fun waitForAllUpdatesToFinish() {
+  (ourToolbarJobs + ourOtherJobs).joinAll()
 }
 
 private fun removeUnnecessarySeparators(visible: List<AnAction>): List<AnAction> {

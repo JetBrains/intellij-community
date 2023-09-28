@@ -58,7 +58,6 @@ import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.ContextKey
 import io.opentelemetry.extension.kotlin.asContextElement
-import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
@@ -76,7 +75,6 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import javax.swing.*
-import kotlin.collections.ArrayList
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.max
@@ -210,8 +208,10 @@ object Utils {
 
   @JvmStatic
   fun clearAllCachesAndUpdates() {
-    cancelAllUpdates("clear-all-caches-and-updates requested")
-    waitForAllUpdatesToFinish()
+    runBlockingForActionExpand {
+      cancelAllUpdates("clear-all-caches-and-updates requested")
+      waitForAllUpdatesToFinish()
+    }
     PreCachedDataContext.clearAllCaches()
   }
 
@@ -275,22 +275,6 @@ object Utils {
   }
 
   /**
-   * The deprecated way to synchronously expand a group blocking EDT
-   */
-  @Deprecated("Will cause EDT freezes. Use other expandActionGroupXXX methods.")
-  @JvmStatic
-  fun expandActionGroupWithTimeout(group: ActionGroup,
-                                   presentationFactory: PresentationFactory,
-                                   context: DataContext,
-                                   place: String,
-                                   isToolbarAction: Boolean,
-                                   timeoutMs: Int): List<AnAction> = runBlockingForActionExpand(
-    CoroutineName("expandActionGroupWithTimeout ($place)")) {
-    val updater = ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction, this)
-    updater.expandActionGroupWithTimeout(group, group is CompactActionGroup, timeoutMs)
-  }
-
-  /**
    * The preferred way to synchronously expand a group while pumping EDT intended for synchronous clients
    */
   @JvmStatic
@@ -329,53 +313,42 @@ object Utils {
                                     expire: (() -> Boolean)?,
                                     menuItem: Component?): List<AnAction> = runBlockingForActionExpand(
     CoroutineName("expandActionGroupImpl ($place)")) {
-    val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode()
     val wrapped = createAsyncDataContext(dataContext)
     checkAsyncDataContext(wrapped, place)
     val hideDisabled = group is CompactActionGroup
-    val async = isAsyncDataContext(wrapped) && !isUnitTestMode
-    if (!async && !isUnitTestMode) {
-      checkAsyncDataContext(wrapped, place)
-    }
     val maxLoops = max(2, Registry.intValue("actionSystem.update.actions.async.max.nested.loops", 20))
     if (ourExpandActionGroupImplEDTLoopLevel >= maxLoops) {
       LOG.warn("Maximum number of recursive EDT loops reached ($maxLoops) at '$place'")
       cancelAllUpdates("recursive EDT loops limit reached at '$place'")
       throw CancellationException()
     }
-    if (async && isContextMenu) {
+    if (isContextMenu) {
       cancelAllUpdates("context menu requested")
     }
-    val fastTrackTime = getFastTrackMaxTime(async, group, place, wrapped, false, false)
+    val fastTrackTime = getFastTrackMaxTime(true, group, place, wrapped, false, false)
     val mainJob = coroutineContext.job
-    val loopJob = if (!async) null
-    else launch {
+    val loopJob = launch {
       val start = System.nanoTime()
       while (TimeoutUtil.getDurationMillis(start) < fastTrackTime) {
         delay(1)
       }
       runEdtLoop(mainJob, expire, PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(wrapped), menuItem)
     }
-    val progressJob = if (!async || loadingIconPoint == null) null
+    val progressJob = if (loadingIconPoint == null) null
     else launch {
       addLoadingIcon(loadingIconPoint, place)
     }
     try {
       service<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, wrapped, place, group, false) {
         val updater = ActionUpdater(presentationFactory, wrapped, place, isContextMenu, false, this)
-        if (async) {
-          withContext(updaterContext(place, fastTrackTime, isContextMenu, false)) {
-            updater.expandActionGroup(group, hideDisabled)
-          }
-        }
-        else {
-          updater.expandActionGroupWithTimeout(group, hideDisabled)
+        withContext(updaterContext(place, fastTrackTime, isContextMenu, false)) {
+          updater.expandActionGroup(group, hideDisabled)
         }
       }
     }
     finally {
       progressJob?.cancel()
-      loopJob?.cancel()
+      loopJob.cancel()
       SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
     }
   }
