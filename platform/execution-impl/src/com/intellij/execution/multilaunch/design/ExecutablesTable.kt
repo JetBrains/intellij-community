@@ -15,6 +15,7 @@ import com.intellij.execution.multilaunch.design.actions.ManageExecutableGroup
 import com.intellij.execution.multilaunch.design.popups.TableSelectorPopupController
 import com.intellij.execution.multilaunch.design.tooltips.TableTooltipsController
 import com.intellij.icons.AllIcons
+import com.jetbrains.rd.util.lifetime.Lifetime
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.Point
@@ -26,7 +27,8 @@ private const val thirdColumnWidth = 60
 
 class ExecutablesTable(
   private val project: Project,
-  private val viewModel: MultiLaunchConfigurationViewModel
+  private val viewModel: MultiLaunchConfigurationViewModel,
+  private val lifetime: Lifetime
 ) : TableView<ExecutableRow>(viewModel.tableModel) {
   companion object {
     const val UNKNOWN_CELL = -1
@@ -74,7 +76,7 @@ class ExecutablesTable(
   }
 
   private fun installTooltipsController() {
-    TableTooltipsController().install(this)
+    TableTooltipsController(lifetime.createNested()).install(this)
   }
 
   private fun installColumnAutoEdit() {

@@ -3,7 +3,6 @@ package com.intellij.execution.multilaunch.design
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManagerListener
 import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.HtmlChunk
@@ -21,6 +20,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.execution.multilaunch.MultiLaunchConfiguration
 import com.intellij.execution.multilaunch.execution.executables.Executable
 import com.intellij.execution.multilaunch.state.toSnapshot
+import com.intellij.execution.options.LifetimedSettingsEditor
+import com.jetbrains.rd.util.lifetime.Lifetime
 import net.miginfocom.swing.MigLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
@@ -29,8 +30,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTable
 
-
-class MultiLaunchConfigurationEditor(private val project: Project, private val configuration: MultiLaunchConfiguration) : SettingsEditor<MultiLaunchConfiguration>() {
+class MultiLaunchConfigurationEditor(private val project: Project, private val configuration: MultiLaunchConfiguration) : LifetimedSettingsEditor<MultiLaunchConfiguration>() {
   private val runManagerListenerConnection: MessageBusConnection
   private var viewModel = MultiLaunchConfigurationViewModel(project, configuration)
 
@@ -62,10 +62,10 @@ class MultiLaunchConfigurationEditor(private val project: Project, private val c
     multiLaunchConfiguration.parameters.activateToolWindows = viewModel.activateAllToolWindows
   }
 
-  override fun createEditor(): JComponent {
+  override fun createEditor(lifetime: Lifetime): JComponent {
     return JPanel(MigLayout("fill")).apply {
       add(JLabel(ExecutionBundle.message("run.configurations.multilaunch.tasks.to.launch")), "wrap")
-      val table = createTable()
+      val table = createTable(lifetime)
       val pane = wrapWithScrollPane(table)
       add(pane, "grow, wrap")
       val activateAllToolWindows = createActivateToolWindowsCheckbox()
@@ -90,8 +90,8 @@ class MultiLaunchConfigurationEditor(private val project: Project, private val c
     return scrollPane
   }
 
-  private fun createTable(): ExecutablesTable {
-    return ExecutablesTable(project, viewModel).apply {
+  private fun createTable(lifetime: Lifetime): ExecutablesTable {
+    return ExecutablesTable(project, viewModel, lifetime).apply {
       val renderer = object : ColoredTableCellRenderer() {
         override fun customizeCellRenderer(table: JTable,
                                            value: Any?,

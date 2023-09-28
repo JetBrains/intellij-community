@@ -1,26 +1,31 @@
 package com.intellij.execution.multilaunch.design
 
 import com.jetbrains.rd.util.concurrentMapOf
-import java.util.concurrent.Executors
-import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
+import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.threading.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class Debouncer(
-  private val delay: Long,
-  private val timeUnit: TimeUnit
+  private val launchDelayMs: Long,
+  private val lifetime: Lifetime
 ) {
-  private val scheduler = Executors.newSingleThreadScheduledExecutor()
-  private val delayedMap = concurrentMapOf<Any, Future<*>>()
+  private val dispatcher = Dispatchers.IO.limitedParallelism(1)
+  private val delayedMap = concurrentMapOf<Any, Job>()
 
   fun call(key: Any, callback: () -> Unit) {
-    val previous = delayedMap.put(key, scheduler.schedule(Runnable {
+    val previous = delayedMap.put(key, lifetime.launch(dispatcher) {
+      delay(launchDelayMs)
       callback()
-    }, delay, timeUnit))
-    previous?.cancel(true)
+    })
+    previous?.cancel(null)
   }
 
   fun cancel(key: Any) {
     val added = delayedMap.remove(key)
-    added?.cancel(true)
+    added?.cancel(null)
   }
 }

@@ -10,15 +10,15 @@ import com.intellij.ui.hover.HoverListener
 import com.intellij.util.ui.Html
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.rd.util.lifetime.Lifetime
 import java.awt.Component
 import java.awt.Point
-import java.util.concurrent.TimeUnit
 import javax.swing.JTable
 import javax.swing.SwingUtilities
 
-class TableTooltipsController(private val schedulerKey: Any = TableTooltipsController::class.java) : HoverListener() {
+class TableTooltipsController(lifetime: Lifetime, private val schedulerKey: Any = TableTooltipsController::class.java) : HoverListener() {
   private var tooltip: Balloon? = null
-  private val tooltipScheduler = Debouncer(500, TimeUnit.MILLISECONDS)
+  private val tooltipScheduler = Debouncer(500, lifetime)
   private val tooltipProvidersTracker = TooltipProvidersTracker()
 
   fun install(table: JTable) {
