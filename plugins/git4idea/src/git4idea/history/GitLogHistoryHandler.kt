@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.history.VcsCachingHistory
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vfs.VirtualFile
@@ -18,7 +17,6 @@ import com.intellij.vcs.log.impl.VcsFileStatusInfo
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitRevisionNumber
-import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
@@ -48,8 +46,9 @@ class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistoryHand
 
   @Throws(VcsException::class)
   override fun collectHistory(root: VirtualFile, filePath: FilePath, hash: Hash?, consumer: (VcsFileRevision) -> Unit) {
-    val revisionNumber = if (hash != null) VcsLogUtil.convertToRevisionNumber(hash) else null
-    VcsCachingHistory.collect(GitVcs.getInstance(project), filePath, revisionNumber, consumer)
+    val args = GitHistoryProvider.getHistoryLimitArgs(project)
+    val revisionNumber = if (hash != null) VcsLogUtil.convertToRevisionNumber(hash) else GitRevisionNumber.HEAD
+    GitFileHistory(project, root, filePath, revisionNumber).load(consumer, *args)
   }
 
   @Throws(VcsException::class)

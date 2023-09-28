@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -129,10 +129,7 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
     final VcsAbstractHistorySession emptySession = createSession(path, Collections.emptyList(), null);
     partner.reportCreatedEmptySession(emptySession);
 
-    VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
-    String[] additionalArgs = vcsConfiguration.LIMIT_HISTORY ?
-                              new String[]{"--max-count=" + vcsConfiguration.MAXIMUM_HISTORY_ROWS} :
-                              ArrayUtilRt.EMPTY_STRING_ARRAY;
+    String[] additionalArgs = getHistoryLimitArgs(myProject);
 
     GitFileHistory.loadHistory(myProject, path, startingRevision,
                                fileRevision -> partner.acceptRevision(fileRevision),
@@ -155,6 +152,13 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
     GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
     GitRepository repository = manager.getRepositoryForFileQuick(file);
     return repository != null && !repository.isFresh();
+  }
+
+  static String @NotNull [] getHistoryLimitArgs(@NotNull Project project) {
+    VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(project);
+    return vcsConfiguration.LIMIT_HISTORY ?
+           new String[]{"--max-count=" + vcsConfiguration.MAXIMUM_HISTORY_ROWS} :
+           ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   class GitHistorySession extends VcsAbstractHistorySession {

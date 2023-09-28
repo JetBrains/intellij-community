@@ -51,14 +51,14 @@ import java.util.function.Consumer
  * <p>
  * TODO: handle multiple repositories configuration: a file can be moved from one repo to another
  */
-class GitFileHistory private constructor(private val project: Project,
-                                         private val root: VirtualFile,
-                                         path: FilePath,
-                                         private val startingRevision: VcsRevisionNumber) {
+class GitFileHistory internal constructor(private val project: Project,
+                                          private val root: VirtualFile,
+                                          path: FilePath,
+                                          private val startingRevision: VcsRevisionNumber) {
   private val path = VcsUtil.getLastCommitPath(project, path)
 
   @Throws(VcsException::class)
-  private fun load(consumer: (GitFileRevision) -> Unit, vararg parameters: String) {
+  internal fun load(consumer: (GitFileRevision) -> Unit, vararg parameters: String) {
     val logParser = createLogParser(project)
     var startRevision: String? = startingRevision.asString()
     var startPath = path
