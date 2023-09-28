@@ -12,10 +12,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Supplier
 
 // separate service to avoid using LafManager in the EditorColorsManagerImpl initialization
 @Service(Service.Level.APP)
+@Internal
 class UiThemeProviderListManager {
   companion object {
     fun getInstance(): UiThemeProviderListManager = service()

@@ -156,6 +156,11 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
     }
   }
 
+  @Override
+  public @NotNull UIThemeExportableBean describe() {
+    return theme.describe$intellij_platform_ide_impl();
+  }
+
   private static <T extends Enum<T>> String parseEnumValue(Object value, T defaultValue) {
     if (value instanceof String) {
       String name = Strings.toUpperCase((String)value);

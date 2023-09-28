@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.ide.ui.laf.UIThemeExportableBean
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoImpl
 import com.intellij.ide.ui.laf.UiThemeProviderListManager
 import com.intellij.openapi.diagnostic.thisLogger
@@ -129,6 +130,25 @@ class UITheme internal constructor(
   @ApiStatus.Internal
   fun setProviderClassLoader(value: ClassLoader?) {
     _providerClassLoader = value
+  }
+
+  internal fun describe(): UIThemeExportableBean {
+    val iconMap = bean.icons?.let {
+      val iconMap = LinkedHashMap<String, String>(it.size)
+      for ((key, value) in it) {
+        if (key != "ColorPalette" && value is String) {
+          iconMap.put(key, value)
+        }
+      }
+      iconMap
+    } ?: emptyMap()
+    @Suppress("UNCHECKED_CAST")
+    return UIThemeExportableBean(
+      colors = bean.colorMap.map.mapValues { it.value.rgb },
+      iconColorsOnSelection = bean.iconColorOnSelectionMap.map.mapValues { it.value.rgb },
+      icons = iconMap,
+      colorPalette = bean.icons?.get("ColorPalette") as? Map<String, String> ?: emptyMap()
+    )
   }
 
   val editorSchemePath: String?
@@ -290,12 +310,12 @@ private fun createTheme(theme: UIThemeBean,
 private fun configureIcons(theme: UIThemeBean,
                            paletteScopeManager: UiThemePaletteScopeManager,
                            iconMap: Map<String, Any?>): SvgElementColorPatcherProvider? {
-  val palette = iconMap.get("ColorPalette") as? Map<*, *> ?: return null
-  for (o in palette.keys) {
-    val colorKey = o.toString()
+  @Suppress("UNCHECKED_CAST")
+  val palette = iconMap.get("ColorPalette") as? Map<String, String> ?: return null
+  for (colorKey in palette.keys) {
     val scope = paletteScopeManager.getScope(colorKey) ?: continue
     val key = toColorString(key = colorKey, darkTheme = theme.dark)
-    var v = palette.get(colorKey)
+    var v: Any? = palette.get(colorKey)
     if (v is String) {
       // named
       v = theme.colorMap.map.get(v) ?: parseColorOrNull(key, null)
