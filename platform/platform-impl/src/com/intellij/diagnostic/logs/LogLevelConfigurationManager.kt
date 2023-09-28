@@ -51,7 +51,7 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
   private fun applyCategories(categories: List<LogCategory>): List<LogCategory> {
     val filteredCategories = filteredCategories(categories)
     val resultCategories = mutableListOf<LogCategory>()
-    for (logCategory in filteredCategories) {
+    filteredCategories.map { logCategory ->
       val level = logCategory.level
       val loggerLevel = when (level) {
         DebugLogLevel.DEBUG -> Level.FINE
@@ -81,17 +81,17 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
   private fun filteredCategories(categories: List<LogCategory>): List<LogCategory> {
     val currentCategories = getCategories().toMutableList()
     for (newCat in categories) {
+      var level: DebugLogLevel = newCat.level
       val found = currentCategories.find { curCat ->
         if (curCat.category == newCat.category) {
           val verbose = maxOf(curCat.level.ordinal, newCat.level.ordinal)
-          curCat.level = DebugLogLevel.entries.toTypedArray()[verbose]
+          level = DebugLogLevel.entries.toTypedArray()[verbose]
           return@find true
         }
         else false
       }
-      if (found == null) {
-        currentCategories.add(newCat)
-      }
+      found?.let { currentCategories.remove(it) }
+      currentCategories.add(LogCategory(newCat.category, level))
     }
     return currentCategories
   }
@@ -114,6 +114,10 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
 
   @Serializable
   data class State(@JvmField val categories: List<LogCategory> = listOf())
+
+  init {
+    loadState(State())
+  }
 
   override fun loadState(state: State) {
     super.loadState(state)
