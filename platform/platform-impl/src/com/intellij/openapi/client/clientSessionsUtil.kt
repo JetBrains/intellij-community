@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ClientSessionsUtil")
+@file:Suppress("UNCHECKED_CAST", "unused", "UnusedReceiverParameter")
 
 package com.intellij.openapi.client
 
@@ -28,7 +29,6 @@ inline fun Application.forEachSession(kind: ClientKind, action: (ClientAppSessio
  * Executes given action for each client connected to this [Project]
  */
 inline fun Project.forEachSession(kind: ClientKind, action: (ClientProjectSession) -> Unit) {
-  @Suppress("UNCHECKED_CAST")
   for (session in this.service<ClientSessionsManager<*>>().getSessions(kind) as List<ClientProjectSession>) {
     ClientId.withClientId(session.clientId) {
       logger<ClientSessionsManager<*>>().runAndLogException {
@@ -51,9 +51,13 @@ val Project.currentSession: ClientProjectSession
   get() = currentSessionOrNull ?: error("Project-level session is not set. ${ClientId.current}")
 
 
-@Deprecated("use get app-level session from application", ReplaceWith("application.currentSession", "com.intellij.util.application"))
+@Deprecated("use get app-level session from application",
+            ReplaceWith("application.currentSession", "com.intellij.util.application"),
+            DeprecationLevel.ERROR)
 val currentSession: ClientAppSession get() = application.currentSession
 
-@Deprecated("use get app-level session from application", ReplaceWith("application.currentSessionOrNull", "com.intellij.util.application"))
+@Deprecated("use get app-level session from application",
+            ReplaceWith("application.currentSessionOrNull", "com.intellij.util.application"),
+            DeprecationLevel.ERROR)
 val currentSessionOrNull: ClientAppSession?
   get() = application.currentSessionOrNull
