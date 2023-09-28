@@ -28,6 +28,8 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
@@ -272,6 +274,7 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   private fun clearToolbarColorsAndInMemoryCache(colorStorage: ProjectColorStorage) {
+    ThreadingAssertions.assertEventDispatchThread()
     colorStorage.projectPath?.let { colorCache.remove(it) }
 
     if (colorStorage is WorkspaceProjectColorStorage) {
@@ -363,8 +366,10 @@ private class ProjectWindowCustomizerListener : ProjectActivity, UISettingsListe
 
   override suspend fun execute(project: Project) {
     val service = serviceAsync<ProjectWindowCustomizerService>()
-    service.enableIfNeeded()
-    service.setupWorkspaceStorage(project)
+    MainScope().async {
+      service.enableIfNeeded()
+      service.setupWorkspaceStorage(project)
+    }
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
