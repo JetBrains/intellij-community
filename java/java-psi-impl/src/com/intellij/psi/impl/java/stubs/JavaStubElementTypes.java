@@ -5,10 +5,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.java.*;
+import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubBase;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.util.JavaUnnamedClassUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,6 +55,14 @@ public interface JavaStubElementTypes {
     @Override
     public ASTNode createCompositeNode() {
       return new UnnamedClassElement();
+    }
+
+    @Override
+    public void indexStub(@NotNull PsiClassStub stub, @NotNull IndexSink sink) {
+      StubElement parent = stub.getParentStub();
+      if (parent instanceof PsiJavaFileStub) {
+        sink.occurrence(JavaStubIndexKeys.UNNAMED_CLASSES, JavaUnnamedClassUtil.trimJavaExtension(((PsiJavaFileStub)parent).getPsi().getName()));
+      }
     }
   };
 
