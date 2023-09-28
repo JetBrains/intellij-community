@@ -26,6 +26,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class FileDifferenceModel {
   protected final Project myProject;
@@ -46,17 +48,20 @@ public abstract class FileDifferenceModel {
   }
 
   public @NlsContexts.Label String getLeftTitle(RevisionProcessingProgress p) {
-    if (!hasLeftEntry()) return LocalHistoryBundle.message("file.does.not.exist");
-    return formatTitle(getLeftEntry(), isLeftContentAvailable(p));
+    Entry leftEntry = getLeftEntry();
+    if (leftEntry == null) return LocalHistoryBundle.message("file.does.not.exist");
+    return formatTitle(leftEntry, isLeftContentAvailable(p));
   }
 
   public @NlsContexts.Label String getRightTitle(RevisionProcessingProgress p) {
-    if (!hasRightEntry()) return LocalHistoryBundle.message("file.does.not.exist");
-    if (!isRightContentAvailable(p)) {
-      return formatTitle(getRightEntry(), false);
+    Entry rightEntry = getRightEntry();
+    if (rightEntry == null) return LocalHistoryBundle.message("file.does.not.exist");
+    if (isRightContentAvailable(p)) {
+      return isRightContentCurrent ? LocalHistoryBundle.message("current.revision") : formatTitle(rightEntry, true);
     }
-    if (isRightContentCurrent) return LocalHistoryBundle.message("current.revision");
-    return formatTitle(getRightEntry(), true);
+    else {
+      return formatTitle(rightEntry, false);
+    }
   }
 
   private static @NlsContexts.Label String formatTitle(Entry e, boolean isAvailable) {
@@ -67,42 +72,43 @@ public abstract class FileDifferenceModel {
     return result;
   }
 
-  protected abstract Entry getLeftEntry();
+  protected abstract @Nullable Entry getLeftEntry();
 
-  protected abstract Entry getRightEntry();
+  protected abstract @Nullable Entry getRightEntry();
 
-  public DiffContent getLeftDiffContent(RevisionProcessingProgress p) {
-    if (!hasLeftEntry()) return DiffContentFactory.getInstance().createEmpty();
-    if (!isLeftContentAvailable(p)) return DiffContentFactory.getInstance().create(LocalHistoryBundle.message("content.not.available"));
-    return doGetLeftDiffContent(p);
+  public @NotNull DiffContent getLeftDiffContent(RevisionProcessingProgress p) {
+    Entry leftEntry = getLeftEntry();
+    if (leftEntry == null) return DiffContentFactory.getInstance().createEmpty();
+    if (isLeftContentAvailable(p)) {
+      DiffContent content = doGetLeftDiffContent(p);
+      if (content != null) return content;
+    }
+    return DiffContentFactory.getInstance().create(LocalHistoryBundle.message("content.not.available"));
   }
 
-  public DiffContent getRightDiffContent(RevisionProcessingProgress p) {
-    if (!hasRightEntry()) return DiffContentFactory.getInstance().createEmpty();
-    if (!isRightContentAvailable(p)) return DiffContentFactory.getInstance().create(LocalHistoryBundle.message("content.not.available"));
-    if (isRightContentCurrent) return getEditableRightDiffContent(p);
-    return getReadOnlyRightDiffContent(p);
-  }
-
-  private boolean hasLeftEntry() {
-    return getLeftEntry() != null;
-  }
-
-  private boolean hasRightEntry() {
-    return getRightEntry() != null;
+  public @NotNull DiffContent getRightDiffContent(RevisionProcessingProgress p) {
+    Entry rightEntry = getRightEntry();
+    if (rightEntry == null) return DiffContentFactory.getInstance().createEmpty();
+    if (isRightContentAvailable(p)) {
+      DiffContent content = isRightContentCurrent ? getEditableRightDiffContent(p) : getReadOnlyRightDiffContent(p);
+      if (content != null) return content;
+    }
+    return DiffContentFactory.getInstance().create(LocalHistoryBundle.message("content.not.available"));
   }
 
   protected abstract boolean isLeftContentAvailable(RevisionProcessingProgress p);
 
   protected abstract boolean isRightContentAvailable(RevisionProcessingProgress p);
 
-  protected abstract DiffContent doGetLeftDiffContent(RevisionProcessingProgress p);
+  protected abstract @Nullable DiffContent doGetLeftDiffContent(RevisionProcessingProgress p);
 
-  protected abstract DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p);
+  protected abstract @Nullable DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p);
 
-  protected abstract DiffContent getEditableRightDiffContent(RevisionProcessingProgress p);
+  protected abstract @Nullable DiffContent getEditableRightDiffContent(RevisionProcessingProgress p);
 
-  protected Document getDocument() {
-    return myGateway.getDocument(getRightEntry().getPath());
+  protected @Nullable Document getDocument() {
+    Entry rightEntry = getRightEntry();
+    if (rightEntry == null) return null;
+    return myGateway.getDocument(rightEntry.getPath());
   }
 }

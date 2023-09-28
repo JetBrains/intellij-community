@@ -50,7 +50,7 @@ public abstract class Entry {
   public Entry(int nameId) {
     this(nameId, calcNameHash(fromNameId(nameId)));
   }
-  
+
   private Entry(int nameId, int nameHash) {
     myNameId = nameId;
     myNameHash = nameHash;
@@ -96,7 +96,7 @@ public abstract class Entry {
   public int getNameId() {
     return myNameId;
   }
-  
+
   public int getNameHash() {
     return myNameHash;
   }
@@ -231,16 +231,23 @@ public abstract class Entry {
     throw new UnsupportedOperationException(formatPath());
   }
 
-  public static List<Difference> getDifferencesBetween(Entry left, Entry right) {
+  public static List<Difference> getDifferencesBetween(@Nullable Entry left, @Nullable Entry right) {
     return getDifferencesBetween(left, right, false);
   }
 
-  public static List<Difference> getDifferencesBetween(Entry left, Entry right, boolean isRightContentCurrent) {
+  public static @NotNull List<Difference> getDifferencesBetween(@Nullable Entry left,
+                                                                @Nullable Entry right,
+                                                                boolean isRightContentCurrent) {
     List<Difference> result = new SmartList<>();
-
-    if (left == null) right.collectCreatedDifferences(result, isRightContentCurrent);
-    else if (right == null) left.collectDeletedDifferences(result, isRightContentCurrent);
-    else left.collectDifferencesWith(right, result, isRightContentCurrent);
+    if (left != null && right != null) {
+      left.collectDifferencesWith(right, result, isRightContentCurrent);
+    }
+    else if (right != null) {
+      right.collectCreatedDifferences(result, isRightContentCurrent);
+    }
+    else if (left != null) {
+      left.collectDeletedDifferences(result, isRightContentCurrent);
+    }
     return result;
   }
 

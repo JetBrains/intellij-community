@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 public final class EntireFileDifferenceModel extends FileDifferenceModel {
   private final Entry myLeft;
@@ -42,22 +43,24 @@ public final class EntireFileDifferenceModel extends FileDifferenceModel {
   }
 
   @Override
-  protected DiffContent doGetLeftDiffContent(RevisionProcessingProgress p) {
+  protected @Nullable DiffContent doGetLeftDiffContent(RevisionProcessingProgress p) {
     return getDiffContent(myLeft);
   }
 
   @Override
-  protected DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p) {
+  protected @Nullable DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p) {
     return getDiffContent(myRight);
   }
 
   @Override
-  protected DiffContent getEditableRightDiffContent(RevisionProcessingProgress p) {
+  protected @Nullable DiffContent getEditableRightDiffContent(RevisionProcessingProgress p) {
     Document d = getDocument();
+    if (d == null) return null;
     return DiffContentFactory.getInstance().create(myProject, d);
   }
 
-  private DiffContent getDiffContent(Entry e) {
+  private @Nullable DiffContent getDiffContent(@Nullable Entry e) {
+    if (e == null) return null;
     byte[] content = e.getContent().getBytes();
     VirtualFile virtualFile = myGateway.findVirtualFile(e.getPath());
     if (virtualFile != null) {

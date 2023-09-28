@@ -52,7 +52,7 @@ public abstract class Revision {
     return Pair.create(Collections.emptyList(), 0);
   }
 
-  public abstract Entry findEntry();
+  public abstract @Nullable Entry findEntry();
 
   public List<Difference> getDifferencesWith(Revision right) {
     return Entry.getDifferencesBetween(findEntry(), right.findEntry(), right instanceof CurrentRevision);
