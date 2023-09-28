@@ -9,13 +9,12 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.dsl.builder.*
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
+import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.Paths
 import kotlin.io.path.exists
-
 class PythonNewVirtualenvCreator(state: PythonAddInterpreterState) : PythonAddEnvironment(state) {
   private val location = propertyGraph.property("")
   private val inheritSitePackages = propertyGraph.property(false)
@@ -31,7 +30,8 @@ class PythonNewVirtualenvCreator(state: PythonAddInterpreterState) : PythonAddEn
 
       }
       row(message("sdk.create.custom.location")) {
-        textFieldWithBrowseButton(message("sdk.create.custom.venv.location.browse.title"), fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
+        textFieldWithBrowseButton(message("sdk.create.custom.venv.location.browse.title"),
+                                  fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
           .bindText(location)
           .whenTextChangedFromUi { locationModified = true }
           .cellValidation {
@@ -70,12 +70,12 @@ class PythonNewVirtualenvCreator(state: PythonAddInterpreterState) : PythonAddEn
   }
 
   override fun getOrCreateSdk(): Sdk {
-    return PyProjectVirtualEnvConfiguration.createVirtualEnvSynchronously(state.basePythonVersion.get(),
-                                                                          state.basePythonSdks.get(),
-                                                                          location.get(),
-                                                                          state.projectPath.get(),
-                                                                          null, null,
-                                                                          inheritSitePackages = inheritSitePackages.get(),
-                                                                          makeShared = makeAvailable.get())!!
+    return createVirtualEnvSynchronously(state.basePythonVersion.get(),
+                                         state.basePythonSdks.get(),
+                                         location.get(),
+                                         state.projectPath.get(),
+                                         null, null,
+                                         inheritSitePackages = inheritSitePackages.get(),
+                                         makeShared = makeAvailable.get())!!
   }
 }

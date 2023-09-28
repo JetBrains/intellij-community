@@ -23,7 +23,7 @@ import com.jetbrains.python.sdk.add.target.conda.TargetEnvironmentRequestCommand
 import com.jetbrains.python.sdk.add.target.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.add.target.conda.suggestCondaPath
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
-import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
+import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
 import com.jetbrains.python.sdk.findBaseSdks
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
@@ -169,9 +169,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
     return when (selectedMode.get()) {
       PROJECT_VENV -> {
         val venvPath = projectPath.get() + File.separator + ".venv"
-        return PyProjectVirtualEnvConfiguration.createVirtualEnvSynchronously(pythonBaseVersion.get(), basePythonSdks.get(), venvPath,
-                                                                              projectPath.get(),
-                                                                              null, null)
+        return createVirtualEnvSynchronously(pythonBaseVersion.get(), basePythonSdks.get(), venvPath, projectPath.get(), null, null)
       }
       BASE_CONDA -> {
         runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.conda.select.progress"), TaskCancellation.nonCancellable()) {

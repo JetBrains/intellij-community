@@ -18,7 +18,7 @@ import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.basePath
-import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
+import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import icons.PythonIcons
@@ -75,9 +75,8 @@ open class PyAddNewVirtualEnvPanel(private val project: Project?,
                   validateSdkComboBox(baseSdkField, this))
 
   override fun getOrCreateSdk(): Sdk? {
-    return PyProjectVirtualEnvConfiguration.createVirtualEnvSynchronously(baseSdkField.selectedSdk, existingSdks, pathField.text,
-                                                                          newProjectPath, project, module, context,
-                                                                          inheritSitePackagesField.isSelected, makeSharedField.isSelected)
+    return createVirtualEnvSynchronously(baseSdkField.selectedSdk, existingSdks, pathField.text, newProjectPath, project, module, context,
+                                         inheritSitePackagesField.isSelected, makeSharedField.isSelected)
   }
 
   override fun getStatisticInfo(): InterpreterStatisticsInfo? {
