@@ -30,9 +30,9 @@ class PluginSetTestBuilder(private val path: Path) {
   fun withLoadingContext(): PluginSetTestBuilder {
     return apply {
       context = DescriptorListLoadingContext(
-        disabledPlugins = PluginManagerCore.toPluginIds(disabledPluginIds),
-        expiredPlugins = PluginManagerCore.toPluginIds(expiredPluginIds),
-        brokenPluginVersions = emptyMap(),
+        customDisabledPlugins = PluginManagerCore.toPluginIds(disabledPluginIds),
+        customExpiredPlugins = PluginManagerCore.toPluginIds(expiredPluginIds),
+        customBrokenPluginVersions = emptyMap(),
         productBuildNumber = { productBuildNumber },
       )
     }

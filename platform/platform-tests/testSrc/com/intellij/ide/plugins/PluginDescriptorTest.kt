@@ -594,7 +594,7 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
   result.readExternal(
     raw = raw,
     isSub = false,
-    context = DescriptorListLoadingContext(disabledPlugins = emptySet()),
+    context = DescriptorListLoadingContext(customDisabledPlugins = emptySet()),
     pathResolver = pathResolver,
     dataLoader = dataLoader,
   )

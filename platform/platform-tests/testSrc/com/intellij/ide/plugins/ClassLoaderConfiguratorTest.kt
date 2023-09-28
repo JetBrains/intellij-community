@@ -181,8 +181,8 @@ internal class ClassLoaderConfiguratorTest {
 
 private fun loadDescriptors(dir: Path): PluginLoadingResult {
   val result = PluginLoadingResult()
-  val context = DescriptorListLoadingContext(disabledPlugins = emptySet(),
-                                             brokenPluginVersions = emptyMap(),
+  val context = DescriptorListLoadingContext(customDisabledPlugins = emptySet(),
+                                             customBrokenPluginVersions = emptyMap(),
                                              productBuildNumber = { buildNumber })
 
   // constant order in tests
