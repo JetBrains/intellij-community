@@ -11,14 +11,21 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import static com.intellij.util.io.DataInputOutputUtil.readINT;
+import static com.intellij.util.io.DataInputOutputUtil.writeINT;
 
 public final class AttributesFlyweight {
   private static final ConcurrentMap<FlyweightKey, AttributesFlyweight> entries = new ConcurrentHashMap<>();
@@ -151,10 +158,38 @@ public final class AttributesFlyweight {
     return create(FOREGROUND, BACKGROUND, FONT_TYPE, EFFECT_COLOR, toEffectType(EFFECT_TYPE), Collections.emptyMap(), ERROR_STRIPE_COLOR);
   }
 
+  @ApiStatus.Internal
+  static @NotNull AttributesFlyweight create(@NotNull DataInput in) throws IOException {
+    Color FOREGROUND = readColor(in);
+    Color BACKGROUND = readColor(in);
+    int fontType = readINT(in);
+    if (fontType < 0 || fontType > 3) {
+      fontType = 0;
+    }
+    int FONT_TYPE = fontType;
+    Color EFFECT_COLOR = readColor(in);
+    Color ERROR_STRIPE_COLOR = readColor(in);
+    int EFFECT_TYPE = readINT(in);
+    return create(FOREGROUND, BACKGROUND, FONT_TYPE, EFFECT_COLOR, toEffectType(EFFECT_TYPE), Collections.emptyMap(), ERROR_STRIPE_COLOR);
+  }
+
+  private static @Nullable Color readColor(@NotNull DataInput in) throws IOException {
+    boolean colorExists = in.readBoolean();
+    return colorExists ? new Color(readINT(in)) : null;
+  }
+
   private static void writeColor(@NotNull Element element, @NotNull String fieldName, Color color) {
     if (color != null) {
       String string = Integer.toString(color.getRGB() & 0xFFFFFF, 16);
       JDOMExternalizerUtil.writeField(element, fieldName, string);
+    }
+  }
+
+  private static void writeColor(@NotNull DataOutput out, @Nullable Color color) throws IOException {
+    boolean colorExists = color != null;
+    out.writeBoolean(colorExists);
+    if (colorExists) {
+      writeINT(out, color.getRGB() & 0xFFFFFF);
     }
   }
 
@@ -172,6 +207,16 @@ public final class AttributesFlyweight {
       JDOMExternalizerUtil.writeField(element, "EFFECT_TYPE", String.valueOf(effectType));
     }
     // todo additionalEffects are not serialized yet, we have no user-controlled additional effects
+  }
+
+  @ApiStatus.Internal
+  void writeExternal(@NotNull DataOutput out) throws IOException {
+    writeColor(out, getForeground());
+    writeColor(out, getBackground());
+    writeINT(out, getFontType());
+    writeColor(out, getEffectColor());
+    writeColor(out, getErrorStripeColor());
+    writeINT(out, fromEffectType(getEffectType()));
   }
 
   private static final int EFFECT_BORDER = 0;

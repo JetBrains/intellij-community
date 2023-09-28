@@ -600,6 +600,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     }
   }
 
+  @Nullable
   @Override
   public Value get(Key key) throws IOException {
     getReadLock().lock();
