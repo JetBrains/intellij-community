@@ -2,6 +2,7 @@
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.devkit.workspaceModel.WorkspaceModelGenerator.Companion.modulesWithAbstractTypes
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ModuleRootManager
@@ -41,7 +42,6 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   private val LOG = logger<AllIntellijEntitiesGenerationTest>()
 
   private val virtualFileManager = IdeVirtualFileUrlManagerImpl()
-  private val modulesWithUnknownFields: Set<String> = setOf("intellij.platform.workspace.storage.testEntities")
 
   private val skippedModulePaths: Set<Pair<String, Path>> = setOf(
     "intellij.platform.workspace.storage.tests" to
@@ -195,7 +195,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
             modifiableModel.commit()
           }
         }
-        in modulesWithUnknownFields -> {
+        in modulesWithAbstractTypes -> {
           val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, true, false)
           storageChanged = storageChanged || projectModelUpdateResult
         }
@@ -214,7 +214,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   private fun generate(
     storage: MutableEntityStorage, moduleEntity: ModuleEntity,
     sourceRoot: SourceRootEntity, pathToPackages: Set<String>,
-    keepUnknownFields: Boolean, explicitApiEnabled: Boolean
+    processAbstractTypes: Boolean, explicitApiEnabled: Boolean
   ): Boolean {
     val relativize = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl))
     myFixture.copyDirectoryToProject(relativize.systemIndependentPath, "")
@@ -226,8 +226,8 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
 
       val (srcRoot, genRoot) = generateCode(
         relativePathToEntitiesDirectory = packagePath,
-        keepUnknownFields = keepUnknownFields,
-        explicitApiEnabled = explicitApiEnabled,
+        processAbstractTypes = processAbstractTypes,
+        explicitApiEnabled = explicitApiEnabled
       )
 
       runWriteActionAndWait {
@@ -266,7 +266,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   private fun generateAndCompare(
     storage: MutableEntityStorage, moduleEntity: ModuleEntity,
     sourceRoot: SourceRootEntity, pathToPackages: Set<String>,
-    keepUnknownFields: Boolean, explicitApiEnabled: Boolean
+    processAbstractTypes: Boolean, explicitApiEnabled: Boolean
   ): Boolean {
     val genSourceRoots = sourceRoot.contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.filter { it.generated }
     val relativize = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl))
@@ -281,7 +281,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
         dirWithExpectedApiFiles = apiRootPath,
         dirWithExpectedImplFiles = implRootPath,
         pathToPackage = pathToPackage,
-        keepUnknownFields = keepUnknownFields,
+        processAbstractTypes = processAbstractTypes,
         explicitApiEnabled = explicitApiEnabled
       )
     }

@@ -11,10 +11,7 @@ import com.intellij.devkit.workspaceModel.metaModel.impl.extensions.moduleAbstra
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.ModulesScope
 import com.intellij.openapi.project.Project
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EqualsBy
-import com.intellij.platform.workspace.storage.SymbolicEntityId
-import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.annotations.Default
@@ -40,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 internal class WorkspaceMetaModelProviderImpl(
   private val explicitApiEnabled: Boolean,
-  private val keepUnknownFields: Boolean,
+  private val processAbstractTypes: Boolean,
   project: Project
 ): WorkspaceMetaModelProvider {
   private val objModuleByName = ConcurrentHashMap<String, Pair<CompiledObjModule, ModuleDescriptor>>()
@@ -193,13 +190,13 @@ internal class WorkspaceMetaModelProviderImpl(
           return ValueType.ObjRef(type.isAnnotatedBy(StandardNames.CHILD_ANNOTATION) || hasChildAnnotation, //todo leave only one target for @Child annotation 
                                   findObjClass(descriptor))
         }
-        return descriptor.toValueType(knownTypes, keepUnknownFields)
+        return descriptor.toValueType(knownTypes, processAbstractTypes)
       }
 
       return unsupportedType(type.toString())
     }
 
-    private fun ClassDescriptor.toValueType(knownTypes: MutableMap<String, ValueType.Blob<*>>, convertAbstractClasses: Boolean): ValueType.JvmClass<*> {
+    private fun ClassDescriptor.toValueType(knownTypes: MutableMap<String, ValueType.Blob<*>>, processAbstractTypes: Boolean): ValueType.JvmClass<*> {
       val javaClassFqn = javaClassFqn
       val superTypes = superTypesJavaFqns
 
@@ -222,9 +219,12 @@ internal class WorkspaceMetaModelProviderImpl(
           }
           ValueType.AbstractClass<Any>(javaClassFqn, superTypes, subclasses)
         }
-        convertAbstractClasses && isAbstractClassOrInterface -> {
+        isAbstractClassOrInterface -> {
+          if (!processAbstractTypes) {
+            throw IncorrectObjInterfaceException("$javaClassFqn is abstract type. Abstract types are not supported in generator")
+          }
           val inheritors = inheritors(javaPsiFacade, allScope)
-            .map { it.toValueType(hashMapOf(javaClassFqn to blobType), convertAbstractClasses) }
+            .map { it.toValueType(hashMapOf(javaClassFqn to blobType), processAbstractTypes) }
           ValueType.AbstractClass<Any>(javaClassFqn, superTypes, inheritors)
         }
         else -> ValueType.FinalClass<Any>(javaClassFqn, superTypes, createProperties(this@toValueType, knownTypes))
@@ -315,6 +315,7 @@ internal object StandardNames {
   val ENTITY_SOURCE = FqName(EntitySource::class.qualifiedName!!)
   val VIRTUAL_FILE_URL = FqName(VirtualFileUrl::class.qualifiedName!!)
   val SYMBOLIC_ENTITY_ID = FqName(SymbolicEntityId::class.qualifiedName!!)
+  val ENTITY_REFERENCE = FqName(EntityReference::class.qualifiedName!!)
 }
 
 internal val standardTypes = setOf(Any::class.qualifiedName, CommonClassNames.JAVA_LANG_OBJECT, CommonClassNames.JAVA_LANG_ENUM)

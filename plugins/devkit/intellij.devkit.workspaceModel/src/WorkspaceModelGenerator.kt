@@ -11,7 +11,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -37,8 +36,11 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
     coroutineScope.launch {
       acceptedSourceRoots.map { sourceRoot ->
         withContext(Dispatchers.EDT) {
-          System.setProperty(CODEGEN_REGISTRY_KEY, Registry.`is`(CODEGEN_REGISTRY_KEY).toString())
-          CodeWriter.generate(project, module, sourceRoot.file!!, module.explicitApiEnabled) {
+          CodeWriter.generate(
+            project, module, sourceRoot.file!!,
+            processAbstractTypes = module.withAbstractTypes,
+            explicitApiEnabled = module.explicitApiEnabled
+          ) {
             createGeneratedSourceFolder(module, sourceRoot)
           }
         }
@@ -95,6 +97,9 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
     }
   }
 
+  private val Module.withAbstractTypes: Boolean
+    get() = name in modulesWithAbstractTypes || name.startsWith(RIDER_MODULES_PREFIX)
+
   private val Module.explicitApiEnabled: Boolean
     get() {
       val something: IKotlinFacetSettings? = KotlinFacet.get(this)?.configuration?.settings
@@ -103,7 +108,10 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
 
   companion object {
     const val GENERATED_FOLDER_NAME = "gen"
-    private const val CODEGEN_REGISTRY_KEY = "workspace.model.generator.keep.unknown.fields"
+
+    private const val RIDER_MODULES_PREFIX = "intellij.rider"
+
+    val modulesWithAbstractTypes: Set<String> = setOf("intellij.platform.workspace.storage.testEntities")
 
     fun getInstance(project: Project): WorkspaceModelGenerator = project.service()
   }
