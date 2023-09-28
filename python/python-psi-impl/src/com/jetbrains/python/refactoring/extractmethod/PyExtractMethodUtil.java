@@ -179,10 +179,12 @@ public final class PyExtractMethodUtil {
         pointers.addAll(ContainerUtil.map(duplicates, p -> pointerManager.createSmartPsiFileRangePointer(file, p.getStartElement().getTextRange())));
       }
 
-      if (insertedCallElement != null && processDuplicates) {
+      if (insertedCallElement != null) {
         pointers.add(0, pointerManager.createSmartPsiFileRangePointer(file, insertedMethod.getNameIdentifier().getTextRange()));
         pointers.add(pointerManager.createSmartPsiFileRangePointer(file, insertedCallElement.getTextRange()));
-        processDuplicates(duplicates, insertedCallElement, editor);
+        if (processDuplicates) {
+          processDuplicates(duplicates, insertedCallElement, editor);
+        }
       }
 
       // Set editor
