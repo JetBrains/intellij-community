@@ -23,6 +23,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -31,6 +33,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.java.stubs.index.JavaUnnamedClassIndex;
+import com.intellij.psi.util.JavaUnnamedClassUtil;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.PathUtil;
@@ -184,12 +188,23 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   @NotNull
   public JavaRunConfigurationModule checkClass() throws RuntimeConfigurationException {
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
+    final String mainClass = getMainClassName();
     if (getOptions().isUnnamedClassConfiguration()) {
-      // TODO: Check Unnamed class index
+      if (mainClass != null && !DumbService.isDumb(getProject())) {
+        try {
+          final boolean matchingClass = ContainerUtil.exists(
+            JavaUnnamedClassIndex.getInstance().getAllClasses(getProject()),
+            indexed -> JavaUnnamedClassUtil.trimJavaExtension(indexed).equals(mainClass)
+          );
+          if (!matchingClass) {
+            throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", mainClass));
+          }
+        } catch (IndexNotReadyException ignored) {}
+      }
     } else {
-      final PsiClass psiClass = configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
+      final PsiClass psiClass = configurationModule.checkModuleAndClassName(mainClass, ExecutionBundle.message("no.main.class.specified.error.text"));
       if (psiClass == null || !PsiMethodUtil.hasMainMethod(psiClass)) {
-        throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", getMainClassName()));
+        throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", mainClass));
       }
     }
     return configurationModule;
