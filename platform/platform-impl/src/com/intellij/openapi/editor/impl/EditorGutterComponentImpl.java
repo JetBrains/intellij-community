@@ -169,7 +169,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private @Nullable Int2ObjectMap<List<GutterMark>> myLineToGutterRenderers;
   private boolean myLineToGutterRenderersCacheForLogicalLines;
   private boolean myHasInlaysWithGutterIcons;
-  private int myStartIconAreaWidth = ExperimentalUI.isNewUI() ? 0 : START_ICON_AREA_WIDTH.get();
+  private int myStartIconAreaWidth = START_ICON_AREA_WIDTH.get();
   private int myIconsAreaWidth;
   int myLineNumberAreaWidth = getInitialLineNumberWidth();
   int myAdditionalLineNumberAreaWidth;
@@ -1892,7 +1892,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   int getGapAfterIconsArea() {
-    return isRealEditor() && areIconsShown() ? ExperimentalUI.isNewUI() ? EditorUIUtil.scaleWidth(2, myEditor) : getGapBetweenAreas() : 0;
+    return isRealEditor() && areIconsShown() ? ExperimentalUI.isNewUI() ? EditorUIUtil.scaleWidth(4, myEditor) : getGapBetweenAreas() : 0;
   }
 
   private boolean isMirrored() {
