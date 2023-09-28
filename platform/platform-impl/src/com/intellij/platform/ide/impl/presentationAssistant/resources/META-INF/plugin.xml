@@ -1,0 +1,90 @@
+<!--
+  ~ Copyright 2000-2016 Nikolay Chashnikov.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<idea-plugin>
+  <id>org.nik.presentation-assistant</id>
+  <name>Presentation Assistant</name>
+  <vendor>Nikolay Chashnikov</vendor>
+  <idea-version since-build="221.0"/>
+
+  <description><![CDATA[This plugin shows name and Win/Mac shortcuts of any action you invoke (View | Appearance | Descriptions of Actions) ]]></description>
+  <change-notes><![CDATA[
+    <p>1.0.10</p>
+    <ul>
+    <li>Fix problem with showing shortcut for repeatedly invoked action (<a href="https://github.com/chashnikov/IntelliJ-presentation-assistant/issues/54">#54</a>).</li>
+    </ul>
+    <p>1.0.9</p>
+    <ul>
+    <li>Suggests to automatically install 'macOS Keymap' plugin to show Mac shortcuts.</li>
+    </ul>
+    <p>1.0.8</p>
+    <ul>
+    <li>Show shortcuts for Clone Caret Below/Above actions (<a href="https://github.com/chashnikov/IntelliJ-presentation-assistant/issues/45">#45</a>).</li>
+    </ul>
+    <p>1.0.7</p>
+    <ul>
+    <li>Fixed exception when working with Code With Me plugin (<a href="https://github.com/chashnikov/IntelliJ-presentation-assistant/issues/42">#42</a>).</li>
+    </ul>
+    <p>1.0.6</p>
+    <ul>
+    <li>Fixed presentation of Windows/Linux shortcuts on Mac (<a href="https://github.com/chashnikov/IntelliJ-presentation-assistant/issues/39">#39</a>).</li>
+    </ul>
+    <p>1.0.5</p>
+    <ul>
+    <li>Margin of hints can be changes in Settings.</li>
+    </ul>
+    <p>1.0.4</p>
+    <ul>
+    <li>Correct location of the plugin action in the description.</li>
+    <li>Show modifiers for Win/Linux shortcuts in consistent order.</li>
+    </ul>
+    <p>1.0.3</p>
+    <ul>
+    <li>Prepare plugin for installing without restart in 2020.1.</li>
+    </ul>
+    <p>1.0.2</p>
+    <ul>
+    <li>Fix problem with changing menu item in CLion.</li>
+    </ul>
+    <p>1.0.1</p>
+    <ul>
+    <li>Time during which hint is shown can be changed (Settings | Appearance & Behavior | Presentation Assistant).</li>
+    <li>Position of hints can be changed (Settings | Appearance & Behavior | Presentation Assistant).</li>
+    <li>Colors of hints can be changed (Settings | Editor | Color Scheme | Presentation Assistant).</li>
+    <li>Fixed bug which caused hint to be never hidden if a dialog is opened.</li>
+    </ul>
+]]></change-notes>
+
+  <depends>com.intellij.modules.lang</depends>
+
+  <applicationListeners>
+    <listener class="org.nik.presentationAssistant.PresentationAssistantListenerRegistrar" topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="org.nik.presentationAssistant.PresentationAssistantListenerRegistrar" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+  </applicationListeners>
+  <extensions defaultExtensionNs="com.intellij">
+      <applicationService serviceImplementation="org.nik.presentationAssistant.PresentationAssistant"/>
+      <applicationConfigurable groupId="appearance" groupWeight="-15" instance="org.nik.presentationAssistant.PresentationAssistantConfigurable"/>
+      <colorSettingsPage implementation="org.nik.presentationAssistant.ActionInfoColorSettings"/>
+      <notificationGroup displayType="BALLOON" id="Presentation Assistant"/>
+  </extensions>
+  <actions>
+    <action class="org.nik.presentationAssistant.ShowActionDescriptionsToggleAction"
+            id="presentationAssistant.ShowActionDescriptions">
+      <add-to-group group-id="UIToggleActions" anchor="last"/>
+      <keyboard-shortcut first-keystroke="alt shift d" keymap="$default"/>
+    </action>
+  </actions>
+</idea-plugin>

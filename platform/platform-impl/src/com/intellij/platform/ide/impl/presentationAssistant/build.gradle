@@ -1,0 +1,36 @@
+plugins {
+    id 'org.jetbrains.intellij' version "1.6.0"
+    id 'org.jetbrains.kotlin.jvm' version '1.6.10'
+}
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = javaVersion
+targetCompatibility = javaVersion
+
+sourceSets {
+    main {
+        java.srcDirs 'src'
+        kotlin.srcDirs 'src'
+        resources.srcDir 'resources'
+    }
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+}
+
+apply plugin: 'org.jetbrains.intellij'
+intellij {
+    version = ideaVersion
+    pluginName = 'Presentation Assistant'
+    updateSinceUntilBuild = false
+}
+
+compileKotlin {
+    kotlinOptions {
+        freeCompilerArgs += ["-Xjvm-default=enable"]
+    }
+}
