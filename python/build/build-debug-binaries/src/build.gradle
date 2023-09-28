@@ -18,8 +18,8 @@ envs {
   String python38version = "3.8.10"
   String python39version = "3.9.13"
   String python310version = "3.10.8"
-  String python311version = "3.11.0"
-  String python312version = "3.12.0rc1"
+  String python311version = "3.11.5"
+  String python312version = "3.12.0rc3"
 
   def customBuildDir = System.getenv().get("PYCHARM_BUILD_DIR")
   project.buildDir = customBuildDir? new File(customBuildDir): buildDir
