@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.history.VcsFileRevision
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.CollectConsumer
 import com.intellij.util.ExceptionUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -224,8 +225,8 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     repo.mv(repo2File, repo2MovedFile)
     val monorepoMergeMessage = "monorepo merge"
     val monorepoMerge = repo.addCommit(monorepoMergeMessage)
-    repo1Commits.add(TestCommit(monorepoMerge, monorepoMergeMessage, repo1MovedFile))
-    repo2Commits.add(TestCommit(monorepoMerge, monorepoMergeMessage, repo2MovedFile))
+    repo1Commits.add(TestCommit(monorepoMerge, monorepoMergeMessage, repo.root, repo1MovedFile))
+    repo2Commits.add(TestCommit(monorepoMerge, monorepoMergeMessage, repo.root, repo2MovedFile))
 
     assertSameHistory(repo1Commits.asReversed(), collectFileHistory(repo1MovedFile))
     assertSameHistory(repo2Commits.asReversed(), collectFileHistory(repo2MovedFile))
@@ -239,10 +240,15 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     TestCase.assertEquals("History is different.", expected, actual.map { it.toTestCommit() })
   }
 
-  private data class TestCommit(val hash: String, val commitMessage: String, val file: File)
+  private data class TestCommit(val hash: String, val commitMessage: String, val root: VirtualFile, val file: File) {
+    override fun toString(): String {
+      val relativePath = FileUtil.getRelativePath(root.toNioPath().toFile(), file)
+      return "${DvcsUtil.getShortHash(hash)}:${relativePath}:$commitMessage"
+    }
+  }
 
   private fun VcsFileRevision.toTestCommit(): TestCommit {
-    return TestCommit(revisionNumber.asString(), commitMessage!!, (this as GitFileRevision).path.ioFile)
+    return TestCommit(revisionNumber.asString(), commitMessage!!, repo.root, (this as GitFileRevision).path.ioFile)
   }
 
   private fun move(file: File, dir: File): TestCommit {
@@ -269,7 +275,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
 
   private fun commit(file: File, message: String): TestCommit {
     repo.addCommit(message)
-    return TestCommit(last(), message, file)
+    return TestCommit(last(), message, repo.root, file)
   }
 
   private fun File.relativePath(): String? = FileUtil.getRelativePath(repo.root.toNioPath().toFile(), this)
