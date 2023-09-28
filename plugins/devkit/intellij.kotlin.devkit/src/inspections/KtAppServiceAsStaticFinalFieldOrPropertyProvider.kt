@@ -60,7 +60,8 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
           }
         }
 
-        val serviceLevel = getLevelType(holder.project, typeClassElement.toUElementOfType<UClass>()!!)
+        val serviceClassCandidate = typeClassElement.toUElementOfType<UClass>() ?: return
+        val serviceLevel = getLevelType(holder.project, serviceClassCandidate)
         if (serviceLevel == null || !serviceLevel.isApp()) return
 
         val anchor = property.nameIdentifier ?: property
