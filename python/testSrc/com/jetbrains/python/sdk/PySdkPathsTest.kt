@@ -19,6 +19,7 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonMockSdk
 import com.jetbrains.python.PythonPluginDisposable
@@ -26,9 +27,7 @@ import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyUtil
 import org.jetbrains.annotations.NotNull
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
 
 class PySdkPathsTest {
 
@@ -41,6 +40,11 @@ class PySdkPathsTest {
   @Rule
   @JvmField
   val projectModel = ProjectModelRule()
+
+  @Before
+  fun setUp() {
+    Assume.assumeTrue("Test has to be executed on a new implementation of SDK", GlobalSdkTableBridge.isEnabled())
+  }
 
   @Test
   fun sysPathEntryIsExcludedPath() {
