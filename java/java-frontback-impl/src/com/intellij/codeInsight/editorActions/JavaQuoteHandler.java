@@ -102,12 +102,13 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   @Nullable
   @Override
   public CharSequence getClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
-    return iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL && offset == iterator.getStart() + 3 ? "\"\"\"" : null;
+    return (iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL || iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) 
+           && offset == iterator.getStart() + 3 ? "\"\"\"" : null;
   }
 
   @Override
   public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
-    if (iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
+    if (iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL || iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
       Document document = editor.getDocument();
       Project project = editor.getProject();
       PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(document);
