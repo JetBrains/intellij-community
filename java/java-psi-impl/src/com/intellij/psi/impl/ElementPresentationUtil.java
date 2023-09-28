@@ -57,10 +57,11 @@ public final class ElementPresentationUtil {
   private static final int CLASS_KIND_RUNNABLE      = 100;
   private static final int CLASS_KIND_RECORD        = 110;
 
-  private static final int FLAGS_ABSTRACT = 0x100;
-  private static final int FLAGS_STATIC = 0x200;
-  private static final int FLAGS_FINAL = 0x400;
-  private static final int FLAGS_JUNIT_TEST = 0x2000;
+  //NOTE: these flags can be used in other plugins (e.g. Scala Plugin)
+  public static final int FLAGS_ABSTRACT = 0x100;
+  public static final int FLAGS_STATIC = 0x200;
+  public static final int FLAGS_FINAL = 0x400;
+  public static final int FLAGS_JUNIT_TEST = 0x2000;
   public static final int FLAGS_RUNNABLE = 0x4000;
 
   private static final Key<CachedValue<Integer>> CLASS_KIND_KEY = new Key<>("CLASS_KIND_KEY");
