@@ -102,11 +102,11 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
                 .use(DirectoryStream<Path>::toList)
                 .ifEmpty { error(KotlinIdeaGradleBundle.message("error.text.missing.jars.in.gradle.directory")) }
 
-            scriptingDebugLog { "gradle script templates classpath $templateClasspath" }
+            scriptingDebugLog { "Gradle definitions classpath: $templateClasspath" }
 
             val additionalClassPath = kotlinStdlibAndCompiler(gradleLibDir)
 
-            scriptingDebugLog { "gradle script templates additional classpath $templateClasspath" }
+            scriptingDebugLog { "Gradle definitions additional classpath: $templateClasspath" }
 
             return templateClasspath to additionalClassPath
         }

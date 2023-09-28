@@ -357,14 +357,15 @@ fun loadDefinitionsFromTemplatesByPaths(
     defaultCompilerOptions: Iterable<String> = emptyList()
 ): List<ScriptDefinition> {
     val classpath = templateClasspath + additionalResolverClasspath
-    scriptingInfoLog("Loading script definitions $templateClassNames using classpath: ${classpath.joinToString(File.pathSeparator)}")
+    scriptingInfoLog("Loading script definitions: classes = $templateClassNames, classpath = ${classpath}")
+
     val baseLoader = ScriptDefinitionContributor::class.java.classLoader
     val loader = if (classpath.isEmpty())
         baseLoader
     else
         UrlClassLoader.build().files(classpath).parent(baseLoader).get()
 
-    return templateClassNames.mapNotNull { templateClassName ->
+    val definitions = templateClassNames.mapNotNull { templateClassName ->
         try {
             // TODO: drop class loading here - it should be handled downstream
             // as a compatibility measure, the asm based reading of annotations should be implemented to filter classes before classloading
@@ -406,6 +407,9 @@ fun loadDefinitionsFromTemplatesByPaths(
             null
         }
     }
+
+    scriptingInfoLog("Loaded definitions: classes = $templateClassNames, definitions = ${definitions.map { it.name }}")
+    return definitions
 }
 
 @Deprecated("migrating to new configuration refinement: use ScriptDefinitionsSource internally and kotlin.script.experimental.intellij.ScriptDefinitionsProvider as a providing extension point")
