@@ -2,12 +2,14 @@
 package com.intellij.importSettings.chooser.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.laf.darcula.ui.OnboardingDialogButtons
 import com.intellij.importSettings.data.ActionsDataProvider
 import com.intellij.importSettings.data.JBrActionsDataProvider
 import com.intellij.importSettings.data.Product
 import com.intellij.importSettings.data.SyncActionsDataProvider
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAwareAction
+import javax.swing.JButton
 
 class OtherOptions(val callback: (Int) -> Unit) : ProductChooserAction(), LinkAction {
   private val jbDataProvider = JBrActionsDataProvider.getInstance()
@@ -16,6 +18,11 @@ class OtherOptions(val callback: (Int) -> Unit) : ProductChooserAction(), LinkAc
   private var jb: List<AnAction>? = null
   private var sync: List<AnAction>? = null
   private val config = ConfigAction(callback)
+
+  init {
+    templatePresentation.text = "Other Options"
+
+  }
 
   override fun displayTextInToolbar(): Boolean {
     return true
@@ -71,11 +78,21 @@ class OtherOptions(val callback: (Int) -> Unit) : ProductChooserAction(), LinkAc
   }
 
   override fun update(e: AnActionEvent) {
-    if (jb?.isNotEmpty() == true || sync?.isNotEmpty() == true) {
+    val ch = getChildren(e)
+
+    if (ch.isNotEmpty()) {
       e.presentation.isVisible = true
       e.presentation.text = "Other Options"
-      e.presentation.icon = null
+      e.presentation.icon = AllIcons.General.LinkDropTriangle
       e.presentation.isPopupGroup = true
+    } else {
+      e.presentation.isVisible = false
+    }
+  }
+
+  override fun createButton(): JButton {
+    return OnboardingDialogButtons.createLinkButton().apply {
+      icon = AllIcons.General.LinkDropTriangle
     }
   }
 }

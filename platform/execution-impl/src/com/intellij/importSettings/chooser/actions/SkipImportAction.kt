@@ -1,14 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.importSettings.chooser.actions
 
+import com.intellij.ide.ui.laf.darcula.ui.OnboardingDialogButtons
+import com.intellij.importSettings.chooser.ui.JButtonAction_
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.NlsActions
-import javax.swing.Icon
+import javax.swing.JButton
 
-class SkipImportAction : DumbAwareAction(), LinkAction {
+class SkipImportAction : JButtonAction_("Skip Import") {
   init {
     templatePresentation.text = "Skip Import"
     templatePresentation.icon = null
@@ -20,6 +18,11 @@ class SkipImportAction : DumbAwareAction(), LinkAction {
 
   override fun actionPerformed(e: AnActionEvent) {
 
+  }
+
+
+  override fun createButton(): JButton {
+    return OnboardingDialogButtons.createHoveredLinkButton()
   }
 
 }

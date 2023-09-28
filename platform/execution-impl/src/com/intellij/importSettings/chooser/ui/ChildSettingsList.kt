@@ -49,19 +49,10 @@ private class CBRenderer(val configurable: Boolean) : ListCellRenderer<ChildItem
 
   val line = panel {
     row {
-      checkBox("").applyToComponent {
-        ch = this
-      }.customize(gaps)
-      text("").applyToComponent {
-        txt = this
-      }.customize(gaps)
-      comment("").applyToComponent {
-        addTxt = this
-      }.resizableColumn().customize(gaps)
-
-      comment("").applyToComponent {
-        rightTxt = this
-      }.customize(UnscaledGaps(wg, 10, wg, hg))
+      ch = checkBox("").customize(gaps).component
+      txt = text("").customize(gaps).component
+      addTxt = comment("").resizableColumn().customize(gaps).component
+      rightTxt = comment("").customize(UnscaledGaps(wg, 10, wg, hg)).component
     }
   }
 
