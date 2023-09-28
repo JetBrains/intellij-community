@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 
-class UsePlatformProcessAwaitExitInspection : LocalInspectionTool() {
+internal class UsePlatformProcessAwaitExitInspection : LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (!isAllowed(holder)) return PsiElementVisitor.EMPTY_VISITOR
