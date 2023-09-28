@@ -775,7 +775,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
         }
       }
       if (hasMismatch) {
-        LOG.warn(String.format("Change mismatch on commit of %s: %s", virtualFile, fileCommitChanges));
+        LOG.error(String.format("Change mismatch on commit of %s: %s", virtualFile, fileCommitChanges));
       }
 
       result.add(new CommitChange(beforePath, afterPath,
