@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.importSettings.chooser
+package com.intellij.ide.startup.importSettings.chooser
 
 import com.intellij.icons.AllIcons
-import com.intellij.importSettings.chooser.actions.*
-import com.intellij.importSettings.chooser.ui.UiUtils
+import com.intellij.ide.startup.importSettings.chooser.actions.*
+import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ActionButton
