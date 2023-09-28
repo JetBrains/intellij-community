@@ -83,7 +83,7 @@ class TransferSettingsView(private val config: TransferSettingsConfiguration, pr
   }
 
   private fun performRefresh(selectionTargetId: String?) {
-    val newOrdered = model.performRefresh(selectionTargetId)
+    val newOrdered = model.performRefresh()
 
     leftPanel.list.selectedIndex = if (selectionTargetId != null) newOrdered.indexOfFirst { it.id == selectionTargetId } else 0
   }
