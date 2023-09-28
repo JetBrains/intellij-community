@@ -29,7 +29,6 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
     List.of("ExtensionClassShouldBeFinalAndNonPublic",
             "ActionPresentationInstantiatedInCtor",
             "CancellationCheckInLoops",
-            "ApplicationServiceAsStaticFinalFieldOrProperty",
             "ThreadingConcurrency",
             "TokenSetInParserDefinition",
             "CallingMethodShouldBeRequiresBlockingContext",
