@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
 class JewelSvgLoader(private val svgPatcher: SvgPatcher) : SvgLoader {
 
     private val cache = ConcurrentHashMap<String, Painter>()
+    private val rawSvgCache = ConcurrentHashMap<String, Painter>()
 
     @Composable
     override fun loadSvgResource(
@@ -40,6 +41,27 @@ class JewelSvgLoader(private val svgPatcher: SvgPatcher) : SvgLoader {
             loadSvgPainter(it.patchColors(resourcePath), density)
         }
         return remember(resourcePath, density, loader) { painter }
+    }
+
+    @Composable
+    override fun loadRawSvg(rawSvg: String, key: String): Painter =
+        rawSvg.byteInputStream().use { loadRawSvg(it, key) }
+
+    @Composable
+    override fun loadRawSvg(rawSvg: InputStream, key: String): Painter {
+        rawSvgCache[key]?.let { return it }
+
+        val painter = rememberRawSvgResource(rawSvg, key)
+        cache[key] = painter
+        return painter
+    }
+
+    @Composable
+    private fun rememberRawSvgResource(rawSvg: InputStream, key: String): Painter {
+        val density = LocalDensity.current
+
+        val painter = loadSvgPainter(rawSvg, density)
+        return remember(key, density) { painter }
     }
 
     private fun InputStream.patchColors(resourcePath: String): InputStream =
