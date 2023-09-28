@@ -21,7 +21,6 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
@@ -105,10 +104,4 @@ public abstract class FileDifferenceModel {
   protected abstract @Nullable DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p);
 
   protected abstract @Nullable DiffContent getEditableRightDiffContent(RevisionProcessingProgress p);
-
-  protected @Nullable Document getDocument() {
-    Entry rightEntry = getRightEntry();
-    if (rightEntry == null) return null;
-    return myGateway.getDocument(rightEntry.getPath());
-  }
 }

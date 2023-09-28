@@ -54,8 +54,11 @@ public final class EntireFileDifferenceModel extends FileDifferenceModel {
 
   @Override
   protected @Nullable DiffContent getEditableRightDiffContent(RevisionProcessingProgress p) {
-    Document d = getDocument();
+    if (myRight == null) return null;
+
+    Document d = myGateway.getDocument(myRight.getPath());
     if (d == null) return null;
+
     return DiffContentFactory.getInstance().create(myProject, d);
   }
 

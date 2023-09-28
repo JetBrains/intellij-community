@@ -85,7 +85,10 @@ public final class SelectionDifferenceModel extends FileDifferenceModel {
 
   @Override
   protected @Nullable DiffContent getEditableRightDiffContent(RevisionProcessingProgress p) {
-    Document d = getDocument();
+    Entry rightEntry = getRightEntry();
+    if (rightEntry == null) return null;
+
+    Document d = myGateway.getDocument(rightEntry.getPath());
     if (d == null) return null;
 
     int fromOffset = d.getLineStartOffset(myFrom);
