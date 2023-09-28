@@ -324,6 +324,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
       RunnerAndConfigurationSettings selectedSettings = getSelectedConfiguration(e);
       boolean enabled = false;
+      boolean isLoading = false;
       boolean runConfigAsksToHideDisabledExecutorButtons = false;
       String text;
       if (selectedSettings != null) {
@@ -336,7 +337,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         if (ActionPlaces.NEW_UI_RUN_TOOLBAR.equals(e.getPlace())) {
           RunStatusHistory startHistory = RunStatusHistory.getInstance(project);
 
-          boolean isLoading = startHistory.firstOrNull(selectedSettings, it ->
+          isLoading = startHistory.firstOrNull(selectedSettings, it ->
             (it.getExecutorId().equals(myExecutor.getId()) && it.getState() == RunState.SCHEDULED)
           ) != null;
           if (isLoading) {
@@ -397,7 +398,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         }
       }
 
-      if (runConfigAsksToHideDisabledExecutorButtons || hideDisabledExecutorButtons()) {
+      if (!isLoading && (runConfigAsksToHideDisabledExecutorButtons || hideDisabledExecutorButtons())) {
         presentation.setEnabledAndVisible(enabled);
       }
       else {
