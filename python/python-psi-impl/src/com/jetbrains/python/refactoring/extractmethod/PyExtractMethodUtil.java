@@ -60,11 +60,21 @@ public final class PyExtractMethodUtil {
                                            @NotNull final PyCodeFragment fragment,
                                            @NotNull final PsiElement statement1,
                                            @NotNull final PsiElement statement2) {
+    extractFromStatements(project, editor, fragment, statement1, statement2, true);
+  }
+
+  public static List<SmartPsiFileRange> extractFromStatements(@NotNull final Project project,
+                                           @NotNull final Editor editor,
+                                           @NotNull final PyCodeFragment fragment,
+                                           @NotNull final PsiElement statement1,
+                                           @NotNull final PsiElement statement2,
+                                           Boolean processDuplicates) {
+    List<SmartPsiFileRange> pointers = new ArrayList<>();
     if (!fragment.getOutputVariables().isEmpty() && fragment.isReturnInstructionInside()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           PyPsiBundle.message("refactoring.extract.method.error.local.variable.modifications.and.returns"),
                                           RefactoringBundle.message("error.title"), "refactoring.extractMethod");
-      return;
+      return pointers;
     }
 
     final PyFunction function = PsiTreeUtil.getParentOfType(statement1, PyFunction.class);
@@ -78,13 +88,15 @@ public final class PyExtractMethodUtil {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           PyPsiBundle.message("refactoring.extract.method.error.empty.fragment"),
                                           RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
-      return;
+      return pointers;
     }
 
     final Pair<String, AbstractVariableData[]> data = getNameAndVariableData(project, fragment, statement1, isClassMethod, isStaticMethod);
     if (data.first == null || data.second == null) {
-      return;
+      return pointers;
     }
+
+    PsiFile file = statement1.getContainingFile();
 
     final String methodName = data.first;
     final AbstractVariableData[] variableData = data.second;
@@ -162,7 +174,14 @@ public final class PyExtractMethodUtil {
       PsiElement insertedCallElement = WriteAction.compute(() -> replaceElements(elementsRange, callElement));
       insertedCallElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(insertedCallElement);
 
-      if (insertedCallElement != null) {
+      SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
+      if (processDuplicates) {
+        pointers.addAll(ContainerUtil.map(duplicates, p -> pointerManager.createSmartPsiFileRangePointer(file, p.getStartElement().getTextRange())));
+      }
+
+      if (insertedCallElement != null && processDuplicates) {
+        pointers.add(0, pointerManager.createSmartPsiFileRangePointer(file, insertedMethod.getNameIdentifier().getTextRange()));
+        pointers.add(pointerManager.createSmartPsiFileRangePointer(file, insertedCallElement.getTextRange()));
         processDuplicates(duplicates, insertedCallElement, editor);
       }
 
@@ -174,6 +193,7 @@ public final class PyExtractMethodUtil {
       project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
         .refactoringDone(getRefactoringId(), afterData);
     }, PyPsiBundle.message("refactoring.extract.method"), null);
+    return pointers;
   }
 
   @NotNull
