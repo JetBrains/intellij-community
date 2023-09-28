@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
@@ -9,7 +9,6 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -97,6 +96,13 @@ public abstract class GitTextHandler extends GitHandler {
       }
     });
     myHandler.startNotify();
+  }
+
+  protected void endCommandSpan() {
+    OpenTelemetrySpanHolder spanHolder = mySpanHolder;
+    if (spanHolder != null) {
+      spanHolder.endSpan();
+    }
   }
 
   /**

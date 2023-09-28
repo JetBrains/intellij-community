@@ -4,10 +4,7 @@ package git4idea.history
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
 import com.intellij.util.ArrayUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogObjectsFactory
@@ -82,18 +79,15 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
   private fun readRecordsFromHandler(handler: GitLineHandler, converter: Consumer<R>, vararg parameters: String) {
     val parser = GitLogParser(project, recordBuilder, GitLogParser.NameStatus.STATUS, *GitLogUtil.COMMIT_METADATA_OPTIONS)
     handler.setStdoutSuppressed(true)
+    handler.setSpan(GitTelemetrySpan.Log.LoadingDetails.name, Consumer { span -> span.setAttribute("rootName", root.name) })
     handler.addParameters(*parameters)
     handler.addParameters(parser.pretty, "--encoding=UTF-8")
     handler.addParameters("--name-status")
     handler.endOptions()
 
-    runWithSpan(TelemetryManager.getInstance().getTracer(VcsScope), GitTelemetrySpan.Log.LoadingDetails.name) { span ->
-      span.setAttribute("rootName", root.name)
-
-      val handlerListener = GitLogOutputSplitter(handler, parser, converter)
-      Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
-      handlerListener.reportErrors()
-    }
+    val handlerListener = GitLogOutputSplitter(handler, parser, converter)
+    Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
+    handlerListener.reportErrors()
   }
 
   protected abstract fun createRecordsCollector(consumer: (List<R>) -> Unit): GitLogRecordCollector<R>
