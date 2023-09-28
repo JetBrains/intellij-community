@@ -5,7 +5,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.intellij.execution.multilaunch.execution.BeforeExecuteTask
 import com.intellij.execution.multilaunch.execution.ExecutionMode
-import com.intellij.execution.multilaunch.execution.executables.ExecutableTemplate
 import com.intellij.execution.multilaunch.state.ExecutableSnapshot
 import javax.swing.Icon
 

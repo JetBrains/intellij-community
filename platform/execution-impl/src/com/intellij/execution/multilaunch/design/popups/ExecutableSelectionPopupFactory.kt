@@ -59,8 +59,8 @@ class ExecutableSelectionPopupFactory(private val project: Project) {
       null -> ""
     }
 
-    override fun getIconFor(value: PopupItem?) = when(value) {
-      is PopupItem.Executable -> value.executable.icon
+    override fun getIconFor(value: PopupItem?): Icon = when(value) {
+      is PopupItem.Executable -> value.executable.icon ?: EmptyIcon.ICON_16
       else -> EmptyIcon.ICON_16
     }
 
@@ -109,6 +109,6 @@ class ExecutableSelectionPopupFactory(private val project: Project) {
   sealed class PopupItem {
     class Executable(val executable: com.intellij.execution.multilaunch.execution.executables.Executable) : PopupItem()
     class Tasks(val executables: List<com.intellij.execution.multilaunch.execution.executables.Executable>) : PopupItem()
-    object AddMultiple : PopupItem()
+    data object AddMultiple : PopupItem()
   }
 }
