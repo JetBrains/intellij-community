@@ -79,16 +79,18 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     val javaParameters = SimpleJavaParameters()
     javaParameters.jdk = SimpleJavaSdkType.getInstance().createJdk("", SystemProperties.getJavaHome())
     javaParameters.setShortenCommandLine(ShortenCommandLine.ARGS_FILE)
-    val tempDir = Path(PathManager.getTempPath()) / "embedded-client"
-    val configDir = tempDir / "config"
-    if (!configDir.exists()) {
-      CustomConfigMigrationOption.MigrateFromCustomPlace(PathManager.getConfigDir()).writeConfigMarkerFile(configDir)
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      val tempDir = Path(PathManager.getTempPath()) / "embedded-client"
+      val configDir = tempDir / "config"
+      if (!configDir.exists()) {
+        CustomConfigMigrationOption.MigrateFromCustomPlace(PathManager.getConfigDir()).writeConfigMarkerFile(configDir)
+      }
+      javaParameters.vmParametersList.defineProperty(PathManager.PROPERTY_CONFIG_PATH, configDir.pathString)
+      val systemDir = tempDir / "system"
+      javaParameters.vmParametersList.defineProperty(PathManager.PROPERTY_SYSTEM_PATH, systemDir.pathString)
+      val logDir = PathManager.getLogDir() / "embedded-client"
+      javaParameters.vmParametersList.defineProperty(PathManager.PROPERTY_LOG_PATH, logDir.pathString)
     }
-    javaParameters.vmParametersList.defineProperty(PathManager.PROPERTY_CONFIG_PATH, configDir.pathString)
-    val systemDir = tempDir / "system"
-    javaParameters.vmParametersList.defineProperty(PathManager.PROPERTY_SYSTEM_PATH, systemDir.pathString)
-    val logDir = PathManager.getLogDir() / "embedded-client"
-    javaParameters.vmParametersList.defineProperty(PathManager.PROPERTY_LOG_PATH, logDir.pathString)
     passProperties(javaParameters.vmParametersList)
     javaParameters.mainClass = "com.intellij.platform.runtime.loader.IntellijLoader"
     val runtimeLoaderModule = RuntimeModuleId.module("intellij.platform.runtime.loader")
