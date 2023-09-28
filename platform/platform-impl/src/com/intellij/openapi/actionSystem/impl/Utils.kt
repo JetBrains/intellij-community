@@ -252,13 +252,14 @@ object Utils {
                                        isToolbarAction: Boolean,
                                        fastTrack: Boolean): List<AnAction> = withContext(
     CoroutineName("expandActionGroupSuspend ($place)") + ModalityState.any().asContextElement()) {
-    checkAsyncDataContext(dataContext, place)
+    val wrapped = createAsyncDataContext(dataContext)
+    checkAsyncDataContext(wrapped, place)
     val hideDisabled = group is CompactActionGroup
     val isContextMenu = ActionPlaces.isPopupPlace(place)
-    val fastTrackTime = getFastTrackMaxTime(fastTrack, group, place, dataContext, isToolbarAction, true)
+    val fastTrackTime = getFastTrackMaxTime(fastTrack, group, place, wrapped, isToolbarAction, true)
     val deferred = async(if (fastTrackTime > 0) AltEdtDispatcher.apply { switchToQueue() } else EmptyCoroutineContext) {
-      service<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, dataContext, place, group, isToolbarAction) {
-        val updater = ActionUpdater(presentationFactory, dataContext, place, isContextMenu, isToolbarAction, this)
+      service<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, wrapped, place, group, isToolbarAction) {
+        val updater = ActionUpdater(presentationFactory, wrapped, place, isContextMenu, isToolbarAction, this)
         withContext(updaterContext(place, fastTrackTime, isContextMenu, isToolbarAction)) {
           updater.expandActionGroup(group, hideDisabled)
         }
@@ -318,7 +319,7 @@ object Utils {
 
   private fun expandActionGroupImpl(group: ActionGroup,
                                     presentationFactory: PresentationFactory,
-                                    context: DataContext,
+                                    dataContext: DataContext,
                                     place: String,
                                     isContextMenu: Boolean,
                                     loadingIconPoint: RelativePoint?,
@@ -326,7 +327,8 @@ object Utils {
                                     menuItem: Component?): List<AnAction> = runBlockingForActionExpand(
     CoroutineName("expandActionGroupImpl ($place)")) {
     val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode()
-    val wrapped = createAsyncDataContext(context)
+    val wrapped = createAsyncDataContext(dataContext)
+    checkAsyncDataContext(wrapped, place)
     val hideDisabled = group is CompactActionGroup
     val async = isAsyncDataContext(wrapped) && !isUnitTestMode
     if (!async && !isUnitTestMode) {
@@ -341,7 +343,7 @@ object Utils {
     if (async && isContextMenu) {
       cancelAllUpdates("context menu requested")
     }
-    val fastTrackTime = getFastTrackMaxTime(async, group, place, context, false, false)
+    val fastTrackTime = getFastTrackMaxTime(async, group, place, wrapped, false, false)
     val mainJob = coroutineContext.job
     val loopJob = if (!async) null
     else launch {
@@ -690,12 +692,13 @@ object Utils {
                              place: String,
                              presentationFactory: PresentationFactory,
                              onUpdate: Runnable) {
-    checkAsyncDataContext(dataContext, place)
+    val wrapped = createAsyncDataContext(dataContext)
+    checkAsyncDataContext(wrapped, place)
     val actionGroup = DefaultActionGroup(actions.toList())
     ApplicationManager.getApplication().coroutineScope.async(
       Dispatchers.EDT + ModalityState.any().asContextElement(), CoroutineStart.UNDISPATCHED) {
       try {
-        expandActionGroupSuspend(actionGroup, presentationFactory, dataContext, place, false, true)
+        expandActionGroupSuspend(actionGroup, presentationFactory, wrapped, place, false, true)
         onUpdate.run()
       }
       finally {
@@ -886,8 +889,9 @@ object Utils {
   }
 
   fun rearrangeByPromotersNonAsync(actions: List<AnAction>, dataContext: DataContext): List<AnAction> = runBlockingForActionExpand {
-    checkAsyncDataContext(dataContext, "rearrangeByPromotersNonAsync")
-    rearrangeByPromoters(actions, dataContext)
+    val wrapped = createAsyncDataContext(dataContext)
+    checkAsyncDataContext(wrapped, "rearrangeByPromotersNonAsync")
+    rearrangeByPromoters(actions, wrapped)
   }
 }
 
