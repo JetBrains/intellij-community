@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class EntireFileDifferenceModel extends FileDifferenceModel {
@@ -33,27 +34,27 @@ public final class EntireFileDifferenceModel extends FileDifferenceModel {
   }
 
   @Override
-  protected boolean isLeftContentAvailable(RevisionProcessingProgress p) {
+  protected boolean isLeftContentAvailable(@NotNull RevisionProcessingProgress p) {
     return myLeft.getContent().isAvailable();
   }
 
   @Override
-  protected boolean isRightContentAvailable(RevisionProcessingProgress p) {
+  protected boolean isRightContentAvailable(@NotNull RevisionProcessingProgress p) {
     return myRight.getContent().isAvailable();
   }
 
   @Override
-  protected @Nullable DiffContent getReadOnlyLeftDiffContent(RevisionProcessingProgress p) {
+  protected @Nullable DiffContent getReadOnlyLeftDiffContent(@NotNull RevisionProcessingProgress p) {
     return getDiffContent(myLeft);
   }
 
   @Override
-  protected @Nullable DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p) {
+  protected @Nullable DiffContent getReadOnlyRightDiffContent(@NotNull RevisionProcessingProgress p) {
     return getDiffContent(myRight);
   }
 
   @Override
-  protected @Nullable DiffContent getEditableRightDiffContent(RevisionProcessingProgress p) {
+  protected @Nullable DiffContent getEditableRightDiffContent(@NotNull RevisionProcessingProgress p) {
     if (myRight == null) return null;
 
     Document d = myGateway.getDocument(myRight.getPath());

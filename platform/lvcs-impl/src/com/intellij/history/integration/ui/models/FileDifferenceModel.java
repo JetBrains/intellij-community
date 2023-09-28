@@ -33,7 +33,7 @@ public abstract class FileDifferenceModel {
   protected final IdeaGateway myGateway;
   private final boolean isRightContentCurrent;
 
-  protected FileDifferenceModel(Project p, IdeaGateway gw, boolean currentRightContent) {
+  protected FileDifferenceModel(Project p, @NotNull IdeaGateway gw, boolean currentRightContent) {
     myProject = p;
     myGateway = gw;
     isRightContentCurrent = currentRightContent;
@@ -46,13 +46,13 @@ public abstract class FileDifferenceModel {
     return FileUtil.toSystemDependentName(e.getPath());
   }
 
-  public @NlsContexts.Label String getLeftTitle(RevisionProcessingProgress p) {
+  public @NlsContexts.Label String getLeftTitle(@NotNull RevisionProcessingProgress p) {
     Entry leftEntry = getLeftEntry();
     if (leftEntry == null) return LocalHistoryBundle.message("file.does.not.exist");
     return formatTitle(leftEntry, isLeftContentAvailable(p));
   }
 
-  public @NlsContexts.Label String getRightTitle(RevisionProcessingProgress p) {
+  public @NlsContexts.Label String getRightTitle(@NotNull RevisionProcessingProgress p) {
     Entry rightEntry = getRightEntry();
     if (rightEntry == null) return LocalHistoryBundle.message("file.does.not.exist");
     if (isRightContentAvailable(p)) {
@@ -75,7 +75,7 @@ public abstract class FileDifferenceModel {
 
   protected abstract @Nullable Entry getRightEntry();
 
-  public @NotNull DiffContent getLeftDiffContent(RevisionProcessingProgress p) {
+  public @NotNull DiffContent getLeftDiffContent(@NotNull RevisionProcessingProgress p) {
     Entry leftEntry = getLeftEntry();
     if (leftEntry == null) return DiffContentFactory.getInstance().createEmpty();
     if (isLeftContentAvailable(p)) {
@@ -85,7 +85,7 @@ public abstract class FileDifferenceModel {
     return DiffContentFactory.getInstance().create(LocalHistoryBundle.message("content.not.available"));
   }
 
-  public @NotNull DiffContent getRightDiffContent(RevisionProcessingProgress p) {
+  public @NotNull DiffContent getRightDiffContent(@NotNull RevisionProcessingProgress p) {
     Entry rightEntry = getRightEntry();
     if (rightEntry == null) return DiffContentFactory.getInstance().createEmpty();
     if (isRightContentAvailable(p)) {
@@ -95,13 +95,13 @@ public abstract class FileDifferenceModel {
     return DiffContentFactory.getInstance().create(LocalHistoryBundle.message("content.not.available"));
   }
 
-  protected abstract boolean isLeftContentAvailable(RevisionProcessingProgress p);
+  protected abstract boolean isLeftContentAvailable(@NotNull RevisionProcessingProgress p);
 
-  protected abstract boolean isRightContentAvailable(RevisionProcessingProgress p);
+  protected abstract boolean isRightContentAvailable(@NotNull RevisionProcessingProgress p);
 
-  protected abstract @Nullable DiffContent getReadOnlyLeftDiffContent(RevisionProcessingProgress p);
+  protected abstract @Nullable DiffContent getReadOnlyLeftDiffContent(@NotNull RevisionProcessingProgress p);
 
-  protected abstract @Nullable DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p);
+  protected abstract @Nullable DiffContent getReadOnlyRightDiffContent(@NotNull RevisionProcessingProgress p);
 
-  protected abstract @Nullable DiffContent getEditableRightDiffContent(RevisionProcessingProgress p);
+  protected abstract @Nullable DiffContent getEditableRightDiffContent(@NotNull RevisionProcessingProgress p);
 }

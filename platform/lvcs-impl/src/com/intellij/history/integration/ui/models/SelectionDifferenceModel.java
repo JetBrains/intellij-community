@@ -38,8 +38,8 @@ public final class SelectionDifferenceModel extends FileDifferenceModel {
   private final int myTo;
 
   public SelectionDifferenceModel(Project p,
-                                  IdeaGateway gw,
-                                  SelectionCalculator c,
+                                  @NotNull IdeaGateway gw,
+                                  @NotNull SelectionCalculator c,
                                   @NotNull Revision left,
                                   @NotNull Revision right,
                                   int from,
@@ -64,27 +64,27 @@ public final class SelectionDifferenceModel extends FileDifferenceModel {
   }
 
   @Override
-  protected boolean isLeftContentAvailable(RevisionProcessingProgress p) {
+  protected boolean isLeftContentAvailable(@NotNull RevisionProcessingProgress p) {
     return myCalculator.canCalculateFor(myLeftRevision, p);
   }
 
   @Override
-  protected boolean isRightContentAvailable(RevisionProcessingProgress p) {
+  protected boolean isRightContentAvailable(@NotNull RevisionProcessingProgress p) {
     return myCalculator.canCalculateFor(myRightRevision, p);
   }
 
   @Override
-  protected @Nullable DiffContent getReadOnlyLeftDiffContent(RevisionProcessingProgress p) {
+  protected @Nullable DiffContent getReadOnlyLeftDiffContent(@NotNull RevisionProcessingProgress p) {
     return getDiffContent(myLeftRevision, p);
   }
 
   @Override
-  protected @Nullable DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p) {
+  protected @Nullable DiffContent getReadOnlyRightDiffContent(@NotNull RevisionProcessingProgress p) {
     return getDiffContent(myRightRevision, p);
   }
 
   @Override
-  protected @Nullable DiffContent getEditableRightDiffContent(RevisionProcessingProgress p) {
+  protected @Nullable DiffContent getEditableRightDiffContent(@NotNull RevisionProcessingProgress p) {
     Entry rightEntry = getRightEntry();
     if (rightEntry == null) return null;
 

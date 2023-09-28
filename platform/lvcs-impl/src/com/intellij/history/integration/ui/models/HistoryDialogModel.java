@@ -33,9 +33,9 @@ import java.util.*;
 
 public abstract class HistoryDialogModel {
   protected final Project myProject;
-  protected LocalHistoryFacade myVcs;
-  protected VirtualFile myFile;
-  protected IdeaGateway myGateway;
+  protected final LocalHistoryFacade myVcs;
+  protected final VirtualFile myFile;
+  protected final IdeaGateway myGateway;
   private String myFilter;
   private List<RevisionItem> myRevisionsCache;
   private Revision myCurrentRevisionCache;
@@ -91,6 +91,7 @@ public abstract class HistoryDialogModel {
     myVcs.accept(new ChangeVisitor() {
       final RootEntry root = ContainerUtil.getFirstItem(revMap.values()).getRoot().copy();
       String path = myGateway.getPathOrUrl(myFile);
+
       {
         processContent(revMap.get(null));
       }
@@ -134,7 +135,8 @@ public abstract class HistoryDialogModel {
     for (Revision each : ContainerUtil.iterateBackward(revs)) {
       if (each.isLabel() && !result.isEmpty()) {
         result.getFirst().labels.addFirst(each);
-      } else {
+      }
+      else {
         result.addFirst(new RevisionItem(each));
       }
     }
@@ -169,7 +171,7 @@ public abstract class HistoryDialogModel {
     return getRevisions().get(myRightRevisionIndex).revision;
   }
 
-  protected Entry getLeftEntry() {
+  protected @Nullable Entry getLeftEntry() {
     if (myLeftEntryCache == null) {
       // array is used because entry itself can be null
       myLeftEntryCache = new Entry[]{getLeftRevision().findEntry()};
@@ -177,7 +179,7 @@ public abstract class HistoryDialogModel {
     return myLeftEntryCache[0];
   }
 
-  protected Entry getRightEntry() {
+  protected @Nullable Entry getRightEntry() {
     if (myRightEntryCache == null) {
       // array is used because entry itself can be null
       myRightEntryCache = new Entry[]{getRightRevision().findEntry()};
