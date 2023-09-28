@@ -17,7 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.impl.source.BasicJavaTokenSet;
+import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -139,7 +139,7 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
       PsiDocumentManager.getInstance(project).commitDocument(doc);
       final PsiElement leaf = file.findElementAt(offset);
       if (BasicJavaAstTreeUtil.getParentOfType(leaf, BASIC_ARRAY_INITIALIZER_EXPRESSION, false,
-                                               BasicJavaTokenSet.orSet(BasicJavaTokenSet.create(BASIC_CODE_BLOCK), MEMBER_SET)) != null) {
+                                               ParentAwareTokenSet.orSet(ParentAwareTokenSet.create(BASIC_CODE_BLOCK), MEMBER_SET)) != null) {
         return Result.CONTINUE;
       }
       PsiElement st = leaf != null ? leaf.getParent() : null;
@@ -168,7 +168,7 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
     // lambda
     if (prevLeaf != null && prevLeaf.getNode().getElementType() == JavaTokenType.ARROW) return true;
     // anonymous class
-    BasicJavaTokenSet stopAt = BasicJavaTokenSet.orSet(MEMBER_SET, BasicJavaTokenSet.create(BASIC_CODE_BLOCK));
+    ParentAwareTokenSet stopAt = ParentAwareTokenSet.orSet(MEMBER_SET, ParentAwareTokenSet.create(BASIC_CODE_BLOCK));
     if (BasicJavaAstTreeUtil.getParentOfType(prevLeaf, BASIC_NEW_EXPRESSION, true, stopAt) != null) return true;
     // local class
     if (prevLeaf != null && prevLeaf.getParent() != null && BasicJavaAstTreeUtil.is(prevLeaf.getNode(), JavaTokenType.IDENTIFIER) &&

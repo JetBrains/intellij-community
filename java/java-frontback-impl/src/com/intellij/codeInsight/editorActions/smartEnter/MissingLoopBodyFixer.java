@@ -21,7 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.impl.source.BasicJavaTokenSet;
+import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -58,9 +58,9 @@ public class MissingLoopBodyFixer implements Fixer {
   }
 
   private static ASTNode getLoopParent(@NotNull ASTNode element) {
-    ASTNode statement = BasicJavaAstTreeUtil.getParentOfType(element, BasicJavaTokenSet.create(BASIC_FOREACH_STATEMENT,
-                                                                                               BASIC_FOR_STATEMENT,
-                                                                                               BASIC_WHILE_STATEMENT));
+    ASTNode statement = BasicJavaAstTreeUtil.getParentOfType(element, ParentAwareTokenSet.create(BASIC_FOREACH_STATEMENT,
+                                                                                                 BASIC_FOR_STATEMENT,
+                                                                                                 BASIC_WHILE_STATEMENT));
     if (statement == null) return null;
     if (BasicJavaAstTreeUtil.is(statement, BASIC_FOREACH_STATEMENT)) {
       return isForEachApplicable(statement, element) ? statement : null;

@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.impl.source.BasicJavaTokenSet;
+import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,9 +17,9 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
 public class LeaveCodeBlockEnterProcessor implements ASTNodeEnterProcessor {
-  private final BasicJavaTokenSet CONTROL_FLOW_ELEMENT_TYPES =
-    BasicJavaTokenSet.create(BASIC_IF_STATEMENT, BASIC_WHILE_STATEMENT, BASIC_DO_WHILE_STATEMENT, BASIC_FOR_STATEMENT,
-                             BASIC_FOREACH_STATEMENT);
+  private final ParentAwareTokenSet CONTROL_FLOW_ELEMENT_TYPES =
+    ParentAwareTokenSet.create(BASIC_IF_STATEMENT, BASIC_WHILE_STATEMENT, BASIC_DO_WHILE_STATEMENT, BASIC_FOR_STATEMENT,
+                               BASIC_FOREACH_STATEMENT);
 
 
   @Override

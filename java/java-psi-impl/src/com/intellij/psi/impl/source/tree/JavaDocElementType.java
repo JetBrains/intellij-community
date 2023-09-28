@@ -84,5 +84,6 @@ public interface JavaDocElementType {
     }
   };
 
-  TokenSet ALL_JAVADOC_ELEMENTS = BasicJavaDocElementType.ALL_JAVADOC_ELEMENTS.toTokenSet();
+  TokenSet ALL_JAVADOC_ELEMENTS = TokenSet.create(DOC_TAG, DOC_INLINE_TAG, DOC_METHOD_OR_FIELD_REF, DOC_PARAMETER_REF, DOC_TAG_VALUE_ELEMENT,
+                                                  DOC_REFERENCE_HOLDER, DOC_TYPE_HOLDER, DOC_COMMENT);
 }

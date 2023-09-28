@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.impl.source.BasicJavaTokenSet;
+import com.intellij.psi.tree.ParentAwareTokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -177,7 +177,7 @@ public abstract class AbstractBasicJavadocTypedHandler extends TypedHandlerDeleg
 
     // The contents of inline tags is not HTML, so the paired tag completion isn't appropriate there.
     if (BasicJavaAstTreeUtil.is(astNode, DOC_INLINE_TAG, DOC_SNIPPET_TAG) ||
-        BasicJavaAstTreeUtil.getParentOfType(astNode, BasicJavaTokenSet.create(DOC_INLINE_TAG, DOC_SNIPPET_TAG)) != null) {
+        BasicJavaAstTreeUtil.getParentOfType(astNode, ParentAwareTokenSet.create(DOC_INLINE_TAG, DOC_SNIPPET_TAG)) != null) {
       return false;
     }
 

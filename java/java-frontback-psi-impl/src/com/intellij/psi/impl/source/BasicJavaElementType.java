@@ -159,8 +159,8 @@ public interface BasicJavaElementType {
   IElementType BASIC_TYPE_WITH_CONJUNCTIONS_TEXT = new IElementType("TYPE_WITH_CONJUNCTIONS_TEXT", JavaLanguage.INSTANCE);
   IElementType BASIC_DUMMY_ELEMENT = new IJavaElementType("DUMMY_ELEMENT");
 
-  BasicJavaTokenSet STATEMENT_SET =
-    BasicJavaTokenSet.create(
+  ParentAwareTokenSet STATEMENT_SET =
+    ParentAwareTokenSet.create(
       BASIC_ASSERT_STATEMENT, BASIC_BLOCK_STATEMENT, BASIC_BREAK_STATEMENT, BASIC_CONTINUE_STATEMENT,
       BASIC_DECLARATION_STATEMENT, BASIC_DO_WHILE_STATEMENT, BASIC_EMPTY_STATEMENT, BASIC_EXPRESSION_LIST_STATEMENT,
       BASIC_EXPRESSION_STATEMENT,
@@ -174,21 +174,21 @@ public interface BasicJavaElementType {
 
   IElementType BASIC_JAVA_CODE_REFERENCE_ELEMENT_MARK = new IElementType("BASIC_JAVA_CODE_REFERENCE_ELEMENT_MARK", JavaLanguage.INSTANCE);
 
-  BasicJavaTokenSet JAVA_CODE_REFERENCE_ELEMENT_SET = BasicJavaTokenSet.create(
+  ParentAwareTokenSet JAVA_CODE_REFERENCE_ELEMENT_SET = ParentAwareTokenSet.create(
     BASIC_JAVA_CODE_REFERENCE_ELEMENT_MARK,
     BASIC_IMPORT_STATIC_REFERENCE, BASIC_JAVA_CODE_REFERENCE, BASIC_METHOD_REF_EXPRESSION, BASIC_REFERENCE_EXPRESSION
   );
 
   IElementType BASIC_REFERENCE_EXPRESSION_MARK = new IElementType("BASIC_REFERENCE_EXPRESSION_MARK", JavaLanguage.INSTANCE);
 
-  BasicJavaTokenSet REFERENCE_EXPRESSION_SET = BasicJavaTokenSet.create(
+  ParentAwareTokenSet REFERENCE_EXPRESSION_SET = ParentAwareTokenSet.create(
     BASIC_REFERENCE_EXPRESSION_MARK,
     BASIC_METHOD_REF_EXPRESSION, BASIC_REFERENCE_EXPRESSION
   );
 
   IElementType BASIC_EXPRESSION_MARK = new IElementType("BASIC_EXPRESSION_MARK", JavaLanguage.INSTANCE);
 
-  BasicJavaTokenSet EXPRESSION_SET = BasicJavaTokenSet.create(
+  ParentAwareTokenSet EXPRESSION_SET = ParentAwareTokenSet.create(
     BASIC_EXPRESSION_MARK,
     BASIC_REFERENCE_EXPRESSION, BASIC_LITERAL_EXPRESSION, BASIC_THIS_EXPRESSION, BASIC_SUPER_EXPRESSION,
     BASIC_PARENTH_EXPRESSION, BASIC_METHOD_CALL_EXPRESSION,
@@ -203,17 +203,17 @@ public interface BasicJavaElementType {
 
   IElementType BASIC_CLASS_MARK = new IElementType("BASIC_CLASS_MARK", JavaLanguage.INSTANCE);
 
-  BasicJavaTokenSet CLASS_SET = BasicJavaTokenSet.create(BASIC_CLASS_MARK,
-                                                         BASIC_CLASS, BASIC_ANONYMOUS_CLASS,
-                                                         BASIC_ENUM_CONSTANT_INITIALIZER);
+  ParentAwareTokenSet CLASS_SET = ParentAwareTokenSet.create(BASIC_CLASS_MARK,
+                                                             BASIC_CLASS, BASIC_ANONYMOUS_CLASS,
+                                                             BASIC_ENUM_CONSTANT_INITIALIZER);
   IElementType BASIC_MEMBER_MARK = new IElementType("BASIC_MEMBER_MARK", JavaLanguage.INSTANCE);
 
-  BasicJavaTokenSet MEMBER_SET = BasicJavaTokenSet.create(BASIC_MEMBER_MARK,
-                                                          BASIC_ANNOTATION_METHOD, BASIC_ANONYMOUS_CLASS, BASIC_CLASS,
-                                                          BASIC_CLASS_INITIALIZER,
-                                                          BASIC_ENUM_CONSTANT, BASIC_ENUM_CONSTANT_INITIALIZER, BASIC_FIELD,
-                                                          BASIC_METHOD, BASIC_RECORD_COMPONENT,
-                                                          BASIC_TYPE_PARAMETER);
+  ParentAwareTokenSet MEMBER_SET = ParentAwareTokenSet.create(BASIC_MEMBER_MARK,
+                                                              BASIC_ANNOTATION_METHOD, BASIC_ANONYMOUS_CLASS, BASIC_CLASS,
+                                                              BASIC_CLASS_INITIALIZER,
+                                                              BASIC_ENUM_CONSTANT, BASIC_ENUM_CONSTANT_INITIALIZER, BASIC_FIELD,
+                                                              BASIC_METHOD, BASIC_RECORD_COMPONENT,
+                                                              BASIC_TYPE_PARAMETER);
 
 
   class JavaCompositeElementType extends IJavaElementType implements ICompositeElementType, ParentProviderElementType {

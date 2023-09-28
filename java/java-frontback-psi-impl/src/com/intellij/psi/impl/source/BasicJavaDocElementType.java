@@ -44,7 +44,7 @@ public interface BasicJavaDocElementType {
 
   IElementType DOC_COMMENT = new IJavaDocElementType("DOC_COMMENT");
 
-  BasicJavaTokenSet ALL_JAVADOC_ELEMENTS = BasicJavaTokenSet.create(
+  ParentAwareTokenSet ALL_JAVADOC_ELEMENTS = ParentAwareTokenSet.create(
     DOC_TAG, DOC_INLINE_TAG, DOC_METHOD_OR_FIELD_REF, DOC_PARAMETER_REF, DOC_TAG_VALUE_ELEMENT,
     DOC_REFERENCE_HOLDER, DOC_TYPE_HOLDER, DOC_COMMENT);
 

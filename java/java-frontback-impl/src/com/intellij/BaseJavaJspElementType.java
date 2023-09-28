@@ -2,12 +2,12 @@
 package com.intellij;
 
 import com.intellij.lang.xml.XmlTokenElementMarkTypes;
-import com.intellij.psi.impl.source.BasicJavaTokenSet;
+import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.tree.TokenSet;
 
 
 public interface BaseJavaJspElementType {
-  BasicJavaTokenSet WHITE_SPACE_BIT_SET = BasicJavaTokenSet.orSet(
-    BasicJavaTokenSet.create(TokenSet.WHITE_SPACE),
-          BasicJavaTokenSet.create(XmlTokenElementMarkTypes.XML_WHITE_SPACE_MARK));
+  ParentAwareTokenSet WHITE_SPACE_BIT_SET = ParentAwareTokenSet.orSet(
+    ParentAwareTokenSet.create(TokenSet.WHITE_SPACE),
+    ParentAwareTokenSet.create(XmlTokenElementMarkTypes.XML_WHITE_SPACE_MARK));
 }

@@ -102,7 +102,7 @@ public class BasicReferenceParser {
       builder.remapCurrentToken(tokenType = JavaTokenType.IDENTIFIER);
     }
 
-    if (expect(builder, BasicElementTypes.BASIC_PRIMITIVE_TYPE_BIT_SET.toTokenSet())) {
+    if (expect(builder, BasicElementTypes.BASIC_PRIMITIVE_TYPE_BIT_SET)) {
       typeInfo.isPrimitive = true;
     }
     else if ((isSet(flags, WILDCARD) || badWildcard) && (tokenType == JavaTokenType.QUEST || isKeywordAny(builder))) {

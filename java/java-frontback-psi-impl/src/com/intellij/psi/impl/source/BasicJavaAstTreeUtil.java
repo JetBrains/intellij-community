@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.tree.ParentProviderElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaDocElementType;
@@ -67,10 +68,10 @@ public final class BasicJavaAstTreeUtil {
     if (!isNotNull) {
       return false;
     }
-    return is(element.getElementType(), tokenSet);
+    return ParentProviderElementType.containsWithSourceParent(element.getElementType(), tokenSet);
   }
 
-  public static boolean is(@Nullable ASTNode element, @NotNull BasicJavaTokenSet tokenSet) {
+  public static boolean is(@Nullable ASTNode element, @NotNull ParentAwareTokenSet tokenSet) {
     boolean isNotNull = element != null;
     if (!isNotNull) {
       return false;
@@ -78,19 +79,7 @@ public final class BasicJavaAstTreeUtil {
     return is(element.getElementType(), tokenSet);
   }
 
-  //needs for FrontBackJavaTokenSet
-  public static boolean is(@NotNull IElementType source, @NotNull TokenSet tokenSet) {
-    if (tokenSet.contains(source)) {
-      return true;
-    }
-    if (source instanceof ParentProviderElementType) {
-      Set<IElementType> parents = ((ParentProviderElementType)source).getParents();
-      return ContainerUtil.exists(parents, parent -> parent != null && is(parent, tokenSet));
-    }
-    return false;
-  }
-
-  private static boolean is(@NotNull IElementType source, @NotNull BasicJavaTokenSet tokenSet) {
+  private static boolean is(@NotNull IElementType source, @NotNull ParentAwareTokenSet tokenSet) {
     //not call iteratively!
     if (tokenSet.contains(source)) {
       return true;
@@ -110,7 +99,7 @@ public final class BasicJavaAstTreeUtil {
   }
 
   public static boolean is(@Nullable ASTNode element, IElementType... iElementTypes) {
-    return is(element, BasicJavaTokenSet.create(iElementTypes));
+    return is(element, ParentAwareTokenSet.create(iElementTypes));
   }
 
   public static List<ASTNode> getChildren(@Nullable ASTNode element) {
@@ -152,10 +141,10 @@ public final class BasicJavaAstTreeUtil {
 
 
   public static @Nullable ASTNode findChildByType(@Nullable ASTNode astNode, IElementType... targets) {
-    return findChildByType(astNode, BasicJavaTokenSet.create(targets));
+    return findChildByType(astNode, ParentAwareTokenSet.create(targets));
   }
 
-  public static @Nullable ASTNode findChildByType(@Nullable ASTNode astNode, BasicJavaTokenSet targets) {
+  public static @Nullable ASTNode findChildByType(@Nullable ASTNode astNode, ParentAwareTokenSet targets) {
     if (astNode == null) {
       return null;
     }
@@ -316,7 +305,7 @@ public final class BasicJavaAstTreeUtil {
   }
 
   @Nullable
-  public static ASTNode getParentOfType(@Nullable ASTNode e, @NotNull BasicJavaTokenSet set) {
+  public static ASTNode getParentOfType(@Nullable ASTNode e, @NotNull ParentAwareTokenSet set) {
     if (e == null) {
       return null;
     }
@@ -330,7 +319,7 @@ public final class BasicJavaAstTreeUtil {
     return null;
   }
 
-  private static @Nullable ASTNode findParent(@NotNull ASTNode element, @NotNull BasicJavaTokenSet type) {
+  private static @Nullable ASTNode findParent(@NotNull ASTNode element, @NotNull ParentAwareTokenSet type) {
     for (ASTNode parent = element.getTreeParent(); parent != null; parent = parent.getTreeParent()) {
       if (is(parent.getElementType(), type)) return parent;
     }
@@ -425,7 +414,7 @@ public final class BasicJavaAstTreeUtil {
   public static @Nullable PsiElement getParentOfType(@Nullable PsiElement element,
                                                      @NotNull IElementType target,
                                                      boolean strict,
-                                                     @Nullable BasicJavaTokenSet stopAt) {
+                                                     @Nullable ParentAwareTokenSet stopAt) {
     if (element == null) return null;
     if (strict) {
       if (element instanceof PsiFile) return null;
@@ -512,7 +501,7 @@ public final class BasicJavaAstTreeUtil {
   }
 
   @Nullable
-  public static ASTNode getParentOfType(@Nullable ASTNode e, @NotNull BasicJavaTokenSet types, boolean strict) {
+  public static ASTNode getParentOfType(@Nullable ASTNode e, @NotNull ParentAwareTokenSet types, boolean strict) {
     if (!strict && is(e, types)) {
       return e;
     }
@@ -527,7 +516,7 @@ public final class BasicJavaAstTreeUtil {
     if (e == null) {
       return null;
     }
-    return toPsi(getParentOfType(e.getNode(), BasicJavaTokenSet.create(types)));
+    return toPsi(getParentOfType(e.getNode(), ParentAwareTokenSet.create(types)));
   }
 
   @Nullable
@@ -779,8 +768,8 @@ public final class BasicJavaAstTreeUtil {
       return null;
     }
 
-    return findChildByType(element, BasicJavaTokenSet.orSet(
-      BasicJavaTokenSet.create(BASIC_BLOCK_STATEMENT, BASIC_THROW_STATEMENT), EXPRESSION_SET));
+    return findChildByType(element, ParentAwareTokenSet.orSet(
+      ParentAwareTokenSet.create(BASIC_BLOCK_STATEMENT, BASIC_THROW_STATEMENT), EXPRESSION_SET));
   }
 
   @Nullable

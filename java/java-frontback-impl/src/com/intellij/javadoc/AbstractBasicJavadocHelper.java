@@ -12,8 +12,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.impl.source.BasicJavaTokenSet;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ParentAwareTokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,9 +29,9 @@ public abstract class AbstractBasicJavadocHelper {
 
   public static final Pair<JavadocParameterInfo, List<JavadocParameterInfo>> EMPTY
     = new Pair<>(null, Collections.emptyList());
-  private static final @NotNull BasicJavaTokenSet TAG_TOKEN_SET = BasicJavaTokenSet.create(DOC_TAG,
-                                                                                           DOC_SNIPPET_TAG,
-                                                                                           DOC_INLINE_TAG);
+  private static final @NotNull ParentAwareTokenSet TAG_TOKEN_SET = ParentAwareTokenSet.create(DOC_TAG,
+                                                                                               DOC_SNIPPET_TAG,
+                                                                                               DOC_INLINE_TAG);
 
   protected AbstractBasicJavadocHelper() {
   }
