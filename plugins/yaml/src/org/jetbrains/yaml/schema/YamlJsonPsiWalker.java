@@ -155,7 +155,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
 
   @Override
   public int indentOf(@NotNull PsiFile file) {
-    return Objects.requireNonNull(CodeStyle.getLanguageSettings(file, YAMLLanguage.INSTANCE).getIndentOptions()).INDENT_SIZE;
+    return CodeStyle.getSettings(file.getProject(), file.getVirtualFile()).getIndentOptionsByFile(file).INDENT_SIZE;
   }
 
   @Nullable
