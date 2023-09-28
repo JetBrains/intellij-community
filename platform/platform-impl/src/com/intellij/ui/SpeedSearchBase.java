@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.speedSearch.SpeedSearchAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
@@ -173,6 +174,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         return ActionUpdateThread.EDT;
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "control BACK_SPACE"), myComponent);
+
+    ActionManager.getInstance().getAction(SpeedSearchAction.ID).registerCustomShortcutSet(myComponent, null);
 
     installSupplyTo(myComponent);
   }
