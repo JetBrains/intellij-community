@@ -267,12 +267,12 @@ public final class PyExtractMethodUtil {
     extractFromExpression(project, editor, fragment, expression, true);
   }
 
-  public static List<SmartPsiElementPointer<PsiElement>> extractFromExpression(@NotNull final Project project,
-                                                                               @NotNull final Editor editor,
-                                                                               @NotNull final PyCodeFragment fragment,
-                                                                               @NotNull final PsiElement expression,
-                                                                               final Boolean processDuplicates) {
-    List<SmartPsiElementPointer<PsiElement>> pointers = new ArrayList<>();
+  public static List<SmartPsiFileRange> extractFromExpression(@NotNull final Project project,
+                                                              @NotNull final Editor editor,
+                                                              @NotNull final PyCodeFragment fragment,
+                                                              @NotNull final PsiElement expression,
+                                                              final Boolean processDuplicates) {
+    List<SmartPsiFileRange> pointers = new ArrayList<>();
 
     if (!fragment.getOutputVariables().isEmpty()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
@@ -358,12 +358,16 @@ public final class PyExtractMethodUtil {
 
         // replace statements with call
         PsiElement insertedCallElement = null;
-        pointers.addAll(ContainerUtil.map(duplicates, p -> SmartPointerManager.createPointer(p.getStartElement())));
+        PsiFile file = expression.getContainingFile();
+        SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
+        if (processDuplicates) {
+          pointers.addAll(ContainerUtil.map(duplicates, p -> pointerManager.createSmartPsiFileRangePointer(file, p.getStartElement().getTextRange())));
+        }
         if (callElement != null) {
           insertedCallElement = WriteAction.compute(() -> PyReplaceExpressionUtil.replaceExpression(expression, callElement));
           if (insertedCallElement != null) {
-            pointers.add(0, SmartPointerManager.createPointer(insertedMethod.getNameIdentifier()));
-            pointers.add(SmartPointerManager.createPointer(insertedCallElement));
+            pointers.add(0, pointerManager.createSmartPsiFileRangePointer(file, insertedMethod.getNameIdentifier().getTextRange()));
+            pointers.add(pointerManager.createSmartPsiFileRangePointer(file, insertedCallElement.getTextRange()));
             if (processDuplicates) {
               processDuplicates(duplicates, insertedCallElement, editor);
             }
