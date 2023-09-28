@@ -2,16 +2,15 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.dependency.impl.StringReferenceID;
 
 public class ClassUsage extends JvmElementUsage {
 
   public ClassUsage(@NotNull String className) {
-    super(new StringReferenceID(className));
+    super(new JvmNodeReferenceID(className));
   }
 
   public String getClassName() {
-    return ((StringReferenceID)getElementOwner()).getValue();
+    return ((JvmNodeReferenceID)getElementOwner()).getNodeName();
   }
 
 }

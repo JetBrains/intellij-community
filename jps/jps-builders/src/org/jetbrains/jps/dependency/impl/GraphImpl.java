@@ -58,6 +58,11 @@ abstract class GraphImpl implements Graph {
   }
 
   @Override
+  public Iterable<ReferenceID> getRegisteredNodes() {
+    return myNodeToSourcesMap.getKeys();
+  }
+
+  @Override
   public Iterable<NodeSource> getSources() {
     return mySourceToNodesMap.getKeys();
   }

@@ -31,12 +31,15 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
   @Override
   public DifferentiateResult differentiate(Delta delta) {
 
-    Set<Node<?, ?>> nodesBefore = Iterators.collect(Iterators.flat(Iterators.map(Iterators.unique(Iterators.flat(Arrays.asList(delta.getBaseSources(), delta.getSources(), delta.getDeletedSources()))), s -> getNodes(s))), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
-    Set<Node<?, ?>> nodesAfter = Iterators.collect(Iterators.flat(Iterators.map(delta.getSources(), s -> delta.getNodes(s))), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
+    Iterable<NodeSource> deltaSources = delta.getSources();
+    Set<NodeSource> allProcessedSources = Iterators.collect(Iterators.flat(Arrays.asList(delta.getBaseSources(), deltaSources, delta.getDeletedSources())), new HashSet<>());
+    Set<Node<?, ?>> nodesBefore = Iterators.collect(Iterators.flat(Iterators.map(allProcessedSources, s -> getNodes(s))), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
+    Set<Node<?, ?>> nodesAfter = Iterators.collect(Iterators.flat(Iterators.map(deltaSources, s -> delta.getNodes(s))), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
 
     var diffContext = new DifferentiateContext() {
       private final Predicate<Node<?, ?>> ANY_CONSTRAINT = node -> true;
 
+      final Set<NodeSource> compiledSources = deltaSources instanceof Set? (Set<NodeSource>)deltaSources : Iterators.collect(deltaSources, new HashSet<>());
       final Map<Usage, Predicate<Node<?, ?>>> affectedUsages = new HashMap<>();
       final Set<BiPredicate<Node<?, ?>, Usage>> usageQueries = new HashSet<>();
       final Set<NodeSource> affectedSources = new HashSet<>();
@@ -49,6 +52,11 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       @Override
       public @NotNull Delta getDelta() {
         return delta;
+      }
+
+      @Override
+      public boolean isCompiled(NodeSource src) {
+        return compiledSources.contains(src);
       }
 
       @Override
@@ -103,27 +111,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     List<Node<?, ?>> deletedNodes = Iterators.collect(Iterators.filter(nodesBefore, n -> !nodesAfter.contains(n)), new ArrayList<>());
 
     if (!incremental) {
-      return new DifferentiateResult() {
-        @Override
-        public boolean isIncremental() {
-          return false;
-        }
-
-        @Override
-        public Delta getDelta() {
-          return delta;
-        }
-
-        @Override
-        public Iterable<Node<?, ?>> getDeletedNodes() {
-          return deletedNodes;
-        }
-
-        @Override
-        public Iterable<NodeSource> getAffectedSources() {
-          return Collections.emptyList();
-        }
-      };
+      return DifferentiateResult.createNonIncremental(delta, deletedNodes);
     }
 
     Set<NodeSource> affectedSources = new HashSet<>();
@@ -138,18 +126,25 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     for (ReferenceID dependent : Iterators.unique(Iterators.filter(Iterators.flat(Iterators.map(changedScopeNodes, id -> getDependingNodes(id))), id -> !dependingOnDeleted.contains(id)))) {
       for (NodeSource depSrc : getSources(dependent)) {
         if (!affectedSources.contains(depSrc)) {
+          boolean affectSource = false;
           for (var depNode : getNodes(depSrc)) {
             if (diffContext.isNodeAffected(depNode)) {
-              affectedSources.add(depSrc);
-              break;
+              affectSource = true;
+              for (DifferentiateStrategy strategy : myDifferentiateStrategies) {
+                if (!strategy.isIncremental(diffContext, depNode)) {
+                  return DifferentiateResult.createNonIncremental(delta, deletedNodes);
+                }
+              }
             }
+          }
+          if (affectSource) {
+            affectedSources.add(depSrc);
           }
         }
       }
     }
     // do not include sources that were already compiled
-    affectedSources.removeAll(delta.getBaseSources());
-    affectedSources.removeAll(delta.getDeletedSources());
+    affectedSources.removeAll(allProcessedSources);
     // ensure sources explicitly marked by strategies are affected, even if these sources were compiled initially
     affectedSources.addAll(diffContext.affectedSources);
 

@@ -103,7 +103,11 @@ public class Proto {
 
     @Override
     public boolean unchanged() {
-      return myPast.getFlags().equals(getFlags()) && !signatureChanged() && annotations().unchanged();
+      return !flagsChanged() && !signatureChanged() && annotations().unchanged();
+    }
+
+    public boolean flagsChanged() {
+      return !myPast.getFlags().equals(getFlags());
     }
 
     public JVMFlags getAddedFlags() {

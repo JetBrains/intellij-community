@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.NodeBuilder;
 import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.Usage;
-import org.jetbrains.jps.dependency.impl.StringReferenceID;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
@@ -355,7 +354,7 @@ final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuilder {
 
   @Override
   public @NotNull ReferenceID getReferenceID() {
-    return new StringReferenceID(myName);
+    return new JvmNodeReferenceID(myName);
   }
 
   @Override

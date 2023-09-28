@@ -4,6 +4,8 @@ package org.jetbrains.jps.dependency.java;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 
+import java.util.Objects;
+
 public final class JvmField extends ProtoMember implements DiffCapable<JvmField, JvmField.Diff> {
 
   public JvmField(JVMFlags flags, String signature, String name, String descriptor, @NotNull Iterable<TypeRepr.ClassType> annotations, Object value) {
@@ -23,6 +25,20 @@ public final class JvmField extends ProtoMember implements DiffCapable<JvmField,
   @Override
   public int diffHashCode() {
     return getName().hashCode();
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * diffHashCode() + getType().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof JvmField)) {
+      return false;
+    }
+    JvmField other = (JvmField)obj;
+    return isSame(other) && Objects.equals(getType(), other.getType());
   }
 
   @Override

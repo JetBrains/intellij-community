@@ -8,6 +8,7 @@ import org.jetbrains.jps.javac.Iterators;
 
 import java.lang.annotation.RetentionPolicy;
 import java.util.Objects;
+import java.util.Set;
 
 public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
   private final String mySuperFqName;
@@ -40,12 +41,16 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
   }
 
   public @NotNull String getPackageName() {
-    String name = getName();
-    int index = name.lastIndexOf('/');
-    return index >= 0? name.substring(0, index) : "";
+    return getPackageName(getName());
   }
 
-  public final boolean isAnonymous() {
+  @NotNull
+  public static String getPackageName(@NotNull String jvmClassName) {
+    int index = jvmClassName.lastIndexOf('/');
+    return index >= 0? jvmClassName.substring(0, index) : "";
+  }
+
+  public boolean isAnonymous() {
     return getFlags().isAnonymous();
   }
 
@@ -55,6 +60,10 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
 
   public String getOuterFqName() {
     return myOuterFqName;
+  }
+
+  public boolean isInnerClass() {
+    return myOuterFqName != null && !myOuterFqName.isBlank();
   }
 
   public Iterable<String> getInterfaces() {
@@ -140,5 +149,18 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     public Specifier<ElemType, ?> annotationTargets() {
       return Difference.diff(myPast.getAnnotationTargets(), getAnnotationTargets());
     }
+
+    public boolean targetAttributeCategoryMightChange() {
+      Specifier<ElemType, ?> targetsDiff = annotationTargets();
+      if (!targetsDiff.unchanged()) {
+        for (ElemType elemType : Set.of(ElemType.TYPE_USE, ElemType.RECORD_COMPONENT)) {
+          if (Iterators.contains(targetsDiff.added(), elemType) || Iterators.contains(targetsDiff.removed(), elemType) || Iterators.contains(myPast.getAnnotationTargets(), elemType) ) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
   }
 }

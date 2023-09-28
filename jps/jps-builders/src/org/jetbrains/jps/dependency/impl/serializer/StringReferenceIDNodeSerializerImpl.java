@@ -2,20 +2,20 @@
 package org.jetbrains.jps.dependency.impl.serializer;
 
 import org.jetbrains.jps.dependency.SerializableGraphElement;
-import org.jetbrains.jps.dependency.impl.StringReferenceID;
+import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public final class StringReferenceIDNodeSerializerImpl extends NodeSerializerImpl<StringReferenceID>{
+public final class StringReferenceIDNodeSerializerImpl extends NodeSerializerImpl<JvmNodeReferenceID>{
   public StringReferenceIDNodeSerializerImpl() {
-    super(StringReferenceID.class);
+    super(JvmNodeReferenceID.class);
   }
 
   @Override
   public <T extends SerializableGraphElement> void write(T elem, DataOutput out) throws IOException {
-    String p = ((StringReferenceID)elem).getValue();
+    String p = ((JvmNodeReferenceID)elem).getNodeName();
     out.writeUTF(p);
   }
 
@@ -23,6 +23,6 @@ public final class StringReferenceIDNodeSerializerImpl extends NodeSerializerImp
   public <T extends SerializableGraphElement> T read(DataInput in) throws IOException {
     String s = in.readUTF();
 
-    return (T)new StringReferenceID(s);
+    return (T)new JvmNodeReferenceID(s);
   }
 }

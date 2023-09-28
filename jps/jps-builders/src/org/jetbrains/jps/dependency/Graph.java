@@ -20,6 +20,8 @@ public interface Graph {
    */
   Iterable<NodeSource> getSources(@NotNull ReferenceID id);
 
+  Iterable<ReferenceID> getRegisteredNodes();
+
   /**
    * @return all sources registered in this graph
    */

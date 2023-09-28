@@ -10,7 +10,6 @@ import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
-import org.jetbrains.jps.dependency.impl.StringReferenceID;
 import org.jetbrains.jps.dependency.java.*;
 import org.jetbrains.org.objectweb.asm.Type;
 
@@ -396,8 +395,8 @@ public final class SerializerUtil {
 
   static void writeFieldUsage(FieldUsage fieldUsage, DataOutput out) throws IOException {
     ReferenceID refId = fieldUsage.getElementOwner();
-    if (refId instanceof StringReferenceID) {
-      out.writeUTF(((StringReferenceID)refId).getValue());
+    if (refId instanceof JvmNodeReferenceID) {
+      out.writeUTF(((JvmNodeReferenceID)refId).getNodeName());
     }
     else {
       throw new SerializationException("Serialization error: Unexpected ReferenceID type: " + refId.getClass().getTypeName());
@@ -409,8 +408,8 @@ public final class SerializerUtil {
 
   public static void writeMethodUsage(MethodUsage methodUsage, DataOutput out) throws IOException {
     ReferenceID refId = methodUsage.getElementOwner();
-    if (refId instanceof StringReferenceID) {
-      out.writeUTF(((StringReferenceID)refId).getValue());
+    if (refId instanceof JvmNodeReferenceID) {
+      out.writeUTF(((JvmNodeReferenceID)refId).getNodeName());
     }
     else {
       throw new SerializationException("Serialization error: Unexpected ReferenceID type: " + refId.getClass().getTypeName());
@@ -422,8 +421,8 @@ public final class SerializerUtil {
 
   public static void writeImportStaticMemberUsage(ImportStaticMemberUsage importStaticMemberUsage, DataOutput out) throws IOException {
     ReferenceID refId = importStaticMemberUsage.getElementOwner();
-    if (refId instanceof StringReferenceID) {
-      out.writeUTF(((StringReferenceID)refId).getValue());
+    if (refId instanceof JvmNodeReferenceID) {
+      out.writeUTF(((JvmNodeReferenceID)refId).getNodeName());
     }
     else {
       throw new SerializationException("Serialization error: Unexpected ReferenceID type: " + refId.getClass().getTypeName());
@@ -448,11 +447,11 @@ public final class SerializerUtil {
     out.writeUTF(annotationUsage.getClassType().getJvmName());
     // UserArgNames
     int userArgNamesCount = 0;
-    for (String userArgName : annotationUsage.getUserArgNames()) {
+    for (String userArgName : annotationUsage.getUsedArgNames()) {
       userArgNamesCount++;
     }
     DataInputOutputUtil.writeINT(out, userArgNamesCount);
-    for (String userArgName : annotationUsage.getUserArgNames()) {
+    for (String userArgName : annotationUsage.getUsedArgNames()) {
       out.writeUTF(userArgName);
     }
 

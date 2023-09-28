@@ -3,4 +3,8 @@ package org.jetbrains.jps.dependency;
 
 public interface DifferentiateStrategy {
   boolean differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter);
+
+  default boolean isIncremental(DifferentiateContext context, Node<?, ?> affectedNode) {
+    return true;
+  }
 }

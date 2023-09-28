@@ -60,6 +60,20 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
   }
 
   @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof JvmMethod)) {
+      return false;
+    }
+    JvmMethod other = (JvmMethod)obj;
+    return isSame(other) && Objects.equals(getType(), other.getType());
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * diffHashCode() + getType().hashCode();
+  }
+
+  @Override
   public JvmMethod.Diff difference(JvmMethod past) {
     return new Diff(past);
   }

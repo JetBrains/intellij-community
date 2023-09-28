@@ -1,17 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.jps.dependency.impl;
+package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.jps.dependency.ReferenceID;
 
-public final class StringReferenceID implements ReferenceID {
-  private final String myValue;
+public final class JvmNodeReferenceID implements ReferenceID {
+  private final String myName;
 
-  public StringReferenceID(String value) {
-    myValue = value;
+  public JvmNodeReferenceID(String name) {
+    myName = name;
   }
 
-  public String getValue() {
-    return myValue;
+  /**
+   * @return either JVM class name (FQ-name) or JVM module name
+   */
+  public String getNodeName() {
+    return myName;
   }
 
   @Override
@@ -23,9 +26,9 @@ public final class StringReferenceID implements ReferenceID {
       return false;
     }
 
-    final StringReferenceID that = (StringReferenceID)o;
+    final JvmNodeReferenceID that = (JvmNodeReferenceID)o;
 
-    if (!myValue.equals(that.myValue)) {
+    if (!myName.equals(that.myName)) {
       return false;
     }
 
@@ -34,11 +37,11 @@ public final class StringReferenceID implements ReferenceID {
 
   @Override
   public int hashCode() {
-    return myValue.hashCode();
+    return myName.hashCode();
   }
 
   @Override
   public String toString() {
-    return "REF_ID:" + myValue;
+    return "JVM_NODE_ID:" + myName;
   }
 }
