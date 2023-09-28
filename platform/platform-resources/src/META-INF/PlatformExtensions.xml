@@ -1469,7 +1469,6 @@
                        key="notification.group.built.in.server"/>
     <notificationGroup id="Password Safe" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.password.safe"/>
     <notificationGroup id="Test Results" displayType="TOOL_WINDOW" toolWindowId="Run" isLogByDefault="false" hideFromSettings="true"/>
-    <notificationGroup id="feedback.form" displayType="BALLOON" bundle="messages.ApplicationBundle" key="feedback.form.notification.group"/>
     <notificationGroup id="PerformanceWatcher" displayType="STICKY_BALLOON" bundle="messages.DiagnosticBundle"
                        key="notification.group.performance.watcher"/>
     <notificationGroup id="WindowsDefender" displayType="BALLOON" bundle="messages.DiagnosticBundle"
