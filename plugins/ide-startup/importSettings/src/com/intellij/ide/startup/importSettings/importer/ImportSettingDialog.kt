@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.importSettings.importer
+package com.intellij.ide.startup.importSettings.importer
 
-import com.intellij.importSettings.data.*
+import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.openapi.ui.DialogWrapper
 import java.awt.event.ActionEvent
 import javax.swing.Action

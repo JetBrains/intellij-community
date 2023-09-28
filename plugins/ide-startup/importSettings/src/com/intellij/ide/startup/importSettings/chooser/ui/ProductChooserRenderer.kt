@@ -1,11 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.importSettings.chooser.ui
+package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.ListPluginComponent
-import com.intellij.importSettings.chooser.actions.ConfigAction
-import com.intellij.importSettings.chooser.actions.SettingChooserItemAction
-import com.intellij.importSettings.data.ActionsDataProvider
+import com.intellij.ide.startup.importSettings.chooser.actions.ConfigAction
+import com.intellij.ide.startup.importSettings.chooser.actions.SettingChooserItemAction
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -15,11 +14,7 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.NamedColorUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import java.awt.BorderLayout
 import java.awt.Color

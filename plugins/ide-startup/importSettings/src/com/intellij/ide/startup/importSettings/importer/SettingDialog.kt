@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.importSettings.importer
+package com.intellij.ide.startup.importSettings.importer
 
-import com.intellij.importSettings.chooser.ui.BaseSettingPane
-import com.intellij.importSettings.chooser.ui.createSettingPane
-import com.intellij.importSettings.data.ActionsDataProvider
-import com.intellij.importSettings.data.IconProductSize
-import com.intellij.importSettings.data.ImportItem
+import com.intellij.ide.startup.importSettings.chooser.ui.BaseSettingPane
+import com.intellij.ide.startup.importSettings.chooser.ui.createSettingPane
+import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
+import com.intellij.ide.startup.importSettings.data.IconProductSize
+import com.intellij.ide.startup.importSettings.data.ImportItem
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.HorizontalLayout
