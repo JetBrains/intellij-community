@@ -1,84 +1,70 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInspection.export;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInspection.export
 
-import com.intellij.codeEditor.printing.ExportToHTMLSettings;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.openapi.editor.EditorBundle;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.ui.OptionGroup;
-import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.codeEditor.printing.ExportToHTMLDialog.Companion.addBrowseDirectoryListener
+import com.intellij.codeEditor.printing.ExportToHTMLSettings
+import com.intellij.codeInspection.InspectionsBundle
+import com.intellij.openapi.editor.EditorBundle
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.GraphicsUtil
+import java.awt.Dimension
+import javax.swing.JCheckBox
+import javax.swing.JComponent
 
-import javax.swing.*;
-import java.awt.*;
+class ExportToHTMLDialog(private val project: Project, private val canBeOpenInBrowser: Boolean) : DialogWrapper(project, true) {
 
-public final class ExportToHTMLDialog extends DialogWrapper{
-  private final Project myProject;
-  private JCheckBox myCbOpenInBrowser;
-  private TextFieldWithBrowseButton myTargetDirectoryField;
-  private final boolean myCanBeOpenInBrowser;
+  private var cbOpenInBrowser: JCheckBox? = null
+  private val targetDirectoryField = TextFieldWithBrowseButton()
 
-  public ExportToHTMLDialog(Project project, final boolean canBeOpenInBrowser) {
-    super(project, true);
-    myProject = project;
-    myCanBeOpenInBrowser = canBeOpenInBrowser;
-    setOKButtonText(InspectionsBundle.message("inspection.export.save.button"));
-    setTitle(InspectionsBundle.message("inspection.export.dialog.title"));
-    init();
+  init {
+    setOKButtonText(InspectionsBundle.message("inspection.export.save.button"))
+    title = InspectionsBundle.message("inspection.export.dialog.title")
+    init()
   }
 
-  @Override
-  protected JComponent createNorthPanel() {
-    myTargetDirectoryField = new TextFieldWithBrowseButton();
-    com.intellij.codeEditor.printing.ExportToHTMLDialog.addBrowseDirectoryListener(myTargetDirectoryField, myProject);
+  override fun createCenterPanel(): JComponent {
+    addBrowseDirectoryListener(targetDirectoryField, project)
 
-    LabeledComponent<TextFieldWithBrowseButton> labeledComponent = new LabeledComponent<>();
-    labeledComponent.setText(EditorBundle.message("export.to.html.output.directory.label"));
-    labeledComponent.setComponent(myTargetDirectoryField);
-    return labeledComponent;
-  }
+    return panel {
+      row {
+        cell(targetDirectoryField)
+          .label(EditorBundle.message("export.to.html.output.directory.label"), LabelPosition.TOP)
+          .align(AlignX.FILL)
+      }
 
-  @Override
-  protected JComponent createCenterPanel() {
-    if (!myCanBeOpenInBrowser) return null;
-    OptionGroup optionGroup = new OptionGroup();
-
-    addOptions(optionGroup);
-
-    return optionGroup.createPanel();
-  }
-
-  private void addOptions(OptionGroup optionGroup) {
-    myCbOpenInBrowser = new JCheckBox();
-    myCbOpenInBrowser.setText(InspectionsBundle.message("inspection.export.open.option"));
-    optionGroup.add(myCbOpenInBrowser);
-  }
-
-  public void reset() {
-    ExportToHTMLSettings exportToHTMLSettings = ExportToHTMLSettings.getInstance(myProject);
-    if (myCanBeOpenInBrowser) {
-      myCbOpenInBrowser.setSelected(exportToHTMLSettings.OPEN_IN_BROWSER);
+      if (canBeOpenInBrowser) {
+        row {
+          cbOpenInBrowser = checkBox(InspectionsBundle.message("inspection.export.open.option")).component
+        }
+      }
     }
-    final String text = exportToHTMLSettings.OUTPUT_DIRECTORY;
-    myTargetDirectoryField.setText(text);
+  }
+
+  fun reset() {
+    val exportToHTMLSettings = ExportToHTMLSettings.getInstance(project)
+    cbOpenInBrowser?.isSelected = exportToHTMLSettings.OPEN_IN_BROWSER
+    val text = exportToHTMLSettings.OUTPUT_DIRECTORY
+    targetDirectoryField.text = text
     if (text != null) {
-      myTargetDirectoryField.setPreferredSize(new Dimension(GraphicsUtil.stringWidth(text, myTargetDirectoryField.getFont()) + 100, myTargetDirectoryField.getPreferredSize().height));
+      targetDirectoryField.preferredSize = Dimension(GraphicsUtil.stringWidth(text, targetDirectoryField.font) + 100,
+                                                     targetDirectoryField.getPreferredSize().height)
     }
   }
 
-  public void apply() {
-    ExportToHTMLSettings exportToHTMLSettings = ExportToHTMLSettings.getInstance(myProject);
-
-    if (myCanBeOpenInBrowser) {
-      exportToHTMLSettings.OPEN_IN_BROWSER = myCbOpenInBrowser.isSelected();
+  fun apply() {
+    val exportToHTMLSettings = ExportToHTMLSettings.getInstance(project)
+    cbOpenInBrowser?.let {
+      exportToHTMLSettings.OPEN_IN_BROWSER = it.isSelected
     }
-    exportToHTMLSettings.OUTPUT_DIRECTORY = myTargetDirectoryField.getText();
+    exportToHTMLSettings.OUTPUT_DIRECTORY = targetDirectoryField.getText()
   }
 
-  @Override
-  protected String getHelpId() {
-    return "procedures.inspecting.export";
+  override fun getHelpId(): String {
+    return "procedures.inspecting.export"
   }
 }

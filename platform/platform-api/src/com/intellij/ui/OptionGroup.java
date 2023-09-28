@@ -125,33 +125,4 @@ public class OptionGroup implements PanelWithAnchor {
       }
     }
   }
-
-  public JComponent[] getComponents() {
-    List<JComponent> components = new ArrayList<>();
-    for (Object o : myOptions) {
-      if (o instanceof Pair) {
-        components.add((JComponent)((Pair<?, ?>)o).first);
-        components.add((JComponent)((Pair<?, ?>)o).second);
-      }
-      else {
-        components.add((JComponent)o);
-      }
-    }
-    return components.toArray(new JComponent[0]);
-  }
-
-  public @Nullable JComponent findAnchor() {
-    double maxWidth = -1;
-    JComponent anchor = null;
-    for (Object o : myOptions) {
-      if (o instanceof Pair && ((Pair<?, ?>)o).first instanceof AnchorableComponent &&
-          ((Pair<?, ?>)o).first instanceof JComponent component) {
-        if (component.getPreferredSize().getWidth() > maxWidth) {
-          maxWidth = component.getPreferredSize().getWidth();
-          anchor = component;
-        }
-      }
-    }
-    return anchor;
-  }
 }
