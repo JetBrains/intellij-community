@@ -64,6 +64,8 @@ public abstract class TypedHandlerDelegate {
   /**
    * Called before IDE automatically inserts the specified closing bracket in the editor.
    * This method is called for each caret individually.
+   * <p>
+   * If {@link Result#STOP} is returned, no closing paren will be inserted.
    */
   public @NotNull Result beforeClosingParenInserted(char c, final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
     return Result.CONTINUE;
@@ -72,6 +74,8 @@ public abstract class TypedHandlerDelegate {
   /**
    * Called before IDE automatically inserts the specified closing quote in the editor.
    * This method is called for each caret individually.
+   * <p>
+   * If {@link Result#STOP} is returned, no closing quote will be inserted.
    */
   public @NotNull Result beforeClosingQuoteInserted(@NotNull CharSequence quote, final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
     return Result.CONTINUE;

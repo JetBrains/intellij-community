@@ -508,10 +508,9 @@ public final class TypedHandler extends TypedActionHandlerBase {
         if (offset == document.getTextLength() ||
             !Character.isUnicodeIdentifierPart(document.getCharsSequence().charAt(offset))) { //any better heuristic or an API?
           TypedDelegateFunc func = (delegate, c1, p1, e1, f1) -> delegate.beforeClosingQuoteInserted(closingQuote, p1, e1, f1);
-          if (callDelegates(func, quote, project, editor, file)) {
-            return false;
+          if (!callDelegates(func, quote, project, editor, file)) {
+            ((MultiCharQuoteHandler)quoteHandler).insertClosingQuote(editor, offset, file, closingQuote);
           }
-          ((MultiCharQuoteHandler)quoteHandler).insertClosingQuote(editor, offset, file, closingQuote);
           return true;
         }
       }
@@ -522,11 +521,10 @@ public final class TypedHandler extends TypedActionHandlerBase {
           !Character.isUnicodeIdentifierPart(document.getCharsSequence().charAt(offset))) { //any better heuristic or an API?
         String quoteString = String.valueOf(quote);
         TypedDelegateFunc func = (delegate, c1, p1, e1, f1) -> delegate.beforeClosingQuoteInserted(quoteString, p1, e1, f1);
-        if (callDelegates(func, quote, project, editor, file)) {
-          return false;
+        if (!callDelegates(func, quote, project, editor, file)) {
+          document.insertString(offset, quoteString);
+          TabOutScopesTracker.getInstance().registerEmptyScope(editor, offset);
         }
-        document.insertString(offset, quoteString);
-        TabOutScopesTracker.getInstance().registerEmptyScope(editor, offset);
       }
     }
 
