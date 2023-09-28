@@ -33,7 +33,8 @@ private val moduleAbstractTypesClassIds: List<ClassId> = listOf(
 private val entitiesSuperclassFqn = StandardNames.WORKSPACE_ENTITY
 
 internal val blobClasses: List<FqName> = arrayListOf(
-  StandardNames.VIRTUAL_FILE_URL
+  StandardNames.VIRTUAL_FILE_URL,
+  StandardNames.ENTITY_REFERENCE
 )
 
 
