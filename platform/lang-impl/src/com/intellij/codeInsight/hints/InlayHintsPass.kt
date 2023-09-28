@@ -138,7 +138,7 @@ class InlayHintsPass(
         val inlay = if (toBePlacedAtTheEndOfLine) {
           inlayModel.addAfterLineEndElement(entry.key, true, renderer)
         } else {
-          inlayModel.addInlineElement(entry.key, isRelatedToPrecedingText, renderer) ?: break
+          inlayModel.addInlineElement(entry.key, isRelatedToPrecedingText, renderer)
         }
 
         inlay?.let { postprocessInlay(it, false) }
