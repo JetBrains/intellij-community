@@ -96,8 +96,8 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
     if (File(repo.url).isDirectory) return File(repo.url).canonicalPath
     try {
       val uri = URI(repo.url)
-      if (uri.scheme.lowercase() == "file") return uri.path
-      return repo.url
+      if (uri.scheme == null || uri.scheme.lowercase() == "file") return uri.path
+      return uri.toString()
     }
     catch (e: URISyntaxException) {
       return repo.url
