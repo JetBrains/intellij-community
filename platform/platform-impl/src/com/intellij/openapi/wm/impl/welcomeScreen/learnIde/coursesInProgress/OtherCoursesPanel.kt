@@ -3,13 +3,13 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress
 
 import com.intellij.openapi.wm.InteractiveCourseFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.InteractiveCoursePanel
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnButton
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy.JBAcademyWelcomeScreenBundle
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBUI
 import java.awt.Font
-import javax.swing.JButton
 import javax.swing.JPanel
 
 class OtherCoursesPanel(private val courseFactory: InteractiveCourseFactory) : Wrapper() {
@@ -41,10 +41,7 @@ class OtherCoursesPanel(private val courseFactory: InteractiveCourseFactory) : W
       row {
         cell(OtherCoursePanel()).align(Align.FILL).gap(RightGap.COLUMNS).resizableColumn()
 
-        val button = JButton(JBAcademyWelcomeScreenBundle.message("welcome.tab.learn.start.learning")).apply {
-          action = courseFactory.getCourseData().getAction()
-          isEnabled = courseFactory.isEnabled
-        }
+        val button = LearnButton(courseFactory.getCourseData().getAction(), courseFactory.isEnabled)
 
         cell(button).align(AlignY.TOP).apply {
           border = JBUI.Borders.empty(6, 0)
