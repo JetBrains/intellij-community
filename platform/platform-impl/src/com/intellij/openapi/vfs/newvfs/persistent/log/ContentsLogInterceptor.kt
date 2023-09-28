@@ -29,7 +29,13 @@ class ContentsLogInterceptor(
       context.trackOperation(VfsOperationTag.CONTENT_WRITE_STREAM) {
         val sdo = underlying(record)
         object : IStorageDataOutput by sdo {
+          private var wasClosed = false
           override fun close() {
+            if (wasClosed) {
+              sdo.close()
+              return
+            }
+            wasClosed = true
             val data = sdo.asByteArraySequence().toBytes();
             { sdo.close() } catchResult { result ->
               completeTracking {
@@ -48,7 +54,13 @@ class ContentsLogInterceptor(
       context.trackOperation(VfsOperationTag.CONTENT_WRITE_STREAM_2) {
         val sdo = underlying(record, fixedSize)
         object : IStorageDataOutput by sdo {
+          private var wasClosed: Boolean = false
           override fun close() {
+            if (wasClosed) {
+              sdo.close()
+              return
+            }
+            wasClosed = true
             val data = sdo.asByteArraySequence().toBytes();
             { sdo.close() } catchResult { result ->
               completeTracking {
@@ -67,7 +79,13 @@ class ContentsLogInterceptor(
       context.trackOperation(VfsOperationTag.CONTENT_APPEND_STREAM) {
         val ias = underlying(record)
         object : IAppenderStream by ias {
+          private var wasClosed: Boolean = false
           override fun close() {
+            if (wasClosed) {
+              ias.close()
+              return
+            }
+            wasClosed = true
             val data = ias.asByteArraySequence().toBytes();
             { ias.close() } catchResult { result ->
               completeTracking {

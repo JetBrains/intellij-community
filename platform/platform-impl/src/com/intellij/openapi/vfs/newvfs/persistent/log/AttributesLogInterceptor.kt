@@ -18,15 +18,23 @@ class AttributesLogInterceptor(
       context.trackOperation(VfsOperationTag.ATTR_WRITE_ATTR) {
         val aos = underlying(connection, fileId, attribute)
         object : AttributeOutputStream(aos) {
+          private var wasClosed: Boolean = false
+
           override fun writeEnumeratedString(str: String?) = aos.writeEnumeratedString(str)
 
           override fun close() {
-            val data = aos.asByteArraySequence().toBytes();
-            { super.close() } catchResult {
-              completeTracking {
-                val payloadRef = context.payloadWriter(data)
-                val attrIdEnumerated = context.enumerateAttribute(attribute)
-                VfsOperation.AttributesOperation.WriteAttribute(fileId, attrIdEnumerated, payloadRef, it)
+            if (wasClosed) {
+              super.close()
+              return
+            } else {
+              wasClosed = true
+              val data = aos.asByteArraySequence().toBytes();
+              { super.close() } catchResult {
+                completeTracking {
+                  val payloadRef = context.payloadWriter(data)
+                  val attrIdEnumerated = context.enumerateAttribute(attribute)
+                  VfsOperation.AttributesOperation.WriteAttribute(fileId, attrIdEnumerated, payloadRef, it)
+                }
               }
             }
           }
