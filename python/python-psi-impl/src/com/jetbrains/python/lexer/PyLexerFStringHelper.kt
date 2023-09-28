@@ -103,6 +103,7 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
   }
 
   private fun findFStringTerminator(text: String): Pair<IElementType?, Int> {
+    val topmostFStringQuotes = myFStringStates.peek().openingQuotes
     var i = 0
     while (i < text.length) {
       val c = text[i]
@@ -111,8 +112,7 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
         continue
       }
       if (c == '\n') {
-        val topmostFStringIsSingleQuoted = myFStringStates.peek().openingQuotes.length == 1
-        if (topmostFStringIsSingleQuoted) {
+        if (topmostFStringQuotes.length == 1) {
           if (i == 0) {
             // Terminate all f-strings and insert STATEMENT_BREAK at this point
             dropFStringStateWithAllNested(0)
@@ -123,13 +123,11 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
       }
       else {
         val nextThree = text.substring(i, min(text.length, i + 3))
-        val topmostFStringState = myFStringStates.peek()
-        val closesTopmostFStringQuotes =  nextThree.startsWith(topmostFStringState.openingQuotes)
-        if (closesTopmostFStringQuotes) {
+        if (nextThree.startsWith(topmostFStringQuotes)) {
           if (i == 0) {
             dropFStringStateWithAllNested(myFStringStates.size - 1)
           }
-          pushBackToOrConsumeMatch(i, topmostFStringState.openingQuotes.length)
+          pushBackToOrConsumeMatch(i, topmostFStringQuotes.length)
           return Pair(PyTokenTypes.FSTRING_END, i)
         }
       }
@@ -143,6 +141,16 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
     myFStringStates.subList(fStringIndex, myFStringStates.size).clear()
   }
 
+  /**
+   * Split the current token at its fragment.
+   *
+   * If it's a prefix match, e.g. the first quote `'` of a token `'text'`,
+   * leave only its own text and return everything that follows back to the input
+   * stream to be tokenized again.
+   * If it's a middle match, e.g. the same first quote in a token `r'foo'`, leave only
+   * the text that precedes it (`r`) and tokenize everything that follows (including
+   * the quote itself) again.
+   */
   private fun pushBackToOrConsumeMatch(matchOffset: Int, matchSize: Int) {
     if (matchOffset == 0) {
       myLexer.yypushback(myLexer.yylength() - matchSize)
