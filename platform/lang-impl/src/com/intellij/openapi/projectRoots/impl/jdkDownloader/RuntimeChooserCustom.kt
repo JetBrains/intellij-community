@@ -30,7 +30,8 @@ object RuntimeChooserCustom {
   val sdkType: SdkType?
     get() = SdkType
       .getAllTypes()
-      .singleOrNull(SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType()::value)
+      .filter { SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType().value(it) }
+      .firstOrNull { it.name.contains("Java") }
 
   val isActionAvailable: Boolean
     get() = sdkType != null
