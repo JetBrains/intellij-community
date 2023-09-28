@@ -58,6 +58,7 @@ import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.ContextKey
 import io.opentelemetry.extension.kotlin.asContextElement
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
@@ -69,11 +70,13 @@ import java.awt.event.FocusEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import javax.swing.*
+import kotlin.collections.ArrayList
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.max
@@ -921,12 +924,12 @@ private fun rearrangeByPromotersImpl(readOnlyActions: List<AnAction>, dataContex
   val promoters = ActionPromoter.EP_NAME.extensionList + readOnlyActions.filterIsInstance<ActionPromoter>()
   val actions = ArrayList(readOnlyActions)
   for (promoter in promoters) {
-    val promoted = promoter.promote(readOnlyActions, dataContext)
+    val promoted = promoter.promote(Collections.unmodifiableList(actions), dataContext)
     if (!promoted.isNullOrEmpty()) {
       actions.removeAll(promoted)
       actions.addAll(0, promoted)
     }
-    val suppressed = promoter.suppress(readOnlyActions, dataContext)
+    val suppressed = promoter.suppress(Collections.unmodifiableList(actions), dataContext)
     if (!suppressed.isNullOrEmpty()) {
       actions.removeAll(suppressed)
     }
