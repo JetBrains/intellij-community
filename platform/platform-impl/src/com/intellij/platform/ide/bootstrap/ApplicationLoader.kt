@@ -17,7 +17,10 @@ import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.laf.LafManagerImpl
-import com.intellij.idea.*
+import com.intellij.idea.AppExitCodes
+import com.intellij.idea.AppMode
+import com.intellij.idea.IdeStarter
+import com.intellij.idea.StartupErrorReporter
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
@@ -160,6 +163,7 @@ internal suspend fun loadApp(app: ApplicationImpl,
 
     appRegisteredJob.join()
     initConfigurationStoreJob.join()
+
     val appInitializedListenerJob = launch {
       val appInitializedListeners = appInitListeners.await()
       span("app initialized callback") {
@@ -167,6 +171,7 @@ internal suspend fun loadApp(app: ApplicationImpl,
         callAppInitialized(listeners = appInitializedListeners, asyncScope = app.coroutineScope)
       }
     }
+
     asyncScope.launch {
       launch(CoroutineName("checkThirdPartyPluginsAllowed")) {
         checkThirdPartyPluginsAllowed()

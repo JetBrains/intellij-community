@@ -22,7 +22,6 @@ import com.intellij.openapi.application.impl.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ShutDownTracker
@@ -64,6 +63,7 @@ import java.util.function.BiFunction
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import javax.swing.*
+import kotlin.concurrent.Volatile
 import kotlin.system.exitProcess
 
 internal const val IDE_STARTED: String = "------------------------------------------------------ IDE STARTED ------------------------------------------------------"
@@ -187,34 +187,41 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
 
-  val configImportDeferred = async {
-    if (!isHeadless && configImportNeededDeferred.await()) {
-      initLafJob.join()
-      val log = logDeferred.await()
-      importConfig(
-        args = args,
-        targetDirectoryToImportConfig = targetDirectoryToImportConfig ?: PathManager.getConfigDir(),
-        log = log,
-        appStarter = appStarterDeferred.await(),
-        euaDocumentDeferred = euaDocumentDeferred,
-      )
+  val configImportDeferred: Deferred<Job?> = async {
+    if (isHeadless || !configImportNeededDeferred.await()) {
+      return@async null
+    }
 
-      if (ConfigImportHelper.isNewUser() && System.getProperty("ide.experimental.ui") == null) {
+    initLafJob.join()
+    val log = logDeferred.await()
+    importConfig(
+      args = args,
+      targetDirectoryToImportConfig = targetDirectoryToImportConfig ?: PathManager.getConfigDir(),
+      log = log,
+      appStarter = appStarterDeferred.await(),
+      euaDocumentDeferred = euaDocumentDeferred,
+    )
+
+    if (ConfigImportHelper.isNewUser()) {
+      if (System.getProperty("ide.experimental.ui") == null) {
         runCatching {
           EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true"))
         }.getOrLogException(log)
       }
 
-      if (isStartupWizardEnabled && ConfigImportHelper.isNewUser()) {
-        log.info("Will enter initial app wizard flow.")
-        ApplicationManagerEx.setInitialStart()
-      }
+      log.info("Will enter initial app wizard flow.")
+      val result = CompletableDeferred<Boolean>()
+      isInitialStart = result
+      result
+    }
+    else {
+      null
     }
   }
 
   val pluginSetDeferred = async {
     // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
-    configImportDeferred.await()
+    configImportDeferred.join()
 
     PluginManagerCore.scheduleDescriptorLoading(coroutineScope = this@startApplication,
                                                 zipFilePoolDeferred = zipFilePoolDeferred,
@@ -245,7 +252,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     Class.forName(OpenTelemetrySdkBuilder::class.java.name, true, classLoader)
   }
 
-  val appLoaded = async {
+  val appLoaded = launch {
     checkSystemDirJob.join()
 
     val classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY)
@@ -262,30 +269,26 @@ fun CoroutineScope.startApplication(args: List<String>,
     val starter = loadApp(app = app,
                           initAwtToolkitAndEventQueueJob = initEventQueueJob,
                           pluginSetDeferred = pluginSetDeferred,
-            appInfoDeferred = appInfoDeferred,
+                          appInfoDeferred = appInfoDeferred,
                           euaDocumentDeferred = euaDocumentDeferred,
                           asyncScope = this@startApplication,
                           initLafJob = initLafJob,
                           logDeferred = logDeferred,
                           appRegisteredJob = appRegisteredJob,
                           args = args.filterNot { CommandLineArgs.isKnownArgument(it) })
-    if (isStartupWizardEnabled) {
-      // Initial startup wizard relies on config import being performed before this async ends.
-      configImportDeferred.await()
-    }
-    else {
-      // In case of startup wizard, this will be executed at a stage separated from app loading.
-      executeApplicationStarter(starter, args)
-    }
-    return@async starter
-  }
-
-  if (isStartupWizardEnabled) {
-    launch {
-      val starter = appLoaded.await()
-      val log = logDeferred.await()
-      log.runAndLogException { runStartupWizard() }
-      executeApplicationStarter(starter, args)
+    // out of appLoaded scope
+    this@startApplication.launch {
+      val isInitialStart = configImportDeferred.await()
+      // appLoaded not only provides starter, but also loads app, that's why it is here
+      if (isInitialStart != null) {
+        val log = logDeferred.await()
+        runCatching {
+          span("startup wizard run") {
+            runStartupWizard(isInitialStart = isInitialStart, app = ApplicationManager.getApplication())
+          }
+        }.getOrLogException(log)
+      }
+      executeApplicationStarter(starter = starter, args = args)
     }
   }
 
@@ -310,6 +313,10 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 }
+
+@Volatile
+@JvmField
+internal var isInitialStart: CompletableDeferred<Boolean>? = null
 
 private fun CoroutineScope.scheduleEnableCoroutineDumpAndJstack() {
   if (!System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {

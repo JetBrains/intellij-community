@@ -1,0 +1,6 @@
+<idea-plugin package="com.intellij.ide.startup.importSettings">
+  <extensions defaultExtensionNs="com.intellij">
+    <!--suppress PluginXmlDynamicPlugin -->
+    <ideStartupWizard implementation="com.intellij.ide.startup.importSettings.IdeStartupWizardImpl"/>
+  </extensions>
+</idea-plugin>
