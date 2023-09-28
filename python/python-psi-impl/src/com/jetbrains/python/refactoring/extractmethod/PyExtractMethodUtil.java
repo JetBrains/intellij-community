@@ -267,23 +267,25 @@ public final class PyExtractMethodUtil {
     extractFromExpression(project, editor, fragment, expression, true);
   }
 
-  public static void extractFromExpression(@NotNull final Project project,
-                                           @NotNull final Editor editor,
-                                           @NotNull final PyCodeFragment fragment,
-                                           @NotNull final PsiElement expression,
-                                           final Boolean processDuplicates) {
+  public static List<SmartPsiElementPointer<PsiElement>> extractFromExpression(@NotNull final Project project,
+                                                                               @NotNull final Editor editor,
+                                                                               @NotNull final PyCodeFragment fragment,
+                                                                               @NotNull final PsiElement expression,
+                                                                               final Boolean processDuplicates) {
+    List<SmartPsiElementPointer<PsiElement>> pointers = new ArrayList<>();
+
     if (!fragment.getOutputVariables().isEmpty()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           PyPsiBundle.message("refactoring.extract.method.error.local.variable.modifications"),
                                           RefactoringBundle.message("error.title"), "refactoring.extractMethod");
-      return;
+      return pointers;
     }
 
     if (fragment.isReturnInstructionInside()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           PyPsiBundle.message("refactoring.extract.method.error.returns"),
                                           RefactoringBundle.message("error.title"), "refactoring.extractMethod");
-      return;
+      return pointers;
     }
 
     final PyFunction function = PsiTreeUtil.getParentOfType(expression, PyFunction.class);
@@ -293,7 +295,7 @@ public final class PyExtractMethodUtil {
 
     final Pair<String, AbstractVariableData[]> data = getNameAndVariableData(project, fragment, expression, isClassMethod, isStaticMethod);
     if (data.first == null || data.second == null) {
-      return;
+      return pointers;
     }
 
     final String methodName = data.first;
@@ -356,9 +358,12 @@ public final class PyExtractMethodUtil {
 
         // replace statements with call
         PsiElement insertedCallElement = null;
+        pointers.addAll(ContainerUtil.map(duplicates, p -> SmartPointerManager.createPointer(p.getStartElement())));
         if (callElement != null) {
           insertedCallElement = WriteAction.compute(() -> PyReplaceExpressionUtil.replaceExpression(expression, callElement));
           if (insertedCallElement != null) {
+            pointers.add(0, SmartPointerManager.createPointer(insertedMethod.getNameIdentifier()));
+            pointers.add(SmartPointerManager.createPointer(insertedCallElement));
             if (processDuplicates) {
               processDuplicates(duplicates, insertedCallElement, editor);
             }
@@ -368,6 +373,7 @@ public final class PyExtractMethodUtil {
         // Set editor
       }, PyPsiBundle.message("refactoring.extract.method"), null);
     }
+    return pointers;
   }
 
   private static void setSelectionAndCaret(@NotNull Editor editor, @Nullable final PsiElement callElement) {
