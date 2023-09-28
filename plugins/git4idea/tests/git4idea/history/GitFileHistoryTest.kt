@@ -244,30 +244,32 @@ class GitFileHistoryTest : GitSingleRepoTest() {
 
   private fun move(file: File, dir: File): TestCommit {
     repo.mv(file, dir)
-    return commit(File(dir, file.name), "Moved ${file.path} to ${dir.name}")
+    return commit(File(dir, file.name), "Moved ${file.relativePath()} to ${dir.relativePath()}")
   }
 
   private fun rename(file: File, newFile: File): TestCommit {
     repo.mv(file, newFile)
-    return commit(newFile, "Renamed ${file.path} to ${newFile.name}")
+    return commit(newFile, "Renamed ${file.relativePath()} to ${newFile.relativePath()}")
   }
 
   @Throws(IOException::class)
   private fun modify(file: File, appendContent: String = "Modified"): TestCommit {
     FileUtil.appendToFile(file, appendContent)
-    return commit(file, "Modified ${file.path}")
+    return commit(file, "Modified ${file.relativePath()}")
   }
 
   private fun add(fileName: String, dir: File, initialContent: String = RandomStringUtils.randomAlphanumeric(200)): TestCommit {
     val relativePath = dir.relativeTo(ourCurrentDir()).path
     val file = touch("$relativePath/$fileName", initialContent)
-    return commit(file, "Created $fileName in ${dir.name}")
+    return commit(file, "Created ${file.relativePath()}")
   }
 
   private fun commit(file: File, message: String): TestCommit {
     repo.addCommit(message)
     return TestCommit(last(), message, file)
   }
+
+  private fun File.relativePath(): String? = FileUtil.getRelativePath(repo.root.toNioPath().toFile(), this)
 
   private fun toReadable(history: Collection<VcsFileRevision>): String {
     val maxSubjectLength = history.maxOfOrNull { it.commitMessage?.length ?: 0 } ?: 0
