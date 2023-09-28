@@ -119,7 +119,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
 
     public void showInspector(@Nullable Project project, @NotNull Component c) {
       InspectorWindow window = new InspectorWindow(project, c, this);
-      Disposer.register(window, this);
+      Disposer.register(this, window);
       if (DimensionService.getInstance().getSize(InspectorWindow.getDimensionServiceKey(), null) == null) {
         window.pack();
       }
