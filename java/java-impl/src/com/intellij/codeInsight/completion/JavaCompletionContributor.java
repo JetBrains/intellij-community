@@ -406,7 +406,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     PrefixMatcher matcher = result.getPrefixMatcher();
     PsiElement parent = position.getParent();
 
-    if (!smart && new JavaKeywordCompletion(parameters, session).addWildcardExtendsSuper(result, position)) {
+    if (new JavaKeywordCompletion(parameters, session, smart).addWildcardExtendsSuper(result, position)) {
       result.stopHere();
       return;
     }
@@ -676,8 +676,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       items.add(LookupElementBuilder.create("*"));
     }
 
-    if (!smart && findAnnotationWhoseAttributeIsCompleted(position) == null) {
-      items.addAll(new JavaKeywordCompletion(parameters, session).getResults());
+    if (findAnnotationWhoseAttributeIsCompleted(position) == null) {
+      items.addAll(new JavaKeywordCompletion(parameters, session, smart).getResults());
     }
 
     addExpressionVariants(parameters, position, items::add);

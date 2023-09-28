@@ -649,7 +649,9 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
 
   public void testOnlyKeywordsInsideSwitch() {
     configureByFile(getTestName(false) + ".java");
-    assertStringItems("case", "default");
+    List<String> strings = myFixture.getLookupElementStrings();
+    assertNotNull(strings);
+    assertSameElements(strings, "case", "default");
   }
 
   @NeedsIndex.ForStandardLibrary

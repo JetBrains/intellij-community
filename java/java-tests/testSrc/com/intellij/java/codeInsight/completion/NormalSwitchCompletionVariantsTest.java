@@ -4,12 +4,16 @@ package com.intellij.java.codeInsight.completion;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 public class NormalSwitchCompletionVariantsTest extends LightFixtureCompletionTestCase {
   private static final String[] COMMON_VARIANTS = {"case", "default"};
@@ -52,6 +56,78 @@ public class NormalSwitchCompletionVariantsTest extends LightFixtureCompletionTe
       assertDoesntContain(lookup, "when");
     }
     //if null - it is ok
+  }
+
+  public void testCompletionDefaultNotShow() {
+    List<String> lookup = doTestAndGetLookup();
+    if (lookup != null) {
+      assertDoesntContain(lookup, "default");
+      assertDoesntContain(lookup, "case null, default");
+    }
+    //if null - it is ok
+  }
+
+  public void testCompletionNullDefault() {
+    List<String> lookup = doTestAndGetLookup();
+    assertNotNull(lookup);
+    assertContainsElements(lookup, "case null", "case null, default", "default");
+  }
+
+  @NeedsIndex.Full
+  public void testCompletionUsedSealedNotShow() {
+    List<String> lookup = doTestAndGetLookup();
+    assertNotNull(lookup);
+    assertDoesntContain(lookup, "case A");
+    assertContainsElements(lookup, "case B");
+  }
+
+  @NeedsIndex.Full
+  public void testCompletionSmartCase() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, () -> {
+      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.complete(CompletionType.SMART);
+      List<String> lookup = myFixture.getLookupElementStrings();
+      assertContainsElements(lookup, "case A", "case B", "default", "case null", "case null, default");
+    });
+  }
+
+  @NeedsIndex.Full
+  public void testCompletionRuleCaseOrdering() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, () -> {
+      List<String> lookup = doTestAndGetLookup();
+      Set<Integer> indexes = Set.of(
+        lookup.indexOf("case A"),
+        lookup.indexOf("case B"),
+        lookup.indexOf("default"),
+        lookup.indexOf("case null"),
+        lookup.indexOf("case null, default"));
+      assertFalse(indexes.contains(-1));
+      int last = lookup.indexOf("o");
+      for (Integer index : indexes) {
+        if (last < index) {
+          fail("broken order");
+        }
+      }
+    });
+  }
+
+  @NeedsIndex.Full
+  public void testCompletionCaseOrdering() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, () -> {
+      List<String> lookup = doTestAndGetLookup();
+      Set<Integer> indexes = Set.of(
+        lookup.indexOf("case A"),
+        lookup.indexOf("case B"),
+        lookup.indexOf("default"),
+        lookup.indexOf("case null"),
+        lookup.indexOf("case null, default"));
+      assertFalse(indexes.contains(-1));
+      int last = lookup.indexOf("o");
+      Optional<Integer> afterO = indexes.stream().filter(index -> last < index).findAny();
+      if (afterO.isEmpty()) {
+        fail("broken order");
+      }
+    });
   }
 
   @NeedsIndex.Full
