@@ -399,6 +399,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     ChangedFilesCollector changedFilesCollector = getChangedFilesCollector();
     if (forceRebuild) {
       file.putUserData(IndexingDataKeys.REBUILD_REQUESTED, Boolean.TRUE);
+      IndexingFlag.cleanProcessedFlagRecursively(file);
     }
     changedFilesCollector.scheduleForIndexingRecursively(file, true);
     if (myRegisteredIndexes.isInitialized()) {
