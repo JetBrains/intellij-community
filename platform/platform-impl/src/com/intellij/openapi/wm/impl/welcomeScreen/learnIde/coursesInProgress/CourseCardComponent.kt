@@ -3,14 +3,11 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.ListPluginComponent
-import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.util.ColorProgressBar
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy.JBAcademyWelcomeScreenBundle
-import com.intellij.ui.Gray
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
@@ -27,7 +24,7 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 
 
-private const val CARD_GAP = 7
+private const val CARD_GAP = 6
 private const val CARD_WIDTH = 80
 private const val CARD_HEIGHT = 55
 private const val LOGO_SIZE = 20
@@ -174,9 +171,8 @@ private class CourseInfoComponent(
 ) : JPanel(FlowLayout(FlowLayout.LEFT, INFO_HGAP, INFO_VGAP)) {
 
   init {
-
-    // TODO: should we add special view for edutools course creator
-    val progressBar = createProgressBar().apply {
+    val progressBar = JProgressBar().apply {
+      isIndeterminate = false
       border = JBUI.Borders.emptyRight(CARD_GAP)
       maximum = totalTaskNumber
       value = solvedTasksNumber
@@ -189,25 +185,9 @@ private class CourseInfoComponent(
       text = when (solvedTasksNumber) {
         0 -> if (totalTaskNumber != 0) JBAcademyWelcomeScreenBundle.message("welcome.tab.learn.courses.card.no.tasks") else ""
         totalTaskNumber -> JBAcademyWelcomeScreenBundle.message("welcome.tab.learn.courses.card.completed")
-        else -> "$solvedTasksNumber/$totalTaskNumber"
-      }
-    }).apply {
-      border = JBUI.Borders.emptyTop(5)
-    }
-    add(Wrapper(infoComponent))
-  }
-
-  fun createProgressBar(): JProgressBar {
-    val progressBar = JProgressBar()
-
-    progressBar.setUI(object : DarculaProgressBarUI() {
-      override fun getRemainderColor(): Color {
-        return JBColor(Gray._220, Color(76, 77, 79))
+        else -> "$solvedTasksNumber / $totalTaskNumber"
       }
     })
-    progressBar.foreground = ColorProgressBar.GREEN
-    progressBar.isIndeterminate = false
-    progressBar.putClientProperty("ProgressBar.flatEnds", true)
-    return progressBar
+    add(Wrapper(infoComponent))
   }
 }
