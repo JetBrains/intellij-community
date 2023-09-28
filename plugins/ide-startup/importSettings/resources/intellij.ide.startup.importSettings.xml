@@ -1,6 +1,15 @@
 <idea-plugin package="com.intellij.ide.startup.importSettings">
+  <actions>
+    <action id="ImportSettingAction" class="com.intellij.ide.startup.importSettings.chooser.ImportSettingAction" text="Perform ImportSettingAction" internal="true"/>
+    <action id="TestSettingAction" class="com.intellij.ide.startup.importSettings.chooser.TestDialogAction" text="Perform TestDialogAction" internal="true"/>
+    <action id="SettingSyncAction" class="com.intellij.ide.startup.importSettings.importer.SettingSyncAction" text="Perform SettingSyncAction" internal="true"/>
+  </actions>
+
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlDynamicPlugin -->
     <ideStartupWizard implementation="com.intellij.ide.startup.importSettings.IdeStartupWizardImpl"/>
+
+    <applicationService serviceInterface="com.intellij.ide.startup.importSettings.data.SettingsService"
+                        serviceImplementation="com.intellij.ide.startup.importSettings.data.TestBaseService"/>
   </extensions>
 </idea-plugin>

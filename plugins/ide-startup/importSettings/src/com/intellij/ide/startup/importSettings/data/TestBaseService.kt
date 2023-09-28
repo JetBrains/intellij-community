@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.importSettings.data
+package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
@@ -125,7 +125,7 @@ class TestJbService : JbService {
   }
 
   override fun getProductIcon(itemId: String, size: IconProductSize): Icon {
-    return Companion.getProductIcon(size)
+    return getProductIcon(size)
   }
 
   override fun getConfig(): Config {

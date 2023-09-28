@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.importSettings.chooser.actions
+package com.intellij.ide.startup.importSettings.chooser.actions
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.startup.importSettings.data.Product
 import com.intellij.ide.ui.laf.darcula.ui.OnboardingDialogButtons
-import com.intellij.importSettings.data.Product
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
