@@ -13,9 +13,13 @@ import kotlin.io.path.readText
 
 
 fun main(args: Array<String>) {
-  assert(args.size == 3) { "Should be 3 files: Path to JSON, path to result file dir, path to ApplicationInfo.xml" }
-  val applicationVersion = readAppVersion(Paths.get(args[2]))
-  generateJvmSupportMatrices(Paths.get(args[0]), Paths.get(args[1]), applicationVersion)
+  assert(args.size == 1) { "Should be 1 arg: Path to project" }
+  val projectPath = Paths.get(args[0])
+  val compatibilityJsonPath = projectPath.resolve("community/plugins/gradle/resources/compatibility/compatibility.json")
+  val generatedDataPath = projectPath.resolve("community/plugins/gradle/generated/GradleJvmSupportDefaultData.kt")
+  val applicationInfoPath = projectPath.resolve("ultimate/ultimate-resources/resources/idea/ApplicationInfo.xml")
+  val applicationVersion = readAppVersion(applicationInfoPath)
+  generateJvmSupportMatrices(compatibilityJsonPath, generatedDataPath, applicationVersion)
 }
 
 fun createCopyrightComment(): String {
