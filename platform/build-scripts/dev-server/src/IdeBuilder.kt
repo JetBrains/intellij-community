@@ -22,9 +22,7 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.copyTo
-import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
-import kotlin.io.path.listDirectoryEntries
 import kotlin.time.Duration.Companion.seconds
 
 internal const val UNMODIFIED_MARK_FILE_NAME = ".unmodified"
@@ -49,7 +47,7 @@ data class BuildRequest(
   }
 }
 
-internal suspend fun buildProduct(productConfiguration: ProductConfiguration, request: BuildRequest) {
+internal suspend fun buildProduct(productConfiguration: ProductConfiguration, request: BuildRequest): Path {
   val rootDir = withContext(Dispatchers.IO) {
     val rootDir = request.homePath.resolve("out/dev-run")
     // if symlinked to ram disk, use a real path for performance reasons and avoid any issues in ant/other code
@@ -64,7 +62,9 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
 
   val runDir = withContext(Dispatchers.IO) {
     val classifier = if (request.isIdeProfileAware) computeAdditionalModulesFingerprint(request.additionalModules) else ""
-    val runDir = rootDir.resolve((if (request.platformPrefix == "Idea") "idea-community" else request.platformPrefix) + classifier)
+    val productDirName = (if (request.platformPrefix == "Idea") "idea-community" else request.platformPrefix) + classifier
+
+    val runDir = rootDir.resolve("$productDirName/$productDirName").toAbsolutePath()
     // on start, delete everything to avoid stale data
     if (Files.isDirectory(runDir)) {
       val usePluginCache = spanBuilder("check plugin cache applicability").useWithScope2 {
@@ -92,10 +92,8 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
       launch(Dispatchers.IO) {
         // PathManager.getBinPath() is used as a working dir for maven
         Files.createDirectories(runDir.resolve("bin")).also { distBinDir ->
-          // cleanup previously copied vm options since current directory structure doesn't allow to run multiple IDE's
-          distBinDir.parent.parent.listDirectoryEntries(glob = "*.vmoptions").forEach { it.deleteIfExists() }
-
           getOsDistributionBuilder(os = OsFamily.currentOs, context = context)!!.writeVmOptions(distBinDir)
+            // copying outside of the installation directory is neccesary to specify system property "jb.vmOptionsFile"
             .apply { this.copyTo(distBinDir.parent.parent.resolve(this.fileName), overwrite = true) }
         }
         Files.writeString(runDir.resolve("build.txt"), context.fullBuildNumber)
@@ -168,6 +166,8 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
       }
     }
   }
+
+  return runDir
 }
 
 private suspend fun createBuildContext(productConfiguration: ProductConfiguration,

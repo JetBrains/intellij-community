@@ -45,8 +45,9 @@ fun getIdeSystemProperties(runDir: Path): Map<String, String> {
   )
 }
 
-suspend fun buildProductInProcess(request: BuildRequest) {
-  TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).useWithScope2 {
+/** Returns IDE installation directory */
+suspend fun buildProductInProcess(request: BuildRequest): Path {
+  return TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).useWithScope2 {
     val platformPrefix = request.platformPrefix
     val configuration = createConfiguration(homePath = request.homePath, productionClassOutput = request.productionClassOutput)
     val productConfiguration = getProductConfiguration(configuration, platformPrefix)
