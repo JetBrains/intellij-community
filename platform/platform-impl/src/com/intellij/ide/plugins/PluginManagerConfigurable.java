@@ -1821,6 +1821,9 @@ public final class PluginManagerConfigurable
     if (myMarketplaceSearchPanel != null) {
       myMarketplaceSearchPanel.dispose();
     }
+    if (myInstalledSearchPanel != null) {
+      myInstalledSearchPanel.dispose();
+    }
 
     myPluginUpdatesService.dispose();
     PluginPriceService.cancel();

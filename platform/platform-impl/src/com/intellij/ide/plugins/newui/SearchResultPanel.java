@@ -5,8 +5,11 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.Alarm;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +33,8 @@ public abstract class SearchResultPanel {
   private AtomicBoolean myRunQuery;
   private boolean myEmpty = true;
   private boolean isMarketplace;
+  private boolean isLoading;
+  private SingleAlarm myAnnounceSearchResultsAlarm;
 
   protected Runnable myPostFillGroupCallback;
 
@@ -150,7 +155,7 @@ public abstract class SearchResultPanel {
             }
           }
 
-          announceSearchResults();
+          announceSearchResultsWithDelay();
           myPanel.initialSelection(false);
           runPostFillGroupCallback();
           fullRepaint();
@@ -166,7 +171,7 @@ public abstract class SearchResultPanel {
         myPanel.initialSelection(false);
       }
 
-      announceSearchResults();
+      announceSearchResultsWithDelay();
       runPostFillGroupCallback();
       fullRepaint();
     }
@@ -184,9 +189,11 @@ public abstract class SearchResultPanel {
   private void loading(boolean start) {
     PluginsGroupComponentWithProgress panel = (PluginsGroupComponentWithProgress)myPanel;
     if (start) {
+      isLoading = true;
       panel.startLoading();
     }
     else {
+      isLoading = false;
       panel.stopLoading();
     }
   }
@@ -194,6 +201,9 @@ public abstract class SearchResultPanel {
   public void dispose() {
     if (isProgressMode()) {
       ((PluginsGroupComponentWithProgress)myPanel).dispose();
+    }
+    if (myAnnounceSearchResultsAlarm != null) {
+      Disposer.dispose(myAnnounceSearchResultsAlarm);
     }
   }
 
@@ -216,8 +226,19 @@ public abstract class SearchResultPanel {
     myPanel.repaint();
   }
 
-  private void announceSearchResults() {
+  private void announceSearchResultsWithDelay() {
     if (AccessibleAnnouncerUtil.isSafeAnnouncingAvailable()) {
+      if (myAnnounceSearchResultsAlarm == null) {
+        myAnnounceSearchResultsAlarm =
+          new SingleAlarm(this::announceSearchResults, 250, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.stateForComponent(myPanel));
+      }
+
+      myAnnounceSearchResultsAlarm.cancelAndRequest();
+    }
+  }
+
+  private void announceSearchResults() {
+    if (myPanel.isShowing() && !isLoading) {
       String pluginsTabName = IdeBundle.message(isMarketplace ? "plugin.manager.tab.marketplace" : "plugin.manager.tab.installed");
       String message = IdeBundle.message("plugins.configurable.search.result.0.plugins.found.in.1",
                                          myGroup.descriptors.size(), pluginsTabName);
