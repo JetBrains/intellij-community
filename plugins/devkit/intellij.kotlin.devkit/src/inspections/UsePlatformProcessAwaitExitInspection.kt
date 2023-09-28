@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.idea.devkit.kotlin.util.getContext
@@ -59,7 +58,7 @@ internal class UsePlatformProcessAwaitExitInspection : LocalInspectionTool() {
   private fun isAllowed(holder: ProblemsHolder): Boolean {
     val project = holder.project
     return DevKitInspectionUtil.isAllowed(holder.file) &&
-           KotlinTopLevelFunctionFqnNameIndex["com.intellij.util.io.awaitExit", project, GlobalSearchScope.projectScope(project)]
+           KotlinTopLevelFunctionFqnNameIndex["com.intellij.util.io.awaitExit", project, holder.file.resolveScope]
              .isNotEmpty()
   }
 }
