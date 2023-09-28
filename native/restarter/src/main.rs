@@ -4,6 +4,9 @@ use std::{env, process};
 use std::error::Error;
 use std::io::ErrorKind;
 
+#[cfg(target_family = "unix")]
+use std::os::unix::process::CommandExt;
+
 mod logger;
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
@@ -42,8 +45,13 @@ fn process_args(args: &Vec<String>, log: &mut logger::Logger) -> Result<()> {
     log.info(&format!("waiting for {}", pid));
     wait_for_process_exit(pid);
 
-    for command in commands {
-        run_command(command, log)?;
+    let last_idx = commands.len() - 1;
+    for (i, command) in commands.iter().enumerate() {
+        if i != last_idx {
+            run_command(command, log)?;
+        } else {
+            exec_command(command, log)?;
+        }
     }
 
     Ok(())
@@ -75,4 +83,15 @@ fn format_output(bytes: &[u8]) -> String {
     let full = String::from_utf8_lossy(bytes);
     let trimmed = full.trim();
     if trimmed.is_empty() { String::from("-") } else { String::from("\n") + trimmed }
+}
+
+#[cfg(target_os = "windows")]
+fn exec_command(command: &[String], log: &mut logger::Logger) -> Result<()> {
+    todo!("Windows implementation isn't there yet")
+}
+
+#[cfg(target_family = "unix")]
+fn exec_command(command: &[String], log: &mut logger::Logger) -> Result<()> {
+    log.info(&format!("exec-ing: {:?}", command));
+    Err(Box::new(process::Command::new(&command[0]).args(&command[1..]).exec()))
 }
