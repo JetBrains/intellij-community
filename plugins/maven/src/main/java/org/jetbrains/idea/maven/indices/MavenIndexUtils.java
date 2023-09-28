@@ -13,10 +13,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,10 +36,14 @@ public final class MavenIndexUtils {
 
   private MavenIndexUtils() { }
 
+  @Nullable
   public static IndexPropertyHolder readIndexProperty(File dir) throws MavenIndexException {
     Properties props = new Properties();
     try (FileInputStream s = new FileInputStream(new File(dir, INDEX_INFO_FILE))) {
       props.load(s);
+    }
+    catch (FileNotFoundException e) {
+      return null;
     }
     catch (IOException e) {
       throw new MavenIndexException("Cannot read " + INDEX_INFO_FILE + " file", e);

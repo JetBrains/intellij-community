@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.indices
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.util.PathUtilRt
 import kotlinx.coroutines.CoroutineScope
@@ -45,7 +46,14 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
     return ourTestIndicesDir ?: MavenUtil.getPluginSystemDir("Indices")
   }
 
-  private suspend fun getIndexForRepo(repo: MavenRepositoryInfo): MavenIndex {
+  fun getIndexForRepoSync(repo: MavenRepositoryInfo): MavenIndex {
+    return runBlockingMaybeCancellable {
+      getIndexForRepo(repo)
+    }
+
+  }
+
+  suspend fun getIndexForRepo(repo: MavenRepositoryInfo): MavenIndex {
     return cs.async(Dispatchers.IO) {
       val dir = getDirForMavenIndex(repo)
       mutex.withLock {

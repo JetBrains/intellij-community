@@ -149,7 +149,7 @@ public class MavenIndices implements Disposable {
 
   @NotNull
   public MavenIndexHolder getIndexHolder() {
-    if(isDisposed) {
+    if (isDisposed) {
       throw new AlreadyDisposedException("Index was already disposed");
     }
     return myIndexHolder;
@@ -284,14 +284,18 @@ public class MavenIndices implements Disposable {
     try {
       DependencySearchService.getInstance(project).clearCache();
     }
-    catch (AlreadyDisposedException ignored) {}
+    catch (AlreadyDisposedException ignored) {
+    }
   }
 
   @Nullable
   private static MavenIndex createMavenIndex(@NotNull MavenIndexUtils.IndexPropertyHolder propertyHolder,
                                              @NotNull RepositoryDiffContext context) {
     try {
-      return new MavenIndex(context.indexer, propertyHolder);
+      String id = propertyHolder.repositoryIds.iterator().next();
+      return MavenSystemIndicesManager.getInstance()
+        .getIndexForRepoSync(new MavenRepositoryInfo(id, id, propertyHolder.repositoryPathOrUrl, propertyHolder.kind));
+      //return new MavenIndex(context.indexer, propertyHolder);
     }
     catch (Exception e) {
       FileUtil.delete(propertyHolder.dir);
