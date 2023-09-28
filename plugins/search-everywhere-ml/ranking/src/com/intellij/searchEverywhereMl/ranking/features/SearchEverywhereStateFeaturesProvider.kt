@@ -44,7 +44,7 @@ class SearchEverywhereStateFeaturesProvider {
     }
   }
 
-  fun getSearchStateFeatures(tabId: String, query: String, project: Project?,
+  fun getSearchStateFeatures(project: Project?, tabId: String, query: String,
                              searchScope: ScopeDescriptor?, isSearchEverywhere: Boolean): List<EventPair<*>> {
     val features = arrayListOf<EventPair<*>>(
       QUERY_LENGTH_DATA_KEY.with(query.length),

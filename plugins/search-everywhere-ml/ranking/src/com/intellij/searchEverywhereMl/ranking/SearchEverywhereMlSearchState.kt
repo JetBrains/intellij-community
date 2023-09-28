@@ -22,7 +22,7 @@ internal class SearchEverywhereMlSearchState(
   searchScope: ScopeDescriptor?,
   isSearchEverywhere: Boolean,
 ) {
-  val searchStateFeatures = SearchEverywhereStateFeaturesProvider().getSearchStateFeatures(tabId, searchQuery, project,
+  val searchStateFeatures = SearchEverywhereStateFeaturesProvider().getSearchStateFeatures(project, tabId, searchQuery,
                                                                                            searchScope, isSearchEverywhere)
   private val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
 
