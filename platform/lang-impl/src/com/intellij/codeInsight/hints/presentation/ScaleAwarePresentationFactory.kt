@@ -125,7 +125,7 @@ abstract class ScaledDelegatedPresentation : BasePresentation() {
   }
 
   override fun mouseClicked(event: MouseEvent, translated: Point) {
-    delegate.mouseExited()
+    delegate.mouseClicked(event, translated)
   }
 
   override fun mouseMoved(event: MouseEvent, translated: Point) {
