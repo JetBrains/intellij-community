@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -19,7 +20,7 @@ import java.util.function.Supplier;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class ChangeEditorFontSizeAction extends AnAction implements DumbAware {
+public abstract class ChangeEditorFontSizeAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   private final float myStep;
   private final boolean myGlobal;
 
