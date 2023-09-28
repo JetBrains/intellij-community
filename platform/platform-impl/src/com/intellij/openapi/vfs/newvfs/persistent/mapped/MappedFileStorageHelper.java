@@ -176,6 +176,9 @@ public final class MappedFileStorageHelper implements Closeable {
 
   public static final int DEFAULT_PAGE_SIZE = 4 * MiB;
 
+  //TODO RC: byteBufferViewVarHandle(byte[].class) is not supported by JDK
+  //private static final VarHandle BYTE_HANDLE = byteBufferViewVarHandle(byte[].class, nativeOrder())
+  //  .withInvokeExactBehavior();
   private static final VarHandle SHORT_HANDLE = byteBufferViewVarHandle(short[].class, nativeOrder())
     .withInvokeExactBehavior();
   private static final VarHandle INT_HANDLE = byteBufferViewVarHandle(int[].class, nativeOrder())
@@ -185,6 +188,7 @@ public final class MappedFileStorageHelper implements Closeable {
 
 
   private final int bytesPerRow;
+  private final transient byte[] rowOfZeroes;
 
   private final @NotNull MMappedFileStorage storage;
 
@@ -212,6 +216,8 @@ public final class MappedFileStorageHelper implements Closeable {
     this.bytesPerRow = bytesPerRow;
     maxAllocatedFileIdSupplier = maxRowsSupplier;
     this.checkFileIdsBelowMax = checkFileIdsBelowMax;
+
+    this.rowOfZeroes = new byte[bytesPerRow];
   }
 
   public int getVersion() throws IOException {
@@ -228,6 +234,10 @@ public final class MappedFileStorageHelper implements Closeable {
 
   public void setVFSCreationTag(long vfsCreationTag) throws IOException {
     writeLongHeaderField(HeaderLayout.VFS_CREATION_TIMESTAMP_OFFSET, vfsCreationTag);
+  }
+
+  public int bytesPerRow() {
+    return bytesPerRow;
   }
 
 
@@ -342,28 +352,44 @@ public final class MappedFileStorageHelper implements Closeable {
     return "MappedFileStorageHelper[" + storage.storagePath() + "]";
   }
 
-  public int readIntField(int fileId,
-                          int fieldOffsetInRow) throws IOException {
-    int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
+  //TODO RC: We can fill the row just byte-by-bytes, but we can't keep reasonable atomicity/memory semantics
+  //         -- to write 4 bytes is not the same as write 1 int. I doubt: is it really worth to deal with all
+  //         possible complications arising from that, or better to keep that pandora-box closed, and not
+  //         expose clearRow() method? If users want to clear the row -- they could implement it with
+  //         .writeXXXField() methods.
+  private void clearRow(int fileId) throws IOException {
+    int offsetInFile = toOffsetInFile(fileId);
     int offsetInPage = storage.toOffsetInPage(offsetInFile);
 
     Page page = storage.pageByOffset(offsetInFile);
     ByteBuffer rawPageBuffer = page.rawPageBuffer();
 
-    return (int)INT_HANDLE.getVolatile(rawPageBuffer, offsetInPage);
+    rawPageBuffer.put(offsetInPage, rowOfZeroes);//plain write, not volatile!
   }
 
-  public void writeIntField(int fileId,
-                            int fieldOffsetInRow,
-                            int attributeValue) throws IOException {
-    int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
-    int offsetInPage = storage.toOffsetInPage(offsetInFile);
+  //public byte readByteField(int fileId,
+  //                          int fieldOffsetInRow) throws IOException {
+  //  int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
+  //  int offsetInPage = storage.toOffsetInPage(offsetInFile);
+  //
+  //  Page page = storage.pageByOffset(offsetInFile);
+  //  ByteBuffer rawPageBuffer = page.rawPageBuffer();
+  //
+  //  return (byte)BYTE_HANDLE.getVolatile(rawPageBuffer, offsetInPage);
+  //}
+  //
+  //public void writeByteField(int fileId,
+  //                           int fieldOffsetInRow,
+  //                           byte attributeValue) throws IOException {
+  //  int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
+  //  int offsetInPage = storage.toOffsetInPage(offsetInFile);
+  //
+  //  Page page = storage.pageByOffset(offsetInFile);
+  //  ByteBuffer rawPageBuffer = page.rawPageBuffer();
+  //
+  //  BYTE_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
+  //}
 
-    Page page = storage.pageByOffset(offsetInFile);
-    ByteBuffer rawPageBuffer = page.rawPageBuffer();
-
-    INT_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
-  }
 
   public short readShortField(int fileId,
                               int fieldOffsetInRow) throws IOException {
@@ -388,6 +414,28 @@ public final class MappedFileStorageHelper implements Closeable {
     SHORT_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
   }
 
+  public int readIntField(int fileId,
+                          int fieldOffsetInRow) throws IOException {
+    int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
+    int offsetInPage = storage.toOffsetInPage(offsetInFile);
+
+    Page page = storage.pageByOffset(offsetInFile);
+    ByteBuffer rawPageBuffer = page.rawPageBuffer();
+
+    return (int)INT_HANDLE.getVolatile(rawPageBuffer, offsetInPage);
+  }
+
+  public void writeIntField(int fileId,
+                            int fieldOffsetInRow,
+                            int attributeValue) throws IOException {
+    int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
+    int offsetInPage = storage.toOffsetInPage(offsetInFile);
+
+    Page page = storage.pageByOffset(offsetInFile);
+    ByteBuffer rawPageBuffer = page.rawPageBuffer();
+
+    INT_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
+  }
 
   public int updateIntField(int fileId,
                             int fieldOffsetInRow,
@@ -405,6 +453,7 @@ public final class MappedFileStorageHelper implements Closeable {
       }
     }
   }
+
 
   public long readLongField(int fileId,
                             int fieldOffsetInRow) throws IOException {
@@ -476,6 +525,7 @@ public final class MappedFileStorageHelper implements Closeable {
 
 
   // ============== implementation: ======================================================================
+
   private int toOffsetInFile(int fileId) {
     checkFileIdValid(fileId);
     return (fileId - FSRecords.ROOT_FILE_ID) * bytesPerRow + HeaderLayout.HEADER_SIZE;

@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl.FileIdIndexedStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
 import org.jetbrains.annotations.ApiStatus;
@@ -39,9 +40,10 @@ public final class FastFileAttributes {
       version
     );
 
-    vfs.addCloseable(helper);
-
-    return new Int3FileAttribute(helper);
+    Int3FileAttribute attribute = new Int3FileAttribute(helper);
+    vfs.addCloseable(attribute);
+    vfs.addFileIdIndexedStorage(attribute);
+    return attribute;
   }
 
   public static TimestampedBooleanAttributeAccessor timestampedBoolean(@NotNull FileAttribute attribute) throws IOException {
@@ -57,12 +59,14 @@ public final class FastFileAttributes {
       TimestampedBooleanAttributeAccessorImpl.ROW_SIZE
     );
 
-    vfs.addCloseable(helper);
 
-    return new TimestampedBooleanAttributeAccessorImpl(helper);
+    TimestampedBooleanAttributeAccessorImpl accessor = new TimestampedBooleanAttributeAccessorImpl(helper);
+    vfs.addCloseable(accessor);
+    vfs.addFileIdIndexedStorage(accessor);
+    return accessor;
   }
 
-  public static final class Int3FileAttribute implements Closeable {
+  public static final class Int3FileAttribute implements FileIdIndexedStorage, Closeable {
     public static final int FIELDS = 3;
     public static final int ROW_SIZE = FIELDS * Integer.BYTES;
 
@@ -87,6 +91,13 @@ public final class FastFileAttributes {
       storageHelper.updateIntField(vFile, fieldOffset(fieldNo), updater);
     }
 
+    @Override
+    public void clear(int fileId) throws IOException {
+      storageHelper.writeIntField(fileId, 0, 0);
+      storageHelper.writeIntField(fileId, 1, 0);
+      storageHelper.writeIntField(fileId, 2, 0);
+    }
+
     public void fsync() throws IOException {
       storageHelper.fsync();
     }
@@ -108,7 +119,8 @@ public final class FastFileAttributes {
     }
   }
 
-  private static final class TimestampedBooleanAttributeAccessorImpl implements TimestampedBooleanAttributeAccessor, Closeable {
+  private static final class TimestampedBooleanAttributeAccessorImpl
+    implements TimestampedBooleanAttributeAccessor, FileIdIndexedStorage, Closeable {
     public static final int ROW_SIZE = Long.BYTES;
 
     private final MappedFileStorageHelper storageHelper;
@@ -138,6 +150,11 @@ public final class FastFileAttributes {
       //use sign bit to store true(1) | false(0)
       long fieldValue = value ? -stamp : stamp;
       storageHelper.writeLongField(vFile, 0, fieldValue);
+    }
+
+    @Override
+    public void clear(int fileId) throws IOException {
+      storageHelper.writeLongField(fileId, 0, 0);
     }
 
     @Override

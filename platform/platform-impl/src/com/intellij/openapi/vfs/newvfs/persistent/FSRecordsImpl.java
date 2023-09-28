@@ -195,6 +195,7 @@ public final class FSRecordsImpl {
   private volatile Exception disposedStackTrace = null;
 
   private final CopyOnWriteArraySet<AutoCloseable> closeables = new CopyOnWriteArraySet<>();
+  private final CopyOnWriteArraySet<FileIdIndexedStorage> fileIdIndexedStorages = new CopyOnWriteArraySet<>();
 
   private static int nextMask(int value,
                               int bits,
@@ -479,7 +480,7 @@ public final class FSRecordsImpl {
   int createRecord() {
     checkNotDisposed();
     try {
-      return recordAccessor.createRecord();
+      return recordAccessor.createRecord(fileIdIndexedStorages);
     }
     catch (Exception e) {
       throw handleError(e);
@@ -1350,6 +1351,16 @@ public final class FSRecordsImpl {
     this.closeables.add(closeable);
   }
 
+  /**
+   * Registers a storage keeping some data by fileId.
+   * Since we reuse fileId of removed files, we need to be sure all data attached to the re-used fileId was
+   * cleaned before re-use -- hence a storage that keeps such data should implement {@link FileIdIndexedStorage}
+   * interface, and should be registered with that method (or invent own method to keep track of removed files)
+   */
+  public void addFileIdIndexedStorage(@NotNull FileIdIndexedStorage storage) {
+    fileIdIndexedStorages.add(storage);
+  }
+
 
   //========== diagnostic, sanity checks: ========================================
 
@@ -1444,5 +1455,15 @@ public final class FSRecordsImpl {
      */
     void handleError(@NotNull FSRecordsImpl records,
                      @NotNull Throwable error) throws Error, RuntimeException;
+  }
+
+  /**
+   * Any storage keeping some data by fileId.
+   * Since we reuse fileId of removed files, we need to be sure all data attached to the re-used fileId was
+   * cleaned before re-use -- hence every storage that keeps such data should implement this interface, and
+   * should be registered {@link #addFileIdIndexedStorage(FileIdIndexedStorage)}
+   */
+  public interface FileIdIndexedStorage {
+    void clear(int fileId) throws IOException;
   }
 }
