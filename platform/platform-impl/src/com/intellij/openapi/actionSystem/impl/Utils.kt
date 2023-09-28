@@ -147,11 +147,20 @@ object Utils {
   }
 
   @JvmStatic
-  fun createAsyncDataContext(dataContext: DataContext): DataContext = when {
+  fun createAsyncDataContext(dataContext: DataContext): DataContext {
+    val result = createAsyncDataContextImpl(dataContext)
+    if ((result as? PreCachedDataContext)?.cachesAllKnownDataKeys() == false) {
+      return createAsyncDataContextImpl(dataContext) // recache!
+    }
+    return result
+  }
+
+  @JvmStatic
+  private fun createAsyncDataContextImpl(dataContext: DataContext): DataContext = when {
     isAsyncDataContext(dataContext) -> dataContext
-    dataContext is EdtDataContext -> newPreCachedDataContext(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
+    dataContext is EdtDataContext -> PreCachedDataContext(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
     dataContext is CustomizedDataContext ->
-      when (val delegate = createAsyncDataContext(dataContext.getParent())) {
+      when (val delegate = createAsyncDataContextImpl(dataContext.getParent())) {
         DataContext.EMPTY_CONTEXT -> PreCachedDataContext(null)
           .prependProvider(dataContext.customDataProvider)
         is PreCachedDataContext -> delegate
@@ -164,12 +173,6 @@ object Utils {
       dataContext
     }
     else -> dataContext
-  }
-
-  private fun newPreCachedDataContext(component: Component?): DataContext {
-    val result = PreCachedDataContext(component)
-    if (result.cachesAllKnownDataKeys()) return result
-    return PreCachedDataContext(component) // recache!
   }
 
   @JvmStatic
