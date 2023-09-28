@@ -115,8 +115,16 @@ class CombinedDiffViewer(
   private val blockListeners = EventDispatcher.create(BlockListener::class.java)
 
   private val diffInfo = object : DiffInfo() {
+    private var currentIndex: Int = 0
+    private val currentBlock get() = blockState[currentIndex] ?: getCurrentBlockId()
+
+    fun updateForBlock(blockId: CombinedBlockId) {
+      currentIndex = blockState.indexOf(blockId)
+      update()
+    }
+
     override fun getContentTitles(): List<String?> {
-      return getCurrentBlockId().let { blockId -> diffViewers[blockId] as? DiffViewerBase }?.request?.contentTitles ?: return emptyList()
+      return currentBlock.let { blockId -> diffViewers[blockId] as? DiffViewerBase }?.request?.contentTitles ?: return emptyList()
     }
   }
 
@@ -360,6 +368,8 @@ class CombinedDiffViewer(
     separatorPanel.background = if (showBorder) JBColor.border() else CombinedDiffUI.MAIN_HEADER_BACKGROUND
     separatorPanel.setBounds(0, 0, contentPanel.width, 1)
     stickyHeaderPanel.repaint()
+
+    diffInfo.updateForBlock(block.id)
   }
 
   fun getCurrentBlockId(): CombinedBlockId = blockState.currentBlock
@@ -514,7 +524,6 @@ class CombinedDiffViewer(
       val blockId = diffViewers.entries.find { it.value.editors.contains(editor) }?.key ?: return
 
       blockState.currentBlock = blockId
-      diffInfo.update()
     }
 
     override fun focusGained(e: FocusEvent) {
@@ -524,8 +533,6 @@ class CombinedDiffViewer(
       }?.key ?: return
 
       blockState.currentBlock = blockId
-
-      diffInfo.update()
     }
 
     fun register(component: JComponent, disposable: Disposable) {
@@ -759,6 +766,8 @@ private class BlockState(list: List<CombinedBlockId>, current: CombinedBlockId) 
   }
 
   fun indexOf(blockId: CombinedBlockId): Int = blockByIndex[blockId]!!
+
+  operator fun get(index: Int): CombinedBlockId? = if (index in blocks.indices) blocks[index] else null
 
   override val blocksCount: Int
     get() = blocks.size
