@@ -10,6 +10,8 @@ import com.intellij.psi.tree.TokenSet;
  * The BasicElementTypes interface represents a collection of basic element types used in frontback java modules.
  * {@link TokenSet} is used for set, which contains `basic` types, which are not used in hierarchy.
  * for other sets {@link ParentAwareTokenSet} is used.
+ * This set of sets must be consistent with {@link com.intellij.psi.impl.source.tree.ElementType}.
+ * It checks with {@link com.intellij.java.parser.FrontBackElementTypeTest#testJavaTokenSet()}
  *
  * @see ParentAwareTokenSet
  */
