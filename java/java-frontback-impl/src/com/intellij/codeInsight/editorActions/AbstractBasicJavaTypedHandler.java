@@ -125,6 +125,17 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
         return Result.CONTINUE;
       }
       Document doc = editor.getDocument();
+      if (!iterator.atEnd() &&
+          (iterator.getTokenType() == StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN ||
+            iterator.getTokenType() == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN) &&
+          CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) { // "\{}" in strings
+        CharSequence sequence = doc.getCharsSequence();
+        if (sequence.length() > offset && sequence.charAt(offset - 1) == '\\' && sequence.charAt(offset) != '}') {
+          doc.insertString(offset, "{}");
+          editor.getCaretModel().moveToOffset(offset + 1);
+          return Result.STOP;
+        }
+      }
       PsiDocumentManager.getInstance(project).commitDocument(doc);
       final PsiElement leaf = file.findElementAt(offset);
       if (BasicJavaAstTreeUtil.getParentOfType(leaf, BASIC_ARRAY_INITIALIZER_EXPRESSION, false,

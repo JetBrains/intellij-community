@@ -118,6 +118,14 @@ public abstract class AbstractBasicJavaTypingTest extends BasePlatformTestCase {
 
   public void testQuestionAfterPolyadicBoolean() { doTest('?'); }
 
+  public void testStartStringTemplate() { doTest('{'); }
+
+  public void testStartStringTemplateNoClosingQuote() { doTest('{'); }
+
+  public void testStartStringTemplateTextBlock() { doTest('{'); }
+
+  public void testStartStringTemplateAlreadyBrace() { doTest('{'); }
+
   protected void doTest(char c) {
     myFixture.configureByFile(getTestName(true) + "_before.java");
     myFixture.type(c);
