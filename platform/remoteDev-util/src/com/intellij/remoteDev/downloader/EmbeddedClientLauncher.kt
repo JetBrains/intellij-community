@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CustomConfigMigrationOption
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
@@ -32,9 +33,19 @@ import kotlin.io.path.pathString
 class EmbeddedClientLauncher private constructor(private val moduleRepository: RuntimeModuleRepository, 
                                                  private val moduleRepositoryPath: Path) {
   companion object {
+    private val CLIENT_ROOT_MODULE = RuntimeModuleId.module("intellij.cwm.guest")
+    private val LOG = logger<EmbeddedClientLauncher>()
+    
     fun create(): EmbeddedClientLauncher? {
       val moduleRepository = RuntimeModuleIntrospection.moduleRepository ?: return null
       val moduleRepositoryPath = RuntimeModuleIntrospection.moduleRepositoryPath ?: return null
+      try {
+        moduleRepository.getModule(CLIENT_ROOT_MODULE)
+      }
+      catch (e: Exception) {
+        LOG.warn("Failed to load embedded client: " + e.message)
+        return null
+      }
       return EmbeddedClientLauncher(moduleRepository, moduleRepositoryPath)
     }
   }
@@ -150,7 +161,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "-Didea.initially.ask.config=never",
       "-Didea.paths.customizer=com.intellij.platform.ide.impl.startup.multiProcess.PerProcessPathCustomizer",
       "-Dintellij.platform.runtime.repository.path=${moduleRepositoryPath.pathString}",
-      "-Dintellij.platform.root.module=intellij.cwm.guest",
+      "-Dintellij.platform.root.module=${CLIENT_ROOT_MODULE.stringId}",
       "-Dintellij.platform.load.app.info.from.resources=true",
       "-Dsplash=true",
     )

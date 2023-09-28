@@ -106,7 +106,7 @@ object CodeWithMeGuestLauncher {
               return
             }
             else {
-              LOG.debug("Cannot launch client process from the current IDE because information about runtime modules isn't available")
+              LOG.debug("Embedded client isn't available in the current IDE installation")
             }
           }
         }
