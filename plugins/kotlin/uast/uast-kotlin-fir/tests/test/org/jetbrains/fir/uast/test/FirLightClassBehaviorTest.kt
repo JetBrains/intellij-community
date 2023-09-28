@@ -74,8 +74,7 @@ class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
     }
 
     fun testUpperBoundForRecursiveTypeParameter() {
-        // TODO(KT-61459): remove the flag
-        checkUpperBoundForRecursiveTypeParameter(myFixture, isK2 = true)
+        checkUpperBoundForRecursiveTypeParameter(myFixture)
     }
 
     fun testDefaultValueOfAnnotation() {
