@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDocumentManager
@@ -35,6 +36,8 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
     manager = FileEditorManagerImpl(project, project.coroutineScope.childScope()).also { it.initDockableContentFactory() }
     project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()
+
+    Registry.get("ide.open.in.split.with.chooser.enabled").setValue(true, testRootDisposable)
   }
 
   override fun tearDown() {
