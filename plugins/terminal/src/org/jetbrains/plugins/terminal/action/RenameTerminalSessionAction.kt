@@ -14,13 +14,13 @@ class RenameTerminalSessionAction : ToolWindowTabRenameActionBase(
   TerminalToolWindowFactory.TOOL_WINDOW_ID,
   TerminalBundle.message("action.RenameSession.newSessionName.label")
 ), DumbAware {
-  override fun getContentDisplayNameToEdit(content: Content, project: Project): String =
-    TerminalToolWindowManager.getWidgetByContent(content)?.terminalTitle?.let {
-      it.userDefinedTitle ?: it.applicationTitle ?: it.defaultTitle
-    } ?: content.displayName
+  override fun getContentDisplayNameToEdit(content: Content, project: Project): String {
+    val widget = TerminalToolWindowManager.findWidgetByContent(content) ?: return content.displayName
+    return widget.terminalTitle.buildFullTitle()
+  }
 
   override fun applyContentDisplayName(content: Content, project: Project, @Nls newContentName: String) {
-    TerminalToolWindowManager.getWidgetByContent(content)?.terminalTitle?.change {
+    TerminalToolWindowManager.findWidgetByContent(content)?.terminalTitle?.change {
       userDefinedTitle = newContentName
     }
   }

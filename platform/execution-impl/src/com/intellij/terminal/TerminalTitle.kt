@@ -63,6 +63,10 @@ class TerminalTitle {
     return if (tag != null) "$title ($tag)" else title
   }
 
+  fun buildFullTitle(): @Nls String {
+    return userDefinedTitle ?: applicationTitle ?: defaultTitle ?: ExecutionBundle.message("terminal.default.title")
+  }
+
   private fun shortenApplicationTitle(): String? {
     return StringUtil.trimMiddle(applicationTitle ?: return null, 30)
   }
