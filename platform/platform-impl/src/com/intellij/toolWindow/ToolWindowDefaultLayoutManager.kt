@@ -124,19 +124,21 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     val v2: List<ToolWindowDescriptor> = emptyList(),
   ) {
 
-    fun getActiveLayoutCopy(isNewUi: Boolean): DesktopLayout {
+    fun getActiveLayoutCopy(isNewUi: Boolean): DesktopLayout = getLayoutCopy(activeLayoutName, isNewUi)
+
+    private fun getLayoutCopy(layoutName: String, isNewUi: Boolean): DesktopLayout {
       return DesktopLayout(
-        convertWindowDescriptorsToWindowInfos(getDescriptors(isNewUi)),
-        convertUnifiedWeightsDescriptorToUnifiedWeights(getUnifiedWeights())
+        convertWindowDescriptorsToWindowInfos(getDescriptors(layoutName, isNewUi)),
+        convertUnifiedWeightsDescriptorToUnifiedWeights(getUnifiedWeights(layoutName))
       )
     }
 
-    private fun getDescriptors(isNewUi: Boolean): List<ToolWindowDescriptor> =
-      (layouts[activeLayoutName]?.let { if (isNewUi) it.v2 else it.v1 } ?: emptyList())
+    private fun getDescriptors(layoutName: String, isNewUi: Boolean): List<ToolWindowDescriptor> =
+      (layouts[layoutName]?.let { if (isNewUi) it.v2 else it.v1 } ?: emptyList())
         .ifEmpty { getDefaultLayoutToolWindowDescriptors(isNewUi) }
 
-    private fun getUnifiedWeights(): Map<String, Float> =
-        layouts[activeLayoutName]?.unifiedWeights ?: DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR
+    private fun getUnifiedWeights(layoutName: String): Map<String, Float> =
+        layouts[layoutName]?.unifiedWeights ?: DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR
 
     fun withRenamedLayout(oldName: String, newName: String): ToolWindowLayoutStorageManagerState =
       copy(
