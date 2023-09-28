@@ -7,4 +7,8 @@ public interface DifferentiateResult {
   Iterable<Node<?, ?>> getDeletedNodes();
 
   Iterable<NodeSource> getAffectedSources();
+
+  default boolean isIncremental() {
+    return true;
+  }
 }

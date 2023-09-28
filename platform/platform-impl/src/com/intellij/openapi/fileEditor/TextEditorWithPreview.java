@@ -47,6 +47,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.actionSystem.ActionPlaces.TEXT_EDITOR_WITH_PREVIEW;
@@ -144,7 +145,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     mySplitter.setFirstComponent(myEditor.getComponent());
     mySplitter.setSecondComponent(myPreview.getComponent());
     mySplitter.setDividerWidth(ExperimentalUI.isNewUI() ? 1 : 2); // We're using OnePixelSplitter, but it actually supports wider dividers.
-    mySplitter.getDivider().setBackground(JBColor.lazy(() -> EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.PREVIEW_BORDER_COLOR)));
+    mySplitter.getDivider().setBackground(JBColor.lazy(() -> Objects.requireNonNullElse(EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.PREVIEW_BORDER_COLOR), UIUtil.getPanelBackground())));
 
     myToolbarWrapper = createSplitEditorToolbar(mySplitter);
 

@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.psi.impl.source.BasicElementTypes.JAVA_COMMENT_BIT_SET;
+import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_BIT_SET;
 
 public class AntLikePropertySelectionHandler extends ExtendWordSelectionHandlerBase {
   @Override
@@ -49,7 +49,7 @@ public class AntLikePropertySelectionHandler extends ExtendWordSelectionHandlerB
       return false;
     }
 
-    if (BasicJavaAstTreeUtil.getParentOfType(BasicJavaAstTreeUtil.toNode(e), JAVA_COMMENT_BIT_SET) == null) {
+    if (BasicJavaAstTreeUtil.getParentOfType(BasicJavaAstTreeUtil.toNode(e), BASIC_JAVA_COMMENT_BIT_SET) == null) {
       return true;
     }
     return PsiTreeUtil.getParentOfType(e, PsiComment.class) == null;

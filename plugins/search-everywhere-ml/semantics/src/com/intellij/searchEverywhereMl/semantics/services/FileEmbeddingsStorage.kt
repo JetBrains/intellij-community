@@ -1,13 +1,18 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
-import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.isFile
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.indices.IndexableEntity
@@ -16,7 +21,6 @@ import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import com.intellij.searchEverywhereMl.semantics.utils.splitIdentifierIntoTokens
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.io.File
-import java.util.*
 
 /**
  * Thread-safe service for semantic files search.
@@ -24,7 +28,7 @@ import java.util.*
  * Generates the embeddings for files not present in the loaded state at the IDE startup event if semantic files search is enabled.
  */
 @Service(Service.Level.PROJECT)
-class FileEmbeddingsStorage(project: Project) : DiskSynchronizedEmbeddingsStorage<IndexableFile>(project) {
+class FileEmbeddingsStorage(project: Project) : DiskSynchronizedEmbeddingsStorage<IndexableFile>(project), Disposable {
   // At unique path based on project location in a file system
   override val index = DiskSynchronizedEmbeddingSearchIndex(
     project.getProjectCachePath(
@@ -43,7 +47,7 @@ class FileEmbeddingsStorage(project: Project) : DiskSynchronizedEmbeddingsStorag
   override val indexStrongLimit = Registry.intValue("search.everywhere.ml.semantic.indexing.indexable.files.limit")
 
   init {
-    project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, FilesSemanticSearchFileChangeListener(project))
+    project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, FilesSemanticSearchFileChangeListener(project))
   }
 
   override fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInFilesTab
@@ -54,11 +58,9 @@ class FileEmbeddingsStorage(project: Project) : DiskSynchronizedEmbeddingsStorag
     // If the write action is invoked, the read action is restarted
     return ReadAction.nonBlocking<List<IndexableFile>> {
       buildList {
-        ProjectRootManager.getInstance(project).contentSourceRoots.forEach { root ->
-          VfsUtilCore.iterateChildrenRecursively(root, null) { virtualFile ->
-            virtualFile.canonicalFile?.also { if (it.isFile) add(IndexableFile(it)) }
-            return@iterateChildrenRecursively true
-          }
+        ProjectFileIndex.getInstance(project).iterateContent{
+            if (it.isFile and it.isInLocalFileSystem) add(IndexableFile(it))
+            true
         }
       }
     }.executeSynchronously()
@@ -76,6 +78,8 @@ class FileEmbeddingsStorage(project: Project) : DiskSynchronizedEmbeddingsStorag
 
     fun getInstance(project: Project) = project.service<FileEmbeddingsStorage>()
   }
+
+  override fun dispose() = Unit
 }
 
 @Suppress("unused")  // Registered in the plugin's XML file

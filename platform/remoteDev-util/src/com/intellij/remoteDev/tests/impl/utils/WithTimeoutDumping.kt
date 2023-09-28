@@ -31,14 +31,14 @@ suspend fun <T> withTimeoutDumping(title: String,
         deferred.cancel(e)
         throw TimeoutException(buildString {
           append("$title: Has not finished in $timeout.\n")
+          val failMessage = failMessageProducer?.invoke()
+          if (!failMessage.isNullOrBlank()) {
+            append("$failMessage\n")
+          }
           append("------------\n")
           append("CoroutineDump:\n")
           append("$coroutinesDump\n")
           append("------------")
-          val failMessage = failMessageProducer?.invoke()
-          if (!failMessage.isNullOrBlank()) {
-            append("\n$failMessage")
-          }
         })
       }
     }

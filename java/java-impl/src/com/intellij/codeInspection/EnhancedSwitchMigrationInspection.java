@@ -486,7 +486,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         statements = psiCodeBlock.getCodeBlock().getStatements();
       }
       if (statements.length == 0) {
-        if (i == branches.size() - 1) {
+        if ((i == branches.size() - 1) || branch.isDefault()) {
           if (returnAfterSwitch != null) {
             statements = new PsiStatement[]{returnAfterSwitch};
           }
@@ -496,6 +496,9 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
           else {
             return null;
           }
+        }
+        else {
+          return null;
         }
       }
       if (maxLines < statements.length) {

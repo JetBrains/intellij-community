@@ -2,6 +2,7 @@
 package com.intellij.ui
 
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.NewUIComboBoxRenderer
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
@@ -26,7 +27,7 @@ import javax.swing.border.CompoundBorder
  * this renderer makes it possible to use [ComboBox]<[T]> and specify which items should be preceded
  * by a separator. (see [GroupedComboBoxRenderer.separatorFor])
  */
-abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : GroupedElementsRenderer(), ListCellRenderer<T> {
+abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : GroupedElementsRenderer(), ListCellRenderer<T>, NewUIComboBoxRenderer {
 
   /**
    * @return The item title displayed in the combo

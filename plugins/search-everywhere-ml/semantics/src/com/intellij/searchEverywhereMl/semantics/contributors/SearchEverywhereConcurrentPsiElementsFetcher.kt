@@ -46,7 +46,8 @@ interface SearchEverywhereConcurrentPsiElementsFetcher : SearchEverywhereConcurr
 
   override fun prepareSemanticDescriptor(descriptor: FoundItemDescriptor<PsiItemWithSimilarity<*>>,
                                          knownItems: MutableList<FoundItemDescriptor<PsiItemWithSimilarity<*>>>,
-                                         mutex: ReentrantLock): FoundItemDescriptor<Any> {
+                                         mutex: ReentrantLock,
+                                         durationMs: Long): FoundItemDescriptor<Any> {
     val element = descriptor.item.value
     val foundElement = if (element is PsiElement) attachPsiPresentation(element, psiElementsRenderer) else element
     val newItem = PsiItemWithSimilarity(foundElement, descriptor.item.similarityScore)

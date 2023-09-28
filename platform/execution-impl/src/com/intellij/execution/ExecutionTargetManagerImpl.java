@@ -5,7 +5,6 @@ import com.intellij.execution.compound.CompoundRunConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.TargetAwareRunProfile;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -13,6 +12,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -119,7 +119,7 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
 
   @Override
   public void setActiveTarget(@NotNull ExecutionTarget target) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     synchronized (myActiveTargetLock) {
       updateActiveTarget(getRunManager().getSelectedConfiguration(), target);
     }
@@ -288,7 +288,7 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
 
   @Override
   public void update() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     updateActiveTarget();
   }
 

@@ -67,6 +67,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.Matcher;
@@ -748,7 +749,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   }
 
   void cancelListUpdater() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (checkDisposed()) return;
 
     final CalcElementsThread calcElementsThread = myCalcElementsThread;
@@ -878,7 +879,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
                    final int delay,
                    @NotNull final ModalityState modalityState,
                    @Nullable final Runnable postRunnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (!myInitialized) {
       return;
     }
@@ -913,7 +914,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     MatcherHolder.associateMatcher(myList, matcher);
 
     scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, pos, elements -> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
 
       if (postRunnable != null) {
         postRunnable.run();
@@ -1321,7 +1322,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     private final Alarm myUpdateListAlarm = new Alarm();
 
     void scheduleThread() {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       myCalcElementsThread = this;
       showCard(SEARCHING_CARD, 200);
       ProgressIndicatorUtils.scheduleWithWriteActionPriority(myProgress, this);
@@ -1471,7 +1472,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     private void cancel() {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       myProgress.cancel();
     }
 

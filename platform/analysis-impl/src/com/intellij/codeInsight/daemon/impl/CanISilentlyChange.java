@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -11,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  */
 final class CanISilentlyChange {
   private static boolean canUndo(@NotNull VirtualFile virtualFile, @NotNull Project project) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(virtualFile);
     if (editors.length == 0) {
       return false;
@@ -62,7 +62,7 @@ final class CanISilentlyChange {
 
   @NotNull
   static Result thisFile(@NotNull PsiFileSystemItem file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Project project = file.getProject();
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) {

@@ -9,7 +9,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.workspace.storage.EntityStorageSerializer
-import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
+import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule

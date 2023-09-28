@@ -9,7 +9,6 @@ import com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.concurrency.JobLauncher
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -25,6 +24,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.Processor
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.jetbrains.rd.util.reactive.adviseUntil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
@@ -71,13 +71,15 @@ class CodeVisionPass(
         JobLauncher.getInstance().invokeConcurrentlyUnderProgress(providers, progress, Processor { provider ->
             span.useWithScope {
               computeWithSpan(tracer, provider.javaClass.simpleName) {
-                val results: List<Pair<TextRange, CodeVisionEntry>>
-                //val duration = measureTimeMillis {
+                val results: List<Pair<TextRange, CodeVisionEntry>>?
+                val duration = measureTimeMillis {
                   results = provider.computeForEditor(editor, file)
-                //}
-                //CodeVisionFusCollector.CODE_VISION_FINISHED.log(file.project, duration, provider::class.java, file.language)
-                providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results,
-                                                                                                        modificationTracker.modificationCount)
+                }
+                if (results != null) {
+                  CodeVisionFusCollector.reportCodeVisionProviderDuration(editor, file.language, duration, provider::class.java)
+                  providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results,
+                                                                                                          modificationTracker.modificationCount)
+                }
               }
             }
             true
@@ -133,7 +135,7 @@ class CodeVisionPass(
     private val providerIdToLenses: Map<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>
   ) {
     fun applyTo(editor: Editor, project: Project) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
       saveToCache(project, editor, providerIdToLenses)
       updateProviders(project, editor, providerIdToLenses)
     }

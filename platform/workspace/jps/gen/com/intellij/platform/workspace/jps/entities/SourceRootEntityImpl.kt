@@ -15,7 +15,6 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
@@ -23,21 +22,22 @@ import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRootEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : SourceRootEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, SourceRootEntity::class.java,
                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, false)
     internal val CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
                                                                                               CustomSourceRootPropertiesEntity::class.java,
                                                                                               ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       CONTENTROOT_CONNECTION_ID,
       CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID,
     )
@@ -62,6 +62,7 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: SourceRootEntityData?) : ModifiableWorkspaceEntityBase<SourceRootEntity, SourceRootEntityData>(
     result), SourceRootEntity.Builder {
@@ -92,7 +93,7 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -238,8 +239,8 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
   lateinit var url: VirtualFileUrl
   lateinit var rootType: String
 
-  fun isUrlInitialized(): Boolean = ::url.isInitialized
-  fun isRootTypeInitialized(): Boolean = ::rootType.isInitialized
+  internal fun isUrlInitialized(): Boolean = ::url.isInitialized
+  internal fun isRootTypeInitialized(): Boolean = ::rootType.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SourceRootEntity> {
     val modifiable = SourceRootEntityImpl.Builder(null)
@@ -256,6 +257,10 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.SourceRootEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -315,10 +320,5 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
     result = 31 * result + url.hashCode()
     result = 31 * result + rootType.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.url?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

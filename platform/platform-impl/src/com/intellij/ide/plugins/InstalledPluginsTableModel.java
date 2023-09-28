@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
@@ -28,7 +28,7 @@ public class InstalledPluginsTableModel {
   public InstalledPluginsTableModel(@Nullable Project project) {
     myProject = project;
 
-    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    ApplicationInfo appInfo = ApplicationInfo.getInstance();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
       PluginId pluginId = plugin.getPluginId();
       if (appInfo.isEssentialPlugin(pluginId)) {

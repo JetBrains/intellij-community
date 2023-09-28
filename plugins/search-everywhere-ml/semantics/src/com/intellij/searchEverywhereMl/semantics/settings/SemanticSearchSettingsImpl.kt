@@ -1,5 +1,9 @@
 package com.intellij.searchEverywhereMl.semantics.settings
 
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
@@ -93,6 +97,20 @@ class SemanticSearchSettingsImpl : SemanticSearchSettings, PersistentStateCompon
   }
 
   override fun isEnabled() = enabledInActionsTab || enabledInFilesTab || enabledInSymbolsTab || enabledInClassesTab
+
+  override fun isEnableInTab(tabId: String): Boolean {
+    return when (tabId) {
+      ActionSearchEverywhereContributor::class.java.simpleName ->
+        enabledInActionsTab
+      FileSearchEverywhereContributor::class.java.simpleName ->
+        enabledInFilesTab
+      ClassSearchEverywhereContributor::class.java.simpleName ->
+        enabledInClassesTab
+      SymbolSearchEverywhereContributor::class.java.simpleName ->
+        enabledInSymbolsTab
+      else -> false
+    }
+  }
 
   override fun getUseRemoteActionsServer() = Registry.`is`("search.everywhere.ml.semantic.actions.server.use")
 

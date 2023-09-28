@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -14,24 +15,24 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class FacetsOrderEntityImpl(val dataSource: FacetsOrderEntityData) : FacetsOrderEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityData) : FacetsOrderEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val MODULEENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetsOrderEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       MODULEENTITY_CONNECTION_ID,
     )
 
@@ -49,6 +50,7 @@ open class FacetsOrderEntityImpl(val dataSource: FacetsOrderEntityData) : Facets
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: FacetsOrderEntityData?) : ModifiableWorkspaceEntityBase<FacetsOrderEntity, FacetsOrderEntityData>(
     result), FacetsOrderEntity.Builder {
@@ -78,7 +80,7 @@ open class FacetsOrderEntityImpl(val dataSource: FacetsOrderEntityData) : Facets
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -191,7 +193,7 @@ open class FacetsOrderEntityImpl(val dataSource: FacetsOrderEntityData) : Facets
 class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
   lateinit var orderOfFacets: MutableList<String>
 
-  fun isOrderOfFacetsInitialized(): Boolean = ::orderOfFacets.isInitialized
+  internal fun isOrderOfFacetsInitialized(): Boolean = ::orderOfFacets.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FacetsOrderEntity> {
     val modifiable = FacetsOrderEntityImpl.Builder(null)
@@ -208,6 +210,10 @@ class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.FacetsOrderEntity") as EntityMetadata
   }
 
   override fun clone(): FacetsOrderEntityData {
@@ -270,10 +276,5 @@ class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
     var result = javaClass.hashCode()
     result = 31 * result + orderOfFacets.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.orderOfFacets?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

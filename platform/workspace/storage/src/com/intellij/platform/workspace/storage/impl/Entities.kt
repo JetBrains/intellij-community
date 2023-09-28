@@ -7,9 +7,10 @@ import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
-public abstract class WorkspaceEntityBase : WorkspaceEntity, Any() {
+public abstract class WorkspaceEntityBase(private var currentEntityData: WorkspaceEntityData<out WorkspaceEntity>? = null) : WorkspaceEntity {
   //override lateinit var entitySource: EntitySource
   //  internal set
 
@@ -67,6 +68,13 @@ public abstract class WorkspaceEntityBase : WorkspaceEntity, Any() {
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> = id.clazz.findWorkspaceEntity()
 
+
+  internal open fun getData(): WorkspaceEntityData<out WorkspaceEntity> =
+    currentEntityData ?: throw IllegalStateException("Entity data is not initialized")
+
+  internal fun getMetadata(): EntityMetadata = getData().getMetadata()
+
+
   override fun toString(): String = id.asString()
 
   override fun equals(other: Any?): Boolean {
@@ -93,7 +101,7 @@ public data class EntityLink(
 internal val EntityLink.remote: EntityLink
   get() = EntityLink(!this.isThisFieldChild, connectionId)
 
-public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEntityData<T>>(protected var currentEntityData: E?) : WorkspaceEntityBase(), WorkspaceEntity.Builder<T> {
+public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEntityData<T>>(protected var currentEntityData: E?) : WorkspaceEntityBase(currentEntityData), WorkspaceEntity.Builder<T> {
   /**
    * In case any of two referred entities is not added to diff, the reference between entities will be stored in this field
    */
@@ -396,6 +404,8 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
     }
   }
 
+  override fun getData(): WorkspaceEntityData<out WorkspaceEntity> = this.getEntityData()
+
   public fun getEntityData(supposedModification: Boolean = false): E {
     if (currentEntityData != null) return currentEntityData!!
     val actualEntityData = if (supposedModification) {
@@ -500,6 +510,8 @@ public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Seri
 
   public abstract fun getEntityInterface(): Class<out WorkspaceEntity>
 
+  public abstract fun getMetadata(): EntityMetadata
+
   @Suppress("UNCHECKED_CAST")
   public override fun clone(): WorkspaceEntityData<E> = super.clone() as WorkspaceEntityData<E>
 
@@ -561,10 +573,6 @@ public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Seri
     throw NotImplementedError()
   }
 
-  public open fun collectClassUsagesData(collector: UsedClassesCollector) {
-    throw NotGeneratedMethodRuntimeException("collectClassUsagesData")
-  }
-
   /**
    * Temporally solution.
    * Get symbolic Id without creating of TypedEntity. Should be in sync with TypedEntityWithSymbolicId.
@@ -586,23 +594,4 @@ public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Seri
 internal fun WorkspaceEntityData<*>.symbolicId(): SymbolicEntityId<*>? = when (this) {
   is WorkspaceEntityData.WithCalculableSymbolicId -> this.symbolicId()
   else -> null
-}
-
-public class UsedClassesCollector(
-  public var sameForAllEntities: Boolean = false,
-  internal var collection: MutableSet<Class<out Any>> = HashSet(),
-  internal var collectionObjects: MutableSet<Class<out Any>> = HashSet(),
-  internal var collectionToInspection: MutableSet<Any> = HashSet(),
-) {
-  public fun add(clazz: Class<out Any>) {
-    collection.add(clazz)
-  }
-
-  public fun addObject(clazz: Class<out Any>) {
-    collectionObjects.add(clazz)
-  }
-
-  public fun addDataToInspect(data: Any) {
-    collectionToInspection.add(data)
-  }
 }

@@ -43,6 +43,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/removeRedundantQualifierName")
             model("${idea}/inspectionsLocal/equalsBetweenInconvertibleTypes")
             model("${idea}/inspectionsLocal/redundantIf")
+            model("${idea}/inspectionsLocal/mayBeConstant")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
         }
         /**

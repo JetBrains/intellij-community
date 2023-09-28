@@ -4,10 +4,11 @@ package com.intellij.workspaceModel.codegen.impl.writer.fields
 import com.intellij.workspaceModel.codegen.impl.writer.classes.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.impl.writer.getRefType
-import com.intellij.workspaceModel.codegen.impl.writer.isRefType
 import com.intellij.workspaceModel.codegen.impl.writer.*
-import com.intellij.workspaceModel.codegen.impl.writer.javaName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.getRefType
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.isRefType
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.kotlinClassName
 
 val ObjProperty<*, *>.implWsBuilderFieldCode: String
   get() = valueType.implWsBuilderBlockingCode(this)
@@ -333,11 +334,11 @@ private fun LinesBuilder.isInitializedBaseCode(field: ObjProperty<*, *>, express
 
 private fun ValueType<*>.addVirtualFileIndex(field: ObjProperty<*, *>): String {
   return when {
-    this is ValueType.Blob && javaClassName == VirtualFileUrl.decoded ->
+    this is ValueType.Blob && kotlinClassName == VirtualFileUrl.decoded ->
       """val _diff = diff
 |                    if (_diff != null) index(this, "${field.javaName}", value)
         """.trimMargin()
-    this is ValueType.JvmClass && javaClassName == LibraryRoot.decoded -> """
+    this is ValueType.JvmClass && kotlinClassName == LibraryRoot.decoded -> """
                     val _diff = diff
                     if (_diff != null) {
                         indexLibraryRoots(value)

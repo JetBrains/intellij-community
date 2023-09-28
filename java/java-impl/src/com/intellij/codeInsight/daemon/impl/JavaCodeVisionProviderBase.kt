@@ -9,11 +9,11 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 
 abstract class JavaCodeVisionProviderBase : DaemonBoundCodeVisionProvider {
-  override fun computeForEditor(editor: Editor, file: PsiFile): List<Pair<TextRange, CodeVisionEntry>> {
-    if (file.language != JavaLanguage.INSTANCE) return emptyList()
+  override fun computeForEditor(editor: Editor, file: PsiFile): List<Pair<TextRange, CodeVisionEntry>>? {
+    if (file.language != JavaLanguage.INSTANCE) return null
 
     return computeLenses(editor, file)
   }
 
-  abstract fun computeLenses(editor: Editor, psiFile: PsiFile): List<Pair<TextRange, CodeVisionEntry>>
+  abstract fun computeLenses(editor: Editor, psiFile: PsiFile): List<Pair<TextRange, CodeVisionEntry>>?
 }

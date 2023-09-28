@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence
 
 import com.intellij.featureStatistics.FeatureUsageTracker
@@ -182,7 +182,7 @@ class ActionsCollectorImpl : ActionsCollector() {
     fun addActionClass(data: MutableList<EventPair<*>>,
                        action: AnAction,
                        info: PluginInfo): String {
-      val actionClassName = if (info.isSafeToReport()) action.javaClass.name else DEFAULT_ID
+      val actionClass = action.javaClass
       var actionId = getActionId(info, action)
       if (action is ActionWithDelegate<*>) {
         val delegate = ActionUtil.getDelegateChainRoot(action)
@@ -193,13 +193,13 @@ class ActionsCollectorImpl : ActionsCollector() {
         else {
           if (delegateInfo.isSafeToReport()) delegate.javaClass.name else DEFAULT_ID
         }
-        data.add(ActionsEventLogGroup.ACTION_CLASS.with(actionId))
-        data.add(ActionsEventLogGroup.ACTION_PARENT.with(actionClassName))
+        data.add(ActionsEventLogGroup.ACTION_CLASS.with(delegate.javaClass))
+        data.add(ActionsEventLogGroup.ACTION_PARENT.with(actionClass))
       }
       else {
-        data.add(ActionsEventLogGroup.ACTION_CLASS.with(actionClassName))
+        data.add(ActionsEventLogGroup.ACTION_CLASS.with(actionClass))
       }
-      data.add(ActionsEventLogGroup.ACTION_ID.with(StringUtil.substringBeforeLast(actionId, "$\$Lambda$", true)))
+      data.add(ActionsEventLogGroup.ACTION_ID.with(actionId))
       return actionId
     }
 

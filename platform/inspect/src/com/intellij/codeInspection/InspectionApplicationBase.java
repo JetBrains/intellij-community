@@ -16,7 +16,6 @@ import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -148,7 +147,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   public void header() { }
 
   public void execute() throws Exception {
-    ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
+    ApplicationInfo appInfo = ApplicationInfo.getInstance();
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.starting.up",
                                                           appInfo.getFullApplicationName() +
                                                           " (build " +

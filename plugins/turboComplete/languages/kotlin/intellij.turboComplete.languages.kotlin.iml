@@ -13,19 +13,19 @@
     <orderEntry type="module" module-name="intellij.platform.ml.impl" />
     <orderEntry type="module-library">
       <library name="completion-performance-kotlin" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.completion:performance-kotlin:0.0.6">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:performance-kotlin:0.0.9">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/performance-kotlin/0.0.6/performance-kotlin-0.0.6.jar">
-              <sha256sum>f8b9b802decae658447475325ae341efd07b2f6e3915312c9b51c5168e158012</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/performance-kotlin/0.0.9/performance-kotlin-0.0.9.jar">
+              <sha256sum>fabf4f175e25ea01a72fb18e6ba1479ebbbd555245021a83174089dc4fac1f5f</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/performance-kotlin/0.0.6/performance-kotlin-0.0.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/performance-kotlin/0.0.9/performance-kotlin-0.0.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/performance-kotlin/0.0.6/performance-kotlin-0.0.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/performance-kotlin/0.0.9/performance-kotlin-0.0.9-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

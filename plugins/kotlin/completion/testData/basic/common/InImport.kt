@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // FIR_COMPARISON
 package Test
 
@@ -9,5 +8,4 @@ class Test {
 }
 
 // EXIST: Unit, Nothing, collections, concurrent
-// EXIST_K2: Unit, Nothing, collections., concurrent.
 // EXIST_JAVA_ONLY: assert

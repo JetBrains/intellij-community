@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableStringEn
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl;
-import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.util.ExceptionUtil;
@@ -25,6 +24,7 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import com.intellij.util.io.storage.*;
 import com.intellij.util.io.storage.lf.RefCountingContentStorageImplLF;
@@ -175,7 +175,7 @@ public final class PersistentFSLoader {
 
   public void initializeStorages() throws IOException {
     if (enableVfsLog) {
-      vfsLog = VfsLogImpl.open(vfsLogDir, false);
+      vfsLog = VfsLogImpl.open(vfsLogDir, false, true);
     }
     else {
       vfsLog = null;
@@ -191,6 +191,8 @@ public final class PersistentFSLoader {
     //Initiate async scanning of the recordsStorage to fill both invertedNameIndex and reusableFileIds,
     //  and create lazy-accessors for both.
     collectDeletedFileRecordsTask = executorService.async(() -> {
+      //TODO RC: limit max number of reusable fileIds -- i.e. what if there are millions of them?
+      //         5-10_000 max should be enough.
       IntList reusableFileIds = new IntArrayList(1024);
       //fill up reusable (=deleted) records:
       PersistentFSRecordsStorage storage = recordsStorageFuture.join();
@@ -629,16 +631,18 @@ public final class PersistentFSLoader {
         /*percentOnTop: */30
       );
       final StreamlinedBlobStorage blobStorage;
+      boolean nativeBytesOrder = true;
       if (FSRecordsImpl.USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE && PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
         LOG.info("VFS uses streamlined attributes storage (over new FilePageCache)");
+        //RC: make page smaller for the transition period: new FPCache has quite a small memory and it's hard
+        //    to manage huge 10Mb pages having only ~100-150Mb budget in total, it ruins large-numbers assumptions
+        int pageSize = 1 << 20;//PageCacheUtils.DEFAULT_PAGE_SIZE,
         blobStorage = IOUtil.wrapSafely(
           new PagedFileStorageWithRWLockedPageContent(
             attributesFile,
             PERSISTENT_FS_STORAGE_CONTEXT,
-            //RC: make page smaller for the transition period: new FPCache has quite a small memory and it's hard
-            //    to manage huge 10Mb pages having only ~100-150Mb budget in total, it ruins large-numbers assumptions
-            1 << 20, //PageCacheUtils.DEFAULT_PAGE_SIZE,
-            /*nativeByteOrder: */  true,
+            pageSize,
+            nativeBytesOrder,
             PageContentLockingStrategy.LOCK_PER_PAGE
           ),
           storage -> new StreamlinedBlobStorageOverLockFreePagedStorage(storage, allocationStrategy)
@@ -647,10 +651,15 @@ public final class PersistentFSLoader {
       else if (FSRecordsImpl.USE_ATTRIBUTES_OVER_MMAPPED_FILE) {
         LOG.info("VFS uses streamlined attributes storage (over mmapped file)");
         int pageSize = 1 << 24;//16Mb
-        blobStorage = IOUtil.wrapSafely(
-          new MMappedFileStorage(attributesFile, pageSize),
-          storage -> new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy)
-        );
+        blobStorage = MMappedFileStorageFactory.withDefaults()
+          .pageSize(pageSize)
+          //mmapped and !mmapped storages have the same binary layout, so mmapped storage could inherit all the
+          // data from non-mmapped -- the only 'migration' needed is to page-align the file:
+          .expandFileIfNotPageAligned(true)
+          .wrapStorageSafely(
+            attributesFile,
+            storage -> new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy)
+          );
       }
       else {
         LOG.info("VFS uses streamlined attributes storage (over regular FilePageCache)");
@@ -660,7 +669,7 @@ public final class PersistentFSLoader {
             PERSISTENT_FS_STORAGE_CONTEXT,
             PageCacheUtils.DEFAULT_PAGE_SIZE,
             /*valuesAreAligned: */ true,
-            /*nativeByteOrder: */  true
+            nativeBytesOrder
           ),
           storage -> new StreamlinedBlobStorageOverPagedStorage(storage, allocationStrategy)
         );

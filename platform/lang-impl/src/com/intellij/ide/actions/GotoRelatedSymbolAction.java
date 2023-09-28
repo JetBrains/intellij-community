@@ -1,23 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -50,11 +50,15 @@ public final class GotoRelatedSymbolAction extends AnAction {
 
     List<GotoRelatedItem> items = NavigationUtil.collectRelatedItems(element, dataContext);
     if (items.isEmpty()) {
-      final JComponent label = HintUtil.createErrorLabel(LangBundle.message("hint.text.no.related.symbols"));
-      label.setBorder(JBUI.Borders.empty(2, 7));
-      JBPopupFactory.getInstance().createBalloonBuilder(label)
+      Object component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+      if (component instanceof EditorComponentImpl editor) {
+        Point point = popupLocation.getPoint();
+        point.translate(0, -editor.getEditor().getLineHeight());
+        popupLocation = new RelativePoint(popupLocation.getComponent(), point);
+      }
+
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(LangBundle.message("hint.text.no.related.symbols"), MessageType.ERROR, null)
         .setFadeoutTime(3000)
-        .setFillColor(HintUtil.getErrorColor())
         .createBalloon()
         .show(popupLocation, Balloon.Position.above);
       return;

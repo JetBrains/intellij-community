@@ -20,8 +20,8 @@ import org.jetbrains.plugins.gradle.tooling.internal.web.WarModelImpl
 import org.jetbrains.plugins.gradle.tooling.internal.web.WebConfigurationImpl
 import org.jetbrains.plugins.gradle.tooling.internal.web.WebResourceImpl
 
-import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getTaskArchiveFile
-import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getTaskArchiveFileName
+import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getTaskArchiveFile
+import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getTaskArchiveFileName
 import static com.intellij.gradle.toolingExtension.impl.modelBuilder.ExtraModelBuilder.reportModelBuilderFailure
 /**
  * @author Vladislav.Soroka

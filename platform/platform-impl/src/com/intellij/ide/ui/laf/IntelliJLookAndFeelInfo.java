@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 
 import javax.swing.*;
 
@@ -12,7 +13,7 @@ import javax.swing.*;
 @Deprecated(forRemoval = true)
 public final class IntelliJLookAndFeelInfo extends UIManager.LookAndFeelInfo {
   public IntelliJLookAndFeelInfo(){
-    super(IdeBundle.message("idea.intellij.look.and.feel"), IntelliJLaf.class.getName());
+    super(IdeBundle.message("idea.intellij.look.and.feel"), DarculaLaf.class.getName());
   }
 
   @Override

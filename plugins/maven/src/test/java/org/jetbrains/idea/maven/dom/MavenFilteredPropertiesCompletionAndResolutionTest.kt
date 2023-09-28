@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
+import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference
@@ -28,10 +29,10 @@ import org.junit.Test
 
 class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   @Test
-  fun testBasic() {
+  fun testBasic() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -52,10 +53,10 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testTestResourceProperties() {
+  fun testTestResourceProperties() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -76,10 +77,10 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testBasicAt() {
+  fun testBasicAt() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -100,10 +101,10 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testCorrectlyCalculatingBaseDir() {
+  fun testCorrectlyCalculatingBaseDir() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -125,7 +126,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testResolvingToNonManagedParentProperties() {
+  fun testResolvingToNonManagedParentProperties() = runBlocking {
     createProjectSubDir("res")
 
     createProjectPom("""
@@ -159,7 +160,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                                            </properties>
                                            """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=\${parentProp<caret>}")
@@ -168,7 +169,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testResolvingToProfileProperties() {
+  fun testResolvingToProfileProperties() = runBlocking {
     createProjectSubDir("res")
 
     createProjectPom("""
@@ -202,10 +203,10 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testDoNotResolveOutsideResources() {
+  fun testDoNotResolveOutsideResources() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -225,10 +226,10 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testDoNotResolveNonFilteredResources() {
+  fun testDoNotResolveNonFilteredResources() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -248,10 +249,10 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testUsingFilters() {
+  fun testUsingFilters() = runBlocking {
     val filter = createProjectSubFile("filters/filter.properties", "xxx=1")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -279,11 +280,11 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testCompletionFromFilters() {
+  fun testCompletionFromFilters() = runBlocking {
     createProjectSubFile("filters/filter1.properties", "xxx=1")
     createProjectSubFile("filters/filter2.properties", "yyy=1")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -309,10 +310,10 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testSearchingFromFilters() {
+  fun testSearchingFromFilters() = runBlocking {
     createProjectSubFile("filters/filter.properties", "xxx=1")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -341,10 +342,10 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testCompletionAfterOpenBrace() {
+  fun testCompletionAfterOpenBrace() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -365,10 +366,10 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testCompletionAfterOpenBraceInTheBeginningOfFile() {
+  fun testCompletionAfterOpenBraceInTheBeginningOfFile() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -389,12 +390,12 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testCompletionAfterOpenBraceInTheBeginningOfPropertiesFile() {
-    if (ignore()) return
+  fun testCompletionAfterOpenBraceInTheBeginningOfPropertiesFile() = runBlocking {
+    if (ignore()) return@runBlocking
 
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -415,10 +416,10 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testCompletionInEmptyFile() {
+  fun testCompletionInEmptyFile() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -439,10 +440,10 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testRenaming() {
+  fun testRenaming() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -488,11 +489,11 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testRenamingFilteredProperty() {
+  fun testRenamingFilteredProperty() = runBlocking {
     val filter = createProjectSubFile("filters/filter.properties", "xxx=1")
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -520,7 +521,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testCustomDelimiters() {
+  fun testCustomDelimiters() = runBlocking {
     createProjectSubDir("res")
 
     importProjectAndExpectResourcePluginIndexed("""
@@ -565,7 +566,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testDontUseDefaultDelimiter1() {
+  fun testDontUseDefaultDelimiter1() = runBlocking {
     createProjectSubDir("res")
 
     importProjectAndExpectResourcePluginIndexed("""
@@ -606,7 +607,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testDoNotAddReferenceToDelimiterDefinition() {
+  fun testDoNotAddReferenceToDelimiterDefinition() = runBlocking {
     importProjectAndExpectResourcePluginIndexed("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -651,10 +652,10 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   @Test
-  fun testReferencesInXml() {
+  fun testReferencesInXml() = runBlocking {
     createProjectSubDir("res")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -682,7 +683,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
 
     for (ref in references) {
       if (ref.resolve() is PsiDirectory) {
-        return  // Maven references was added.
+        return@runBlocking  // Maven references was added.
       }
     }
 
@@ -690,9 +691,9 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   }
 
   private fun importProjectAndExpectResourcePluginIndexed(@Language(value = "XML", prefix = "<project>",
-                                                                    suffix = "</project>") xml: String) {
+                                                                    suffix = "</project>") xml: String) = runBlocking {
     runAndExpectPluginIndexEvents(setOf("maven-resources-plugin")) {
-      importProject(xml)
+      importProjectAsync(xml)
     }
   }
 }

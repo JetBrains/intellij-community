@@ -46,7 +46,7 @@ object SnapshotFillerPresets {
       PropertyOverwriteRule(VfsOperationTagsMask(VfsOperationTag.REC_ALLOC)) { setValue ->
         if (this !is VfsOperation.RecordsOperation.AllocateRecord)
           throw AssertionError("operation $this does not allocate record")
-        if (result.hasValue) setValue(true)
+        if (result.isSuccess) setValue(true)
       },
       FillInVirtualFileSnapshot::recordAllocationExists
     )

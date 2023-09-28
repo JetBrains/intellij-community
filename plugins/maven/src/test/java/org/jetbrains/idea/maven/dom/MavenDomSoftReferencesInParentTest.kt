@@ -16,12 +16,18 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 
 class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
   @Test
-  fun testDoNotHighlightSourceDirectoryInParentPom() {
-    importProject("""
+  fun testDoNotHighlightSourceDirectoryInParentPom() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -37,8 +43,19 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testHighlightSourceDirectory() {
-    importProject("""
+  fun testHighlightSourceDirectory() = runBlocking {
+    ApplicationManager.getApplication().messageBus.connect(testRootDisposable)
+      .subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+        override fun before(events: MutableList<out VFileEvent>) {
+          MavenLog.LOG.warn("before $events")
+        }
+
+        override fun after(events: MutableList<out VFileEvent>) {
+          MavenLog.LOG.warn("after $events")
+        }
+      })
+
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

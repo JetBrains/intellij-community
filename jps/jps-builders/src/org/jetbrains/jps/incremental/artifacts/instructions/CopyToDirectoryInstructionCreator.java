@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import org.jetbrains.annotations.NotNull;
@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class CopyToDirectoryInstructionCreator extends ArtifactCompilerInstructionCreatorBase {
+public final class CopyToDirectoryInstructionCreator extends ArtifactCompilerInstructionCreatorBase {
   private final String myOutputPath;
 
   public CopyToDirectoryInstructionCreator(ArtifactInstructionsBuilderImpl builder, String outputPath) {
@@ -44,9 +44,8 @@ public class CopyToDirectoryInstructionCreator extends ArtifactCompilerInstructi
     return new PackIntoArchiveInstructionCreator(myInstructionsBuilder, jarInfo, "", destination);
   }
 
-  @Nullable
   @Override
-  public File getTargetDirectory() {
+  public @Nullable File getTargetDirectory() {
     return new File(myOutputPath);
   }
 }

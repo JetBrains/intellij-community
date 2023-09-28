@@ -151,7 +151,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       }
     }
 
-    if (lambdaCount > 0 && !XLineBreakpointManager.shouldShowBreakpointsInline()) {
+    if (lambdaCount > 0) {
       res.add(new JavaBreakpointVariant(position, lambdaCount)); //all
     }
 

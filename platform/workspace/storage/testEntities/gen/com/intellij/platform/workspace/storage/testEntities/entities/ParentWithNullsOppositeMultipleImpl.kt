@@ -12,18 +12,19 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOppositeMultipleData) : ParentWithNullsOppositeMultiple, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class ParentWithNullsOppositeMultipleImpl(private val dataSource: ParentWithNullsOppositeMultipleData) : ParentWithNullsOppositeMultiple, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -37,6 +38,7 @@ open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOp
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: ParentWithNullsOppositeMultipleData?) : ModifiableWorkspaceEntityBase<ParentWithNullsOppositeMultiple, ParentWithNullsOppositeMultipleData>(
     result), ParentWithNullsOppositeMultiple.Builder {
@@ -66,7 +68,7 @@ open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOp
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -113,7 +115,7 @@ open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOp
 class ParentWithNullsOppositeMultipleData : WorkspaceEntityData<ParentWithNullsOppositeMultiple>() {
   lateinit var parentData: String
 
-  fun isParentDataInitialized(): Boolean = ::parentData.isInitialized
+  internal fun isParentDataInitialized(): Boolean = ::parentData.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ParentWithNullsOppositeMultiple> {
     val modifiable = ParentWithNullsOppositeMultipleImpl.Builder(null)
@@ -130,6 +132,11 @@ class ParentWithNullsOppositeMultipleData : WorkspaceEntityData<ParentWithNullsO
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.ParentWithNullsOppositeMultiple") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -183,9 +190,5 @@ class ParentWithNullsOppositeMultipleData : WorkspaceEntityData<ParentWithNullsO
     var result = javaClass.hashCode()
     result = 31 * result + parentData.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

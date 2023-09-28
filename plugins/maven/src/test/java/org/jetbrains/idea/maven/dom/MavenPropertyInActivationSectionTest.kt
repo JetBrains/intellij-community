@@ -1,12 +1,13 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPropertyInActivationSectionTest : MavenDomTestCase() {
   @Test
-  fun testResolvePropertyFromActivationSection() {
-    importProject(
+  fun testResolvePropertyFromActivationSection() = runBlocking {
+    importProjectAsync(
       """
           <groupId>example</groupId>
           <artifactId>parent</artifactId>

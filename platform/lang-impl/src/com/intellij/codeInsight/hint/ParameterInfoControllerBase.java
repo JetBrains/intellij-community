@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -109,7 +110,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
                                      PsiElement parameterOwner,
                                      @NotNull ParameterInfoHandler handler,
                                      boolean showHint) {
-    ApplicationManager.getApplication().assertIsDispatchThread(); // DEXP-575205
+    ThreadingAssertions.assertEventDispatchThread(); // DEXP-575205
 
     myProject = project;
     myEditor = editor;
@@ -521,7 +522,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     }
 
     public void applyUIChanges() {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
 
       for (int index = 0, len = getObjects().length; index < len; index++) {
         boolean enabled = isUIComponentEnabled(index);

@@ -41,7 +41,7 @@ public class JavaBraceMatcher implements PairedBraceMatcher {
   }
 
   private static boolean isPairedBracesAllowedBeforeTypeInJava(final IElementType tokenType) {
-    return JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(tokenType)
+    return BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(tokenType)
            || tokenType == JavaTokenType.SEMICOLON
            || tokenType == JavaTokenType.COMMA
            || tokenType == JavaTokenType.RPARENTH
@@ -65,15 +65,15 @@ public class JavaBraceMatcher implements PairedBraceMatcher {
         TextRange range = DeclarationRangeUtil.getDeclarationRange(parentNode.getPsi());
         return range.getStartOffset();
       }
-      else if (BasicJavaAstTreeUtil.is(parentNode, JAVA_STATEMENT_BIT_SET)) {
+      else if (BasicJavaAstTreeUtil.is(parentNode, BASIC_JAVA_STATEMENT_BIT_SET)) {
         if (BasicJavaAstTreeUtil.is(parentNode, BASIC_BLOCK_STATEMENT) &&
-            BasicJavaAstTreeUtil.is(parentNode.getTreeParent(), JAVA_STATEMENT_BIT_SET)) {
+            BasicJavaAstTreeUtil.is(parentNode.getTreeParent(), BASIC_JAVA_STATEMENT_BIT_SET)) {
           parentNode = parentNode.getTreeParent();
         }
         return parentNode.getTextRange().getStartOffset();
       }
     }
-    else if (BasicJavaAstTreeUtil.is(parentNode, CLASS_KEYWORD_BIT_SET)) {
+    else if (BasicJavaAstTreeUtil.is(parentNode, BASIC_CLASS_KEYWORD_BIT_SET)) {
       TextRange range = DeclarationRangeUtil.getDeclarationRange(parent);
       return range.getStartOffset();
     }

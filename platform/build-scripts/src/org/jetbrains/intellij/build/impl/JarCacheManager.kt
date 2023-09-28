@@ -25,7 +25,7 @@ import java.util.*
 private const val jarSuffix = ".jar"
 private const val metaSuffix = ".json"
 
-private const val cacheVersion: Byte = 3
+private const val cacheVersion: Byte = 4
 
 internal sealed interface JarCacheManager {
   suspend fun computeIfAbsent(item: JarDescriptor,
@@ -34,7 +34,7 @@ internal sealed interface JarCacheManager {
                               producer: suspend () -> Unit)
 }
 
-internal object NonCachingJarCacheManager : JarCacheManager {
+internal data object NonCachingJarCacheManager : JarCacheManager {
   override suspend fun computeIfAbsent(item: JarDescriptor,
                                        nativeFiles: MutableMap<ZipSource, List<String>>?,
                                        span: Span,

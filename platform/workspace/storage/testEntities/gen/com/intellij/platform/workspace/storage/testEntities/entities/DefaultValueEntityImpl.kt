@@ -12,21 +12,21 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : DefaultValueEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class DefaultValueEntityImpl(private val dataSource: DefaultValueEntityData) : DefaultValueEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -44,6 +44,7 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: DefaultValueEntityData?) : ModifiableWorkspaceEntityBase<DefaultValueEntity, DefaultValueEntityData>(
     result), DefaultValueEntity.Builder {
@@ -73,7 +74,7 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -140,7 +141,7 @@ class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>() {
   var isGenerated: Boolean = true
   var anotherName: String = "Another Text"
 
-  fun isNameInitialized(): Boolean = ::name.isInitialized
+  internal fun isNameInitialized(): Boolean = ::name.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<DefaultValueEntity> {
     val modifiable = DefaultValueEntityImpl.Builder(null)
@@ -157,6 +158,11 @@ class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.DefaultValueEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -220,9 +226,5 @@ class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>() {
     result = 31 * result + isGenerated.hashCode()
     result = 31 * result + anotherName.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

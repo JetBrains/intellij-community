@@ -64,7 +64,7 @@ abstract class AbstractIdeReplCompletionTest : KotlinFixtureCompletionBaseTestCa
         myFixture.configureFromExistingVirtualFile(runner.consoleFile.virtualFile)
         myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.getLineEndOffset(0))
 
-        testCompletion(file.readText(), getPlatform(), { completionType, count -> myFixture.complete(completionType, count) }, isK2Plugin = isFirPlugin)
+        testCompletion(file.readText(), getPlatform(), { completionType, count -> myFixture.complete(completionType, count) })
     }
 
     private fun List<String>.prefixedWith(prefix: String) = filter { it.startsWith(prefix) }.map { it.removePrefix(prefix) }

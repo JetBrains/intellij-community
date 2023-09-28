@@ -2,8 +2,10 @@
   <id>com.intellij.dev</id>
   <vendor>JetBrains</vendor>
   <description>This plugin provides actions which make sense in debug IDE instance, such as "View PSI Structure".</description>
+
   <content>
     <module name="intellij.dev.psiViewer"/>
+    <module name="intellij.dev.codeInsight"/>
     <module name="intellij.platform.statistics.devkit"/>
   </content>
 </idea-plugin>

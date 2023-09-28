@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.loader;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
 
-public class JpsOutputLoaderManager {
+public final class JpsOutputLoaderManager {
   private static final Logger LOG = Logger.getInstance(JpsOutputLoaderManager.class);
   private static final String FS_STATE_FILE = "fs_state.dat";
   // Downloading caches applicable only for the good internet connection
@@ -250,8 +250,7 @@ public class JpsOutputLoaderManager {
     }
   }
 
-  @Nullable
-  private static String getBuildDirPath(@NotNull JpsProject project) {
+  private static @Nullable String getBuildDirPath(@NotNull JpsProject project) {
     JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(project);
     if (projectExtension == null) return null;
     String url = projectExtension.getOutputUrl();

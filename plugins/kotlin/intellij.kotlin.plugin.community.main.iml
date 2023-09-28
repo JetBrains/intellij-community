@@ -46,6 +46,8 @@
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-k1" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections-k1" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-k2" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.k2" exported="" />
@@ -158,7 +160,6 @@
     <orderEntry type="module" module-name="kotlin.highlighting.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.highlighting.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
-    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" />
     <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k2" exported="" />
     <orderEntry type="module" module-name="kotlin.features-trainer" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-jps-common" level="project" />

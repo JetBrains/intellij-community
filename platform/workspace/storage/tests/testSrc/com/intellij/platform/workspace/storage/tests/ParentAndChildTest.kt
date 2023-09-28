@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.toBuilder
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

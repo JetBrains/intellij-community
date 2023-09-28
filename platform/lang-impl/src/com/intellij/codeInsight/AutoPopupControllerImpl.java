@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,7 +115,7 @@ public class AutoPopupControllerImpl extends AutoPopupController {
   public void autoPopupParameterInfo(@NotNull final Editor editor, @Nullable final PsiElement highlightedMethod) {
     if (PowerSaveMode.isEnabled()) return;
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (settings.AUTO_POPUP_PARAMETER_INFO) {
       AtomicInteger offset = new AtomicInteger(-1);

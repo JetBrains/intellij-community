@@ -18,7 +18,6 @@ import com.intellij.openapi.externalSystem.test.JavaExternalSystemImportingTestC
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.environment.Environment;
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.projectRoots.impl.JavaHomeFinder;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver;
@@ -47,11 +46,9 @@ import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.GradleWrapperMain;
 import org.gradle.wrapper.PathAssembler;
 import org.gradle.wrapper.WrapperConfiguration;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GroovyDslGradleSettingScriptBuilder;
@@ -62,6 +59,7 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
+import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.graldeJvm.GradleJvmResolver;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -248,26 +246,12 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion) {
-    JavaVersion javaRuntimeVersion = JavaVersion.current();
-    if (GradleJvmSupportMatrix.isSupported(gradleVersion, javaRuntimeVersion)) {
+    if (GradleJvmSupportMatrix.isSupported(gradleVersion, JavaVersion.current())) {
       return IdeaTestUtil.requireRealJdkHome();
     }
     // fix exception of FJP at JavaHomeFinder.suggestHomePaths => ... => EnvironmentUtil.getEnvironmentMap => CompletableFuture.<clinit>
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
-    List<String> paths = JavaHomeFinder.suggestHomePaths(true);
-    for (String path : paths) {
-      if (JdkUtil.checkForJdk(path)) {
-        JdkVersionDetector.JdkVersionInfo jdkVersionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(path);
-        if (jdkVersionInfo == null) continue;
-        if (GradleJvmSupportMatrix.isSupported(gradleVersion, jdkVersionInfo.version)) {
-          return path;
-        }
-      }
-    }
-    fail("Cannot find JDK for Gradle " + gradleVersion.getVersion() +
-         "\nchecked paths: " + paths +
-         "\npossibly compatible java versions: " + GradleJvmSupportMatrix.Companion.getSupportedJavaVersions(gradleVersion));
-    return null;
+    return GradleJvmResolver.resolveGradleJvmHomePath(gradleVersion);
   }
 
   public String findJdkPath() {
@@ -371,18 +355,18 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     super.importProject(skipIndexing);
   }
 
-  protected void importProjectUsingSingeModulePerGradleProject(@NonNls @Language("Groovy") String config, Boolean skipIndexing)
+  protected void importProjectUsingSingeModulePerGradleProject(@NonNls String config, Boolean skipIndexing)
     throws IOException {
     getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
     importProject(config, skipIndexing);
   }
 
-  protected void importProjectUsingSingeModulePerGradleProject(@NonNls @Language("Groovy") String config) throws IOException {
+  protected void importProjectUsingSingeModulePerGradleProject(@NonNls String config) throws IOException {
     importProjectUsingSingeModulePerGradleProject(config, null);
   }
 
   @Override
-  protected void importProject(@NonNls @Language("Groovy") String config, Boolean skipIndexing) throws IOException {
+  protected void importProject(@NonNls String config, Boolean skipIndexing) throws IOException {
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
       config = injectRepo(config);
     }
@@ -430,7 +414,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     super.handleImportFailure(errorMessage, errorDetails);
   }
 
-  public void importProject(@NonNls @Language("Groovy") String config) throws IOException {
+  public void importProject(@NonNls String config) throws IOException {
     importProject(config, null);
   }
 
@@ -461,7 +445,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   private static final String MAVEN_REPOSITORY_PATCH_PLACE = "// Place for Maven repository patch";
 
   @NotNull
-  protected String injectRepo(@NonNls @Language("Groovy") String config) {
+  protected String injectRepo(@NonNls String config) {
     String mavenRepositoryPatch =
       """
         allprojects {
@@ -497,7 +481,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return GradleConstants.SYSTEM_ID;
   }
 
-  protected VirtualFile createSettingsFile(@NonNls @Language("Groovy") String content) throws IOException {
+  protected VirtualFile createSettingsFile(@NonNls String content) throws IOException {
     return createProjectSubFile("settings.gradle", content);
   }
 

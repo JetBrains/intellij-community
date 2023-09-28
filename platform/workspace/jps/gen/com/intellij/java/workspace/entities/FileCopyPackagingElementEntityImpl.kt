@@ -18,25 +18,26 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToAbstractManyParent
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractManyParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingElementEntityData) : FileCopyPackagingElementEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class FileCopyPackagingElementEntityImpl(private val dataSource: FileCopyPackagingElementEntityData) : FileCopyPackagingElementEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
                                                                                 PackagingElementEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
     )
 
@@ -57,6 +58,7 @@ open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingE
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: FileCopyPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<FileCopyPackagingElementEntity, FileCopyPackagingElementEntityData>(
     result), FileCopyPackagingElementEntity.Builder {
@@ -86,7 +88,7 @@ open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingE
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -184,7 +186,7 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
   lateinit var filePath: VirtualFileUrl
   var renamedOutputFileName: String? = null
 
-  fun isFilePathInitialized(): Boolean = ::filePath.isInitialized
+  internal fun isFilePathInitialized(): Boolean = ::filePath.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FileCopyPackagingElementEntity> {
     val modifiable = FileCopyPackagingElementEntityImpl.Builder(null)
@@ -201,6 +203,10 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.java.workspace.entities.FileCopyPackagingElementEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -260,10 +266,5 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
     result = 31 * result + filePath.hashCode()
     result = 31 * result + renamedOutputFileName.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.filePath?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

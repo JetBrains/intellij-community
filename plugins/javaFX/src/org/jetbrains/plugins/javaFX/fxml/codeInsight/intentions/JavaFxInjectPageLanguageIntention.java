@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -33,7 +33,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 
-public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAction {
+public final class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAction {
   public static final Logger LOG = Logger.getInstance(JavaFxInjectPageLanguageIntention.class);
 
   public static Set<String> getAvailableLanguages(Project project) {
@@ -66,7 +66,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
   }
 
   @Override
-  public void invoke(@NotNull final Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
     final XmlFile containingFile = (XmlFile)element.getContainingFile();
     final Set<String> availableLanguages = getAvailableLanguages(project);
@@ -116,9 +116,8 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
     return element.isValid();
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaFXBundle.message("javafx.inject.page.language.intention.family.name");
   }
 

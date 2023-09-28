@@ -13,24 +13,25 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ParentNullableEntityImpl(val dataSource: ParentNullableEntityData) : ParentNullableEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class ParentNullableEntityImpl(private val dataSource: ParentNullableEntityData) : ParentNullableEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentNullableEntity::class.java, ChildNullableEntity::class.java,
                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       CHILD_CONNECTION_ID,
     )
 
@@ -48,6 +49,7 @@ open class ParentNullableEntityImpl(val dataSource: ParentNullableEntityData) : 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: ParentNullableEntityData?) : ModifiableWorkspaceEntityBase<ParentNullableEntity, ParentNullableEntityData>(
     result), ParentNullableEntity.Builder {
@@ -77,7 +79,7 @@ open class ParentNullableEntityImpl(val dataSource: ParentNullableEntityData) : 
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -159,7 +161,7 @@ open class ParentNullableEntityImpl(val dataSource: ParentNullableEntityData) : 
 class ParentNullableEntityData : WorkspaceEntityData<ParentNullableEntity>() {
   lateinit var parentData: String
 
-  fun isParentDataInitialized(): Boolean = ::parentData.isInitialized
+  internal fun isParentDataInitialized(): Boolean = ::parentData.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ParentNullableEntity> {
     val modifiable = ParentNullableEntityImpl.Builder(null)
@@ -176,6 +178,11 @@ class ParentNullableEntityData : WorkspaceEntityData<ParentNullableEntity>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.ParentNullableEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -229,9 +236,5 @@ class ParentNullableEntityData : WorkspaceEntityData<ParentNullableEntity>() {
     var result = javaClass.hashCode()
     result = 31 * result + parentData.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

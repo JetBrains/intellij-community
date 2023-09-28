@@ -11,7 +11,7 @@ interface FileIndexableEntitiesProvider {
   fun extractIndexableClasses(file: PsiFile): List<IndexableClass>
 
   companion object {
-    private val EP_NAME: ExtensionPointName<FileIndexableEntitiesProvider> =
+    val EP_NAME: ExtensionPointName<FileIndexableEntitiesProvider> =
       ExtensionPointName.create("com.intellij.searcheverywhere.ml.fileIndexableEntitiesProvider")
 
     fun extractSymbols(file: PsiFile): List<IndexableSymbol> {

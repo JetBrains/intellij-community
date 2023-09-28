@@ -66,6 +66,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
@@ -210,7 +211,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   @Override
   public void cleanFileLevelHighlights(int group, @NotNull PsiFile psiFile) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assertMyFile(psiFile.getProject(), psiFile);
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
     for (FileEditor fileEditor : getFileEditorManager().getAllEditors(vFile)) {
@@ -237,14 +238,14 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   private static final int ANY_GROUP = -409423948;
   void cleanAllFileLevelHighlights() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     for (FileEditor fileEditor : getFileEditorManager().getAllEditors()) {
       cleanFileLevelHighlights(fileEditor, ANY_GROUP);
     }
   }
 
   private void cleanFileLevelHighlights(@NotNull FileEditor fileEditor, int group) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
     if (infos == null || infos.isEmpty()) {
       return;
@@ -270,7 +271,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   @Override
   public void addFileLevelHighlight(int group, @NotNull HighlightInfo info, @NotNull PsiFile psiFile) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assertMyFile(psiFile.getProject(), psiFile);
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
     FileEditorManager fileEditorManager = getFileEditorManager();
@@ -368,7 +369,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                         int @NotNull [] passesToIgnore,
                         boolean canChangeDocument,
                         @Nullable Runnable callbackWhileWaiting) throws ProcessCanceledException {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assert !myDisposed;
     assertMyFile(file.getProject(), file);
     assert textEditor.getEditor().getDocument() == document : "Expected document "+document+" but one of the passed TextEditors points to a different document: "+textEditor.getEditor().getDocument();
@@ -487,7 +488,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   @TestOnly
   private void waitInOtherThread(int millis, boolean canChangeDocument, @NotNull ThrowableComputable<Boolean, Throwable> runWhile) throws Throwable {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Disposable disposable = Disposer.newDisposable();
     AtomicBoolean assertOnModification = new AtomicBoolean();
     // last hope protection against PsiModificationTrackerImpl.incCounter() craziness (yes, Kotlin)
@@ -575,7 +576,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   public void disableUpdateByTimer(@NotNull Disposable parentDisposable) {
     setUpdateByTimerEnabled(false);
     myDisableCount.incrementAndGet();
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     Disposer.register(parentDisposable, () -> {
       if (myDisableCount.decrementAndGet() == 0) {
@@ -710,7 +711,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   @TestOnly
   public boolean isRunningOrPending() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return isRunning() || !myUpdateRunnableFuture.isDone() || GeneralHighlightingPass.isRestartPending();
   }
 
@@ -953,7 +954,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   private static void runUpdate(@Nullable Project project, @NotNull UpdateRunnable updateRunnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     DaemonCodeAnalyzerImpl dca;
     if (project == null ||
         project.isDefault() ||
@@ -1046,7 +1047,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                                                   @NotNull VirtualFile virtualFile,
                                                   @NotNull PsiFile psiFile,
                                                   int @NotNull [] passesToIgnore) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     BackgroundEditorHighlighter highlighter;
 
     try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
@@ -1222,19 +1223,23 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   private @NotNull Collection<? extends FileEditor> getSelectedEditors() {
-    Application application = ApplicationManager.getApplication();
-    application.assertIsDispatchThread();
-
+    ThreadingAssertions.assertEventDispatchThread();
     // editors in modal context
     List<? extends Editor> editors = EditorTracker.getInstance(myProject).getActiveEditors();
-    Collection<TextEditor> activeTextEditors;
-    if (editors.isEmpty()) {
-      activeTextEditors = Collections.emptyList();
-    }
-    else {
+    Collection<FileEditor> activeTextEditors = new HashSet<>(editors.size());
+    Set<VirtualFile> files = new HashSet<>(editors.size());
+    if (!editors.isEmpty()) {
       TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
-      activeTextEditors = ContainerUtil.map2SetNotNull(editors,
-                                                       editor -> editor.isDisposed() ? null: textEditorProvider.getTextEditor(editor));
+      for (Editor editor : editors) {
+        if (!editor.isDisposed()) {
+          TextEditor textEditor = textEditorProvider.getTextEditor(editor);
+          VirtualFile virtualFile = textEditor.getFile();
+          if (textEditor.isValid() && virtualFile != null && virtualFile.isValid() && isInActiveProject(textEditor)) {
+            activeTextEditors.add(textEditor);
+            files.add(virtualFile);
+          }
+        }
+      }
     }
 
     if (ModalityState.current() != ModalityState.nonModal()) {
@@ -1242,16 +1247,19 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
 
     // tests usually care about just one explicitly configured editor
-    Collection<FileEditor> tabEditors = application.isUnitTestMode() ? Collections.emptyList() : getFileEditorManager().getSelectedEditorWithRemotes();
+    Collection<FileEditor> tabEditors = ApplicationManager.getApplication().isUnitTestMode() ? Collections.emptyList() : getFileEditorManager().getSelectedEditorWithRemotes();
+    for (FileEditor tabEditor : tabEditors) {
+      VirtualFile tabFile = tabEditor.getFile();
+      if (tabFile != null && tabFile.isValid() && files.add(tabFile) && isInActiveProject(tabEditor)) {
+        activeTextEditors.add(tabEditor);
+      }
+    }
 
-    return ContainerUtil.filter(ContainerUtil.union(activeTextEditors, tabEditors),
-                         fileEditor -> fileEditor.isValid()
-                                       && fileEditor.getFile() != null
-                                       && fileEditor.getFile().isValid()
-                                       && isInActiveProject(fileEditor));
+    return activeTextEditors;
   }
 
   private static boolean isInActiveProject(@NotNull FileEditor editor) {
+    ThreadingAssertions.assertEventDispatchThread();
     if (ProjectManager.getInstance().getOpenProjects().length <= 1 || ApplicationManager.getApplication().isUnitTestMode()) {
       return true;
     }
@@ -1271,7 +1279,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
    */
   @ApiStatus.Internal
   public void serializeCodeInsightPasses(boolean flag) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     setUpdateByTimerEnabled(false);
     try {
       cancelAllUpdateProgresses(false, "serializeCodeInsightPasses");

@@ -78,7 +78,6 @@ project.jsMain
 project.jsTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
-    jsMain (friend, RUNTIME)
     jsMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-dom-api-compat:klib:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-js:klib:{{KGP_VERSION}} (TEST)
@@ -104,7 +103,6 @@ project.jvmTest
     commonTest (refines, TEST)
     jvmAndNativeMain (friend, TEST)
     jvmAndNativeTest (refines, TEST)
-    jvmMain (friend, RUNTIME)
     jvmMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)

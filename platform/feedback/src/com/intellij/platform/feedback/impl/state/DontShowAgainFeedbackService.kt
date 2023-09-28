@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.impl.state
 
-import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.*
 import kotlinx.serialization.Serializable
 
@@ -11,12 +11,12 @@ class DontShowAgainFeedbackService : PersistentStateComponent<DontShowAgainFeedb
   companion object {
     @JvmStatic
     fun checkIsAllowedToShowFeedback(): Boolean {
-      return !getInstance().state.dontShowAgainIdeVersions.contains(ApplicationInfoEx.getInstanceEx().shortVersion)
+      return !getInstance().state.dontShowAgainIdeVersions.contains(ApplicationInfo.getInstance().shortVersion)
     }
 
     @JvmStatic
     fun dontShowFeedbackInCurrentVersion() {
-      getInstance().state.dontShowAgainIdeVersions.add(ApplicationInfoEx.getInstanceEx().shortVersion)
+      getInstance().state.dontShowAgainIdeVersions.add(ApplicationInfo.getInstance().shortVersion)
     }
 
     @JvmStatic

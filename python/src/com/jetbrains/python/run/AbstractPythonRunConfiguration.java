@@ -231,6 +231,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
   @Override
   @Nullable
+  @Transient
   public Sdk getSdk() {
     if (myUseModuleSdk) {
       return PythonSdkUtil.findPythonSdk(getModule());
@@ -332,6 +333,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   @Override
+  @Transient
   public void setSdk(@Nullable Sdk sdk) {
     mySdk = sdk;
   }

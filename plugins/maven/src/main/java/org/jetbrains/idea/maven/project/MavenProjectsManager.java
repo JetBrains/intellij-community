@@ -840,6 +840,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private void forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec spec) {
     if (!isMavenizedProject()) {
       addManagedFiles(collectAllAvailablePomFiles());
+      return;
     }
     if (MavenUtil.isLinearImportEnabled()) {
       MavenLog.LOG.warn("forceUpdateAllProjectsOrFindAllAvailablePomFiles: Linear Import is enabled");

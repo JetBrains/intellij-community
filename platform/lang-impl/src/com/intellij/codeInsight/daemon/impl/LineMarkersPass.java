@@ -119,14 +119,14 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
            });
     }
 
-    List<LineMarkerInfo<?>> markers = mergeLineMarkers(lineMarkers, getDocument());
+    List<LineMarkerInfo<?>> markers = mergeLineMarkers(lineMarkers, getDocument(), passId);
     if (LOG.isDebugEnabled()) {
       LOG.debug("LineMarkersPass.doCollectInformation. lineMarkers: " + lineMarkers+"; merged: "+markers);
     }
     return markers;
   }
 
-  private static @NotNull List<LineMarkerInfo<?>> mergeLineMarkers(@NotNull List<LineMarkerInfo<?>> markers, @NotNull Document document) {
+  private static @NotNull List<LineMarkerInfo<?>> mergeLineMarkers(@NotNull List<LineMarkerInfo<?>> markers, @NotNull Document document, int passId) {
     Int2ObjectMap<List<MergeableLineMarkerInfo<?>>> sameLineMarkers = new Int2ObjectOpenHashMap<>();
 
     for (int i = markers.size() - 1; i >= 0; i--) {
@@ -150,7 +150,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
 
     List<LineMarkerInfo<?>> result = new ArrayList<>(markers);
     for (List<MergeableLineMarkerInfo<?>> value : sameLineMarkers.values()) {
-      result.addAll(MergeableLineMarkerInfo.merge(value));
+      result.addAll(MergeableLineMarkerInfo.merge(value, passId));
     }
     return result;
   }

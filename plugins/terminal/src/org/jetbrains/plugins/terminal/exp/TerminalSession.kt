@@ -8,10 +8,7 @@ import com.intellij.terminal.TerminalExecutorServiceManagerImpl
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.*
-import com.jediterm.terminal.model.JediTermDebouncerImpl
-import com.jediterm.terminal.model.JediTermTypeAheadModel
-import com.jediterm.terminal.model.StyleState
-import com.jediterm.terminal.model.TerminalTextBuffer
+import com.jediterm.terminal.model.*
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.awt.event.KeyEvent
@@ -24,7 +21,7 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase, val shellI
   private val executorServiceManager: TerminalExecutorServiceManager = TerminalExecutorServiceManagerImpl()
 
   private val textBuffer: TerminalTextBuffer
-  val controller: TerminalController
+  internal val controller: JediTerminal
   private val commandManager: ShellCommandManager
   private val typeAheadManager: TerminalTypeAheadManager
   private val terminationListeners: MutableList<Runnable> = CopyOnWriteArrayList()
@@ -34,7 +31,7 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase, val shellI
     styleState.setDefaultStyle(settings.defaultStyle)
     textBuffer = TerminalTextBuffer(80, 24, styleState)
     model = TerminalModel(textBuffer, styleState)
-    controller = TerminalController(model, settings)
+    controller = JediTerminal(ModelUpdatingTerminalDisplay(model, settings), textBuffer, styleState)
 
     commandManager = ShellCommandManager(controller)
 

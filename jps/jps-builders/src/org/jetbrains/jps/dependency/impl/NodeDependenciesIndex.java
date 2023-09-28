@@ -7,7 +7,7 @@ import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.javac.Iterators;
 
-public class NodeDependenciesIndex extends BackDependencyIndexImpl {
+public final class NodeDependenciesIndex extends BackDependencyIndexImpl {
   public static final String NAME = "nodes-backward-dependencies";
 
   public NodeDependenciesIndex(@NotNull MapletFactory cFactory) {

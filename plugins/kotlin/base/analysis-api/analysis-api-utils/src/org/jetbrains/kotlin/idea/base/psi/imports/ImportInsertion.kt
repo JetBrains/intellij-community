@@ -32,9 +32,9 @@ fun KtFile.addImport(fqName: FqName, allUnder: Boolean = false, alias: Name? = n
             val packageDirective = packageDirective?.takeIf { it.packageKeyword != null }
             packageDirective?.let {
                 val elemAfterPkg = packageDirective.nextSibling
-                var newLines = 2
-                if (elemAfterPkg is PsiWhiteSpace) newLines -= elemAfterPkg.getLineCount() - 1
-                if (newLines > 0) addAfter(psiFactory.createNewLine(newLines), it)
+                val linesAfterPkg = elemAfterPkg.getLineCount() - 1
+                val missingLines = 2 - linesAfterPkg
+                if (missingLines > 0) addAfter(psiFactory.createNewLine(missingLines), it)
             }
 
             (importList.add(newDirective) as KtImportDirective).also {

@@ -853,7 +853,7 @@ internal class MutableEntityStorageImpl(
     for (id in accumulator) indexes.entityRemoved(id)
 
     accumulator.forEach {
-      LOG.debug { "Cascade removing: ${ClassToIntConverter.INSTANCE.getClassOrDie(it.clazz)}-${it.arrayId}" }
+      LOG.debug { "Cascade removing: ${ClassToIntConverter.getInstance().getClassOrDie(it.clazz)}-${it.arrayId}" }
       this.changeLog.addRemoveEvent(it, originals[it]!!.first, originals[it]!!.second)
     }
 
@@ -1121,7 +1121,6 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
     indexes.virtualFileIndex.setTypedEntityStorage(this)
     return indexes.virtualFileIndex
   }
-
 
   override fun <T: WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T = newInstance()
 

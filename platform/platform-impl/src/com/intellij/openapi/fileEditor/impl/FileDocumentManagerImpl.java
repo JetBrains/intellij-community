@@ -56,6 +56,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -272,7 +273,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   private void saveDocuments(@Nullable Predicate<? super Document> filter, boolean isExplicit) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
     myMultiCaster.beforeAllDocumentsSaving();
@@ -313,7 +314,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   public void saveDocument(@NotNull Document document, boolean explicit) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
     myMultiCaster.beforeAnyDocumentSaving(document, explicit);
@@ -706,7 +707,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   @Override
   public void reloadFromDisk(@NotNull Document document, @Nullable Project project) {
     try (AccessToken ignored = ClientId.withClientId(ClientId.getLocalId())) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
 
       VirtualFile file = getFile(document);
       assert file != null;

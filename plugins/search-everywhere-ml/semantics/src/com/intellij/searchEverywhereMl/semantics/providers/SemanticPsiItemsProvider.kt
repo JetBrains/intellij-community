@@ -16,7 +16,7 @@ interface SemanticPsiItemsProvider : StreamSemanticItemsProvider<PsiItemWithSimi
   override fun search(pattern: String, similarityThreshold: Double?): List<FoundItemDescriptor<PsiItemWithSimilarity<*>>> {
     if (pattern.isBlank()) return emptyList()
     return getEmbeddingsStorage()
-      .searchNeighbours(pattern, itemLimit, similarityThreshold)
+      .searchNeighboursIfEnabled(pattern, itemLimit, similarityThreshold)
       .flatMap { createItemDescriptors(it.text, it.similarity, pattern) }
   }
 

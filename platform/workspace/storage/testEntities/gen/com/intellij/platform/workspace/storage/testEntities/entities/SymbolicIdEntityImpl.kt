@@ -14,10 +14,10 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.util.UUID
 import kotlin.jvm.JvmName
@@ -25,13 +25,13 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class SymbolicIdEntityImpl(val dataSource: SymbolicIdEntityData) : SymbolicIdEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class SymbolicIdEntityImpl(private val dataSource: SymbolicIdEntityData) : SymbolicIdEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -45,6 +45,7 @@ open class SymbolicIdEntityImpl(val dataSource: SymbolicIdEntityData) : Symbolic
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: SymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SymbolicIdEntity, SymbolicIdEntityData>(
     result), SymbolicIdEntity.Builder {
@@ -74,7 +75,7 @@ open class SymbolicIdEntityImpl(val dataSource: SymbolicIdEntityData) : Symbolic
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -121,7 +122,7 @@ open class SymbolicIdEntityImpl(val dataSource: SymbolicIdEntityData) : Symbolic
 class SymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymbolicId<SymbolicIdEntity>() {
   lateinit var data: String
 
-  fun isDataInitialized(): Boolean = ::data.isInitialized
+  internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SymbolicIdEntity> {
     val modifiable = SymbolicIdEntityImpl.Builder(null)
@@ -138,6 +139,11 @@ class SymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Symbol
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.SymbolicIdEntity") as EntityMetadata
   }
 
   override fun symbolicId(): SymbolicEntityId<*> {
@@ -195,9 +201,5 @@ class SymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Symbol
     var result = javaClass.hashCode()
     result = 31 * result + data.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

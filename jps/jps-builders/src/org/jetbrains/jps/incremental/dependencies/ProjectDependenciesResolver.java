@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.dependencies;
 
 import org.jetbrains.annotations.NotNull;
@@ -46,13 +46,12 @@ public final class ProjectDependenciesResolver extends TargetBuilder<BuildRootDe
     }
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return JpsBuildBundle.message("builder.name.project.dependencies.resolver");
   }
 
-  public static class ProjectDependenciesResolvingTarget extends BuildTarget<BuildRootDescriptor> {
+  public static final class ProjectDependenciesResolvingTarget extends BuildTarget<BuildRootDescriptor> {
     public ProjectDependenciesResolvingTarget() {
       super(ProjectDependenciesResolvingTargetType.INSTANCE);
     }
@@ -67,50 +66,44 @@ public final class ProjectDependenciesResolver extends TargetBuilder<BuildRootDe
       return Collections.emptyList();
     }
 
-    @NotNull
     @Override
-    public List<BuildRootDescriptor> computeRootDescriptors(@NotNull JpsModel model,
-                                                            @NotNull ModuleExcludeIndex index,
-                                                            @NotNull IgnoredFileIndex ignoredFileIndex,
-                                                            @NotNull BuildDataPaths dataPaths) {
+    public @NotNull List<BuildRootDescriptor> computeRootDescriptors(@NotNull JpsModel model,
+                                                                     @NotNull ModuleExcludeIndex index,
+                                                                     @NotNull IgnoredFileIndex ignoredFileIndex,
+                                                                     @NotNull BuildDataPaths dataPaths) {
       return Collections.emptyList();
     }
 
-    @Nullable
     @Override
-    public BuildRootDescriptor findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex) {
+    public @Nullable BuildRootDescriptor findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex) {
       return null;
     }
 
-    @NotNull
     @Override
-    public String getPresentableName() {
+    public @NotNull String getPresentableName() {
       return "Project Dependencies Resolving";
     }
 
-    @NotNull
     @Override
-    public Collection<File> getOutputRoots(@NotNull CompileContext context) {
+    public @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context) {
       return Collections.emptyList();
     }
   }
 
-  public static class ProjectDependenciesResolvingTargetType extends BuildTargetType<ProjectDependenciesResolvingTarget> {
+  public static final class ProjectDependenciesResolvingTargetType extends BuildTargetType<ProjectDependenciesResolvingTarget> {
     public static final ProjectDependenciesResolvingTargetType INSTANCE = new ProjectDependenciesResolvingTargetType();
 
     public ProjectDependenciesResolvingTargetType() {
       super(TARGET_TYPE_ID);
     }
 
-    @NotNull
     @Override
-    public List<ProjectDependenciesResolvingTarget> computeAllTargets(@NotNull JpsModel model) {
+    public @NotNull List<ProjectDependenciesResolvingTarget> computeAllTargets(@NotNull JpsModel model) {
       return Collections.singletonList(new ProjectDependenciesResolvingTarget());
     }
 
-    @NotNull
     @Override
-    public BuildTargetLoader<ProjectDependenciesResolvingTarget> createLoader(@NotNull JpsModel model) {
+    public @NotNull BuildTargetLoader<ProjectDependenciesResolvingTarget> createLoader(@NotNull JpsModel model) {
       return new BuildTargetLoader<ProjectDependenciesResolvingTarget>() {
         @Override
         public ProjectDependenciesResolvingTarget createTarget(@NotNull String targetId) {

@@ -487,6 +487,7 @@ private suspend fun reportCrashesIfAny() {
 
         val content = Files.readString(file.toPath())
         // TODO: maybe we need to notify the user
+        // see https://youtrack.jetbrains.com/issue/IDEA-258128
         if (content.contains("fuck_the_regulations")) {
           break
         }
@@ -527,7 +528,8 @@ private suspend fun reportCrashesIfAny() {
       }
     }
   }
-  IdeaFreezeReporter.saveAppInfo(appInfoFile, true)
+
+  IdeaFreezeReporter.saveAppInfo(appInfoFile = appInfoFile, overwrite = true)
   withContext(Dispatchers.IO) {
     Files.createDirectories(pidFile.parent)
     Files.writeString(pidFile, OSProcessUtil.getApplicationPid())

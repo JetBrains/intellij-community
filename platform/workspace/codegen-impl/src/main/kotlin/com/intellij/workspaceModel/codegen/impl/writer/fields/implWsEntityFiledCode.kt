@@ -1,9 +1,11 @@
 package com.intellij.workspaceModel.codegen.impl.writer.fields
 
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.EntityStorage
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 
 val ObjProperty<*, *>.implWsEntityFieldCode: String
   get() = buildString {
@@ -85,7 +87,7 @@ internal fun ObjProperty<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: St
       else -> implWsBlockCode(fieldType.type, name, "?")
     }
     is ValueType.JvmClass -> """            
-            override val $name: ${fieldType.javaClassName.toQualifiedName()}$optionalSuffix
+            override val $name: ${fieldType.kotlinClassName.toQualifiedName()}$optionalSuffix
                 get() = dataSource.$name
                                 
         """.trimIndent()

@@ -135,7 +135,7 @@ class KotlinLineBreakpointType :
             }
         }
 
-        if (mainMethodAdded && result.size > 1 && !XLineBreakpointManager.shouldShowBreakpointsInline()) {
+        if (mainMethodAdded && result.size > 1) {
             result.add(KotlinBreakpointVariant(position, lambdas.size))
         }
 

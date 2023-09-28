@@ -143,8 +143,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
           if (mainContents.size() == 1) {
             Content mainContent = mainContents.get(0);
             JComponent component = mainContent.getComponent();
-            SingleContentSupplier supplier = component instanceof DataProvider provider
-                                             ? SingleContentSupplier.KEY.getData(provider) : null;
+            SingleContentSupplier supplier = SingleContentSupplier.Companion.getSupplierFrom(component);
             if (supplier != null && supplier.getSubContents().containsAll(subContents)) {
               for (Content subContent : subContents) {
                 ContentManager m = subContent.getManager();

@@ -6,7 +6,7 @@ import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesContainer
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelDelegate
-import com.intellij.collaboration.util.REVISION_COMPARISON_CHANGE_HASHING_STRATEGY
+import com.intellij.collaboration.util.CODE_REVIEW_CHANGE_HASHING_STRATEGY
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -76,8 +76,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
             mergeRequest.changes.map { it.getParsedChanges() }.catch { },
             delegate.selectedCommit) { positions, parsedChanges, commit ->
       val changes = parsedChanges.getChanges(commit)
-      val result: MutableMap<Change, Int> =
-        CollectionFactory.createCustomHashingStrategyMap(REVISION_COMPARISON_CHANGE_HASHING_STRATEGY)
+      val result: MutableMap<Change, Int> = CollectionFactory.createCustomHashingStrategyMap(CODE_REVIEW_CHANGE_HASHING_STRATEGY)
       changes.associateWithTo(result) { change ->
         val patch = parsedChanges.patchesByChange[change] ?: return@associateWithTo 0
         //TODO: cache?

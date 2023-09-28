@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.junit.Test
 import java.io.IOException
@@ -10,10 +11,10 @@ import java.util.stream.Collectors
 
 class MavenPluginIndexTest : MavenDomWithIndicesTestCase() {
   @Test
-  fun testDefaultPluginsDownloadedAndIndexed() {
+  fun testDefaultPluginsDownloadedAndIndexed() = runBlocking {
     runAndExpectPluginIndexEvents(DEFAULT_PLUGIN_ARTIFACT_IDS) {
       runAndExpectArtifactDownloadEvents(DEFAULT_PLUGIN_GROUP_ID, DEFAULT_PLUGIN_ARTIFACT_IDS) {
-        importProject("""
+        importProjectAsync("""
                         <groupId>test</groupId>
                         <artifactId>project</artifactId>
                         <version>1</version>

@@ -63,6 +63,9 @@ class SingleChangeListCommitWorkflowHandler(
 
     amendCommitHandler.initialMessage = getCommitMessage()
 
+    if (workflow.isDefaultCommitEnabled) {
+      LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
+    }
     return ui.activate()
   }
 
@@ -70,7 +73,9 @@ class SingleChangeListCommitWorkflowHandler(
     commitOptions.saveChangeListSpecificOptions()
     commitMessagePolicy.onDialogClosed(getCommitState(), false)
 
-    LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
+    if (workflow.isDefaultCommitEnabled) {
+      LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
+    }
   }
 
   override fun changeListChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList) {

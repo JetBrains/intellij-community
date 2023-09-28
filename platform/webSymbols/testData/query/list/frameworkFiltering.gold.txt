@@ -8,34 +8,20 @@
   segments: [
    {
     name-part: "bar",
-    symbols: [
-     {
-      matchedName: "html/elements/bar",
-      origin: "basic@1.0 (<none>)",
-      complete: true,
-      description: "<p>first bar",
-      priority: NORMAL,
-      segments: [
-       {
-        name-part: "bar",
-        symbol: <self>,
-       },
-      ],
-     },
-     {
-      matchedName: "html/elements/bar",
-      origin: "basic@1.0 (<none>)",
-      complete: true,
-      description: "<p>second bar",
-      priority: NORMAL,
-      segments: [
-       {
-        name-part: "bar",
-        symbol: <self>,
-       },
-      ],
-     },
-    ],
+    symbol: <self>,
+   },
+  ],
+ },
+ {
+  matchedName: "html/elements/bar",
+  origin: "basic@1.0 (<none>)",
+  complete: true,
+  description: "<p>second bar",
+  priority: NORMAL,
+  segments: [
+   {
+    name-part: "bar",
+    symbol: <self>,
    },
   ],
  },

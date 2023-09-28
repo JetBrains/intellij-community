@@ -536,7 +536,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertIsIndexed(vFile)
 
     WriteAction.run { VfsUtil.saveText(vFile, "Foo class") }
-    def indexingRequest = ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).latestIndexingRequestToken
+    def indexingRequest = project.getService(ProjectIndexingDependenciesService.class).latestIndexingRequestToken
     assertFalse(IndexingFlag.isFileIndexed(vFile, indexingRequest.getFileIndexingStamp(vFile)))
     assertTrue(stamp == FileBasedIndex.instance.getIndexModificationStamp(IdIndex.NAME, project))
     assertIsIndexed(vFile)
@@ -562,8 +562,8 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert stamp == FileBasedIndex.instance.getIndexModificationStamp(JavaFunctionalExpressionIndex.INDEX_ID, project)
   }
 
-  private static assertIsIndexed(VirtualFile vFile) {
-    def indexingRequest = ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).latestIndexingRequestToken
+  private assertIsIndexed(VirtualFile vFile) {
+    def indexingRequest = project.getService(ProjectIndexingDependenciesService.class).latestIndexingRequestToken
     assertTrue(IndexingFlag.isFileIndexed(vFile, indexingRequest.getFileIndexingStamp(vFile)) || VfsData.isIsIndexedFlagDisabled())
   }
 
@@ -1189,7 +1189,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     // now all directories are indexed
 
 
-    def indexingRequest = ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).latestIndexingRequestToken
+    def indexingRequest = project.getService(ProjectIndexingDependenciesService.class).latestIndexingRequestToken
     assertFalse(IndexingFlag.isFileIndexed(foo, indexingRequest.getFileIndexingStamp(foo)))
     assertIsIndexed(main)
     assertIsIndexed(src)
@@ -1508,7 +1508,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     fileBasedIndex.ensureUpToDate(trigramId, project, GlobalSearchScope.everythingScope(project))
     assertEmpty(fileBasedIndex.getIndex(trigramId).getIndexedFileData(fileId).values())
-    def indexingRequest = ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).latestIndexingRequestToken
+    def indexingRequest = project.getService(ProjectIndexingDependenciesService.class).latestIndexingRequestToken
     assertFalse(IndexingFlag.isFileIndexed(file, indexingRequest.getFileIndexingStamp(file)))
   }
 

@@ -3,10 +3,7 @@ package com.intellij.turboComplete
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.addingPolicy.PolicyController
-import com.intellij.platform.ml.impl.turboComplete.KindCollector
-import com.intellij.platform.ml.impl.turboComplete.KindExecutionListener
-import com.intellij.platform.ml.impl.turboComplete.SuggestionGenerator
-import com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorConsumer
+import com.intellij.platform.ml.impl.turboComplete.*
 import com.intellij.turboComplete.analysis.PipelineListener
 
 private class GenerationReportingSuggestionGenerator(
@@ -28,13 +25,13 @@ class ReportingSuggestionGeneratorExecutor(
   private val baseExecutor: SuggestionGeneratorExecutor,
   private val listener: KindExecutionListener,
 ) : SuggestionGeneratorExecutor by baseExecutor {
-  fun reportGenerateCompletionKinds(generator: KindCollector,
+  fun reportGenerateCompletionKinds(collector: KindCollector,
                                     parameters: CompletionParameters,
-                                    completionKindsConsumer: SuggestionGeneratorConsumer,
+                                    completionKindsExecutor: SuggestionGeneratorExecutor,
                                     result: CompletionResultSet) {
     listener.onCollectionStarted()
     try {
-      generator.collectKinds(parameters, completionKindsConsumer, result)
+      collector.collectKinds(parameters, completionKindsExecutor, result)
     }
     finally {
       listener.onCollectionFinished()
@@ -51,7 +48,6 @@ class ReportingSuggestionGeneratorExecutor(
     fun initialize(
       parameters: CompletionParameters,
       policyController: PolicyController,
-      executorProvider: SuggestionGeneratorExecutorProvider,
     ): ReportingSuggestionGeneratorExecutor {
       val listener = object : DelegatingKindExecutionListener<KindExecutionListener> {
         override val delegatedListeners: MutableList<KindExecutionListener> = PipelineListener.EP_NAME.extensionList.toMutableList()
@@ -60,10 +56,13 @@ class ReportingSuggestionGeneratorExecutor(
 
       val performanceParameters = CompletionPerformanceParameters.fromCompletionPreferences(parameters)
 
-      val generatorExecutor = if (performanceParameters.fixedGeneratorsOrder)
+      val generatorExecutor = if (performanceParameters.fixedGeneratorsOrder) {
         ImmediateExecutor(parameters, policyController)
-      else
+      }
+      else {
+        val executorProvider = SuggestionGeneratorExecutorProvider.findOneMatching(parameters)
         executorProvider.createExecutor(parameters, policyController)
+      }
 
       return ReportingSuggestionGeneratorExecutor(generatorExecutor, listener)
     }

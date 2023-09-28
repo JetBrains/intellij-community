@@ -14,12 +14,12 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.util.UUID
 import kotlin.jvm.JvmName
@@ -27,14 +27,14 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class SourceEntityImpl(val dataSource: SourceEntityData) : SourceEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class SourceEntityImpl(private val dataSource: SourceEntityData) : SourceEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceEntity::class.java, ChildSourceEntity::class.java,
                                                                             ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       CHILDREN_CONNECTION_ID,
     )
 
@@ -52,6 +52,7 @@ open class SourceEntityImpl(val dataSource: SourceEntityData) : SourceEntity, Wo
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: SourceEntityData?) : ModifiableWorkspaceEntityBase<SourceEntity, SourceEntityData>(result), SourceEntity.Builder {
     constructor() : this(SourceEntityData())
@@ -80,7 +81,7 @@ open class SourceEntityImpl(val dataSource: SourceEntityData) : SourceEntity, Wo
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -184,7 +185,7 @@ open class SourceEntityImpl(val dataSource: SourceEntityData) : SourceEntity, Wo
 class SourceEntityData : WorkspaceEntityData<SourceEntity>() {
   lateinit var data: String
 
-  fun isDataInitialized(): Boolean = ::data.isInitialized
+  internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SourceEntity> {
     val modifiable = SourceEntityImpl.Builder(null)
@@ -201,6 +202,11 @@ class SourceEntityData : WorkspaceEntityData<SourceEntity>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.SourceEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -254,9 +260,5 @@ class SourceEntityData : WorkspaceEntityData<SourceEntity>() {
     var result = javaClass.hashCode()
     result = 31 * result + data.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

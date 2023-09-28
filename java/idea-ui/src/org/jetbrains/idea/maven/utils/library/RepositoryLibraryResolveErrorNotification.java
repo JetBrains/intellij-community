@@ -7,9 +7,9 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.notification.NotificationsManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +29,7 @@ class RepositoryLibraryResolveErrorNotification extends Notification {
   }
 
   void addLibraryResolveError(@NotNull RepositoryLibraryProperties lib) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     myErrors.add(lib.getMavenId());
     String message;
@@ -50,7 +50,7 @@ class RepositoryLibraryResolveErrorNotification extends Notification {
   }
 
   static synchronized void showOrUpdate(@NotNull RepositoryLibraryProperties libWithError, @NotNull Project project) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     RepositoryLibraryResolveErrorNotification[] notifications =
       NotificationsManager.getNotificationsManager().getNotificationsOfType(RepositoryLibraryResolveErrorNotification.class, project);
     RepositoryLibraryResolveErrorNotification notification = notifications.length > 0 ? notifications[0] : null;

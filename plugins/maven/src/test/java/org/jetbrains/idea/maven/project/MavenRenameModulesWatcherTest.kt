@@ -17,7 +17,7 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
 
   @Test
   fun testModuleRenameArtifactIdChanged() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                   <groupId>group</groupId>
                   <artifactId>module</artifactId>
                   <version>1</version>
@@ -50,7 +50,7 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
                     <artifactId>parent</artifactId>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
     val oldModuleName = "m1"
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
@@ -79,7 +79,7 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
                     <artifactId>parent</artifactId>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
     val oldModuleName = "parent"
     val newModuleName = "newParent"
     renameModule(oldModuleName, newModuleName)
@@ -124,7 +124,7 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
                     </dependency>
                   </dependencies>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
     val oldModuleName = "m1"
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
@@ -171,7 +171,7 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
                     </dependencies>
                   </dependencyManagement>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
     val oldModuleName = "m1"
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
@@ -242,7 +242,7 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
                     </dependency>
                   </dependencies>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
     val oldModuleName = "m1"
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
@@ -291,7 +291,7 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
                     </dependency>
                   </dependencies>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
     val oldModuleName = "m1"
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
@@ -303,7 +303,7 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
 
   @Test
   fun test_when_ModuleMovedToGroup_then_ArtifactIdRemains() = runBlocking {
-    importProject("""
+    importProjectAsync("""
                   <groupId>group</groupId>
                   <artifactId>module</artifactId>
                   <version>1</version>

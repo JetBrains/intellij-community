@@ -29,6 +29,7 @@ import static java.util.Objects.requireNonNull;
  * in platform/platform-resources/src/idea/ApplicationInfo.xsd,
  * so you need to update it when adding or removing support for some XML elements in this class.
  */
+@ApiStatus.Internal
 public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
          static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
@@ -324,6 +325,15 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       myBuildDate = Calendar.getInstance();
     }
     return myBuildDate;
+  }
+
+  @Override
+  public long getBuildUnixTimeInMillis() {
+    Calendar buildDate = myBuildDate;
+    if (buildDate == null) {
+      return 0;
+    }
+    return buildDate.getTimeInMillis();
   }
 
   @Override

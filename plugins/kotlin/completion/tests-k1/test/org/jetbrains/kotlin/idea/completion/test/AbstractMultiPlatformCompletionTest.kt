@@ -32,18 +32,15 @@ abstract class AbstractMultiPlatformCompletionTest : AbstractMultiModuleTest() {
     }
 
     private fun testCompletion(file: KtFile, editor: Editor) {
-        testCompletion(
-            file.text, null, { completionType, invocationCount ->
-                CodeCompletionHandlerBase(completionType).invokeCompletion(
-                    myProject, InjectedLanguageUtil
-                        .getEditorForInjectedLanguageNoCommit(editor, file), invocationCount
-                )
+        testCompletion(file.text, null, { completionType, invocationCount ->
+            CodeCompletionHandlerBase(completionType).invokeCompletion(
+                myProject, InjectedLanguageUtil
+                    .getEditorForInjectedLanguageNoCommit(editor, file), invocationCount
+            )
 
-                val lookup = LookupManager.getActiveLookup(editor) as LookupImpl
-                lookup.items?.toTypedArray()
-            },
-            isK2Plugin = isFirPlugin()
-        )
+            val lookup = LookupManager.getActiveLookup(editor) as LookupImpl
+            lookup.items?.toTypedArray()
+        })
     }
 
     override fun getTestDataDirectory() = COMPLETION_TEST_DATA_BASE.resolve("smartMultiFile").resolve(getTestName(false))

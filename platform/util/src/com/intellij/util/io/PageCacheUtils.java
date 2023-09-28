@@ -69,6 +69,13 @@ public final class PageCacheUtils {
     Math.max(0, MAX_DIRECT_MEMORY_TO_USE_BYTES - FILE_PAGE_CACHES_TOTAL_CAPACITY_BYTES - 300 * MiB)
   );
 
+  /**
+   * How much memory FilePageCache could allocate above FILE_PAGE_CACHE_NEW_CAPACITY_BYTES, from heap -- temporary,
+   * to serve page request(s) without delay -- at the cost of more GC pressure later.
+   * Fraction of 'hard' capacity {@link #FILE_PAGE_CACHE_NEW_CAPACITY_BYTES}
+   */
+  static final float HEAP_CAPACITY_FRACTION = getFloatProperty("vfs.lock-free-impl.heap-capacity-ratio", 0.1f);
+
 
   private static final int CHANNELS_CACHE_CAPACITY = getIntProperty("paged.file.storage.open.channel.cache.capacity", 400);
 
@@ -85,7 +92,8 @@ public final class PageCacheUtils {
       LOG.info("\tFilePageCache: regular + lock-free (LOCK_FREE_PAGE_CACHE_ENABLED:true)");
       LOG.info("\tNEW_PAGE_CACHE_MEMORY_FRACTION: " + NEW_PAGE_CACHE_MEMORY_FRACTION);
       LOG.info("\tRegular FilePageCache: " + FILE_PAGE_CACHE_OLD_CAPACITY_BYTES + " bytes");
-      LOG.info("\tNew     FilePageCache: " + FILE_PAGE_CACHE_NEW_CAPACITY_BYTES + " bytes");
+      LOG.info("\tNew     FilePageCache: " + FILE_PAGE_CACHE_NEW_CAPACITY_BYTES + " bytes" +
+               " (+ up to " + (HEAP_CAPACITY_FRACTION * 100) + "% overflow)");
     }
     else {
       LOG.info("\tFilePageCache: regular");

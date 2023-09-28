@@ -38,6 +38,11 @@ public class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2LocalInsp
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/callableReference.kt");
     }
 
+    @TestMetadata("catchParameter.kt")
+    public void testCatchParameter() throws Exception {
+        runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/catchParameter.kt");
+    }
+
     @TestMetadata("classByPrimaryConstructor.kt")
     public void testClassByPrimaryConstructor() throws Exception {
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/classByPrimaryConstructor.kt");
@@ -176,6 +181,11 @@ public class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2LocalInsp
     @TestMetadata("lastPropertyInPrimaryConstructorWithComments.kt")
     public void testLastPropertyInPrimaryConstructorWithComments() throws Exception {
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/lastPropertyInPrimaryConstructorWithComments.kt");
+    }
+
+    @TestMetadata("loopParameter.kt")
+    public void testLoopParameter() throws Exception {
+        runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/loopParameter.kt");
     }
 
     @TestMetadata("namedFunctionalParameter.kt")

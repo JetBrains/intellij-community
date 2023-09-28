@@ -25,6 +25,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.idea.maven.model.IndexKind;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -215,12 +216,12 @@ public class MavenIndices implements Disposable {
     context.indexPropertyHolders = indexPropertyHolders;
 
     MavenIndex index = indexPropertyHolders.stream()
-      .filter(iph -> iph.kind == MavenSearchIndex.Kind.LOCAL && FileUtil.pathsEqual(iph.repositoryPathOrUrl, localRepo.url))
+      .filter(iph -> iph.kind == IndexKind.LOCAL && FileUtil.pathsEqual(iph.repositoryPathOrUrl, localRepo.url))
       .findFirst()
       .map(iph -> createMavenIndex(iph, context))
       .orElseGet(() -> {
         MavenIndexUtils.IndexPropertyHolder propertyHolder = new MavenIndexUtils.IndexPropertyHolder(
-          createNewIndexDir(context.indicesDir), MavenSearchIndex.Kind.LOCAL, Collections.singleton(LOCAL_REPOSITORY_ID), localRepo.url
+          createNewIndexDir(context.indicesDir), IndexKind.LOCAL, Collections.singleton(LOCAL_REPOSITORY_ID), localRepo.url
         );
         return createMavenIndex(propertyHolder, context);
       });
@@ -244,7 +245,7 @@ public class MavenIndices implements Disposable {
     List<MavenIndexUtils.IndexPropertyHolder> indexPropertyHolders = context.indexPropertyHolders;
     indexPropertyHolders = indexPropertyHolders != null ? indexPropertyHolders : readCurrentIndexFileProperty(context.indicesDir);
     Map<String, MavenIndexUtils.IndexPropertyHolder> propertyHolderMapByUrl = indexPropertyHolders.stream()
-      .filter(iph -> iph.kind == MavenSearchIndex.Kind.REMOTE)
+      .filter(iph -> iph.kind == IndexKind.REMOTE)
       .collect(Collectors.toMap(iph -> iph.repositoryPathOrUrl, Function.identity(), (i1, i2) -> i1));
 
     List<MavenIndex> oldIndices = ContainerUtil
@@ -271,7 +272,7 @@ public class MavenIndices implements Disposable {
     if (index != null) return index;
 
     propertyHolder = new MavenIndexUtils.IndexPropertyHolder(
-      createNewIndexDir(context.indicesDir), MavenSearchIndex.Kind.REMOTE, remoteEntry.getValue(), remoteEntry.getKey()
+      createNewIndexDir(context.indicesDir), IndexKind.REMOTE, remoteEntry.getValue(), remoteEntry.getKey()
     );
     return createMavenIndex(propertyHolder, context);
   }

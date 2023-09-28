@@ -5,6 +5,7 @@ import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.impl.file.PsiDirectoryFactory
 import com.intellij.refactoring.rename.RenameDialog
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
@@ -14,7 +15,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDirectoryRenameModuleReferenceChanged() {
+  fun testDirectoryRenameModuleReferenceChanged() = runBlocking {
     val parentFile = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -33,7 +34,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <version>1</version>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val newModulePath = "m1new"
 
@@ -47,7 +48,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testParentDirectoryRenameModuleReferenceChanged() {
+  fun testParentDirectoryRenameModuleReferenceChanged() = runBlocking {
     val parentFile = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -66,7 +67,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <version>1</version>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val newDirectoryName = "mNew"
     val newModulePath = "mNew/m1"
@@ -81,7 +82,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDirectoryRenameModuleRelativeReferenceChanged() {
+  fun testDirectoryRenameModuleRelativeReferenceChanged() = runBlocking {
     val parentFile = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -100,7 +101,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <version>1</version>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val newDirectoryName = "m1new"
     val newModulePath = "./m1new"
@@ -115,7 +116,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDirectoryRenameModuleParentPathReferenceChanged() {
+  fun testDirectoryRenameModuleParentPathReferenceChanged() = runBlocking {
     val parentFile = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -144,7 +145,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <relativePath>../parent2/pom.xml</relativePath>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val newDirectoryName = "m1new"
     val newModulePath = "../m1new"
@@ -159,7 +160,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDirectoryRenameModuleWeirdNameReferenceChanged() {
+  fun testDirectoryRenameModuleWeirdNameReferenceChanged() = runBlocking {
     val parentFile = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -178,7 +179,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <version>1</version>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val newDirectoryName = "module-new"
     val newModulePath = "module/module-new"
@@ -193,7 +194,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testParentDirectoryRenameModuleWeirdNameReferenceChanged() {
+  fun testParentDirectoryRenameModuleWeirdNameReferenceChanged() = runBlocking {
     val parentFile = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -212,7 +213,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <version>1</version>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val newDirectoryName = "module-new"
     val newModulePath = "module-new/module"
@@ -228,7 +229,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
 
 
   @Test
-  fun testIncorrectModuleNameWithNewLineRenameModuleReferenceChanged() {
+  fun testIncorrectModuleNameWithNewLineRenameModuleReferenceChanged() = runBlocking {
     val parentFile = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -247,7 +248,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <artifactId>parent</artifactId>
                   </parent>
                   """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     val newModulePath = "m1new"
 

@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.util.childScope
+import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -119,7 +120,7 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
     // We need EDT or WriteLock to make sure that dumb mode does not start while the method is in progress (see DumbServiceImpl.updateFinished).
     // Note that neither write lock nor EDT are enough to protect against switching to "almost smart": scanning can start at any moment 
     //   (it does not need write lock nor EDT), so the code should be ready for scanning to start at any moment.
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     // It may happen that one of the pending runWhenSmart actions triggers new dumb mode;
     // in this case we should quit processing pending actions and postpone them until the newly started dumb mode finishes.

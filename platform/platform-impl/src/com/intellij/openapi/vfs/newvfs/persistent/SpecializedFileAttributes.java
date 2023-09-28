@@ -13,6 +13,9 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.function.IntUnaryOperator;
+import java.util.function.LongUnaryOperator;
+
+import static java.nio.ByteOrder.BIG_ENDIAN;
 
 /**
  * Experimental API for faster access of file attribute if the attribute value is simple
@@ -42,7 +45,11 @@ public final class SpecializedFileAttributes {
       @Override
       public long read(int fileId,
                        long defaultValue) throws IOException {
-        Long value = vfs.readAttributeRaw(fileId, attribute, ByteBuffer::getLong);
+
+        Long value = vfs.readAttributeRaw(fileId, attribute, buffer -> {
+          //stream.writeLong() writes in BIG_ENDIAN (default byte order for JVM)
+          return buffer.order(BIG_ENDIAN).getLong();
+        });
         return value == null ? defaultValue : value.longValue();
       }
 
@@ -56,6 +63,11 @@ public final class SpecializedFileAttributes {
         //  return buffer.putLong(value);
         //});
       }
+
+      @Override
+      public void update(int fileId, @NotNull LongUnaryOperator updater) throws IOException {
+        throw new UnsupportedOperationException("Method is not implemented");
+      }
     };
   }
 
@@ -64,7 +76,10 @@ public final class SpecializedFileAttributes {
     return new IntFileAttributeAccessor() {
       @Override
       public int read(int fileId, int defaultValue) {
-        Integer value = vfs.readAttributeRaw(fileId, attribute, ByteBuffer::getInt);
+        Integer value = vfs.readAttributeRaw(fileId, attribute, buffer -> {
+          //stream.writeInt() writes in BIG_ENDIAN (default byte order for JVM)
+          return buffer.order(BIG_ENDIAN).getInt();
+        });
         return value == null ? defaultValue : value.intValue();
       }
 
@@ -114,6 +129,49 @@ public final class SpecializedFileAttributes {
   }
 
 
+  public static LongFileAttributeAccessor specializeAsFastLong(@NotNull FileAttribute attribute) throws IOException {
+    return specializeAsFastLong(FSRecords.getInstance(), attribute);
+  }
+
+  public static LongFileAttributeAccessor specializeAsFastLong(@NotNull FSRecordsImpl vfs,
+                                                               @NotNull FileAttribute attribute) throws IOException {
+    String attributeId = attribute.getId();
+
+    MappedFileStorageHelper storageHelper = MappedFileStorageHelper.openHelperAndVerifyVersions(
+      vfs,
+      attributeId,
+      attribute.getVersion(),
+      Long.BYTES
+    );
+    vfs.addCloseable(storageHelper);
+
+    int fieldOffset = 0;
+
+    return new LongFileAttributeAccessor() {
+      @Override
+      public long read(int fileId,
+                       long defaultValue) throws IOException {
+        if (defaultValue != 0) {
+          throw new UnsupportedOperationException(
+            "defaultValue=" + defaultValue + ": so far only 0 is supported default value for fast-attributes");
+        }
+        return storageHelper.readLongField(fileId, fieldOffset);
+      }
+
+      @Override
+      public void write(int fileId,
+                        long value) throws IOException {
+        storageHelper.writeLongField(fileId, fieldOffset, value);
+      }
+
+      @Override
+      public void update(int fileId,
+                         @NotNull LongUnaryOperator updater) throws IOException {
+        storageHelper.updateLongField(fileId, fieldOffset, updater);
+      }
+    };
+  }
+
   public static IntFileAttributeAccessor specializeAsFastInt(@NotNull FileAttribute attribute) throws IOException {
     return specializeAsFastInt(FSRecords.getInstance(), attribute);
   }
@@ -150,11 +208,13 @@ public final class SpecializedFileAttributes {
       }
 
       @Override
-      public void update(int fileId, @NotNull IntUnaryOperator updater) throws IOException {
-
+      public void update(int fileId,
+                         @NotNull IntUnaryOperator updater) throws IOException {
+        storageHelper.updateIntField(fileId, fieldOffset, updater);
       }
     };
   }
+
 
   public static ShortFileAttributeAccessor specializeAsFastShort(@NotNull FileAttribute attribute) throws IOException {
     return specializeAsFastShort(FSRecords.getInstance(), attribute);
@@ -229,12 +289,19 @@ public final class SpecializedFileAttributes {
       return read(vFile, 0);
     }
 
-    default long read(@NotNull VirtualFile vFile, long defaultValue) throws IOException {
+    default long read(@NotNull VirtualFile vFile,
+                      long defaultValue) throws IOException {
       return read(extractFileId(vFile), defaultValue);
     }
 
-    default void write(@NotNull VirtualFile vFile, long value) throws IOException {
+    default void write(@NotNull VirtualFile vFile,
+                       long value) throws IOException {
       write(extractFileId(vFile), value);
+    }
+
+    default void update(@NotNull VirtualFile vFile,
+                        @NotNull LongUnaryOperator updater) throws IOException {
+      update(extractFileId(vFile), updater);
     }
 
     long read(int fileId,
@@ -242,6 +309,9 @@ public final class SpecializedFileAttributes {
 
     void write(int fileId,
                long value) throws IOException;
+
+    void update(int fileId,
+                @NotNull LongUnaryOperator updater) throws IOException;
   }
 
   public interface IntFileAttributeAccessor {
@@ -325,26 +395,5 @@ public final class SpecializedFileAttributes {
       throw new IllegalArgumentException(vFile + " must be instance of VirtualFileWithId");
     }
     return ((VirtualFileWithId)vFile).getId();
-  }
-
-  private static final class FileAttributeAccessorHelper implements FileAttributeExAccessor, Closeable {
-    private final @NotNull MappedFileStorageHelper storageHelper;
-
-    private FileAttributeAccessorHelper(@NotNull MappedFileStorageHelper helper) { storageHelper = helper; }
-
-    @Override
-    public void clear() throws IOException {
-      storageHelper.clear();
-    }
-
-    @Override
-    public void flush() throws IOException {
-      storageHelper.fsync();
-    }
-
-    @Override
-    public void close() throws IOException {
-      storageHelper.close();
-    }
   }
 }

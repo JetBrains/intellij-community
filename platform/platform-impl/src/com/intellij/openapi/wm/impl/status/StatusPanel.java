@@ -9,7 +9,6 @@ import com.intellij.notification.impl.StatusMessage;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.JBMenuItem;
@@ -21,6 +20,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -150,7 +150,7 @@ final class StatusPanel extends JPanel {
   // Returns the alarm used for displaying status messages in the status bar, or null if the status bar is attached to a floating
   // editor window.
   private @Nullable Alarm getAlarm() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myLogAlarm == null || myLogAlarm.isDisposed()) {
       myLogAlarm = null; //Welcome screen
       Project project = getActiveProject();
@@ -162,7 +162,7 @@ final class StatusPanel extends JPanel {
   }
 
   public boolean updateText(@Nullable @NlsContexts.StatusBarText String nonLogText) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     Project project = getActiveProject();
     StatusMessage statusMessage = NotificationsToolWindowFactory.Companion.getStatusMessage(project);

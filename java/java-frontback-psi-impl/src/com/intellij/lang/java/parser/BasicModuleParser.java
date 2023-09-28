@@ -179,7 +179,7 @@ public class BasicModuleParser {
 
     PsiBuilder.Marker modifierList = builder.mark();
     while (true) {
-      if (expect(builder, BasicElementTypes.MODIFIER_BIT_SET.toTokenSet())) continue;
+      if (expect(builder, BasicElementTypes.BASIC_MODIFIER_BIT_SET.toTokenSet())) continue;
       if (builder.getTokenType() == JavaTokenType.IDENTIFIER && PsiKeyword.TRANSITIVE.equals(builder.getTokenText())) {
         mapAndAdvance(builder, JavaTokenType.TRANSITIVE_KEYWORD);
         continue;

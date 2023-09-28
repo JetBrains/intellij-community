@@ -194,6 +194,10 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.api.display.name"
                      implementationClass="com.intellij.codeInspection.JavaApiUsageInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="SystemGetProperty"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.system.get.property.display.name"
+                     implementationClass="com.intellij.codeInspection.SystemGetPropertyInspection"/>
     <notificationGroup id="UAST" displayType="BALLOON" hideFromSettings="true"/>
     <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
                     serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>

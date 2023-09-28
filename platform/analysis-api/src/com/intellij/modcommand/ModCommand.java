@@ -31,8 +31,8 @@ import java.util.function.Function;
  */
 public sealed interface ModCommand
   permits ModChooseAction, ModChooseMember, ModCompositeCommand, ModCopyToClipboard, ModCreateFile, ModDeleteFile, ModDisplayMessage,
-          ModHighlight, ModNavigate, ModNothing, ModRenameSymbol, ModShowConflicts, ModStartTemplate, ModUpdateFileText,
-          ModUpdateInspectionOptions {
+          ModHighlight, ModNavigate, ModNothing, ModRenameSymbol, ModShowConflicts, ModStartTemplate, ModUpdateReferences,
+          ModUpdateFileText, ModUpdateInspectionOptions {
 
   /**
    * @return true if the command does nothing

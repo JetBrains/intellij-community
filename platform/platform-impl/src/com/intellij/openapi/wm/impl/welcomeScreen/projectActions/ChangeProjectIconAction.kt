@@ -95,7 +95,7 @@ internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase()
     if (selectedItem is RecentProjectItem) {
       return selectedItem.projectPath
     }
-    return event.project?.basePath
+    return event.project?.let { ProjectWindowCustomizerService.projectPath(it) }
   }
 
   override fun update(event: AnActionEvent) {

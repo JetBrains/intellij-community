@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
+import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
@@ -17,13 +18,11 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import org.jetbrains.concurrency.await
 import java.awt.Dialog
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
@@ -31,7 +30,6 @@ import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JComponent
 import javax.swing.JFrame
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.time.Duration.Companion.seconds
 
 internal interface ActionAwareIdeMenuBar {
   fun updateMenuActions(forceRebuild: Boolean = false)
@@ -57,7 +55,7 @@ internal interface IdeMenuFlavor {
 }
 
 internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
-                                       @JvmField internal val menuBar: MenuBarImpl) : ActionAwareIdeMenuBar {
+                                       @JvmField val menuBar: MenuBarImpl) : ActionAwareIdeMenuBar {
   protected abstract fun isUpdateForbidden(): Boolean
 
   @JvmField
@@ -91,7 +89,8 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
 
     coroutineScope.launch(ModalityState.any().asContextElement()) {
       withContext(if (StartUpMeasurer.isEnabled()) (rootTask() + CoroutineName("ide menu bar actions init")) else EmptyCoroutineContext) {
-        val actions = updateMenuActions(mainActionGroup = menuBar.getMainMenuActionGroup(), forceRebuild = false, isFirstUpdate = true)
+        val actions = expandMainActionGroup(true)
+        doUpdateVisibleActions(actions, false)
         postInitActions(actions)
       }
 
@@ -117,10 +116,15 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
           }
 
           presentationFactory.reset()
-          updateMenuActions(mainActionGroup = menuBar.getMainMenuActionGroup(), forceRebuild = forceRebuild, isFirstUpdate = false)
+          doUpdateVisibleActions(expandMainActionGroup(false), forceRebuild)
           lastUpdate.set(System.currentTimeMillis())
         }
     }
+  }
+
+  private suspend fun expandMainActionGroup(isFirstUpdate: Boolean): List<ActionGroup> {
+    val mainActionGroup = menuBar.getMainMenuActionGroup() ?: return emptyList()
+    return expandMainActionGroup(mainActionGroup, menuBar.component, menuBar.frame, presentationFactory, isFirstUpdate)
   }
 
   private fun filterUpdate(): Boolean {
@@ -154,39 +158,35 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
   }
 
   protected open suspend fun postInitActions(actions: List<ActionGroup>) {
+    withContext(Dispatchers.EDT) {
+      for (action in actions) {
+        PopupMenuPreloader.install(menuBar.component, ActionPlaces.MAIN_MENU, null) { action }
+      }
+    }
   }
 
-  abstract suspend fun updateMenuActions(mainActionGroup: ActionGroup?, forceRebuild: Boolean, isFirstUpdate: Boolean): List<ActionGroup>
+  abstract suspend fun doUpdateVisibleActions(newVisibleActions: List<ActionGroup>, forceRebuild: Boolean)
 }
 
-@Suppress("unused")
-private val firstUpdateFastTrackUpdateTimeout = 30.seconds.inWholeMilliseconds
-
-internal suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
-                                           menuBar: JComponent,
-                                           frame: JFrame,
-                                           presentationFactory: PresentationFactory,
-                                           isFirstUpdate: Boolean): List<ActionGroup>? {
+private suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
+                                          menuBar: JComponent,
+                                          frame: JFrame,
+                                          presentationFactory: PresentationFactory,
+                                          isFirstUpdate: Boolean): List<ActionGroup> {
   try {
     val windowManager = serviceAsync<WindowManager>()
-    return withContext(CoroutineName("expandMainActionGroup") + Dispatchers.EDT) {
+    return withContext(Dispatchers.EDT + CoroutineName("expandMainActionGroup")) {
       val targetComponent = windowManager.getFocusedComponent(frame) ?: menuBar
       val dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(targetComponent))
-      Utils.expandActionGroupAsync(group = mainActionGroup,
-                                   presentationFactory = presentationFactory,
-                                   context = dataContext,
-                                   place = ActionPlaces.MAIN_MENU,
-                                   isToolbarAction = false,
-                                   fastTrack = isFirstUpdate)
-    }.await().filterIsInstance<ActionGroup>()
+      Utils.expandActionGroupSuspend(mainActionGroup, presentationFactory, dataContext,
+                                     ActionPlaces.MAIN_MENU, false, isFirstUpdate)
+    }.filterIsInstance<ActionGroup>()
   }
-  catch (e: ProcessCanceledException) {
+  catch (e: CancellationException) {
     if (isFirstUpdate) {
-      logger<IdeMenuBarHelper>().warn("Cannot expand action group")
+      logger<IdeMenuBarHelper>().warn("Cannot expand menu action group the first time")
     }
-
-    // don't repeat - will do on next timer event
-    return null
+    throw e
   }
 }
 

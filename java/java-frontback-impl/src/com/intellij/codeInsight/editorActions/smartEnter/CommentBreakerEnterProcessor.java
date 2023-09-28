@@ -34,7 +34,7 @@ import static com.intellij.psi.impl.source.BasicJavaDocElementType.DOC_COMMENT;
 public class CommentBreakerEnterProcessor implements ASTNodeEnterProcessor {
 
   private final BasicJavaTokenSet myCommentTypes = BasicJavaTokenSet.orSet(
-    BasicElementTypes.JAVA_PLAIN_COMMENT_BIT_SET, BasicJavaTokenSet.create(DOC_COMMENT)
+    BasicJavaTokenSet.create(BasicElementTypes.BASIC_JAVA_PLAIN_COMMENT_BIT_SET), BasicJavaTokenSet.create(DOC_COMMENT)
   );
 
   @Override

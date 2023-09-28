@@ -19,8 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbModeBlockedFunctionality;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.popup.util.RoundedCellRenderer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -144,7 +145,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     if (useEditorFont()) {
       builder.setFont(EditorUtil.getEditorFont());
     }
-    builder.setRenderer(new RoundedCellRenderer<>(new GotoTargetRenderer(o -> ((ItemWithPresentation)o).getPresentation()))).
+    var renderer = Registry.is("ide.goto.target.new.renderer")
+                   ? new GotoTargetRendererNew(o -> ((ItemWithPresentation)o).getPresentation())
+                   : new RoundedCellRenderer<>(new GotoTargetRenderer(o -> ((ItemWithPresentation)o).getPresentation()));
+    builder.setRenderer(renderer).
       setItemsChosenCallback(selectedElements -> {
         for (ItemWithPresentation element : selectedElements) {
           if (element.getItem() instanceof AdditionalAction) {

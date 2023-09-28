@@ -27,7 +27,11 @@ public final class DevMainKt {
 
   private static void build() throws Throwable {
     PathClassLoader classLoader = (PathClassLoader)DevMainKt.class.getClassLoader();
-    Class<?> implClass = new PathClassLoader(UrlClassLoader.build().files(classLoader.getFiles()).parent(classLoader))
+    // do not use classLoader as a parent - make sure that we don't make the initial classloader dirty
+    // (say, do not load kotlin coroutine classes)
+    Class<?> implClass = new PathClassLoader(UrlClassLoader.build()
+                                               .files(classLoader.getFiles())
+                                               .parent(ClassLoader.getPlatformClassLoader()))
       .loadClass("org.jetbrains.intellij.build.devServer.DevMainImpl");
 
     @SuppressWarnings("unchecked")

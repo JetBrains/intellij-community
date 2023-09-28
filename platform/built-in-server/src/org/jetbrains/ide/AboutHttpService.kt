@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.ide
 
@@ -6,7 +6,6 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.PlatformUtils
@@ -102,7 +101,7 @@ fun writeApplicationInfoJson(out: OutputStream, urlDecoder: QueryStringDecoder?,
 }
 
 fun writeAboutJson(writer: JsonGenerator) {
-  var appName = ApplicationInfoEx.getInstanceEx().fullApplicationName
+  var appName = ApplicationInfo.getInstance().fullApplicationName
   if (!PlatformUtils.isIdeaUltimate()) {
     val productName = ApplicationNamesInfo.getInstance().productName
     appName = appName

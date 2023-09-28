@@ -15,7 +15,7 @@ object KnownLafs {
   val Darcula: BundledLookAndFeel
     get() = _dark.value
   private val _dark = lazy {
-    LafManager.getInstance().defaultDarkLaf?.let { BundledLookAndFeel(TransferableLafId.Darcula, it) } ?: error("Dark theme not found")
+    LafManager.getInstance().defaultDarkLaf?.let { BundledLookAndFeel(TransferableLafId.Dark, it) } ?: error("Dark theme not found")
   }
 
   val HighContrast: BundledLookAndFeel

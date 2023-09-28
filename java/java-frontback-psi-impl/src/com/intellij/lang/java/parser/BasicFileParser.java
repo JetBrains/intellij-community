@@ -34,7 +34,7 @@ public class BasicFileParser {
     myParser = javaParser;
     myJavaElementTypeContainer = javaParser.getJavaElementTypeFactory().getContainer();
     IMPORT_LIST_STOPPER_SET = TokenSet.orSet(
-      BasicElementTypes.MODIFIER_BIT_SET.toTokenSet(),
+      BasicElementTypes.BASIC_MODIFIER_BIT_SET.toTokenSet(),
       TokenSet.create(JavaTokenType.CLASS_KEYWORD, JavaTokenType.INTERFACE_KEYWORD, JavaTokenType.ENUM_KEYWORD, JavaTokenType.AT));
     UNNAMED_CLASS_INDICATORS =
     TokenSet.create(myJavaElementTypeContainer.METHOD, myJavaElementTypeContainer.FIELD, myJavaElementTypeContainer.CLASS_INITIALIZER);

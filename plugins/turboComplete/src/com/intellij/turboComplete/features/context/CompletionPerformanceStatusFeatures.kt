@@ -11,9 +11,8 @@ class CompletionPerformanceStatusFeatures : ContextFeatureProvider {
   override fun calculateFeatures(environment: CompletionEnvironment): Map<String, MLFeatureValue> {
     val performanceParameters = CompletionPerformanceParameters.fromCompletionPreferences(environment.parameters)
     return mutableMapOf(
-      "performance_enabled" to MLFeatureValue.binary(performanceParameters.enabled),
+      "performance_enabled" to MLFeatureValue.binary(!performanceParameters.fixedGeneratorsOrder),
       "show_lookup_early" to MLFeatureValue.binary(performanceParameters.showLookupEarly),
-      "fixed_generators_order" to MLFeatureValue.binary(performanceParameters.fixedGeneratorsOrder)
     )
   }
 }

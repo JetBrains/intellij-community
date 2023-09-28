@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.ide.IdeBundle
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.text.VersionComparatorUtil
 import java.io.IOException
@@ -119,7 +120,7 @@ open class StandalonePluginUpdateChecker(
   }
 
   protected fun queueUpdateCheck(callback: (PluginUpdateStatus) -> Boolean) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (checkQueued.compareAndSet(/* expectedValue = */ false, /* newValue = */ true)) {
       alarm.addRequest(
         {

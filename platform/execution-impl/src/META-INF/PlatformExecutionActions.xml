@@ -77,6 +77,16 @@
     <extensionPoint interface="com.intellij.execution.DisplayDescriptorChooser"
                     dynamic="true"
                     qualifiedName="com.intellij.execution.displayDescriptorChooser" />
+
+    <!-- Multi-Launch: Extension points -->
+    <extensionPoint qualifiedName="com.intellij.multilaunch.task.definition"
+                    area="IDEA_PROJECT"
+                    interface="com.intellij.execution.multilaunch.execution.executables.TaskExecutableTemplate"
+                    dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.multilaunch.condition.template"
+                    area="IDEA_PROJECT"
+                    interface="com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate"
+                    dynamic="true" />
   </extensionPoints>
   <projectListeners>
     <listener class="com.intellij.execution.runToolbar.RunToolbarComponentService$MyExecutionListener"

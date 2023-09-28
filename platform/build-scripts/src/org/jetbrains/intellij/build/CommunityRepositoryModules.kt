@@ -175,7 +175,12 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.testng.rt", "testng-rt.jar")
       spec.withProjectLibrary("TestNG")
     },
-    plugin(listOf("intellij.dev", "intellij.dev.psiViewer", "intellij.platform.statistics.devkit")),
+    plugin(listOf(
+      "intellij.dev",
+      "intellij.dev.psiViewer",
+      "intellij.dev.codeInsight",
+      "intellij.platform.statistics.devkit",
+    )),
     pluginAuto(listOf("intellij.devkit")) { spec ->
       spec.withModule("intellij.devkit.core")
       spec.withModule("intellij.devkit.git")
@@ -222,10 +227,10 @@ object CommunityRepositoryModules {
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
     androidDesignPlugin(),
     plugin("intellij.completionMlRankingModels") { spec ->
-      spec.bundlingRestrictions.includeInEapOnly = true
+      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
     plugin("intellij.statsCollector") { spec ->
-      spec.bundlingRestrictions.includeInEapOnly = true
+      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
     plugin(listOf("intellij.lombok", "intellij.lombok.generated")),
     plugin(listOf(
@@ -285,7 +290,7 @@ object CommunityRepositoryModules {
     plugin(
       "intellij.turboComplete",
     ) { spec ->
-      spec.bundlingRestrictions.includeInEapOnly = true
+      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
       spec.withModule("intellij.turboComplete.languages.kotlin")
     }
   )

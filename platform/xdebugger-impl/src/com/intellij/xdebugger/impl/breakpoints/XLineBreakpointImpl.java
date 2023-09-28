@@ -439,6 +439,9 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       XDebuggerUtilImpl.getLineBreakpointVariants(project, breakpointTypes, linePosition).onProcessed(variants -> {
         if (variants == null) {
           variants = Collections.emptyList();
+        } else if (ContainerUtil.exists(variants, XLineBreakpointImpl::isAllVariant)) {
+          // No need to show "all" variant in case of the inline breakpoints approach, it's useful only for the popup based one.
+          variants = variants.stream().filter(v -> !isAllVariant(v)).toList();
         }
 
         var codeStartOffset = DocumentUtil.getLineStartIndentedOffset(document, line);
@@ -472,6 +475,13 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
         }
       });
     }
+  }
+
+  private static boolean isAllVariant(XLineBreakpointType<?>.XLineBreakpointVariant variant) {
+    // Currently, it's the easiest way to check that it's really multi-location variant.
+    // Don't try to check whether the variant is an instance of XLineBreakpointAllVariant, they all are.
+    // FIXME[inline-bp]: introduce better way for this or completely get rid of multi-location variants
+    return variant.getIcon() == AllIcons.Debugger.MultipleBreakpoints;
   }
 
   private static void addInlineBreakpointInlay(Editor editor, @NotNull XLineBreakpointImpl<?> breakpoint, @Nullable XLineBreakpointType<?>.XLineBreakpointVariant variant, int codeStartOffset) {
@@ -581,7 +591,8 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       }
       else {
         assert variant != null;
-        baseIcon = variant.getIcon();
+        baseIcon = variant.getType().getEnabledIcon();
+
         // FIXME[inline-bp]: do we need to rename the property?
         alpha = JBUI.getFloat("Breakpoint.iconHoverAlpha", 0.5f);
         alpha = Math.max(0, Math.min(alpha, 1));
@@ -599,6 +610,32 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       var x = targetRegion.x + targetRegion.width / 2 - scaledIcon.getIconWidth() / 2;
       var y = targetRegion.y + targetRegion.height / 2 - scaledIcon.getIconHeight() / 2;
       GraphicsUtil.paintWithAlpha(g, alpha, () -> scaledIcon.paintIcon(component, g, x, y));
+    }
+
+    @Override
+    public void mousePressed(@NotNull MouseEvent event, @NotNull Point translated) {
+      invokePopupIfNeeded(event);
+    }
+
+    @Override
+    public void mouseReleased(@NotNull MouseEvent event, @NotNull Point translated) {
+      invokePopupIfNeeded(event);
+    }
+
+    private void invokePopupIfNeeded(@NotNull MouseEvent event) {
+      if (event.isPopupTrigger()) {
+        if (breakpoint != null) {
+          var bounds = inlay.getBounds();
+          if (bounds == null) return;
+          Point center = new Point((int)bounds.getCenterX(), (int)bounds.getCenterY());
+          DebuggerUIUtil.showXBreakpointEditorBalloon(breakpoint.getProject(), center, inlay.getEditor().getContentComponent(), false,
+                                                      breakpoint);
+        } else {
+          // FIXME[inline-bp]: show context like in gutter (XDebugger.Hover.Breakpoint.Context.Menu),
+          //                   but actions should be adapted for inline breakpoints.
+        }
+        event.consume();
+      }
     }
 
     private enum ClickAction {
@@ -696,16 +733,5 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       }
     }
 
-    @Override
-    public void mousePressed(@NotNull MouseEvent event, @NotNull Point translated) {
-      if (event.isPopupTrigger() && breakpoint != null) {
-        var bounds = inlay.getBounds();
-        if (bounds == null) return;
-        Point center = new Point((int)bounds.getCenterX(), (int)bounds.getCenterY());
-        DebuggerUIUtil.showXBreakpointEditorBalloon(breakpoint.getProject(), center, inlay.getEditor().getContentComponent(), false,
-                                                    breakpoint);
-        event.consume();
-      }
-    }
   }
 }

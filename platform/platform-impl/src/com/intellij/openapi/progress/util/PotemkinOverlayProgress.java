@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
@@ -37,7 +38,7 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
 
   private final Component myComponent;
   private final PotemkinProgress.EventStealer myEventStealer;
-  private final long myCreatedAt = System.currentTimeMillis();
+  private final long myCreatedAt = System.nanoTime();
   private int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS * 10;
   private long myLastUiUpdate = myCreatedAt;
   private long myLastInteraction;
@@ -76,17 +77,18 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   @Override
   public void interact() {
     if (!EDT.isCurrentThreadEdt()) return;
-    long now = System.currentTimeMillis();
+    long now = System.nanoTime();
     if (now == myLastInteraction) return;
     myLastInteraction = now;
-    if (!myShowing && now - myLastUiUpdate > myDelayInMillis) {
+    long millisSinceLastUpdate = TimeoutUtil.getDurationMillis(myLastUiUpdate);
+    if (!myShowing && millisSinceLastUpdate > myDelayInMillis) {
       myShowing = true;
     }
     if (myShowing) {
       myEventStealer.dispatchEvents(0);
     }
-    if (myShowing && now - myLastUiUpdate > ProgressDialog.UPDATE_INTERVAL) {
-      myLastUiUpdate = now;
+    if (myShowing && millisSinceLastUpdate > ProgressDialog.UPDATE_INTERVAL) {
+      myLastUiUpdate = System.nanoTime();
       paintProgress();
     }
   }
@@ -117,10 +119,13 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   }
 
   private void paintProgress() {
-    JRootPane rootPane = SwingUtilities.getRootPane(myComponent);
+    paintOverlayProgress(SwingUtilities.getRootPane(myComponent), myCreatedAt);
+  }
+
+  private static void paintOverlayProgress(@Nullable JRootPane rootPane, long createdAt) {
     IdeGlassPane glassPane = rootPane == null ? null : ObjectUtils.tryCast(rootPane.getGlassPane(), IdeGlassPane.class);
     if (glassPane == null) return;
-    long roundedDuration = (System.currentTimeMillis() - myCreatedAt) / 1000 * 1000;
+    long roundedDuration = TimeoutUtil.getDurationMillis(createdAt) / 1000 * 1000;
     //noinspection HardCodedStringLiteral
     String text = KeymapUtil.getShortcutText(CANCEL_SHORTCUT) + " to cancel, " +
                   KeymapUtil.getShortcutText(DUMP_SHORTCUT) + " to dump threads (" +

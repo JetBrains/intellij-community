@@ -3,6 +3,7 @@ package com.intellij.openapi.progress.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.*;
@@ -17,6 +18,7 @@ import com.intellij.ui.SystemNotifications;
 import com.intellij.util.io.IOCancellationCallback;
 import com.intellij.util.io.IOCancellationCallbackHolder;
 import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -178,6 +180,21 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
   @Override
   public boolean runInReadActionWithWriteActionPriority(@NotNull Runnable action, @Nullable ProgressIndicator indicator) {
     return ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action, indicator);
+  }
+
+  @ApiStatus.Internal
+  public AccessToken withCheckCanceledHook(@NotNull Runnable runnable) {
+    CheckCanceledHook hook = indicator -> {
+      runnable.run();
+      return true;
+    };
+    addCheckCanceledHook(hook);
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        removeCheckCanceledHook(hook);
+      }
+    };
   }
 
   /**

@@ -7,8 +7,9 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection;
-import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage.Page;
-import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -52,6 +53,7 @@ public final class MappedFileStorageHelper implements Closeable {
    * Keeps a registry of all {@link MappedFileStorageHelper} -- prevents creating duplicates, i.e. >1 storage
    * for the same path.
    */
+  //@GuardedBy(storagesRegistry)
   private static final Map<Path, MappedFileStorageHelper> storagesRegistry = new HashMap<>();
 
   public static @NotNull MappedFileStorageHelper openHelper(@NotNull FSRecordsImpl vfs,
@@ -87,19 +89,21 @@ public final class MappedFileStorageHelper implements Closeable {
         return alreadyExistingHelper;
       }
 
-      return IOUtil.wrapSafely(
-        new MMappedFileStorage(storagePath, DEFAULT_PAGE_SIZE),
-        mappedFileStorage -> {
-          MappedFileStorageHelper storageHelper = new MappedFileStorageHelper(
-            mappedFileStorage,
-            bytesPerRow,
-            recordsStorage::maxAllocatedID,
-            checkFileIdsBelowMax
-          );
-          storagesRegistry.put(storagePath, storageHelper);
-          return storageHelper;
-        }
-      );
+      return MMappedFileStorageFactory.withDefaults()
+        .pageSize(DEFAULT_PAGE_SIZE)
+        .wrapStorageSafely(
+          storagePath,
+          mappedFileStorage -> {
+            MappedFileStorageHelper storageHelper = new MappedFileStorageHelper(
+              mappedFileStorage,
+              bytesPerRow,
+              recordsStorage::maxAllocatedID,
+              checkFileIdsBelowMax
+            );
+            storagesRegistry.put(storagePath, storageHelper);
+            return storageHelper;
+          }
+        );
     }
   }
 

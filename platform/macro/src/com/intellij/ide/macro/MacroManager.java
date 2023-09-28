@@ -100,6 +100,9 @@ public final class MacroManager {
     predefinedMacros.add(macro);
   }
 
+  /**
+   * @return all macros (built-in and provided via {@link Macro} extension point)
+   */
   @NotNull
   public Collection<Macro> getMacros() {
     return ContainerUtil.concat(predefinedMacros, Macro.EP_NAME.getExtensionList());
@@ -139,7 +142,15 @@ public final class MacroManager {
   }
 
   /**
-   * Expands all macros that are found in the {@code str}.
+   * Expands macros in a string.
+   * Macros returning {@code null} from {@link Macro#expand(DataContext)} or {@link Macro#expand(DataContext, String...)}
+   * are replaced with empty strings.
+   *
+   * @param str              string possibly containing macros
+   * @param firstQueueExpand expand only macros that do not implement {@link SecondQueueExpandMacro}
+   * @param dataContext      data context used for macro expansion
+   * @return string with macros expanded
+   * @throws ExecutionCancelledException can be thrown by any macro's expand method to stop expansion
    */
   @Nullable
   public String expandMacrosInString(@Nullable String str, boolean firstQueueExpand, DataContext dataContext)
@@ -147,6 +158,18 @@ public final class MacroManager {
     return expandMacrosInString(str, firstQueueExpand, dataContext, "", false);
   }
 
+  /**
+   * Expands only macros not requiring interaction with a user (not implementing {@link PromptingMacro}).
+   * Macros requiring input from the user or returning {@code null}
+   * from {@link Macro#expand(DataContext)} or {@link Macro#expand(DataContext, String...)}
+   * are replaced with empty strings.
+   *
+   * @param str              string possibly containing macros
+   * @param firstQueueExpand expand only macros that do not implement {@link SecondQueueExpandMacro}
+   * @param dataContext      data context used for macro expansion
+   * @return string with macros expanded
+   * @throws ExecutionCancelledException can be thrown by any macro's expand method to stop expansion
+   */
   @Nullable
   public String expandSilentMacros(@Nullable String str, boolean firstQueueExpand, DataContext dataContext)
     throws ExecutionCancelledException {
@@ -154,13 +177,17 @@ public final class MacroManager {
   }
 
   /**
-   * Expand macros in a string.
-   * @param str string possibly containing macros
-   * @param firstQueueExpand expand only macros that does not implement {@link SecondQueueExpandMacro}
-   * @param dataContext data context used for macro expansion
+   * Expands macros in a string.
+   *
+   * @param str                string possibly containing macros
+   * @param firstQueueExpand   expand only macros that do not implement {@link SecondQueueExpandMacro}
+   * @param dataContext        data context used for macro expansion
    * @param defaultExpandValue if macro is expended to null, {@code defaultExpandValue} will be used instead
-   * @param onlySilent does not expand macros that may require interaction with user; {@code defaultExpandValue} will be used for such macros
-   * @return string with macros expanded or null if some macro is expanded to null and {@code defaultExpandValue} is null
+   * @param onlySilent         does not expand macros that may require interaction with a user;
+   *                           {@code defaultExpandValue} will be used for such macros
+   * @return string with macros expanded or {@code null} if some macro is expanded to {@code null}
+   * and {@code defaultExpandValue} is {@code null}
+   * @throws ExecutionCancelledException can be thrown by any macro's expand method to stop expansion
    */
   @Nullable
   public String expandMacrosInString(@Nullable String str,

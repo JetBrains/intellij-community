@@ -44,10 +44,10 @@ internal fun isCodeVisionEnabled(ignored: Project): Boolean {
 }
 
 internal class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
-  override fun computeLenses(editor: Editor, psiFile: PsiFile): List<Pair<TextRange, CodeVisionEntry>> {
+  override fun computeLenses(editor: Editor, psiFile: PsiFile): List<Pair<TextRange, CodeVisionEntry>>? {
     // we want to let this provider work only in tests dedicated for code vision, otherwise they harm performance
     if (ApplicationManager.getApplication().isUnitTestMode && !CodeVisionHost.isCodeLensTest()) {
-      return emptyList()
+      return null
     }
 
     val project = editor.project ?: return emptyList()

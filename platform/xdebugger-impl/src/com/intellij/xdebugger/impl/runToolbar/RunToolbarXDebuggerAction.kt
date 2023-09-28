@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.runToolbar
 
 import com.intellij.execution.InlineResumeCreator
+import com.intellij.execution.RunWidgetExecutionActionMarker
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.runToolbar.RTBarAction
 import com.intellij.execution.runToolbar.RunToolbarMainSlotState
@@ -10,15 +11,11 @@ import com.intellij.execution.runToolbar.mainState
 import com.intellij.execution.ui.RunWidgetResumeManager
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.actionSystem.*
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 import com.intellij.xdebugger.impl.actions.handlers.*
-import com.intellij.openapi.actionSystem.Presentation
 
 abstract class RunToolbarXDebuggerAction : XDebuggerActionBase(false), RTBarAction {
   override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
@@ -106,7 +103,7 @@ open class ConfigurationXDebuggerResumeAction : XDebuggerResumeAction() {
 }
 
 
-abstract class XDebuggerResumeAction : XDebuggerActionBase(false) {
+abstract class XDebuggerResumeAction : XDebuggerActionBase(false), RunWidgetExecutionActionMarker {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }

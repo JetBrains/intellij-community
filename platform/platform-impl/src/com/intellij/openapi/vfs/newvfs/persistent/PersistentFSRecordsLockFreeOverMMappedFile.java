@@ -3,8 +3,8 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage.Page;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -598,9 +598,8 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   @Override
   public void force() throws IOException {
     if (dirty.compareAndSet(true, false)) {
-      setIntHeaderField(HEADER_RECORDS_ALLOCATED, allocatedRecordsCount());
       setIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET, globalModCount.get());
-      //MAYBE RC: should we do fsync() here, or we could trust OS will flush mmapped pages to disk?
+      //MAYBE RC: should we do fsync() here -- or we could trust OS will flush mmapped pages to disk?
       storage.fsync();
     }
   }

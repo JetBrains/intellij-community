@@ -70,7 +70,8 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ArtifactEntity, modification: ArtifactEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ArtifactEntity,
+                                      modification: ArtifactEntity.Builder.() -> Unit): ArtifactEntity = modifyEntity(
   ArtifactEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -107,7 +108,7 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ArtifactPropertiesEntity,
-                                      modification: ArtifactPropertiesEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: ArtifactPropertiesEntity.Builder.() -> Unit): ArtifactPropertiesEntity = modifyEntity(
   ArtifactPropertiesEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -199,7 +200,7 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: DirectoryPackagingElementEntity,
-                                      modification: DirectoryPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: DirectoryPackagingElementEntity.Builder.() -> Unit): DirectoryPackagingElementEntity = modifyEntity(
   DirectoryPackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -234,7 +235,7 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ArchivePackagingElementEntity,
-                                      modification: ArchivePackagingElementEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: ArchivePackagingElementEntity.Builder.() -> Unit): ArchivePackagingElementEntity = modifyEntity(
   ArchivePackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -265,7 +266,7 @@ interface ArtifactRootElementEntity: CompositePackagingElementEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ArtifactRootElementEntity,
-                                      modification: ArtifactRootElementEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: ArtifactRootElementEntity.Builder.() -> Unit): ArtifactRootElementEntity = modifyEntity(
   ArtifactRootElementEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -297,7 +298,7 @@ interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ArtifactOutputPackagingElementEntity,
-                                      modification: ArtifactOutputPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: ArtifactOutputPackagingElementEntity.Builder.() -> Unit): ArtifactOutputPackagingElementEntity = modifyEntity(
   ArtifactOutputPackagingElementEntity.Builder::class.java, entity, modification)
 
 var ArtifactOutputPackagingElementEntity.Builder.artifactEntity: ArtifactEntity
@@ -335,7 +336,7 @@ interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ModuleOutputPackagingElementEntity,
-                                      modification: ModuleOutputPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: ModuleOutputPackagingElementEntity.Builder.() -> Unit): ModuleOutputPackagingElementEntity = modifyEntity(
   ModuleOutputPackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -367,7 +368,7 @@ interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: LibraryFilesPackagingElementEntity,
-                                      modification: LibraryFilesPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: LibraryFilesPackagingElementEntity.Builder.() -> Unit): LibraryFilesPackagingElementEntity = modifyEntity(
   LibraryFilesPackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -399,7 +400,7 @@ interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ModuleSourcePackagingElementEntity,
-                                      modification: ModuleSourcePackagingElementEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: ModuleSourcePackagingElementEntity.Builder.() -> Unit): ModuleSourcePackagingElementEntity = modifyEntity(
   ModuleSourcePackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -431,7 +432,7 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ModuleTestOutputPackagingElementEntity,
-                                      modification: ModuleTestOutputPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: ModuleTestOutputPackagingElementEntity.Builder.() -> Unit): ModuleTestOutputPackagingElementEntity = modifyEntity(
   ModuleTestOutputPackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -494,7 +495,7 @@ interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementE
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: DirectoryCopyPackagingElementEntity,
-                                      modification: DirectoryCopyPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: DirectoryCopyPackagingElementEntity.Builder.() -> Unit): DirectoryCopyPackagingElementEntity = modifyEntity(
   DirectoryCopyPackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -532,7 +533,7 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ExtractedDirectoryPackagingElementEntity,
-                                      modification: ExtractedDirectoryPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: ExtractedDirectoryPackagingElementEntity.Builder.() -> Unit): ExtractedDirectoryPackagingElementEntity = modifyEntity(
   ExtractedDirectoryPackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -568,7 +569,7 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: FileCopyPackagingElementEntity,
-                                      modification: FileCopyPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: FileCopyPackagingElementEntity.Builder.() -> Unit): FileCopyPackagingElementEntity = modifyEntity(
   FileCopyPackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -609,7 +610,7 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: CustomPackagingElementEntity,
-                                      modification: CustomPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: CustomPackagingElementEntity.Builder.() -> Unit): CustomPackagingElementEntity = modifyEntity(
   CustomPackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -646,6 +647,7 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ArtifactsOrderEntity, modification: ArtifactsOrderEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ArtifactsOrderEntity,
+                                      modification: ArtifactsOrderEntity.Builder.() -> Unit): ArtifactsOrderEntity = modifyEntity(
   ArtifactsOrderEntity.Builder::class.java, entity, modification)
 //endregion

@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // FIR_COMPARISON
 package testdata.kotlin.data
 
@@ -9,4 +8,3 @@ class TestSample() {
 }
 
 // EXIST: kotlin
-// EXIST_K2: kotlin.

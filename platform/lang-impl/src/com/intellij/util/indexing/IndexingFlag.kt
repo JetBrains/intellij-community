@@ -3,20 +3,24 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.impl.VfsData
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.util.application
 import com.intellij.util.asSafely
+import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
 import com.intellij.util.indexing.dependencies.FileIndexingStamp
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
+import com.intellij.util.indexing.impl.perFileVersion.IntFileAttribute
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 /**
- * An object dedicated to manage in memory `isIndexed` file flag.
+ * An object dedicated to manage persistent `isIndexed` file flag.
  */
 @ApiStatus.Internal
 object IndexingFlag {
+  private val persistence = IntFileAttribute.create("indexing.flag", 0, true)
   private val hashes = StripedIndexingStampLock()
 
   @JvmStatic
@@ -24,20 +28,22 @@ object IndexingFlag {
 
   @JvmStatic
   fun cleanupProcessedFlag() {
-    application.service<ProjectIndexingDependenciesService>().invalidateAllStamps()
+    application.service<AppIndexingDependenciesService>().invalidateAllStamps()
   }
 
-  private fun VirtualFile.asApplicable(): VirtualFileSystemEntry? {
-    return asSafely<VirtualFileSystemEntry>()?.let { if (VfsData.isIsIndexedFlagDisabled()) null else it }
+  private fun VirtualFile.asApplicable(): VirtualFileWithId? {
+    return asSafely<VirtualFileWithId>()?.let { if (VfsData.isIsIndexedFlagDisabled()) null else it }
   }
 
   @JvmStatic
   fun cleanProcessedFlagRecursively(file: VirtualFile) {
-    file.asApplicable()?.also { entry ->
-      cleanProcessingFlag(entry)
-      if (entry.isDirectory()) {
-        for (child in entry.cachedChildren) {
-          cleanProcessedFlagRecursively(child)
+    file.asApplicable()?.also { fileWithId ->
+      cleanProcessingFlag(file)
+      if (fileWithId is VirtualFileSystemEntry) {
+        if (fileWithId.isDirectory()) {
+          for (child in fileWithId.cachedChildren) {
+            cleanProcessedFlagRecursively(child)
+          }
         }
       }
     }
@@ -45,38 +51,46 @@ object IndexingFlag {
 
   @JvmStatic
   fun cleanProcessingFlag(file: VirtualFile) {
-    file.asApplicable()?.also { entry ->
-      hashes.releaseHash(entry.id)
-      entry.indexedStamp = ProjectIndexingDependenciesService.NULL_STAMP.toInt()
-    }
+    setFileIndexed(file, ProjectIndexingDependenciesService.NULL_STAMP)
   }
 
   @JvmStatic
   fun setFileIndexed(file: VirtualFile, stamp: FileIndexingStamp) {
-    file.asApplicable()?.also { entry -> entry.indexedStamp = stamp.toInt() }
+    file.asApplicable()?.also { fileWithId ->
+      stamp.store { s ->
+        persistence.writeInt(fileWithId.id, s)
+      }
+    }
   }
 
   @JvmStatic
   fun isFileIndexed(file: VirtualFile, stamp: FileIndexingStamp): Boolean {
-    return file.asApplicable()?.let { entry -> entry.indexedStamp == stamp.toInt() } ?: false
+    return file.asApplicable()?.let { fileWithId ->
+      stamp.isSame(persistence.readInt(fileWithId.id))
+    } ?: false
   }
 
   @JvmStatic
   fun getOrCreateHash(file: VirtualFile): Long {
-    return file.asApplicable()?.let { entry -> hashes.getHash(entry.id) } ?: nonExistentHash
+    return file.asApplicable()?.let { fileWithId -> hashes.getHash(fileWithId.id) } ?: nonExistentHash
   }
 
   @JvmStatic
   fun unlockFile(file: VirtualFile) {
-    file.asApplicable()?.also { entry -> hashes.releaseHash(entry.id) }
+    file.asApplicable()?.also { fileWithId -> hashes.releaseHash(fileWithId.id) }
   }
 
   @JvmStatic
   fun setIndexedIfFileWithSameLock(file: VirtualFile, lockObject: Long, stamp: FileIndexingStamp) {
-    file.asApplicable()?.also { entry ->
-      val hash = hashes.releaseHash(entry.id)
-      if (entry.indexedStamp != stamp.toInt()) {
-        entry.indexedStamp = (if (hash == lockObject) stamp else ProjectIndexingDependenciesService.NULL_STAMP).toInt()
+    file.asApplicable()?.also { fileWithId ->
+      val hash = hashes.releaseHash(fileWithId.id)
+      if (!isFileIndexed(file, stamp)) {
+        if (hash == lockObject) {
+          setFileIndexed(file, stamp)
+        }
+        else {
+          cleanProcessingFlag(file)
+        }
       }
     }
   }

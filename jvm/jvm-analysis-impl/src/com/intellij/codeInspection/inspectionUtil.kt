@@ -7,9 +7,12 @@ import com.intellij.lang.jvm.actions.ChangeModifierRequest
 import com.intellij.lang.jvm.actions.createAddAnnotationActions
 import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.asSafely
 import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.toUElement
 
 fun createAddAnnotationQuickfixes(target: UDeclaration, request: AnnotationRequest): Array<LocalQuickFix> {
@@ -27,4 +30,9 @@ val PsiElement.nonPreviewElement: JvmModifiersOwner? get() {
   // workaround because langElement.originalElement doesn't always work
   val physSourcePsi = PsiTreeUtil.findSameElementInCopy(navigationElement, navigationElement?.containingFile?.originalFile ?: return null)
   return physSourcePsi.toUElement()?.javaPsi?.asSafely<JvmModifiersOwner>()
+}
+
+fun List<UExpression>.toSmartPsiElementPointers() : List<SmartPsiElementPointer<PsiElement>> = this.map {
+  val element = it.sourcePsi ?: return@toSmartPsiElementPointers emptyList()
+  SmartPointerManager.createPointer(element)
 }

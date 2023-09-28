@@ -17,6 +17,10 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeResult.MergeStatus.CONFLICTING
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.api.errors.EmptyCommitException
+import org.eclipse.jgit.dircache.DirCache
+import org.eclipse.jgit.errors.LockFailedException
+import org.eclipse.jgit.events.IndexChangedListener
+import org.eclipse.jgit.internal.storage.file.LockFile
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.lib.Constants.R_HEADS
 import org.eclipse.jgit.revwalk.RevCommit
@@ -73,6 +77,29 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       LOG.info("Initializing new Git repository for Settings Sync at $settingsSyncStorage")
       repository.create()
       addInitialCommit(repository)
+    } else {
+      // ensure directory is unlocked:
+      // IDEA-305967 org.eclipse.jgit.api.errors.JGitInternalException: Cannot lock /home/user/.config/JetBrains/IntelliJIdea2023.1/settingsSync/.git/index
+      val dummyIndexChangedListener = IndexChangedListener {
+        // do nothing
+      }
+      for (i in 1..3) {
+        try {
+          val dirCache = DirCache.lock(repository, dummyIndexChangedListener)
+          dirCache.unlock()
+          break
+        } catch (lfex: LockFailedException) {
+          if (i > 1) {
+            LOG.warn("Repository directory $dotGit cannot be locked. Please remove index.lock manually", lfex)
+          }
+          if (!LockFile.unlock(lfex.file)){
+            LOG.warn("Unable to unlock ${lfex.file}. Will try again")
+          }
+          if (i==3){
+            throw lfex // we weren't able to do this in 3 attempts, give up and throw exception
+          }
+        }
+      }
     }
     if (!repository.headCommitExists()) {
       addInitialCommit(repository)

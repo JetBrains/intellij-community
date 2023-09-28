@@ -74,7 +74,7 @@ private fun calcStats(log: VfsLogImpl): Stats {
             }
             is OperationReadResult.Complete -> {
               stats.operationsCount.incrementAndGet()
-              if (!it.operation.result.hasValue) stats.exceptionResultCount.incrementAndGet()
+              if (!it.operation.result.isSuccess) stats.exceptionResultCount.incrementAndGet()
               stats.tagsCount.compute(it.operation.tag, ::incStat)
               when (val op = it.operation) {
                 is VfsOperation.AttributesOperation.WriteAttribute -> {

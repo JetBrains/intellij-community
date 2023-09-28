@@ -1,12 +1,13 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenDontCheckDependencyInManagementSectionTest : MavenDomTestCase() {
   @Test
-  fun testHighlighting() {
-    importProject(
+  fun testHighlighting() = runBlocking {
+    importProjectAsync(
       """
         <groupId>test</groupId>
         <artifactId>m1</artifactId>

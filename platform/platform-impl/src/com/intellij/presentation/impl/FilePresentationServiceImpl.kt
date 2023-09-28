@@ -13,7 +13,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import java.awt.Color
 
-private class FilePresentationServiceImpl(private val project: Project) : FilePresentationService {
+internal class FilePresentationServiceImpl(private val project: Project) : FilePresentationService {
   @RequiresReadLock
   @RequiresBackgroundThread
   override fun getFileBackgroundColor(file: VirtualFile): Color? {

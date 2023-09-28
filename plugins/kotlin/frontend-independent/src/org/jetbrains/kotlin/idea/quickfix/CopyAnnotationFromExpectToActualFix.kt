@@ -10,13 +10,13 @@ import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtModifierListOwner
 
 internal class CopyAnnotationFromExpectToActualFix(
-    actualDeclaration: KtNamedDeclaration,
+    actualElement: KtModifierListOwner,
     @SafeFieldForPreview private val expectAnnotationEntry: KtAnnotationEntry,
     @SafeFieldForPreview private val annotationClassId: ClassId,
-) : KotlinQuickFixAction<KtNamedDeclaration>(actualDeclaration) {
+) : KotlinQuickFixAction<KtModifierListOwner>(actualElement) {
 
     private val expectAnnotationShortName: String = expectAnnotationEntry.shortName?.toString() ?: "<unknown>"
 
@@ -27,9 +27,9 @@ internal class CopyAnnotationFromExpectToActualFix(
     override fun getFamilyName(): String = text
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val actualDeclaration = element ?: return
+        val actualElement = element ?: return
         val innerText = expectAnnotationEntry.valueArguments.joinToString { it.asElement().text }
-        actualDeclaration.addAnnotation(annotationClassId, innerText.takeIf { it.isNotEmpty() }, searchForExistingEntry = false)
+        actualElement.addAnnotation(annotationClassId, innerText.takeIf { it.isNotEmpty() }, searchForExistingEntry = false)
     }
 }
 

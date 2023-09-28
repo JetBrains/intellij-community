@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -13,17 +14,28 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import java.util.concurrent.Callable
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutorService
 
 /** Abstracts out specific way to run async tasks during VFS initialization */
-internal interface VFSAsyncTaskExecutor {
+interface VFSAsyncTaskExecutor {
   fun <T> async(task: Callable<T>): CompletableFuture<T>
 }
 
 @Service
-internal class ExecuteOnCoroutine(private val coroutineScope: CoroutineScope) : VFSAsyncTaskExecutor {
-  private val dispatcherAndName = CoroutineName("PersistentFsLoader") + Dispatchers.IO
+internal class ExecuteOnCoroutine(coroutineScope: CoroutineScope) : VFSAsyncTaskExecutor {
+  /**
+   * We need tasks to be independent -- i.e. cancellation/fail of one task must not affect others.
+   * This is important because:
+   * a) other implementations behave that way
+   * b) resource management become quite complex with implicit task cancellation
+   */
+  private val supervisorScope = coroutineScope.childScope(
+    context = CoroutineName("PersistentFsLoader") + Dispatchers.IO,
+    supervisor = true //default, but to be explicit -- this is the main reason to create .childScope
+  )
+
   override fun <T> async(task: Callable<T>): CompletableFuture<T> {
-    return coroutineScope.async(dispatcherAndName) {
+    return supervisorScope.async {
       blockingContext {
         task.call()
       }
@@ -31,10 +43,9 @@ internal class ExecuteOnCoroutine(private val coroutineScope: CoroutineScope) : 
   }
 }
 
-internal object ExecuteOnAppThreadPool : VFSAsyncTaskExecutor {
+class ExecuteOnThreadPool(private val pool: ExecutorService) : VFSAsyncTaskExecutor {
   override fun <T> async(task: Callable<T>): CompletableFuture<T> {
     //MAYBE RC: use Dispatchers.IO-kind pool, with many threads (appExecutor has 1 core thread, so needs time to inflate)
-    val pool = AppExecutorUtil.getAppExecutorService()
     return CompletableFuture.supplyAsync(
       { task.call() },
       pool
@@ -71,7 +82,8 @@ internal object PersistentFsConnectorHelper {
       }
     }
     else {
-      return ExecuteOnAppThreadPool
+      val pool = AppExecutorUtil.getAppExecutorService()
+      return ExecuteOnThreadPool(pool)
     }
   }
 }

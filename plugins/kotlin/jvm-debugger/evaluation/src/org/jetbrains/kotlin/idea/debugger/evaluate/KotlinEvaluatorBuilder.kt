@@ -9,7 +9,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.expression.*
-import com.intellij.debugger.engine.jdi.StackFrameProxy
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
@@ -74,6 +73,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.AnalyzingUtils
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.util.*
@@ -194,6 +194,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     }
 
     private fun compileCodeFragment(context: ExecutionContext): CompiledCodeFragmentData {
+        patchCodeFragment(context, codeFragment)
         return if (isK2Plugin()) compiledCodeFragmentDataK2(context) else compiledCodeFragmentDataK1(context)
     }
 
@@ -301,20 +302,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
 
         compilerStrategy.beforeAnalyzingCodeFragment()
-        var analysisResult = analyze(codeFragment, debugProcess)
-        val codeFragmentWasEdited = KotlinCodeFragmentEditor(codeFragment)
-            .withToStringWrapper(analysisResult.bindingContext)
-            .withSuspendFunctionWrapper(
-                analysisResult.bindingContext,
-                context,
-                isCoroutineScopeAvailable(context.frameProxy)
-            )
-            .editCodeFragment()
-
-        if (codeFragmentWasEdited) {
-            // Repeat analysis for edited code fragment
-            analysisResult = analyze(codeFragment, debugProcess)
-        }
+        val analysisResult = analyze(codeFragment, debugProcess)
 
         analysisResult.illegalSuspendFunCallDiagnostic?.let {
             evaluationException(DefaultErrorMessages.render(it))
@@ -329,12 +317,6 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
         return createCompiledDataDescriptor(result)
     }
-
-    private fun isCoroutineScopeAvailable(frameProxy: StackFrameProxy) =
-        if (frameProxy is CoroutineStackFrameProxyImpl)
-            frameProxy.isCoroutineScopeAvailable()
-        else
-            false
 
     private data class ErrorCheckingResult(
         val bindingContext: BindingContext,
@@ -553,7 +535,10 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                     Errors.MISSING_DEPENDENCY_SUPERCLASS,
                     Errors.IR_WITH_UNSTABLE_ABI_COMPILED_CLASS,
                     Errors.FIR_COMPILED_CLASS,
-                    Errors.ILLEGAL_SUSPEND_FUNCTION_CALL
+                    Errors.ILLEGAL_SUSPEND_FUNCTION_CALL,
+                    ErrorsJvm.JAVA_MODULE_DOES_NOT_DEPEND_ON_MODULE,
+                    ErrorsJvm.JAVA_MODULE_DOES_NOT_READ_UNNAMED_MODULE,
+                    ErrorsJvm.JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE
                 )
 
         private val DEFAULT_METHOD_MARKERS = listOf(AsmTypes.OBJECT_TYPE, AsmTypes.DEFAULT_CONSTRUCTOR_MARKER)

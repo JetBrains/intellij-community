@@ -39,6 +39,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.api" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" />
     <orderEntry type="module" module-name="kotlin.code-insight.descriptions" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.editor" />
@@ -52,5 +53,6 @@
     <orderEntry type="module" module-name="kotlin.searching.k2" />
     <orderEntry type="module" module-name="kotlin.highlighting.shared" />
     <orderEntry type="module" module-name="kotlin.highlighting.k2" />
+    <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
   </component>
 </module>

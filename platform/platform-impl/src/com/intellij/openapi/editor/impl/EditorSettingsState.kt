@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentListener
@@ -78,11 +79,14 @@ class EditorSettingsState(private val editor: EditorImpl?,
 
   // These come from CodeStyleSettings.
   var myUseTabCharacter: Boolean by property {
-    val file = getVirtualFile()
-    if (file == null || project == null) {
-      CodeStyle.getProjectOrDefaultSettings(project).getIndentOptions(null).USE_TAB_CHARACTER
-    }
-    else CodeStyle.getIndentOptions(project, file).USE_TAB_CHARACTER
+    ReadAction.compute(ThrowableComputable {
+      val file = getVirtualFile()
+
+      if (file == null || project == null) {
+        CodeStyle.getProjectOrDefaultSettings(project).getIndentOptions(null).USE_TAB_CHARACTER
+      }
+      else CodeStyle.getIndentOptions(project, file).USE_TAB_CHARACTER
+    })
   }
   var myWrapWhenTypingReachesRightMargin: Boolean by property {
     if (editor == null) CodeStyle.getDefaultSettings().isWrapOnTyping(language)

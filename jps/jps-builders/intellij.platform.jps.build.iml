@@ -33,7 +33,7 @@
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="library" name="NanoXML" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="library" name="protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="RUNTIME" />

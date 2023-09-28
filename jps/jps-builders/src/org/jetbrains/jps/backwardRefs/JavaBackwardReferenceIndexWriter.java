@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.openapi.util.ShutDownTracker;
@@ -34,7 +34,7 @@ public final class JavaBackwardReferenceIndexWriter extends CompilerReferenceWri
     super(index);
   }
 
-  public synchronized static void closeIfNeeded(boolean clearIndex) {
+  public static synchronized void closeIfNeeded(boolean clearIndex) {
     if (ourInstance != null) {
       File dir = clearIndex ? ourInstance.myIndex.getIndicesDir() : null;
       try {
@@ -53,7 +53,7 @@ public final class JavaBackwardReferenceIndexWriter extends CompilerReferenceWri
     return ourInstance;
   }
 
-  public static void initialize(@NotNull final CompileContext context) {
+  public static void initialize(final @NotNull CompileContext context) {
     if (ourInstance != null) {
       return;
     }

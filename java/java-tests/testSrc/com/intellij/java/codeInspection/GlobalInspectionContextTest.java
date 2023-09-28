@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.psi.*;
 import com.intellij.testFramework.InspectionsKt;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
@@ -37,7 +38,7 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
   public void setUp() throws Exception {
     super.setUp();
     InspectionProfileImpl.INIT_INSPECTIONS = true;
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
   }
 

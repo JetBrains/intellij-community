@@ -56,7 +56,7 @@ internal object ITNProxy {
   private const val NEW_THREAD_VIEW_URL = "https://jb-web.exa.aws.intellij.net/report/"
 
   private val TEMPLATE: Map<String, String?> by lazy {
-    val template: MutableMap<String, String?> = LinkedHashMap()
+    val template = LinkedHashMap<String, String?>()
     template["protocol.version"] = "1.1"
     template["os.name"] = SystemInfo.OS_NAME
     template["java.version"] = SystemInfo.JAVA_VERSION
@@ -148,8 +148,8 @@ internal object ITNProxy {
     if (response.startsWith("message ")) {
       throw InternalEAPException(response.substring(8))
     }
-    return try {
-      response.trim { it <= ' ' }.toInt()
+    try {
+      return response.trim().toInt()
     }
     catch (ex: NumberFormatException) {
       throw InternalEAPException(DiagnosticBundle.message("error.itn.returns.wrong.data"))

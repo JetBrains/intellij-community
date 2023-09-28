@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.stubs.StubTreeBuilder
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.application
-import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
+import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
 import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.roots.IndexableFilesIterator
@@ -42,11 +42,10 @@ class RescanIndexesAction : RecoveryAction {
       predefinedIndexableFilesIterators = recoveryScope.files.map { ProjectIndexableFilesIteratorImpl(it) }
       if (predefinedIndexableFilesIterators.isEmpty()) return emptyList()
     }
-    val rescan = application.service<ProjectIndexingDependenciesService>().invalidateAllStamps()
+    application.service<AppIndexingDependenciesService>().invalidateAllStamps()
     object : UnindexedFilesScanner(project, false, false,
                                    predefinedIndexableFilesIterators, null, "Rescanning indexes recovery action",
-                                   if(predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED,
-                                   rescan) {
+                                   if(predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED) {
       private val stubIndex =
         runCatching { (FileBasedIndex.getInstance() as FileBasedIndexImpl).getIndex(StubUpdatingIndex.INDEX_ID) }
         .onFailure { logger<RescanIndexesAction>().error(it) }.getOrNull()
@@ -91,7 +90,7 @@ class RescanIndexesAction : RecoveryAction {
 
       override fun tryMergeWith(taskFromQueue: FilesScanningTask): UnindexedFilesScanner? =
         if (taskFromQueue.javaClass == javaClass) this else null
-    }.queue(project)
+    }.queue()
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(historyFuture).extractConsistencyProblems() +
              stubAndIndexingStampInconsistencies

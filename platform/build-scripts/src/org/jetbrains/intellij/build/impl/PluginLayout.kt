@@ -59,6 +59,9 @@ class PluginLayout private constructor(val mainModule: String,
     private set
 
   var scrambleClasspathFilter: (BuildContext, Path) -> Boolean = { _, _ -> true }
+  
+  var allowUsingScrambledPlatformClasses: Boolean = false
+    private set
 
   /**
    * See [org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec.zkmScriptStub]
@@ -346,6 +349,16 @@ class PluginLayout private constructor(val mainModule: String,
      */
     fun scrambleClasspathPlugin(pluginName: String, relativePath: String = "lib") {
       layout.scrambleClasspathPlugins = layout.scrambleClasspathPlugins.add(Pair(pluginName, relativePath))
+    }
+
+    /**
+     * Call this method to allow code from the plugin to refer to internal license-related classes from the platform. 
+     * Code which uses such classes must be scrambled in the plugin as well by calling [scramble] for corresponding JAR files.
+     * If this option is enabled, [ZKM script][zkmScriptStub] must include `__CHANGE-LOG-FILE-IN__` placeholder in `obfuscate` call.
+     */
+    @Internal
+    fun allowUsingScrambledPlatformClasses() {
+      layout.allowUsingScrambledPlatformClasses = true
     }
 
     /**

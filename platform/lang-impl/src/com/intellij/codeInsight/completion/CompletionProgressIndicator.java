@@ -53,11 +53,13 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.TestModeFlags;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -127,6 +129,12 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   private final EmptyCompletionNotifier myEmptyCompletionNotifier;
 
+  /**
+   * Unfreeze immediately after N-th item is added to the lookup.
+   * -1 means this functionality is disabled.
+   */
+  private volatile int myUnfreezeAfterNItems = -1;
+
   CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount,
                               CodeCompletionHandlerBase handler, @NotNull OffsetMap offsetMap, @NotNull OffsetsInFile hostOffsets,
                               boolean hasModifiers, @NotNull LookupImpl lookup) {
@@ -162,7 +170,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
     myQueue = new MergingUpdateQueue("completion lookup progress", ourShowPopupAfterFirstItemGroupingTime, true, myEditor.getContentComponent());
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (hasModifiers && !ApplicationManager.getApplication().isUnitTestMode()) {
       trackModifiers();
@@ -370,7 +378,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   private void updateLookup() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (isOutdated() || !shouldShowLookup()) return;
 
     while (true) {
@@ -467,11 +475,31 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     //noinspection NonAtomicOperationOnVolatileField
     myCount++; // invoked from a single thread
 
-    if (myCount == 1) {
+    if (myCount == myUnfreezeAfterNItems) {
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(myFreezeSemaphore::up, 0, TimeUnit.MILLISECONDS);
+    }
+    else if (myCount == 1) {
       AppExecutorUtil.getAppScheduledExecutorService().schedule(myFreezeSemaphore::up, ourInsertSingleItemTimeSpan, TimeUnit.MILLISECONDS);
     }
     myQueue.queue(myUpdate);
   }
+
+  /**
+   * In certain cases we add the first batch of items almost at once and want to show lookup directly after they are added.
+   * It makes sense to set this number when you get all your items from one contributor, and you have full control over the completion
+   * process. So you can, for example, set this number in the beginning of `addCompletions()` in your completion provider and reset it
+   * when the completion is over.
+   * Example: Completion provider receives first 100 items at once after significant delay (200+ ms) and adds them all together. If you
+   * don't set this value, and you continue adding results in your completion provider (for example you get your next batch of results in
+   * 500ms) the popup might be shown with significant delay.
+   *
+   * @param number The Number of items in lookup which trigger the popup. -1 means this functionality is disabled. Also specifying 0 makes
+   *               no sense since we can't add 0 items.
+   */
+  public void unfreezeImmediatelyAfterFirstNItems(int number) {
+    myUnfreezeAfterNItems = number;
+  }
+
 
   void addDelayedMiddleMatches() {
     ArrayList<CompletionResult> delayed;
@@ -505,7 +533,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   private void finishCompletionProcess(boolean disposeOffsetMap) {
     cancel();
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Disposer.dispose(myQueue);
     LookupManager.getInstance(getProject()).removePropertyChangeListener(myLookupManagerListener);
 
@@ -747,7 +775,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   @Override
   public void scheduleRestart() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myHandler.isTestingMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       closeAndFinish(false);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -818,7 +846,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     LightweightHint[] result = {null};
     EditorHintListener listener = new EditorHintListener() {
       @Override
-      public void hintShown(Project project, @NotNull LightweightHint hint, int flags) {
+      public void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
         result[0] = hint;
       }
     };

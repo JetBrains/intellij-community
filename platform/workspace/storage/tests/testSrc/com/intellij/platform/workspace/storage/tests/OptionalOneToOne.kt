@@ -5,6 +5,7 @@ import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.OptionalOneToOneChildEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.OptionalOneToOneParentEntity
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull

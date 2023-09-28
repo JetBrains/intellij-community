@@ -16,6 +16,23 @@ import kotlin.coroutines.EmptyCoroutineContext
 /**
  * See [Span](https://opentelemetry.io/docs/reference/specification),
  * [Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/#create-spans-with-events).
+ *
+ * Commonly used entry point to work with OpenTelemetry. Configures and initializes OpenTelemetry instances.
+ *
+ * Using tracer example:
+ * ```
+ * val myTracer = TelemetryManager.getInstance().getTracer(VcsScopeKt.VcsScope)
+ * val span = myTracer.spanBuilder("my.span").startSpan()
+ * ... code you want to trace ...
+ * span.end()
+ * ```
+ *
+ * Using meter example:
+ * ```
+ * val jvmMeter = TelemetryManager.getMeter(JVM)
+ * val threadCountGauge = jvmMeter.gaugeBuilder("JVM.threadCount").ofLongs().buildObserver()
+ * jvmMeter.batchCallback( { threadCountGauge.record(threadMXBean.threadCount.toLong()) }, threadCountGauge)
+ * ```
  */
 @Experimental
 @Internal

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.delay
 import java.time.Duration
 
@@ -12,6 +13,7 @@ inline fun <reified T> Any?.requireIs(): T {
 }
 
 /** See [pollAssertionsAsync]. */
+@RequiresBlockingContext
 fun pollAssertions(total: Duration, interval: Duration, action: () -> Unit) {
   val loopStartedAt = System.nanoTime()
   while (true) {

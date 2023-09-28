@@ -17,24 +17,25 @@ import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class TestModulePropertiesEntityImpl(val dataSource: TestModulePropertiesEntityData) : TestModulePropertiesEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class TestModulePropertiesEntityImpl(private val dataSource: TestModulePropertiesEntityData) : TestModulePropertiesEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, TestModulePropertiesEntity::class.java,
                                                                           ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
     )
 
@@ -52,6 +53,7 @@ open class TestModulePropertiesEntityImpl(val dataSource: TestModulePropertiesEn
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: TestModulePropertiesEntityData?) : ModifiableWorkspaceEntityBase<TestModulePropertiesEntity, TestModulePropertiesEntityData>(
     result), TestModulePropertiesEntity.Builder {
@@ -81,7 +83,7 @@ open class TestModulePropertiesEntityImpl(val dataSource: TestModulePropertiesEn
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -174,7 +176,7 @@ open class TestModulePropertiesEntityImpl(val dataSource: TestModulePropertiesEn
 class TestModulePropertiesEntityData : WorkspaceEntityData<TestModulePropertiesEntity>(), SoftLinkable {
   lateinit var productionModuleId: ModuleId
 
-  fun isProductionModuleIdInitialized(): Boolean = ::productionModuleId.isInitialized
+  internal fun isProductionModuleIdInitialized(): Boolean = ::productionModuleId.isInitialized
 
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
@@ -230,6 +232,11 @@ class TestModulePropertiesEntityData : WorkspaceEntityData<TestModulePropertiesE
     }
   }
 
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntity") as EntityMetadata
+  }
+
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return TestModulePropertiesEntity::class.java
   }
@@ -283,10 +290,5 @@ class TestModulePropertiesEntityData : WorkspaceEntityData<TestModulePropertiesE
     var result = javaClass.hashCode()
     result = 31 * result + productionModuleId.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(ModuleId::class.java)
-    collector.sameForAllEntities = true
   }
 }

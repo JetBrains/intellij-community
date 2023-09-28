@@ -307,7 +307,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     TerminalTextBuffer buffer = terminalPanel.getTerminalTextBuffer();
     buffer.lock();
     try {
-      Pair<Point, Point> points = selection.pointsForRun(terminalPanel.getColumnCount());
+      Pair<Point, Point> points = selection.pointsForRun(buffer.getWidth());
       return SelectionUtil.getSelectionText(points.first, points.second, buffer);
     }
     finally {
@@ -329,8 +329,8 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     try {
       TerminalSelection selection = new TerminalSelection(
         new Point(0, -buffer.getHistoryLinesCount()),
-        new Point(terminalPanel.getColumnCount(), buffer.getScreenLinesCount() - 1));
-      Pair<Point, Point> points = selection.pointsForRun(terminalPanel.getColumnCount());
+        new Point(buffer.getWidth(), buffer.getScreenLinesCount() - 1));
+      Pair<Point, Point> points = selection.pointsForRun(buffer.getWidth());
       return SelectionUtil.getSelectionText(points.first, points.second, buffer);
     }
     finally {

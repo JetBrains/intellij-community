@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.EntryArrayStorage.EntryExternalizer
 import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
-import java.nio.channels.FileChannel
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.*
 import java.util.*
@@ -264,24 +263,18 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
           else Block(it)
         })
       )
-      newState.blocks.forEach {
+      newState.blocks.forEach { block ->
         checkCancelled()
-        with(it) {
-          if (descriptor.blockId > fromState.lastAllocatedBlockId) {
-            if (entryExternalizer is EntryArrayStorage.ConstSizeEntryExternalizer &&
-                descriptor.entryIdBegin < fromState.size &&
-                descriptor.entryRange == fromState.findResponsibleBlock(descriptor.entryIdBegin).descriptor.entryRange) {
-              val previousBlock = fromState.findResponsibleBlock(descriptor.entryIdBegin)
-              previousBlock.descriptor.blockPath.copyTo(descriptor.blockPath, overwrite = true)
-              fileChannel.access {
-                updateModifiedConstSizeEntries(updatedEntryIds, getUpdatedEntry)
-              }
-            }
-            else {
-              fileChannel.access {
-                writeBlock { entryId -> if (entryId in updatedEntryIds) getUpdatedEntry(entryId) else fromState.getEntry(entryId) }
-              }
-            }
+        if (block.descriptor.blockId > fromState.lastAllocatedBlockId) {
+          if (entryExternalizer is EntryArrayStorage.ConstSizeEntryExternalizer &&
+              block.descriptor.entryIdBegin < fromState.size &&
+              block.descriptor.entryRange == fromState.findResponsibleBlock(block.descriptor.entryIdBegin).descriptor.entryRange) {
+            val previousBlock = fromState.findResponsibleBlock(block.descriptor.entryIdBegin)
+            previousBlock.descriptor.blockPath.copyTo(block.descriptor.blockPath, overwrite = true)
+            block.rewriteModifiedConstSizeEntries(updatedEntryIds, getUpdatedEntry)
+          }
+          else {
+            block.writeBlock { entryId -> if (entryId in updatedEntryIds) getUpdatedEntry(entryId) else fromState.getEntry(entryId) }
           }
         }
       }
@@ -341,9 +334,7 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
       val block = findResponsibleBlock(entryId)
       val offset = block.getEntryOffset(entryId)
       return block.fileChannel.access {
-        with(entryExternalizer) {
-          asStorageIO().offsetView(offset.toLong()).deserialize()
-        }
+        entryExternalizer.deserialize(asStorageIO().offsetView(offset))
       }
     }
 
@@ -376,9 +367,7 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
         var currentOffset = 0L
         for (localId in 0 until descriptor.entryCount) {
           offsets[localId] = currentOffset
-          val entrySize = with(entryExternalizer) {
-            io.offsetView(currentOffset).getEntrySize()
-          }
+          val entrySize = entryExternalizer.getEntrySize(io.offsetView(currentOffset))
           check(entrySize > 0) { "entry can't be of 0 size" }
           currentOffset += entrySize
         }
@@ -390,40 +379,40 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
       }
     }
 
-    internal fun FileChannel.writeBlock(getEntry: (entryId: Int) -> Entry) {
-      val io = asStorageIO()
-      var currentOffset = 0L
-      for (entryId in descriptor.entryRange) {
-        with(entryExternalizer) {
+    internal fun writeBlock(getEntry: (entryId: Int) -> Entry) {
+      fileChannel.access {
+        val io = asStorageIO()
+        var currentOffset = 0L
+        for (entryId in descriptor.entryRange) {
           val entry = getEntry(entryId)
-          io.offsetView(currentOffset).serialize(entry)
-          currentOffset += getEntrySize(entry)
+          entryExternalizer.serialize(io.offsetView(currentOffset), entry)
+          currentOffset += entryExternalizer.getEntrySize(entry)
         }
+        check(currentOffset == descriptor.blockSizeBytes) { "Failed to write block $descriptor: only $currentOffset bytes were written" }
+        force(false)
       }
-      check(currentOffset == descriptor.blockSizeBytes) { "Failed to write block $descriptor: only $currentOffset bytes were written" }
-      force(false)
     }
 
-    internal fun FileChannel.updateModifiedConstSizeEntries(updatedIds: Set<Int>, getUpdatedEntry: (Int) -> Entry) {
-      entryExternalizer as EntryArrayStorage.ConstSizeEntryExternalizer
-      val io = asStorageIO()
-      with(entryExternalizer) {
+    internal fun rewriteModifiedConstSizeEntries(updatedIds: Set<Int>, getUpdatedEntry: (Int) -> Entry) {
+      fileChannel.access {
+        entryExternalizer as EntryArrayStorage.ConstSizeEntryExternalizer
+        val io = asStorageIO()
         if (updatedIds.size < descriptor.entryCount) {
           updatedIds.forEach { entryId ->
             if (entryId in descriptor.entryRange) {
-              io.offsetView(getEntryOffset(entryId)).serialize(getUpdatedEntry(entryId))
+              entryExternalizer.serialize(io.offsetView(getEntryOffset(entryId)), getUpdatedEntry(entryId))
             }
           }
         }
         else {
           for (entryId in descriptor.entryRange) {
             if (entryId in updatedIds) {
-              io.offsetView(getEntryOffset(entryId).toLong()).serialize(getUpdatedEntry(entryId))
+              entryExternalizer.serialize(io.offsetView(getEntryOffset(entryId)), getUpdatedEntry(entryId))
             }
           }
         }
+        force(false)
       }
-      force(false)
     }
 
     override fun getEntryOffset(entryId: Int): Long = index.getEntryOffset(entryId)
@@ -451,9 +440,9 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
     internal object BlockDescriptorExternalizer : EntryArrayStorage.ConstSizeEntryExternalizer<BlockDescriptor> {
       override val entrySize: Long = 3L * Int.SIZE_BYTES + Long.SIZE_BYTES
 
-      override fun RandomAccessReadBuffer.deserialize(): BlockDescriptor {
+      override fun deserialize(readBuffer: RandomAccessReadBuffer): BlockDescriptor {
         val bin = ByteArray(entrySize.toInt())
-        read(0, bin)
+        readBuffer.read(0, bin)
         val buf = ByteBuffer.wrap(bin)
         val blockId = buf.getInt()
         val entryIdBegin = buf.getInt()
@@ -462,14 +451,15 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
         return BlockDescriptor(blockId, entryIdBegin, entryIdEnd, blockSizeBytes)
       }
 
-      override fun RandomAccessWriteBuffer.serialize(entry: BlockDescriptor) {
-        val bin = ByteArray(entrySize.toInt())
+      override fun serialize(writeBuffer: RandomAccessWriteBuffer,
+                             entry: BlockDescriptor) {
+        val bin = ByteArray(this@BlockDescriptorExternalizer.entrySize.toInt())
         val buf = ByteBuffer.wrap(bin)
         buf.putInt(entry.blockId)
         buf.putInt(entry.entryIdBegin)
         buf.putInt(entry.entryIdEnd)
         buf.putLong(entry.blockSizeBytes)
-        write(0, bin)
+        writeBuffer.write(0, bin)
       }
     }
 
@@ -480,40 +470,34 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
       override fun getEntrySize(entry: AutoSizeAdjustingBlockEntryArrayStorage<E>.State): Long =
         3L * Int.SIZE_BYTES + entry.blocks.size * BlockDescriptorExternalizer.entrySize
 
-      override fun RandomAccessReadBuffer.getEntrySize(): Long {
+      override fun getEntrySize(readBuffer: RandomAccessReadBuffer): Long {
         val intBuf = ByteArray(Int.SIZE_BYTES)
-        read(2 * Int.SIZE_BYTES.toLong(), intBuf)
+        readBuffer.read(2 * Int.SIZE_BYTES.toLong(), intBuf)
         val blocksCount = ByteBuffer.wrap(intBuf).getInt()
         return 3L * Int.SIZE_BYTES + blocksCount * BlockDescriptorExternalizer.entrySize
       }
 
-      override fun RandomAccessReadBuffer.deserialize(): AutoSizeAdjustingBlockEntryArrayStorage<E>.State {
+      override fun deserialize(readBuffer: RandomAccessReadBuffer): AutoSizeAdjustingBlockEntryArrayStorage<E>.State {
         val intArr = ByteArray(3 * Int.SIZE_BYTES)
-        read(0L, intArr)
+        readBuffer.read(0L, intArr)
         val (size, lastAllocatedBlockId, blocksCount) = ByteBuffer.wrap(intArr).run { Triple(getInt(), getInt(), getInt()) }
-        offsetView(3L * Int.SIZE_BYTES).run {
-          val blocks = ArrayList<AutoSizeAdjustingBlockEntryArrayStorage<E>.Block>(blocksCount)
-          repeat(blocksCount) {
-            with(BlockDescriptorExternalizer) {
-              val descriptor = offsetView(it.toLong() * entrySize).deserialize()
-              blocks.add(owningStorage.Block(descriptor))
-            }
-          }
-          return owningStorage.State(size, lastAllocatedBlockId, blocks)
+        val dataView = readBuffer.offsetView(3L * Int.SIZE_BYTES)
+        val blocks = ArrayList<AutoSizeAdjustingBlockEntryArrayStorage<E>.Block>(blocksCount)
+        repeat(blocksCount) {
+          val descriptor = BlockDescriptorExternalizer.deserialize(dataView.offsetView(it.toLong() * BlockDescriptorExternalizer.entrySize))
+          blocks.add(owningStorage.Block(descriptor))
         }
+        return owningStorage.State(size, lastAllocatedBlockId, blocks)
       }
 
-      override fun RandomAccessWriteBuffer.serialize(entry: AutoSizeAdjustingBlockEntryArrayStorage<E>.State) {
+      override fun serialize(writeBuffer: RandomAccessWriteBuffer,
+                             entry: AutoSizeAdjustingBlockEntryArrayStorage<E>.State) {
         val intArr = ByteArray(3 * Int.SIZE_BYTES)
         ByteBuffer.wrap(intArr).putInt(entry.size).putInt(entry.lastAllocatedBlockId).putInt(entry.blocks.size)
-        write(0, intArr)
-        offsetView(3L * Int.SIZE_BYTES).run {
-          with(BlockDescriptorExternalizer) {
-            entry.blocks.forEachIndexed { index, block ->
-              offsetView(index * entrySize.toLong())
-                .serialize(block.descriptor)
-            }
-          }
+        writeBuffer.write(0, intArr)
+        val dataView = writeBuffer.offsetView(3L * Int.SIZE_BYTES)
+        entry.blocks.forEachIndexed { index, block ->
+          BlockDescriptorExternalizer.serialize(dataView.offsetView(index * BlockDescriptorExternalizer.entrySize), block.descriptor)
         }
       }
     }

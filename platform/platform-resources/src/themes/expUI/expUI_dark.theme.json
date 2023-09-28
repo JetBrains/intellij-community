@@ -913,7 +913,9 @@
           }
         }
       }
-    }
+    },
+
+    "DataSummary.Chart.background": "Blue6"
   },
 
   "icons": {

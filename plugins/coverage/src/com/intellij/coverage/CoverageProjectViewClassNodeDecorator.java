@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
+import com.intellij.coverage.analysis.JavaCoverageAnnotator;
+import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
@@ -29,11 +31,11 @@ final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjec
 
     final Object value = node.getValue();
     PsiElement element = null;
-    if (value instanceof PsiElement) {
-      element = (PsiElement)value;
+    if (value instanceof PsiElement psiElement) {
+      element = psiElement;
     }
-    else if (value instanceof SmartPsiElementPointer) {
-      element = ((SmartPsiElementPointer<?>)value).getElement();
+    else if (value instanceof SmartPsiElementPointer<?> smartPointer) {
+      element = smartPointer.getElement();
     }
     else if (value instanceof PackageElement packageElement) {
       final String coverageString = javaCovAnnotator.getPackageCoverageInformationString(packageElement.getPackage(),
@@ -52,11 +54,11 @@ final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjec
         }
       }
     }
-    else if (element instanceof PsiNamedElement &&
+    else if (element instanceof PsiNamedElement namedElement &&
              // handled in CoverageProjectViewDirectoryNodeDecorator
              !(element instanceof PsiFile || element instanceof PsiDirectory)) {
       for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
-        final PackageAnnotator.ClassCoverageInfo info = extension.getSummaryCoverageInfo(javaCovAnnotator, (PsiNamedElement)element);
+        final PackageAnnotator.ClassCoverageInfo info = extension.getSummaryCoverageInfo(javaCovAnnotator, namedElement);
         if (info != null) {
           data.setLocationString(JavaCoverageAnnotator.getClassCoverageInformationString(info, coverageDataManager));
           break;

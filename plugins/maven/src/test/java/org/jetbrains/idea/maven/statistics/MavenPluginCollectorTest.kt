@@ -5,13 +5,14 @@ import com.intellij.internal.statistic.FUCollectorTestCase.collectProjectStateCo
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.maven.testFramework.MavenImportingTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPluginCollectorTest : MavenImportingTestCase() {
 
   @Test
-  fun `test should collect info about plugins`() {
-    importProject("""
+  fun `test should collect info about plugins`() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -40,8 +41,8 @@ class MavenPluginCollectorTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun `test should not collect info for private plugins`() {
-    importProject("""
+  fun `test should not collect info for private plugins`() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -73,7 +74,7 @@ class MavenPluginCollectorTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun `test check whitelist plugin Rule`() {
+  fun `test check whitelist plugin Rule`() = runBlocking {
     val rule = MavenPluginCoordinatesWhitelistValidationRule()
     assertEquals(ValidationResultType.ACCEPTED,
                  rule.validate("org.apache.maven.plugins:maven-eclipse-plugin", EventContext.create("", emptyMap())))

@@ -97,12 +97,6 @@ public abstract class ActionGroup extends AnAction {
     return getTemplatePresentation().isPopupGroup();
   }
 
-  /** @deprecated Use {@link Presentation#setPopupGroup(boolean)} instead. */
-  @Deprecated(forRemoval = true)
-  public boolean isPopup(@NotNull String place) {
-    return isPopup();
-  }
-
   /**
    * Sets the default value of the popup flag for the group.
    * A popup group is shown as a popup in menus.

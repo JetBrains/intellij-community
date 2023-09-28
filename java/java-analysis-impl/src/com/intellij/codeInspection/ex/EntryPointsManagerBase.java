@@ -91,7 +91,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
 
   public static EntryPointsManagerBase getInstance(Project project) {
-    return (EntryPointsManagerBase)project.getService(EntryPointsManager.class);
+    return (EntryPointsManagerBase)EntryPointsManager.getInstance(project);
   }
 
   @Override
@@ -512,15 +512,10 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
            MetaAnnotationUtil.isMetaAnnotated(owner, defaultAdditionalAnnotations);
   }
 
-  private static boolean isAcceptedByPattern(@NotNull PsiClass element, @Nullable String qualifiedName, @NotNull ClassPattern pattern, @NotNull Set<? super PsiClass> visited) {
-    if (qualifiedName == null) {
-      return false;
-    }
-
+  private static boolean isAcceptedByPattern(@NotNull PsiClass element, @NotNull String qualifiedName, @NotNull ClassPattern pattern, @NotNull Set<? super PsiClass> visited) {
     if (qualifiedName.equals(pattern.pattern)) {
       return true;
     }
-
     Pattern regexp = pattern.getRegexp();
     if (regexp != null) {
       try {
@@ -534,7 +529,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     if (pattern.hierarchically) {
       for (PsiClass superClass : element.getSupers()) {
         String superClassQualifiedName = superClass.getQualifiedName();
-        if (visited.add(superClass) && isAcceptedByPattern(superClass, superClassQualifiedName, pattern, visited)) {
+        if (visited.add(superClass) && superClassQualifiedName != null && isAcceptedByPattern(superClass, superClassQualifiedName, pattern, visited)) {
           return true;
         }
       }

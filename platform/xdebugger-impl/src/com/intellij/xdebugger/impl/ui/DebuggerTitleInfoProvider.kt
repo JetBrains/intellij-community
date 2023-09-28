@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.TitleInfoProvider
 import com.intellij.openapi.wm.impl.simpleTitleParts.RegistryOption
 import com.intellij.openapi.wm.impl.simpleTitleParts.SimpleTitleInfoProvider
-import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
 import com.intellij.xdebugger.*
 import javax.swing.SwingUtilities
@@ -66,7 +66,7 @@ private class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption
 
     fun checkState(provider: DebuggerTitleInfoProvider) {
       fun action() {
-        application.assertIsDispatchThread()
+        ThreadingAssertions.assertEventDispatchThread()
         debuggerSessionStarted = XDebuggerManager.getInstance(project)?.let {
           provider.isEnabled() && it.debugSessions.isNotEmpty()
         } ?: false
@@ -89,7 +89,7 @@ private class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption
 
       project.messageBus.connect(disposable).subscribe(XDebuggerManager.TOPIC, object : XDebuggerManagerListener {
         override fun processStarted(debugProcess: XDebugProcess) {
-          application.assertIsDispatchThread()
+          ThreadingAssertions.assertEventDispatchThread()
           debuggerSessionStarted = true
 
           debugProcess.session.addSessionListener(object : XDebugSessionListener {

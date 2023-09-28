@@ -1,22 +1,20 @@
 package com.intellij.turboComplete
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.completion.ml.common.CurrentProjectInfo
 import com.intellij.completion.ml.experiment.ExperimentStatus
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ml.impl.turboComplete.KindCollector
+import com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorExecutorProvider
 
 data class CompletionPerformanceParameters(
-  val enabled: Boolean,
   val showLookupEarly: Boolean,
   val fixedGeneratorsOrder: Boolean,
 ) {
   companion object {
-    private fun parametrizeNoPerformance() = CompletionPerformanceParameters(false, false, false)
+    const val PROPERTY_SHOW_LOOKUP_EARLY = "ml.completion.performance.showLookupEarly"
+    const val PROPERTY_EXECUTE_IMMEDIATELY = "ml.completion.performance.executeImmediately"
 
-    private fun parametrizeForUnitTesting() = CompletionPerformanceParameters(true, false, false)
-
-    private val isTeamCity = System.getenv("TEAMCITY_VERSION") != null
+    private fun parametrizeNoPerformance() = CompletionPerformanceParameters(false, true)
 
     private enum class Experiment(val number: Int) {
       PERFORMANCE_LOOKUP_RANKING(17),
@@ -30,16 +28,27 @@ data class CompletionPerformanceParameters(
       }
     }
 
+    private fun systemParameters(): CompletionPerformanceParameters? {
+      fun property(name: String): Boolean? = System.getProperty(name)?.toBoolean()
+
+      val nullableShowLookupEarly = property(PROPERTY_SHOW_LOOKUP_EARLY)
+      val nullableExecuteImmediately = property(PROPERTY_EXECUTE_IMMEDIATELY)
+
+      if (nullableShowLookupEarly == null && nullableExecuteImmediately == null) {
+        return null
+      }
+
+      return CompletionPerformanceParameters(nullableShowLookupEarly ?: false, nullableExecuteImmediately ?: false)
+    }
+
     private fun registryParameters(): CompletionPerformanceParameters? {
       if (Registry.`is`("ml.completion.performance.experiment")) return null
 
-      val enablePerformance = Registry.`is`("ml.completion.performance.enable")
       val showLookupEarly = Registry.`is`("ml.completion.performance.showLookupEarly")
       val executeImmediately = Registry.`is`("ml.completion.performance.executeImmediately")
 
       return CompletionPerformanceParameters(
-        enablePerformance,
-        enablePerformance && showLookupEarly,
+        showLookupEarly,
         executeImmediately,
       )
     }
@@ -51,28 +60,36 @@ data class CompletionPerformanceParameters(
       }
 
       return when (Experiment.fromVersion(status.version)) {
-        Experiment.PERFORMANCE_LOOKUP_RANKING, Experiment.PERFORMANCE_LOOKUP -> CompletionPerformanceParameters(true, true, false)
-        Experiment.ONLY_PERFORMANCE -> CompletionPerformanceParameters(true, false, false)
+        Experiment.PERFORMANCE_LOOKUP_RANKING, Experiment.PERFORMANCE_LOOKUP -> CompletionPerformanceParameters(true, false)
+        Experiment.ONLY_PERFORMANCE -> CompletionPerformanceParameters(false, false)
         else -> parametrizeNoPerformance()
       }
     }
 
+    private fun unitTestingParameters(parameters: CompletionParameters): CompletionPerformanceParameters? = if (parameters.isTestingMode) {
+      CompletionPerformanceParameters(false, true)
+    } else {
+      null
+    }
+
     private fun canEnablePerformance(parameters: CompletionParameters): Boolean {
-      val hasKindExecutorProvider = { SuggestionGeneratorExecutorProvider.hasAnyToCall(parameters) }
-      val hasAtLeastOneGenerator = { KindCollector.forParameters(parameters).any() }
-      return hasKindExecutorProvider() && hasAtLeastOneGenerator()
+      val project = parameters.editor.project ?: return false
+      if (DumbService.isDumb(project)) {
+        return false
+      }
+      val hasKindExecutorProvider = SuggestionGeneratorExecutorProvider.hasAnyToCall(parameters)
+      return hasKindExecutorProvider
     }
 
     fun fromCompletionPreferences(parameters: CompletionParameters): CompletionPerformanceParameters {
-      if (isTeamCity || !canEnablePerformance(parameters)) {
+      if (!canEnablePerformance(parameters)) {
         return parametrizeNoPerformance()
       }
 
-      if (parameters.isTestingMode) {
-        return parametrizeForUnitTesting()
-      }
-
-      return registryParameters() ?: experimentParameters(parameters)
+      return systemParameters()
+             ?: unitTestingParameters(parameters)
+             ?: registryParameters()
+             ?: experimentParameters(parameters)
     }
   }
 }

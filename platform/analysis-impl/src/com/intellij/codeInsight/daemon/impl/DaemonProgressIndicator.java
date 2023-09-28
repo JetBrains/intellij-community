@@ -37,11 +37,15 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   @Override
   public final void stop() {
+    boolean cancelled = false;
     synchronized (getLock()) {
       super.stop();
       if (tryCancel()) {
-        onStop();
+        cancelled = true;
       }
+    }
+    if (cancelled) {
+      onStop();
     }
   }
 

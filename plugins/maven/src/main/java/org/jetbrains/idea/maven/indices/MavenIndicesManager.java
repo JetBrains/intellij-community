@@ -23,7 +23,9 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
-import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.server.MavenServerConnector;
+import org.jetbrains.idea.maven.server.MavenServerDownloadListener;
+import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
@@ -57,7 +59,6 @@ public final class MavenIndicesManager implements Disposable {
   private final @NotNull MavenIndices myMavenIndices;
 
   private final MavenIndexServerDownloadListener myDownloadListener = new MavenIndexServerDownloadListener(this);
-  private final MavenIndexerWrapper myIndexerWrapper;
   private final IndexFixer myIndexFixer = new IndexFixer();
   private final MavenIndexUpdateManager myIndexUpdateManager;
 
@@ -68,9 +69,8 @@ public final class MavenIndicesManager implements Disposable {
 
   public MavenIndicesManager(@NotNull Project project) {
     myProject = project;
-    myIndexerWrapper = MavenServerManager.getInstance().createIndexer(myProject);
     myIndexUpdateManager = new MavenIndexUpdateManager();
-    myMavenIndices = myIndexerWrapper.getOrCreateIndices();
+    myMavenIndices = MavenSystemIndicesManager.getInstance().getOrCreateIndices(project);
 
     initListeners();
 
@@ -171,7 +171,7 @@ public final class MavenIndicesManager implements Disposable {
 
   @NotNull
   Path getIndicesDir() {
-    return MavenIndexerWrapper.getIndicesDir();
+    return MavenSystemIndicesManager.getInstance().getIndicesDir();
   }
 
   public void addArchetype(@NotNull MavenArchetype archetype) {
@@ -195,7 +195,6 @@ public final class MavenIndicesManager implements Disposable {
 
   /**
    * Add artifact info to index async.
-   *
    */
   public boolean scheduleArtifactIndexing(@Nullable MavenId mavenId, @NotNull File artifactFile) {
 
@@ -239,7 +238,6 @@ public final class MavenIndicesManager implements Disposable {
 
   /**
    * Schedule update indices list {@link MavenIndices} async.
-   *
    *
    * @param consumer - consumer for new indices.
    */

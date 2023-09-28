@@ -51,6 +51,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -210,7 +211,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   public void markSelectionTouched() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
     }
     mySelectionTouched = true;
     myList.repaint();
@@ -299,7 +300,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void requestResize() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myResizePending = true;
   }
 
@@ -415,7 +416,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   private boolean updateList(boolean onExplicitAction, boolean reused) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
     }
     checkValid();
 
@@ -679,13 +680,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   @Override
   public boolean isShown() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
     }
     return myShown;
   }
 
   public boolean showLookup() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     checkValid();
     LOG.assertTrue(!myShown);
     myShown = true;
@@ -1095,7 +1096,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public List<LookupElement> getVisibleItems() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     var itemsCount = myList.getItemsCount();
     if (!myShown || itemsCount == 0) return Collections.emptyList();
@@ -1122,7 +1123,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public void hideLookup(boolean explicitly) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (myHidden) return;
 
@@ -1165,7 +1166,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assert myHidden;
 
     myOffsets.disposeMarkers();

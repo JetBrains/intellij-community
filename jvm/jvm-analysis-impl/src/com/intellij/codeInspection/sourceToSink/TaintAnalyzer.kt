@@ -199,13 +199,28 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         fromExpressionWithoutCollection(uForEachExpression.iteratedValue, analyzeContext)
       }
     }
-    var taintValue: TaintValue = myTaintValueFactory.fromElement(sourceTarget) ?: TaintValue.UNKNOWN
+    var taintValue: TaintValue = myTaintValueFactory.fromElement(sourceTarget, getClazzFromReceiver(expression)) ?: TaintValue.UNKNOWN
     if (taintValue != TaintValue.UNKNOWN) return taintValue
     val value = checkAndPrepareVisited(expression)
     if (value != null) return value
     taintValue = fromModifierListOwner(sourceTarget, expression, analyzeContext) ?: TaintValue.UNKNOWN
     addToVisited(expression, taintValue)
     return taintValue
+  }
+
+  private fun getClazzFromReceiver(expression: UResolvable): PsiClass? {
+    val type = when (expression) {
+      is UQualifiedReferenceExpression -> {
+        expression.receiver.getExpressionType()
+      }
+      is UCallExpression -> {
+        expression.receiverType
+      }
+      else -> {
+        null
+      }
+    }
+    return PsiUtil.resolveClassInClassTypeOnly(type)
   }
 
   private fun checkAndPrepareVisited(uElement: UElement?, prepare: Boolean = true): TaintValue? {
@@ -748,12 +763,33 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       val flow = VariableFlow()
 
       override fun visitIfExpression(node: UIfExpression): Boolean {
-        val flowIf = FlowVisitor()
-        val flowElse = FlowVisitor()
-        node.thenExpression?.accept(flowIf)
-        node.elseExpression?.accept(flowElse)
-        flow.addSplit(listOf(flowIf.flow, flowElse.flow), node.thenExpression != null && node.elseExpression != null)
+        val condition = node.condition
+        condition.accept(this)
+        val value: Any? = getConstant(node.condition)
+        when (value) {
+          true -> {
+            node.thenExpression?.accept(this)
+          }
+          false -> {
+            node.elseExpression?.accept(this)
+          }
+          else -> {
+            val flowIf = FlowVisitor()
+            val flowElse = FlowVisitor()
+            node.thenExpression?.accept(flowIf)
+            node.elseExpression?.accept(flowElse)
+            flow.addSplit(listOf(flowIf.flow, flowElse.flow), node.thenExpression != null && node.elseExpression != null)
+          }
+        }
         return true
+      }
+
+      private fun getConstant(condition: UExpression): Any? {
+        val sourcePsi = condition.sourcePsi
+        if (sourcePsi == null) return null
+        val sourceToSinkProvider = SourceToSinkProvider.sourceToSinkLanguageProvider.forLanguage(sourcePsi.getLanguage())
+        if(sourceToSinkProvider==null) return null
+        return sourceToSinkProvider.computeConstant(sourcePsi)
       }
 
       override fun visitSwitchExpression(node: USwitchExpression): Boolean {
@@ -1038,7 +1074,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
             }
             val fastExit = flowResults.firstOrNull { it.fast }
             if (fastExit != null) {
-              processValue = fastExit.taintValue
+              return FlowResult(fastExit.taintValue, true) //fast exit
             }
             else {
               flowResults.forEach { flowResult ->

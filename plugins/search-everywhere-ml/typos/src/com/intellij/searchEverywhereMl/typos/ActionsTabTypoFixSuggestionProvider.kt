@@ -6,6 +6,7 @@ import ai.grazie.spell.suggestion.ranker.LinearAggregatingSuggestionRanker
 import ai.grazie.spell.suggestion.ranker.SuggestionRanker
 import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
+import com.intellij.openapi.actionSystem.AbbreviationManager
 import com.intellij.openapi.project.Project
 import com.intellij.searchEverywhereMl.typos.models.ActionsLanguageModel
 import com.intellij.spellchecker.SpellCheckerManager
@@ -31,14 +32,18 @@ internal class ActionsTabTypoFixSuggestionProvider(private val project: Project)
       return _suggestionRanker
     }
 
-  fun suggestFixFor(query: String): SearchEverywhereSpellCheckResult = splitText(query)
-    .map { token ->
-      when (token) {
-        is SearchEverywhereStringToken.Delimiter -> WordSpellCheckResult.NoCorrection(token.value)
-        is SearchEverywhereStringToken.Word -> correctWord(token.value)
+  fun suggestFixFor(query: String): SearchEverywhereSpellCheckResult {
+    if (isActionAbbreviation(query)) return SearchEverywhereSpellCheckResult.NoCorrection
+
+    return splitText(query)
+      .map { token ->
+        when (token) {
+          is SearchEverywhereStringToken.Delimiter -> WordSpellCheckResult.NoCorrection(token.value)
+          is SearchEverywhereStringToken.Word -> correctWord(token.value)
+        }
       }
-    }
-    .toQuerySpellCheckResult()
+      .toQuerySpellCheckResult()
+  }
 
   private fun correctWord(word: String): WordSpellCheckResult = word.takeIf { spellChecker.hasProblem(it) }
     ?.let { misspelledWord ->
@@ -46,10 +51,15 @@ internal class ActionsTabTypoFixSuggestionProvider(private val project: Project)
 
       suggestionRanker?.score(word.lowercase(), correctionSuggestions)
         ?.asSequence()
-        ?.maxBy { it.value }
+        ?.maxByOrNull { it.value }
+        ?.takeUnless { it.key.startsWith(word, ignoreCase = true) }
         ?.let { (correction, confidence) -> correction.capitalizeBasedOn(word) to confidence }
         ?.let { (word, confidence) -> WordSpellCheckResult.Correction(word, confidence) }
     } ?: WordSpellCheckResult.NoCorrection(word)
+
+  private fun isActionAbbreviation(query: String): Boolean {
+    return AbbreviationManager.getInstance().findActions(query).isNotEmpty()
+  }
 
   private sealed class WordSpellCheckResult(val word: String) {
     class Correction(suggestion: String, val confidence: Double) : WordSpellCheckResult(suggestion)
@@ -71,4 +81,3 @@ internal class ActionsTabTypoFixSuggestionProvider(private val project: Project)
     else return this
   }
 }
-

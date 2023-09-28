@@ -45,6 +45,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.io.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -127,7 +128,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
         Document document = e.getDocument();
         final VirtualFile file = getFileDocumentManager().getFile(document);
         if (file != null && !(file instanceof LightVirtualFile) && !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)) {
-          ApplicationManager.getApplication().assertIsDispatchThread();
+          ThreadingAssertions.assertEventDispatchThread();
           myCurrentCommandHasChanges = true;
           myChangedFilesInCurrentCommand.add(file);
         }

@@ -149,27 +149,20 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile,
                                       ((declaration.parent as? KtClassBody)?.parent as? KtClassOrObject)?.isLocal == true
 
         val nameIdentifier = declaration.nameIdentifier
-        if (mustBeLocallyReferenced &&
+        val problemPsiElement: PsiElement = if (mustBeLocallyReferenced &&
             !SuppressionUtil.inspectionResultSuppressed(declaration, deadCodeInspection) &&
             declaration.annotationEntries.isEmpty() //instead of slow implicit usages checks
         ) {
-            val description = declaration.describe() ?: return
-            val problemPsiElement = nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword() ?: declaration
-            val info = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(problemPsiElement, KotlinBaseHighlightingBundle.message("inspection.message.never.used", description), deadCodeInfoType, null)
-              .registerFix(SafeDeleteFix(declaration), null, null, null, deadCodeKey)
-              .create()
-            holder.add(info)
+            nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword() ?: declaration
+        } else {
+            (KotlinUnusedSymbolUtil.getPsiToReportProblem(declaration) { javaInspection.isEntryPoint(it) } ?: return)
         }
-        else {
-            val problemPsi = KotlinUnusedSymbolUtil.getPsiToReportProblem(declaration) { javaInspection.isEntryPoint(it) } ?: return
-            val message = declaration.describe()?.let { KotlinBaseHighlightingBundle.message("inspection.message.never.used", it) }
-                          ?: return
-            val fixes = KotlinUnusedSymbolUtil.createQuickFixes(declaration).toTypedArray()
-            val builder = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(problemPsi, message, deadCodeInfoType, null)
-
-            fixes.forEach { builder.registerFix(it, null, null, null, deadCodeKey) }
-            holder.add(builder.create())
-        }
+        val description = declaration.describe() ?: return
+        val message = KotlinBaseHighlightingBundle.message("inspection.message.never.used", description)
+        val builder = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(problemPsiElement, message, deadCodeInfoType, null)
+        val fixes = KotlinUnusedSymbolUtil.createQuickFixes(declaration)
+        fixes.forEach { builder.registerFix(it, null, null, null, deadCodeKey) }
+        holder.add(builder.create())
     }
 }
 

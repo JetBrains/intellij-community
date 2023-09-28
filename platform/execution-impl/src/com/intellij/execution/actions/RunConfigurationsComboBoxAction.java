@@ -408,7 +408,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
 
-  private static void addExecutorActions(@NotNull DefaultActionGroup group,
+  public static void addExecutorActions(@NotNull DefaultActionGroup group,
                                          @NotNull Function<? super Executor, ? extends ExecutorRegistryImpl.ExecutorAction> actionCreator,
                                          @NotNull Function<? super Executor, Boolean> executorFilter) {
     for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {

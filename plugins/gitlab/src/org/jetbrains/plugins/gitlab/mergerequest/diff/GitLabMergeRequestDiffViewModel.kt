@@ -6,8 +6,8 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.util.CODE_REVIEW_CHANGE_HASHING_STRATEGY
 import com.intellij.collaboration.util.ChangesSelection
-import com.intellij.collaboration.util.REVISION_COMPARISON_CHANGE_HASHING_STRATEGY
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -83,7 +83,7 @@ internal class GitLabMergeRequestDiffViewModelImpl(
           GitLabMergeRequestDiffChangeViewModelImpl(project, this, currentUser, mergeRequest, diffData, discussionsViewOption)
         },
         { destroy() },
-        customHashingStrategy = REVISION_COMPARISON_CHANGE_HASHING_STRATEGY
+        customHashingStrategy = CODE_REVIEW_CHANGE_HASHING_STRATEGY
       )
 
   private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)

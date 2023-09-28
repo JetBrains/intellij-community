@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.addingPolicy.PolicyController
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
@@ -13,9 +14,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.context.*
-import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirPositionCompletionContextDetector
-import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
 import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributorFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
@@ -73,15 +71,12 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
 
         if (shouldSuppressCompletion(parameters.ijParameters, result.prefixMatcher)) return
         val positionContext = FirPositionCompletionContextDetector.detect(parameters.ijParameters.position)
-        val resultSet = createResultSet(parameters, positionContext, result)
-
+        val (resultController, resultSet) = createResultSet(parameters, positionContext, result)
         val basicContext = FirBasicCompletionContext.createFromParameters(parameters, resultSet) ?: return
-
-
 
         FirPositionCompletionContextDetector.analyzeInContext(basicContext, positionContext) {
             recordOriginalFile(basicContext)
-            complete(basicContext, positionContext)
+            complete(basicContext, positionContext, resultController)
         }
     }
 
@@ -90,8 +85,9 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
     private fun complete(
         basicContext: FirBasicCompletionContext,
         positionContext: FirRawPositionCompletionContext,
+        resultController: PolicyController,
     ) {
-        val factory = FirCompletionContributorFactory(basicContext)
+        val factory = FirCompletionContributorFactory(basicContext, resultController)
         with(Completions) {
             val weighingContext = createWeighingContext(basicContext, positionContext)
             val sessionParameters = FirCompletionSessionParameters(basicContext, positionContext)
@@ -111,14 +107,17 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         parameters: KotlinFirCompletionParameters,
         positionContext: FirRawPositionCompletionContext,
         result: CompletionResultSet
-    ): CompletionResultSet {
+    ): Pair<PolicyController, CompletionResultSet> {
         val prefix = CompletionUtil.findIdentifierPrefix(
             parameters.ijParameters.position.containingFile,
             parameters.ijParameters.offset,
             kotlinIdentifierPartPattern(),
             kotlinIdentifierStartPattern()
         )
-        return result.withRelevanceSorter(createSorter(parameters.ijParameters, positionContext, result)).withPrefixMatcher(prefix)
+        val resultWithSorter = result.withRelevanceSorter(createSorter(parameters.ijParameters, positionContext, result)).withPrefixMatcher(prefix)
+        val controller = PolicyController(resultWithSorter)
+        val obeyingResultSet = PolicyObeyingResultSet(resultWithSorter, controller)
+        return controller to obeyingResultSet
     }
 
     private fun createSorter(

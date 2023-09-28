@@ -25,5 +25,3 @@ fun main() {
     //Breakpoint!
     println()
 }
-
-// IGNORE_K2

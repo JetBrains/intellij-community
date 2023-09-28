@@ -86,11 +86,16 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
    * At this point either {@link #myProviderAndData} is filled in {@link #askUsername(String)} or username is contained in url
    */
   @Override
-  @NotNull
+  @Nullable
   public String askPassword(@NotNull String url) {
     myWasRequested = true;
 
     ProviderAndData providerAndData = myProviderAndData;
+    if (providerAndData != null && providerAndData.myProvider instanceof CancelledProvider) {
+      LOG.debug("askPassword. Auth was cancelled.");
+      return null;
+    }
+
     if (providerAndData != null) {
       LOG.debug("askPassword. Data already filled in askUsername.");
       return providerAndData.getPassword();
@@ -107,8 +112,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     LOG.debug("askPassword. gitUrl=" + url + ", unifiedUrl=" + unifiedUrl);
 
     ProviderAndData newData = acquireData(unifiedUrl, provider -> provider.getDataForKnownLogin(login));
-
     myProviderAndData = newData;
+
     if (newData != null) {
       LOG.debug("askPassword. " + newData.toString());
       return newData.getPassword();
@@ -120,7 +125,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public String askUsername(@NotNull String url) {
     myWasRequested = true;
 
@@ -129,6 +134,11 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     ProviderAndData providerAndData = acquireData(unifiedUrl, AuthDataProvider::getData);
     myProviderAndData = providerAndData;
+
+    if (providerAndData != null && providerAndData.myProvider instanceof CancelledProvider) {
+      LOG.debug("askUsername. Auth was cancelled.");
+      return null;
+    }
 
     if (providerAndData != null) {
       LOG.debug("askUsername. " + providerAndData.toString());
@@ -141,26 +151,32 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   }
 
   @Nullable
-  private ProviderAndData acquireData(@NotNull String unifiedUrl, @NotNull Function<? super AuthDataProvider, ? extends AuthData> dataAcquirer) {
+  private ProviderAndData acquireData(@NotNull String unifiedUrl,
+                                      @NotNull Function<? super AuthDataProvider, ? extends AuthData> dataAcquirer) {
     return myAuthenticationGate.waitAndCompute(() -> {
-      try {
-        for (AuthDataProvider provider : getProviders(unifiedUrl)) {
+      for (AuthDataProvider provider : getProviders(unifiedUrl)) {
+        try {
           AuthData data = dataAcquirer.apply(provider);
           if (data != null && data.getPassword() != null) {
             return new ProviderAndData(provider, data.getLogin(), data.getPassword());
           }
         }
-        return null;
+        catch (ProcessCanceledException pce) {
+          LOG.debug("Auth process cancelled by" + provider);
+          myAuthenticationGate.cancel();
+          return new ProviderAndData(new CancelledProvider(unifiedUrl), "", "");
+        }
+        catch (CredentialHelperShouldBeUsedException e) {
+          LOG.debug("Auth switched to credential helper");
+          myAuthenticationGate.cancel();
+          myCredentialHelperShouldBeUsed = true;
+          return null;
+        }
+        catch (Throwable e) {
+          LOG.error("Can't get password from " + provider, e);
+        }
       }
-      catch (ProcessCanceledException pce) {
-        myAuthenticationGate.cancel();
-        return new ProviderAndData(new CancelledProvider(unifiedUrl), "", "");
-      }
-      catch (CredentialHelperShouldBeUsedException e) {
-        myAuthenticationGate.cancel();
-        myCredentialHelperShouldBeUsed = true;
-        return null;
-      }
+      return null;
     });
   }
 
@@ -174,7 +190,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     PasswordSafeProvider passwordSafeProvider =
       new PasswordSafeProvider(unifiedUrl, GitRememberedInputs.getInstance(), PasswordSafe.getInstance());
 
-    boolean showActionForGitHelper =  GitConfigUtil.isCredentialHelperUsed(myProject, myWorkingDirectory);
+    boolean showActionForGitHelper = GitConfigUtil.isCredentialHelperUsed(myProject, myWorkingDirectory);
 
     DialogProvider dialogProvider = new DialogProvider(unifiedUrl, myProject, passwordSafeProvider, showActionForGitHelper);
 
@@ -315,11 +331,16 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
 
     @Override
-    public void onAuthSuccess() {}
+    public void onAuthSuccess() { }
 
     @Override
     public void onAuthFailure() {
       if (myData != null) myDelegate.forgetPassword(myProject, myUrl, myData);
+    }
+
+    @Override
+    public String toString() {
+      return "ExtensionAdapterProvider(" + myDelegate + ")";
     }
   }
 
@@ -553,10 +574,10 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
 
     @Override
-    void onAuthSuccess() {}
+    void onAuthSuccess() { }
 
     @Override
-    void onAuthFailure() {}
+    void onAuthFailure() { }
   }
 
   private static final class ProviderAndData {

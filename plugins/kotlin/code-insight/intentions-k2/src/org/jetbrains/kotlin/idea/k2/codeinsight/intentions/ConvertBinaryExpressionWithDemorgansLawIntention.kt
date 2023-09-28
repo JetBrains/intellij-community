@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.EmptinessCheckFunctionUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class ConvertBinaryExpressionWithDemorgansLawIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtBinaryExpression, ConvertBinaryExpressionWithDemorgansLawIntention.Context>(
+    AbstractKotlinModCommandWithContext<KtBinaryExpression, ConvertBinaryExpressionWithDemorgansLawIntention.Context>(
         KtBinaryExpression::class
     ) {
 
@@ -31,7 +31,7 @@ internal class ConvertBinaryExpressionWithDemorgansLawIntention :
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtBinaryExpression> = ApplicabilityRanges.SELF
 
-    override fun apply(element: KtBinaryExpression, context: Context, project: Project, editor: Editor?) {
+    override fun apply(element: KtBinaryExpression, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
         val expression = element.topmostBinaryExpression()
         val operatorText = when (expression.operationToken) {
             KtTokens.ANDAND -> KtTokens.OROR.value
@@ -39,7 +39,7 @@ internal class ConvertBinaryExpressionWithDemorgansLawIntention :
             else -> throw IllegalArgumentException()
         }
         val newExpression = KtPsiFactory(expression.project).buildExpression {
-            val negatedOperands = context.pointers.map { it.element }
+            val negatedOperands = context.analyzeContext.pointers.map { it.element }
             appendExpressions(negatedOperands, separator = operatorText)
         }
         expression.parents.match(KtParenthesizedExpression::class, last = KtPrefixExpression::class)

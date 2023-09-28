@@ -449,7 +449,7 @@ public class WSLDistribution implements AbstractWslDistribution {
           .setExecuteCommandInShell(true)
           .setExecuteCommandInLoginShell(true)
           .setExecuteCommandInInteractiveShell(true),
-        5000);
+        DEFAULT_TIMEOUT);
       if (processOutput.getExitCode() == 0) {
         Map<String, String> result = new HashMap<>();
         for (String string : processOutput.getStdoutLines()) {

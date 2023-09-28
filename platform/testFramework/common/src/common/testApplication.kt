@@ -10,10 +10,6 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.enableCoroutineDump
-import com.intellij.ide.bootstrap.callAppInitialized
-import com.intellij.ide.bootstrap.getAppInitializedListeners
-import com.intellij.ide.bootstrap.initConfigurationStore
-import com.intellij.ide.bootstrap.preloadCriticalServices
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.Application
@@ -46,6 +42,10 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.ide.bootstrap.callAppInitialized
+import com.intellij.platform.ide.bootstrap.getAppInitializedListeners
+import com.intellij.platform.ide.bootstrap.initConfigurationStore
+import com.intellij.platform.ide.bootstrap.preloadCriticalServices
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.DocumentCommitProcessor
 import com.intellij.psi.impl.DocumentCommitThread

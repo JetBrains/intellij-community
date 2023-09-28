@@ -5,10 +5,7 @@ import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor
-import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo
-import com.intellij.refactoring.changeSignature.ParameterInfoImpl
-import com.intellij.refactoring.changeSignature.ThrownExceptionInfo
+import com.intellij.refactoring.changeSignature.*
 import com.intellij.refactoring.suggested.SuggestedChangeSignatureData
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
@@ -103,17 +100,18 @@ class JavaSuggestedRefactoringExecution(refactoringSupport: SuggestedRefactoring
 
     val exceptionInfos = prepareExceptionInfos(newExceptionTypes, oldExceptionTypes)
 
-    val processor = ChangeSignatureProcessor(
-      project,
+    val changeInfo = JavaChangeInfoImpl.generateChangeInfo(
       declaration,
+      false,
       false,
       data.newSignature.visibility?.takeIf { it != data.oldSignature.visibility },
       data.newSignature.name,
-      returnType,
+      returnType?.let(CanonicalTypes::createTypeWrapper),
       newParameters.toTypedArray(),
-      exceptionInfos.toTypedArray()
-    )
-    processor.run()
+      exceptionInfos.toTypedArray(),
+      null,
+      null)
+    ChangeSignatureProcessor(project, changeInfo).run()
   }
 
   private fun typesEqualWithAnnotations(type1: PsiType?, type2: PsiType?) = type1?.getCanonicalText(true) == type2?.getCanonicalText(true)

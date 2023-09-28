@@ -25,6 +25,9 @@
     <appStarter id="dumpActions" implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter"/>
     <protocolHandler implementation="com.intellij.openapi.application.JBProtocolHandler"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.application.ApplicationInfo"
+                        serviceImplementation="com.intellij.openapi.application.impl.ApplicationInfoServiceDelegate"/>
+
     <groupConfigurable id="appearance" weight="70"
                        helpTopic="configurable.group.appearance.help.topic"
                        displayNameKey="configurable.group.appearance.settings.display.name"
@@ -182,8 +185,8 @@
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
                         serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionGroupExpander"
-                        serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionGroupExpanderImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionUpdaterInterceptor"
+                        serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionUpdaterInterceptorImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.options.ShowSettingsUtil"
                         serviceImplementation="com.intellij.ide.actions.ShowSettingsUtilImpl"/>
@@ -195,6 +198,8 @@
                         serviceImplementation="com.intellij.openapi.fileChooser.impl.LocalFileChooserFactory" client="local"/>
     <applicationService serviceInterface="com.intellij.openapi.progress.ProgressManager"
                         serviceImplementation="com.intellij.openapi.progress.impl.ProgressManagerImpl"/>
+    <applicationService serviceImplementation="com.intellij.codeWithMe.LocalTransferUIManager"
+                        serviceInterface="com.intellij.codeWithMe.TransferUIManager" client="local"/>
 
     <applicationService serviceImplementation="com.intellij.ide.ui.customization.CustomActionsSchema"/>
     <applicationService serviceInterface="com.intellij.ide.ui.ProductIcons"
@@ -1324,8 +1329,7 @@
 
     <applicationService serviceImplementation="com.intellij.usages.impl.UsageFilteringRuleStateService" client="all"/>
 
-    <notificationGroup id="IDE-errors" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.ide.errors"
-                       isLogByDefault="false"/>
+    <notificationGroup id="IDE-errors" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.ide.errors" isLogByDefault="false"/>
     <notificationGroup id="System Clipboard" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.system.clipboard"/>
     <notificationGroup id="Project Startup Tasks Messages" displayType="NONE" bundle="messages.ExecutionBundle"
                        key="notification.group.startup.task"/>
@@ -1384,6 +1388,7 @@
     <notificationGroup id="feedback.form" displayType="BALLOON" bundle="messages.ApplicationBundle" key="feedback.form.notification.group"/>
     <notificationGroup id="PerformanceWatcher" displayType="STICKY_BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.performance.watcher"/>
     <notificationGroup id="WindowsDefender" displayType="BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.defender.config"/>
+    <notificationGroup id="BrowserCfgProblems" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.browser.config.problems"/>
 
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
     <registryKey key="html.editor.timeout" defaultValue="15000" description="HTML editor content loading timeout, ms"/>
@@ -1572,13 +1577,8 @@
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.ProfilerQuickAction" listGroupID="MainToolbarQuickActions.Run" />
 
     <notificationRouter implementation="com.intellij.notification.impl.LocalNotificationRouter" order="last"/>
-
     <applicationInitializedListener implementation="com.intellij.ide.ui.IconDbMaintainer"/>
     <ideEventQueueDispatcher implementation="com.intellij.ide.ui.laf.LaFMnemonicDispatcher"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains">
-    <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
   </extensions>
 
   <applicationListeners>

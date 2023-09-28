@@ -4,7 +4,6 @@ package com.intellij.util.lang;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.xxh3.Xx3UnencodedString;
 
 import java.util.function.IntFunction;
 import java.util.function.LongFunction;
@@ -120,9 +119,9 @@ public final class ClasspathCache {
       StrippedLongToObjectMap<Loader[]> newResourceMap = resourcePackageCache == null
                                                          ? new StrippedLongToObjectMap<>(ARRAY_FACTORY, registrar.resourcePackageCount())
                                                          : new StrippedLongToObjectMap<>(resourcePackageCache);
+      addPackages(registrar.resourcePackages(), newResourceMap, loader, registrar.getKeyFilter(false));
       resourcePackageCache = newResourceMap;
       resourcePackageCacheGetter = newResourceMap;
-      addPackages(registrar.resourcePackages(), newResourceMap, loader, registrar.getKeyFilter(false));
     }
   }
 
@@ -140,7 +139,7 @@ public final class ClasspathCache {
   }
 
   public static long getPackageNameHash(@NotNull String resourcePath, int endIndex) {
-    return endIndex <= 0 ? 0 : Xx3UnencodedString.hashUnencodedStringRange(resourcePath, 0, endIndex);
+    return endIndex <= 0 ? 0 : Xx3UnencodedString.hashUnencodedStringRange(resourcePath, endIndex);
   }
 
   private static void addPackages(long[] hashes, StrippedLongToObjectMap<Loader[]> map, Loader loader, @Nullable LongPredicate hashFilter) {

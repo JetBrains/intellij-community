@@ -56,10 +56,10 @@ class ContinuationHolder private constructor(val context: DefaultExecutionContex
                     }
                 CoroutineDescriptor.instance(ci)
             } else {
-                CoroutineDescriptor(CoroutineInfoData.DEFAULT_COROUTINE_NAME, "-1", State.UNKNOWN, null)
+                CoroutineDescriptor(CoroutineInfoData.DEFAULT_COROUTINE_NAME, "-1", State.UNKNOWN, null, null)
             }
         }
-        return CompleteCoroutineInfoData(realState, stackFrameItems, creationStackTrace)
+        return CompleteCoroutineInfoData(realState, stackFrameItems, creationStackTrace, jobHierarchy = emptyList())
     }
 
     fun state(value: ObjectReference?): CoroutineDescriptor? {
@@ -76,7 +76,7 @@ class ContinuationHolder private constructor(val context: DefaultExecutionContex
             if (matcher.matches()) {
                 val state = stateOf(matcher.group(1))
                 val hexAddress = matcher.group(2)
-                return CoroutineDescriptor(name, id?.toString() ?: hexAddress, state, standAloneCoroutineMirror.context.dispatcher)
+                return CoroutineDescriptor(name, id?.toString() ?: hexAddress, state, standAloneCoroutineMirror.context.dispatcher, null)
             }
         }
         return null

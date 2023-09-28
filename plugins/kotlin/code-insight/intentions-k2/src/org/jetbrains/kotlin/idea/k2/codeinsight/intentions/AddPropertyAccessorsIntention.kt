@@ -3,12 +3,12 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils.addAccessors
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 internal abstract class AbstractAddAccessorIntention(
     private val addGetter: Boolean,
     private val addSetter: Boolean,
-) : AbstractKotlinApplicableIntention<KtProperty>(KtProperty::class) {
+) : AbstractKotlinApplicableModCommandIntention<KtProperty>(KtProperty::class) {
     override fun getFamilyName(): String = AddAccessorUtils.familyAndActionName(addGetter, addSetter)
     override fun getActionName(element: KtProperty): String = familyName
 
@@ -57,7 +57,9 @@ internal abstract class AbstractAddAccessorIntention(
         return symbol.backingFieldSymbol?.hasAnnotation(JVM_FIELD_CLASS_ID) != true
     }
 
-    override fun apply(element: KtProperty, project: Project, editor: Editor?) = addAccessors(element, addGetter, addSetter, editor)
+    override fun invoke(context: ActionContext, element: KtProperty, updater: ModPsiUpdater) {
+        addAccessors(element, addGetter, addSetter, updater::moveTo)
+    }
 }
 
 private val JVM_FIELD_CLASS_ID = ClassId.topLevel(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)

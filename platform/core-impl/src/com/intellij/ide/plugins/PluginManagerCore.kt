@@ -299,8 +299,6 @@ object PluginManagerCore {
       return emptyList()
     }
 
-    val globalErrors = globalErrorsSuppliers.map { it.get() }
-
     // a log includes all messages, not only those which need to be reported to the user
     val loadingErrors = pluginLoadingErrors.entries
       .asSequence()
@@ -308,7 +306,7 @@ object PluginManagerCore {
       .map { it.value }
       .toList()
     val logMessage = "Problems found loading plugins:\n  " +
-                     (globalErrors.asSequence() + loadingErrors.asSequence().map { it.internalMessage })
+                     (globalErrorsSuppliers.asSequence() + loadingErrors.asSequence().map { it.internalMessage })
                        .joinToString(separator = "\n  ")
     if (isUnitTestMode || !GraphicsEnvironment.isHeadless()) {
       if (!isUnitTestMode) {
@@ -316,9 +314,9 @@ object PluginManagerCore {
       }
 
       @Suppress("HardCodedStringLiteral")
-      return (globalErrors.asSequence() +
-              loadingErrors.asSequence().filter(PluginLoadingError::isNotifyUser).map(PluginLoadingError::detailedMessage))
-        .map { text -> Supplier { HtmlChunk.text(text) } }
+      return (globalErrorsSuppliers.asSequence() +
+              loadingErrors.asSequence().filter(PluginLoadingError::isNotifyUser).map(PluginLoadingError::detailedMessageSupplier))
+        .map { Supplier { HtmlChunk.text(it!!.get()) } }
         .toList()
     }
     else {
@@ -370,7 +368,7 @@ object PluginManagerCore {
   @Synchronized
   fun scheduleDescriptorLoading(coroutineScope: CoroutineScope,
                                 zipFilePoolDeferred: Deferred<ZipFilePool>?,
-                                mainClassLoaderDeferred: Deferred<ClassLoader>,
+                                mainClassLoaderDeferred: Deferred<ClassLoader>?,
                                 logDeferred: Deferred<Logger>?): Deferred<PluginSet> {
     var result = initFuture
     if (result == null) {

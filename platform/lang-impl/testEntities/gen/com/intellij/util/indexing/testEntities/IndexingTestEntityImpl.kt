@@ -11,21 +11,21 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class IndexingTestEntityImpl(val dataSource: IndexingTestEntityData) : IndexingTestEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class IndexingTestEntityImpl(private val dataSource: IndexingTestEntityData) : IndexingTestEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -42,6 +42,7 @@ open class IndexingTestEntityImpl(val dataSource: IndexingTestEntityData) : Inde
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: IndexingTestEntityData?) : ModifiableWorkspaceEntityBase<IndexingTestEntity, IndexingTestEntityData>(
     result), IndexingTestEntity.Builder {
@@ -73,7 +74,7 @@ open class IndexingTestEntityImpl(val dataSource: IndexingTestEntityData) : Inde
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -174,8 +175,8 @@ class IndexingTestEntityData : WorkspaceEntityData<IndexingTestEntity>() {
   lateinit var roots: MutableList<VirtualFileUrl>
   lateinit var excludedRoots: MutableList<VirtualFileUrl>
 
-  fun isRootsInitialized(): Boolean = ::roots.isInitialized
-  fun isExcludedRootsInitialized(): Boolean = ::excludedRoots.isInitialized
+  internal fun isRootsInitialized(): Boolean = ::roots.isInitialized
+  internal fun isExcludedRootsInitialized(): Boolean = ::excludedRoots.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<IndexingTestEntity> {
     val modifiable = IndexingTestEntityImpl.Builder(null)
@@ -192,6 +193,10 @@ class IndexingTestEntityData : WorkspaceEntityData<IndexingTestEntity>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.util.indexing.testEntities.IndexingTestEntity") as EntityMetadata
   }
 
   override fun clone(): IndexingTestEntityData {
@@ -257,11 +262,5 @@ class IndexingTestEntityData : WorkspaceEntityData<IndexingTestEntity>() {
     result = 31 * result + roots.hashCode()
     result = 31 * result + excludedRoots.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.roots?.let { collector.add(it::class.java) }
-    this.excludedRoots?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

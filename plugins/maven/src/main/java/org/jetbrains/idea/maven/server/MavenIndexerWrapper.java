@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -29,17 +30,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
 
   private MavenIndices myIndices;
 
-  @TestOnly
-  public static void setTestIndicesDir(Path myTestIndicesDir) {
-    ourTestIndicesDir = myTestIndicesDir;
-  }
 
-  @NotNull
-  public static Path getIndicesDir() {
-    return ourTestIndicesDir == null
-           ? MavenUtil.getPluginSystemDir("Indices")
-           : ourTestIndicesDir;
-  }
 
 
   public MavenIndexerWrapper(@Nullable RemoteObjectWrapper<?> parent) {
@@ -131,7 +122,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
   }
 
   @ApiStatus.Internal
-  public MavenIndices getOrCreateIndices() {
+  public MavenIndices getOrCreateIndices(Project project) {
     if (myIndices != null) {
       return myIndices;
     }

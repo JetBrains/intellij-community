@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.importing
 
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
@@ -8,7 +9,7 @@ import java.io.ByteArrayInputStream
 
 class MavenXmlCrcTest : TestCase() {
   @Test
-  fun testCrc() {
+  fun testCrc() = runBlocking {
     same("""
            <project a="a" b="b">
            </project>

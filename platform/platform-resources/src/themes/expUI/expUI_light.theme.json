@@ -945,7 +945,9 @@
           }
         }
       }
-    }
+    },
+
+    "DataSummary.Chart.background": "Blue4"
   },
 
   "icons": {

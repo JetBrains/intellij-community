@@ -19,6 +19,7 @@ import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -141,7 +142,7 @@ public class HintManagerImpl extends HintManager {
    * So, first of all, editor will be scrolled to make the caret position visible.
    */
   public void showEditorHint(final LightweightHint hint, final Editor editor, @PositionFlags final short constraint, @HideFlags final int flags, final int timeout, final boolean reviveOnEditorChange) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     editor.getScrollingModel().runActionOnScrollingFinished(() -> {
       LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
@@ -694,7 +695,7 @@ public class HintManagerImpl extends HintManager {
 
     @Override
     public void projectClosed(@NotNull Project project) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
 
       // avoid leak through com.intellij.codeInsight.hint.TooltipController.myCurrentTooltip
       TooltipController.getInstance().cancelTooltips();

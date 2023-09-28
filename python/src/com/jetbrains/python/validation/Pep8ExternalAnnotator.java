@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.validation;
 
 import com.google.common.collect.ImmutableMap;
@@ -16,7 +16,7 @@ import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -224,7 +224,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       LOG.info("Timeout running pycodestyle.py");
       return results;
     }
-    if (!output.getStderr().isEmpty() && ApplicationInfoEx.getInstanceEx().isEAP()) {
+    if (!output.getStderr().isEmpty() && ApplicationInfo.getInstance().isEAP()) {
       LOG.info("Error running pycodestyle.py: " + output.getStderr());
     }
     for (String line : output.getStdoutLines()) {
@@ -431,7 +431,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       int column = Integer.parseInt(m.group(2));
       return new Problem(line, column, m.group(3), m.group(4));
     }
-    if (ApplicationInfoEx.getInstanceEx().isEAP()) {
+    if (ApplicationInfo.getInstance().isEAP()) {
       LOG.info("Failed to parse problem line from pycodestyle.py: " + s);
     }
     return null;

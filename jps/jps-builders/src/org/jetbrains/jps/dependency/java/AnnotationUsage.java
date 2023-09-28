@@ -3,7 +3,7 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.jps.dependency.impl.StringReferenceID;
 
-public class AnnotationUsage extends JvmElementUsage {
+public final class AnnotationUsage extends JvmElementUsage {
 
   private final TypeRepr.ClassType myClassType;
   private final Iterable<String> myUserArgNames;

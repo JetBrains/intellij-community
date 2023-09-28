@@ -16,7 +16,6 @@ project.kmpJvm.commonMain
 project.kmpJvm.commonTest
     jvm.main (TEST)
     kmpJvm.commonMain (friend, TEST)
-    kmpJvm.jvmMain (friend, RUNTIME)
     kmpJvm.jvmMain (friend, TEST)
 
 project.kmpJvm.jvmMain
@@ -27,7 +26,6 @@ project.kmpJvm.jvmTest
     jvm.main (TEST)
     kmpJvm.commonMain (friend, TEST)
     kmpJvm.commonTest (refines, TEST)
-    kmpJvm.jvmMain (friend, RUNTIME)
     kmpJvm.jvmMain (friend, TEST)
 
 

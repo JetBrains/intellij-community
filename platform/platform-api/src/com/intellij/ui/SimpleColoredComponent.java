@@ -156,7 +156,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return appendWithClipping(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES, clipper);
   }
 
-  public final SimpleColoredComponent appendWithClipping(@NotNull @Nls String fragment, final @NotNull SimpleTextAttributes attributes, @Nullable FragmentTextClipper clipper) {
+  public final @NotNull SimpleColoredComponent appendWithClipping(@NotNull @Nls String fragment, final @NotNull SimpleTextAttributes attributes, @Nullable FragmentTextClipper clipper) {
     _append(fragment, attributes, clipper, myMainTextLastIndex < 0);
     revalidateAndRepaint();
     return this;

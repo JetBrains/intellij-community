@@ -11,6 +11,16 @@ public class MismatchedStringBuilderQueryUpdateInspectionTest extends LightJavaI
   public void testMismatchedStringBuilderQueryUpdate() {
     doTest();
   }
+  public void testRepeatAbstractStringBuilder() {
+    myFixture.addClass("""
+                         package java.lang;
+                        
+                         public final class StringBuilder2 extends AbstractStringBuilder {
+                             public native StringBuilder2 repeat(CharSequence cs, int count);
+                         }
+                         """);
+    doTest();
+  }
 
   @NotNull
   @Override

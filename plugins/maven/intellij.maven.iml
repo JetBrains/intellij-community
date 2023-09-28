@@ -63,7 +63,7 @@
     <orderEntry type="library" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="module" module-name="intellij.maven.errorProne.compiler" scope="RUNTIME" />
-    <orderEntry type="library" name="NanoXML" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.repository.search" />

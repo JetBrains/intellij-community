@@ -27,6 +27,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.LinuxGlobalMenuEventHandler;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.ui.ImageUtil;
 import com.sun.jna.Callback;
@@ -383,7 +384,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
       return;
     }
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     int[] stats = new int[]{0, 0, 0};
     final int size = roots == null ? 0 : roots.size();

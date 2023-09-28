@@ -2,12 +2,12 @@
 package org.jetbrains.idea.devkit.threadingModelHelper;
 
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +56,7 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   }
 
   public void testBackgroundActionOnEdt() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assertThrows(RuntimeException.class, ()->runBackgroundAction());
   }
 

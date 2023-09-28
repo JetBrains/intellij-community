@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.codeInsight.daemon.Validator;
@@ -39,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class JavaFxBuiltInTagDescriptor implements XmlElementDescriptor, Validator<XmlTag> {
+public final class JavaFxBuiltInTagDescriptor implements XmlElementDescriptor, Validator<XmlTag> {
   private final String myName;
   private final XmlTag myXmlTag;
 
@@ -63,9 +49,8 @@ public class JavaFxBuiltInTagDescriptor implements XmlElementDescriptor, Validat
     return XmlElementDescriptor.EMPTY_ARRAY;
   }
 
-  @Nullable
   @Override
-  public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
+  public @Nullable XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
     if (FxmlConstants.FX_DEFINE.equals(myName)) {
       return JavaFxClassTagDescriptorBase.createTagDescriptor(childTag);
     }
@@ -104,9 +89,8 @@ public class JavaFxBuiltInTagDescriptor implements XmlElementDescriptor, Validat
     return descriptors.isEmpty() ? XmlAttributeDescriptor.EMPTY : descriptors.toArray(XmlAttributeDescriptor.EMPTY);
   }
 
-  @Nullable
   @Override
-  public XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, @Nullable XmlTag context) {
+  public @Nullable XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, @Nullable XmlTag context) {
     final List<String> defaultAttributeList = FxmlConstants.FX_BUILT_IN_TAG_SUPPORTED_ATTRIBUTES.get(getName());
     if (defaultAttributeList != null) {
       if (defaultAttributeList.contains(attributeName)) {
@@ -138,8 +122,7 @@ public class JavaFxBuiltInTagDescriptor implements XmlElementDescriptor, Validat
     return null;
   }
 
-  @Nullable
-  public static XmlTag getReferencedTag(XmlTag tag) {
+  public static @Nullable XmlTag getReferencedTag(XmlTag tag) {
     final String tagName = tag.getName();
     if (FxmlConstants.FX_REFERENCE.equals(tagName) || FxmlConstants.FX_COPY.equals(tagName)) {
       final XmlAttribute attribute = tag.getAttribute(FxmlConstants.SOURCE);
@@ -180,9 +163,8 @@ public class JavaFxBuiltInTagDescriptor implements XmlElementDescriptor, Validat
     return null;
   }
 
-  @Nullable
   @Override
-  public XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute) {
+  public @Nullable XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute) {
     return getAttributeDescriptor(attribute.getName(), attribute.getParent());
   }
 
@@ -191,9 +173,8 @@ public class JavaFxBuiltInTagDescriptor implements XmlElementDescriptor, Validat
     return null;
   }
 
-  @Nullable
   @Override
-  public XmlElementsGroup getTopGroup() {
+  public @Nullable XmlElementsGroup getTopGroup() {
     return null;
   }
 
@@ -202,9 +183,8 @@ public class JavaFxBuiltInTagDescriptor implements XmlElementDescriptor, Validat
     return CONTENT_TYPE_UNKNOWN;
   }
 
-  @Nullable
   @Override
-  public String getDefaultValue() {
+  public @Nullable String getDefaultValue() {
     return null;
   }
 

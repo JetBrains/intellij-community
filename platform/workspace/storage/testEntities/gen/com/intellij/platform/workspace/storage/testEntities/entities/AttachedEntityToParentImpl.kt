@@ -12,21 +12,22 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class AttachedEntityToParentImpl(val dataSource: AttachedEntityToParentData) : AttachedEntityToParent, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class AttachedEntityToParentImpl(private val dataSource: AttachedEntityToParentData) : AttachedEntityToParent, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -40,6 +41,7 @@ open class AttachedEntityToParentImpl(val dataSource: AttachedEntityToParentData
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: AttachedEntityToParentData?) : ModifiableWorkspaceEntityBase<AttachedEntityToParent, AttachedEntityToParentData>(
     result), AttachedEntityToParent.Builder {
@@ -69,7 +71,7 @@ open class AttachedEntityToParentImpl(val dataSource: AttachedEntityToParentData
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -116,7 +118,7 @@ open class AttachedEntityToParentImpl(val dataSource: AttachedEntityToParentData
 class AttachedEntityToParentData : WorkspaceEntityData<AttachedEntityToParent>() {
   lateinit var data: String
 
-  fun isDataInitialized(): Boolean = ::data.isInitialized
+  internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<AttachedEntityToParent> {
     val modifiable = AttachedEntityToParentImpl.Builder(null)
@@ -133,6 +135,11 @@ class AttachedEntityToParentData : WorkspaceEntityData<AttachedEntityToParent>()
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.AttachedEntityToParent") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -186,9 +193,5 @@ class AttachedEntityToParentData : WorkspaceEntityData<AttachedEntityToParent>()
     var result = javaClass.hashCode()
     result = 31 * result + data.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

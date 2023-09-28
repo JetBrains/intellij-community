@@ -610,6 +610,13 @@ public final class ExceptionUtil {
     return ex;
   }
 
+  /**
+   * Returns all checked exceptions that are thrown by the specified {@code templateExpression}
+   * and not handled inside the specified {@code topElement}.
+   *
+   * @param templateExpression  the template expression to check
+   * @param topElement ancestor element which may handle exceptions in e.g. try-catch statements.
+   */
   @NotNull
   public static List<PsiClassType> getUnhandledProcessorExceptions(@NotNull PsiTemplateExpression templateExpression,
                                                                    @Nullable PsiElement topElement) {
@@ -792,13 +799,13 @@ public final class ExceptionUtil {
   public static HandlePlace getHandlePlace(@Nullable PsiElement element,
                                            @NotNull PsiClassType exceptionType,
                                            @Nullable PsiElement topElement) {
-    if (element == null || element.getParent() == topElement || element.getParent() == null) return HandlePlace.UNHANDLED;
+    if (element == null || element == topElement) return HandlePlace.UNHANDLED;
+    PsiElement parent = element.getParent();
+    if (parent == null || parent == topElement) return HandlePlace.UNHANDLED;
 
     for (CustomExceptionHandler exceptionHandler : CustomExceptionHandler.KEY.getExtensionList()) {
       if (exceptionHandler.isHandled(element, exceptionType, topElement)) return HandlePlace.UNKNOWN;
     }
-
-    final PsiElement parent = element.getParent();
 
     if (parent instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)parent;

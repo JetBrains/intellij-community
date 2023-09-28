@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log.compaction
 
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.FileUtil
@@ -52,6 +53,7 @@ class CompactedVfsModel(
     filesDir, FILES_PER_BLOCK * FileModel.HEADER_SIZE_BYTES, FILES_PER_BLOCK,
     entryExternalizer = FileModelExternalizer, maxOpenedBlocks = 4,
   )
+
   /** contents are deflated */
   private val contentsStorage = AutoSizeAdjustingBlockEntryArrayStorage<ByteArray>(
     contentsDir, CONTENTS_BLOCK_SIZE, CONTENTS_PER_BLOCK,
@@ -148,43 +150,38 @@ class CompactedVfsModel(
       contentsStorage.stateExternalizer.getEntrySize(entry.contentsState) +
       attributesStorage.stateExternalizer.getEntrySize(entry.attributesState)
 
-    override fun RandomAccessReadBuffer.getEntrySize(): Long {
+    override fun getEntrySize(readBuffer: RandomAccessReadBuffer): Long {
       val subStateSizes = ByteArray(4 + 4 + 4)
-      read(8 + 8, subStateSizes)
+      readBuffer.read(8 + 8, subStateSizes)
       val (filesStateSize, contentsStateSize, attributesStateSize) = ByteBuffer.wrap(subStateSizes).run {
         Triple(getInt(), getInt(), getInt())
       }
       return 8L + 8 + 4 + 4 + 4 + filesStateSize + contentsStateSize + attributesStateSize
     }
 
-    override fun RandomAccessReadBuffer.deserialize(): CompactedVfsState {
+    override fun deserialize(readBuffer: RandomAccessReadBuffer): CompactedVfsState {
       val headerArr = ByteArray(8 + 8 + 4 + 4 + 4)
-      read(0, headerArr)
+      readBuffer.read(0, headerArr)
       val buf = ByteBuffer.wrap(headerArr)
       val operationLogPosition = buf.getLong()
       val payloadStoragePosition = buf.getLong()
       val filesStateSize = buf.getInt()
       val contentsStateSize = buf.getInt()
       // val attributesStateSize = buf.getInt() // not used
-      offsetView(8 + 8 + 4 + 4 + 4).run {
-        val filesState = with(filesStorage.stateExternalizer) {
-          deserialize()
-        }
+      readBuffer.offsetView(8 + 8 + 4 + 4 + 4).run {
+        val filesState = filesStorage.stateExternalizer.deserialize(this)
         offsetView(filesStateSize.toLong()).run {
-          val contentsState = with(contentsStorage.stateExternalizer) {
-            deserialize()
-          }
+          val contentsState = contentsStorage.stateExternalizer.deserialize(this)
           offsetView(contentsStateSize.toLong()).run {
-            val attributesState = with(attributesStorage.stateExternalizer) {
-              deserialize()
-            }
-            return CompactedVfsState(CompactionPosition(operationLogPosition, payloadStoragePosition), filesState, contentsState, attributesState)
+            val attributesState = attributesStorage.stateExternalizer.deserialize(this)
+            return CompactedVfsState(CompactionPosition(operationLogPosition, payloadStoragePosition),
+                                     filesState, contentsState, attributesState)
           }
         }
       }
     }
 
-    override fun RandomAccessWriteBuffer.serialize(entry: CompactedVfsState) {
+    override fun serialize(writeBuffer: RandomAccessWriteBuffer, entry: CompactedVfsState) {
       val headerArr = ByteArray(8 + 8 + 4 + 4 + 4)
       val filesStateSize = filesStorage.stateExternalizer.getEntrySize(entry.filesState).toInt()
       val contentsStateSize = contentsStorage.stateExternalizer.getEntrySize(entry.contentsState).toInt()
@@ -195,45 +192,50 @@ class CompactedVfsModel(
         .putInt(filesStateSize)
         .putInt(contentsStateSize)
         .putInt(attributesStateSize)
-      write(0, headerArr)
-      offsetView(8 + 8 + 4 + 4 + 4).run {
-        with(filesStorage.stateExternalizer) {
-          serialize(entry.filesState)
-        }
+      writeBuffer.write(0, headerArr)
+      writeBuffer.offsetView(8 + 8 + 4 + 4 + 4).run {
+        filesStorage.stateExternalizer.serialize(this, entry.filesState)
         offsetView(filesStateSize.toLong()).run {
-          with(contentsStorage.stateExternalizer) {
-            serialize(entry.contentsState)
-          }
+          contentsStorage.stateExternalizer.serialize(this, entry.contentsState)
           offsetView(contentsStateSize.toLong()).run {
-            with(attributesStorage.stateExternalizer) {
-              serialize(entry.attributesState)
-            }
+            attributesStorage.stateExternalizer.serialize(this, entry.attributesState)
           }
         }
       }
     }
   }
 
-  fun loadOrInitState(initialCompactionPosition: () -> CompactionPosition): CompactedVfsState {
-    if (!stateFile.exists()) {
-      return CompactedVfsState(initialCompactionPosition(), filesStorage.emptyState(), contentsStorage.emptyState(),
-                               attributesStorage.emptyState())
+  var cachedState: CompactedVfsState? = synchronized(this) { null }
+
+  fun loadState(): CompactedVfsState = synchronized(this) {
+    if (cachedState != null) return cachedState!!
+    val state = if (!stateFile.exists()) {
+      CompactedVfsState(CompactionPosition(0L, 0L),
+                        filesStorage.emptyState(), contentsStorage.emptyState(), attributesStorage.emptyState())
     }
-    ResilientFileChannel(stateFile, READ).use {
-      with(stateExternalizer) {
-        return it.asStorageIO().deserialize()
+    else {
+      ResilientFileChannel(stateFile, READ).use {
+        with(stateExternalizer) {
+          deserialize(it.asStorageIO())
+        }
       }
     }
+    cachedState = state
+    return state
   }
 
   private fun persistState(newState: CompactedVfsState) {
-    val updateFile = stateFile.resolveSibling(stateFile.name + ".upd")
-    ResilientFileChannel(updateFile, WRITE, CREATE).use {
-      with(stateExternalizer) {
-        it.asStorageIO().serialize(newState)
+    synchronized(this) {
+      val updateFile = stateFile.resolveSibling(stateFile.name + ".upd")
+      ResilientFileChannel(updateFile, WRITE, CREATE).use {
+        with(stateExternalizer) {
+          serialize(it.asStorageIO(), newState)
+        }
       }
+
+      updateFile.moveTo(stateFile, overwrite = true)
+      cachedState = newState
     }
-    updateFile.moveTo(stateFile, overwrite = true)
   }
 
   fun compactUpTo(context: VfsLogCompactionContext, currentState: CompactedVfsState, position: CompactionPosition): CompactedVfsState {
@@ -259,11 +261,11 @@ class CompactedVfsModel(
       }
     }
 
-    class AttributesUpdate(var clear: Boolean = false, val entries: MutableMap<EnumeratedFileAttribute, PayloadRef> = mutableMapOf())
+    class AttributesUpdate(var clear: Boolean = false, val entries: MutableMap<EnumeratedFileAttribute, PayloadRef> = hashMapOf())
 
-    val fileUpdates = mutableMapOf<Int, FileModel>()
-    val contentUpdates = mutableMapOf<Int, VfsChronicle.ContentRestorationSequenceBuilder>()
-    val attributeUpdates = mutableMapOf<Int, AttributesUpdate>()
+    val fileUpdates = hashMapOf<Int, FileModel>()
+    val contentUpdates = hashMapOf<Int, VfsChronicle.ContentRestorationSequenceBuilder>()
+    val attributeUpdates = hashMapOf<Int, AttributesUpdate>()
     var newFilesSize: Int = currentState.filesState.size
     var newContentsSize: Int = currentState.contentsState.size
 
@@ -325,7 +327,7 @@ class CompactedVfsModel(
           else {
             assert(it.data != null)
             attributeUpdates.compute(fileId) { _, upd ->
-              if (upd == null) return@compute AttributesUpdate(false, mutableMapOf(it.enumeratedAttributeFilter to it.data!!))
+              if (upd == null) return@compute AttributesUpdate(false, hashMapOf(it.enumeratedAttributeFilter to it.data!!))
               if (it.enumeratedAttributeFilter in upd.entries) {
                 upd.entries.remove(it.enumeratedAttributeFilter)
               }
@@ -346,16 +348,54 @@ class CompactedVfsModel(
       // super root allocation happens before modification interception, so alloc -> 1 will not be found in the logs
       fileUpdates.putIfAbsent(1, FileModel())
     }
+    val emptyContent = VfsChronicle.ContentRestorationSequenceBuilder()
+    emptyContent.setInitial(VfsModificationContract.ContentOperation.Set { _ -> ByteArray(0).let(State::Ready) })
     if (currentState.contentsState.size == 0) {
-      val emptyContent = VfsChronicle.ContentRestorationSequenceBuilder()
-      emptyContent.setInitial(VfsModificationContract.ContentOperation.Set { _ -> ByteArray(0).let(State::Ready) })
       contentUpdates.putIfAbsent(0, emptyContent)
     }
+
+    val attachment by lazy {
+      Attachment("compaction state",
+                 """
+                    current state:
+                      compaction position: ${currentState.position}
+                      files size: ${currentState.filesState.size}
+                      attributes size: ${currentState.attributesState.size}
+                      contents size: ${currentState.contentsSize}
+                    newFilesSize: $newFilesSize
+                    newContentsSize: $newContentsSize
+                    file updates: size = ${fileUpdates.size}, keys = ${fileUpdates.keys.joinToString(limit = 25)}
+                    attribute updates: size = ${attributeUpdates.size}, keys = ${attributeUpdates.keys.joinToString(limit = 25)}
+                    content updates: size = ${contentUpdates.size}, keys = ${contentUpdates.keys.joinToString(limit = 25)}
+                 """.trimIndent())
+    }
+    var errorsLogged = 0
+    val maxErrorsToLog = 10
+    fun logError(msg: String) {
+      if (errorsLogged++ < maxErrorsToLog) {
+        LOG.error(msg, attachment)
+      }
+    }
+
     for (i in currentState.filesState.size until newFilesSize) {
-      check(fileUpdates.contains(i) && attributeUpdates.contains(i))
+      if (!fileUpdates.contains(i)) {
+        logError("fileUpdates does not contain $i")
+        fileUpdates[i] = FileModel()
+      }
+      if (!attributeUpdates.contains(i)) {
+        logError("attributeUpdates does not contain $i")
+        attributeUpdates[i] = AttributesUpdate()
+      }
     }
     for (i in currentState.contentsState.size until newContentsSize) {
-      check(contentUpdates.containsKey(i) && contentUpdates[i]!!.isFormed)
+      if (!contentUpdates.containsKey(i)) {
+        logError("contentUpdates does not contain $i")
+        contentUpdates[i] = emptyContent
+      }
+      if (!contentUpdates[i]!!.isFormed) {
+        logError("contentUpdates[$i] is not formed")
+        contentUpdates[i]!!.setInitial(VfsModificationContract.ContentOperation.Set { ByteArray(0).let(State::Ready) })
+      }
     }
 
     val newFilesState =
@@ -375,8 +415,8 @@ class CompactedVfsModel(
         { fileId ->
           val upd = attributeUpdates[fileId]!!
           val result: MutableMap<EnumeratedFileAttribute, ByteArray> =
-            if (upd.clear || currentState.attributesState.size <= fileId) mutableMapOf()
-            else currentState.attributesState.getEntry(fileId).toMap(mutableMapOf())
+            if (upd.clear || currentState.attributesState.size <= fileId) hashMapOf()
+            else currentState.attributesState.getEntry(fileId).toMap(hashMapOf())
           val loadedAttrs = upd.entries.mapValues {
             check(it.value.source != PayloadSource.PayloadStorage || currentState.position.payloadStoragePosition <= it.value.offset) {
               "compaction failed: attribute update refers to a payload that was already compacted before: " +
@@ -396,6 +436,7 @@ class CompactedVfsModel(
       ).also {
         attributeUpdates.clear()
       }
+
     fun ByteArray.deflate(): ByteArray {
       val result = UnsyncByteArrayOutputStream()
       DeflaterOutputStream(result).use {
@@ -403,6 +444,7 @@ class CompactedVfsModel(
       }
       return result.toByteArray()
     }
+
     val newContentsState =
       contentsStorage.performUpdate(
         currentState.contentsState,
@@ -441,12 +483,12 @@ class CompactedVfsModel(
   companion object {
     private val LOG = Logger.getInstance(CompactedVfsModel::class.java)
 
-    private const val FILES_PER_BLOCK = 250 * 1024
+    private const val FILES_PER_BLOCK = 512 * 1024
 
-    private const val CONTENTS_BLOCK_SIZE = 8L * 1024 * 1024
-    private const val CONTENTS_PER_BLOCK = 5 * 1024
+    private const val CONTENTS_BLOCK_SIZE = 16L * 1024 * 1024
+    private const val CONTENTS_PER_BLOCK = 16 * 1024
 
-    private const val ATTRIBUTES_BLOCK_SIZE = 16L * 1024 * 1024
+    private const val ATTRIBUTES_BLOCK_SIZE = 32L * 1024 * 1024
     private const val ATTRIBUTES_PER_BLOCK = 1024 * 1024
 
     internal class FileModel(
@@ -487,9 +529,9 @@ class CompactedVfsModel(
     private object FileModelExternalizer : EntryArrayStorage.ConstSizeEntryExternalizer<FileModel> {
       override val entrySize: Long = FileModel.HEADER_SIZE_BYTES
 
-      override fun RandomAccessReadBuffer.deserialize(): FileModel {
+      override fun deserialize(readBuffer: RandomAccessReadBuffer): FileModel {
         val arr = ByteArray(FileModel.HEADER_SIZE_BYTES.toInt())
-        read(0, arr)
+        readBuffer.read(0, arr)
         ByteBuffer.wrap(arr).run {
           return FileModel(
             getInt(), getInt(), getLong(), getLong(), getInt(), getInt(), getInt()
@@ -497,7 +539,8 @@ class CompactedVfsModel(
         }
       }
 
-      override fun RandomAccessWriteBuffer.serialize(entry: FileModel) {
+      override fun serialize(writeBuffer: RandomAccessWriteBuffer,
+                             entry: FileModel) {
         val arr = ByteArray(FileModel.HEADER_SIZE_BYTES.toInt())
         ByteBuffer.wrap(arr)
           .putInt(entry.nameId)
@@ -507,34 +550,35 @@ class CompactedVfsModel(
           .putInt(entry.flags)
           .putInt(entry.contentRecordId)
           .putInt(entry.attributesRecordId)
-        write(0, arr)
+        writeBuffer.write(0, arr)
       }
     }
 
     object ByteArrayExternalizer : EntryArrayStorage.EntryExternalizer<ByteArray> {
       override fun getEntrySize(entry: ByteArray): Long = 4 + entry.size.toLong()
 
-      override fun RandomAccessReadBuffer.getEntrySize(): Long {
+      override fun getEntrySize(readBuffer: RandomAccessReadBuffer): Long {
         val intArr = ByteArray(4)
-        read(0, intArr)
+        readBuffer.read(0, intArr)
         val size = ByteBuffer.wrap(intArr).getInt()
         return 4 + size.toLong()
       }
 
-      override fun RandomAccessReadBuffer.deserialize(): ByteArray {
+      override fun deserialize(readBuffer: RandomAccessReadBuffer): ByteArray {
         val intArr = ByteArray(4)
-        read(0, intArr)
+        readBuffer.read(0, intArr)
         val size = ByteBuffer.wrap(intArr).getInt()
         val data = ByteArray(size)
-        read(4, data)
+        readBuffer.read(4, data)
         return data
       }
 
-      override fun RandomAccessWriteBuffer.serialize(entry: ByteArray) {
+      override fun serialize(writeBuffer: RandomAccessWriteBuffer,
+                             entry: ByteArray) {
         val intArr = ByteArray(4)
         ByteBuffer.wrap(intArr).putInt(entry.size)
-        write(0, intArr)
-        write(4, entry)
+        writeBuffer.write(0, intArr)
+        writeBuffer.write(4, entry)
       }
     }
 
@@ -544,61 +588,54 @@ class CompactedVfsModel(
       }
 
       override fun getEntrySize(entry: List<Pair<EnumeratedFileAttribute, ByteArray>>): Long {
-        var totalSize = 4 // entries count
+        var totalSize = 4 // entry size in bytes
         entry.forEach { (_, data) ->
           totalSize += 8 + 4 + data.size
         }
         return totalSize.toLong()
       }
 
-      override fun RandomAccessReadBuffer.getEntrySize(): Long {
+      override fun getEntrySize(readBuffer: RandomAccessReadBuffer): Long {
         val intArr = ByteArray(4)
-        var totalSize = 4L
-        read(0, intArr)
-        val entriesCount = ByteBuffer.wrap(intArr).getInt()
-        repeat(entriesCount) {
-          read(totalSize + 8, intArr)
-          val dataSize = ByteBuffer.wrap(intArr).getInt()
-          totalSize += 8 + 4 + dataSize
-        }
-        return totalSize
+        readBuffer.read(0, intArr)
+        val entrySize = ByteBuffer.wrap(intArr).getInt()
+        return entrySize.toLong()
       }
 
-      override fun RandomAccessReadBuffer.deserialize(): List<Pair<EnumeratedFileAttribute, ByteArray>> {
+      override fun deserialize(readBuffer: RandomAccessReadBuffer): List<Pair<EnumeratedFileAttribute, ByteArray>> {
         val intArr = ByteArray(4)
-        read(0, intArr)
-        var offset = 4L
-        val entriesCount = ByteBuffer.wrap(intArr).getInt()
-        val entries = ArrayList<Pair<EnumeratedFileAttribute, ByteArray>>(entriesCount)
-        val entryArr = ByteArray(8 + 4)
-        repeat(entriesCount) {
-          read(offset, entryArr)
-          val (compressedInfo, dataSize) = ByteBuffer.wrap(entryArr).run { getLong().toULong() to getInt() }
+        readBuffer.read(0, intArr)
+        val entrySize = ByteBuffer.wrap(intArr).getInt()
+        val entryData = ByteArray(entrySize - 4)
+        readBuffer.read(4, entryData)
+        var offset = 0
+        val entries = ArrayList<Pair<EnumeratedFileAttribute, ByteArray>>(8)
+        while (offset < entrySize - 4) {
+          val (compressedInfo, dataSize) = ByteBuffer.wrap(entryData, offset, 8 + 4).run { getLong().toULong() to getInt() }
           offset += 8 + 4
           val data = ByteArray(dataSize)
-          read(offset, data)
+          entryData.copyInto(data, 0, offset, offset + dataSize)
           entries.add(EnumeratedFileAttribute(compressedInfo) to data)
           offset += data.size
         }
         return entries
       }
 
-      override fun RandomAccessWriteBuffer.serialize(entry: List<Pair<EnumeratedFileAttribute, ByteArray>>) {
-        val intArr = ByteArray(4)
+      override fun serialize(writeBuffer: RandomAccessWriteBuffer,
+                             entry: List<Pair<EnumeratedFileAttribute, ByteArray>>) {
+        val out = UnsyncByteArrayOutputStream()
         val entryArr = ByteArray(8 + 4)
-        var offset = 0L
-        ByteBuffer.wrap(intArr).putInt(entry.size)
-        write(offset, intArr)
-        offset += 4
         entry.forEach { (attr, data) ->
           ByteBuffer.wrap(entryArr)
             .putLong(attr.compressedInfo.toLong())
             .putInt(data.size)
-          write(offset, entryArr)
-          offset += 8 + 4
-          write(offset, data)
-          offset += data.size
+          out.write(entryArr)
+          out.write(data)
         }
+        val intArr = ByteArray(4)
+        ByteBuffer.wrap(intArr).putInt(out.size() + 4)
+        writeBuffer.write(0, intArr)
+        writeBuffer.write(4, out.toByteArray())
       }
     }
   }

@@ -3,6 +3,7 @@ package com.intellij.html.webSymbols.attributes.impl
 
 import com.intellij.html.webSymbols.attributes.WebSymbolHtmlAttributeInfo
 import com.intellij.html.webSymbols.attributes.WebSymbolHtmlAttributeValueTypeSupport
+import com.intellij.util.ThreeState
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
@@ -52,14 +53,19 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
         }?.let { typeSupport.resolve(symbol, it) }
       else null
 
-      val isHtmlBoolean = kind == WebSymbolHtmlAttributeValue.Kind.PLAIN
-                          && (type == WebSymbolHtmlAttributeValue.Type.BOOLEAN || typeSupport?.isBoolean(symbol, langType) == true)
-      val valueRequired = attrValue?.required != false && !isHtmlBoolean && kind != WebSymbolHtmlAttributeValue.Kind.NO_VALUE
-      val acceptsNoValue = !valueRequired || isHtmlBoolean
+      val isHtmlBoolean = if (kind == WebSymbolHtmlAttributeValue.Kind.PLAIN)
+        if (type == WebSymbolHtmlAttributeValue.Type.BOOLEAN)
+          ThreeState.YES
+        else
+          typeSupport?.isBoolean(symbol, langType) ?: ThreeState.YES
+      else
+        ThreeState.NO
+      val valueRequired = attrValue?.required != false && isHtmlBoolean == ThreeState.NO && kind != WebSymbolHtmlAttributeValue.Kind.NO_VALUE
+      val acceptsNoValue = !valueRequired
       val acceptsValue = kind != WebSymbolHtmlAttributeValue.Kind.NO_VALUE
 
       val enumValues =
-        if (isHtmlBoolean) {
+        if (isHtmlBoolean == ThreeState.YES) {
           listOf(WebSymbolCodeCompletionItem.create(name))
         }
         else if (kind == WebSymbolHtmlAttributeValue.Kind.PLAIN) {

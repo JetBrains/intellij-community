@@ -8,43 +8,59 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
+/**
+ * Specialized version of Result<T> from kotlin stdlib
+ */
 class OperationResult<out T : Any> private constructor(
-  private val valueNullable: T?,
-  val exceptionClass: String
+  private val _value: Any
 ) {
-  val hasValue: Boolean get() = valueNullable != null
-  val value: T get() = valueNullable!!
+  val isSuccess: Boolean get() = _value !is ExceptionalResult
 
-  infix fun <R : Any> fmap(action: (T) -> R): OperationResult<R> {
-    if (hasValue) return fromValue(action(value))
-    return fromException(exceptionClass)
-  }
+  @Suppress("UNCHECKED_CAST")
+  val value: T get() = _value as T
 
-  override fun toString(): String {
-    return if (hasValue) "OperationResult(value=$value)"
-    else "OperationResult(exception=$exceptionClass)"
-  }
+  @PublishedApi
+  internal val exceptionEvidence: Int get() = (_value as ExceptionalResult).evidence
 
+  override fun toString(): String = _value.toString()
 
   companion object {
-    fun <T : Any> fromValue(value: T): OperationResult<T> =
-      OperationResult(value, "")
+    private class ExceptionalResult(
+      val evidence: Int // evidence < 0
+    ) {
+      override fun toString(): String {
+        return "ExceptionalResult(exceptionEvidence=$evidence)"
+      }
+    }
 
-    fun fromException(exceptionClass: String): OperationResult<Nothing> =
-      OperationResult(null, exceptionClass)
+    fun <T : Any> fromValue(value: T): OperationResult<T> =
+      OperationResult(value)
+
+    fun fromException(exception: Throwable): OperationResult<Nothing> =
+      fromException(encodeException(exception))
+
+    @PublishedApi
+    internal fun fromException(exceptionEvidence: Int): OperationResult<Nothing> =
+      OperationResult(ExceptionalResult(exceptionEvidence))
+
+    /**
+     * @return value < 0
+     */
+    private fun encodeException(exception: Throwable): Int =
+      exception.javaClass.name.sumOf { -it.code }.coerceIn(Int.MIN_VALUE, -1)
 
     /*
      * Serialization of OperationResult<T>:
-     * this class is used only with T in {Unit, Int (with value >= 0), Boolean} and exception class name gets enumerated,
+     * this class is used only with T in {Unit, Int (with value >= 0), Boolean}, and exception class name gets encoded to negative Int range,
      * so it is possible to serialize it using only one Int field (4 bytes)
      */
     const val SIZE_BYTES: Int = Int.SIZE_BYTES
 
-    inline fun <reified T : Any> OperationResult<T>.serialize(enumerator: (String) -> Int): Int {
-      if (!hasValue) {
-        val enum = enumerator(exceptionClass)
-        assert(enum >= 0)
-        return -enum - 1
+    inline fun <reified T : Any> OperationResult<T>.serialize(): Int {
+      if (!isSuccess) {
+        val evidence = exceptionEvidence
+        assert(evidence < 0)
+        return evidence
       }
       // XXX: kotlin can't properly optimize branch selection if T::class is used here (although T is reified),
       // but using java class fixes it
@@ -54,12 +70,7 @@ class OperationResult<out T : Any> private constructor(
           value as Int
         }
         Boolean::class.javaObjectType -> {
-          if (value as Boolean) {
-            1
-          }
-          else {
-            0
-          }
+          if (value as Boolean) 1 else 0
         }
         Unit::class.javaObjectType -> 0
         else -> throw IllegalStateException("OperationResult is not designed to be used with type-parameter " + T::class.java.name)
@@ -67,11 +78,9 @@ class OperationResult<out T : Any> private constructor(
     }
 
     @Suppress("UNCHECKED_CAST")
-    inline fun <reified T : Any> deserialize(data: Int, deenumerator: (Int) -> String): OperationResult<T> {
+    inline fun <reified T : Any> deserialize(data: Int): OperationResult<T> {
       if (data < 0) {
-        val enumVal = -(data + 1)
-        val exceptionClass = deenumerator(enumVal)
-        return fromException(exceptionClass)
+        return fromException(data)
       }
       // XXX: kotlin can't properly optimize branch selection if T::class is used here (although T is reified),
       // but using java class fixes it
@@ -116,7 +125,7 @@ internal inline fun <R : Any> catchResult(crossinline processor: (result: Operat
       // catchResult is currently used in write interceptors for VFS storages, cancellation of such operations is something strange
       OperationResult.LOG.error("unexpected cancellation exception in catchResult: $e")
     }
-    safeProcessor(OperationResult.fromException(e.javaClass.name))
+    safeProcessor(OperationResult.fromException(e))
     throw e
   }
 }

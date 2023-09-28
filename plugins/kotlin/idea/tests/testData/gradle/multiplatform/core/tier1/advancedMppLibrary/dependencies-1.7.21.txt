@@ -77,7 +77,6 @@ project.jsMain
 project.jsTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
-    jsMain (friend, RUNTIME)
     jsMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}} (TEST)
 
@@ -104,7 +103,6 @@ project.jvmTest
     commonTest (refines, TEST)
     jvmAndNativeMain (friend, TEST)
     jvmAndNativeTest (refines, TEST)
-    jvmMain (friend, RUNTIME)
     jvmMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)

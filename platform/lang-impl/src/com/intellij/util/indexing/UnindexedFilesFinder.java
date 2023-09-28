@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 
 final class UnindexedFilesFinder {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesFinder.class);
+  private static final boolean TRUST_INDEXING_FLAG = Registry.is("scanning.trust.indexing.flag", false);
 
   private final Project myProject;
   private final FileBasedIndexImpl myFileBasedIndex;
@@ -166,9 +168,17 @@ final class UnindexedFilesFinder {
     }
     // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
     FileIndexingStamp indexingStamp = indexingRequest.getFileIndexingStamp(file);
+    FileIndexesValuesApplier.ApplicationMode applicationMode = FileBasedIndexImpl.getContentIndependentIndexesApplicationMode();
+
+    if (TRUST_INDEXING_FLAG) {
+      if (IndexingFlag.isFileIndexed(file, indexingStamp)) {
+        myIndexableFilesFilterHolder.addFileId(FileBasedIndex.getFileId(file), myProject);
+        return new UnindexedFileStatusBuilder(applicationMode).build();
+      }
+    }
+
     Supplier<@NotNull Boolean> checker = CachedFileType.getFileTypeChangeChecker();
     FileType cachedFileType = file.getFileType();
-    FileIndexesValuesApplier.ApplicationMode applicationMode = FileBasedIndexImpl.getContentIndependentIndexesApplicationMode();
     return ReadAction.compute(() -> {
       if (myProject.isDisposed() || !file.isValid()) {
         return null;

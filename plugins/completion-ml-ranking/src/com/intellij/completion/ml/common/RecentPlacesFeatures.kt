@@ -67,7 +67,7 @@ class RecentPlacesFeatures : ElementFeatureProvider {
             recentPlacesStorage.putChildren(place2children.second)
           }
         }
-        .coalesceBy(offset)
+        .coalesceBy(this, changePlace.file)
         .expireWith(project)
         .expireWhen(BooleanSupplier { changePlace.window == null || changePlace.window.isDisposed })
         .submit(AppExecutorUtil.getAppExecutorService())

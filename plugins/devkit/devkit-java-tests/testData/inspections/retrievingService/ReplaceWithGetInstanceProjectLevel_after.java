@@ -1,7 +1,7 @@
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 
-@Service
+@Service(Service.Level.PROJECT)
 final class MyService {
 
   public static MyService getInstance(Project project) {

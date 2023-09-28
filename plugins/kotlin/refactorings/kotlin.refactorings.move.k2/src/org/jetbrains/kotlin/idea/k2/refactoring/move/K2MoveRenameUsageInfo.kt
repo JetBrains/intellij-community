@@ -106,16 +106,27 @@ sealed class K2MoveRenameUsageInfo(
         }
 
         @OptIn(KtAllowAnalysisFromWriteAction::class)
-        private fun KtReference.createUsageInfo(declaration: PsiElement): K2MoveRenameUsageInfo {
+        private fun KtSimpleNameExpression.isUnqualifiable(): Boolean {
+            // example: a.foo() where foo is an extension function
             fun KtSimpleNameExpression.isExtensionReference(): Boolean = allowAnalysisFromWriteAction {
                 analyze(this) {
                     resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.extensionReceiver != null
                 }
             }
 
+            // example: ::foo
+            fun KtSimpleNameExpression.isNonInstancedCallableReferenceExpression(): Boolean = allowAnalysisFromWriteAction {
+                val parent = parent
+                return parent is KtCallableReferenceExpression && parent.receiverExpression == null
+            }
+
+            return isExtensionReference() || isNonInstancedCallableReferenceExpression()
+        }
+
+        private fun KtReference.createUsageInfo(declaration: PsiElement): K2MoveRenameUsageInfo {
             val refExpr = element
-            return if (refExpr is KtSimpleNameExpression && refExpr.isExtensionReference()) {
-                Unqualifiable(refExpr, this, declaration) // extension references have no qualified representation
+            return if (refExpr is KtSimpleNameExpression && refExpr.isUnqualifiable()) {
+                Unqualifiable(refExpr, this, declaration)
             } else {
                 Qualifiable(refExpr, this, declaration)
             }

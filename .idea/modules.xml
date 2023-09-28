@@ -599,6 +599,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/cucumber-jvm-formatter5/intellij.cucumber.jvmFormatter5.iml" filepath="$PROJECT_DIR$/plugins/cucumber-jvm-formatter5/intellij.cucumber.jvmFormatter5.iml" />
       <module fileurl="file://$PROJECT_DIR$/build/cucumber-test-runner/intellij.cucumber.testRunner.iml" filepath="$PROJECT_DIR$/build/cucumber-test-runner/intellij.cucumber.testRunner.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/intellij.dev/intellij.dev.iml" filepath="$PROJECT_DIR$/plugins/intellij.dev/intellij.dev.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/intellij.dev.codeInsight/intellij.dev.codeInsight.iml" filepath="$PROJECT_DIR$/plugins/intellij.dev.codeInsight/intellij.dev.codeInsight.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/intellij.dev.psiViewer/intellij.dev.psiViewer.iml" filepath="$PROJECT_DIR$/plugins/intellij.dev.psiViewer/intellij.dev.psiViewer.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit/intellij.devkit.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit/intellij.devkit.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/devkit-core/intellij.devkit.core.iml" filepath="$PROJECT_DIR$/plugins/devkit/devkit-core/intellij.devkit.core.iml" />
@@ -996,6 +997,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/util/immutable-key-value-store/intellij.platform.util.immutableKeyValueStore.iml" filepath="$PROJECT_DIR$/platform/util/immutable-key-value-store/intellij.platform.util.immutableKeyValueStore.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/immutable-key-value-store/benchmark/intellij.platform.util.immutableKeyValueStore.benchmark.iml" filepath="$PROJECT_DIR$/platform/util/immutable-key-value-store/benchmark/intellij.platform.util.immutableKeyValueStore.benchmark.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/jdom/intellij.platform.util.jdom.iml" filepath="$PROJECT_DIR$/platform/util/jdom/intellij.platform.util.jdom.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/util/nanoxml/intellij.platform.util.nanoxml.iml" filepath="$PROJECT_DIR$/platform/util/nanoxml/intellij.platform.util.nanoxml.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util-rt/intellij.platform.util.rt.iml" filepath="$PROJECT_DIR$/platform/util-rt/intellij.platform.util.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/rt-java8/intellij.platform.util.rt.java8.iml" filepath="$PROJECT_DIR$/platform/util/rt-java8/intellij.platform.util.rt.java8.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/testSrc/intellij.platform.util.tests.iml" filepath="$PROJECT_DIR$/platform/util/testSrc/intellij.platform.util.tests.iml" />
@@ -1195,6 +1197,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/code-insight/api/kotlin.code-insight.api.iml" filepath="$PROJECT_DIR$/plugins/kotlin/code-insight/api/kotlin.code-insight.api.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/code-insight/descriptions/kotlin.code-insight.descriptions.iml" filepath="$PROJECT_DIR$/plugins/kotlin/code-insight/descriptions/kotlin.code-insight.descriptions.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/code-insight/impl-base/kotlin.code-insight.impl-base.iml" filepath="$PROJECT_DIR$/plugins/kotlin/code-insight/impl-base/kotlin.code-insight.impl-base.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/code-insight/inspections-k1/kotlin.code-insight.inspections-k1.iml" filepath="$PROJECT_DIR$/plugins/kotlin/code-insight/inspections-k1/kotlin.code-insight.inspections-k1.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/code-insight/inspections-k2/kotlin.code-insight.inspections-k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/code-insight/inspections-k2/kotlin.code-insight.inspections-k2.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/code-insight/inspections-k2/tests/kotlin.code-insight.inspections-k2.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/code-insight/inspections-k2/tests/kotlin.code-insight.inspections-k2.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/code-insight/inspections-shared/kotlin.code-insight.inspections-shared.iml" filepath="$PROJECT_DIR$/plugins/kotlin/code-insight/inspections-shared/kotlin.code-insight.inspections-shared.iml" />

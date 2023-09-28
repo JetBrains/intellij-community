@@ -22,8 +22,18 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
     val renderer = if (inlay == null) null else getRenderer(inlay)
     val mouseArea = if (renderer == null || inlay == null) null else getMouseAreaUnderCursor(inlay, renderer, e.mouseEvent)
     val ctrlDown = isControlDown(e.mouseEvent)
+
+    if (inlay != inlayUnderCursor?.get()) {
+      hint?.hide()
+      if (renderer != null) {
+        hint = renderer.handleHover(e)
+      }
+      else {
+        hint = null
+      }
+    }
+
     if (mouseArea != areaUnderCursor || ctrlDown != this.ctrlDown) {
-      val isHovered = !ctrlDown && mouseArea != null
       val isHoveredWithCtrl = ctrlDown && mouseArea != null
 
       val oldEntries = areaUnderCursor?.entries
@@ -40,19 +50,15 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
         }
       }
 
-      if (isHovered && renderer != null) {
-        hint = renderer.handleHover(e)
-      }
-      else {
-        hint?.hide()
-      }
-
       inlayUnderCursor?.get()?.update()
       inlay?.update()
 
       areaUnderCursor = mouseArea
-      inlayUnderCursor = inlay?.let { WeakReference(it) }
       this.ctrlDown = ctrlDown
+    }
+
+    if (inlay != inlayUnderCursor?.get()) {
+      inlayUnderCursor = inlay?.let { WeakReference(it) }
     }
   }
 

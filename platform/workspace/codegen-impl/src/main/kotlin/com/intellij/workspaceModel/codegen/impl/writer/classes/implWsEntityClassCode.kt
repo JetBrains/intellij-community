@@ -6,6 +6,7 @@ import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsEntityFieldC
 import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionId
 import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionIdCode
 import com.intellij.workspaceModel.codegen.impl.CodeGeneratorVersionCalculator
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 
 fun ObjClass<*>.implWsEntityCode(): String {
   return """
@@ -13,10 +14,10 @@ package ${module.name}
 
 @${GeneratedCodeApiVersion}(${CodeGeneratorVersionCalculator.apiVersion})
 @${GeneratedCodeImplVersion}(${CodeGeneratorVersionCalculator.implementationMajorVersion})
-${if (openness.instantiatable) "open" else "abstract"} class $javaImplName(val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase}() {
+$generatedCodeVisibilityModifier ${if (openness.instantiatable) "open" else "abstract"} class $javaImplName(private val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase}(dataSource) {
     ${
     """
-    companion object {
+    private companion object {
         ${allRefsFields.lines("        ") { refsConnectionIdCode }.trimEnd()}
         
 ${getLinksOfConnectionIds(this)}
@@ -31,6 +32,7 @@ ${getLinksOfConnectionIds(this)}
     override fun connectionIdList(): List<${ConnectionId}> {
         return connections
     }
+  
 
     ${implWsEntityBuilderCode().indentRestOnly("    ")}
 }
@@ -39,7 +41,7 @@ ${getLinksOfConnectionIds(this)}
 
 private fun getLinksOfConnectionIds(type: ObjClass<*>): String {
   return lines(2) {
-    line("val connections = listOf<${ConnectionId}>(")
+    line("private val connections = listOf<$ConnectionId>(")
     type.allRefsFields.forEach {
       line("    " + it.refsConnectionId + ",")
     }

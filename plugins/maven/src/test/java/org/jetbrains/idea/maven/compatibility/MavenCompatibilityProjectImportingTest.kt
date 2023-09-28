@@ -7,6 +7,7 @@ import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.text.VersionComparatorUtil
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.server.MavenServerManager
@@ -16,8 +17,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.io.IOException
-import java.util.*
 
 @RunWith(Parameterized::class)
 class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
@@ -45,7 +44,6 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Before
-  @Throws(Exception::class)
   fun before() {
     myWrapperTestFixture = MavenWrapperTestFixture(myProject, myMavenVersion)
     myWrapperTestFixture!!.setUp()
@@ -57,15 +55,13 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @After
-  @Throws(Exception::class)
   fun after() {
     myWrapperTestFixture!!.tearDown()
   }
 
 
   @Test
-  @Throws(Exception::class)
-  fun testExceptionsFromMavenExtensionsAreReportedAsProblems() {
+  fun testExceptionsFromMavenExtensionsAreReportedAsProblems() = runBlocking {
     assumeVersionAtLeast("3.1.0")
     val helper = MavenCustomRepositoryHelper(myDir, "plugins")
     repositoryPath = helper.getTestDataPath("plugins")
@@ -103,10 +99,10 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testSmokeImport() {
+  fun testSmokeImport() = runBlocking {
     assertCorrectVersion()
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -117,8 +113,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  @Throws(IOException::class)
-  fun testSmokeImportWithUnknownExtension() {
+  fun testSmokeImportWithUnknownExtension() = runBlocking {
     assertCorrectVersion()
     createProjectSubFile(".mvn/extensions.xml", """
       <extensions>
@@ -158,7 +153,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                        <artifactId>m2</artifactId>
                          """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     assertModules("m2", "m1", "project")
   }
@@ -169,10 +164,10 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testInterpolateModel() {
+  fun testInterpolateModel() = runBlocking {
     assertCorrectVersion()
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -194,7 +189,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testImportProjectProperties() {
+  fun testImportProjectProperties() = runBlocking {
     assumeVersionMoreThan("3.0.3")
 
     assertCorrectVersion()
@@ -216,7 +211,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
       """.trimIndent()
     )
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -236,7 +231,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testImportAddedProjectProperties() {
+  fun testImportAddedProjectProperties() = runBlocking {
     assumeVersionMoreThan("3.0.3")
     assumeVersionNot("3.6.0")
 
@@ -259,7 +254,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
       """.trimIndent()
     )
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -296,7 +291,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
       """.trimIndent()
     )
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -314,7 +309,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testImportSubProjectWithPropertyInParent() {
+  fun testImportSubProjectWithPropertyInParent() = runBlocking {
     assumeVersionMoreThan("3.0.3")
 
     assertCorrectVersion()
@@ -328,7 +323,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
       <artifactId>module1</artifactId>
       """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                         <artifactId>project</artifactId>
                         <version>${'$'}{revision}</version>
@@ -346,8 +341,8 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testLanguageLevelWhenSourceLanguageLevelIsNotSpecified() {
-    importProject("""
+  fun testLanguageLevelWhenSourceLanguageLevelIsNotSpecified() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

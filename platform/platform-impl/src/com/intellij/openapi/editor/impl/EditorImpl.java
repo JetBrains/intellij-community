@@ -79,6 +79,7 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -264,7 +265,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return Unit.INSTANCE;
   });
   private VirtualFile myVirtualFile;
-  private @Nullable Color myForcedBackground;
   private @Nullable Dimension myPreferredSize;
 
   private final Alarm myMouseSelectionStateAlarm = new Alarm();
@@ -284,10 +284,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private Predicate<? super RangeHighlighter> myHighlightingFilter;
 
   private final @NotNull IndentsModel myIndentsModel;
-
-  private @Nullable CharSequence myPlaceholderText;
-  private @Nullable TextAttributes myPlaceholderAttributes;
-  private boolean myShowPlaceholderWhenFocused;
 
   private int myStickySelectionStart;
   private boolean myPurePaintingMode;
@@ -549,6 +545,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         case EditorState.isEmbeddedIntoDialogWrapperPropertyName -> isEmbeddedIntoDialogWrapperChanged(event);
         case EditorState.verticalScrollBarOrientationPropertyName -> verticalScrollBarOrientationChanged(event);
         case EditorState.isStickySelectionPropertyName -> isStickySelectionChanged(event);
+        case EditorState.myForcedBackgroundPropertyName -> forcedBackgroundChanged(event);
       }
     }, myDisposable);
   }
@@ -1683,7 +1680,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void beforeChangedUpdate(@NotNull DocumentEvent e) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     myDocumentChangeInProgress = true;
     if (isStickySelection()) {
@@ -2057,14 +2054,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setBackgroundColor(Color color) {
-    myScrollPane.setBackground(color);
-
     if (getBackgroundIgnoreForced().equals(color)) {
-      myForcedBackground = null;
+      myState.setMyForcedBackground(null);
     }
     else {
-      myForcedBackground = color;
+      myState.setMyForcedBackground(color);
     }
+  }
+
+  private void forcedBackgroundChanged(ObservableStateListener.PropertyChangeEvent event) {
+    myScrollPane.setBackground(getBackgroundColor());
   }
 
   @NotNull
@@ -2074,7 +2073,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Color getBackgroundColor() {
-    return myForcedBackground == null ? getBackgroundIgnoreForced() : myForcedBackground;
+    Color forcedBackground = myState.getMyForcedBackground();
+    return forcedBackground == null ? getBackgroundIgnoreForced() : forcedBackground;
   }
 
   @Override
@@ -2084,29 +2084,29 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setPlaceholder(@Nullable CharSequence text) {
-    myPlaceholderText = text;
+     myState.setMyPlaceholderText(text);
   }
 
   @Override
   public void setPlaceholderAttributes(@Nullable TextAttributes attributes) {
-    myPlaceholderAttributes = attributes;
+     myState.setMyPlaceholderAttributes(attributes);
   }
 
   public @Nullable TextAttributes getPlaceholderAttributes() {
-    return myPlaceholderAttributes;
+    return myState.getMyPlaceholderAttributes();
   }
 
   public CharSequence getPlaceholder() {
-    return myPlaceholderText;
+    return myState.getMyPlaceholderText();
   }
 
   @Override
   public void setShowPlaceholderWhenFocused(boolean show) {
-    myShowPlaceholderWhenFocused = show;
+    myState.setMyShowPlaceholderWhenFocused(show);
   }
 
   public boolean getShowPlaceholderWhenFocused() {
-    return myShowPlaceholderWhenFocused;
+    return myState.getMyShowPlaceholderWhenFocused();
   }
 
   Color getBackgroundColor(@NotNull TextAttributes attributes) {
@@ -2943,7 +2943,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myState.setEmbeddedIntoDialogWrapper(b);
   }
 
-  private void isEmbeddedIntoDialogWrapperChanged(ObservableStateListener.PropertyChangeEvent  event) {
+  private void isEmbeddedIntoDialogWrapperChanged(ObservableStateListener.PropertyChangeEvent event) {
     assertIsDispatchThread();
 
     Object newValue = event.getNewValue();
@@ -2963,7 +2963,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myState.setOneLineMode(isOneLineMode);
   }
 
-  private void isOneLineModeChanged(ObservableStateListener.PropertyChangeEvent  event) {
+  private void isOneLineModeChanged(ObservableStateListener.PropertyChangeEvent event) {
     Object newValue = event.getNewValue();
     if (!(newValue instanceof Boolean)) {
       LOG.error("newValue is not Boolean. property name = " + event.getPropertyName() + ", newValue = " + newValue);
@@ -3445,7 +3445,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   static void assertIsDispatchThread() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
   }
 
   private static void assertReadAccess() {
@@ -3458,7 +3458,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myState.setVerticalScrollBarOrientation(type);
   }
 
-  private void verticalScrollBarOrientationChanged(ObservableStateListener.PropertyChangeEvent  event) {
+  private void verticalScrollBarOrientationChanged(ObservableStateListener.PropertyChangeEvent event) {
     assertIsDispatchThread();
 
     Object newValue = event.getNewValue();

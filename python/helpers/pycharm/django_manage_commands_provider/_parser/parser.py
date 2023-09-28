@@ -103,5 +103,9 @@ def _is_django_10():
             return StrictVersion(django.get_version()) >= StrictVersion("1.10")
         except ValueError:
             return LooseVersion(django.get_version()) >= LooseVersion("1.10")
-    except (ImportError, AttributeError):
+    except ImportError:
+        if sys.version_info[:2] >= (3, 12):
+            return django.get_version().split('.') >= ['1', '10']
+        return False
+    except AttributeError:
         return False

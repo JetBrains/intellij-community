@@ -14,22 +14,23 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class TreeMultiparentLeafEntityImpl(val dataSource: TreeMultiparentLeafEntityData) : TreeMultiparentLeafEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultiparentLeafEntityData) : TreeMultiparentLeafEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val MAINPARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(TreeMultiparentRootEntity::class.java,
                                                                               TreeMultiparentLeafEntity::class.java,
                                                                               ConnectionId.ConnectionType.ONE_TO_MANY, true)
@@ -40,7 +41,7 @@ open class TreeMultiparentLeafEntityImpl(val dataSource: TreeMultiparentLeafEnti
                                                                             TreeMultiparentLeafEntity::class.java,
                                                                             ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       MAINPARENT_CONNECTION_ID,
       LEAFPARENT_CONNECTION_ID,
       CHILDREN_CONNECTION_ID,
@@ -66,6 +67,7 @@ open class TreeMultiparentLeafEntityImpl(val dataSource: TreeMultiparentLeafEnti
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: TreeMultiparentLeafEntityData?) : ModifiableWorkspaceEntityBase<TreeMultiparentLeafEntity, TreeMultiparentLeafEntityData>(
     result), TreeMultiparentLeafEntity.Builder {
@@ -95,7 +97,7 @@ open class TreeMultiparentLeafEntityImpl(val dataSource: TreeMultiparentLeafEnti
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -276,7 +278,7 @@ open class TreeMultiparentLeafEntityImpl(val dataSource: TreeMultiparentLeafEnti
 class TreeMultiparentLeafEntityData : WorkspaceEntityData<TreeMultiparentLeafEntity>() {
   lateinit var data: String
 
-  fun isDataInitialized(): Boolean = ::data.isInitialized
+  internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<TreeMultiparentLeafEntity> {
     val modifiable = TreeMultiparentLeafEntityImpl.Builder(null)
@@ -293,6 +295,11 @@ class TreeMultiparentLeafEntityData : WorkspaceEntityData<TreeMultiparentLeafEnt
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.TreeMultiparentLeafEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -348,9 +355,5 @@ class TreeMultiparentLeafEntityData : WorkspaceEntityData<TreeMultiparentLeafEnt
     var result = javaClass.hashCode()
     result = 31 * result + data.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

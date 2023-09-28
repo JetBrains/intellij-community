@@ -33,9 +33,4 @@ public interface CoverageAnnotator {
   void onSuiteChosen(@Nullable CoverageSuitesBundle newSuite);
 
   void renewCoverageData(@NotNull CoverageSuitesBundle suite, @NotNull CoverageDataManager dataManager);
-
-  /**
-   * A flag whether annotator is in progress of data collection.
-   */
-  boolean isLoading();
 }

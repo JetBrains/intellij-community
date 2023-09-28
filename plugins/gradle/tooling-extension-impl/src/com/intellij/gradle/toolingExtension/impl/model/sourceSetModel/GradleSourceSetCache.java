@@ -29,7 +29,7 @@ public class GradleSourceSetCache {
     DefaultGradleSourceSetModel sourceSetModel = allSourceSetModels.get(projectIdentifier);
     if (sourceSetModel == null) {
       context.getMessageReporter().createMessage()
-        .withTitle("Project source set model isn't found")
+        .withTitle("Source set model isn't found")
         .withText(
           "Source sets for " + project + " wasn't collected. " +
           "All source sets should be collected during " + GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE + "."
@@ -47,7 +47,7 @@ public class GradleSourceSetCache {
     DefaultGradleSourceSetModel previousSourceSetModel = allSourceSetModels.put(projectIdentifier, sourceSetModel);
     if (previousSourceSetModel != null) {
       context.getMessageReporter().createMessage()
-        .withTitle("Project source set model redefinition")
+        .withTitle("Source set model redefinition")
         .withText("Source sets for " + project + " was already collected.")
         .withException(new IllegalStateException())
         .withKind(Message.Kind.ERROR)

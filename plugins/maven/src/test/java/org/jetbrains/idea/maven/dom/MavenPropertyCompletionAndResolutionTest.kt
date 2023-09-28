@@ -13,7 +13,6 @@ import com.intellij.psi.xml.XmlTag
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.dom.model.MavenDomProfiles
 import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel
@@ -29,10 +28,10 @@ import java.util.concurrent.TimeUnit
 class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
   override fun runInDispatchThread() = false
 
-  override fun setUp() {
+  override fun setUp() = runBlocking {
     super.setUp()
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -143,7 +142,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                        </parent>
                                        <artifactId>m1</artifactId>
                                        """.trimIndent())
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -368,7 +367,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                           </parent>
                                           <name>${'$'}{project.build.directory}</name>
                                           """.trimIndent())
-    importProjects(myProjectPom, child)
+    importProjectsAsync(myProjectPom, child)
 
     createModulePom("child",
                     """
@@ -1209,7 +1208,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
     }
     else {
       projectsManager.explicitProfiles = MavenExplicitProfiles(listOf(*profiles))
-      projectsManager.updateAllMavenProjects(MavenImportSpec(false, true, false))
+      updateAllProjects()
     }
   }
 

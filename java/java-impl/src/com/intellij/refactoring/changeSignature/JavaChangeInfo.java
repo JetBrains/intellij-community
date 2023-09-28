@@ -30,6 +30,13 @@ public interface JavaChangeInfo extends ChangeInfo {
     return type != null ? type.getCanonicalText() : null;
   }
 
+  /**
+   * @return true if it's desired to fix conflicts between new parameters and field names (adding {@code this.} qualifier to field accesses)
+   */
+  default boolean isFixFieldConflicts() {
+    return true;
+  }
+
   @Override
   JavaParameterInfo @NotNull [] getNewParameters();
 

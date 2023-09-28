@@ -14,28 +14,28 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class XChildEntityImpl(val dataSource: XChildEntityData) : XChildEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class XChildEntityImpl(private val dataSource: XChildEntityData) : XChildEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(XParentEntity::class.java, XChildEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_MANY, false)
     internal val CHILDCHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(XChildEntity::class.java, XChildChildEntity::class.java,
                                                                               ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
       CHILDCHILD_CONNECTION_ID,
     )
@@ -60,6 +60,7 @@ open class XChildEntityImpl(val dataSource: XChildEntityData) : XChildEntity, Wo
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: XChildEntityData?) : ModifiableWorkspaceEntityBase<XChildEntity, XChildEntityData>(result), XChildEntity.Builder {
     constructor() : this(XChildEntityData())
@@ -88,7 +89,7 @@ open class XChildEntityImpl(val dataSource: XChildEntityData) : XChildEntity, Wo
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -252,7 +253,7 @@ class XChildEntityData : WorkspaceEntityData<XChildEntity>() {
   lateinit var childProperty: String
   var dataClass: DataClassX? = null
 
-  fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
+  internal fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<XChildEntity> {
     val modifiable = XChildEntityImpl.Builder(null)
@@ -269,6 +270,11 @@ class XChildEntityData : WorkspaceEntityData<XChildEntity>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.XChildEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -329,11 +335,5 @@ class XChildEntityData : WorkspaceEntityData<XChildEntity>() {
     result = 31 * result + childProperty.hashCode()
     result = 31 * result + dataClass.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(DataClassX::class.java)
-    this.dataClass?.let { collector.addDataToInspect(it) }
-    collector.sameForAllEntities = true
   }
 }

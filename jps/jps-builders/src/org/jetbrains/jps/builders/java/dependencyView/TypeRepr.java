@@ -31,7 +31,7 @@ public final class TypeRepr {
     void save(DataOutput out);
   }
 
-  public static class PrimitiveType implements AbstractType {
+  public static final class PrimitiveType implements AbstractType {
     public final int type;
 
     @Override
@@ -84,7 +84,7 @@ public final class TypeRepr {
     }
   }
 
-  public static class ArrayType implements AbstractType {
+  public static final class ArrayType implements AbstractType {
     public final AbstractType elementType;
 
     public AbstractType getDeepElementType() {
@@ -138,7 +138,7 @@ public final class TypeRepr {
     }
   }
 
-  public static class ClassType implements AbstractType {
+  public static final class ClassType implements AbstractType {
     public static final ClassType[] EMPTY_ARRAY = new ClassType[0];
     public final int className;
 
@@ -250,12 +250,12 @@ public final class TypeRepr {
   static <T extends AbstractType> DataExternalizer<T> externalizer(final DependencyContext context) {
     return new DataExternalizer<>() {
       @Override
-      public void save(@NotNull final DataOutput out, final T value) throws IOException {
+      public void save(final @NotNull DataOutput out, final T value) {
         value.save(out);
       }
 
       @Override
-      public T read(@NotNull final DataInput in) throws IOException {
+      public T read(final @NotNull DataInput in) throws IOException {
         AbstractType elementType;
         int level = 0;
 

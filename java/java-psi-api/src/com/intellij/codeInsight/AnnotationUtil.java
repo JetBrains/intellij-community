@@ -316,6 +316,18 @@ public class AnnotationUtil {
   @Target({ElementType.PARAMETER, ElementType.METHOD})
   private @interface Flags { }
 
+  public static boolean isMetaAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFqn, @Flags int flags) {
+    return Arrays.stream(listOwner.getAnnotations()).map(it -> it.resolveAnnotationType()).distinct().filter(Objects::nonNull)
+      .anyMatch(type -> isAnnotated(type, annotationFqn, flags));
+  }
+
+  public static boolean isMetaAnnotated(@NotNull PsiModifierListOwner listOwner,
+                                        @NotNull Collection<String> annotations,
+                                        @Flags int flags) {
+    return Arrays.stream(listOwner.getAnnotations()).map(it -> it.resolveAnnotationType()).distinct().filter(Objects::nonNull)
+      .anyMatch(type -> isAnnotated(type, annotations, flags));
+  }
+
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations, @Flags int flags) {
     return ContainerUtil.exists(annotations, annotation -> isAnnotated(listOwner, annotation, flags, null));
   }

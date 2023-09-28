@@ -8,14 +8,17 @@ import kotlin.reflect.KType
 class TransferableObjectStateProperty<T>(val type: KType,
                                          initialValue: T,
                                          defaultValueCalculator: SyncDefaultValueCalculator<T>,
-                                         customOutValueModifier: CustomOutValueModifier<T>? = null)
+                                         customOutValueModifier: CustomOutValueModifier<T>?,
+                                         val customPropertySerializer: CustomPropertySerializer<T>?)
   : ObjectStateProperty<T>(initialValue, defaultValueCalculator, customOutValueModifier), TransferableProperty<T> {
   override fun encodeToString(): String {
-    return commonFormat.encodeToString(serializer(type), value)
+    return if (customPropertySerializer != null) customPropertySerializer.encodeToString(value)
+    else commonFormat.encodeToString(serializer(type), value)
   }
 
   override fun decodeFromString(encoded: String): T {
     @Suppress("UNCHECKED_CAST")
-    return commonFormat.decodeFromString(serializer(type), encoded) as T
+    return if (customPropertySerializer != null) customPropertySerializer.decodeFromString(encoded)
+    else commonFormat.decodeFromString(serializer(type), encoded) as T
   }
 }

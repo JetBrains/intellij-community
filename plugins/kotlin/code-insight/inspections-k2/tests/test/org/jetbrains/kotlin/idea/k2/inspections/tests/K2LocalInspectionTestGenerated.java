@@ -2630,6 +2630,144 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/mayBeConstant")
+    public static class MayBeConstant extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("array.kt")
+        public void testArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/array.kt");
+        }
+
+        @TestMetadata("cascadeConst.kt")
+        public void testCascadeConst() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/cascadeConst.kt");
+        }
+
+        @TestMetadata("companion.kt")
+        public void testCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/companion.kt");
+        }
+
+        @TestMetadata("const.kt")
+        public void testConst() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/const.kt");
+        }
+
+        @TestMetadata("constInExpr.kt")
+        public void testConstInExpr() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/constInExpr.kt");
+        }
+
+        @TestMetadata("delegation.kt")
+        public void testDelegation() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/delegation.kt");
+        }
+
+        @TestMetadata("enum.kt")
+        public void testEnum() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/enum.kt");
+        }
+
+        @TestMetadata("explicitType.kt")
+        public void testExplicitType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/explicitType.kt");
+        }
+
+        @TestMetadata("explicitType2.kt")
+        public void testExplicitType2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/explicitType2.kt");
+        }
+
+        @TestMetadata("explicitType3.kt")
+        public void testExplicitType3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/explicitType3.kt");
+        }
+
+        @TestMetadata("explicitType4.kt")
+        public void testExplicitType4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/explicitType4.kt");
+        }
+
+        @TestMetadata("explicitType5.kt")
+        public void testExplicitType5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/explicitType5.kt");
+        }
+
+        @TestMetadata("extension.kt")
+        public void testExtension() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/extension.kt");
+        }
+
+        @TestMetadata("getter.kt")
+        public void testGetter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/getter.kt");
+        }
+
+        @TestMetadata("getterWithInitializer.kt")
+        public void testGetterWithInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/getterWithInitializer.kt");
+        }
+
+        @TestMetadata("inClass.kt")
+        public void testInClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/inClass.kt");
+        }
+
+        @TestMetadata("jvmStatic.kt")
+        public void testJvmStatic() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/jvmStatic.kt");
+        }
+
+        @TestMetadata("nonConstInExpr.kt")
+        public void testNonConstInExpr() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/nonConstInExpr.kt");
+        }
+
+        @TestMetadata("nonJvmFieldAnnotated.kt")
+        public void testNonJvmFieldAnnotated() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/nonJvmFieldAnnotated.kt");
+        }
+
+        @TestMetadata("null.kt")
+        public void testNull() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/null.kt");
+        }
+
+        @TestMetadata("object.kt")
+        public void testObject() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/object.kt");
+        }
+
+        @TestMetadata("objectLiteral.kt")
+        public void testObjectLiteral() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/objectLiteral.kt");
+        }
+
+        @TestMetadata("override.kt")
+        public void testOverride() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/override.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/simple.kt");
+        }
+
+        @TestMetadata("simplest.kt")
+        public void testSimplest() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/simplest.kt");
+        }
+
+        @TestMetadata("var.kt")
+        public void testVar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mayBeConstant/var.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)

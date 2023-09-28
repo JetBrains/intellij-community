@@ -2,5 +2,5 @@
 package org.jetbrains.jps.dependency;
 
 public interface DifferentiateStrategy {
-  void differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter);
+  boolean differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter);
 }

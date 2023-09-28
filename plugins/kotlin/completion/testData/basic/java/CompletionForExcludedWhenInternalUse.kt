@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // FIR_COMPARISON
 package kotlin
 
@@ -7,4 +6,3 @@ fun some() {
 }
 
 // EXIST: internal
-// EXIST_K2: internal.

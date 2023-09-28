@@ -12,6 +12,7 @@ import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -33,7 +34,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Processor;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.JBUI;
@@ -68,6 +69,8 @@ import static com.intellij.util.ui.ThreeStateCheckBox.State;
  * Consider implementing {@link AsyncChangesTree} instead.
  */
 public abstract class ChangesTree extends Tree implements DataProvider {
+  private static final Logger LOG = Logger.getInstance(ChangesTree.class);
+
   @ApiStatus.Internal @NonNls public static final String LOG_COMMIT_SESSION_EVENTS = "LogCommitSessionEvents";
 
   public static final int EXPAND_NODES_THRESHOLD = 30000;
@@ -435,7 +438,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   protected void updateTreeModel(@NotNull DefaultTreeModel model,
                                  @SuppressWarnings("rawtypes") @NotNull TreeStateStrategy treeStateStrategy) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     myModelUpdateInProgress = true;
     try {
@@ -541,8 +544,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   @NotNull
-  @RequiresEdt
   public InclusionModel getInclusionModel() {
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      LOG.error(new Throwable("Access is allowed from Event Dispatch Thread (EDT) only"));
+    }
     return myInclusionModel;
   }
 

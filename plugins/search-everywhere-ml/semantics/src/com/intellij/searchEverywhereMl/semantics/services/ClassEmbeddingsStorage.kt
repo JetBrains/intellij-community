@@ -7,7 +7,7 @@ import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.psi.*
+import com.intellij.psi.PsiFile
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.indices.FileIndexableEntitiesProvider
@@ -43,7 +43,7 @@ class ClassEmbeddingsStorage(project: Project) : FileContentBasedEmbeddingsStora
   override val indexStrongLimit = Registry.intValue("search.everywhere.ml.semantic.indexing.indexable.classes.limit")
 
   init {
-    project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, ClassesSemanticSearchFileChangeListener.getInstance(project))
+    project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, ClassesSemanticSearchFileChangeListener.getInstance(project))
   }
 
   override fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInClassesTab

@@ -16,12 +16,13 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPackagingCompletionTest : MavenDomTestCase() {
   @Test
-  fun testVariants() {
-    importProject("""
+  fun testVariants() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -38,8 +39,8 @@ class MavenPackagingCompletionTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDoNotHighlightUnknownPackagingTypes() {
-    importProject("""
+  fun testDoNotHighlightUnknownPackagingTypes() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

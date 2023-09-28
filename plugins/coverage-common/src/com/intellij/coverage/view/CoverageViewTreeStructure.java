@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
+import com.intellij.coverage.BaseCoverageAnnotator;
 import com.intellij.coverage.CoverageSuitesBundle;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
@@ -12,7 +14,7 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
   private final Project myProject;
   final CoverageSuitesBundle myData;
   final CoverageViewManager.StateBean myStateBean;
-  private CoverageListRootNode myRootNode;
+  private Object myRootNode;
 
   public CoverageViewTreeStructure(Project project, CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean) {
     myProject = project;
@@ -25,15 +27,18 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
   @Override
   synchronized public Object getRootElement() {
     if (myRootNode == null) {
-      myRootNode = (CoverageListRootNode)myData.getCoverageEngine().createCoverageViewExtension(myProject, myData, myStateBean).createRootNode();
+      if (myData.getCoverageEngine().getCoverageAnnotator(myProject) instanceof BaseCoverageAnnotator annotator) {
+        annotator.setVcsFilteredChildren(false);
+      }
+      myRootNode = myData.getCoverageEngine().createCoverageViewExtension(myProject, myData, myStateBean).createRootNode();
     }
     return myRootNode;
   }
 
   @Override
   public Object @NotNull [] getChildElements(@NotNull final Object element) {
-    if (element instanceof CoverageListNode) {
-      return ArrayUtil.toObjectArray(((CoverageListNode)element).getChildren());
+    if (element instanceof AbstractTreeNode<?> node) {
+      return ArrayUtil.toObjectArray(node.getChildren());
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
@@ -41,8 +46,8 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
 
   @Override
   public Object getParentElement(@NotNull final Object element) {
-    if (element instanceof CoverageListNode) {
-      return ((CoverageListNode)element).getParent();
+    if (element instanceof AbstractTreeNode<?> node) {
+      return node.getParent();
     }
     return null;
   }
@@ -50,8 +55,8 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
   @Override
   @NotNull
   public NodeDescriptor createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
-    if (element instanceof CoverageListNode) {
-      return (CoverageListNode)element;
+    if (element instanceof AbstractTreeNode<?> node) {
+      return node;
     }
     return new CoverageViewDescriptor(myProject, parentDescriptor, element);
   }
@@ -63,6 +68,10 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
   @Override
   public boolean hasSomethingToCommit() {
     return false;
+  }
+
+  public synchronized void reset() {
+    myRootNode = null;
   }
 }
 

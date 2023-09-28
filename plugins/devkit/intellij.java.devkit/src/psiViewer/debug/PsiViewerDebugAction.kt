@@ -17,12 +17,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.util.TextRange
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.text.findTextRange
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import com.sun.jdi.IntegerValue
 import com.sun.jdi.ObjectReference
+import com.sun.jdi.StringReference
+import com.sun.jdi.Value
 
 private val LOG = Logger.getInstance(PsiViewerDebugAction::class.java)
 private const val PSI_ELEMENT = "com.intellij.psi.PsiElement"
@@ -30,6 +33,10 @@ private const val GET_CONTAINING_FILE = "getContainingFile"
 private const val GET_TEXT = "getText"
 private const val GET_LANGUAGE = "getLanguage"
 private const val GET_ID = "getID"
+private const val GET_NAME = "getName"
+private const val GET_TEXT_RANGE = "getTextRange"
+private const val GET_START_OFFSET = "getStartOffset"
+private const val GET_END_OFFSET = "getEndOffset"
 
 class PsiViewerDebugAction : DebuggerTreeAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -52,9 +59,9 @@ class PsiViewerDebugAction : DebuggerTreeAction() {
         try {
           val evalContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
 
-          fun ObjectReference.invokeMethod(methodName: String): ObjectReference? {
+          fun ObjectReference.invokeMethod(methodName: String): Value? {
             val method = DebuggerUtils.findMethod(referenceType(), methodName, null) ?: return null
-            return debugProcess.invokeMethod(evalContext, this, method, emptyList()) as? ObjectReference
+            return debugProcess.invokeMethod(evalContext, this, method, emptyList())
           }
 
           fun ObjectReference.getText(): String? {
@@ -63,16 +70,23 @@ class PsiViewerDebugAction : DebuggerTreeAction() {
           }
 
           fun ObjectReference.getLanguageId(): String? {
-            val languageObj = invokeMethod(GET_LANGUAGE) ?: return null
-            val stringObj = languageObj.invokeMethod(GET_ID) ?: return null
+            val languageObj = invokeMethod(GET_LANGUAGE) as? ObjectReference ?: return null
+            val stringObj = languageObj.invokeMethod(GET_ID) as? StringReference ?: return null
             return DebuggerUtils.getValueAsString(evalContext, stringObj) ?: return null
           }
 
+          fun ObjectReference.getTextRange(): TextRange? {
+            val textRangeObj = invokeMethod(GET_TEXT_RANGE) as? ObjectReference ?: return null
+            val startOffset = textRangeObj.invokeMethod(GET_START_OFFSET) as? IntegerValue ?: return null
+            val endOffset = textRangeObj.invokeMethod(GET_END_OFFSET) as? IntegerValue ?: return null
+            return TextRange(startOffset.value(), endOffset.value())
+          }
+
           val psiElemObj = getObjectReference(node) ?: return
-          val psiFileObj = psiElemObj.invokeMethod(GET_CONTAINING_FILE) ?: return
-          val psiText = psiElemObj.getText() ?: return
+          val psiFileObj = psiElemObj.invokeMethod(GET_CONTAINING_FILE) as? ObjectReference ?: return
           val fileText = psiFileObj.getText() ?: return
-          val psiRangeInFile = fileText.findTextRange(psiText)
+          val fileName = DebuggerUtils.getValueAsString(evalContext, psiFileObj.invokeMethod(GET_NAME))
+          val psiRangeInFile = psiElemObj.getTextRange()
           val languageId = psiFileObj.getLanguageId()
           val language = Language.findLanguageByID(languageId) ?: return
 
@@ -89,7 +103,7 @@ class PsiViewerDebugAction : DebuggerTreeAction() {
 
             fun showDebugTab() {
               val runnerLayoutUi = debugProcess.session?.xDebugSession?.ui ?: return
-              val psiViewerPanel = PsiViewerDebugPanel(project, editor, language)
+              val psiViewerPanel = PsiViewerDebugPanel(project, editor, language, fileName)
               val id = "${node.name} ${DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis())}"
               val content = runnerLayoutUi.createContent(id, psiViewerPanel, id, null, null)
               runnerLayoutUi.addContent(content)

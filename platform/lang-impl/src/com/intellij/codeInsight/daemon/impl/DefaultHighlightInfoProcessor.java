@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +63,7 @@ public final class DefaultHighlightInfoProcessor extends HighlightInfoProcessor 
 
   private static void showAutoImportHints(@NotNull ProgressIndicator progressIndicator,
                                           @Nullable TextEditorHighlightingPass showAutoImportPass) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (showAutoImportPass != null) {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> showAutoImportPass.doApplyInformationToEditor(), progressIndicator);
     }

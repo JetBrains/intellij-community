@@ -56,41 +56,15 @@ fun findPluginInfoBySystemId(systemId: ProjectSystemId?): PluginInfo? {
 
 fun importActivityStarted(project: Project, externalSystemId: ProjectSystemId,
                           dataSupplier: (() -> List<EventPair<*>>)?): StructuredIdeActivity {
-  return IMPORT_ACTIVITY.started(project){
+  return IMPORT_ACTIVITY.started(project) {
     val data: MutableList<EventPair<*>> = mutableListOf(EXTERNAL_SYSTEM_ID.with(anonymizeSystemId(externalSystemId)))
     val pluginInfo = findPluginInfoBySystemId(externalSystemId)
     if (pluginInfo != null) {
       data.add(EventFields.PluginInfo.with(pluginInfo))
     }
-    if(dataSupplier != null) {
+    if (dataSupplier != null) {
       data.addAll(dataSupplier())
     }
     data
-  }
-}
-
-suspend fun <T> runImportActivity(project: Project,
-                                  externalSystemId: ProjectSystemId,
-                                  taskClass: Class<*>,
-                                  action: suspend () -> T): T {
-  val activity = importActivityStarted(project, externalSystemId) { listOf(ProjectImportCollector.TASK_CLASS.with(taskClass)) }
-  try {
-    return action()
-  }
-  finally {
-    activity.finished()
-  }
-}
-
-fun <T> runImportActivitySync(project: Project,
-                              externalSystemId: ProjectSystemId,
-                              taskClass: Class<*>,
-                              action: () -> T): T {
-  val activity = importActivityStarted(project, externalSystemId) { listOf(ProjectImportCollector.TASK_CLASS.with(taskClass)) }
-  try {
-    return action()
-  }
-  finally {
-    activity.finished()
   }
 }

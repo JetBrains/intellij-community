@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase
 import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.core.implicitModality
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
@@ -24,8 +25,6 @@ import org.jetbrains.kotlin.idea.inspections.ExplicitThisInspection.Util.thisAsR
 import org.jetbrains.kotlin.idea.inspections.LiftReturnOrAssignmentInspection.Util.LiftType.LIFT_ASSIGNMENT_OUT
 import org.jetbrains.kotlin.idea.inspections.LiftReturnOrAssignmentInspection.Util.LiftType.LIFT_RETURN_OUT
 import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Util.getStatus
-import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Status.JVM_FIELD_MIGHT_BE_CONST
-import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Status.MIGHT_BE_CONST
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.intentions.DestructureIntention
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
@@ -340,7 +339,7 @@ internal class MayBeConstantInspectionBasedProcessing : InspectionLikeProcessing
     override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
         if (!isInspectionEnabledInCurrentProfile(inspection, element.project)) return false
         val status = element.getStatus()
-        return status == MIGHT_BE_CONST || status == JVM_FIELD_MIGHT_BE_CONST
+        return status == MayBeConstantInspectionBase.Status.MIGHT_BE_CONST || status == MayBeConstantInspectionBase.Status.JVM_FIELD_MIGHT_BE_CONST
     }
 
     override fun apply(element: KtProperty) {

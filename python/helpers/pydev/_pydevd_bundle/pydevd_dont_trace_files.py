@@ -109,6 +109,7 @@ DONT_TRACE = {
     'pydevd_modify_bytecode.py': PYDEV_FILE,
     'pydevd_nest_asyncio.py': PYDEV_FILE,
     'pydevd_pandas.py': PYDEV_FILE,
+    'pydevd_pep_669_tracing.py': PYDEV_FILE,
     'pydevd_plugin_numpy_types.py': PYDEV_FILE,
     'pydevd_plugin_utils.py': PYDEV_FILE,
     'pydevd_plugins_django_form_str.py': PYDEV_FILE,
@@ -137,6 +138,7 @@ DONT_TRACE = {
     'pydevd_vm_type.py': PYDEV_FILE,
     'pydevd_xml.py': PYDEV_FILE,
     'test_common.py': PYDEV_FILE,
+    'test_pandas.py': PYDEV_FILE,
     'test_pydev_pandas.py': PYDEV_FILE,
 }
 

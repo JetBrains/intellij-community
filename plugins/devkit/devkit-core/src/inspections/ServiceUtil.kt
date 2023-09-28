@@ -39,7 +39,7 @@ fun getLevelType(annotation: JvmAnnotation, language: Language): LevelType {
       serviceLevelExtractor.extractLevels(attributeValue)
     }
     is JvmAnnotationEnumFieldValue -> getLevels(attributeValue)
-    else -> emptySet()
+    else -> setOf(Service.Level.APP)
   }
   return toLevelType(levels)
 }
@@ -98,7 +98,7 @@ private fun getLevelType(annotation: UAnnotation): LevelType {
         }
       ?: emptySet()
 
-    else -> emptySet()
+    else -> listOf(Service.Level.APP)
   }
   return toLevelType(levels)
 }

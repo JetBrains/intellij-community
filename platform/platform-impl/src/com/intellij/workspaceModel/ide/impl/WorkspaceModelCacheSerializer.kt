@@ -11,7 +11,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelCacheVersion
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
+import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.io.basicAttributesIfExists
@@ -32,7 +32,6 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
     EntityStorageSerializerImpl(
       PluginAwareEntityTypesResolver,
       vfuManager,
-      ::collectExternalCacheVersions,
       urlRelativizer
     )
 
@@ -118,18 +117,23 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
     }
 
     override fun resolveClass(name: String, pluginId: String?): Class<*> {
+      val classLoader = getClassLoader(pluginId) ?:
+        error("Could not resolve class loader for plugin '$pluginId' with type: $name")
+
+      if (name.startsWith("[")) return Class.forName(name, true, classLoader)
+      return classLoader.loadClass(name)
+    }
+
+    override fun getClassLoader(pluginId: String?): ClassLoader? {
       val id = pluginId?.let { PluginId.getId(it) }
-      val classloader = if (id == null) {
-        ApplicationManager::class.java.classLoader
-      }
-      else {
-        val plugin = PluginManagerCore.getPlugin(id) ?: error("Could not resolve plugin by id '$pluginId' for type: $name")
-        plugin.pluginClassLoader ?: ApplicationManager::class.java.classLoader
+      if (id != null && !PluginManagerCore.isPluginInstalled(id)) {
+         return null
       }
 
-      if (name.startsWith("[")) return Class.forName(name, true, classloader)
-      return classloader.loadClass(name)
+      val plugin = PluginManagerCore.getPlugin(id)
+      return plugin?.pluginClassLoader ?: ApplicationManager::class.java.classLoader
     }
+
   }
 
   companion object {

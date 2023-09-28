@@ -13,6 +13,7 @@ import java.awt.Component
 import java.util.function.Function
 import javax.swing.*
 
+@Deprecated("Use GotoTargetRendererNew.createFullTargetPresentationRenderer instead")
 internal class TargetPresentationRenderer<T>(
   private val presentationProvider: Function<in T, out TargetPresentation>,
 ) : ListCellRenderer<T> {

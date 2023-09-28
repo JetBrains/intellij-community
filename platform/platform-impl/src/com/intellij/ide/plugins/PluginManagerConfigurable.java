@@ -66,6 +66,7 @@ import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -638,6 +639,9 @@ public final class PluginManagerConfigurable
         myMarketplaceSortByAction.setListener(
           (component, __) -> showRightBottomPopup(component.getParent().getParent(), IdeBundle.message("plugins.configurable.sort.by"),
                                                   myMarketplaceSortByGroup), null);
+
+        DumbAwareAction.create(event -> myMarketplaceSortByAction.doClick())
+          .registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, myMarketplaceSortByAction);
 
         myMarketplaceSortByCallback = updateAction -> {
           MarketplaceSortByAction removeAction = null;

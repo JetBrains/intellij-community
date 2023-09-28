@@ -21,12 +21,12 @@ abstract class AbstractGradleSettingScriptBuilder<Self : AbstractGradleSettingSc
     this.projectName = projectName
   }
 
-  override fun include(name: String) = apply {
-    script.call("include", name)
+  override fun include(vararg name: String) = apply {
+    script.call("include", *name)
   }
 
-  override fun includeFlat(name: String) = apply {
-    script.call("includeFlat", name)
+  override fun includeFlat(vararg name: String) = apply {
+    script.call("includeFlat", *name)
   }
 
   override fun includeBuild(name: String) = apply {

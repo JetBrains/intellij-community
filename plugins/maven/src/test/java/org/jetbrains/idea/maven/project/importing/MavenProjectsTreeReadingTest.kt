@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager
 import org.jetbrains.idea.maven.project.MavenProject
@@ -39,7 +40,7 @@ import kotlin.collections.mutableListOf
 
 class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   @Test
-  fun testTwoRootProjects() {
+  fun testTwoRootProjects() = runBlocking {
     val m1 = createModulePom("m1",
                              """
                              <groupId>test</groupId>
@@ -60,7 +61,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testModulesWithWhiteSpaces() {
+  fun testModulesWithWhiteSpaces() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -86,7 +87,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testDoNotImportChildAsRootProject() {
+  fun testDoNotImportChildAsRootProject() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -111,7 +112,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testDoNotImportSameRootProjectTwice() {
+  fun testDoNotImportSameRootProjectTwice() = runBlocking {
     val listener = MyLoggingListener()
     tree.addListener(listener, getTestRootDisposable())
     val m1 = createModulePom("m1",
@@ -135,7 +136,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testRereadingChildIfParentWasReadAfterIt() {
+  fun testRereadingChildIfParentWasReadAfterIt() = runBlocking {
     val listener = MyLoggingListener()
     tree.addListener(listener, getTestRootDisposable())
     val m1 = createModulePom("m1",
@@ -169,7 +170,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testSameProjectAsModuleOfSeveralProjects() {
+  fun testSameProjectAsModuleOfSeveralProjects() = runBlocking {
     val p1 = createModulePom("project1",
                              """
                              <groupId>test</groupId>
@@ -207,7 +208,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testSameProjectAsModuleOfSeveralProjectsInHierarchy() {
+  fun testSameProjectAsModuleOfSeveralProjectsInHierarchy() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -244,7 +245,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testRemovingChildProjectFromRootProjects() {
+  fun testRemovingChildProjectFromRootProjects() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -273,7 +274,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testSendingNotificationsWhenAggregationChanged() {
+  fun testSendingNotificationsWhenAggregationChanged() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -319,7 +320,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testUpdatingWholeModel() {
+  fun testUpdatingWholeModel() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -366,7 +367,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testForceUpdatingWholeModel() {
+  fun testForceUpdatingWholeModel() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -395,7 +396,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testForceUpdatingSingleProject() {
+  fun testForceUpdatingSingleProject() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -425,7 +426,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testUpdatingModelWithNewProfiles() {
+  fun testUpdatingModelWithNewProfiles() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -473,7 +474,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testUpdatingParticularProject() {
+  fun testUpdatingParticularProject() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -501,7 +502,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testUpdatingInheritance() {
+  fun testUpdatingInheritance() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -536,7 +537,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testUpdatingInheritanceHierarhically() {
+  fun testUpdatingInheritanceHierarhically() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -582,7 +583,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testSendingNotificationAfterProjectIsAddedInToHierarchy() {
+  fun testSendingNotificationAfterProjectIsAddedInToHierarchy() = runBlocking {
     val listener = MyLoggingListener()
     tree.addListener(listener, getTestRootDisposable())
     createProjectPom("""
@@ -634,7 +635,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testAddingInheritanceParent() {
+  fun testAddingInheritanceParent() = runBlocking {
     val child = createModulePom("child",
                                 """
                                           <groupId>test</groupId>
@@ -662,7 +663,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testAddingInheritanceChild() {
+  fun testAddingInheritanceChild() = runBlocking {
     val parent = createModulePom("parent",
                                  """
                                            <groupId>test</groupId>
@@ -689,7 +690,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testParentPropertyInterpolation() {
+  fun testParentPropertyInterpolation() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -716,7 +717,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testAddingInheritanceChildOnParentUpdate() {
+  fun testAddingInheritanceChildOnParentUpdate() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -746,7 +747,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testDoNotReAddInheritanceChildOnParentModulesRemoval() {
+  fun testDoNotReAddInheritanceChildOnParentModulesRemoval() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -785,7 +786,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testChangingInheritance() {
+  fun testChangingInheritance() = runBlocking {
     val parent1 = createModulePom("parent1",
                                   """
                                             <groupId>test</groupId>
@@ -832,7 +833,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testChangingInheritanceParentId() {
+  fun testChangingInheritanceParentId() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -923,7 +924,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testDeletingInheritanceParent() {
+  fun testDeletingInheritanceParent() = runBlocking {
     val parent = createModulePom("parent",
                                  """
                                            <groupId>test</groupId>
@@ -951,7 +952,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testDeletingInheritanceChild() {
+  fun testDeletingInheritanceChild() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -1016,7 +1017,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testUpdatingAddsModules() {
+  fun testUpdatingAddsModules() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1052,7 +1053,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testUpdatingUpdatesModulesIfProjectIsChanged() {
+  fun testUpdatingUpdatesModulesIfProjectIsChanged() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1090,7 +1091,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testUpdatingDoesNotUpdateModulesIfProjectIsNotChanged() {
+  fun testUpdatingDoesNotUpdateModulesIfProjectIsNotChanged() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1120,7 +1121,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testAddingProjectAsModuleToExistingOne() {
+  fun testAddingProjectAsModuleToExistingOne() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1148,7 +1149,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testAddingProjectAsAggregatorForExistingOne() {
+  fun testAddingProjectAsAggregatorForExistingOne() = runBlocking {
     val m = createModulePom("m",
                             """
                                       <groupId>test</groupId>
@@ -1178,7 +1179,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testAddingProjectWithModules() {
+  fun testAddingProjectWithModules() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1215,7 +1216,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testUpdatingAddsModulesFromRootProjects() {
+  fun testUpdatingAddsModulesFromRootProjects() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1253,7 +1254,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testMovingModuleToRootsWhenAggregationChanged() {
+  fun testMovingModuleToRootsWhenAggregationChanged() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1287,7 +1288,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testDeletingProject() {
+  fun testDeletingProject() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1314,7 +1315,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testDeletingProjectWithModules() {
+  fun testDeletingProjectWithModules() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1353,7 +1354,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testSendingNotificationsWhenProjectDeleted() {
+  fun testSendingNotificationsWhenProjectDeleted() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1387,7 +1388,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testReconnectModuleOfDeletedProjectIfModuleIsManaged() {
+  fun testReconnectModuleOfDeletedProjectIfModuleIsManaged() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1431,7 +1432,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testAddingProjectsOnUpdateAllWhenManagedFilesChanged() {
+  fun testAddingProjectsOnUpdateAllWhenManagedFilesChanged() = runBlocking {
     val m1 = createModulePom("m1",
                              """
                                        <groupId>test</groupId>
@@ -1457,7 +1458,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testDeletingProjectsOnUpdateAllWhenManagedFilesChanged() {
+  fun testDeletingProjectsOnUpdateAllWhenManagedFilesChanged() = runBlocking {
     val m1 = createModulePom("m1",
                              """
                                        <groupId>test</groupId>
@@ -1483,7 +1484,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testSendingNotificationsWhenAddingOrDeletingManagedFiles() {
+  fun testSendingNotificationsWhenAddingOrDeletingManagedFiles() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -1517,7 +1518,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testUpdatingModelWhenActiveProfilesChange() {
+  fun testUpdatingModelWhenActiveProfilesChange() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1574,7 +1575,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testUpdatingModelWhenProfilesXmlChange() {
+  fun testUpdatingModelWhenProfilesXmlChange() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1617,7 +1618,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testUpdatingModelWhenParentProfilesXmlChange() {
+  fun testUpdatingModelWhenParentProfilesXmlChange() = runBlocking {
     val parent = createModulePom("parent",
                                  """
                                            <groupId>test</groupId>
@@ -1675,7 +1676,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testUpdatingModelWhenParentProfilesXmlChangeAndItIsAModuleAlso() {
+  fun testUpdatingModelWhenParentProfilesXmlChangeAndItIsAModuleAlso() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1731,7 +1732,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testDoNotUpdateModelWhenAggregatorProfilesXmlChange() {
+  fun testDoNotUpdateModelWhenAggregatorProfilesXmlChange() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -2144,7 +2145,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   }
 
   @Test
-  fun testFindRootWithMultiLevelAggregator() {
+  fun testFindRootWithMultiLevelAggregator() = runBlocking {
     val p1 = createModulePom("project1", """
       <groupId>test</groupId>
       <artifactId>project1</artifactId>

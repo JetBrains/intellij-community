@@ -12,7 +12,6 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -26,8 +25,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbModeBlockedFunctionality;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -51,6 +50,7 @@ import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -104,7 +104,7 @@ public final class FindUsagesManager {
   }
 
   public void clearFindingNextUsageInFile() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myLastSearchInFileData = null;
   }
 
@@ -117,7 +117,7 @@ public final class FindUsagesManager {
   }
 
   private boolean findUsageInFile(@NotNull Editor editor, @NotNull FileSearchScope direction) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (myLastSearchInFileData == null) return false;
     PsiElement[] primaryElements = myLastSearchInFileData.getPrimaryElements();
@@ -144,7 +144,7 @@ public final class FindUsagesManager {
   private void initLastSearchElement(@NotNull FindUsagesOptions findUsagesOptions,
                                      PsiElement @NotNull [] primaryElements,
                                      PsiElement @NotNull [] secondaryElements) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     myLastSearchInFileData = new LastSearchData(primaryElements, secondaryElements, findUsagesOptions);
   }
@@ -189,7 +189,7 @@ public final class FindUsagesManager {
   }
 
   public void findUsages(@NotNull PsiElement psiElement, @Nullable PsiFile scopeFile, FileEditor editor, boolean showDialog, @Nullable("null means default (stored in options)") SearchScope searchScope) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     FindUsagesHandler handler = getFindUsagesHandler(psiElement, showDialog ? OperationMode.DEFAULT : OperationMode.USAGES_WITH_DEFAULT_OPTIONS);
     if (handler == null) return;
 
@@ -217,7 +217,7 @@ public final class FindUsagesManager {
   }
 
   public void startFindUsages(@NotNull PsiElement psiElement, @NotNull FindUsagesOptions findUsagesOptions) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     FindUsagesHandler handler = getFindUsagesHandler(psiElement, false);
     if (handler == null) return;
     startFindUsages(findUsagesOptions, handler, null, null);
@@ -227,7 +227,7 @@ public final class FindUsagesManager {
                                @NotNull FindUsagesHandler handler,
                                PsiFile scopeFile,
                                FileEditor fileEditor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     boolean singleFile = scopeFile != null;
 
     clearFindingNextUsageInFile();
@@ -302,7 +302,7 @@ public final class FindUsagesManager {
                                         @NotNull UsageSearcher usageSearcher,
                                         @NotNull Processor<? super Usage> processor,
                                         @NotNull Runnable onComplete) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Task.Backgroundable task = new Task.Backgroundable(project, FindBundle.message("progress.title.finding.usages")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -497,7 +497,7 @@ public final class FindUsagesManager {
                                   @NotNull FileSearchScope direction,
                                   @NotNull FindUsagesOptions findUsagesOptions,
                                   @NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     initLastSearchElement(findUsagesOptions, primaryElements, secondaryElements);
 
     clearStatusBar();

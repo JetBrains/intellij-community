@@ -2,9 +2,11 @@ package com.intellij.remoteDev.tests.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
-import com.intellij.diagnostic.DebugLogManager
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.enableCoroutineDump
+import com.intellij.diagnostic.logs.DebugLogLevel
+import com.intellij.diagnostic.logs.LogCategory
+import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -25,7 +27,7 @@ import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
 import com.intellij.ui.WinFocusStealer
 import com.intellij.util.ui.ImageUtil
 import com.jetbrains.rd.framework.*
-import com.jetbrains.rd.framework.util.setSuspend
+import com.intellij.openapi.rd.util.setSuspendPreserveClientId
 import com.jetbrains.rd.util.lifetime.EternalLifetime
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.viewNotNull
@@ -144,7 +146,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           testMethod.invoke(testClassObject)
 
           // Advice for processing events
-          session.runNextAction.setSuspend(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+          session.runNextAction.setSuspendPreserveClientId { _, _ ->
             val action = queue.remove()
             val actionTitle = action.title
             val timeout = action.timeout
@@ -155,7 +157,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
               LOG.info("'$actionTitle': received action execution request")
 
               val dispatcher = if (action.fromEdt) Dispatchers.EDT else Dispatchers.Default
-              return@setSuspend withContext(dispatcher) {
+              return@setSuspendPreserveClientId withContext(dispatcher) {
                 if (action.fromEdt) {
                   // Sync state across all IDE agents to maintain proper order in protocol events
                   // we don't wat to sync state in case of bg task, as it may be launched with blocked UI thread
@@ -198,12 +200,12 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        session.isResponding.setSuspend(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+        session.isResponding.setSuspendPreserveClientId { _, _ ->
           LOG.info("Answering for session is responding...")
           true
         }
 
-        session.closeProjectIfOpened.setSuspend(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+        session.closeProjectIfOpened.setSuspendPreserveClientId { _, _ ->
           runLogged("Close project if it is opened") {
             projectOrNull?.let {
               withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
@@ -222,13 +224,13 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        session.requestFocus.setSuspend(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, actionTitle ->
+        session.requestFocus.setSuspendPreserveClientId { _, actionTitle ->
           withContext(Dispatchers.EDT) {
             requestFocus(actionTitle)
           }
         }
 
-        session.makeScreenshot.setSuspend(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, fileName ->
+        session.makeScreenshot.setSuspendPreserveClientId { _, fileName ->
           makeScreenshot(fileName)
         }
 
@@ -237,10 +239,9 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         }
 
         // Initialize loggers
-        DebugLogManager.getInstance().applyCategories(
-          session.traceCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.TRACE) } +
-          session.debugCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.DEBUG) }
-        )
+        LogLevelConfigurationManager.getInstance().addCategories(session.traceCategories.map { LogCategory(it, DebugLogLevel.TRACE) } +
+                                                                 session.debugCategories.map { LogCategory(it, DebugLogLevel.DEBUG) })
+
         LOG.info("Test session ready!")
         session.ready.value = true
       }

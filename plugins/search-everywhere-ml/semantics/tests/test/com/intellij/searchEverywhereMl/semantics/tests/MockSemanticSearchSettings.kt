@@ -11,6 +11,8 @@ class MockSemanticSearchSettings : SemanticSearchSettings {
   override var enabledInClassesTab = false
 
   override fun isEnabled() = true
+  override fun isEnableInTab(tabId: String): Boolean = true
+
   override fun getUseRemoteActionsServer() = false
   override fun getActionsAPIToken() = ""
 }

@@ -99,7 +99,7 @@ private class ReaderModeActionProvider : InspectionWidgetActionProvider {
           }
         }
       }.also {
-        it.foreground = JBColor.lazy { editor.colorsScheme.getColor(FOREGROUND) ?: FOREGROUND.defaultColor }
+        it.foreground = JBColor.lazy { editor.colorsScheme.getColor(FOREGROUND) ?: FOREGROUND.defaultColor ?: UIUtil.getInactiveTextColor()}
         if (!SystemInfo.isWindows) {
           it.font = FontUIResource(it.font.deriveFont(it.font.style, it.font.size - JBUIScale.scale(2).toFloat()))
         }

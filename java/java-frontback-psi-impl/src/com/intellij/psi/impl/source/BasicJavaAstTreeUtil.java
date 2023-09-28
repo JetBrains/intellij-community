@@ -23,7 +23,7 @@ import java.util.Set;
 
 import static com.intellij.psi.JavaTokenType.JAVA_TOKEN_TYPE_SET;
 import static com.intellij.psi.JavaTokenType.RPARENTH;
-import static com.intellij.psi.impl.source.BasicElementTypes.KEYWORD_BIT_SET;
+import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_KEYWORD_BIT_SET;
 import static com.intellij.psi.impl.source.BasicJavaDocElementType.DOC_COMMENT;
 import static com.intellij.psi.impl.source.BasicJavaDocElementType.DOC_SNIPPET_ATTRIBUTE_VALUE;
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
@@ -47,7 +47,7 @@ public final class BasicJavaAstTreeUtil {
     }
     if (source instanceof ParentProviderElementType) {
       Set<IElementType> parents = ((ParentProviderElementType)source).getParents();
-      return ContainerUtil.exists(parents, parent -> is(parent, target));
+      return ContainerUtil.exists(parents, parent -> parent != null && is(parent, target));
     }
     return false;
   }
@@ -85,7 +85,7 @@ public final class BasicJavaAstTreeUtil {
     }
     if (source instanceof ParentProviderElementType) {
       Set<IElementType> parents = ((ParentProviderElementType)source).getParents();
-      return ContainerUtil.exists(parents, parent -> is(parent, tokenSet));
+      return ContainerUtil.exists(parents, parent -> parent != null && is(parent, tokenSet));
     }
     return false;
   }
@@ -104,7 +104,7 @@ public final class BasicJavaAstTreeUtil {
     }
     if (source instanceof ParentProviderElementType) {
       Set<IElementType> parents = ((ParentProviderElementType)source).getParents();
-      return ContainerUtil.exists(parents, parent -> is(parent, tokenSet));
+      return ContainerUtil.exists(parents, parent -> parent != null && is(parent, tokenSet));
     }
     return false;
   }
@@ -271,7 +271,7 @@ public final class BasicJavaAstTreeUtil {
   }
 
   public static boolean isKeyword(@Nullable ASTNode element) {
-    return is(element, KEYWORD_BIT_SET);
+    return is(element, BASIC_KEYWORD_BIT_SET);
   }
 
   public static boolean isWhiteSpace(@Nullable ASTNode element) {
@@ -371,7 +371,7 @@ public final class BasicJavaAstTreeUtil {
   }
 
   public static boolean isComment(@Nullable ASTNode element) {
-    return is(element, BasicElementTypes.JAVA_COMMENT_BIT_SET);
+    return is(element, BasicElementTypes.BASIC_JAVA_COMMENT_BIT_SET);
   }
 
   public static boolean isDocToken(@Nullable ASTNode element) {

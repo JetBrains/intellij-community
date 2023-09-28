@@ -147,6 +147,22 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
   }
 
   @Override
+  public void rawAdvanceLexer(int steps) {
+    if (steps < 0) {
+      throw new IllegalArgumentException("Steps must be a positive integer - lexer can only be advanced. " +
+                                         "Use Marker.rollbackTo if you want to rollback PSI building.");
+    }
+    if (steps == 0) return;
+    // Be permissive as advanceLexer() and don't throw error if advancing beyond eof state
+    myLexPosition += steps;
+    if (myLexPosition > myShrunkSequence.size() || myLexPosition < 0 /* int overflow */ ) {
+      myLexPosition = myShrunkSequence.size();
+    }
+    skipWhitespace();
+    synchronizePositions(false);
+  }
+
+  @Override
   public int rawTokenTypeStart(int steps) {
     int cur = myLexPosition + steps;
     if (cur < 0) return -1;

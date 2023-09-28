@@ -3,12 +3,13 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.maven.testFramework.MavenDomTestCase
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection
 import org.junit.Test
 
 class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
   @Test
-  fun testAutomaticParentVersionResolutionForMaven4() {
+  fun testAutomaticParentVersionResolutionForMaven4() = runBlocking {
     assumeVersionAtLeast("4.0.0-alpha-2")
     createProjectPom("""
                        <groupId>test</groupId>
@@ -28,7 +29,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                       </parent>
                                        <artifactId>m</artifactId>
                                       """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertEquals("1.1", projectsManager.findProject(m)!!.mavenId.version)
 
     createModulePom("m",
@@ -45,7 +46,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testAutomaticParentVersionResolutionIsNotEnabledForMaven3() {
+  fun testAutomaticParentVersionResolutionIsNotEnabledForMaven3() = runBlocking {
     assumeVersionLessThan("4.0.0-alpha-2")
     createProjectPom("""
                        <groupId>test</groupId>
@@ -65,7 +66,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                       </parent>
                                        <artifactId>m</artifactId>
                                       """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createModulePom("m",
                     """
@@ -80,7 +81,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testAutomaticDependencyVersionResolutionForMaven4() {
+  fun testAutomaticDependencyVersionResolutionForMaven4() = runBlocking {
     assumeVersionAtLeast("4.0.0-alpha-2")
     createProjectPom("""
                        <groupId>test</groupId>
@@ -115,7 +116,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                           </dependency>
                                         </dependencies>
                                        """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertEquals("1.1", projectsManager.findProject(m1)!!.mavenId.version)
     assertEquals("1.1", projectsManager.findProject(m2)!!.mavenId.version)
     assertModuleModuleDeps("m2", "m1")
@@ -139,7 +140,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testAutomaticDependencyVersionResolutionForMaven4AndRelativePath() {
+  fun testAutomaticDependencyVersionResolutionForMaven4AndRelativePath() = runBlocking {
     assumeVersionAtLeast("4.0.0-alpha-2")
     createProjectPom("""
                        <groupId>test</groupId>
@@ -160,7 +161,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                        </parent>
                                         <artifactId>m1</artifactId>
                                        """.trimIndent())
-    importProject()
+    importProjectAsync()
     assertEquals("1.1", projectsManager.findProject(m1)!!.mavenId.version)
 
     createModulePom("m/m1",

@@ -131,7 +131,7 @@
     {
       "id": "kotlin",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 8, 12, 13, 17, 17, 17 ],
+      "includeGroups": [ 7, 8, 8, 8, 12, 17, 17, 17 ],
       "shouldLogElementFeatures": true
     },
     {

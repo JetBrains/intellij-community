@@ -2,8 +2,8 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -77,10 +77,10 @@ final class ThrottlingListenerWrapper implements SearchListener, Disposable {
   }
 
   private void scheduleFlushBuffer() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     Runnable flushTask = () -> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       if (!flushScheduled) return;
       flushScheduled = false;
       buffer.flushBuffer(delegateListener);
@@ -93,7 +93,7 @@ final class ThrottlingListenerWrapper implements SearchListener, Disposable {
   }
 
   private void cancelScheduledFlush() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     flushAlarm.cancelAllRequests();
     flushScheduled = false;
   }

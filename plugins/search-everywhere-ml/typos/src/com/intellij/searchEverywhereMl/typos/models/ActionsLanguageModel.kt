@@ -5,9 +5,12 @@ import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -22,7 +25,9 @@ import com.intellij.spellchecker.dictionary.RuntimeDictionaryProvider
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 
 @Service(Service.Level.PROJECT)
 internal class ActionsLanguageModel @NonInjectable constructor(private val actionDictionary: ActionDictionary,
@@ -49,7 +54,7 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
 
   init {
     languageModelComputationJob = coroutineScope.launch {
-      asyncInit()
+      init()
     }
   }
 
@@ -96,7 +101,7 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
     override fun getFrequency(word: String): Int? = if (words.containsKey(word)) words.getInt(word) else null
   }
 
-  private fun asyncInit() {
+  private fun init() {
     (getWordsFromActions() + getWordsFromSettings())
       .flatMap {
         splitText(it)
@@ -111,8 +116,17 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
 }
 
 private class ModelComputationStarter : ProjectActivity {
+  init {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
   override suspend fun execute(project: Project) {
-    ActionsLanguageModel.getInstance(project)
+    delay(30.seconds)
+    if (isTypoFixingEnabled) {
+      project.serviceAsync<ActionsLanguageModel>()
+    }
   }
 }
 

@@ -9,6 +9,7 @@ import com.intellij.codeInsight.hints.codeVision.CodeVisionFusCollector
 import com.intellij.codeInsight.hints.isCodeAuthorInlayHintsEnabled
 import com.intellij.codeInsight.hints.refreshCodeAuthorInlayHints
 import com.intellij.ide.PowerSaveMode
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
@@ -28,9 +29,12 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiManager
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.vcs.CacheableAnnotationProvider
+import kotlinx.coroutines.Runnable
 
 @Service(Level.PROJECT)
 internal class AnnotationsPreloader(private val project: Project) {
@@ -53,7 +57,16 @@ internal class AnnotationsPreloader(private val project: Project) {
 
           annotationProvider.populateCache(file)
           val durationMs = System.currentTimeMillis() - start
-          //CodeVisionFusCollector.ANNOTATION_LOADED.log(project, durationMs)
+
+          AppExecutorUtil.getAppExecutorService().submit(Runnable {
+            ApplicationManager.getApplication().runReadAction {
+              val psiFile = PsiManager.getInstance(project).findFile(file)
+              if (psiFile != null) {
+                CodeVisionFusCollector.reportVcsAnnotationDuration(psiFile, durationMs)
+              }
+            }
+          })
+
           LOG.debug { "Preloaded VCS annotations for ${file.name} in $durationMs ms" }
 
           runInEdt {

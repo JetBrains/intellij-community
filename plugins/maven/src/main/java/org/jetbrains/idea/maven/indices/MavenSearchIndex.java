@@ -18,17 +18,16 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.IndexKind;
+import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.File;
+import java.util.Set;
 
 public interface MavenSearchIndex {
-
-  enum Kind {
-    LOCAL, REMOTE, ONLINE
-  }
 
   void close(boolean releaseIndexContext);
 
@@ -43,7 +42,7 @@ public interface MavenSearchIndex {
   @NlsSafe
   String getRepositoryPathOrUrl();
 
-  Kind getKind();
+  IndexKind getKind();
 
   long getUpdateTimestamp();
 
@@ -52,6 +51,8 @@ public interface MavenSearchIndex {
 
   void updateOrRepair(boolean fullUpdate, @Nullable MavenGeneralSettings settings, MavenProgressIndicator progress)
     throws MavenProcessCanceledException;
+
+  Set<MavenArtifactInfo> search(String pattern, int maxResult);
 
   interface IndexListener {
     void indexIsBroken(@NotNull MavenSearchIndex index);

@@ -21,10 +21,9 @@ public abstract class TypeRepr {
     return Collections.emptyList();
   }
 
-  public static class PrimitiveType extends TypeRepr {
+  public static final class PrimitiveType extends TypeRepr {
 
-    @NotNull
-    private final String myDescriptor;
+    private final @NotNull String myDescriptor;
 
     public PrimitiveType(String descriptor) {
       myDescriptor = descriptor;
@@ -59,7 +58,7 @@ public abstract class TypeRepr {
     }
   }
 
-  public static class ClassType extends TypeRepr {
+  public static final class ClassType extends TypeRepr {
 
     private final String myJvmName;
 
@@ -105,9 +104,8 @@ public abstract class TypeRepr {
     }
   }
 
-  public static class ArrayType extends TypeRepr {
-    @NotNull
-    private final TypeRepr myElementType;
+  public static final class ArrayType extends TypeRepr {
+    private final @NotNull TypeRepr myElementType;
 
     public ArrayType(@NotNull TypeRepr elementType) {
       myElementType = elementType;

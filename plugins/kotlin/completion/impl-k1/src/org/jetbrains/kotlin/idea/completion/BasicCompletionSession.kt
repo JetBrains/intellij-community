@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.addingPolicy.PolicyController
 import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -11,6 +11,9 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.openapi.module.Module
+import com.intellij.platform.ml.impl.turboComplete.CompletionKind
+import com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorConsumer
+import com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorWithArtifact
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.GlobalSearchScope
@@ -35,6 +38,7 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
+import org.jetbrains.kotlin.idea.util.FuzzyType
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -62,42 +66,71 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class BasicCompletionSession(
     configuration: CompletionSessionConfiguration,
-    parameters: CompletionParameters,
-    resultSet: CompletionResultSet,
-) : CompletionSession(configuration, parameters, resultSet) {
+    completionParameters: CompletionParameters,
+    private val policyController: PolicyController,
+    private val suggestionGeneratorConsumer: SuggestionGeneratorConsumer,
+) : CompletionSession(configuration, completionParameters, policyController.getObeyingResultSet()) {
 
-    private interface CompletionKind {
+    private interface CompletionCategory {
         val descriptorKindFilter: DescriptorKindFilter?
-        fun doComplete()
-        fun shouldDisableAutoPopup() = false
-        fun addWeighers(sorter: CompletionSorter) = sorter
+        fun generateCategories()
+        fun shouldDisableAutoPopup(): Boolean = false
+        fun addWeighers(sorter: CompletionSorter): CompletionSorter = sorter
     }
 
-    private val completionKind by lazy { detectCompletionKind() }
+    private fun <T> suggestionGeneratorForCompletionKind(
+        name: KotlinCompletionKindName,
+        fillResultSet: () -> T
+    ) = object : SuggestionGeneratorWithArtifact<T>(
+        CompletionKind(name, KotlinKindVariety), collector.resultSet, policyController, parameters
+    ) {
+        override fun generateVariantsAndArtifact(): T {
+            val artifact = fillResultSet()
+            flushToResultSet()
+            return artifact
+        }
+    }
+
+    private abstract inner class OneKindCompletionCategory(private val name: KotlinCompletionKindName) : CompletionCategory {
+        final override fun generateCategories() {
+            suggestionGeneratorConsumer.pass(suggestionGeneratorForCompletionKind(name) {
+                fillResultSet()
+            })
+        }
+
+        abstract fun fillResultSet()
+    }
+
+    val isNothingAddedToResult: Boolean
+        get() = collector.isResultEmpty
+
+    private val completionKind by lazy { detectCompletionCategory() }
 
     override val descriptorKindFilter: DescriptorKindFilter? get() = completionKind.descriptorKindFilter
 
-    private val smartCompletion = expression?.let {
-        SmartCompletion(
-            expression = it,
-            resolutionFacade = resolutionFacade,
-            bindingContext = bindingContext,
-            moduleDescriptor = moduleDescriptor,
-            visibilityFilter = isVisibleFilter,
-            applicabilityFilter = applicabilityFilter,
-            indicesHelper = indicesHelper(false),
-            prefixMatcher = prefixMatcher,
-            inheritorSearchScope = GlobalSearchScope.EMPTY_SCOPE,
-            toFromOriginalFileMapper = toFromOriginalFileMapper,
-            callTypeAndReceiver = callTypeAndReceiver,
-            isJvmModule = isJvmModule,
-            forBasicCompletion = true,
-        )
+    private val smartCompletion by lazy {
+        expression?.let {
+            SmartCompletion(
+                expression = it,
+                resolutionFacade = resolutionFacade,
+                bindingContext = bindingContext,
+                moduleDescriptor = moduleDescriptor,
+                visibilityFilter = isVisibleFilter,
+                applicabilityFilter = applicabilityFilter,
+                indicesHelper = indicesHelper(false),
+                prefixMatcher = prefixMatcher,
+                inheritorSearchScope = GlobalSearchScope.EMPTY_SCOPE,
+                toFromOriginalFileMapper = toFromOriginalFileMapper,
+                callTypeAndReceiver = callTypeAndReceiver,
+                isJvmModule = isJvmModule,
+                forBasicCompletion = true,
+            )
+        }
     }
 
     override val expectedInfos: Collection<ExpectedInfo> get() = smartCompletion?.expectedInfos ?: emptyList()
 
-    private fun detectCompletionKind(): CompletionKind {
+    private fun detectCompletionCategory(): CompletionCategory {
         if (nameExpression == null) {
             return if ((position.parent as? KtNamedDeclaration)?.nameIdentifier == position) DECLARATION_NAME else KEYWORDS_ONLY
         }
@@ -143,7 +176,7 @@ class BasicCompletionSession(
             lookupElement
         }
 
-        completionKind.doComplete()
+        completionKind.generateCategories()
     }
 
     private fun isInFunctionLiteralStart(position: PsiElement): Boolean {
@@ -161,7 +194,7 @@ class BasicCompletionSession(
 
         if (smartCompletion != null) {
             val smartCompletionInBasicWeigher = SmartCompletionInBasicWeigher(
-                smartCompletion,
+                smartCompletion!!,
                 callTypeAndReceiver,
                 resolutionFacade,
                 bindingContext,
@@ -179,7 +212,7 @@ class BasicCompletionSession(
         return sorter
     }
 
-    private val ALL = object : CompletionKind {
+    private val ALL = object : CompletionCategory {
         override val descriptorKindFilter: DescriptorKindFilter by lazy {
             callTypeAndReceiver.callType.descriptorKindFilter.let { filter ->
                 filter.takeIf { it.kindMask.and(DescriptorKindFilter.PACKAGES_MASK) != 0 }
@@ -191,7 +224,7 @@ class BasicCompletionSession(
         override fun shouldDisableAutoPopup(): Boolean =
             isStartOfExtensionReceiverFor() is KtProperty && wasAutopopupRecentlyCancelled(parameters)
 
-        override fun doComplete() {
+        override fun generateCategories() {
             val declaration = isStartOfExtensionReceiverFor()
             if (declaration != null) {
                 completeDeclarationNameFromUnresolvedOrOverride(declaration)
@@ -214,7 +247,7 @@ class BasicCompletionSession(
                             .map { it.node.elementType }
                             .none { it is KtModifierKeywordToken && it !in KtTokens.VISIBILITY_MODIFIERS }
                     ) {
-                        KEYWORDS_ONLY.doComplete()
+                        KEYWORDS_ONLY.generateCategories()
                     }
                     return
                 }
@@ -222,7 +255,7 @@ class BasicCompletionSession(
 
             fun completeWithSmartCompletion(lookupElementFactory: LookupElementFactory) {
                 if (smartCompletion != null) {
-                    val (additionalItems, @Suppress("UNUSED_VARIABLE") inheritanceSearcher) = smartCompletion.additionalItems(
+                    val (additionalItems, @Suppress("UNUSED_VARIABLE") inheritanceSearcher) = smartCompletion!!.additionalItems(
                         lookupElementFactory
                     )
 
@@ -237,7 +270,7 @@ class BasicCompletionSession(
                 }
             }
 
-            withCollectRequiredContextVariableTypes { lookupFactory ->
+            withCollectRequiredContextVariableTypes(KotlinCompletionKindName.DSL_FUNCTION) { lookupFactory ->
                 DslMembersCompletion(
                     prefixMatcher,
                     lookupFactory,
@@ -248,111 +281,189 @@ class BasicCompletionSession(
                 ).completeDslFunctions()
             }
 
-            KEYWORDS_ONLY.doComplete()
+            KEYWORDS_ONLY.generateCategories()
 
-            val contextVariableTypesForSmartCompletion = withCollectRequiredContextVariableTypes(::completeWithSmartCompletion)
-            val contextVariableTypesForReferenceVariants = withCollectRequiredContextVariableTypes { lookupElementFactory ->
-                when {
-                    prefix.isEmpty() ||
-                            callTypeAndReceiver.receiver != null ||
-                            CodeInsightSettings.getInstance().completionCaseSensitive == CodeInsightSettings.NONE
-                    -> {
-                        addReferenceVariantElements(lookupElementFactory, descriptorKindFilter)
-                    }
+            val contextVariableTypesForSmartCompletion = withCollectRequiredContextVariableTypes(
+                KotlinCompletionKindName.SMART_ADDITIONAL_ITEM,
+                ::completeWithSmartCompletion
+            )
 
-                    prefix[0].isLowerCase() -> {
-                        addReferenceVariantElements(lookupElementFactory, USUALLY_START_LOWER_CASE.intersect(descriptorKindFilter))
-                        addReferenceVariantElements(lookupElementFactory, USUALLY_START_UPPER_CASE.intersect(descriptorKindFilter))
-                    }
+            fun addReferenceVariants(lookupElementFactory: LookupElementFactory, referenceVariants: ReferenceVariants) {
+                collector.addDescriptorElements(
+                    referenceVariantsHelper.excludeNonInitializedVariable(referenceVariants.imported, position),
+                    lookupElementFactory, prohibitDuplicates = true
+                )
 
-                    else -> {
-                        addReferenceVariantElements(lookupElementFactory, USUALLY_START_UPPER_CASE.intersect(descriptorKindFilter))
-                        addReferenceVariantElements(lookupElementFactory, USUALLY_START_LOWER_CASE.intersect(descriptorKindFilter))
+                collector.addDescriptorElements(
+                    referenceVariants.notImportedExtensions, lookupElementFactory,
+                    notImported = true, prohibitDuplicates = true
+                )
+            }
+
+            fun makeReferenceSuggestionGenerators(
+                descriptors: List<DescriptorKindFilter>,
+                lookupElementFactory: LookupElementFactory
+            ): List<SuggestionGeneratorWithArtifact<Unit>> {
+                val generators = descriptors.map { descriptorKindFilter ->
+                    referenceVariantsCollector!!.makeReferenceVariantsCollectors(descriptorKindFilter)
+                }
+
+                val basicReferencesKind = suggestionGeneratorForCompletionKind(KotlinCompletionKindName.REFERENCE_BASIC) {
+                    generators.forEach {
+                        addReferenceVariants(lookupElementFactory, it.basic.value)
                     }
                 }
 
-                referenceVariantsCollector!!.collectingFinished()
+                val extensionReferencesKind = suggestionGeneratorForCompletionKind(KotlinCompletionKindName.REFERENCE_EXTENSION) {
+                    generators.forEach {
+                        addReferenceVariants(lookupElementFactory, it.extensions.value)
+                    }
+                }
+
+                return listOf(basicReferencesKind, extensionReferencesKind)
             }
+
+            fun collectReferences(descriptors: List<DescriptorKindFilter>): Lazy<Set<FuzzyType>> {
+                val provider = CollectRequiredTypesContextVariablesProvider()
+                val lookupElementFactory = createLookupElementFactory(provider)
+                val generators = makeReferenceSuggestionGenerators(descriptors, lookupElementFactory)
+                /**
+                 * Acknowledge the generators' existence, passing them to the consumer.
+                 * So the consumer (which is a [com.intellij.turboComplete.SuggestionGeneratorExecutor])
+                 * could use it at its discretion.
+                 */
+                generators.forEach { suggestionGeneratorConsumer.pass(it) }
+                return lazy {
+                    /**
+                     * Make that all generators generated their artifacts by the moment, when
+                     * the one who addressed this function's return value
+                     */
+                    generators.forEach { it.getArtifact() }
+                    referenceVariantsCollector!!.collectingFinished()
+                    provider.requiredTypes
+                }
+            }
+
+            val descriptors = when {
+                prefix.isEmpty() ||
+                        callTypeAndReceiver.receiver != null ||
+                        CodeInsightSettings.getInstance().completionCaseSensitive == CodeInsightSettings.NONE
+                -> {
+                    listOf(descriptorKindFilter)
+                }
+
+                prefix[0].isLowerCase() -> {
+                    listOf(
+                        USUALLY_START_LOWER_CASE.intersect(descriptorKindFilter),
+                        USUALLY_START_UPPER_CASE.intersect(descriptorKindFilter)
+                    )
+                }
+
+                else -> {
+                    listOf(
+                        USUALLY_START_UPPER_CASE.intersect(descriptorKindFilter),
+                        USUALLY_START_LOWER_CASE.intersect(descriptorKindFilter)
+                    )
+                }
+            }
+
+            val references = collectReferences(descriptors)
 
             // getting root packages from scope is very slow so we do this in alternative way
             if (callTypeAndReceiver.receiver == null &&
                 callTypeAndReceiver.callType.descriptorKindFilter.kindMask.and(DescriptorKindFilter.PACKAGES_MASK) != 0
             ) {
-                //TODO: move this code somewhere else?
-                val packageNames = KotlinPackageIndexUtils.getSubPackageFqNames(FqName.ROOT, searchScope, prefixMatcher.asNameFilter())
-                    .toHashSet()
+                addKind(KotlinCompletionKindName.PACKAGE_NAME) {
+                    //TODO: move this code somewhere else?
+                    val packageNames = KotlinPackageIndexUtils.getSubPackageFqNames(FqName.ROOT, searchScope, prefixMatcher.asNameFilter())
+                        .toHashSet()
 
-                if ((parameters.originalFile as KtFile).platform.isJvm()) {
-                    JavaPsiFacade.getInstance(project).findPackage("")?.getSubPackages(searchScope)?.forEach { psiPackage ->
-                        val name = psiPackage.name
-                        if (Name.isValidIdentifier(name!!)) {
-                            packageNames.add(FqName(name))
+                    if ((parameters.originalFile as KtFile).platform.isJvm()) {
+                        JavaPsiFacade.getInstance(project).findPackage("")?.getSubPackages(searchScope)?.forEach { psiPackage ->
+                            val name = psiPackage.name
+                            if (Name.isValidIdentifier(name!!)) {
+                                packageNames.add(FqName(name))
+                            }
                         }
                     }
-                }
 
-                packageNames.forEach { collector.addElement(basicLookupElementFactory.createLookupElementForPackage(it)) }
+                    packageNames.forEach { collector.addElement(basicLookupElementFactory.createLookupElementForPackage(it)) }
+                }
             }
 
-            flushToResultSet()
-
-            NamedArgumentCompletion.complete(collector, expectedInfos, callTypeAndReceiver.callType)
-            flushToResultSet()
+            addKind(KotlinCompletionKindName.NAMED_ARGUMENT) {
+                NamedArgumentCompletion.complete(collector, expectedInfos, callTypeAndReceiver.callType)
+            }
 
             val contextVariablesProvider = RealContextVariablesProvider(referenceVariantsHelper, position)
             withContextVariablesProvider(contextVariablesProvider) { lookupElementFactory ->
                 if (receiverTypes != null) {
-                    ExtensionFunctionTypeValueCompletion(receiverTypes, callTypeAndReceiver.callType, lookupElementFactory)
-                        .processVariables(contextVariablesProvider)
-                        .forEach {
-                            val lookupElements = it.factory.createStandardLookupElementsForDescriptor(
-                                it.invokeDescriptor,
-                                useReceiverTypes = true,
-                            )
-
-                            collector.addElements(lookupElements)
-                        }
+                    addKind(KotlinCompletionKindName.EXTENSION_FUNCTION_TYPE_VALUE) {
+                        ExtensionFunctionTypeValueCompletion(receiverTypes, callTypeAndReceiver.callType, lookupElementFactory)
+                            .processVariables(contextVariablesProvider)
+                            .forEach {
+                                val lookupElements = it.factory.createStandardLookupElementsForDescriptor(
+                                    it.invokeDescriptor,
+                                    useReceiverTypes = true,
+                                )
+                                collector.addElements(lookupElements)
+                            }
+                    }
                 }
 
-                if (contextVariableTypesForSmartCompletion.any { contextVariablesProvider.functionTypeVariables(it).isNotEmpty() }) {
-                    completeWithSmartCompletion(lookupElementFactory)
+                addKind(KotlinCompletionKindName.CONTEXT_VARIABLE_TYPE_SC) {
+                    if (contextVariableTypesForSmartCompletion.getArtifact().any {
+                            contextVariablesProvider.functionTypeVariables(it).isNotEmpty()
+                        }) {
+                        completeWithSmartCompletion(lookupElementFactory)
+                    }
                 }
 
-                if (contextVariableTypesForReferenceVariants.any { contextVariablesProvider.functionTypeVariables(it).isNotEmpty() }) {
-                    val (imported, notImported) = referenceVariantsWithSingleFunctionTypeParameter()!!
-                    collector.addDescriptorElements(imported, lookupElementFactory)
-                    collector.addDescriptorElements(notImported, lookupElementFactory, notImported = true)
+                addKind(KotlinCompletionKindName.CONTEXT_VARIABLE_TYPE_REFERENCE) {
+                    if (references.value.any { contextVariablesProvider.functionTypeVariables(it).isNotEmpty() }) {
+                        val (imported, notImported) = referenceVariantsWithSingleFunctionTypeParameter()!!
+                        collector.addDescriptorElements(imported, lookupElementFactory)
+                        collector.addDescriptorElements(notImported, lookupElementFactory, notImported = true)
+                    }
                 }
 
-                val staticMembersCompletion = StaticMembersCompletion(
-                    prefixMatcher,
-                    resolutionFacade,
-                    lookupElementFactory,
-                    referenceVariantsCollector!!.allCollected.imported,
-                    isJvmModule
-                )
+                val staticMembersCompletion = lazy {
+                    references.value
+                    StaticMembersCompletion(
+                        prefixMatcher,
+                        resolutionFacade,
+                        lookupElementFactory,
+                        referenceVariantsCollector!!.allCollected.imported,
+                        isJvmModule
+                    )
+                }
 
                 if (callTypeAndReceiver is CallTypeAndReceiver.DEFAULT) {
-                    staticMembersCompletion.completeFromImports(file, collector)
+                    addKind(KotlinCompletionKindName.STATIC_MEMBER_FROM_IMPORTS) {
+                        staticMembersCompletion.value.completeFromImports(file, collector)
+                    }
                 }
 
-                completeNonImported(lookupElementFactory)
-                flushToResultSet()
+                addKind(KotlinCompletionKindName.NON_IMPORTED) {
+                    contextVariableTypesForSmartCompletion.getArtifact()
+                    references.value
+                    completeNonImported(lookupElementFactory)
+                }
 
                 if (isDebuggerContext) {
-                    val variantsAndFactory = getRuntimeReceiverTypeReferenceVariants(lookupElementFactory)
-                    if (variantsAndFactory != null) {
-                        val variants = variantsAndFactory.first
-                        val resultLookupElementFactory = variantsAndFactory.second
-                        collector.addDescriptorElements(variants.imported, resultLookupElementFactory, withReceiverCast = true)
-                        collector.addDescriptorElements(
-                            variants.notImportedExtensions,
-                            resultLookupElementFactory,
-                            withReceiverCast = true,
-                            notImported = true
-                        )
-
-                        flushToResultSet()
+                    addKind(KotlinCompletionKindName.DEBUGGER_VARIANTS) {
+                        val variantsAndFactory = getRuntimeReceiverTypeReferenceVariants(lookupElementFactory)
+                        if (variantsAndFactory != null) {
+                            val variants = variantsAndFactory.first
+                            val resultLookupElementFactory = variantsAndFactory.second
+                            collector.addDescriptorElements(variants.imported, resultLookupElementFactory, withReceiverCast = true)
+                            collector.addDescriptorElements(
+                                variants.notImportedExtensions,
+                                resultLookupElementFactory,
+                                withReceiverCast = true,
+                                notImported = true
+                            )
+                        }
                     }
                 }
 
@@ -364,27 +475,33 @@ class BasicCompletionSession(
                     }
 
                     if (shouldCompleteExtensionsFromObjects) {
-                        val receiverKotlinTypes = receiverTypes.map { it.type }
+                        val receiverKotlinTypes by lazy { receiverTypes.map { it.type } }
 
-                        staticMembersCompletion.completeObjectMemberExtensionsFromIndices(
-                            indicesHelper(mayIncludeInaccessible = false),
-                            receiverKotlinTypes,
-                            callTypeAndReceiver,
-                            collector
-                        )
+                        addKind(KotlinCompletionKindName.STATIC_MEMBER_OBJECT_MEMBER) {
+                            staticMembersCompletion.value.completeObjectMemberExtensionsFromIndices(
+                                indicesHelper(mayIncludeInaccessible = false),
+                                receiverKotlinTypes,
+                                callTypeAndReceiver,
+                                collector
+                            )
+                        }
 
-                        staticMembersCompletion.completeExplicitAndInheritedMemberExtensionsFromIndices(
-                            indicesHelper(mayIncludeInaccessible = false),
-                            receiverKotlinTypes,
-                            callTypeAndReceiver,
-                            collector
-                        )
+                        addKind(KotlinCompletionKindName.STATIC_MEMBER_EXPLICIT_INHERITED) {
+                            staticMembersCompletion.value.completeExplicitAndInheritedMemberExtensionsFromIndices(
+                                indicesHelper(mayIncludeInaccessible = false),
+                                receiverKotlinTypes,
+                                callTypeAndReceiver,
+                                collector
+                            )
+                        }
                     }
                 }
 
                 if (configuration.staticMembers && prefix.isNotEmpty()) {
                     if (callTypeAndReceiver is CallTypeAndReceiver.DEFAULT) {
-                        staticMembersCompletion.completeFromIndices(indicesHelper(false), collector)
+                        addKind(KotlinCompletionKindName.STATIC_MEMBER_INACCESSIBLE) {
+                            staticMembersCompletion.value.completeFromIndices(indicesHelper(false), collector)
+                        }
                     }
                 }
             }
@@ -581,7 +698,7 @@ class BasicCompletionSession(
     private fun wasAutopopupRecentlyCancelled(parameters: CompletionParameters) =
         LookupCancelService.getInstance(project).wasAutoPopupRecentlyCancelled(parameters.editor, position.startOffset)
 
-    private val KEYWORDS_ONLY = object : CompletionKind {
+    private val KEYWORDS_ONLY = object : OneKindCompletionCategory(KotlinCompletionKindName.KEYWORD_ONLY) {
         override val descriptorKindFilter: DescriptorKindFilter? get() = null
 
         private val keywordCompletion = KeywordCompletion(object : KeywordCompletion.LanguageVersionSettingProvider {
@@ -589,7 +706,7 @@ class BasicCompletionSession(
             override fun getLanguageVersionSetting(module: Module) = module.languageVersionSettings
         })
 
-        override fun doComplete() {
+        override fun fillResultSet() {
             val keywordsToSkip = HashSet<String>()
             val keywordValueConsumer = object : KeywordValues.Consumer {
                 override fun consume(
@@ -628,7 +745,7 @@ class BasicCompletionSession(
                 isJvmModule
             )
 
-            keywordCompletion.complete(expression ?: position, resultSet.prefixMatcher, isJvmModule) { lookupElement ->
+            keywordCompletion.complete(expression ?: position, collector.resultSet.prefixMatcher, isJvmModule) { lookupElement ->
                 val keyword = lookupElement.lookupString
                 if (keyword in keywordsToSkip) return@complete
 
@@ -705,12 +822,12 @@ class BasicCompletionSession(
         }
     }
 
-    private val NAMED_ARGUMENTS_ONLY = object : CompletionKind {
+    private val NAMED_ARGUMENTS_ONLY = object : OneKindCompletionCategory(KotlinCompletionKindName.NAMED_ARGUMENT) {
         override val descriptorKindFilter: DescriptorKindFilter? get() = null
-        override fun doComplete(): Unit = NamedArgumentCompletion.complete(collector, expectedInfos, callTypeAndReceiver.callType)
+        override fun fillResultSet(): Unit = NamedArgumentCompletion.complete(collector, expectedInfos, callTypeAndReceiver.callType)
     }
 
-    private val OPERATOR_NAME = object : CompletionKind {
+    private val OPERATOR_NAME = object : OneKindCompletionCategory(KotlinCompletionKindName.OPERATOR_NAME) {
         override val descriptorKindFilter: DescriptorKindFilter? get() = null
 
         fun isApplicable(): Boolean {
@@ -726,27 +843,28 @@ class BasicCompletionSession(
             return !originalFunc.isTopLevel || (originalFunc.isExtensionDeclaration())
         }
 
-        override fun doComplete() {
+        override fun fillResultSet() {
             OperatorNameCompletion.doComplete(collector, descriptorNameFilter)
-            flushToResultSet()
         }
     }
 
-    private val DECLARATION_NAME = object : CompletionKind {
+    private val DECLARATION_NAME = object : CompletionCategory {
         override val descriptorKindFilter: DescriptorKindFilter? get() = null
 
-        override fun doComplete() {
+        override fun generateCategories() {
             val declaration = declaration()
             if (declaration is KtParameter && !NameWithTypeCompletion.shouldCompleteParameter(declaration)) {
                 return // do not complete also keywords and from unresolved references in such case
             }
 
-            collector.addLookupElementPostProcessor { lookupElement ->
-                lookupElement.putUserData(KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING, Unit)
-                lookupElement
+            addKind(KotlinCompletionKindName.DECLARATION_NAME) {
+                collector.addLookupElementPostProcessor { lookupElement ->
+                    lookupElement.putUserData(KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING, Unit)
+                    lookupElement
+                }
             }
 
-            KEYWORDS_ONLY.doComplete()
+            KEYWORDS_ONLY.generateCategories()
 
             completeDeclarationNameFromUnresolvedOrOverride(declaration)
 
@@ -754,7 +872,9 @@ class BasicCompletionSession(
                 is KtParameter -> completeParameterOrVarNameAndType(withType = true)
                 is KtClassOrObject -> {
                     if (declaration.isTopLevel()) {
-                        completeTopLevelClassName()
+                        addKind(KotlinCompletionKindName.TOP_LEVEL_CLASS_NAME) {
+                            completeTopLevelClassName()
+                        }
                     }
                 }
             }
@@ -785,11 +905,11 @@ class BasicCompletionSession(
         private fun declaration() = position.parent as KtNamedDeclaration
     }
 
-    private val SUPER_QUALIFIER = object : CompletionKind {
+    private val SUPER_QUALIFIER = object : OneKindCompletionCategory(KotlinCompletionKindName.SUPER_QUALIFIER) {
         override val descriptorKindFilter: DescriptorKindFilter
             get() = DescriptorKindFilter.NON_SINGLETON_CLASSIFIERS
 
-        override fun doComplete() {
+        override fun fillResultSet() {
             val classOrObject = position.parents.firstIsInstanceOrNull<KtClassOrObject>() ?: return
             val classDescriptor = resolutionFacade.resolveToDescriptor(classOrObject, BodyResolveMode.PARTIAL) as ClassDescriptor
             var superClasses = classDescriptor.defaultType.constructor.supertypesWithAny()
@@ -807,15 +927,23 @@ class BasicCompletionSession(
     }
 
     private fun completeDeclarationNameFromUnresolvedOrOverride(declaration: KtNamedDeclaration) {
-        if (declaration is KtCallableDeclaration && declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-            OverridesCompletion(collector, basicLookupElementFactory).complete(position, declaration)
-        } else {
-            val referenceScope = referenceScope(declaration) ?: return
-            val originalScope = toFromOriginalFileMapper.toOriginalFile(referenceScope) ?: return
-            val afterOffset = if (referenceScope is KtBlockExpression) parameters.offset else null
-            val descriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, declaration]
-            FromUnresolvedNamesCompletion(collector, prefixMatcher).addNameSuggestions(originalScope, afterOffset, descriptor)
+        addKind(KotlinCompletionKindName.DECLARATION_NAME_FROM_UNRESOLVED_OVERRIDE) {
+            if (declaration is KtCallableDeclaration && declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
+                OverridesCompletion(collector, basicLookupElementFactory).complete(position, declaration)
+            } else {
+                val referenceScope = referenceScope(declaration) ?: return@addKind
+                val originalScope = toFromOriginalFileMapper.toOriginalFile(referenceScope) ?: return@addKind
+                val afterOffset = if (referenceScope is KtBlockExpression) parameters.offset else null
+                val descriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, declaration]
+                FromUnresolvedNamesCompletion(collector, prefixMatcher).addNameSuggestions(originalScope, afterOffset, descriptor)
+            }
         }
+    }
+
+    private fun addKind(name: KotlinCompletionKindName, generator: () -> Unit) {
+        suggestionGeneratorConsumer.pass(suggestionGeneratorForCompletionKind(name) {
+            generator()
+        })
     }
 
     private fun addClassesFromIndex(
@@ -837,44 +965,37 @@ class BasicCompletionSession(
         ).collect({ processWithShadowedFilter(it, classifierDescriptorCollector) }, javaClassCollector)
     }
 
-    private fun addReferenceVariantElements(lookupElementFactory: LookupElementFactory, descriptorKindFilter: DescriptorKindFilter) {
-        fun addReferenceVariants(referenceVariants: ReferenceVariants) {
-            collector.addDescriptorElements(
-                referenceVariantsHelper.excludeNonInitializedVariable(referenceVariants.imported, position),
-                lookupElementFactory, prohibitDuplicates = true
+    private fun completeParameterOrVarNameAndType(withType: Boolean) {
+        collector.restartCompletionOnPrefixChange(NameWithTypeCompletion.prefixEndsWithUppercaseLetterPattern)
+        addKind(KotlinCompletionKindName.PARAMETER_OR_VAR_NAME_AND_TYPE) {
+            val nameWithTypeCompletion = VariableOrParameterNameWithTypeCompletion(
+                collector,
+                basicLookupElementFactory,
+                prefixMatcher,
+                resolutionFacade,
+                withType,
             )
-
-            collector.addDescriptorElements(
-                referenceVariants.notImportedExtensions, lookupElementFactory,
-                notImported = true, prohibitDuplicates = true
-            )
-        }
-
-        val referenceVariantsCollector = referenceVariantsCollector!!
-        referenceVariantsCollector.collectReferenceVariants(descriptorKindFilter) { referenceVariants ->
-            addReferenceVariants(referenceVariants)
-            flushToResultSet()
+            nameWithTypeCompletion.addFromParametersInFile(position, resolutionFacade, isVisibleFilterCheckAlways)
+            nameWithTypeCompletion.addFromImportedClasses(position, bindingContext, isVisibleFilterCheckAlways)
+            nameWithTypeCompletion.addFromAllClasses(parameters, indicesHelper(false))
         }
     }
 
-    private fun completeParameterOrVarNameAndType(withType: Boolean) {
-        val nameWithTypeCompletion = VariableOrParameterNameWithTypeCompletion(
-            collector,
-            basicLookupElementFactory,
-            prefixMatcher,
-            resolutionFacade,
-            withType,
-        )
+    private fun withCollectRequiredContextVariableTypes(
+        kindName: KotlinCompletionKindName,
+        action: (LookupElementFactory) -> Unit
+    ): SuggestionGeneratorWithArtifact<Set<FuzzyType>> {
+        val provider = CollectRequiredTypesContextVariablesProvider()
+        val lookupElementFactory = createLookupElementFactory(provider)
 
-        collector.restartCompletionOnPrefixChange(NameWithTypeCompletion.prefixEndsWithUppercaseLetterPattern)
+        val actionAsKind = suggestionGeneratorForCompletionKind(kindName) {
+            action(lookupElementFactory)
+            flushToResultSet()
+            provider.requiredTypes
+        }
 
-        nameWithTypeCompletion.addFromParametersInFile(position, resolutionFacade, isVisibleFilterCheckAlways)
-        flushToResultSet()
-
-        nameWithTypeCompletion.addFromImportedClasses(position, bindingContext, isVisibleFilterCheckAlways)
-        flushToResultSet()
-
-        nameWithTypeCompletion.addFromAllClasses(parameters, indicesHelper(false))
+        suggestionGeneratorConsumer.pass(actionAsKind)
+        return actionAsKind
     }
 }
 

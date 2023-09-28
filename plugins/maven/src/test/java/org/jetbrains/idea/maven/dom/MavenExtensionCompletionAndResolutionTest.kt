@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.openapi.vfs.LocalFileSystem
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.junit.Test
@@ -16,7 +17,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
   }
 
   @Test
-  fun testGroupIdCompletion() {
+  fun testGroupIdCompletion() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -35,7 +36,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
   }
 
   @Test
-  fun testArtifactIdCompletion() {
+  fun testArtifactIdCompletion() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -57,7 +58,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
   }
 
   @Test
-  fun testArtifactWithoutGroupCompletion() {
+  fun testArtifactWithoutGroupCompletion() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -87,7 +88,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
   }
 
   @Test
-  fun testCompletionInsideTag() {
+  fun testCompletionInsideTag() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -117,7 +118,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
   }
 
   @Test
-  fun testResolving() {
+  fun testResolving() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -142,7 +143,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
 
 
   @Test
-  fun testResolvingAbsentPlugins() {
+  fun testResolvingAbsentPlugins() = runBlocking {
     removeFromLocalRepository("org/apache/maven/plugins/maven-compiler-plugin")
 
     createProjectPom("""
@@ -161,10 +162,11 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
     val ref = getReferenceAtCaret(myProjectPom)
     assertNotNull(ref)
     ref.resolve() // shouldn't throw;
+    return@runBlocking
   }
 
   @Test
-  fun testDoNotHighlightAbsentGroupIdAndVersion() {
+  fun testDoNotHighlightAbsentGroupIdAndVersion() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -181,7 +183,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
   }
 
   @Test
-  fun testHighlightingAbsentArtifactId() {
+  fun testHighlightingAbsentArtifactId() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

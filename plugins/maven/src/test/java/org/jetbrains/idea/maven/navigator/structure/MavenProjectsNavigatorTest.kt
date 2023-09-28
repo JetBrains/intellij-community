@@ -282,7 +282,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
     assertEquals(setOf("Lifecycle", "Plugins"), childNodeNamesAfter)
   }
 
-  private fun waitForPluginNodesUpdated() {
+  private suspend fun waitForPluginNodesUpdated() = withContext(Dispatchers.EDT) {
     val pluginsNode = rootNodes[0].pluginsNode
     PlatformTestUtil.waitWithEventsDispatching({ "Waiting for Plugins to be updated" },
                                                { !pluginsNode.pluginNodes.isEmpty() }, 10)

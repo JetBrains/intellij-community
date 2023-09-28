@@ -24,7 +24,7 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
     assertEquals(3, storage.index.size)
 
-    var neighbours = storage.searchNeighbours("index project job", 10, 0.5)
+    var neighbours = storage.searchNeighboursIfEnabled("index project job", 10, 0.5)
     assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), neighbours.map { it.text }.toSet())
 
     neighbours = storage.streamSearchNeighbours("index project job", 0.5).toList()

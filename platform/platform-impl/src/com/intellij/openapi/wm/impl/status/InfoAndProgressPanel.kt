@@ -45,6 +45,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.flow.throttle
@@ -233,7 +234,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
   @RequiresEdt
   fun addProgress(original: ProgressIndicatorEx, info: TaskInfo) {
     // `openProcessPopup` may require the dispatch thread
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     synchronized(originals) {
       if (originals.isEmpty()) {
         mainPanel.updateNavBarAutoscrollToSelectedLimit(AutoscrollLimit.ALLOW_ONCE)
@@ -266,7 +267,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
 
   @RequiresEdt
   private fun removeProgress(progress: MyInlineProgressIndicator) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     synchronized(originals) {
       // already disposed
       if (!inlineToOriginal.containsKey(progress)) {

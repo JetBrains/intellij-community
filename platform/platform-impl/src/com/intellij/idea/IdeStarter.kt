@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.bootstrap.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
@@ -202,7 +203,7 @@ open class IdeStarter : ModernApplicationStarter() {
 private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
   val currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
   @Suppress("SSBasedInspection")
-  Logger.getInstance("#com.intellij.ide.bootstrap.ApplicationLoader").info("ApplicationLoader.loadProject (cwd=${currentDirectory})")
+  Logger.getInstance("#com.intellij.platform.ide.bootstrap.ApplicationLoader").info("ApplicationLoader.loadProject (cwd=${currentDirectory})")
   val result = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory)
   if (result.hasError) {
     withContext(Dispatchers.EDT) {

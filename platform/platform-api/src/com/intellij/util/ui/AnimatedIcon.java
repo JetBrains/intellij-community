@@ -18,7 +18,7 @@ import java.awt.*;
  */
 public class AnimatedIcon extends JComponent implements Disposable {
   private final Icon[] icons;
-  private final Dimension preferredSize;
+  private Dimension preferredSize;
 
   private int currentIconIndex;
 
@@ -79,6 +79,12 @@ public class AnimatedIcon extends JComponent implements Disposable {
     }
 
     return new Dimension(Math.max(passiveIcon.getIconWidth(), dimension.width), Math.max(passiveIcon.getIconHeight(), dimension.height));
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (getParent() != null) preferredSize = calcPreferredSize();
   }
 
   public void setPaintPassiveIcon(boolean paintPassive) {

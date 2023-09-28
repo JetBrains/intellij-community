@@ -766,11 +766,15 @@ fun satisfiesBundlingRequirements(plugin: PluginLayout,
   val bundlingRestrictions = plugin.bundlingRestrictions
 
   if (context.options.useReleaseCycleRelatedBundlingRestrictionsForContentReport) {
-    if (bundlingRestrictions.includeInEapOnly && !context.applicationInfo.isEAP) {
-      return false
-    }
+    val isNightly = context.options.isNightlyBuild
+    val isEap = context.applicationInfo.isEAP
 
-    if (bundlingRestrictions.includeInNightlyOnly && !context.options.isNightlyBuild) {
+    val distributionCondition = when (bundlingRestrictions.includeInDistribution) {
+      PluginDistribution.ALL -> true
+      PluginDistribution.NOT_FOR_RELEASE -> isNightly || isEap
+      PluginDistribution.NOT_FOR_PUBLIC_BUILDS -> isNightly
+    }
+    if (!distributionCondition) {
       return false
     }
   }

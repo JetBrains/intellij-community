@@ -33,11 +33,13 @@ interface EmbeddingSearchIndex {
 internal fun Map<String, FloatTextEmbedding>.findClosest(searchEmbedding: FloatTextEmbedding,
                                                          topK: Int, similarityThreshold: Double?): List<ScoredText> {
   return mapValues { searchEmbedding.times(it.value) }
+    .asSequence()
     .filter { (_, similarity) -> if (similarityThreshold != null) similarity > similarityThreshold else true }
     .toList()
     .sortedByDescending { (_, similarity) -> similarity }
     .take(topK)
     .map { (id, similarity) -> ScoredText(id, similarity.toDouble()) }
+    .toList()
 }
 
 internal fun Sequence<Pair<String, FloatTextEmbedding>>.streamFindClose(queryEmbedding: FloatTextEmbedding,

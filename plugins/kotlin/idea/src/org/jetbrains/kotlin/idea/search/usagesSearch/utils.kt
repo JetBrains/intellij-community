@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.usagesSearch
 
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.*
 import com.intellij.psi.util.MethodSignatureUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -53,7 +54,7 @@ inline fun <R> calculateInModalWindow(
     @NlsContexts.DialogTitle windowTitle: String,
     crossinline action: () -> R
 ): R {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val task = object : Task.WithResult<R, Exception>(contextElement.project, windowTitle, /*canBeCancelled*/ true) {
         override fun compute(indicator: ProgressIndicator): R =
           ApplicationManager.getApplication().runReadAction(Computable { action() })

@@ -10,12 +10,9 @@ import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
-import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager.Properties.RendererFactory
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -112,7 +109,7 @@ private fun <VM : EditorMapped> CoroutineScope.controlInlay(
 fun EditorEx.insertComponentAfter(lineIndex: Int,
                                   component: JComponent,
                                   priority: Int = 0,
-                                  rendererFactory: RendererFactory? = null): Inlay<*>? {
+                                  rendererFactory: (Inlay<*>) -> GutterIconRenderer? = { null }): Inlay<*>? {
   val offset = document.getLineEndOffset(lineIndex)
   return insertComponent(offset, component, priority, rendererFactory)
 }
@@ -121,7 +118,7 @@ fun EditorEx.insertComponentAfter(lineIndex: Int,
 fun EditorEx.insertComponent(offset: Int,
                              component: JComponent,
                              priority: Int = 0,
-                             rendererFactory: RendererFactory? = null): Inlay<*>? {
+                             rendererFactory: (Inlay<*>) -> GutterIconRenderer? = { null }): Inlay<*>? {
   val editor = this
   val layout = SizeRestrictedSingleComponentLayout().apply {
     // 52 for avatar and gaps
@@ -132,13 +129,12 @@ fun EditorEx.insertComponent(offset: Int,
     add(component)
   }
 
-  val props = EditorEmbeddedComponentManager.Properties(EditorEmbeddedComponentManager.ResizePolicy.none(),
-                                                        rendererFactory,
-                                                        false,
-                                                        false,
-                                                        priority,
-                                                        offset)
-  return EditorEmbeddedComponentManager.getInstance().addComponent(editor, wrappedComponent, props)
+  val renderer = object : ComponentInlayRenderer<JComponent>(wrappedComponent, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH) {
+    override fun calcGutterIconRenderer(inlay: Inlay<*>): GutterIconRenderer? = rendererFactory(inlay)
+  }
+
+  val props = InlayProperties().priority(priority).relatesToPrecedingText(true)
+  return editor.addComponentInlay(offset, props, renderer)
 }
 
 @ApiStatus.Experimental

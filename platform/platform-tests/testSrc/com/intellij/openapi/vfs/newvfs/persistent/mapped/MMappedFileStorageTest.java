@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.mapped;
 
-import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage.Page;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,21 +12,27 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.concurrent.*;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class MMappedFileStorageTest {
 
   public static final int PAGE_SIZE = 1 << 20;
 
   private MMappedFileStorage storage;
+  private Path storagePath;
 
   @BeforeEach
   public void setup(@TempDir Path tempDir) throws IOException {
-    storage = new MMappedFileStorage(tempDir.resolve("test.mmap").toAbsolutePath(), PAGE_SIZE);
+    storagePath = tempDir.resolve("test.mmap").toAbsolutePath();
+    storage = open();
+  }
+
+  private @NotNull MMappedFileStorage open() throws IOException {
+    return new MMappedFileStorage(storagePath, PAGE_SIZE);
   }
 
   @AfterEach
@@ -135,6 +143,59 @@ public class MMappedFileStorageTest {
     finally {
       pool.shutdown();
       pool.awaitTermination(10, SECONDS);
+    }
+  }
+
+  @Test
+  public void openingSecondStorage_OverSameFile_Fails() {
+    assertThrows(
+      IllegalStateException.class,
+      () -> new MMappedFileStorage(storage.storagePath(), PAGE_SIZE)
+    );
+  }
+
+  @Test
+  public void afterTruncate_fileBecomesEmptyAndZeroed_andNoTracesOfPreviousContentIsLeft() throws IOException {
+    int pagesToAllocate = 16;
+
+    byte[] ones = new byte[1024];
+    Arrays.fill(ones, (byte)1);
+
+    for (int pageNo = 0; pageNo < pagesToAllocate; pageNo++) {
+      Page page = storage.pageByIndex(pageNo);
+      ByteBuffer buffer = page.rawPageBuffer();
+      buffer.put(0, ones);
+    }
+    assertEquals(
+      pagesToAllocate * (long)storage.pageSize(),
+      storage.actualFileSize(),
+      "File must be " + pagesToAllocate + " pages long"
+    );
+
+    storage.close();
+    storage = open();
+
+    assertEquals(
+      pagesToAllocate * (long)storage.pageSize(),
+      storage.actualFileSize(),
+      "File still must be " + pagesToAllocate + " pages long after reopen"
+    );
+
+    storage.truncate();
+    assertEquals(
+      0L,
+      storage.actualFileSize(),
+      "After .truncate() file size must be 0 "
+    );
+    for (int pageNo = 0; pageNo < pagesToAllocate; pageNo++) {
+      Page page = storage.pageByIndex(pageNo);
+      ByteBuffer buffer = page.rawPageBuffer();
+      byte firstByte = buffer.get(0);
+      assertEquals(
+        0,
+        firstByte,
+        "All pages should be zeroed -- it should be no traces of 1s written before .truncate() call"
+      );
     }
   }
 }

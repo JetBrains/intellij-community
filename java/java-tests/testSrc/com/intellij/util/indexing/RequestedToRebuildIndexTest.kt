@@ -5,6 +5,8 @@ import com.intellij.ide.startup.ServiceNotReadyException
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
@@ -13,8 +15,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createIterators
-import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder
 import org.junit.Test
 import java.util.function.Consumer
@@ -40,7 +40,7 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
     val moduleEntity = storage.entities(ModuleEntity::class.java).iterator().next()
     assertNotNull(moduleEntity)
     val iterators = createIterators(moduleEntity, IndexingRootHolder.fromFile(fileA), storage)
-    UnindexedFilesUpdater(myFixture.project, ArrayList(iterators), null,
+    UnindexedFilesScanner(myFixture.project, ArrayList(iterators), null,
                           "Partial reindex of one of two indexable files").queue()
   }
 
@@ -88,7 +88,7 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
                  fileBasedIndex.getFileData(countingIndex.name, fileA, myFixture.project))
     assertEquals("File was not reindexed after indexing on creation", 0, countingIndex.counter.get())
 
-    UnindexedFilesUpdater(myFixture.project).queue()
+    UnindexedFilesScanner(myFixture.project).queue()
     assertEquals("File was not reindexed after full project reindex request", 0, countingIndex.counter.get())
 
     fileBasedIndex.requestRebuild(countingIndex.name)

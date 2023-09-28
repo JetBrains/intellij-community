@@ -89,6 +89,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   private XDebuggerState myState = new XDebuggerState();
 
+  private InlayRunToCursorEditorListener myNewRunToCursorListener = null;
+
   XDebuggerManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
 
@@ -171,10 +173,23 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     eventMulticaster.addEditorMouseListener(listener, this);
     eventMulticaster.addEditorMouseMotionListener(bpPromoter, this);
     if (ExperimentalUI.isNewUI()) {
-      InlayRunToCursorEditorListener newRunToCursorListener = new InlayRunToCursorEditorListener(myProject, coroutineScope);
-      eventMulticaster.addEditorMouseMotionListener(newRunToCursorListener, this);
-      eventMulticaster.addEditorMouseListener(newRunToCursorListener, this);
+      myNewRunToCursorListener = new InlayRunToCursorEditorListener(myProject, coroutineScope);
+      eventMulticaster.addEditorMouseMotionListener(myNewRunToCursorListener, this);
+      eventMulticaster.addEditorMouseListener(myNewRunToCursorListener, this);
+
+      myNewRunToCursorListener.installScrollListeners(this);
     }
+  }
+
+  void reshowInlayToolbar(@NotNull Editor editor) {
+    if (myNewRunToCursorListener == null) {
+      return;
+    }
+    XDebugSessionImpl session = getCurrentSession();
+    if (session == null) {
+      return;
+    }
+    myNewRunToCursorListener.scheduleInlayRunToCursor(editor, session);
   }
 
   @Override

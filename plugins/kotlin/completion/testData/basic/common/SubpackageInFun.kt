@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // FIR_COMPARISON
 package Test.MyTest
 
@@ -7,4 +6,3 @@ fun test() {
 }
 
 // EXIST: MyTest
-// EXIST_K2: MyTest.

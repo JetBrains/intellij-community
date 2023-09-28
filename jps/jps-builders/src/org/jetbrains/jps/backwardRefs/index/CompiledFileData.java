@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.backwardRefs.index;
 
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +8,7 @@ import org.jetbrains.jps.backwardRefs.SignatureData;
 import java.util.Collection;
 import java.util.Map;
 
-public class CompiledFileData {
+public final class CompiledFileData {
   private final Map<CompilerRef, Collection<CompilerRef>> myBackwardHierarchyMap;
   private final Map<CompilerRef, Collection<CompilerRef>> myCasts;
   private final Map<CompilerRef, Integer> myReferences;
@@ -30,33 +30,27 @@ public class CompiledFileData {
     myImplicitToString = implicitToString;
   }
 
-  @NotNull
-  public Map<CompilerRef, Collection<CompilerRef>> getBackwardHierarchy() {
+  public @NotNull Map<CompilerRef, Collection<CompilerRef>> getBackwardHierarchy() {
     return myBackwardHierarchyMap;
   }
 
-  @NotNull
-  public Map<CompilerRef, Integer> getReferences() {
+  public @NotNull Map<CompilerRef, Integer> getReferences() {
     return myReferences;
   }
 
-  @NotNull
-  public Map<CompilerRef, Void> getDefinitions() {
+  public @NotNull Map<CompilerRef, Void> getDefinitions() {
     return myDefinitions;
   }
 
-  @NotNull
-  public Map<SignatureData, Collection<CompilerRef>> getSignatureData() {
+  public @NotNull Map<SignatureData, Collection<CompilerRef>> getSignatureData() {
     return mySignatureData;
   }
 
-  @NotNull
-  public Map<CompilerRef, Collection<CompilerRef>> getCasts() {
+  public @NotNull Map<CompilerRef, Collection<CompilerRef>> getCasts() {
     return myCasts;
   }
 
-  @NotNull
-  public Map<CompilerRef, Void> getImplicitToString() {
+  public @NotNull Map<CompilerRef, Void> getImplicitToString() {
     return myImplicitToString;
   }
 }

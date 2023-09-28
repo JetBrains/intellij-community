@@ -118,7 +118,7 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
     importProjectAsync()
     assertUnorderedElementsAreEqual(projectsTree.getAvailableProfiles())
     waitForImportWithinTimeout {
-      updateSettingsXml("""
+      createSettingsXml("""
                         <profiles>
                           <profile>
                             <id>one</id>

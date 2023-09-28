@@ -30,8 +30,8 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.nio.file.Path
 
-import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getTaskArchiveFile
-import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.dynamicCheckInstanceOf
+import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getTaskArchiveFile
+import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.dynamicCheckInstanceOf
 import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 
 @ApiStatus.Internal
@@ -68,7 +68,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
   @NotNull
   @Override
   ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(project, e, "Gradle source set model error")
+    return ErrorMessageBuilder.create(project, e, "Source set model error")
   }
 
   @NotNull
@@ -584,7 +584,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     sourceSetContainer.all { SourceSet ss -> outputFiles.addAll(ss.output.files) }
     for (Object path: getArchiveTaskSourcePaths(archiveTask)) {
       if (isSafeToResolve(path, project) || isResolvableFileCollection(path, project)) {
-        def files = project.files(path).files
+        def files = new HashSet<>(project.files(path).files)
         files.removeAll(outputFiles)
         if (files.any { it.isDirectory() || (it.isFile() && it.name.endsWith(".class"))}) {
           return true

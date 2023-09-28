@@ -2038,50 +2038,73 @@ public final class BuildManager implements Disposable {
             candidates.addAll(myRootsToRefresh);
             myRootsToRefresh.clear();
           }
-          if (compileContext.isAnnotationProcessorsEnabled()) {
-            // annotation processors may have re-generated code
-            final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
-            for (Module module : compileContext.getCompileScope().getAffectedModules()) {
-              if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
-                final String productionPath = CompilerPaths.getAnnotationProcessorsGenerationPath(module, false);
-                if (productionPath != null) {
-                  candidates.add(productionPath);
-                }
-                final String testsPath = CompilerPaths.getAnnotationProcessorsGenerationPath(module, true);
-                if (testsPath != null) {
-                  candidates.add(testsPath);
-                }
-              }
-            }
+
+          if (candidates.isEmpty() && !compileContext.isAnnotationProcessorsEnabled()) {
+            return;
           }
 
-          if (!candidates.isEmpty()) {
-            ApplicationManager.getApplication().executeOnPooledThread(() -> {
-              if (project.isDisposed()) {
-                return;
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            if (project.isDisposed()) {
+              return;
+            }
+
+            if (compileContext.isAnnotationProcessorsEnabled()) {
+              // annotation processors may have re-generated code
+              final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
+              try {
+                for (Module module : ReadAction.nonBlocking(() -> compileContext.getCompileScope().getAffectedModules()).executeSynchronously()) {
+                  if (project.isDisposed()) {
+                    return;
+                  }
+                  if (module.isDisposed()) {
+                    continue;
+                  }
+                  if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
+                    final String productionPath = CompilerPaths.getAnnotationProcessorsGenerationPath(module, false);
+                    if (productionPath != null) {
+                      candidates.add(productionPath);
+                    }
+                    final String testsPath = CompilerPaths.getAnnotationProcessorsGenerationPath(module, true);
+                    if (testsPath != null) {
+                      candidates.add(testsPath);
+                    }
+                  }
+                }
               }
+              catch (ProcessCanceledException ignored) {
+              }
+              catch (Throwable e) {
+                LOG.info(e);
+              }
+            }
 
-              CompilerUtil.refreshOutputRoots(candidates);
+            if (candidates.isEmpty()) {
+              return;
+            }
 
-              LocalFileSystem lfs = LocalFileSystem.getInstance();
-              Set<VirtualFile> toRefresh = ReadAction.compute(() -> {
+            CompilerUtil.refreshOutputRoots(candidates);
+
+            LocalFileSystem lfs = LocalFileSystem.getInstance();
+            try {
+              Collection<VirtualFile> toRefresh = ReadAction.nonBlocking(() -> {
                 if (project.isDisposed()) {
-                  return Collections.emptySet();
+                  return Collections.<VirtualFile>emptySet();
                 }
-                else {
-                  ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-                  return candidates.stream()
-                    .map(lfs::findFileByPath)
-                    .filter(root -> root != null && fileIndex.isInSourceContent(root))
-                    .collect(Collectors.toSet());
-                }
-              });
+                ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+                return candidates.stream().map(lfs::findFileByPath).filter(root -> root != null && fileIndex.isInSourceContent(root)).collect(Collectors.toSet());
 
+              }).executeSynchronously();
+              
               if (!toRefresh.isEmpty()) {
                 lfs.refreshFiles(toRefresh, true, true, null);
               }
-            });
-          }
+            }
+            catch (ProcessCanceledException ignored) {
+            }
+            catch (Throwable e) {
+              LOG.info(e);
+            }
+          });
         }
 
         @Override

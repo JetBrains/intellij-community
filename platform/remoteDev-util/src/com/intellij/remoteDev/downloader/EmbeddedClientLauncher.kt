@@ -5,15 +5,10 @@ import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CustomConfigMigrationOption
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
@@ -21,12 +16,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.bootstrap.RuntimeModuleIntrospection
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
-import com.intellij.remoteDev.RemoteDevUtilBundle
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.SystemProperties
 import com.intellij.util.system.OS
 import com.jetbrains.rd.util.lifetime.Lifetime
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.Path
@@ -34,7 +28,8 @@ import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
-internal class EmbeddedClientLauncher private constructor(private val moduleRepository: RuntimeModuleRepository, 
+@ApiStatus.Internal
+class EmbeddedClientLauncher private constructor(private val moduleRepository: RuntimeModuleRepository, 
                                                  private val moduleRepositoryPath: Path) {
   companion object {
     fun create(): EmbeddedClientLauncher? {
@@ -43,8 +38,8 @@ internal class EmbeddedClientLauncher private constructor(private val moduleRepo
       return EmbeddedClientLauncher(moduleRepository, moduleRepositoryPath)
     }
   }
-  
-  fun launch(urlToOpen: String, lifetime: Lifetime, project: Project?): Lifetime {
+
+  fun launch(urlToOpen: String, lifetime: Lifetime, errorReporter: EmbeddedClientErrorReporter): Lifetime {
     val processLifetimeDef = lifetime.createNested()
     
     val javaParameters = createProcessParameters(moduleRepository, moduleRepositoryPath, urlToOpen)
@@ -57,20 +52,7 @@ internal class EmbeddedClientLauncher private constructor(private val moduleRepo
 
       override fun processTerminated(event: ProcessEvent) {
         if (event.exitCode != 0) {
-          val notification = Notification(
-            "IDE-errors",
-            RemoteDevUtilBundle.message("notification.title.failed.to.start.client"),
-            RemoteDevUtilBundle.message("notification.content.process.finished.with.exit.code.0", event.exitCode),
-            NotificationType.ERROR
-          )
-          if (project != null) {
-            notification.addAction(
-              NotificationAction.createSimple(RemoteDevUtilBundle.message("action.notification.view.output")) {
-                FileEditorManager.getInstance(project).openFile(LightVirtualFile("output.txt", output.joinToString("")), true)
-              }
-            )
-          }
-          notification.notify(project)
+          errorReporter.startupFailed(event.exitCode, output)
         }
         ApplicationManager.getApplication().invokeLater { 
           processLifetimeDef.terminate()

@@ -2,12 +2,13 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.psi.PsiManager
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenDomPathWithPropertyTest : MavenDomTestCase() {
   @Test
-  fun testRename() {
-    importProject(
+  fun testRename() = runBlocking {
+    importProjectAsync(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -54,7 +55,7 @@ class MavenDomPathWithPropertyTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testCompletionDirectoriesOnly() {
+  fun testCompletionDirectoriesOnly() = runBlocking {
     createProjectPom(
       """
             <groupId>test</groupId>

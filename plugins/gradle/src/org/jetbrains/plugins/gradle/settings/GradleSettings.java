@@ -33,6 +33,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
 
   private boolean isOfflineMode = false;
   private boolean isDownloadSources = Registry.is("gradle.download.sources", false);
+  private boolean isParallelModelFetch = false;
 
   public GradleSettings(@NotNull Project project) {
     super(GradleSettingsListener.TOPIC, project);
@@ -60,6 +61,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
 
     state.setOfflineMode(isOfflineWork());
     state.setDownloadSources(isDownloadSources());
+    state.setParallelModelFetch(isParallelModelFetch());
 
     return state;
   }
@@ -70,6 +72,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
 
     setOfflineWork(state.isOfflineMode());
     setDownloadSources(state.isDownloadSources());
+    setParallelModelFetch(state.isParallelModelFetch());
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
@@ -150,6 +153,14 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     isDownloadSources = downloadSources;
   }
 
+  public boolean isParallelModelFetch() {
+    return isParallelModelFetch;
+  }
+
+  public void setParallelModelFetch(boolean parallelModelFetch) {
+    isParallelModelFetch = parallelModelFetch;
+  }
+
   @Override
   protected void checkSettings(@NotNull GradleProjectSettings old, @NotNull GradleProjectSettings current) {
     if (!Objects.equals(old.getGradleHome(), current.getGradleHome())) {
@@ -179,6 +190,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     private final Set<GradleProjectSettings> myProjectSettings = new TreeSet<>();
     private boolean isOfflineMode = false;
     private boolean isDownloadSources = false;
+    private boolean isParallelModelFetch = false;
 
     @Override
     @XCollection(elementTypes = GradleProjectSettings.class)
@@ -207,6 +219,14 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
 
     public void setDownloadSources(boolean downloadSources) {
       isDownloadSources = downloadSources;
+    }
+
+    public boolean isParallelModelFetch() {
+      return isParallelModelFetch;
+    }
+
+    public void setParallelModelFetch(boolean parallelModelFetch) {
+      isParallelModelFetch = parallelModelFetch;
     }
   }
 }

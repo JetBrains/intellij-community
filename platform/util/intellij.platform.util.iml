@@ -43,6 +43,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.trove" />
+    <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
   </component>
   <component name="copyright">
     <Base>

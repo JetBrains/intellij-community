@@ -26,7 +26,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
     assertEquals(5, storage.index.size)
 
-    var neighbours = storage.searchNeighbours("begin indexing", 10, 0.5)
+    var neighbours = storage.searchNeighboursIfEnabled("begin indexing", 10, 0.5)
     assertEquals(setOf("startIndexing", "ProjectIndexingTask"), neighbours.map { it.text }.toSet())
 
     neighbours = storage.streamSearchNeighbours("begin indexing", 0.5).toList()

@@ -13,7 +13,7 @@ final class ForceIndexRescanningAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
-    UnindexedFilesUpdater task = new UnindexedFilesUpdater(project,
+    UnindexedFilesScanner task = new UnindexedFilesScanner(project,
                                                            false,
                                                            false,
                                                            null,

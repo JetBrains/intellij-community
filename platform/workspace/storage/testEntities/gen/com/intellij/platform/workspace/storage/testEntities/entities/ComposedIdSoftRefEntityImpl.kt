@@ -15,23 +15,24 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ComposedIdSoftRefEntityImpl(val dataSource: ComposedIdSoftRefEntityData) : ComposedIdSoftRefEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class ComposedIdSoftRefEntityImpl(private val dataSource: ComposedIdSoftRefEntityData) : ComposedIdSoftRefEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -48,6 +49,7 @@ open class ComposedIdSoftRefEntityImpl(val dataSource: ComposedIdSoftRefEntityDa
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: ComposedIdSoftRefEntityData?) : ModifiableWorkspaceEntityBase<ComposedIdSoftRefEntity, ComposedIdSoftRefEntityData>(
     result), ComposedIdSoftRefEntity.Builder {
@@ -77,7 +79,7 @@ open class ComposedIdSoftRefEntityImpl(val dataSource: ComposedIdSoftRefEntityDa
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -138,8 +140,8 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculableSymbolicId
   lateinit var myName: String
   lateinit var link: NameId
 
-  fun isMyNameInitialized(): Boolean = ::myName.isInitialized
-  fun isLinkInitialized(): Boolean = ::link.isInitialized
+  internal fun isMyNameInitialized(): Boolean = ::myName.isInitialized
+  internal fun isLinkInitialized(): Boolean = ::link.isInitialized
 
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
@@ -193,6 +195,11 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculableSymbolicId
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.ComposedIdSoftRefEntity") as EntityMetadata
   }
 
   override fun symbolicId(): SymbolicEntityId<*> {
@@ -254,10 +261,5 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculableSymbolicId
     result = 31 * result + myName.hashCode()
     result = 31 * result + link.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(NameId::class.java)
-    collector.sameForAllEntities = true
   }
 }

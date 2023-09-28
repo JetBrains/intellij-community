@@ -7,10 +7,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public abstract class ProtoMember extends Proto {
-  @NotNull
-  private final TypeRepr type;
-  @Nullable
-  private final Object value;
+  private final @NotNull TypeRepr type;
+  private final @Nullable Object value;
 
   public ProtoMember(JVMFlags flags, String signature, String name, @NotNull TypeRepr type, @NotNull Iterable<TypeRepr.ClassType> annotations, @Nullable Object value) {
     super(flags, signature, name, annotations);

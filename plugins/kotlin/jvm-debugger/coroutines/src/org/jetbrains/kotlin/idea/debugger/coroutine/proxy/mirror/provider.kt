@@ -8,7 +8,7 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
 interface ReferenceTypeProvider {
-    fun getCls(): ClassType
+    fun getCls(): ReferenceType
 }
 
 interface MirrorProvider<T, F> {

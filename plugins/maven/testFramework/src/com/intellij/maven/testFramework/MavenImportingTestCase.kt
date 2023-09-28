@@ -54,11 +54,13 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.project.importing.*
 import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import java.io.File
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -92,6 +94,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     isNewImportingProcess = Registry.`is`("maven.linear.import")
     myNotificationAware = AutoImportProjectNotificationAware.getInstance(myProject)
     myProjectTracker = AutoImportProjectTracker.getInstance(myProject)
+    myProject.messageBus.connect(testRootDisposable).subscribe(MavenImportListener.TOPIC, MavenImportLoggingListener())
   }
 
   @Throws(Exception::class)
@@ -407,6 +410,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   protected suspend fun importProjectsAsync(files: List<VirtualFile>) {
     initProjectsManager(false)
     projectsManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
+    projectsManager.waitForPluginResolution()
   }
 
   protected fun importProjectWithErrors() {
@@ -631,10 +635,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
         myProjectTracker!!.scheduleProjectRefresh()
       }
     }
-    waitForImportCompletion()
-    if (!isNewImportingProcess) {
-      MavenUtil.invokeAndWait(myProject) {}
-    }
 
     // otherwise project settings was modified while importing
     assertNoPendingProjectForReload()
@@ -642,6 +642,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   protected suspend fun updateAllProjects() {
     projectsManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
+    projectsManager.waitForPluginResolution()
   }
 
   protected fun waitForReadingCompletion() {
@@ -796,9 +797,12 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   @RequiresBackgroundThread
-  protected suspend fun waitForImportWithinTimeout(action: suspend () -> Any) {
+  protected suspend fun waitForImportWithinTimeout(action: suspend () -> Any?) {
+    MavenLog.LOG.warn("waitForImportWithinTimeout started")
     val importStarted = AtomicBoolean(false)
     val importFinished = AtomicBoolean(false)
+    val pluginResolutionFinished = AtomicBoolean(true)
+    val artifactDownloadingFinished = AtomicBoolean(true)
     myProject.messageBus.connect(testRootDisposable)
       .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
         override fun importStarted() {
@@ -809,12 +813,81 @@ abstract class MavenImportingTestCase : MavenTestCase() {
             importFinished.set(true)
           }
         }
+        override fun pluginResolutionStarted() {
+          pluginResolutionFinished.set(false)
+        }
+
+        override fun pluginResolutionFinished() {
+          pluginResolutionFinished.set(true)
+        }
+
+        override fun artifactDownloadingStarted() {
+          artifactDownloadingFinished.set(false)
+        }
+
+        override fun artifactDownloadingFinished() {
+          artifactDownloadingFinished.set(true)
+        }
       })
 
     action()
 
     assertWithinTimeout {
-      assertTrue(importStarted.get() && importFinished.get())
+      assertTrue(
+        importStarted.get()
+        && importFinished.get()
+        && pluginResolutionFinished.get()
+        && artifactDownloadingFinished.get()
+      )
+      MavenLog.LOG.warn("waitForImportWithinTimeout finished")
+    }
+  }
+
+  private class MavenImportLoggingListener : MavenImportListener {
+    private val logCounts = ConcurrentHashMap<String, Int>()
+
+    private fun log(method: String, details: String) {
+      logCounts.putIfAbsent(method, 0)
+      val logCount = logCounts[method]!!.plus(1)
+      logCounts[method] = logCount
+      val extraDetails = if (details.isEmpty()) "" else ": $details"
+      MavenLog.LOG.warn("ImportLogging. $method ($logCount)$extraDetails")
+    }
+
+    private fun log(method: String) {
+      log(method, "")
+    }
+
+    override fun importStarted() {
+      log("importStarted")
+    }
+
+    override fun importFinished(importedProjects: Collection<MavenProject?>, newModules: List<Module>) {
+      log("importFinished", "${importedProjects.size}, ${newModules.size}")
+    }
+
+    override fun pomReadingStarted() {
+      log("pomReadingStarted")
+    }
+
+    override fun pomReadingFinished() {
+      log("pomReadingFinished")
+    }
+
+    override fun pluginResolutionStarted() {
+      log("pluginResolutionStarted")
+    }
+
+    override fun pluginResolutionFinished() {
+      log("pluginResolutionFinished")
+    }
+
+    override fun artifactDownloadingStarted() {
+      log("artifactDownloadingStarted")
+    }
+
+    override fun artifactDownloadingFinished() {
+      log("artifactDownloadingFinished")
     }
   }
 

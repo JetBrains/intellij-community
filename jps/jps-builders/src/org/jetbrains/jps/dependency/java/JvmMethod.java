@@ -12,8 +12,8 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, JvmMethod.Diff> {
-  public final Iterable<TypeRepr> myArgTypes;
+public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, JvmMethod.Diff> {
+  private final Iterable<TypeRepr> myArgTypes;
   private final Set<ParamAnnotation> myParamAnnotations;
   private final Set<TypeRepr.ClassType> myExceptions;
 
@@ -30,7 +30,7 @@ public class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, Jvm
 
   @Override
   public MethodUsage createUsage(String owner) {
-    return new MethodUsage(owner, getName(), getDescr());
+    return new MethodUsage(owner, getName(), getDescriptor());
   }
   
   public Set<ParamAnnotation> getParamAnnotations() {
@@ -40,7 +40,11 @@ public class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, Jvm
   public Set<TypeRepr.ClassType> getExceptions() {
     return myExceptions;
   }
-  
+
+  public Iterable<TypeRepr> getArgTypes() {
+    return myArgTypes;
+  }
+
   @Override
   public boolean isSame(DiffCapable<?, ?> other) {
     if (!(other instanceof JvmMethod)) {
@@ -60,7 +64,7 @@ public class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, Jvm
     return new Diff(past);
   }
 
-  public class Diff extends ProtoMember.Diff<JvmMethod> {
+  public final class Diff extends ProtoMember.Diff<JvmMethod> {
 
     public Diff(JvmMethod past) {
       super(past);
@@ -84,7 +88,7 @@ public class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, Jvm
     }
   }
 
-  private String getDescr() {
+  public String getDescriptor() {
     final StringBuilder buf = new StringBuilder();
 
     buf.append("(");

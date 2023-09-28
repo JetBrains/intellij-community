@@ -47,6 +47,8 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
     deleteModule(id.artifactId)
     createNewModule(id)
     assertModules(id.artifactId!!)
+
+    updateAllProjects()
   }
 
   @Test

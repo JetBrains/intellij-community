@@ -30,7 +30,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
@@ -57,6 +56,7 @@ import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -373,7 +373,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
   @RequiresEdt
   protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy, boolean sync) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myIterationState = IterationState.NONE;
 
     force = force || (myQueuedApplyRequest != null && myQueuedApplyRequest.force);

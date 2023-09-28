@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,9 +16,8 @@ public abstract class ArtifactBasedBuildTargetType<T extends ArtifactBasedBuildT
     super(typeId, fileBased);
   }
 
-  @NotNull
   @Override
-  public List<T> computeAllTargets(@NotNull JpsModel model) {
+  public @NotNull List<T> computeAllTargets(@NotNull JpsModel model) {
     Collection<JpsArtifact> artifacts = JpsBuilderArtifactService.getInstance().getArtifacts(model, true);
     List<T> targets = new ArrayList<>(artifacts.size());
     for (JpsArtifact artifact : artifacts) {
@@ -43,15 +28,14 @@ public abstract class ArtifactBasedBuildTargetType<T extends ArtifactBasedBuildT
     return targets;
   }
 
-  @NotNull
   @Override
-  public BuildTargetLoader<T> createLoader(@NotNull JpsModel model) {
+  public @NotNull BuildTargetLoader<T> createLoader(@NotNull JpsModel model) {
     return new Loader(model);
   }
 
   protected abstract T createArtifactBasedTarget(JpsArtifact artifact);
 
-  private class Loader extends BuildTargetLoader<T> {
+  private final class Loader extends BuildTargetLoader<T> {
     private final Map<String, JpsArtifact> myArtifacts;
 
     Loader(JpsModel model) {
@@ -61,9 +45,8 @@ public abstract class ArtifactBasedBuildTargetType<T extends ArtifactBasedBuildT
       }
     }
 
-    @Nullable
     @Override
-    public T createTarget(@NotNull String targetId) {
+    public @Nullable T createTarget(@NotNull String targetId) {
       JpsArtifact artifact = myArtifacts.get(targetId);
       return artifact != null ? createArtifactBasedTarget(artifact) : null;
     }

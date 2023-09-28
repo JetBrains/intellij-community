@@ -96,7 +96,7 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     debug!("Resolved runtime: {jre_home:?}");
 
     debug!("** Collecting JVM options");
-    let vm_options = get_full_vm_options(&configuration).context("Cannot collect JVM options")?;
+    let vm_options = get_full_vm_options(&*configuration).context("Cannot collect JVM options")?;
     debug!("VM options: {vm_options:?}");
 
     debug!("** Launching JVM");
@@ -166,7 +166,7 @@ fn get_configuration(is_remote_dev: bool, exe_path: &Path) -> Result<Box<dyn Lau
     }
 }
 
-fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<Vec<String>> {
+fn get_full_vm_options(configuration: &dyn LaunchConfiguration) -> Result<Vec<String>> {
     let mut vm_options = configuration.get_vm_options()?;
 
     debug!("Looking for custom properties environment variable");
@@ -266,11 +266,11 @@ fn win_user_profile_dir() -> Result<String> {
     let mut buf: [u16; Foundation::MAX_PATH as usize] = unsafe { std::mem::zeroed() };
     let mut size = buf.len() as u32;
     debug!("Calling GetUserProfileDirectoryW({:?})", token);
-    let result: Foundation::BOOL = unsafe {
+    let result = unsafe {
         Shell::GetUserProfileDirectoryW(token, PWSTR::from_raw(buf.as_mut_ptr()), std::ptr::addr_of_mut!(size))
     };
     debug!("  result: {:?}, size: {}", result, size);
-    if result == Foundation::TRUE {
+    if result.is_ok() {
         Ok(String::from_utf16(&buf[0..(size - 1) as usize])?)
     } else {
         bail!("GetUserProfileDirectoryW(): {:?}", unsafe { Foundation::GetLastError() })

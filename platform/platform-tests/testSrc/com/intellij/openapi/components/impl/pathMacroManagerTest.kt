@@ -2,12 +2,17 @@
 import com.intellij.application.options.PathMacrosImpl
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.ApplicationRule
 import com.intellij.util.SystemProperties
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.model.serialization.PathMacroUtil
+import org.junit.Rule
 import org.junit.Test
 
 class LightPathMacroManagerTest {
+  @get: Rule
+  val app: ApplicationRule = ApplicationRule()
+
   @Test
   fun systemOverridesUser() {
     val macros = PathMacrosImpl()

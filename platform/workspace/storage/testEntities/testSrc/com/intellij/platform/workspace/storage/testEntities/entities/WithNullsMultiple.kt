@@ -42,7 +42,7 @@ interface ParentWithNullsMultiple : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ParentWithNullsMultiple,
-                                      modification: ParentWithNullsMultiple.Builder.() -> Unit) = modifyEntity(
+                                      modification: ParentWithNullsMultiple.Builder.() -> Unit): ParentWithNullsMultiple = modifyEntity(
   ParentWithNullsMultiple.Builder::class.java, entity, modification)
 //endregion
 
@@ -74,7 +74,7 @@ interface ChildWithNullsMultiple : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ChildWithNullsMultiple,
-                                      modification: ChildWithNullsMultiple.Builder.() -> Unit) = modifyEntity(
+                                      modification: ChildWithNullsMultiple.Builder.() -> Unit): ChildWithNullsMultiple = modifyEntity(
   ChildWithNullsMultiple.Builder::class.java, entity, modification)
 
 var ChildWithNullsMultiple.Builder.parent: ParentWithNullsMultiple?

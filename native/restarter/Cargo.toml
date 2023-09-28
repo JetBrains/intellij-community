@@ -1,0 +1,18 @@
+[package]
+name = "restarter"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.70"
+publish = false
+
+[profile.release]
+strip = "debuginfo"
+opt-level = "z"
+lto = true
+codegen-units = 1
+
+[dependencies]
+chrono = { version = "0.4", default-features = false, features = ["std"] }
+
+[target.'cfg(target_family = "unix")'.dependencies]
+libc = "0.2"

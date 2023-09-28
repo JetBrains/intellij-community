@@ -52,6 +52,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -360,6 +361,14 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   protected static String pathFromBasedir(VirtualFile root, String relPath) {
     return FileUtil.toSystemIndependentName(root.getPath() + "/" + relPath);
+  }
+
+  protected VirtualFile createSettingsXml(String innerContent) throws IOException {
+    var content = createSettingsXmlContent(innerContent);
+    var path = Path.of(myDir.getPath(), "settings.xml");
+    Files.write(path, content.getBytes(StandardCharsets.UTF_8));
+    getMavenGeneralSettings().setUserSettingsFile(path.toString());
+    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path);
   }
 
   protected VirtualFile updateSettingsXml(String content) throws IOException {

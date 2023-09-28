@@ -18,6 +18,7 @@ interface SemanticSearchSettings {
     get() = false
 
   fun isEnabled(): Boolean
+  fun isEnableInTab(tabId: String): Boolean
   fun getUseRemoteActionsServer(): Boolean
   fun getActionsAPIToken(): String
 

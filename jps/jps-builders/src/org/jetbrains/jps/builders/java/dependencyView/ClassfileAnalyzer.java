@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,7 +16,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
 final class ClassfileAnalyzer {
-  private final static Logger LOG = Logger.getInstance(ClassfileAnalyzer.class);
+  private static final Logger LOG = Logger.getInstance(ClassfileAnalyzer.class);
   public static final String LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";
   private static final String KOTLIN_LAMBDA_USAGE_CLASS_MARKER = "$sam$";
   private static final int ASM_API_VERSION = Opcodes.API_VERSION;
@@ -27,7 +27,7 @@ final class ClassfileAnalyzer {
     this.myContext = context;
   }
 
-  private class ClassCrawler extends ClassVisitor {
+  private final class ClassCrawler extends ClassVisitor {
     private final class AnnotationRetentionPolicyCrawler extends AnnotationVisitor {
       private AnnotationRetentionPolicyCrawler() {
         super(ASM_API_VERSION);
@@ -147,8 +147,7 @@ final class ClassfileAnalyzer {
         return descriptor.toString();
       }
 
-      @Nullable
-      private String myArrayName;
+      private @Nullable String myArrayName;
 
       @Override
       public void visit(String name, Object value) {
@@ -221,7 +220,7 @@ final class ClassfileAnalyzer {
       }
     }
 
-    private class ModuleCrawler extends ModuleVisitor {
+    private final class ModuleCrawler extends ModuleVisitor {
       ModuleCrawler() {
         super(ASM_API_VERSION);
       }

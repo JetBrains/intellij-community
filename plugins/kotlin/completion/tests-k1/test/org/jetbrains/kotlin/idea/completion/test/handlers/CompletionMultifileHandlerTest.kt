@@ -47,6 +47,8 @@ open class CompletionMultiFileHandlerTest22 : KotlinFixtureCompletionBaseTestCas
     fun testNotImportedExtension() = doTest()
     fun testNotImportedTypeAlias() = doTest()
     fun testKT12077() = doTest()
+    fun testPackageDirective() = if (isFirPlugin) doTest() else Unit
+    fun testPackageInImportDirective() = if (isFirPlugin) doTest() else Unit
 
     protected fun getTestFileName(): String = "${getTestName(false)}-1.kt"
 

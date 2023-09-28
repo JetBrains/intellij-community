@@ -125,7 +125,7 @@ internal class GitCompareBranchesUi(internal val project: Project,
     val rangeFilter: VcsLogRangeFilter
       get() = myBranchFilterModel.rangeFilter!!
 
-    override fun createBranchComponent(): FilterActionComponent? = null
+    override fun createBranchComponent() = null
 
     override fun setCustomEmptyText(text: StatusText) {
       if (filters.filters.any { it !is VcsLogRangeFilter && it !is VcsLogRootFilter }) {

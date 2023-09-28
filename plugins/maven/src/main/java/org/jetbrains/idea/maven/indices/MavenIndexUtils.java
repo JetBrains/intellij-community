@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.idea.maven.model.IndexKind;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -50,7 +51,7 @@ public final class MavenIndexUtils {
       throw new MavenIndexException("Incompatible index version, needs to be updated: " + dir);
     }
 
-    MavenSearchIndex.Kind kind = MavenSearchIndex.Kind.valueOf(props.getProperty(KIND_KEY));
+    IndexKind kind = IndexKind.valueOf(props.getProperty(KIND_KEY));
 
     Set<String> repositoryIds = Collections.emptySet();
     String myRepositoryIdsStr = props.getProperty(ID_KEY);
@@ -58,7 +59,7 @@ public final class MavenIndexUtils {
       repositoryIds = Set.copyOf(split(myRepositoryIdsStr, ","));
     }
     String repositoryPathOrUrl = normalizePathOrUrl(props.getProperty(PATH_OR_URL_KEY));
-    if (kind != MavenSearchIndex.Kind.LOCAL) {
+    if (kind != IndexKind.LOCAL) {
       repositoryPathOrUrl = repositoryPathOrUrl.toLowerCase(Locale.ROOT);
     }
     long updateTimestamp = -1L;
@@ -136,7 +137,7 @@ public final class MavenIndexUtils {
 
   static class IndexPropertyHolder {
     final File dir;
-    final MavenSearchIndex.Kind kind;
+    final IndexKind kind;
     final Set<String> repositoryIds;
     final String repositoryPathOrUrl;
     final long updateTimestamp;
@@ -144,7 +145,7 @@ public final class MavenIndexUtils {
     final String failureMessage;
 
     IndexPropertyHolder(File dir,
-                        MavenSearchIndex.Kind kind,
+                        IndexKind kind,
                         Set<String> repositoryIds,
                         String url,
                         long timestamp,
@@ -160,7 +161,7 @@ public final class MavenIndexUtils {
     }
 
     IndexPropertyHolder(File dir,
-                        MavenSearchIndex.Kind kind,
+                        IndexKind kind,
                         Set<String> repositoryIds,
                         String url) {
       this(dir, kind, repositoryIds, url, -1, null, null);

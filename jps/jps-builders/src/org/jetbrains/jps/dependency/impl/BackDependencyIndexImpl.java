@@ -29,8 +29,7 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
   }
 
   @Override
-  @NotNull
-  public Iterable<ReferenceID> getDependencies(@NotNull ReferenceID id) {
+  public @NotNull Iterable<ReferenceID> getDependencies(@NotNull ReferenceID id) {
     Iterable<ReferenceID> nodes = myMap.get(id);
     return nodes != null? nodes : Collections.emptyList();
   }

@@ -36,7 +36,7 @@ public abstract class CopyPasteManagerWithHistory implements ClientCopyPasteMana
   private static final Logger LOG = Logger.getInstance(CopyPasteManagerWithHistory.class);
 
   private final EventDispatcher<ContentChangedListener> myDispatcher = EventDispatcher.create(ContentChangedListener.class);
-  private final LinkedListWithSum<Transferable> myData = new LinkedListWithSum<>(CopyPasteManagerWithHistory::getSize);
+  protected final LinkedListWithSum<Transferable> myData = new LinkedListWithSum<>(CopyPasteManagerWithHistory::getSize);
   private boolean myOwnContent;
 
   @Override
@@ -251,7 +251,7 @@ public abstract class CopyPasteManagerWithHistory implements ClientCopyPasteMana
     return new StringSelection(UIBundle.message("clipboard.history.purged.item"));
   }
 
-  private void fireContentChanged(@Nullable Transferable oldContent, @Nullable Transferable newContent) {
+  protected void fireContentChanged(@Nullable Transferable oldContent, @Nullable Transferable newContent) {
     myDispatcher.getMulticaster().contentChanged(oldContent, newContent);
   }
 

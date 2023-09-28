@@ -25,7 +25,6 @@ abstract class AbstractMultiFileSmartCompletionTest : KotlinCompletionTestCase()
                 },
                 defaultCompletionType = CompletionType.SMART,
                 defaultInvocationCount = 1,
-                isK2Plugin = false
             )
         }
     }

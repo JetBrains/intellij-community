@@ -3735,19 +3735,6 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKClassDerivedClassesCircular extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("JKClassDerivedClassesCircular.0.java")
-                public void testJKClassDerivedClassesCircular() throws Exception {
-                    runTest("../../idea/tests/testData/findUsages/java/findJavaClassUsages/JKClassDerivedClassesCircular.0.java");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKClassDerivedInnerClasses extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);

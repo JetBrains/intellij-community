@@ -12,7 +12,7 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
+import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.idea.StartupErrorReporter;
 import com.intellij.openapi.application.migrations.BigDataTools232;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -73,8 +73,8 @@ import java.util.zip.ZipFile;
 
 import static com.intellij.ide.SpecialConfigFiles.*;
 import static com.intellij.ide.plugins.BundledPluginsStateKt.BUNDLED_PLUGINS_FILENAME;
-import static com.intellij.idea.SplashManagerKt.hideSplash;
 import static com.intellij.openapi.application.ImportOldConfigsState.InitialImportScenario.*;
+import static com.intellij.platform.ide.bootstrap.SplashManagerKt.hideSplash;
 
 @ApiStatus.Internal
 public final class ConfigImportHelper {
@@ -358,13 +358,8 @@ public final class ConfigImportHelper {
       return null;
     }
 
-    try {
-      //noinspection TestOnlyProblems
-      UIManager.setLookAndFeel(new DarculaLaf());
-    }
-    catch (UnsupportedLookAndFeelException e) {
-      return null;
-    }
+    //noinspection TestOnlyProblems
+    LookAndFeelThemeAdapterKt.setEarlyUiLaF();
 
     ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, ConfigImportHelper::findConfigDirectoryByPath);
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);

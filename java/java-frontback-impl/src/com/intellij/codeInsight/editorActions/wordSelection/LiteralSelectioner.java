@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.intellij.psi.impl.source.BasicElementTypes.STRING_LITERALS;
+import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_STRING_LITERALS;
 import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_LITERAL_EXPRESSION;
 
 public class LiteralSelectioner extends AbstractBasicBackBasicSelectioner {
@@ -27,7 +27,7 @@ public class LiteralSelectioner extends AbstractBasicBackBasicSelectioner {
   }
 
   private static boolean isStringLiteral(PsiElement element) {
-    return BasicJavaAstTreeUtil.is(BasicJavaAstTreeUtil.toNode(element), STRING_LITERALS)
+    return BasicJavaAstTreeUtil.is(BasicJavaAstTreeUtil.toNode(element), BASIC_STRING_LITERALS)
            && element.getText().startsWith("\"")
            && element.getText().endsWith("\"");
   }

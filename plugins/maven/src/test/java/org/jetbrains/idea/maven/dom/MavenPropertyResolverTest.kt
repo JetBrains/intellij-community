@@ -20,14 +20,15 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import kotlinx.coroutines.runBlocking
 import org.junit.Assume
 import org.junit.Test
 import java.io.File
 
 class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   @Test
-  fun testResolvingProjectAttributes() {
-    importProject("""
+  fun testResolvingProjectAttributes() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -38,7 +39,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testResolvingProjectParentAttributes() {
+  fun testResolvingProjectParentAttributes() = runBlocking {
     val modulePom = createModulePom("test",
                                     """
                           <groupId>test</groupId>
@@ -50,7 +51,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                             <version>parent.1</version>
                           </parent>
                           """.trimIndent())
-    importProject("""
+    importProjectAsync("""
                       <groupId>parent.test</groupId>
                       <artifactId>parent.project</artifactId>
                       <version>parent.1</version>
@@ -65,8 +66,8 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testResolvingAbsentProperties() {
-    importProject("""
+  fun testResolvingAbsentProperties() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -76,8 +77,8 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testResolvingProjectDirectories() {
-    importProject("""
+  fun testResolvingProjectDirectories() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -90,7 +91,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testResolvingProjectAndParentProperties() {
+  fun testResolvingProjectAndParentProperties() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -119,7 +120,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                                       </parent>
                                       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     assertEquals("parent.value", resolve("\${parentProp}", f))
     assertEquals("module.value", resolve("\${moduleProp}", f))
@@ -131,7 +132,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testProjectPropertiesRecursively() {
+  fun testProjectPropertiesRecursively() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -143,7 +144,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                        </properties>
                        """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     assertEquals("value", resolve("\${prop1}", myProjectPom))
     assertEquals("value-2", resolve("\${prop2}", myProjectPom))
@@ -151,7 +152,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoNotGoIntoInfiniteRecursion() {
+  fun testDoNotGoIntoInfiniteRecursion() = runBlocking {
     Assume.assumeTrue(isWorkspaceImport)
     createProjectPom("""
                        <groupId>test</groupId>
@@ -174,8 +175,8 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testSophisticatedPropertyNameDoesNotBreakResolver() {
-    importProject("""
+  fun testSophisticatedPropertyNameDoesNotBreakResolver() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -186,7 +187,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testProjectPropertiesWithProfiles() {
+  fun testProjectPropertiesWithProfiles() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -210,7 +211,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                        </profiles>
                        """.trimIndent())
 
-    importProject()
+    importProjectAsync()
     assertEquals("value1", resolve("\${prop}", myProjectPom))
 
     importProjectWithProfiles("one")
@@ -221,8 +222,8 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testResolvingBasedirProperties() {
-    importProject("""
+  fun testResolvingBasedirProperties() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -234,11 +235,11 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testResolvingSystemProperties() {
+  fun testResolvingSystemProperties() = runBlocking {
     val javaHome = System.getProperty("java.home")
     val tempDir = System.getenv(getEnvVar())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -249,8 +250,8 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testAllProperties() {
-    importProject("""
+  fun testAllProperties() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -261,8 +262,8 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testIncompleteProperties() {
-    importProject("""
+  fun testIncompleteProperties() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -274,8 +275,8 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testUncomittedProperties() {
-    importProject("""
+  fun testUncomittedProperties() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -299,7 +300,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testChainResolvePropertiesForFileWhichIsNotAProjectPom() {
+  fun testChainResolvePropertiesForFileWhichIsNotAProjectPom() = runBlocking {
     val file = createProjectSubFile("../some.pom",
                                     """
                                               <project>
@@ -317,7 +318,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                                               </project>
                                               """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

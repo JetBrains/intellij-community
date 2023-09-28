@@ -1,11 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependencies
 
-import com.intellij.util.io.ResilientFileChannel
 import java.io.IOException
 import java.nio.channels.FileChannel
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
 
 class ProjectIndexingDependenciesStorage(private val storage: FileChannel, storagePath: Path) :
   IndexingDependenciesStorageBase(storage, storagePath, CURRENT_STORAGE_VERSION) {
@@ -14,18 +12,11 @@ class ProjectIndexingDependenciesStorage(private val storage: FileChannel, stora
     private const val CURRENT_STORAGE_VERSION = 0
     private const val DEFAULT_INDEXING_STAMP: Int = 0
     private const val INDEXING_STAMP_OFFSET = FIRST_UNUSED_OFFSET
+    private const val FILE_SIZE = INDEXING_STAMP_OFFSET + Int.SIZE_BYTES
 
     @Throws(IOException::class)
     fun openOrInit(path: Path): ProjectIndexingDependenciesStorage {
-      val channel = ResilientFileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE)
-      val storage = ProjectIndexingDependenciesStorage(channel, path)
-
-      storage.initIfNotInitialized()
-      storage.checkVersion { storageVersion ->
-        throw IOException("Incompatible version change in FileIndexingStampService: $storageVersion > $CURRENT_STORAGE_VERSION")
-      }
-
-      return storage
+      return openOrInit(path, ::ProjectIndexingDependenciesStorage)
     }
   }
 
@@ -34,7 +25,7 @@ class ProjectIndexingDependenciesStorage(private val storage: FileChannel, stora
     synchronized(storage) {
       super.resetStorage()
       writeRequestId(DEFAULT_INDEXING_STAMP)
-      storage.truncate(8)
+      storage.truncate(FILE_SIZE)
       storage.force(false)
     }
   }

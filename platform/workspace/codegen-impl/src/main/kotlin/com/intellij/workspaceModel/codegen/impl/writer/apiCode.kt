@@ -14,17 +14,18 @@ import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
 import com.intellij.workspaceModel.codegen.impl.writer.fields.wsCode
 import com.intellij.workspaceModel.codegen.impl.CodeGeneratorVersionCalculator
 import com.intellij.workspaceModel.codegen.impl.engine.ProblemReporter
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 
 fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
   checkSuperTypes(this@generateBuilderCode, reporter)
   checkSymbolicId(this@generateBuilderCode, reporter)
   line("@${GeneratedCodeApiVersion}(${CodeGeneratorVersionCalculator.apiVersion})")
   val (typeParameter, typeDeclaration) = 
-    if (openness.extendable) "T" to "<T: $javaFullName>" else javaFullName to ""
+    if (builderWithTypeParameter) "T" to "<T: $javaFullName>" else javaFullName to ""
   val superBuilders = superTypes.filterIsInstance<ObjClass<*>>().filter { !it.isStandardInterface }.joinToString { 
     ", ${it.name}.Builder<$typeParameter>"
   }
-  val header = "interface Builder$typeDeclaration: $javaFullName$superBuilders, ${WorkspaceEntity.Builder}<$typeParameter>"
+  val header = "$generatedCodeVisibilityModifier interface Builder$typeDeclaration: $javaFullName$superBuilders, ${WorkspaceEntity.Builder}<$typeParameter>"
 
   section(header) {
     list(allFields.noSymbolicId()) {
@@ -64,7 +65,7 @@ private fun checkProperty(objProperty: ObjProperty<*, *>, reporter: ProblemRepor
 }
 
 fun checkInheritance(objProperty: ObjProperty<*, *>, reporter: ProblemReporter) {
-  objProperty.receiver.allSuperClasses.mapNotNull { it.fieldsByName[objProperty.name] }.forEach { overriddenField -> 
+  objProperty.receiver.allSuperClasses.mapNotNull { it.fieldsByName[objProperty.name] }.forEach { overriddenField ->
     if (!overriddenField.open) {
       reporter.reportProblem(
         GenerationProblem("Property '${overriddenField.receiver.name}::${overriddenField.name}' cannot be overridden",
@@ -108,8 +109,8 @@ private fun checkType(type: ValueType<*>): String? = when (type) {
     checkType(type.keyType) ?: checkType(type.valueType)
   }
   is ValueType.Blob<*> -> {
-    if (!keepUnknownFields && type.javaClassName !in knownInterfaces) {
-      "Unsupported type '${type.javaClassName}'"
+    if (!keepUnknownFields && type.kotlinClassName !in knownInterfaces) {
+      "Unsupported type '${type.kotlinClassName}'"
     }
     else null
   }
@@ -124,7 +125,7 @@ private val knownInterfaces = setOf(VirtualFileUrl.decoded, EntitySource.decoded
 fun ObjClass<*>.generateCompanionObject(): String = lines {
   val builderGeneric = if (openness.extendable) "<$javaFullName>" else ""
   val companionObjectHeader = buildString {
-    append("companion object: ${EntityType}<$javaFullName, Builder$builderGeneric>(")
+    append("$generatedCodeVisibilityModifier companion object: ${EntityType}<$javaFullName, Builder$builderGeneric>(")
     val base = superTypes.filterIsInstance<ObjClass<*>>().firstOrNull()
     if (base != null && base.name !in SKIPPED_TYPES)
       append(base.javaFullName)
@@ -137,7 +138,7 @@ fun ObjClass<*>.generateCompanionObject(): String = lines {
       line("@${JvmOverloads::class.fqn}")
       line("@${JvmStatic::class.fqn}")
       line("@${JvmName::class.fqn}(\"create\")")
-      section("operator fun invoke($fields, init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
+      section("$generatedCodeVisibilityModifier operator fun invoke($fields, init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
         line("val builder = builder()")
         list(mandatoryFields) {
           if (this.valueType is ValueType.Set<*> && !this.valueType.isRefType()) {
@@ -158,7 +159,7 @@ fun ObjClass<*>.generateCompanionObject(): String = lines {
       line("@${JvmOverloads::class.fqn}")
       line("@${JvmStatic::class.fqn}")
       line("@${JvmName::class.fqn}(\"create\")")
-      section("operator fun invoke(init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
+      section("$generatedCodeVisibilityModifier operator fun invoke(init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
         line("val builder = builder()")
         line("init?.invoke(builder)")
         line("return builder")
@@ -176,12 +177,12 @@ fun List<OwnProperty<*, *>>.mandatoryFields(): List<ObjProperty<*, *>> {
 }
 
 fun ObjClass<*>.generateExtensionCode(): String? {
-  val fields = module.extensions.filter { it.receiver == this || it.receiver.module != module && it.valueType.isRefType() && it.valueType.getRefType().target == this }
+  val fields = allExtensions
   if (openness.extendable && fields.isEmpty()) return null
 
   return lines {
     if (!openness.extendable) {
-      line("fun ${MutableEntityStorage}.modifyEntity(entity: $name, modification: $name.Builder.() -> Unit) = modifyEntity($name.Builder::class.java, entity, modification)")
+      line("$generatedCodeVisibilityModifier fun ${MutableEntityStorage}.modifyEntity(entity: $name, modification: $name.Builder.() -> Unit): $name = modifyEntity($name.Builder::class.java, entity, modification)")
     }
     fields.sortedWith(compareBy({ it.receiver.name }, { it.name })).forEach { line(it.wsCode) }
   }

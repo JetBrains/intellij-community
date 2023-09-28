@@ -28,7 +28,7 @@ public final class EditRunConfigurationsAction extends DumbAwareAction {
     }
     RunnerAndConfigurationSettings configurationSettings = e.getData(RunToolbarPopupKt.getRUN_CONFIGURATION_KEY());
     if (configurationSettings != null) {
-      new EditConfigurationsDialog(project, new ProjectRunConfigurationConfigurable(project, null) {
+      new EditConfigurationsDialog(project, new ProjectRunConfigurationConfigurable(project) {
         @Override
         protected RunnerAndConfigurationSettings getInitialSelectedConfiguration() {
           return configurationSettings;

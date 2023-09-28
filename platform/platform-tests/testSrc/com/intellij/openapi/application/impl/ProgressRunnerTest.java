@@ -2,7 +2,6 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -14,6 +13,7 @@ import com.intellij.openapi.progress.impl.ProgressRunner;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.ProgressWindowTest.TestProgressWindow;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.platform.ide.bootstrap.StartupUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ExceptionUtil;

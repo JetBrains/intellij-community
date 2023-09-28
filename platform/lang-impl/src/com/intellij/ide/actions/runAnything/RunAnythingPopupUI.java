@@ -54,6 +54,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
@@ -90,6 +91,8 @@ public final class RunAnythingPopupUI extends BigPopupUI {
   @Nullable private final VirtualFile myVirtualFile;
   private JLabel myTextFieldTitle;
   private boolean myIsItemSelected;
+  private volatile boolean myShiftIsPressed;
+  private volatile boolean myAltIsPressed;
   private String myLastInputText = null;
   private final Module myModule;
 
@@ -205,7 +208,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
 
     if (model != null) {
       RunAnythingUsageCollector.Companion.triggerExecCategoryStatistics(myProject, model.getGroups(), model.getClass(), index,
-                                                                        SHIFT_IS_PRESSED.get(), ALT_IS_PRESSED.get());
+                                                                        myShiftIsPressed, myAltIsPressed);
     }
     RunAnythingUtil.executeMatched(getDataContext(), pattern);
 
@@ -290,7 +293,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
 
   @NotNull
   private VirtualFile getWorkDirectory() {
-    if (ALT_IS_PRESSED.get()) {
+    if (myAltIsPressed) {
       if (myVirtualFile != null) {
         VirtualFile file = myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
         if (file != null) {
@@ -343,7 +346,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
   }
 
   private void rebuildList() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     myListRenderingAlarm.cancelAllRequests();
     myResultsList.getEmptyText().setText(FindBundle.message("empty.text.searching"));
@@ -456,7 +459,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     return SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, getProject())
       .add(CommonDataKeys.VIRTUAL_FILE, getWorkDirectory())
-      .add(RunAnythingAction.EXECUTOR_KEY, getExecutor())
+      .add(RunAnythingAction.EXECUTOR_KEY, getCurrentExecutor())
       .add(RunAnythingProvider.EXECUTING_CONTEXT, myChooseContextAction.getSelectedContext())
       .build();
   }
@@ -481,18 +484,22 @@ public final class RunAnythingPopupUI extends BigPopupUI {
 
       private void updateByModifierKeysEvent(@NotNull KeyEvent e) {
         String message;
-        if (e.isShiftDown() && e.isAltDown()) {
+        myShiftIsPressed = e.isShiftDown();
+        myAltIsPressed = e.isAltDown();
+        if (myShiftIsPressed && myAltIsPressed) {
           message = IdeBundle.message("run.anything.run.in.context.debug.title");
         }
-        else if (e.isShiftDown()) {
+        else if (myShiftIsPressed) {
           message = IdeBundle.message("run.anything.run.debug.title");
         }
-        else if (e.isAltDown()) {
+        else if (myAltIsPressed) {
           message = IdeBundle.message("run.anything.run.in.context.title");
         }
         else {
           message = IdeBundle.message("run.anything.run.anything.title");
         }
+        SHIFT_IS_PRESSED.set(myShiftIsPressed);
+        ALT_IS_PRESSED.set(myAltIsPressed);
         myTextFieldTitle.setText(message);
         updateMatchedRunConfigurationStuff();
       }
@@ -577,12 +584,23 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     myHintLabel.addAdvertisement(s, null);
   }
 
+  /**
+   * @deprecated this is an internal method, must not be used outside the class
+   */
+  @SuppressWarnings("DataFlowIssue")
+  @Deprecated
   @NotNull
   public static Executor getExecutor() {
     final Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
     final Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
 
     return !SHIFT_IS_PRESSED.get() ? runExecutor : debugExecutor;
+  }
+  
+  @NotNull
+  private Executor getCurrentExecutor() {
+    Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
+    return myShiftIsPressed && debugExecutor != null ? debugExecutor : DefaultRunExecutor.getRunExecutorInstance();
   }
 
   private final class MyListRenderer extends ColoredListCellRenderer<Object> {

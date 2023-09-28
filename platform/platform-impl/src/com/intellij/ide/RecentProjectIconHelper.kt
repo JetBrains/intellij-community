@@ -83,8 +83,8 @@ internal class RecentProjectIconHelper {
     }
 
     @JvmStatic
-    fun generateProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean, size: Int = unscaledProjectIconSize()): Icon {
-      val generatedProjectIcon = generateProjectIcon(path, isProjectValid, size, null)
+    fun generateProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean, size: Int = unscaledProjectIconSize(), projectName: String? = null): Icon {
+      val generatedProjectIcon = generateProjectIcon(path, isProjectValid, size, null, projectName)
 
       projectIconCache.put(Pair(path, size), ProjectIcon(icon = generatedProjectIcon,
                                              isProjectValid = isProjectValid,
@@ -93,8 +93,8 @@ internal class RecentProjectIconHelper {
       return generatedProjectIcon
     }
 
-    fun generateProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean, size: Int = unscaledProjectIconSize(), colorIndex: Int?): Icon {
-      val name = getProjectName(path, RecentProjectsManagerBase.getInstanceEx())
+    fun generateProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean, size: Int = unscaledProjectIconSize(), colorIndex: Int?, projectName: String? = null): Icon {
+      val name = projectName ?: getProjectName(path, RecentProjectsManagerBase.getInstanceEx())
       val palette = if (colorIndex != null) ChangeProjectIconPalette(colorIndex) else ProjectIconPalette
 
       var generatedProjectIcon: Icon = AvatarIcon(targetSize = size,
@@ -122,13 +122,13 @@ internal class RecentProjectIconHelper {
     }
   }
 
-  fun getProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean = true, iconSize: Int = unscaledProjectIconSize()): Icon {
+  fun getProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean = true, iconSize: Int = unscaledProjectIconSize(), name: String? = null): Icon {
     if (!RecentProjectsManagerBase.isFileSystemPath(path)) {
       return EmptyIcon.create(iconSize)
     }
 
     return IconDeferrer.getInstance().defer(EmptyIcon.create(iconSize), Triple(path, isProjectValid, iconSize)) {
-      getCustomIcon(path = it.first, isProjectValid = it.second, iconSize) ?: getGeneratedProjectIcon(path = it.first, isProjectValid = it.second, iconSize)
+      getCustomIcon(path = it.first, isProjectValid = it.second, iconSize) ?: getGeneratedProjectIcon(path = it.first, isProjectValid = it.second, iconSize, name)
     }
   }
 
@@ -173,17 +173,21 @@ private fun getCustomIcon(path: @SystemIndependent String, isProjectValid: Boole
   return iconWrapper.icon
 }
 
-private fun getGeneratedProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean, size: Int = unscaledProjectIconSize()): Icon {
+private fun getGeneratedProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean, size: Int = unscaledProjectIconSize(), name: String? = null): Icon {
   val projectIcon = projectIconCache.get(Pair(path, size))
-  if (projectIcon != null && isCachedIcon(projectIcon, isProjectValid)) {
+  if (projectIcon != null && isCachedIcon(projectIcon, isProjectValid, name = name)) {
     return projectIcon.icon
   }
-  return RecentProjectIconHelper.generateProjectIcon(path, isProjectValid, size)
+  return RecentProjectIconHelper.generateProjectIcon(path, isProjectValid, size, projectName = name)
 }
 
-private fun isCachedIcon(icon: ProjectIcon, isProjectValid: Boolean, timestamp: Long? = null): Boolean {
-  val isCached = icon.isProjectValid == isProjectValid && icon.lastUsedProjectIconSize == userScaledProjectIconSize()
-  return if (timestamp == null) isCached else isCached && icon.timestamp == timestamp
+private fun isCachedIcon(icon: ProjectIcon, isProjectValid: Boolean, timestamp: Long? = null, name: String? = null): Boolean {
+  val isNameChanged = (icon.icon as? AvatarIcon)?.avatarName?.let { it != name } ?: false
+  val isTimestampChanged = timestamp?.let { icon.timestamp != it } ?: false
+
+  return icon.isProjectValid == isProjectValid
+         && icon.lastUsedProjectIconSize == userScaledProjectIconSize()
+         && !isNameChanged && !isTimestampChanged
 }
 
 private data class ProjectIcon(
@@ -259,7 +263,7 @@ private sealed class IconData(val iconSize: Int = unscaledProjectIconSize()) {
 private class SvgIconData(private val file: Path, iconSize: Int = unscaledProjectIconSize()) : IconData(iconSize) {
   override fun getScaledIcon(sysScale: Float, pixScale: Float): Icon {
     val userSize = JBUIScale.scale(iconSize)
-    return JBImageIcon(loadWithSizes(sizes = listOf(userSize), data = Files.readAllBytes(file), scale = pixScale).first())
+    return JBImageIcon(loadWithSizes(sizes = listOf(userSize), data = Files.readAllBytes(file), scale = sysScale).first())
   }
 
   override fun toString() = "SvgIconData(file=$file, iconSize=$iconSize)"

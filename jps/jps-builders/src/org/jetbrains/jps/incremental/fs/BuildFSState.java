@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.fs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -199,8 +199,7 @@ public final class BuildFSState {
     return Collections.emptyList();
   }
 
-  @NotNull
-  private FilesDelta getDelta(BuildTarget<?> buildTarget) {
+  private @NotNull FilesDelta getDelta(BuildTarget<?> buildTarget) {
     synchronized (myDeltas) {
       FilesDelta delta = myDeltas.get(buildTarget);
       if (delta == null) {
@@ -216,8 +215,7 @@ public final class BuildFSState {
     return !myAlwaysScanFS && myInitialScanPerformed.contains(target);
   }
 
-  @NotNull
-  public FilesDelta getEffectiveFilesDelta(@NotNull CompileContext context, BuildTarget<?> target) {
+  public @NotNull FilesDelta getEffectiveFilesDelta(@NotNull CompileContext context, BuildTarget<?> target) {
     if (target instanceof ModuleBuildTarget) {
       // multiple compilation rounds are applicable to ModuleBuildTarget only
       final FilesDelta lastRoundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
@@ -438,8 +436,7 @@ public final class BuildFSState {
     }
   }
 
-  @Nullable
-  private static FilesDelta getRoundDelta(@NotNull Key<FilesDelta> key, @Nullable CompileContext context) {
+  private static @Nullable FilesDelta getRoundDelta(@NotNull Key<FilesDelta> key, @Nullable CompileContext context) {
     return context != null? key.get(context) : null;
   }
 

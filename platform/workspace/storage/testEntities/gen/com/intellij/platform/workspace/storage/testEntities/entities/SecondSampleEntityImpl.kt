@@ -13,10 +13,10 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.util.UUID
 import kotlin.jvm.JvmName
@@ -24,13 +24,13 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : SecondSampleEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class SecondSampleEntityImpl(private val dataSource: SecondSampleEntityData) : SecondSampleEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -43,6 +43,7 @@ open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : Seco
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: SecondSampleEntityData?) : ModifiableWorkspaceEntityBase<SecondSampleEntity, SecondSampleEntityData>(
     result), SecondSampleEntity.Builder {
@@ -72,7 +73,7 @@ open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : Seco
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -134,6 +135,11 @@ class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {
     }
   }
 
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.SecondSampleEntity") as EntityMetadata
+  }
+
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return SecondSampleEntity::class.java
   }
@@ -185,9 +191,5 @@ class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {
     var result = javaClass.hashCode()
     result = 31 * result + intProperty.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

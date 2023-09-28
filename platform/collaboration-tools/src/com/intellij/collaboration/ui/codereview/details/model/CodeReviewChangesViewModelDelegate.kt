@@ -2,7 +2,7 @@
 package com.intellij.collaboration.ui.codereview.details.model
 
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.util.REVISION_COMPARISON_CHANGE_HASHING_STRATEGY
+import com.intellij.collaboration.util.CODE_REVIEW_CHANGE_HASHING_STRATEGY
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.containers.CollectionFactory
@@ -149,7 +149,7 @@ class CodeReviewChangesContainer(val summaryChanges: List<Change>,
                                  val changesByCommits: Map<String, List<Change>>) {
   val commitsByChange: Map<Change, String> = CollectionFactory
     .createCustomHashingStrategyMap<Change, String>(changesByCommits.entries.fold(0) { acc, (_, changes) -> acc + changes.size },
-                                                    REVISION_COMPARISON_CHANGE_HASHING_STRATEGY).apply {
+                                                    CODE_REVIEW_CHANGE_HASHING_STRATEGY).apply {
       changesByCommits.entries.forEach { (commit, changes) ->
         changes.forEach {
           put(it, commit)

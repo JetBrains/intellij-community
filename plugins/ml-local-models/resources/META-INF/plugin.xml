@@ -2,7 +2,7 @@
   <id>com.intellij.ml.local.models</id>
   <name>Machine Learning Local Models</name>
   <vendor>JetBrains</vendor>
-  <category>Other Tools</category>
+  <category>AI-Powered</category>
 
   <description><![CDATA[
       <p>The plugin contains logic for training local models based on machine learning.

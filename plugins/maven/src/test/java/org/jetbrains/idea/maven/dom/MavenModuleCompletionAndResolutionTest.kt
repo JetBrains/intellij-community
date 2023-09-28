@@ -18,11 +18,12 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.psi.PsiDocumentManager
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   @Test
-  fun testCompleteFromAllAvailableModules() {
+  fun testCompleteFromAllAvailableModules() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -59,7 +60,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                       <version>1</version>
                       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
     assertModules("project", "m1", "m2", "m3")
 
     createProjectPom("""
@@ -91,14 +92,14 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDoesNotCompeteIfThereIsNoModules() {
+  fun testDoesNotCompeteIfThereIsNoModules() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -114,14 +115,14 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testIncludesAllThePomsAvailable() {
+  fun testIncludesAllThePomsAvailable() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createModulePom("subDir1",
                     """
@@ -151,7 +152,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testResolution() {
+  fun testResolution() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -177,7 +178,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                        <version>1</version>
                                        """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -219,7 +220,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testResolutionWithSlashes() {
+  fun testResolutionWithSlashes() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -237,7 +238,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                       <version>1</version>
                                       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -265,7 +266,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testResolutionWithProperties() {
+  fun testResolutionWithProperties() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -286,7 +287,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                       <version>1</version>
                                       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -320,14 +321,14 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreatePomQuickFix() {
+  fun testCreatePomQuickFix() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -363,14 +364,14 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreatePomQuickFixCustomPomFileName() {
+  fun testCreatePomQuickFixCustomPomFileName() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -406,14 +407,14 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreatePomQuickFixInDotXmlFolder() {
+  fun testCreatePomQuickFixInDotXmlFolder() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -450,14 +451,14 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreatePomQuickFixTakesGroupAndVersionFromSuperParent() {
+  fun testCreatePomQuickFixTakesGroupAndVersionFromSuperParent() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <artifactId>project</artifactId>
@@ -496,14 +497,14 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreatePomQuickFixWithProperties() {
+  fun testCreatePomQuickFixWithProperties() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -527,14 +528,14 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreatePomQuickFixTakesDefaultGroupAndVersionIfNothingToOffer() {
+  fun testCreatePomQuickFixTakesDefaultGroupAndVersionIfNothingToOffer() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <artifactId>project</artifactId>
@@ -567,14 +568,14 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreateModuleWithParentQuickFix() {
+  fun testCreateModuleWithParentQuickFix() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -615,14 +616,14 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreateModuleWithParentQuickFix2() {
+  fun testCreateModuleWithParentQuickFix2() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -664,7 +665,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreateModuleWithParentQuickFix3() {
+  fun testCreateModuleWithParentQuickFix3() = runBlocking {
     val parentPom = createModulePom("parent",
                                     """
                                               <groupId>test</groupId>
@@ -673,7 +674,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                               <packaging>pom</packaging>
                                               """.trimIndent())
 
-    importProject(parentPom)
+    importProjectAsync(parentPom)
 
     myFixture.saveText(parentPom, createPomXml(
       """
@@ -716,14 +717,14 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDoesNotShowCreatePomQuickFixForEmptyModuleTag() {
+  fun testDoesNotShowCreatePomQuickFixForEmptyModuleTag() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -739,7 +740,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDoesNotShowCreatePomQuickFixExistingModule() {
+  fun testDoesNotShowCreatePomQuickFixExistingModule() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -756,7 +757,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                       <artifactId>module</artifactId>
                       <version>1</version>
                       """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectPom("""
                        <groupId>test</groupId>

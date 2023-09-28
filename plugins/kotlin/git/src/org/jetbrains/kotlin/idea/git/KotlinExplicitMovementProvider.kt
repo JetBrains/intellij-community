@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.git
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.IssueNavigationConfiguration
 import git4idea.checkin.GitCheckinExplicitMovementProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.pathBeforeJavaToKotlinConversion
 
@@ -18,17 +17,8 @@ class KotlinExplicitMovementProvider : GitCheckinExplicitMovementProvider() {
         return KotlinGitBundle.message("j2k.extra.commit.description")
     }
 
-    override fun getCommitMessage(project: Project, oldCommitMessage: String): String {
-        val header = KotlinGitBundle.message("j2k.extra.commit.commit.message")
-        val matches = IssueNavigationConfiguration.getInstance(project).findIssueLinks(oldCommitMessage)
-        if (matches.isEmpty()) return header
-        val body = buildString {
-            for (match in matches) {
-                val issueId = oldCommitMessage.substring(match.range.startOffset, match.range.endOffset)
-                appendLine(issueId)
-            }
-        }
-        return header + "\n\n" + body
+    override fun getCommitMessage(oldCommitMessage: String): String {
+        return KotlinGitBundle.message("j2k.extra.commit.commit.message")
     }
 
     override fun collectExplicitMovements(

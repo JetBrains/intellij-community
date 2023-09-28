@@ -9,8 +9,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer
 import java.awt.BorderLayout
 import java.awt.Color
-import java.time.LocalDateTime
-import java.time.ZonedDateTime
 import javax.swing.*
 
 private val TEXT_BORDER = JBUIScale.scale(5)
@@ -20,15 +18,7 @@ enum class ProgressStatus {
   RUNNING, STOPPED_OK, STOPPED_ERROR
 }
 
-/**
- * @param previousStatusDateTime - date time, when previous status was set
- * @param statusStartDateTime - date time, when status was set
- */
-data class StatusDateTimeStamp(val previousStatusDateTime: ZonedDateTime? = null, val statusStartDateTime: ZonedDateTime)
-
-data class InlayProgressStatus(val progress: ProgressStatus,
-                               @Nls val statusText: String = "",
-                               val statusDateTimeStamp: StatusDateTimeStamp? = null)
+data class InlayProgressStatus(val progress: ProgressStatus, @Nls val statusText: String = "")
 
 fun buildProgressStatusComponent(progressStatus: InlayProgressStatus, editor: Editor): JComponent? {
   if (progressStatus.progress == ProgressStatus.STOPPED_OK && progressStatus.statusText.isEmpty()) return null

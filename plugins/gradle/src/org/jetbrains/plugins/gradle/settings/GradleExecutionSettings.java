@@ -14,8 +14,6 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   private static final boolean USE_VERBOSE_GRADLE_API_BY_DEFAULT = Boolean.parseBoolean(System.getProperty("gradle.api.verbose"));
 
-  private static final long serialVersionUID = 1L;
-
   @NotNull private final GradleExecutionWorkspace myExecutionWorkspace = new GradleExecutionWorkspace();
 
   @Nullable private final String myGradleHome;
@@ -33,6 +31,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   private boolean useQualifiedModuleNames = false;
   private boolean delegatedBuild = true;
   private boolean downloadSources = false;
+  private boolean isParallelModelFetch = false;
 
   private boolean myBuiltInTestEventsUsed = false;
 
@@ -170,6 +169,14 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   public void setDownloadSources(boolean downloadSources) {
     this.downloadSources = downloadSources;
+  }
+
+  public boolean isParallelModelFetch() {
+    return isParallelModelFetch;
+  }
+
+  public void setParallelModelFetch(boolean parallelModelFetch) {
+    isParallelModelFetch = parallelModelFetch;
   }
 
   @Override

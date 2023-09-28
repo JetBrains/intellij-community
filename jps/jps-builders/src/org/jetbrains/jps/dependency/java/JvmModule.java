@@ -7,7 +7,7 @@ import org.jetbrains.jps.dependency.diff.Difference;
 
 import java.util.Collections;
 
-public class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
+public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
 
   private final String myVersion;
   private final Iterable<ModuleRequires> myRequires;
@@ -37,7 +37,7 @@ public class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
     return new Diff(past);
   }
 
-  public class Diff extends Proto.Diff<JvmModule> {
+  public final class Diff extends Proto.Diff<JvmModule> {
 
     public Diff(JvmModule past) {
       super(past);

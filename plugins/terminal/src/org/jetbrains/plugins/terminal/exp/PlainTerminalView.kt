@@ -11,7 +11,6 @@ import com.jediterm.terminal.TtyConnector
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
 /**
@@ -44,7 +43,7 @@ class PlainTerminalView(
   }
 
   override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
-    session.controller.resize(initialTermSize, RequestOrigin.User, CompletableFuture.completedFuture(Unit))
+    session.controller.resize(initialTermSize, RequestOrigin.User)
     session.start(ttyConnector)
   }
 

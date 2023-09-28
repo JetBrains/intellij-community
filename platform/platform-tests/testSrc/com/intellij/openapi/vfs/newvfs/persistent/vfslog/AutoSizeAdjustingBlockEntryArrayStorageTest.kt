@@ -108,10 +108,8 @@ class AutoSizeAdjustingBlockEntryArrayStorageTest {
   private fun <E> AutoSizeAdjustingBlockEntryArrayStorage<E>.persistState(statePath: Path,
                                                                           state: AutoSizeAdjustingBlockEntryArrayStorage<E>.State) {
     val updateFile = statePath.resolveSibling(statePath.name + ".upd")
-    with(stateExternalizer) {
-      ResilientFileChannel(updateFile, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE)).use {
-        it.asStorageIO().serialize(state)
-      }
+    ResilientFileChannel(updateFile, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE)).use {
+      stateExternalizer.serialize(it.asStorageIO(), state)
     }
     updateFile.moveTo(statePath, overwrite = true)
   }
@@ -119,7 +117,7 @@ class AutoSizeAdjustingBlockEntryArrayStorageTest {
   private fun <E> AutoSizeAdjustingBlockEntryArrayStorage<E>.loadState(statePath: Path): AutoSizeAdjustingBlockEntryArrayStorage<E>.State {
     return with(stateExternalizer) {
       ResilientFileChannel(statePath, EnumSet.of(StandardOpenOption.READ)).use {
-        it.asStorageIO().deserialize()
+        deserialize(it.asStorageIO())
       }
     }
   }
@@ -128,43 +126,43 @@ class AutoSizeAdjustingBlockEntryArrayStorageTest {
     object PairExternalizer : ConstSizeEntryExternalizer<Pair<Int, Int>> {
       override val entrySize: Long = 8
 
-      override fun RandomAccessReadBuffer.deserialize(): Pair<Int, Int> {
+      override fun deserialize(readBuffer: RandomAccessReadBuffer): Pair<Int, Int> {
         val buf = ByteArray(8)
-        read(0, buf)
+        readBuffer.read(0, buf)
         return ByteBuffer.wrap(buf).run { getInt() to getInt() }
       }
 
-      override fun RandomAccessWriteBuffer.serialize(entry: Pair<Int, Int>) {
+      override fun serialize(writeBuffer: RandomAccessWriteBuffer, entry: Pair<Int, Int>) {
         val buf = ByteArray(8)
-        ByteBuffer.wrap(buf).run { putInt(entry.first); putInt(entry.second) }
-        write(0, buf)
+        ByteBuffer.wrap(buf).run { this.putInt(entry.first); this.putInt(entry.second) }
+        writeBuffer.write(0, buf)
       }
     }
 
     object StringExternalizer : EntryArrayStorage.EntryExternalizer<String> {
       override fun getEntrySize(entry: String): Long = 4L + entry.encodeToByteArray().size
 
-      override fun RandomAccessReadBuffer.getEntrySize(): Long {
+      override fun getEntrySize(readBuffer: RandomAccessReadBuffer): Long {
         val buf = ByteArray(4)
-        read(0, buf)
+        readBuffer.read(0, buf)
         return ByteBuffer.wrap(buf).run { 4L + getInt() }
       }
 
-      override fun RandomAccessReadBuffer.deserialize(): String {
+      override fun deserialize(readBuffer: RandomAccessReadBuffer): String {
         val buf = ByteArray(4)
-        read(0, buf)
+        readBuffer.read(0, buf)
         val size = ByteBuffer.wrap(buf).getInt()
         val data = ByteArray(size)
-        read(4, data)
+        readBuffer.read(4, data)
         return data.decodeToString()
       }
 
-      override fun RandomAccessWriteBuffer.serialize(entry: String) {
+      override fun serialize(writeBuffer: RandomAccessWriteBuffer, entry: String) {
         val data = entry.encodeToByteArray()
         val buf = ByteArray(4)
         ByteBuffer.wrap(buf).putInt(data.size)
-        write(0, buf)
-        write(4, data)
+        writeBuffer.write(0, buf)
+        writeBuffer.write(4, data)
       }
     }
   }

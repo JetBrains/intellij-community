@@ -105,6 +105,11 @@ class JavaSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase() 
     myFixture.testHighlighting("IfStatement.java")
   }
 
+  fun `test if statements with constants`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("IfStatementConstant.java")
+  }
+
   fun `test lambdaWithForEachLoop`() {
     prepareCheckFramework()
     myFixture.testHighlighting("LambdaWithForEachLoop.java")
@@ -166,5 +171,13 @@ class JavaSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase() 
     inspection.setUntaintedMethod("java.lang.String", "trim")
 
     myFixture.testHighlighting("FromMethod.java")
+  }
+
+  fun `test custom inheritance`() {
+    prepareCheckFramework()
+    inspection.setTaintedMethod("com.test.Random", "nextInt")
+    inspection.setUntaintedMethod("com.test.SecureRandom", "nextInt")
+
+    myFixture.testHighlighting("SecureCustomInheritance.java")
   }
 }

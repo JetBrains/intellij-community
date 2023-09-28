@@ -2,7 +2,6 @@
 package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.ide.IdeCoreBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
@@ -28,6 +27,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -418,7 +418,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
   @RequiresEdt
   private void initAddOption() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myAdd == null) {
       myAdd = getAddedFilesPlaceOption();
     }

@@ -796,8 +796,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("copyPaste/moveDeclarations", pattern = KT_WITHOUT_DOTS, testMethodName = "doTest")
         }
 
-        testClass<AbstractHighlightExitPointsTest> {
+        testClass<AbstractCustomHighlightUsageHandlerTest>("HighlightExitPointsTestGenerated") {
             model("exitPoints")
+        }
+
+        testClass<AbstractKotlinReceiverUsageHighlightingTest>("KotlinReceiverUsageHighlightingTestGenerated") {
+            model("receiverUsageHighlighting")
         }
 
         testClass<AbstractLineMarkersTest> {
@@ -1210,6 +1214,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractK1JvmBasicCompletionTest>("org.jetbrains.kotlin.idea.completion.test.K1KDocCompletionTestGenerated") {
             model("kdoc", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
+        }
+
+        testClass<AbstractK1MLPerformanceCompletionTest> {
+            model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractJava8BasicCompletionTest> {

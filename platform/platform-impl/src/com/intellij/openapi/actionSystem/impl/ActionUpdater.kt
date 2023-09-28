@@ -1,12 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ActionUpdaterKt")
+@file:OptIn(IntellijInternalApi::class)
 
 package com.intellij.openapi.actionSystem.impl
 
-import com.intellij.codeWithMe.ClientId.Companion.current
-import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.ThreadDumpService
 import com.intellij.ide.IdeEventQueue
@@ -18,113 +16,55 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.ALWAYS_VISIBLE
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.SUPPRESS_SUBMENU
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.client.ClientSessionsManager.Companion.getAppSession
-import com.intellij.openapi.client.ClientSessionsManager.Companion.getProjectSession
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.*
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.checkCancelled
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.DumbService.Companion.getInstance
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
 import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
 import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
-import com.intellij.util.containers.*
+import com.intellij.util.application
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.FList
 import com.intellij.util.ui.EDT
+import com.intellij.util.use
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
+import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.CancellablePromise
+import kotlinx.coroutines.flow.*
 import java.awt.AWTEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import java.lang.Runnable
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.swing.JComponent
-import kotlin.time.Duration.Companion.minutes
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 private val LOG = logger<ActionUpdater>()
 
 @JvmField
 internal val SUPPRESS_SUBMENU_IMPL: Key<Boolean> = Key.create("SUPPRESS_SUBMENU_IMPL")
-private const val NESTED_WA_REASON_PREFIX = "nested write-action requested by "
 private const val OLD_EDT_MSG_SUFFIX = ". Revise AnAction.getActionUpdateThread property"
 
-private val ourPromises: MutableSet<CancellablePromise<*>> = ConcurrentCollectionFactory.createConcurrentSet()
-private val ourToolbarPromises: MutableSet<CancellablePromise<*>> = ConcurrentCollectionFactory.createConcurrentSet()
+private val ourToolbarJobs: MutableSet<Job> = ConcurrentCollectionFactory.createConcurrentSet()
+private val ourOtherJobs: MutableSet<Job> = ConcurrentCollectionFactory.createConcurrentSet()
 private var ourInEDTActionOperationStack: FList<String> = FList.emptyList()
-
-private class MyExecutor(name: String, private val coroutineScope: CoroutineScope) : Executor {
-  private val coroutineName = CoroutineName(name)
-
-  override fun execute(command: Runnable) {
-    val name = if (command is NamedRunnable) CoroutineName("${coroutineName.name} ($command)") else coroutineName
-    coroutineScope.launch(name) {
-      blockingContext {
-        command.run()
-      }
-    }
-  }
-}
-
-internal val beforePerformedExecutor: Executor
-  get() = service<ActionUpdateExecutorManager>().beforePerformedExecutor
-
-private val fastTrackToolbarsCount = AtomicInteger()
-
-@Service
-private class ActionUpdateExecutorManager(private val coroutineScope: CoroutineScope) {
-  private val fastTrackExecutor: Executor = MyExecutor("Action Updater (Fast)", coroutineScope)
-
-  @JvmField
-  val beforePerformedExecutor: Executor = MyExecutor("Action Updater (Exclusive)", coroutineScope)
-
-  private val commonExecutor: Executor = object : Executor {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val commonExecutorCoroutineContext = Dispatchers.Default.limitedParallelism(2) + CoroutineName("Action Updater (Common)")
-
-    override fun execute(it: Runnable) {
-      coroutineScope.launch(commonExecutorCoroutineContext) {
-        blockingContext {
-          it.run()
-        }
-      }
-    }
-  }
-
-  fun getExecutor(useFastTrack: Boolean): Executor = if (useFastTrack) fastTrackExecutor else commonExecutor
-
-  fun waitForAllUpdatesToFinish() {
-    val jobs = coroutineScope.coroutineContext.job.children.toList()
-    if (jobs.isEmpty()) {
-      return
-    }
-
-    coroutineScope.launch {
-      withTimeout(1.minutes) {
-        jobs.joinAll()
-      }
-    }.asCompletableFuture().join()
-  }
-}
 
 internal class ActionUpdater @JvmOverloads constructor(
   private val presentationFactory: PresentationFactory,
@@ -132,39 +72,43 @@ internal class ActionUpdater @JvmOverloads constructor(
   private val place: String,
   private val contextMenuAction: Boolean,
   private val toolbarAction: Boolean,
-  private val edtExecutor: Executor? = null,
+  private val edtScope: CoroutineScope,
   private val eventTransform: ((AnActionEvent) -> AnActionEvent)? = null) {
 
+  @Volatile private var bgtScope: CoroutineScope? = null
+  private val application: Application = com.intellij.util.application
   private val project = CommonDataKeys.PROJECT.getData(dataContext)
-  private val myUserDataHolder = UserDataHolderBase()
+  private val sessionData = ConcurrentHashMap<Pair<String, Any?>, Deferred<*>>()
   private val updatedPresentations = ConcurrentHashMap<AnAction, Presentation>()
   private val groupChildren = ConcurrentHashMap<ActionGroup, List<AnAction>>()
   private val realUpdateStrategy = UpdateStrategy(
-    update = { action -> updateActionReal(action) },
-    getChildren = { group -> callAction(group, Op.GetChildren) {
-      doGetChildren(group, createActionEvent(updatedPresentations[group] ?: initialBgtPresentation(group)))
-    } })
-  private val myCheapStrategy = UpdateStrategy(
+    update = { action ->
+      retryOnAwaitSharedData {
+        updateActionReal(action)
+      }
+    },
+    getChildren = { group ->
+      retryOnAwaitSharedData {
+        callAction(group, Op.GetChildren) {
+          doGetChildren(group, createActionEvent(updatedPresentations[group] ?: initialBgtPresentation(group)))
+        }
+      }
+    })
+  private val cheapStrategy = UpdateStrategy(
     update = { action -> presentationFactory.getPresentation(action) },
     getChildren = { group  -> doGetChildren(group, null) })
 
-  private var allowPartialExpand = true
-  private var preCacheSlowDataKeys: Boolean = Utils.isAsyncDataContext(dataContext) &&
-                                              !Registry.`is`("actionSystem.update.actions.suppress.dataRules.on.edt")
-  private var forcedUpdateThread: ActionUpdateThread? = null
   private val testDelayMillis =
     if (ActionPlaces.ACTION_SEARCH == place || ActionPlaces.isShortcutPlace(place)) 0
     else Registry.intValue("actionSystem.update.actions.async.test.delay", 0)
-  private val myThreadDumpService = ThreadDumpService.getInstance()
-  private var edtCallsCount = 0
-  private var edtWaitNanos: Long = 0
+  private val threadDumpService = ThreadDumpService.getInstance()
 
-  @Volatile
-  private var currentEDTWaitMillis: Long = 0
+  private val preCacheSlowDataKeys = !Registry.`is`("actionSystem.update.actions.suppress.dataRules.on.edt")
 
-  @Volatile
-  private var currentEDTPerformMillis: Long = 0
-  private fun updateActionReal(action: AnAction): Presentation? {
+  private var edtCallsCount: Int = 0 // used only in EDT
+  private var edtWaitNanos: Long = 0 // used only in EDT
+
+  private suspend fun updateActionReal(action: AnAction): Presentation? {
     // clone the presentation to avoid partially changing the cached one if the update is interrupted
     val presentation = presentationFactory.getPresentation(action).clone()
     // reset enabled/visible flags (actions are encouraged to always set them in `update`)
@@ -175,6 +119,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     return if (success) presentation else null
   }
 
+  @RequiresEdt
   fun applyPresentationChanges() {
     for ((action, copy) in updatedPresentations) {
       val orig = presentationFactory.getPresentation(action)
@@ -191,100 +136,91 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
   }
 
-  private fun <T> callAction(action: AnAction, operation: Op, call: () -> T): T {
-    val operationName = Utils.operationName(action = action, op = operation.name, place = place)
-    return callAction(action = action, operationName = operationName, updateThreadOrig = action.getActionUpdateThread(), call = call)
+  private suspend fun <T> callAction(action: AnAction, operation: Op, call: () -> T): T {
+    val operationName = Utils.operationName(action, operation.name, place)
+    return callAction(action, operationName, action.getActionUpdateThread(), call)
   }
 
-  private fun <T> callAction(action: Any,
-                             operationName: String,
-                             updateThreadOrig: ActionUpdateThread,
-                             call: () -> T): T {
-    val updateThread = forcedUpdateThread ?: updateThreadOrig
+  private suspend fun <T> callAction(action: Any,
+                                     operationName: String,
+                                     updateThreadOrig: ActionUpdateThread,
+                                     call: () -> T): T {
+    val forcedUpdateThread = currentCoroutineContext()[ForcedActionUpdateThreadElement]?.updateThread
+    val updateThread: ActionUpdateThread = forcedUpdateThread ?: updateThreadOrig
     val canAsync = Utils.isAsyncDataContext(dataContext)
     val shallAsync = updateThread == ActionUpdateThread.BGT
     val isEDT = EDT.isCurrentThreadEdt()
     val shallEDT = !(canAsync && shallAsync)
-    if (isEDT && !shallEDT && !SlowOperations.isInSection(SlowOperations.ACTION_PERFORM) &&
-        !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (isEDT && !shallEDT && !SlowOperations.isInSection(SlowOperations.ACTION_PERFORM) && !application.isUnitTestMode()) {
       LOG.error("Calling on EDT $operationName that requires $updateThread${if (forcedUpdateThread != null) " (forced)" else ""}")
     }
-    if (allowPartialExpand) {
-      ProgressManager.checkCanceled()
-    }
+    checkCancelled()
     if (isEDT || !shallEDT) {
-      return computeWithSpan(Utils.getTracer(true), if (isEDT) "edt-op" else "bgt-op") { span: Span ->
-        span.setAttribute(Utils.OT_OP_KEY, operationName)
-        val start = System.nanoTime()
-        try {
-          ProhibitAWTEvents.start(operationName).use {
-            call()
+      return computeWithSpan(Utils.getTracer(true), operationName) { span: Span ->
+        val adjustedCall = {
+          val start = System.nanoTime()
+          try {
+            ProhibitAWTEvents.start(operationName).use {
+              call()
+            }
+          }
+          finally {
+            val elapsed = TimeoutUtil.getDurationMillis(start)
+            if (elapsed > 1000) {
+              LOG.warn(elapsedReport(elapsed, isEDT, operationName))
+            }
           }
         }
-        finally {
-          val elapsed = TimeoutUtil.getDurationMillis(start)
-          span.end()
-          if (elapsed > 1000) {
-            LOG.warn(elapsedReport(elapsed, isEDT, operationName))
-          }
-        }
+        readActionUndispatchedForActionExpand(adjustedCall)
       }
     }
     if (PopupMenuPreloader.isToSkipComputeOnEDT(place)) {
       throw ComputeOnEDTSkipped()
     }
     @Suppress("removal", "DEPRECATION")
-    if (preCacheSlowDataKeys && updateThread == ActionUpdateThread.OLD_EDT) {
-      ApplicationManagerEx.getApplicationEx().tryRunReadAction {
-        ensureSlowDataKeysPreCached(action, operationName)
-      }
+    if (updateThread == ActionUpdateThread.OLD_EDT) {
+      ensureSlowDataKeysPreCached(action, operationName)
     }
-    return computeOnEdt(action = action, operationName = operationName, call = call, noRulesInEDT = updateThread == ActionUpdateThread.EDT)
+    return computeOnEdt(action, operationName, updateThread == ActionUpdateThread.EDT) {
+      call()
+    }
   }
 
-  /** @noinspection AssignmentToStaticFieldFromInstanceMethod
-   */
-  private fun <T> computeOnEdt(action: Any, operationName: String, call: () -> T, noRulesInEDT: Boolean): T {
-    currentEDTPerformMillis = 0L
-    currentEDTWaitMillis = currentEDTPerformMillis
-    val progress = ProgressIndicatorProvider.getGlobalProgressIndicator()!!
-    val edtTraceListRef = AtomicReference<List<Throwable>>()
+  private suspend fun <T> computeOnEdt(action: Any, operationName: String, noRulesInEDT: Boolean, call: () -> T): T {
+    var currentEDTPerformMillis = 0L
+    var currentEDTWaitMillis = 0L
+    var edtTraces: List<Throwable>? = null
     val start0 = System.nanoTime()
-    val supplier: Supplier<out T> = Supplier {
-      val start = System.nanoTime()
-      edtCallsCount++
-      edtWaitNanos += start - start0
-      currentEDTWaitMillis = TimeUnit.NANOSECONDS.toMillis(start - start0)
-      computeWithSpan(Utils.getTracer(true), "edt-op") { span: Span ->
-        span.setAttribute(Utils.OT_OP_KEY, operationName)
-        val computable: Computable<out T> = Computable {
+    return try {
+      computeOnEdt {
+        val start = System.nanoTime()
+        edtCallsCount++
+        edtWaitNanos += start - start0
+        currentEDTWaitMillis = TimeUnit.NANOSECONDS.toMillis(start - start0)
+        computeWithSpan(Utils.getTracer(true), operationName) { span: Span ->
           val prevStack = ourInEDTActionOperationStack
           val prevNoRules = isNoRulesInEDTSection
           var traceCookie: ThreadDumpService.Cookie? = null
           try {
-            ProhibitAWTEvents.start(operationName).use {
-              myThreadDumpService.start(100, 50, 5, Thread.currentThread()).use { cookie ->
-                traceCookie = cookie
-                ourInEDTActionOperationStack = prevStack.prepend(operationName)
-                isNoRulesInEDTSection = noRulesInEDT
-                return@Computable call()
-              }
+            Triple({ ProhibitAWTEvents.start(operationName) },
+                   { ProgressIndicatorUtils.prohibitWriteActionsInside(application) },
+                   { threadDumpService.start(100, 50, 5, Thread.currentThread()) }).use { _, _, cookie ->
+              traceCookie = cookie
+              ourInEDTActionOperationStack = prevStack.prepend(operationName)
+              isNoRulesInEDTSection = noRulesInEDT
+              call()
             }
           }
           finally {
             isNoRulesInEDTSection = prevNoRules
             ourInEDTActionOperationStack = prevStack
-            if (traceCookie != null) {
-              currentEDTPerformMillis = TimeoutUtil.getDurationMillis(traceCookie!!.startNanos)
-              edtTraceListRef.set(traceCookie!!.traces)
+            traceCookie?.apply {
+              currentEDTPerformMillis = TimeoutUtil.getDurationMillis(startNanos)
+              edtTraces = traces
             }
           }
         }
-        ProgressManager.getInstance().runProcess(computable, ProgressWrapper.wrap(progress))
       }
-    }
-    try {
-      return computeOnEdt(Context.current().wrapSupplier(supplier))
     }
     finally {
       if (currentEDTWaitMillis > 300) {
@@ -293,7 +229,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       if (currentEDTPerformMillis > 300) {
         val throwable: Throwable = PluginException.createByClass(
           elapsedReport(currentEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX, null, action.javaClass)
-        val edtTraces = edtTraceListRef.get()
+        val edtTraces = edtTraces
         // do not report pauses without EDT traces (e.g., due to debugging)
         if (edtTraces != null && !edtTraces.isEmpty() && edtTraces[0].stackTrace.isNotEmpty()) {
           for (trace in edtTraces) {
@@ -305,196 +241,87 @@ internal class ActionUpdater @JvmOverloads constructor(
           LOG.warn(throwable)
         }
       }
-      currentEDTPerformMillis = 0L
-      currentEDTWaitMillis = currentEDTPerformMillis
     }
   }
 
   /**
    * @return actions from the given and nested non-popup groups that are visible after updating
    */
-  fun expandActionGroup(group: ActionGroup, hideDisabled: Boolean): List<AnAction> {
-    try {
-      return expandActionGroup(group, hideDisabled, realUpdateStrategy)
-    }
-    finally {
-      applyPresentationChanges()
-    }
-  }
-
-  /**
-   * @return actions from the given and nested non-popup groups that are visible after updating
-   * don't check progress.isCanceled (to obtain a full list of actions)
-   */
-  fun expandActionGroupFull(group: ActionGroup, hideDisabled: Boolean): List<AnAction> {
-    try {
-      allowPartialExpand = false
-      return expandActionGroup(group, hideDisabled, realUpdateStrategy)
-    }
-    finally {
-      allowPartialExpand = true
-      applyPresentationChanges()
-    }
-  }
-
-  /**
-   * @return actions from the given and nested non-popup groups that are visible after updating
-   */
-  private fun expandActionGroup(group: ActionGroup, hideDisabled: Boolean, strategy: UpdateStrategy): List<AnAction> {
+  private suspend fun expandActionGroup(group: ActionGroup, hideDisabled: Boolean, strategy: UpdateStrategy): List<AnAction> {
     return removeUnnecessarySeparators(doExpandActionGroup(group, hideDisabled, strategy))
   }
 
   /**
    * @return actions from the given and nested non-popup groups that are visible after updating
    */
-  @JvmOverloads
-  fun expandActionGroupWithTimeout(group: ActionGroup, hideDisabled: Boolean, timeoutMs: Int = -1): List<AnAction> {
+  suspend fun expandActionGroupWithTimeout(group: ActionGroup,
+                                           hideDisabled: Boolean,
+                                           timeoutMs: Int = -1): List<AnAction> = coroutineScope {
+    bgtScope = null
     val adjustedMs = if (timeoutMs <= 0) Registry.intValue("actionSystem.update.timeout.ms") else timeoutMs
-    val result = ProgressIndicatorUtils.withTimeout(adjustedMs.toLong()) {
-      expandActionGroup(group, hideDisabled)
+    val result = try {
+      withTimeout(adjustedMs.toLong()) {
+        expandActionGroup(group, hideDisabled, realUpdateStrategy)
+      }
     }
-    try {
-      return result ?: expandActionGroup(group, hideDisabled, myCheapStrategy)
+    catch (_ : TimeoutCancellationException) {
+      expandActionGroup(group, hideDisabled, cheapStrategy)
     }
-    finally {
-      applyPresentationChanges()
-    }
+    applyPresentationChanges()
+    result
   }
 
-  fun expandActionGroupAsync(group: ActionGroup, hideDisabled: Boolean): CancellablePromise<List<AnAction>> {
-    return ActionGroupExpander.getInstance().expandActionGroupAsync(
-      presentationFactory, dataContext, place, group, toolbarAction, hideDisabled) { g, h ->
-      doExpandActionGroupAsync(g, h)
-    }
-  }
-
-  private fun doExpandActionGroupAsync(group: ActionGroup, hideDisabled: Boolean): CancellablePromise<List<AnAction>?> {
-    val clientId = current
-    val disposableParent = when {
-      project == null -> getAppSession(clientId)!!
-      project.isDefault -> project
-      else -> getProjectSession(project, clientId)!!
-    }
-    val parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator()
-    val indicator: ProgressIndicator = if (parentIndicator == null) ProgressIndicatorBase() else SensitiveProgressWrapper(parentIndicator)
-    val promise = newPromise<List<AnAction>?>(place)
-    promise.onError(Consumer<Throwable> {
-      indicator.cancel()
-      ApplicationManager.getApplication().invokeLater(
-        { applyPresentationChanges() }, ModalityState.any(), disposableParent.getDisposed())
-    })
+  suspend fun expandActionGroup(group: ActionGroup, hideDisabled: Boolean): List<AnAction> = withContext(CoroutineName("doExpandActionGroup")) {
+    bgtScope = this
     edtCallsCount = 0
     edtWaitNanos = 0
-    promise.onProcessed {
+    val job = coroutineContext.job
+    val targetPromises = if (toolbarAction) ourToolbarJobs else ourOtherJobs
+    targetPromises.add(job)
+    try {
+      if (testDelayMillis > 0) {
+        delay(testDelayMillis.toLong())
+      }
+      val result = expandActionGroup(group, hideDisabled, realUpdateStrategy)
+      computeOnEdt {
+        applyPresentationChanges()
+      }
+      result
+    }
+    finally {
+      targetPromises.remove(job)
       val edtWaitMillis = TimeUnit.NANOSECONDS.toMillis(edtWaitNanos)
-      if (edtExecutor == null && (edtCallsCount > 500 || edtWaitMillis > 3000)) {
+      if (edtCallsCount > 500 || edtWaitMillis > 3000) {
         LOG.warn(edtWaitMillis.toString() + " ms total to grab EDT " + edtCallsCount + " times to expand " +
                  Utils.operationName(group, null, place) + ". Use `ActionUpdateThread.BGT`.")
       }
     }
-    // only one toolbar fast-track at a time
-    val useFastTrack = edtExecutor != null && !(toolbarAction && fastTrackToolbarsCount.get() > 0)
-    if (useFastTrack && toolbarAction) {
-      fastTrackToolbarsCount.incrementAndGet()
-    }
-    val targetPromises = if (toolbarAction) ourToolbarPromises else ourPromises
-    targetPromises.add(promise)
-    val computable = Computable {
-      indicator.checkCanceled()
-      if (testDelayMillis > 0) {
-        waitTheTestDelay()
-      }
-      val result = expandActionGroup(group, hideDisabled, realUpdateStrategy)
-      Computable<Void?> {
-        try {
-          applyPresentationChanges()
-          promise.setResult(result)
-        }
-        catch (e: Throwable) {
-          cancelPromise(promise, e)
-        }
-        null
-      }
-    }
-    val runnable = Runnable {
-      val applyRunnableRef = Ref.create<Computable<Void?>>()
-      try {
-        withClientId(clientId).use {
-          BackgroundTaskUtil.runUnderDisposeAwareIndicator(
-            disposableParent, Runnable {
-            if (tryRunReadActionAndCancelBeforeWrite(promise) { applyRunnableRef.set(computable.compute()) } &&
-                !applyRunnableRef.isNull && !promise.isDone()) {
-              computeOnEdt(applyRunnableRef.get())
-            }
-            else if (!promise.isDone()) {
-              cancelPromise(promise, "read-action unavailable")
-            }
-          }, indicator)
-        }
-      }
-      catch (e: Throwable) {
-        if (!promise.isDone()) {
-          cancelPromise(promise, e)
-        }
-      }
-      finally {
-        if (useFastTrack && toolbarAction) {
-          fastTrackToolbarsCount.decrementAndGet()
-        }
-        targetPromises.remove(promise)
-        if (!promise.isDone()) {
-          cancelPromise(promise, "unknown reason")
-          LOG.error(Throwable("'" + place + "' update exited incorrectly (" + !applyRunnableRef.isNull + ")"))
-        }
-      }
-    }
-    val current = Context.current()
-    service<ActionUpdateExecutorManager>().getExecutor(useFastTrack).execute(object : NamedRunnable(place) {
-      override fun run() {
-        current.makeCurrent().use { runnable.run() }
-      }
-    })
-    return promise
   }
 
-  fun tryRunReadActionAndCancelBeforeWrite(promise: CancellablePromise<*>, runnable: () -> Unit): Boolean {
-    if (promise.isDone) return false
-    val applicationEx = ApplicationManagerEx.getApplicationEx()
-    return ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
-      applicationEx,
-      Runnable {
-        cancelPromise(promise,
-                      if (currentInEDTOperationName() == null) "write-action requested"
-                      else NESTED_WA_REASON_PREFIX + currentInEDTOperationName())
-      },
-      Runnable { applicationEx.tryRunReadAction(runnable) })
-  }
-
-  private fun waitTheTestDelay() {
-    if (testDelayMillis <= 0) return
-    ProgressIndicatorUtils.awaitWithCheckCanceled(testDelayMillis.toLong())
-  }
-
-  private fun ensureSlowDataKeysPreCached(action: Any, targetOperationName: String) {
+  private suspend fun ensureSlowDataKeysPreCached(action: Any, targetOperationName: String) {
     if (!preCacheSlowDataKeys) return
+    getSessionDataDeferred(Pair("precache-slow-data@$targetOperationName", null)) {
+      readActionUndispatchedForActionExpand {
+        precacheSlowDataKeys(action, targetOperationName)
+      }
+    }.await()
+  }
+
+  private fun precacheSlowDataKeys(action: Any, targetOperationName: String) {
     val operationName = "precache-slow-data@$targetOperationName"
     val start = System.nanoTime()
     try {
-      runWithSpan(Utils.getTracer(true), "precache-slow-data", Consumer { span: Span ->
-        span.setAttribute(Utils.OT_OP_KEY, operationName)
-        for (key in DataKey.allKeys()) {
-          try {
-            dataContext.getData(key)
-          }
-          catch (ex: ProcessCanceledException) {
-            throw ex
-          }
-          catch (ex: Throwable) {
-            LOG.error(ex)
-          }
+      for (key in DataKey.allKeys()) {
+        try {
+          dataContext.getData(key)
         }
-        preCacheSlowDataKeys = false
-      })
+        catch (ex: ProcessCanceledException) {
+          throw ex
+        }
+        catch (ex: Throwable) {
+          LOG.error(ex)
+        }
+      }
     }
     finally {
       logTimeProblemForPreCached(action, operationName, TimeoutUtil.getDurationMillis(start))
@@ -513,36 +340,32 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
   }
 
-  private fun doExpandActionGroup(group: ActionGroup, hideDisabled: Boolean, strategy: UpdateStrategy): List<AnAction> {
+  private suspend fun doExpandActionGroup(group: ActionGroup, hideDisabled: Boolean, strategy: UpdateStrategy): List<AnAction> = coroutineScope {
     if (group is ActionGroupStub) {
-      @Suppress("SpellCheckingInspection")
-      throw IllegalStateException("Trying to expand non-unstubbed group")
+      throw IllegalStateException("ActionGroupStub cannot be expanded")
     }
-    if (allowPartialExpand) {
-      ProgressManager.checkCanceled()
-    }
-    val prevForceAsync = forcedUpdateThread
-    forcedUpdateThread = if (group is ActionUpdateThreadAware.Recursive) group.getActionUpdateThread() else prevForceAsync
+    checkCancelled()
     val presentation = update(group, strategy)
     if (presentation == null || !presentation.isVisible) {
       // don't process invisible groups
-      return emptyList()
+      return@coroutineScope emptyList()
     }
 
     val children = getGroupChildren(group, strategy)
-    val result = if (children.isEmpty()) {
-      emptyList()
+    // parallel update execution can break some existing caching
+    // the preferred way to do caching now is `updateSession.sharedData`
+    val result = withContext(if (group is ActionUpdateThreadAware.Recursive) ForcedActionUpdateThreadElement(group.getActionUpdateThread())
+                             else EmptyCoroutineContext) {
+      children
+        .map {
+          async(Context.current().asContextElement()) {
+            expandGroupChild(it, hideDisabled, strategy)
+          }
+        }
+        .awaitAll()
+        .flatten()
     }
-    else {
-      val result = ArrayList<AnAction>()
-      for (v in children) {
-        result.addAll(expandGroupChild(child = v, hideDisabledBase = hideDisabled, strategy = strategy))
-      }
-      result
-    }
-
-    forcedUpdateThread = prevForceAsync
-    val actions = group.postProcessVisibleChildren(/* visibleChildren = */ result, /* updateSession = */ asUpdateSession(strategy))
+    val actions = group.postProcessVisibleChildren(result, asUpdateSession(strategy))
     for (action in actions) {
       if (action is InlineActionsHolder) {
         for (inlineAction in action.getInlineActions()) {
@@ -550,15 +373,15 @@ internal class ActionUpdater @JvmOverloads constructor(
         }
       }
     }
-    return actions
+    actions
   }
 
-  private fun getGroupChildren(group: ActionGroup, strategy: UpdateStrategy): List<AnAction> {
-    return groupChildren.computeIfAbsent(group) {
+  private suspend fun getGroupChildren(group: ActionGroup, strategy: UpdateStrategy): List<AnAction> {
+    return groupChildren.getOrPut(group) {
       val children = try {
         strategy.getChildren(group)
       }
-      catch (ignore: ComputeOnEDTSkipped) {
+      catch (_: ComputeOnEDTSkipped) {
         emptyArray()
       }
 
@@ -574,9 +397,8 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
   }
 
-  private fun expandGroupChild(child: AnAction, hideDisabledBase: Boolean, strategy: UpdateStrategy): List<AnAction> {
-    val application = ApplicationManager.getApplication()
-    if (application == null || application.isDisposed()) {
+  private suspend fun expandGroupChild(child: AnAction, hideDisabledBase: Boolean, strategy: UpdateStrategy): List<AnAction> {
+    if (application.isDisposed()) {
       return emptyList()
     }
     val presentation = update(child, strategy)
@@ -597,23 +419,23 @@ internal class ActionUpdater @JvmOverloads constructor(
     val hideDisabled = isPopup && !skipChecks && hideDisabledBase
     @Suppress("removal", "DEPRECATION")
     val hideEmpty = isPopup && !skipChecks && (presentation.isHideGroupIfEmpty || child.hideIfNoVisibleChildren())
-
     @Suppress("removal", "DEPRECATION")
     val disableEmpty = isPopup && !skipChecks && presentation.isDisableGroupIfEmpty && child.disableIfNoVisibleChildren()
     val checkChildren = isPopup && !skipChecks && (canBePerformed || hideDisabled || hideEmpty || disableEmpty)
     var hasEnabled = false
     var hasVisible = false
     if (checkChildren) {
-      val childrenIterable = iterateGroupChildren(child, strategy)
-      for (action in childrenIterable.take(100)) {
-        if (action is Separator) continue
+      val childrenFlow = iterateGroupChildren(child, strategy)
+      childrenFlow.take(100).takeWhile { action ->
+        if (action is Separator) return@takeWhile true
         val p = update(action, strategy)
-        if (p == null) continue
+        if (p == null) return@takeWhile true
         hasVisible = hasVisible or p.isVisible
         hasEnabled = hasEnabled or p.isEnabled
         // stop early if all the required flags are collected
-        if (hasVisible && (hasEnabled || !hideDisabled)) break
+        return@takeWhile !(hasVisible && (hasEnabled || !hideDisabled))
       }
+        .collect()
       performOnly = canBePerformed && !hasVisible
     }
     if (isPopup) {
@@ -650,8 +472,12 @@ internal class ActionUpdater @JvmOverloads constructor(
     return event
   }
 
-  private fun <T> computeOnEdt(supplier: Supplier<out T>): T {
-    return ActionUpdateEdtExecutor.computeOnEdt(supplier, edtExecutor)
+  private suspend fun <T> computeOnEdt(supplier: () -> T): T {
+    return edtScope.async(Context.current().asContextElement()) {
+      blockingContext {
+        supplier()
+      }
+    }.await()
   }
 
   fun asUpdateSession(): UpdateSession {
@@ -662,30 +488,48 @@ internal class ActionUpdater @JvmOverloads constructor(
     return UpdateSessionImpl(this, strategy)
   }
 
-  private fun iterateGroupChildren(group: ActionGroup, strategy: UpdateStrategy): JBIterable<AnAction> {
+  private suspend fun iterateGroupChildren(group: ActionGroup, strategy: UpdateStrategy): Flow<AnAction> {
     val isDumb = project != null && getInstance(project).isDumb
-    return JBTreeTraverser.from { o: AnAction ->
-      if (o === group) return@from null
-      if (isDumb && !o.isDumbAware()) return@from null
-      if (o !is ActionGroup) {
-        return@from null
-      }
+    val tree: suspend (AnAction) -> List<AnAction>? = tree@ { o ->
+      if (o === group) return@tree null
+      if (isDumb && !o.isDumbAware()) return@tree null
+      // in all clients the next call is `update`
+      // let's update both actions and groups
       val presentation = update(o, strategy)
-      if (presentation == null || !presentation.isVisible) {
-        return@from null
+      if (o !is ActionGroup) {
+        return@tree null
       }
-      if (presentation.isPopupGroup || presentation.isPerformGroup) {
-        return@from null
+      if (presentation == null ||
+          !presentation.isVisible ||
+          presentation.isPopupGroup ||
+          presentation.isPerformGroup) {
+        null
       }
-      getGroupChildren(o, strategy)
+      else {
+        getGroupChildren(o, strategy)
+      }
     }
-      .withRoots(getGroupChildren(group, strategy))
-      .unique()
-      .traverse(TreeTraversal.LEAVES_DFS)
-      .filter(Condition { !isDumb || it.isDumbAware() })
+    val roots = getGroupChildren(group, strategy)
+    return channelFlow {
+      val set = HashSet<AnAction>()
+      val queue = ArrayDeque(roots)
+      while (!queue.isEmpty()) {
+        val first = queue.removeFirst()
+        if (!set.add(first)) continue
+        val children = tree(first)
+        if (children.isNullOrEmpty()) send(first)
+        else children.reversed().forEach(queue::addFirst)
+      }
+    }
+      .buffer(1)
+      .filter { !isDumb || it.isDumbAware()  }
   }
 
-  private fun update(action: AnAction, strategy: UpdateStrategy): Presentation? {
+  suspend fun presentation(action: AnAction): Presentation {
+    return update(action, realUpdateStrategy) ?: initialBgtPresentation(action)
+  }
+
+  private suspend fun update(action: AnAction, strategy: UpdateStrategy): Presentation? {
     val cached = updatedPresentations[action]
     if (cached != null) {
       return cached
@@ -697,9 +541,38 @@ internal class ActionUpdater @JvmOverloads constructor(
         return presentation
       }
     }
-    catch (ignore: ComputeOnEDTSkipped) {
+    catch (_: ComputeOnEDTSkipped) {
+      return null
     }
     return null
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  fun <T : Any?> getSessionDataDeferred(key: Pair<String, Any?>, supplier: suspend () -> T): Deferred<T> {
+    sessionData[key]?.let { return it as Deferred<T> }
+    val result = CompletableDeferred<T>()
+    sessionData.putIfAbsent(key, result)?.let { return it as Deferred<T> }
+    bgtScope?.async(Context.current().asContextElement()) {
+      runWithSpan(Utils.getTracer(true), "${key.first}@$place") {
+        result.completeWith(runCatching {
+          supplier()
+        })
+      }
+    } ?: result.completeWith(runCatching {
+      runBlockingForActionExpand {
+        supplier()
+      }
+    })
+    return result
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  fun <T: Any?> computeSessionDataOrThrow(key: Pair<String, Any?>, supplier: suspend () -> T): T {
+    val deferred = getSessionDataDeferred(key, supplier)
+    if (deferred.isCompleted) {
+      return deferred.getCompleted()
+    }
+    throw AwaitSharedData(deferred, key.first)
   }
 
   companion object {
@@ -712,7 +585,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       IdeEventQueue.getInstance().addPreprocessor(IdeEventQueue.EventDispatcher { event: AWTEvent ->
         if (event is KeyEvent && event.keyCode != 0 ||
             event is MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED) {
-          cancelPromises(ourToolbarPromises, event)
+          cancelAllUpdates(ourToolbarJobs, event.toString())
         }
         false
       }, ApplicationManager.getApplication())
@@ -720,58 +593,65 @@ internal class ActionUpdater @JvmOverloads constructor(
   }
 
   private class UpdateSessionImpl(val updater: ActionUpdater, val strategy: UpdateStrategy) : UpdateSession {
-    override fun expandedChildren(actionGroup: ActionGroup): Iterable<AnAction> {
-      return updater.iterateGroupChildren(actionGroup, strategy)
-    }
+    override fun expandedChildren(actionGroup: ActionGroup): Iterable<AnAction> =
+      updater.computeSessionDataOrThrow(Pair("expandedChildren", actionGroup)) {
+        updater.iterateGroupChildren(actionGroup, strategy).toCollection(ArrayList())
+      }
 
-    override fun children(actionGroup: ActionGroup): List<AnAction> {
-      return updater.getGroupChildren(actionGroup, strategy)
-    }
+    override fun children(actionGroup: ActionGroup): List<AnAction> =
+      updater.groupChildren[actionGroup] ?: updater.computeSessionDataOrThrow(Pair("children", actionGroup)) {
+        updater.getGroupChildren(actionGroup, strategy)
+      }
 
-    override fun presentation(action: AnAction): Presentation {
-      return updater.update(action, strategy) ?: updater.initialBgtPresentation(action)
-    }
+    override fun presentation(action: AnAction): Presentation =
+      updater.updatedPresentations[action] ?: updater.computeSessionDataOrThrow(Pair("presentation", action)) {
+        updater.update(action, strategy) ?: updater.initialBgtPresentation(action)
+      }
 
-    override fun <T : Any> sharedData(key: Key<T>, provider: Supplier<out T>): T {
-      return updater.myUserDataHolder.getUserData(key)
-             ?: updater.myUserDataHolder.putUserDataIfAbsent(key, provider.get())
-    }
+    override fun <T : Any> sharedData(key: Key<T>, supplier: Supplier<out T>): T =
+      updater.computeSessionDataOrThrow(Pair(key.toString(), key)) {
+        readActionUndispatchedForActionExpand {
+          supplier.get()
+        }
+      }
 
     override fun <T> compute(action: Any,
                              operationName: String,
                              updateThread: ActionUpdateThread,
-                             supplier: Supplier<out T>): T {
+                             supplier: Supplier<out T>): T = runBlockingForActionExpand {
       val operationNameFull = Utils.operationName(action, operationName, updater.place)
-      return updater.callAction(action = action, operationName = operationNameFull, updateThreadOrig = updateThread) { supplier.get() }
+      updater.callAction(action = action, operationName = operationNameFull, updateThreadOrig = updateThread) { supplier.get() }
     }
   }
 }
 
 private enum class Op { Update, GetChildren }
 
-private data class UpdateStrategy(@JvmField val update: (AnAction) -> Presentation?,
-                                  @JvmField val getChildren: (ActionGroup) -> Array<AnAction>)
+private data class UpdateStrategy(@JvmField val update: suspend (AnAction) -> Presentation?,
+                                  @JvmField val getChildren: suspend (ActionGroup) -> Array<AnAction>)
 
-private class ComputeOnEDTSkipped : ProcessCanceledException() {
+private class ComputeOnEDTSkipped : RuntimeException() {
   override fun fillInStackTrace(): Throwable = this
 }
 
 internal fun cancelAllUpdates(reason: String) {
   val adjusted = "$reason (cancelling all updates)"
-  cancelPromises(ourToolbarPromises, adjusted)
-  cancelPromises(ourPromises, adjusted)
+  cancelAllUpdates(ourToolbarJobs, adjusted)
+  cancelAllUpdates(ourOtherJobs, adjusted)
 }
 
-private fun cancelPromises(promises: MutableCollection<CancellablePromise<*>>, reason: Any) {
-  if (promises.isEmpty()) return
-  for (promise in promises) {
-    cancelPromise(promise, reason)
+private fun cancelAllUpdates(jobs: MutableCollection<Job>, reason: String) {
+  if (jobs.isEmpty()) return
+  for (job in jobs) {
+    job.cancel(reason)
   }
-  promises.clear()
+  jobs.clear()
 }
 
 internal fun waitForAllUpdatesToFinish() {
-  service<ActionUpdateExecutorManager>().waitForAllUpdatesToFinish()
+  runBlockingForActionExpand {
+    (ourToolbarJobs + ourOtherJobs).joinAll()
+  }
 }
 
 private fun removeUnnecessarySeparators(visible: List<AnAction>): List<AnAction> {
@@ -792,6 +672,8 @@ private fun elapsedReport(elapsed: Long, isEDT: Boolean, operationName: String):
 
 private fun handleException(action: AnAction, op: Op, event: AnActionEvent?, ex: Throwable) {
   if (ex is ProcessCanceledException) throw ex
+  if (ex is AwaitSharedData) throw ex
+  if (ex is ComputeOnEDTSkipped) throw ex
   val id = ActionManager.getInstance().getId(action)
   val place = event?.place
   val text = event?.presentation?.text
@@ -803,7 +685,7 @@ private fun handleException(action: AnAction, op: Op, event: AnActionEvent?, ex:
 
 // returns false if exception was thrown and handled
 private fun doUpdate(action: AnAction, e: AnActionEvent): Boolean = try {
-  if (ApplicationManager.getApplication().isDisposed()) false
+  if (application.isDisposed()) false
   else !ActionUtil.performDumbAwareUpdate(action, e, false)
 }
 catch (ex: Throwable) {
@@ -813,7 +695,8 @@ catch (ex: Throwable) {
 
 private fun doGetChildren(group: ActionGroup, e: AnActionEvent?): Array<AnAction> {
   try {
-    return if (ApplicationManager.getApplication().isDisposed()) AnAction.EMPTY_ARRAY else group.getChildren(e)
+    return if (application.isDisposed()) AnAction.EMPTY_ARRAY
+    else group.getChildren(e)
   }
   catch (ex: Throwable) {
     handleException(group, Op.GetChildren, e, ex)
@@ -821,42 +704,22 @@ private fun doGetChildren(group: ActionGroup, e: AnActionEvent?): Array<AnAction
   }
 }
 
-private val ourDebugPromisesMap = CollectionFactory.createConcurrentWeakIdentityMap<AsyncPromise<*>, String>()
-
-internal fun <T> newPromise(place: String): AsyncPromise<T> {
-  val promise = AsyncPromise<T>()
-  if (LOG.isDebugEnabled()) {
-    ourDebugPromisesMap[promise] = place
-    promise.onProcessed(Consumer { ourDebugPromisesMap.remove(promise) })
-  }
-  return promise
-}
-
-internal fun cancelPromise(promise: CancellablePromise<*>, reason: Any) {
-  if (LOG.isDebugEnabled()) {
-    val place = ourDebugPromisesMap.remove(promise)
-    if (place == null && promise.isDone) return
-    val message = "'$place' update cancelled: $reason"
-    if (reason is String && (message.contains("fast-track") || message.contains("all updates"))) {
-      LOG.debug(message)
+private suspend inline fun <R> retryOnAwaitSharedData(block: suspend () -> R): R {
+  while (true) {
+    try {
+      return block()
     }
-    else {
-      LOG.debug(message, if (reason is Throwable) reason else ProcessCanceledException())
+    catch (ex: AwaitSharedData) {
+      ex.job.join()
     }
-  }
-  val nestedWA = reason is String && reason.startsWith(NESTED_WA_REASON_PREFIX)
-  if (nestedWA) {
-    LOG.error(AssertionError(
-      (reason as String).substring(NESTED_WA_REASON_PREFIX.length) + " requests write-action. " +
-      "An action must not request write-action during actions update. " +
-      "See CustomComponentAction.createCustomComponent javadoc, if caused by a custom component."))
-  }
-  if (!nestedWA && promise is AsyncPromise<*>) {
-    promise.setError(
-      (if (reason is Throwable) reason else ProcessCanceledWithReasonException(reason)))
-  }
-  else {
-    promise.cancel()
   }
 }
 
+private class AwaitSharedData(val job: Job, val key: String): RuntimeException(key) {
+  override fun fillInStackTrace(): Throwable = this
+}
+
+private class ForcedActionUpdateThreadElement(val updateThread: ActionUpdateThread)
+  : AbstractCoroutineContextElement(ForcedActionUpdateThreadElement) {
+  companion object : CoroutineContext.Key<ForcedActionUpdateThreadElement>
+}

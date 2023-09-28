@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.javac.Iterators;
@@ -8,7 +9,7 @@ import org.jetbrains.jps.javac.Iterators;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Objects;
 
-public class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
+public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
   private final String mySuperFqName;
   private final String myOuterFqName;
   private final Iterable<String> myInterfaces;
@@ -36,6 +37,12 @@ public class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     myMethods = methods;
     myAnnotationTargets = annotationTargets;
     myRetentionPolicy = retentionPolicy;
+  }
+
+  public @NotNull String getPackageName() {
+    String name = getName();
+    int index = name.lastIndexOf('/');
+    return index >= 0? name.substring(0, index) : "";
   }
 
   public final boolean isAnonymous() {
@@ -79,7 +86,7 @@ public class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     return new Diff(past);
   }
 
-  public class Diff extends Proto.Diff<JvmClass> {
+  public final class Diff extends Proto.Diff<JvmClass> {
 
     public Diff(JvmClass past) {
       super(past);

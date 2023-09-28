@@ -4,7 +4,7 @@ package org.jetbrains.jps.dependency.java;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.impl.StringReferenceID;
 
-public class ModuleUsage extends JvmElementUsage {
+public final class ModuleUsage extends JvmElementUsage {
 
   public ModuleUsage(@NotNull String moduleName) {
     super(new StringReferenceID(moduleName));

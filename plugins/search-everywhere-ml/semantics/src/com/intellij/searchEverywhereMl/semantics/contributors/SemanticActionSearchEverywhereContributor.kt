@@ -6,6 +6,7 @@ import com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
@@ -67,16 +68,29 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
 
   override fun prepareSemanticDescriptor(descriptor: FoundItemDescriptor<MatchedValue>,
                                          knownItems: MutableList<FoundItemDescriptor<MatchedValue>>,
-                                         mutex: ReentrantLock): FoundItemDescriptor<MatchedValue> = mutex.withLock {
-    val equal = knownItems.firstOrNull { checkActionsEqual(it.item, descriptor.item) }
-    if (equal != null) {
-      val mergedElement = equal.item.mergeWith(descriptor.item) as MatchedValue
-      FoundItemDescriptor(mergedElement, equal.weight + 1)
+                                         mutex: ReentrantLock,
+                                         durationMs: Long): FoundItemDescriptor<MatchedValue>? = mutex.withLock {
+    val knownEqualAction = knownItems.firstOrNull { checkActionsEqual(it.item, descriptor.item) }
+    if (knownEqualAction != null) {
+      mergeOrSkipAction(descriptor, knownEqualAction, durationMs)
     }
     else {
       knownItems.add(descriptor)
       descriptor
     }
+  }
+
+  private fun mergeOrSkipAction(newItem: FoundItemDescriptor<MatchedValue>,
+                                existingItem: FoundItemDescriptor<MatchedValue>,
+                                durationMs: Long): FoundItemDescriptor<MatchedValue>? {
+    if (durationMs > 70) {
+      // elements are frozen after 100ms delay and shouldn't be re-ordered
+      logger.debug("Skip merge for '${newItem.item ?: "unknown"}', because duration is $durationMs")
+      return null
+    }
+    logger.debug("Merge semantic action '${newItem.item ?: "unknown"}', because duration: $durationMs")
+    val mergedElement = existingItem.item.mergeWith(newItem.item) as MatchedValue
+    return FoundItemDescriptor(mergedElement, existingItem.weight + 1)
   }
 
   override fun prepareStandardDescriptor(descriptor: FoundItemDescriptor<MatchedValue>,
@@ -113,6 +127,8 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
   }
 
   companion object {
+    private val logger by lazy { Logger.getInstance(SemanticActionSearchEverywhereContributor::class.java) }
+
     val PRIORITY_THRESHOLDS = (ORDERED_PRIORITIES zip listOf(0.35, 0.25, 0.2)).toMap()
     private const val DESIRED_RESULTS_COUNT = 10
 

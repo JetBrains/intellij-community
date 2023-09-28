@@ -17,7 +17,6 @@ import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.startup.StartupManager;
@@ -652,7 +651,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     iconComponent.setOpaque(false);
 
     Runnable iconSizeRunnable = () -> iconComponent.setPreferredSize(
-      new Dimension(layoutData.configuration.iconPanelWidth, 2 * layoutData.configuration.iconOffset.height + icon.getIconHeight()));
+      new Dimension(Math.max(layoutData.configuration.iconPanelWidth, icon.getIconWidth() + layoutData.configuration.iconOffset.width + JBUIScale.scale(5)),
+                    2 * layoutData.configuration.iconOffset.height + icon.getIconHeight()));
     iconSizeRunnable.run();
 
     content.add(iconComponent, BorderLayout.WEST);

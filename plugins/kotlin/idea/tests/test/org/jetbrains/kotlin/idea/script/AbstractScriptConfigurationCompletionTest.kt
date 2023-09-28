@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.script
 
-import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
 import org.jetbrains.kotlin.idea.completion.test.testCompletion
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
@@ -10,15 +9,13 @@ abstract class AbstractScriptConfigurationCompletionTest : AbstractScriptConfigu
     fun doTest(unused: String) {
         configureScriptFile(testDataFile())
         testCompletion(
-          file.text,
-          JvmPlatforms.unspecifiedJvmPlatform,
-          additionalValidDirectives = switches,
-          complete = { completionType, count ->
+            file.text,
+            JvmPlatforms.unspecifiedJvmPlatform,
+            additionalValidDirectives = switches,
+            complete = { completionType, count ->
                 setType(completionType)
                 complete(count)
                 myItems
-            },
-          isK2Plugin = isK2Plugin()
-        )
+            })
     }
 }

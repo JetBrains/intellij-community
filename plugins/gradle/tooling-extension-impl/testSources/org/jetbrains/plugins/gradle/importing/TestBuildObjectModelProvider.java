@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import org.gradle.tooling.BuildController;
-import org.gradle.tooling.model.Model;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
@@ -27,9 +26,4 @@ public class TestBuildObjectModelProvider implements ProjectImportModelProvider 
     //noinspection unused
     Object model = controller.findModel(Object.class);
   }
-
-  @Override
-  public void populateProjectModels(@NotNull BuildController controller,
-                                    @NotNull Model projectModel,
-                                    @NotNull ProjectImportModelProvider.ProjectModelConsumer modelConsumer) { }
 }

@@ -304,8 +304,7 @@ public final class ClassRepr extends ClassFileRepr {
     return strValue != null? getShortName(strValue) : null;
   }
 
-  @NotNull
-  public static String getPackageName(@NotNull final String raw) {
+  public static @NotNull String getPackageName(final @NotNull String raw) {
     final int index = raw.lastIndexOf('/');
 
     if (index == -1) {
@@ -315,8 +314,7 @@ public final class ClassRepr extends ClassFileRepr {
     return raw.substring(0, index);
   }
 
-  @NotNull
-  public static String getShortName(@NotNull final String fqName) {
+  public static @NotNull String getShortName(final @NotNull String fqName) {
     final int index = fqName.lastIndexOf('/');
 
     if (index == -1) {
@@ -326,8 +324,7 @@ public final class ClassRepr extends ClassFileRepr {
     return fqName.substring(index + 1);
   }
 
-  @Nullable
-  public FieldRepr findField(final int name) {
+  public @Nullable FieldRepr findField(final int name) {
     for (FieldRepr f : myFields) {
       if (f.name == name) {
         return f;
@@ -337,8 +334,7 @@ public final class ClassRepr extends ClassFileRepr {
     return null;
   }
 
-  @NotNull
-  public Collection<MethodRepr> findMethods(final Predicate<? super MethodRepr> p) {
+  public @NotNull Collection<MethodRepr> findMethods(final Predicate<? super MethodRepr> p) {
     final Collection<MethodRepr> result = new LinkedList<>();
 
     for (MethodRepr mm : myMethods) {
@@ -353,12 +349,12 @@ public final class ClassRepr extends ClassFileRepr {
   public static DataExternalizer<ClassRepr> externalizer(final DependencyContext context) {
     return new DataExternalizer<>() {
       @Override
-      public void save(@NotNull final DataOutput out, final ClassRepr value) throws IOException {
+      public void save(final @NotNull DataOutput out, final ClassRepr value) {
         value.save(out);
       }
 
       @Override
-      public ClassRepr read(@NotNull final DataInput in) throws IOException {
+      public ClassRepr read(final @NotNull DataInput in) {
         return new ClassRepr(context, in);
       }
     };

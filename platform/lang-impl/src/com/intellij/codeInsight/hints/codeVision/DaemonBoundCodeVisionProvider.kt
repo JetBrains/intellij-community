@@ -37,9 +37,10 @@ interface DaemonBoundCodeVisionProvider {
 
   /**
    * Computes code lens data in read action in background for a given editor.
+   * @return entries list or null if not supported for a given file
    */
   @Suppress("DEPRECATION")
-  fun computeForEditor(editor: Editor, file: PsiFile): List<Pair<TextRange, CodeVisionEntry>> = emptyList()
+  fun computeForEditor(editor: Editor, file: PsiFile): List<Pair<TextRange, CodeVisionEntry>>? = null
 
   fun handleClick(editor: Editor, textRange: TextRange, entry: CodeVisionEntry){
     if (entry is CodeVisionPredefinedActionEntry) entry.onClick(editor)

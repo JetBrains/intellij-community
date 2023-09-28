@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.FieldInplaceActionButtonLook;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -26,6 +25,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.SearchFieldWithExtension;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
@@ -204,34 +204,14 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
   @Override
   public @NotNull ActionGroup createActionGroup() {
-    DefaultActionGroup actionGroup = new DefaultActionGroup();
-
-    FilterActionComponent branchComponent = createBranchComponent();
-    if (branchComponent != null) {
-      actionGroup.add(branchComponent);
-    }
-
-    FilterActionComponent userComponent = createUserComponent();
-    if (userComponent != null) {
-      actionGroup.add(userComponent);
-    }
-
-    FilterActionComponent dateComponent = createDateComponent();
-    if (dateComponent != null) {
-      actionGroup.add(dateComponent);
-    }
-
-    FilterActionComponent structureFilterComponent = createStructureFilterComponent();
-    if (structureFilterComponent != null) {
-      actionGroup.add(structureFilterComponent);
-    }
-
-    return actionGroup;
+    List<AnAction> actions = ContainerUtil.packNullables(createBranchComponent(), createUserComponent(), createDateComponent(),
+                                                         createStructureFilterComponent());
+    return new DefaultActionGroup(actions);
   }
 
   @Override
   public @NotNull VcsLogFilterCollection getFilters() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return VcsLogFilterObject.collection(myBranchFilterModel.getBranchFilter(), myBranchFilterModel.getRevisionFilter(),
                                          myBranchFilterModel.getRangeFilter(),
                                          myTextFilterModel.getFilter1(), myTextFilterModel.getFilter2(),
@@ -241,7 +221,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
   @Override
   public void setFilters(@NotNull VcsLogFilterCollection collection) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myBranchFilterModel.setFilter(new BranchFilters(collection.get(BRANCH_FILTER),
                                                     collection.get(REVISION_FILTER),
                                                     collection.get(RANGE_FILTER)));
@@ -252,22 +232,22 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     myUserFilterModel.setFilter(collection.get(USER_FILTER));
   }
 
-  protected @Nullable FilterActionComponent createBranchComponent() {
+  protected @Nullable AnAction createBranchComponent() {
     return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.branch.filter.action.text"),
                                      () -> new BranchFilterPopupComponent(myUiProperties, myBranchFilterModel).initUi());
   }
 
-  protected @Nullable FilterActionComponent createUserComponent() {
+  protected @Nullable AnAction createUserComponent() {
     return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.user.filter.action.text"),
                                      () -> new UserFilterPopupComponent(myUiProperties, myLogData, myUserFilterModel).initUi());
   }
 
-  protected @Nullable FilterActionComponent createDateComponent() {
+  protected @Nullable AnAction createDateComponent() {
     return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.date.filter.action.text"),
                                      () -> new DateFilterPopupComponent(myDateFilterModel).initUi());
   }
 
-  protected @Nullable FilterActionComponent createStructureFilterComponent() {
+  protected @Nullable AnAction createStructureFilterComponent() {
     return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.path.filter.action.text"),
                                      () -> new StructureFilterPopupComponent(myUiProperties, myStructureFilterModel,
                                                                              myColorManager).initUi());

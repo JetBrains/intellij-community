@@ -5,6 +5,12 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.platform.ml.impl.turboComplete.KindVariety
 import org.jetbrains.kotlin.idea.KotlinLanguage
 
+/**
+ * Represents categories of completion variants in Kotlin K1 code completion.
+ *
+ * The names are used later to create [com.intellij.platform.ml.impl.turboComplete.KindCollector]s,
+ * which are later reordered via [com.intellij.turboComplete.SortingExecutor].
+ */
 enum class KotlinCompletionKindName {
   DSL_FUNCTION,
   SMART_ADDITIONAL_ITEM,

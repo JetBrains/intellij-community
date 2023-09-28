@@ -20,7 +20,7 @@ enum class TransferableIdeVersionId {
 
 enum class TransferableLafId {
   Light,
-  Darcula,
+  Dark,
   HighContrast
 }
 

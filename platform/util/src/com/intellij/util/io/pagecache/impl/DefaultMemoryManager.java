@@ -59,6 +59,9 @@ public final class DefaultMemoryManager implements IMemoryManager {
   }
 
   private ByteBuffer tryReserveInHeap(int bufferSize) {
+    if (heapCapacityBytes == 0) {
+      return null;
+    }
     while (true) {
       long used = heapBytesUsed.get();
       if (used + bufferSize > heapCapacityBytes) {

@@ -55,6 +55,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -750,7 +751,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       }
 
       Disposer.register(popup, popup.myListPopup);
-      Disposer.register(popup.myListPopup, ApplicationManager.getApplication()::assertIsDispatchThread);
+      Disposer.register(popup.myListPopup, ThreadingAssertions::assertEventDispatchThread);
     }
 
     private static void highlightOnHover(@NotNull IntentionActionWithTextCaching actionWithCaching, @NotNull HighlightingContext context,

@@ -18,7 +18,6 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
@@ -29,14 +28,16 @@ import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractManyChildrenOfParent
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractManyParentOfChild
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractOneParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class CustomPackagingElementEntityImpl(val dataSource: CustomPackagingElementEntityData) : CustomPackagingElementEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class CustomPackagingElementEntityImpl(private val dataSource: CustomPackagingElementEntityData) : CustomPackagingElementEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
                                                                                 PackagingElementEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
@@ -47,7 +48,7 @@ open class CustomPackagingElementEntityImpl(val dataSource: CustomPackagingEleme
                                                                             PackagingElementEntity::class.java,
                                                                             ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
       ARTIFACT_CONNECTION_ID,
       CHILDREN_CONNECTION_ID,
@@ -77,6 +78,7 @@ open class CustomPackagingElementEntityImpl(val dataSource: CustomPackagingEleme
     return connections
   }
 
+
   class Builder(result: CustomPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<CustomPackagingElementEntity, CustomPackagingElementEntityData>(
     result), CustomPackagingElementEntity.Builder {
     constructor() : this(CustomPackagingElementEntityData())
@@ -105,7 +107,7 @@ open class CustomPackagingElementEntityImpl(val dataSource: CustomPackagingEleme
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -293,8 +295,8 @@ class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElem
   lateinit var typeId: String
   lateinit var propertiesXmlTag: String
 
-  fun isTypeIdInitialized(): Boolean = ::typeId.isInitialized
-  fun isPropertiesXmlTagInitialized(): Boolean = ::propertiesXmlTag.isInitialized
+  internal fun isTypeIdInitialized(): Boolean = ::typeId.isInitialized
+  internal fun isPropertiesXmlTagInitialized(): Boolean = ::propertiesXmlTag.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<CustomPackagingElementEntity> {
     val modifiable = CustomPackagingElementEntityImpl.Builder(null)
@@ -311,6 +313,10 @@ class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElem
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.java.workspace.entities.CustomPackagingElementEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -370,9 +376,5 @@ class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElem
     result = 31 * result + typeId.hashCode()
     result = 31 * result + propertiesXmlTag.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

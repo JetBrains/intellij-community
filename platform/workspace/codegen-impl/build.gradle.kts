@@ -50,5 +50,5 @@ publishing {
 
 dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect")
-  implementation("com.jetbrains.intellij.platform:workspace-model-codegen:0.0.3")
+  implementation("com.jetbrains.intellij.platform:workspace-model-codegen:0.0.5")
 }

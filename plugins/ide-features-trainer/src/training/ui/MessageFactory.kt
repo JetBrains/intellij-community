@@ -77,7 +77,7 @@ internal object MessageFactory {
           "callback" -> {
             val id = content.getAttributeValue("id")
             if (id != null) {
-              val callback = LearningUiManager.getAndClearCallback(id.toInt())
+              val callback = LearningUiManager.getAndClearCallback(id)
               if (callback != null) {
                 LinkTextPart(text, callback)
               }
@@ -142,7 +142,7 @@ internal object MessageFactory {
           "callback" -> {
             val id = content.getAttributeValue("id")
             if (id != null) {
-              val callback = LearningUiManager.getAndClearCallback(id.toInt())
+              val callback = LearningUiManager.getAndClearCallback(id)
               if (callback != null) {
                 this.link(text, callback)
               }

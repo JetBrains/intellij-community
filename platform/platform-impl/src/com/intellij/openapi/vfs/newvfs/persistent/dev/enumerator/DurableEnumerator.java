@@ -70,7 +70,8 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
   @Override
   public void close() throws IOException {
     ExceptionUtil.runAllAndRethrowAllExceptions(
-      new IOException("Can't close " + valuesLog + "/" + valueHashToId),
+      IOException.class,
+      () -> new IOException("Can't close " + valuesLog + "/" + valueHashToId),
       valuesLog::close,
       valueHashToId::close
     );

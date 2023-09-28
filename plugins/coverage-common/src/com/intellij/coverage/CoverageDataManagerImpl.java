@@ -628,6 +628,17 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     }
   }
 
+  public void fireCoverageDataCalculated() {
+    for (CoverageSuiteListener listener : myListeners) {
+      listener.coverageDataCalculated();
+    }
+  }
+
+  @Override
+  public void coverageDataCalculated() {
+    fireCoverageDataCalculated();
+  }
+
   @Override
   public boolean isSubCoverageActive() {
     return mySubCoverageIsActive;

@@ -813,11 +813,17 @@ open class FileEditorManagerImpl(
     }
     else {
       val context = ClientId.coroutineContext()
-      return runWithModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
+      val composite = runWithModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
         withContext(context) {
           openFileAsync(window = windowToOpenIn, file = getOriginalFile(file), entry = null, options = options)
         }
       }
+      if (composite is EditorComposite && options.requestFocus && !ApplicationManager.getApplication().isUnitTestMode) {
+        // NOTE: it is a workaround on problem with runWithModalProgressBlocking which does not respect focus requests.
+        // It can be removed when the problem is solved. Original bug: IDEA-327729
+        composite.preferredFocusedComponent?.requestFocusInWindow()
+      }
+      return composite
     }
   }
 
@@ -1329,11 +1335,17 @@ open class FileEditorManagerImpl(
     }
     else {
       val context = ClientId.coroutineContext()
-      runWithModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
+      val composite = runWithModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
         withContext(context) {
-          openFile(file = file, options = openOptions).allEditors
+          openFile(file = file, options = openOptions)
         }
       }
+      if (composite is EditorComposite && openOptions.requestFocus && !ApplicationManager.getApplication().isUnitTestMode) {
+        // NOTE: it is a workaround on problem with runWithModalProgressBlocking which does not respect focus requests.
+        // It can be removed when the problem is solved. Original bug: IDEA-327729
+        composite.preferredFocusedComponent?.requestFocusInWindow()
+      }
+      composite.allEditors
     }
 
     for (editor in result) {

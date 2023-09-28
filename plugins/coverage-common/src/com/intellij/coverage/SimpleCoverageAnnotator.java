@@ -30,6 +30,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
   private final Map<String, FileCoverageInfo> myFileCoverageInfos = new HashMap<>();
   private final Map<String, DirCoverageInfo> myTestDirCoverageInfos = new HashMap<>();
   private final Map<String, DirCoverageInfo> myDirCoverageInfos = new HashMap<>();
+  private final Set<String> myTestDirectories = new HashSet<>();
 
   public SimpleCoverageAnnotator(Project project) {
     super(project);
@@ -42,6 +43,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     myFileCoverageInfos.clear();
     myTestDirCoverageInfos.clear();
     myDirCoverageInfos.clear();
+    myTestDirectories.clear();
   }
 
   @Nullable
@@ -49,12 +51,13 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
                                                @NotNull final CoverageSuitesBundle currentSuite) {
     final VirtualFile dir = directory.getVirtualFile();
 
-    final boolean isInTestContent = ReadAction.compute(() -> TestSourcesFilter.isTestSources(dir, directory.getProject()));
+    final String path = normalizeFilePath(dir.getPath());
+
+    final boolean isInTestContent = myTestDirectories.contains(path);
+
     if (!currentSuite.isTrackTestFolders() && isInTestContent) {
       return null;
     }
-
-    final String path = normalizeFilePath(dir.getPath());
 
     return isInTestContent ? myTestDirCoverageInfos.get(path) : myDirCoverageInfos.get(path);
   }
@@ -194,7 +197,12 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     }
     visitedDirs.add(dir);
 
+    final String dirPath = normalizeFilePath(dir.getPath());
+
     final boolean isInTestSrcContent = ReadAction.compute(() -> TestSourcesFilter.isTestSources(dir, getProject()));
+    if (isInTestSrcContent) {
+      myTestDirectories.add(dirPath);
+    }
 
     // Don't count coverage for tests folders if track test folders is switched off
     if (!trackTestFolders && isInTestSrcContent) {
@@ -247,7 +255,6 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
       return null;
     }
 
-    final String dirPath = normalizeFilePath(dir.getPath());
     if (isInTestSrcContent) {
       annotator.annotateTestDirectory(dirPath, dirCoverageInfo);
     }

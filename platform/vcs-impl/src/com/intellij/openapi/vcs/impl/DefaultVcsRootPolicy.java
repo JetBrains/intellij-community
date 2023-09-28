@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Set;
 
 public abstract class DefaultVcsRootPolicy {
   @NotNull protected final Project myProject;
@@ -45,5 +46,13 @@ public abstract class DefaultVcsRootPolicy {
     if (StringUtil.isNotEmpty(vcsManager.haveDefaultMapping())) {
       vcsManager.scheduleMappedRootsUpdate();
     }
+  }
+
+  /**
+   * Schedules new scan for vcs in content roots. Should be called
+   * when {@link DefaultVcsRootPolicy#getDefaultVcsRoots()} collection is changed
+   */
+  protected void scheduleRootsChangeProcessing(Collection<VirtualFile> removed, Collection<VirtualFile> added) {
+    myProject.getService(ModuleVcsDetector.class).scheduleScanForNewContentRoots(removed, added);
   }
 }

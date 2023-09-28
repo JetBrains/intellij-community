@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
-import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.isAlive
@@ -42,7 +42,7 @@ class CodeVisionView(val project: Project) {
   private fun isLensValid(lenses: Map<CodeVisionAnchorKind, List<CodeVisionEntry>>): Boolean = lenses.values.any { it.isNotEmpty() }
 
   fun runWithReusingLenses(action: () -> Unit) {
-    application.assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     usingTrueFlag(CodeVisionView::delayInlayRemoval) {
       //inlaysToDelete are filled here in action() method
       action()

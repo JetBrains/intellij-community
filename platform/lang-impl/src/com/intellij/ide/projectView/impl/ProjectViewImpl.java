@@ -76,6 +76,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
@@ -724,7 +725,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public synchronized void removeProjectPane(@NotNull AbstractProjectViewPane pane) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myUninitializedPanes.remove(pane);
     //assume we are completely initialized here
     @NotNull String idToRemove = pane.getId();
@@ -796,7 +797,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private void doAddPane(@NotNull final AbstractProjectViewPane newPane) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     int index;
     final ContentManager manager = getContentManager();
     for (index = 0; index < manager.getContentCount(); index++) {
@@ -924,7 +925,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   // public for tests
   public synchronized void setupImpl(@NotNull ToolWindow toolWindow, final boolean loadPaneExtensions) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (isInitialized) return;
 
     myActionGroup = new DefaultActionGroup();

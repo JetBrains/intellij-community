@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.ElementManipulators
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection
@@ -25,8 +26,8 @@ import org.junit.Test
 
 class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   @Test
-  fun testVariants() {
-    importProject("""
+  fun testVariants() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -69,7 +70,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testResolutionInsideTheProject() {
+  fun testResolutionInsideTheProject() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -100,8 +101,8 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testResolutionOutsideOfTheProject() {
-    importProject("""
+  fun testResolutionOutsideOfTheProject() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -124,8 +125,8 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testResolvingByRelativePath() {
-    importProject("""
+  fun testResolvingByRelativePath() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -154,8 +155,8 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testResolvingByRelativePathWithProperties() {
-    importProject("""
+  fun testResolvingByRelativePathWithProperties() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -187,7 +188,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testResolvingByRelativePathWhenOutsideOfTheProject() {
+  fun testResolvingByRelativePathWhenOutsideOfTheProject() = runBlocking {
     val parent = createPomFile(myProjectRoot.getParent(),
                                """
                                          <groupId>test</groupId>
@@ -195,7 +196,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                          <version>1</version>
                                          """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -217,7 +218,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDoNotHighlightResolvedParentByRelativePathWhenOutsideOfTheProject() {
+  fun testDoNotHighlightResolvedParentByRelativePathWhenOutsideOfTheProject() = runBlocking {
     createPomFile(myProjectRoot.getParent(),
                   """
                     <groupId>test</groupId>
@@ -231,7 +232,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                                 <version>1</version>
                                                 """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     setPomContent(projectPom,
                   """
@@ -251,7 +252,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testHighlightParentProperties() {
+  fun testHighlightParentProperties() = runBlocking {
     assumeVersionMoreThan("3.5.0")
 
     createProjectPom("""
@@ -289,7 +290,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                        <artifactId>m1</artifactId>
                                        """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     m2 = createModulePom("m2",
                          """
@@ -306,7 +307,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testHighlightParentPropertiesForMavenLess35() {
+  fun testHighlightParentPropertiesForMavenLess35() = runBlocking {
     assumeVersionLessThan("3.5.0")
 
     createProjectPom("""
@@ -344,7 +345,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                       <artifactId>m1</artifactId>
                       """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     val m2 = createModulePom("m2",
                              """
@@ -361,8 +362,8 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testRelativePathCompletion() {
-    importProject("""
+  fun testRelativePathCompletion() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -398,8 +399,8 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testRelativePathCompletion_2() {
-    importProject("""
+  fun testRelativePathCompletion_2() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -438,8 +439,8 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testHighlightingUnknownValues() {
-    importProject("""
+  fun testHighlightingUnknownValues() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -460,7 +461,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testHighlightingAbsentGroupId() {
+  fun testHighlightingAbsentGroupId() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -475,7 +476,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testHighlightingAbsentArtifactId() {
+  fun testHighlightingAbsentArtifactId() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -490,7 +491,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testHighlightingAbsentVersion() {
+  fun testHighlightingAbsentVersion() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -507,8 +508,8 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testHighlightingInvalidRelativePath() {
-    importProject("""
+  fun testHighlightingInvalidRelativePath() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -530,7 +531,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testPathQuickFixForInvalidValue() {
+  fun testPathQuickFixForInvalidValue() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -568,7 +569,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDoNotShowPathQuickFixForValidPath() {
+  fun testDoNotShowPathQuickFixForValidPath() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

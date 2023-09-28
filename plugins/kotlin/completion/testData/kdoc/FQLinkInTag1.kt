@@ -1,5 +1,4 @@
 // FIR_COMPARISON
-// FIR_IDENTICAL
 package importP.source
 
 /**
@@ -8,6 +7,5 @@ package importP.source
 class Referrer
 
 // EXIST: source
-// EXIST_K2: source.
 // ABSENT: Referrer
 

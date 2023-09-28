@@ -9,7 +9,10 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.idea.*;
+import com.intellij.idea.AppExitCodes;
+import com.intellij.idea.AppMode;
+import com.intellij.idea.IdeaLogger;
+import com.intellij.idea.StartupErrorReporter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -35,6 +38,7 @@ import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
+import com.intellij.platform.ide.bootstrap.StartupUtil;
 import com.intellij.psi.util.ReadActionCache;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.ui.ComponentUtil;
@@ -159,8 +163,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   private static void registerFakeServices(ApplicationImpl app) {
     app.registerServiceInstance(TransactionGuard.class, app.myTransactionGuard, ComponentManagerImpl.fakeCorePluginDescriptor);
-    app.registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(),
-                                ComponentManagerImpl.fakeCorePluginDescriptor);
     app.registerServiceInstance(Application.class, app, ComponentManagerImpl.fakeCorePluginDescriptor);
     app.registerServiceInstance(ReadActionCache.class, app.myReadActionCacheImpl, ComponentManagerImpl.fakeCorePluginDescriptor);
   }
@@ -1004,7 +1006,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public <T, E extends Throwable> T runWriteIntentReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
+  public <T, E extends Throwable> T runWriteIntentReadAction(@NotNull ThrowableComputable<T, E> computation) {
     return IdeEventQueue.getInstance().getRwLockHolder().runWriteIntentReadAction(computation);
   }
 
@@ -1048,13 +1050,13 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     }
 
     if (Boolean.TRUE.equals(component.getClientProperty(WAS_EVER_SHOWN))) {
-      assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
     }
     else {
       JRootPane root = component.getRootPane();
       if (root != null) {
         component.putClientProperty(WAS_EVER_SHOWN, Boolean.TRUE);
-        assertIsDispatchThread();
+        ThreadingAssertions.assertEventDispatchThread();
       }
     }
   }
@@ -1434,7 +1436,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   @ApiStatus.Internal
   public static void postInit(@NotNull ApplicationImpl app) {
     app.myLock = IdeEventQueue.getInstance().getRwLockHolder().lock;
-
     AtomicBoolean reported = new AtomicBoolean();
     IdeEventQueue.getInstance().addPostprocessor(e -> {
       if (app.isWriteAccessAllowed() && reported.compareAndSet(false, true)) {

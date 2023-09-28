@@ -305,11 +305,6 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     return JavaProjectUtil.getEffectiveJdk(project)?.let { JavaSdk.getInstance().getVersionString(it) } ?: "none"
   }
 
-  private fun getCallBackActionId(@Suppress("SameParameterValue") actionId: String): Int {
-    val action = getActionById(actionId)
-    return LearningUiManager.addCallback { invokeActionForFocusContext(action) }
-  }
-
   private fun LessonContext.debugTasks() {
     clearBreakpoints()
 

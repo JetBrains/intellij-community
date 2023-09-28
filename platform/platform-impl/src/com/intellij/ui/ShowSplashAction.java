@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.event.*;
 import java.util.Objects;
 
-import static com.intellij.idea.SplashManagerKt.loadSplashImage;
+import static com.intellij.platform.ide.bootstrap.SplashManagerKt.loadSplashImage;
 
 /**
  * @author Konstantin Bulenkov

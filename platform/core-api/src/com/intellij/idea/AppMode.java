@@ -18,6 +18,8 @@ public final class AppMode {
   public static final String DONT_REOPEN_PROJECTS = "dontReopenProjects";
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String CWM_HOST_COMMAND = "cwmHost";
+  /** @see com.jetbrains.rdserver.unattendedHost.HostWithClientSplitModeStarter */
+  public static final String SPLIT_MODE_COMMAND = "splitMode";
   public static final String CWM_HOST_NO_LOBBY_COMMAND = "cwmHostNoLobby";
   public static final String REMOTE_DEV_HOST_COMMAND = "remoteDevHost";
 
@@ -77,7 +79,8 @@ public final class AppMode {
 
     isRemoteDevHost = CWM_HOST_COMMAND.equals(args.get(0)) ||
                       CWM_HOST_NO_LOBBY_COMMAND.equals(args.get(0)) ||
-                      REMOTE_DEV_HOST_COMMAND.equals(args.get(0));
+                      REMOTE_DEV_HOST_COMMAND.equals(args.get(0)) ||
+                      SPLIT_MODE_COMMAND.equals(args.get(0));
 
     for (String arg : args) {
       if (DISABLE_NON_BUNDLED_PLUGINS.equalsIgnoreCase(arg)) {

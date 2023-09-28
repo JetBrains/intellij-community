@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
+import com.intellij.platform.testFramework.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 abstract class BuildViewMessagesImportingTestCase : GradleImportingTestCase() {
@@ -25,6 +27,16 @@ abstract class BuildViewMessagesImportingTestCase : GradleImportingTestCase() {
     ThrowableRunnable { super.tearDown() }
   ).run()
 
+  protected fun SimpleTreeAssertion.Node<Nothing?>.assertNodeWithDeprecatedGradleWarning() {
+    if (GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentGradleVersion)) {
+      assertNode("Gradle ${currentGradleVersion.version} support can be dropped in the next release")
+    }
+  }
+
+  protected fun assertSyncViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
+    buildViewTestFixture.assertSyncViewTree(assert)
+  }
+
   protected fun assertSyncViewTreeEquals(executionTreeText: String) {
     buildViewTestFixture.assertSyncViewTreeEquals(executionTreeText)
   }
@@ -35,6 +47,10 @@ abstract class BuildViewMessagesImportingTestCase : GradleImportingTestCase() {
 
   protected fun assertSyncViewTreeEquals(treeTestPresentationChecker: (String?) -> Unit) {
     buildViewTestFixture.assertSyncViewTreeEquals(treeTestPresentationChecker)
+  }
+
+  protected fun assertBuildViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
+    buildViewTestFixture.assertBuildViewTree(assert)
   }
 
   protected fun assertBuildViewTreeEquals(executionTree: String) {

@@ -45,7 +45,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
   public static final String DEFAULT_HOUSEKEEPER_THREAD_NAME = "FilePageCache housekeeper";
 
   /** Initial size of page table hashmap in {@linkplain PagesTable} */
-  private static final int INITIAL_PAGES_TABLE_SIZE = 1 << 8;
+  private static final int INITIAL_PAGES_TABLE_SIZE = 256;
 
   /** Before housekeeper thread created */
   private static final int STATE_NOT_STARTED = 0;
@@ -122,14 +122,25 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
 
   public FilePageCacheLockFree(final long cacheCapacityBytes) {
-    this(cacheCapacityBytes, r -> new Thread(r, DEFAULT_HOUSEKEEPER_THREAD_NAME));
+    this(cacheCapacityBytes, cacheCapacityBytes / 10);
+  }
+
+  public FilePageCacheLockFree(final long cacheCapacityBytes,
+                               final long heapCapacityBytes) {
+    this(cacheCapacityBytes, heapCapacityBytes, r -> new Thread(r, DEFAULT_HOUSEKEEPER_THREAD_NAME));
   }
 
   public FilePageCacheLockFree(final long cacheCapacityBytes,
                                final ThreadFactory maintenanceThreadFactory) {
+    this(cacheCapacityBytes, cacheCapacityBytes / 10, maintenanceThreadFactory);
+  }
+
+  public FilePageCacheLockFree(final long cacheCapacityBytes,
+                               final long heapCapacityBytes,
+                               final ThreadFactory maintenanceThreadFactory) {
     this.memoryManager = new DefaultMemoryManager(
       cacheCapacityBytes,
-      cacheCapacityBytes / 10, // allow allocating up to 10% buffers from the heap
+      heapCapacityBytes, // allow allocating up to .. buffers from the heap
       statistics
     );
 
@@ -629,7 +640,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     memoryManager.releaseBuffer(pageSize, pageBuffer);
   }
 
-  void waitForHousekeepingTurn(int maxWaitMs){
+  void waitForHousekeepingTurn(int maxWaitMs) {
     pagesToProbablyReclaim.waitForRefill(maxWaitMs);
   }
 
@@ -1148,7 +1159,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       }
 
       return Math.max(
-        pagesAllocatedInTurn * safetyMarginFactor.value() / 10  + 1,
+        pagesAllocatedInTurn * safetyMarginFactor.value() / 10 + 1,
         1
       );
     }

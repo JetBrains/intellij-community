@@ -25,15 +25,23 @@ class K2MoveFilesHandler : MoveFileHandler() {
         searchInNonJavaFiles: Boolean
     ): List<UsageInfo> {
         require(psiFile is KtFile) { "Can only find usages from Kotlin files" }
-        val newPkgName = JavaDirectoryService.getInstance().getPackage(newParent)?.kotlinFqName ?: return emptyList()
-        return K2MoveSource.FileSource(psiFile).findusages(searchInComments, searchInNonJavaFiles, newPkgName)
+        return if (psiFile.requiresPackageUpdate) {
+            val newPkgName = JavaDirectoryService.getInstance().getPackage(newParent)?.kotlinFqName ?: return emptyList()
+            K2MoveSource.FileSource(psiFile).findusages(searchInComments, searchInNonJavaFiles, newPkgName)
+        } else emptyList() // don't need to update usages when package doesn't change
     }
 
     override fun prepareMovedFile(file: PsiFile, moveDestination: PsiDirectory, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
         require(file is KtFile) { "Can only prepare Kotlin files" }
-        file.updatePackageDirective(moveDestination)
+        if (file.requiresPackageUpdate) file.updatePackageDirective(moveDestination)
         val declarations = file.declarationsForUsageSearch
-        declarations.forEach { oldToNewMap[it] = it }
+        declarations.forEach { oldToNewMap[it] = it } // to pass files that are moved through MoveFileHandler API
+    }
+
+    private val KtFile.requiresPackageUpdate: Boolean get() {
+        val containingDirectory = containingDirectory ?: return true
+        val directoryPkg = JavaDirectoryService.getInstance().getPackage(containingDirectory)
+        return directoryPkg?.kotlinFqName == packageFqName
     }
 
     private fun KtFile.updatePackageDirective(destination: PsiDirectory) {

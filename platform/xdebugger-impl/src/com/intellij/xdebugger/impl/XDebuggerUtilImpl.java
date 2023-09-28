@@ -68,8 +68,8 @@ import org.jetbrains.concurrency.Promises;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.event.MouseEvent;
 import java.util.*;
-import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -414,6 +414,26 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   public static boolean removeBreakpointWithConfirmation(final XBreakpointBase<?, ?, ?> breakpoint) {
     return removeBreakpointWithConfirmation(breakpoint.getProject(), breakpoint);
+  }
+
+  public static void reshowInlayRunToCursor(@NotNull AnActionEvent e) {
+    if (!(e.getInputEvent() instanceof MouseEvent)) {
+      return;
+    }
+
+    Project project = e.getProject();
+    if (project == null) {
+      return;
+    }
+
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    if(editor == null) {
+      return;
+    }
+
+    if (XDebuggerManager.getInstance(project) instanceof XDebuggerManagerImpl debuggerManagerImpl) {
+      debuggerManagerImpl.reshowInlayToolbar(editor);
+    }
   }
 
   /**

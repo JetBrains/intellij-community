@@ -4,6 +4,9 @@ package com.intellij.coverage;
 import com.intellij.CommonBundle;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.coverage.analysis.AnalysisUtils;
+import com.intellij.coverage.analysis.JavaCoverageAnnotator;
+import com.intellij.coverage.analysis.JavaCoverageClassesEnumerator;
 import com.intellij.coverage.listeners.java.CoverageListener;
 import com.intellij.coverage.view.CoverageViewExtension;
 import com.intellij.coverage.view.CoverageViewManager;
@@ -473,8 +476,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(dataManager, module, includeTests);
 
 
-    final String packageFQName = getPackageName(srcFile);
-    final String packageVmName = packageFQName.replace('.', '/');
+    String packageVmName = AnalysisUtils.fqnToInternalName(getPackageName(srcFile));
 
     final List<File> children = new ArrayList<>();
     for (VirtualFile root : roots) {
@@ -774,7 +776,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     return new JavaCoverageViewExtension((JavaCoverageAnnotator)getCoverageAnnotator(project), project, suiteBundle, stateBean);
   }
 
-  public static boolean isSourceMapNeeded(RunConfigurationBase configuration) {
+  public static boolean isSourceMapNeeded(RunConfigurationBase<?> configuration) {
     for (final JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
       if (extension.isSourceMapNeeded(configuration)) {
         return true;

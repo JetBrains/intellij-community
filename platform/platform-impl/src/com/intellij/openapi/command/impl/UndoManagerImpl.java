@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -802,7 +803,7 @@ public final class UndoManagerImpl extends UndoManager {
 
   @ApiStatus.Internal
   public void clearDocumentReferences(@NotNull Document document) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     for (ClientState state : getAllClientStates()) {
       state.myUndoStacksHolder.clearDocumentReferences(document);
       state.myRedoStacksHolder.clearDocumentReferences(document);

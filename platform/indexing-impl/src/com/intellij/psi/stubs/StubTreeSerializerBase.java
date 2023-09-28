@@ -198,7 +198,7 @@ abstract class StubTreeSerializerBase<SerializationState> {
         int serializerId = DataInputOutputUtil.readINT(inputStream);
         ObjectStubSerializer<?, Stub> serializer = getClassByIdLocal(serializerId, null, state);
 
-        int start = serializer.isAlwaysEmpty() ? 0 : DataInputOutputUtil.readINT(inputStream);
+        int start = serializer instanceof EmptyStubSerializer ? 0 : DataInputOutputUtil.readINT(inputStream);
 
         allStarts.set(start);
 
@@ -249,7 +249,7 @@ abstract class StubTreeSerializerBase<SerializationState> {
     for (int i = 1; i < stubList.size(); i++) {
       StubBase<?> stub = stubList.get(i);
       ObjectStubSerializer<Stub, Stub> serializer = writeSerializerId(stub, out, state);
-      if (!serializer.isAlwaysEmpty()) {
+      if (!(serializer instanceof EmptyStubSerializer)) {
         DataInputOutputUtil.writeINT(out, interner.internBytes(serializeStub(serializer, storage, stub, tempBuffer)));
       }
       int count = stubList.getChildrenCount(stub.id);

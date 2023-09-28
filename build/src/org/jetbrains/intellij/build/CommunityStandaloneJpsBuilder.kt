@@ -29,6 +29,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
     "intellij.platform.util.diff",
     "intellij.platform.util.rt.java8",
     "intellij.platform.util.trove",
+    "intellij.platform.util.nanoxml",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "util.jar", reason = null) })
 
   layout.withModule("intellij.platform.util.rt", "util_rt.jar")
@@ -74,7 +75,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
   layout.withModule("intellij.space.java.jps", "space-java-jps.jar")
 
   for (it in listOf(
-    "jna", "OroMatcher", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
+    "jna", "OroMatcher", "ASM", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
     "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
     "jetbrains-annotations", "gson", "jps-javac-extension", "fastutil-min", "kotlin-stdlib",
     "commons-lang3", "maven-resolver-provider", "netty-buffer", "aalto-xml"

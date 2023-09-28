@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.*;
 import static com.intellij.lang.java.parser.BasicJavaParserUtil.*;
-import static com.intellij.psi.impl.source.BasicElementTypes.JAVA_COMMENT_OR_WHITESPACE_BIT_SET;
+import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET;
 
 public class BasicStatementParser {
   private static final TokenSet YIELD_STMT_INDICATOR_TOKENS = TokenSet.create(
@@ -460,7 +460,7 @@ public class BasicStatementParser {
   private static IElementType getLastToken(PsiBuilder builder) {
     IElementType token;
     int offset = -1;
-    while (JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains((token = builder.rawLookup(offset)))) offset--;
+    while (BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains((token = builder.rawLookup(offset)))) offset--;
     return token;
   }
 

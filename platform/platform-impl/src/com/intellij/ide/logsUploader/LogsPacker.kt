@@ -16,9 +16,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.withPushPop
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.troubleshooting.TroubleInfoCollector
@@ -28,6 +26,7 @@ import com.intellij.util.io.Compressor
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.net.NetUtils
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -119,12 +118,11 @@ object LogsPacker {
 
   @RequiresBackgroundThread
   @Throws(IOException::class)
-  fun uploadLogs(indicator: ProgressIndicator, project: Project?): String {
-    indicator.withPushPop {
-      indicator.text = IdeBundle.message("uploading.logs.message")
+  suspend fun uploadLogs(project: Project?): String {
+    return indeterminateStep(IdeBundle.message("uploading.logs.message")) {
       val file = packLogs(project)
       val fileName = file.name
-      ProgressManager.checkCanceled()
+      checkCancelled()
       val responseJson = HttpRequests.post("$UPLOADS_SERVICE_URL/sign", HttpRequests.JSON_CONTENT_TYPE)
         .accept(HttpRequests.JSON_CONTENT_TYPE)
         .connect { request ->
@@ -143,7 +141,7 @@ object LogsPacker {
       val uploadUrl = responseJson["url"] as String
       val folderName = responseJson["folderName"] as String
       val headers = responseJson["headers"] as Map<*, *>
-      ProgressManager.checkCanceled()
+      checkCancelled()
       HttpRequests.put(uploadUrl, "application/octet-stream")
         .productNameAsUserAgent()
         .tuner { urlConnection ->
@@ -157,14 +155,19 @@ object LogsPacker {
           http.setFixedLengthStreamingMode(length)
           http.outputStream.use { outputStream ->
             file.inputStream().buffered(64 * 1024).use { inputStream ->
-              NetUtils.copyStreamContent(indicator, inputStream, outputStream, length)
+              this.launch {
+                coroutineToIndicator {
+                  val indicator = ProgressManager.getGlobalProgressIndicator()
+                  NetUtils.copyStreamContent(indicator, inputStream, outputStream, length)
+                }
+              }
             }
           }
         }
 
       val message = IdeBundle.message("collect.logs.notification.sent.success", UPLOADS_SERVICE_URL, folderName)
       Notification(CollectZippedLogsAction.NOTIFICATION_GROUP, message, NotificationType.INFORMATION).notify(project)
-      return folderName
+      return@indeterminateStep folderName
     }
   }
 

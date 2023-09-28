@@ -244,7 +244,8 @@ public class AppendOnlyLogOverMMappedFileTest {
 
   private static @NotNull AppendOnlyLogOverMMappedFile openLog(@NotNull Path storageFile) throws IOException {
     return AppendOnlyLogFactory
-      .withPageSize(PAGE_SIZE)
+      .withDefaults()
+      .pageSize(PAGE_SIZE)
       .ignoreDataFormatVersion()
       .open(storageFile);
   }

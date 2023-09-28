@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiField;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -191,7 +192,7 @@ public class BreakpointManager {
 
   @Nullable
   public LineBreakpoint<?> addLineBreakpoint(Document document, int lineIndex, Consumer<JavaLineBreakpointProperties> setupAction) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (!LineBreakpoint.canAddLineBreakpoint(myProject, document, lineIndex)) {
       return null;
     }
@@ -228,7 +229,7 @@ public class BreakpointManager {
 
   @Nullable
   public FieldBreakpoint addFieldBreakpoint(Document document, int lineIndex, String fieldName) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     XLineBreakpoint xBreakpoint = addXLineBreakpoint(JavaFieldBreakpointType.class, document, lineIndex);
     Breakpoint javaBreakpoint = getJavaBreakpoint(xBreakpoint);
     if (javaBreakpoint instanceof FieldBreakpoint fieldBreakpoint) {
@@ -241,7 +242,7 @@ public class BreakpointManager {
 
   @Nullable
   public ExceptionBreakpoint addExceptionBreakpoint(@NotNull final String exceptionClassName, final String packageName) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     final JavaExceptionBreakpointType type = XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType.class);
     return WriteAction.compute(() -> {
       XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint = XDebuggerManager.getInstance(myProject).getBreakpointManager()
@@ -259,7 +260,7 @@ public class BreakpointManager {
 
   @Nullable
   public MethodBreakpoint addMethodBreakpoint(Document document, int lineIndex) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     XLineBreakpoint xBreakpoint = addXLineBreakpoint(JavaMethodBreakpointType.class, document, lineIndex);
     if (getJavaBreakpoint(xBreakpoint) instanceof MethodBreakpoint methodBreakpoint) {

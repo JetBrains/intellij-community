@@ -10,7 +10,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
@@ -30,6 +29,7 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -77,7 +77,7 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
     super(new BorderLayout());
     myProvider = rootNode.getProvider();
     myToolWindow = toolWindow;
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myProject = project;
 
     myProject.getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {

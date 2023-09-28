@@ -44,6 +44,7 @@ import com.intellij.util.LazyInitializer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageDocument.ScaledImageProvider;
@@ -72,6 +73,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Objects;
 
 /**
  * Image editor UI
@@ -156,7 +158,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       actionToolbar.setTargetComponent(this);
 
       toolbarPanel = actionToolbar.getComponent();
-      toolbarPanel.setBackground(JBColor.lazy(() -> getBackground()));
+      toolbarPanel.setBackground(JBColor.lazy(() -> Objects.requireNonNullElse(getBackground(), UIUtil.getPanelBackground())));
       toolbarPanel.addMouseListener(new FocusRequester());
     }
 
@@ -323,6 +325,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
     ImageContainerPane(final ImageComponent imageComponent) {
       this.imageComponent = imageComponent;
+      setLayout(new Layout());
       add(imageComponent);
 
       putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {
@@ -348,14 +351,31 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     }
 
     @Override
-    public void invalidate() {
-      centerComponents();
-      super.invalidate();
-    }
-
-    @Override
     public Dimension getPreferredSize() {
       return imageComponent.getSize();
+    }
+
+    private class Layout implements LayoutManager {
+      @Override
+      public void addLayoutComponent(String name, Component comp) { }
+
+      @Override
+      public void removeLayoutComponent(Component comp) { }
+
+      @Override
+      public Dimension preferredLayoutSize(Container parent) {
+        return imageComponent.getPreferredSize();
+      }
+
+      @Override
+      public Dimension minimumLayoutSize(Container parent) {
+        return imageComponent.getMinimumSize();
+      }
+
+      @Override
+      public void layoutContainer(Container parent) {
+        centerComponents();
+      }
     }
   }
 

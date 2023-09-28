@@ -27,7 +27,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
   @NonNls
   static final Map<BuilderType, Set<String>> returnSelfNames =
     Map.of(BuilderType.ABSTRACT_STRING_BUILDER,
-           Set.of("append", "appendCodePoint", "delete", "deleteCharAt", "insert", "replace", "reverse"),
+           Set.of("append", "appendCodePoint", "delete", "deleteCharAt", "insert", "replace", "reverse", "repeat"),
            BuilderType.STRING_JOINER, Set.of("add", "merge", "setEmptyValue"));
   private static final String STRING_JOINER = "java.util.StringJoiner";
 
@@ -211,7 +211,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     @NonNls
     private static final Map<BuilderType, Set<String>> updateNames =
       Map.of(BuilderType.ABSTRACT_STRING_BUILDER,
-             Set.of("append", "appendCodePoint", "delete", "deleteCharAt", "insert", "replace", "reverse", "setCharAt", "setLength"),
+             Set.of("append", "appendCodePoint", "delete", "deleteCharAt", "insert", "replace", "reverse", "setCharAt", "setLength", "repeat"),
              BuilderType.STRING_JOINER, Set.of("add", "merge", "setEmptyValue"));
 
     @NotNull

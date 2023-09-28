@@ -13,7 +13,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.impl.source.BasicElementTypes.JAVA_PLAIN_COMMENT_BIT_SET;
+import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_PLAIN_COMMENT_BIT_SET;
 import static com.intellij.psi.impl.source.BasicJavaDocElementType.DOC_COMMENT;
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
@@ -43,7 +43,7 @@ public class IfConditionFixer implements Fixer {
             innerComment = lastChild.getText();
           }
           else if (BasicJavaAstTreeUtil.is(lastChild, DOC_COMMENT) ||
-                   BasicJavaAstTreeUtil.is(lastChild, JAVA_PLAIN_COMMENT_BIT_SET)
+                   BasicJavaAstTreeUtil.is(lastChild, BASIC_JAVA_PLAIN_COMMENT_BIT_SET)
           ) {
             lastComment = lastChild.getText();
           }

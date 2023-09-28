@@ -9,12 +9,25 @@ import com.intellij.driver.model.OnDispatcher
 interface Editor {
   fun getDocument(): Document
   fun getProject(): Project
+  fun getCaretModel(): CaretModel
 }
 
 @Remote("com.intellij.openapi.editor.Document")
 interface Document {
   fun getText(): String
   fun setText(text: String)
+}
+
+@Remote("com.intellij.openapi.editor.CaretModel")
+interface CaretModel {
+  fun moveToLogicalPosition(position: LogicalPosition)
+}
+
+@Remote("com.intellij.openapi.editor.LogicalPosition")
+interface LogicalPosition
+
+fun Driver.logicalPosition(line: Int, column: Int): LogicalPosition {
+  return new(LogicalPosition::class, line, column)
 }
 
 @Remote("com.intellij.openapi.fileEditor.FileEditor")

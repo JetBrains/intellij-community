@@ -2,11 +2,12 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.testFramework.UsefulTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   @Test
-  fun testCompletion() {
+  fun testCompletion() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -22,7 +23,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testInsertDependency() {
+  fun testInsertDependency() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -56,7 +57,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testInsertManagedDependency() {
+  fun testInsertManagedDependency() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -104,7 +105,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testInsertManagedDependencyWithTypeAndClassifier() {
+  fun testInsertManagedDependencyWithTypeAndClassifier() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -169,8 +170,8 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCompletionArtifactIdThenVersion() {
-    importProject("""
+  fun testCompletionArtifactIdThenVersion() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -214,8 +215,8 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCompletionArtifactIdThenGroupIdThenInsertVersion() {
-    importProject("""
+  fun testCompletionArtifactIdThenGroupIdThenInsertVersion() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -255,8 +256,8 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCompletionArtifactIdNonExactmatch() {
-    importProject("""
+  fun testCompletionArtifactIdNonExactmatch() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -281,8 +282,8 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCompletionArtifactIdInsideManagedDependency() {
-    importProject("""
+  fun testCompletionArtifactIdInsideManagedDependency() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -328,8 +329,8 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCompletionArtifactIdWithManagedDependency() {
-    importProject("""
+  fun testCompletionArtifactIdWithManagedDependency() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                       <dependencyManagement>
                         <dependencies>
@@ -392,8 +393,8 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCompletionGroupIdWithManagedDependencyWithTypeAndClassifier() {
-    importProject("""
+  fun testCompletionGroupIdWithManagedDependencyWithTypeAndClassifier() = runBlocking {
+    importProjectAsync("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                     <properties>
                       <ioClassifier>ccc</ioClassifier>  <ioType>ttt</ioType></properties>

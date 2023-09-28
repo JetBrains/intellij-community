@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.ComboboxSpeedSearch
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.SimpleListCellRenderer
@@ -62,6 +63,7 @@ internal fun createRepositoryField(repositories: List<GitRepository>,
   item = repositories.find { repo -> repo.root == defaultRoot } ?: repositories.first()
   renderer = SimpleListCellRenderer.create("") { DvcsUtil.getShortRepositoryName(it) }
   setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0)))
+  ComboboxSpeedSearch.installOn(this)
 }
 
 internal fun createSouthPanelWithOptionsDropDown(southPanel: JComponent, optionDropDown: DropDownLink<*>) = southPanel.apply {

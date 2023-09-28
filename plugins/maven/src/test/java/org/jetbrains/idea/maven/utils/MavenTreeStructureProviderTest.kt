@@ -8,6 +8,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ui.tree.TreeUtil
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import javax.swing.JTree
 
@@ -34,7 +35,7 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testShouldCreateSpecialNode() {
+  fun testShouldCreateSpecialNode() = runBlocking {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -52,7 +53,7 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
                           "  <version>1</version>" +
                           "</parent>")
 
-    importProject()
+    importProjectAsync()
 
     val projectTree = myStructure.createPane().tree
     expand(projectTree)
@@ -66,7 +67,7 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
 
   }
 
-  @Test fun testShouldMarkNodeAsIgnored() {
+  @Test fun testShouldMarkNodeAsIgnored() = runBlocking {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -84,7 +85,7 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
                                           "  <version>1</version>" +
                                           "</parent>")
 
-    importProject()
+    importProjectAsync()
 
     projectsManager.setIgnoredState(listOf(projectsManager.findProject (modulePom)), true)
     val projectTree = myStructure.createPane().tree

@@ -207,7 +207,6 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         }
     }
 
-    @Throws(Exception::class)
     protected open fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
         val mainFilePath = mainFile.name
         val isApplicableExpected: Boolean = isApplicableDirective(fileText)

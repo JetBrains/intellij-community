@@ -45,7 +45,13 @@ public interface MavenServerManager extends Disposable {
                                                boolean alwaysOnline,
                                                @NotNull String multiModuleProjectDirectory);
 
+  /**
+   * @deprecated use createIndexer()
+   */
+  @Deprecated
   MavenIndexerWrapper createIndexer(@NotNull Project project);
+
+  MavenIndexerWrapper createIndexer();
 
   static MavenServerManager getInstance() {
     return ApplicationManager.getApplication().getService(MavenServerManager.class);

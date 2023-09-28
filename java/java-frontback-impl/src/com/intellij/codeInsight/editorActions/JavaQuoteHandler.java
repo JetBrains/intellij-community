@@ -17,8 +17,8 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.impl.source.BasicElementTypes.JAVA_COMMENT_OR_WHITESPACE_BIT_SET;
-import static com.intellij.psi.impl.source.BasicElementTypes.TEXT_LITERALS;
+import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET;
+import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_TEXT_LITERALS;
 import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_LITERAL_EXPRESSION;
 import static com.intellij.psi.impl.source.BasicJavaElementType.REFERENCE_EXPRESSION_SET;
 
@@ -26,12 +26,12 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   private final BasicJavaTokenSet myConcatenableStrings = BasicJavaTokenSet.create(JavaTokenType.STRING_LITERAL);
   private final BasicJavaTokenSet myAppropriateElementTypeForLiteral = BasicJavaTokenSet.orSet(
     BasicJavaTokenSet.create(JavaDocTokenType.ALL_JAVADOC_TOKENS),
-    JAVA_COMMENT_OR_WHITESPACE_BIT_SET, TEXT_LITERALS,
+    BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET, BasicJavaTokenSet.create(BASIC_TEXT_LITERALS),
     BasicJavaTokenSet.create(JavaTokenType.SEMICOLON, JavaTokenType.COMMA, JavaTokenType.RPARENTH, JavaTokenType.RBRACKET,
                              JavaTokenType.RBRACE));
 
   public JavaQuoteHandler() {
-    super(BasicJavaTokenSet.orSet(TEXT_LITERALS, BasicJavaTokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_QUOTE)).toTokenSet());
+    super(BasicJavaTokenSet.orSet(BasicJavaTokenSet.create(BASIC_TEXT_LITERALS), BasicJavaTokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_QUOTE)).toTokenSet());
   }
 
   @Override

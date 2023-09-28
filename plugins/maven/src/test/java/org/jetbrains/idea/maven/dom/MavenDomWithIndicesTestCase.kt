@@ -19,6 +19,7 @@ import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.indices.MavenIndicesManager.MavenIndexerListener
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
@@ -33,7 +34,7 @@ import java.util.concurrent.TimeUnit
 
 abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
   protected var myIndicesFixture: MavenIndicesTestFixture? = null
-  override fun setUp() {
+  override fun setUp() = runBlocking {
     super.setUp()
     maskExtensions(DependencySearchService.EP_NAME,
                    listOf(MavenCompletionProviderFactory()),
@@ -42,7 +43,7 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
     myIndicesFixture!!.setUpBeforeImport()
 
     if (importProjectOnSetup()) {
-      importProject("""
+      importProjectAsync("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <version>1</version>
@@ -73,7 +74,7 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
     }
   }
 
-  protected fun runAndExpectPluginIndexEvents(expectedArtifactIds: Set<String>?, action: Runnable) {
+  suspend protected fun runAndExpectPluginIndexEvents(expectedArtifactIds: Set<String>?, action: suspend () -> Unit) {
     val latch = CountDownLatch(1)
     val artifactIdsToIndex: MutableSet<String> = ConcurrentHashMap.newKeySet()
     artifactIdsToIndex.addAll(expectedArtifactIds!!)
@@ -91,7 +92,7 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
         }
       })
 
-    action.run()
+    action()
 
     try {
       latch.await(1, TimeUnit.MINUTES)
@@ -103,7 +104,7 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
     assertTrue("Maven plugins are not indexed in time: " + java.lang.String.join(", ", artifactIdsToIndex), artifactIdsToIndex.isEmpty())
   }
 
-  protected fun runAndExpectArtifactDownloadEvents(groupId: String, artifactIds: Set<String>, action: Runnable) {
+  protected suspend fun runAndExpectArtifactDownloadEvents(groupId: String, artifactIds: Set<String>, action: suspend () -> Unit) {
     val groupFolder = groupId.replace('.', '/')
     val latch = CountDownLatch(1)
     val actualEvents: MutableSet<String> = ConcurrentHashMap.newKeySet()
@@ -122,7 +123,7 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
       .subscribe(MavenServerConnector.DOWNLOAD_LISTENER_TOPIC, downloadListener)
 
-    action.run()
+    action()
 
     try {
       latch.await(1, TimeUnit.MINUTES)

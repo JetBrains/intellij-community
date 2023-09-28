@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -22,13 +23,14 @@ import java.util.Optional;
  *
  * @author Michail Plushnikov
  */
-public class SuperBuilderClassProcessor extends AbstractClassProcessor {
+@Service
+public final class SuperBuilderClassProcessor extends AbstractClassProcessor {
 
   public SuperBuilderClassProcessor() {
     super(PsiClass.class, LombokClassNames.SUPER_BUILDER);
   }
 
-  protected SuperBuilderHandler getBuilderHandler() {
+  private static SuperBuilderHandler getBuilderHandler() {
     return new SuperBuilderHandler();
   }
 

@@ -11,6 +11,9 @@ import java.util.List;
 
 public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase {
 
+  /**
+   * Inspections that are finished and intentionally disabled.
+   */
   private static final List<String> DISABLED_INSPECTIONS =
     List.of("StatisticsCollectorNotRegistered",
             "UseCouple",
@@ -18,6 +21,10 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
             "PluginXmlI18n",
             "SerializableCtor");
 
+  /**
+   * Inspections which implementation is in progress
+   * or are finished but not battle-tested yet and may require improvements/polishing.
+   */
   private static final List<String> WIP_INSPECTIONS =
     List.of("ExtensionClassShouldBeFinalAndNonPublic",
             "ActionPresentationInstantiatedInCtor",
@@ -28,7 +35,8 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
             "CallingMethodShouldBeRequiresBlockingContext",
             "IncorrectProcessCanceledExceptionHandling",
             "StaticInitializationInExtensions",
-            "ListenerImplementationMustNotBeDisposable");
+            "ListenerImplementationMustNotBeDisposable",
+            "UsePlatformProcessAwaitExit");
 
   /**
    * Validates all DevKit inspections that are disabled by default match the expected known set.
@@ -37,7 +45,7 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
     List<LocalInspectionEP> devkitInspections = ContainerUtil.filter(LocalInspectionEP.LOCAL_INSPECTION.getExtensionList(), ep -> {
       return "DevKit".equals(ep.getPluginDescriptor().getPluginId().getIdString());
     });
-    assertEquals("Mismatch in total inspections, check classpath in test run configuration (intellij.devkit.plugin)", 65,
+    assertEquals("Mismatch in total inspections, check classpath in test run configuration (intellij.devkit.plugin)", 67,
                  devkitInspections.size());
 
     List<LocalInspectionEP> disabledInspections = ContainerUtil.filter(devkitInspections, ep -> !ep.enabledByDefault);

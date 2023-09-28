@@ -77,7 +77,6 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
   protected final Project myProject;
   private final boolean myStartSuspended;
   private final boolean myOnProjectOpen;
-  private final IndexingRequestToken indexingRequest;
   private final @NotNull @NonNls String myIndexingReason;
   private final @NotNull ScanningType myScanningType;
   private final PushedFilePropertiesUpdater myPusher;
@@ -85,6 +84,30 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
   private final @Nullable List<IndexableFilesIterator> myPredefinedIndexableFilesIterators;
   private boolean flushQueueAfterScanning = true;
 
+  @TestOnly
+  public UnindexedFilesScanner(@NotNull Project project) {
+    // If we haven't succeeded to fully scan the project content yet, then we must keep trying to run
+    // file based index extensions for all project files until at least one of UnindexedFilesScanner-s finishes without cancellation.
+    // This is important, for example, for shared indexes: all files must be associated with their locally available shared index chunks.
+    this(project, false, false, null, null, null, ScanningType.FULL);
+  }
+
+  public UnindexedFilesScanner(@NotNull Project project, @Nullable @NonNls String indexingReason) {
+    this(project, false, false, null, null, indexingReason, ScanningType.FULL);
+  }
+
+  public UnindexedFilesScanner(@NotNull Project project,
+                               @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators,
+                               @Nullable DependenciesIndexedStatusService.StatusMark mark,
+                               @Nullable @NonNls String indexingReason) {
+    this(project,
+         false,
+         false,
+         predefinedIndexableFilesIterators,
+         mark,
+         indexingReason,
+         predefinedIndexableFilesIterators == null ? ScanningType.FULL : ScanningType.PARTIAL);
+  }
 
   public UnindexedFilesScanner(@NotNull Project project,
                                boolean startSuspended,
@@ -92,8 +115,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
                                @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators,
                                @Nullable StatusMark mark,
                                @Nullable @NonNls String indexingReason,
-                               @NotNull ScanningType scanningType,
-                               @NotNull IndexingRequestToken indexingRequest) {
+                               @NotNull ScanningType scanningType) {
     super(project);
     myProject = project;
     myStartSuspended = startSuspended;
@@ -108,7 +130,6 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     if (isFullIndexUpdate()) {
       myProject.putUserData(CONTENT_SCANNED, null);
     }
-    this.indexingRequest = indexingRequest;
   }
 
   @Override
@@ -146,8 +167,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
       mergeIterators(myPredefinedIndexableFilesIterators, oldTask.myPredefinedIndexableFilesIterators),
       StatusMark.mergeStatus(myProvidedStatusMark, oldTask.myProvidedStatusMark),
       reason,
-      ScanningType.Companion.merge(oldTask.myScanningType, oldTask.myScanningType),
-      indexingRequest.mergeWith(oldTask.indexingRequest)
+      ScanningType.Companion.merge(oldTask.myScanningType, oldTask.myScanningType)
     );
   }
 
@@ -326,13 +346,12 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
                                             @NotNull CheckCancelOnlyProgressIndicator indicator) {
     if (shouldScanInSmartMode()) {
       // Switch to dumb mode and index
-      myProject.getService(PerProjectIndexingQueue.class).flushNow(myIndexingReason, indexingRequest);
+      myProject.getService(PerProjectIndexingQueue.class).flushNow(myIndexingReason);
     }
     else {
       // Already in dumb mode. Just invoke indexer
       myProject.getService(PerProjectIndexingQueue.class).flushNowSync(indexingReason,
-                                                                       indicator.originalIndicatorOnlyToFlushIndexingQueueSynchronously(),
-                                                                       indexingRequest);
+                                                                       indicator.originalIndicatorOnlyToFlushIndexingQueueSynchronously());
     }
   }
 
@@ -404,6 +423,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     if (providers.isEmpty()) {
       return;
     }
+    IndexingRequestToken indexingRequest = myProject.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
     List<IndexableFileScanner.ScanSession> sessions =
       ContainerUtil.map(IndexableFileScanner.EP_NAME.getExtensionList(), scanner -> scanner.startSession(project));
 
@@ -560,40 +580,50 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
                                                   @Nullable @NonNls String indexingReason) {
     FileBasedIndex.getInstance().loadIndexes();
     ((UserDataHolderEx)project).putUserDataIfAbsent(FIRST_SCANNING_REQUESTED, FirstScanningState.REQUESTED);
-    IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
     if (TestModeFlags.is(INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY)) {
       LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
       List<IndexableFilesIterator> iterators = collectProviders(project, (FileBasedIndexImpl)FileBasedIndex.getInstance()).getFirst();
       for (IndexableFilesIterator iterator : iterators) {
-        new UnindexedFilesScanner(project, startSuspended, true, Collections.singletonList(iterator), null, indexingReason,
-                                  ScanningType.FULL_ON_PROJECT_OPEN, indexingRequest).queue(project);
+        new UnindexedFilesScanner(project,
+                                  startSuspended,
+                                  true,
+                                  Collections.singletonList(iterator),
+                                  null,
+                                  indexingReason,
+                                  ScanningType.FULL_ON_PROJECT_OPEN)
+          .queue();
       }
       project.putUserData(CONTENT_SCANNED, true);
     }
     else {
-      new UnindexedFilesScanner(project, startSuspended, true, null, null, indexingReason, ScanningType.FULL_ON_PROJECT_OPEN,
-                                indexingRequest).
-        queue(project);
+      new UnindexedFilesScanner(project,
+                                startSuspended,
+                                true,
+                                null,
+                                null,
+                                indexingReason,
+                                ScanningType.FULL_ON_PROJECT_OPEN)
+        .queue();
     }
   }
 
-  void queue(@NotNull Project project) {
+  public void queue() {
     // Delay scanning tasks until after all the scheduled dumb tasks are finished.
     // For example, PythonLanguageLevelPusher.initExtra is invoked from RequiredForSmartModeActivity and may submit additional dumb tasks.
     // We want scanning start after all these "extra" dumb tasks are finished.
     // Note that project may become dumb/smart immediately after the check
     // If project becomes smart, in the worst case we'll trigger additional short dumb mode
     // If project becomes dumb, not a problem at all - we'll schedule scanning task out of dumb mode either way.
-    if (DumbService.isDumb(project)) {
+    if (DumbService.isDumb(myProject)) {
       new DumbModeTask() {
         @Override
         public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-          project.getService(UnindexedFilesScannerExecutor.class).submitTask(UnindexedFilesScanner.this);
+          myProject.getService(UnindexedFilesScannerExecutor.class).submitTask(UnindexedFilesScanner.this);
         }
-      }.queue(project);
+      }.queue(myProject);
     }
     else {
-      project.getService(UnindexedFilesScannerExecutor.class).submitTask(this);
+      myProject.getService(UnindexedFilesScannerExecutor.class).submitTask(this);
     }
   }
 

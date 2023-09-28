@@ -2,7 +2,7 @@
 package com.intellij.platform.ide.impl.customization
 
 import com.intellij.ide.feedback.FeedbackForm
-import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.customization.FeedbackReporter
@@ -18,7 +18,7 @@ class JetBrainsFeedbackReporter(private val productName: String,
     get() = "jetbrains.com"
 
   override fun feedbackFormUrl(description: String): Url {
-    val appInfo = ApplicationInfoEx.getInstanceEx()
+    val appInfo = ApplicationInfo.getInstance()
     val build = appInfo.getBuild()
 
     return Urls.newFromEncoded("https://www.jetbrains.com/feedback/feedback.jsp")

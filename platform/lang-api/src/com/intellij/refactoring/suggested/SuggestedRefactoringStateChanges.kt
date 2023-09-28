@@ -46,7 +46,7 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
     val signatureRange = refactoringSupport.signatureRange(anchor) ?: return null
     val psiDocumentManager = PsiDocumentManager.getInstance(anchor.project)
     val file = anchor.containingFile
-    val document = psiDocumentManager.getDocument(file)!!
+    val document = file.viewProvider.document!!
     require(psiDocumentManager.isCommitted(document))
     return SuggestedRefactoringState(
       anchor,
@@ -163,7 +163,7 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
 }
 
 fun SuggestedRefactoringStateChanges.parameterMarkers(declaration: PsiElement, signature: Signature): List<ParameterMarker> {
-  val document = PsiDocumentManager.getInstance(declaration.project).getDocument(declaration.containingFile)!!
+  val document = declaration.containingFile.viewProvider.document!!
   val markerRanges = parameterMarkerRanges(declaration)
   require(markerRanges.size == signature.parameters.size)
   return markerRanges.zip(signature.parameters)

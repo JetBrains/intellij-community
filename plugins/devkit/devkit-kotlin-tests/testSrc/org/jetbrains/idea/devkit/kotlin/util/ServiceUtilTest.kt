@@ -31,56 +31,22 @@ class ServiceUtilTest : LightJavaCodeInsightFixtureTestCase() {
 
   // ##### Test services (defined both in Java and Kotlin) usages from Java #####
   fun testServiceLevelByAnnotationFromJava() {
-    // TODO: fix and include these tests
-    //  Wrong results for no argument annotation for Java and Kotlin (should be the default APP_LEVEL)
-    val testsToExclude = listOf(
-      "serviceUsages/java/UsagesOfKtLightServiceEmpty.java",
-      "serviceUsages/java/UsagesOfLightServiceEmpty.java",
-    )
-
-    lightServiceTests("java").filter { it !in testsToExclude }.forEach {
-      serviceLevelByAnnotationTest(it)
-    }
+    lightServiceTests("java").forEach(::serviceLevelByAnnotationTest)
   }
 
 
   fun testServiceLevelByClassFromJava() {
-    // TODO: fix and include these tests
-    //  Different results for no argument annotation for Java and Kotlin (for Java it works correctly)
-    val testsToExclude = listOf(
-      "serviceUsages/java/UsagesOfKtLightServiceEmpty.java",
-    )
-
-    (lightServiceTests("java") + registeredServiceTests("java")).filter { it !in testsToExclude }.forEach {
-      serviceLevelByClassTest(it)
-    }
+    (lightServiceTests("java") + registeredServiceTests("java")).forEach(::serviceLevelByClassTest)
   }
 
   // ##### Test services (defined both in Java and Kotlin) usages from Kotlin #####
   fun testServiceLevelByAnnotationFromKotlin() {
-    // TODO: fix and include these tests
-    //  Wrong results for no argument annotation for Java and Kotlin (should be the default APP_LEVEL)
-    val testsToExclude = listOf(
-      "serviceUsages/kotlin/UsagesOfKtLightServiceEmpty.kt",
-      "serviceUsages/kotlin/UsagesOfLightServiceEmpty.kt",
-    )
-
-    lightServiceTests("kt").filter { it !in testsToExclude }.forEach {
-      serviceLevelByAnnotationTest(it)
-    }
+    lightServiceTests("kt").forEach(::serviceLevelByAnnotationTest)
   }
 
 
   fun testServiceLevelByClassFromKotlin() {
-    // TODO: fix and include these tests
-    //  Different results for no argument annotation for Java and Kotlin (for Java it works correctly)
-    val testsToExclude = listOf(
-      "serviceUsages/kotlin/UsagesOfKtLightServiceEmpty.kt",
-    )
-
-    (lightServiceTests("kt") + registeredServiceTests("kt")).filter { it !in testsToExclude }.forEach {
-      serviceLevelByClassTest(it)
-    }
+    (lightServiceTests("kt") + registeredServiceTests("kt")).forEach(::serviceLevelByClassTest)
   }
 
   fun testNonService() {
@@ -136,8 +102,8 @@ class ServiceUtilTest : LightJavaCodeInsightFixtureTestCase() {
       """
       package com.intellij.openapi.application;
       
-      public class ApplicationManager {
-        protected static Application ourApplication;
+      public final class ApplicationManager {
+        private static Application ourApplication;
       
         public static Application getApplication() {
           return ourApplication;

@@ -3,7 +3,7 @@ package com.intellij.platform.feedback.impl
 
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
-import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
@@ -277,11 +277,11 @@ enum class IdleFeedbackTypes {
   abstract fun isSuitable(): Boolean
 
   protected fun isIdeEAP(): Boolean {
-    return ApplicationInfoEx.getInstanceEx().isEAP
+    return ApplicationInfo.getInstance().isEAP
   }
 
   protected fun checkIdeVersionIsSuitable(): Boolean {
-    return suitableIdeVersion == ApplicationInfoEx.getInstanceEx().shortVersion
+    return suitableIdeVersion == ApplicationInfo.getInstance().shortVersion
   }
 
   protected abstract fun createNotification(forTest: Boolean): Notification

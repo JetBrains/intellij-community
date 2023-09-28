@@ -173,7 +173,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
           val loadedDiffCs = this
           when (hunkState) {
             is GitLabDiscussionDiffViewModel.PatchHunkResult.Loaded -> {
-              TimelineDiffComponentFactory.createDiffComponent(project, EditorFactory.getInstance(), hunkState.hunk, hunkState.anchor, null)
+              TimelineDiffComponentFactory.createDiffComponentIn(loadedDiffCs, project, EditorFactory.getInstance(), hunkState.hunk,
+                                                                 hunkState.anchor, null)
             }
             is GitLabDiscussionDiffViewModel.PatchHunkResult.Error,
             GitLabDiscussionDiffViewModel.PatchHunkResult.NotLoaded -> {

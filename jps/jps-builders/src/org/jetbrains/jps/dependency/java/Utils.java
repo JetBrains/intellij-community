@@ -16,12 +16,12 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class Utils {
-  @NotNull
-  private final Graph myGraph;
+public final class Utils {
+  public static final String OBJECT_CLASS_NAME = "java/lang/Object";
+
+  private final @NotNull Graph myGraph;
   
-  @Nullable
-  private final Graph myDelta;
+  private final @Nullable Graph myDelta;
 
   private final @NotNull BackDependencyIndex myDirectSubclasses;
   private final Set<NodeSource> myCompiledSources;
@@ -87,4 +87,18 @@ public class Utils {
       }
     }.traverse(from, f);
   }
+
+  public Iterable<String> allDirectSupertypes(String className) {
+    return Iterators.unique(Iterators.flat(Iterators.map(getClassesByName(className), cl -> cl.getSuperTypes())));
+  }
+
+  public Set<String> collectAllSupertypes(String className, Set<String> acc) {
+    for (String st : allDirectSupertypes(className)) {
+      if (acc.add(st)) {
+        collectAllSupertypes(st, acc);
+      }
+    }
+    return acc;
+  }
+
 }

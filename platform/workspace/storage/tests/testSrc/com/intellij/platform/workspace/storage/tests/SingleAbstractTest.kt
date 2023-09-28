@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ChildSingle
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentSingleAbEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 

@@ -44,7 +44,7 @@ public final class GradleTaskCache {
     Set<Task> projectTasks = allTasks.get(projectIdentifier);
     if (projectTasks == null) {
       context.getMessageReporter().createMessage()
-        .withTitle("Project tasks aren't found")
+        .withTitle("Tasks aren't found")
         .withText(
           "Tasks for " + project + " wasn't collected. " +
           "All tasks should be collected during " + GradleModelFetchPhase.TASK_WARM_UP_PHASE + "."
@@ -62,7 +62,7 @@ public final class GradleTaskCache {
     Set<Task> previousTasks = allTasks.put(projectIdentifier, tasks);
     if (previousTasks != null) {
       context.getMessageReporter().createMessage()
-        .withTitle("Project tasks redefinition")
+        .withTitle("Tasks redefinition")
         .withText("Tasks for " + project + " was already collected.")
         .withException(new IllegalStateException())
         .withKind(Message.Kind.ERROR)

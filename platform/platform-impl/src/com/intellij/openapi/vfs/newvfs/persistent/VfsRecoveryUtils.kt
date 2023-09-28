@@ -219,7 +219,7 @@ object VfsRecoveryUtils {
     fun ensureAllocated(fileId: Int) {
       while (lastAllocatedRecord < fileId) {
         val newRecord = newFsRecords.createRecord()
-        check(newRecord == lastAllocatedRecord + 1)
+        check(newRecord == lastAllocatedRecord + 1) { "newRecord=$newRecord, lastAllocatedRecord=$lastAllocatedRecord" }
         lastAllocatedRecord = newRecord
       }
     }
@@ -368,7 +368,7 @@ object VfsRecoveryUtils {
 
     var maxFileId = superRootId
     val childrenCacheMap: Map<Int, List<Int>> = run {
-      val result = mutableMapOf<Int, MutableList<Int>>()
+      val result = hashMapOf<Int, MutableList<Int>>()
       snapshot.forEachFile {
         if (maxFileId < it.fileId) maxFileId = it.fileId
         it.parentId.getOrNull()?.let { parentId ->
@@ -502,8 +502,8 @@ object VfsRecoveryUtils {
           continue
         }
         val initializedFiles = file.fileId
-        progressReporter?.fraction((file.fileId.toDouble() / maxFileId).coerceIn(0.0, 1.0))
         if ((initializedFiles and 0xFF) == 0) {
+          progressReporter?.fraction((file.fileId.toDouble() / maxFileId).coerceIn(0.0, 1.0))
           progressReporter?.details(IdeBundle.message("progress.cache.recover.from.logs.files.processed", initializedFiles, maxFileId))
         }
       }
@@ -645,8 +645,8 @@ object VfsRecoveryUtils {
         if (e is IOException) throw e
       }
       val connectedFiles = fileStates.getCount(RecoveryState.CONNECTED)
-      progressReporter?.fraction((connectedFiles.toDouble() / maxFileId).coerceIn(0.0, 1.0))
       if ((connectedFiles and 0xFF) == 0) {
+        progressReporter?.fraction((connectedFiles.toDouble() / maxFileId).coerceIn(0.0, 1.0))
         progressReporter?.details(IdeBundle.message("progress.cache.recover.from.logs.files.processed", connectedFiles, maxFileId))
       }
     }
@@ -666,8 +666,8 @@ object VfsRecoveryUtils {
         }
       }
 
-      progressReporter?.fraction((recordId.toDouble() / lastAllocatedRecord).coerceIn(0.0, 1.0))
       if ((recordId and 0xFF) == 0) {
+        progressReporter?.fraction((recordId.toDouble() / lastAllocatedRecord).coerceIn(0.0, 1.0))
         progressReporter?.details(IdeBundle.message("progress.cache.recover.from.logs.files.processed", recordId, maxFileId))
       }
     }

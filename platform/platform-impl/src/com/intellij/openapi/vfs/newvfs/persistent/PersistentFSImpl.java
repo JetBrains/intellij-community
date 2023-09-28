@@ -1516,6 +1516,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     if (attributes == null || !attributes.isDirectory()) {
+      //FIXME RC: put special sentinel value into myRoots & myIdToDirCache so next attempt to resolve the root
+      //          doesn't need to repeat the whole lookup process (which is slow)
       return null;
     }
     // assume roots have the FS default case sensitivity
@@ -1537,7 +1539,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     vfsPeer.loadRootData(rootId, path, fs);
 
 
-    int rootNameId = vfsPeer.getNameId(rootName);//FileNameCache.storeName(rootName);
+    int rootNameId = vfsPeer.getNameId(rootName);
     boolean mark;
     VirtualFileSystemEntry newRoot;
     synchronized (myRoots) {

@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class XDebuggerActionBase extends AnAction {
@@ -55,6 +56,7 @@ public abstract class XDebuggerActionBase extends AnAction {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     performWithHandler(e);
+    XDebuggerUtilImpl.reshowInlayRunToCursor(e);
   }
 
   protected boolean performWithHandler(AnActionEvent e) {

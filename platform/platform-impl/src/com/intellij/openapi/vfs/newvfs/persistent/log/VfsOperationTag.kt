@@ -49,8 +49,6 @@ enum class VfsOperationTag(val operationSerializer: Serializer<*>) {
 
   companion object {
     const val SIZE_BYTES: Int = Byte.SIZE_BYTES
-
-    internal val VALUES: Array<VfsOperationTag> = VfsOperationTag.values() // memoize to generate less garbage
   }
 }
 
@@ -75,24 +73,24 @@ value class VfsOperationTagsMask(val mask: Long) {
 
   operator fun contains(tag: VfsOperationTag): Boolean = (mask and (1L shl tag.ordinal)) != 0L
 
-  fun toList(): List<VfsOperationTag> = VfsOperationTag.VALUES.filter { contains(it) }
+  fun toList(): List<VfsOperationTag> = VfsOperationTag.entries.filter { contains(it) }
 
   companion object {
     /**
      * @see [IteratorUtils.nextIncomplete]
      */
     val EMPTY: VfsOperationTagsMask = VfsOperationTagsMask(0L)
-    val ALL: VfsOperationTagsMask = VfsOperationTagsMask(*VfsOperationTag.VALUES)
+    val ALL: VfsOperationTagsMask = VfsOperationTagsMask(*VfsOperationTag.entries.toTypedArray())
     val RecordsMask: VfsOperationTagsMask =
-      VfsOperationTagsMask(*VfsOperationTag.VALUES.filter { it.isRecordOperation }.toTypedArray())
+      VfsOperationTagsMask(*VfsOperationTag.entries.filter { it.isRecordOperation }.toTypedArray())
     val AttributesMask: VfsOperationTagsMask =
-      VfsOperationTagsMask(*VfsOperationTag.VALUES.filter { it.isAttributeOperation }.toTypedArray())
+      VfsOperationTagsMask(*VfsOperationTag.entries.filter { it.isAttributeOperation }.toTypedArray())
     val ContentsMask: VfsOperationTagsMask =
-      VfsOperationTagsMask(*VfsOperationTag.VALUES.filter { it.isContentOperation }.toTypedArray())
+      VfsOperationTagsMask(*VfsOperationTag.entries.filter { it.isContentOperation }.toTypedArray())
     val VFileEventsMask: VfsOperationTagsMask =
-      VfsOperationTagsMask(*VfsOperationTag.VALUES.filter { it.isVFileEventOperation }.toTypedArray())
+      VfsOperationTagsMask(*VfsOperationTag.entries.filter { it.isVFileEventOperation }.toTypedArray())
     val VFileEventsStartMask: VfsOperationTagsMask =
-      VfsOperationTagsMask(*VfsOperationTag.VALUES.filter { it.isVFileEventStartOperation }.toTypedArray())
+      VfsOperationTagsMask(*VfsOperationTag.entries.filter { it.isVFileEventStartOperation }.toTypedArray())
     val VFileEventEndMask: VfsOperationTagsMask = VfsOperationTagsMask(VfsOperationTag.VFILE_EVENT_END)
 
     fun List<VfsOperationTagsMask>.intersection(): VfsOperationTagsMask =
@@ -101,6 +99,7 @@ value class VfsOperationTagsMask(val mask: Long) {
     fun List<VfsOperationTagsMask>.union(): VfsOperationTagsMask =
       VfsOperationTagsMask(map { it.mask }.foldRight(EMPTY.mask, Long::or))
 
+    // FIXME remove reflection here
     // if operation's tag is in this mask, then it's implementing PayloadContainingOperation
     val PayloadContainingOperations: VfsOperationTagsMask = run {
       fun KClass<*>.collectAllFinalSubclasses(): Sequence<KClass<*>> = sequence {
@@ -114,7 +113,7 @@ value class VfsOperationTagsMask(val mask: Long) {
           it.companionObjectInstance!! as Serializer<*>
         else null
       }.toSet()
-      VfsOperationTagsMask(*VfsOperationTag.VALUES.filter { it.operationSerializer in payloadContainingSerializers }.toTypedArray())
+      VfsOperationTagsMask(*VfsOperationTag.entries.filter { it.operationSerializer in payloadContainingSerializers }.toTypedArray())
     }
   }
 }

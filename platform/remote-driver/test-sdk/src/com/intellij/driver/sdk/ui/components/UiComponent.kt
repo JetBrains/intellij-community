@@ -47,9 +47,15 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   // Search Text Locations
   fun findText(text: String): UiText {
-    return findAllText {
-      it.text == text
-    }.single()
+    val allTexts = findAllText()
+    val filteredTexts = allTexts.filter { it.text == text }
+    if (filteredTexts.isEmpty()) {
+      throw AssertionError("No '$text' found. Available texts are:\n${allTexts.joinToString("\n") { it.text }}")
+    }
+    if (filteredTexts.size > 1) {
+      throw AssertionError("Found ${filteredTexts.size} texts '$text', expected 1")
+    }
+    return filteredTexts.first()
   }
 
   fun hasText(text: String): Boolean {

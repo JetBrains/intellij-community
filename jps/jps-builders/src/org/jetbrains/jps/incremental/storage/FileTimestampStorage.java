@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.util.ArrayUtil;
@@ -19,7 +19,7 @@ import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.Timesta
 /**
  * @author Eugene Zhuravlev
  */
-public class FileTimestampStorage extends AbstractStateStorage<File, TimestampPerTarget[]> implements StampsStorage<Timestamp> {
+public final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPerTarget[]> implements StampsStorage<Timestamp> {
   private final BuildTargetsState myTargetsState;
   private final File myTimestampsRoot;
 
@@ -29,8 +29,7 @@ public class FileTimestampStorage extends AbstractStateStorage<File, TimestampPe
     myTargetsState = targetsState;
   }
 
-  @NotNull
-  private static File calcStorageRoot(File dataStorageRoot) {
+  private static @NotNull File calcStorageRoot(File dataStorageRoot) {
     return new File(dataStorageRoot, "timestamps");
   }
 
@@ -123,7 +122,7 @@ public class FileTimestampStorage extends AbstractStateStorage<File, TimestampPe
     }
   }
 
-  private static class StateExternalizer implements DataExternalizer<TimestampPerTarget[]> {
+  private static final class StateExternalizer implements DataExternalizer<TimestampPerTarget[]> {
     @Override
     public void save(@NotNull DataOutput out, TimestampPerTarget[] value) throws IOException {
       out.writeInt(value.length);
@@ -146,7 +145,7 @@ public class FileTimestampStorage extends AbstractStateStorage<File, TimestampPe
     }
   }
 
-  static class Timestamp implements StampsStorage.Stamp {
+  static final class Timestamp implements StampsStorage.Stamp {
     static final Timestamp MINUS_ONE = new Timestamp(-1L);
     private final long myTimestamp;
 

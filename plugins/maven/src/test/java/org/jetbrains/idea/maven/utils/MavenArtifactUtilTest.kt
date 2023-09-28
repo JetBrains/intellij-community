@@ -3,11 +3,12 @@ package org.jetbrains.idea.maven.utils
 
 import com.intellij.maven.testFramework.MavenTestCase
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenArtifactUtilTest : MavenTestCase() {
   @Test
-  fun `test get artifact path with illegal newline char in version`() {
+  fun `test get artifact path with illegal newline char in version`() = runBlocking {
     val groupId = "groupId"
     val artifactId = "artifactId"
     val version = "3.1.0"
@@ -19,7 +20,7 @@ class MavenArtifactUtilTest : MavenTestCase() {
   }
 
   @Test
-  fun `test get artifact path with illegal &rt char in version`() {
+  fun `test get artifact path with illegal &rt char in version`() = runBlocking {
     val groupId = "groupId"
     val artifactId = "artifactId"
     val version = "3.1.0"

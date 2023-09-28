@@ -286,11 +286,21 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
       }
       else {
         PsiCaseLabelElement[] labelElements = labelElementList.getElements();
-        caseExpressionsText = StreamEx.of(labelElements)
-          .map(e -> e instanceof PsiDefaultCaseLabelElement ?
-                    (ct.text(e) + ":") :
-                    ("case " + ct.text(e) + ":"))
-          .joining("\n");
+        if (ContainerUtil.exists(labelElements, label -> label instanceof PsiPattern)) {
+          //to preserve the style, when labels are listed separated by commas
+          PsiExpression guardExpression = rule.getGuardExpression();
+          String guardText = guardExpression == null ? "" : " when " + ct.text(guardExpression);
+          caseExpressionsText = StreamEx.of(labelElements)
+            .map(e -> ct.text(e))
+            .joining(",", "case " , guardText + ":");
+        }
+        else {
+          caseExpressionsText = StreamEx.of(labelElements)
+            .map(e -> e instanceof PsiDefaultCaseLabelElement ?
+                      (ct.text(e) + ":") :
+                      ("case " + ct.text(e) + ":"))
+            .joining("\n");
+        }
       }
       PsiStatement body = rule.getBody();
       String finalBody;

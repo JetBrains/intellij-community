@@ -7,3 +7,11 @@ abstract class NoImports implements List<NoImports.A> {
 
   class A {}
 }
+class RecordQualifier {
+  private static record CalcResult(RecordQualifier.CalcResult.Type type) {
+
+    enum Type {
+      OK, ERROR
+    }
+  }
+}

@@ -242,7 +242,7 @@ public interface BasicJavaElementType {
     }
 
     @Override
-    public Set<IElementType> getParents() {
+    public @NotNull Set<IElementType> getParents() {
       return myParentElementTypes;
     }
   }
@@ -277,7 +277,7 @@ public interface BasicJavaElementType {
     }
 
     @Override
-    public Set<IElementType> getParents() {
+    public @NotNull Set<IElementType> getParents() {
       return PARENT_ELEMENT_TYPES;
     }
   }
@@ -328,7 +328,7 @@ public interface BasicJavaElementType {
     }
 
     @Override
-    public Set<IElementType> getParents() {
+    public @NotNull Set<IElementType> getParents() {
       return PARENT_ELEMENT_TYPES;
     }
   }
@@ -370,7 +370,7 @@ public interface BasicJavaElementType {
     }
 
     @Override
-    public Set<IElementType> getParents() {
+    public @NotNull Set<IElementType> getParents() {
       return myParentElementTypes;
     }
   }
@@ -443,7 +443,7 @@ public interface BasicJavaElementType {
     }
 
     @Override
-    public Set<IElementType> getParents() {
+    public @NotNull Set<IElementType> getParents() {
       return parentElementTypes;
     }
   }

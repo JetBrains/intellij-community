@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class MavenServerStatsCollector {
   private static final Map<String, AtomicInteger> readCounters = new ConcurrentHashMap<>();
   private static final Map<String, AtomicInteger> pluginResolving = new ConcurrentHashMap<>();
-  public static final boolean collectStatistics = Boolean.getBoolean("maven.collect.stat");
+  public static final boolean collectStatistics = Boolean.getBoolean("maven.collect.local.stat");
 
   private MavenServerStatsCollector() { }
 

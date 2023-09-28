@@ -22,8 +22,8 @@ import java.io.File
 
 class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
   @Test
-  fun testImportingDependencies() {
-    if (!hasMavenInstallation()) return
+  fun testImportingDependencies() = runBlocking {
+    if (!hasMavenInstallation()) return@runBlocking
 
     repositoryPath = File(myDir, "/repo").path
     updateSettingsXml("""
@@ -50,7 +50,7 @@ class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
 
     executeGoal("__temp", "install")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

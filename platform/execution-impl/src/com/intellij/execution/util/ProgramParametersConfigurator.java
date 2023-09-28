@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
@@ -98,6 +98,9 @@ public class ProgramParametersConfigurator {
     return result;
   }
 
+  /**
+   * Expands macros, which may contain values representing paths, e.g., working directory, input file, etc.
+   */
   @Contract("!null, _, _ -> !null")
   public @Nullable String expandPathAndMacros(String s, @Nullable Module module, @NotNull Project project) {
     String path = s;
@@ -123,16 +126,20 @@ public class ProgramParametersConfigurator {
   }
 
   /**
-   * Unless expanding macros in a generic value that doesn't represent a path of some kind, or a parameter string,
-   * consider using the following specialized methods instead:
-   *
-   * @see #expandMacrosAndParseParameters For values representing parameters: program arguments, VM options
-   * @see #expandPathAndMacros For paths: working directory, input file, etc.
+   * Expands macros not representing a path or a parameter string.
+   * IMPORTANT: If any macro contains a path or a parameter, consider using one of:
+   * <ul>
+   * <li>{@link #expandMacrosAndParseParameters} for values representing parameters: program arguments, VM options, etc.
+   * <li>{@link #expandPathAndMacros} for paths: working directory, input file, etc.
+   * </ul>
    */
   public static String expandMacros(@Nullable String path) {
     return !StringUtil.isEmpty(path) ? expandMacros(path, DataContext.EMPTY_CONTEXT, false) : path;
   }
 
+  /**
+   * Expands macros, which may contain values representing parameters, e.g., program arguments, VM options, etc.
+   */
   public static @NotNull List<String> expandMacrosAndParseParameters(@Nullable String parametersStringWithMacros) {
     if (StringUtil.isEmpty(parametersStringWithMacros)) {
       return Collections.emptyList();

@@ -3,7 +3,7 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
 
-public class ClassAsGenericBoundUsage extends ClassUsage {
+public final class ClassAsGenericBoundUsage extends ClassUsage {
 
   public ClassAsGenericBoundUsage(@NotNull String className) {
     super(className);

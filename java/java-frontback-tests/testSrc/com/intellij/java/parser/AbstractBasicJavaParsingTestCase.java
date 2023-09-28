@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.parser;
 
+import com.intellij.PathJavaTestUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
@@ -39,7 +39,7 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getTestDataPath(PathManagerEx.TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE);
+    return PathJavaTestUtil.getCommunityJavaTestDataPath();
   }
 
   public final <T> void addExplicit(@NotNull LanguageExtension<T> collector, @NotNull Language language, @NotNull T object) {

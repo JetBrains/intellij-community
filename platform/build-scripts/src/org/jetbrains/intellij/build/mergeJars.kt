@@ -7,8 +7,6 @@ package org.jetbrains.intellij.build
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.io.*
 import java.nio.ByteBuffer
 import java.nio.file.Files
@@ -17,10 +15,10 @@ import java.nio.file.PathMatcher
 import java.util.function.IntConsumer
 import java.util.zip.Deflater
 
-const val UTIL_JAR = "util.jar"
-const val PLATFORM_LOADER_JAR = "platform-loader.jar"
-const val UTIL_RT_JAR = "util_rt.jar"
-const val UTIL_8_JAR = "util-8.jar"
+const val UTIL_JAR: String = "util.jar"
+const val PLATFORM_LOADER_JAR: String = "platform-loader.jar"
+const val UTIL_RT_JAR: String = "util_rt.jar"
+const val UTIL_8_JAR: String = "util-8.jar"
 
 sealed interface Source {
   val sizeConsumer: IntConsumer?
@@ -91,13 +89,6 @@ internal interface NativeFileHandler {
   val sourceToNativeFiles: MutableMap<ZipSource, List<String>>
 
   suspend fun sign(name: String, dataSupplier: () -> ByteBuffer): Path?
-}
-
-@Obsolete
-fun buildJarSync(targetFile: Path, sources: List<Source>) {
-  runBlocking {
-    buildJar(targetFile, sources)
-  }
 }
 
 suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false) {
@@ -312,10 +303,11 @@ private fun getIgnoredNames(): Set<String> {
       set.add("META-INF/$name.md")
     }
   }
+  //set.add("kotlinx/coroutines/debug/internal/ByteBuddyDynamicAttach.class")
   return java.util.Set.copyOf(set)
 }
 
-private val ignoredNames = java.util.Set.copyOf(getIgnoredNames())
+private val ignoredNames = getIgnoredNames()
 
 private fun checkNameForZipSource(name: String, excludes: List<Regex>, includeManifest: Boolean): Boolean {
   @Suppress("SpellCheckingInspection")
@@ -363,6 +355,8 @@ private fun checkNameForZipSource(name: String, excludes: List<Regex>, includeMa
          !name.startsWith("META-INF/versions/9/org/bouncycastle/") &&
          !name.startsWith("META-INF/versions/10/org/bouncycastle/") &&
          !name.startsWith("META-INF/versions/15/org/bouncycastle/") &&
+
+         //!name.startsWith("kotlinx/coroutines/repackaged/") &&
 
          !name.startsWith("native/") &&
          !name.startsWith("licenses/") &&

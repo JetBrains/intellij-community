@@ -32,14 +32,14 @@ import java.io.IOException
 
 class ResourceFilteringTest : MavenCompilingTestCase() {
   @Test
-  fun testBasic() {
+  fun testBasic() = runBlocking {
     createProjectSubFile("resources/file.properties", """
       value=${'$'}{project.version}
       value2=@project.version@
       time=${'$'}{time}
       """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     
@@ -69,10 +69,10 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testResolveSettingProperty() {
+  fun testResolveSettingProperty() = runBlocking {
     createProjectSubFile("resources/file.properties", "value=\${settings.localRepository}")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -92,7 +92,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testCustomDelimiter() {
+  fun testCustomDelimiter() = runBlocking {
     createProjectSubFile("resources/file.properties", """
       value1=${'$'}{project.version}
       value2=@project.version@
@@ -100,7 +100,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
       value3=|project.version|
       """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -137,10 +137,10 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testPomArtifactId() {
+  fun testPomArtifactId() = runBlocking {
     createProjectSubFile("resources/file.properties", "value=\${pom.artifactId}")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -159,7 +159,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testPomVersionInModules() {
+  fun testPomVersionInModules() = runBlocking {
     createProjectSubFile("m1/resources/file.properties", "value=\${pom.version}")
 
     createProjectPom("""
@@ -186,7 +186,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
                         </resources>
                       </build>
                       """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     compileModules("project", "m1")
 
@@ -194,10 +194,10 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testDoNotFilterSomeFileByDefault() {
+  fun testDoNotFilterSomeFileByDefault() = runBlocking {
     createProjectSubFile("resources/file.bmp", "value=\${project.version}")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -216,11 +216,11 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testCustomNonFilteredExtensions() {
+  fun testCustomNonFilteredExtensions() = runBlocking {
     createProjectSubFile("resources/file.bmp", "value=\${project.version}")
     createProjectSubFile("resources/file.xxx", "value=\${project.version}")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -251,10 +251,10 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testFilteringTestResources() {
+  fun testFilteringTestResources() = runBlocking {
     createProjectSubFile("resources/file.properties", "value=@project.version@")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -273,11 +273,11 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testExcludesAndIncludes() {
+  fun testExcludesAndIncludes() = runBlocking {
     createProjectSubFile("src/main/resources/file1.properties", "value=\${project.artifactId}")
     createProjectSubFile("src/main/resources/file2.properties", "value=\${project.artifactId}")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -315,14 +315,14 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testEscapingWindowsChars() {
+  fun testEscapingWindowsChars() = runBlocking {
     createProjectSubFile("resources/file.txt", """
       value=${'$'}{foo}
       value2=@foo@
       value3=${'$'}{bar}
       """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -349,10 +349,10 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testDontEscapingWindowsChars() {
+  fun testDontEscapingWindowsChars() = runBlocking {
     createProjectSubFile("resources/file.txt", "value=\${foo}")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -382,10 +382,10 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testFilteringPropertiesWithEmptyValues() {
+  fun testFilteringPropertiesWithEmptyValues() = runBlocking {
     createProjectSubFile("resources/file.properties", "value1=\${foo}\nvalue2=\${bar}")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -407,11 +407,11 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testFilterWithSeveralResourceFolders() {
+  fun testFilterWithSeveralResourceFolders() = runBlocking {
     createProjectSubFile("resources1/file1.properties", "value=\${project.version}")
     createProjectSubFile("resources2/file2.properties", "value=\${project.version}")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -435,7 +435,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testFilterWithSeveralModules() {
+  fun testFilterWithSeveralModules() = runBlocking {
     createProjectSubFile("module1/resources/file1.properties", "value=\${project.version}")
     createProjectSubFile("module2/resources/file2.properties", "value=\${project.version}")
 
@@ -477,11 +477,11 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testDoNotFilterIfNotRequested() {
+  fun testDoNotFilterIfNotRequested() = runBlocking {
     createProjectSubFile("resources1/file1.properties", "value=\${project.version}")
     createProjectSubFile("resources2/file2.properties", "value=\${project.version}")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -505,10 +505,10 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testDoNotChangeFileIfPropertyIsNotResolved() {
+  fun testDoNotChangeFileIfPropertyIsNotResolved() = runBlocking {
     createProjectSubFile("resources/file.properties", "value=\${foo.bar}")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -527,10 +527,10 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testChangingResolvedPropsBackWhenSettingsIsChange() {
+  fun testChangingResolvedPropsBackWhenSettingsIsChange() = runBlocking {
     createProjectSubFile("resources/file.properties", "value=\${project.version}")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -559,18 +559,18 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
                          </resources>
                        </build>
                        """.trimIndent())
-    importProject()
+    importProjectAsync()
     compileModules("project")
 
     assertResult("target/classes/file.properties", "value=\${project.version}")
   }
 
   @Test
-  fun testUpdatingWhenPropertiesInFiltersAreChanged() {
+  fun testUpdatingWhenPropertiesInFiltersAreChanged() = runBlocking {
     val filter = createProjectSubFile("filters/filter.properties", "xxx=1")
     createProjectSubFile("resources/file.properties", "value=\${xxx}")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -596,10 +596,10 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testUpdatingWhenPropertiesAreChanged() {
+  fun testUpdatingWhenPropertiesAreChanged() = runBlocking {
     createProjectSubFile("resources/file.properties", "value=\${foo}")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -618,7 +618,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
     compileModules("project")
     assertResult("target/classes/file.properties", "value=val1")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -649,13 +649,13 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testUpdatingWhenPropertiesInModelAreChanged() {
+  fun testUpdatingWhenPropertiesInModelAreChanged() = runBlocking {
     createProjectSubFile("resources/file.properties", "value=\${project.name}")
 
     val moduleManager = getInstance(myProject)
     val mavenProjectsManager = MavenProjectsManager.getInstance(myProject)
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -679,7 +679,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
     compileModules("project")
     assertResult("target/classes/file.properties", "value=val1")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -754,11 +754,11 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testSameFileInSourcesAndTestSources() {
+  fun testSameFileInSourcesAndTestSources() = runBlocking {
     createProjectSubFile("src/main/resources/file.properties", "foo=\${foo.main}")
     createProjectSubFile("src/test/resources/file.properties", "foo=\${foo.test}")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -788,7 +788,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testCustomFilters() {
+  fun testCustomFilters() = runBlocking {
     createProjectSubFile("filters/filter1.properties",
                          """
                            xxx=value
@@ -802,7 +802,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
                            value3=${'$'}{zzz}
                            """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -829,11 +829,11 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testCustomFiltersViaPlugin() {
+  fun testCustomFiltersViaPlugin() = runBlocking {
     createProjectSubFile("filters/filter.properties", "xxx=value")
     createProjectSubFile("resources/file.properties", "value1=\${xxx}")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -872,11 +872,11 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testCustomFilterWithPropertyInThePath() {
+  fun testCustomFilterWithPropertyInThePath() = runBlocking {
     createProjectSubFile("filters/filter.properties", "xxx=value")
     createProjectSubFile("resources/file.properties", "value=\${xxx}")
 
-    importProject("""
+    importProjectAsync("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <version>1</version>
@@ -902,7 +902,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testCustomFiltersFromProfiles() {
+  fun testCustomFiltersFromProfiles() = runBlocking {
     createProjectSubFile("filters/filter1.properties", "xxx=value1")
     createProjectSubFile("filters/filter2.properties", "yyy=value2")
     createProjectSubFile("resources/file.properties",
@@ -959,7 +959,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testEscapingFiltering() {
+  fun testEscapingFiltering() = runBlocking {
     createProjectSubFile("filters/filter.properties", "xxx=value")
     createProjectSubFile("resources/file.properties",
                          """
@@ -970,7 +970,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
                            value4=.\.\\.\\\.
                            """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1008,7 +1008,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testPropertyPriority() {
+  fun testPropertyPriority() = runBlocking {
     createProjectSubFile("filters/filter.properties", """
    xxx=fromFilterFile
    yyy=fromFilterFile
@@ -1018,7 +1018,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
    value2=${"$"}{yyy}
    """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1047,7 +1047,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testCustomEscapingFiltering() {
+  fun testCustomEscapingFiltering() = runBlocking {
     createProjectSubFile("filters/filter.properties", "xxx=value")
     createProjectSubFile("resources/file.properties",
                          """
@@ -1055,7 +1055,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
                            value2=\${'$'}{xxx}
                            """.trimIndent())
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1090,12 +1090,12 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testDoNotFilterButCopyBigFiles() {
+  fun testDoNotFilterButCopyBigFiles() = runBlocking {
     assertEquals(FileTypes.UNKNOWN, FileTypeManager.getInstance().getFileTypeByFileName("file.xyz"))
 
     WriteAction.runAndWait<IOException> { createProjectSubFile("resources/file.xyz").setBinaryContent(ByteArray(1024 * 1024 * 20)) }
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1114,10 +1114,10 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testResourcesOrdering1() {
+  fun testResourcesOrdering1() = runBlocking {
     createProjectSubFile("resources/file.properties", "value=\${project.version}\n")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1141,10 +1141,10 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testResourcesOrdering2() {
+  fun testResourcesOrdering2() = runBlocking {
     createProjectSubFile("resources/file.properties", "value=\${project.version}\n")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1168,11 +1168,11 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testResourcesOrdering3() {
+  fun testResourcesOrdering3() = runBlocking {
     createProjectSubFile("resources1/a.txt", "1")
     createProjectSubFile("resources2/a.txt", "2")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1194,11 +1194,11 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testResourcesOrdering4() {
+  fun testResourcesOrdering4() = runBlocking {
     createProjectSubFile("resources1/a.txt", "1")
     createProjectSubFile("resources2/a.txt", "2")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1222,11 +1222,11 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testOverwriteParameter1() {
+  fun testOverwriteParameter1() = runBlocking {
     createProjectSubFile("resources1/a.txt", "1")
     createProjectSubFile("resources2/a.txt", "2")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1256,11 +1256,11 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
   }
 
   @Test
-  fun testOverwriteParameter2() {
+  fun testOverwriteParameter2() = runBlocking {
     createProjectSubFile("resources1/a.txt", "1")
     createProjectSubFile("resources2/a.txt", "2")
 
-    importProject("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

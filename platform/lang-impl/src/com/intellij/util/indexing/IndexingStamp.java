@@ -22,9 +22,12 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+
+import static java.nio.ByteOrder.BIG_ENDIAN;
 
 /**
  * A file has three indexed states (per particular index): indexed (with particular index_stamp which monotonically increases), outdated and (trivial) unindexed.
@@ -141,6 +144,7 @@ public final class IndexingStamp {
 
     public Timestamps(final @Nullable ByteBuffer buffer) {
       if (buffer != null) {
+        buffer.order(BIG_ENDIAN);//to be compatible with .writeToStream()
         int[] outdatedIndices = null;
         //'header' is either timestamp (dominatingIndexStamp), or, if timestamp is small enough
         // (<MAX_SHORT), it is really a number of 'outdatedIndices', followed by actual indices
@@ -159,6 +163,7 @@ public final class IndexingStamp {
 
         //and after is just a set of ints -- Index IDs from ID class
         while (buffer.hasRemaining()) {
+          //RC: .findById() takes 1/4 of total the method time -- mostly spent on CHMap lookup.
           ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(buffer));
           if (id != null && !(id instanceof StubIndexKey)) {
             long stamp = IndexVersion.getIndexCreationStamp(id);

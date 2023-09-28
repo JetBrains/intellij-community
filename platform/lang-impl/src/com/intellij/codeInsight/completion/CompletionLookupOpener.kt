@@ -3,7 +3,6 @@ package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeLater
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -14,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 object CompletionLookupOpener {
-  private fun LookupImpl.shownTimestampInitialized() = this.shownTimestampMillis != 0L
+  private fun LookupImpl.shownOrDisposed() = this.shownTimestampMillis != 0L || this.isLookupDisposed
 
   /**
    * Schedules a request to open lookup on the AWT event dispatching thread under Write Intent lock.
@@ -26,7 +25,7 @@ object CompletionLookupOpener {
       return
     }
     val lookup = process.lookup
-    if (lookup.shownTimestampInitialized()) return
-    ApplicationManager.getApplication().invokeLater(process::showLookup) { lookup.shownTimestampInitialized() }
+    if (lookup.shownOrDisposed()) return
+    ApplicationManager.getApplication().invokeLater(process::showLookup) { lookup.shownOrDisposed() }
   }
 }

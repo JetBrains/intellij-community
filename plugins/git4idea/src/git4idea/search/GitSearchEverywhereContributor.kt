@@ -122,7 +122,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
 
   private val renderer = listCellRenderer<Any> {
     val value = this.value
-    val iconBg = background ?: JBUI.CurrentTheme.List.BACKGROUND
+    val iconBg = selectionColor ?: JBUI.CurrentTheme.List.BACKGROUND
 
     icon(
       if (value is VcsRef) LabelIcon(list, JBUI.scale(16), iconBg, listOf(value.type.backgroundColor)) else AllIcons.Vcs.CommitNode)

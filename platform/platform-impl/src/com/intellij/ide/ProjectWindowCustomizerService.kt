@@ -14,6 +14,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectNameListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
@@ -24,6 +25,7 @@ import com.intellij.ui.JBColor
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
@@ -46,11 +48,16 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
     busConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
       cachedIcon.drop()
     })
+    busConnection.subscribe(ProjectNameListener.TOPIC, object: ProjectNameListener {
+      override fun nameChanged(newName: String) {
+        cachedIcon.drop()
+      }
+    })
   }
 
   private fun getIconRaw(): Icon {
     val path = ProjectWindowCustomizerService.projectPath(project) ?: ""
-    return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, iconSize = 20)
+    return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, iconSize = 20, name = project.name)
   }
 }
 
@@ -145,6 +152,7 @@ class ProjectWindowCustomizerService : Disposable {
   fun getCurrentProjectColorIndex(project: Project): Int? =  storageFor(project)?.let { getProjectColor(it).index }
 
   private fun getProjectColor(colorStorage: ProjectColorStorage): ProjectColors {
+    ThreadingAssertions.assertEventDispatchThread()
     val projectPath = colorStorage.projectPath ?: return defaultColors
 
     // Get calculated earlier color or calculate the next color

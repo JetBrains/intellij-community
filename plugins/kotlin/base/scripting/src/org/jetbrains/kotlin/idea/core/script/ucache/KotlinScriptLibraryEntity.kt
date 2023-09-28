@@ -82,6 +82,6 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: KotlinScriptLibraryEntity,
-                                      modification: KotlinScriptLibraryEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: KotlinScriptLibraryEntity.Builder.() -> Unit): KotlinScriptLibraryEntity = modifyEntity(
     KotlinScriptLibraryEntity.Builder::class.java, entity, modification)
 //endregion

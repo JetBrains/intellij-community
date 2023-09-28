@@ -17,11 +17,12 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenSpellcheckerTest : MavenDomTestCase() {
   @Test
-  fun testSpell() {
+  fun testSpell() = runBlocking {
     myFixture.enableInspections(SpellCheckingInspection::class.java)
 
     createProjectPom("""

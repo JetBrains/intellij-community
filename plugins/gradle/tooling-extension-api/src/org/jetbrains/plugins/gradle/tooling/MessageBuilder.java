@@ -1,11 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling;
 
+import com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.gradle.api.Project;
+import org.jetbrains.annotations.*;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -21,45 +20,67 @@ public final class MessageBuilder {
   private @Nullable Exception myException = null;
   private @NotNull Message.Kind myKind = Message.Kind.INFO;
   private @Nullable Message.FilePosition myFilePosition = null;
+  private @Nullable Project myProject = null;
 
+  @CheckReturnValue
   public @NotNull MessageBuilder withTitle(String title) {
     myTitle = title;
     return this;
   }
 
+  @CheckReturnValue
   public @NotNull MessageBuilder withText(String text) {
     myText = text;
     return this;
   }
 
-  public @NotNull MessageBuilder info() { return withKind(Message.Kind.INFO); }
-
-  public @NotNull MessageBuilder warning() { return withKind(Message.Kind.WARNING); }
-
-  public @NotNull MessageBuilder error() { return withKind(Message.Kind.ERROR); }
-
+  @CheckReturnValue
   public @NotNull MessageBuilder withKind(Message.Kind kind) {
     myKind = kind;
     return this;
   }
 
+  @CheckReturnValue
   public @NotNull MessageBuilder withGroup(String group) {
     myGroup = group;
     return this;
   }
 
+  @CheckReturnValue
   public @NotNull MessageBuilder withException(Exception e) {
     myException = e;
     return this;
   }
 
-  public @NotNull MessageBuilder withLocation(String filePath, int line, int column) {
-    myFilePosition = new Message.FilePosition(filePath, line, column);
+  @CheckReturnValue
+  public @NotNull MessageBuilder withLocation(Message.FilePosition filePosition) {
+    myFilePosition = filePosition;
     return this;
   }
 
-  public @NotNull Message build() {
+  @CheckReturnValue
+  public @NotNull MessageBuilder withLocation(String filePath, int line, int column) {
+    return withLocation(new Message.FilePosition(filePath, line, column));
+  }
+
+  @CheckReturnValue
+  public @NotNull MessageBuilder withProject(Project project) {
+    myProject = project;
+    return this;
+  }
+
+  private @NotNull String buildTitle() {
     assert myTitle != null;
+
+    String title = myTitle;
+    if (myProject != null) {
+      String projectDisplayName = GradleNegotiationUtil.getProjectDisplayName(myProject);
+      title = projectDisplayName + ": " + title;
+    }
+    return title;
+  }
+
+  private @NotNull String buildText() {
     assert myText != null;
 
     String text = myText;
@@ -71,7 +92,23 @@ public final class MessageBuilder {
         text += ("\n\n" + myException.getMessage());
       }
     }
-    return new Message(myTitle, text, myGroup, myKind, myFilePosition);
+    return text;
+  }
+
+  private @Nullable Message.FilePosition buildFilePosition() {
+    Message.FilePosition filePosition = myFilePosition;
+    if (filePosition == null && myProject != null) {
+      String buildScriptPath = myProject.getBuildFile().getPath();
+      filePosition = new Message.FilePosition(buildScriptPath, 0, 0);
+    }
+    return filePosition;
+  }
+
+  public @NotNull Message build() {
+    String title = buildTitle();
+    String text = buildText();
+    Message.FilePosition filePosition = buildFilePosition();
+    return new Message(title, text, myGroup, myKind, filePosition);
   }
 
   @Contract("null -> null; !null->!null")

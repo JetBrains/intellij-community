@@ -8,6 +8,7 @@ import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FileStatus
 import com.intellij.util.childScope
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitBranchComparisonResultImpl
@@ -127,15 +128,22 @@ class GitLabMergeRequestChangesImpl(
 }
 
 private fun GitLabDiffDTO.toPatch(): TextFilePatch {
-  val beforeFilePath = oldPath.takeIf { !newFile } ?: "/dev/null"
-  val afterFilePath = newPath.takeIf { !deletedFile } ?: "/dev/null"
-  val header = """--- a/$beforeFilePath
-+++ b/$afterFilePath
-"""
+  val beforeFilePath = oldPath.takeIf { !newFile }
+  val afterFilePath = newPath.takeIf { !deletedFile }
+  val headerFileBefore = beforeFilePath?.let { "a/$it" } ?: "/dev/null"
+  val headerFileAfter = afterFilePath?.let { "b/$it" } ?: "/dev/null"
+  val header = "--- $headerFileBefore\n+++ $headerFileAfter"
+
+  val fileStatus = when {
+    newFile -> FileStatus.ADDED
+    deletedFile -> FileStatus.DELETED
+    else -> FileStatus.MODIFIED
+  }
 
   val patchReader = PatchReader(header + diff)
   return patchReader.readTextPatches().firstOrNull()?.apply {
     beforeName = beforeFilePath
     afterName = afterFilePath
+    setFileStatus(fileStatus)
   } ?: throw IllegalStateException("Could not parse diff $this")
 }

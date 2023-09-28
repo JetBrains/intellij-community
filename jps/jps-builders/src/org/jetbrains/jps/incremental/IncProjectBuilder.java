@@ -1063,7 +1063,7 @@ public final class IncProjectBuilder {
       span.complete();
     }
 
-    public void buildInParallel() throws IOException, ProjectBuildException {
+    public void buildInParallel() throws ProjectBuildException {
       List<BuildChunkTask> initialTasks = new ArrayList<>();
       for (BuildChunkTask task : myTasks) {
         if (task.isReady()) {

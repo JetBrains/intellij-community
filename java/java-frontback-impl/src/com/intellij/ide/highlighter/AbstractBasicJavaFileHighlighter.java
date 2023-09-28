@@ -29,9 +29,9 @@ public abstract class AbstractBasicJavaFileHighlighter extends SyntaxHighlighter
     ourMap1 = new HashMap<>();
     ourMap2 = new HashMap<>();
 
-    fillMap(ourMap1, KEYWORD_BIT_SET.toTokenSet(), JavaHighlightingColors.KEYWORD);
-    fillMap(ourMap1, LITERAL_BIT_SET.toTokenSet(), JavaHighlightingColors.KEYWORD);
-    fillMap(ourMap1, OPERATION_BIT_SET.toTokenSet(), JavaHighlightingColors.OPERATION_SIGN);
+    fillMap(ourMap1, BASIC_KEYWORD_BIT_SET, JavaHighlightingColors.KEYWORD);
+    fillMap(ourMap1, BASIC_LITERAL_BIT_SET, JavaHighlightingColors.KEYWORD);
+    fillMap(ourMap1, BASIC_OPERATION_BIT_SET, JavaHighlightingColors.OPERATION_SIGN);
 
     for (IElementType type : JavaDocTokenType.ALL_JAVADOC_TOKENS.getTypes()) {
       ourMap1.put(type, JavaHighlightingColors.DOC_COMMENT);

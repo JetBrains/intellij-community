@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.name.JvmNames
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
@@ -352,7 +352,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
   ) {
     val newNameUnquoted = newName.unquoteKotlinIdentifier()
     if (element is KtLightMethod) {
-      if (element.modifierList.hasAnnotation(JvmNames.JVM_NAME.asString())) {
+      if (element.modifierList.hasAnnotation(JvmStandardClassIds.JVM_NAME.asString())) {
         return super.renameElement(element, newName, usages, listener)
       }
     }

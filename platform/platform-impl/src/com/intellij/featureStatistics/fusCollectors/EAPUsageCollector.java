@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LicensingFacade;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,7 @@ public final class EAPUsageCollector extends ApplicationUsagesCollector {
     try {
       if (!AppMode.isHeadless()) {
         final Set<MetricEvent> result = new HashSet<>();
-        if (ApplicationInfoEx.getInstanceEx().isEAP()) {
+        if (ApplicationInfo.getInstance().isEAP()) {
           result.add(BUILD.metric(BuildType.eap));
         }
         else {

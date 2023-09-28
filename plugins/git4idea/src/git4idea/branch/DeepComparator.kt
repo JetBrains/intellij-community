@@ -2,7 +2,6 @@
 package git4idea.branch
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -21,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.DataPack
@@ -33,7 +33,6 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.util.subgraphDifference
 import com.intellij.vcs.log.visible.VisiblePack
-import git4idea.GitBranch
 import git4idea.GitNotificationIdsHolder.Companion.COULD_NOT_COMPARE_WITH_BRANCH
 import git4idea.GitUtil
 import git4idea.commands.Git
@@ -104,7 +103,7 @@ class DeepComparator(private val project: Project,
 
   @RequiresEdt
   fun startTask(dataPack: VcsLogDataPack, branchToCompare: String) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (comparedBranch != null) {
       LOG.error("Already comparing with branch $comparedBranch")
       return
@@ -123,14 +122,14 @@ class DeepComparator(private val project: Project,
 
   @RequiresEdt
   fun stopTaskAndUnhighlight() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     stopTask()
     unhighlight()
   }
 
   @RequiresEdt
   fun hasHighlightingOrInProgress(): Boolean {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     return comparedBranch != null
   }
 

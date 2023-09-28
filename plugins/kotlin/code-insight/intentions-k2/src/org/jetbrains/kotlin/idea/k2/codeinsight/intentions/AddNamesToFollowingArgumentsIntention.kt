@@ -8,6 +8,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.addArgumentNames
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.associateArgumentNamesStartingAt
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidKeys
@@ -29,7 +30,8 @@ internal class AddNamesToFollowingArgumentsIntention :
     override fun getFamilyName(): String = KotlinBundle.message("add.names.to.this.argument.and.following.arguments")
     override fun getActionName(element: KtValueArgument, context: Context): String = familyName
 
-    override fun getApplicabilityRange() = ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtValueArgument> =
+        ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
 
     override fun isApplicableByPsi(element: KtValueArgument): Boolean {
         // Not applicable when lambda is trailing lambda after argument list (e.g., `run {  }`); element is a KtLambdaArgument.

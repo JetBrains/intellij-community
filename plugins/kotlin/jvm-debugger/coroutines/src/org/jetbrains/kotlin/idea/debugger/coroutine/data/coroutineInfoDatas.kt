@@ -12,6 +12,7 @@ abstract class CoroutineInfoData(val descriptor: CoroutineDescriptor) {
     abstract val stackTrace: List<CoroutineStackFrameItem>
     abstract val creationStackTrace: List<CreationCoroutineStackFrameItem>
     abstract val activeThread: ThreadReference?
+    abstract val jobHierarchy: List<String>
 
     val topFrameVariables: List<JavaValue> by lazy {
         stackTrace.firstOrNull()?.spilledVariables ?: emptyList()
@@ -31,7 +32,8 @@ abstract class CoroutineInfoData(val descriptor: CoroutineDescriptor) {
 
 class LazyCoroutineInfoData(
     private val mirror: MirrorOfCoroutineInfo,
-    private val stackTraceProvider: CoroutineStackTraceProvider
+    private val stackTraceProvider: CoroutineStackTraceProvider,
+    private val jobHierarchyProvider: CoroutineJobHierarchyProvider
 ) : CoroutineInfoData(CoroutineDescriptor.instance(mirror)) {
     private val stackFrames: CoroutineStackTraceProvider.CoroutineStackFrames? by lazy {
         stackTraceProvider.findStackFrames(mirror)
@@ -46,6 +48,10 @@ class LazyCoroutineInfoData(
     }
 
     override val activeThread = mirror.lastObservedThread
+
+    override val jobHierarchy by lazy {
+        jobHierarchyProvider.findJobHierarchy(mirror)
+    }
 }
 
 class CompleteCoroutineInfoData(
@@ -53,6 +59,7 @@ class CompleteCoroutineInfoData(
     override val stackTrace: List<CoroutineStackFrameItem>,
     override val creationStackTrace: List<CreationCoroutineStackFrameItem>,
     override val activeThread: ThreadReference? = null, // for suspended coroutines should be null
+    override val jobHierarchy: List<String> = emptyList()
 ) : CoroutineInfoData(descriptor)
 
 fun CoroutineInfoData.toCompleteCoroutineInfoData() =
@@ -63,11 +70,12 @@ fun CoroutineInfoData.toCompleteCoroutineInfoData() =
                 descriptor,
                 stackTrace,
                 creationStackTrace,
-                activeThread
+                activeThread,
+                jobHierarchy
             )
     }
 
-data class CoroutineDescriptor(val name: String, val id: String, val state: State, val dispatcher: String?) {
+data class CoroutineDescriptor(val name: String, val id: String, val state: State, val dispatcher: String?, val contextSummary: String?) {
     fun formatName() =
         "$name:$id"
 
@@ -77,7 +85,8 @@ data class CoroutineDescriptor(val name: String, val id: String, val state: Stat
                 mirror.context?.name ?: DEFAULT_COROUTINE_NAME,
                 "${mirror.sequenceNumber}",
                 State.valueOf(mirror.state ?: DEFAULT_COROUTINE_STATE),
-                mirror.context?.dispatcher
+                mirror.context?.dispatcher,
+                mirror.context?.summary
             )
     }
 }

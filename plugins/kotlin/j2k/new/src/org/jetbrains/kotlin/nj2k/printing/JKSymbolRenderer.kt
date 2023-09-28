@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.nj2k.JKImportStorage
 import org.jetbrains.kotlin.nj2k.escaped
 import org.jetbrains.kotlin.nj2k.symbols.*
-import org.jetbrains.kotlin.nj2k.tree.JKClassAccessExpression
 import org.jetbrains.kotlin.nj2k.tree.JKQualifiedExpression
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 import org.jetbrains.kotlin.psi.KtFile

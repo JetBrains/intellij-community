@@ -84,7 +84,7 @@ public final class FSRecordsImpl {
 
   public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = getBooleanProperty("vfs.attributes-storage.streamlined", true);
   /** Supported values: 'over-old-page-cache', 'over-lock-free-page-cache', 'over-mmapped-file'... */
-  private static final String ATTRIBUTES_STORAGE_IMPL = System.getProperty("vfs.attributes-storage.impl", "over-lock-free-page-cache");
+  private static final String ATTRIBUTES_STORAGE_IMPL = System.getProperty("vfs.attributes-storage.impl", "over-mmapped-file");
   public static final boolean USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE = "over-lock-free-page-cache".equals(ATTRIBUTES_STORAGE_IMPL);
   public static final boolean USE_ATTRIBUTES_OVER_MMAPPED_FILE = "over-mmapped-file".equals(ATTRIBUTES_STORAGE_IMPL);
   
@@ -101,7 +101,7 @@ public final class FSRecordsImpl {
   private static final String CONTENT_STORAGE_IMPL = System.getProperty("vfs.content-storage.impl", "over-lock-free-page-cache");
   public static final boolean USE_CONTENT_STORAGE_OVER_NEW_FILE_PAGE_CACHE = "over-lock-free-page-cache".equals(CONTENT_STORAGE_IMPL);
 
-  private static final String CONTENT_HASH_IMPL = System.getProperty("vfs.content-hash-storage.impl", "over-old-page-cache");
+  private static final String CONTENT_HASH_IMPL = System.getProperty("vfs.content-hash-storage.impl", "over-mmapped-file");
   public static final boolean USE_CONTENT_HASH_STORAGE_OVER_MMAPPED_FILE = "over-mmapped-file".equals(CONTENT_HASH_IMPL);
   //@formatter:on
 
@@ -420,8 +420,8 @@ public final class FSRecordsImpl {
   }
 
   public long getCreationTimestamp() {
+    checkNotDisposed();
     try {
-      checkNotDisposed();
       return connection.getTimestamp();
     }
     catch (IOException e) {
@@ -454,8 +454,8 @@ public final class FSRecordsImpl {
 
   @TestOnly
   void force() {
+    checkNotDisposed();
     try {
-      checkNotDisposed();
       connection.doForce();
     }
     catch (IOException e) {
@@ -477,6 +477,7 @@ public final class FSRecordsImpl {
   //========== record allocations: ========================================
 
   int createRecord() {
+    checkNotDisposed();
     try {
       return recordAccessor.createRecord();
     }
@@ -522,16 +523,20 @@ public final class FSRecordsImpl {
       int id = ids.getInt(i);
       ids.addElements(ids.size(), listIds(id));
     }
-    // delete children first
+    PersistentFSRecordsStorage records = connection.getRecords();
+    InvertedNameIndex invertedNameIndex = invertedNameIndexLazy.getValue();
+    // delete children first:
     for (int i = ids.size() - 1; i >= 0; i--) {
       int id = ids.getInt(i);
-      int nameId = connection.getRecords().getNameId(id);
-      if (PersistentFS.isDirectory(getFlags(id))) {
+      int nameId = records.getNameId(id);
+      int flags = records.getFlags(id);
+
+      if (PersistentFS.isDirectory(flags)) {
         treeAccessor.deleteDirectoryRecord(id);
       }
       recordAccessor.markRecordAsDeleted(id);
 
-      invertedNameIndexLazy.getValue().updateFileName(id, NULL_NAME_ID, nameId);
+      invertedNameIndex.updateFileName(id, NULL_NAME_ID, nameId);
     }
     invertedNameIndexModCount.incrementAndGet();
   }
@@ -540,6 +545,7 @@ public final class FSRecordsImpl {
   //========== FS roots manipulation: ========================================
 
   int @NotNull [] listRoots() {
+    checkNotDisposed();
     try {
       return treeAccessor.listRoots();
     }
@@ -549,6 +555,7 @@ public final class FSRecordsImpl {
   }
 
   int findOrCreateRootRecord(@NotNull String rootUrl) {
+    checkNotDisposed();
     try {
       return treeAccessor.findOrCreateRootRecord(rootUrl);
     }
@@ -558,6 +565,7 @@ public final class FSRecordsImpl {
   }
 
   void forEachRoot(@NotNull ObjIntConsumer<? super String> rootConsumer) {
+    checkNotDisposed();
     try {
       treeAccessor.forEachRoot((rootId, rootUrlId) -> {
         String rootUrl = getNameByNameId(rootUrlId);

@@ -31,5 +31,3 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         }
     }
 }
-
-// IGNORE_K2

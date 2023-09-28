@@ -7,6 +7,7 @@ import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMethodUtil;
@@ -85,8 +86,9 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
   private record ActionsTooltipProvider(@NotNull AnAction @NotNull [] myActions) implements Function<PsiElement, String> {
     @Override
     public String apply(PsiElement element) {
+      AnActionEvent event = createActionEvent(element);
       return Arrays.stream(myActions)
-            .map(action -> getText(action, element))
+            .map(action -> getText(action, event))
             .filter(Objects::nonNull)
             .collect(Collectors.joining("\n"));
     }

@@ -87,8 +87,10 @@ public final class RefCountingContentStorageImplLF extends AbstractStorageLF imp
       doRecordSanityCheck(record, result);
     }
 
+    //text files usually 3-4x compressible:
+    int uncompressedSizeEstimation = Math.max(512, result.length * 3);
     try (InflaterInputStream in = new CustomInflaterInputStream(result)) {
-      final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
+      final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream(uncompressedSizeEstimation);
       StreamUtil.copy(in, outputStream);
       return outputStream;
     }

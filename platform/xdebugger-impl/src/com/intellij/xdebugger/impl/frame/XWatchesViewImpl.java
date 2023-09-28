@@ -27,6 +27,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -406,7 +407,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   public void addWatchExpression(@NotNull XExpression expression, int index, final boolean navigateToWatchNode, boolean noDuplicates) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     XDebugSession session = getSession(getTree());
     boolean found = false;
     if (noDuplicates) {
@@ -452,7 +453,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   @Override
   public void addInlineWatchExpression(@NotNull InlineWatch watch, int index, boolean navigateToWatchNode) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     XDebugSession session = getSession(getTree());
 
     ((InlineWatchesRootNode)myRootNode).addInlineWatchExpression(session != null ? session.getCurrentStackFrame() : null, watch, index, navigateToWatchNode);
@@ -533,7 +534,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   @Override
   public void removeWatches(List<? extends XDebuggerTreeNode> nodes) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     List<? extends XDebuggerTreeNode> ordinaryWatches = ContainerUtil.filter(nodes, node -> !(node instanceof InlineWatchNode));
     List<? extends XDebuggerTreeNode> inlineWatches = ContainerUtil.filter(nodes, node -> node instanceof InlineWatchNode);
@@ -564,7 +565,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   @Override
   public void removeAllWatches() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (inlineWatchesEnabled) {
       List<? extends InlineWatchNode> children = ((InlineWatchesRootNode)myRootNode).getInlineWatchChildren();
       if (!children.isEmpty()) {

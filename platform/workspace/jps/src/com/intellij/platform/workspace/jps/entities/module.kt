@@ -3,12 +3,17 @@ package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.annotations.NonNls
 
 /**
- * Describes configuration of a [Module][com.intellij.openapi.module.Module]. 
+ * Describes configuration of a [Module][com.intellij.openapi.module.Module].
  * See [package documentation](psi_element://com.intellij.platform.workspace.jps.entities) for more details.
  */
 interface ModuleEntity : WorkspaceEntityWithSymbolicId {
@@ -67,7 +72,7 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ModuleEntity, modification: ModuleEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ModuleEntity, modification: ModuleEntity.Builder.() -> Unit): ModuleEntity = modifyEntity(
   ModuleEntity.Builder::class.java, entity, modification)
 
 var ModuleEntity.Builder.facetOrder: @Child FacetsOrderEntity?
@@ -118,7 +123,7 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ModuleCustomImlDataEntity,
-                                      modification: ModuleCustomImlDataEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: ModuleCustomImlDataEntity.Builder.() -> Unit): ModuleCustomImlDataEntity = modifyEntity(
   ModuleCustomImlDataEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -156,7 +161,8 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ModuleGroupPathEntity, modification: ModuleGroupPathEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ModuleGroupPathEntity,
+                                      modification: ModuleGroupPathEntity.Builder.() -> Unit): ModuleGroupPathEntity = modifyEntity(
   ModuleGroupPathEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -205,7 +211,7 @@ interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ExternalSystemModuleOptionsEntity,
-                                      modification: ExternalSystemModuleOptionsEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: ExternalSystemModuleOptionsEntity.Builder.() -> Unit): ExternalSystemModuleOptionsEntity = modifyEntity(
   ExternalSystemModuleOptionsEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -243,6 +249,6 @@ interface TestModulePropertiesEntity : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: TestModulePropertiesEntity,
-                                      modification: TestModulePropertiesEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: TestModulePropertiesEntity.Builder.() -> Unit): TestModulePropertiesEntity = modifyEntity(
   TestModulePropertiesEntity.Builder::class.java, entity, modification)
 //endregion

@@ -12,7 +12,10 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.colors.EditorColors
@@ -49,6 +52,7 @@ import com.intellij.usages.UsageView
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession
 import com.intellij.util.childScope
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -160,7 +164,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
 
   var lineHeight: Int
     get() {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
       return myLineHeight
     }
     private set(lineHeight) {
@@ -221,7 +225,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
   }
 
   fun releaseEditor() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (myEditor != null) {
       EditorFactory.getInstance().releaseEditor(myEditor!!)
       myEditor = null
@@ -375,7 +379,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
                   project: Project,
                   highlightOnlyNameElements: Boolean,
                   highlightLayer: Int) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
       LOG.assertTrue(PsiDocumentManager.getInstance(project).isCommitted(editor.document))
       val markupModel = editor.markupModel
       for (highlighter in markupModel.allHighlighters) {
@@ -457,7 +461,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
 
     private val REPLACEMENT_BALLOON_KEY = Key.create<Balloon>("REPLACEMENT_BALLOON_KEY")
     private fun showBalloon(project: Project, editor: Editor, range: TextRange, findModel: FindModel) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
       try {
         val replacementPreviewText = FindManager.getInstance(project)
                                        .getStringToReplace(editor.document.getText(range), findModel, range.startOffset,
@@ -562,7 +566,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     }
 
     private fun insideVisibleArea(e: Editor, r: TextRange): Boolean {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
       val textLength = e.document.textLength
       if (r.startOffset > textLength) return false
       if (r.endOffset > textLength) return false

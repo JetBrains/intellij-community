@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
 import org.junit.Test
 
@@ -10,7 +11,7 @@ class MavenSurefirePluginTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCompletion() {
+  fun testCompletion() = runBlocking {
     configureProjectPom(
       """
           <groupId>simpleMaven</groupId>
@@ -31,7 +32,7 @@ class MavenSurefirePluginTest : MavenDomWithIndicesTestCase() {
             </plugins>
           </build>
         """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     createProjectSubFile("src/main/A.txt", "")
     createProjectSubFile("src/test/A.txt", "")
@@ -41,7 +42,7 @@ class MavenSurefirePluginTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCompletionSurefireProperties() {
+  fun testCompletionSurefireProperties() = runBlocking {
     configureProjectPom(
       """
           <groupId>simpleMaven</groupId>
@@ -62,13 +63,13 @@ class MavenSurefirePluginTest : MavenDomWithIndicesTestCase() {
             </plugins>
           </build>
         """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     assertCompletionVariants(myProjectPom, "surefire.forkNumber", "surefire.threadNumber")
   }
 
   @Test
-  fun testCompletionSurefirePropertiesOutsideConfiguration() {
+  fun testCompletionSurefirePropertiesOutsideConfiguration() = runBlocking {
     configureProjectPom(
       """
           <groupId>simpleMaven</groupId>
@@ -90,14 +91,14 @@ class MavenSurefirePluginTest : MavenDomWithIndicesTestCase() {
             </plugins>
           </build>
         """.trimIndent())
-    importProject()
+    importProjectAsync()
 
     assertCompletionVariants(myProjectPom)
   }
 
   @Test
-  fun testSurefirePropertiesHighlighting() {
-    importProject(
+  fun testSurefirePropertiesHighlighting() = runBlocking {
+    importProjectAsync(
       """
           <groupId>simpleMaven</groupId>
           <artifactId>simpleMaven</artifactId>

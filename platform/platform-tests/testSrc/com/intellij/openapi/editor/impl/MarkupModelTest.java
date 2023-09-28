@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MarkupModelTest extends AbstractEditorTest {
   public void testMarkupModelListenersDoWork() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     initText(" ".repeat(100));
     Document document = getDocument(getFile());
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
@@ -78,7 +79,7 @@ public class MarkupModelTest extends AbstractEditorTest {
   }
 
   public void testMarkupModelListenersMustWorkInBGT() throws ExecutionException, InterruptedException {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     initText(" ".repeat(100));
     Document document = getDocument(getFile());
     List<String> events = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -100,7 +101,7 @@ public class MarkupModelTest extends AbstractEditorTest {
   }
 
   public void testRangeMarkerTreeClearMustFireRemoveEvents() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     initText(" ".repeat(100));
     Document document = getDocument(getFile());
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);

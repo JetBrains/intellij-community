@@ -109,7 +109,7 @@ public interface JavaStubElementTypes {
       }
 
       @Override
-      public boolean isAlwaysLeaf(StubBase<?> root) {
+      public boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
         return root instanceof PsiJavaFileStub && ((PsiJavaFileStub)root).isCompiled();
       }
     };
@@ -123,7 +123,7 @@ public interface JavaStubElementTypes {
       }
 
       @Override
-      public boolean isAlwaysLeaf(StubBase<?> root) {
+      public boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
         return root instanceof PsiJavaFileStub && ((PsiJavaFileStub)root).isCompiled();
       }
     };
@@ -136,7 +136,7 @@ public interface JavaStubElementTypes {
       }
 
       @Override
-      public boolean isAlwaysLeaf(StubBase<?> root) {
+      public boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
         return root instanceof PsiJavaFileStub && ((PsiJavaFileStub)root).isCompiled();
       }
     };
@@ -149,7 +149,7 @@ public interface JavaStubElementTypes {
       }
 
       @Override
-      public boolean isAlwaysLeaf(StubBase<?> root) {
+      public boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
         return root instanceof PsiJavaFileStub && ((PsiJavaFileStub)root).isCompiled();
       }
     };
@@ -162,7 +162,7 @@ public interface JavaStubElementTypes {
       }
 
       @Override
-      public boolean isAlwaysLeaf(StubBase<?> root) {
+      public boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
         return root instanceof PsiJavaFileStub && ((PsiJavaFileStub)root).isCompiled();
       }
     };

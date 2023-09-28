@@ -39,7 +39,7 @@ public interface JavaDocElementType {
     }
 
     @Override
-    public Set<IElementType> getParents() {
+    public @NotNull Set<IElementType> getParents() {
       return myParentElementTypes;
     }
   }

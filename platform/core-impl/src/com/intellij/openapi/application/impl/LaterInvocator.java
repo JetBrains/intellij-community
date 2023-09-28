@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -147,7 +148,7 @@ public final class LaterInvocator {
   }
 
   public static void enterModal(@NotNull Object modalEntity, @NotNull ModalityStateEx appendedState) {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("enterModal:" + modalEntity);
@@ -169,7 +170,7 @@ public final class LaterInvocator {
   }
 
   public static void enterModal(@NotNull Project project, @NotNull Dialog dialog) {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("enterModal:" + dialog.getName() + " ; for project: " + project.getName());
@@ -196,13 +197,13 @@ public final class LaterInvocator {
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static void markTransparent(@NotNull ModalityState state) {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ((ModalityStateEx)state).markTransparent();
     reincludeSkippedItemsAndRequestFlush();
   }
 
   public static void leaveModal(Project project, @NotNull Dialog dialog) {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("leaveModal:" + dialog.getName() + " ; for project: " + project.getName());
@@ -243,7 +244,7 @@ public final class LaterInvocator {
 
 
   public static void leaveModal(@NotNull Object modalEntity) {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("leaveModal:" + modalEntity);
@@ -260,7 +261,7 @@ public final class LaterInvocator {
 
   @TestOnly
   public static void leaveAllModals() {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     while (!ourModalEntities.isEmpty()) {
       leaveModal(ourModalEntities.get(ourModalEntities.size() - 1));
     }
@@ -275,7 +276,7 @@ public final class LaterInvocator {
    */
   @ApiStatus.Internal
   public static void forceLeaveAllModals() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ModalityStateEx currentState = getCurrentModalityState();
     if (currentState != ModalityState.nonModal()) {
       currentState.cancelAllEntities();
@@ -285,19 +286,19 @@ public final class LaterInvocator {
   }
 
   public static Object @NotNull [] getCurrentModalEntities() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return ArrayUtil.toObjectArray(ourModalEntities);
   }
 
   public static @NotNull ModalityStateEx getCurrentModalityState() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     synchronized (ourModalityStack) {
       return ourModalityStack.peek();
     }
   }
 
   public static boolean isInModalContextForProject(@Nullable Project project) {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (ourModalEntities.isEmpty()) return false;
     if (project == null) return true;
@@ -338,10 +339,6 @@ public final class LaterInvocator {
     return false;
   }
 
-  private static void assertIsDispatchThread() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-  }
-
   static boolean isFlushNow(@NotNull Runnable runnable) {
     return ourEdtQueue.isFlushNow(runnable);
   }
@@ -356,12 +353,12 @@ public final class LaterInvocator {
   }
 
   private static void reincludeSkippedItemsAndRequestFlush() {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ourEdtQueue.reincludeSkippedItems();
   }
 
   public static void purgeExpiredItems() {
-    assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ourEdtQueue.purgeExpiredItems();
   }
 

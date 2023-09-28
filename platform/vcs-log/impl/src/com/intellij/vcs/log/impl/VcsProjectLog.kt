@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.childScope
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
@@ -214,7 +215,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
 
   @RequiresEdt
   private fun dropLogManager(): VcsLogManager? {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val oldValue = cachedLogManager ?: return null
     cachedLogManager = null
     LOG.debug { "Disposing Vcs Log for ${VcsLogUtil.getProvidersMapText(oldValue.dataManager.logProviders)}" }

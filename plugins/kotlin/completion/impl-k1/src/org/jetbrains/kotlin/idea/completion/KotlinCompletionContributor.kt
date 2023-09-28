@@ -3,16 +3,17 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.addingPolicy.PolicyController
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiJavaPatterns.elementType
 import com.intellij.patterns.PsiJavaPatterns.psiElement
+import com.intellij.platform.ml.impl.turboComplete.KindExecutingCompletionContributor
+import com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorExecutor
 import com.intellij.psi.PsiComment
-import com.intellij.util.ProcessingContext
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.StringTemplateCompletion
@@ -25,7 +26,9 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import kotlin.math.max
 
-class KotlinCompletionContributor : CompletionContributor() {
+class KotlinCompletionContributor : KindExecutingCompletionContributor() {
+    override val kindVariety = KotlinKindVariety
+
     private val AFTER_NUMBER_LITERAL = psiElement().afterLeafSkipping(
         psiElement().withText(""),
         psiElement().withElementType(elementType().oneOf(KtTokens.FLOAT_LITERAL, KtTokens.INTEGER_LITERAL))
@@ -39,16 +42,6 @@ class KotlinCompletionContributor : CompletionContributor() {
     companion object {
         // add '$' to ignore context after the caret
         const val DEFAULT_DUMMY_IDENTIFIER: String = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED + "$"
-    }
-
-    init {
-        val provider = object : CompletionProvider<CompletionParameters>() {
-            override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-                performCompletion(parameters, result)
-            }
-        }
-        extend(CompletionType.BASIC, PlatformPatterns.psiElement(), provider)
-        extend(CompletionType.SMART, PlatformPatterns.psiElement(), provider)
     }
 
     override fun beforeCompletion(context: CompletionInitializationContext) {
@@ -124,26 +117,32 @@ class KotlinCompletionContributor : CompletionContributor() {
         return expression.textRange!!.endOffset
     }
 
-
-    private fun performCompletion(parameters: CompletionParameters, result: CompletionResultSet) {
+    override fun shouldBeCalled(parameters: CompletionParameters): Boolean {
         val position = parameters.position
         val parametersOriginFile = parameters.originalFile
-        if (position.containingFile !is KtFile || parametersOriginFile !is KtFile) return
+        return position.containingFile is KtFile && parametersOriginFile is KtFile
+    }
 
+    override fun collectKinds(
+        parameters: CompletionParameters,
+        generatorExecutor: SuggestionGeneratorExecutor,
+        result: CompletionResultSet
+    ) {
         StringTemplateCompletion.correctParametersForInStringTemplateCompletion(parameters)?.let { correctedParameters ->
-            doComplete(correctedParameters, result, ::wrapLookupElementForStringTemplateAfterDotCompletion)
+            generateCompletionKinds(correctedParameters, generatorExecutor, result, ::wrapLookupElementForStringTemplateAfterDotCompletion)
             return
         }
 
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
-            doComplete(parameters, result)
+            generateCompletionKinds(parameters, generatorExecutor, result, null)
         })
     }
 
-    private fun doComplete(
+    private fun generateCompletionKinds(
         parameters: CompletionParameters,
+        suggestionGeneratorExecutor: SuggestionGeneratorExecutor,
         result: CompletionResultSet,
-        lookupElementPostProcessor: ((LookupElement) -> LookupElement)? = null
+        lookupElementPostProcessor: ((LookupElement) -> LookupElement)?
     ) {
         val position = parameters.position
         if (position.getNonStrictParentOfType<PsiComment>() != null) {
@@ -169,10 +168,11 @@ class KotlinCompletionContributor : CompletionContributor() {
 
         result.restartCompletionWhenNothingMatches()
 
+        val resultPolicyController = PolicyController(result)
+
         val configuration = CompletionSessionConfiguration(parameters)
         if (parameters.completionType == CompletionType.BASIC) {
-            val session = BasicCompletionSession(configuration, parameters, result)
-
+            val session = BasicCompletionSession(configuration, parameters, resultPolicyController, suggestionGeneratorExecutor)
             addPostProcessor(session)
 
             if (parameters.isAutoPopup && session.shouldDisableAutoPopup()) {
@@ -180,8 +180,10 @@ class KotlinCompletionContributor : CompletionContributor() {
                 return
             }
 
-            val somethingAdded = session.complete()
-            if (!somethingAdded && parameters.invocationCount < 2) {
+            session.complete()
+            suggestionGeneratorExecutor.executeAll()
+
+            if (session.isNothingAddedToResult && parameters.invocationCount < 2) {
                 // Rerun completion if nothing was found
                 val newConfiguration = CompletionSessionConfiguration(
                     useBetterPrefixMatcherForNonImportedClasses = false,
@@ -193,7 +195,10 @@ class KotlinCompletionContributor : CompletionContributor() {
                     excludeEnumEntries = configuration.excludeEnumEntries,
                 )
 
-                val newSession = BasicCompletionSession(newConfiguration, parameters, result)
+                val newSession = BasicCompletionSession(
+                    newConfiguration, parameters, resultPolicyController, suggestionGeneratorExecutor
+                )
+
                 addPostProcessor(newSession)
                 newSession.complete()
             }
