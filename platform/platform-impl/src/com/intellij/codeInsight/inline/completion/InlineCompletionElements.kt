@@ -54,7 +54,6 @@ interface InlineCompletionEvent {
     }
   }
 
-
   /**
    * Represents a non-dummy not empty document event call in the editor.
    */
