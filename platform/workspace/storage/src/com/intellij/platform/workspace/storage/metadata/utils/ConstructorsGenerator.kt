@@ -77,9 +77,9 @@ private val COLLECTION_CONSTRUCTOR_METHOD = """
     }
     if (any is Iterable<*>) {
       val constructor = when (any) {
-        is List<*> -> "arrayListOf"
-        is Set<*> -> "hashSetOf"
-        else -> "hashMapOf"
+        is List<*> -> "listOf"
+        is Set<*> -> "setOf"
+        else -> "mapOf"
       }
       return "${'$'}constructor(${'$'}{any.joinToString(",\n") { getCollectionConstructor(it) }})"
     }
