@@ -16,10 +16,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.productInfo.*
-import org.jetbrains.intellij.build.io.copyDir
-import org.jetbrains.intellij.build.io.copyFile
-import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
-import org.jetbrains.intellij.build.io.writeNewFile
+import org.jetbrains.intellij.build.io.*
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -217,6 +214,7 @@ class MacDistributionBuilder(override val context: BuildContext,
                                    arch: JvmArchitecture) {
     val macCustomizer = customizer
     copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"), macDistDir.resolve("bin"), customizer.binFilesFilter)
+    copyFileToDir(NativeBinaryDownloader.downloadRestarter(context, OsFamily.MACOS, arch), macDistDir.resolve("bin"))
     copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
 
     val executable = context.productProperties.baseFileName

@@ -122,6 +122,7 @@ public final class Restarter {
     return restarter != null && Files.isExecutable(restarter) ? null : "not an executable file: " + restarter;
   }
 
+  @ApiStatus.Internal
   public static void scheduleRestart(boolean elevate, String @NotNull ... beforeRestart) throws IOException {
     var exitCodeVariable = EnvironmentUtil.getValue(SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR);
     if (exitCodeVariable != null) {
@@ -158,13 +159,7 @@ public final class Restarter {
     if (starter == null) throw new IOException("Starter executable not found in " + PathManager.getBinPath());
     var restarter = PathManager.findBinFileWithException("restarter.exe");
 
-    var command = new ArrayList<String>();
-    command.add(copyWhenNeeded(restarter, beforeRestart).toString());
-    command.add(String.valueOf(ProcessHandle.current().pid()));
-    if (beforeRestart.length > 0) {
-      command.add(String.valueOf(beforeRestart.length));
-      Collections.addAll(command, beforeRestart);
-    }
+    var command = prepareCommand(restarter, beforeRestart);
     if (elevate) {
       command.add("2");
       command.add(PathManager.findBinFileWithException("launcher.exe").toString());
@@ -181,10 +176,10 @@ public final class Restarter {
     if (appDir == null) throw new IOException("Application bundle not found: " + PathManager.getHomePath());
     var restarter = Path.of(PathManager.getBinPath(), "restarter");
 
-    var command = new ArrayList<String>();
-    command.add(copyWhenNeeded(restarter, beforeRestart).toString());
+    var command = prepareCommand(restarter, beforeRestart);
+    command.add("2");
+    command.add("/usr/bin/open");
     command.add(appDir.toString());
-    Collections.addAll(command, beforeRestart);
     runRestarter(command);
   }
 
@@ -210,6 +205,17 @@ public final class Restarter {
     System.setProperty(DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY, "true");
   }
 
+  private static List<String> prepareCommand(Path restarter, String[] beforeRestart) throws IOException {
+    var command = new ArrayList<String>();
+    command.add(copyWhenNeeded(restarter, beforeRestart).toString());
+    command.add(String.valueOf(ProcessHandle.current().pid()));
+    if (beforeRestart.length > 0) {
+      command.add(String.valueOf(beforeRestart.length));
+      Collections.addAll(command, beforeRestart);
+    }
+    return command;
+  }
+
   private static Path copyWhenNeeded(Path binFile, String[] args) throws IOException {
     if (SystemProperties.getBooleanProperty(DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY, false) || ArrayUtil.contains(UpdateInstaller.UPDATER_MAIN_CLASS, args)) {
       var tempDir = Files.createDirectories(PathManager.getSystemDir().resolve("restart"));
@@ -223,8 +229,9 @@ public final class Restarter {
   private static void runRestarter(List<String> command) throws IOException {
     Logger.getInstance(Restarter.class).info("run restarter: " + command);
 
-    var processBuilder = new ProcessBuilder(command)
-      .directory(Path.of(SystemProperties.getUserHome()).toFile());
+    var processBuilder = new ProcessBuilder(command);
+    processBuilder.directory(Path.of(SystemProperties.getUserHome()).toFile());
+    processBuilder.environment().put("IJ_RESTARTER_LOG", PathManager.getLogDir().resolve("restarter.log").toString());
 
     if (SystemInfo.isXWindow) setDesktopStartupId(processBuilder);
 
