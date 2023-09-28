@@ -26,7 +26,7 @@ open class InteractiveCoursePanel(protected val data: InteractiveCourseData, pri
   private val newContentMarker = data.newContentMarker()
   private val nameLine: JPanel? = if (data.newContentMarker() != null) JPanel() else null
 
-  private val interactiveCourseDescription = HeightLimitedPane(data.getDescription(), -1, LearnIdeContentColorsAndFonts.HeaderColor)
+  private val interactiveCourseDescription = HeightLimitedPane(data.getDescription(), -1, LearnIdeContentColorsAndFonts.ModuleDescriptionColor)
 
   private val calculateInnerComponentHeight: () -> Int = { preferredSize.height }
 
