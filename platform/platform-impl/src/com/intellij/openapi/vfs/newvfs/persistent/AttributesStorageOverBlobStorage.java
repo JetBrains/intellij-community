@@ -320,7 +320,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
 
     /** Record buffer */
     private final ByteBuffer buffer;
-    /** Fill record length (i.e. header + all attributes entries) */
+    /** Full record length (i.e. header + all attributes entries) */
     private final int length;
 
     private final int backRefFileId;
@@ -394,6 +394,13 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
       final byte[] recordValue = new byte[length - DEDICATED_RECORD_HEADER_SIZE];
       buffer.get(DEDICATED_RECORD_HEADER_SIZE, recordValue);
       return recordValue;
+    }
+
+    @Override
+    public String toString() {
+      return "AttributesRecord[" + (hasDirectory() ? "directory" : "dedicated") + "][" +
+             buffer.position() + ".." + buffer.limit() + ", length: " + length + "]" +
+             "[backRefFileId: " + backRefFileId + ", dedicatedAttributeId: " + dedicatedAttributeId + "]";
     }
 
     public static ByteBuffer putDirectoryRecordHeader(final ByteBuffer buffer,
@@ -579,7 +586,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
                                              final int encodedAttributeId,
                                              final int sizeOrRefId) {
       assert encodedAttributeId <= MAX_SUPPORTED_ATTRIBUTE_ID
-        : "attributeId: " + encodedAttributeId + " > " + MAX_SUPPORTED_ATTRIBUTE_ID;
+        : "attributeId: " + encodedAttributeId + " > max " + MAX_SUPPORTED_ATTRIBUTE_ID;
 
       if (fitsTinyEntry(encodedAttributeId, sizeOrRefId)) {
         final byte firstByte = (byte)((encodedAttributeId << TINY_ENTRY_SIZE_BITS) | sizeOrRefId);
@@ -746,8 +753,8 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
     }
   }
 
+  //@GuardedBy("lock")
   @VisibleForTesting
-    //@GuardedBy("lock")
   int updateAttribute(final int attributesRecordId,
                       final int fileId,
                       final int attributeId,
@@ -925,15 +932,15 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
   }
 
 
+  //@GuardedBy("lock")
   @VisibleForTesting
-    //@GuardedBy("lock")
   byte[] readAttributeValue(final int attributesRecordId,
                             final int fileId,
                             final int attributeId) throws IOException {
     return storage.readRecord(attributesRecordId, buffer -> {
       final AttributesRecord attributesRecord = new AttributesRecord(buffer);
       assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
-                                                        " != backref fileId(" + attributesRecord.backRefFileId + ")";
+                                                        " != backref fileId(" + attributesRecord.backRefFileId + "), " + attributesRecord;
 
       if (!attributesRecord.findAttributeInDirectoryRecord(attributeId)) {
         return null;
@@ -955,8 +962,8 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
     });
   }
 
+  //@GuardedBy("lock")
   @VisibleForTesting
-    //@GuardedBy("lock")
   <R> R readAttributeValue(final int attributesRecordId,
                            final int fileId,
                            final int attributeId,
@@ -964,7 +971,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
     return storage.readRecord(attributesRecordId, buffer -> {
       final AttributesRecord attributesRecord = new AttributesRecord(buffer);
       assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
-                                                        " != backref fileId(" + attributesRecord.backRefFileId + ")";
+                                                        " != backref fileId(" + attributesRecord.backRefFileId + "), "+attributesRecord;
 
       if (!attributesRecord.findAttributeInDirectoryRecord(attributeId)) {
         return null;
@@ -989,8 +996,8 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
   }
 
 
+  //@GuardedBy("lock")
   @VisibleForTesting
-    //@GuardedBy("lock")
   boolean hasAttribute(final int attributesRecordId,
                        final int fileId,
                        final int attributeId) throws IOException {
@@ -1020,8 +1027,8 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
     });
   }
 
+  //@GuardedBy("lock")
   @VisibleForTesting
-    //@GuardedBy("lock")
   boolean deleteAttributes(final int attributesRecordId,
                            final int fileId) throws IOException {
     if (attributesRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
@@ -1042,6 +1049,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
              entry.moveToNextEntry()) {
           if (!entry.isValueInlined()) {
             deleteRecordInStorage(entry.dedicatedValueRecordId());
+            //TODO clear entry.dedicatedRecordId?
           }
         }
         return null;//indicate no actual write happened
