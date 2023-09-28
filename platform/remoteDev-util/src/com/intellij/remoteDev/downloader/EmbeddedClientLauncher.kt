@@ -3,6 +3,7 @@ package com.intellij.remoteDev.downloader
 import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
+import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.openapi.application.ApplicationInfo
@@ -54,7 +55,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     val processLifetimeDef = lifetime.createNested()
     
     val javaParameters = createProcessParameters(moduleRepository, moduleRepositoryPath, urlToOpen)
-    val handler = javaParameters.createOSProcessHandler()
+    val handler = OSProcessHandler.Silent(javaParameters.toCommandLine())
     val output = Collections.synchronizedList(ArrayList<@NlsSafe String>())
     handler.addProcessListener(object : ProcessListener {
       override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
