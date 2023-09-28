@@ -187,7 +187,8 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
                     problem = LearningInternalProblems.NO_SDK_CONFIGURED) {
           !isSdkConfigured(project)
         }
-      } else {
+      }
+      else {
         // for Scratch lessons in the non-learning project
         val openCallbackId = LearningUiManager.addCallback {
           CourseManager.instance.openLesson(project, lesson, LessonStartingWay.NO_SDK_RESTART,
