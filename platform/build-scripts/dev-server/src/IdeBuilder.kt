@@ -23,6 +23,7 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.copyTo
 import kotlin.io.path.exists
+import kotlin.io.path.moveTo
 import kotlin.time.Duration.Companion.seconds
 
 internal const val UNMODIFIED_MARK_FILE_NAME = ".unmodified"
@@ -95,6 +96,8 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
           getOsDistributionBuilder(os = OsFamily.currentOs, context = context)!!.writeVmOptions(distBinDir)
             // copying outside of the installation directory is neccesary to specify system property "jb.vmOptionsFile"
             .apply { this.copyTo(distBinDir.parent.parent.resolve(this.fileName), overwrite = true) }
+
+          patchIdeaPropertiesFile(context).apply { moveTo(distBinDir.resolve(this.fileName), overwrite = true) }
         }
         Files.writeString(runDir.resolve("build.txt"), context.fullBuildNumber)
       }

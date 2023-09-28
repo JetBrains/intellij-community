@@ -191,7 +191,7 @@ private fun getLocalArtifactRepositoryRoot(global: JpsGlobal): Path {
   return if (root == null) Path.of(".m2/repository") else Path.of(root, ".m2/repository")
 }
 
-private fun patchIdeaPropertiesFile(buildContext: BuildContext): Path {
+fun patchIdeaPropertiesFile(buildContext: BuildContext): Path {
   val builder = StringBuilder(Files.readString(buildContext.paths.communityHomeDir.resolve("bin/idea.properties")))
   for (it in buildContext.productProperties.additionalIDEPropertiesFilePaths) {
     builder.append('\n').append(Files.readString(it))
