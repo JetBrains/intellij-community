@@ -236,11 +236,14 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   private fun assertSameHistory(expected: List<TestCommit>, actual: List<VcsFileRevision>) {
-    TestCase.assertEquals("History size doesn't match. Actual history: \n" + toReadable(actual), expected.size, actual.size)
-    TestCase.assertEquals("History is different.", toReadable(expected), toReadable(actual))
+    TestCase.assertEquals("History is different.", expected, actual.map { it.toTestCommit() })
   }
 
-  private class TestCommit(val hash: String, val commitMessage: String, val file: File)
+  private data class TestCommit(val hash: String, val commitMessage: String, val file: File)
+
+  private fun VcsFileRevision.toTestCommit(): TestCommit {
+    return TestCommit(revisionNumber.asString(), commitMessage!!, (this as GitFileRevision).path.ioFile)
+  }
 
   private fun move(file: File, dir: File): TestCommit {
     repo.mv(file, dir)
@@ -270,25 +273,4 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   private fun File.relativePath(): String? = FileUtil.getRelativePath(repo.root.toNioPath().toFile(), this)
-
-  private fun toReadable(history: Collection<VcsFileRevision>): String {
-    val maxSubjectLength = history.maxOfOrNull { it.commitMessage?.length ?: 0 } ?: 0
-    val sb = StringBuilder()
-    for (revision in history) {
-      val rev = revision as GitFileRevision
-      val relPath = FileUtil.getRelativePath(File(projectPath), rev.path.ioFile)
-      sb.append(String.format("%s  %-" + maxSubjectLength + "s  %s%n", DvcsUtil.getShortHash(rev.hash), rev.commitMessage, relPath))
-    }
-    return sb.toString()
-  }
-
-  private fun toReadable(history: List<TestCommit>): String {
-    val maxSubjectLength = history.maxOfOrNull { it.commitMessage.length } ?: 0
-    val sb = StringBuilder()
-    for (commit in history) {
-      val relPath = FileUtil.getRelativePath(File(projectPath), commit.file)
-      sb.append(String.format("%s  %-" + maxSubjectLength + "s  %s%n", DvcsUtil.getShortHash(commit.hash), commit.commitMessage, relPath))
-    }
-    return sb.toString()
-  }
 }
