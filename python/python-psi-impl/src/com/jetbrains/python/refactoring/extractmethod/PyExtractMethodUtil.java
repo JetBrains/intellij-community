@@ -44,7 +44,6 @@ import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyRefactoringUiService;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -265,6 +264,14 @@ public final class PyExtractMethodUtil {
                                            @NotNull final Editor editor,
                                            @NotNull final PyCodeFragment fragment,
                                            @NotNull final PsiElement expression) {
+    extractFromExpression(project, editor, fragment, expression, true);
+  }
+
+  public static void extractFromExpression(@NotNull final Project project,
+                                           @NotNull final Editor editor,
+                                           @NotNull final PyCodeFragment fragment,
+                                           @NotNull final PsiElement expression,
+                                           final Boolean processDuplicates) {
     if (!fragment.getOutputVariables().isEmpty()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           PyPsiBundle.message("refactoring.extract.method.error.local.variable.modifications"),
@@ -352,7 +359,9 @@ public final class PyExtractMethodUtil {
         if (callElement != null) {
           insertedCallElement = WriteAction.compute(() -> PyReplaceExpressionUtil.replaceExpression(expression, callElement));
           if (insertedCallElement != null) {
-            processDuplicates(duplicates, insertedCallElement, editor);
+            if (processDuplicates) {
+              processDuplicates(duplicates, insertedCallElement, editor);
+            }
           }
         }
         setSelectionAndCaret(editor, insertedCallElement);
