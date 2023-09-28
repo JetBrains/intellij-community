@@ -103,7 +103,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
                             FbiSnapshot.Impl.isRescanningRequired(snapshot as FbiSnapshot.Impl, FbiSnapshot.Impl.capture()))
         if (runRescanning) {
           beforeIndexTasksStarted?.run()
-          cleanupProcessedFlag()
+          cleanupProcessedFlag(reason)
           for (project in ProjectUtil.getOpenProjects()) {
             object : UnindexedFilesScanner(project, reason) {
               override fun shouldHideProgressInSmartMode(): Boolean = true

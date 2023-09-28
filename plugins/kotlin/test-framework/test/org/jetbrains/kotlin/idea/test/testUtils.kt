@@ -74,7 +74,7 @@ fun Project.waitIndexingComplete(indexingReason: String? = null) {
     UIUtil.dispatchAllInvocationEvents()
     invokeAndWaitIfNeeded {
         // TODO: [VD] a dirty hack to reindex created android project
-        IndexingFlag.cleanupProcessedFlag()
+        IndexingFlag.cleanupProcessedFlag("org.jetbrains.kotlin.idea.test.TestUtilsKt.waitIndexingComplete")
         with(DumbService.getInstance(project)) {
             UnindexedFilesScanner(project, indexingReason).queue()
             completeJustSubmittedTasks()

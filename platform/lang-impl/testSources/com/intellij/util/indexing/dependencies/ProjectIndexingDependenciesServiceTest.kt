@@ -93,7 +93,7 @@ class ProjectIndexingDependenciesServiceTest {
     val file = factory.nonExistingFile()
     val inst = factory.newProjectIndexingDependenciesService(file)
     val oldStamp = inst.getLatestIndexingRequestToken()
-    inst.invalidateAllStamps()
+    inst.invalidateAllStamps("test invalidateAllStamps in project")
     val newStamp = inst.getLatestIndexingRequestToken()
 
     assertNotEquals(oldStamp, newStamp)
@@ -110,7 +110,7 @@ class ProjectIndexingDependenciesServiceTest {
     val oldStamp1 = inst1.getLatestIndexingRequestToken()
     val oldStamp2 = inst2.getLatestIndexingRequestToken()
 
-    inst1.invalidateAllStamps()
+    inst1.invalidateAllStamps("test invalidateAllStamps in project invalidates only that project")
 
     val newStamp1 = inst1.getLatestIndexingRequestToken()
     val newStamp2 = inst2.getLatestIndexingRequestToken()
@@ -124,7 +124,7 @@ class ProjectIndexingDependenciesServiceTest {
     val file = factory.nonExistingFile()
     val inst = factory.newProjectIndexingDependenciesService(file)
     val oldStamp = inst.getLatestIndexingRequestToken()
-    factory.sharedAppService.invalidateAllStamps()
+    factory.sharedAppService.invalidateAllStamps("test invalidateAllStamps in app")
     val newStamp = inst.getLatestIndexingRequestToken()
 
     assertNotEquals(oldStamp, newStamp)
@@ -135,7 +135,7 @@ class ProjectIndexingDependenciesServiceTest {
     val file = factory.nonExistingFile()
     val inst1 = factory.newProjectIndexingDependenciesService(file)
 
-    inst1.invalidateAllStamps() // make some non-default sate
+    inst1.invalidateAllStamps("test service reload keeps state") // make some non-default sate
     val oldStamp = inst1.getLatestIndexingRequestToken()
 
     val inst2 = factory.newProjectIndexingDependenciesService(file)

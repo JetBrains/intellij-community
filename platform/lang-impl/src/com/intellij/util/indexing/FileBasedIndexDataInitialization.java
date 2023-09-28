@@ -145,7 +145,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
 
     if (myCurrentVersionCorrupted) {
       CorruptionMarker.dropIndexes();
-      ApplicationManager.getApplication().getService(AppIndexingDependenciesService.class).invalidateAllStamps();
+      ApplicationManager.getApplication().getService(AppIndexingDependenciesService.class).invalidateAllStamps("Indexes corrupted");
     }
 
     return tasks;

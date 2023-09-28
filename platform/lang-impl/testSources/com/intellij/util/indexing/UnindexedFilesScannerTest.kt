@@ -317,7 +317,7 @@ class UnindexedFilesScannerTest {
   }
 
   private fun indexFiles(provider: SingleRootIndexableFilesIterator, dirtyFiles: Collection<VirtualFile>) {
-    project.service<ProjectIndexingDependenciesService>().invalidateAllStamps()
+    project.service<ProjectIndexingDependenciesService>().invalidateAllStamps("com.intellij.util.indexing.UnindexedFilesScannerTest.indexFiles")
     val indexingTask = UnindexedFilesIndexer(project, mapOf(provider to dirtyFiles), "Test", LongSet.of())
     val indicator = EmptyProgressIndicator()
     ProgressManager.getInstance().runProcess({ indexingTask.perform(indicator) }, indicator)

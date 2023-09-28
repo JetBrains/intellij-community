@@ -241,7 +241,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void scheduleFullIndexesRescan(@NotNull String reason) {
-    cleanupProcessedFlag();
+    cleanupProcessedFlag(reason);
     scheduleIndexRescanningForAllProjects(reason);
   }
 
@@ -1230,7 +1230,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   private void doRequestRebuild(@NotNull ID<?, ?> indexId, Throwable throwable) {
-    cleanupProcessedFlag();
+    cleanupProcessedFlag("Rebuild requested for index " + indexId);
     if (!myRegisteredIndexes.isExtensionsDataLoaded()) reportUnexpectedAsyncInitState();
 
     if (RebuildStatus.requestRebuild(indexId)) {
@@ -1245,7 +1245,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         LOG.info(message, throwable);
       }
 
-      cleanupProcessedFlag();
+      cleanupProcessedFlag(message);
 
       if (!myRegisteredIndexes.isInitialized()) return;
       advanceIndexVersion(indexId);

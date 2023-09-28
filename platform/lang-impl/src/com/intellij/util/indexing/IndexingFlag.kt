@@ -31,8 +31,8 @@ object IndexingFlag {
   val nonExistentHash: Long = StripedIndexingStampLock.NON_EXISTENT_HASH
 
   @JvmStatic
-  fun cleanupProcessedFlag() {
-    application.service<AppIndexingDependenciesService>().invalidateAllStamps()
+  fun cleanupProcessedFlag(debugReason: String) {
+    application.service<AppIndexingDependenciesService>().invalidateAllStamps(debugReason)
   }
 
   private fun VirtualFile.asApplicable(): VirtualFileWithId? {

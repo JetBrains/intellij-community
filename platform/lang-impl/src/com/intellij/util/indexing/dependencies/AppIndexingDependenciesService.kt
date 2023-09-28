@@ -106,7 +106,7 @@ class AppIndexingDependenciesService @NonInjectable @VisibleForTesting construct
 
     val latestFingerprintValue = latestFingerprint.get()
     if (latestFingerprintValue != fingerprint) {
-      invalidateAllStamps()
+      invalidateAllStamps("App fingerprint changed: $latestFingerprintValue to $fingerprint")
       storage.writeAppFingerprint(fingerprint)
       latestFingerprint.compareAndSet(latestFingerprintValue, fingerprint)
     }
@@ -114,7 +114,9 @@ class AppIndexingDependenciesService @NonInjectable @VisibleForTesting construct
     return current.get()
   }
 
-  fun invalidateAllStamps() {
+  fun invalidateAllStamps(debugReason: String) {
+    thisLogger().info("Invalidating all indexing flags. Reason: $debugReason")
+
     val next = current.updateAndGet {
       AppIndexingDependenciesTokenImpl(it.appIndexingRequestId + 1)
     }

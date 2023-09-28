@@ -140,7 +140,9 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     return IndexingRequestTokenImpl(currentRequestId.get(), appCurrent)
   }
 
-  fun invalidateAllStamps() {
+  fun invalidateAllStamps(debugReason: String) {
+    thisLogger().info("Invalidating all indexing flags in project. Reason: $debugReason")
+
     val next = currentRequestId.incrementAndGet()
 
     // Assumption is that projectStamp >=0 and appStamp >=0. Their sum can be negative and this is fine (think of it as of unsigned int).
