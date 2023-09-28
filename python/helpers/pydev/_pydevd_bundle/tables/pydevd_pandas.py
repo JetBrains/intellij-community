@@ -113,6 +113,42 @@ def __get_counts(table):
     return __convert_to_df(table).count().to_frame().transpose()
 
 
+def get_value_occurrences_count(table):
+    # type: (Union[pd.DataFrame, pd.Series, np.ndarray, pd.Categorical]) -> str
+    class ColumnVisualisationType:
+        HISTOGRAM = "histogram"
+        UNIQUE = "unique"
+        PERCENTAGE = "percentage"
+
+    df = __convert_to_df(table)
+    num_bins = 5
+    bin_counts = []
+    column_visualisation_type = ColumnVisualisationType.HISTOGRAM
+
+    for col_name in df.columns:
+        column = df[col_name].dropna()
+        col_type = column.dtype
+        res = {}
+        if col_type == bool:
+            res = df[col_name].value_counts().sort_index().to_dict()
+        elif col_type.kind in ['i', 'f']:
+            unique_values = column.nunique()
+            if unique_values <= num_bins:
+                res = df[col_name].value_counts().sort_index().to_dict()
+            else:
+                counts, bin_edges = np.histogram(column, bins=num_bins)
+                if col_type.kind == 'i':
+                    format_function = lambda x: int(x)
+                else:
+                    format_function = lambda x: round(x, 1)
+
+                bin_labels = ['{} — {}'.format(format_function(bin_edges[i]), format_function(bin_edges[i+1])) for i in range(num_bins)]
+                bin_count_dict = {label: count for label, count in zip(bin_labels, counts)}
+                res = bin_count_dict
+        bin_counts.append(str({column_visualisation_type: res}))
+
+    return ';'.join(bin_counts)
+
 # noinspection PyUnresolvedReferences
 def __convert_to_df(table):
     # type: (Union[pd.DataFrame, pd.Series, np.ndarray, pd.Categorical]) -> pd.DataFrame

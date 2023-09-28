@@ -1,4 +1,5 @@
 #  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+import numpy as np
 import polars as pl
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
@@ -66,6 +67,48 @@ def get_value_counts(table):
     # type: (Union[pl.DataFrame, pl.Series]) -> str
     return ""
 
+
+def get_value_occurrences_count(table):
+    # type: (Union[pl.DataFrame, pl.Series]) -> str
+    class ColumnVisualisationType:
+        HISTOGRAM = "histogram"
+        UNIQUE = "unique"
+        PERCENTAGE = "percentage"
+
+    bin_counts = []
+    num_bins = 5
+
+    def calculate_occurrences(col_name, column):
+        col_type = column.dtype
+        column_visualisation_type = ColumnVisualisationType.HISTOGRAM
+        res = {}
+        if col_type == pl.Boolean and not column.is_null().any():
+            counts = column.value_counts().sort(by = col_name).to_dict()
+            res = {label: count for label, count in zip(counts[col_name], counts["counts"])}
+
+        elif column.is_numeric():
+            column = column.drop_nulls()
+            unique_values = column.n_unique()
+            if unique_values > num_bins:
+                counts, bin_edges = np.histogram(column, bins=num_bins)
+
+                format_function = int if column.is_integer() else lambda x: round(x, 1)
+                bin_labels = ['{} — {}'.format(format_function(bin_edges[i]), format_function(bin_edges[i + 1])) for i in range(num_bins)]
+
+                res = {label: count for label, count in zip(bin_labels, counts)}
+            else:
+                counts = column.value_counts().sort(by=col_name).to_dict()
+                res = {label: count for label, count in zip(counts[col_name], counts["counts"])}
+        return str({column_visualisation_type: res})
+
+    if isinstance(table, pl.DataFrame):
+        for col in table.columns:
+            bin_counts.append(calculate_occurrences(col, table[col]))
+
+    elif isinstance(table, pl.Series):
+        bin_counts.append(calculate_occurrences(table.name, table))
+
+    return ';'.join(bin_counts)
 
 def __get_describe(table):
     # type: (Union[pl.DataFrame, pl.Series]) -> Union[pl.DataFrame, None]
