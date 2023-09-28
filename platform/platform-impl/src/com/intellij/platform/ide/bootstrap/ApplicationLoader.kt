@@ -321,24 +321,22 @@ private fun CoroutineScope.runPostAppInitTasks() {
 
 // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
 private fun CoroutineScope.createAppStarter(args: List<String>): Deferred<ApplicationStarter> {
-  val first = args.firstOrNull()
+  val commandName = args.firstOrNull()
   // first argument maybe a project path
-  if (first == null) {
+  if (commandName == null) {
     return async { IdeStarter() }
   }
-  else if (args.size == 1 && OSAgnosticPathUtil.isAbsolute(first)) {
+  else if (args.size == 1 && OSAgnosticPathUtil.isAbsolute(commandName)) {
     return async { createDefaultAppStarter() }
   }
 
-  val starter = findStarter(first) ?: createDefaultAppStarter()
+  val starter = findStarter(commandName) ?: createDefaultAppStarter()
   if (AppMode.isHeadless() && !starter.isHeadless) {
-    @Suppress("DEPRECATION") val commandName = starter.commandName
     val message = IdeBundle.message(
       "application.cannot.start.in.a.headless.mode",
       when {
         starter is IdeStarter -> 0
-        commandName != null -> 1
-        else -> 2
+        else -> 1
       },
       commandName,
       starter.javaClass.name,
@@ -424,10 +422,24 @@ private suspend fun handleExternalCommand(args: List<String>, currentDirectory: 
   }
 }
 
+private const val APP_STARTER_EP_NAME = "com.intellij.appStarter"
+
 fun findStarter(key: String): ApplicationStarter? {
   @Suppress("DEPRECATION")
-  return ExtensionPointName<ApplicationStarter>("com.intellij.appStarter").findByIdOrFromInstance(key) { it.commandName }
+  return ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME).findByIdOrFromInstance(key) { it.commandName }
 }
+
+/**
+ * Returns name of the command for this [ApplicationStarter] specified in plugin.xml file. It should be used instead of deprecated
+ * [ApplicationStarter.commandName].
+ */
+val ApplicationStarter.commandNameFromExtension: String?
+  get() {
+    val extension = ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME).filterableLazySequence().find {
+      it.implementationClassName == javaClass.name
+    }
+    return extension?.id
+  }
 
 @VisibleForTesting
 fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedListener>, asyncScope: CoroutineScope) {

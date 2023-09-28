@@ -53,6 +53,7 @@ interface ApplicationStarter {
    */
   @Deprecated("Specify it as `id` for extension definition in a plugin descriptor")
   val commandName: String?
+    get() = null
 
   /**
    * Called before application initialization.
