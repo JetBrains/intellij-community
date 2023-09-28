@@ -153,6 +153,7 @@ internal class VcsConsoleTabServiceImpl(val project: Project) : VcsConsoleTabSer
     panel.toolbar = toolbar.component
 
     val contentTab = ContentImpl(panel, VcsBundle.message("vcs.console.toolwindow.display.name"), true)
+    contentTab.isCloseable = false
     contentTab.setPreferredFocusedComponent { consoleView.preferredFocusableComponent }
 
     contentTab.tabName = ChangesViewContentManager.CONSOLE //NON-NLS
