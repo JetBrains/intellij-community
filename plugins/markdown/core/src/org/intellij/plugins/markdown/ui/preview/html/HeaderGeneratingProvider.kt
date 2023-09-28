@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.ui.preview.html
 
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
@@ -49,8 +50,12 @@ class HeaderGeneratingProvider(headerTag: String): SimpleTagProvider(headerTag) 
           count += 1
         }
       }
-      val replaced = text.lowercase().replace(MarkdownHeader.garbageRegex, "").replace(MarkdownHeader.additionalSymbolsRegex, "")
-      return replaced.replace(" ", "-")
+      val replaced = text.lowercase().replace(MarkdownHeader.garbageRegex, "").replace(" ", "-")
+
+      return when {
+        AdvancedSettings.getBoolean("markdown.squash.multiple.dashes.in.header.anchors") -> replaced.replace(Regex("-{2,}"), "-")
+        else -> replaced
+      }
     }
 
     private fun obtainLinkTextElements(node: ASTNode): Sequence<ASTNode> {

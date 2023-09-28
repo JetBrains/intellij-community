@@ -5,12 +5,19 @@ import com.intellij.lang.ASTNode
 import com.intellij.navigation.ColoredItemPresentation
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiReference
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.util.*
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.elementType
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.util.children
@@ -162,8 +169,12 @@ class MarkdownHeader: MarkdownHeaderImpl {
         count += 1
       }
     }
-    val replaced = text.lowercase().replace(garbageRegex, "").replace(additionalSymbolsRegex, "")
-    return replaced.replace(" ", "-")
+    val replaced = text.lowercase().replace(garbageRegex, "").replace(" ", "-")
+
+    return when {
+      AdvancedSettings.getBoolean("markdown.squash.multiple.dashes.in.header.anchors") -> replaced.replace(Regex("-{2,}"), "-")
+      else -> replaced
+    }
   }
 
   private fun StringBuilder.processInlineLink(element: MarkdownInlineLink) {
@@ -178,8 +189,7 @@ class MarkdownHeader: MarkdownHeaderImpl {
   }
 
   companion object {
-    internal val garbageRegex = Regex("[^\\p{IsAlphabetic}\\d\\- ]")
-    internal val additionalSymbolsRegex = Regex("[^\\-_ \\p{IsAlphabetic}\\d]")
+    internal val garbageRegex = Regex("[^\\p{IsAlphabetic}\\d\\-_ ]")
 
     private fun buildUniqueAnchorText(header: MarkdownHeader): String? {
       val anchorText = obtainRawAnchorText(header) ?: return null
