@@ -6,18 +6,18 @@ import com.intellij.execution.actions.RunConfigurationsComboBoxAction;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,14 +27,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+
+import static com.intellij.ui.components.JBOptionButton.getDefaultTooltip;
 
 public class EditConfigurationsDialog extends SingleConfigurableEditor {
   private static final Logger LOG = Logger.getInstance(EditConfigurationsDialog.class);
   protected Executor myExecutor;
   private final @NotNull Project myProject;
   private @Nullable Action myRunAction;
+  private final List<AnAction> myExecutorActions = new ArrayList<>();
   private final @Nullable DataContext myDataContext;
 
   public EditConfigurationsDialog(@NotNull Project project) {
@@ -137,6 +142,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
     if (action == myRunAction) {
       JBOptionButton button = new JBOptionButton(action, null);
       button.setAddSeparator(false);
+      button.setOptionTooltipText(getDefaultTooltip());
       button.setIconTextGap(JBUI.CurrentTheme.ActionsList.elementIconGap());
       return button;
     }
@@ -168,30 +174,48 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
       myRunAction.putValue(Action.NAME, executor.getActionName());
       button.setText(executor.getActionName());
       button.setIcon(executor.getIcon());
+      myExecutorActions.forEach(action -> action.unregisterCustomShortcutSet(getContentPanel()));
+      myExecutorActions.clear();
       if (selected != null) {
+        ExecutorRegistryImpl.ExecutorAction action = createAction(selected, executor);
         DefaultActionGroup group = new DefaultActionGroup();
         RunConfigurationsComboBoxAction.addExecutorActions(group,
-                                                           exec -> new ExecutorRegistryImpl.ExecutorAction(exec) {
-                                                             @Override
-                                                             public void actionPerformed(@NotNull AnActionEvent e) {
-                                                               run(myProject, selected, Objects.requireNonNull(myDataContext));
-                                                               doOKAction();
-                                                             }
-
-                                                             @Override
-                                                             protected RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull AnActionEvent e) {
-                                                               return selected;
-                                                             }
-
-                                                             @Override
-                                                             protected boolean hideDisabledExecutorButtons() {
-                                                               return true;
-                                                             }
-                                                           },
+                                                           exec -> createAction(selected, exec),
                                                            exec -> exec != executor);
         button.setOptions(Arrays.asList(group.getChildren(null)));
+        button.setToolTipText(UIUtil.removeMnemonic(executor.getStartActionText(selected.getName())) + " (" + KeymapUtil.getFirstKeyboardShortcutText(action) + ")");
       }
     }
+  }
+
+  @NotNull
+  private ExecutorRegistryImpl.ExecutorAction createAction(@NotNull RunnerAndConfigurationSettings selected, @NotNull Executor executor) {
+    return new ExecutorRegistryImpl.ExecutorAction(executor) {
+      {
+        AnAction action = ActionManager.getInstance().getAction(executor.getId());
+        if (action != null) {
+          setShortcutSet(action.getShortcutSet());
+          registerCustomShortcutSet(getContentPanel(), null);
+        }
+        myExecutorActions.add(this);
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        run(myProject, selected, Objects.requireNonNull(myDataContext));
+        doOKAction();
+      }
+
+      @Override
+      protected RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull AnActionEvent e) {
+        return selected;
+      }
+
+      @Override
+      protected boolean hideDisabledExecutorButtons() {
+        return true;
+      }
+    };
   }
 
   private void updateDialog() {

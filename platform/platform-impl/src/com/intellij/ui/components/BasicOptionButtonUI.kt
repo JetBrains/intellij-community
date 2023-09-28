@@ -183,7 +183,8 @@ open class BasicOptionButtonUI : OptionButtonUI() {
       ICON_CHANGED_PROPERTY -> mainButton.icon = optionButton.icon
       "iconTextGap" -> mainButton.iconTextGap = optionButton.iconTextGap
       MNEMONIC_CHANGED_PROPERTY -> mainButton.mnemonic = optionButton.mnemonic
-      TOOL_TIP_TEXT_KEY, PROP_OPTION_TOOLTIP -> updateTooltip()
+      TOOL_TIP_TEXT_KEY -> mainButton.toolTipText = optionButton.toolTipText
+      PROP_OPTION_TOOLTIP -> updateTooltip()
       PROP_OPTIONS -> {
         closePopup()
         updateTooltip()
@@ -317,7 +318,9 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   private fun updateTooltip() {
     val toolTip = if (!isSimpleButton) optionButton.optionTooltipText else optionButton.toolTipText
 
-    mainButton.toolTipText = toolTip
+    if (mainButton.toolTipText == null) {
+      mainButton.toolTipText = toolTip
+    }
     arrowButton.toolTipText = toolTip
   }
 
