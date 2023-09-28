@@ -187,7 +187,7 @@ public class JavaSliceUsage extends SliceUsage {
     SliceValueFilter filter = params.valueFilter;
     SliceUsage parent = getParent();
     SliceValueFilter parentFilter = parent == null ? null : parent.params.valueFilter;
-    String filterText = filter == null ? "" : filter.getPresentationText(getElement());
+    String filterText = filter == null || getElement() == null ? "" : filter.getPresentationText(getElement());
     String parentFilterText = parentFilter == null || parent.getElement() == null ? "" :
                               parentFilter.getPresentationText(parent.getElement());
     if (!filterText.isEmpty() && !filterText.equals(parentFilterText)) {
