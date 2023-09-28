@@ -50,6 +50,8 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
   fun getLayoutCopy(): DesktopLayout = state.getActiveLayoutCopy(isNewUi)
 
+  fun getFactoryDefaultLayoutCopy(): DesktopLayout = state.getLayoutCopy(FACTORY_DEFAULT_LAYOUT_NAME, isNewUi)
+
   fun setLayout(layout: DesktopLayout): Unit = setLayout(activeLayoutName, layout)
 
   fun setLayout(name: String, layout: DesktopLayout) {
@@ -117,7 +119,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
     fun getActiveLayoutCopy(isNewUi: Boolean): DesktopLayout = getLayoutCopy(activeLayoutName, isNewUi)
 
-    private fun getLayoutCopy(layoutName: String, isNewUi: Boolean): DesktopLayout {
+    fun getLayoutCopy(layoutName: String, isNewUi: Boolean): DesktopLayout {
       return DesktopLayout(
         convertWindowDescriptorsToWindowInfos(getDescriptors(layoutName, isNewUi)),
         convertUnifiedWeightsDescriptorToUnifiedWeights(getUnifiedWeights(layoutName))

@@ -1271,6 +1271,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       return
     }
 
+    val factoryDefault = ToolWindowDefaultLayoutManager.getInstance().getFactoryDefaultLayoutCopy()
+
     data class LayoutData(val old: WindowInfoImpl, val new: WindowInfoImpl, val entry: ToolWindowEntry)
 
     val list = mutableListOf<LayoutData>()
@@ -1278,9 +1280,15 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     for (entry in idToEntry.values) {
       val old = layoutState.getInfo(entry.id) ?: entry.readOnlyWindowInfo as WindowInfoImpl
       var new = newLayout.getInfo(entry.id)
-      // If it wasn't present when the layout was saved, leave its state alone, but hide it.
       if (new == null) {
-        new = old.copy().apply { isVisible = false }
+        // The window wasn't present when the layout was saved. The best thing we can do is to restore
+        // its state to default. But if it doesn't even present in the default layout, there's little we can
+        // do except at least make the window invisible (otherwise it'll stick around for no reason, see IDEA-321129),
+        // and also remove its stripe button for similar reasons (IDEA-331827).
+        new = factoryDefault.getInfo(entry.id) ?: old.copy().apply {
+          isVisible = false
+          isShowStripeButton = false
+        }
         newLayout.addInfo(entry.id, new)
       }
       if (old != new) {
