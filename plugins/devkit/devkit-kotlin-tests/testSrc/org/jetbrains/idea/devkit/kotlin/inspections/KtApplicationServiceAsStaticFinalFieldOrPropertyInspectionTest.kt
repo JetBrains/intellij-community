@@ -41,12 +41,7 @@ class KtApplicationServiceAsStaticFinalFieldOrPropertyInspectionTest : Applicati
     doHighlightTest()
   }
 
-  // TODO: enable after fixing ServiceUtil.kt (classes, annotated with @Service without any arguments
-  //  are treated as APP service if defined in Java, and NOT_SPECIFIED if they are defined in Kotlin,
-  //  so here the inspection doesn't detect application services)
-
-  // Test SSR inspection "Eager service initialization during classloading"
-  fun _testEagerInitializationDuringClassloading() {
+  fun testEagerInitializationDuringClassloading() {
     doHighlightTest()
   }
 
