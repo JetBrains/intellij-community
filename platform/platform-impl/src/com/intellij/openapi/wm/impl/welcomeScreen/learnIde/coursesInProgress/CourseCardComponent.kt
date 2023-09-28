@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
@@ -51,10 +52,12 @@ class CourseCardComponent(val data: CourseInfo) : JPanel(BorderLayout()) {
         val icon = data.icon
         if (icon != null) {
           cell(getScaledLogoComponent(icon, this@CourseCardComponent))
-            .align(AlignY.TOP).gap(com.intellij.ui.dsl.builder.RightGap.SMALL)
+            .align(AlignY.TOP)
+            .gap(RightGap.SMALL)
         }
       }
     }
+    logoPanel.border = JBUI.Borders.emptyRight(6)
     add(logoPanel, BorderLayout.LINE_START)
     add(createMainComponent(), BorderLayout.CENTER)
 
