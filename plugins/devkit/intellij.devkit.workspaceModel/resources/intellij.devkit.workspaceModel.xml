@@ -11,8 +11,6 @@
     </action>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="workspace.model.generator.keep.unknown.fields" defaultValue="false"
-                 description="With this option generator keeps unknown properties at generated interface otherwise it will be skipped"/>
     <localInspection language="kotlin"
                      projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitWorkspaceModelBundle"
