@@ -68,18 +68,23 @@ import java.util.function.Function;
 
 @State(name = "com.intellij.coverage.CoverageDataManagerImpl", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class CoverageDataManagerImpl extends CoverageDataManager implements Disposable, PersistentStateComponent<Element> {
-  private final List<CoverageSuiteListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final Logger LOG = Logger.getInstance(CoverageDataManagerImpl.class);
   @NonNls
   private static final String SUITE = "SUITE";
 
   private final Project myProject;
-  private final Set<CoverageSuite> myCoverageSuites = new HashSet<>();
-  private boolean myIsProjectClosing = false;
-
+  private final List<CoverageSuiteListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final Map<Editor, CoverageEditorAnnotator> myAnnotators = new HashMap<>();
+  private final Set<CoverageSuite> myRegisteredSuites = new HashSet<>();
+  private final Object ANNOTATORS_LOCK = new Object();
   private final Object myLock = new Object();
+  private CoverageSuitesBundle myCurrentSuitesBundle;
+
+  private boolean myIsProjectClosing = false;
   private boolean mySubCoverageIsActive;
 
+  private Set<LocalFileSystem.WatchRequest> myWatchRequests;
+  private List<String> myCurrentSuiteRoots;
   private final VirtualFileContentsChangedAdapter myContentListener = new VirtualFileContentsChangedAdapter() {
     @Override
     protected void onFileChange(@NotNull VirtualFile fileOrDirectory) {
@@ -92,21 +97,23 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     @Override
     protected void onBeforeFileChange(@NotNull VirtualFile fileOrDirectory) { }
   };
-  private Set<LocalFileSystem.WatchRequest> myWatchRequests;
-  private List<String> myCurrentSuiteRoots;
 
-  @Override
-  public CoverageSuitesBundle getCurrentSuitesBundle() {
-    return myCurrentSuitesBundle;
-  }
 
-  private CoverageSuitesBundle myCurrentSuitesBundle;
-
-  private final Object ANNOTATORS_LOCK = new Object();
-  private final Map<Editor, CoverageEditorAnnotator> myAnnotators = new HashMap<>();
 
   public CoverageDataManagerImpl(@NotNull Project project) {
     myProject = project;
+
+    CoverageViewSuiteListener coverageViewListener = createCoverageViewListener();
+    if (coverageViewListener != null) {
+      addSuiteListener(coverageViewListener, this);
+    }
+
+    setUpOnSchemeChangeCallback(project);
+    setUpRunnerEPRemovedCallback(project);
+    setUpEngineEPRemovedCallback();
+  }
+
+  private void setUpOnSchemeChangeCallback(@NotNull Project project) {
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
@@ -114,12 +121,9 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
         chooseSuitesBundle(myCurrentSuitesBundle);
       }
     });
+  }
 
-    final CoverageViewSuiteListener coverageViewListener = createCoverageViewListener();
-    if (coverageViewListener != null) {
-      addSuiteListener(coverageViewListener, this);
-    }
-
+  private void setUpRunnerEPRemovedCallback(@NotNull Project project) {
     CoverageRunner.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull CoverageRunner coverageRunner, @NotNull PluginDescriptor pluginDescriptor) {
@@ -132,12 +136,12 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
         RunManager runManager = RunManager.getInstance(project);
         List<RunConfiguration> configurations = runManager.getAllConfigurationsList();
         for (RunConfiguration configuration : configurations) {
-          if (configuration instanceof RunConfigurationBase) {
+          if (configuration instanceof RunConfigurationBase<?> runConfiguration) {
             CoverageEnabledConfiguration coverageEnabledConfiguration =
-              ((RunConfigurationBase)configuration).getCopyableUserData(CoverageEnabledConfiguration.COVERAGE_KEY);
+              runConfiguration.getCopyableUserData(CoverageEnabledConfiguration.COVERAGE_KEY);
             if (coverageEnabledConfiguration != null && Objects.equals(coverageRunner.getId(), coverageEnabledConfiguration.getRunnerId())) {
               coverageEnabledConfiguration.coverageRunnerExtensionRemoved(coverageRunner);
-              ((RunConfigurationBase)configuration).putCopyableUserData(CoverageEnabledConfiguration.COVERAGE_KEY, null);
+              runConfiguration.putCopyableUserData(CoverageEnabledConfiguration.COVERAGE_KEY, null);
             }
           }
         }
@@ -155,7 +159,9 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
         }
       }
     }, this);
+  }
 
+  private void setUpEngineEPRemovedCallback() {
     CoverageEngine.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull CoverageEngine coverageEngine, @NotNull PluginDescriptor pluginDescriptor) {
@@ -164,9 +170,14 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
           chooseSuitesBundle(null);
         }
 
-        myCoverageSuites.removeIf(suite -> suite.getCoverageEngine() == coverageEngine);
+        myRegisteredSuites.removeIf(suite -> suite.getCoverageEngine() == coverageEngine);
       }
     }, this);
+  }
+
+  @Override
+  public CoverageSuitesBundle getCurrentSuitesBundle() {
+    return myCurrentSuitesBundle;
   }
 
   @Nullable
@@ -203,7 +214,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       if (suite != null) {
         try {
           suite.readExternal(suiteElement);
-          myCoverageSuites.add(suite);
+          myRegisteredSuites.add(suite);
         }
         catch (NumberFormatException e) {
           //try next suite
@@ -216,7 +227,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   @Override
   public Element getState() {
     Element element = new Element("state");
-    for (CoverageSuite coverageSuite : myCoverageSuites) {
+    for (CoverageSuite coverageSuite : myRegisteredSuites) {
       final Element suiteElement = new Element(SUITE);
       element.addContent(suiteElement);
       coverageSuite.writeExternal(suiteElement);
@@ -239,8 +250,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     if (suiteToMergeWith == null || !suite.getPresentableName().equals(suiteToMergeWith)) {
       removeCoverageSuite(suite);
     }
-    myCoverageSuites.remove(suite); // remove previous instance
-    myCoverageSuites.add(suite); // add new instance
+    myRegisteredSuites.remove(suite); // remove previous instance
+    myRegisteredSuites.add(suite); // add new instance
   }
 
   @Override
@@ -249,7 +260,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
                                                 CoverageRunner coverageRunner,
                                                 CoverageFileProvider fileProvider) {
     final CoverageSuite suite = createCoverageSuite(coverageRunner, selectedFileName, fileProvider, ArrayUtilRt.EMPTY_STRING_ARRAY, timeStamp, null, false, false);
-    myCoverageSuites.add(suite);
+    myRegisteredSuites.add(suite);
     return suite;
   }
 
@@ -269,7 +280,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     removeCoverageSuite(suite);
 
     // add new instance
-    myCoverageSuites.add(suite);
+    myRegisteredSuites.add(suite);
     return suite;
   }
 
@@ -281,7 +292,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   @Override
   public void unregisterCoverageSuite(CoverageSuite suite) {
-    myCoverageSuites.remove(suite);
+    myRegisteredSuites.remove(suite);
     if (myCurrentSuitesBundle != null && myCurrentSuitesBundle.contains(suite)) {
       CoverageSuite[] suites = myCurrentSuitesBundle.getSuites();
       suites = ArrayUtil.remove(suites, suite);
@@ -291,7 +302,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   @Override
   public CoverageSuite @NotNull [] getSuites() {
-    return myCoverageSuites.toArray(new CoverageSuite[0]);
+    return myRegisteredSuites.toArray(new CoverageSuite[0]);
   }
 
   @Override
@@ -466,7 +477,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   @Override
   public void dispose() { }
 
-  public static void processGatheredCoverage(RunConfigurationBase configuration) {
+  public static void processGatheredCoverage(RunConfigurationBase<?> configuration) {
     final Project project = configuration.getProject();
     if (project.isDisposed()) return;
     final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);

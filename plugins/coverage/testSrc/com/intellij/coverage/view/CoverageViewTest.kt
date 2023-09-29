@@ -16,12 +16,19 @@ class CoverageViewTest : CoverageIntegrationBaseTest() {
     val bundle = loadIJSuite()
 
     openSuiteAndWait(bundle)
-    Assert.assertNotNull(getInstance(myProject).getToolWindow(CoverageViewManager.TOOLWINDOW_ID))
-    Assert.assertNotNull(CoverageViewManager.getInstance(myProject).getToolwindow(bundle))
+    assertToolWindowExists()
+    Assert.assertNotNull(findCoverageView(bundle))
 
     closeSuite()
+    assertToolWindowExists()
+    Assert.assertNull(findCoverageView(bundle))
+  }
+
+  private fun findCoverageView(bundle: CoverageSuitesBundle): CoverageView? =
+    CoverageViewManager.getInstance(myProject).getToolwindow(bundle)
+
+  private fun assertToolWindowExists() {
     Assert.assertNotNull(getInstance(myProject).getToolWindow(CoverageViewManager.TOOLWINDOW_ID))
-    Assert.assertNull(CoverageViewManager.getInstance(myProject).getToolwindow(bundle))
   }
 
 

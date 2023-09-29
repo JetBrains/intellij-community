@@ -39,7 +39,7 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
     val fileProvider: CoverageFileProvider = DefaultCoverageFileProvider(coverageFile)
     val engine = CoverageEngine.EP_NAME.findExtensionOrFail(coverageEngineClass)
     val suite: CoverageSuite = engine.createCoverageSuite(
-      runner, "Simple", fileProvider, includeFilters,
+      runner, coverageDataPath, fileProvider, includeFilters,
       -1, null, false, false, false, myProject)!!
     return CoverageSuitesBundle(suite)
   }

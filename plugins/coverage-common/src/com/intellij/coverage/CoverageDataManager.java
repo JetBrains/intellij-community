@@ -21,7 +21,7 @@ public abstract class CoverageDataManager {
 
   /**
    * TeamCity compatibility
-   *
+   * <p>
    * List coverage suite for presentation from IDEA
    *
    * @param name                  presentable name of a suite
@@ -29,6 +29,7 @@ public abstract class CoverageDataManager {
    * @param lastCoverageTimeStamp when this coverage data was gathered
    * @param suiteToMergeWith      null remove coverage pack from prev run and get from new
    */
+  @SuppressWarnings("unused")
   public abstract CoverageSuite addCoverageSuite(String name,
                                                  CoverageFileProvider fileProvider,
                                                  String[] filters,
@@ -45,7 +46,9 @@ public abstract class CoverageDataManager {
 
 
   /**
+   * Suites that are tracked by the coverage manager.
    * @return registered suites
+   * @see com.intellij.coverage.actions.CoverageSuiteChooserDialog
    */
   public abstract CoverageSuite @NotNull [] getSuites();
 
@@ -84,7 +87,7 @@ public abstract class CoverageDataManager {
   /**
    * runs computation in read action, blocking project close till action has been run,
    * and doing nothing in case projectClosing() event has been already broadcasted.
-   *  Note that actions must not be long running not to cause significant pauses on project close.
+   *  Note that actions must not be long-running not to cause significant pauses on project close.
    * @param computation {@link Computable to be run}
    * @return result of the computation or null if the project is already closing.
    */
@@ -105,8 +108,8 @@ public abstract class CoverageDataManager {
    * This method attach process listener to process handler. Listener will load coverage information after process termination
    */
   public abstract void attachToProcess(@NotNull final ProcessHandler handler,
-                                       @NotNull final RunConfigurationBase configuration, RunnerSettings runnerSettings);
+                                       @NotNull final RunConfigurationBase<?> configuration, RunnerSettings runnerSettings);
 
-  public abstract void processGatheredCoverage(@NotNull RunConfigurationBase configuration, RunnerSettings runnerSettings);
+  public abstract void processGatheredCoverage(@NotNull RunConfigurationBase<?> configuration, RunnerSettings runnerSettings);
 
 }
