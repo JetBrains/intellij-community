@@ -5,11 +5,12 @@ import com.intellij.debugger.engine.DebugProcess
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import kotlin.math.roundToLong
 
 object DebuggerStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("java.debugger", 1)
+  private val GROUP = EventLogGroup("java.debugger", 2)
 
   // fields
   private val breakpointTypeField = EventFields.String("type", listOf(
@@ -18,7 +19,7 @@ object DebuggerStatistics : CounterUsagesCollector() {
     "kotlin-line", "kotlin-field", "kotlin-function",
   ))
 
-  private val averageTimeField = EventFields.Double("avg_time_ms")
+  private val averageTimeField = EventFields.Long("avg_time_ms")
   private val countField = EventFields.Count
   private val steppingActionField = EventFields.Enum<SteppingAction>("step_action")
   private val languageField = EventFields.Enum<Engine>("language")
@@ -62,4 +63,4 @@ object DebuggerStatistics : CounterUsagesCollector() {
   }
 }
 
-private val TimeStats.averageTime: Double get() = timeMs.toDouble() / hits
+private val TimeStats.averageTime: Long get() = (timeMs.toDouble() / hits).roundToLong()
