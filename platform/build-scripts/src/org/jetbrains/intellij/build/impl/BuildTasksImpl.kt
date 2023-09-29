@@ -1151,7 +1151,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
           val name = file.fileName.toString()
           when {
             name.endsWith(".vmoptions") -> out.entryToDir(file, "bin/linux")
-            name.endsWith(".sh") || name.endsWith(".py") -> out.entry("bin/${file.fileName}", file, unixMode = executableFileUnixMode)
+            name.endsWith(".sh") -> out.entry("bin/${file.fileName}", file, unixMode = executableFileUnixMode)
             name == "fsnotifier" -> out.entry("bin/linux/${name}", file, unixMode = executableFileUnixMode)
           }
         }
@@ -1167,7 +1167,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
           }
           else {
             val fileName = file.fileName.toString()
-            if (fileName.startsWith("restarter") || fileName.startsWith("printenv")) {
+            if (fileName.startsWith("printenv")) {
               out.entry("bin/$fileName", file, unixMode = executableFileUnixMode)
             }
             else if (fileName.startsWith("fsnotifier")) {
