@@ -89,6 +89,8 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
           return true
         }
       }
+      val additionalArgumentCount: Int = findAdditionalArguments(node, searcher) ?: return true
+      argumentCount += additionalArgumentCount
       val logStringArgument = arguments[index - 1]
       val parts = collectParts(logStringArgument) ?: return true
 
@@ -145,6 +147,40 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       registerProblem(holder, logStringArgument, Result(argumentCount, placeholderCountHolder.count, resultType))
 
       return true
+    }
+
+    private val BUILDER_CHAIN = setOf("addKeyValue", "addMarker", "setCause")
+    private val ADD_ARGUMENT = "addArgument"
+    private fun findAdditionalArguments(node: UCallExpression,
+                                        loggerType: LoggerTypeSearcher): Int? {
+      if (loggerType != SLF4J_BUILDER_HOLDER) {
+        return 0
+      }
+      var additionalArgumentCount = 0
+      var currentCall = node.receiver
+      for (ignore in 0..20) {
+        if(currentCall is UQualifiedReferenceExpression){
+          currentCall = currentCall.selector
+        }
+        if (currentCall is UCallExpression) {
+          val methodName = currentCall.methodName ?: return null
+          if (methodName == ADD_ARGUMENT) {
+            additionalArgumentCount++
+            currentCall = currentCall.receiver
+            continue
+          }
+          if (methodName.startsWith("at") && LoggingUtil.getLoggerLevel(currentCall) != null) {
+            return additionalArgumentCount
+          }
+          if (BUILDER_CHAIN.contains(methodName)) {
+            currentCall = currentCall.receiver
+            continue
+          }
+          return null
+        }
+        return null
+      }
+      return null
     }
 
     private fun collectParts(logStringArgument: UExpression): List<LoggingStringPartEvaluator.PartHolder>? {

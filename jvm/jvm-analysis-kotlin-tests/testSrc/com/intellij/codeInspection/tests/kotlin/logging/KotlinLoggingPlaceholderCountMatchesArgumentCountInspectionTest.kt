@@ -544,7 +544,19 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
           LoggerFactory.getLogger().atError().log("{}", RuntimeException("test"))
           LoggerFactory.getLogger().atError().log("{} {}", 1, RuntimeException("test"))
           LoggerFactory.getLogger().atError().log( "<warning descr="More arguments provided (2) than placeholders specified (1)">{}</warning>" , 1, RuntimeException("test"))
-          builder.log("<warning descr="Fewer arguments provided (1) than placeholders specified (2)">{} {}</warning>", 1)
+          logger2.atError().log("<warning descr="Fewer arguments provided (1) than placeholders specified (2)">{} {}</warning>", 1)
+          
+          val loggingEventBuilder = logger2.atError()
+          loggingEventBuilder
+              .log("{} {}", 2) //skip, because it can be complex cases
+  
+          logger2.atError()
+          .log("<warning descr="Fewer arguments provided (1) than placeholders specified (2)">{} {}</warning>", 2) //warn
+  
+          logger2.atError()
+              .addArgument("s")
+              .addKeyValue("1", "1")
+              .log("{} {}", 2)
       }
       
       private val logger2 = LoggerFactory.getLogger()
