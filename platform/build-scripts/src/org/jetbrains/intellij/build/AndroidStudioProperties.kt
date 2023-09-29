@@ -86,6 +86,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "-XX:FlightRecorderOptions=stackdepth=256", // Reduces the chance of truncated JFR stacks (ag/I16b829882).
       "--add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED", // Required by instantapps-api.jar (ag/I55803b347).
       "-Didea.required.plugins.id=org.jetbrains.kotlin", // Stopgap solution to ensure the Kotlin plugin stays enabled (b/202048599).
+      "-Djava.security.manager=allow", // Enable use of the deprecated SecurityManager (b/302171264).
     )
 
     embeddedJetBrainsClientMainModule = null // Overrides org.jetbrains.intellij.build.configureJetBrainsProduct().
