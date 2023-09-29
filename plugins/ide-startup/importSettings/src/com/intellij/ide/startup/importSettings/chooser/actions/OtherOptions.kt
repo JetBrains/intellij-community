@@ -1,14 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.importSettings.chooser.actions
+package com.intellij.ide.startup.importSettings.chooser.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
+import com.intellij.ide.startup.importSettings.data.JBrActionsDataProvider
+import com.intellij.ide.startup.importSettings.data.Product
+import com.intellij.ide.startup.importSettings.data.SyncActionsDataProvider
 import com.intellij.ide.ui.laf.darcula.ui.OnboardingDialogButtons
-import com.intellij.importSettings.data.ActionsDataProvider
-import com.intellij.importSettings.data.JBrActionsDataProvider
-import com.intellij.importSettings.data.Product
-import com.intellij.importSettings.data.SyncActionsDataProvider
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Separator
 import javax.swing.JButton
 
 class OtherOptions(val callback: (Int) -> Unit) : ProductChooserAction(), LinkAction {

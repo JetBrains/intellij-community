@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.importSettings.chooser.ui
+package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.ide.plugins.newui.ListPluginComponent
-import com.intellij.importSettings.chooser.actions.ConfigAction
-import com.intellij.importSettings.chooser.actions.SettingChooserItemAction
+import com.intellij.ide.startup.importSettings.chooser.actions.ConfigAction
+import com.intellij.ide.startup.importSettings.chooser.actions.SettingChooserItemAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.PopupUtil
