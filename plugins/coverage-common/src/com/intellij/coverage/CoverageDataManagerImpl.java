@@ -439,7 +439,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     UIUtil.invokeLaterIfNeeded(() -> {
       if (myProject.isDisposed()) return;
       ProjectView.getInstance(myProject).refresh();
-      CoverageViewManager.getInstance(myProject).setReady(true);
     });
   }
 

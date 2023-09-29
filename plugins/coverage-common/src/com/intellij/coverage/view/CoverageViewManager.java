@@ -40,7 +40,6 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
   private ContentManager myContentManager;
   private StateBean myStateBean = new StateBean();
   private final Map<String, CoverageView> myViews = new HashMap<>();
-  private boolean myReady;
 
   public CoverageViewManager(@NotNull Project project) {
     myProject = project;
@@ -120,15 +119,6 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
         }
       });
     }
-    setReady(false);
-  }
-
-  public boolean isReady() {
-    return myReady;
-  }
-
-  public void setReady(boolean ready) {
-    myReady = ready;
   }
 
   public static String getDisplayName(CoverageSuitesBundle suitesBundle) {
