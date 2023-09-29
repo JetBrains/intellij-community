@@ -29,10 +29,7 @@ import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.Function
 import com.intellij.util.MathUtil
-import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
@@ -195,7 +192,13 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
       isOpaque = false
     }
   }
-  
+
+  override fun threeStateCheckBox(@NlsContexts.Checkbox text: String): Cell<ThreeStateCheckBox> {
+    return cell(ThreeStateCheckBox(text)).applyToComponent {
+      isOpaque = false
+    }
+  }
+
   override fun radioButton(text: String, value: Any?): Cell<JBRadioButton> {
     val result = cell(JBRadioButton(text)).applyToComponent {
       isOpaque = false
