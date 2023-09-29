@@ -7,10 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -60,25 +57,6 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
         storagePath.deleteIfExists()
         throw e
       }
-    }
-  }
-
-  @VisibleForTesting
-  data class IndexingRequestTokenImpl(val requestId: Int,
-                                              val appIndexingRequest: AppIndexingDependenciesToken) : IndexingRequestToken {
-    private val appIndexingRequestId = appIndexingRequest.toInt()
-    override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
-      if (file !is VirtualFileWithId) return NULL_STAMP
-      val fileStamp = PersistentFS.getInstance().getModificationCount(file)
-      return getFileIndexingStamp(fileStamp)
-    }
-
-    @VisibleForTesting
-    fun getFileIndexingStamp(fileStamp: Int): FileIndexingStamp {
-      // we assume that stamp and file.modificationStamp never decrease => their sum only grow up
-      // in the case of overflow we hope that new value does not match any previously used value
-      // (which is hopefully true in most cases, because (new value)==(old value) was used veeeery long time ago)
-      return ReadWriteFileIndexingStampImpl(fileStamp + requestId + appIndexingRequestId)
     }
   }
 

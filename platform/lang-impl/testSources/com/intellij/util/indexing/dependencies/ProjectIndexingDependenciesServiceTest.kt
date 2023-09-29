@@ -4,7 +4,6 @@ import com.intellij.mock.MockVirtualFile
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService.IndexingRequestTokenImpl
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
