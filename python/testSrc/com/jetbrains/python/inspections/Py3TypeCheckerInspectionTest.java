@@ -1943,6 +1943,18 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-61137
+  public void testTypeVarBoundToLiteralString() {
+    doTestByText("""
+                   from typing import TypeVar, LiteralString
+                   TLiteral = TypeVar("TLiteral", bound=LiteralString)
+                   def literal_identity(s: TLiteral) -> TLiteral:
+                       return s
+                   s: LiteralString
+                   y2 = literal_identity(s)
+                   """);
+  }
+
   // PY-62476
   public void testTypeGuardReturnTypeTreatedAsBool() {
     runWithLanguageLevel(
