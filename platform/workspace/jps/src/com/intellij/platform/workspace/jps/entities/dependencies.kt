@@ -3,11 +3,6 @@ package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -19,16 +14,18 @@ import java.io.Serializable
  * See [package documentation](psi_element://com.intellij.platform.workspace.jps.entities) for more details.
  */
 interface LibraryEntity : WorkspaceEntityWithSymbolicId {
-    val name: @NlsSafe String
-    val tableId: LibraryTableId
+  val name: @NlsSafe String
+  val tableId: LibraryTableId
 
-    val roots: List<LibraryRoot>
-    val excludedRoots: List<@Child ExcludeUrlEntity>
-    @Child val sdk: SdkEntity?
-    @Child val libraryProperties: LibraryPropertiesEntity?
+  val roots: List<LibraryRoot>
+  val excludedRoots: List<@Child ExcludeUrlEntity>
+  @Child
+  val sdk: SdkEntity?
+  @Child
+  val libraryProperties: LibraryPropertiesEntity?
 
-    override val symbolicId: LibraryId
-        get() = LibraryId(name, tableId)
+  override val symbolicId: LibraryId
+    get() = LibraryId(name, tableId)
 
   //region generated code
   @GeneratedCodeApiVersion(2)
@@ -75,10 +72,10 @@ val ExcludeUrlEntity.library: LibraryEntity? by WorkspaceEntity.extension()
  * Describes custom [library properties][com.intellij.openapi.roots.libraries.LibraryProperties].
  */
 interface LibraryPropertiesEntity : WorkspaceEntity {
-    val library: LibraryEntity
+  val library: LibraryEntity
 
-    val libraryType: @NonNls String
-    val propertiesXmlTag: @NonNls String?
+  val libraryType: @NonNls String
+  val propertiesXmlTag: @NonNls String?
 
   //region generated code
   @GeneratedCodeApiVersion(2)
@@ -116,9 +113,9 @@ fun MutableEntityStorage.modifyEntity(entity: LibraryPropertiesEntity,
  * Currently, these entities aren't synchronized with the project model, so until IDEA-306969 is implemented, it makes no sense to use them.
  */
 interface SdkEntity : WorkspaceEntity {
-    val library: LibraryEntity
+  val library: LibraryEntity
 
-    val homeUrl: VirtualFileUrl
+  val homeUrl: VirtualFileUrl
 
   //region generated code
   @GeneratedCodeApiVersion(2)
@@ -150,10 +147,11 @@ fun MutableEntityStorage.modifyEntity(entity: SdkEntity, modification: SdkEntity
 //endregion
 
 data class LibraryRootTypeId(val name: @NonNls String) : Serializable {
-    companion object {
-        val COMPILED = LibraryRootTypeId("CLASSES")
-        val SOURCES = LibraryRootTypeId("SOURCES")
-    }
+  companion object {
+    val COMPILED = LibraryRootTypeId("CLASSES")
+    val SOURCES = LibraryRootTypeId("SOURCES")
+    val JAVADOC = LibraryRootTypeId("JAVADOC")
+  }
 }
 
 data class LibraryRoot(
@@ -161,8 +159,8 @@ data class LibraryRoot(
   val type: LibraryRootTypeId,
   val inclusionOptions: InclusionOptions = InclusionOptions.ROOT_ITSELF
 ) : Serializable {
-    enum class InclusionOptions {
-        ROOT_ITSELF, ARCHIVES_UNDER_ROOT, ARCHIVES_UNDER_ROOT_RECURSIVELY
-    }
+  enum class InclusionOptions {
+    ROOT_ITSELF, ARCHIVES_UNDER_ROOT, ARCHIVES_UNDER_ROOT_RECURSIVELY
+  }
 }
 
