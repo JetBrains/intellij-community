@@ -34,8 +34,13 @@ class GitLabServerPath : ServerPath {
   val restApiUri: URI
     get() = toURI().resolveRelative("api/v4/")
 
+  /**
+   * I think the first part of this condition was wrong and always false - since the default String uri is always https://gitlab.com and so it's
+   *  never start with gitlab.com
+   *
+   */
   val isDefault: Boolean
-    get() = uri.startsWith("gitlab.com", true) || uri.contains("/gitlab.com", true)
+    get() = uri.startsWith("https://gitlab.com", true) || uri.contains("/gitlab.com", true)
 
   fun toURL(): URL = URL("$uri/")
 
