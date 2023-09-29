@@ -38,3 +38,12 @@ data class ReadWriteFileIndexingStampImpl(val stamp: Int) : FileIndexingStamp {
     return i != NULL_INDEXING_STAMP && i == stamp
   }
 }
+
+@VisibleForTesting
+data class WriteOnlyFileIndexingStampImpl(val stamp: Int) : FileIndexingStamp {
+  override fun store(storage: IntConsumer) {
+    storage.accept(stamp)
+  }
+
+  override fun isSame(i: Int): Boolean = false
+}

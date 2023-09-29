@@ -4,7 +4,6 @@ import com.intellij.mock.MockVirtualFile
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService.Companion.NULL_STAMP
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService.IndexingRequestTokenImpl
 import org.junit.After
 import org.junit.Assert.*
@@ -189,25 +188,5 @@ class ProjectIndexingDependenciesServiceTest {
     val fileIndexingStampBefore = indexingRequest.getFileIndexingStamp(42)
     val fileIndexingStampAfter = indexingRequest.getFileIndexingStamp(43)
     assertNotEquals(fileIndexingStampBefore, fileIndexingStampAfter)
-  }
-
-  @Test
-  fun `test NULL_STAMP is not equal to any other int, not even to NULL_INDEXING_STAMP`() {
-    assertFalse(NULL_STAMP.isSame(0))
-    assertFalse(NULL_STAMP.isSame(42))
-
-    assertFalse(ReadWriteFileIndexingStampImpl(0).isSame(0))
-    assertFalse(ReadWriteFileIndexingStampImpl(0).isSame(42))
-    assertFalse(ReadWriteFileIndexingStampImpl(42).isSame(0))
-    assertTrue(ReadWriteFileIndexingStampImpl(42).isSame(42))
-
-    assertEquals(ReadWriteFileIndexingStampImpl(0), ReadWriteFileIndexingStampImpl(0))
-    assertEquals(ReadWriteFileIndexingStampImpl(42), ReadWriteFileIndexingStampImpl(42))
-    assertNotEquals(ReadWriteFileIndexingStampImpl(41), ReadWriteFileIndexingStampImpl(42))
-
-    assertNotEquals(NULL_STAMP, ReadWriteFileIndexingStampImpl(0))
-    assertNotEquals(ReadWriteFileIndexingStampImpl(0), NULL_STAMP)
-    assertNotEquals(NULL_STAMP, ReadWriteFileIndexingStampImpl(42))
-    assertNotEquals(ReadWriteFileIndexingStampImpl(42), NULL_STAMP)
   }
 }
