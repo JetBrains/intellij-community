@@ -32,6 +32,8 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.JBColor
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.jetbrains.jewel.CheckboxRow
+import org.jetbrains.jewel.CircularProgressIndicator
+import org.jetbrains.jewel.CircularProgressIndicatorBig
 import org.jetbrains.jewel.DefaultButton
 import org.jetbrains.jewel.ExperimentalJewelApi
 import org.jetbrains.jewel.Icon
@@ -81,6 +83,8 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
             Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            val svgLoader = service<SwingBridgeService>().svgLoader
+
             Text("Here is a selection of our finest components:")
 
             Row(
@@ -132,10 +136,18 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                val svgLoader = service<SwingBridgeService>().svgLoader
                 val painterProvider = retrieveStatelessIcon("actions/close.svg", svgLoader, IntUiTheme.iconData)
                 val painter by painterProvider.getPainter(resourceLoader)
                 Icon(painter = painter, modifier = Modifier.border(1.dp, Color.Magenta), contentDescription = "An icon")
+            }
+
+            Row {
+                Text("Circular progress small: ")
+                CircularProgressIndicator(svgLoader)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Circular progress big: ")
+                CircularProgressIndicatorBig(svgLoader)
             }
         }
     }

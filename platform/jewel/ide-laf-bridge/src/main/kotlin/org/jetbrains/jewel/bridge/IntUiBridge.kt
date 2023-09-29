@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.TextStyle
@@ -36,6 +37,7 @@ import org.jetbrains.jewel.intui.standalone.styling.IntUiCheckboxStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiChipColors
 import org.jetbrains.jewel.intui.standalone.styling.IntUiChipMetrics
 import org.jetbrains.jewel.intui.standalone.styling.IntUiChipStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiCircularProgressStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiDropdownColors
 import org.jetbrains.jewel.intui.standalone.styling.IntUiDropdownIcons
 import org.jetbrains.jewel.intui.standalone.styling.IntUiDropdownMetrics
@@ -160,6 +162,7 @@ internal fun createSwingIntUiComponentStyling(
         radioButtonStyle = readRadioButtonStyle(theme.iconData, svgLoader),
         scrollbarStyle = readScrollbarStyle(theme.isDark),
         textAreaStyle = readTextAreaStyle(textAreaTextStyle, textFieldStyle.metrics),
+        circularProgressStyle = readCircularProgressStyle(theme.isDark),
         textFieldStyle = textFieldStyle,
     )
 }
@@ -881,3 +884,13 @@ private fun readEditorTabStyle(iconData: IntelliJThemeIconData, svgLoader: SvgLo
         ),
     )
 }
+
+private fun readCircularProgressStyle(
+    isDark: Boolean,
+): IntUiCircularProgressStyle =
+    IntUiCircularProgressStyle(
+        frameTime = 125.milliseconds,
+        color = retrieveColorOrUnspecified("ProgressIcon.color")
+            .takeIf { it.isSpecified }
+            ?: if (isDark) Color(0xFF6F737A) else Color(0xFFA8ADBD),
+    )

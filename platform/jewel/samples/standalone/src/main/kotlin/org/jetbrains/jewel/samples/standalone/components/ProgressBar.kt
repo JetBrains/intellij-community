@@ -14,16 +14,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import org.jetbrains.jewel.CircularProgressIndicator
+import org.jetbrains.jewel.CircularProgressIndicatorBig
 import org.jetbrains.jewel.GroupHeader
 import org.jetbrains.jewel.HorizontalProgressBar
 import org.jetbrains.jewel.IndeterminateHorizontalProgressBar
+import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.Text
 
 @Composable
-fun ProgressBar() {
+fun ProgressBar(svgLoader: SvgLoader) {
     GroupHeader("Progress bars")
     val transition = rememberInfiniteTransition()
     val currentOffset by transition.animateFloat(
@@ -50,21 +54,33 @@ fun ProgressBar() {
     }
     Column {
         Text("HorizontalProgressBar - linear progress")
-        Row(Modifier.width(600.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(
+            Modifier.width(600.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             HorizontalProgressBar(modifier = Modifier.width(500.dp), progress = currentOffset)
             Text("${(currentOffset * 100).toInt()} %")
         }
     }
     Column {
         Text("HorizontalProgressBar - non linear progress")
-        Row(Modifier.width(600.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(
+            Modifier.width(600.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             HorizontalProgressBar(modifier = Modifier.width(500.dp), progress = intermittentProgress)
             Text("${(intermittentProgress * 100).toInt()} %")
         }
     }
     Column {
         Text("HorizontalProgressBar - smoothed non linear progress")
-        Row(Modifier.width(600.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(
+            Modifier.width(600.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             val smoothedProgress by androidx.compose.animation.core.animateFloatAsState(intermittentProgress)
             HorizontalProgressBar(modifier = Modifier.width(500.dp), progress = smoothedProgress)
             Text("${(intermittentProgress * 100).toInt()} %")
@@ -72,9 +88,31 @@ fun ProgressBar() {
     }
     Column {
         Text("IndeterminateHorizontalProgressBar")
-        Row(Modifier.width(600.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(
+            Modifier.width(600.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             IndeterminateHorizontalProgressBar(modifier = Modifier.width(500.dp))
             Text("----")
+        }
+    }
+    Column {
+        Row(
+            Modifier.width(600.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("CircularProgress (16x16)")
+            CircularProgressIndicator(svgLoader)
+        }
+        Row(
+            Modifier.width(600.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("CircularProgressBig (32x32) - Big")
+            CircularProgressIndicatorBig(svgLoader)
         }
     }
 }

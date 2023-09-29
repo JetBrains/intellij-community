@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import org.jetbrains.jewel.PaletteMapper
 import org.jetbrains.jewel.SvgPatcher
+import org.jetbrains.jewel.util.toHexString
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import java.io.IOException
@@ -60,24 +61,6 @@ class IntelliJSvgPatcher(private val mapper: PaletteMapper) : SvgPatcher {
             val originalColor = tryParseColor(color, alpha) ?: return
             val newColor = mapperScope.mapColorOrNull(originalColor) ?: return
             setAttribute(attrName, newColor.copy(alpha = alpha).toHexString())
-        }
-    }
-
-    private fun Color.toHexString(): String {
-        val r = Integer.toHexString((red * 255).roundToInt())
-        val g = Integer.toHexString((green * 255).roundToInt())
-        val b = Integer.toHexString((blue * 255).roundToInt())
-
-        return buildString {
-            append('#')
-            append(r.padStart(2, '0'))
-            append(g.padStart(2, '0'))
-            append(b.padStart(2, '0'))
-
-            if (alpha != 1.0f) {
-                val a = Integer.toHexString((alpha * 255).roundToInt())
-                append(a.padStart(2, '0'))
-            }
         }
     }
 

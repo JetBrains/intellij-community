@@ -19,6 +19,7 @@ import org.jetbrains.jewel.NoIndication
 import org.jetbrains.jewel.styling.ButtonStyle
 import org.jetbrains.jewel.styling.CheckboxStyle
 import org.jetbrains.jewel.styling.ChipStyle
+import org.jetbrains.jewel.styling.CircularProgressStyle
 import org.jetbrains.jewel.styling.DropdownStyle
 import org.jetbrains.jewel.styling.GroupHeaderStyle
 import org.jetbrains.jewel.styling.HorizontalProgressBarStyle
@@ -27,6 +28,7 @@ import org.jetbrains.jewel.styling.LazyTreeStyle
 import org.jetbrains.jewel.styling.LinkStyle
 import org.jetbrains.jewel.styling.LocalCheckboxStyle
 import org.jetbrains.jewel.styling.LocalChipStyle
+import org.jetbrains.jewel.styling.LocalCircularProgressStyle
 import org.jetbrains.jewel.styling.LocalDefaultButtonStyle
 import org.jetbrains.jewel.styling.LocalDefaultTabStyle
 import org.jetbrains.jewel.styling.LocalDropdownStyle
@@ -178,6 +180,11 @@ interface BaseIntUiTheme : IntelliJTheme {
         @Composable
         @ReadOnlyComposable
         get() = IntelliJTheme.editorTabStyle
+
+    val circularProgressStyle: CircularProgressStyle
+        @Composable
+        @ReadOnlyComposable
+        get() = IntelliJTheme.circularProgressStyle
 }
 
 @Composable
@@ -218,6 +225,7 @@ fun BaseIntUiTheme(
         LocalDefaultTabStyle provides componentStyling.defaultTabStyle,
         LocalEditorTabStyle provides componentStyling.editorTabStyle,
         LocalIndication provides NoIndication,
+        LocalCircularProgressStyle provides componentStyling.circularProgressStyle,
     ) {
         IntelliJTheme(theme, swingCompatMode, content)
     }

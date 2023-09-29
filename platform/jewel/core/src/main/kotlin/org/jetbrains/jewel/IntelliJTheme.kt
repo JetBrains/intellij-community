@@ -9,6 +9,7 @@ import androidx.compose.ui.text.TextStyle
 import org.jetbrains.jewel.styling.ButtonStyle
 import org.jetbrains.jewel.styling.CheckboxStyle
 import org.jetbrains.jewel.styling.ChipStyle
+import org.jetbrains.jewel.styling.CircularProgressStyle
 import org.jetbrains.jewel.styling.DropdownStyle
 import org.jetbrains.jewel.styling.GroupHeaderStyle
 import org.jetbrains.jewel.styling.HorizontalProgressBarStyle
@@ -17,6 +18,7 @@ import org.jetbrains.jewel.styling.LazyTreeStyle
 import org.jetbrains.jewel.styling.LinkStyle
 import org.jetbrains.jewel.styling.LocalCheckboxStyle
 import org.jetbrains.jewel.styling.LocalChipStyle
+import org.jetbrains.jewel.styling.LocalCircularProgressStyle
 import org.jetbrains.jewel.styling.LocalDefaultButtonStyle
 import org.jetbrains.jewel.styling.LocalDefaultTabStyle
 import org.jetbrains.jewel.styling.LocalDropdownStyle
@@ -175,6 +177,11 @@ interface IntelliJTheme {
             @Composable
             @ReadOnlyComposable
             get() = LocalEditorTabStyle.current
+
+        val circularProgressStyle: CircularProgressStyle
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalCircularProgressStyle.current
     }
 }
 

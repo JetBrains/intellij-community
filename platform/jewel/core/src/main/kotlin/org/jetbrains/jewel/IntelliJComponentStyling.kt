@@ -4,6 +4,7 @@ import androidx.compose.runtime.Stable
 import org.jetbrains.jewel.styling.ButtonStyle
 import org.jetbrains.jewel.styling.CheckboxStyle
 import org.jetbrains.jewel.styling.ChipStyle
+import org.jetbrains.jewel.styling.CircularProgressStyle
 import org.jetbrains.jewel.styling.DropdownStyle
 import org.jetbrains.jewel.styling.GroupHeaderStyle
 import org.jetbrains.jewel.styling.HorizontalProgressBarStyle
@@ -36,6 +37,7 @@ class IntelliJComponentStyling(
     val scrollbarStyle: ScrollbarStyle,
     val textAreaStyle: TextAreaStyle,
     val textFieldStyle: TextFieldStyle,
+    val circularProgressStyle: CircularProgressStyle,
 ) {
 
     override fun equals(other: Any?): Boolean {
@@ -61,6 +63,7 @@ class IntelliJComponentStyling(
         if (lazyTreeStyle != other.lazyTreeStyle) return false
         if (defaultTabStyle != other.defaultTabStyle) return false
         if (editorTabStyle != other.editorTabStyle) return false
+        if (circularProgressStyle != other.circularProgressStyle) return false
 
         return true
     }
@@ -83,6 +86,7 @@ class IntelliJComponentStyling(
         result = 31 * result + lazyTreeStyle.hashCode()
         result = 31 * result + defaultTabStyle.hashCode()
         result = 31 * result + editorTabStyle.hashCode()
+        result = 31 * result + circularProgressStyle.hashCode()
         return result
     }
 
@@ -93,5 +97,6 @@ class IntelliJComponentStyling(
             "horizontalProgressBarStyle=$horizontalProgressBarStyle, labelledTextFieldStyle=$labelledTextFieldStyle, " +
             "lazyTreeStyle=$lazyTreeStyle, linkStyle=$linkStyle, menuStyle=$menuStyle, " +
             "outlinedButtonStyle=$outlinedButtonStyle, radioButtonStyle=$radioButtonStyle, " +
-            "scrollbarStyle=$scrollbarStyle, textAreaStyle=$textAreaStyle, textFieldStyle=$textFieldStyle)"
+            "scrollbarStyle=$scrollbarStyle, textAreaStyle=$textAreaStyle, textFieldStyle=$textFieldStyle" +
+            "circularProgressStyle=$circularProgressStyle)"
 }

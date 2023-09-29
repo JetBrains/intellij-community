@@ -43,10 +43,20 @@ fun java.awt.Color.toComposeColor() = Color(
 
 fun java.awt.Color?.toComposeColorOrUnspecified() = this?.toComposeColor() ?: Color.Unspecified
 
+@Suppress("JavaIoSerializableObjectMustHaveReadResolve")
+private object FallbackMarker : JBColor(0x0000, 0x0000) {
+
+    override fun toString() = "%%%%%%COLOR_NOT_FOUND_MARKER%%%%%%"
+
+    override fun equals(other: Any?) = other === this
+
+    override fun hashCode() = toString().hashCode()
+}
+
 @Suppress("UnstableApiUsage")
-fun retrieveColorOrNull(key: String) =
-    JBColor.namedColor(key)
-        .takeUnless { it.name == "NAMED_COLOR_FALLBACK_MARKER" }
+fun retrieveColorOrNull(key: String): Color? =
+    JBColor.namedColor(key, FallbackMarker)
+        .takeUnless { it.name == "NAMED_COLOR_FALLBACK_MARKER" || it == FallbackMarker }
         ?.toComposeColor()
 
 fun retrieveColorOrUnspecified(key: String): Color {

@@ -34,6 +34,7 @@ import org.jetbrains.jewel.intui.standalone.IntUiTheme.defaultComponentStyling
 import org.jetbrains.jewel.intui.standalone.styling.IntUiButtonStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiCheckboxStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiChipStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiCircularProgressStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiDropdownStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiGroupHeaderStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiHorizontalProgressBarStyle
@@ -49,6 +50,7 @@ import org.jetbrains.jewel.intui.standalone.styling.IntUiTextFieldStyle
 import org.jetbrains.jewel.styling.ButtonStyle
 import org.jetbrains.jewel.styling.CheckboxStyle
 import org.jetbrains.jewel.styling.ChipStyle
+import org.jetbrains.jewel.styling.CircularProgressStyle
 import org.jetbrains.jewel.styling.DropdownStyle
 import org.jetbrains.jewel.styling.GroupHeaderStyle
 import org.jetbrains.jewel.styling.HorizontalProgressBarStyle
@@ -128,6 +130,7 @@ object IntUiTheme : BaseIntUiTheme {
         lazyTreeStyle: LazyTreeStyle = IntUiLazyTreeStyle.dark(svgLoader),
         defaultTabStyle: TabStyle = IntUiTabStyle.Default.dark(svgLoader),
         editorTabStyle: TabStyle = IntUiTabStyle.Editor.dark(svgLoader),
+        circularProgressStyle: CircularProgressStyle = IntUiCircularProgressStyle.dark(),
     ) =
         IntelliJComponentStyling(
             checkboxStyle = checkboxStyle,
@@ -147,6 +150,7 @@ object IntUiTheme : BaseIntUiTheme {
             scrollbarStyle = scrollbarStyle,
             textAreaStyle = textAreaStyle,
             textFieldStyle = textFieldStyle,
+            circularProgressStyle = circularProgressStyle,
         )
 
     @Composable
@@ -169,26 +173,27 @@ object IntUiTheme : BaseIntUiTheme {
         lazyTreeStyle: LazyTreeStyle = IntUiLazyTreeStyle.light(svgLoader),
         defaultTabStyle: TabStyle = IntUiTabStyle.Default.light(svgLoader),
         editorTabStyle: TabStyle = IntUiTabStyle.Editor.light(svgLoader),
-    ) =
-        IntelliJComponentStyling(
-            checkboxStyle = checkboxStyle,
-            chipStyle = chipStyle,
-            defaultButtonStyle = defaultButtonStyle,
-            defaultTabStyle = defaultTabStyle,
-            dropdownStyle = dropdownStyle,
-            editorTabStyle = editorTabStyle,
-            groupHeaderStyle = groupHeaderStyle,
-            horizontalProgressBarStyle = horizontalProgressBarStyle,
-            labelledTextFieldStyle = labelledTextFieldStyle,
-            lazyTreeStyle = lazyTreeStyle,
-            linkStyle = linkStyle,
-            menuStyle = menuStyle,
-            outlinedButtonStyle = outlinedButtonStyle,
-            radioButtonStyle = radioButtonStyle,
-            scrollbarStyle = scrollbarStyle,
-            textAreaStyle = textAreaStyle,
-            textFieldStyle = textFieldStyle,
-        )
+        circularProgressStyle: CircularProgressStyle = IntUiCircularProgressStyle.light(),
+    ) = IntelliJComponentStyling(
+        checkboxStyle = checkboxStyle,
+        chipStyle = chipStyle,
+        defaultButtonStyle = defaultButtonStyle,
+        defaultTabStyle = defaultTabStyle,
+        dropdownStyle = dropdownStyle,
+        editorTabStyle = editorTabStyle,
+        groupHeaderStyle = groupHeaderStyle,
+        horizontalProgressBarStyle = horizontalProgressBarStyle,
+        labelledTextFieldStyle = labelledTextFieldStyle,
+        lazyTreeStyle = lazyTreeStyle,
+        linkStyle = linkStyle,
+        menuStyle = menuStyle,
+        outlinedButtonStyle = outlinedButtonStyle,
+        radioButtonStyle = radioButtonStyle,
+        scrollbarStyle = scrollbarStyle,
+        textAreaStyle = textAreaStyle,
+        textFieldStyle = textFieldStyle,
+        circularProgressStyle = circularProgressStyle,
+    )
 }
 
 @Composable
