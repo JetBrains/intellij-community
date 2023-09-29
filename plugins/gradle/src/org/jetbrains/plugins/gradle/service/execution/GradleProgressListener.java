@@ -22,6 +22,7 @@ import org.gradle.tooling.events.ProgressEvent;
 import org.gradle.tooling.events.ProgressListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollector;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.MessageReporter;
 
@@ -127,6 +128,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
         }
       };
 
+      GradleModelBuilderMessageCollector.logModelBuilderMessage(myTaskId.findProject(), myTaskId.getId(), message);
       myListener.onStatusChange(new ExternalSystemBuildEvent(myTaskId, messageEvent));
       return true;
     }

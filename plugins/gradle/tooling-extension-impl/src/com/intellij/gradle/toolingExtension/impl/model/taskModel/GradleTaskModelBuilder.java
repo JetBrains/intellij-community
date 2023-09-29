@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.taskModel;
 
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleResultUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -55,6 +56,7 @@ public class GradleTaskModelBuilder extends AbstractModelBuilderService {
     }
     catch (Exception e) {
       context.getMessageReporter().createMessage()
+        .withGroup(Messages.TASK_MODEL_COLLECTING_GROUP)
         .withTitle("Tasks collecting failure")
         .withText("Tasks for " + project + " cannot be collected due to plugin exception.")
         .withException(e)
@@ -77,7 +79,8 @@ public class GradleTaskModelBuilder extends AbstractModelBuilderService {
 
   @Override
   public @NotNull ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(project, e, "Gradle import errors")
+    return ErrorMessageBuilder.create(project, e, Messages.TASK_MODEL_GROUP)
+      .withTitle("Task model building failure")
       .withDescription("Unable to warm-up Gradle task model");
   }
 }

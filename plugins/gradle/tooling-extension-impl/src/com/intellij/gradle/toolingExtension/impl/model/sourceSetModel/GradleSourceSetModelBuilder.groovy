@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel
 
 import com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel.GradleResourceFilterModelBuilder
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
@@ -68,7 +69,8 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
   @NotNull
   @Override
   ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(project, e, "Source set model error")
+    return ErrorMessageBuilder.create(project, e, Messages.SOURCE_SET_MODEL_GROUP)
+      .withTitle("Source set model building failure")
   }
 
   @NotNull
@@ -86,6 +88,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       }
       catch (e) {
         context.getMessageReporter().createMessage()
+          .withGroup(Messages.SOURCE_SET_MODEL_PROJECT_TASK_ARTIFACT_GROUP)
           .withTitle("Jar task configuration error")
           .withText("Cannot resolve artifact file for the project Jar task: " + jar.path)
           .withKind(Message.Kind.WARNING)
@@ -113,6 +116,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       }
       catch (e) {
         context.getMessageReporter().createMessage()
+          .withGroup(Messages.SOURCE_SET_MODEL_NON_SOURCE_SET_ARTIFACT_GROUP)
           .withTitle("Jar task configuration error")
           .withText("Cannot resolve artifact file for the project Jar task: " + jar.path)
           .withKind(Message.Kind.WARNING)
@@ -141,6 +145,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       }
       catch (Exception e) {
         context.getMessageReporter().createMessage()
+          .withGroup(Messages.SOURCE_SET_MODEL_PROJECT_CONFIGURATION_ARTIFACT_GROUP)
           .withTitle("Jar task configuration error")
           .withText("Cannot resolve artifact files for project configuration" + configuration)
           .withKind(Message.Kind.WARNING)

@@ -4,6 +4,7 @@ package com.intellij.gradle.toolingExtension.impl.model.projectModel;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGradleSourceSetModel;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetCache;
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache;
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil;
 import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
 import org.gradle.api.Project;
@@ -134,7 +135,8 @@ public class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   @Override
   public @NotNull ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(project, e, "Project resolve errors")
+    return ErrorMessageBuilder.create(project, e, Messages.PROJECT_MODEL_GROUP)
+      .withTitle("Project resolution error")
       .withDescription("Unable to resolve additional project configuration.");
   }
 }
