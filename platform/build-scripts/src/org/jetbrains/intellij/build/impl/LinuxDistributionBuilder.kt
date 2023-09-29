@@ -47,12 +47,8 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         val distBinDir = targetPath.resolve("bin")
         val sourceBinDir = context.paths.communityHomeDir.resolve("bin/linux")
         copyFileToDir(NativeBinaryDownloader.downloadRestarter(context, OsFamily.LINUX, arch), distBinDir)
-        if (arch == JvmArchitecture.x64 || arch == JvmArchitecture.aarch64) {
-          @Suppress("SpellCheckingInspection")
-          listOf("fsnotifier", "libdbm.so").forEach {
-            copyFileToDir(sourceBinDir.resolve("${arch.dirName}/${it}"), distBinDir)
-          }
-        }
+        copyFileToDir(sourceBinDir.resolve("${arch.dirName}/fsnotifier"), distBinDir)
+        copyFileToDir(sourceBinDir.resolve("${arch.dirName}/libdbm.so"), distBinDir)
         generateBuildTxt(context, targetPath)
         copyDistFiles(context = context, newDir = targetPath, os = OsFamily.LINUX, arch = arch)
         Files.copy(ideaProperties!!, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
@@ -143,9 +139,8 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     ), convertToUnixLineEndings = true)
   }
 
-  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
-    return customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
-  }
+  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): List<String> =
+    customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
 
   private val rootDirectoryName: String
     get() = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
@@ -190,7 +185,8 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
   private suspend fun buildSnapPackage(runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture) {
     val snapName = customizer.snapName
-    if (snapName == null) {
+    val snapArtifactName = this.snapArtifactName
+    if (snapName == null || snapArtifactName == null) {
       Span.current().addEvent("Linux .snap package build skipped because of missing snapName in ${customizer::class.java.simpleName}")
       return
     }

@@ -114,8 +114,8 @@ public final class Restarter {
   });
 
   private static String checkRestarter(String restarterName) {
-    var restarter = PathManager.findBinFile(restarterName);
-    return restarter != null && Files.isExecutable(restarter) ? null : "not an executable file: " + restarter;
+    var restarter = Path.of(PathManager.getBinPath(), restarterName);
+    return Files.isExecutable(restarter) ? null : "not an executable file: " + restarter;
   }
 
   @ApiStatus.Internal
@@ -153,12 +153,10 @@ public final class Restarter {
   private static void restartOnWindows(boolean elevate, String... beforeRestart) throws IOException {
     var starter = ourStarter.getValue();
     if (starter == null) throw new IOException("Starter executable not found in " + PathManager.getBinPath());
-    var restarter = PathManager.findBinFileWithException("restarter.exe");
-
-    var command = prepareCommand(restarter, beforeRestart);
+    var command = prepareCommand(beforeRestart);
     if (elevate) {
       command.add("2");
-      command.add(PathManager.findBinFileWithException("launcher.exe").toString());
+      command.add(Path.of(PathManager.getBinPath(), "launcher.exe").toString());
     }
     else {
       command.add("1");
@@ -170,9 +168,7 @@ public final class Restarter {
   private static void restartOnMac(String... beforeRestart) throws IOException {
     var appDir = ourStarter.getValue();
     if (appDir == null) throw new IOException("Application bundle not found: " + PathManager.getHomePath());
-    var restarter = Path.of(PathManager.getBinPath(), "restarter");
-
-    var command = prepareCommand(restarter, beforeRestart);
+    var command = prepareCommand(beforeRestart);
     command.add("2");
     command.add("/usr/bin/open");
     command.add(appDir.toString());
@@ -182,9 +178,7 @@ public final class Restarter {
   private static void restartOnLinux(String... beforeRestart) throws IOException {
     var starterScript = ourStarter.getValue();
     if (starterScript == null) throw new IOException("Starter script not found in " + PathManager.getBinPath());
-    var restarter = Path.of(PathManager.getBinPath(), "restarter");
-
-    var command = prepareCommand(restarter, beforeRestart);
+    var command = prepareCommand(beforeRestart);
     command.add("1");
     command.add(starterScript.toString());
     runRestarter(command);
@@ -195,7 +189,8 @@ public final class Restarter {
     System.setProperty(DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY, "true");
   }
 
-  private static List<String> prepareCommand(Path restarter, String[] beforeRestart) throws IOException {
+  private static List<String> prepareCommand(String[] beforeRestart) throws IOException {
+    var restarter = Path.of(PathManager.getBinPath(), SystemInfo.isWindows ? "restarter.exe" : "restarter");
     var command = new ArrayList<String>();
     command.add(copyWhenNeeded(restarter, beforeRestart).toString());
     command.add(String.valueOf(ProcessHandle.current().pid()));

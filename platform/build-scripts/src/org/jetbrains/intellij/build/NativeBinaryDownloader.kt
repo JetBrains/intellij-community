@@ -23,13 +23,11 @@ object NativeBinaryDownloader {
     val archiveFile = downloadFileToCacheLocation(uri.toString(), communityRoot)
     val unpackedDir = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot, archiveFile)
 
-    val platformDirName = "${os.osName}-${arch.archName}"
-    val platformDir = unpackedDir.resolve(platformDirName)
-    check(platformDir.isDirectory()) { "'${platformDir}' not found in '${archiveFile.fileName}'" }
+    val platformDir = unpackedDir.resolve("${os.osName}-${arch.archName}")
+    check(platformDir.isDirectory()) { "'${platformDir.fileName}' not found in '${archiveFile.fileName}'" }
 
-    val executableName = if (os == OsFamily.WINDOWS) "restarter.exe" else "restarter"
-    val executableFile = platformDir.resolve(executableName)
-    check(executableFile.isRegularFile()) { "Executable '${executableName}' not found in '${platformDir}'" }
+    val executableFile = platformDir.resolve(if (os == OsFamily.WINDOWS) "restarter.exe" else "restarter")
+    check(executableFile.isRegularFile()) { "Executable '${executableFile.fileName}' not found in '${platformDir}'" }
 
     return executableFile
   }

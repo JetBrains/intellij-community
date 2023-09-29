@@ -34,12 +34,8 @@ interface OsSpecificDistributionBuilder {
 
   fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture)
 
-  @Deprecated("Please specify architecture explicitly", replaceWith = ReplaceWith("generateExecutableFilesPatterns(includeRuntime, arch)"))
-  fun generateExecutableFilesPatterns(includeRuntime: Boolean): List<String> {
-    return generateExecutableFilesPatterns(includeRuntime, JvmArchitecture.x64)
-  }
-
   fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): List<String> = emptyList()
+
   fun generateExecutableFilesMatchers(includeRuntime: Boolean, arch: JvmArchitecture): Map<PathMatcher, String> {
     val fileSystem = FileSystems.getDefault()
     return generateExecutableFilesPatterns(includeRuntime, arch)
