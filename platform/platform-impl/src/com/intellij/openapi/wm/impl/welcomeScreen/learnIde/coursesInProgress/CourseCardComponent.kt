@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.util.ColorProgressBar
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy.JBAcademyWelcomeScreenBundle
@@ -145,12 +144,15 @@ class CourseCardComponent(val data: CourseInfo) : JPanel(BorderLayout()) {
   }
 
   override fun paintComponent(g: Graphics) {
+    if (!isHovered) {
+      super.paintComponent(g)
+      return
+    }
     val g2 = g.create() as Graphics2D
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    g2.color = background
-    val cornerRadius = 20
+    g2.color = hoverColor
+    val cornerRadius = 15
     g2.fillRoundRect(0, 0, width, height, cornerRadius, cornerRadius)
-    g2.color = if (isHovered) hoverColor else mainBackgroundColor
     g2.drawRoundRect(0, 0, width, height, cornerRadius, cornerRadius)
     g2.dispose()
   }
