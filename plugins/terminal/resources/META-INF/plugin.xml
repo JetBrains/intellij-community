@@ -115,6 +115,9 @@
       <keyboard-shortcut first-keystroke="DOWN" keymap="$default"/>
     </action>
 
+    <action id="Terminal.CommandCompletion" class="org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction">
+      <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
+    </action>
     <action id="Terminal.Copy" class="org.jetbrains.plugins.terminal.action.TerminalCopyAction"
             use-shortcut-of="$Copy" icon="AllIcons.Actions.Copy"/>
 
