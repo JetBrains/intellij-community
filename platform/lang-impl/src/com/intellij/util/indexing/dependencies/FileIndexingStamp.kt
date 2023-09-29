@@ -29,7 +29,7 @@ internal object NullIndexingStamp : FileIndexingStamp {
 }
 
 @VisibleForTesting
-data class FileIndexingStampImpl(val stamp: Int) : FileIndexingStamp {
+data class ReadWriteFileIndexingStampImpl(val stamp: Int) : FileIndexingStamp {
   override fun store(storage: IntConsumer) {
     storage.accept(stamp)
   }

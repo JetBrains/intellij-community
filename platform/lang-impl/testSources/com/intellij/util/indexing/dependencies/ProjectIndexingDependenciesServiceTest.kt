@@ -196,18 +196,18 @@ class ProjectIndexingDependenciesServiceTest {
     assertFalse(NULL_STAMP.isSame(0))
     assertFalse(NULL_STAMP.isSame(42))
 
-    assertFalse(FileIndexingStampImpl(0).isSame(0))
-    assertFalse(FileIndexingStampImpl(0).isSame(42))
-    assertFalse(FileIndexingStampImpl(42).isSame(0))
-    assertTrue(FileIndexingStampImpl(42).isSame(42))
+    assertFalse(ReadWriteFileIndexingStampImpl(0).isSame(0))
+    assertFalse(ReadWriteFileIndexingStampImpl(0).isSame(42))
+    assertFalse(ReadWriteFileIndexingStampImpl(42).isSame(0))
+    assertTrue(ReadWriteFileIndexingStampImpl(42).isSame(42))
 
-    assertEquals(FileIndexingStampImpl(0), FileIndexingStampImpl(0))
-    assertEquals(FileIndexingStampImpl(42), FileIndexingStampImpl(42))
-    assertNotEquals(FileIndexingStampImpl(41), FileIndexingStampImpl(42))
+    assertEquals(ReadWriteFileIndexingStampImpl(0), ReadWriteFileIndexingStampImpl(0))
+    assertEquals(ReadWriteFileIndexingStampImpl(42), ReadWriteFileIndexingStampImpl(42))
+    assertNotEquals(ReadWriteFileIndexingStampImpl(41), ReadWriteFileIndexingStampImpl(42))
 
-    assertNotEquals(NULL_STAMP, FileIndexingStampImpl(0))
-    assertNotEquals(FileIndexingStampImpl(0), NULL_STAMP)
-    assertNotEquals(NULL_STAMP, FileIndexingStampImpl(42))
-    assertNotEquals(FileIndexingStampImpl(42), NULL_STAMP)
+    assertNotEquals(NULL_STAMP, ReadWriteFileIndexingStampImpl(0))
+    assertNotEquals(ReadWriteFileIndexingStampImpl(0), NULL_STAMP)
+    assertNotEquals(NULL_STAMP, ReadWriteFileIndexingStampImpl(42))
+    assertNotEquals(ReadWriteFileIndexingStampImpl(42), NULL_STAMP)
   }
 }

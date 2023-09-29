@@ -78,7 +78,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
       // we assume that stamp and file.modificationStamp never decrease => their sum only grow up
       // in the case of overflow we hope that new value does not match any previously used value
       // (which is hopefully true in most cases, because (new value)==(old value) was used veeeery long time ago)
-      return FileIndexingStampImpl(fileStamp + requestId + appIndexingRequestId)
+      return ReadWriteFileIndexingStampImpl(fileStamp + requestId + appIndexingRequestId)
     }
   }
 

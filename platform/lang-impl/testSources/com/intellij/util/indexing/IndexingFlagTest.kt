@@ -7,7 +7,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.util.indexing.dependencies.FileIndexingStampImpl
+import com.intellij.util.indexing.dependencies.ReadWriteFileIndexingStampImpl
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -35,7 +35,7 @@ class IndexingFlagTest {
     val fileBasedIndexTumbler = FileBasedIndexTumbler("test")
     val vFile = temp.newVirtualFile("test", "content".toByteArray())
 
-    val fileIndexingStamp = FileIndexingStampImpl(1)
+    val fileIndexingStamp = ReadWriteFileIndexingStampImpl(1)
     IndexingFlag.setFileIndexed(vFile, fileIndexingStamp)
 
     try {
@@ -57,7 +57,7 @@ class IndexingFlagTest {
     val file = temp.newFile("test", "content".toByteArray())
     val vFileBefore = VfsUtil.findFileByIoFile(file, true) ?: throw AssertionError("File not found: $file")
 
-    val fileIndexingStamp = FileIndexingStampImpl(1)
+    val fileIndexingStamp = ReadWriteFileIndexingStampImpl(1)
     IndexingFlag.setFileIndexed(vFileBefore, fileIndexingStamp)
 
     switchIndexAndVfs(
