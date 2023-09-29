@@ -81,8 +81,9 @@ public final class PagesTable {
     //    dirty again even before the loop is finished.
     //    But I see no simple way to fix it, apart from returning to global lock protecting all
     //    writes -- which is exactly what we're escaping from by moving to concurrent implementation.
-    for (int i = 0; i < pages.length(); i++) {
-      final PageImpl page = pages.get(i);
+    AtomicReferenceArray<PageImpl> pagesLocal = pages;
+    for (int i = 0; i < pagesLocal.length(); i++) {
+      final PageImpl page = pagesLocal.get(i);
       if (page != null && page.isDirty()) {
         page.flush();
       }
@@ -369,7 +370,7 @@ public final class PagesTable {
       }
 
       if (page.isTombstone()) {
-        //Tombstone: page was removed -> look up further, but remember the position
+        //Tombstone: page was removed -> look up further
       }
       else if (page.pageIndex() == pageIndex) {
         return probeNo;
