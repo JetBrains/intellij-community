@@ -129,8 +129,12 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
       ReadWriteScanningRequestTokenImpl(appCurrent)
     }
     registerIssuedToken(token)
-    completeToken(RequestHeavyScanningOnThisOrNextStartToken, true)
+    completeTokenOrFutureToken(RequestHeavyScanningOnThisOrNextStartToken, true)
     return token
+  }
+
+  fun newFutureScanningToken(): FutureScanningRequestToken {
+    return FutureScanningRequestToken().also { registerIssuedToken(it) }
   }
 
   private fun registerIssuedToken(token: Any) {
@@ -142,11 +146,15 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     }
   }
 
-  fun completeToken(token: ScanningRequestToken) {
-    completeToken(token, token.isSuccessful())
+  fun completeToken(token: FutureScanningRequestToken) {
+    completeTokenOrFutureToken(token, token.isSuccessful())
   }
 
-  private fun completeToken(token: ScanningRequestToken, successful: Boolean) {
+  fun completeToken(token: ScanningRequestToken) {
+    completeTokenOrFutureToken(token, token.isSuccessful())
+  }
+
+  private fun completeTokenOrFutureToken(token: Any, successful: Boolean) {
     if (!successful) {
       registerIssuedToken(RequestHeavyScanningOnNextStartToken)
     }

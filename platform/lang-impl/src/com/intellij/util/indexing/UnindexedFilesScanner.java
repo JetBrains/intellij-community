@@ -28,6 +28,7 @@ import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.FilesScanningTaskBase.IndexingProgressReporter.IndexingSubTaskProgressReporter;
 import com.intellij.util.indexing.PerProjectIndexingQueue.PerProviderSink;
+import com.intellij.util.indexing.dependencies.FutureScanningRequestToken;
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import com.intellij.util.indexing.dependencies.ScanningRequestToken;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
@@ -82,6 +83,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
   private final PushedFilePropertiesUpdater myPusher;
   private final @Nullable StatusMark myProvidedStatusMark;
   private final @Nullable List<IndexableFilesIterator> myPredefinedIndexableFilesIterators;
+  private final @NotNull FutureScanningRequestToken myFutureScanningRequestToken;
   private boolean flushQueueAfterScanning = true;
 
   @TestOnly
@@ -126,6 +128,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     myProvidedStatusMark = predefinedIndexableFilesIterators == null ? null : mark;
     myPredefinedIndexableFilesIterators = predefinedIndexableFilesIterators;
     LOG.assertTrue(myPredefinedIndexableFilesIterators == null || !myPredefinedIndexableFilesIterators.isEmpty());
+    myFutureScanningRequestToken = project.getService(ProjectIndexingDependenciesService.class).newFutureScanningToken();
 
     if (isFullIndexUpdate()) {
       myProject.putUserData(CONTENT_SCANNED, null);
@@ -427,6 +430,9 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     final ScanningRequestToken scanningRequest = myOnProjectOpen ?
                                                  projectIndexingDependenciesService.newScanningTokenOnProjectOpen() :
                                                  projectIndexingDependenciesService.newScanningToken();
+    myFutureScanningRequestToken.markSuccessful();
+    projectIndexingDependenciesService.completeToken(myFutureScanningRequestToken);
+
     List<IndexableFileScanner.ScanSession> sessions =
       ContainerUtil.map(IndexableFileScanner.EP_NAME.getExtensionList(), scanner -> scanner.startSession(project));
 
@@ -630,6 +636,17 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     else {
       myProject.getService(UnindexedFilesScannerExecutor.class).submitTask(this);
     }
+  }
+
+  @Override
+  public void dispose() {
+    if (!myProject.isDisposed()) {
+      ProjectIndexingDependenciesService serviceIfCreated = myProject.getServiceIfCreated(ProjectIndexingDependenciesService.class);
+      if (serviceIfCreated != null) {
+        serviceIfCreated.completeToken(myFutureScanningRequestToken);
+      }
+    }
+    super.dispose();
   }
 
   @Nullable
