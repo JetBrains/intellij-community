@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -74,12 +75,14 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   private int getColumn(XLineBreakpoint<P> breakpoint) {
+    if (!Registry.is("debugger.show.breakpoints.inline")) return -1;
     var pos = breakpoint.getSourcePosition();
     if (pos == null) return -1;
     return ReadAction.compute(() -> {
       var document = FileDocumentManager.getInstance().getDocument(pos.getFile());
       if (document == null) return -1;
       var offset = pos.getOffset();
+      if (offset < 0) return -1;
       return offset - document.getLineStartOffset(document.getLineNumber(offset));
     });
   }

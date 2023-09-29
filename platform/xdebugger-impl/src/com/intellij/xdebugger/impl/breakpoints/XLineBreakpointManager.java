@@ -93,7 +93,7 @@ public final class XLineBreakpointManager {
       EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
         @Override
         public void editorCreated(@NotNull EditorFactoryEvent event) {
-          if (!shouldShowBreakpointsInline()) return;
+          if (!Registry.is("debugger.show.breakpoints.inline")) return;
 
           var file = event.getEditor().getVirtualFile();
           if (file == null) return;
@@ -112,10 +112,6 @@ public final class XLineBreakpointManager {
           .forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
       }
     });
-  }
-
-  public static boolean shouldShowBreakpointsInline() {
-    return Registry.is("debugger.show.breakpoints.inline");
   }
 
   void updateBreakpointsUI() {
@@ -158,7 +154,7 @@ public final class XLineBreakpointManager {
     List<XLineBreakpoint> toRemove = new SmartList<>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       breakpoint.updatePosition();
-      if (!breakpoint.isValid() || !positions.add(shouldShowBreakpointsInline() ? breakpoint.getOffset() : breakpoint.getLine())) {
+      if (!breakpoint.isValid() || !positions.add(Registry.is("debugger.show.breakpoints.inline") ? breakpoint.getOffset() : breakpoint.getLine())) {
         toRemove.add(breakpoint);
       }
     }

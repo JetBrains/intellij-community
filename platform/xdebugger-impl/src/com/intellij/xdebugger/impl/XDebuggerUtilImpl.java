@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -244,7 +245,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
 
     Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>> variantsAsync = getLineBreakpointVariants(project, types, position);
-    if (XLineBreakpointManager.shouldShowBreakpointsInline()) {
+    if (Registry.is("debugger.show.breakpoints.inline")) {
       return variantsAsync.then(variants -> {
 
         var breakpointOrVariant = getBestMatchingBreakpoint(caretOffset,

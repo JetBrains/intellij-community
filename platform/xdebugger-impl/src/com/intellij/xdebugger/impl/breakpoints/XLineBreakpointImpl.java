@@ -274,7 +274,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     removeHighlighter();
 
     // FIXME[inline-bp]: this part seems very dirty, we should modify only one inlay here or remove all of them in a line
-    if (XLineBreakpointManager.shouldShowBreakpointsInline()) {
+    if (Registry.is("debugger.show.breakpoints.inline")) {
       var file = getFile();
       if (file != null) {
         var document = FileDocumentManager.getInstance().getDocument(file);
@@ -419,7 +419,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   // FIXME[inline-bp]: it's super inefficient
   static void redrawInlineBreakpoints(XLineBreakpointManager lineBreakpointManager, @NotNull Project project, @NotNull VirtualFile file, @NotNull Document document) {
-    if (!XLineBreakpointManager.shouldShowBreakpointsInline()) return;
+    if (!Registry.is("debugger.show.breakpoints.inline")) return;
 
     Collection<XLineBreakpointImpl> allBreakpoints = lineBreakpointManager.getDocumentBreakpoints(document);
     Map<Integer, List<XLineBreakpointImpl>> breakpointsByLine = allBreakpoints.stream().collect(Collectors.groupingBy(b -> b.getLine()));
