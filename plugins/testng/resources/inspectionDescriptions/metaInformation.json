@@ -1,0 +1,11 @@
+{
+  "inspections": [
+    {
+      "id": "MalformedDataProvider",
+      "cweIds": [
+        561,
+        628
+      ]
+    }
+  ]
+}

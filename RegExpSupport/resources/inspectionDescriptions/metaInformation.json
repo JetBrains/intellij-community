@@ -1,0 +1,10 @@
+{
+  "inspections": [
+    {
+      "id": "RegExpRepeatedSpace",
+      "cweIds": [
+        625
+      ]
+    }
+  ]
+}

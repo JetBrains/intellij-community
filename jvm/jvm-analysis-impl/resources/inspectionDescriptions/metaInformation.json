@@ -1,0 +1,32 @@
+{
+  "inspections": [
+    {
+      "id": "JUnitMalformedDeclaration",
+      "cweIds": [
+        489,
+        489,
+        697
+      ]
+    },
+    {
+      "id": "LoggingPlaceholderCountMatchesArgumentCount",
+      "cweIds": [
+        117,
+        532
+      ]
+    },
+    {
+      "id": "NonExtendableApiUsage",
+      "cweIds": [
+        843
+      ]
+    },
+    {
+      "id": "UrlHashCode",
+      "cweIds": [
+        400,
+        597
+      ]
+    }
+  ]
+}

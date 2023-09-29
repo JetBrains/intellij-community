@@ -1,0 +1,10 @@
+{
+  "inspections": [
+    {
+      "id": "InjectedReferences",
+      "cweIds": [
+        73
+      ]
+    }
+  ]
+}

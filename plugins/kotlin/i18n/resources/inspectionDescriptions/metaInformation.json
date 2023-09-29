@@ -1,0 +1,10 @@
+{
+  "inspections": [
+    {
+      "id": "KotlinInvalidBundleOrProperty",
+      "cweIds": [
+        200
+      ]
+    }
+  ]
+}
