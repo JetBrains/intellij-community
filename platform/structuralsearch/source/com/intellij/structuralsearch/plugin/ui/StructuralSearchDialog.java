@@ -887,7 +887,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
   @Override
   protected @NotNull List<ValidationInfo> doValidateAll() {
     final JRootPane component = getRootPane();
-    if (component == null) {
+    if (component == null || myPerformAction) {
       return Collections.emptyList();
     }
     final List<ValidationInfo> errors = new SmartList<>();
@@ -1106,11 +1106,11 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     if (profile != null) {
       final Document document = textField.getDocument();
-      final String pattern = ReadAction.nonBlocking(() -> {
+      final String pattern = ReadAction.compute(() -> {
         final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         assert file != null;
         return profile.getCodeFragmentText(file);
-      }).executeSynchronously();
+      });
       return pattern.isEmpty() ? textField.getText() : pattern;
     }
     return textField.getText();
