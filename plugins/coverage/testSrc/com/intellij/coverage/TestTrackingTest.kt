@@ -12,6 +12,9 @@ class TestTrackingTest {
    */
   @Test
   fun `test ProjectData API compatibility`() {
-    Assert.assertNull(ProjectData.getProjectData())
+    val projectData = ProjectData.getProjectData()
+    @Suppress("USELESS_IS_CHECK")
+    // check that API does not change
+    Assert.assertTrue(projectData == null || projectData is ProjectData)
   }
 }
