@@ -3,8 +3,6 @@
 
 package com.intellij.openapi.fileEditor.impl
 
-import com.intellij.codeWithMe.ClientId
-import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
@@ -14,7 +12,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
-import com.intellij.openapi.client.ClientSessionsManager
+import com.intellij.openapi.client.currentSession
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
@@ -59,7 +57,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -964,8 +961,8 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
             fileDocumentManager.getDocument(file)
           }
 
-          val clientId = ClientId.current
-          if (clientId.isLocal) {
+          val session = fileEditorManager.project.currentSession
+          if (session.isLocal) {
             fileEditorManager.openFileOnStartup(windowDeferred = windowDeferred,
                                                 file = file,
                                                 entry = entry,
@@ -978,8 +975,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
                                                 newProviders = newProviders.await())
           }
           else {
-            ClientSessionsManager.getProjectSession(fileEditorManager.project, clientId)
-              ?.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(file = file, forceCreate = false, requestFocus = true)
+              session.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(file = file, forceCreate = false, requestFocus = true)
           }
 
           // This is just to make sure document reference is kept on stack till this point

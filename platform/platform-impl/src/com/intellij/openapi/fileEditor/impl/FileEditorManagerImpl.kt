@@ -6,7 +6,6 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId
-import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
@@ -25,7 +24,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.client.ClientKind
-import com.intellij.openapi.client.ClientSessionsManager
+import com.intellij.openapi.client.currentSession
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -971,9 +970,9 @@ open class FileEditorManagerImpl(
 
   private val clientFileEditorManager: ClientFileEditorManager?
     get() {
-      val clientId = ClientId.current
-      LOG.assertTrue(!clientId.isLocal, "Trying to get ClientFileEditorManager for local ClientId")
-      return ClientSessionsManager.getProjectSession(project, clientId)?.serviceOrNull<ClientFileEditorManager>()
+      val session = project.currentSession
+      LOG.assertTrue(!session.isLocal, "Trying to get ClientFileEditorManager for local ClientId")
+      return session.serviceOrNull<ClientFileEditorManager>()
     }
 
   /**
