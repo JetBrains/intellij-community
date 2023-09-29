@@ -90,7 +90,13 @@ public final class PagesTable {
     }
   }
 
-  /** Shrink table if alivePagesCount is too small for current size. */
+  /**
+   * Shrink table if alivePagesCount is too small for current size.
+   *
+   * @return true if actually shrunk, false if there are too many entries (due to concurrent modifications),
+   * to shrink
+   */
+  @SuppressWarnings("UnusedReturnValue")
   public boolean shrinkIfNeeded(final int alivePagesCount) {
     final int expectedTableSize = (int)Math.ceil(alivePagesCount / loadFactor);
     if (expectedTableSize >= MIN_TABLE_SIZE
