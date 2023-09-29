@@ -109,6 +109,15 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     }
   }
 
+  /**
+   * Rider uses default layout for per-app toolwindows feature, so we need to migrate default layout
+   */
+  @Serializable
+  data class ToolWindowLayoutStorageManagerStateV1(
+    val v1: List<ToolWindowDescriptor> = emptyList(),
+    val v2: List<ToolWindowDescriptor> = emptyList()
+  )
+
   @Serializable
   data class ToolWindowLayoutStorageManagerState(
     val activeLayoutName: String = INITIAL_LAYOUT_NAME,
