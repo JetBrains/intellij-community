@@ -50,8 +50,7 @@ class NewProjectWizardLanguageStep(
     if (PlatformUtils.isIdeaCommunity())
       mapOf(
         Language.PYTHON to "PythonCore",
-        Language.SCALA to "org.intellij.scala",
-        Language.RUST to "com.jetbrains.rust"
+        Language.SCALA to "org.intellij.scala"
       )
     else
       mapOf(
