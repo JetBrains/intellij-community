@@ -39,7 +39,7 @@ fun getIdeSystemProperties(runDir: Path): Map<String, String> {
   val libDir = runDir.resolve("lib")
 
   val defaultProperties: Map<String, String> = Properties().apply {
-    load(runDir.resolve("bin").listDirectoryEntries(glob = "*.properties").single().bufferedReader())
+    load(runDir.resolve("bin/idea.properties").bufferedReader())
   }.map { it.key.toString() to it.value.toString() }.toMap()
 
   return defaultProperties.plus(

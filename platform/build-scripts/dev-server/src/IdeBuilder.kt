@@ -94,7 +94,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
         // PathManager.getBinPath() is used as a working dir for maven
         Files.createDirectories(runDir.resolve("bin")).also { distBinDir ->
           getOsDistributionBuilder(os = OsFamily.currentOs, context = context)!!.writeVmOptions(distBinDir)
-            // copying outside of the installation directory is neccesary to specify system property "jb.vmOptionsFile"
+            // copying outside the installation directory is necessary to specify system property "jb.vmOptionsFile"
             .apply { this.copyTo(distBinDir.parent.parent.resolve(this.fileName), overwrite = true) }
 
           patchIdeaPropertiesFile(context).apply { moveTo(distBinDir.resolve(this.fileName), overwrite = true) }
