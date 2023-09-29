@@ -28,8 +28,8 @@ import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.FilesScanningTaskBase.IndexingProgressReporter.IndexingSubTaskProgressReporter;
 import com.intellij.util.indexing.PerProjectIndexingQueue.PerProviderSink;
-import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
+import com.intellij.util.indexing.dependencies.ScanningRequestToken;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark;
 import com.intellij.util.indexing.diagnostic.*;
@@ -423,7 +423,10 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     if (providers.isEmpty()) {
       return;
     }
-    IndexingRequestToken indexingRequest = myProject.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
+    ProjectIndexingDependenciesService projectIndexingDependenciesService = myProject.getService(ProjectIndexingDependenciesService.class);
+    final ScanningRequestToken scanningRequest = myOnProjectOpen ?
+                                                 projectIndexingDependenciesService.newScanningTokenOnProjectOpen() :
+                                                 projectIndexingDependenciesService.newScanningToken();
     List<IndexableFileScanner.ScanSession> sessions =
       ContainerUtil.map(IndexableFileScanner.EP_NAME.getExtensionList(), scanner -> scanner.startSession(project));
 
@@ -477,7 +480,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
           scanningStatistics.startFileChecking();
           for (Pair<VirtualFile, List<VirtualFile>> rootAndFiles : rootsAndFiles) {
             UnindexedFilesFinder finder = new UnindexedFilesFinder(project, sharedExplanationLogger, myIndex, getForceReindexingTrigger(),
-                                                                   rootAndFiles.getFirst(), indexingRequest);
+                                                                   rootAndFiles.getFirst(), scanningRequest);
             var rootIterator = new SingleProviderIterator(project, indicator, provider, finder,
                                                           scanningStatistics, perProviderSink);
             rootAndFiles.getSecond().forEach(it -> rootIterator.processFile(it));

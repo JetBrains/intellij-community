@@ -99,6 +99,18 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     return IndexingRequestTokenImpl(currentRequestId.get(), appCurrent)
   }
 
+  @RequiresBackgroundThread
+  fun newScanningToken(): ScanningRequestToken {
+    val appCurrent = appIndexingDependenciesService.getCurrent()
+    return ScanningRequestTokenImpl(currentRequestId.get(), appCurrent)
+  }
+
+  @RequiresBackgroundThread
+  fun newScanningTokenOnProjectOpen(): ScanningRequestToken {
+    val appCurrent = appIndexingDependenciesService.getCurrent()
+    return ScanningRequestTokenImpl(currentRequestId.get(), appCurrent)
+  }
+
   fun invalidateAllStamps(debugReason: String) {
     thisLogger().info("Invalidating all indexing flags in project. Reason: $debugReason")
 
