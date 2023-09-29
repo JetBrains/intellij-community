@@ -9,15 +9,21 @@ import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/retrievingService")
 internal class KtRetrievingServiceInspectionTest : RetrievingServiceInspectionTestBase() {
 
+  override fun setUp() {
+    super.setUp()
+    myFixture.configureByFile("service.kt")
+    myFixture.configureByFile("services.kt")
+  }
+
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/retrievingService/"
 
   override fun getFileExtension() = "kt"
 
-  fun testAppLevelServiceAsProjectLevel() {
+  fun testRetrievingServiceAsProjectLevel() {
     doTest()
   }
 
-  fun testProjectLevelServiceAsAppLevel() {
+  fun testRetrievingServiceAsAppLevel() {
     doTest()
   }
 
@@ -54,7 +60,7 @@ internal class KtRetrievingServiceInspectionTest : RetrievingServiceInspectionTe
     doTest(DevKitBundle.message("inspection.retrieving.service.replace.with", "MyService", "getInstance"))
   }
 
-  fun testUnregisteredService() {
+  fun testUnregisteredServices() {
     doTest()
   }
 }

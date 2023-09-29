@@ -19,10 +19,20 @@ import org.jetbrains.uast.generate.UastCodeGenerationPlugin
 import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
+private val SERVICE_KT_METHODS =
+  CallMatcher.staticCall("com.intellij.openapi.components.ServiceKt", "service", "serviceOrNull", "serviceIfCreated")
+             .parameterCount(0)
+private val SERVICES_KT_METHODS =
+  CallMatcher.staticCall("com.intellij.openapi.components.ServicesKt", "service", "serviceOrNull", "serviceIfCreated")
+             .parameterTypes(ComponentManager::class.java.canonicalName)
+
 private val COMPONENT_MANAGER_GET_SERVICE = CallMatcher.anyOf(
   CallMatcher.instanceCall(ComponentManager::class.java.canonicalName, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS),
   CallMatcher.instanceCall(ComponentManager::class.java.canonicalName, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS,
-                                                                                                    "boolean"))
+                                                                                                    "boolean"),
+  SERVICE_KT_METHODS,
+  SERVICES_KT_METHODS,
+)
 
 internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
 
@@ -77,7 +87,8 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
   }
 
   private fun howServiceRetrieved(getServiceCandidate: UCallExpression): Level? {
-    val receiverType = getServiceCandidate.receiverType ?: return null
+    if (SERVICE_KT_METHODS.uCallMatches(getServiceCandidate)) return Level.APP
+    val receiverType = getServiceCandidate.receiver?.getExpressionType() ?: return null
     val aClass = (receiverType as? PsiClassType)?.resolve() ?: return null
     return when {
       InheritanceUtil.isInheritor(aClass, Application::class.java.canonicalName) -> Level.APP

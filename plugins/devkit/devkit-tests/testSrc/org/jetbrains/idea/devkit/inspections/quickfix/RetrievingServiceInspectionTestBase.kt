@@ -24,6 +24,7 @@ abstract class RetrievingServiceInspectionTestBase : LightDevKitInspectionFixTes
 
       public interface ComponentManager {
         <T> T getService(@NotNull Class<T> serviceClass);
+        <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded);
       }
       """)
     myFixture.addClass(
