@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.SUPPRESS_SUBM
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.checkCancelled
@@ -570,7 +571,12 @@ internal class ActionUpdater @JvmOverloads constructor(
   fun <T: Any?> computeSessionDataOrThrow(key: Pair<String, Any?>, supplier: suspend () -> T): T {
     val deferred = getSessionDataDeferred(key, supplier)
     if (deferred.isCompleted) {
-      return deferred.getCompleted()
+      try {
+        return deferred.getCompleted()
+      }
+      catch (ex: CancellationException) {
+        throw CeProcessCanceledException(ex)
+      }
     }
     throw AwaitSharedData(deferred, key.first)
   }
