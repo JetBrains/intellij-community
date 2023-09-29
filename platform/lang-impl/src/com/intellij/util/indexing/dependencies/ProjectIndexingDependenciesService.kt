@@ -18,7 +18,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.function.IntConsumer
 import kotlin.io.path.deleteIfExists
 
 /**
@@ -44,16 +43,9 @@ import kotlin.io.path.deleteIfExists
 class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting constructor(storagePath: Path,
                                                                                        private val appIndexingDependenciesService: AppIndexingDependenciesService) : Disposable {
   companion object {
-    private const val NULL_INDEXING_STAMP: Int = 0
 
     @JvmStatic
-    val NULL_STAMP: FileIndexingStamp = object : FileIndexingStamp {
-      override fun store(storage: IntConsumer) {
-        storage.accept(NULL_INDEXING_STAMP)
-      }
-
-      override fun isSame(i: Int): Boolean = false
-    }
+    val NULL_STAMP: FileIndexingStamp = NullIndexingStamp
 
     private fun requestVfsRebuildDueToError(reason: Throwable) {
       thisLogger().error(reason)
@@ -68,17 +60,6 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
         storagePath.deleteIfExists()
         throw e
       }
-    }
-  }
-
-  @VisibleForTesting
-  data class FileIndexingStampImpl(val stamp: Int) : FileIndexingStamp {
-    override fun store(storage: IntConsumer) {
-      storage.accept(stamp)
-    }
-
-    override fun isSame(i: Int): Boolean {
-      return i != NULL_INDEXING_STAMP && i == stamp
     }
   }
 
