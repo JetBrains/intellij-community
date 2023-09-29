@@ -426,7 +426,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
     if (recordOffsetInFile >= recordsAllocatedUpTo) {
       throw new IllegalArgumentException(
         "Can't read recordId(=" + recordId + ", offset: " + recordOffsetInFile + "]: " +
-        "outside of allocated region [<" + recordsAllocatedUpTo + "]");
+        "outside of allocated region [<" + recordsAllocatedUpTo + "] " +
+        moreDiagnosticInfo(recordOffsetInFile));
     }
 
 

@@ -154,7 +154,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
         }
         catch (IOException ex) {
           if (cleanFileIfIncompatible) {
-            LOG.info("[" + storagePath + "] is incompatible with current format " +
+            LOG.warn("[" + storagePath + "] is incompatible with current format " +
                      "-> delete it, and pretend never seen it incompatible " +
                      "(incompatibility: " + ex.getMessage() + ")"
             );
