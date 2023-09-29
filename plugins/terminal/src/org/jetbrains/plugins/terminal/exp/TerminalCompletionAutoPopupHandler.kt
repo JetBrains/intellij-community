@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.CompletionPhase.EmptyAutoPopup
-import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -15,7 +14,8 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEdito
 
 /**
  * Logic is mostly copied from [com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler].
- * Added only additional characters to trigger auto popup (' ', '-', '/').
+ * Added additional characters to trigger auto popup (' ', '-', '/').
+ * Allowed to reopen the popup automatically in the [EmptyAutoPopup] phase.
  */
 class TerminalCompletionAutoPopupHandler : TypedHandlerDelegate() {
   override fun checkAutoPopup(charTyped: Char, project: Project, editor: Editor, file: PsiFile): Result {
@@ -23,7 +23,6 @@ class TerminalCompletionAutoPopupHandler : TypedHandlerDelegate() {
       return Result.CONTINUE
     }
 
-    val phase = CompletionServiceImpl.getCompletionPhase()
     val lookup = LookupManager.getActiveLookup(editor)
     if (lookup is LookupImpl) {
       if (editor.selectionModel.hasSelection()) {
@@ -33,9 +32,6 @@ class TerminalCompletionAutoPopupHandler : TypedHandlerDelegate() {
     }
 
     if (Character.isLetterOrDigit(charTyped) || charTyped == ' ' || charTyped == '-' || charTyped == '/') {
-      if (phase is EmptyAutoPopup && phase.allowsSkippingNewAutoPopup(editor, charTyped)) {
-        return Result.CONTINUE
-      }
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
       return Result.STOP
     }
