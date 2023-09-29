@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy.JBAcademyWelcomeScreenBundle
+import com.intellij.ui.util.preferredHeight
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
@@ -22,6 +22,7 @@ class LearnButton : JButton {
     isOpaque = false
     isContentAreaFilled = false
     isEnabled = contentEnabled
+    preferredHeight = 33
   }
   constructor(anAction: AnAction, @Nls title: String, contentEnabled: Boolean) : this(anAction.toSwingAction(title), contentEnabled) {}
 

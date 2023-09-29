@@ -66,6 +66,7 @@ class CoursesInProgressPanel : Wrapper() {
                                  true)
         cell(button).align(AlignX.RIGHT)
       }
+      topGap(TopGap.MEDIUM)
     }
     row {
       topGap(TopGap.SMALL)
@@ -79,7 +80,7 @@ class CoursesInProgressPanel : Wrapper() {
       val interactiveCourseFactories = InteractiveCourseFactory.INTERACTIVE_COURSE_FACTORY_EP.extensions
       val courseFactory = interactiveCourseFactories.find { !it.getCourseData().isEduTools() }
       if (courseFactory != null) {
-        topGap(TopGap.MEDIUM)
+        topGap(TopGap.SMALL)
         cell(OtherCoursesPanel(courseFactory))
       }
     }
@@ -89,7 +90,8 @@ class CoursesInProgressPanel : Wrapper() {
       alignmentY = BOTTOM_ALIGNMENT
       topGap(TopGap.MEDIUM)
     }
-    border = JBUI.Borders.empty(14, 30, 20, 30)
+  }.apply {
+    border = JBUI.Borders.empty(0,32, 40, 32)
   }
 
   private fun openCourse(courseInfo: CourseInfo) {

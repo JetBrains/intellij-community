@@ -9,7 +9,6 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBUI
-import java.awt.Font
 import javax.swing.JPanel
 
 class OtherCoursesPanel(private val courseFactory: InteractiveCourseFactory) : Wrapper() {
@@ -41,7 +40,7 @@ class OtherCoursesPanel(private val courseFactory: InteractiveCourseFactory) : W
 
         val button = LearnButton(courseFactory.getCourseData().getAction(), courseFactory.isEnabled)
 
-        cell(button).align(AlignY.TOP).apply {
+        cell(button).align(AlignY.TOP).align(AlignX.RIGHT).apply {
           border = JBUI.Borders.empty(6, 0)
         }
       }
