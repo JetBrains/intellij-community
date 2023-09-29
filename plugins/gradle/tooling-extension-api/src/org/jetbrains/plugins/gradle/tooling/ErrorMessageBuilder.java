@@ -19,6 +19,7 @@ public final class ErrorMessageBuilder {
   @NotNull private final Project myProject;
   @Nullable private final Exception myException;
   @NotNull private final String myGroup;
+  @Nullable private String myTitle;
   @Nullable private String myDescription;
 
   private ErrorMessageBuilder(@NotNull Project project, @Nullable Exception exception, @NotNull String group) {
@@ -35,6 +36,11 @@ public final class ErrorMessageBuilder {
     return new ErrorMessageBuilder(project, exception, group);
   }
 
+  public ErrorMessageBuilder withTitle(@NotNull String title) {
+    myTitle = title;
+    return this;
+  }
+
   public ErrorMessageBuilder withDescription(@NotNull String description) {
     myDescription = description;
     return this;
@@ -43,39 +49,13 @@ public final class ErrorMessageBuilder {
   @ApiStatus.Internal
   public Message buildMessage() {
     return new MessageBuilder()
-      .withTitle(getMessageTitle())
-      .withText(myDescription != null ? myDescription : "")
+      .withTitle(myTitle)
+      .withText(myDescription)
       // custom model builders failures often not so critical to the import results and reported as warnings to avoid useless distraction
       .withKind(Message.Kind.WARNING)
       .withException(myException)
       .withGroup(myGroup)
       .withProject(myProject)
       .build();
-  }
-
-  private @NotNull String getMessageTitle() {
-    String title = null;
-    if (myException != null) {
-      title = getRootCauseMessage(myException);
-    }
-    if (title == null) {
-      title = myDescription;
-    }
-    if (title == null) {
-      title = myGroup;
-    }
-    return title;
-  }
-
-  @Nullable
-  private static String getRootCauseMessage(@NotNull Throwable t) {
-    Throwable e = t;
-    while (true) {
-      if (e.getCause() == null) {
-        String message = e.getMessage();
-        return message == null ? t.getMessage() : message;
-      }
-      e = e.getCause();
-    }
   }
 }

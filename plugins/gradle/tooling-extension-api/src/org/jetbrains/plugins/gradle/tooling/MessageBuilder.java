@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.tooling;
 
 import com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.openapi.util.text.StringUtilRt;
 import org.gradle.api.Project;
 import org.jetbrains.annotations.*;
 
@@ -18,7 +19,7 @@ public final class MessageBuilder {
   private @Nullable String myText = null;
   private @Nullable String myGroup = null;
   private @Nullable Exception myException = null;
-  private @NotNull Message.Kind myKind = Message.Kind.INFO;
+  private @Nullable Message.Kind myKind = null;
   private @Nullable Message.FilePosition myFilePosition = null;
   private @Nullable Project myProject = null;
 
@@ -69,10 +70,27 @@ public final class MessageBuilder {
     return this;
   }
 
-  private @NotNull String buildTitle() {
-    assert myTitle != null;
+  public @NotNull Message build() {
+    String title = buildTitle();
+    String text = buildText();
+    String group = buildGroup();
+    Message.Kind kind = buildKind();
+    Message.FilePosition filePosition = buildFilePosition();
+    return new Message(title, text, group, kind, filePosition);
+  }
 
+  private @NotNull String buildTitle() {
     String title = myTitle;
+    if (title == null && myException != null) {
+      title = getRootCauseExceptionMessage(myException);
+    }
+    if (title == null) {
+      title = myText;
+    }
+    if (title == null) {
+      assert myGroup != null;
+      title = myGroup;
+    }
     if (myProject != null) {
       String projectDisplayName = GradleNegotiationUtil.getProjectDisplayName(myProject);
       title = projectDisplayName + ": " + title;
@@ -81,18 +99,36 @@ public final class MessageBuilder {
   }
 
   private @NotNull String buildText() {
-    assert myText != null;
-
     String text = myText;
     if (myException != null) {
-      if (myException.getStackTrace().length > 0) {
-        text += ("\n\n" + getErrorMessage(myException));
+      if (text == null) {
+        text = buildExceptionStacktrace(myException);
       }
       else {
-        text += ("\n\n" + myException.getMessage());
+        text += "\n\n" + buildExceptionStacktrace(myException);
       }
     }
+    if (text == null) {
+      text = myTitle;
+    }
+    if (text == null) {
+      assert myGroup != null;
+      text = myGroup;
+    }
     return text;
+  }
+
+  private @NotNull String buildGroup() {
+    assert myGroup != null;
+    return myGroup;
+  }
+
+  private @NotNull Message.Kind buildKind() {
+    Message.Kind kind = myKind;
+    if (kind == null) {
+      kind = Message.Kind.INFO;
+    }
+    return kind;
   }
 
   private @Nullable Message.FilePosition buildFilePosition() {
@@ -104,22 +140,46 @@ public final class MessageBuilder {
     return filePosition;
   }
 
-  public @NotNull Message build() {
-    String title = buildTitle();
-    String text = buildText();
-    Message.FilePosition filePosition = buildFilePosition();
-    return new Message(title, text, myGroup, myKind, filePosition);
+  private static @NotNull String buildExceptionStacktrace(@NotNull Throwable exception) {
+    if (exception.getStackTrace().length == 0) {
+      return getRootCauseExceptionMessage(exception);
+    }
+    return getExceptionStacktrace(exception);
   }
 
-  @Contract("null -> null; !null->!null")
-  private static String getErrorMessage(@Nullable Throwable e) {
-    if (e == null) return null;
+  private static @Nullable String getExceptionOriginalReason(@NotNull Throwable exception) {
+    ExternalSystemException esException = findCause(exception, ExternalSystemException.class);
+    if (esException != null && esException != exception) {
+      String originalReason = esException.getOriginalReason();
+      if (!StringUtilRt.isEmptyOrSpaces(originalReason)) {
+        return originalReason;
+      }
+    }
+    return null;
+  }
+
+  private static @NotNull String getExceptionStacktrace(@NotNull Throwable exception) {
     StringWriter sw = new StringWriter();
-    e.printStackTrace(new PrintWriter(sw));
-    ExternalSystemException esException = findCause(e, ExternalSystemException.class);
-    if (esException != null && esException != e) {
-      sw.append("\nCaused by: ").append(esException.getOriginalReason());
+    exception.printStackTrace(new PrintWriter(sw));
+    String originalReason = getExceptionOriginalReason(exception);
+    if (originalReason != null) {
+      sw.append("\nCaused by: ").append(originalReason);
     }
     return sw.toString();
+  }
+
+  private static @NotNull String getRootCauseExceptionMessage(@NotNull Throwable exception) {
+    Throwable rootCauseException = exception;
+    while (rootCauseException.getCause() != null) {
+      rootCauseException = rootCauseException.getCause();
+    }
+    String message = rootCauseException.getMessage();
+    if (message == null) {
+      message = exception.getMessage();
+    }
+    if (message == null) {
+      message = exception.getClass().getName();
+    }
+    return message;
   }
 }
