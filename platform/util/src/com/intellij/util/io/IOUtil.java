@@ -261,7 +261,7 @@ public final class IOUtil {
     boolean ok = true;
     for (Path f : files) {
       try {
-        Files.deleteIfExists(f);
+        FileUtil.delete(f);
       }
       catch (IOException ignore) {
         ok = false;
