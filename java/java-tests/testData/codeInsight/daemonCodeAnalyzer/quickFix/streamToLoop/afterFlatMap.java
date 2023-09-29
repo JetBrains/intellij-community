@@ -140,8 +140,8 @@ public class Main {
   private static List<String> testMethodRef2(List<String[]> list) {
       List<String> result = new ArrayList<>();
       for (String[] strings : list) {
-          for (String t : strings) {
-              result.add(t);
+          for (String value : strings) {
+              result.add(value);
           }
       }
       return result;
