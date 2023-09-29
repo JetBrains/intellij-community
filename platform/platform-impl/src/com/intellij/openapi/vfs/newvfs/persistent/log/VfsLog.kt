@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor
 import com.intellij.util.SystemProperties
@@ -33,11 +34,20 @@ interface VfsLog {
   fun isCompactionRunning(): Boolean
 
   companion object {
-    private val LOG_VFS_OPERATIONS_ENABLED: Boolean = SystemProperties.getBooleanProperty("idea.vfs.log-vfs-operations.enabled",
-                                                                                          ApplicationManager.getApplication().isEAP &&
-                                                                                          !ApplicationManager.getApplication().isUnitTestMode &&
-                                                                                          !ApplicationManagerEx.isInStressTest() &&
-                                                                                          !ApplicationManagerEx.isInIntegrationTest())
+    private val LOG_VFS_OPERATIONS_ENABLED: Boolean =
+      SystemProperties.getBooleanProperty(
+        "idea.vfs.log-vfs-operations.enabled",
+        try {
+          ApplicationManager.getApplication().isEAP &&
+          !ApplicationManager.getApplication().isUnitTestMode &&
+          !ApplicationManagerEx.isInStressTest() &&
+          !ApplicationManagerEx.isInIntegrationTest()
+        }
+        catch (e: NullPointerException) { // ApplicationManager may be not initialized in some tests
+          logger<VfsLog>().info("ApplicationManager is not available", e)
+          false
+        }
+      )
 
     @JvmStatic
     val isVfsTrackingEnabled: Boolean get() = LOG_VFS_OPERATIONS_ENABLED
@@ -45,7 +55,7 @@ interface VfsLog {
 }
 
 @ApiStatus.Internal
-interface VfsLogEx: VfsLog {
+interface VfsLogEx : VfsLog {
   val connectionInterceptors: List<ConnectionInterceptor>
   val applicationVFileEventsTracker: ApplicationVFileEventsTracker
 
