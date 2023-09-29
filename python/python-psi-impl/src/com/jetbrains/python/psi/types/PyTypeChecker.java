@@ -234,9 +234,6 @@ public final class PyTypeChecker {
       return false;
     }
 
-    // Remove value-specific components from the actual type to make it safe to propagate
-    PyType safeActual = replaceLiteralStringWithStr(actual);
-
     final PyType substitution = context.mySubstitutions.typeVars.get(expected);
     PyType bound = expected.getBound();
     // Promote int in Type[TypeVar('T', int)] to Type[int] before checking that bounds match
@@ -244,6 +241,9 @@ public final class PyTypeChecker {
       final Function<PyType, PyType> toDefinition = t -> t instanceof PyInstantiableType ? ((PyInstantiableType<?>)t).toClass() : t;
       bound = PyUnionType.union(PyTypeUtil.toStream(bound).map(toDefinition).toList());
     }
+
+    // Remove value-specific components from the actual type to make it safe to propagate
+    PyType safeActual = bound instanceof PyLiteralStringType ? actual : replaceLiteralStringWithStr(actual);
 
     Optional<Boolean> match = match(bound, safeActual, context);
     if (match.isPresent() && !match.get()) {
