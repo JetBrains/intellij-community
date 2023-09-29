@@ -46,7 +46,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
       withContext(Dispatchers.IO) {
         val distBinDir = targetPath.resolve("bin")
         val sourceBinDir = context.paths.communityHomeDir.resolve("bin/linux")
-        copyFileToDir(sourceBinDir.resolve("restart.py"), distBinDir)
+        copyFileToDir(NativeBinaryDownloader.downloadRestarter(context, OsFamily.LINUX, arch), distBinDir)
         if (arch == JvmArchitecture.x64 || arch == JvmArchitecture.aarch64) {
           @Suppress("SpellCheckingInspection")
           listOf("fsnotifier", "libdbm.so").forEach {

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,7 +48,7 @@ public final class Restarter {
         return appDir;
       }
     }
-    else if (SystemInfo.isUnix) {
+    else if (SystemInfo.isLinux) {
       var starter = Path.of(PathManager.getBinPath(), ApplicationNamesInfo.getInstance().getScriptName() + ".sh");
       if (Files.exists(starter)) {
         return starter;
@@ -93,15 +92,12 @@ public final class Restarter {
         problem = checkRestarter("restarter");
       }
     }
-    else if (SystemInfo.isUnix) {
+    else if (SystemInfo.isLinux) {
       if (ourStarter.getValue() == null) {
         problem = "cannot find launcher script in " + PathManager.getBinPath();
       }
-      else if (PathEnvironmentVariableUtil.findInPath("python3") == null && PathEnvironmentVariableUtil.findInPath("python") == null) {
-        problem = "cannot find neither 'python' nor 'python3' in 'PATH'";
-      }
       else {
-        problem = checkRestarter("restart.py");
+        problem = checkRestarter("restarter");
       }
     }
     else {
@@ -142,8 +138,8 @@ public final class Restarter {
     else if (SystemInfo.isMac) {
       restartOnMac(beforeRestart);
     }
-    else if (SystemInfo.isUnix) {
-      restartOnUnix(beforeRestart);
+    else if (SystemInfo.isLinux) {
+      restartOnLinux(beforeRestart);
     }
     else {
       throw new IOException("Cannot restart application: not supported.");
@@ -183,20 +179,14 @@ public final class Restarter {
     runRestarter(command);
   }
 
-  private static void restartOnUnix(String... beforeRestart) throws IOException {
+  private static void restartOnLinux(String... beforeRestart) throws IOException {
     var starterScript = ourStarter.getValue();
     if (starterScript == null) throw new IOException("Starter script not found in " + PathManager.getBinPath());
-    var python = PathEnvironmentVariableUtil.findInPath("python3");
-    if (python == null) python = PathEnvironmentVariableUtil.findInPath("python");
-    if (python == null) throw new IOException("Cannot find neither 'python' nor 'python3' in 'PATH'");
-    var restarter = Path.of(PathManager.getBinPath(), "restart.py");
+    var restarter = Path.of(PathManager.getBinPath(), "restarter");
 
-    var command = new ArrayList<String>();
-    command.add(python.getPath());
-    command.add(copyWhenNeeded(restarter, beforeRestart).toString());
-    command.add(String.valueOf(ProcessHandle.current().pid()));
+    var command = prepareCommand(restarter, beforeRestart);
+    command.add("1");
     command.add(starterScript.toString());
-    Collections.addAll(command, beforeRestart);
     runRestarter(command);
   }
 
