@@ -7,9 +7,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import org.jetbrains.annotations.VisibleForTesting
 
 interface IndexingRequestToken {
-  /**
-   * Monotonically increasing number representing IndexingStamp
-   */
   fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp
 }
 
@@ -28,6 +25,6 @@ data class IndexingRequestTokenImpl(val requestId: Int,
     // we assume that stamp and file.modificationStamp never decrease => their sum only grow up
     // in the case of overflow we hope that new value does not match any previously used value
     // (which is hopefully true in most cases, because (new value)==(old value) was used veeeery long time ago)
-    return ReadWriteFileIndexingStampImpl(fileStamp + requestId + appIndexingRequestId)
+    return WriteOnlyFileIndexingStampImpl(fileStamp + requestId + appIndexingRequestId)
   }
 }

@@ -102,13 +102,13 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
   @RequiresBackgroundThread
   fun newScanningToken(): ScanningRequestToken {
     val appCurrent = appIndexingDependenciesService.getCurrent()
-    return ScanningRequestTokenImpl(currentRequestId.get(), appCurrent)
+    return WriteOnlyScanningRequestTokenImpl(currentRequestId.get(), appCurrent)
   }
 
   @RequiresBackgroundThread
   fun newScanningTokenOnProjectOpen(): ScanningRequestToken {
     val appCurrent = appIndexingDependenciesService.getCurrent()
-    return ScanningRequestTokenImpl(currentRequestId.get(), appCurrent)
+    return ReadWriteScanningRequestTokenImpl(currentRequestId.get(), appCurrent)
   }
 
   fun invalidateAllStamps(debugReason: String) {
