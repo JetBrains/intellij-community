@@ -90,22 +90,6 @@ fun Icon(
     )
 }
 
-@Composable
-fun Icon(
-    resource: String,
-    contentDescription: String?,
-    modifier: Modifier = Modifier,
-    resourceLoader: ResourceLoader = LocalResourceLoader.current,
-    tint: Color = Color.Unspecified,
-) {
-    Icon(
-        painter = painterResource(resource, resourceLoader),
-        contentDescription = contentDescription,
-        modifier = modifier,
-        tint = tint,
-    )
-}
-
 /**
  * Icon component that draws a [painter] using [tint], defaulting to
  * [Color.Unspecified]

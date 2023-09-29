@@ -1,15 +1,11 @@
 package org.jetbrains.jewel.intui.core
 
-import androidx.compose.foundation.Indication
-import androidx.compose.foundation.IndicationInstance
 import androidx.compose.foundation.LocalContextMenuRepresentation
 import androidx.compose.foundation.LocalIndication
-import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.text.TextStyle
 import org.jetbrains.jewel.GlobalColors
 import org.jetbrains.jewel.GlobalMetrics
@@ -19,6 +15,7 @@ import org.jetbrains.jewel.IntelliJTheme
 import org.jetbrains.jewel.IntelliJThemeIconData
 import org.jetbrains.jewel.LocalColorPalette
 import org.jetbrains.jewel.LocalIconData
+import org.jetbrains.jewel.NoIndication
 import org.jetbrains.jewel.styling.ButtonStyle
 import org.jetbrains.jewel.styling.CheckboxStyle
 import org.jetbrains.jewel.styling.ChipStyle
@@ -224,18 +221,4 @@ fun BaseIntUiTheme(
     ) {
         IntelliJTheme(theme, swingCompatMode, content)
     }
-}
-
-private object NoIndication : Indication {
-
-    private object NoIndicationInstance : IndicationInstance {
-
-        override fun ContentDrawScope.drawIndication() {
-            drawContent()
-        }
-    }
-
-    @Composable
-    override fun rememberUpdatedInstance(interactionSource: InteractionSource): IndicationInstance =
-        NoIndicationInstance
 }

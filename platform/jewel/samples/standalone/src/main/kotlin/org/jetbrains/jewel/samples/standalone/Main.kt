@@ -29,14 +29,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.singleWindowApplication
 import org.jetbrains.jewel.CheckboxRow
 import org.jetbrains.jewel.Divider
+import org.jetbrains.jewel.JewelSvgLoader
 import org.jetbrains.jewel.LocalResourceLoader
 import org.jetbrains.jewel.VerticalScrollbar
 import org.jetbrains.jewel.intui.standalone.IntUiTheme
+import org.jetbrains.jewel.intui.standalone.rememberSvgLoader
 import org.jetbrains.jewel.samples.standalone.components.Borders
 import org.jetbrains.jewel.samples.standalone.components.Buttons
 import org.jetbrains.jewel.samples.standalone.components.Checkboxes
 import org.jetbrains.jewel.samples.standalone.components.ChipsAndTree
 import org.jetbrains.jewel.samples.standalone.components.Dropdowns
+import org.jetbrains.jewel.samples.standalone.components.Icons
 import org.jetbrains.jewel.samples.standalone.components.Links
 import org.jetbrains.jewel.samples.standalone.components.ProgressBar
 import org.jetbrains.jewel.samples.standalone.components.RadioButtons
@@ -57,6 +60,7 @@ fun main() {
 
         IntUiTheme(theme, swingCompat) {
             val resourceLoader = LocalResourceLoader.current
+            val svgLoader by rememberSvgLoader()
 
             val windowBackground = if (isDark) {
                 IntUiTheme.colorPalette.grey(1)
@@ -76,14 +80,14 @@ fun main() {
 
                 Divider(Modifier.fillMaxWidth())
 
-                ComponentShowcase()
+                ComponentShowcase(svgLoader, resourceLoader)
             }
         }
     }
 }
 
 @Composable
-private fun ComponentShowcase() {
+private fun ComponentShowcase(svgLoader: JewelSvgLoader, resourceLoader: ResourceLoader) {
     val verticalScrollState = rememberScrollState()
 
     Box(Modifier.fillMaxSize()) {
@@ -104,7 +108,8 @@ private fun ComponentShowcase() {
             TextAreas()
             ProgressBar()
             ChipsAndTree()
-            Tabs()
+            Tabs(svgLoader, resourceLoader)
+            Icons(svgLoader, resourceLoader)
         }
 
         VerticalScrollbar(

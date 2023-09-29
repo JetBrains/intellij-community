@@ -197,20 +197,39 @@ fun IntUiTheme(
     swingCompatMode: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val svgLoader by remember(themeDefinition.isDark, themeDefinition.iconData, themeDefinition.colorPalette) {
-        val paletteMapper =
-            StandalonePaletteMapperFactory.create(
-                themeDefinition.isDark,
-                themeDefinition.iconData,
-                themeDefinition.colorPalette,
-            )
-        val svgPatcher = IntelliJSvgPatcher(paletteMapper)
-        mutableStateOf(JewelSvgLoader(svgPatcher))
-    }
+    val svgLoader by rememberSvgLoader(
+        isDark = themeDefinition.isDark,
+        iconData = themeDefinition.iconData,
+        colorPalette = themeDefinition.colorPalette,
+    )
 
     val componentStyling = defaultComponentStyling(themeDefinition, svgLoader)
     IntUiTheme(themeDefinition, componentStyling, swingCompatMode, content)
 }
+
+/**
+ * Create and remember an instance of [SvgLoader].
+ *
+ * Note that since [SvgLoader] may cache the loaded images, and
+ * that creating it may be somewhat expensive, you should only
+ * create it once at the top level, and pass it around.
+ */
+@Composable
+fun rememberSvgLoader(
+    isDark: Boolean = IntUiTheme.isDark,
+    iconData: IntelliJThemeIconData = IntUiTheme.iconData,
+    colorPalette: IntUiThemeColorPalette = IntUiTheme.colorPalette,
+) =
+    remember(isDark, iconData, colorPalette) {
+        val paletteMapper =
+            StandalonePaletteMapperFactory.create(
+                isDark,
+                iconData,
+                colorPalette,
+            )
+        val svgPatcher = IntelliJSvgPatcher(paletteMapper)
+        mutableStateOf(JewelSvgLoader(svgPatcher))
+    }
 
 @Composable
 fun IntUiTheme(
