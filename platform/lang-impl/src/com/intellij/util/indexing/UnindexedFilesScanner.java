@@ -138,7 +138,8 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
 
   @Override
   protected boolean shouldHideProgressInSmartMode() {
-    return super.shouldHideProgressInSmartMode() || myProject.getUserData(FIRST_SCANNING_REQUESTED) == FirstScanningState.REQUESTED;
+    return Registry.is("scanning.hide.progress.in.smart.mode", true) &&
+           myProject.getUserData(FIRST_SCANNING_REQUESTED) == FirstScanningState.REQUESTED;
   }
 
   @Override

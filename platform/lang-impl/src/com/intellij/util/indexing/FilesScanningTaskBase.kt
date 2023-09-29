@@ -49,7 +49,7 @@ abstract class FilesScanningTaskBase(private val project: Project) : MergeableQu
     }
   }
 
-  protected open fun shouldHideProgressInSmartMode() = Registry.`is`("scanning.hide.progress.in.smart.mode", false)
+  protected open fun shouldHideProgressInSmartMode() = Registry.`is`("scanning.hide.progress.in.smart.mode", true)
 
   abstract fun perform(indicator: CheckCancelOnlyProgressIndicator, progressReporter: IndexingProgressReporter)
 

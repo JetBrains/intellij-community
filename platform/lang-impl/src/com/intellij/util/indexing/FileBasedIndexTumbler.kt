@@ -106,7 +106,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
           cleanupProcessedFlag(reason)
           for (project in ProjectUtil.getOpenProjects()) {
             object : UnindexedFilesScanner(project, reason) {
-              override fun shouldHideProgressInSmartMode(): Boolean = true
+              override fun shouldHideProgressInSmartMode(): Boolean = Registry.`is`("scanning.hide.progress.in.smart.mode", true)
             }.queue()
           }
           LOG.info("Index rescanning has been started after `$reason`")
