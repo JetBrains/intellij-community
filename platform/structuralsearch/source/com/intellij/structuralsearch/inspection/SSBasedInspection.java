@@ -388,22 +388,23 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
                                                                @NotNull Project project) {
     final Map<Configuration, Matcher> result = new HashMap<>();
     for (Configuration configuration : configurations) {
-      final Matcher matcher = myCompiledPatterns.popValue(configuration);
+      Matcher matcher = myCompiledPatterns.popValue(configuration);
       if (matcher == Matcher.EMPTY) {
         continue;
       }
       if (matcher != null) {
+        matcher = new Matcher(matcher); // safe copy
         result.put(configuration, matcher);
       }
       else {
-        final Matcher newMatcher = buildCompiledConfiguration(configuration, project);
-        if (newMatcher != null) {
-          MatchContext context = newMatcher.getMatchContext();
-          context.setSink(new InspectionResultSink());
-          // ssr should never match recursively because this is handled by the inspection visitor
-          context.setShouldRecursivelyMatch(false);
-        }
-        result.put(configuration, newMatcher);
+        matcher = buildCompiledConfiguration(configuration, project);
+        result.put(configuration, matcher);
+      }
+      if (matcher != null) {
+        MatchContext context = matcher.getMatchContext();
+        context.setSink(new InspectionResultSink());
+        // ssr should never match recursively because this is handled by the inspection visitor
+        context.setShouldRecursivelyMatch(false);
       }
     }
     return result;

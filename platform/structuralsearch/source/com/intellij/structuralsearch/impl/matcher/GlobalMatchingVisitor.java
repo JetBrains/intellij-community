@@ -279,4 +279,9 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     final MatchResultImpl result = matchContext.getResult();
     for (MatchResult child : source.getChildren()) result.addChild(child);
   }
+
+  public void copyFrom(@NotNull GlobalMatchingVisitor other) {
+    matchContext.copyFrom(other.matchContext);
+    myElement = other.myElement;
+  }
 }

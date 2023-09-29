@@ -76,6 +76,12 @@ public class Matcher {
     matchContext.setPattern(compiledPattern);
   }
 
+  public Matcher(@NotNull Matcher other) {
+    // copy essential fields only, ignoring fields which are rewritten on inspection start
+    project = other.project;
+    visitor.copyFrom(other.visitor);
+  }
+
   public static Matcher buildMatcher(@NotNull Project project, @NotNull LanguageFileType fileType, @NotNull String constraint) {
     if (StringUtil.isQuotedString(constraint)) {
       // keep old configurations working, also useful for testing
