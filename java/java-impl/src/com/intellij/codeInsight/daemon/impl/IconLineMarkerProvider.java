@@ -24,7 +24,7 @@ import org.jetbrains.uast.values.*;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 /**
  * Shows small (16x16 or less) icons as gutters.
@@ -35,6 +35,12 @@ import java.util.stream.Collectors;
  * @author Konstantin Bulenkov
  */
 public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
+  @NotNull
+  @Override
+  public String getName() {
+    return JavaBundle.message("icon.preview");
+  }
+
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     return null;
@@ -43,8 +49,11 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
   @Override
   public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements,
                                      @NotNull Collection<? super LineMarkerInfo<?>> result) {
-    for (PsiElement element : elements) {
+    if (!hasIconTypeExpressions(elements)) {
+      return;
+    }
 
+    for (PsiElement element : elements) {
       UCallExpression expression = UastContextKt.toUElement(element, UCallExpression.class);
       if (expression == null) {
         continue;
@@ -65,8 +74,8 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
             .toList();
           if (!constants.isEmpty()) {
             UIdentifier identifier = expression.getMethodIdentifier();
-            if (identifier != null) {
-              LineMarkerInfo<PsiElement> marker = createIconLineMarker(ContainerUtil.getFirstItem(constants), identifier.getPsi());
+            if (identifier != null && identifier.getSourcePsi() != null) {
+              LineMarkerInfo<PsiElement> marker = createIconLineMarker(ContainerUtil.getFirstItem(constants), identifier.getSourcePsi());
               if (marker != null) {
                 result.add(marker);
               }
@@ -75,6 +84,15 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
         }
       }
     }
+  }
+
+  private static boolean hasIconTypeExpressions(@NotNull List<? extends PsiElement> elements) {
+    return elements.stream()
+      .map(e -> UastContextKt.toUElement(e, UCallExpression.class))
+      .filter(Objects::nonNull)
+      .map(UExpression::getExpressionType)
+      .distinct()
+      .anyMatch(ProjectIconsAccessor::isIconClassType);
   }
 
   @Nullable
@@ -97,11 +115,5 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
     return new LineMarkerInfo<>(bindingElement, bindingElement.getTextRange(), icon,
                                 null, navHandler,
                                 GutterIconRenderer.Alignment.LEFT);
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    return JavaBundle.message("icon.preview");
   }
 }
