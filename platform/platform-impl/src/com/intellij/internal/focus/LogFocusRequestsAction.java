@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 final class LogFocusRequestsAction extends ToggleAction implements DumbAware {
@@ -37,7 +38,7 @@ final class LogFocusRequestsAction extends ToggleAction implements DumbAware {
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     LogLevelConfigurationManager logsManager = LogLevelConfigurationManager.getInstance();
-    List<LogCategory> logsCategories = logsManager.getState().categories;
+    List<LogCategory> logsCategories = new ArrayList<>(logsManager.getState().categories);
     logsCategories.removeIf(c -> LOGGER_NAME.equals(c.getCategory()));
     if (state) {
       logsCategories.add(new LogCategory(LOGGER_NAME, DebugLogLevel.DEBUG));
