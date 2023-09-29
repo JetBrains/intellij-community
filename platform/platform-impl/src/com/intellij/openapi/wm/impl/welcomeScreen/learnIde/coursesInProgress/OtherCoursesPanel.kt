@@ -17,9 +17,7 @@ class OtherCoursesPanel(private val courseFactory: InteractiveCourseFactory) : W
   init {
     val panel = panel {
       row {
-        label(JBAcademyWelcomeScreenBundle.message("welcome.tab.learn.other.courses")).apply {
-          component.font = component.font.deriveFont(Font.BOLD, 16.0f)
-        }
+        cell(createTitlePanel(JBAcademyWelcomeScreenBundle.message("welcome.tab.learn.other.courses")))
         bottomGap(BottomGap.SMALL)
       }
       row {

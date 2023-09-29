@@ -123,5 +123,5 @@ class CoursesInProgressPanel : Wrapper() {
 }
 
 fun createTitlePanel(titleText: String): HeightLimitedPane {
-  return HeightLimitedPane(titleText, 5, LearnIdeContentColorsAndFonts.HeaderColor, true)
+  return HeightLimitedPane(titleText, 3, LearnIdeContentColorsAndFonts.HeaderColor, true)
 }
