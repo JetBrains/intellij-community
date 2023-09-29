@@ -339,7 +339,6 @@ private fun CoroutineScope.createAppStarter(args: List<String>): Deferred<Applic
         else -> 1
       },
       commandName,
-      starter.javaClass.name,
       if (args.isEmpty()) 0 else 1,
       args.joinToString(" ")
     )
