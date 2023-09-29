@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.StyledTextConsumer
+import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.StyleState
@@ -146,10 +147,10 @@ class TerminalModel(internal val textBuffer: TerminalTextBuffer, val styleState:
 
   fun clearAll() = textBuffer.clearAll()
 
-  fun clearAllExceptPrompt(promptLines: Int = 1) {
-    textBuffer.scrollArea(1, promptLines - cursorY, height)
+  fun clearAllAndMoveCursorToTopLeftCorner(terminal: Terminal) {
+    terminal.eraseInDisplay(2)
+    terminal.cursorPosition(1, 1)
     textBuffer.clearHistory()
-    cursorY = promptLines
   }
 
   fun lockContent() = textBuffer.lock()

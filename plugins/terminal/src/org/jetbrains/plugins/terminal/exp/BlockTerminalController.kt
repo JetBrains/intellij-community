@@ -77,7 +77,7 @@ class BlockTerminalController(
 
     // prepare terminal for the next command
     model.withContentLock {
-      model.clearAllExceptPrompt()
+      model.clearAllAndMoveCursorToTopLeftCorner(session.controller)
     }
 
     invokeLater {

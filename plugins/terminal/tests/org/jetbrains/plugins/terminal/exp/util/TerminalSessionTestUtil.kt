@@ -63,7 +63,7 @@ object TerminalSessionTestUtil {
       Disposer.dispose(listenersDisposable)
     }
     // Remove all welcome messages
-    model.withContentLock { model.clearAllExceptPrompt(1) }
+    model.withContentLock { model.clearAllAndMoveCursorToTopLeftCorner(session.controller) }
 
     return session
   }
