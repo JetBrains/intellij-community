@@ -51,6 +51,7 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
         LOG.info("ContentHashesEnumerator was successfully rebuild, ContentStorage was verified along the way");
       }
       catch (IOException ex) {
+        LOG.warn("ContentStorage check is failed: " + ex.getMessage());
         //Seems like the ContentStorage itself is broken -> clean both Content & ContentHashes storages,
         //  and invalidate all the contentId references from fs-records:
 
@@ -74,7 +75,7 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
         //inform others (LocalHistory) that old contentIds are no longer valid:
         loader.contentIdsInvalidated(true);
         loader.problemsWereRecovered(contentStoragesProblems);
-        LOG.info("ContentStorage is found broken -> fixed by invalidating all the content refs (LocalHistory is lost)");
+        LOG.warn("ContentStorage is found broken -> fixed by invalidating all the content refs (LocalHistory is lost)");
       }
     }
     catch (Throwable t) {
@@ -96,6 +97,9 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
       if (contentId != NULL_ID) {
         try (var stream = contentStorage.readStream(contentId)) {
           stream.readAllBytes();
+        }
+        catch (Throwable t) {
+          throw new IOException("file[#" + fileId + "].content[contentId: " + contentId + "] is broken, " + t, t);
         }
       }
     }
