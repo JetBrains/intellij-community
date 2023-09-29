@@ -11,26 +11,34 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.deleteIfExists
 
 /**
  * Service that tracks FileIndexingStamp.
+ *
+ * There are two kinds of tokens: scanning and indexing. Scanning tokens must be explicitly marked as "successfully completed".
+ * If there are incomplete or unsuccessful scanning tokens remaining on IDE shutdown, then IDE will do "heavy" scanning on the
+ * following start.
+ *
+ * Indexing tokens are not sensitive to completion. It is expected that during scanning Indexing flag will be cleared for
+ * all the files that needs indexing. For files that are sent directly to indexing from VFS refresh we don't need to invalidate
+ * indexing flag explicitly, because all these files will have updated modification counter.
  *
  * Notes about "invalidate caches":
  *
  * 1. If VFS is invalidated, we don't need any additional actions. IndexingFlag is stored in the VFS records, invalidating VFS
  * effectively means "reset all the stamps to the default value (unindexed)".
  *
- * 2. If Indexes are invalidated, indexes must call [ProjectIndexingDependenciesService.invalidateAllStamps], otherwise files that were indexed
+ * 2. If Indexes are invalidated, indexes must call [AppIndexingDependenciesService.invalidateAllStamps], otherwise files that were indexed
  * early will be recognized as "indexed", however real data has been wiped from storages.
  *
- * 3. If int inside [FileIndexingStamp], invalidate VFS storages will help, because all the files fil be marked as "unindexed", and
+ * 3. If int inside [AppIndexingDependenciesService] overflows, invalidate VFS storages will help, because all the files fil be marked as "unindexed", and
  * we don't really care if indexing stamp starts counting from 0, or from -42. We only care that after
- * [ProjectIndexingDependenciesService.invalidateAllStamps] invocation "expected" and "actual" stamps are different numbers
+ * [AppIndexingDependenciesService.invalidateAllStamps] invocation "expected" and "actual" stamps are different numbers
  *
  * 4. We don't want "invalidate caches" to drop persistent state. It is OK, if the state is dropped together with VFS invalidation,
  * but persistence should not be dropped in other cases, because IndexingStamp is actually stored in VFS.
@@ -60,7 +68,10 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     }
   }
 
-  private val currentRequestId = AtomicInteger(0)
+  private val issuedScanningTokens = HashSet<Any>()
+
+  @Volatile
+  private var heavyScanningOnProjectOpen: Boolean = false
 
   private val storage: ProjectIndexingDependenciesStorage = openOrInitStorage(storagePath)
 
@@ -74,7 +85,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
                                                      "$actualVersion to $expectedVersion"))
       }
 
-      currentRequestId.set(storage.readRequestId())
+      heavyScanningOnProjectOpen = storage.readIncompleteScanningMark()
     }
     catch (e: IOException) {
       requestVfsRebuildAndResetStorage(e)
@@ -89,45 +100,80 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     }
     finally {
       storage.resetStorage()
-      currentRequestId.set(0)
     }
   }
 
   @RequiresBackgroundThread
   fun getLatestIndexingRequestToken(): IndexingRequestToken {
     val appCurrent = appIndexingDependenciesService.getCurrent()
-    return IndexingRequestTokenImpl(currentRequestId.get(), appCurrent)
+    return IndexingRequestTokenImpl(appCurrent)
   }
 
   @RequiresBackgroundThread
   fun newScanningToken(): ScanningRequestToken {
     val appCurrent = appIndexingDependenciesService.getCurrent()
-    return WriteOnlyScanningRequestTokenImpl(currentRequestId.get(), appCurrent)
+    val token = WriteOnlyScanningRequestTokenImpl(appCurrent)
+    registerIssuedToken(token)
+    return token
   }
 
   @RequiresBackgroundThread
   fun newScanningTokenOnProjectOpen(): ScanningRequestToken {
     val appCurrent = appIndexingDependenciesService.getCurrent()
-    return ReadWriteScanningRequestTokenImpl(currentRequestId.get(), appCurrent)
-  }
-
-  fun invalidateAllStamps(debugReason: String) {
-    thisLogger().info("Invalidating all indexing flags in project. Reason: $debugReason")
-
-    val next = currentRequestId.incrementAndGet()
-
-    // Assumption is that projectStamp >=0 and appStamp >=0. Their sum can be negative and this is fine (think of it as of unsigned int).
-    if (next < 0) {
-      requestVfsRebuildAndResetStorage(IOException("Project indexing stamp overflow"))
+    val token = if (heavyScanningOnProjectOpen || issuedScanningTokens.contains(RequestHeavyScanningOnThisOrNextStartToken)) {
+      thisLogger().info("Heavy scanning on startup because of incomplete scanning from previous IDE session")
+      heavyScanningOnProjectOpen = false
+      WriteOnlyScanningRequestTokenImpl(appCurrent)
     }
     else {
-      // don't use `next`: currentRequestId.get() will return just updated value or more up-to-date value which might has already
-      // been persisted by another thread
-      storage.writeRequestId(currentRequestId.get())
+      ReadWriteScanningRequestTokenImpl(appCurrent)
     }
+    registerIssuedToken(token)
+    completeToken(RequestHeavyScanningOnThisOrNextStartToken, true)
+    return token
+  }
+
+  private fun registerIssuedToken(token: Any) {
+    synchronized(issuedScanningTokens) {
+      if (issuedScanningTokens.isEmpty()) {
+        storage.writeIncompleteScanningMark(true)
+      }
+      issuedScanningTokens.add(token)
+    }
+  }
+
+  fun completeToken(token: ScanningRequestToken) {
+    completeToken(token, token.isSuccessful())
+  }
+
+  private fun completeToken(token: ScanningRequestToken, successful: Boolean) {
+    if (!successful) {
+      registerIssuedToken(RequestHeavyScanningOnNextStartToken)
+    }
+    synchronized(issuedScanningTokens) {
+      issuedScanningTokens.remove(token)
+      if (issuedScanningTokens.isEmpty()) {
+        storage.writeIncompleteScanningMark(false)
+      }
+    }
+  }
+
+  fun requestHeavyScanningOnProjectOpen(debugReason: String) {
+    thisLogger().info("Requesting heavy scanning on project open. Reason: $debugReason")
+    registerIssuedToken(RequestHeavyScanningOnThisOrNextStartToken)
   }
 
   override fun dispose() {
     storage.close()
+  }
+
+  /**
+   * This token can be thrown away without [completeToken] invocation
+   */
+  @RequiresBackgroundThread
+  @TestOnly
+  fun getReadOnlyTokenForTest(): ScanningRequestToken {
+    val appCurrent = appIndexingDependenciesService.getCurrent()
+    return ReadWriteScanningRequestTokenImpl(appCurrent)
   }
 }

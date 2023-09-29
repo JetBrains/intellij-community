@@ -68,7 +68,7 @@ class ProjectIndexingDependenciesServiceTest {
   }
 
   @Test
-  fun `test corrupted indexingRequestId`() {
+  fun `test corrupted scanning mark`() {
     val file = factory.nonExistingFile()
     FileOutputStream(file).use {
       it.write(ByteArray(7)) // 4 bytes for file version + 3 bytes
@@ -79,41 +79,24 @@ class ProjectIndexingDependenciesServiceTest {
       fail("Should throw exception, because 3 bytes is too few to read indexing stamp")
     }
     catch (ae: AssertionError) {
-      val expected = "Could not read indexing stamp (only 3 bytes read). Storage path: "
+      val expected = "Could not read incomplete scanning mark (only 3 bytes read). Storage path: "
       val actual = ae.message!!
       assertEquals(expected, actual.substring(0, min(expected.length, actual.length)))
     }
   }
 
   @Test
-  fun `test invalidateAllStamps in project`() {
+  fun `test requestHeavyScanningOnProjectOpen in project`() {
     val file = factory.nonExistingFile()
     val inst = factory.newProjectIndexingDependenciesService(file)
-    val oldStamp = inst.getLatestIndexingRequestToken()
-    inst.invalidateAllStamps("test invalidateAllStamps in project")
-    val newStamp = inst.getLatestIndexingRequestToken()
 
-    assertNotEquals(oldStamp, newStamp)
-  }
+    val oldStamp = inst.newScanningTokenOnProjectOpen()
+    assertTrue(oldStamp.toString(), oldStamp is ReadWriteScanningRequestTokenImpl)
 
-  @Test
-  fun `test invalidateAllStamps in project invalidates only that project`() {
-    val file1 = factory.nonExistingFile("storage1")
-    val file2 = factory.nonExistingFile("storage2")
+    inst.requestHeavyScanningOnProjectOpen("test requestHeavyScanningOnProjectOpen in project")
 
-    val inst1 = factory.newProjectIndexingDependenciesService(file1)
-    val inst2 = factory.newProjectIndexingDependenciesService(file2)
-
-    val oldStamp1 = inst1.getLatestIndexingRequestToken()
-    val oldStamp2 = inst2.getLatestIndexingRequestToken()
-
-    inst1.invalidateAllStamps("test invalidateAllStamps in project invalidates only that project")
-
-    val newStamp1 = inst1.getLatestIndexingRequestToken()
-    val newStamp2 = inst2.getLatestIndexingRequestToken()
-
-    assertNotEquals(oldStamp1, newStamp1)
-    assertEquals(oldStamp2, newStamp2)
+    val newStamp = inst.newScanningTokenOnProjectOpen()
+    assertTrue(oldStamp.toString(), newStamp is WriteOnlyScanningRequestTokenImpl)
   }
 
   @Test
@@ -127,12 +110,14 @@ class ProjectIndexingDependenciesServiceTest {
     assertNotEquals(oldStamp, newStamp)
   }
 
+  // TODO: test heavy scanning after incomplete scanning
+
   @Test
   fun `test service reload keeps state`() {
     val file = factory.nonExistingFile()
     val inst1 = factory.newProjectIndexingDependenciesService(file)
 
-    inst1.invalidateAllStamps("test service reload keeps state") // make some non-default sate
+    factory.sharedAppService.invalidateAllStamps("test service reload keeps state") // make some non-default sate
     val oldStamp = inst1.getLatestIndexingRequestToken()
 
     val inst2 = factory.newProjectIndexingDependenciesService(file)

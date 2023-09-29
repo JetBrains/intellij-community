@@ -11,8 +11,7 @@ interface IndexingRequestToken {
 }
 
 @VisibleForTesting
-data class IndexingRequestTokenImpl(val requestId: Int,
-                                    val appIndexingRequest: AppIndexingDependenciesToken) : IndexingRequestToken {
+data class IndexingRequestTokenImpl(val appIndexingRequest: AppIndexingDependenciesToken) : IndexingRequestToken {
   private val appIndexingRequestId = appIndexingRequest.toInt()
   override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
     if (file !is VirtualFileWithId) return ProjectIndexingDependenciesService.NULL_STAMP
@@ -22,9 +21,9 @@ data class IndexingRequestTokenImpl(val requestId: Int,
 
   @VisibleForTesting
   fun getFileIndexingStamp(fileStamp: Int): FileIndexingStamp {
-    // we assume that stamp and file.modificationStamp never decrease => their sum only grow up
+    // we assume that appIndexingRequestId and file.modificationStamp never decrease => their sum only grow up
     // in the case of overflow we hope that new value does not match any previously used value
     // (which is hopefully true in most cases, because (new value)==(old value) was used veeeery long time ago)
-    return WriteOnlyFileIndexingStampImpl(fileStamp + requestId + appIndexingRequestId)
+    return WriteOnlyFileIndexingStampImpl(fileStamp + appIndexingRequestId)
   }
 }

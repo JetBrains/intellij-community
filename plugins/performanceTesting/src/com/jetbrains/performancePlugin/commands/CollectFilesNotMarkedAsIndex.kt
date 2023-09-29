@@ -63,7 +63,7 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
     }
 
     Files.newBufferedWriter(fullLogPath).use { writer ->
-      val indexingRequest = project.service<ProjectIndexingDependenciesService>().newScanningTokenOnProjectOpen()
+      val indexingRequest = project.service<ProjectIndexingDependenciesService>().getReadOnlyTokenForTest()
       val iterator = object : ContentIterator {
         var number = 0
 

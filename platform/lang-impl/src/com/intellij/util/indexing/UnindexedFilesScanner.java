@@ -487,6 +487,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
           }
           scanningStatistics.tryFinishFilesChecking();
 
+          scanningRequest.markSuccessful();
           perProviderSink.commit();
         }
         catch (ProcessCanceledException pce) {
@@ -499,6 +500,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
                     "To reindex files under this origin IDEA has to be restarted", e);
         }
         finally {
+          projectIndexingDependenciesService.completeToken(scanningRequest);
           scanningStatistics.tryFinishVfsIterationAndScanningApplication();
           scanningStatistics.tryFinishFilesChecking();
           scanningStatistics.setTotalOneThreadTimeWithPauses(System.nanoTime() - providerScanningStartTime);

@@ -10,9 +10,9 @@ class ProjectIndexingDependenciesStorage(private val storage: FileChannel, stora
 
   companion object {
     private const val CURRENT_STORAGE_VERSION = 0
-    private const val DEFAULT_INDEXING_STAMP: Int = 0
-    private const val INDEXING_STAMP_OFFSET = FIRST_UNUSED_OFFSET
-    private const val FILE_SIZE = INDEXING_STAMP_OFFSET + Int.SIZE_BYTES
+    private const val DEFAULT_INCOMPLETE_SCANNING_MARK: Boolean = false
+    private const val INCOMPLETE_SCANNING_MARK_OFFSET = FIRST_UNUSED_OFFSET
+    private const val FILE_SIZE = INCOMPLETE_SCANNING_MARK_OFFSET + Int.SIZE_BYTES
 
     @Throws(IOException::class)
     fun openOrInit(path: Path): ProjectIndexingDependenciesStorage {
@@ -24,26 +24,26 @@ class ProjectIndexingDependenciesStorage(private val storage: FileChannel, stora
   override fun resetStorage() {
     synchronized(storage) {
       super.resetStorage()
-      writeRequestId(DEFAULT_INDEXING_STAMP)
+      writeIncompleteScanningMark(DEFAULT_INCOMPLETE_SCANNING_MARK)
       storage.truncate(FILE_SIZE)
       storage.force(false)
     }
   }
 
   @Throws(IOException::class)
-  fun readRequestId(): Int {
+  fun readIncompleteScanningMark(): Boolean {
     synchronized(storage) {
-      return readIntOrExecute(INDEXING_STAMP_OFFSET) { bytesRead ->
-        throw IOException(tooFewBytesReadMsg(bytesRead, "indexing stamp"))
-      }
+      return readIntOrExecute(INCOMPLETE_SCANNING_MARK_OFFSET) { bytesRead ->
+        throw IOException(tooFewBytesReadMsg(bytesRead, "incomplete scanning mark"))
+      } != 0
     }
   }
 
   @Throws(IOException::class)
-  fun writeRequestId(requestId: Int) {
+  fun writeIncompleteScanningMark(mark: Boolean) {
     synchronized(storage) {
-      writeIntOrExecute(INDEXING_STAMP_OFFSET, requestId) { bytesWritten ->
-        throw IOException(tooFewBytesWrittenMsg(bytesWritten, "indexing stamp"))
+      writeIntOrExecute(INCOMPLETE_SCANNING_MARK_OFFSET, if (mark) 1 else 0) { bytesWritten ->
+        throw IOException(tooFewBytesWrittenMsg(bytesWritten, "incomplete scanning mark"))
       }
       storage.force(false)
     }
