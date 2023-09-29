@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.data
 
+import com.intellij.ide.startup.importSettings.ImportSettingsBundle
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 interface ActionsDataProvider<T : BaseService> {
@@ -61,8 +63,8 @@ class JBrActionsDataProvider private constructor(): ActionsDataProvider<JbServic
     return importItem.name
   }
 
-  override val title: String
-    get() = "JetBrains IDEs"
+  override val title: @Nls String
+    get() = ImportSettingsBundle.message("jetbrains.ides")
 
   override fun getComment(importItem: ImportItem): String? {
     if(importItem is Config) {
