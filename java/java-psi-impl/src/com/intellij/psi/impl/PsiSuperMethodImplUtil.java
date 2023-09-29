@@ -228,26 +228,50 @@ public final class PsiSuperMethodImplUtil {
                                @NotNull Map<MethodSignature, HierarchicalMethodSignatureImpl> map,
                                @NotNull HierarchicalMethodSignature hierarchicalMethodSignature,
                                @NotNull MethodSignature signature) {
+    if (!canBeStoreInMap(hierarchicalMethodSignature, aClass)) {
+      return;
+    }
     HierarchicalMethodSignatureImpl existing = map.get(signature);
     if (existing == null) {
       HierarchicalMethodSignatureImpl copy = copy(hierarchicalMethodSignature);
       LOG.assertTrue(copy.getMethod().isValid());
       map.put(signature, copy);
+      return;
     }
-    else if (isReturnTypeIsMoreSpecificThan(hierarchicalMethodSignature, existing) && isSuperMethod(aClass, hierarchicalMethodSignature, existing)) {
-      HierarchicalMethodSignatureImpl newSuper = copy(hierarchicalMethodSignature);
-      mergeSupers(newSuper, existing);
-      LOG.assertTrue(newSuper.getMethod().isValid());
-      map.put(signature, newSuper);
+
+    MergeSuperType mergeSuperType = isSuperMethod(aClass, hierarchicalMethodSignature, existing);
+    if ((isReturnTypeIsMoreSpecificThan(hierarchicalMethodSignature, existing) &&
+         mergeSuperType == MergeSuperType.MERGE_SUPER) || mergeSuperType == MergeSuperType.FORCE_MERGE) {
+      HierarchicalMethodSignatureImpl newCurrent = copy(hierarchicalMethodSignature);
+      mergeSupers(newCurrent, existing);
+      LOG.assertTrue(newCurrent.getMethod().isValid());
+      map.put(signature, newCurrent);
+      return;
     }
-    else if (isSuperMethod(aClass, existing, hierarchicalMethodSignature)) {
+
+    mergeSuperType = isSuperMethod(aClass, existing, hierarchicalMethodSignature);
+    if (mergeSuperType == MergeSuperType.MERGE_SUPER || mergeSuperType == MergeSuperType.FORCE_MERGE) {
       mergeSupers(existing, hierarchicalMethodSignature);
+      return;
     }
     // just drop an invalid method declaration there - to highlight accordingly
-    else if (!result.containsKey(signature)) {
+    if (!result.containsKey(signature)) {
       LOG.assertTrue(hierarchicalMethodSignature.getMethod().isValid());
       result.put(signature, hierarchicalMethodSignature);
     }
+  }
+
+  private static boolean canBeStoreInMap(@NotNull HierarchicalMethodSignature signature, @NotNull PsiClass aClass) {
+    //static methods from interfaces are not inheritable
+    //jls 8, 8.4.8. and 9.4.1., so we need to skip them
+    PsiMethod method = signature.getMethod();
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass != null &&
+        !aClass.getManager().areElementsEquivalent(aClass, containingClass) &&
+        containingClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC)) {
+      return false;
+    }
+    return true;
   }
 
   private static boolean isReturnTypeIsMoreSpecificThan(@NotNull HierarchicalMethodSignature thisSig, @NotNull HierarchicalMethodSignature thatSig) {
@@ -294,7 +318,7 @@ public final class PsiSuperMethodImplUtil {
     }
   }
 
-  private static boolean isSuperMethod(@NotNull PsiClass aClass,
+  private static MergeSuperType isSuperMethod(@NotNull PsiClass aClass,
                                        @NotNull MethodSignatureBackedByPsiMethod hierarchicalMethodSignature,
                                        @NotNull MethodSignatureBackedByPsiMethod superSignatureHierarchical) {
     PsiMethod superMethod = superSignatureHierarchical.getMethod();
@@ -306,30 +330,36 @@ public final class PsiSuperMethodImplUtil {
         MethodSignatureUtil.isSubsignature(superSignatureHierarchical, hierarchicalMethodSignature) && superClass != null) {
       if (superClass.isInterface() ||
           CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
-        if (superMethod.hasModifierProperty(PsiModifier.STATIC) ||
-            superMethod.hasModifierProperty(PsiModifier.DEFAULT) &&
+        if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) &&
+            //static method can't be from interface (see com.intellij.psi.impl.PsiSuperMethodImplUtil.canBeStoreInMap),
+            // so it is inheritable, then according to
+            //jls 8, 8.4.8.2. it is a compile-time error
             method.hasModifierProperty(PsiModifier.STATIC) &&
             !InheritanceUtil.isInheritorOrSelf(containingClass, superClass, true)) {
-          return false;
+          //return method as base, it will be processed by
+          // com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil.checkOverrideEquivalentInheritedMethods
+          //it requires that static method must be a base
+          return MergeSuperType.FORCE_MERGE;
         }
 
         if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) || method.hasModifierProperty(PsiModifier.DEFAULT)) {
-          return superMethod.equals(method) || !InheritanceUtil.isInheritorOrSelf(superClass, containingClass, true);
+          boolean isSuper = superMethod.equals(method) || !InheritanceUtil.isInheritorOrSelf(superClass, containingClass, true);
+          return isSuper ? MergeSuperType.MERGE_SUPER : MergeSuperType.NOT_MERGE_SUPER;
         }
-        return true;
+        return MergeSuperType.MERGE_SUPER;
       }
 
       if (containingClass != null) {
         if (containingClass.isInterface()) {
-          return false;
+          return MergeSuperType.NOT_MERGE_SUPER;
         }
 
         if (!aClass.isInterface() && !InheritanceUtil.isInheritorOrSelf(superClass, containingClass, true)) {
-          return true;
+          return MergeSuperType.MERGE_SUPER;
         }
       }
     }
-    return false;
+    return MergeSuperType.NOT_MERGE_SUPER;
   }
 
   @NotNull
@@ -397,4 +427,8 @@ public final class PsiSuperMethodImplUtil {
     return true;
   }
 
+
+  public enum MergeSuperType{
+    MERGE_SUPER, NOT_MERGE_SUPER, FORCE_MERGE
+  }
 }
