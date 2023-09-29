@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus
  * Each client however specifies its [ClientType].
  */
 @ApiStatus.Experimental
+@ApiStatus.Internal
 enum class ClientType {
   LOCAL,
   CONTROLLER,

@@ -5,15 +5,16 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
+private val LOG = logger<ClientSessionsManager<*>>()
 @ApiStatus.Experimental
 @ApiStatus.Internal
-sealed class ClientSessionsManager<T : ClientSession> {
+open class ClientSessionsManager<T : ClientSession> {
   companion object {
     /**
      * Returns an application-level session for a particular client.
@@ -54,14 +55,6 @@ sealed class ClientSessionsManager<T : ClientSession> {
     fun getProjectSessions(project: Project, kind: ClientKind): List<ClientProjectSession> {
       return project.service<ClientSessionsManager<ClientProjectSession>>().getSessions(kind)
     }
-
-    @Deprecated("Use application.currentSession, application.forEachSession")
-    @ApiStatus.Internal
-    fun getInstance(): ClientAppSessionsManager = service<ClientSessionsManager<*>>() as ClientAppSessionsManager
-
-    @Deprecated("Use project.currentSession, project.forEachSession")
-    @ApiStatus.Internal
-    fun getInstance(project: Project): ClientProjectSessionsManager = project.service<ClientSessionsManager<*>>() as ClientProjectSessionsManager
   }
 
   private val sessions = ConcurrentHashMap<ClientId, T>()
@@ -82,11 +75,18 @@ sealed class ClientSessionsManager<T : ClientSession> {
   fun registerSession(disposable: Disposable, session: T) {
     val clientId = session.clientId
     if (sessions.putIfAbsent(clientId, session) != null) {
-      thisLogger().error("Session with '$clientId' is already registered")
+      LOG.error("Session $session with such clientId is already registered")
     }
+    LOG.debug("Session added '$session'")
+
     Disposer.register(disposable, session)
     Disposer.register(disposable) {
       sessions.remove(clientId)
+      LOG.debug("Session removed '$clientId'")
     }
+  }
+
+  fun isValid(clientId: ClientId): Boolean {
+    return getSession(clientId)?.isDisposed == false
   }
 }

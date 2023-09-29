@@ -109,6 +109,8 @@ abstract class ClientSessionImpl(
   }
 
   fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean, fallbackToShared: Boolean): T? {
+    if (!fallbackToShared && !hasComponent(serviceClass)) return null
+
     val clientService = ClientId.withClientId(clientId) {
       super.doGetService(serviceClass = serviceClass, createIfNeeded = createIfNeeded)
     }
@@ -150,7 +152,7 @@ abstract class ClientSessionImpl(
   }
 
   final override fun toString(): String {
-    return clientId.toString()
+    return "${javaClass.name}(type=${type}, clientId=$clientId)"
   }
 }
 

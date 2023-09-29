@@ -5,6 +5,9 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.ClientSessionsManager
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -16,7 +19,6 @@ import com.intellij.util.Processor
 import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.ThreadContextElement
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 import java.util.function.BiConsumer
@@ -181,21 +183,13 @@ data class ClientId(val value: String) {
       get() = this == null || this == localId
 
     /**
-     * Is true if the given ID is local or a client is still in the session.
-     * Consider subscribing to a proper lifetime instead of this check
-     */
-    @JvmStatic
-    val ClientId?.isValid: Boolean
-      get() = getCachedService()?.isValid(this) ?: true
-
-    /**
      * Computes a value under given [ClientId]
      */
     @JvmStatic
     inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
       val service = getCachedService() ?: return action()
 
-      val newClientIdValue = if (service.isValid(clientId)) {
+      val newClientIdValue = if (clientId == null || service.isValid(clientId)) {
         clientId?.value
       }
       else {
@@ -253,13 +247,22 @@ data class ClientId(val value: String) {
       return ClientIdAccessToken(oldClientIdValue)
     }
 
-    private var service: Ref<ClientIdService?>? = null
+    private var service: Ref<ClientSessionsManager<*>?>? = null
 
     @ApiStatus.Internal
-    fun getCachedService(): ClientIdService? {
+    fun getCachedService(): ClientSessionsManager<*>? {
       val cached = service
       if (cached != null) return cached.get()
-      val instance = ClientIdService.tryGetInstance()
+      if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
+        return null
+      }
+
+      val app = ApplicationManager.getApplication()
+      if (app == null || app.isDisposed) {
+        return null
+      }
+
+      val instance = app.serviceOrNull<ClientSessionsManager<*>>()
       if (instance != null) {
         service = Ref.create(instance)
       }
@@ -371,8 +374,8 @@ private class ClientIdElement2(val clientId: ClientId) : AbstractCoroutineContex
 
 // TODO: it's a temporary solution that solves stofl problem
 private val threadLocalClientIdString = ThreadLocal.withInitial<String?> { null }
-@get:Internal
-@set:Internal
+@get:ApiStatus.Internal
+@set:ApiStatus.Internal
 var currentClientIdString: String?
   get() = threadLocalClientIdString.get()
   set(value) = threadLocalClientIdString.set(value)

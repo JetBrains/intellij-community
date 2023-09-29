@@ -10,7 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
-import com.intellij.util.application
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Executes given action for each client connected to all projects opened in IDE
@@ -38,26 +38,30 @@ inline fun Project.forEachSession(kind: ClientKind, action: (ClientProjectSessio
   }
 }
 
+@get:Internal
 val Application.currentSession: ClientAppSession
-  get() = this.currentSessionOrNull ?: error("Application-level session is not set. ${ClientId.current}")
+  get() = ClientSessionsManager.getAppSession() ?: error("Application-level session is not set. ${ClientId.current}")
 
-val Application.currentSessionOrNull: ClientAppSession?
-  get() = ClientSessionsManager.getAppSession()
-
-val Project.currentSessionOrNull: ClientProjectSession?
-  get() = ClientSessionsManager.getProjectSession(this)
-
+@get:Internal
 val Project.currentSession: ClientProjectSession
-  get() = currentSessionOrNull ?: error("Project-level session is not set. ${ClientId.current}")
+  get() = ClientSessionsManager.getProjectSession(this) ?: error("Project-level session is not set. ${ClientId.current}")
 
+@Internal
+fun Application.sessions(kind: ClientKind): List<ClientAppSession> {
+  return ClientSessionsManager.getAppSessions(kind)
+}
 
-@Deprecated("use get app-level session from application",
-            ReplaceWith("application.currentSession", "com.intellij.util.application"),
-            DeprecationLevel.ERROR)
-val currentSession: ClientAppSession get() = application.currentSession
+@Internal
+fun Project.sessions(kind: ClientKind): List<ClientProjectSession> {
+  return ClientSessionsManager.getProjectSessions(this, kind)
+}
 
-@Deprecated("use get app-level session from application",
-            ReplaceWith("application.currentSessionOrNull", "com.intellij.util.application"),
-            DeprecationLevel.ERROR)
-val currentSessionOrNull: ClientAppSession?
-  get() = application.currentSessionOrNull
+@Internal
+fun Application.session(clientId: ClientId): ClientAppSession {
+  return ClientSessionsManager.getAppSession(clientId) ?: error("Application-level session is not found. $clientId")
+}
+
+@Internal
+fun Project.session(clientId: ClientId): ClientProjectSession {
+  return ClientSessionsManager.getProjectSession(this, clientId) ?: error("Project-level session is not found. $clientId")
+}
