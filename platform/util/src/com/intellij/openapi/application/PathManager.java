@@ -113,7 +113,7 @@ public final class PathManager {
       else {
         Path root = Paths.get(result);
         if (Boolean.getBoolean("idea.use.dev.build.server")) {
-          root = root.resolve("../../..").normalize();
+          root = root.resolve("../../../..").normalize();
         }
         ourBinDirectories = getBinDirectories(root);
       }
