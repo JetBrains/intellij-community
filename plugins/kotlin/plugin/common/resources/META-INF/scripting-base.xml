@@ -133,6 +133,6 @@
     <scriptDefinitionContributor
             id="StandardScriptDefinitionContributor"
             order="last"
-            implementation="org.jetbrains.kotlin.idea.core.script.StandardScriptDefinitionContributor"/>
+            implementation="org.jetbrains.kotlin.idea.core.script.BundledScriptDefinitionContributor"/>
   </extensions>
 </idea-plugin>
