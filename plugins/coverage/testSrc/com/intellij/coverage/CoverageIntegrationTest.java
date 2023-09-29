@@ -6,11 +6,11 @@ import com.intellij.coverage.analysis.Annotator;
 import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator;
 import com.intellij.coverage.analysis.JavaCoverageReportEnumerator;
 import com.intellij.coverage.analysis.PackageAnnotator;
+import com.intellij.coverage.xml.XMLReportAnnotator;
 import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
-import junit.framework.AssertionFailedError;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +26,14 @@ public class CoverageIntegrationTest extends CoverageIntegrationBaseTest {
     CoverageSuitesBundle bundle = loadIJSuite();
     PackageAnnotationConsumer consumer = new PackageAnnotationConsumer();
     new JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitSuite();
-    assertHits(consumer, false);
+    assertHits(consumer, false, true);
+  }
+
+  public void testXMLSuite() {
+    CoverageSuitesBundle bundle = loadXMLSuite();
+    PackageAnnotationConsumer consumer = new PackageAnnotationConsumer();
+    XMLReportAnnotator.getInstance(myProject).annotate(bundle, CoverageDataManager.getInstance(myProject), consumer);
+    assertHits(consumer, true, false);
   }
 
   public void testSingleClassFilter() {
@@ -57,14 +64,14 @@ public class CoverageIntegrationTest extends CoverageIntegrationBaseTest {
     CoverageSuitesBundle bundle = loadJaCoCoSuite();
     PackageAnnotationConsumer consumer = new PackageAnnotationConsumer();
     new JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitSuite();
-    assertHits(consumer, true);
+    assertHits(consumer, true, true);
   }
 
   public void testJaCoCoWithoutUnloaded() {
     CoverageSuitesBundle bundle = loadJaCoCoSuite();
     PackageAnnotationConsumer consumer = new PackageAnnotationConsumer();
     JavaCoverageReportEnumerator.collectSummaryInReport(bundle, myProject, consumer);
-    assertHits(consumer, true);
+    assertHits(consumer, true, true);
   }
 
   public void testMergeIjWithJaCoCo() {
@@ -74,28 +81,40 @@ public class CoverageIntegrationTest extends CoverageIntegrationBaseTest {
     var bundle = new CoverageSuitesBundle(new CoverageSuite[]{ijSuite, jacocoSuite});
     PackageAnnotationConsumer consumer = new PackageAnnotationConsumer();
     new JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitSuite();
-    assertHits(consumer, true);
+    assertHits(consumer, true, true);
   }
 
-  private static void assertHits(PackageAnnotationConsumer consumer, boolean branches) {
+  private static void assertHits(PackageAnnotationConsumer consumer, boolean branches, boolean ignoreConstructor) {
     assertEquals(3, consumer.myClassCoverageInfo.size());
     assertEquals(2, consumer.myFlatPackageCoverage.size());
     assertEquals(3, consumer.myPackageCoverage.size());
     assertEquals(3, consumer.myDirectoryCoverage.size());
 
+    int barTotalMethods = ignoreConstructor ? 3 : 4;
+    int barCoveredMethods = ignoreConstructor ? 1 : 2;
+    int[] barHits = {1, 1, barTotalMethods, barCoveredMethods, 4, 2, 0, 0};
+    assertHits(consumer.myClassCoverageInfo.get("foo.bar.BarClass"), barHits);
+
+    int uncoveredTotalMethods = ignoreConstructor ? 4 : 5;
+    int uncoveredTotalLines = ignoreConstructor ? 4 : 5;
+    int[] uncoveredHits = {1, 0, uncoveredTotalMethods, 0, uncoveredTotalLines, 0, 0, 0};
+    assertHits(consumer.myClassCoverageInfo.get("foo.bar.UncoveredClass"), uncoveredHits);
+
     int totalBranches = branches ? 2 : 0;
     int coveredBranches = branches ? 1 : 0;
+    int fooTotalMethods = ignoreConstructor ? 2 : 3;
+    int fooCoveredMethods = ignoreConstructor ? 2 : 3;
+    int[] fooClassHits = {1, 1, fooTotalMethods, fooCoveredMethods, 3, 3, totalBranches, coveredBranches};
+    assertHits(consumer.myClassCoverageInfo.get("foo.FooClass"), fooClassHits);
 
-    assertHits(consumer.myClassCoverageInfo.get("foo.bar.BarClass"), new int[]{1, 1, 3, 1, 4, 2, 0, 0});
-    assertHits(consumer.myClassCoverageInfo.get("foo.bar.UncoveredClass"), new int[]{1, 0, 4, 0, 4, 0, 0, 0});
-    assertHits(consumer.myClassCoverageInfo.get("foo.FooClass"), new int[]{1, 1, 2, 2, 3, 3, totalBranches, coveredBranches});
+    int[] fooBarHits = sumArrays(barHits, uncoveredHits);
+    assertHits(consumer.myFlatPackageCoverage.get("foo.bar"), fooBarHits);
+    assertHits(consumer.myFlatPackageCoverage.get("foo"), fooClassHits);
 
-    assertHits(consumer.myFlatPackageCoverage.get("foo.bar"), new int[]{2, 1, 7, 1, 8, 2, 0, 0});
-    assertHits(consumer.myFlatPackageCoverage.get("foo"), new int[]{1, 1, 2, 2, 3, 3, totalBranches, coveredBranches});
-
-    assertHits(consumer.myPackageCoverage.get("foo.bar"), new int[]{2, 1, 7, 1, 8, 2, 0, 0});
-    assertHits(consumer.myPackageCoverage.get("foo"), new int[]{3, 2, 9, 3, 11, 5, totalBranches, coveredBranches});
-    assertHits(consumer.myPackageCoverage.get(""), new int[]{3, 2, 9, 3, 11, 5, totalBranches, coveredBranches});
+    assertHits(consumer.myPackageCoverage.get("foo.bar"), fooBarHits);
+    int[] fooHits = sumArrays(fooBarHits, fooClassHits);
+    assertHits(consumer.myPackageCoverage.get("foo"), fooHits);
+    assertHits(consumer.myPackageCoverage.get(""), fooHits);
   }
 
   public void testHTMLReport() throws IOException {
@@ -149,5 +168,14 @@ public class CoverageIntegrationTest extends CoverageIntegrationBaseTest {
     assertEquals(hits[5], info.getCoveredLineCount());
     assertEquals(hits[6], info.totalBranchCount);
     assertEquals(hits[7], info.coveredBranchCount);
+  }
+
+  private static int[] sumArrays(int[] a, int[] b) {
+    assert a.length == b.length;
+    int[] c = a.clone();
+    for (int i = 0; i < a.length; i++) {
+      c[i] += b[i];
+    }
+    return c;
   }
 }
