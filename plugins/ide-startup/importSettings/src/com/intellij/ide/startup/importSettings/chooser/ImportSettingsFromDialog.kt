@@ -5,19 +5,13 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.chooser.actions.*
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook
-import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.*
-import java.util.function.Supplier
 import javax.swing.*
 
 class ImportSettingsFromDialog : DialogWrapper(null) {
@@ -25,7 +19,7 @@ class ImportSettingsFromDialog : DialogWrapper(null) {
     icon = AllIcons.General.User
   }
 
-  private val pane = JPanel(VerticalLayout(JBUI.scale(36), SwingConstants.CENTER)).apply {
+  private val pane = JPanel(VerticalLayout(JBUI.scale(26), SwingConstants.CENTER)).apply {
     add(JLabel("Import Settings").apply {
       font = Font(font.getFontName(), Font.PLAIN, JBUIScale.scaleFontSize(24f))
     })
@@ -44,47 +38,13 @@ class ImportSettingsFromDialog : DialogWrapper(null) {
     group.add(ExpChooserAction(callback))
     group.add(SkipImportAction())
 
-    val actionButtonLook = object : IdeaActionButtonLook() {
-      override fun paintBorder(g: Graphics, component: JComponent, state: Int) {
-        if (component is ActionButtonWithText && component.action is LinkAction) {
-          return
-        }
-
-        val rect = Rectangle(component.size)
-        JBInsets.removeFrom(rect, component.getInsets())
-        /*
-        val color = when(state) {
-          ActionButtonComponent.PUSHED -> JBColor.namedColor("Button.startBorderColor", JBColor(0xa8adbd, 0x6f737a))
-          ActionButtonComponent.POPPED -> JBColor.namedColor("Button.default.borderColor", JBColor(0xa8adbd, 0x6f737a))
-          else -> JBColor.namedColor("Button.default.borderColor", JBColor(0xa8adbd, 0x6f737a))
-        }
-        */
-        val color = when (state) {
-          ActionButtonComponent.PUSHED -> Color.RED
-          ActionButtonComponent.POPPED -> Color.BLUE
-          else -> Color.GRAY
-        }
-        paintLookBorder(g, rect, color)
-      }
-
-      override fun paintBackground(g: Graphics?, component: JComponent?, state: Int) {
-        if (component is ActionButtonWithText && component.action is SkipImportAction) {
-          super.paintBackground(g, component, state)
-          return
-        }
-      }
-    }
-
-    val act = createActionToolbar(group, false).apply {
+    val act = ActionManager.getInstance().createActionToolbar(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, false).apply {
       if (this is ActionToolbarImpl) {
 
         setMinimumButtonSize {
           JBUI.size(UiUtils.DEFAULT_BUTTON_WIDTH, UiUtils.DEFAULT_BUTTON_HEIGHT)
         }
         setMiniMode(false)
-        setActionButtonBorder(4, JBUI.CurrentTheme.RunWidget.toolbarBorderHeight())
-
-        setCustomButtonLook(actionButtonLook)
       }
     }
     act.targetComponent = pane
@@ -100,23 +60,6 @@ class ImportSettingsFromDialog : DialogWrapper(null) {
 
   private fun createActionToolbar(group: ActionGroup, horizontal: Boolean): ActionToolbar {
     return object : ActionToolbarImpl(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, horizontal){
-      override fun createToolbarButton(action: AnAction,
-                                       look: ActionButtonLook?,
-                                       place: String,
-                                       presentation: Presentation,
-                                       minimumSize: Supplier<out Dimension>?): ActionButton {
-        val actionButton = super.createToolbarButton(action, look, place, presentation, minimumSize)
-        if(actionButton.action is LinkAction) {
-          actionButton.foreground = JBUI.CurrentTheme.Link.Foreground.ENABLED
-        }
-
-        return actionButton
-      }
-
-      init {
-        isOpaque = false
-        setNoGapMode()
-      }
 
       override fun getPreferredSize(): Dimension {
         val dm = super.getPreferredSize()
@@ -126,9 +69,6 @@ class ImportSettingsFromDialog : DialogWrapper(null) {
           return dm
       }
     }
-
-
-
   }
 
 

@@ -42,18 +42,17 @@ class OtherOptions(val callback: (Int) -> Unit) : ProductChooserAction(), LinkAc
       sync = addActionList(syncProducts, syncDataProvider, "Setting Sync")
     }
 
-    jb?.let {
-      if (it.isNotEmpty()) {
-        arr.addAll(it)
-      }
-    }
-
     sync?.let {
       if (it.isNotEmpty()) {
         arr.addAll(it)
       }
     }
 
+    jb?.let {
+      if (it.isNotEmpty()) {
+        arr.addAll(it)
+      }
+    }
 
     if (arr.isNotEmpty()) {
       arr.add(Separator())
@@ -80,15 +79,20 @@ class OtherOptions(val callback: (Int) -> Unit) : ProductChooserAction(), LinkAc
 
   override fun update(e: AnActionEvent) {
     val ch = getChildren(e)
-
-    if (ch.isNotEmpty()) {
-      e.presentation.isVisible = true
-      e.presentation.text = "Other Options"
-      e.presentation.icon = AllIcons.General.LinkDropTriangle
-      e.presentation.isPopupGroup = true
-    } else {
+    if (ch.isEmpty()) {
       e.presentation.isVisible = false
+      return
     }
+
+    if (ch.size == 1) {
+      ch.firstOrNull()?.update(e)
+      return
+    }
+
+    e.presentation.isVisible = true
+    e.presentation.text = "Other Options"
+    e.presentation.icon = AllIcons.General.LinkDropTriangle
+    e.presentation.isPopupGroup = true
   }
 
   override fun createButton(): JButton {

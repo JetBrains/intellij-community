@@ -48,7 +48,7 @@ class TestJbService : JbService {
                        TestProduct("Idea444", "версия", Date()),
                        TestProduct("Idea555", "версия", Date()),
                        TestProduct("Idea666", "версия", Date()))
-
+    val empty = emptyList<Product>()
     val old = listOf(TestProduct("Idea111", "версия", Date()),
                      TestProduct("Idea222", "версия", Date()),
                      TestProduct("Idea333", "версия", Date()),
@@ -113,11 +113,11 @@ class TestJbService : JbService {
   }
 
   override fun products(): List<Product> {
-    return productList3 //fresh
+    return empty//productList3 //fresh
   }
 
   override fun getOldProducts(): List<Product> {
-    return old
+    return empty// old
   }
 
   override fun getSettings(itemId: String): List<BaseSetting> {

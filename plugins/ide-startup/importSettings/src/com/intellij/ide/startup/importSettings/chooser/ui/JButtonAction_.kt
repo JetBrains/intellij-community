@@ -9,9 +9,12 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.util.ui.JBUI
+import java.awt.BorderLayout
+import javax.swing.BoxLayout
 import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 abstract class JButtonAction_(text: @NlsActions.ActionText String?, @NlsActions.ActionDescription description: String? = null, icon: Icon? = null)
   : DumbAwareAction(text, description, icon), CustomComponentAction {
@@ -24,7 +27,7 @@ abstract class JButtonAction_(text: @NlsActions.ActionText String?, @NlsActions.
     }
     button.text = presentation.getText(true)
 
-    return button
+    return ButtonHolder(button)
   }
 
   protected fun performAction(component: JComponent, place: String, presentation: Presentation) {
@@ -46,8 +49,8 @@ abstract class JButtonAction_(text: @NlsActions.ActionText String?, @NlsActions.
     }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    if (component is JButton) {
-      updateButtonFromPresentation(component, presentation)
+    if(component is ButtonHolder) {
+      updateButtonFromPresentation(component.button, presentation)
     }
   }
 
@@ -59,5 +62,13 @@ abstract class JButtonAction_(text: @NlsActions.ActionText String?, @NlsActions.
     button.mnemonic = presentation.mnemonic
     button.displayedMnemonicIndex = presentation.displayedMnemonicIndex
     button.toolTipText = presentation.description
+  }
+
+  class ButtonHolder(val button: JButton) : JPanel(BorderLayout(0, 0)) {
+    init {
+      isOpaque = false
+      add(button)
+      border = JBUI.Borders.empty(2, 0)
+    }
   }
 }

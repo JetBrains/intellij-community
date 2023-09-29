@@ -50,8 +50,7 @@ class JBrActionsDataProvider private constructor(): ActionsDataProvider<JbServic
   private var map: Map<ActionsDataProvider.popUpPlace, List<Product>?>? = null
 
   init {
-    val service = settingsService.getJbService()
-    map = ActionsDataProvider.prepareMap(service)
+    map = ActionsDataProvider.prepareMap(productService)
   }
 
   override fun getProductIcon(productId: String, size: IconProductSize): Icon? {
@@ -92,8 +91,7 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider<SyncSe
   private var map: Map<ActionsDataProvider.popUpPlace, List<Product>?>? = null
 
   init {
-    val service = settingsService.getJbService()
-    map = ActionsDataProvider.prepareMap(service)
+    map = ActionsDataProvider.prepareMap(productService)
   }
 
   private fun updateSyncMap() {

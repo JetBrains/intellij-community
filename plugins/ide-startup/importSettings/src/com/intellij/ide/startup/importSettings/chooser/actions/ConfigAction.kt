@@ -23,6 +23,11 @@ class ConfigAction(val callback: (Int) -> Unit) : DumbAwareAction() {
     return true
   }
 
+  override fun update(e: AnActionEvent) {
+    e.presentation.text = config.name
+    e.presentation.icon = service.getProductIcon(config.id)
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     callback(DialogWrapper.OK_EXIT_CODE)
 
