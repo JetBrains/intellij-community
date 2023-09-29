@@ -243,7 +243,7 @@ public final class ConfigImportHelper {
 
       if (settings == null || settings.shouldRestartAfterVmOptionsChange()) {
         new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile();
-        restart();
+        restart(args);
       }
     }
   }
@@ -275,10 +275,10 @@ public final class ConfigImportHelper {
     return Files.isRegularFile(configDir.resolve(VMOptions.getFileName()));
   }
 
-  private static void restart() {
+  private static void restart(List<String> args) {
     if (Restarter.isSupported()) {
       try {
-        Restarter.scheduleRestart(false);
+        Restarter.scheduleRestart(false, List.of(), args);
       }
       catch (IOException e) {
         StartupErrorReporter.showMessage(BootstrapBundle.message("restart.failed.title"), e);

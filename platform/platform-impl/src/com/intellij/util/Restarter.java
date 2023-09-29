@@ -18,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -119,10 +118,10 @@ public final class Restarter {
   }
 
   @ApiStatus.Internal
-  public static void scheduleRestart(boolean elevate, String @NotNull ... beforeRestart) throws IOException {
+  public static void scheduleRestart(boolean elevate, @NotNull List<String> beforeRestart, @NotNull List<String> args) throws IOException {
     var exitCodeVariable = EnvironmentUtil.getValue(SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR);
     if (exitCodeVariable != null) {
-      if (beforeRestart.length > 0) {
+      if (!beforeRestart.isEmpty()) {
         throw new IOException("Cannot restart application: specific exit code restart mode does not support executing additional commands");
       }
       try {
@@ -133,13 +132,13 @@ public final class Restarter {
       }
     }
     else if (SystemInfo.isWindows) {
-      restartOnWindows(elevate, beforeRestart);
+      restartOnWindows(elevate, beforeRestart, args);
     }
     else if (SystemInfo.isMac) {
-      restartOnMac(beforeRestart);
+      restartOnMac(beforeRestart, args);
     }
     else if (SystemInfo.isLinux) {
-      restartOnLinux(beforeRestart);
+      restartOnLinux(beforeRestart, args);
     }
     else {
       throw new IOException("Cannot restart application: not supported.");
@@ -150,37 +149,40 @@ public final class Restarter {
     return ourStarter.getValue();
   }
 
-  private static void restartOnWindows(boolean elevate, String... beforeRestart) throws IOException {
+  private static void restartOnWindows(boolean elevate, List<String> beforeRestart, List<String> args) throws IOException {
     var starter = ourStarter.getValue();
     if (starter == null) throw new IOException("Starter executable not found in " + PathManager.getBinPath());
     var command = prepareCommand(beforeRestart);
+    command.add(String.valueOf((elevate ? 2 : 1) + args.size()));
     if (elevate) {
-      command.add("2");
       command.add(Path.of(PathManager.getBinPath(), "launcher.exe").toString());
     }
-    else {
-      command.add("1");
-    }
     command.add(starter.toString());
+    command.addAll(args);
     runRestarter(command);
   }
 
-  private static void restartOnMac(String... beforeRestart) throws IOException {
+  private static void restartOnMac(List<String> beforeRestart, List<String> args) throws IOException {
     var appDir = ourStarter.getValue();
     if (appDir == null) throw new IOException("Application bundle not found: " + PathManager.getHomePath());
     var command = prepareCommand(beforeRestart);
-    command.add("2");
+    command.add(String.valueOf(args.isEmpty() ? 2 : args.size() + 3));
     command.add("/usr/bin/open");
     command.add(appDir.toString());
+    if (!args.isEmpty()) {
+      command.add("--args");
+      command.addAll(args);
+    }
     runRestarter(command);
   }
 
-  private static void restartOnLinux(String... beforeRestart) throws IOException {
+  private static void restartOnLinux(List<String> beforeRestart, List<String> args) throws IOException {
     var starterScript = ourStarter.getValue();
     if (starterScript == null) throw new IOException("Starter script not found in " + PathManager.getBinPath());
     var command = prepareCommand(beforeRestart);
-    command.add("1");
+    command.add(String.valueOf(args.size() + 1));
     command.add(starterScript.toString());
+    command.addAll(args);
     runRestarter(command);
   }
 
@@ -189,20 +191,20 @@ public final class Restarter {
     System.setProperty(DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY, "true");
   }
 
-  private static List<String> prepareCommand(String[] beforeRestart) throws IOException {
+  private static List<String> prepareCommand(List<String> beforeRestart) throws IOException {
     var restarter = Path.of(PathManager.getBinPath(), SystemInfo.isWindows ? "restarter.exe" : "restarter");
     var command = new ArrayList<String>();
     command.add(copyWhenNeeded(restarter, beforeRestart).toString());
     command.add(String.valueOf(ProcessHandle.current().pid()));
-    if (beforeRestart.length > 0) {
-      command.add(String.valueOf(beforeRestart.length));
-      Collections.addAll(command, beforeRestart);
+    if (!beforeRestart.isEmpty()) {
+      command.add(String.valueOf(beforeRestart.size()));
+      command.addAll(beforeRestart);
     }
     return command;
   }
 
-  private static Path copyWhenNeeded(Path binFile, String[] args) throws IOException {
-    if (SystemProperties.getBooleanProperty(DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY, false) || ArrayUtil.contains(UpdateInstaller.UPDATER_MAIN_CLASS, args)) {
+  private static Path copyWhenNeeded(Path binFile, List<String> args) throws IOException {
+    if (SystemProperties.getBooleanProperty(DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY, false) || args.contains(UpdateInstaller.UPDATER_MAIN_CLASS)) {
       var tempDir = Files.createDirectories(PathManager.getSystemDir().resolve("restart"));
       return Files.copy(binFile, tempDir.resolve(binFile.getFileName()), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
     }
