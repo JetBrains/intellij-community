@@ -111,6 +111,20 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
     if (c == ';') {
       if (handleSemicolon(project, editor, file, fileType)) return Result.STOP;
     }
+    if (fileType instanceof JavaFileType && c == '}') {
+      // Normal RBrace handler doesn't work with \{}, because braces in string template are not separate tokens
+      int offset = editor.getCaretModel().getOffset();
+      
+      HighlighterIterator iterator = editor.getHighlighter().createIterator(offset-1);
+      CharSequence sequence = editor.getDocument().getCharsSequence();
+      if (!iterator.atEnd() && iterator.getTokenType() == StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN &&
+          iterator.getEnd() == offset && sequence.subSequence(iterator.getStart(), iterator.getEnd()).toString().equals("\\{")) {
+        if (sequence.length() > offset && sequence.charAt(offset) == '}') {
+          editor.getCaretModel().moveToOffset(offset + 1);
+          return Result.STOP;
+        }
+      }
+    }
     if (fileType instanceof JavaFileType && c == '{') {
       int offset = editor.getCaretModel().getOffset();
       if (offset == 0) {
@@ -130,7 +144,7 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
             iterator.getTokenType() == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN) &&
           CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) { // "\{}" in strings
         CharSequence sequence = doc.getCharsSequence();
-        if (sequence.length() > offset && sequence.charAt(offset - 1) == '\\' && sequence.charAt(offset) != '}') {
+        if (sequence.charAt(offset - 1) == '\\' && (sequence.length() == offset || sequence.charAt(offset) != '}')) {
           doc.insertString(offset, "{}");
           editor.getCaretModel().moveToOffset(offset + 1);
           return Result.STOP;
