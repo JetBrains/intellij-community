@@ -16,7 +16,6 @@
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 
 public class CoverageViewSuiteListener implements CoverageSuiteListener {
@@ -40,9 +39,6 @@ public class CoverageViewSuiteListener implements CoverageSuiteListener {
 
   @Override
   public void coverageDataCalculated() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
     final CoverageSuitesBundle suitesBundle = myDataManager.getCurrentSuitesBundle();
     if (suitesBundle == null) return;
     final CoverageViewManager viewManager = CoverageViewManager.getInstance(myProject);
