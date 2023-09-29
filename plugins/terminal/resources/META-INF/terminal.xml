@@ -88,6 +88,11 @@
     </extensionPoint>
   </extensionPoints>
 
+  <projectListeners>
+    <listener class="org.jetbrains.plugins.terminal.exp.TerminalLookupManagerListener"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
+  </projectListeners>
+
   <actions>
     <group id="TerminalToolwindowActionGroup">
       <action id="Terminal.NewTab" class="org.jetbrains.plugins.terminal.action.TerminalNewTabAction">
