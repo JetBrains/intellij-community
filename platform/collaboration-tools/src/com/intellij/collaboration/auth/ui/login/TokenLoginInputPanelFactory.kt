@@ -6,7 +6,6 @@ import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.util.URIUtil
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.fields.ExtendableTextComponent
@@ -64,7 +63,7 @@ class TokenLoginInputPanelFactory(
           }
       }
       row(CollaborationToolsBundle.message("login.field.token")) {
-        val tokenField = passwordField()
+        passwordField()
           .bindText(model::token)
           .align(AlignX.FILL)
           .resizableColumn()
@@ -80,12 +79,10 @@ class TokenLoginInputPanelFactory(
           .apply {
             onReset { component.text = "" }
           }
-          .component
 
         if (model is LoginTokenGenerator) {
           button(CollaborationToolsBundle.message("login.token.generate")) {
             model.generateToken(serverTextField.text)
-            IdeFocusManager.findInstanceByComponent(tokenField).requestFocus(tokenField, false)
           }.enabledIf(TokenGeneratorPredicate(model, serverTextField))
         }
       }

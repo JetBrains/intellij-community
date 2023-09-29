@@ -64,8 +64,12 @@ class TokenLoginDialog(
     return null
   }
 
-  override fun getPreferredFocusedComponent(): JComponent? {
-    val focusManager = IdeFocusManager.findInstanceByComponent(contentPanel)
-    return focusManager.getFocusTargetFor(contentPanel)
-  }
+  /**
+   * This change the focus to the first focusable component in the dialog, while the focus should be on the Password text field
+   * when this code is running the focus is on the server text field even though the password text field request focus.
+   */
+  //override fun getPreferredFocusedComponent(): JComponent? {
+  //  val focusManager = IdeFocusManager.findInstanceByComponent(contentPanel)
+  //  return focusManager.getFocusTargetFor(contentPanel)
+  //}
 }
