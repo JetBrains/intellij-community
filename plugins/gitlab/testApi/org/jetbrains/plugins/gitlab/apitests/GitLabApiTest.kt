@@ -22,8 +22,9 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabETagUpdatableListLoader
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import kotlin.random.Random
 
 /**
@@ -335,15 +336,41 @@ class GitLabApiTest : GitLabApiTestCase() {
   }
 
   @Test
-  fun `REST mergeRequestApprove and mergeRequestUnApprove works`() = runTest {
+  fun `REST mergeRequestApprove and mergeRequestUnApprove does not error`() = runTest {
     checkMetadata {
       (it.version >= v(10, 6) && it.edition == GitLabEdition.Enterprise) ||
-      (it.version >= v(13, 3) && it.edition == GitLabEdition.Community)
+      (it.version < v(14, 3) && it.edition == GitLabEdition.Community)
     }
 
     requiresAuthentication { api ->
       api.rest.mergeRequestApprove(volatileProjectCoordinates, volatileProjectMr2Iid).body()
       api.rest.mergeRequestUnApprove(volatileProjectCoordinates, volatileProjectMr2Iid).body()
+    }
+  }
+
+  @Test
+  fun `REST mergeRequestApprove and mergeRequestUnApprove works`() = runTest {
+    // The approved field is only available for Enterprise...
+    checkMetadata {
+      (it.version >= v(14, 3) && it.edition == GitLabEdition.Enterprise)
+    }
+
+    requiresAuthentication { api ->
+      api.rest.mergeRequestApprove(volatileProjectCoordinates, volatileProjectMr2Iid).body()
+      var mr = api.graphQL.loadMergeRequest(volatileProjectCoordinates, volatileProjectMr2Iid).body()
+      assertNotNull(mr)
+      assertEquals(true, mr?.approved)
+
+      api.rest.mergeRequestUnApprove(volatileProjectCoordinates, volatileProjectMr2Iid).body()
+      mr = api.graphQL.loadMergeRequest(volatileProjectCoordinates, volatileProjectMr2Iid).body()
+      assertNotNull(mr)
+      assertEquals(false, mr?.approved)
+
+      // Do it one more time to confirm the MR wasn't already approved before the first approve
+      api.rest.mergeRequestApprove(volatileProjectCoordinates, volatileProjectMr2Iid).body()
+      mr = api.graphQL.loadMergeRequest(volatileProjectCoordinates, volatileProjectMr2Iid).body()
+      assertNotNull(mr)
+      assertEquals(true, mr?.approved)
     }
   }
 
@@ -403,8 +430,7 @@ class GitLabApiTest : GitLabApiTestCase() {
   }
 
   @Test
-  @Ignore
-  // TODO: It's probably a bad idea to have a random server here, so ignoring this test for now.
+  @Disabled("Find out what server to ping here, if any")
   fun `REST checkIsGitLabServer is negative for unrelated API`() = runTest {
     val api = service<GitLabApiManager>().getClient(GitLabServerPath("https://google.com"), "")
     assertFalse(api.rest.checkIsGitLabServer())

@@ -45,6 +45,8 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabPersistentAccounts"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager"
                         serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.PersistentGitLabAccountManager"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gitlab.api.GitLabApiManager"
+                        serviceImplementation="org.jetbrains.plugins.gitlab.api.GitLabApiManagerImpl"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gitlab.GitLabServersManager"
                         serviceImplementation="org.jetbrains.plugins.gitlab.CachingGitLabServersManager"/>
 

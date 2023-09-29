@@ -6,6 +6,7 @@ import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_ENCODING
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_ENCODING_HEADER
 import com.intellij.collaboration.api.logName
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
@@ -101,7 +102,9 @@ object HttpClientUtil {
    */
   fun getUserAgentValue(agentName: String): String {
     val ideName = ApplicationNamesInfo.getInstance().fullProductName.replace(' ', '-')
-    val ideBuild = ApplicationInfo.getInstance().build.asString()
+    val ideBuild =
+      if (ApplicationManager.getApplication().isUnitTestMode) "test"
+      else ApplicationInfo.getInstance().build.asString()
     val java = "JRE " + SystemInfo.JAVA_RUNTIME_VERSION
     val os = SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION
     val arch = SystemInfo.OS_ARCH
