@@ -311,26 +311,34 @@ public final class PersistentFSLoader {
     int commonVersion = commonVersionIfExists(recordsStorage, attributesStorage, contentsStorage);
 
     if (commonVersion != currentImplVersion) {
-      //If storages are just created -> commonVersion=0, and storages are empty.
-      // => we should stamp them with current implVersion and go ahead.
-      //Otherwise it is version mismatch and we should rebuild VFS storages from 0.
-      boolean storagesAreEmpty = (recordsStorage.recordsCount() == 0);
-      if (commonVersion == 0 && storagesAreEmpty) {//MAYBE RC: better check also attributes/contentsStorage.isEmpty()?
+      //If (commonVersion=0) AND (all storages are empty)
+      //   => storages were just created
+      //   => we should stamp them with current implVersion and go ahead.
+      boolean storagesAreEmpty = recordsStorage.recordsCount() == 0
+                                 && contentsStorage.getRecordsCount() == 0
+                                 && attributesStorage.isEmpty();
+      if (commonVersion == 0 && storagesAreEmpty) {
         //all storages are fresh new => assign their versions to the current one:
         setCurrentVersion(recordsStorage, attributesStorage, contentsStorage, currentImplVersion);
         return;
       }
 
-      //if commonVersion > 0 => current VFS data has a consistent version, but != implVersion
-      //                     => IMPL_VERSION_MISMATCH
-      //if commonVersion = -1 => different VFS storages have inconsistent versions
-      //                      => UNRECOGNIZED (I guess it is a rare case, most probably happens for users playing
-      //                         hard with their IDE installations, most likely they are our QAs -- so the case
-      //                         doesn't worth dedicated enum constant)
+      //Otherwise: (not all storages are empty OR commonVersion != 0)
+      //   => it is a version mismatch
+      //   => we should rebuild VFS storages from 0.
+
+
+      //if commonVersion > 0  => current VFS data _has_ a consistent version, but != implVersion
+      //                      => IMPL_VERSION_MISMATCH
+      //if commonVersion = -1 => different VFS storages have different, inconsistent versions
+      //                      => UNRECOGNIZED (I guess it is a rare case, most probably happens if users play hard
+      //                         with their IDE installations -- most likely they are our QAs -- or it is Nightly,
+      //                         and we're changing VFS file layout... -- anyway, those are cases that are not worth
+      //                         dedicated statistics/enum constant)
       VFSInitException.ErrorCategory rebuildCause = commonVersion > 0 ? IMPL_VERSION_MISMATCH : UNRECOGNIZED;
       throw new VFSInitException(
         rebuildCause,
-        "FS repository detected version(=" + commonVersion + ") != current version(=" + currentImplVersion + ") -> VFS needs rebuild"
+        "VFS storages detected version(=" + commonVersion + ") != current impl version(=" + currentImplVersion + ") -> VFS needs rebuild"
       );
     }
   }
@@ -767,7 +775,7 @@ public final class PersistentFSLoader {
     return storage;
   }
 
-  /** @return common version of all 3 storages, or -1, if their versions are differ (i.e. inconsistent) */
+  /** @return common version of all 3 storages, or -1, if their versions are different (i.e. inconsistent) */
   private static int commonVersionIfExists(@NotNull PersistentFSRecordsStorage records,
                                            @NotNull AbstractAttributesStorage attributes,
                                            @NotNull RefCountingContentStorage contents) throws IOException {
