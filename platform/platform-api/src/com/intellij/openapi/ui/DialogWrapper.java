@@ -123,6 +123,7 @@ public abstract class DialogWrapper {
   public static final String DEFAULT_ACTION = "DefaultAction";
 
   public static final String FOCUSED_ACTION = "FocusedAction";
+  public static final String MAC_ACTION_ORDER = "MacActionOrder";
 
   public static final Object DIALOG_CONTENT_PANEL_PROPERTY = new Object();
 
@@ -526,20 +527,8 @@ public abstract class DialogWrapper {
         leftSideActions.add(macOtherAction);
         actions.remove(macOtherAction);
       }
-
-      // move ok action to the right
-      int okNdx = actions.indexOf(getOKAction());
-      if (okNdx >= 0 && okNdx != actions.size() - 1) {
-        actions.remove(getOKAction());
-        actions.add(getOKAction());
-      }
-
-      // move cancel action to the left of OK action, if present, and to the leftmost position otherwise
-      int cancelNdx = actions.indexOf(getCancelAction());
-      if (cancelNdx > 0) {
-        actions.remove(getCancelAction());
-        actions.add(okNdx < 0 ? 0 : actions.size() - 1, getCancelAction());
-      }
+      actions.sort(Comparator.comparing(action -> action instanceof AbstractAction ? Objects.<Integer>requireNonNullElse(
+        (Integer)action.getValue(MAC_ACTION_ORDER), 0) : 0));
     }
 
     if (!Registry.is("ide.allow.merge.buttons", true)) {
@@ -1903,6 +1892,7 @@ public abstract class DialogWrapper {
       super(CommonBundle.getOkButtonText());
       addPropertyChangeListener(myRepaintOnNameChangeListener);
       putValue(DEFAULT_ACTION, Boolean.TRUE);
+      putValue(MAC_ACTION_ORDER, 100);
     }
 
     @Override
@@ -1937,6 +1927,7 @@ public abstract class DialogWrapper {
   protected final class CancelAction extends DialogWrapperAction {
     private CancelAction() {
       super(CommonBundle.getCancelButtonText());
+      putValue(MAC_ACTION_ORDER, 10);
       addPropertyChangeListener(myRepaintOnNameChangeListener);
     }
 
