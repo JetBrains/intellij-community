@@ -8,6 +8,6 @@
     Monokai editor color scheme for all IntelliJ-based IDEs.
   </description>
   <extensions defaultExtensionNs="com.intellij">
-    <bundledColorScheme path="/colorSchemes/monokai"/>
+    <bundledColorScheme id="Monokai" path="/colorSchemes/monokai"/>
   </extensions>
 </idea-plugin>

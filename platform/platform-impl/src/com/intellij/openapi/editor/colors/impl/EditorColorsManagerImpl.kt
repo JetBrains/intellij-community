@@ -39,7 +39,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeManager
@@ -161,10 +160,15 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
 
   // initScheme has to execute only after the LaF has been set in LafManagerImpl.initializeComponent
   private fun initEditableDefaultSchemesCopies() {
+    val to = ArrayList<EditorColorsScheme>()
     for (defaultScheme in DefaultColorSchemesManager.getInstance().allSchemes) {
       if (defaultScheme.hasEditableCopy()) {
-        createEditableCopy(initialScheme = defaultScheme, editableCopyName = defaultScheme.editableCopyName)
+        createEditableCopy(initialScheme = defaultScheme, editableCopyName = defaultScheme.editableCopyName, to = to)
       }
+    }
+
+    for (scheme in to) {
+      schemeManager.addScheme(scheme)
     }
   }
 
@@ -183,23 +187,17 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     return bundledScheme
   }
 
-  @TestOnly
-  fun loadBundledScheme(resourcePath: String, descriptor: PluginDescriptor): EditorColorsScheme? {
-    assert(ApplicationManager.getApplication().isUnitTestMode()) { "Test-only method" }
-    val scheme = schemeManager.loadBundledScheme(resourceName = resourcePath,
-                                                 requestor = null,
-                                                 pluginDescriptor = descriptor) as BundledScheme?
-    scheme?.metaProperties?.setProperty(AbstractColorsScheme.META_INFO_PLUGIN_ID, descriptor.getPluginId().idString)
-    initEditableBundledSchemesCopies()
-    return scheme
-  }
-
   private fun initEditableBundledSchemesCopies() {
+    val to = ArrayList<EditorColorsScheme>()
     // process over allSchemes snapshot
     for (scheme in schemeManager.allSchemes.toList()) {
       if (scheme is BundledScheme) {
-        createEditableCopy(initialScheme = scheme, editableCopyName = Scheme.EDITABLE_COPY_PREFIX + scheme.getName())
+        createEditableCopy(initialScheme = scheme, editableCopyName = Scheme.EDITABLE_COPY_PREFIX + scheme.name, to)
       }
+    }
+
+    for (scheme in to) {
+      schemeManager.addScheme(scheme)
     }
   }
 
@@ -230,12 +228,12 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     }
   }
 
-  private fun createEditableCopy(initialScheme: AbstractColorsScheme, editableCopyName: String) {
+  private fun createEditableCopy(initialScheme: AbstractColorsScheme, editableCopyName: String, to: MutableList<EditorColorsScheme>) {
     var editableCopy = getScheme(editableCopyName) as AbstractColorsScheme?
     if (editableCopy == null) {
       editableCopy = initialScheme.clone() as AbstractColorsScheme
       editableCopy.name = editableCopyName
-      schemeManager.addScheme(editableCopy)
+      to.add(editableCopy)
     }
     else if (initialScheme is BundledScheme) {
       editableCopy.copyMissingAttributes(initialScheme)
@@ -724,13 +722,13 @@ fun loadBundledSchemes(additionalTextAttributes: MutableMap<String, MutableList<
       yield(object : SchemeManager.LoadBundleSchemeRequest<EditorColorsScheme> {
         override val pluginId: PluginId
           get() = pluginDescriptor.pluginId
-        override val resourceName: String
+        override val resourcePath: String
           get() = resourceName
         override val schemeKey: String
           get() {
             val idFromExtension = item.id
             if (idFromExtension == null) {
-              LOG.error("id is not specified for extension $item")
+              LOG.error("id is not specified for extension ${bean.path}")
             }
             else if (!checkId) {
               return idFromExtension
