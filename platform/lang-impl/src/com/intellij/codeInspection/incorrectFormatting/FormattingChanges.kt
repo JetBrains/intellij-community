@@ -83,8 +83,10 @@ fun detectFormattingChanges(file: PsiFile): FormattingChanges? {
     throw pce
   }
   catch (e: NonWhitespaceChangeException) {
-    LOG.error("Non-whitespace change: pre-format=%#04x, post-format=%#04x, lang=%s, filetype=%s"
-                .format(e.pre.code, e.post.code, file.language.id, file.fileType.name))
+    LOG.error("Non-whitespace change: pre-format=%#04x @ %d, post-format=%#04x @ %d, lang=%s, filetype=%s, path=%s"
+                .format(e.pre[e.locPre].code, e.locPre,
+                        e.post[e.locPost].code, e.locPost,
+                        file.language.id, file.fileType.name, file.viewProvider.virtualFile))
   }
   catch (e: Exception) {
     LOG.error(e)
@@ -128,7 +130,7 @@ private fun diffWhitespace(pre: CharSequence,
       j = jWsEnd
     }
     else if (pre[i] != post[j]) {
-      throw NonWhitespaceChangeException(pre[i], post[j])
+      throw NonWhitespaceChangeException(pre, post, i, j)
     }
     else {
       ++i
@@ -138,4 +140,7 @@ private fun diffWhitespace(pre: CharSequence,
   return mismatches
 }
 
-private data class NonWhitespaceChangeException(val pre: Char, val post: Char): Exception()
+private data class NonWhitespaceChangeException(val pre: CharSequence,
+                                                val post: CharSequence,
+                                                val locPre: Int,
+                                                val locPost: Int) : Exception()
