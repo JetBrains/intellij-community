@@ -9,6 +9,9 @@ import com.esotericsoftware.kryo.kryo5.io.Input
 import com.esotericsoftware.kryo.kryo5.io.Output
 import com.esotericsoftware.kryo.kryo5.objenesis.strategy.StdInstantiatorStrategy
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.diagnostic.telemetry.JPS
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
@@ -27,15 +30,15 @@ import com.intellij.platform.workspace.storage.metadata.model.*
 import com.intellij.platform.workspace.storage.impl.serialization.registration.registerEntitiesClasses
 import com.intellij.platform.workspace.storage.metadata.diff.CacheMetadataComparator
 import com.intellij.platform.workspace.storage.metadata.diff.ComparisonResult
-import com.intellij.platform.workspace.storage.metadata.diff.MetadataComparator
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import io.opentelemetry.api.metrics.Meter
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.*
 import org.jetbrains.annotations.TestOnly
-import java.lang.UnsupportedOperationException
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 import kotlin.system.measureNanoTime
 
@@ -48,6 +51,23 @@ public class EntityStorageSerializerImpl(
 ) : EntityStorageSerializer {
   public companion object {
     public const val STORAGE_SERIALIZATION_VERSION: String = "v2"
+
+    private val loadCacheMetadataFromFileTimeMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter) {
+      val loadCacheMetadataFromFileTimeGauge = meter.gaugeBuilder("workspaceModel.load.cache.metadata.from.file.ms")
+        .ofLongs().setDescription("Total time spent on metadata deserialization").buildObserver()
+
+      meter.batchCallback({
+          loadCacheMetadataFromFileTimeGauge.record(loadCacheMetadataFromFileTimeMs.get())
+        },
+        loadCacheMetadataFromFileTimeGauge
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(TelemetryManager.getMeter(JPS))
+    }
   }
 
   private val interner: StorageInterner = StorageInternerImpl()
@@ -135,6 +155,7 @@ public class EntityStorageSerializerImpl(
         }
 
         var time = System.nanoTime()
+        val metadataDeserializationStartTimeMs = System.currentTimeMillis()
 
         val cacheMetadata = kryo.readObject(input, CacheMetadata::class.java)
         val currentMetadata = loadCurrentEntitiesMetadata(cacheMetadata, typesResolver)
@@ -143,6 +164,8 @@ public class EntityStorageSerializerImpl(
           LOG.info("Cache isn't loaded. Reason:\n${comparisonResult.info}")
           return Result.failure(UnsupportedEntitiesVersionException())
         }
+
+        loadCacheMetadataFromFileTimeMs.addElapsedTimeMs(metadataDeserializationStartTimeMs)
 
         time = logAndResetTime(time) { measuredTime -> "Read cache metadata and compare it with the existing metadata: $measuredTime ns" }
 
