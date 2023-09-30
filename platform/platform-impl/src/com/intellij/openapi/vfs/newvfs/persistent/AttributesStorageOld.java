@@ -243,6 +243,7 @@ public final class AttributesStorageOld implements AbstractAttributesStorage {
   public void close() throws IOException {
     Disposer.dispose(attributesBlobStorage);
   }
+
   /* ==================================== implementation =================================================================== */
 
   private final class AttributeOutputStreamImpl extends DataOutputStream implements RepresentableAsByteArraySequence {

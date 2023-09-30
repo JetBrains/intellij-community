@@ -236,6 +236,10 @@ public final class IOUtil {
     return c < 128;
   }
 
+  /**
+   * @return true if _there are no files with such prefix exist_ -- e.g. if we delete nothing,
+   * because there were no such files beforehand.
+   */
   public static boolean deleteAllFilesStartingWith(@NotNull Path file) {
     String baseName = file.getFileName().toString();
     Path parentFile = file.getParent();

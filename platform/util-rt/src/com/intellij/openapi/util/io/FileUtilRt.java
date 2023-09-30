@@ -859,6 +859,8 @@ public class FileUtilRt {
         }
       }
 
+      //MAYBE RC: if(attempt > 2 && SystemInfoRt.isWindows ) System.gc()
+      //         (probably helps with memory-mapped file removing)
       try { Thread.sleep(10); }
       catch (InterruptedException ignored) { }
     }
