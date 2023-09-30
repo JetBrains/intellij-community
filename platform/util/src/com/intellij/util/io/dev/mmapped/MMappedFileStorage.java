@@ -128,6 +128,43 @@ public final class MMappedFileStorage implements Closeable {
     }
   }
 
+  public Path storagePath() {
+    return storagePath;
+  }
+
+  public int pageSize() {
+    return pageSize;
+  }
+
+  public ByteOrder byteOrder() {
+    return nativeOrder();
+  }
+
+  public boolean isOpen() {
+    return channel.isOpen();
+  }
+
+  /**
+   * @return current file size. Returned size is always N*pageSize
+   * </p>
+   * <b>BEWARE</b>: file pages are mapped <i>lazily</i>, hence if file size = N*pageSize -- it does NOT mean there
+   * are N {@link Page}s currently mapped into memory -- it could be only pages #0, 5, 8, N-1 are mapped, but
+   * pages in between those were never requested, hence not mapped (yet?).
+   */
+  public long actualFileSize() throws IOException {
+    synchronized (pagesLock) {
+      //RC: Lock the pages to prevent file expansion (file expansion also acquires .pagesLock, see .pageByOffset())
+      //    If file is expanded concurrently with this method, we could see not-pageSize-aligned file size,
+      //    which is confusing to deal with.
+      //    Better to just prohibit such cases: file expansion (=new page allocation) is a relatively rare
+      //    event, so this lock is mostly uncontended, so the cost is negligible.
+      long channelSize = channel.size();
+      if ((channelSize & pageSizeMask) != 0) {
+        throw new AssertionError("Bug: [" + storagePath + "].channelSize(=" + channelSize + ") is not pageSize(=" + pageSize + ")-aligned");
+      }
+      return channelSize;
+    }
+  }
 
   public @NotNull Page pageByOffset(long offsetInFile) throws IOException {
     int pageIndex = pageIndexByOffset(offsetInFile);
@@ -151,26 +188,6 @@ public final class MMappedFileStorage implements Closeable {
     return page;
   }
 
-  private Page pageByIndexLocked(int pageIndex) throws IOException {
-    synchronized (pagesLock) {
-      if (!channel.isOpen()) {
-        throw new ClosedStorageException("Storage already closed");
-      }
-      if (pageIndex >= pages.length) {
-        pages = Arrays.copyOf(pages, pageIndex + 1);
-      }
-      Page page = pages[pageIndex];
-
-      if (page == null) {
-        page = new Page(pageIndex, channel, pageSize, byteOrder());
-        pages[pageIndex] = page;
-
-        registerMappedPage(pageSize);
-      }
-      return page;
-    }
-  }
-
   /**
    * Truncates the file so that it has size=0, and all previous content is lost.
    * This method is unsafe and should be used with caution: it should be no chance storage is used by other
@@ -188,15 +205,6 @@ public final class MMappedFileStorage implements Closeable {
       channel.truncate(0L);
       pages = new Page[0];
     }
-  }
-
-
-  private static @Nullable Page pageOrNull(Page[] pages,
-                                           int pageIndex) {
-    if (0 <= pageIndex && pageIndex < pages.length) {
-      return pages[pageIndex];
-    }
-    return null;
   }
 
   public int pageIndexByOffset(long offsetInFile) {
@@ -237,23 +245,10 @@ public final class MMappedFileStorage implements Closeable {
     }
   }
 
-
   public void fsync() throws IOException {
     if (channel.isOpen()) {
       channel.force(true);
     }
-  }
-
-  public Path storagePath() {
-    return storagePath;
-  }
-
-  public int pageSize() {
-    return pageSize;
-  }
-
-  public boolean isOpen() {
-    return channel.isOpen();
   }
 
   /**
@@ -290,6 +285,10 @@ public final class MMappedFileStorage implements Closeable {
     }
   }
 
+  /**
+   * Fills with zeroes a region starting with startOffsetInFile (inclusive) and until the end-of-file.
+   * If startOffsetInFile is beyond EOF -- do nothing
+   */
   public void zeroizeTillEOF(long startOffsetInFile) throws IOException {
     long actualFileSize = actualFileSize();
     if (actualFileSize == 0) {
@@ -298,38 +297,38 @@ public final class MMappedFileStorage implements Closeable {
     zeroizeRegion(startOffsetInFile, actualFileSize - 1);
   }
 
-  /**
-   * @return current file size. Returned size is always N*pageSize
-   * </p>
-   * <b>BEWARE</b>: file pages are mapped <i>lazily</i>, hence if file size = N*pageSize -- it does NOT mean there
-   * are N {@link Page}s currently mapped into memory -- it could be only pages #0, 5, 8, N-1 are mapped, but
-   * pages in between those were never requested, hence not mapped (yet?).
-   */
-  public long actualFileSize() throws IOException {
-    synchronized (pagesLock) {
-      //RC: Lock the pages to prevent file expansion (file expansion also acquires .pagesLock, see .pageByOffset())
-      //    If file is expanded concurrently with this method, we could see not-pageSize-aligned file size,
-      //    which is confusing to deal with.
-      //    Better to just prohibit such cases: file expansion (=new page allocation) is a relatively rare
-      //    event, so this lock is mostly uncontended, so the cost is negligible.
-      long channelSize = channel.size();
-      if ((channelSize & pageSizeMask) != 0) {
-        throw new AssertionError("Bug: [" + storagePath + "].channelSize(=" + channelSize + ") is not pageSize(=" + pageSize + ")-aligned");
-      }
-      return channelSize;
-    }
-  }
-
-  public ByteOrder byteOrder() {
-    return nativeOrder();
-  }
-
   @Override
   public String toString() {
     return "MMappedFileStorage[" + storagePath + "]" +
-           "[pageSize: " + pageSize +
-           ", pages: " + pages.length +
-           ']';
+           "[" + pages.length + " pages of " + pageSize + "b]";
+  }
+
+  private Page pageByIndexLocked(int pageIndex) throws IOException {
+    synchronized (pagesLock) {
+      if (!channel.isOpen()) {
+        throw new ClosedStorageException("Storage already closed");
+      }
+      if (pageIndex >= pages.length) {
+        pages = Arrays.copyOf(pages, pageIndex + 1);
+      }
+      Page page = pages[pageIndex];
+
+      if (page == null) {
+        page = new Page(pageIndex, channel, pageSize, byteOrder());
+        pages[pageIndex] = page;
+
+        registerMappedPage(pageSize);
+      }
+      return page;
+    }
+  }
+
+  private static @Nullable Page pageOrNull(Page[] pages,
+                                           int pageIndex) {
+    if (0 <= pageIndex && pageIndex < pages.length) {
+      return pages[pageIndex];
+    }
+    return null;
   }
 
   public static final class Page {
