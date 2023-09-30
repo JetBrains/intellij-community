@@ -215,8 +215,11 @@ internal class SoftwareBillOfMaterialsImpl(
   }
 
   private fun isRuntimeBundled(file: Path, os: OsFamily): Boolean {
-    return os == OsFamily.LINUX && !file.name.contains(LinuxDistributionBuilder.NO_RUNTIME_SUFFIX) ||
-           os == OsFamily.MACOS && !file.name.contains(MacDistributionBuilder.NO_RUNTIME_SUFFIX)
+    return when (os) {
+      OsFamily.LINUX -> !file.name.contains(LinuxDistributionBuilder.NO_RUNTIME_SUFFIX)
+      OsFamily.MACOS -> !file.name.contains(MacDistributionBuilder.NO_RUNTIME_SUFFIX)
+      OsFamily.WINDOWS -> true
+    }
   }
 
   /**
