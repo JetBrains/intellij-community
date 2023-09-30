@@ -396,7 +396,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun findLaf(reference: LafReference): UIThemeLookAndFeelInfo {
-    return UiThemeProviderListManager.getInstance().getLaFsWithUITypes()
+    return UiThemeProviderListManager.getInstance().getDescriptors()
              .singleOrNull { it.id == reference.themeId }
              ?.theme
              ?.get()
@@ -540,7 +540,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     if (oldLaf is TempUIThemeLookAndFeelInfo || currentTheme is TempUIThemeLookAndFeelInfo) {
       return
     }
-    if (currentTheme?.editorSchemeName != null) {
+    if (currentTheme?.editorSchemeId != null) {
       return
     }
 
@@ -759,13 +759,13 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   private fun isSchemeDefault(lookAndFeelInfo: UIThemeLookAndFeelInfo, scheme: EditorColorsScheme): Boolean {
-    return lookAndFeelInfo.editorSchemeName == scheme.displayName
+    return lookAndFeelInfo.editorSchemeId == scheme.name
   }
 
   private inner class UiThemeEpListener : ExtensionPointListener<UIThemeProvider> {
     override fun extensionAdded(extension: UIThemeProvider, pluginDescriptor: PluginDescriptor) {
       val uiThemeProviderListManager = UiThemeProviderListManager.getInstance()
-      val newLaF = uiThemeProviderListManager.themeProviderAdded(extension) as UIThemeLookAndFeelInfoImpl? ?: return
+      val newLaF = uiThemeProviderListManager.themeProviderAdded(extension, pluginDescriptor) as UIThemeLookAndFeelInfoImpl? ?: return
       updateLafComboboxModel()
 
       // when updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current

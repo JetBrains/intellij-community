@@ -71,7 +71,7 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
     UIThemeLookAndFeelInfo suitableLaf = null;
     String schemeName = Scheme.getBaseName(newScheme.getName());
     for (UIThemeLookAndFeelInfo laf : SequencesKt.asIterable(UiThemeProviderListManager.Companion.getInstance().getLaFs())) {
-      if (schemeName.equals(laf.getEditorSchemeName())) {
+      if (schemeName.equals(laf.getEditorSchemeId())) {
         suitableLaf = laf;
         break;
       }

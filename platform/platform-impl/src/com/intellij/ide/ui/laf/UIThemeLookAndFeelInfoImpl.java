@@ -51,8 +51,8 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
   }
 
   @Override
-  public @Nullable String getEditorSchemeName() {
-    return theme.getEditorSchemeName();
+  public @Nullable String getEditorSchemeId() {
+    return theme.getEditorSchemeId();
   }
 
   public @NotNull UITheme getTheme() {
@@ -98,7 +98,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
   public void installEditorScheme(@Nullable EditorColorsScheme previousSchemeForLaf) {
     EditorColorsManager editorColorManager = EditorColorsManager.getInstance();
     if (previousSchemeForLaf == null) {
-      String name = getEditorSchemeName();
+      String name = getEditorSchemeId();
       if (name != null) {
         previousSchemeForLaf = editorColorManager.getScheme(name);
       }

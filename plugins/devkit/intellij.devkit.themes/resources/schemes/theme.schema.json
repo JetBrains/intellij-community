@@ -1,5 +1,5 @@
 {
-  "version": "0.6",
+  "version": "0.7",
   "definitions": {
     "color": {
       "type": "string",
@@ -270,19 +270,6 @@
       "examples": [
         "John Doe"
       ]
-    },
-    "editorScheme": {
-      "type": "string",
-      "title": "Path to the editor schema xml file starting with '/'",
-      "default": "",
-      "pattern": "^/",
-      "examples": [
-        "/editorScheme.xml"
-      ]
-    },
-    "additionalEditorSchemes": {
-      "type": "array",
-      "title": "Array of paths to additional editor schemes xml files starting with '/'"
     },
     "parentTheme": {
       "type": "string",

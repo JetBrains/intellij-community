@@ -14,7 +14,8 @@ interface UIThemeLookAndFeelInfo  {
   val name: String
   val isDark: Boolean
 
-  val editorSchemeName: String?
+  val editorSchemeId: String?
+
   val isInitialized: Boolean
 
   val providerClassLoader: ClassLoader

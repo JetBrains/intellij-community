@@ -59,8 +59,6 @@ class UITheme internal constructor(
   val author: String?
     get() = bean.author
 
-  val additionalEditorSchemes: List<String>
-    get() = bean.additionalEditorSchemes ?: emptyList()
   val background: Map<String, Any?>
     get() = bean.background ?: emptyMap()
   val emptyFrameBackground: Map<String, Any?>
@@ -151,10 +149,8 @@ class UITheme internal constructor(
     )
   }
 
-  val editorSchemePath: String?
-    get() = IdeUICustomization.getInstance().getUiThemeEditorSchemePath(id, bean.editorScheme)
-
-  var editorSchemeName: String? = null
+  val editorSchemeId: String?
+    get() = IdeUICustomization.getInstance().getUiThemeEditorSchemeId(/* themeId = */ id, /* editorSchemeId = */ bean.editorScheme)
 
   companion object {
     const val FILE_EXT_ENDING: String = ".theme.json"

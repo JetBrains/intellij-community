@@ -2,12 +2,7 @@
   "name": "Dark",
   "dark": true,
   "author": "JetBrains",
-  "editorScheme": "/themes/expUI/expUI_darkScheme.xml",
   "nameKey": "dark.theme.name",
-  "additionalEditorSchemes": [
-    "/themes/expUI/expUI_darculaContrastScheme.xml"
-  ],
-
   "colors": {
     "Grey1": "#1E1F22",
     "Grey2": "#2B2D30",

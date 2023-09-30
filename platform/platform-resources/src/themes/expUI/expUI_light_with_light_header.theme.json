@@ -3,7 +3,6 @@
   "dark": false,
   "author": "JetBrains",
   "parentTheme": "ExperimentalLight",
-  "editorScheme": "/themes/expUI/expUI_lightScheme.xml",
   "nameKey": "light.header.theme.name",
 
   "ui": {

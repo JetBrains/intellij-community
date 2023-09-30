@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -221,7 +221,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(21, myScheme.getConsoleFontSize());
   }
 
-  public void testWriteColorWithAlpha() throws Exception {
+  public void testWriteColorWithAlpha() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     EditorColorsScheme scheme = (EditorColorsScheme)defaultScheme.clone();
     scheme.setName("test");
@@ -238,7 +238,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       serialize(scheme));
   }
 
-  public void testWriteInheritedFromDefault() throws Exception {
+  public void testWriteInheritedFromDefault() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
     editorColorsScheme.setName("test");
@@ -260,7 +260,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       serialize(editorColorsScheme));
   }
 
-  public void testWriteInheritedFromDarcula() throws Exception {
+  public void testWriteInheritedFromDarcula() {
     EditorColorsScheme darculaScheme = EditorColorsManager.getInstance().getScheme("Darcula");
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)darculaScheme.clone();
     editorColorsScheme.setName("test");
@@ -399,7 +399,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
   }
 
-  public void testWriteDefaultSemanticHighlighting() throws Exception {
+  public void testWriteDefaultSemanticHighlighting() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
     editorColorsScheme.setName("rainbow");

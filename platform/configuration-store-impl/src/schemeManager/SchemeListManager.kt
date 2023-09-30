@@ -9,14 +9,14 @@ import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.Scheme
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.UniqueNameGenerator
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
 
 internal class SchemeCollection<T : Any>(
   @JvmField val list: MutableList<T>,
   // the scheme could be changed - so, hashcode will be changed - we must use identity hashing strategy
-  @JvmField val schemeToInfo: ConcurrentMap<T, ExternalInfo> = ConcurrentCollectionFactory.createConcurrentIdentityMap()
+  @JvmField val schemeToInfo: MutableMap<T, ExternalInfo> = ConcurrentCollectionFactory.createConcurrentIdentityMap()
 ) {
   fun putSchemeInfo(scheme: T, externalInfo: ExternalInfo): ExternalInfo? {
     return schemeToInfo.put(scheme, externalInfo)
@@ -50,6 +50,17 @@ internal class SchemeListManager<T : Scheme>(private val schemeManager: SchemeMa
     if (!schemeListRef.compareAndSet(oldList, newList)) {
       throw IllegalStateException("Scheme list was modified")
     }
+  }
+
+  inline fun mutate(task: (schemes: MutableList<T>,
+                    schemeToInfo: MutableMap<T, ExternalInfo>,
+                    readOnlyExternalizableSchemes: MutableMap<String, T>) -> Unit) {
+    val old = schemeListRef.get()
+    val list = ArrayList(old.list)
+    val schemeToInfo = IdentityHashMap(old.schemeToInfo)
+    task(list, schemeToInfo, readOnlyExternalizableSchemes)
+    replaceSchemeList(old, SchemeCollection(list = Collections.synchronizedList(list),
+                                            schemeToInfo = Collections.synchronizedMap(schemeToInfo)))
   }
 
   fun getExternalInfo(scheme: T): ExternalInfo? = schemeListRef.get().schemeToInfo.get(scheme)
