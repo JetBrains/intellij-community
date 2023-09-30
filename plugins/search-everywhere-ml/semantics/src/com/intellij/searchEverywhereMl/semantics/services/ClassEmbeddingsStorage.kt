@@ -1,5 +1,7 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -12,7 +14,6 @@ import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.indices.FileIndexableEntitiesProvider
 import com.intellij.searchEverywhereMl.semantics.indices.IndexableEntity
-import com.intellij.searchEverywhereMl.semantics.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import com.intellij.searchEverywhereMl.semantics.utils.splitIdentifierIntoTokens
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread

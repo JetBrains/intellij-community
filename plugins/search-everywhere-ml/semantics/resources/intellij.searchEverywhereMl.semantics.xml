@@ -1,6 +1,10 @@
 <idea-plugin package="com.intellij.searchEverywhereMl.semantics">
   <resource-bundle>messages.searchEverywhereMlSemanticsBundle</resource-bundle>
 
+  <dependencies>
+    <module name="intellij.platform.ml.embeddings"/>
+  </dependencies>
+
   <extensions defaultExtensionNs="com.intellij">
     <searchEverywhereMlContributorReplacementService
       implementation="com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereMlContributorReplacementServiceImpl"/>
@@ -63,10 +67,6 @@
                  description="Highlight semantic items in Search Everywhere"
                  key="search.everywhere.ml.semantic.highlight.items"/>
 
-    <registryKey defaultValue="0.0.3"
-                 description="Semantic text search model version"
-                 key="search.everywhere.ml.semantic.model.version"/>
-
     <registryKey defaultValue="true"
                  description="Show embedding indexing progress indicator"
                  key="search.everywhere.ml.semantic.indexing.show.progress"/>
@@ -86,10 +86,6 @@
     <registryKey defaultValue="true"
                  description="Restrict memory usage of semantic search indexing"
                  key="search.everywhere.ml.semantic.indexing.restrict.memory.usage"/>
-
-    <notificationGroup id="Semantic search" displayType="STICKY_BALLOON"
-                       bundle="messages.searchEverywhereMlSemanticsBundle"
-                       key="search.everywhere.ml.semantic.notification.group.name"/>
   </extensions>
 
   <extensionPoints>

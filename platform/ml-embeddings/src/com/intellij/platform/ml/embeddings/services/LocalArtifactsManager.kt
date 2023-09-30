@@ -1,5 +1,7 @@
-package com.intellij.searchEverywhereMl.semantics.services
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.ml.embeddings.services
 
+import com.intellij.platform.ml.embeddings.EmbeddingsBundle
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
@@ -12,7 +14,6 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.io.Decompressor
@@ -87,7 +88,7 @@ class LocalArtifactsManager {
   companion object {
     const val SEMANTIC_SEARCH_RESOURCES_DIR = "semantic-search"
 
-    private val ARTIFACTS_DOWNLOAD_TASK_NAME = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.artifacts.download.name")
+    private val ARTIFACTS_DOWNLOAD_TASK_NAME = EmbeddingsBundle.getMessage("ml.embeddings.artifacts.download.name")
 
     private val MODEL_VERSION = Registry.stringValue("search.everywhere.ml.semantic.model.version")
     private val MAVEN_ROOT = "https://packages.jetbrains.team/maven/p/ml-search-everywhere/local-models/org/jetbrains/intellij/" +
@@ -104,8 +105,8 @@ class LocalArtifactsManager {
     private fun showDownloadErrorNotification() {
       NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
         .createNotification(
-          SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.notification.model.downloading.failed.title"),
-          SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.notification.model.downloading.failed.content"),
+          EmbeddingsBundle.getMessage("ml.embeddings.notification.model.downloading.failed.title"),
+          EmbeddingsBundle.getMessage("ml.embeddings.notification.model.downloading.failed.content"),
           NotificationType.WARNING
         )
         .notify(null)

@@ -1,5 +1,6 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug

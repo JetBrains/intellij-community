@@ -3,9 +3,9 @@ package com.intellij.searchEverywhereMl.semantics.tests
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticActionSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.services.ActionEmbeddingsStorage
-import com.intellij.searchEverywhereMl.semantics.services.LocalArtifactsManager
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import com.intellij.testFramework.PlatformTestUtil
 

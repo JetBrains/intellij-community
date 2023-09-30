@@ -1,4 +1,5 @@
-package com.intellij.searchEverywhereMl.semantics.models
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.ml.embeddings.models
 
 import ai.grazie.nlp.encoder.PreTrainedTextEncoder
 import ai.grazie.nlp.encoder.bert.uncased.BertBaseUncasedTextEncoder

@@ -1,10 +1,10 @@
 package com.intellij.searchEverywhereMl.semantics.utils
 
 import ai.grazie.emb.FloatTextEmbedding
+import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.searchEverywhereMl.semantics.services.LocalEmbeddingServiceProvider
 import kotlin.math.sqrt
 
 private const val SEPARATOR = "~"

@@ -1,6 +1,8 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -19,7 +21,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments
 import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments.SemanticSearchFeature
 import com.intellij.searchEverywhereMl.semantics.indices.InMemoryEmbeddingSearchIndex
-import com.intellij.searchEverywhereMl.semantics.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import com.intellij.searchEverywhereMl.semantics.utils.ScoredText
 import com.intellij.searchEverywhereMl.semantics.utils.generateEmbedding

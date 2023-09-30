@@ -1,0 +1,14 @@
+<idea-plugin package="com.intellij.platform.ml.embeddings">
+  <resource-bundle>messages.EmbeddingsBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="Semantic search" displayType="STICKY_BALLOON"
+                       bundle="messages.EmbeddingsBundle"
+                       key="search.everywhere.ml.semantic.notification.group.name"/>
+
+    <registryKey defaultValue="0.0.3"
+                 description="Embeddings model version"
+                 key="search.everywhere.ml.semantic.model.version"/>
+  </extensions>
+
+</idea-plugin>
