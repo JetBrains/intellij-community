@@ -335,6 +335,8 @@
     <projectService serviceImplementation="com.jetbrains.python.console.PythonConsoleToolWindow"/>
     <toolWindowExtractorMode id="Python Console" mode="mirror"/>
 
+    <environmentKeyProvider implementation="com.jetbrains.python.sdk.headless.PythonEnvironmentKeyProvider"/>
+    <postStartupActivity implementation="com.jetbrains.python.sdk.headless.PythonHeadlessSdkProjectActivity"/>
     <projectConfigurable groupId="build" groupWeight="119" id="reference.idesettings.debugger.python"
                          instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"
                          bundle="messages.PyBundle"
