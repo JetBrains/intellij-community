@@ -9,13 +9,13 @@ import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.ml.embeddings.utils.splitIdentifierIntoTokens
 import com.intellij.psi.PsiFile
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.indices.FileIndexableEntitiesProvider
 import com.intellij.searchEverywhereMl.semantics.indices.IndexableEntity
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
-import com.intellij.searchEverywhereMl.semantics.utils.splitIdentifierIntoTokens
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.io.File
 

@@ -12,12 +12,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
 import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
+import com.intellij.platform.ml.embeddings.utils.generateEmbedding
 import com.intellij.searchEverywhereMl.semantics.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.indices.IndexableEntity
 import com.intellij.searchEverywhereMl.semantics.listeners.SemanticIndexingFinishListener
 import com.intellij.searchEverywhereMl.semantics.utils.SEMANTIC_SEARCH_TRACER
 import com.intellij.searchEverywhereMl.semantics.utils.ScoredText
-import com.intellij.searchEverywhereMl.semantics.utils.generateEmbedding
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.withLock

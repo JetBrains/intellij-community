@@ -5,11 +5,11 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.platform.ml.embeddings.utils.generateEmbedding
+import com.intellij.platform.ml.embeddings.utils.generateEmbeddings
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.utils.LowMemoryNotificationManager
-import com.intellij.searchEverywhereMl.semantics.utils.generateEmbedding
-import com.intellij.searchEverywhereMl.semantics.utils.generateEmbeddings
 import java.util.LinkedList
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock

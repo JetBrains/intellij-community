@@ -1,4 +1,5 @@
-package com.intellij.searchEverywhereMl.semantics.utils
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.ml.embeddings.utils
 
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
@@ -40,14 +41,14 @@ fun splitIdentifierIntoTokens(initialScope: String): List<String> {
   }
 }
 
-fun generateEmbedding(indexableRepresentation: String): FloatTextEmbedding? {
-  return generateEmbeddings(listOf(indexableRepresentation))?.single()
+fun generateEmbedding(indexableRepresentation: String, downloadArtifacts: Boolean = false): FloatTextEmbedding? {
+  return generateEmbeddings(listOf(indexableRepresentation), downloadArtifacts)?.single()
 }
 
-fun generateEmbeddings(texts: List<String>): List<FloatTextEmbedding>? {
+fun generateEmbeddings(texts: List<String>, downloadArtifacts: Boolean = false): List<FloatTextEmbedding>? {
   return ProgressManager.getInstance().runProcess<List<FloatTextEmbedding>?>(
     {
-      val embeddingService = LocalEmbeddingServiceProvider.getInstance().getServiceBlocking() ?: return@runProcess null
+      val embeddingService = LocalEmbeddingServiceProvider.getInstance().getServiceBlocking(downloadArtifacts) ?: return@runProcess null
       runBlockingCancellable { embeddingService.embed(texts) }.map { it.normalized() }
     },
     EmptyProgressIndicator()

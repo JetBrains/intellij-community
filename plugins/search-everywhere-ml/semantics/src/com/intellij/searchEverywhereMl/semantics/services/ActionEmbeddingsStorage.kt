@@ -18,12 +18,12 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ml.embeddings.utils.generateEmbedding
 import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments
 import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments.SemanticSearchFeature
 import com.intellij.searchEverywhereMl.semantics.indices.InMemoryEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import com.intellij.searchEverywhereMl.semantics.utils.ScoredText
-import com.intellij.searchEverywhereMl.semantics.utils.generateEmbedding
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference

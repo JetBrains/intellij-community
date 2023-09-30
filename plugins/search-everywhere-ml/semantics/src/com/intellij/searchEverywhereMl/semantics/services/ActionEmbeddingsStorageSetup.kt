@@ -8,9 +8,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.platform.ml.embeddings.utils.normalized
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.indices.EmbeddingSearchIndex
-import com.intellij.searchEverywhereMl.semantics.utils.normalized
 import java.util.concurrent.atomic.AtomicReference
 
 class ActionEmbeddingsStorageSetup(
