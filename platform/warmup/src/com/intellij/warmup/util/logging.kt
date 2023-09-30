@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
+import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.warmup.WarmupStatus
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -19,6 +20,7 @@ import com.intellij.openapi.progress.impl.ProgressState
 import com.intellij.openapi.progress.impl.TextDetailsProgressReporter
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.util.io.findOrCreateFile
+import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.ide.bootstrap.logEssentialInfoAboutIde
@@ -37,6 +39,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.logging.Level
 import java.util.logging.LogRecord
 import kotlin.io.path.div
+import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.milliseconds
 
 object WarmupLogger {
@@ -239,5 +242,12 @@ class WarmupProgressListener : ProgressManagerListener {
     val startTime = taskDurationMap.remove(System.identityHashCode(task))
     val elapsedTimeSuffix = if (startTime == null) "" else " in ${Formats.formatDuration(currentTime - startTime)}"
     WarmupLogger.logInfo("[IDE]: Task '${task.title}' ended" + elapsedTimeSuffix)
+  }
+}
+
+internal fun dumpThreadsAfterConfiguration() {
+  val dump = ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false)
+  (PathManager.getLogPath().toNioPath() / "warmup").findOrCreateFile("thread-dump-after-project-configuration.txt").apply {
+    writeText(dump.rawDump)
   }
 }

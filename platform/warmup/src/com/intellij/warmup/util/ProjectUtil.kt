@@ -102,6 +102,7 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
       withLoggingProgressReporter {
         Observation.awaitConfiguration(project)
       }
+      dumpThreadsAfterConfiguration()
     }
   }
 
