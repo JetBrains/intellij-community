@@ -52,12 +52,10 @@ internal class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesColl
   }
 }
 
-class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
-  companion object {
-    private val GROUP = EventLogGroup("vcs.log.index.project", 3)
-    private val INDEXING_TIME = GROUP.registerEvent("indexing.time.minutes", EventFields.Count)
-    private val INDEX_DISABLED = GROUP.registerEvent("index.disabled.in.project", EventFields.Boolean("value"))
-  }
+internal class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
+  private val GROUP = EventLogGroup("vcs.log.index.project", 3)
+  private val INDEXING_TIME = GROUP.registerEvent("indexing.time.minutes", EventFields.Count)
+  private val INDEX_DISABLED = GROUP.registerEvent("index.disabled.in.project", EventFields.Boolean("value"))
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
     if (!project.isTrusted()) return emptySet()

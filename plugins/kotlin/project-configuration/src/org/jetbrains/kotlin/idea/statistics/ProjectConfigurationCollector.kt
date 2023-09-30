@@ -19,8 +19,7 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.konan.target.KonanTarget
 
-
-class ProjectConfigurationCollector : ProjectUsagesCollector() {
+internal class ProjectConfigurationCollector : ProjectUsagesCollector() {
     override fun getGroup() = GROUP
 
     override fun getMetrics(project: Project): Set<MetricEvent> {
@@ -58,33 +57,30 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
         }
     }
 
-    companion object {
-        private val GROUP = EventLogGroup("kotlin.project.configuration", 10)
+    private val GROUP = EventLogGroup("kotlin.project.configuration", 10)
 
-        private val systemField = EventFields.String("system", listOf("JPS", "Maven", "Gradle", "unknown"))
-        private val platformField = EventFields.String("platform", composePlatformFields())
-        private val languageLevelField = EventFields.StringValidatedByRegexp("languageLevel", "version")
-        private val isMPPBuild = EventFields.Boolean("isMPP")
-        private val pluginInfoField = EventFields.PluginInfo
+    private val systemField = EventFields.String("system", listOf("JPS", "Maven", "Gradle", "unknown"))
+    private val platformField = EventFields.String("platform", composePlatformFields())
+    private val languageLevelField = EventFields.StringValidatedByRegexp("languageLevel", "version")
+    private val isMPPBuild = EventFields.Boolean("isMPP")
+    private val pluginInfoField = EventFields.PluginInfo
 
-        private val eventFlags = EventFields.Long("eventFlags")
+    private val eventFlags = EventFields.Long("eventFlags")
 
-        private fun composePlatformFields(): List<String> {
-            return listOf(
-                listOf("jvm", "jvm.android", "js", "wasm", "common", "native.unknown", "unknown"),
-                KonanTarget.predefinedTargets.keys.map { "native.$it" }
-            ).flatten()
-        }
-
-        private val buildEvent = GROUP.registerVarargEvent(
-            "Build",
-            systemField,
-            platformField,
-            isMPPBuild,
-            languageLevelField,
-            pluginInfoField,
-            eventFlags
-        )
-
+    private fun composePlatformFields(): List<String> {
+        return listOf(
+            listOf("jvm", "jvm.android", "js", "wasm", "common", "native.unknown", "unknown"),
+            KonanTarget.predefinedTargets.keys.map { "native.$it" }
+        ).flatten()
     }
+
+    private val buildEvent = GROUP.registerVarargEvent(
+        "Build",
+        systemField,
+        platformField,
+        isMPPBuild,
+        languageLevelField,
+        pluginInfoField,
+        eventFlags
+    )
 }

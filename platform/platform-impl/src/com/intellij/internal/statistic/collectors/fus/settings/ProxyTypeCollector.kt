@@ -11,6 +11,12 @@ import java.util.HashSet
 
 private class ProxyTypeCollector : ApplicationUsagesCollector() {
 
+  private val GROUP: EventLogGroup = EventLogGroup("proxy.settings", 1)
+  private val TYPE: EventId1<String?> = GROUP.registerEvent(
+    "proxy.type", EventFields.String("name", ProxyType.values().map { type -> type.name }))
+
+  enum class ProxyType { Auto, Socks, Http }
+
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(): MutableSet<MetricEvent> {
@@ -29,13 +35,5 @@ private class ProxyTypeCollector : ApplicationUsagesCollector() {
     }
 
     return result
-  }
-
-  companion object {
-    private val GROUP: EventLogGroup = EventLogGroup("proxy.settings", 1)
-    private val TYPE: EventId1<String?> = GROUP.registerEvent(
-      "proxy.type", EventFields.String("name", ProxyType.values().map { type -> type.name }))
-
-    enum class ProxyType { Auto, Socks, Http }
   }
 }

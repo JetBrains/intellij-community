@@ -21,9 +21,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.lang.JavaVersion
 
 class ExternalSystemUsagesCollector : ProjectUsagesCollector() {
-  override fun getGroup(): EventLogGroup {
-    return GROUP
-  }
+  override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val usages = mutableSetOf<MetricEvent>()
@@ -52,10 +50,10 @@ class ExternalSystemUsagesCollector : ProjectUsagesCollector() {
     USE_JAVA_HOME("#JAVA_HOME")
   }
 
-
   companion object {
     private val GROUP = EventLogGroup("build.tools", 4)
-    private val EXTERNAL_SYSTEM_ID = GROUP.registerEvent("externalSystemId", EventFields.StringValidatedByCustomRule<SystemIdValidationRule>("value"))
+    private val EXTERNAL_SYSTEM_ID = GROUP.registerEvent("externalSystemId",
+                                                         EventFields.StringValidatedByCustomRule<SystemIdValidationRule>("value"))
     val JRE_TYPE_FIELD = EventFields.Enum("value", JreType::class.java) { it.description }
 
     fun getJreType(jreName: String?): JreType {

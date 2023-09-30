@@ -44,37 +44,35 @@ class IDESettingsFUSCollector : ProjectUsagesCollector() {
         return metrics
     }
 
-    companion object {
-        private val GROUP = EventLogGroup("kotlin.ide.settings", 4)
+    private val GROUP = EventLogGroup("kotlin.ide.settings", 4)
 
-        // scriptingAutoReloadEnabled Event
-        private val scriptingAREnabledField = EventFields.Boolean("enabled")
-        private val scriptingDefNameField = EventFields.String(
-            "definition_name", listOf(
-                "KotlinInitScript",
-                "KotlinSettingsScript",
-                "KotlinBuildScript",
-                "Script_definition_for_extension_scripts_and_IDE_console",
-                "MainKtsScript",
-                "Kotlin_Script",
-                "Space_Automation"
-            )
+    // scriptingAutoReloadEnabled Event
+    private val scriptingAREnabledField = EventFields.Boolean("enabled")
+    private val scriptingDefNameField = EventFields.String(
+        "definition_name", listOf(
+            "KotlinInitScript",
+            "KotlinSettingsScript",
+            "KotlinBuildScript",
+            "Script_definition_for_extension_scripts_and_IDE_console",
+            "MainKtsScript",
+            "Kotlin_Script",
+            "Space_Automation"
         )
-        private val scriptingPluginInfoField = EventFields.PluginInfo
+    )
+    private val scriptingPluginInfoField = EventFields.PluginInfo
 
-        private val scriptingAREvent = GROUP.registerEvent(
-            "scriptingAutoReloadEnabled",
-            scriptingDefNameField,
-            scriptingAREnabledField,
-            scriptingPluginInfoField
-        )
+    private val scriptingAREvent = GROUP.registerEvent(
+        "scriptingAutoReloadEnabled",
+        scriptingDefNameField,
+        scriptingAREnabledField,
+        scriptingPluginInfoField
+    )
 
-        // addUnambiguousImportsOnTheFly Event
-        private val unambiguousImportsEvent =
-            GROUP.registerEvent("addUnambiguousImportsOnTheFly", EventFields.Boolean("enabled"), EventFields.PluginInfo)
+    // addUnambiguousImportsOnTheFly Event
+    private val unambiguousImportsEvent =
+        GROUP.registerEvent("addUnambiguousImportsOnTheFly", EventFields.Boolean("enabled"), EventFields.PluginInfo)
 
-        // optimizeImportsOnTheFly Event
-        private val optimizeImportsEvent =
-            GROUP.registerEvent("optimizeImportsOnTheFly", EventFields.Boolean("enabled"), EventFields.PluginInfo)
-    }
+    // optimizeImportsOnTheFly Event
+    private val optimizeImportsEvent =
+        GROUP.registerEvent("optimizeImportsOnTheFly", EventFields.Boolean("enabled"), EventFields.PluginInfo)
 }

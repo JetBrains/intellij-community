@@ -7,12 +7,11 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
 
-class HighlightingSettingsPerFileCollector : ProjectUsagesCollector() {
-  companion object {
-    private val GROUP = EventLogGroup("highlighting.settings.per.file", 2)
-    private val SKIP_HIGHLIGHTING_ROOTS = GROUP.registerEvent("skip.highlighting.roots", EventFields.Count)
-    private val SKIP_INSPECTION_ROOTS = GROUP.registerEvent("skip.inspection.roots", EventFields.Count)
-  }
+internal class HighlightingSettingsPerFileCollector : ProjectUsagesCollector() {
+  private val GROUP = EventLogGroup("highlighting.settings.per.file", 2)
+  private val SKIP_HIGHLIGHTING_ROOTS = GROUP.registerEvent("skip.highlighting.roots", EventFields.Count)
+  private val SKIP_INSPECTION_ROOTS = GROUP.registerEvent("skip.inspection.roots", EventFields.Count)
+
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): Set<MetricEvent> {

@@ -17,6 +17,10 @@ import org.jetbrains.concurrency.CancellablePromise
 import java.util.concurrent.Callable
 
 private class IndexableFilesCollector : ProjectUsagesCollector() {
+  private val GROUP = EventLogGroup("project.indexable.files", 3)
+  private val ALL_INDEXABLE_FILES = GROUP.registerEvent("all.indexable.files", EventFields.Int("count"))
+  private val CONTENT_INDEXABLE_FILES = GROUP.registerEvent("content.indexable.files", EventFields.Int("count"))
+
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project, indicator: ProgressIndicator?): CancellablePromise<out Set<MetricEvent>> {
@@ -46,11 +50,5 @@ private class IndexableFilesCollector : ProjectUsagesCollector() {
     }
     return action
       .submit(NonUrgentExecutor.getInstance())
-  }
-
-  companion object {
-    private val GROUP = EventLogGroup("project.indexable.files", 3)
-    private val ALL_INDEXABLE_FILES = GROUP.registerEvent("all.indexable.files", EventFields.Int("count"))
-    private val CONTENT_INDEXABLE_FILES = GROUP.registerEvent("content.indexable.files", EventFields.Int("count"))
   }
 }
