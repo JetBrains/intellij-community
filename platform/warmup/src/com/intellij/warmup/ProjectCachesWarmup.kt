@@ -30,7 +30,6 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
     get() = "warmup"
 
   override fun premain(args: List<String>) {
-    System.setProperty("ide.warmup.use.predicates", true.toString())
     if (System.getProperty("caches.indexerThreadsCount") == null) {
       System.setProperty("caches.indexerThreadsCount", max(1, Runtime.getRuntime().availableProcessors() - 1).toString())
     }
