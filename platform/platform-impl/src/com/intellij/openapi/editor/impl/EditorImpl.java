@@ -546,6 +546,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         case EditorState.verticalScrollBarOrientationPropertyName -> verticalScrollBarOrientationChanged(event);
         case EditorState.isStickySelectionPropertyName -> isStickySelectionChanged(event);
         case EditorState.myForcedBackgroundPropertyName -> forcedBackgroundChanged(event);
+        case EditorState.myBorderPropertyName -> borderChanged(event);
       }
     }, myDisposable);
   }
@@ -2279,7 +2280,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setBorder(@Nullable Border border) {
     if (border == null) border = JBUI.Borders.empty();
-    myScrollPane.setBorder(border);
+    myState.setMyBorder(border);
+  }
+
+  private void borderChanged(ObservableStateListener.PropertyChangeEvent event) {
+    myScrollPane.setBorder(myState.getMyBorder());
   }
 
   @Override

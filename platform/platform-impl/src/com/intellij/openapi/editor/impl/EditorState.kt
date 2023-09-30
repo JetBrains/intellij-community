@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.editor.state.ObservableState
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
+import javax.swing.border.Border
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
@@ -21,6 +22,7 @@ class EditorState : ObservableState() {
     const val verticalScrollBarOrientationPropertyName = "verticalScrollBarOrientation"
     const val isStickySelectionPropertyName = "isStickySelection"
     const val myForcedBackgroundPropertyName = "myForcedBackground"
+    const val myBorderPropertyName = "myBorder"
   }
 
 
@@ -51,6 +53,7 @@ class EditorState : ObservableState() {
   var horizontalTextAlignment: Int by property(EditorImpl.TEXT_ALIGNMENT_LEFT)
 
   var myForcedBackground: Color? by property(null)
+  var myBorder: Border? by property(null)
 
   var myPlaceholderText: CharSequence? by property(null)
   var myPlaceholderAttributes: TextAttributes? by property(null)
