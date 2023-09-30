@@ -93,7 +93,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   private boolean myIsSaveNeeded;
   private boolean myCanBeDeleted = true;
   private boolean myIsVisible = true;
-  // version influences XML format and triggers migration
+  // version influences an XML format and triggers migration
   private int myVersion = CURR_VERSION;
   private Color myDeprecatedBackgroundColor = null;
 
@@ -514,7 +514,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
      * attribute in the scheme indicates the previous "hidpi-unaware" scheme and the restored font size
      * is reset to default. It's assumed this (transition case) happens only once, after which the IDE
      * will be able to restore the font size according to its scale and the IDE HiDPI mode. The default
-     * FONT_SCALE value should also be written by that reason.
+     * FONT_SCALE value should also be written for that reason.
      */
     if (!(myFontPreferences instanceof DelegatingFontPreferences) || !(myConsoleFontPreferences instanceof DelegatingFontPreferences)) {
       JdomKt.addOptionTag(parentNode, FONT_SCALE, String.valueOf(UISettings.getDefFontScale())); // must precede font options
@@ -533,8 +533,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
 
     // IJ has used a 'single customizable font' mode for ages. That's why we want to support that format now, when it's possible
-    // to specify fonts sequence (see getFontPreferences()), there are big chances that many clients still will use a single font.
-    // That's why we want to use old format when zero or one font is selected and 'extended' format otherwise.
+    // to specify a font sequence (see getFontPreferences()), there are big chances that many clients still will use a single font.
+    // That's why we want to use an old format when zero or one font is selected and 'extended' format otherwise.
     boolean useOldFontFormat = myFontPreferences.getEffectiveFontFamilies().size() <= 1;
     if (!(myFontPreferences instanceof DelegatingFontPreferences)) {
       JdomKt.addOptionTag(parentNode, LINE_SPACING, String.valueOf(getLineSpacing()));
@@ -598,7 +598,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     EditorColorsScheme baseScheme = getBaseScheme();
     if (attributes == INHERITED_ATTRS_MARKER) {
       TextAttributesKey baseKey = key.getFallbackAttributeKey();
-      // IDEA-162774 do not store if  inheritance = on in the parent scheme
+      // IDEA-162774 do not store if inheritance = on in the parent scheme
       TextAttributes parentAttributes = baseScheme instanceof AbstractColorsScheme ?
                                         ((AbstractColorsScheme)baseScheme).getDirectlyDefinedAttributes(key) : null;
       boolean parentOverwritingInheritance = parentAttributes != null && parentAttributes != INHERITED_ATTRS_MARKER;
@@ -925,9 +925,11 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   public boolean settingsEqual(Object other, @Nullable Predicate<? super ColorKey> colorKeyFilter) {
-    if (!(other instanceof AbstractColorsScheme otherScheme)) return false;
+    if (!(other instanceof AbstractColorsScheme otherScheme)) {
+      return false;
+    }
 
-    // parent is used only for default schemes (e.g. Darcula bundled in all ide (opposite to IDE-specific, like Cobalt))
+    // parent is used only for default schemes (e.g., Darcula bundled in all IDEs (opposite to IDE-specific, like Cobalt))
     if (getBaseDefaultScheme(this) != getBaseDefaultScheme(otherScheme)) {
       return false;
     }
