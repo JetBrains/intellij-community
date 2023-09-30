@@ -3,6 +3,8 @@ package com.intellij.util.io.dev.mmapped;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -36,7 +38,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * {@link com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper} or {@link com.intellij.openapi.vfs.newvfs.persistent.dev.FastFileAttributes}
  */
 @ApiStatus.Internal
-public final class MMappedFileStorage implements Closeable {
+public final class MMappedFileStorage implements Closeable, CleanableStorage {
   private static final Logger LOG = Logger.getInstance(MMappedFileStorage.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, 1000);
 
@@ -249,6 +251,12 @@ public final class MMappedFileStorage implements Closeable {
     if (channel.isOpen()) {
       channel.force(true);
     }
+  }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    close();
+    FileUtil.delete(storagePath);
   }
 
   /**

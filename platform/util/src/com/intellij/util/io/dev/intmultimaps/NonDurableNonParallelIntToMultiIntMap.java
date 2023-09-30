@@ -95,6 +95,11 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
     //nothing
   }
 
+  @Override
+  public void closeAndClean() throws IOException {
+    //nothing
+  }
+
   private static int adjustKey(int key) {
     if (key == Int2IntMultimap.NO_VALUE) {
       //Int2IntMultimap doesn't allow 0 keys/values, hence replace 0 key with just any value!=0. Key doesn't

@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.*;
@@ -103,6 +104,17 @@ public class ExtendibleHashMapTest extends IntToMultiIntMapTestBase<ExtendibleHa
       });
   }
 
+  @Test
+  public void closeAndClean_RemovesTheUnderlyingFile() throws IOException {
+    //RC: it is over-specification -- .closeAndClean() doesn't require to remove the file, only to clean the
+    //    content so new storage opened on top of it will be as-new. But this is the current implementation
+    //    of that spec:
+    multimap.closeAndClean();
+    assertFalse(
+      Files.exists(storagePath),
+      "File ["+storagePath+"] must NOT exist after .closeAndClean()"
+    );
+  }
 
   private Path storagePath;
 

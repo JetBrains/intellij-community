@@ -11,6 +11,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.*;
@@ -197,5 +198,17 @@ public class MMappedFileStorageTest {
         "All pages should be zeroed -- it should be no traces of 1s written before .truncate() call"
       );
     }
+  }
+
+  @Test
+  public void closeAndClean_RemovesTheStorageFile() throws IOException {
+    //RC: it is over-specification -- .closeAndClean() doesn't require to remove the file, only to clean the
+    //    content so new storage opened on top of it will be as-new. But this is the current implementation
+    //    of that spec:
+    storage.closeAndClean();
+    assertFalse(
+      Files.exists(storage.storagePath()),
+      "Storage file [" + storage.storagePath() + "] must not exist after .closeAndClean()"
+    );
   }
 }

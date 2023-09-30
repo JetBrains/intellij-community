@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -20,6 +21,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.io.DataEnumeratorEx.NULL_ID;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumeratorEx<String>> {
 
@@ -432,6 +434,16 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
       returnedNames
     );
   }
+
+  @Test
+  public void ifEnumeratorCloseable_CloseIsSafeToCallTwice() throws IOException {
+    assumeTrue(enumerator instanceof Closeable);
+
+    ((Closeable)enumerator).close();
+    ((Closeable)enumerator).close();
+  }
+
+
 
 
   protected void closeEnumerator(DataEnumerator<String> enumerator) throws Exception {

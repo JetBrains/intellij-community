@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.DurableDataEnumerator;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.ExceptionUtil;
@@ -24,7 +25,8 @@ import java.io.IOException;
  */
 @ApiStatus.Internal
 public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
-                                                   ScannableDataEnumeratorEx<V> {
+                                                   ScannableDataEnumeratorEx<V>,
+                                                   CleanableStorage {
 
   public static final int DATA_FORMAT_VERSION = 1;
 
@@ -74,6 +76,16 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
       () -> new IOException("Can't close " + valuesLog + "/" + valueHashToId),
       valuesLog::close,
       valueHashToId::close
+    );
+  }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    ExceptionUtil.runAllAndRethrowAllExceptions(
+      IOException.class,
+      () -> new IOException("Can't closeAndClean " + valuesLog + "/" + valueHashToId),
+      valuesLog::closeAndClean,
+      valueHashToId::closeAndClean
     );
   }
 

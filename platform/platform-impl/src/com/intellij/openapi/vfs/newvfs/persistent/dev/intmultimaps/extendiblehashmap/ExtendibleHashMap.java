@@ -251,13 +251,21 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
 
   @Override
   public synchronized void close() throws IOException {
-    if (storageModifiedSinceOpened) {
-      header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
+    if(storage.isOpen()) {
+      if (storageModifiedSinceOpened) {
+        header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
+      }
+      storage.close();
+      //clean all references to mapped ByteBuffers, so it's easier for GC to unmap them:
+      header = null;
+      bufferSource = null;
     }
-    storage.close();
-    //clean all references to mapped ByteBuffers, so it's easier for GC to unmap them:
-    header = null;
-    bufferSource = null;
+  }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    close();
+    storage.closeAndClean();
   }
 
   @Override

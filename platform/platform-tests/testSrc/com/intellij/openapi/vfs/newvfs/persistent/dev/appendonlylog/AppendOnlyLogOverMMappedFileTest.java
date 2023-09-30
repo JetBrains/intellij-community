@@ -10,6 +10,7 @@ import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
@@ -18,6 +19,7 @@ import static com.intellij.util.io.IOUtil.readString;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class AppendOnlyLogOverMMappedFileTest {
 
@@ -42,7 +44,7 @@ public class AppendOnlyLogOverMMappedFileTest {
   @After
   public void tearDown() throws IOException {
     if (appendOnlyLog != null) {
-      appendOnlyLog.closeAndRemove();
+      appendOnlyLog.closeAndClean();
     }
   }
 
@@ -197,6 +199,24 @@ public class AppendOnlyLogOverMMappedFileTest {
       "Log must throws exception if full record (payload+header) doesn't fit into a page, ",
       IllegalArgumentException.class,
       () -> appendOnlyLog.append(data -> data, PAGE_SIZE - headerSize + 1)
+    );
+  }
+
+  @Test
+  public void closeIsSafeToCallTwice() throws IOException {
+    appendOnlyLog.close();
+    appendOnlyLog.close();
+  }
+
+  @Test
+  public void closeAndClean_RemovesTheStorageFile() throws IOException {
+    //RC: it is over-specification -- .closeAndClean() doesn't require to remove the file, only to clean the
+    //    content so new storage opened on top of it will be as-new. But this is the current implementation
+    //    of that spec:
+    appendOnlyLog.closeAndClean();
+    assertFalse(
+      Files.exists(appendOnlyLog.storagePath()),
+      "Storage file [" + appendOnlyLog.storagePath() + "] must not exist after .closeAndClean()"
     );
   }
 

@@ -175,6 +175,12 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
   }
 
 
+  @Test
+  public void closeIsSafeToCallTwice() throws IOException {
+    multimap.close();
+    multimap.close();
+  }
+
   //TODO RC: test modification of records
   //TODO RC: test many multi-mapping (>1 value for the same key)
 

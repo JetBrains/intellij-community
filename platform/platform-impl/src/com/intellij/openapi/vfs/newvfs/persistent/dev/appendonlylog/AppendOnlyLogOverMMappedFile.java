@@ -562,12 +562,14 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
 
   @Override
   public void close() throws IOException {
-    //MAYBE RC: is it better to state that flush(true) should be called
-    //          explicitly, if needed, otherwise leave it to OS to decide
-    //          when to sync the pages?
-    flush(true);
-    storage.close();
-    headerPage = null;//help GC unmap pages sooner
+    if(storage.isOpen()) {
+      //MAYBE RC: is it better to state that flush(true) should be called
+      //          explicitly, if needed, otherwise leave it to OS to decide
+      //          when to sync the pages?
+      flush(true);
+      storage.close();
+      headerPage = null;//help GC unmap pages sooner
+    }
   }
 
   /**
@@ -579,7 +581,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
    * adds another level of uncertainty. Hence, if one needs to re-create the storage, it may be more reliable
    * to just .clear() the current storage, than to closeAndRemove -> create-fresh-new.
    */
-  public void closeAndRemove() throws IOException {
+  @Override
+  public void closeAndClean() throws IOException {
     close();
     FileUtil.delete(storage.storagePath());
   }

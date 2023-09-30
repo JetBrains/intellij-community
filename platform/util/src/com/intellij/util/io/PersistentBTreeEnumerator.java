@@ -42,7 +42,8 @@ import java.util.List;
  * cases {@link #myInlineKeysNoMapping} param allows to skip collision resolution paths altogether.
  */
 public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> implements DurableDataEnumerator<Data>,
-                                                                                               ScannableDataEnumeratorEx<Data> {
+                                                                                               ScannableDataEnumeratorEx<Data>,
+                                                                                               CleanableStorage {
   private static final int BTREE_PAGE_SIZE;
   private static final int DEFAULT_BTREE_PAGE_SIZE = 32768;
 
@@ -759,6 +760,12 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         StorageStatsRegistrar.INSTANCE.unregisterEnumerator(myFile);
       }
     }
+  }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    close();
+    IOUtil.deleteAllFilesStartingWith(myFile);
   }
 
   @Override
