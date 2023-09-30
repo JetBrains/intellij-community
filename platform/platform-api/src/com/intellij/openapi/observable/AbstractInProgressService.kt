@@ -21,6 +21,10 @@ abstract class AbstractInProgressService(private val scope: CoroutineScope) {
   @Volatile
   private var inProgress: Int = 0
 
+  /**
+   * Installs a tracker for a suspending asynchronous activity of [action].
+   * This method is cheap to use: it does not add any complex computations.
+   */
   suspend fun <T> trackConfigurationActivity(action: suspend () -> T) : T {
     return withBlockingJob { blockingJob ->
       withContext(blockingJob) {
@@ -29,6 +33,10 @@ abstract class AbstractInProgressService(private val scope: CoroutineScope) {
     }
   }
 
+  /**
+   * Installs a tracker for a blocking asynchronous activity of [action].
+   * This method is cheap to use: it does not add any synchronization or complex computations.
+   */
   @RequiresBlockingContext
   fun <T> trackConfigurationActivityBlocking(action: () -> T) : T {
     val currentContext = currentThreadContext()
