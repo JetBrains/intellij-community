@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,10 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.editor.colors.impl.AbstractColorsScheme.NAME_ATTR;
 
@@ -48,8 +45,8 @@ public final class DefaultColorSchemesManager {
 
   public void reload() {
     try {
-      loadState(JDOMUtil.load(ResourceUtil.getResourceAsBytes("DefaultColorSchemesManager.xml",
-                                                              DefaultColorSchemesManager.class.getClassLoader())));
+      loadState(JDOMUtil.load(Objects.requireNonNull(ResourceUtil.getResourceAsBytes("DefaultColorSchemesManager.xml",
+                                                                                     DefaultColorSchemesManager.class.getClassLoader()))));
     }
     catch (JDOMException | IOException e) {
       ExceptionUtil.rethrow(e);
@@ -81,13 +78,11 @@ public final class DefaultColorSchemesManager {
     mySchemes = Collections.unmodifiableList(schemes);
   }
 
-  @NotNull
-  public List<DefaultColorsScheme> getAllSchemes() {
+  public @NotNull List<DefaultColorsScheme> getAllSchemes() {
     return mySchemes;
   }
 
-  @NotNull
-  public List<@NonNls String> listNames() {
+  public @NotNull List<@NonNls String> listNames() {
     String[] names = new String[mySchemes.size()];
     for (int i = 0; i < names.length; i ++) {
       names[i] = mySchemes.get(i).getName();
@@ -95,13 +90,11 @@ public final class DefaultColorSchemesManager {
     return Arrays.asList(names);
   }
 
-  @NotNull
-  public DefaultColorsScheme getFirstScheme() {
+  public @NotNull DefaultColorsScheme getFirstScheme() {
     return mySchemes.get(0);
   }
 
-  @Nullable
-  public EditorColorsScheme getScheme(String name) {
+  public @Nullable EditorColorsScheme getScheme(String name) {
     for (DefaultColorsScheme scheme : mySchemes) {
       if (name.equals(scheme.getName())) return scheme;
     }

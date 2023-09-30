@@ -1009,7 +1009,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Override
     public @Nullable AbstractColorsScheme getOriginal() {
-      return myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getOriginal() : null;
+      return parentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)parentScheme).getOriginal() : null;
     }
 
     @Override
@@ -1032,7 +1032,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Override
     public boolean isReadOnly() {
-      return myParentScheme instanceof ReadOnlyColorsScheme;
+      return parentScheme instanceof ReadOnlyColorsScheme;
     }
 
     public boolean isModified() {
@@ -1049,20 +1049,20 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Override
     public boolean canBeDeleted() {
-      return (myParentScheme instanceof AbstractColorsScheme) && ((AbstractColorsScheme)myParentScheme).canBeDeleted();
+      return (parentScheme instanceof AbstractColorsScheme) && ((AbstractColorsScheme)parentScheme).canBeDeleted();
     }
 
     private boolean isFontModified() {
-      return !areDelegatingOrEqual(getFontPreferences(), myParentScheme.getFontPreferences());
+      return !areDelegatingOrEqual(getFontPreferences(), parentScheme.getFontPreferences());
     }
 
     private boolean isConsoleFontModified() {
-      return !areDelegatingOrEqual(getConsoleFontPreferences(), myParentScheme.getConsoleFontPreferences());
+      return !areDelegatingOrEqual(getConsoleFontPreferences(), parentScheme.getConsoleFontPreferences());
     }
 
     protected boolean apply() {
-      if (!(myParentScheme instanceof ReadOnlyColorsScheme)) {
-        return apply(myParentScheme);
+      if (!(parentScheme instanceof ReadOnlyColorsScheme)) {
+        return apply(parentScheme);
       }
       return false;
     }
@@ -1118,8 +1118,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     public boolean isInherited(@NotNull TextAttributesKey key) {
       TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
       if (fallbackKey != null) {
-        if (myParentScheme instanceof AbstractColorsScheme) {
-          TextAttributes ownAttrs = ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key);
+        if (parentScheme instanceof AbstractColorsScheme) {
+          TextAttributes ownAttrs = ((AbstractColorsScheme)parentScheme).getDirectlyDefinedAttributes(key);
           if (ownAttrs != null) {
             return ownAttrs == AbstractColorsScheme.INHERITED_ATTRS_MARKER;
           }
@@ -1136,8 +1136,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     public boolean isInherited(ColorKey key) {
       ColorKey fallbackKey = key.getFallbackColorKey();
       if (fallbackKey != null) {
-        if (myParentScheme instanceof AbstractColorsScheme) {
-          Color ownAttrs = ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedColor(key);
+        if (parentScheme instanceof AbstractColorsScheme) {
+          Color ownAttrs = ((AbstractColorsScheme)parentScheme).getDirectlyDefinedColor(key);
           if (ownAttrs != null) {
             return ownAttrs == AbstractColorsScheme.INHERITED_COLOR_MARKER;
           }
@@ -1152,10 +1152,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
 
     public void resetToOriginal() {
-      if (myParentScheme instanceof AbstractColorsScheme) {
-        AbstractColorsScheme originalScheme = ((AbstractColorsScheme)myParentScheme).getOriginal();
+      if (parentScheme instanceof AbstractColorsScheme) {
+        AbstractColorsScheme originalScheme = ((AbstractColorsScheme)parentScheme).getOriginal();
         if (originalScheme != null) {
-          copyPreservingFileStatusColors(originalScheme, (AbstractColorsScheme)myParentScheme);
+          copyPreservingFileStatusColors(originalScheme, (AbstractColorsScheme)parentScheme);
           copyPreservingFileStatusColors(originalScheme, this);
           initScheme(this);
         }

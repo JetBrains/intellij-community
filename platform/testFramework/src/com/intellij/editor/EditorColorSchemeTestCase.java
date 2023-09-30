@@ -87,7 +87,7 @@ public abstract class EditorColorSchemeTestCase extends LightPlatformTestCase {
   }
 
 
-  protected @NotNull Element serializeWithSelectedMetaInfo(@NotNull AbstractColorsScheme scheme, String... properties) {
+  public static @NotNull Element serializeWithSelectedMetaInfo(@NotNull AbstractColorsScheme scheme, String... properties) {
     Element root = new Element("scheme");
     scheme.writeExternal(root);
     fixPlatformSpecificValues(root);

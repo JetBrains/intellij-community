@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -46,14 +46,14 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   public void setColor(ColorKey key, Color color) {
     if (color == NULL_COLOR_MARKER ||
         color == INHERITED_COLOR_MARKER) {
-      myColorsMap.put(key, color);
+      colorMap.put(key, color);
       return;
     }
     Color directlyDefinedColor = getDirectlyDefinedColor(key);
     if (directlyDefinedColor == NULL_COLOR_MARKER ||
         directlyDefinedColor == INHERITED_COLOR_MARKER ||
         !colorsEqual(color, directlyDefinedColor)) {
-      myColorsMap.put(key, ObjectUtils.notNull(color, NULL_COLOR_MARKER));
+      colorMap.put(key, ObjectUtils.notNull(color, NULL_COLOR_MARKER));
     }
   }
 
@@ -77,7 +77,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
         }
       }
     }
-    return myParentScheme.getAttributes(key);
+    return parentScheme.getAttributes(key);
   }
 
   @Override
@@ -99,12 +99,12 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
         }
       }
     }
-    return myParentScheme.getColor(key);
+    return parentScheme.getColor(key);
   }
 
   @Override
   public Object clone() {
-    EditorColorsSchemeImpl newScheme = new EditorColorsSchemeImpl(myParentScheme);
+    EditorColorsSchemeImpl newScheme = new EditorColorsSchemeImpl(parentScheme);
     copyTo(newScheme);
     newScheme.setName(getName());
     newScheme.setDefaultMetaInfo(this);
@@ -134,8 +134,8 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
       }
     }
     filters.add(key -> myAttributesMap.containsKey(key.getExternalName()));
-    if (myParentScheme instanceof EditorColorsSchemeImpl &&
-        !((EditorColorsSchemeImpl)myParentScheme).compareAttributes(otherScheme, filters)) {
+    if (parentScheme instanceof EditorColorsSchemeImpl &&
+        !((EditorColorsSchemeImpl)parentScheme).compareAttributes(otherScheme, filters)) {
       return false;
     }
     return true;
@@ -151,16 +151,16 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
 
   private boolean compareColors(@NotNull AbstractColorsScheme otherScheme,
                                 @NotNull Collection<Predicate<? super ColorKey>> filters) {
-    for (ColorKey key : myColorsMap.keySet()) {
+    for (ColorKey key : colorMap.keySet()) {
       Color thisColor = getColor(key);
       Color otherColor = otherScheme.getColor(key);
       if (isColorKeyAccepted(filters, key) && !Comparing.equal(thisColor, otherColor)) {
         return false;
       }
     }
-    filters.add(key -> !myColorsMap.containsKey(key));
-    if (myParentScheme instanceof EditorColorsSchemeImpl &&
-        !((EditorColorsSchemeImpl)myParentScheme).compareColors(otherScheme, filters)) {
+    filters.add(key -> !colorMap.containsKey(key));
+    if (parentScheme instanceof EditorColorsSchemeImpl &&
+        !((EditorColorsSchemeImpl)parentScheme).compareColors(otherScheme, filters)) {
       return false;
     }
     return true;
