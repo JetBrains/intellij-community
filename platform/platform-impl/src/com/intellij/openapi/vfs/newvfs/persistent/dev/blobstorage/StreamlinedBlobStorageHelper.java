@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.openapi.util.IntRef;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.ActualRecords;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.io.ClosedStorageException;
@@ -238,6 +239,13 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   public int maxPayloadSupported() {
     return Math.min(maxCapacityForPageSize, MAX_CAPACITY);
   }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    close();
+    FileUtil.delete(storagePath());
+  }
+
 
   //monitoring:
 

@@ -3,6 +3,7 @@ package com.intellij.util.io.blobstorage;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.util.IntRef;
+import com.intellij.util.io.CleanableStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ import java.nio.ByteBuffer;
  * Thread safety is a property of specific implementation
  */
 @ApiStatus.Internal
-public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forceable {
+public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forceable, CleanableStorage {
   int NULL_ID = 0;
 
   /** @return version of storage internal format. Read only -- storage manages it */
