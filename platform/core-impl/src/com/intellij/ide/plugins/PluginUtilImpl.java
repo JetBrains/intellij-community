@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.PluginException;
@@ -126,9 +126,8 @@ public final class PluginUtilImpl implements PluginUtil {
     return causeId != null ? causeId : bundledId;
   }
 
-  @Nls
   @Override
-  public @Nullable String findPluginName(@NotNull PluginId pluginId) {
+  public @Nls @Nullable String findPluginName(@NotNull PluginId pluginId) {
     IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
     return plugin != null ? plugin.getName() : null;
   }

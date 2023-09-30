@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExtractIncludeFromHTMLHandler extends ExtractIncludeFileBase<XmlTagChild> {
+public final class ExtractIncludeFromHTMLHandler extends ExtractIncludeFileBase<XmlTagChild> {
   private static final Logger LOG = Logger.getInstance(ExtractIncludeFromHTMLHandler.class);
 
   @Override
@@ -36,7 +36,7 @@ public class ExtractIncludeFromHTMLHandler extends ExtractIncludeFileBase<XmlTag
       try {
         final XmlElementDescriptor descriptor = parentTag.getDescriptor();
         LOG.assertTrue(descriptor != null);
-        @NonNls final String name = descriptor.getName();
+        final @NonNls String name = descriptor.getName();
         if (HtmlUtil.SCRIPT_TAG_NAME.equals(name)) {
           parentTag.setAttribute("src", includePath);
           LOG.assertTrue(first.getParent() == parentTag);
@@ -79,8 +79,7 @@ public class ExtractIncludeFromHTMLHandler extends ExtractIncludeFileBase<XmlTag
   }
 
   @Override
-  @Nullable
-  protected Pair<XmlTagChild, XmlTagChild> findPairToExtract(final int start, final int end) {
+  protected @Nullable Pair<XmlTagChild, XmlTagChild> findPairToExtract(final int start, final int end) {
     Pair<XmlTagChild, XmlTagChild> range = XmlUtil.findTagChildrenInRange(myIncludingFile, start, end);
     if (range != null) {
       if (range.first == range.second && range.first instanceof XmlTag) {

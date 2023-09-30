@@ -11,11 +11,11 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class HtmlHttpEquivEncodingReferenceProvider extends XmlEncodingReferenceProvider {
+public final class HtmlHttpEquivEncodingReferenceProvider extends XmlEncodingReferenceProvider {
   private static final Logger LOG = Logger.getInstance(XmlEncodingReferenceProvider.class);
 
   @Override
-  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context) {
     LOG.assertTrue(element instanceof XmlAttributeValue);
     XmlAttributeValue value = (XmlAttributeValue)element;
     PsiElement parent = value.getParent();

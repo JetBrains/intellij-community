@@ -16,13 +16,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class HtmlUpdateImageSizeIntention extends BaseIntentionAction {
+public final class HtmlUpdateImageSizeIntention extends BaseIntentionAction {
   private boolean myUseElementToTheLeft = false;
   
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return HtmlToolsBundle.message("html.intention.update.image.size");
   }
 
@@ -74,8 +72,7 @@ public class HtmlUpdateImageSizeIntention extends BaseIntentionAction {
     }
   }
 
-  @Nullable
-  private static ImageInfo getImageInfo(@NotNull XmlTag xmlTag) {
+  private static @Nullable ImageInfo getImageInfo(@NotNull XmlTag xmlTag) {
     if (HtmlReferenceProvider.SizeReference.IMAGE_TAG_NAME.equalsIgnoreCase(xmlTag.getName())) {
       return HtmlReferenceProvider.SizeReference.getImageInfo(xmlTag);
     }
@@ -83,8 +80,7 @@ public class HtmlUpdateImageSizeIntention extends BaseIntentionAction {
   }
 
 
-  @Nullable
-  private static XmlTag getTag(@NotNull PsiFile file, int offset) {
+  private static @Nullable XmlTag getTag(@NotNull PsiFile file, int offset) {
     if (!HtmlUtil.hasHtml(file)) {
       return null;
     }

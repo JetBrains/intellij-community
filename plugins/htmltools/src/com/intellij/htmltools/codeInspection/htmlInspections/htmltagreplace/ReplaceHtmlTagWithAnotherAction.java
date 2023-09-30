@@ -17,14 +17,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ReplaceHtmlTagWithAnotherAction implements LocalQuickFix {
-  @NonNls private final String myName;
+public final class ReplaceHtmlTagWithAnotherAction implements LocalQuickFix {
+  private final @NonNls String myName;
   public ReplaceHtmlTagWithAnotherAction(String name) {
     myName = name;
   }
 
-  private static class Holder {
-    @NonNls private static final Map<String, String> ourTagToNewTagMap = new HashMap<>();
+  private static final class Holder {
+    private static final @NonNls Map<String, String> ourTagToNewTagMap = new HashMap<>();
 
     static {
       ourTagToNewTagMap.put("i", "em");
@@ -39,15 +39,12 @@ public class ReplaceHtmlTagWithAnotherAction implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return HtmlToolsBundle.message("html.replace.tag.with.another.quickfix.text", myName, Holder.ourTagToNewTagMap.get(myName));
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getFamilyName() {
+  public @NonNls @NotNull String getFamilyName() {
     return HtmlToolsBundle.message("html.replace.tag.with.another.quickfix.family.name");
   }
 
@@ -58,7 +55,7 @@ public class ReplaceHtmlTagWithAnotherAction implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     PsiElement parent = descriptor.getPsiElement();
     while (parent != null) {
       if (parent instanceof XmlTag && myName.equals(StringUtil.toLowerCase(((XmlTag)parent).getLocalName()))) {
