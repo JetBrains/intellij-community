@@ -613,17 +613,9 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   /** Close the storage and remove all its data files */
   @Override
-  public void closeAndRemoveAllFiles() throws IOException {
+  public void closeAndClean() throws IOException {
     close();
-    if (SystemInfoRt.isWindows) {
-      //On Win there are a lot of issues with removing file that was mmapped.
-      // Let's give mapped buffers at least a chance to be collected & unmapped -- not a guarantee from that kind of
-      // issues, but a small step in the right direction
-
-      //noinspection CallToSystemGC
-      System.gc();
-    }
-    FileUtil.delete(storage.storagePath());
+    storage.closeAndClean();
   }
 
   // =============== implementation: addressing ========================================================= //

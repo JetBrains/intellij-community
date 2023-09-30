@@ -1,13 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.util.io.CleanableStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 @ApiStatus.Internal
-public interface PersistentFSRecordsStorage {
+public interface PersistentFSRecordsStorage extends CleanableStorage {
   int NULL_ID = FSRecords.NULL_FILE_ID;
   int MIN_VALID_ID = NULL_ID + 1;
 
@@ -121,7 +122,8 @@ public interface PersistentFSRecordsStorage {
   void close() throws IOException;
 
   /** Close the storage and remove all its data files */
-  void closeAndRemoveAllFiles() throws IOException;
+  @Override
+  void closeAndClean() throws IOException;
 
   @FunctionalInterface
   interface FsRecordProcessor {

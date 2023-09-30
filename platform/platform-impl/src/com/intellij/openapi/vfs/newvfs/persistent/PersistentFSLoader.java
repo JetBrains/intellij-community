@@ -399,7 +399,7 @@ public final class PersistentFSLoader {
 
     if (recordsStorage != null) {
       try {
-        recordsStorage.closeAndRemoveAllFiles();
+        recordsStorage.closeAndClean();
       }
       catch (IOException ex) {
         LOG.info("Can't delete fs-records: " + ex.getMessage(), ex);

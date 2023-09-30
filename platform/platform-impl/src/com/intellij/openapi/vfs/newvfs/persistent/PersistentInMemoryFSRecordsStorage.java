@@ -374,7 +374,7 @@ public final class PersistentInMemoryFSRecordsStorage implements PersistentFSRec
   }
 
   @Override
-  public void closeAndRemoveAllFiles() throws IOException {
+  public void closeAndClean() throws IOException {
     close();
     //...and nothing to remove
   }
