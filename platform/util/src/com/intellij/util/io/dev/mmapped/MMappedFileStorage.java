@@ -3,6 +3,7 @@ package com.intellij.util.io.dev.mmapped;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.ClosedStorageException;
@@ -256,6 +257,14 @@ public final class MMappedFileStorage implements Closeable, CleanableStorage {
   @Override
   public void closeAndClean() throws IOException {
     close();
+    if (SystemInfoRt.isWindows) {
+      //On Win there are a lot of issues with removing file that was mmapped.
+      // Let's give mapped buffers at least a chance to be collected & unmapped -- not a guarantee from that kind of
+      // issues, but a small step in the right direction
+
+      //noinspection CallToSystemGC
+      System.gc();
+    }
     FileUtil.delete(storagePath);
   }
 
