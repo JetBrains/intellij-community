@@ -493,8 +493,8 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             annotatedElement.initializer?.let { it.getType(it.analyze()) }?.let { return it }
             annotatedElement.delegateExpression?.let { it.getType(it.analyze())?.arguments?.firstOrNull()?.type }?.let { return it }
         }
-        annotatedElement.getParentOfType<KtProperty>(false)?.let {
-            it.typeReference?.getType() ?: it.initializer?.let { it.getType(it.analyze()) }
+        annotatedElement.getParentOfType<KtProperty>(false)?.let { property ->
+            property.typeReference?.getType() ?: property.initializer?.let { it.getType(it.analyze()) }
         }?.let { return it }
         return null
     }
