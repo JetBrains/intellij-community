@@ -25,10 +25,7 @@ import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.SingleTaskController;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.impl.HeavyAwareListener;
-import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
-import com.intellij.vcs.log.impl.VcsLogErrorHandler;
-import com.intellij.vcs.log.impl.VcsLogIndexer;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.statistics.VcsLogIndexCollector;
 import com.intellij.vcs.log.util.IntCollectionUtil;
 import com.intellij.vcs.log.util.StopWatch;
@@ -147,7 +144,10 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   }
 
   private void doScheduleIndex(boolean full) {
-    doScheduleIndex(full, request -> mySingleTaskController.request(request));
+    myProject.getService(VcsInProgressService.class).trackConfigurationActivityBlocking(() -> {
+      doScheduleIndex(full, request -> mySingleTaskController.request(request));
+      return null;
+    });
   }
 
   @TestOnly

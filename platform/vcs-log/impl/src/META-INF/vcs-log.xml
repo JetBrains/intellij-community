@@ -47,6 +47,8 @@
 
     <cachesInvalidator implementation="com.intellij.vcs.log.impl.VcsLogCachesInvalidator"/>
 
+    <activityInProgressPredicate implementation="com.intellij.vcs.log.impl.VcsInProgressPredicate"/>
+
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogFileHistoryProvider"
                     serviceImplementation="com.intellij.vcs.log.history.VcsLogFileHistoryProviderImpl"/>
 

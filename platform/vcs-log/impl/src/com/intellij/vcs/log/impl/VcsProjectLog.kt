@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
@@ -190,8 +191,10 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
     if (logProviders.isEmpty()) return null
 
-    val logManager = getOrCreateLogManager(logProviders)
-    logManager.initialize(force = forceInit)
+    project.serviceAsync<VcsInProgressService>().trackConfigurationActivity {
+      val logManager = getOrCreateLogManager(logProviders)
+      logManager.initialize(force = forceInit)
+    }
     return logManager
   }
 
@@ -236,7 +239,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   internal class InitLogStartupActivity : ProjectActivity {
     init {
       val app = ApplicationManager.getApplication()
-      if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      if (app.isUnitTestMode) {
         throw ExtensionNotApplicableException.create()
       }
     }
@@ -363,21 +366,27 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
 
 private suspend fun VcsLogManager.initialize(force: Boolean) {
   if (force) {
-    scheduleInitialization()
+    blockingContext {
+      scheduleInitialization()
+    }
     return
   }
 
   if (PostponableLogRefresher.keepUpToDate()) {
     val invalidator = CachesInvalidator.EP_NAME.findExtensionOrFail(VcsLogCachesInvalidator::class.java)
     if (invalidator.isValid) {
-      scheduleInitialization()
+      blockingContext {
+        scheduleInitialization()
+      }
       return
     }
   }
 
   withContext(Dispatchers.EDT) {
     if (isLogVisible) {
-      scheduleInitialization()
+      blockingContext {
+        scheduleInitialization()
+      }
     }
   }
 }

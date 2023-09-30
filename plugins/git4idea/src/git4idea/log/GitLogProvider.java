@@ -23,10 +23,7 @@ import com.intellij.vcs.log.data.VcsLogSorter;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import com.intellij.vcs.log.graph.impl.print.GraphColorGetterByNodeFactory;
-import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.LogDataImpl;
-import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
-import com.intellij.vcs.log.impl.VcsLogIndexer;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.CommitCountStageKt;
@@ -375,10 +372,13 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   public @NotNull Disposable subscribeToRootRefreshEvents(@NotNull Collection<? extends VirtualFile> roots, @NotNull VcsLogRefresher refresher) {
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, repository -> {
-      VirtualFile root = repository.getRoot();
-      if (roots.contains(root)) {
-        refresher.refresh(root);
-      }
+      myProject.getService(VcsInProgressService.class).trackConfigurationActivityBlocking(() -> {
+        VirtualFile root = repository.getRoot();
+        if (roots.contains(root)) {
+          refresher.refresh(root);
+        }
+        return null;
+      });
     });
     return connection;
   }
