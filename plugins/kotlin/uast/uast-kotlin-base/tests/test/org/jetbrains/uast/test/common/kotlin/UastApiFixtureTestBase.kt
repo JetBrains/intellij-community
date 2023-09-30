@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.uast.*
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiTypes
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
@@ -368,6 +369,49 @@ interface UastApiFixtureTestBase : UastPluginSelection {
                 TestCase.assertEquals(1, annotations.size)
                 val annotation = annotations.single()
                 TestCase.assertTrue(annotation.isNullable)
+            }
+        })
+    }
+
+    fun checkInheritedGenericTypeNullability_propertyAndAccessor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class CircularArray<E> {
+                    val first: E
+                        get() = TODO()
+
+                    var last: E
+                        get() = TODO()
+                        set(value) = TODO()
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
+
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitField(node: UField): Boolean {
+                TestCase.assertTrue(node.uAnnotations.isEmpty())
+                TestCase.assertTrue(service.hasInheritedGenericType(node.sourcePsi!!))
+                return super.visitField(node)
+            }
+
+            override fun visitMethod(node: UMethod): Boolean {
+                if (node.isConstructor) {
+                    return super.visitMethod(node)
+                }
+                TestCase.assertTrue(node.uAnnotations.isEmpty())
+                TestCase.assertTrue(
+                    node.returnType == PsiTypes.voidType() || service.hasInheritedGenericType(node.sourcePsi!!)
+                )
+                return super.visitMethod(node)
+            }
+
+            override fun visitParameter(node: UParameter): Boolean {
+                TestCase.assertTrue(node.uAnnotations.isEmpty())
+                TestCase.assertTrue(service.hasInheritedGenericType(node.sourcePsi!!))
+                return super.visitParameter(node)
             }
         })
     }

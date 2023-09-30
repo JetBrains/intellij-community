@@ -7,6 +7,7 @@ import com.intellij.psi.impl.compiled.ClsMemberImpl
 import com.intellij.psi.impl.file.PsiPackageImpl
 import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
@@ -630,44 +632,54 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun hasInheritedGenericType(psiElement: PsiElement): Boolean {
-        return when (psiElement) {
-            is KtTypeReference ->
-                analyzeForUast(psiElement) {
-                    isInheritedGenericType(psiElement.getKtType())
-                }
-
-            is KtCallableDeclaration ->
-                analyzeForUast(psiElement) {
-                    isInheritedGenericType(getKtType(psiElement))
-                }
-
-            is KtDestructuringDeclaration ->
-                analyzeForUast(psiElement) {
-                    isInheritedGenericType(psiElement.getReturnKtType())
-                }
-
-            else -> false
+        return getTargetType(psiElement, false) { ktType ->
+            isInheritedGenericType(ktType)
         }
     }
 
     override fun nullability(psiElement: PsiElement): KtTypeNullability? {
+        return getTargetType(psiElement, null) { ktType ->
+            nullability(ktType)
+        }
+    }
+
+    private inline fun <R> getTargetType(
+        psiElement: PsiElement,
+        defaultValue: R,
+        typeConsumer: KtAnalysisSession.(KtType?) -> R,
+    ): R {
         return when (psiElement) {
-            is KtTypeReference ->
+            is KtTypeReference -> {
                 analyzeForUast(psiElement) {
-                    nullability(psiElement.getKtType())
+                    typeConsumer(psiElement.getKtType())
                 }
+            }
 
-            is KtCallableDeclaration ->
+            is KtCallableDeclaration -> {
+                // NB: We should not use [KtDeclaration.getReturnKtType]; see its comment:
+                // IMPORTANT: For `vararg foo: T` parameter returns full `Array<out T>` type
+                // (unlike [KtValueParameterSymbol.returnType] which returns `T`).
                 analyzeForUast(psiElement) {
-                    nullability(getKtType(psiElement))
+                    typeConsumer(getKtType(psiElement))
                 }
+            }
 
-            is KtDestructuringDeclaration ->
+            is KtPropertyAccessor -> {
+                // Not necessary to use the containing property
+                // getter: its return type should be the same as property
+                // setter: it's always `void`, and its (implicit) setter parameter is callable.
                 analyzeForUast(psiElement) {
-                    nullability(psiElement.getReturnKtType())
+                    typeConsumer(psiElement.getReturnKtType())
                 }
+            }
 
-            else -> null
+            is KtDestructuringDeclaration -> {
+                analyzeForUast(psiElement) {
+                    typeConsumer(psiElement.getReturnKtType())
+                }
+            }
+
+            else -> defaultValue
         }
     }
 

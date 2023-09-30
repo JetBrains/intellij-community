@@ -49,6 +49,10 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkInheritedGenericTypeNullability(myFixture)
     }
 
+    fun testInheritedGenericTypeNullability_propertyAndAccessor() {
+        checkInheritedGenericTypeNullability_propertyAndAccessor(myFixture)
+    }
+
     fun testImplicitReceiverType() {
         checkImplicitReceiverType(myFixture)
     }
