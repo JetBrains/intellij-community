@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.common.kotlin
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
@@ -13,8 +14,10 @@ import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.uast.*
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
+import com.intellij.psi.PsiAnnotation
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.util.isConstructorCall
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -268,6 +271,103 @@ interface UastApiFixtureTestBase : UastPluginSelection {
                 }
 
                 return super.visitMethod(node)
+            }
+        })
+    }
+
+    fun checkInheritedGenericTypeNullability(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class NonNullUpperBound<T : Any>(ctorParam: T) {
+                    fun inheritedNullability(i: T): T = i
+                    fun explicitNullable(e: T?): T? = e
+                }
+
+                class NullableUpperBound<T : Any?>(ctorParam: T) {
+                    fun inheritedNullability(i: T): T = i
+                    fun explicitNullable(e: T?): T? = e
+                }
+
+                class UnspecifiedUpperBound<T>(ctorParam: T) {
+                    fun inheritedNullability(i: T): T = i
+                    fun explicitNullable(e: T?): T? = e
+                }
+
+                fun <T : Any> topLevelNonNullUpperBoundInherited(t: T) = t
+                fun <T : Any> T.extensionNonNullUpperBoundInherited(t: T) { }
+                fun <T : Any> topLevelNonNullUpperBoundExplicitNullable(t: T?) = t
+
+                fun <T : Any?> topLevelNullableUpperBoundInherited(t: T) = t
+                fun <T : Any?> T.extensionNullableUpperBoundInherited(t: T) { }
+                fun <T : Any?> topLevelNullableUpperBoundExplicitNullable(t: T?) = t
+
+                fun <T> topLevelUnspecifiedUpperBoundInherited(t: T) = t
+                fun <T> T.extensionUnspecifiedUpperBoundInherited(t: T) { }
+                fun <T> topLevelUnspecifiedUpperBoundExplicitNullable(t: T?) = t
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
+
+        uFile.accept(object : AbstractUastVisitor() {
+            var currentMethod: UMethod? = null
+
+            override fun visitMethod(node: UMethod): Boolean {
+                if (node.isConstructor) {
+                    return super.visitMethod(node)
+                }
+                currentMethod = node
+                return super.visitMethod(node)
+            }
+
+            override fun afterVisitMethod(node: UMethod) {
+                currentMethod = null
+            }
+
+            override fun visitParameter(node: UParameter): Boolean {
+                if (currentMethod == null) {
+                    return super.visitParameter(node)
+                }
+
+                val name = currentMethod!!.name
+                val annotations = node.uAnnotations
+                if (name.endsWith("Nullable")) {
+                    // explicitNullable or ...ExplicitNullable
+                    checkNullableAnnotation(annotations)
+                } else if (name == "inheritedNullability") {
+                    val className = (currentMethod!!.uastParent as UClass).name!!
+                    if (className.startsWith("NonNull")) {
+                        // non-null upper bound (T: Any)
+                        checkNonNullAnnotation(annotations)
+                    } else {
+                        TestCase.assertTrue(annotations.isEmpty())
+                        TestCase.assertTrue(service.hasInheritedGenericType(node.sourcePsi!!))
+                    }
+                } else {
+                    // ...Inherited
+                    if (name.contains("NonNull")) {
+                        // non-null upper bound (T: Any)
+                        checkNonNullAnnotation(annotations)
+                    } else {
+                        TestCase.assertTrue(annotations.isEmpty())
+                        TestCase.assertTrue(service.hasInheritedGenericType(node.sourcePsi!!))
+                    }
+                }
+
+                return super.visitParameter(node)
+            }
+
+            private fun checkNonNullAnnotation(annotations: List<UAnnotation>) {
+                TestCase.assertEquals(1, annotations.size)
+                val annotation = annotations.single()
+                TestCase.assertTrue(annotation.isNotNull)
+            }
+
+            private fun checkNullableAnnotation(annotations: List<UAnnotation>) {
+                TestCase.assertEquals(1, annotations.size)
+                val annotation = annotations.single()
+                TestCase.assertTrue(annotation.isNullable)
             }
         })
     }
