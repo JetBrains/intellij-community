@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PythonPackageManagerExt")
 
 package com.jetbrains.python.packaging.management
@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.util.net.HttpConfigurable
@@ -77,10 +78,14 @@ suspend fun PythonPackageManager.runPackagingTool(operation: String, arguments: 
   val commandLineString = commandLine.joinToString(" ")
 
   thisLogger().debug("Running python packaging tool. Operation: $operation")
-  val handler = CapturingProcessHandler(process, targetedCommandLine.charset, commandLineString)
+  val handler = blockingContext {
+    CapturingProcessHandler(process, targetedCommandLine.charset, commandLineString)
+  }
 
   val result = withBackgroundProgress(project, text, cancellable = true) {
-    handler.runProcess(10 * 60 * 1000)
+    blockingContext {
+      handler.runProcess(10 * 60 * 1000)
+    }
   }
 
   if (result.isCancelled) throw RunCanceledByUserException()

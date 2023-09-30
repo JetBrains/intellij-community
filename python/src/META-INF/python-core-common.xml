@@ -337,6 +337,8 @@
 
     <environmentKeyProvider implementation="com.jetbrains.python.sdk.headless.PythonEnvironmentKeyProvider"/>
     <postStartupActivity implementation="com.jetbrains.python.sdk.headless.PythonHeadlessSdkProjectActivity"/>
+    <activityInProgressPredicate implementation="com.jetbrains.python.sdk.headless.PythonInProgressPredicate"/>
+
     <projectConfigurable groupId="build" groupWeight="119" id="reference.idesettings.debugger.python"
                          instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"
                          bundle="messages.PyBundle"
