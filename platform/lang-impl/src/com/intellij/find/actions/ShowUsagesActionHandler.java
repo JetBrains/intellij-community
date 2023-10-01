@@ -12,6 +12,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageSearchPresentation;
 import com.intellij.usages.UsageSearcher;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,8 @@ public interface ShowUsagesActionHandler {
   @NotNull Class<?> getTargetClass();
 
   @NotNull List<EventPair<?>> getEventData();
+
+  void beforeClose(@NonNls String reason);
 
   @NotNull List<EventPair<?>> buildFinishEventData(@Nullable UsageInfo selectedUsage);
 

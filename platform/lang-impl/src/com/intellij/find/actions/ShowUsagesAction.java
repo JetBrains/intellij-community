@@ -116,6 +116,12 @@ import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public final class ShowUsagesAction extends AnAction implements PopupAction, HintManagerImpl.ActionToIgnore {
   public static final String ID = "ShowUsages";
+
+  @ApiStatus.Internal
+  public static final String CLOSE_REASON_PREVIEW = "Preview";
+  @ApiStatus.Internal
+  public static final String CLOSE_REASON_CHANGE_SCOPE = "ChangeScope";
+
   private static final String DIMENSION_SERVICE_KEY = "ShowUsagesActions.dimensionServiceKey";
   private static final String SPLITTER_SERVICE_KEY = "ShowUsagesActions.splitterServiceKey";
   private static final String PREVIEW_PROPERTY_KEY = "ShowUsagesActions.previewPropertyKey";
@@ -422,6 +428,10 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                                  e -> e.equals(containingFile.getVirtualFile()))));
         }
         return eventData;
+      }
+
+      @Override
+      public void beforeClose(String reason) {
       }
     };
   }
@@ -843,7 +853,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       new DumbAwareAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          cancel(popupRef.get());
+          cancel(popupRef.get(), actionHandler, CLOSE_REASON_CHANGE_SCOPE);
           showUsagesInMaximalScope(parameters, actionHandler);
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(shortcut.getFirstKeyStroke()), table);
@@ -867,7 +877,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         if (e.getDataContext() != DataContext.EMPTY_CONTEXT) { // Avoid fake events
           properties.setValue(PREVIEW_PROPERTY_KEY, state);
-          cancel(popupRef.get());
+          cancel(popupRef.get(), actionHandler, CLOSE_REASON_PREVIEW);
 
           WindowStateService.getInstance().putSize(DIMENSION_SERVICE_KEY, null);
           showElementUsages(parameters, actionHandler);
@@ -1096,8 +1106,17 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     return actionToolbar;
   }
 
-  static void cancel(@Nullable JBPopup popup) {
+  static void cancel(@Nullable AbstractPopup popup) {
+    cancel(popup, null, null);
+  }
+
+  static void cancel(@Nullable AbstractPopup popup, @Nullable ShowUsagesActionHandler actionHandler, @Nullable String closeReason) {
     if (popup != null) {
+      // TODO: think about better API for providing information about closing reason
+      // It is important for RDCT - in some cases we have to terminate protocol session, but in some we can not do it
+      if (actionHandler != null) {
+        actionHandler.beforeClose(closeReason);
+      }
       popup.cancel();
     }
   }
@@ -1113,7 +1132,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     result.addChangeListener(scope -> {
       UsageViewStatisticsCollector.logScopeChanged(project, usageView, actionHandler.getSelectedScope(), scope,
                                                    actionHandler.getTargetClass());
-      cancel(showUsagesPopupData.popupRef.get());
+      cancel(showUsagesPopupData.popupRef.get(), actionHandler, CLOSE_REASON_CHANGE_SCOPE);
       ShowUsagesActionHandler handler = actionHandler.withScope(scope);
       if (handler != null) {
         showElementUsages(showUsagesPopupData.parameters, handler);
