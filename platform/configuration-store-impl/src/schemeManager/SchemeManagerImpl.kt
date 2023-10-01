@@ -123,7 +123,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     schemeListManager.mutate { schemes, schemeToInfo, readOnlyExternalizableSchemes ->
       for (provider in providers) {
         try {
-          val fileName = PathUtilRt.getFileName(provider.resourcePath)
+          val fileName = provider.fileName
           val extension = FileStorageCoreUtil.DEFAULT_EXT
           val externalInfo = ExternalInfo(fileNameWithoutExtension = fileName.substring(0, fileName.length - extension.length),
                                           fileExtension = extension)

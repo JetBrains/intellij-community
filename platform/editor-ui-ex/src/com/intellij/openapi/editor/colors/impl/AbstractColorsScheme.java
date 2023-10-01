@@ -713,7 +713,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     JdomKt.addOptionTag(colorElements, key.getExternalName(), rgb);
   }
 
-  private @Nullable EditorColorsScheme getBaseScheme() {
+  final @Nullable EditorColorsScheme getBaseScheme() {
     if (schemeName.startsWith(Scheme.EDITABLE_COPY_PREFIX)) {
       EditorColorsScheme original = getOriginal();
       if (original != null) {

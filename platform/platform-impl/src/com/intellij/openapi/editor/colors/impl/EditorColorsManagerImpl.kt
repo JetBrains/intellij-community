@@ -54,6 +54,7 @@ import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ComponentTreeEventDispatcher
+import com.intellij.util.PathUtilRt
 import com.intellij.util.ResourceUtil
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.xml.dom.createXmlStreamReader
@@ -181,7 +182,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     val to = ArrayList<EditorColorsScheme>()
     // process over allSchemes snapshot
     for (scheme in schemeManager.allSchemes.toList()) {
-      if (scheme is BundledScheme) {
+      if (scheme is BundledEditorColorScheme) {
         createEditableCopy(initialScheme = scheme, editableCopyName = Scheme.EDITABLE_COPY_PREFIX + scheme.name, to)
       }
     }
@@ -225,7 +226,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       editableCopy.name = editableCopyName
       to.add(editableCopy)
     }
-    else if (initialScheme is BundledScheme) {
+    else if (initialScheme is BundledEditorColorScheme) {
       editableCopy.copyMissingAttributes(initialScheme)
     }
     editableCopy.setCanBeDeleted(false)
@@ -243,7 +244,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   }
 
   override fun getSchemeForCurrentUITheme(): EditorColorsScheme {
-    val lookAndFeelInfo = LafManager.getInstance().getCurrentUIThemeLookAndFeel()
+    val lookAndFeelInfo: UIThemeLookAndFeelInfo? = LafManager.getInstance().getCurrentUIThemeLookAndFeel()
     var scheme: EditorColorsScheme? = null
     if (lookAndFeelInfo is TempUIThemeLookAndFeelInfo) {
       val globalScheme = getGlobalScheme()
@@ -253,17 +254,27 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     }
 
     if (lookAndFeelInfo != null) {
-      val schemeName = lookAndFeelInfo.editorSchemeId
-      if (schemeName != null) {
-        scheme = getScheme(schemeName)
+      val schemeId = lookAndFeelInfo.editorSchemeId
+      if (schemeId != null) {
+        if (schemeId.endsWith(".xml")) {
+          val path = schemeId.removeSuffix(".xml").removePrefix("/")
+          scheme = allSchemes.firstOrNull {
+            val base = if (it is AbstractColorsScheme) it.baseScheme else it
+            base is BundledEditorColorScheme && base.resourcePath.removeSuffix(".xml") == path
+          }
+        }
+        else {
+          scheme = getScheme(schemeId)
+        }
+
         if (scheme == null) {
-          LOG.error("Theme ${lookAndFeelInfo.name} refers to unknown color scheme $schemeName")
+          LOG.error("Theme ${lookAndFeelInfo.name} refers to unknown color scheme $schemeId")
         }
       }
     }
 
     if (scheme == null) {
-      val schemeName = if (lookAndFeelInfo.isDark) "Darcula" else DEFAULT_SCHEME_NAME
+      val schemeName = if (lookAndFeelInfo != null && lookAndFeelInfo.isDark) "Darcula" else DEFAULT_SCHEME_NAME
       val defaultColorSchemeManager = DefaultColorSchemesManager.getInstance()
       scheme = defaultColorSchemeManager.getScheme(schemeName)
       if (scheme == null) {
@@ -287,10 +298,6 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       loadAdditionalTextAttributesForScheme(scheme = scheme, attributeEps = value)
     }
     additionalTextAttributes.clear()
-  }
-
-  internal class BundledScheme : EditorColorsSchemeImpl(null), ReadOnlyColorsScheme {
-    override fun isVisible() = false
   }
 
   class State {
@@ -370,9 +377,8 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
 
     val editableCopyName = getEditableCopyName(scheme)
     if (editableCopyName != null) {
-      val editableCopy = getScheme(editableCopyName)
-      if (editableCopy != null) {
-        return editableCopy
+      getScheme(editableCopyName)?.let {
+        return it
       }
     }
     return null
@@ -470,7 +476,8 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
                               name: String,
                               attributeProvider: (String) -> String?,
                               isBundled: Boolean): EditorColorsSchemeImpl {
-      val scheme = if (isBundled) BundledScheme() else EditorColorsSchemeImpl(null)
+      // do we have BundledEditorColorScheme here?
+      val scheme = if (isBundled) BundledEditorColorScheme(name) else EditorColorsSchemeImpl(null)
       // todo be lazy
       scheme.readExternal(dataHolder.read())
       // we don't need to update digest for a bundled scheme because
@@ -573,7 +580,7 @@ private fun loadAdditionalTextAttributesForScheme(scheme: AbstractColorsScheme, 
 private fun getEditableCopyName(scheme: EditorColorsScheme?): String? {
   return when {
     scheme is DefaultColorsScheme && scheme.hasEditableCopy() -> scheme.editableCopyName
-    scheme is EditorColorsManagerImpl.BundledScheme -> Scheme.EDITABLE_COPY_PREFIX + scheme.getName()
+    scheme is BundledEditorColorScheme -> Scheme.EDITABLE_COPY_PREFIX + scheme.getName()
     else -> null
   }
 }
@@ -707,13 +714,13 @@ fun loadBundledSchemes(additionalTextAttributes: MutableMap<String, MutableList<
     for (item in EditorColorsManagerImpl.BUNDLED_EP_NAME.filterableLazySequence()) {
       val pluginDescriptor = item.pluginDescriptor
       val bean = item.instance ?: continue
-      val resourceName = bean.path!!.let { if (it.endsWith(".xml")) it else "$it.xml" }
+      val resourcePath = (bean.path ?: continue).removePrefix("/").let { if (it.endsWith(".xml")) it else "$it.xml" }
 
       yield(object : SchemeManager.LoadBundleSchemeRequest<EditorColorsScheme> {
         override val pluginId: PluginId
           get() = pluginDescriptor.pluginId
-        override val resourcePath: String
-          get() = resourceName
+        override val fileName: String
+          get() = PathUtilRt.getFileName(resourcePath)
         override val schemeKey: String
           get() {
             val idFromExtension = item.id
@@ -728,7 +735,7 @@ fun loadBundledSchemes(additionalTextAttributes: MutableMap<String, MutableList<
             try {
               val idFromFile = readEditorSchemeNameFromXml(reader)!!
               if (checkId && idFromFile != idFromExtension) {
-                LOG.error("id specified for extension $item is not equal to id from file $resourceName")
+                LOG.error("id specified for extension $item is not equal to id from file $resourcePath")
               }
               return idFromFile
             }
@@ -738,11 +745,11 @@ fun loadBundledSchemes(additionalTextAttributes: MutableMap<String, MutableList<
           }
 
         override fun loadBytes(): ByteArray {
-          return ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), pluginDescriptor.classLoader)!!
+          return ResourceUtil.getResourceAsBytes(resourcePath, pluginDescriptor.classLoader)!!
         }
 
         override fun createScheme(): EditorColorsScheme {
-          val scheme = EditorColorsManagerImpl.BundledScheme()
+          val scheme = BundledEditorColorScheme(resourcePath)
           // todo be lazy
           scheme.readExternal(JDOMUtil.load(loadBytes()))
           // we don't need to update digest for a bundled scheme because
@@ -762,4 +769,9 @@ fun loadBundledSchemes(additionalTextAttributes: MutableMap<String, MutableList<
       })
     }
   }
+}
+
+internal class BundledEditorColorScheme(@JvmField val resourcePath: String)
+  : EditorColorsSchemeImpl(/* parentScheme = */ null), ReadOnlyColorsScheme {
+  override fun isVisible() = false
 }

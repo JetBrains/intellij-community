@@ -65,7 +65,7 @@ abstract class SchemeManager<T> {
   interface LoadBundleSchemeRequest<T> {
     val pluginId: PluginId
 
-    val resourcePath: String
+    val fileName: String
     val schemeKey: String
 
     fun loadBytes(): ByteArray
