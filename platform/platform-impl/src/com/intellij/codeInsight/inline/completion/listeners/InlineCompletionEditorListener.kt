@@ -21,6 +21,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 class InlineCompletionEditorListener(private val scope: CoroutineScope) : EditorFactoryListener {
   private val editorMouseListener = InlineEditorMouseListener()
+  private val editorFocusListener = InlineCompletionFocusListener()
 
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor
@@ -36,6 +37,7 @@ class InlineCompletionEditorListener(private val scope: CoroutineScope) : Editor
     val docListener = InlineCompletionDocumentListener(editor)
 
     editor.document.addDocumentListener(docListener, disposable)
+    editor.addFocusListener(editorFocusListener, disposable)
     editor.addEditorMouseListener(editorMouseListener, disposable)
   }
 
@@ -49,9 +51,3 @@ class InlineCompletionEditorListener(private val scope: CoroutineScope) : Editor
     event.editor.putUserData(InlineCompletionHandler.KEY, null)
   }
 }
-// [root]
-// InlineLifecycleActionTest
-// test lifecycle ARSCNcH
-// InlineLifecycleLookupTest
-// test lifecycle LRSCTH
-// test lifecycle LRSCNcH

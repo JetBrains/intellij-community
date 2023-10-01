@@ -17,11 +17,13 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
+import java.awt.event.FocusEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 
@@ -31,7 +33,7 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl) : BulkAwa
     val handler = InlineCompletionHandler.getOrNull(editor)
 
     if (!(ClientEditorManager.getClientId(editor) ?: ClientId.localId).isCurrent()) {
-      handler?.hide()
+      hideInlineCompletion(editor, handler)
       return
     }
 
@@ -68,10 +70,7 @@ open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter(
     return true
   }
 
-  protected open fun hideInlineCompletion() {
-    val context = InlineCompletionContext.getOrNull(editor) ?: return
-    InlineCompletionHandler.getOrNull(editor)?.hide(editor, false, context)
-  }
+  protected open fun hideInlineCompletion() = hideInlineCompletion(editor)
 
   companion object {
     private val LOG = thisLogger()
@@ -89,17 +88,24 @@ open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter(
   }
 }
 
-// ML-1086 previously handled by [InlineCompletionFocusListener]
+// ML-1086
 @ApiStatus.Experimental
 class InlineEditorMouseListener : EditorMouseListener {
   override fun mousePressed(event: EditorMouseEvent) {
     LOG.trace("Valuable mouse pressed event $event")
-    val context = InlineCompletionContext.getOrNull(event.editor) ?: return
-    InlineCompletionHandler.getOrNull(event.editor)?.hide(event.editor, false, context)
+    hideInlineCompletion(event.editor)
   }
 
   companion object {
     private val LOG = thisLogger()
+  }
+}
+
+class InlineCompletionFocusListener : FocusChangeListener {
+  override fun focusLost(editor: Editor, event: FocusEvent) {
+    if (event.cause == FocusEvent.Cause.ACTIVATION) {
+      hideInlineCompletion(editor)
+    }
   }
 }
 
@@ -157,4 +163,14 @@ class InlineCompletionAnActionListener : AnActionListener {
     val handler = InlineCompletionHandler.getOrNull(editor) ?: return
     handler.allowDocumentChange(SimpleTypingEvent(c.toString(), true))
   }
+}
+
+private fun hideInlineCompletion(editor: Editor) {
+  val context = InlineCompletionContext.getOrNull(editor) ?: return
+  InlineCompletionHandler.getOrNull(editor)?.hide(editor, false, context)
+}
+
+private fun hideInlineCompletion(editor: Editor, handler: InlineCompletionHandler?) {
+  if (handler == null) return
+  InlineCompletionContext.getOrNull(editor)?.let { handler.hide(editor, false, it) }
 }
