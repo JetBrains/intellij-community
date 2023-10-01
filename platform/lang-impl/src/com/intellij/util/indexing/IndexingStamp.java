@@ -86,7 +86,7 @@ public final class IndexingStamp {
   public static void dropIndexingTimeStamps(int fileId) throws IOException {
     ourTimestampsCache.remove(fileId);
     try (DataOutputStream out = FSRecords.writeAttribute(fileId, Timestamps.PERSISTENCE)) {
-      new Timestamps((DataInputStream)null).writeToStream(out);
+      Timestamps.readTimestamps((DataInputStream)null).writeToStream(out);
     }
   }
 
@@ -102,10 +102,10 @@ public final class IndexingStamp {
     if (timestamps == null) {
       if (FSRecords.supportsRawAttributesAccess()) {
         try {
-          timestamps = FSRecords.readAttributeRawWithLock(id, Timestamps.PERSISTENCE, Timestamps::new);
+          timestamps = FSRecords.readAttributeRawWithLock(id, Timestamps.PERSISTENCE, Timestamps::readTimestamps);
           if (timestamps == null) {
             if (createIfNoneSaved) {
-              timestamps = new Timestamps((DataInputStream)null);
+              timestamps = Timestamps.readTimestamps((DataInputStream)null);
             }
             else {
               return null;
@@ -119,7 +119,7 @@ public final class IndexingStamp {
       else {
         try (final DataInputStream stream = FSRecords.readAttributeWithLock(id, Timestamps.PERSISTENCE)) {
           if (stream == null && !createIfNoneSaved) return null;
-          timestamps = new Timestamps(stream);
+          timestamps = Timestamps.readTimestamps(stream);
         }
         catch (IOException e) {
           throw FSRecords.handleError(e);

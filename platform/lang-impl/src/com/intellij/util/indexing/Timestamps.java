@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -33,113 +34,115 @@ public final class Timestamps {
   private Object2LongMap<ID<?, ?>> myIndexStamps;
   private boolean myIsDirty = false;
 
+  private interface InputAdapter {
+    long readTime() throws IOException;
+
+    boolean hasRemaining() throws IOException;
+
+    int readInt() throws IOException;
+  }
+
   @VisibleForTesting
-  public Timestamps(@Nullable DataInputStream stream) throws IOException {
+  public static Timestamps readTimestamps(@Nullable DataInputStream stream) throws IOException {
     if (stream != null) {
-      int[] outdatedIndices = null;
-      //'header' is either timestamp (dominatingIndexStamp), or, if timestamp is small enough
-      // (<MAX_SHORT), it is really a number of 'outdatedIndices', followed by actual indices
-      // ints (which is index id from ID class), and followed by another timestamp=dominatingIndexStamp
-      // value
-      long dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
-      long diff = dominatingIndexStamp - DataInputOutputUtil.timeBase;
-      if (diff > 0 && diff < ID.MAX_NUMBER_OF_INDICES) {
-        int numberOfOutdatedIndices = (int)diff;
-        outdatedIndices = new int[numberOfOutdatedIndices];
-        while (numberOfOutdatedIndices > 0) {
-          outdatedIndices[--numberOfOutdatedIndices] = DataInputOutputUtil.readINT(stream);
+      return new Timestamps(new InputAdapter() {
+        @Override
+        public long readTime() throws IOException {
+          return DataInputOutputUtil.readTIME(stream);
         }
-        dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
-      }
 
-      //and after is just a set of ints -- Index IDs from ID class
-      while (stream.available() > 0) {
-        ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
-        if (id != null && !(id instanceof StubIndexKey)) {
-          long stamp = IndexVersion.getIndexCreationStamp(id);
-          if (stamp == 0) {
-            continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
-          }
-          if (myIndexStamps == null) {
-            myIndexStamps = new Object2LongOpenHashMap<>(5, 0.98f);
-          }
-          if (stamp <= dominatingIndexStamp) {
-            myIndexStamps.put(id, stamp);
-          }
+        @Override
+        public boolean hasRemaining() throws IOException {
+          return stream.available() > 0;
         }
-      }
 
-      if (outdatedIndices != null) {
-        for (int outdatedIndexId : outdatedIndices) {
-          ID<?, ?> id = ID.findById(outdatedIndexId);
-          if (id != null && !(id instanceof StubIndexKey)) {
-            if (IndexVersion.getIndexCreationStamp(id) == 0) {
-              continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
-            }
-            long stamp = IndexingStamp.INDEX_DATA_OUTDATED_STAMP;
-            if (myIndexStamps == null) {
-              myIndexStamps = new Object2LongOpenHashMap<>(5, 0.98f);
-            }
-            if (stamp <= dominatingIndexStamp) {
-              myIndexStamps.put(id, stamp);
-            }
-          }
+        @Override
+        public int readInt() throws IOException {
+          return DataInputOutputUtil.readINT(stream);
         }
-      }
+      });
+    }
+    else {
+      return new Timestamps();
     }
   }
 
-  public Timestamps(final @Nullable ByteBuffer buffer) {
+  public static Timestamps readTimestamps(@Nullable ByteBuffer buffer) throws IOException {
     if (buffer != null) {
       buffer.order(BIG_ENDIAN);//to be compatible with .writeToStream()
-      int[] outdatedIndices = null;
-      //'header' is either timestamp (dominatingIndexStamp), or, if timestamp is small enough
-      // (<MAX_SHORT), it is really a number of 'outdatedIndices', followed by actual indices
-      // ints (which is index id from ID class), and followed by another timestamp=dominatingIndexStamp
-      // value
-      long dominatingIndexStamp = DataInputOutputUtil.readTIME(buffer);
-      long diff = dominatingIndexStamp - DataInputOutputUtil.timeBase;
-      if (diff > 0 && diff < ID.MAX_NUMBER_OF_INDICES) {
-        int numberOfOutdatedIndices = (int)diff;
-        outdatedIndices = new int[numberOfOutdatedIndices];
-        while (numberOfOutdatedIndices > 0) {
-          outdatedIndices[--numberOfOutdatedIndices] = DataInputOutputUtil.readINT(buffer);
+      return new Timestamps(new InputAdapter() {
+        @Override
+        public long readTime() {
+          return DataInputOutputUtil.readTIME(buffer);
         }
-        dominatingIndexStamp = DataInputOutputUtil.readTIME(buffer);
-      }
 
-      //and after is just a set of ints -- Index IDs from ID class
-      while (buffer.hasRemaining()) {
-        //RC: .findById() takes 1/4 of total the method time -- mostly spent on CHMap lookup.
-        ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(buffer));
+        @Override
+        public boolean hasRemaining() {
+          return buffer.hasRemaining();
+        }
+
+        @Override
+        public int readInt() {
+          return DataInputOutputUtil.readINT(buffer);
+        }
+      });
+    }
+    else {
+      return new Timestamps();
+    }
+  }
+
+  private Timestamps() {
+  }
+
+  private Timestamps(final @NotNull InputAdapter stream) throws IOException {
+    int[] outdatedIndices = null;
+    //'header' is either timestamp (dominatingIndexStamp), or, if timestamp is small enough
+    // (<MAX_SHORT), it is really a number of 'outdatedIndices', followed by actual indices
+    // ints (which is index id from ID class), and followed by another timestamp=dominatingIndexStamp
+    // value
+    long dominatingIndexStamp = stream.readTime();
+    long diff = dominatingIndexStamp - DataInputOutputUtil.timeBase;
+    if (diff > 0 && diff < ID.MAX_NUMBER_OF_INDICES) {
+      int numberOfOutdatedIndices = (int)diff;
+      outdatedIndices = new int[numberOfOutdatedIndices];
+      while (numberOfOutdatedIndices > 0) {
+        outdatedIndices[--numberOfOutdatedIndices] = stream.readInt();
+      }
+      dominatingIndexStamp = stream.readTime();
+    }
+
+    //and after is just a set of ints -- Index IDs from ID class
+    while (stream.hasRemaining()) {
+      //RC: .findById() takes 1/4 of total the method time -- mostly spent on CHMap lookup.
+      ID<?, ?> id = ID.findById(stream.readInt());
+      if (id != null && !(id instanceof StubIndexKey)) {
+        long stamp = IndexVersion.getIndexCreationStamp(id);
+        if (stamp == 0) {
+          continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+        }
+        if (myIndexStamps == null) {
+          myIndexStamps = new Object2LongOpenHashMap<>(5, 0.98f);
+        }
+        if (stamp <= dominatingIndexStamp) {
+          myIndexStamps.put(id, stamp);
+        }
+      }
+    }
+
+    if (outdatedIndices != null) {
+      for (int outdatedIndexId : outdatedIndices) {
+        ID<?, ?> id = ID.findById(outdatedIndexId);
         if (id != null && !(id instanceof StubIndexKey)) {
-          long stamp = IndexVersion.getIndexCreationStamp(id);
-          if (stamp == 0) {
+          if (IndexVersion.getIndexCreationStamp(id) == 0) {
             continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
           }
+          long stamp = IndexingStamp.INDEX_DATA_OUTDATED_STAMP;
           if (myIndexStamps == null) {
             myIndexStamps = new Object2LongOpenHashMap<>(5, 0.98f);
           }
           if (stamp <= dominatingIndexStamp) {
             myIndexStamps.put(id, stamp);
-          }
-        }
-      }
-
-      if (outdatedIndices != null) {
-        for (int outdatedIndexId : outdatedIndices) {
-          ID<?, ?> id = ID.findById(outdatedIndexId);
-          if (id != null && !(id instanceof StubIndexKey)) {
-            if (IndexVersion.getIndexCreationStamp(id) == 0) {
-              continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
-            }
-            long stamp = IndexingStamp.INDEX_DATA_OUTDATED_STAMP;
-            if (myIndexStamps == null) {
-              myIndexStamps = new Object2LongOpenHashMap<>(5, 0.98f);
-            }
-            if (stamp <= dominatingIndexStamp) {
-              myIndexStamps.put(id, stamp);
-            }
           }
         }
       }

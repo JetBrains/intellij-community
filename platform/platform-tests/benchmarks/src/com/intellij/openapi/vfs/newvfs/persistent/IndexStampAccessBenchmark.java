@@ -72,7 +72,7 @@ public class IndexStampAccessBenchmark {
     return FSRecords.readAttributeRawWithLock(
       context.fileId,
       PERSISTENCE,
-      Timestamps::new
+      Timestamps::readTimestamps
     );
   }
 
@@ -80,7 +80,7 @@ public class IndexStampAccessBenchmark {
   public Timestamps readIndexStamps_ViaInputStream(final ApplicationContext application,
                                                    final Context context) throws IOException {
     try (final DataInputStream stream = FSRecords.readAttributeWithLock(context.fileId, PERSISTENCE)) {
-      return new Timestamps(stream);
+      return Timestamps.readTimestamps(stream);
     }
   }
 
