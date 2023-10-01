@@ -6,15 +6,14 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.application.smartReadAction
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.indexing.FileBasedIndex
-import org.jetbrains.concurrency.CancellablePromise
-import java.util.concurrent.Callable
+import kotlinx.coroutines.isActive
+import kotlin.coroutines.coroutineContext
 
 private class IndexableFilesCollector : ProjectUsagesCollector() {
   private val GROUP = EventLogGroup("project.indexable.files", 3)
@@ -23,32 +22,32 @@ private class IndexableFilesCollector : ProjectUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  override fun getMetrics(project: Project, indicator: ProgressIndicator?): CancellablePromise<out Set<MetricEvent>> {
-    var action = ReadAction.nonBlocking(
-      Callable<Set<MetricEvent>> {
-        var allIndexableFiles = 0
-        var inContentIndexableFiles = 0
-        val fileIndex = ProjectRootManager.getInstance(project).fileIndex
-        FileBasedIndex.getInstance().iterateIndexableFiles(ContentIterator { fileOrDir ->
-          indicator?.checkCanceled()
-          if (!fileOrDir.isDirectory && !fileIndex.isExcluded(fileOrDir)) {
-            if (fileIndex.isInContent(fileOrDir)) {
-              inContentIndexableFiles++
-            }
-            allIndexableFiles++
+  override suspend fun collect(project: Project): Set<MetricEvent> {
+    val context = coroutineContext
+
+    return smartReadAction(project) {
+      var allIndexableFiles = 0
+      var inContentIndexableFiles = 0
+
+      val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+      FileBasedIndex.getInstance().iterateIndexableFiles(ContentIterator { fileOrDir ->
+        if (!context.isActive) {
+          return@ContentIterator false
+        }
+
+        if (!fileOrDir.isDirectory && !fileIndex.isExcluded(fileOrDir)) {
+          if (fileIndex.isInContent(fileOrDir)) {
+            inContentIndexableFiles++
           }
-          true
-        }, project, indicator)
-        hashSetOf(
-          ALL_INDEXABLE_FILES.metric(roundToPowerOfTwo(allIndexableFiles)),
-          CONTENT_INDEXABLE_FILES.metric(roundToPowerOfTwo(inContentIndexableFiles))
-        )
-      })
-      .inSmartMode(project)
-    if (indicator != null) {
-      action = action.wrapProgress(indicator)
+          allIndexableFiles++
+        }
+        true
+      }, project, EmptyProgressIndicator())
+
+      hashSetOf(
+        ALL_INDEXABLE_FILES.metric(roundToPowerOfTwo(allIndexableFiles)),
+        CONTENT_INDEXABLE_FILES.metric(roundToPowerOfTwo(inContentIndexableFiles))
+      )
     }
-    return action
-      .submit(NonUrgentExecutor.getInstance())
   }
 }

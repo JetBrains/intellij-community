@@ -229,12 +229,13 @@ class ProjectFUStateUsagesLogger(
       }
 
       launch {
-        val metrics = blockingContext { usagesCollector.getMetrics(project, null) }
+        val metrics = usagesCollector.collect(project)
+
         FUStateUsagesLogger.logMetricsOrError(
           project = project,
           recorderLoggers = recorderLoggers,
           usagesCollector = usagesCollector,
-          metrics = metrics.asDeferred().await() ?: emptySet(),
+          metrics = metrics,
         )
       }
     }
