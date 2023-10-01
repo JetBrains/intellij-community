@@ -125,7 +125,7 @@ internal object CallableMetadataProvider {
             expectedReceiverType,
         )
             // currently override members are considered as non-immediate in completion
-            ?.applyIf(hasOverriddenSymbols) { CallableMetadata(kind.correspondingBaseForThisOrSelf, scopeIndex) }
+            .applyIf(hasOverriddenSymbols) { CallableMetadata(kind.correspondingBaseForThisOrSelf, scopeIndex) }
     }
 
     context(KtAnalysisSession)
@@ -215,9 +215,7 @@ internal object CallableMetadataProvider {
         symbol: KtCallableSymbol,
         actualReceiverTypes: List<KtType>,
         expectedReceiverType: KtType,
-    ): CallableMetadata? {
-        if (expectedReceiverType is KtFunctionType) return null
-
+    ): CallableMetadata {
         var allReceiverTypesMatch = true
         var bestMatchIndex: Int? = null
         var bestMatchWeightKind: CallableKind? = null
