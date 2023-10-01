@@ -159,26 +159,25 @@ public final class Timestamps {
       return;
     }
 
-    final long[] data = new long[2];
-    final int dominatingStampIndex = 0;
-    final int numberOfOutdatedIndex = 1;
+    long dominatingStampIndex = 0;
+    long numberOfOutdatedIndex = 0;
     ObjectSet<Object2LongMap.Entry<ID<?, ?>>> entries = myIndexStamps.object2LongEntrySet();
     for (Object2LongMap.Entry<ID<?, ?>> entry : entries) {
       long b = entry.getLongValue();
       if (b == IndexingStamp.INDEX_DATA_OUTDATED_STAMP) {
-        ++data[numberOfOutdatedIndex];
+        ++numberOfOutdatedIndex;
         b = IndexVersion.getIndexCreationStamp(entry.getKey());
       }
-      data[dominatingStampIndex] = Math.max(data[dominatingStampIndex], b);
+      dominatingStampIndex = Math.max(dominatingStampIndex, b);
 
       if (IS_UNIT_TEST && b == IndexingStamp.HAS_NO_INDEXED_DATA_STAMP) {
         FileBasedIndexImpl.LOG.info("Wrong indexing timestamp state: " + myIndexStamps);
       }
     }
 
-    if (data[numberOfOutdatedIndex] > 0) {
-      assert data[numberOfOutdatedIndex] < ID.MAX_NUMBER_OF_INDICES;
-      DataInputOutputUtil.writeTIME(stream, DataInputOutputUtil.timeBase + data[numberOfOutdatedIndex]);
+    if (numberOfOutdatedIndex > 0) {
+      assert numberOfOutdatedIndex < ID.MAX_NUMBER_OF_INDICES;
+      DataInputOutputUtil.writeTIME(stream, DataInputOutputUtil.timeBase + numberOfOutdatedIndex);
       for (Object2LongMap.Entry<ID<?, ?>> entry : entries) {
         if (entry.getLongValue() == IndexingStamp.INDEX_DATA_OUTDATED_STAMP) {
           DataInputOutputUtil.writeINT(stream, entry.getKey().getUniqueId());
@@ -186,7 +185,7 @@ public final class Timestamps {
       }
     }
 
-    DataInputOutputUtil.writeTIME(stream, data[dominatingStampIndex]);
+    DataInputOutputUtil.writeTIME(stream, dominatingStampIndex);
     for (Object2LongMap.Entry<ID<?, ?>> entry : entries) {
       if (entry.getLongValue() != IndexingStamp.INDEX_DATA_OUTDATED_STAMP) {
         DataInputOutputUtil.writeINT(stream, entry.getKey().getUniqueId());
