@@ -1,0 +1,45 @@
+UFile (package = test.pkg)
+    UClass (name = Test)
+        UField (name = pOld_accessors_deprecatedOnProperty)
+            UAnnotation (fqName = org.jetbrains.annotations.Nullable)
+            UAnnotation (fqName = kotlin.Deprecated)
+                UNamedExpression (name = level)
+                    UQualifiedReferenceExpression
+                        USimpleNameReferenceExpression (identifier = DeprecationLevel)
+                        USimpleNameReferenceExpression (identifier = HIDDEN)
+            ULiteralExpression (value = null)
+        UField (name = pOld_accessors_deprecatedOnGetter)
+            UAnnotation (fqName = org.jetbrains.annotations.Nullable)
+            ULiteralExpression (value = null)
+        UField (name = pOld_accessors_deprecatedOnSetter)
+            UAnnotation (fqName = org.jetbrains.annotations.Nullable)
+            ULiteralExpression (value = null)
+        UField (name = pNew_accessors)
+            UAnnotation (fqName = org.jetbrains.annotations.Nullable)
+            ULiteralExpression (value = null)
+        UMethod (name = getPNew_accessors)
+            UBlockExpression
+                UReturnExpression
+                    UExpressionList (elvis)
+                        UDeclarationsExpression
+                            ULocalVariable (name = vardd72847)
+                                USimpleNameReferenceExpression (identifier = field)
+                        UIfExpression
+                            UBinaryExpression (operator = !=)
+                                USimpleNameReferenceExpression (identifier = vardd72847)
+                                ULiteralExpression (value = null)
+                            USimpleNameReferenceExpression (identifier = vardd72847)
+                            ULiteralExpression (value = "null?")
+        UMethod (name = setPNew_accessors)
+            UParameter (name = value)
+                UAnnotation (fqName = org.jetbrains.annotations.Nullable)
+            UBlockExpression
+                UIfExpression
+                    UBinaryExpression (operator = ==)
+                        USimpleNameReferenceExpression (identifier = field)
+                        ULiteralExpression (value = null)
+                    UBlockExpression
+                        UBinaryExpression (operator = =)
+                            USimpleNameReferenceExpression (identifier = field)
+                            USimpleNameReferenceExpression (identifier = value)
+        UMethod (name = Test)
