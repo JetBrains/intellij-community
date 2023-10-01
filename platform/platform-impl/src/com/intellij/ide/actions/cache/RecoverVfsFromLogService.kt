@@ -16,7 +16,6 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper.CANCEL_EXIT_CODE
 import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
@@ -31,6 +30,7 @@ import com.intellij.platform.ide.bootstrap.hideSplash
 import com.intellij.util.io.delete
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.div
 import kotlin.io.path.exists
@@ -177,9 +177,9 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
   }
 
   internal companion object {
-    val LOG = Logger.getInstance(RecoverVfsFromLogService::class.java)
+    private val LOG = Logger.getInstance(RecoverVfsFromLogService::class.java)
 
-    private val cachesDir = FSRecords.getCachesDir().toNioPath()
+    private val cachesDir = FSRecords.getCacheDir()
     private val recoveredCachesDir = cachesDir.parent / "recovered-caches"
 
     // used only in vfs init

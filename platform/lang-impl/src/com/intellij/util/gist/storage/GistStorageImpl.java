@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -65,7 +64,7 @@ public final class GistStorageImpl extends GistStorage {
   /** `{caches}/huge-gists/{FSRecords.createdTimestamp}/' */
   private static final NotNullLazyValue<Path> DIR_FOR_HUGE_GISTS = NotNullLazyValue.atomicLazy(() -> {
     final String vfsStamp = Long.toString(FSRecords.getCreationTimestamp());
-    Path gistsDir = Paths.get(FSRecords.getCachesDir(), HUGE_GISTS_DIR_NAME, vfsStamp);
+    Path gistsDir = FSRecords.getCacheDir().resolve(HUGE_GISTS_DIR_NAME + "/" + vfsStamp);
     try {
       if (Files.isRegularFile(gistsDir)) {
         FileUtil.delete(gistsDir);

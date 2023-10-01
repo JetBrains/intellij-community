@@ -34,7 +34,6 @@ import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.MILLISECONDS
-import kotlin.io.path.absolute
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
 import kotlin.io.path.relativeTo
@@ -195,11 +194,8 @@ object StorageDiagnosticData {
   private fun vfsStorageStatistics(mapStats: MutableMap<Path, PersistentHashMapStatistics>,
                                    enumeratorStats: MutableMap<Path, PersistentEnumeratorStatistics>)
     : StatsPerStorage {
-    val cachesDir = Path.of(FSRecords.getCachesDir()).absolute()
-    return StatsPerStorage(
-      filterStatsForStoragesUnderDir(mapStats, cachesDir),
-      filterStatsForStoragesUnderDir(enumeratorStats, cachesDir)
-    )
+    val cacheDir = FSRecords.getCacheDir().toAbsolutePath()
+    return StatsPerStorage(filterStatsForStoragesUnderDir(mapStats, cacheDir), filterStatsForStoragesUnderDir(enumeratorStats, cacheDir))
   }
 
   private fun <Stats> filterStatsForStoragesUnderDir(mapStats: MutableMap<Path, Stats>, dir: Path): SortedMap<String, Stats> {

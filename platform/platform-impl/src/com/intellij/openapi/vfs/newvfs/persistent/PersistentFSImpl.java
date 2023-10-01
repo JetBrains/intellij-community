@@ -46,6 +46,7 @@ import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -173,9 +174,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static void applyVfsLogPreferences() {
-    Path cachesDir = Path.of(FSRecords.getCachesDir());
-    if (!cachesDir.toFile().exists()) return;
-    PersistentFSPaths fsRecordsPaths = new PersistentFSPaths(cachesDir);
+    Path cacheDir = FSRecords.getCacheDir();
+    if (!Files.exists(cacheDir)) {
+      return;
+    }
+
+    PersistentFSPaths fsRecordsPaths = new PersistentFSPaths(cacheDir);
     Path vfsLogPath = fsRecordsPaths.getVfsLogStorage();
     if (!VfsLog.isVfsTrackingEnabled()) {
       // forcefully erase VfsLog storages if the feature is disabled so that when it will be enabled again we won't consider old data as a source for recovery
@@ -1623,8 +1627,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @VisibleForTesting
-  NewVirtualFile ensureRootCached(@NotNull String missedRootPath,
-                                  @NotNull String missedRootUrl) {
+  NewVirtualFile ensureRootCached(@NotNull String missedRootPath, @NotNull String missedRootUrl) {
     NewVirtualFileSystem fs = detectFileSystem(missedRootUrl, missedRootPath);
     if (fs == null) {
       return null;

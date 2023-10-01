@@ -81,9 +81,9 @@ public final class FSRecords {
   private static volatile FSRecordsImpl impl;
 
   /** @return path to the directory there all VFS files are located */
-  public static @NotNull String getCachesDir() {
+  public static @NotNull Path getCacheDir() {
     String dir = System.getProperty("caches_dir");
-    return dir == null ? PathManager.getSystemPath() + "/caches/" : dir;
+    return dir == null ? Path.of(PathManager.getSystemPath(), "caches") : Path.of(dir);
   }
 
   private FSRecords() {
@@ -119,7 +119,7 @@ public final class FSRecords {
         "Current instance: " + oldImpl
       );
     }
-    FSRecordsImpl _impl = FSRecordsImpl.connect(Path.of(getCachesDir()), Collections.emptyList(), enableVfsLog, errorHandler);
+    FSRecordsImpl _impl = FSRecordsImpl.connect(getCacheDir(), Collections.emptyList(), enableVfsLog, errorHandler);
     impl = _impl;
     return _impl;
   }

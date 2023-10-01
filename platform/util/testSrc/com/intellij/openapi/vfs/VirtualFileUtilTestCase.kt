@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs
 
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.junit5.TestApplication
@@ -24,11 +23,9 @@ abstract class VirtualFileUtilTestCase {
 
   @BeforeEach
   fun setUp() {
-    fileFixture = IdeaTestFixtureFactory.getFixtureFactory()
-      .createTempDirTestFixture()
+    fileFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
     fileFixture.setUp()
-    testRoot = fileFixture.tempDirPath.toNioPath()
-      .refreshAndGetVirtualDirectory()
+    testRoot = Path.of(fileFixture.tempDirPath).refreshAndGetVirtualDirectory()
   }
 
   @AfterEach

@@ -22,7 +22,7 @@ abstract class NioPathUtilTestCase {
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory()
       .createTempDirTestFixture()
     fileFixture.setUp()
-    testRoot = fileFixture.tempDirPath.toNioPath()
+    testRoot = Path.of(fileFixture.tempDirPath)
   }
 
   @AfterEach
