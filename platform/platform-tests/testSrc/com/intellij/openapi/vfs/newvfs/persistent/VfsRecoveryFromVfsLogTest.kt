@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl
 import java.nio.file.Path
 import kotlin.io.path.*
@@ -67,7 +66,7 @@ object VfsRecoveryFromVfsLogTest {
   @JvmStatic
   fun main(args: Array<String>) {
     require(args.size in 1..2) { "Arguments: <path to caches folder> [<position to force compaction to>]" }
-    val cachesDir = args[0].toNioPath()
+    val cachesDir = Path.of(args[0])
     val cachesCopy = cachesDir.resolveSibling("caches-tmp-test-dir")
     println("making a caches copy $cachesDir -> $cachesCopy")
     if (cachesCopy.exists()) cachesCopy.deleteRecursively()
@@ -75,7 +74,8 @@ object VfsRecoveryFromVfsLogTest {
 
     if (args.size == 1) {
       doubleRecoveryIsIdentity(cachesCopy)
-    } else {
+    }
+    else {
       check(args.size == 2)
       val targetPosition = args[1].toLong()
 

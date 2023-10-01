@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
@@ -11,16 +11,15 @@ import com.intellij.ide.wizard.*
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.util.io.*
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.refreshAndFindVirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.*
 
 @ApiStatus.Experimental
 abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent) {
@@ -70,7 +69,7 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
 
   private fun addFilesToOpen(relativeCanonicalPaths: Iterable<String>) {
     for (relativePath in relativeCanonicalPaths) {
-      filesToOpen.add(outputDirectory.toNioPath().getResolvedPath(relativePath))
+      filesToOpen.add(Path.of(outputDirectory).getResolvedPath(relativePath))
     }
   }
 
@@ -82,7 +81,7 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
 
       val generatedFiles = invokeAndWaitIfNeeded {
         runWriteAction {
-          AssetsProcessor.getInstance().generateSources(outputDirectory.toNioPath(), assets, templateProperties)
+          AssetsProcessor.getInstance().generateSources(Path.of(outputDirectory), assets, templateProperties)
         }
       }
 

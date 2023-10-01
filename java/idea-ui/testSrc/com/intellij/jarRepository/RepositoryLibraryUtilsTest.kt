@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository
 
 import com.intellij.application.options.PathMacrosImpl
@@ -7,9 +7,10 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.doNotEnableExternalStorageByDefaultInTests
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.project.stateStore
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.TemporaryDirectory
@@ -18,8 +19,6 @@ import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
-import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.runBlocking
@@ -150,7 +149,7 @@ class RepositoryLibraryUtilsTest {
     project.assertContentMatches(projectWithAllPropertiesFilled)
   }
 
-  private fun getCommunityDirAbsolutePath(relative: String) = PathManagerEx.findFileUnderCommunityHome(relative).absolutePath.toNioPath()
+  private fun getCommunityDirAbsolutePath(relative: String) = Path.of(PathManagerEx.findFileUnderCommunityHome(relative).absolutePath)
 
   private fun testRepositoryLibraryUtils(sampleProjectPath: Path, checkProject: suspend (Project, RepositoryLibraryUtils) -> Unit) {
     fun copyProjectFiles(dir: VirtualFile): Path {
@@ -174,6 +173,6 @@ class RepositoryLibraryUtilsTest {
 
   private suspend fun Project.assertContentMatches(path: Path) {
     stateStore.save()
-    path.assertMatches(directoryContentOf(this.basePath!!.toNioPath()))
+    path.assertMatches(directoryContentOf(Path.of(this.basePath!!)))
   }
 }

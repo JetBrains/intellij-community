@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.impl.ProgressState
 import com.intellij.openapi.progress.impl.TextDetailsProgressReporter
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.util.io.findOrCreateFile
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.ide.bootstrap.logEssentialInfoAboutIde
@@ -247,7 +246,7 @@ class WarmupProgressListener : ProgressManagerListener {
 
 internal fun dumpThreadsAfterConfiguration() {
   val dump = ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false)
-  (PathManager.getLogPath().toNioPath() / "warmup").findOrCreateFile("thread-dump-after-project-configuration.txt").apply {
+  Path.of(PathManager.getLogPath(), "warmup").findOrCreateFile("thread-dump-after-project-configuration.txt").apply {
     writeText(dump.rawDump)
   }
 }

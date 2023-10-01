@@ -21,7 +21,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.progress.blockingContextScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.util.io.createParentDirectories
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationListener
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManager
@@ -43,7 +42,7 @@ import kotlin.io.path.div
 
 private val LOG = logger<GradleCommandLineProjectConfigurator>()
 
-private val gradleLogWriterPath = PathManager.getLogPath().toNioPath() / "gradle-import.log"
+private val gradleLogWriterPath = Path.of(PathManager.getLogPath()) / "gradle-import.log"
 
 private const val DISABLE_GRADLE_AUTO_IMPORT = "external.system.auto.import.disabled"
 private const val DISABLE_GRADLE_JDK_FIX = "gradle.auto.auto.jdk.fix.disabled"
@@ -241,7 +240,7 @@ class GradleWarmupConfigurator : WarmupConfigurator {
   }
 }
 
-internal fun prepareGradleConfiguratorEnvironment(logger : CommandLineInspectionProgressReporter?)  {
+internal fun prepareGradleConfiguratorEnvironment(logger: CommandLineInspectionProgressReporter?) {
   System.setProperty(DISABLE_GRADLE_AUTO_IMPORT, true.toString())
   System.setProperty(DISABLE_GRADLE_JDK_FIX, true.toString())
   System.setProperty(DISABLE_ANDROID_GRADLE_PROJECT_STARTUP_ACTIVITY, true.toString())

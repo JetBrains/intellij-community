@@ -3,7 +3,6 @@ package com.intellij.searchEverywhereMl.semantics.tests
 import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticFileSearchEverywhereContributor
@@ -15,6 +14,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.TimeoutUtil
 import java.io.BufferedReader
+import java.nio.file.Path
 import kotlin.io.path.inputStream
 
 class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
@@ -119,7 +119,7 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
     neighbours = storage.streamSearchNeighbours("handle file with scores", 0.4).toList()
     assertEquals(setOf("ScoresFileManager.java"), neighbours.toIdsSet())
 
-    val fileStream = testDataPath.toNioPath().resolve("kotlin/ProjectIndexingTask.kt").inputStream()
+    val fileStream = Path.of(testDataPath, "kotlin/ProjectIndexingTask.kt").inputStream()
     myFixture.configureByText("ProjectIndexingTask.kt", fileStream.bufferedReader().use(BufferedReader::readText))
 
     TimeoutUtil.sleep(1000) // wait for one second for index update

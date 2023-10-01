@@ -8,7 +8,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
 import com.intellij.openapi.util.io.relativizeToClosestAncestor
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -59,7 +58,7 @@ fun VirtualFile.findPsiFile(project: Project): PsiFile? {
 private fun VirtualFile.relativizeToClosestAncestor(
   relativePath: String
 ): Pair<VirtualFile, Path> {
-  val basePath = path.toNioPath()
+  val basePath = Path.of(path)
   val (normalizedBasePath, normalizedRelativePath) = basePath.relativizeToClosestAncestor(relativePath)
   var baseVirtualFile = this
   repeat(basePath.nameCount - normalizedBasePath.nameCount) {

@@ -15,13 +15,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.nio.file.Path
 import kotlin.io.path.bufferedWriter
 import kotlin.io.path.relativeTo
 
@@ -156,8 +156,8 @@ private class DumpPluginDescriptorsAction : DumbAwareAction() {
       if (printedClassLoaders.add(classLoader)) {
         @Suppress("TestOnlyProblems")
         val parents = when (classLoader) {
-          is PluginClassLoader -> classLoader._getParents().map { it.classLoader }.ifEmpty { 
-            listOf(ClassLoaderConfigurator::class.java.classLoader) 
+          is PluginClassLoader -> classLoader._getParents().map { it.classLoader }.ifEmpty {
+            listOf(ClassLoaderConfigurator::class.java.classLoader)
           }
           else -> listOf(classLoader.parent)
         }
@@ -166,9 +166,9 @@ private class DumpPluginDescriptorsAction : DumbAwareAction() {
           writeString(classLoaderIds[parent] ?: parent.toString())
         }
         writeEndArray()
-        
+
         writeArrayFieldStart("classpath")
-        val homePath = PathManager.getHomePath().toNioPath()
+        val homePath = Path.of(PathManager.getHomePath())
         if (classLoader is UrlClassLoader) {
           for (path in classLoader.baseUrls) {
             val relativePath = if (path.startsWith(homePath)) path.relativeTo(homePath) else path

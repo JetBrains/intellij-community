@@ -13,7 +13,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
@@ -34,6 +33,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.jupiter.api.Assertions
+import java.nio.file.Path
 import kotlin.io.path.name
 
 
@@ -164,7 +164,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
     useKotlinDsl: Boolean = true,
     configure: ProjectInfo.Builder.() -> Unit = {}
   ) = ProjectInfo.create(
-    relativePath.toNioPath().name,
+    Path.of(relativePath).name,
     relativePath,
     useKotlinDsl,
     configure
@@ -173,7 +173,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
   fun getSimpleProjectInfo(relativePath: String) =
     projectInfo(relativePath) {
       withSettingsFile {
-        setProjectName(relativePath.toNioPath().name)
+        setProjectName(Path.of(relativePath).name)
       }
       withBuildFile {
         withJavaPlugin()

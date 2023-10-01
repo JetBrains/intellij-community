@@ -2,14 +2,13 @@
 package com.intellij.ide.trustedProjects.impl
 
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.project.Project
 import java.nio.file.Path
 
 class DefaultTrustedProjectsLocator : TrustedProjectsLocator {
 
   override fun getProjectRoots(project: Project): List<Path> {
-    return listOfNotNull(project.basePath?.toNioPath())
+    return listOfNotNull(project.basePath?.let { Path.of(it) })
   }
 
   override fun getProjectRoots(projectRoot: Path, project: Project?): List<Path> {

@@ -7,16 +7,16 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.toNioPath
+import com.intellij.platform.workspace.storage.CodeGeneratorVersions
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.PathUtil
 import com.intellij.util.lang.UrlClassLoader
-import com.intellij.platform.workspace.storage.CodeGeneratorVersions
 import org.jetbrains.concurrency.await
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import java.nio.file.Path
 
 
 @Service(Service.Level.PROJECT)
@@ -44,7 +44,7 @@ class CodegenJarLoader(val project: Project) {
                                                  listOf(INTELLIJ_DEPENDENCIES_DESCRIPTION),
                                                  null).await()
 
-    val pathsToJars = roots.mapNotNull { PathUtil.getLocalPath(it.file)?.toNioPath() }
+    val pathsToJars = roots.mapNotNull { PathUtil.getLocalPath(it.file)?.let { Path.of(it) } }
     if (pathsToJars.isEmpty()) {
       error("Cannot get paths ${roots.joinToString(", ") { it.file.path }}")
     }
