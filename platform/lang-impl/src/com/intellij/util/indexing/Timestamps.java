@@ -7,7 +7,6 @@ import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.io.DataInputOutputUtil;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +16,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 
 import static java.nio.ByteOrder.BIG_ENDIAN;
 
@@ -161,7 +163,9 @@ public final class Timestamps {
 
     long dominatingStampIndex = 0;
     long numberOfOutdatedIndex = 0;
-    ObjectSet<Object2LongMap.Entry<ID<?, ?>>> entries = myIndexStamps.object2LongEntrySet();
+    List<Object2LongMap.Entry<ID<?, ?>>> entries = new ArrayList<>(myIndexStamps.object2LongEntrySet());
+    entries.sort(Comparator.comparingInt(e -> e.getKey().getUniqueId()));
+
     for (Object2LongMap.Entry<ID<?, ?>> entry : entries) {
       long b = entry.getLongValue();
       if (b == IndexingStamp.INDEX_DATA_OUTDATED_STAMP) {
