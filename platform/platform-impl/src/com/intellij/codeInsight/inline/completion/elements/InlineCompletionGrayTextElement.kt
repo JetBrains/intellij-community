@@ -46,22 +46,11 @@ data class InlineCompletionGrayTextElement(val text: String) : InlineCompletionB
     }
   }
 
-  override fun reset() {
-    blockInlay?.let {
-      Disposer.dispose(it)
-      blockInlay = null
-    }
-
-    suffixInlay?.let {
-      Disposer.dispose(it)
-      suffixInlay = null
-    }
-  }
-
   override fun dispose() {
-    blockInlay?.let { Disposer.dispose(it) }
-    suffixInlay?.let { Disposer.dispose(it) }
-    reset()
+    blockInlay?.also(Disposer::dispose)
+    blockInlay = null
+    suffixInlay?.also(Disposer::dispose)
+    suffixInlay = null
   }
 
   private fun renderSuffix(editor: Editor, lines: List<String>, offset: Int) {
@@ -87,7 +76,6 @@ data class InlineCompletionGrayTextElement(val text: String) : InlineCompletionB
       // wrapping into a batch to notify inlay listeners after the hint is added
       val element = editor.inlayModel.addInlineElement(offset, true, InlineSuffixRenderer(editor, line)) ?: return@execute
       element.addActionAvailabilityHint(EditorActionAvailabilityHint(IdeActions.ACTION_INSERT_INLINE_COMPLETION, EditorActionAvailabilityHint.AvailabilityCondition.CaretOnStart))
-      Disposer.tryRegister(this, element)
       suffixInlay = element
     }
   }
@@ -102,7 +90,6 @@ data class InlineCompletionGrayTextElement(val text: String) : InlineCompletionB
       InlineBlockElementRenderer(editor, lines)
     ) ?: return
 
-    Disposer.tryRegister(this, element)
     blockInlay = element
   }
 }
