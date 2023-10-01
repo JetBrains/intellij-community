@@ -3,10 +3,7 @@ package com.intellij.codeInsight.inline.completion.onboarding
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -26,7 +23,7 @@ internal object InlineCompletionTooltipBuilder {
         appendLine("It extends basic completion suggests.")
         appendLine("Accept it by pressing Tab ")
 
-        KeymapUtil.getFirstKeyboardShortcutText("InsertInlineCompletionAction").also {
+        KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_INSERT_INLINE_COMPLETION).also {
           append("${StringUtil.NON_BREAK_SPACE}<span class=\"shortcut\">${it}</span>${StringUtil.NON_BREAK_SPACE}")
         }
       }
@@ -78,7 +75,7 @@ internal object InlineCompletionTooltipBuilder {
         appendLine("What you want to do next?")
         appendLine("Accept it by pressing Tab ")
 
-        KeymapUtil.getFirstKeyboardShortcutText("InsertInlineCompletionAction").also {
+        KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_INSERT_INLINE_COMPLETION).also {
           append("${StringUtil.NON_BREAK_SPACE}<span class=\"shortcut\">${it}</span>${StringUtil.NON_BREAK_SPACE}")
         }
       }

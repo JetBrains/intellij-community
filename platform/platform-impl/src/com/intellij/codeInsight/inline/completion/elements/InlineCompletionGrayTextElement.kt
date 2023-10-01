@@ -6,6 +6,7 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.render.InlineBlockElementRenderer
 import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
 import com.intellij.codeInsight.inline.completion.render.InlineSuffixRenderer
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
@@ -85,8 +86,7 @@ data class InlineCompletionGrayTextElement(val text: String) : InlineCompletionB
     editor.inlayModel.execute(true) {
       // wrapping into a batch to notify inlay listeners after the hint is added
       val element = editor.inlayModel.addInlineElement(offset, true, InlineSuffixRenderer(editor, line)) ?: return@execute
-      element.addActionAvailabilityHint(
-        EditorActionAvailabilityHint("InsertInlineCompletionAction", EditorActionAvailabilityHint.AvailabilityCondition.CaretOnStart))
+      element.addActionAvailabilityHint(EditorActionAvailabilityHint(IdeActions.ACTION_INSERT_INLINE_COMPLETION, EditorActionAvailabilityHint.AvailabilityCondition.CaretOnStart))
       Disposer.tryRegister(this, element)
       suffixInlay = element
     }

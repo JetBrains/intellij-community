@@ -47,14 +47,14 @@ private abstract class AResetICOnboardingAction(
 
 private class ChangeToTabInlineCompletionAction : AnAction("Tab", "Tab to Insert", null), DumbAware, LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
-    ActionManager.getInstance().getAction("InsertInlineCompletionAction")
+    ActionManager.getInstance().getAction(IdeActions.ACTION_INSERT_INLINE_COMPLETION)
       .registerCustomShortcutSet(CustomShortcutSet(KeyboardShortcut.fromString("tab")), null)
   }
 }
 
 private class ChangeToEnterInlineCompletionAction : AnAction("Enter", "Enter to Insert", null), DumbAware, LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
-    ActionManager.getInstance().getAction("InsertInlineCompletionAction")
+    ActionManager.getInstance().getAction(IdeActions.ACTION_INSERT_INLINE_COMPLETION)
       .registerCustomShortcutSet(CustomShortcutSet(KeyboardShortcut.fromString("enter")), null)
   }
 }
