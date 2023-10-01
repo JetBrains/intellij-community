@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicablePredicate
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
@@ -18,17 +17,15 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.Applicabilit
 import org.jetbrains.kotlin.psi.*
 
 internal class SpecifyTypeExplicitlyIntention:
-    AbstractKotlinModCommandWithContext<KtCallableDeclaration, TypeInfo>(KtCallableDeclaration::class, Helper) {
+    AbstractKotlinModCommandWithContext<KtCallableDeclaration, TypeInfo>(KtCallableDeclaration::class) {
 
-    internal object Helper: AbstractKotlinApplicablePredicate<KtCallableDeclaration>() {
-        override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallableDeclaration> =
-            ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallableDeclaration> =
+        ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER
 
-        override fun isApplicableByPsi(element: KtCallableDeclaration): Boolean {
-            if (element is KtConstructor<*> || element is KtFunctionLiteral) return false
-            if (element is KtParameter && element.isLoopParameter && element.destructuringDeclaration != null) return false
-            return element.typeReference == null && (element as? KtNamedFunction)?.hasBlockBody() != true
-        }
+    override fun isApplicableByPsi(element: KtCallableDeclaration): Boolean {
+        if (element is KtConstructor<*> || element is KtFunctionLiteral) return false
+        if (element is KtParameter && element.isLoopParameter && element.destructuringDeclaration != null) return false
+        return element.typeReference == null && (element as? KtNamedFunction)?.hasBlockBody() != true
     }
 
     override fun getFamilyName(): String = KotlinBundle.message("specify.type.explicitly")

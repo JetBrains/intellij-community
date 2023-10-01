@@ -5,8 +5,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.BiFunction;
-
 /**
  * A convenient abstract class to implement {@link ModCommandAction}
  * that starts on a given {@link PsiElement}, or a {@link PsiElement} of a given type under the caret
@@ -33,17 +31,6 @@ public abstract class PsiUpdateModCommandAction<E extends PsiElement> extends Ps
    */
   protected PsiUpdateModCommandAction(@NotNull Class<E> elementClass) {
     super(elementClass);
-  }
-
-  /**
-   * Constructs an instance, which will look for an element
-   * of a specified class at the caret offset, satisfying the specified filter.
-   *
-   * @param elementClass element class
-   * @param filter       predicate to check the elements: elements that don't satisfy will be skipped
-   */
-  protected PsiUpdateModCommandAction(@NotNull Class<E> elementClass, @NotNull BiFunction<? super E, ActionContext, Boolean> filter) {
-    super(elementClass, filter);
   }
 
   @Override

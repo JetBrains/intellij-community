@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicablePredicate
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.utils.getClassId
@@ -32,111 +31,114 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandIntention<KtDeclaration>(KtDeclaration::class, Helper) {
+internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandIntention<KtDeclaration>(KtDeclaration::class) {
 
-    internal object Helper: AbstractKotlinApplicablePredicate<KtDeclaration>() {
-        override fun getApplicabilityRange(): KotlinApplicabilityRange<KtDeclaration> =
-            applicabilityRanges { declaration ->
-                val typeReference = declaration.typeReference ?: return@applicabilityRanges emptyList()
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtDeclaration> =
+        applicabilityRanges { declaration ->
+            val typeReference = declaration.typeReference ?: return@applicabilityRanges emptyList()
 
-                if (declaration is KtParameter && declaration.isSetterParameter) {
-                    listOf(typeReference.textRangeIn(declaration))
-                } else {
-                    val typeReferenceRelativeEndOffset = typeReference.endOffset - declaration.startOffset
-                    listOf(TextRange(0, typeReferenceRelativeEndOffset))
-                }
+            if (declaration is KtParameter && declaration.isSetterParameter) {
+                listOf(typeReference.textRangeIn(declaration))
+            } else {
+                val typeReferenceRelativeEndOffset = typeReference.endOffset - declaration.startOffset
+                listOf(TextRange(0, typeReferenceRelativeEndOffset))
+            }
+        }
+
+    override fun isApplicableByPsi(element: KtDeclaration): Boolean = when {
+        element.typeReference == null || element.typeReference?.isAnnotatedDeep() == true -> false
+        element is KtParameter -> element.isLoopParameter || element.isSetterParameter
+        element is KtNamedFunction -> true
+        element is KtProperty || element is KtPropertyAccessor -> element.getInitializerOrGetterInitializer() != null
+        else -> false
+    }
+
+    context(KtAnalysisSession)
+    override fun isApplicableByAnalyze(element: KtDeclaration): Boolean = when {
+        element is KtParameter -> true
+        element is KtNamedFunction && element.hasBlockBody() -> element.getReturnKtType().isUnit
+        element is KtCallableDeclaration && publicReturnTypeShouldBePresentInApiMode(element) -> false
+        else -> !explicitTypeMightBeNeededForCorrectTypeInference(element)
+    }
+
+    private val KtDeclaration.typeReference: KtTypeReference?
+        get() = when (this) {
+            is KtCallableDeclaration -> typeReference
+            is KtPropertyAccessor -> returnTypeReference
+            else -> null
+        }
+
+    context(KtAnalysisSession)
+    private fun publicReturnTypeShouldBePresentInApiMode(declaration: KtCallableDeclaration): Boolean {
+        if (declaration.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) == ExplicitApiMode.DISABLED) return false
+
+        if (declaration.containingClassOrObject?.isLocal == true) return false
+        if (declaration is KtFunction && declaration.isLocal) return false
+        if (declaration is KtProperty && declaration.isLocal) return false
+
+        val symbolWithVisibility = declaration.getSymbol() as? KtSymbolWithVisibility ?: return false
+        return isPublicApi(symbolWithVisibility)
+    }
+
+    context(KtAnalysisSession)
+    private fun explicitTypeMightBeNeededForCorrectTypeInference(declaration: KtDeclaration): Boolean {
+        val initializer = declaration.getInitializerOrGetterInitializer() ?: return true
+        val initializerType = getInitializerTypeIfContextIndependent(initializer) ?: return true
+        val explicitType = declaration.getReturnKtType()
+
+        val typeCanBeRemoved = if (declaration.isVar) {
+            initializerType.isEqualTo(explicitType)
+        } else {
+            initializerType.isSubTypeOf(explicitType)
+        }
+        return !typeCanBeRemoved
+    }
+
+    context(KtAnalysisSession)
+    private fun getInitializerTypeIfContextIndependent(initializer: KtExpression): KtType? {
+        return when (initializer) {
+            is KtStringTemplateExpression -> buildClassType(DefaultTypeClassIds.STRING)
+            is KtConstantExpression -> initializer.getClassId()?.let { buildClassType(it) }
+            is KtCallExpression -> {
+                val isNotContextFree = initializer.typeArgumentList == null && returnTypeOfCallDependsOnTypeParameters(initializer)
+                if (isNotContextFree) null else initializer.getKtType()
             }
 
-        override fun isApplicableByPsi(element: KtDeclaration): Boolean = when {
-            element.typeReference == null || element.typeReference?.isAnnotatedDeep() == true -> false
-            element is KtParameter -> element.isLoopParameter || element.isSetterParameter
-            element is KtNamedFunction -> true
-            element is KtProperty || element is KtPropertyAccessor -> element.getInitializerOrGetterInitializer() != null
+            else -> {
+                // get type for expressions that a compiler views as constants, e.g. `1 + 2`
+                val evaluatedConstant = initializer.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
+                if (evaluatedConstant != null) initializer.getKtType() else null
+            }
+        }
+    }
+
+    context(KtAnalysisSession)
+    private fun returnTypeOfCallDependsOnTypeParameters(callExpression: KtCallExpression): Boolean {
+        val call = callExpression.resolveCall()?.singleFunctionCallOrNull() ?: return true
+        val callSymbol = call.partiallyAppliedSymbol.symbol
+        val typeParameters = callSymbol.typeParameters
+        val returnType = callSymbol.returnType
+        return typeParameters.any { typeReferencesTypeParameter(it, returnType) }
+    }
+
+    context(KtAnalysisSession)
+    private fun typeReferencesTypeParameter(typeParameter: KtTypeParameterSymbol, type: KtType): Boolean {
+        return when (type) {
+            is KtTypeParameterType -> type.symbol == typeParameter
+            is KtNonErrorClassType -> type.ownTypeArguments.mapNotNull { it.type }.any { typeReferencesTypeParameter(typeParameter, it) }
             else -> false
         }
+    }
 
-        context(KtAnalysisSession)
-        override fun isApplicableByAnalyze(element: KtDeclaration): Boolean = when {
-            element is KtParameter -> true
-            element is KtNamedFunction && element.hasBlockBody() -> element.getReturnKtType().isUnit
-            element is KtCallableDeclaration && publicReturnTypeShouldBePresentInApiMode(element) -> false
-            else -> !explicitTypeMightBeNeededForCorrectTypeInference(element)
+    private val KtDeclaration.isVar: Boolean
+        get() {
+            val property = (this as? KtProperty) ?: (this as? KtPropertyAccessor)?.property
+            return property?.isVar == true
         }
 
-        private val KtDeclaration.typeReference: KtTypeReference?
-            get() = when (this) {
-                is KtCallableDeclaration -> typeReference
-                is KtPropertyAccessor -> returnTypeReference
-                else -> null
-            }
-
-        context(KtAnalysisSession)
-        private fun publicReturnTypeShouldBePresentInApiMode(declaration: KtCallableDeclaration): Boolean {
-            if (declaration.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) == ExplicitApiMode.DISABLED) return false
-
-            if (declaration.containingClassOrObject?.isLocal == true) return false
-            if (declaration is KtFunction && declaration.isLocal) return false
-            if (declaration is KtProperty && declaration.isLocal) return false
-
-            val symbolWithVisibility = declaration.getSymbol() as? KtSymbolWithVisibility ?: return false
-            return isPublicApi(symbolWithVisibility)
-        }
-
-        context(KtAnalysisSession)
-        private fun explicitTypeMightBeNeededForCorrectTypeInference(declaration: KtDeclaration): Boolean {
-            val initializer = declaration.getInitializerOrGetterInitializer() ?: return true
-            val initializerType = getInitializerTypeIfContextIndependent(initializer) ?: return true
-            val explicitType = declaration.getReturnKtType()
-
-            val typeCanBeRemoved = if (declaration.isVar) {
-                initializerType.isEqualTo(explicitType)
-            } else {
-                initializerType.isSubTypeOf(explicitType)
-            }
-            return !typeCanBeRemoved
-        }
-
-        context(KtAnalysisSession)
-        private fun getInitializerTypeIfContextIndependent(initializer: KtExpression): KtType? {
-            return when (initializer) {
-                is KtStringTemplateExpression -> buildClassType(DefaultTypeClassIds.STRING)
-                is KtConstantExpression -> initializer.getClassId()?.let { buildClassType(it) }
-                is KtCallExpression -> {
-                    val isNotContextFree = initializer.typeArgumentList == null && returnTypeOfCallDependsOnTypeParameters(initializer)
-                    if (isNotContextFree) null else initializer.getKtType()
-                }
-
-                else -> {
-                    // get type for expressions that a compiler views as constants, e.g. `1 + 2`
-                    val evaluatedConstant = initializer.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
-                    if (evaluatedConstant != null) initializer.getKtType() else null
-                }
-            }
-        }
-
-        context(KtAnalysisSession)
-        private fun returnTypeOfCallDependsOnTypeParameters(callExpression: KtCallExpression): Boolean {
-            val call = callExpression.resolveCall()?.singleFunctionCallOrNull() ?: return true
-            val callSymbol = call.partiallyAppliedSymbol.symbol
-            val typeParameters = callSymbol.typeParameters
-            val returnType = callSymbol.returnType
-            return typeParameters.any { typeReferencesTypeParameter(it, returnType) }
-        }
-
-        context(KtAnalysisSession)
-        private fun typeReferencesTypeParameter(typeParameter: KtTypeParameterSymbol, type: KtType): Boolean {
-            return when (type) {
-                is KtTypeParameterType -> type.symbol == typeParameter
-                is KtNonErrorClassType -> type.ownTypeArguments.mapNotNull { it.type }.any { typeReferencesTypeParameter(typeParameter, it) }
-                else -> false
-            }
-        }
-
-        private val KtDeclaration.isVar: Boolean
-            get() {
-                val property = (this as? KtProperty) ?: (this as? KtPropertyAccessor)?.property
-                return property?.isVar == true
-            }
+    private fun KtDeclaration.getInitializerOrGetterInitializer(): KtExpression? {
+        if (this is KtDeclarationWithInitializer && initializer != null) return initializer
+        return (this as? KtProperty)?.getter?.initializer
     }
 
     override fun getFamilyName(): String = KotlinBundle.message("remove.explicit.type.specification")
@@ -156,9 +158,4 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
         }
     }
 
-}
-
-private fun KtDeclaration.getInitializerOrGetterInitializer(): KtExpression? {
-    if (this is KtDeclarationWithInitializer && initializer != null) return initializer
-    return (this as? KtProperty)?.getter?.initializer
 }

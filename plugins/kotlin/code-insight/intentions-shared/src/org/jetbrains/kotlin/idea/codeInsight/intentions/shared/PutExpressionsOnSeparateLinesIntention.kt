@@ -9,7 +9,6 @@ import com.intellij.psi.util.descendants
 import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicablePredicate
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -19,20 +18,18 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.util.takeWhileIsInstance
 
 internal class PutExpressionsOnSeparateLinesIntention :
-    AbstractKotlinApplicableModCommandIntention<KtOperationReferenceExpression>(KtOperationReferenceExpression::class, Helper) {
+    AbstractKotlinApplicableModCommandIntention<KtOperationReferenceExpression>(KtOperationReferenceExpression::class) {
 
-    internal object Helper: AbstractKotlinApplicablePredicate<KtOperationReferenceExpression>() {
-        override fun getApplicabilityRange(): KotlinApplicabilityRange<KtOperationReferenceExpression> =
-            ApplicabilityRanges.SELF
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtOperationReferenceExpression> =
+        ApplicabilityRanges.SELF
 
-        override fun isApplicableByPsi(element: KtOperationReferenceExpression): Boolean {
-            element.topmostBinaryExpression()?.visitOperations {
-                val nextSibling = it.nextSibling as? PsiWhiteSpace ?: return true
-                if (!nextSibling.textContains('\n')) return true
-            }
-
-            return false
+    override fun isApplicableByPsi(element: KtOperationReferenceExpression): Boolean {
+        element.topmostBinaryExpression()?.visitOperations {
+            val nextSibling = it.nextSibling as? PsiWhiteSpace ?: return true
+            if (!nextSibling.textContains('\n')) return true
         }
+
+        return false
     }
 
     override fun getActionName(element: KtOperationReferenceExpression): String = familyName

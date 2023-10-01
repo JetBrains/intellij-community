@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.function.BiFunction;
 
 /**
  * A convenient abstract class to implement {@link ModCommandAction}
@@ -24,7 +23,6 @@ import java.util.function.BiFunction;
 public abstract class PsiBasedModCommandAction<E extends PsiElement> implements ModCommandAction {
   private final @Nullable SmartPsiElementPointer<E> myPointer;
   private final @Nullable Class<E> myClass;
-  private final @Nullable BiFunction<? super E, ActionContext, Boolean> myFilter;
 
   /**
    * Constructs an instance, which is bound to a specified element
@@ -34,7 +32,6 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   protected PsiBasedModCommandAction(@NotNull E element) {
     myPointer = SmartPointerManager.createPointer(element);
     myClass = null;
-    myFilter = null;
   }
 
   /**
@@ -46,20 +43,6 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   protected PsiBasedModCommandAction(@NotNull Class<E> elementClass) {
     myPointer = null;
     myClass = elementClass;
-    myFilter = null;
-  }
-
-  /**
-   * Constructs an instance, which will look for an element 
-   * of a specified class at the caret offset, satisfying the specified filter.
-   * 
-   * @param elementClass element class
-   * @param filter predicate to check the elements: elements that don't satisfy will be skipped
-   */
-  protected PsiBasedModCommandAction(@NotNull Class<E> elementClass, @NotNull BiFunction<? super E, ActionContext, Boolean> filter) {
-    myPointer = null;
-    myClass = elementClass;
-    myFilter = filter;
   }
 
   @Override
@@ -110,12 +93,16 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
     }
   }
 
-  private E getIfSatisfied(PsiElement element, @NotNull ActionContext context) {
+  private E getIfSatisfied(@NotNull PsiElement element, @NotNull ActionContext context) {
     Class<E> cls = Objects.requireNonNull(myClass);
     if (!cls.isInstance(element)) return null;
     E e = cls.cast(element);
-    if (myFilter != null && !myFilter.apply(e, context)) return null;
-    return e;
+    return isElementApplicable(e, context) ? e : null;
+  }
+
+  @SuppressWarnings("unused")
+  protected boolean isElementApplicable(@NotNull E element, @NotNull ActionContext context) {
+    return true;
   }
 
   @Override

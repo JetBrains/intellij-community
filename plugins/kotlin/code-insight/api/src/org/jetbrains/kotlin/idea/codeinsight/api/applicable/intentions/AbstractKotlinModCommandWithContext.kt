@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeInDependedAnalysisSession
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.isApplicableToElement
@@ -21,31 +22,20 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.reflect.KClass
 
-internal val ALWAYS_TRUE: (KtElement, ActionContext) -> Boolean = { _, _ -> true }
-
 abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>(
-    clazz: KClass<ELEMENT>,
-    predicate: (ELEMENT, ActionContext) -> Boolean,
-    private val applicablePredicate: AbstractKotlinApplicablePredicate<ELEMENT>? = null
-) :
-    PsiUpdateModCommandAction<ELEMENT>(clazz.java, predicate),
+    clazz: KClass<ELEMENT>
+) : PsiUpdateModCommandAction<ELEMENT>(clazz.java),
     KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
-
-    constructor(clazz: KClass<ELEMENT>) : this(clazz, ALWAYS_TRUE)
-
-    constructor(clazz: KClass<ELEMENT>, kotlinApplicablePredicate: AbstractKotlinApplicablePredicate<ELEMENT>) :
-            this(clazz, kotlinApplicablePredicate::apply, kotlinApplicablePredicate)
 
     /**
      * Checks the intention's applicability based on [isApplicableByPsi] and [KotlinApplicabilityRange].
      */
-    fun isApplicableTo(element: ELEMENT, caretOffset: Int): Boolean = isApplicableToElement(element, caretOffset)
+    override fun isElementApplicable(element: ELEMENT, context: ActionContext): Boolean {
+        return isApplicableToElement(element, context.offset) && analyze(element) { isApplicableByAnalyze(element) }
+    }
 
-    override fun isApplicableByPsi(element: ELEMENT): Boolean =
-        applicablePredicate?.isApplicableByPsi(element) ?: TODO("isApplicableByPsi has to be overridden")
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<ELEMENT> =
-        applicablePredicate?.getApplicabilityRange() ?: TODO("getApplicabilityRange has to be overridden")
+    context(KtAnalysisSession)
+    protected open fun isApplicableByAnalyze(element: ELEMENT): Boolean = true
 
     protected open val isKotlinOnlyIntention: Boolean = true
 
@@ -63,7 +53,6 @@ abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>
     protected open fun visitTargetTypeOnlyOnce(): Boolean = false
 
     override fun getPresentation(context: ActionContext, element: ELEMENT): Presentation? {
-        if (!isApplicableTo(element, context.offset)) return null
         val analysisContext = prepareContextWithAnalyze(element) ?: return null
         return Presentation.of(getActionName(element, analysisContext))
     }
