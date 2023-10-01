@@ -7,14 +7,13 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByCustomRule
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.DumbService.Companion.getInstance
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.ProjectScope
-import com.intellij.util.containers.ContainerUtil
 
 internal class LibraryJarUsagesCollector : ProjectUsagesCollector() {
   private val GROUP = EventLogGroup("javaLibraryJars", 4)
@@ -24,7 +23,7 @@ internal class LibraryJarUsagesCollector : ProjectUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  public override fun getMetrics(project: Project): Set<MetricEvent> {
+  override suspend fun collect(project: Project): Set<MetricEvent> {
     val descriptors = LibraryJarStatisticsService.getInstance().getTechnologyDescriptors()
     val result: MutableSet<MetricEvent> = HashSet(descriptors.size)
 
@@ -32,20 +31,21 @@ internal class LibraryJarUsagesCollector : ProjectUsagesCollector() {
       val className = descriptor.myClass
       if (className == null) continue
 
-      val event = ReadAction.nonBlocking<MetricEvent?> {
+      val jarVirtualFiles = readAction {
         val psiClasses = getInstance(project).computeWithAlternativeResolveEnabled<Array<PsiClass>, RuntimeException> {
           JavaPsiFacade.getInstance(project).findClasses(className, ProjectScope.getLibrariesScope(project))
         }
-        for (psiClass in psiClasses) {
-          val version = findJarVersion(psiClass)
-          if (StringUtil.isNotEmpty(version)) {
-            return@nonBlocking USED_LIBRARY.metric(version, descriptor.myName)
-          }
+        psiClasses.mapNotNull {
+          it.findCorrespondingVirtualFile()
         }
-        null
-      }.executeSynchronously()
+      }
 
-      ContainerUtil.addIfNotNull(result, event)
+      for (jarVirtualFile in jarVirtualFiles) {
+        val version = findJarVersion(jarVirtualFile)
+        if (StringUtil.isNotEmpty(version)) {
+          result.add(USED_LIBRARY.metric(version, descriptor.myName))
+        }
+      }
     }
 
     return result

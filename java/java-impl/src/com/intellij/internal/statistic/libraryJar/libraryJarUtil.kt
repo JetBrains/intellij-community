@@ -16,6 +16,8 @@ private val JAR_FILE_NAME_PATTERN = Regex("[\\w|\\-.]+-($DIGIT_VERSION_PATTERN_P
 private val JRT_ROOT_FILE_NAME_PATTERN = Regex("[\\w|\\-.]+-($DIGIT_VERSION_PATTERN_PART[\\w|.]*)")
 
 private fun versionByJarManifest(file: VirtualFile): String? {
+  if (!file.isValid) return null
+
   return JarUtil.getJarAttribute(
     VfsUtilCore.virtualToIoFile(file),
     Attributes.Name.IMPLEMENTATION_VERSION,
@@ -34,7 +36,7 @@ private fun versionByJrtRootName(fileName: String): String? {
   return value.trimEnd('.')
 }
 
-private fun PsiElement.findCorrespondingVirtualFile(): VirtualFile? {
+internal fun PsiElement.findCorrespondingVirtualFile(): VirtualFile? {
   return if (this is PsiPackage)
     getDirectories(ProjectScope.getLibrariesScope(project)).firstOrNull()?.virtualFile
   else
@@ -43,6 +45,10 @@ private fun PsiElement.findCorrespondingVirtualFile(): VirtualFile? {
 
 internal fun findJarVersion(elementFromJar: PsiElement): String? {
   val vFile = elementFromJar.findCorrespondingVirtualFile() ?: return null
+  return findJarVersion(vFile)
+}
+
+internal fun findJarVersion(vFile: VirtualFile): String? {
   if (vFile.fileSystem is JrtFileSystem) {
     val fileName = (vFile.fileSystem as JrtFileSystem).getLocalByEntry(vFile)?.name ?: return null
     return versionByJrtRootName(fileName)
