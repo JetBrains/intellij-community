@@ -1033,7 +1033,6 @@
     <getDataRule key="copyProvider" implementationClass="com.intellij.ide.impl.dataRules.CopyProviderRule" type="fast"/>
     <getDataRule key="cutProvider" implementationClass="com.intellij.ide.impl.dataRules.CutProviderRule" type="fast"/>
     <getDataRule key="pasteProvider" implementationClass="com.intellij.ide.impl.dataRules.PasteProviderRule" type="fast"/>
-    <getDataRule key="fileText" implementationClass="com.intellij.ide.impl.dataRules.FileTextRule"/>
     <getDataRule key="fileEditor" implementationClass="com.intellij.ide.impl.dataRules.FileEditorRule" type="fast"/>
     <getDataRule key="NavigatableArray" implementationClass="com.intellij.ide.impl.dataRules.NavigatableArrayRule" type="fast"/>
     <getDataRule key="editor.even.if.inactive" implementationClass="com.intellij.ide.impl.dataRules.InactiveEditorRule" type="fast"/>
