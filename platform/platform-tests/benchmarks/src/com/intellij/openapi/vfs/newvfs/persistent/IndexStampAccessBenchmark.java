@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.util.indexing.IndexingStamp;
-import com.intellij.util.indexing.IndexingStamp.Timestamps;
+import com.intellij.util.indexing.Timestamps;
 import org.jetbrains.annotations.NotNull;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static com.intellij.util.indexing.IndexingStamp.Timestamps.PERSISTENCE;
+import static com.intellij.util.indexing.Timestamps.PERSISTENCE;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
