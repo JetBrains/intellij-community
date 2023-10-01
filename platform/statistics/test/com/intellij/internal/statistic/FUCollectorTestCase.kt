@@ -7,12 +7,9 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
-import org.jetbrains.concurrency.CancellablePromise
-import java.util.concurrent.ExecutionException
 
 object FUCollectorTestCase {
   fun collectLogEvents(parentDisposable: Disposable,
@@ -20,25 +17,17 @@ object FUCollectorTestCase {
     return collectLogEvents("FUS", parentDisposable, action)
   }
 
+  @JvmStatic
   fun collectProjectStateCollectorEvents(collectorClass: Class<out ProjectUsagesCollector>, project: Project): Set<MetricEvent> {
     val collector: ProjectUsagesCollector = collectorClass.getConstructor().newInstance()
-    val method = collectorClass.getMethod("getMetrics", Project::class.java, ProgressIndicator::class.java)
-    val promise = method.invoke(collector, project, EmptyProgressIndicator()) as CancellablePromise<Set<MetricEvent>>
-    try {
-      return promise.get()
-    }
-    catch (e: InterruptedException) {
-      throw RuntimeException(e)
-    }
-    catch (e: ExecutionException) {
-      throw RuntimeException(e)
+    return runBlockingMaybeCancellable {
+      collector.collect(project)
     }
   }
 
   fun collectApplicationStateCollectorEvents(collectorClass: Class<out ApplicationUsagesCollector>): Set<MetricEvent> {
     val collector: ApplicationUsagesCollector = collectorClass.getConstructor().newInstance()
-    val method = collectorClass.getMethod("getMetrics")
-    return method.invoke(collector) as Set<MetricEvent>
+    return collector.getMetrics()
   }
 
   fun collectLogEvents(recorder: String,
@@ -50,5 +39,4 @@ object FUCollectorTestCase {
     action()
     return mockLoggerProvider.getLoggedEvents()
   }
-
 }
