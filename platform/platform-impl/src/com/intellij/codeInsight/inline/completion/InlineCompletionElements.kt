@@ -9,11 +9,9 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 
@@ -51,7 +49,7 @@ interface InlineCompletionEvent {
     val context: DataContext? = null,
   ) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest {
-      val offset = blockingReadAction { caret.offset }
+      val offset = runReadAction { caret.offset }
       return InlineCompletionRequest(this, file, editor, editor.document, offset, offset)
     }
   }
@@ -66,7 +64,7 @@ interface InlineCompletionEvent {
       val project = editor.project ?: return null
       if (editor.caretModel.caretCount != 1) return null
 
-      val file = blockingReadAction { PsiManager.getInstance(project).findFile(virtualFile) } ?: return null
+      val file = runReadAction { PsiManager.getInstance(project).findFile(virtualFile) } ?: return null
 
       return InlineCompletionRequest(this, file, editor, event.document, event.offset, event.offset + event.newLength)
     }
@@ -96,7 +94,7 @@ interface InlineCompletionEvent {
    */
   data class LookupCancelled(override val event: LookupEvent) : InlineLookupEvent
 
-  private interface InlineLookupEvent : InlineCompletionEvent {
+  sealed interface InlineLookupEvent : InlineCompletionEvent {
     val event: LookupEvent
     override fun toRequest(): InlineCompletionRequest? {
       val editor = runReadAction { event.lookup?.editor } ?: return null
@@ -113,9 +111,4 @@ interface InlineCompletionEvent {
       return InlineCompletionRequest(this, file, editor, editor.document, offset, offset, null)
     }
   }
-}
-
-@RequiresBlockingContext
-private fun <T> blockingReadAction(block: () -> T): T {
-  return application.runReadAction(Computable { block() })
 }
