@@ -1,103 +1,86 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.colors.ex;
+package com.intellij.openapi.editor.colors.ex
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
-import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ResourceUtil;
-import org.jdom.Attribute;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme
+import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme
+import com.intellij.openapi.editor.colors.impl.EmptyColorScheme
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.util.ResourceUtil
+import org.jetbrains.annotations.ApiStatus
+import kotlin.concurrent.Volatile
 
-import java.io.IOException;
-import java.util.*;
+private const val SCHEME_ELEMENT = "scheme"
 
-import static com.intellij.openapi.editor.colors.impl.AbstractColorsScheme.NAME_ATTR;
-
-@State(
-  name = "DefaultColorSchemesManager",
-  defaultStateAsResource = true,
-  storages = @Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)
-)
 @Service
 @ApiStatus.Internal
-public final class DefaultColorSchemesManager {
-  private static final String SCHEME_ELEMENT = "scheme";
+class DefaultColorSchemesManager {
+  @Volatile
+  var allSchemes: List<DefaultColorsScheme> = emptyList()
+    private set
 
-  private volatile List<DefaultColorsScheme> mySchemes = Collections.emptyList();
-
-  public static DefaultColorSchemesManager getInstance() {
-    return ApplicationManager.getApplication().getService(DefaultColorSchemesManager.class);
-  }
-
-  public DefaultColorSchemesManager() {
-    reload();
-  }
-
-  public void reload() {
-    try {
-      loadState(JDOMUtil.load(Objects.requireNonNull(ResourceUtil.getResourceAsBytes("DefaultColorSchemesManager.xml",
-                                                                                     DefaultColorSchemesManager.class.getClassLoader()))));
+  init {
+    allSchemes = try {
+      loadState(oldSchemes = emptyList())
     }
-    catch (JDOMException | IOException e) {
-      ExceptionUtil.rethrow(e);
-      mySchemes = Collections.emptyList();
+    catch (e: Exception) {
+      thisLogger().error(e)
+      listOf(EmptyColorScheme.INSTANCE)
     }
   }
 
-  private void loadState(@NotNull Element state) {
-    List<DefaultColorsScheme> schemes = new ArrayList<>();
-    for (Element schemeElement : state.getChildren(SCHEME_ELEMENT)) {
-      boolean isUpdated = false;
-      Attribute nameAttr = schemeElement.getAttribute(NAME_ATTR);
-      if (nameAttr != null) {
-        for (DefaultColorsScheme oldScheme : mySchemes) {
-          if (StringUtil.equals(nameAttr.getValue(), oldScheme.getName())) {
-            oldScheme.readExternal(schemeElement);
-            schemes.add(oldScheme);
-            isUpdated = true;
-          }
+  companion object {
+
+    @JvmStatic
+    fun getInstance(): DefaultColorSchemesManager = service<DefaultColorSchemesManager>()
+  }
+
+  fun reload() {
+    allSchemes = try {
+      loadState(oldSchemes = allSchemes)
+    }
+    catch (e: Exception) {
+      thisLogger().error(e)
+      emptyList()
+    }
+  }
+
+  fun listNames(): List<String> = allSchemes.map { it.name }
+
+  val firstScheme: DefaultColorsScheme
+    get() = allSchemes.first()
+
+  fun getScheme(name: String): EditorColorsScheme? = allSchemes.firstOrNull { name == it.name }
+}
+
+
+private fun loadState(oldSchemes: List<DefaultColorsScheme>): List<DefaultColorsScheme> {
+  val state = JDOMUtil.load(ResourceUtil.getResourceAsBytes("DefaultColorSchemesManager.xml",
+                                                            DefaultColorSchemesManager::class.java.getClassLoader())!!)
+
+  val schemes = ArrayList<DefaultColorsScheme>()
+  for (schemeElement in state.getChildren(SCHEME_ELEMENT)) {
+    var isUpdated = false
+    val nameAttr = schemeElement.getAttribute(AbstractColorsScheme.NAME_ATTR)
+    if (nameAttr != null) {
+      for (oldScheme in oldSchemes) {
+        if (nameAttr.value == oldScheme.name) {
+          oldScheme.readExternal(schemeElement)
+          schemes.add(oldScheme)
+          isUpdated = true
         }
       }
-      if (!isUpdated) {
-        DefaultColorsScheme newScheme = new DefaultColorsScheme();
-        newScheme.readExternal(schemeElement);
-        schemes.add(newScheme);
-      }
     }
-    schemes.add(EmptyColorScheme.INSTANCE);
-    mySchemes = Collections.unmodifiableList(schemes);
-  }
-
-  public @NotNull List<DefaultColorsScheme> getAllSchemes() {
-    return mySchemes;
-  }
-
-  public @NotNull List<@NonNls String> listNames() {
-    String[] names = new String[mySchemes.size()];
-    for (int i = 0; i < names.length; i ++) {
-      names[i] = mySchemes.get(i).getName();
+    if (!isUpdated) {
+      val newScheme = DefaultColorsScheme()
+      newScheme.readExternal(schemeElement)
+      schemes.add(newScheme)
     }
-    return Arrays.asList(names);
   }
-
-  public @NotNull DefaultColorsScheme getFirstScheme() {
-    return mySchemes.get(0);
-  }
-
-  public @Nullable EditorColorsScheme getScheme(String name) {
-    for (DefaultColorsScheme scheme : mySchemes) {
-      if (name.equals(scheme.getName())) return scheme;
-    }
-    return null;
-  }
+  schemes.add(EmptyColorScheme.INSTANCE)
+  return java.util.List.copyOf(schemes)
 }
+
