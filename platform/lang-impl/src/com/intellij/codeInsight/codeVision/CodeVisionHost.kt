@@ -101,7 +101,7 @@ open class CodeVisionHost(val project: Project) {
 
   @Suppress("MemberVisibilityCanBePrivate")
   // Uses in Rider
-  protected val lifeSettingModel: CodeVisionSettingsLiveModel = CodeVisionSettingsLiveModel(codeVisionLifetime)
+  public val lifeSettingModel: CodeVisionSettingsLiveModel = CodeVisionSettingsLiveModel(codeVisionLifetime)
 
   var providers: List<CodeVisionProvider<*>> = CodeVisionProviderFactory.createAllProviders(project)
 
@@ -230,7 +230,7 @@ open class CodeVisionHost(val project: Project) {
     defaultSortedProvidersList.addAll(allProviders.getTopSortedIdList())
   }
 
-  protected open fun collectAllProviders(): List<Pair<String, CodeVisionProvider<*>>> {
+  open fun collectAllProviders(): List<Pair<String, CodeVisionProvider<*>>> {
     return providers.map { it.id to it }
   }
 

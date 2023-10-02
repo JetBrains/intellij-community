@@ -417,8 +417,11 @@
 
     <applicationService serviceImplementation="com.intellij.codeInsight.codeVision.settings.CodeVisionSettings"/>
     <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionInitializer"/>
+    <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionHost"/>
     <postStartupActivity implementation="com.intellij.codeInsight.codeVision.CodeVisionInitializer$CodeVisionInitializerStartupActivity"/>
     <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionContextProvider"/>
+    <projectService serviceInterface="com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel"
+                    serviceImplementation="com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModelImpl"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.codeVision.ui.renderers.painters.CodeVisionThemeInfoProvider"/>
 
     <projectService serviceImplementation="com.intellij.codeInsight.actions.AsyncActionExecutionService"/>

@@ -14,7 +14,7 @@ open class CodeVisionInitializer(project: Project) {
     fun getInstance(project: Project): CodeVisionInitializer = project.service<CodeVisionInitializer>()
   }
 
-  protected open val host: CodeVisionHost = CodeVisionHost(project)
+  protected open val host: CodeVisionHost = project.service<CodeVisionHost>() // TODO: Don't store as field and initialized later?
 
   open fun getCodeVisionHost(): CodeVisionHost = host
 

@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.Key
@@ -22,7 +23,8 @@ import java.awt.event.MouseEvent
 val editorLensContextKey: Key<EditorCodeVisionContext> = Key<EditorCodeVisionContext>("EditorCodeLensContext")
 // used externally
 val codeVisionEntryOnHighlighterKey: Key<CodeVisionEntry> = Key.create("CodeLensEntryOnHighlighter")
-internal val codeVisionEntryMouseEventKey: Key<MouseEvent> = Key.create("CodeVisionEntryMouseEventKey")
+val highlighterOnCodeVisionEntryKey: Key<RangeMarkerEx> = Key.create("HighlighterOnHighlighterCodeLensEntry")
+val codeVisionEntryMouseEventKey: Key<MouseEvent> = Key.create("CodeVisionEntryMouseEventKey")
 
 // used by Rider
 val Editor.lensContext: EditorCodeVisionContext
@@ -43,10 +45,12 @@ open class EditorCodeVisionContext(
   private var hasPendingLenses = false
 
   private val submittedGroupings = ArrayList<Pair<TextRange, (Int) -> Unit>>()
+  val codeVisionModel : CodeVisionModel = CodeVisionModel()
 
   init {
     (editor as EditorImpl).disposable.createLifetime().onTermination {
       frontendResults.forEach { it.dispose() }
+      codeVisionModel.removeLenses(frontendResults)
     }
   }
 
@@ -69,10 +73,12 @@ open class EditorCodeVisionContext(
     ThreadingAssertions.assertEventDispatchThread()
     LOG.trace("Have new frontend lenses ${lenses.size}")
     frontendResults.forEach { it.dispose() }
+    codeVisionModel.removeLenses(frontendResults)
     frontendResults = lenses.mapNotNull { (range, entry) ->
       if (!range.isValidFor(editor.document)) return@mapNotNull null
       editor.document.createRangeMarker(range).apply {
         putUserData(codeVisionEntryOnHighlighterKey, entry)
+        entry.putUserData(highlighterOnCodeVisionEntryKey, this as? RangeMarkerEx)
       }
     }
     resubmitThings()
@@ -88,10 +94,10 @@ open class EditorCodeVisionContext(
   fun resubmitThings() {
     val viewService = editor.project!!.service<CodeVisionView>()
 
-    viewService.runWithReusingLenses {
+    viewService.runWithReusingLenses(codeVisionModel) {
       val lifetime = outputLifetimes.next()
       val mergedLenses = getValidResult().groupBy { editor.document.getLineNumber(it.startOffset) }
-
+      
       submittedGroupings.clear()
       for ((_, lineLenses) in mergedLenses) {
         if (lineLenses.isEmpty()) {
@@ -99,7 +105,6 @@ open class EditorCodeVisionContext(
         }
 
         val lastFilteredLineLenses = lineLenses.groupBy { it.codeVisionEntryOrThrow.providerId }.map { it.value.last() }
-
         val groupedLenses = lastFilteredLineLenses.groupBy { codeVisionHost.getAnchorForEntry(it.codeVisionEntryOrThrow) }
 
         val anchoringRange = groupedLenses.first().value.first()
@@ -107,6 +112,7 @@ open class EditorCodeVisionContext(
         val handlerLambda = viewService.addCodeLenses(lifetime,
                                                       editor as EditorImpl,
                                                       range,
+                                                      codeVisionModel,
                                                       groupedLenses.map {
                                                         it.key to it.value.map { it.codeVisionEntryOrThrow }.sortedBy {
                                                           codeVisionHost.getPriorityForEntry(it)
@@ -124,7 +130,7 @@ open class EditorCodeVisionContext(
     setResults(emptyList())
   }
 
-  protected open fun getValidResult(): Sequence<RangeMarker> = frontendResults.asSequence().filter { it.isValid }
+  open fun getValidResult(): Sequence<RangeMarker> = frontendResults.asSequence().filter { it.isValid }
 
   protected fun TextRange.isValidFor(document: Document): Boolean {
     return this.startOffset >= 0 && this.endOffset <= document.textLength

@@ -3,11 +3,10 @@ package com.intellij.codeInsight.codeVision.ui
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.codeInsight.codeVision.CodeVisionModel
+import com.intellij.codeInsight.codeVision.highlighterOnCodeVisionEntryKey
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
-import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
-import com.intellij.codeInsight.codeVision.ui.model.CodeVisionVisualVerticalPositionKeeper
-import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
-import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
+import com.intellij.codeInsight.codeVision.ui.model.*
 import com.intellij.codeInsight.codeVision.ui.popup.CodeVisionPopup
 import com.intellij.codeInsight.codeVision.ui.renderers.BlockCodeVisionInlayRenderer
 import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionInlayRenderer
@@ -41,7 +40,7 @@ class CodeVisionView(val project: Project) {
 
   private fun isLensValid(lenses: Map<CodeVisionAnchorKind, List<CodeVisionEntry>>): Boolean = lenses.values.any { it.isNotEmpty() }
 
-  fun runWithReusingLenses(action: () -> Unit) {
+  fun runWithReusingLenses(codeVisionModel: CodeVisionModel, action: () -> Unit) {
     ThreadingAssertions.assertEventDispatchThread()
     usingTrueFlag(CodeVisionView::delayInlayRemoval) {
       //inlaysToDelete are filled here in action() method
@@ -50,17 +49,29 @@ class CodeVisionView(val project: Project) {
       val needsKeeper = inlaysToDelete.any { it.renderer is BlockCodeVisionInlayRenderer }
       val editors = inlaysToDelete.map { it.editor }.filter { !it.isDisposed }.distinct().toTypedArray()
       val keeper = CodeVisionVisualVerticalPositionKeeper(*editors)
-      inlaysToDelete.forEach { Disposer.dispose(it) }
+      inlaysToDelete.forEach { 
+        Disposer.dispose(it)
+        signalLensesRemoved(it, codeVisionModel)
+      }
       inlaysToDelete.clear()
       if (needsKeeper)
         keeper.restoreOriginalLocation()
     }
   }
 
+  private fun signalLensesRemoved(it: Inlay<*>, codeVisionModel: CodeVisionModel) {
+    val userData = it.getUserData(CodeVisionListData.KEY) ?: return
+    val lenses = userData.anchoredLens.mapNotNull { entry ->
+      entry.getUserData(highlighterOnCodeVisionEntryKey)
+    }
+    codeVisionModel.removeLenses(lenses)
+  }
+
   fun addCodeLenses(
     lifetime: Lifetime,
     editor: EditorImpl,
     anchoringRange: TextRange,
+    codeVisionModel: CodeVisionModel,
     lenses: Map<CodeVisionAnchorKind, List<CodeVisionEntry>>
   ): (Int) -> Unit {
     if (!isLensValid(lenses)) return {}
@@ -82,6 +93,8 @@ class CodeVisionView(val project: Project) {
       listInlays.add(inlay)
       addCodeLenses(inlay, rangeCodeVisionModel, lens.value, lens.key, lifetime)
     }
+    val lensesRangeMarkers = lenses.values.asSequence().flatMap { it }.mapNotNull { it.getUserData(highlighterOnCodeVisionEntryKey) }
+    codeVisionModel.addOrUpdateLenses(lensesRangeMarkers.asIterable())
     lifetime.onTermination {
       for (inlay in listInlays) {
         inlays.remove(inlay)
@@ -92,6 +105,7 @@ class CodeVisionView(val project: Project) {
         else {
           logger.trace("Removing inlay at ${inlay.offset}")
           Disposer.dispose(inlay)
+          signalLensesRemoved(inlay, codeVisionModel)
         }
       }
       updateSubscription()
