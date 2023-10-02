@@ -2,10 +2,8 @@
 package com.intellij.platform.runtime.repository.serialization.impl;
 
 import com.intellij.platform.runtime.repository.*;
-import com.intellij.platform.runtime.repository.impl.MainRuntimeModuleGroup;
-import com.intellij.platform.runtime.repository.impl.PluginModuleGroup;
-import com.intellij.platform.runtime.repository.impl.ProductModulesImpl;
-import com.intellij.platform.runtime.repository.impl.IncludedRuntimeModuleImpl;
+import com.intellij.platform.runtime.repository.impl.*;
+import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.stream.XMLInputFactory;
@@ -24,7 +22,7 @@ public final class ProductModulesXmlLoader {
     int level = 0;
     ModuleImportance importance = null;
     String moduleName = null;
-    List<IncludedRuntimeModule> rootMainGroupModules = new ArrayList<>();
+    List<RawIncludedRuntimeModule> rootMainGroupModules = new ArrayList<>();
     List<RuntimeModuleGroup> bundledPluginModuleGroups = new ArrayList<>();
     String parentTag = null;
     while (reader.hasNext()) {
@@ -61,7 +59,7 @@ public final class ProductModulesXmlLoader {
           }
           if ("main-root-modules".equals(parentTag)) {
             assert importance != null;
-            rootMainGroupModules.add(new IncludedRuntimeModuleImpl(repository.getModule(RuntimeModuleId.raw(moduleName)), importance, Collections.emptySet()));
+            rootMainGroupModules.add(new RawIncludedRuntimeModule(RuntimeModuleId.raw(moduleName), importance, Collections.emptySet()));
           }
           else {
             bundledPluginModuleGroups.add(new PluginModuleGroup(repository.getModule(RuntimeModuleId.raw(moduleName)), repository));
@@ -75,7 +73,7 @@ public final class ProductModulesXmlLoader {
       }
     }
     reader.close();
-    MainRuntimeModuleGroup mainGroup = new MainRuntimeModuleGroup(rootMainGroupModules);
+    MainRuntimeModuleGroup mainGroup = new MainRuntimeModuleGroup(rootMainGroupModules, repository);
     return new ProductModulesImpl(debugName, mainGroup, bundledPluginModuleGroups);
   }
 }
