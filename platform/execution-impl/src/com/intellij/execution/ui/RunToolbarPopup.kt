@@ -252,7 +252,7 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
 private class HideableDefaultActionGroup(@NlsSafe name: String, override val shouldBeShown: (holdingFilter: Boolean) -> Boolean)
   : DefaultActionGroup({ name }, true), DumbAware, HideableAction
 
-private class AllRunConfigurationsToggle(@NlsActions.ActionText text: String) : ToggleAction(text), KeepingPopupOpenAction, DumbAware {
+class AllRunConfigurationsToggle(@NlsActions.ActionText text: String) : ToggleAction(text), KeepingPopupOpenAction, DumbAware {
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
