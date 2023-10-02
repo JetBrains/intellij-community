@@ -810,14 +810,20 @@ object Utils {
       LOG.warn("Recursive shortcut processing invocation is ignored")
       return null
     }
+    val potemkin = PotemkinOverlayProgress(contextComponent)
     ourInUpdateSessionForInputEventEDTLoop = true
     try {
-      val potemkin = PotemkinOverlayProgress(contextComponent)
+      potemkin.start()
       return runBlockingForActionExpand(CoroutineName("runWithInputEventEdtDispatcher") +
                                         PotemkinElement(potemkin)) {
         val mainJob = coroutineContext.job
-        val potemkinJob = launch {
-          runPotemkinOverlay(mainJob, potemkin)
+        val potemkinJob = launch(EmptyCoroutineContext, CoroutineStart.UNDISPATCHED) {
+          delay(400)
+          while (!potemkin.isCanceled) {
+            delay(200)
+            potemkin.interact()
+          }
+          mainJob.cancel()
         }
         try {
           block()
@@ -829,6 +835,7 @@ object Utils {
     }
     finally {
       ourInUpdateSessionForInputEventEDTLoop = false
+      potemkin.stop()
     }
   }
 
@@ -934,21 +941,6 @@ private fun getFastTrackMaxTime(useFastTrack: Boolean,
   }
   lastFailedFastTrackCount = 0
   return result
-}
-
-private suspend fun runPotemkinOverlay(mainJob: Job, potemkin: PotemkinOverlayProgress) {
-  potemkin.start()
-  try {
-    delay(400)
-    while (!potemkin.isCanceled) {
-      delay(200)
-      potemkin.interact()
-    }
-    mainJob.cancel()
-  }
-  finally {
-    potemkin.stop()
-  }
 }
 
 private class PotemkinElement(val potemkin: PotemkinOverlayProgress) : ThreadContextElement<AccessToken> {

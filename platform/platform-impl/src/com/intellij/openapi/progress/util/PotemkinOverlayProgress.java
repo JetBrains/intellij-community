@@ -59,10 +59,14 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   public void stop() {
     try {
       super.stop();
-      Disposer.dispose(this);
     }
     finally {
-      myEventStealer.dispatchEvents(0);
+      try {
+        Disposer.dispose(this);
+      }
+      finally {
+        myEventStealer.dispatchEvents(0);
+      }
     }
   }
 
