@@ -22,6 +22,7 @@ import javax.swing.ListCellRenderer
 object ImportFixHelper {
     enum class ImportKind(private val key: String, val groupedByPackage: Boolean = false) {
         CLASS("text.class.0", true),
+        TYPE_ALIAS("text.type.alias.0", true),
         PROPERTY("text.property.0"),
         OBJECT("text.object.0", true),
         FUNCTION("text.function.0"),

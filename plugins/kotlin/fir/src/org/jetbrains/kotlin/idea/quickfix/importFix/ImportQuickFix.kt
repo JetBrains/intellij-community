@@ -326,6 +326,7 @@ class ImportQuickFix(
 
             this is KtNamedClassOrObjectSymbol && classKind.isObject -> ImportFixHelper.ImportKind.OBJECT
             this is KtNamedClassOrObjectSymbol -> ImportFixHelper.ImportKind.CLASS
+            this is KtTypeAliasSymbol -> ImportFixHelper.ImportKind.TYPE_ALIAS
 
             else -> null
         }

@@ -25,6 +25,7 @@ import com.intellij.util.Processors
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -147,11 +148,13 @@ abstract class ImportFixBase<T : KtExpression> protected constructor(
                 descriptor.isExtensionProperty -> ImportFixHelper.ImportKind.EXTENSION_PROPERTY
                 descriptor is PropertyDescriptor -> ImportFixHelper.ImportKind.PROPERTY
                 descriptor is ClassConstructorDescriptor -> ImportFixHelper.ImportKind.CLASS
+                descriptor is TypeAliasConstructorDescriptor -> ImportFixHelper.ImportKind.TYPE_ALIAS
                 descriptor is FunctionDescriptor && descriptor.isOperator -> ImportFixHelper.ImportKind.OPERATOR
                 descriptor is FunctionDescriptor && descriptor.isExtension -> ImportFixHelper.ImportKind.EXTENSION_FUNCTION
                 descriptor is FunctionDescriptor -> ImportFixHelper.ImportKind.FUNCTION
                 DescriptorUtils.isObject(descriptor) -> ImportFixHelper.ImportKind.OBJECT
                 descriptor is ClassDescriptor -> ImportFixHelper.ImportKind.CLASS
+                descriptor is TypeAliasDescriptor -> ImportFixHelper.ImportKind.TYPE_ALIAS
                 else -> null
             } ?: return@mapNotNull null
 

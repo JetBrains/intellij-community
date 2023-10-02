@@ -1,5 +1,5 @@
 // FILE: first.before.kt
-// "Import function 'TestAlias'" "true"
+// "Import type alias 'TestAlias'" "true"
 // ERROR: Unresolved reference: TestAlias
 /* IGNORE_K2 */
 
@@ -24,7 +24,7 @@ typealias TestAlias = A
 
 
 // FILE: first.after.kt
-// "Import function 'TestAlias'" "true"
+// "Import type alias 'TestAlias'" "true"
 // ERROR: Unresolved reference: TestAlias
 /* IGNORE_K2 */
 
