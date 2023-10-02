@@ -4,7 +4,7 @@
   "author": "JetBrains",
   "parentTheme": "ExperimentalLight",
   "nameKey": "light.header.theme.name",
-
+  "editorScheme": "Light",
   "ui": {
     "CodeWithMe.MainToolbar.NoConnectionLabelForeground": "Grey7",
 

@@ -271,6 +271,15 @@
         "John Doe"
       ]
     },
+    "editorScheme": {
+      "type": "string",
+      "title": "Path to the editor schema xml file starting with '/'",
+      "default": "",
+      "pattern": "^/",
+      "examples": [
+        "/editorScheme.xml"
+      ]
+    },
     "parentTheme": {
       "type": "string",
       "title": "Parent theme",

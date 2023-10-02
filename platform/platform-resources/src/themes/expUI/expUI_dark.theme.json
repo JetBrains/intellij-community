@@ -3,6 +3,7 @@
   "dark": true,
   "author": "JetBrains",
   "nameKey": "dark.theme.name",
+  "editorScheme": "Dark",
   "colors": {
     "Grey1": "#1E1F22",
     "Grey2": "#2B2D30",

@@ -4,6 +4,7 @@
   "author": "JetBrains",
   "parentTheme": "Darcula",
   "nameKey": "high.contrast.theme.name",
+  "editorScheme": "High contrast",
   "ui": {
     "*": {
       "background": "#000000",

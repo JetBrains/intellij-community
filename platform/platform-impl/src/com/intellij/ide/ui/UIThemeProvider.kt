@@ -49,7 +49,6 @@ class UIThemeProvider {
   @JvmField
   var targetUI: TargetUIType = TargetUIType.UNSPECIFIED
 
-
   @Throws(IOException::class)
   @Internal
   fun getThemeJson(pluginDescriptor: PluginDescriptor): ByteArray? {

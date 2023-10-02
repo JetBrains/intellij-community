@@ -4,7 +4,7 @@
   "author": "JetBrains",
   "parentTheme": "IntelliJ",
   "nameKey": "intellij.light.theme.name",
-
+  "editorScheme": "JetBrainsLightTheme",
   "ui": {
 
     "MainToolbar.Dropdown.transparentHoverBackground": "#0000001A",
