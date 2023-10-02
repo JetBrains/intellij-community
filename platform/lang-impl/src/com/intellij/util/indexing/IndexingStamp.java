@@ -86,7 +86,7 @@ public final class IndexingStamp {
   public static void dropIndexingTimeStamps(int fileId) throws IOException {
     ourTimestampsCache.remove(fileId);
     try (DataOutputStream out = FSRecords.writeAttribute(fileId, Timestamps.PERSISTENCE)) {
-      Timestamps.readTimestamps((DataInputStream)null).writeToStream(out);
+      TimestampsImmutable.readTimestamps((DataInputStream)null).writeToStream(out);
     }
   }
 
@@ -101,25 +101,25 @@ public final class IndexingStamp {
     Timestamps timestamps = ourTimestampsCache.get(id);
     if (timestamps == null) {
       if (FSRecords.supportsRawAttributesAccess()) {
-        try {
-          timestamps = FSRecords.readAttributeRawWithLock(id, Timestamps.PERSISTENCE, Timestamps::readTimestamps);
-          if (timestamps == null) {
-            if (createIfNoneSaved) {
-              timestamps = Timestamps.readTimestamps((DataInputStream)null);
-            }
-            else {
-              return null;
-            }
+        TimestampsImmutable immutable =
+          FSRecords.readAttributeRawWithLock(id, Timestamps.PERSISTENCE, TimestampsImmutable::readTimestamps);
+        if (immutable == null) {
+          if (createIfNoneSaved) {
+            timestamps = new Timestamps();
+          }
+          else {
+            return null;
           }
         }
-        catch (IOException e) {
-          throw FSRecords.handleError(e);
+        else {
+          timestamps = Timestamps.fromImmutable(immutable);
         }
       }
       else {
         try (final DataInputStream stream = FSRecords.readAttributeWithLock(id, Timestamps.PERSISTENCE)) {
           if (stream == null && !createIfNoneSaved) return null;
-          timestamps = Timestamps.readTimestamps(stream);
+          TimestampsImmutable immutable = TimestampsImmutable.readTimestamps(stream);
+          timestamps = Timestamps.fromImmutable(immutable);
         }
         catch (IOException e) {
           throw FSRecords.handleError(e);
@@ -218,7 +218,7 @@ public final class IndexingStamp {
               //    doFlush() is mostly outside the critical path, while implementing timestamps.writeToBuffer(buffer)
               //    is complicated with all those variable-sized numbers used.
               try (DataOutputStream sink = FSRecords.writeAttribute(fileId, Timestamps.PERSISTENCE)) {
-                timestamp.writeToStream(sink);
+                timestamp.toImmutable().writeToStream(sink);
               }
             }
             return null;

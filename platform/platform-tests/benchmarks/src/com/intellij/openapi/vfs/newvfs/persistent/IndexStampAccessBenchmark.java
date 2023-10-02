@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.util.indexing.IndexingStamp;
-import com.intellij.util.indexing.Timestamps;
+import com.intellij.util.indexing.TimestampsImmutable;
 import org.jetbrains.annotations.NotNull;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
@@ -67,20 +67,20 @@ public class IndexStampAccessBenchmark {
   }
 
   @Benchmark
-  public Timestamps readIndexStamps_ViaRawByteBuffer(final ApplicationContext application,
+  public TimestampsImmutable readIndexStamps_ViaRawByteBuffer(final ApplicationContext application,
                                                      final Context context) {
     return FSRecords.readAttributeRawWithLock(
       context.fileId,
       PERSISTENCE,
-      Timestamps::readTimestamps
+      TimestampsImmutable::readTimestamps
     );
   }
 
   @Benchmark
-  public Timestamps readIndexStamps_ViaInputStream(final ApplicationContext application,
+  public TimestampsImmutable readIndexStamps_ViaInputStream(final ApplicationContext application,
                                                    final Context context) throws IOException {
     try (final DataInputStream stream = FSRecords.readAttributeWithLock(context.fileId, PERSISTENCE)) {
-      return Timestamps.readTimestamps(stream);
+      return TimestampsImmutable.readTimestamps(stream);
     }
   }
 
