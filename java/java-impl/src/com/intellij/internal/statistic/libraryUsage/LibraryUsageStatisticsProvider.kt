@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.libraryJar.findCorrespondingVirtualFile
 import com.intellij.internal.statistic.libraryJar.findJarVersion
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -67,16 +67,16 @@ private class FileImportsCollector(val project: Project,
   private suspend fun findUsages(vFile: VirtualFile): List<LibraryUsage> {
     val usages = mutableListOf<LibraryUsage>()
 
-    val libraryFileData = readAction {
-      if (!vFile.isValid) return@readAction null
+    val libraryFileData = smartReadAction(project) {
+      if (!vFile.isValid) return@smartReadAction null
 
       val fileIndex = ProjectFileIndex.getInstance(project)
-      if (!fileIndex.isInSource(vFile) || fileIndex.isInLibrary(vFile)) return@readAction null
+      if (!fileIndex.isInSource(vFile) || fileIndex.isInLibrary(vFile)) return@smartReadAction null
 
-      val psiFile = PsiManager.getInstance(project).findFile(vFile) ?: return@readAction null
+      val psiFile = PsiManager.getInstance(project).findFile(vFile) ?: return@smartReadAction null
       val fileType = psiFile.fileType
 
-      val importProcessor = LibraryUsageImportProcessorBean.INSTANCE.forLanguage(psiFile.language) ?: return@readAction null
+      val importProcessor = LibraryUsageImportProcessorBean.INSTANCE.forLanguage(psiFile.language) ?: return@smartReadAction null
       val processedLibraryNames = mutableSetOf<String>()
 
       // we should process simple element imports first, because they can be unambiguously resolved
