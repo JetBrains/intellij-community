@@ -120,14 +120,12 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   }
 
   companion object {
+    @VisibleForTesting
     val ADDITIONAL_TEXT_ATTRIBUTES_EP_NAME: ExtensionPointName<AdditionalTextAttributesEP> = ExtensionPointName(
       "com.intellij.additionalTextAttributes")
 
     const val COMPONENT_NAME: String = "EditorColorsManagerImpl"
     const val STORAGE_NAME: String = "colors.scheme.xml"
-
-    @JvmField
-    val BUNDLED_EP_NAME: ExtensionPointName<BundledSchemeEP> = ExtensionPointName("com.intellij.bundledColorScheme")
 
     const val FILE_SPEC: String = "colors"
 
@@ -193,7 +191,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   }
 
   private fun resolveLinksToBundledSchemes() {
-    val brokenSchemesList: MutableList<EditorColorsScheme> = ArrayList()
+    val brokenSchemesList = ArrayList<EditorColorsScheme>()
     for (scheme in schemeManager.allSchemes) {
       try {
         resolveSchemeParent(scheme)
@@ -204,7 +202,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       }
     }
     for (brokenScheme in brokenSchemesList) {
-      if (brokenScheme is AbstractColorsScheme && brokenScheme !is ReadOnlyColorsScheme) {
+      if (brokenScheme is EditorColorsSchemeImpl && brokenScheme !is ReadOnlyColorsScheme) {
         brokenScheme.isVisible = false
       }
       else {
@@ -215,7 +213,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
 
   override fun resolveSchemeParent(scheme: EditorColorsScheme) {
     if (scheme is AbstractColorsScheme && scheme !is ReadOnlyColorsScheme) {
-      scheme.resolveParent { name -> schemeManager.findSchemeByName(name) }
+      scheme.resolveParent(schemeManager::findSchemeByName)
     }
   }
 
@@ -707,11 +705,13 @@ fun readEditorSchemeNameFromXml(parser: XMLStreamReader): String? {
   return null
 }
 
+private val BUNDLED_EP_NAME = ExtensionPointName<BundledSchemeEP>("com.intellij.bundledColorScheme")
+
 @VisibleForTesting
 fun loadBundledSchemes(additionalTextAttributes: MutableMap<String, MutableList<AdditionalTextAttributesEP>>, checkId: Boolean = false)
 : Sequence<SchemeManager.LoadBundleSchemeRequest<EditorColorsScheme>> {
   return sequence {
-    for (item in EditorColorsManagerImpl.BUNDLED_EP_NAME.filterableLazySequence()) {
+    for (item in BUNDLED_EP_NAME.filterableLazySequence()) {
       val pluginDescriptor = item.pluginDescriptor
       val bean = item.instance ?: continue
       val resourcePath = (bean.path ?: continue).removePrefix("/").let { if (it.endsWith(".xml")) it else "$it.xml" }

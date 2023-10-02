@@ -20,9 +20,19 @@ import java.util.function.Predicate;
 
 public class EditorColorsSchemeImpl extends AbstractColorsScheme implements ExternalizableScheme {
   private final Map<String, TextAttributes> myAttributesTempMap = new ConcurrentHashMap<>();
+  private boolean isVisible = true;
 
   public EditorColorsSchemeImpl(EditorColorsScheme parentScheme) {
     super(parentScheme);
+  }
+
+  @Override
+  public boolean isVisible() {
+    return isVisible;
+  }
+
+  public void setVisible(boolean value) {
+    isVisible = value;
   }
 
   @Override
@@ -141,14 +151,6 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     return true;
   }
 
-  private static boolean isTextAttributeKeyIgnored(@NotNull Collection<? extends Predicate<? super TextAttributesKey>> filters,
-                                                   TextAttributesKey key) {
-    for (Predicate<? super TextAttributesKey> filter : filters) {
-      if (filter.test(key)) return true;
-    }
-    return false;
-  }
-
   private boolean compareColors(@NotNull AbstractColorsScheme otherScheme,
                                 @NotNull Collection<Predicate<? super ColorKey>> filters) {
     for (ColorKey key : colorMap.keySet()) {
@@ -164,6 +166,14 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
       return false;
     }
     return true;
+  }
+
+  private static boolean isTextAttributeKeyIgnored(@NotNull Collection<? extends Predicate<? super TextAttributesKey>> filters,
+                                                   TextAttributesKey key) {
+    for (Predicate<? super TextAttributesKey> filter : filters) {
+      if (filter.test(key)) return true;
+    }
+    return false;
   }
 
   private static boolean isColorKeyAccepted(@NotNull Collection<? extends Predicate<? super ColorKey>> filters, @NotNull ColorKey key) {

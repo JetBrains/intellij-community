@@ -89,7 +89,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   private String schemeName;
   private boolean isSaveNeeded;
   private boolean canBeDeleted = true;
-  private boolean isVisible = true;
   // version influences an XML format and triggers migration
   private int myVersion = CURR_VERSION;
   private Color myDeprecatedBackgroundColor = null;
@@ -897,15 +896,9 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     this.canBeDeleted = canBeDeleted;
   }
 
-  public boolean isVisible() {
-    return isVisible;
-  }
+  public abstract boolean isVisible();
 
-  public void setVisible(boolean isVisible) {
-    this.isVisible = isVisible;
-  }
-
-  @VisibleForTesting
+  @SuppressWarnings("StaticNonFinalField") @VisibleForTesting
   public static @NotNull Function<String, EditorColorsScheme> getSchemeById = it -> EditorColorsManager.getInstance().getScheme(it);
 
   public @Nullable AbstractColorsScheme getOriginal() {
