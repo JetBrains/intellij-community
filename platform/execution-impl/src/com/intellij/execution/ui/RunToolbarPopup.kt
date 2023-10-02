@@ -14,6 +14,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.dnd.*
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.HideableAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements
@@ -246,10 +247,6 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
       return DnDDragStartBean(DraggedIndex(index))
     }
   }
-}
-
-private interface HideableAction {
-  val shouldBeShown: (holdingFilter: Boolean) -> Boolean
 }
 
 private class HideableDefaultActionGroup(@NlsSafe name: String, override val shouldBeShown: (holdingFilter: Boolean) -> Boolean)
