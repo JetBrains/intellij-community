@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.nik.presentationAssistant
+package com.intellij.platform.ide.impl.presentationAssistant
 
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType

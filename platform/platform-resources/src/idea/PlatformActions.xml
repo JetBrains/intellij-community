@@ -649,6 +649,9 @@
             <group id="ViewStatusBarWidgetsGroup" class="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup" popup="true">
               <action id="StatusTextModeAction" class="com.intellij.openapi.wm.impl.status.StatusTextModeAction"/>
             </group>
+            <action id="presentationAssistant.ShowActionDescriptions" class="com.intellij.platform.ide.impl.presentationAssistant.ShowActionDescriptionsToggleAction">
+              <keyboard-shortcut first-keystroke="alt shift d" keymap="$default"/>
+            </action>
           </group>
         </group>
 

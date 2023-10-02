@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.nik.presentationAssistant
+package com.intellij.platform.ide.impl.presentationAssistant
 
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter

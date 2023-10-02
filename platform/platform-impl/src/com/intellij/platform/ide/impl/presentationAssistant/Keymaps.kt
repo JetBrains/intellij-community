@@ -17,7 +17,7 @@
 /**
  * @author nik
  */
-package org.nik.presentationAssistant
+package com.intellij.platform.ide.impl.presentationAssistant
 
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.SystemInfo

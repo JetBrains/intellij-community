@@ -17,7 +17,7 @@
 /**
  * @author nik
  */
-package org.nik.presentationAssistant
+package com.intellij.platform.ide.impl.presentationAssistant
 
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
