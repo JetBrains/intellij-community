@@ -4,6 +4,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.PasteProvider;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -77,9 +78,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!EditorModificationUtil.requestWriting(editor)) return;
 
-    DataContext context = dataId -> {
-      return PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? (Producer<Transferable>)() -> transferable : dataContext.getData(dataId);
-    };
+    DataContext context = CustomizedDataContext.create(dataContext, dataId ->
+      PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? (Producer<Transferable>)() -> transferable : null);
 
     final Project project = editor.getProject();
     final Document document = editor.getDocument();

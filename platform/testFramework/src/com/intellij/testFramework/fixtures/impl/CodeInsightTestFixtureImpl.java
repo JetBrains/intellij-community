@@ -957,9 +957,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void renameElementAtCaretUsingHandler(@NotNull String newName) {
     DataContext editorContext = ((EditorEx)editor).getDataContext();
-    DataContext context = dataId -> PsiElementRenameHandler.DEFAULT_NAME.is(dataId)
-           ? newName
-           : editorContext.getData(dataId);
+    DataContext context = CustomizedDataContext.create(editorContext, dataId ->
+      PsiElementRenameHandler.DEFAULT_NAME.is(dataId) ? newName : null);
     RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
     assertNotNull("No handler for this context", renameHandler);
 

@@ -170,7 +170,7 @@ object Utils {
       }
     !ApplicationManager.getApplication().isUnitTestMode() -> {
       LOG.warn(Throwable("Unknown data context kind '${dataContext.javaClass.getName()}'. " +
-                         "Use CustomizedDataContext or EdtDataContext"))
+                         "Use EdtDataContext, CustomizedDataContext or SimpleDataContext"))
       dataContext
     }
     else -> dataContext
@@ -195,7 +195,8 @@ object Utils {
   @JvmStatic
   fun checkAsyncDataContext(dataContext: DataContext, place: String) {
     if (!isAsyncDataContext(dataContext)) {
-      LOG.error("Async data context required at '$place': ${dumpDataContextClass(dataContext)}")
+      LOG.error("Cannot convert to AsyncDataContext at '$place' ${dumpDataContextClass(dataContext)}. " +
+                "Please use CustomizedDataContext or its inheritors like SimpleDataContext")
     }
   }
 

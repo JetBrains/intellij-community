@@ -9,6 +9,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -691,7 +692,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @NotNull
   protected DataContext getCurrentEditorDataContext() {
     DataContext defaultContext = DataManager.getInstance().getDataContext();
-    return dataId -> {
+    return CustomizedDataContext.create(defaultContext, dataId -> {
       if (CommonDataKeys.EDITOR.is(dataId)) {
         return getEditor();
       }
@@ -708,8 +709,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         if (editor == null) return null;
         return file.findElementAt(editor.getCaretModel().getOffset());
       }
-      return defaultContext.getData(dataId);
-    };
+      return null;
+    });
   }
 
   /**

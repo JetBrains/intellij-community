@@ -209,7 +209,10 @@ public final class JumpToColorsAndFontsAction extends DumbAwareAction {
     return keys;
   }
 
-  private static boolean openSettingsAndSelectKey(@NotNull Project project, @NotNull ColorAndFontDescriptorsProvider page, @NotNull AttributesDescriptor descriptor) {
-    return selectOrEditColor(id -> CommonDataKeys.PROJECT.is(id) ? project : null, descriptor.getDisplayName(), page.getDisplayName());
+  private static boolean openSettingsAndSelectKey(@NotNull Project project,
+                                                  @NotNull ColorAndFontDescriptorsProvider page,
+                                                  @NotNull AttributesDescriptor descriptor) {
+    return selectOrEditColor(id -> CommonDataKeys.PROJECT.is(id) ? project : null,
+                             descriptor.getDisplayName(), page.getDisplayName());
   }
 }

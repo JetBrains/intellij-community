@@ -150,15 +150,15 @@ class ActionButton implements ActionListener {
 
   private @NotNull AnActionEvent createAnEvent(InputEvent inputEvent, int modifiers) {
     Presentation presentation = myAction.getTemplatePresentation().clone();
-    DataContext context = DataManager.getInstance().getDataContext(myInplaceButton);
-    DataContext compound = dataId -> {
+    DataContext parent = DataManager.getInstance().getDataContext(myInplaceButton);
+    DataContext dataContext = CustomizedDataContext.create(parent, dataId -> {
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
         Object object = myTabInfo.getObject();
         if (object instanceof VirtualFile) return object;
       }
-      return context.getData(dataId);
-    };
-    return new AnActionEvent(inputEvent, compound, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation,
+      return null;
+    });
+    return new AnActionEvent(inputEvent, dataContext, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation,
                              ActionManager.getInstance(), modifiers);
   }
 

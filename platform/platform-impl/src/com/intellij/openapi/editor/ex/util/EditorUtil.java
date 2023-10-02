@@ -1179,20 +1179,12 @@ public final class EditorUtil {
     if (PROJECT.getData(context) == editor.getProject()) {
       return context;
     }
-    return new CustomizedDataContext() {
-      @Override
-      public @NotNull DataContext getParent() {
-        return context;
+    return CustomizedDataContext.create(context, dataId -> {
+      if (PROJECT.is(dataId)) {
+        return Objects.requireNonNullElse(editor.getProject(), CustomizedDataContext.EXPLICIT_NULL);
       }
-
-      @Override
-      public @Nullable Object getRawCustomData(@NotNull String dataId) {
-        if (PROJECT.is(dataId)) {
-          return Objects.requireNonNullElse(editor.getProject(), EXPLICIT_NULL);
-        }
-        return null;
-      }
-    };
+      return null;
+    });
   }
 
   private static final class EditorNotification {

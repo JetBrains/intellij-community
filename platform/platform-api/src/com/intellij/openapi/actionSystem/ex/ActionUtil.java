@@ -409,7 +409,7 @@ public final class ActionUtil {
   }
 
   public static @NotNull AnActionEvent createEmptyEvent() {
-    return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null);
+    return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, DataContext.EMPTY_CONTEXT);
   }
 
   /**
