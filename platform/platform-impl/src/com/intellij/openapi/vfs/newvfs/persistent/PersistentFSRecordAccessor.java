@@ -60,6 +60,10 @@ public final class PersistentFSRecordAccessor {
   public int createRecord(Iterable<FileIdIndexedStorage> fileIdIndexedStorages) throws IOException {
     connection.markDirty();
 
+    if (!FSRecordsImpl.REUSE_DELETED_FILE_IDS) {
+      return connection.getRecords().allocateRecord();
+    }
+
     final int reusedRecordId = connection.reserveFreeRecord();
     if (reusedRecordId < 0) {
       return connection.getRecords().allocateRecord();
@@ -80,7 +84,8 @@ public final class PersistentFSRecordAccessor {
       //            not on startup. Delays shutdown, and increase chance of VFS corruption if app forcibly terminated
       //            due to long shutdown.
       //         c) Don't reuse fileId at all -- just keep allocating new fileIds, and re-build VFS as int32 exhausted
-      //            Actually, quite interesting approach, but needs careful examination (for the next release?)
+      //            Actually, quite interesting approach, now under REUSE_DELETED_FILE_IDS feature-flag, but needs careful examination
+      //            (for the next release?)
       deleteContentAndAttributes(reusedRecordId);
       for (FileIdIndexedStorage storage : fileIdIndexedStorages) {
         storage.clear(reusedRecordId);

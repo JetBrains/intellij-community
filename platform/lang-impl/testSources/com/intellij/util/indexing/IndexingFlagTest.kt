@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.CacheSwitcher.switchIndexAndVfs
@@ -9,7 +10,6 @@ import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.indexing.dependencies.ReadWriteFileIndexingStampImpl
 import org.junit.Assert.assertEquals
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -53,9 +53,8 @@ class IndexingFlagTest {
   }
 
   @Test
-  @Ignore
   @RunsInEdt
-  fun ignoreTestCacheSwitcher() {
+  fun indexingFlagIsKeptThroughVFSReload() {
     val file = temp.newFile("test", "content".toByteArray())
     val vFileBefore = VfsUtil.findFileByIoFile(file, true) ?: throw AssertionError("File not found: $file")
 
@@ -72,8 +71,8 @@ class IndexingFlagTest {
 
     // should not throw exceptions, should be marked as indexed
     val indexed = IndexingFlag.isFileIndexed(vFileAfter, fileIndexingStamp)
-    // TODO-ank: something seems to be broken in VFS, because this test is flaky
-    //assertEquals("Should be indexed because explicitly marked as indexed earlier", !VfsData.isIsIndexedFlagDisabled(), indexed)
+    assertEquals("Should be indexed because explicitly marked as indexed earlier",
+                 !VfsData.isIsIndexedFlagDisabled(), indexed)
     IndexingFlag.cleanProcessingFlag(vFileAfter)
   }
 }

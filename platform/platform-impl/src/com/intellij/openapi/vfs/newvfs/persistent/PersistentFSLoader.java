@@ -188,22 +188,27 @@ public final class PersistentFSLoader {
     CompletableFuture<RefCountingContentStorage> contentsStorageFuture = executorService.async(() -> createContentStorage(contentsFile));
     CompletableFuture<PersistentFSRecordsStorage> recordsStorageFuture = executorService.async(() -> createRecordsStorage(recordsFile));
 
-    //Initiate async scanning of the recordsStorage to fill both invertedNameIndex and reusableFileIds,
-    //  and create lazy-accessors for both.
-    collectDeletedFileRecordsTask = executorService.async(() -> {
-      //TODO RC: limit max number of reusable fileIds -- i.e. what if there are millions of them?
-      //         5-10_000 max should be enough.
-      IntList reusableFileIds = new IntArrayList(1024);
-      //fill up reusable (=deleted) records:
-      PersistentFSRecordsStorage storage = recordsStorageFuture.join();
-      storage.processAllRecords((fileId, nameId, flags, parentId, attributeRecordId, contentId, corrupted) -> {
-        if (hasDeletedFlag(flags)) {
-          reusableFileIds.add(fileId);
-        }
+    //TODO RC: if !REUSE_DELETED_FILE_IDS -> check recordsStorage.maxAllocatedID() -> rebuild VFS if maxID >~ MAX_INT/2
+    if (FSRecordsImpl.REUSE_DELETED_FILE_IDS) {
+      //Initiate async scanning of the recordsStorage to fill reusableFileIds, and create lazy-accessor for it.
+      collectDeletedFileRecordsTask = executorService.async(() -> {
+        //TODO RC: limit max number of reusable fileIds -- i.e. what if there are millions of them?
+        //         5-10_000 max should be enough.
+        IntList reusableFileIds = new IntArrayList(1024);
+        //fill up reusable (=deleted) records:
+        PersistentFSRecordsStorage storage = recordsStorageFuture.join();
+        storage.processAllRecords((fileId, nameId, flags, parentId, attributeRecordId, contentId, corrupted) -> {
+          if (hasDeletedFlag(flags)) {
+            reusableFileIds.add(fileId);
+          }
+        });
+        LOG.info("VFS scanned: " + reusableFileIds.size() + " deleted files to reuse");
+        return reusableFileIds;
       });
-      LOG.info("VFS scanned: " + reusableFileIds.size() + " deleted files to reuse");
-      return reusableFileIds;
-    });
+    }
+    else {
+      collectDeletedFileRecordsTask = CompletableFuture.completedFuture(new IntArrayList(0));
+    }
     //RC: we don't need volatile/atomicLazy, since computation is idempotent: same instance returned always.
     //    So _there could be_ a data race, but it is a benign race.
     reusableFileIdsLazy = NotNullLazyValue.lazy(() -> {
