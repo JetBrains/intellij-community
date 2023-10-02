@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.serviceContainer
 
 import com.intellij.concurrency.resetThreadContext
@@ -57,9 +58,11 @@ internal val LOG: Logger
   get() = logger<ComponentManagerImpl>()
 
 private val methodLookup = MethodHandles.lookup()
+
 @JvmField
 @Internal
 val emptyConstructorMethodType: MethodType = MethodType.methodType(Void.TYPE)
+
 @JvmField
 @Internal
 val coroutineScopeMethodType: MethodType = MethodType.methodType(Void.TYPE, CoroutineScope::class.java)
@@ -84,17 +87,20 @@ abstract class ComponentManagerImpl(
   private val coroutineScope: CoroutineScope,
   setExtensionsRootArea: Boolean = parent == null,
 ) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), ComponentManagerEx, ComponentStoreOwner {
+
   protected enum class ContainerState {
     PRE_INIT, COMPONENT_CREATED, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }
 
   companion object {
     @Internal
-    @JvmField val fakeCorePluginDescriptor = DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null)
+    @JvmField
+    val fakeCorePluginDescriptor = DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null)
 
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
     @Internal
-    @JvmField val badWorkspaceComponents: Set<String> = java.util.Set.of(
+    @JvmField
+    val badWorkspaceComponents: Set<String> = java.util.Set.of(
       "jetbrains.buildServer.codeInspection.InspectionPassRegistrar",
       "jetbrains.buildServer.testStatus.TestStatusPassRegistrar",
       "jetbrains.buildServer.customBuild.lang.gutterActions.CustomBuildParametersGutterActionsHighlightingPassRegistrar",
@@ -698,11 +704,12 @@ abstract class ComponentManagerImpl(
 
     @Suppress("DEPRECATION")
     val result = getComponent(serviceClass) ?: return null
-    PluginException.logPluginError(LOG,
+    LOG.error(PluginException.createByClass(
       "$key requested as a service, but it is a component - " +
       "convert it to a service or change call to " +
       if (parent == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()",
-      null, serviceClass)
+      null, serviceClass
+    ))
     return result
   }
 
@@ -969,7 +976,7 @@ abstract class ComponentManagerImpl(
 
   final override fun createError(message: String,
                                  error: Throwable?,
-                                 pluginId: PluginId, 
+                                 pluginId: PluginId,
                                  attachments: MutableMap<String, String>?): RuntimeException {
     return PluginException(message, error, pluginId, attachments?.map { Attachment(it.key, it.value) } ?: emptyList())
   }
@@ -1031,14 +1038,15 @@ abstract class ComponentManagerImpl(
           continue
         }
 
-        val scope: CoroutineScope = when (service.preload) {
+        val scope = when (service.preload) {
           PreloadMode.TRUE -> if (onlyIfAwait) null else asyncScope
           PreloadMode.NOT_HEADLESS -> if (onlyIfAwait || getApplication()!!.isHeadlessEnvironment) null else asyncScope
           PreloadMode.NOT_LIGHT_EDIT -> if (onlyIfAwait || isLightEdit()) null else asyncScope
           PreloadMode.AWAIT -> syncScope
           PreloadMode.FALSE -> null
           else -> throw IllegalStateException("Unknown preload mode ${service.preload}")
-        } ?: continue
+        }
+        scope ?: continue
 
         if (isServicePreloadingCancelled) {
           return
