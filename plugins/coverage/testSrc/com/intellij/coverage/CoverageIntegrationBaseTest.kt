@@ -4,14 +4,27 @@ package com.intellij.coverage
 import com.intellij.coverage.xml.XMLReportEngine
 import com.intellij.coverage.xml.XMLReportRunner
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.JavaModuleTestCase
 import com.intellij.testFramework.PlatformTestUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Paths
 
 abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
+  override fun runInDispatchThread() = false
+
+  override fun tearDown(): Unit = runBlocking {
+    withContext(Dispatchers.EDT) {
+      super.tearDown()
+    }
+  }
+
   protected fun getTestDataPath(): String {
     return PluginPathManager.getPluginHomePath("coverage") + "/testData/simple"
   }
@@ -37,7 +50,7 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
     CoverageDataManager.getInstance(myProject).chooseSuitesBundle(null)
   }
 
-  protected fun openSuiteAndWait(bundle: CoverageSuitesBundle) {
+  protected suspend fun openSuiteAndWait(bundle: CoverageSuitesBundle) {
     var dataCollected = false
     val disposable = object : Disposable.Default {}
     val listener = object : CoverageSuiteListener {
@@ -51,7 +64,7 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
     }
 
     // wait until data collected
-    while (!dataCollected) Thread.yield()
+    while (!dataCollected) delay(1)
     Disposer.dispose(disposable)
   }
 

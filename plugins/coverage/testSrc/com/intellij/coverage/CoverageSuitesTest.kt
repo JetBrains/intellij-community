@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage
 
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert
 
 class CoverageSuitesTest : CoverageIntegrationBaseTest() {
@@ -19,7 +20,7 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     Assert.assertTrue(dataManager.suites.isEmpty())
   }
 
-  fun `test coverage reopen if one of the suites is deleted`() {
+  fun `test coverage reopen if one of the suites is deleted`(): Unit = runBlocking {
     val dataManager = CoverageDataManager.getInstance(myProject) as CoverageDataManagerImpl
     val ijSuite = loadIJSuite().suites[0]
     val jacocoSuite = loadJaCoCoSuite().suites[0]
