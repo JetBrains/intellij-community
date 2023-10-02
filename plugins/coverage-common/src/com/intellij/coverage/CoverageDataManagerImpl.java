@@ -14,20 +14,12 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
-import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.ui.DoNotAskOption;
@@ -36,17 +28,11 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.*;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -64,9 +50,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   private final Project myProject;
   private final CoverageDataSuitesManager mySuitesManager;
   private final List<CoverageSuiteListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final Map<Editor, CoverageEditorAnnotator> myAnnotators = new HashMap<>();
 
-  private final Object ANNOTATORS_LOCK = new Object();
   private final Object myLock = new Object();
   private CoverageSuitesBundle myCurrentSuitesBundle;
 
@@ -257,7 +241,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     }
 
     myCurrentSuitesBundle = suite;
-    disposeAnnotators();
+    CoverageDataAnnotationsManager.getInstance(myProject).clearAnnotations();
 
     if (suite == null) {
       triggerPresentationUpdate();
@@ -359,7 +343,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   @Override
   public void triggerPresentationUpdate() {
-    renewInformationInEditors();
+    CoverageDataAnnotationsManager.getInstance(myProject).update();
     UIUtil.invokeLaterIfNeeded(() -> {
       if (myProject.isDisposed()) return;
       ProjectView.getInstance(myProject).refresh();
@@ -415,56 +399,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   protected void renewCoverageData(@NotNull final CoverageSuitesBundle suite) {
     if (myCurrentSuitesBundle != null) {
       myCurrentSuitesBundle.getCoverageEngine().getCoverageAnnotator(myProject).renewCoverageData(suite, this);
-    }
-  }
-
-  private void renewInformationInEditors() {
-    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-    final List<VirtualFile> openFiles = fileEditorManager.getOpenFilesWithRemotes();
-    for (VirtualFile openFile : openFiles) {
-      final FileEditor[] allEditors = fileEditorManager.getAllEditors(openFile);
-      applyInformationToEditor(allEditors, openFile);
-    }
-  }
-
-  private void applyInformationToEditor(FileEditor[] editors, final VirtualFile file) {
-    final PsiFile psiFile = doInReadActionIfProjectOpen(() -> file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null);
-    if (psiFile != null && myCurrentSuitesBundle != null && psiFile.isPhysical()) {
-      final CoverageEngine engine = myCurrentSuitesBundle.getCoverageEngine();
-      if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) {
-        return;
-      }
-
-      for (FileEditor editor : editors) {
-        if (editor instanceof TextEditor) {
-          final Editor textEditor = ((TextEditor)editor).getEditor();
-          CoverageEditorAnnotator annotator;
-          synchronized (ANNOTATORS_LOCK) {
-            annotator = myAnnotators.remove(textEditor);
-          }
-          if (annotator != null) {
-            Disposer.dispose(annotator);
-          }
-          break;
-        }
-      }
-
-      for (FileEditor editor : editors) {
-        if (editor instanceof TextEditor) {
-          final Editor textEditor = ((TextEditor)editor).getEditor();
-          CoverageEditorAnnotator annotator = getAnnotator(textEditor);
-          if (annotator == null) {
-            annotator = engine.createSrcFileAnnotator(psiFile, textEditor);
-            synchronized (ANNOTATORS_LOCK) {
-              myAnnotators.put(textEditor, annotator);
-            }
-          }
-
-          if (myCurrentSuitesBundle != null && engine.acceptedByFilters(psiFile, myCurrentSuitesBundle)) {
-            annotator.showCoverage(myCurrentSuitesBundle);
-          }
-        }
-      }
     }
   }
 
@@ -576,106 +510,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   @Override
   public boolean isSubCoverageActive() {
     return mySubCoverageIsActive;
-  }
-
-  @Nullable
-  public CoverageEditorAnnotator getAnnotator(Editor editor) {
-    synchronized (ANNOTATORS_LOCK) {
-      return myAnnotators.get(editor);
-    }
-  }
-
-  public void disposeAnnotators() {
-    synchronized (ANNOTATORS_LOCK) {
-      for (CoverageEditorAnnotator annotator : myAnnotators.values()) {
-        if (annotator != null) {
-          Disposer.dispose(annotator);
-        }
-      }
-      myAnnotators.clear();
-    }
-  }
-
-  private Alarm myRequestsAlarm = null;
-
-  public static class CoverageEditorFactoryListener implements EditorFactoryListener {
-    private final Map<Editor, Runnable> myCurrentEditors = new HashMap<>();
-
-    @Override
-    public void editorCreated(@NotNull EditorFactoryEvent event) {
-      final Editor editor = event.getEditor();
-      Project project = editor.getProject();
-      if (project == null) return;
-
-      CoverageDataManagerImpl manager = (CoverageDataManagerImpl)getInstance(project);
-      if (manager.myCurrentSuitesBundle != null) {
-        final PsiFile psiFile = ReadAction.compute(() -> {
-          final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-          final Document document = editor.getDocument();
-          return documentManager.getPsiFile(document);
-        });
-        if (psiFile == null || !psiFile.isPhysical()) return;
-        final CoverageEngine engine = manager.myCurrentSuitesBundle.getCoverageEngine();
-        AppExecutorUtil.getAppExecutorService().execute(() -> {
-          if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) return;
-          CoverageEditorAnnotator annotator = manager.getAnnotator(editor);
-          if (annotator == null) {
-            annotator = engine.createSrcFileAnnotator(psiFile, editor);
-          }
-
-          final CoverageEditorAnnotator finalAnnotator = annotator;
-
-          synchronized (manager.ANNOTATORS_LOCK) {
-            manager.myAnnotators.put(editor, finalAnnotator);
-          }
-
-          final Runnable request = () -> {
-            if (project.isDisposed()) return;
-            CoverageSuitesBundle suitesBundle = manager.myCurrentSuitesBundle;
-            if (suitesBundle != null) {
-              if (engine.acceptedByFilters(psiFile, suitesBundle)) {
-                finalAnnotator.showCoverage(suitesBundle);
-              }
-            }
-          };
-          myCurrentEditors.put(editor, request);
-          ApplicationManager.getApplication().invokeLater(() -> getRequestsAlarm(manager).addRequest(request, 100));
-        });
-      }
-    }
-
-    @Override
-    public void editorReleased(@NotNull EditorFactoryEvent event) {
-      final Editor editor = event.getEditor();
-      Project project = editor.getProject();
-      if (project == null) return;
-      CoverageDataManagerImpl manager = project.getServiceIfCreated(CoverageDataManagerImpl.class);
-      try {
-        if (manager == null) return;
-        final CoverageEditorAnnotator fileAnnotator;
-        synchronized (manager.ANNOTATORS_LOCK) {
-          fileAnnotator = manager.myAnnotators.remove(editor);
-        }
-        if (fileAnnotator != null) {
-          Disposer.dispose(fileAnnotator);
-        }
-      }
-      finally {
-        final Runnable request = myCurrentEditors.remove(editor);
-        if (request != null && manager != null) {
-          getRequestsAlarm(manager).cancelRequest(request);
-        }
-      }
-    }
-
-    @RequiresEdt
-    private static Alarm getRequestsAlarm(@NotNull CoverageDataManagerImpl manager) {
-      Alarm alarm = manager.myRequestsAlarm;
-      if (alarm == null) {
-        manager.myRequestsAlarm = alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, manager);
-      }
-      return alarm;
-    }
   }
 
   public static class CoverageProjectManagerListener implements ProjectCloseListener {
