@@ -19,16 +19,6 @@ abstract class AbstractHighLevelQuickFixMultiFileTest : AbstractQuickFixMultiFil
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
-    override fun doTestWithExtraFile(beforeFileName: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(
-            Paths.get(beforeFileName),
-            disableTestDirective = IgnoreTests.DIRECTIVES.IGNORE_K2_MULTILINE_COMMENT,
-            directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE,
-            computeAdditionalFiles = { mainTestFile -> listOfNotNull(mainTestFile.getAfterFileIfExists()) },
-            test = { super.doTestWithExtraFile(beforeFileName) }
-        )
-    }
-
     override val captureExceptions: Boolean = false
 
     override fun checkForUnexpectedErrors(file: KtFile) {}

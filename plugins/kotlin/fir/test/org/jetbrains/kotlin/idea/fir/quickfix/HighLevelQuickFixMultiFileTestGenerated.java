@@ -20,6 +20,29 @@ import org.junit.runner.RunWith;
 @TestMetadata("../idea/tests/testData/quickfix/autoImports")
 public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHighLevelQuickFixMultiFileTest {
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/autoImports/innerClass")
+    public static class InnerClass extends AbstractHighLevelQuickFixMultiFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("innerClassInCallableReference.test")
+        public void testInnerClassInCallableReference() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInCallableReference.test");
+        }
+
+        @TestMetadata("innerClassInExpression.test")
+        public void testInnerClassInExpression() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInExpression.test");
+        }
+
+        @TestMetadata("innerClassInTypeReference.test")
+        public void testInnerClassInTypeReference() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInTypeReference.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/quickfix/autoImports/invisible")
     public static class Invisible extends AbstractHighLevelQuickFixMultiFileTest {
         private void runTest(String testDataFilePath) throws Exception {

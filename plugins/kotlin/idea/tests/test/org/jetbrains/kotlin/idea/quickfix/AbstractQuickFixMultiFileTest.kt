@@ -38,17 +38,22 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.TestFiles
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
+import java.nio.file.Paths
 import java.util.regex.Pattern
 
 abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun doTestWithExtraFile(beforeFileName: String) {
-        enableInspections(beforeFileName)
+        val disableTestDirective = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2_MULTILINE_COMMENT else IgnoreTests.DIRECTIVES.IGNORE_K1
+        IgnoreTests.runTestIfNotDisabledByFileDirective(Paths.get(beforeFileName), disableTestDirective) {
+            enableInspections(beforeFileName)
 
-        if (beforeFileName.endsWith(".test")) {
-            doMultiFileTest(beforeFileName)
-        } else {
-            doTest(beforeFileName)
+            if (beforeFileName.endsWith(".test")) {
+                doMultiFileTest(beforeFileName)
+            } else {
+                doTest(beforeFileName)
+            }
         }
     }
 
