@@ -13,6 +13,7 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -33,7 +34,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.sequences.SequencesKt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -173,6 +173,9 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     private @Nullable @NlsContexts.PopupTitle String myTitle;
 
     public void filterActions(@Nullable PsiFile psiFile) {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        ThreadingAssertions.assertBackgroundThread();
+      }
       IntentionActionFilter[] filters = IntentionActionFilter.EXTENSION_POINT_NAME.getExtensions();
       filter(intentionsToShow, psiFile, filters);
       filter(errorFixesToShow, psiFile, filters);
@@ -243,11 +246,12 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (state != null && !state.isFinished()) {
       return;
     }
-
-    IntentionsInfo myIntentionsInfo = new IntentionsInfo();
-    getActionsToShow(myEditor, myFile, myIntentionsInfo, myPassIdToShowIntentionsFor, myQueryIntentionActions);
+    IntentionsInfo intentionsInfo = new IntentionsInfo();
+    getActionsToShow(myEditor, myFile, intentionsInfo, myPassIdToShowIntentionsFor, myQueryIntentionActions);
+    EditorNotificationActions.collectActions(myEditor, intentionsInfo); // TODO EDT-only call! (IDEA-333895)
+    intentionsInfo.filterActions(myFile);
     myCachedIntentions = IntentionsUI.getInstance(myProject).getCachedIntentions(myEditor, myFile);
-    myActionsChanged = myCachedIntentions.wrapAndUpdateActions(myIntentionsInfo, false);
+    myActionsChanged = myCachedIntentions.wrapAndUpdateActions(intentionsInfo, false);
     UnresolvedReferenceQuickFixUpdater.getInstance(myProject).startComputingNextQuickFixes(myFile, myEditor, myVisibleRange);
   }
 
@@ -259,10 +263,6 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     boolean actionsChanged = myActionsChanged;
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
     if ((state == null || state.isFinished()) && cachedIntentions != null) {
-      IntentionsInfo syncInfo = new IntentionsInfo();
-      getActionsToShowSync(myEditor, myFile, syncInfo);
-      actionsChanged |= cachedIntentions.addActions(syncInfo);
-
       IntentionsUI.getInstance(myProject).update(cachedIntentions, actionsChanged);
     }
   }
@@ -276,20 +276,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   public static @NotNull IntentionsInfo getActionsToShow(@NotNull Editor hostEditor, @NotNull PsiFile hostFile, boolean includeSyncActions) {
     IntentionsInfo result = new IntentionsInfo();
     getActionsToShow(hostEditor, hostFile, result, -1);
-    if (includeSyncActions) {
-      getActionsToShowSync(hostEditor, hostFile, result);
-    }
     return result;
-  }
-
-  /**
-   * Collects intention actions from providers intended to be invoked in EDT.
-   */
-  @ApiStatus.Internal
-  public static void getActionsToShowSync(@NotNull Editor hostEditor, @NotNull PsiFile hostFile, @NotNull IntentionsInfo intentions) {
-    ThreadingAssertions.assertEventDispatchThread();
-    EditorNotificationActions.collectActions(hostEditor, intentions);
-    intentions.filterActions(hostFile);
   }
 
   /**
@@ -297,7 +284,9 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
    */
   public static void getActionsToShow(@NotNull Editor hostEditor, @NotNull PsiFile hostFile, @NotNull IntentionsInfo intentions, int passIdToShowIntentionsFor) {
     getActionsToShow(hostEditor, hostFile, intentions, passIdToShowIntentionsFor, true);
+    intentions.filterActions(hostFile);
   }
+
   private static void getActionsToShow(@NotNull Editor hostEditor,
                                        @NotNull PsiFile hostFile,
                                        @NotNull IntentionsInfo intentions,
@@ -403,8 +392,6 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
         }
       }
     }
-
-    intentions.filterActions(hostFile);
   }
 
   private static @NotNull Collection<String> getLanguagesForIntentions(@NotNull PsiFile hostFile,

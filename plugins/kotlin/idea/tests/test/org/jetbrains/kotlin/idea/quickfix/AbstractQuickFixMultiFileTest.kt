@@ -6,7 +6,6 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.LocalInspectionEP
@@ -30,14 +29,14 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.quickfix.utils.findInspectionFile
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.TestFiles
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.Directives
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.TestFiles
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 import java.nio.file.Paths
@@ -296,8 +295,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
     private val availableActions: List<IntentionAction>
         get() {
             myFixture.doHighlighting()
-            val intentions = ShowIntentionActionsHandler.calcIntentions(project, editor, file)
-            val cachedIntentions = CachedIntentions.create(project, file, editor, intentions)
+            val cachedIntentions = ShowIntentionActionsHandler.calcCachedIntentions(project, editor, file)
             cachedIntentions.wrapAndUpdateGutters()
             return cachedIntentions.allActions.map { it.action }
         }

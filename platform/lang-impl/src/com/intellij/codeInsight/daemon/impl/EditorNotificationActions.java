@@ -9,13 +9,15 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
 
-final class EditorNotificationActions {
-  static void collectActions(@NotNull Editor hostEditor, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
+@ApiStatus.Internal
+public final class EditorNotificationActions {
+  public static void collectActions(@NotNull Editor hostEditor, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     Project project = hostEditor.getProject();
     if (project == null) return;
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);

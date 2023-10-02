@@ -5,10 +5,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
-import com.intellij.codeInsight.daemon.impl.IntentionsUI;
-import com.intellij.codeInsight.daemon.impl.IntentionsUIImpl;
-import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -108,7 +105,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     }
 
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    showIntentionHint(project, editor, file, calcIntentions(project, editor, file), showFeedbackOnEmptyMenu);
+    showIntentionHint(project, editor, file, showFeedbackOnEmptyMenu);
     long elapsed = System.currentTimeMillis() - start;
     IntentionFUSCollector.reportPopupDelay(project, elapsed, file.getFileType());
   }
@@ -116,21 +113,15 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   protected void showIntentionHint(@NotNull Project project,
                                    @NotNull Editor editor,
                                    @NotNull PsiFile file,
-                                   @NotNull ShowIntentionsPass.IntentionsInfo intentions,
                                    boolean showFeedbackOnEmptyMenu) {
-    if (intentions.isEmpty()) {
+    CachedIntentions cachedIntentions = calcCachedIntentions(project, editor, file);
+    cachedIntentions.wrapAndUpdateGutters();
+    if (cachedIntentions.getAllActions().isEmpty()) {
       showEmptyMenuFeedback(editor, showFeedbackOnEmptyMenu);
     }
     else {
       editor.getScrollingModel().runActionOnScrollingFinished(() -> {
-        CachedIntentions cachedIntentions = CachedIntentions.createAndUpdateActions(project, file, editor, intentions);
-        cachedIntentions.wrapAndUpdateGutters();
-        if (cachedIntentions.getAllActions().isEmpty()) {
-          showEmptyMenuFeedback(editor, showFeedbackOnEmptyMenu);
-        }
-        else {
-          IntentionHintComponent.showIntentionHint(project, file, editor, true, cachedIntentions);
-        }
+        IntentionHintComponent.showIntentionHint(project, file, editor, true, cachedIntentions);
       });
     }
   }
@@ -143,9 +134,9 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   @ApiStatus.Internal
-  public static @NotNull ShowIntentionsPass.IntentionsInfo calcIntentions(@NotNull Project project,
-                                                                          @NotNull Editor editor,
-                                                                          @NotNull PsiFile file) {
+  public static @NotNull CachedIntentions calcCachedIntentions(@NotNull Project project,
+                                                               @NotNull Editor editor,
+                                                               @NotNull PsiFile file) {
     ThreadingAssertions.assertEventDispatchThread();
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       throw new IllegalStateException("must not wait for intentions inside write action");
@@ -153,20 +144,22 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     String progressTitle = CodeInsightBundle.message("progress.title.searching.for.context.actions");
     DumbService dumbService = DumbService.getInstance(project);
     boolean useAlternativeResolve = dumbService.isAlternativeResolveEnabled();
-    ThrowableComputable<ShowIntentionsPass.IntentionsInfo, RuntimeException> prioritizedRunnable =
+    ShowIntentionsPass.IntentionsInfo intentionsInfo = new ShowIntentionsPass.IntentionsInfo();
+    EditorNotificationActions.collectActions(editor, intentionsInfo);
+    ThrowableComputable<CachedIntentions, RuntimeException> prioritizedRunnable =
       () -> ProgressManager.getInstance().computePrioritized(() -> {
+        intentionsInfo.filterActions(file);
         DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
-        return ReadAction.compute(() -> ShowIntentionsPass.getActionsToShow(editor, file, false));
+        return ReadAction.compute(() -> {
+          ShowIntentionsPass.getActionsToShow(editor, file, intentionsInfo, -1);
+          return CachedIntentions.createAndUpdateActions(project, file, editor, intentionsInfo);
+        });
       });
-    ThrowableComputable<ShowIntentionsPass.IntentionsInfo, RuntimeException> process =
+    ThrowableComputable<CachedIntentions, RuntimeException> process =
       useAlternativeResolve
       ? () -> dumbService.computeWithAlternativeResolveEnabled(prioritizedRunnable)
       : prioritizedRunnable;
-    ShowIntentionsPass.IntentionsInfo intentions =
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project);
-
-    ShowIntentionsPass.getActionsToShowSync(editor, file, intentions);
-    return intentions;
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project);
   }
 
   private static void letAutoImportComplete(@NotNull Editor editor, @NotNull PsiFile file, DaemonCodeAnalyzerImpl codeAnalyzer) {
@@ -246,7 +239,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       Editor editorToApply = null;
       PsiFile fileToApply = null;
 
-      Editor injectedEditor = null;
+      Editor injectedEditor;
       if (injectedFile != null && !(hostEditor instanceof IntentionPreviewEditor)) {
         injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile);
         if (hostEditor != injectedEditor && predicate.process(injectedFile, injectedEditor)) {
@@ -285,7 +278,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     Project project = hostFile.getProject();
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
-    try (AccessToken __ = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       ModCommandAction commandAction = action.asModCommandAction();
       if (commandAction != null) {

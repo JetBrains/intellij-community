@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.PriorityAction
-import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.codeInspection.ex.QuickFixWrapper
@@ -356,8 +355,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         }
 
         myFixture.doHighlighting()
-        val intentions = ShowIntentionActionsHandler.calcIntentions(project, editor, file)
-        val cachedIntentions = CachedIntentions.create(project, file, editor, intentions)
+        val cachedIntentions = ShowIntentionActionsHandler.calcCachedIntentions(project, editor, file)
         cachedIntentions.wrapAndUpdateGutters()
         val actions = cachedIntentions.allActions.map { it.action }.toMutableList()
 
