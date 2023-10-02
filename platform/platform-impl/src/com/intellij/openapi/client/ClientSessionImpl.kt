@@ -57,6 +57,12 @@ abstract class ClientSessionImpl(
            ?: super.findConstructorAndInstantiateClass(lookup, aClass)
   }
 
+  override fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
+    return listOf(
+      sessionConstructorMethodType,
+    ) + super.supportedSignaturesOfLightServiceConstructors()
+  }
+
   fun registerServices() {
     registerComponents()
   }
@@ -202,6 +208,12 @@ open class ClientProjectSessionImpl(
            ?: super.findConstructorAndInstantiateClass(lookup, aClass)
   }
 
+  override fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
+    return listOf(
+      projectMethodType,
+      projectSessionConstructorMethodType,
+    ) + super.supportedSignaturesOfLightServiceConstructors()
+  }
 
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
     return pluginDescriptor.projectContainerDescriptor

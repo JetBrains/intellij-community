@@ -144,6 +144,15 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
                                       "expected (Project), (Project, CoroutineScope), (CoroutineScope), or ()")) as T
   }
 
+  final override fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
+    return listOf(
+      projectMethodType,
+      projectAndScopeMethodType,
+      coroutineScopeMethodType,
+      emptyConstructorMethodType,
+    )
+  }
+
   override fun isInitialized(): Boolean {
     val containerState = containerState.get()
     if ((containerState < ContainerState.COMPONENT_CREATED || containerState >= ContainerState.DISPOSE_IN_PROGRESS)

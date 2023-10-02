@@ -21,6 +21,7 @@ import kotlin.Comparator
 import kotlin.Pair
 import kotlin.RuntimeException
 import kotlin.Suppress
+import kotlin.check
 import kotlin.let
 
 private val constructorComparator = Comparator<Constructor<*>> { c0, c1 -> c1.parameterCount - c0.parameterCount }
@@ -103,13 +104,19 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
   }
 }
 
-private fun isNotApplicableClass(type: Class<*>): Boolean {
-  return type.isPrimitive || type.isEnum || type.isArray ||
-         java.util.Collection::class.java.isAssignableFrom(type) ||
-         java.util.Map::class.java.isAssignableFrom(type) ||
+internal fun isNotApplicableClass(type: Class<*>): Boolean {
+  return type.isPrimitive ||
+         type.isAnnotation ||
+         type.isSynthetic ||
+         type.isEnum ||
+         type.isArray ||
          type === java.lang.String::class.java ||
+         type === Class::class.java ||
          type === File::class.java ||
-         type === Path::class.java
+         type === Path::class.java ||
+         java.lang.Number::class.java.isAssignableFrom(type) ||
+         java.util.Collection::class.java.isAssignableFrom(type) ||
+         java.util.Map::class.java.isAssignableFrom(type)
 }
 
 private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
@@ -258,8 +265,13 @@ private fun resolveInstance(componentManager: ComponentManagerImpl,
                 ?: return handleUnsatisfiedDependency(componentManager, requestorClass, expectedType, pluginId)
   return when {
     adapter is BaseComponentAdapter -> {
+      check(!useInstanceContainer)
       // project level service Foo wants application level service Bar - adapter component manager should be used instead of current
       adapter.getInstance(adapter.componentManager, null)
+    }
+    adapter is HolderAdapter -> {
+      check(useInstanceContainer)
+      adapter.componentInstance
     }
     componentManager.parent == null -> adapter.componentInstance
     else -> componentManager.getComponentInstance(adapter.componentKey)

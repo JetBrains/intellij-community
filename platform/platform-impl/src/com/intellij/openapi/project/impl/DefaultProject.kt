@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.annotations.TestOnly
 import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import kotlin.coroutines.EmptyCoroutineContext
 
 private val LOG = logger<DefaultProject>()
@@ -197,6 +198,15 @@ private class DefaultProjectImpl(private val actualContainerInstance: Project,
             ?: lookup.findConstructorOrNull(aClass, projectAndScopeMethodType)?.invoke(this, instanceCoroutineScope(aClass))
             ?: lookup.findConstructorOrNull(aClass, coroutineScopeMethodType)?.invoke(instanceCoroutineScope(aClass))
             ?: throw RuntimeException("Cannot find suitable constructor, expected (Project) or ()")) as T
+  }
+
+  override fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
+    return listOf(
+      projectMethodType,
+      emptyConstructorMethodType,
+      projectAndScopeMethodType,
+      coroutineScopeMethodType,
+    )
   }
 
   override fun isParentLazyListenersIgnored(): Boolean = true

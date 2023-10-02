@@ -100,6 +100,13 @@ open class ModuleImpl @ApiStatus.Internal constructor(
             ?: RuntimeException("Cannot find suitable constructor, expected (Module) or ()")) as T
   }
 
+  override fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
+    return listOf(
+      moduleMethodType,
+      emptyConstructorMethodType,
+    )
+  }
+
   override fun init(beforeComponentCreation: Runnable?) {
     // do not measure (activityNamePrefix method not overridden by this class)
     // because there are a lot of modules and no need to measure each one

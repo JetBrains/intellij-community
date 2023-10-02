@@ -493,7 +493,8 @@ private fun assertBackgroundThreadOrWriteAction() {
 @IntellijInternalApi
 @Internal
 fun readActionContext(): CoroutineContext {
-  return if (ApplicationManager.getApplication().isReadAccessAllowed) {
+  val application = ApplicationManager.getApplication()
+  return if (application != null && application.isReadAccessAllowed) {
     RunBlockingUnderReadActionMarker
   }
   else {

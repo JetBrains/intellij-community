@@ -16,13 +16,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.runModalTask
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.progress.indeterminateStep
 import com.intellij.psi.stubs.StubElementTypeHolderEP
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.ComponentManagerImpl.Companion.createAllServices2
+import com.intellij.serviceContainer.useInstanceContainer
 import com.intellij.util.getErrorsAsString
 import io.github.classgraph.*
 import java.lang.reflect.Constructor
@@ -30,7 +31,12 @@ import kotlin.properties.Delegates.notNull
 
 private class CreateAllServicesAndExtensionsAction : AnAction("Create All Services And Extensions"), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    val errors = createAllServicesAndExtensions()
+    val errors = if (useInstanceContainer) {
+      createAllServicesAndExtensions2()
+    }
+    else {
+      createAllServicesAndExtensions()
+    }
     if (errors.isNotEmpty()) {
       logger<ComponentManagerImpl>().error(getErrorsAsString(errors).toString())
     }
@@ -131,6 +137,46 @@ fun performAction() {
   )
 }
 
+private fun createAllServicesAndExtensions2(): List<Throwable> {
+  val errors = mutableListOf<Throwable>()
+  runWithModalProgressBlocking(ModalTaskOwner.guess(), "Creating all services and extensions") {
+    val taskExecutor: (task: () -> Unit) -> Unit = { task ->
+      try {
+        task()
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        errors.add(e)
+      }
+    }
+
+    // check first
+    blockingContext {
+      checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
+    }
+
+    val application = ApplicationManager.getApplication() as ComponentManagerImpl
+    checkContainer2(application, "app", taskExecutor)
+
+    val project = ProjectUtil.getOpenProjects().firstOrNull() as? ComponentManagerImpl
+    if (project != null) {
+      checkContainer2(project, "project", taskExecutor)
+      val module = ModuleManager.getInstance(project as Project).modules.firstOrNull() as? ComponentManagerImpl
+      if (module != null) {
+        checkContainer2(module, "module", taskExecutor)
+      }
+    }
+    indeterminateStep("Checking light services...") {
+      blockingContext {
+        checkLightServices(application, project, errors)
+      }
+    }
+  }
+  return errors
+}
+
 // external usage in [src/com/jetbrains/performancePlugin/commands/chain/generalCommandChain.kt]
 const val ACTION_ID: String = "CreateAllServicesAndExtensions"
 
@@ -144,6 +190,7 @@ private val servicesWhichRequireEdt = java.util.Set.of(
   "com.jetbrains.python.scientific.figures.PyPlotToolWindow",
   "com.intellij.analysis.pwa.analyser.PwaServiceImpl",
   "com.intellij.analysis.pwa.view.toolwindow.PwaProblemsViewImpl",
+  "com.android.tools.idea.gradle.project.upgrade.ui.ContentManagerImpl", // invokeAndWait in constructor
 )
 
 /**
@@ -169,6 +216,21 @@ private fun checkContainer(container: ComponentManagerImpl, levelDescription: St
   ComponentManagerImpl.createAllServices(container, servicesWhichRequireEdt, servicesWhichRequireReadAction)
   indicator.text2 = "Checking ${levelDescription} extensions..."
   checkExtensions(container, taskExecutor)
+}
+
+private suspend fun checkContainer2(
+  container: ComponentManagerImpl,
+  levelDescription: String?,
+  taskExecutor: (task: () -> Unit) -> Unit,
+) {
+  indeterminateStep("Checking ${levelDescription} services...") {
+    createAllServices2(container, servicesWhichRequireEdt, servicesWhichRequireReadAction)
+  }
+  indeterminateStep("Checking ${levelDescription} extensions...") {
+    blockingContext {
+      checkExtensions(container, taskExecutor)
+    }
+  }
 }
 
 private fun checkExtensions(
