@@ -412,6 +412,7 @@
       "writeAccess.svg": "gutter/writeAccess.svg"
     },
     "hierarchy": {
+      "classHierarchy.svg": "hierarchy/class.svg",
       "subtypes.svg": "hierarchy/subtypes.svg",
       "supertypes.svg": "hierarchy/supertypes.svg"
     },

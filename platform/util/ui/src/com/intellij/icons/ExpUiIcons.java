@@ -389,6 +389,7 @@ public final class ExpUiIcons {
   }
 
   public static final class Hierarchy {
+    /** 16x16 */ public static final @NotNull Icon ClassHierarchy = load("expui/hierarchy/classHierarchy.svg", -2076359177, 2);
     /** 16x16 */ public static final @NotNull Icon Subtypes = load("expui/hierarchy/subtypes.svg", -1158046965, 2);
     /** 16x16 */ public static final @NotNull Icon Supertypes = load("expui/hierarchy/supertypes.svg", 916048497, 2);
   }
