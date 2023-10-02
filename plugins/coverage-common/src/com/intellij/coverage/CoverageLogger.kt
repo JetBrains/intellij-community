@@ -9,13 +9,13 @@ import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.project.Project
 
 enum class RunnerType {
-  IJCSampling, IJCTracing, IJCTracingTestTracking, JaCoCo, Emma
+  IJCSampling, IJCTracing, IJCTracingTestTracking, JaCoCo
 }
 
 object CoverageLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("coverage", 7)
+  private val GROUP = EventLogGroup("coverage", 8)
 
-  private val runners = listOf("idea", "jacoco", "Emma", "PhpCoverage", "utPlSqlCoverageRunner", "JestJavaScriptTestRunnerCoverage",
+  private val runners = listOf("idea", "jacoco", "PhpCoverage", "utPlSqlCoverageRunner", "JestJavaScriptTestRunnerCoverage",
                                "rcov", "DartCoverageRunner", "WipCoverageRunner", "VitestJavaScriptTestRunnerCoverage",
                                "jacoco_xml_report", "MochaJavaScriptTestRunnerCoverage", "GoCoverage",
                                "KarmaJavaScriptTestRunnerCoverage", "coverage.py")
@@ -43,7 +43,6 @@ object CoverageLogger : CounterUsagesCollector() {
                  includePatterns: Int,
                  excludePatterns: Int) {
     val type = when (coverageRunner.id) {
-      "emma" -> RunnerType.Emma
       "jacoco" -> RunnerType.JaCoCo
       "idea" -> when {
         !branchCoverage -> RunnerType.IJCSampling

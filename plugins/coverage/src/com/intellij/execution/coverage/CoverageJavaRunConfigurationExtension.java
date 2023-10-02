@@ -138,16 +138,6 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
         coverageConfig.setCurrentCoverageSuite(coverageDataManager.addCoverageSuite(coverageConfig));
       }, ModalityState.nonModal(), project.getDisposed());
       appendCoverageArgument(configuration, params, coverageConfig);
-
-      final Sdk jdk = params.getJdk();
-      if (jdk != null && JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_7) && coverageRunner instanceof JavaCoverageRunner && !((JavaCoverageRunner)coverageRunner).isJdk7Compatible()) {
-        Notifications.Bus.notify(new Notification("Coverage",
-                                                  JavaCoverageBundle.message("coverage.instrumentation.jdk7.compatibility"),
-                                                  JavaCoverageBundle.message(
-                                                    "coverage.instrumentation.jdk7.compatibility.veryfy.error.warning",
-                                                    coverageRunner.getPresentableName()),
-                                                  NotificationType.WARNING));
-      }
     }
   }
 
