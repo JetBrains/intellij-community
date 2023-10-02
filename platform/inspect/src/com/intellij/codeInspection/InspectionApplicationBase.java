@@ -104,7 +104,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
   String myTargets;
   public boolean myErrorCodeRequired = true;
-  String myScopePattern;
+  protected String myScopePattern;
 
   public void startup() {
     if (myProjectPath == null) {
