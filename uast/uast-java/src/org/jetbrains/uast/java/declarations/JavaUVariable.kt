@@ -21,9 +21,9 @@ abstract class AbstractJavaUVariable(
   givenParent: UElement?
 ) : JavaAbstractUElement(givenParent), PsiVariable, UVariableEx, JavaUElementWithComments, UAnchorOwner {
 
-  private val uastInitializerPart = UastLazyPart<UExpression?>()
-  private val uAnnotationsPart = UastLazyPart<List<UAnnotation>>()
-  private val typeReferencePart = UastLazyPart<UTypeReferenceExpression?>()
+  private var uastInitializerPart: Any? = UNINITIALIZED_UAST_PART
+  private var uAnnotationsPart: Any? = UNINITIALIZED_UAST_PART
+  private var typeReferencePart: Any? = UNINITIALIZED_UAST_PART
 
   abstract override val javaPsi: PsiVariable
 
@@ -32,17 +32,32 @@ abstract class AbstractJavaUVariable(
     get() = javaPsi
 
   override val uastInitializer: UExpression?
-    get() = uastInitializerPart.getOrBuild {
-      val initializer = javaPsi.initializer ?: return@getOrBuild null
-      UastFacade.findPlugin(initializer)?.convertElement(initializer, this) as? UExpression
+    get() {
+      if (uastInitializerPart != UNINITIALIZED_UAST_PART) return uastInitializerPart as UExpression?
+
+      uastInitializerPart = javaPsi.initializer
+        ?.let { initializer -> UastFacade.findPlugin(initializer)?.convertElement(initializer, this) as? UExpression }
+
+      return uastInitializerPart as UExpression?
     }
 
+  @Suppress("UNCHECKED_CAST")
   override val uAnnotations: List<UAnnotation>
-    get() = uAnnotationsPart.getOrBuild { javaPsi.annotations.map { JavaUAnnotation(it, this) } }
+    get() {
+      if (uAnnotationsPart != UNINITIALIZED_UAST_PART) return uAnnotationsPart as List<UAnnotation>
+
+      uAnnotationsPart = javaPsi.annotations.map { JavaUAnnotation(it, this) }
+      return uAnnotationsPart as List<UAnnotation>
+    }
 
   override val typeReference: UTypeReferenceExpression?
-    get() = typeReferencePart.getOrBuild {
-      javaPsi.typeElement?.let { UastFacade.findPlugin(it)?.convertOpt<UTypeReferenceExpression>(javaPsi.typeElement, this) }
+    get() {
+      if (typeReferencePart != UNINITIALIZED_UAST_PART) return typeReferencePart as UTypeReferenceExpression?
+
+      typeReferencePart = javaPsi.typeElement?.let {
+        UastFacade.findPlugin(it)?.convertOpt<UTypeReferenceExpression>(javaPsi.typeElement, this)
+      }
+      return typeReferencePart as UTypeReferenceExpression?
     }
 
   abstract override val sourcePsi: PsiVariable?
