@@ -4,14 +4,10 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLambdaExpression;
-import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -21,7 +17,7 @@ public class JavaSourcePositionHighlighter extends SourcePositionHighlighter imp
   @Override
   public TextRange getHighlightRange(SourcePosition sourcePosition) {
     TextRange range = getHighlightRangeInternal(sourcePosition);
-    return ensureWholeLineHighlighting(sourcePosition, range);
+    return DebuggerUtilsEx.getHighlightingRangeInsideLine(range, sourcePosition.getFile(), sourcePosition.getLine());
   }
 
   @Nullable
@@ -41,19 +37,5 @@ public class JavaSourcePositionHighlighter extends SourcePositionHighlighter imp
     }
 
     return null;
-  }
-
-  @Nullable
-  private static TextRange ensureWholeLineHighlighting(SourcePosition sourcePosition, @Nullable TextRange range) {
-    PsiFile file = sourcePosition.getFile();
-    if (range != null) {
-      Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-      if (document != null) {
-        TextRange lineRange = DocumentUtil.getLineTextRange(document, sourcePosition.getLine());
-        TextRange res = range.intersection(lineRange);
-        return lineRange.equals(res) ? null : res; // highlight the whole line for multiline lambdas
-      }
-    }
-    return range;
   }
 }

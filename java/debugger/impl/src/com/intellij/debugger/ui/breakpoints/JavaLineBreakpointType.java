@@ -34,7 +34,6 @@ import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import org.jetbrains.annotations.Nls;
@@ -420,9 +419,12 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
         }
       }
     }
-    return highlightedElement != null
-           ? DebuggerUtilsEx.intersectWithLine(highlightedElement.getTextRange(), highlightedElement.getContainingFile(), breakpoint.getLine())
-           : null;
+    if (highlightedElement != null) {
+      PsiFile file = highlightedElement.getContainingFile();
+      int line = breakpoint.getLine();
+      return DebuggerUtilsEx.getHighlightingRangeInsideLine(highlightedElement.getTextRange(), file, line);
+    }
+    return null;
   }
 
   @Override
