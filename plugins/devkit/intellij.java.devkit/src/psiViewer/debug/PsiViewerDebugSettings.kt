@@ -9,6 +9,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 class PsiViewerDebugSettings : PersistentStateComponent<PsiViewerDebugSettings> {
   var showDialogFromDebugAction: Boolean = false
 
+  var watchMode: Boolean = false
+
   override fun getState(): PsiViewerDebugSettings = this
 
   override fun loadState(state: PsiViewerDebugSettings) {

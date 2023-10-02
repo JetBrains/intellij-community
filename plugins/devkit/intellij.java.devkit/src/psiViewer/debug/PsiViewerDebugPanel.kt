@@ -1,6 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.devkit.psiViewer.debug
 
+import com.intellij.debugger.engine.JavaDebugProcess
+import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorProvider
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.intellij.dev.psiViewer.PsiViewerDialog
 import com.intellij.dev.psiViewer.PsiViewerSettings
 import com.intellij.dev.psiViewer.ViewerNodeDescriptor
@@ -10,8 +17,11 @@ import com.intellij.ide.util.treeView.IndexComparator
 import com.intellij.java.devkit.psiViewer.JavaPsiViewerBundle
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.CaretEvent
@@ -22,6 +32,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -31,6 +42,15 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.text.DateFormatUtil
+import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XDebugSessionListener
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
+import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+import com.sun.jdi.ObjectReference
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -38,12 +58,22 @@ import javax.swing.event.TreeSelectionEvent
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
 
+private val LOG = Logger.getInstance(PsiViewerDebugAction::class.java)
+
 class PsiViewerDebugPanel(
   private val project: Project,
   private val editor: EditorEx,
   private val language: Language,
+  private val expression: @NlsSafe String,
+  private val debugSession: XDebugSession,
   private val fileName: String? = null
 ) : JPanel(BorderLayout()), Disposable {
+  private var watchMode = PsiViewerDebugSettings.getInstance().watchMode
+
+  private var showWhiteSpace = PsiViewerSettings.getSettings().showWhiteSpaces
+
+  private var showTreeNodes = PsiViewerSettings.getSettings().showTreeNodes
+
   private val treeStructure = ViewerTreeStructure(project).apply {
     val settings = PsiViewerSettings.getSettings()
     setShowWhiteSpaces(settings.showWhiteSpaces)
@@ -54,7 +84,9 @@ class PsiViewerDebugPanel(
 
   private val psiTree = Tree()
 
-  private val initialRange = TextRange.create(editor.selectionModel.selectionStart, editor.selectionModel.selectionEnd)
+  private var expressionRange = TextRange.create(editor.selectionModel.selectionStart, editor.selectionModel.selectionEnd)
+
+  private val watchListener = DebugWatchSessionListener()
 
   init {
     val toolBar = initToolbar()
@@ -69,6 +101,7 @@ class PsiViewerDebugPanel(
   private fun initToolbar(): JComponent {
     val toolBarActions = DefaultActionGroup().apply {
       add(OpenDialogAction())
+      add(WatchModeAction())
       add(ResetSelection())
       add(ShowWhiteSpaceAction())
       add(ShowTreeNodesAction())
@@ -91,6 +124,82 @@ class PsiViewerDebugPanel(
     }
   }
 
+  private inner class WatchModeAction : ToggleAction(
+    JavaPsiViewerBundle.message("psi.viewer.toggle.watch.mode.action"),
+    JavaPsiViewerBundle.message("psi.viewer.toggle.watch.mode.description"),
+    AllIcons.Debugger.Watch
+  ) {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+    override fun isSelected(e: AnActionEvent): Boolean = watchMode
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      val runnerLayout = debugSession.ui
+      val content = runnerLayout.contentManager.getContent(this@PsiViewerDebugPanel)
+      watchMode = state
+      content.displayName = getTitle(expression, state)
+      PsiViewerDebugSettings.getInstance().watchMode = state
+      if (state) {
+        refreshPanel()
+        debugSession.addSessionListener(watchListener)
+      }
+      else {
+        debugSession.removeSessionListener(watchListener)
+      }
+    }
+  }
+
+  inner class DebugWatchSessionListener : XDebugSessionListener {
+    override fun sessionPaused() {
+      refreshPanel()
+    }
+  }
+
+  private fun refreshPanel() {
+    val debugProcess = (debugSession.debugProcess as? JavaDebugProcess)?.debuggerSession?.process
+    val suspendContext = debugProcess?.suspendManager?.getPausedContext()
+    debugProcess?.managerThread?.schedule(object : SuspendContextCommandImpl(suspendContext) {
+      override fun contextAction(suspendContext: SuspendContextImpl) {
+        val evalContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
+        val evaluator = debugSession.debugProcess.evaluator ?: return
+        evaluator.evaluate(expression, object : XDebuggerEvaluator.XEvaluationCallback {
+          override fun errorOccurred(errorMessage: String) {
+            XDebuggerManagerImpl.getNotificationGroup().createNotification(
+              JavaPsiViewerBundle.message("psi.viewer.debug.evaluation.failed"), NotificationType.ERROR
+            )
+            LOG.error("Failed to evaluate PSI expression", errorMessage)
+          }
+
+          override fun evaluated(result: XValue) {
+            try {
+              val descriptor = (result as? NodeDescriptorProvider)?.descriptor as? ValueDescriptorImpl ?: return
+              val psiElemObj = descriptor.value as? ObjectReference ?: return
+              val psiFileObj = debugProcess.invokeMethod(psiElemObj, GET_CONTAINING_FILE, evalContext) as? ObjectReference ?: return
+              val fileText = psiFileObj.getText(debugProcess, evalContext) ?: return
+              val psiRangeInFile = psiElemObj.getTextRange(debugProcess, evalContext) ?: return
+              DebuggerUIUtil.invokeLater {
+                expressionRange = psiRangeInFile
+                editor.document.setReadOnly(false)
+                runWriteAction {
+                  editor.document.setText(fileText)
+                }
+                editor.document.setReadOnly(true)
+                editor.selectAndScroll(psiRangeInFile)
+              }
+            }
+            catch (e: EvaluateException) {
+              XDebuggerManagerImpl.getNotificationGroup().createNotification(
+                JavaPsiViewerBundle.message("psi.viewer.debug.evaluation.failed"), NotificationType.ERROR
+              )
+              LOG.error("Failed to evaluate PSI expression", e)
+            }
+
+          }
+        }, debugSession.currentPosition)
+      }
+    })
+  }
+
   private inner class ResetSelection : AnAction(
     JavaPsiViewerBundle.message("psi.viewer.show.reset.selection.action"),
     JavaPsiViewerBundle.message("psi.viewer.show.reset.selection.description"),
@@ -99,8 +208,8 @@ class PsiViewerDebugPanel(
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun actionPerformed(e: AnActionEvent) {
-      if (editor.contentComponent.hasFocus()) editor.selectionModel.setSelection(initialRange.startOffset, initialRange.endOffset)
-      updatePsiTreeForSelection(initialRange.startOffset, initialRange.endOffset)
+      if (editor.contentComponent.hasFocus()) editor.selectAndScroll(expressionRange)
+      updatePsiTreeForSelection(expressionRange.startOffset, expressionRange.endOffset)
     }
   }
 
@@ -112,9 +221,10 @@ class PsiViewerDebugPanel(
   ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-    override fun isSelected(e: AnActionEvent): Boolean = PsiViewerSettings.getSettings().showWhiteSpaces
+    override fun isSelected(e: AnActionEvent): Boolean = showWhiteSpace
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
+      showWhiteSpace = state
       PsiViewerSettings.getSettings().showWhiteSpaces = state
       treeStructure.setShowWhiteSpaces(state)
       structureTreeModel.invalidateAsync()
@@ -128,9 +238,10 @@ class PsiViewerDebugPanel(
   ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-    override fun isSelected(e: AnActionEvent): Boolean = PsiViewerSettings.getSettings().showTreeNodes
+    override fun isSelected(e: AnActionEvent): Boolean = showTreeNodes
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
+      showTreeNodes = state
       PsiViewerSettings.getSettings().showTreeNodes = state
       treeStructure.setShowTreeNodes(state)
       structureTreeModel.invalidateAsync()
@@ -148,8 +259,14 @@ class PsiViewerDebugPanel(
     psiTree.addTreeSelectionListener(PsiTreeSelectionListener())
 
     PsiViewerDialog.initTree(psiTree)
-    updatePsiTreeForSelection(initialRange.startOffset, initialRange.endOffset)
+    updatePsiTreeForSelection(expressionRange.startOffset, expressionRange.endOffset)
     return JBScrollPane(psiTree)
+  }
+
+  private fun EditorEx.selectAndScroll(textRange: TextRange) {
+    selectionModel.setSelection(textRange.startOffset, textRange.endOffset)
+    caretModel.moveToOffset(textRange.startOffset)
+    scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
   }
 
   private inner class PsiTreeSelectionListener : TreeSelectionListener {
@@ -160,13 +277,11 @@ class PsiViewerDebugPanel(
       val nodeDescriptor = selectedNode.userObject as? ViewerNodeDescriptor ?: return
       val element = nodeDescriptor.element as? PsiElement ?: return
       val elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, element.getTextRange())
-      editor.selectionModel.setSelection(elementRange.startOffset, elementRange.endOffset)
-      editor.caretModel.moveToOffset(elementRange.startOffset)
-      editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
+      editor.selectAndScroll(elementRange)
     }
   }
 
-  private fun initEditor(): EditorEx?  {
+  private fun initEditor(): EditorEx? {
     val fileType = language.associatedFileType ?: return null
     val editorHighlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType)
     editor.highlighter = editorHighlighter
@@ -205,5 +320,11 @@ class PsiViewerDebugPanel(
 
   override fun dispose() {
     if (!editor.isDisposed()) EditorFactory.getInstance().releaseEditor(editor)
+  }
+
+  internal companion object {
+    fun getTitle(name: @Nls String, inWatchMode: Boolean): @Nls String {
+      return if (inWatchMode) name else "$name ${DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis())}"
+    }
   }
 }
