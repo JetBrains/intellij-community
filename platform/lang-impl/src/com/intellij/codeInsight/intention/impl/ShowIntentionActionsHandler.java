@@ -53,9 +53,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
+import com.intellij.util.TripleFunction;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.ApiStatus;
@@ -171,7 +171,15 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     return false;
   }
 
+  /**
+   * @deprecated Use {@link #availableFor(PsiFile, Editor, int, IntentionAction)} instead.
+   */
+  @Deprecated(forRemoval = true, since = "2023.3")
   public static boolean availableFor(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull IntentionAction action) {
+    return availableFor(psiFile, editor, editor.getCaretModel().getOffset(), action);
+  }
+
+  public static boolean availableFor(@NotNull PsiFile psiFile, @NotNull Editor editor, int offset, @NotNull IntentionAction action) {
     if (!psiFile.isValid()) return false;
 
     try {
@@ -192,7 +200,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
         if (!psiAction.checkFile(psiFile)) {
           return false;
         }
-        PsiElement leaf = psiFile.findElementAt(editor.getCaretModel().getOffset());
+        PsiElement leaf = psiFile.findElementAt(offset);
         if (leaf == null || !psiAction.isAvailable(project, editor, leaf)) {
           return false;
         }
@@ -231,24 +239,39 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     return true;
   }
 
-  public static @Nullable Pair<PsiFile, Editor> chooseBetweenHostAndInjected(@NotNull PsiFile hostFile,
-                                                                             @NotNull Editor hostEditor,
-                                                                             @Nullable PsiFile injectedFile,
-                                                                             @NotNull PairProcessor<? super PsiFile, ? super Editor> predicate) {
+  public static @Nullable Pair<PsiFile, Editor> chooseBetweenHostAndInjected(
+    @NotNull PsiFile hostFile,
+    @NotNull Editor hostEditor,
+    int hostOffset,
+    @NotNull TripleFunction<? super @NotNull PsiFile, ? super @NotNull Editor, ? super @NotNull Integer, @NotNull Boolean> predicate
+  ) {
+    var injectedFile = InjectedLanguageUtilBase.findInjectedPsiNoCommit(hostFile, hostOffset);
+    return chooseBetweenHostAndInjected(hostFile, hostEditor, hostOffset, injectedFile, predicate);
+  }
+
+  public static @Nullable Pair<PsiFile, Editor> chooseBetweenHostAndInjected(
+    @NotNull PsiFile hostFile,
+    @NotNull Editor hostEditor,
+    int hostOffset,
+    @Nullable PsiFile injectedFile,
+    @NotNull TripleFunction<? super @NotNull PsiFile, ? super @NotNull Editor, ? super @NotNull Integer, @NotNull Boolean> predicate) {
     try {
       Editor editorToApply = null;
       PsiFile fileToApply = null;
 
-      Editor injectedEditor;
       if (injectedFile != null && !(hostEditor instanceof IntentionPreviewEditor)) {
-        injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile);
-        if (hostEditor != injectedEditor && predicate.process(injectedFile, injectedEditor)) {
-          editorToApply = injectedEditor;
-          fileToApply = injectedFile;
+        Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile);
+        if (hostEditor != injectedEditor && injectedEditor instanceof EditorWindow editorWindow) {
+          int injectedOffset = injectedEditor.logicalPositionToOffset(
+            editorWindow.hostToInjected(hostEditor.offsetToLogicalPosition(hostOffset)));
+          if (predicate.fun(injectedFile, injectedEditor, injectedOffset)) {
+            editorToApply = injectedEditor;
+            fileToApply = injectedFile;
+          }
         }
       }
 
-      if (editorToApply == null && predicate.process(hostFile, hostEditor)) {
+      if (editorToApply == null && predicate.fun(hostFile, hostEditor, hostOffset)) {
         editorToApply = hostEditor;
         fileToApply = hostFile;
       }
@@ -392,10 +415,9 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       return Pair.create(hostFile, null);
     }
 
-    PsiFile injectedFile = InjectedLanguageUtilBase.findInjectedPsiNoCommit(hostFile, hostEditor.getCaretModel().getOffset());
     return chooseBetweenHostAndInjected(
-      hostFile, hostEditor, injectedFile,
-      (psiFile, editor) -> availableFor(psiFile, editor, action)
+      hostFile, hostEditor, hostEditor.getCaretModel().getOffset(),
+      (psiFile, editor, offset) -> availableFor(psiFile, editor, offset, action)
     );
   }
 }

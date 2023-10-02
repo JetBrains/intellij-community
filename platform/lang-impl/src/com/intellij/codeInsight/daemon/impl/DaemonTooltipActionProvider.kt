@@ -33,7 +33,9 @@ class DaemonTooltipActionProvider : TooltipActionProvider {
  * @param myFixText is a text to show in tooltip
  * @param myActionText is a text to search for in intentions' actions
  */
-private class DaemonTooltipAction(@NlsActions.ActionText private val myFixText: String, @NlsContexts.Command private val myActionText: String, private val myActualOffset: Int) : TooltipAction {
+private class DaemonTooltipAction(@NlsActions.ActionText private val myFixText: String,
+                                  @NlsContexts.Command private val myActionText: String,
+                                  private val myActualOffset: Int) : TooltipAction {
   override fun getText(): String {
     return myFixText
   }
@@ -107,11 +109,14 @@ fun getFirstAvailableAction(psiFile: PsiFile,
   val allActions = cachedIntentions.allActions
 
   if (allActions.isEmpty()) return null
+  val offset = intentionsInfo.offset.takeIf { o -> o >= 0 } ?: editor.caretModel.offset
 
   allActions.forEach {
     val action = IntentionActionDelegate.unwrap(it.action)
-
-    if (action !is AbstractEmptyIntentionAction && action.isAvailable(project, editor, psiFile)) {
+    if (action !is AbstractEmptyIntentionAction
+        && ShowIntentionActionsHandler.chooseBetweenHostAndInjected(psiFile, editor, offset) { f, e, o ->
+        ShowIntentionActionsHandler.availableFor(f, e, o, action)
+      } != null) {
       val text = it.text
       //we cannot properly render html inside the fix button fixes with html text
       if (!XmlStringUtil.isWrappedInHtml(text)) {
@@ -128,18 +133,18 @@ fun wrapIntentionToTooltipAction(intention: IntentionAction,
   val editorOffset = editor.caretModel.offset
   val text = (intention as? CustomizableIntentionAction)?.tooltipText ?: intention.text
 
-  if ((info.actualStartOffset .. info.actualEndOffset).contains(editorOffset)) {
+  if ((info.actualStartOffset..info.actualEndOffset).contains(editorOffset)) {
     //try to avoid caret movements
     return DaemonTooltipAction(text, intention.text, editorOffset)
   }
   val offset: Int =
-  info.findRegisteredQuickFix { descriptor, range ->
-    if (descriptor.action == intention) {
-      range.startOffset
-    }
-    else {
-      null
-    }
-  }?:info.actualStartOffset
+    info.findRegisteredQuickFix { descriptor, range ->
+      if (descriptor.action == intention) {
+        range.startOffset
+      }
+      else {
+        null
+      }
+    } ?: info.actualStartOffset
   return DaemonTooltipAction(text, intention.text, offset)
 }

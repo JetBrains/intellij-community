@@ -10,6 +10,7 @@ import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupport
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -125,6 +126,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
       }
       Editor editorToUse;
       PsiFile fileToUse;
+      int offsetToUse;
       if (info.isFromInjection()) {
         if (injectedEditor[0] == null) {
           injectedFile[0] = InjectedLanguageUtilBase.findInjectedPsiNoCommit(file, offset);
@@ -132,15 +134,18 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
         }
         editorToUse = injectedFile[0] == null ? editor : injectedEditor[0];
         fileToUse = injectedFile[0] == null ? file : injectedFile[0];
+        offsetToUse = !(editorToUse instanceof EditorWindow editorWindow)
+                      ? offset : editorWindow.logicalPositionToOffset(editorWindow.hostToInjected(editor.offsetToLogicalPosition(offset)));
       }
       else {
         editorToUse = editor;
         fileToUse = file;
+        offsetToUse = offset;
       }
       if (indicator != null) {
         indicator.setText(descriptor.getDisplayName());
       }
-      if (descriptor.getAction().isAvailable(project, editorToUse, fileToUse)) {
+      if (ShowIntentionActionsHandler.availableFor(fileToUse, editorToUse, offsetToUse, descriptor.getAction())) {
         outList.add(descriptor);
         hasAvailableAction[0] = true;
       }
@@ -168,7 +173,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     public final List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     public final List<AnAction> guttersToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     public final List<HighlightInfo.IntentionActionDescriptor> notificationActionsToShow = ContainerUtil.createLockFreeCopyOnWriteList();
-    private int myOffset;
+    private int myOffset = -1;
     private HighlightInfoType myHighlightInfoType;
     private @Nullable @NlsContexts.PopupTitle String myTitle;
 
@@ -358,8 +363,8 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
           indicator.setText(action.getFamilyName());
         }
         Pair<PsiFile, Editor> place =
-          ShowIntentionActionsHandler.chooseBetweenHostAndInjected(hostFile, hostEditor, injectedFile,
-                     (psiFile, editor) -> ShowIntentionActionsHandler.availableFor(psiFile, editor, action));
+          ShowIntentionActionsHandler.chooseBetweenHostAndInjected(hostFile, hostEditor, offset, injectedFile,
+                     (psiFile, editor, o) -> ShowIntentionActionsHandler.availableFor(psiFile, editor, o, action));
 
         if (place != null) {
           List<IntentionAction> enableDisableIntentionAction = new ArrayList<>();
@@ -421,6 +426,9 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   public static void fillIntentionsInfoForHighlightInfo(@NotNull HighlightInfo infoAtCursor,
                                                         @NotNull IntentionsInfo intentions,
                                                         @NotNull List<? extends HighlightInfo.IntentionActionDescriptor> fixes) {
+    if (intentions.getOffset() < 0) {
+      intentions.setOffset(infoAtCursor.getActualStartOffset());
+    }
     boolean isError = infoAtCursor.getSeverity() == HighlightSeverity.ERROR;
     for (HighlightInfo.IntentionActionDescriptor fix : fixes) {
       if (fix.isError() && isError) {
