@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.ex.FocusChangeListener
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -28,7 +27,7 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 
 @ApiStatus.Experimental
-class InlineCompletionDocumentListener(private val editor: EditorImpl) : BulkAwareDocumentListener {
+class InlineCompletionDocumentListener(private val editor: Editor) : BulkAwareDocumentListener {
   override fun documentChangedNonBulk(event: DocumentEvent) {
     val handler = InlineCompletionHandler.getOrNull(editor)
 

@@ -1,17 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.listeners
 
-import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
+import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.util.Disposer
 import com.intellij.util.application
-import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
@@ -20,25 +17,12 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 class InlineCompletionEditorListener(private val scope: CoroutineScope) : EditorFactoryListener {
-  private val editorMouseListener = InlineEditorMouseListener()
-  private val editorFocusListener = InlineCompletionFocusListener()
-
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor
-    if (editor.project == null || editor !is EditorImpl || !editorTypeSupported(editor) || editor.project?.isDisposed != false) return
-
-    val disposable = Disposer.newDisposable("inline-completion").also {
-      EditorUtil.disposeWithEditor(editor, it)
+    if (editor.project == null || editor !is EditorImpl || !editorTypeSupported(editor) || editor.project?.isDisposed != false) {
+      return
     }
-
-    val workingScope = scope.childScope(supervisor = !application.isUnitTestMode) // Completely fail only in tests
-    val handler = InlineCompletionHandler(workingScope, disposable)
-    editor.putUserData(InlineCompletionHandler.KEY, handler)
-    val docListener = InlineCompletionDocumentListener(editor)
-
-    editor.document.addDocumentListener(docListener, disposable)
-    editor.addFocusListener(editorFocusListener, disposable)
-    editor.addEditorMouseListener(editorMouseListener, disposable)
+    InlineCompletion.install(editor, scope)
   }
 
   private fun editorTypeSupported(editor: Editor): Boolean {
@@ -47,7 +31,6 @@ class InlineCompletionEditorListener(private val scope: CoroutineScope) : Editor
   }
 
   override fun editorReleased(event: EditorFactoryEvent) {
-    event.editor.getUserData(InlineCompletionHandler.KEY)?.cancel(event.editor)
-    event.editor.putUserData(InlineCompletionHandler.KEY, null)
+    InlineCompletion.remove(event.editor)
   }
 }
