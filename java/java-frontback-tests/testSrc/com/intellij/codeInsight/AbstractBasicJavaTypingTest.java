@@ -5,6 +5,9 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -128,7 +131,17 @@ public abstract class AbstractBasicJavaTypingTest extends BasePlatformTestCase {
 
   public void testStartStringTemplateAlreadyBrace() { doTest('{'); }
   
-  public void testEndStringTemplate() { doTest('}'); }
+  public void testEndStringTemplate() {
+    setLanguageLevel(LanguageLevel.JDK_21);
+    doTest('}');
+  }
+
+  protected void setLanguageLevel(@NotNull LanguageLevel level) {
+    LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(getProject());
+    LanguageLevel prev = extension.getLanguageLevel();
+    extension.setLanguageLevel(level);
+    Disposer.register(myFixture.getTestRootDisposable(), () -> extension.setLanguageLevel(prev));
+  }
 
   protected void doTest(char c) {
     myFixture.configureByFile(getTestName(true) + "_before.java");
