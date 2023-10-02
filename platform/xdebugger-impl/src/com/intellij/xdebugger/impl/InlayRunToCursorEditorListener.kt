@@ -142,8 +142,11 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
   }
 
   private fun getFirstNonSpacePos(editor: Editor, lineNumber: Int): Point? {
-    var firstNonSpaceSymbol = editor.getDocument().getLineStartOffset(lineNumber)
-    val charsSequence = editor.getDocument().charsSequence
+    val document = editor.getDocument()
+    if (lineNumber >= document.lineCount) return null
+
+    var firstNonSpaceSymbol = document.getLineStartOffset(lineNumber)
+    val charsSequence = document.charsSequence
     while (true) {
       if (firstNonSpaceSymbol >= charsSequence.length) {
         return null //end of file
