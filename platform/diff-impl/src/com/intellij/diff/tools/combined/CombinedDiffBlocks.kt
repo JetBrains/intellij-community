@@ -184,7 +184,6 @@ internal class CombinedSimpleDiffBlock(project: Project,
     add(header)
     add(body)
     isOpaque = true
-    background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
   }
 
   override fun updateBlockContent(newContent: CombinedDiffBlockContent) {
