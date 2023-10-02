@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
-import com.intellij.coverage.view.CoverageViewManager;
 import com.intellij.coverage.view.CoverageViewSuiteListener;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -16,10 +15,6 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -50,32 +45,27 @@ import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 import java.util.function.Function;
 
-@State(name = "com.intellij.coverage.CoverageDataManagerImpl", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class CoverageDataManagerImpl extends CoverageDataManager implements Disposable, PersistentStateComponent<Element> {
+
+public class CoverageDataManagerImpl extends CoverageDataManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(CoverageDataManagerImpl.class);
-  @NonNls
-  private static final String SUITE = "SUITE";
 
   private final Project myProject;
+  private final CoverageDataSuitesManager mySuitesManager;
   private final List<CoverageSuiteListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Map<Editor, CoverageEditorAnnotator> myAnnotators = new HashMap<>();
-  private final Set<CoverageSuite> myRegisteredSuites = new HashSet<>();
+
   private final Object ANNOTATORS_LOCK = new Object();
   private final Object myLock = new Object();
   private CoverageSuitesBundle myCurrentSuitesBundle;
@@ -102,6 +92,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   public CoverageDataManagerImpl(@NotNull Project project) {
     myProject = project;
+    mySuitesManager = new CoverageDataSuitesManager(project);
+    Disposer.register(this, mySuitesManager);
 
     CoverageViewSuiteListener coverageViewListener = createCoverageViewListener();
     if (coverageViewListener != null) {
@@ -148,15 +140,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
         //cleanup created templates
         ((RunManagerImpl)runManager).reloadSchemes();
-
-        for (CoverageSuite suite : getSuites()) {
-          if (suite instanceof BaseCoverageSuite) {
-            CoverageRunner runner = suite.getRunner();
-            if (runner == coverageRunner) {
-              ((BaseCoverageSuite)suite).setRunner(null);
-            }
-          }
-        }
       }
     }, this);
   }
@@ -169,8 +152,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
         if (suitesBundle != null && suitesBundle.getCoverageEngine() == coverageEngine) {
           chooseSuitesBundle(null);
         }
-
-        myRegisteredSuites.removeIf(suite -> suite.getCoverageEngine() == coverageEngine);
       }
     }, this);
   }
@@ -185,114 +166,60 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     return new CoverageViewSuiteListener(this, myProject);
   }
 
-  @Override
-  public void loadState(@NotNull Element element) {
-    for (Element suiteElement : element.getChildren(SUITE)) {
-      final CoverageRunner coverageRunner = BaseCoverageSuite.readRunnerAttribute(suiteElement);
-      // skip unknown runners
-      if (coverageRunner == null) {
-        // collect gc
-        final CoverageFileProvider fileProvider = BaseCoverageSuite.readDataFileProviderAttribute(suiteElement);
-        if (fileProvider.isValid()) {
-          //deleteCachedCoverage(fileProvider.getCoverageDataFilePath());
-        }
-        continue;
-      }
+  // ==== Suites storage ====
 
-      CoverageSuite suite = null;
-      for (CoverageEngine engine : CoverageEngine.EP_NAME.getExtensions()) {
-        if (coverageRunner.acceptsCoverageEngine(engine)) {
-          suite = engine.createEmptyCoverageSuite(coverageRunner);
-          if (suite != null) {
-            if (suite instanceof BaseCoverageSuite) {
-              ((BaseCoverageSuite)suite).setProject(myProject);
-            }
-            break;
-          }
-        }
-      }
-      if (suite != null) {
-        try {
-          suite.readExternal(suiteElement);
-          myRegisteredSuites.add(suite);
-        }
-        catch (NumberFormatException e) {
-          //try next suite
-        }
-      }
-    }
+  @Override
+  public CoverageSuite addCoverageSuite(String name,
+                                        @NotNull CoverageFileProvider fileProvider,
+                                        String[] filters,
+                                        long lastCoverageTimeStamp,
+                                        @Nullable String suiteToMergeWith,
+                                        @NotNull CoverageRunner coverageRunner,
+                                        boolean coverageByTestEnabled,
+                                        boolean branchCoverage) {
+    return mySuitesManager.addSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith,
+                                    coverageByTestEnabled, branchCoverage);
   }
 
-  @Nullable
-  @Override
-  public Element getState() {
-    Element element = new Element("state");
-    for (CoverageSuite coverageSuite : myRegisteredSuites) {
-      final Element suiteElement = new Element(SUITE);
-      element.addContent(suiteElement);
-      coverageSuite.writeExternal(suiteElement);
-    }
-    return element;
+  /**
+   * @see <a href="https://github.com/JetBrains/intellij-community/pull/2176">External request</a>
+   */
+  @SuppressWarnings("unused")
+  public void addCoverageSuite(CoverageSuite suite, @Nullable String suiteToMergeWith) {
+    mySuitesManager.addSuite(suite, suiteToMergeWith);
   }
 
   @Override
-  public CoverageSuite addCoverageSuite(final String name, final CoverageFileProvider fileProvider, final String[] filters, final long lastCoverageTimeStamp,
-                                        @Nullable final String suiteToMergeWith,
-                                        final CoverageRunner coverageRunner,
-                                        final boolean coverageByTestEnabled,
-                                        final boolean branchCoverage) {
-    final CoverageSuite suite = createCoverageSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith, coverageByTestEnabled, branchCoverage);
-    addCoverageSuite(suite, suiteToMergeWith);
-    return suite;
-  }
-
-  public void addCoverageSuite(final CoverageSuite suite, @Nullable final String suiteToMergeWith) {
-    if (suiteToMergeWith == null || !suite.getPresentableName().equals(suiteToMergeWith)) {
-      removeCoverageSuite(suite);
-    }
-    myRegisteredSuites.remove(suite); // remove previous instance
-    myRegisteredSuites.add(suite); // add new instance
-  }
-
-  @Override
-  public CoverageSuite addExternalCoverageSuite(String selectedFileName,
+  public CoverageSuite addExternalCoverageSuite(@NotNull String selectedFileName,
                                                 long timeStamp,
-                                                CoverageRunner coverageRunner,
-                                                CoverageFileProvider fileProvider) {
-    final CoverageSuite suite = createCoverageSuite(coverageRunner, selectedFileName, fileProvider, ArrayUtilRt.EMPTY_STRING_ARRAY, timeStamp, null, false, false);
-    myRegisteredSuites.add(suite);
-    return suite;
+                                                @NotNull CoverageRunner coverageRunner,
+                                                @NotNull CoverageFileProvider fileProvider) {
+    return mySuitesManager.addExternalCoverageSuite(coverageRunner, selectedFileName, fileProvider, timeStamp);
   }
 
   @Override
-  public CoverageSuite addCoverageSuite(final CoverageEnabledConfiguration config) {
-    final String name = CoverageBundle.message("coverage.results.suite.name", config.getName());
-    final String covFilePath = config.getCoverageFilePath();
-    assert covFilePath != null; // Shouldn't be null here!
-
-    final CoverageRunner coverageRunner = config.getCoverageRunner();
-    LOG.assertTrue(coverageRunner != null, "Coverage runner id = " + config.getRunnerId());
-
-    final DefaultCoverageFileProvider fileProvider = new DefaultCoverageFileProvider(new File(covFilePath));
-    final CoverageSuite suite = createCoverageSuite(config, name, coverageRunner, fileProvider);
-
-    // remove previous instance
-    removeCoverageSuite(suite);
-
-    // add new instance
-    myRegisteredSuites.add(suite);
-    return suite;
+  public CoverageSuite addCoverageSuite(CoverageEnabledConfiguration config) {
+    return mySuitesManager.addSuite(config);
   }
 
   @Override
-  public void removeCoverageSuite(final CoverageSuite suite) {
-    suite.deleteCachedCoverageData();
-    unregisterCoverageSuite(suite);
+  public CoverageSuite @NotNull [] getSuites() {
+    return mySuitesManager.getSuites();
+  }
+
+  @Override
+  public void removeCoverageSuite(CoverageSuite suite) {
+    mySuitesManager.deleteSuite(suite);
+    removeFromCurrent(suite);
   }
 
   @Override
   public void unregisterCoverageSuite(CoverageSuite suite) {
-    myRegisteredSuites.remove(suite);
+    mySuitesManager.removeSuite(suite);
+    removeFromCurrent(suite);
+  }
+
+  private void removeFromCurrent(CoverageSuite suite) {
     if (myCurrentSuitesBundle != null && myCurrentSuitesBundle.contains(suite)) {
       CoverageSuite[] suites = myCurrentSuitesBundle.getSuites();
       suites = ArrayUtil.remove(suites, suite);
@@ -300,10 +227,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     }
   }
 
-  @Override
-  public CoverageSuite @NotNull [] getSuites() {
-    return myRegisteredSuites.toArray(new CoverageSuite[0]);
-  }
+  // ==== Suites storage ====
 
   @Override
   public void chooseSuitesBundle(final CoverageSuitesBundle suite) {
@@ -670,49 +594,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       }
       myAnnotators.clear();
     }
-  }
-
-  @NotNull
-  private static CoverageSuite createCoverageSuite(final CoverageEnabledConfiguration config,
-                                                   final String name,
-                                                   final CoverageRunner coverageRunner,
-                                                   final DefaultCoverageFileProvider fileProvider) {
-    CoverageSuite suite = null;
-    for (CoverageEngine engine : CoverageEngine.EP_NAME.getExtensions()) {
-      if (coverageRunner.acceptsCoverageEngine(engine) && engine.isApplicableTo(config.getConfiguration())) {
-        suite = engine.createCoverageSuite(coverageRunner, name, fileProvider, config);
-        if (suite != null) {
-          break;
-        }
-      }
-    }
-    LOG.assertTrue(suite != null, "Cannot create coverage suite for runner: " + coverageRunner.getPresentableName());
-    return suite;
-  }
-
-  @NotNull
-  private CoverageSuite createCoverageSuite(final CoverageRunner coverageRunner,
-                                            final String name,
-                                            final CoverageFileProvider fileProvider,
-                                            final String[] filters,
-                                            final long lastCoverageTimeStamp,
-                                            final String suiteToMergeWith,
-                                            final boolean coverageByTestEnabled,
-                                            final boolean branchCoverage) {
-
-    CoverageSuite suite = null;
-    for (CoverageEngine engine : CoverageEngine.EP_NAME.getExtensions()) {
-      if (coverageRunner.acceptsCoverageEngine(engine)) {
-        suite = engine.createCoverageSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp,
-                                           suiteToMergeWith, coverageByTestEnabled, branchCoverage, false, myProject);
-        if (suite != null) {
-          break;
-        }
-      }
-    }
-
-    LOG.assertTrue(suite != null, "Cannot create coverage suite for runner: " + coverageRunner.getPresentableName());
-    return suite;
   }
 
   private Alarm myRequestsAlarm = null;

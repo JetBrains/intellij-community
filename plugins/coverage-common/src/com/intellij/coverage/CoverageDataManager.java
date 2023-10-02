@@ -31,15 +31,17 @@ public abstract class CoverageDataManager {
    */
   @SuppressWarnings("unused")
   public abstract CoverageSuite addCoverageSuite(String name,
-                                                 CoverageFileProvider fileProvider,
+                                                 @NotNull CoverageFileProvider fileProvider,
                                                  String[] filters,
                                                  long lastCoverageTimeStamp,
-                                                 @Nullable String suiteToMergeWith, final CoverageRunner coverageRunner,
-                                                 final boolean coverageByTestEnabled, final boolean branchCoverage);
+                                                 @Nullable String suiteToMergeWith,
+                                                 @NotNull CoverageRunner coverageRunner,
+                                                 boolean coverageByTestEnabled, boolean branchCoverage);
 
-  public abstract CoverageSuite addExternalCoverageSuite(String selectedFileName,
+  public abstract CoverageSuite addExternalCoverageSuite(@NotNull String selectedFileName,
                                                          long timeStamp,
-                                                         CoverageRunner coverageRunner, CoverageFileProvider fileProvider);
+                                                         @NotNull CoverageRunner coverageRunner,
+                                                         @NotNull CoverageFileProvider fileProvider);
 
 
   public abstract CoverageSuite addCoverageSuite(CoverageEnabledConfiguration config);
