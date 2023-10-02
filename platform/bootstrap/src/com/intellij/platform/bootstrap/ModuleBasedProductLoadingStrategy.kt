@@ -85,6 +85,10 @@ class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeMo
       }
     }
   }
+
+  override fun isOptionalProductModule(moduleName: String): Boolean {
+    return productModules.mainModuleGroup.optionalModuleIds.contains(RuntimeModuleId.raw(moduleName))
+  }
 }
 
 private const val PLATFORM_ROOT_MODULE_PROPERTY = "intellij.platform.root.module"

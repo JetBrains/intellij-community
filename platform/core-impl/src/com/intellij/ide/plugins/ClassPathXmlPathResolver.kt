@@ -60,12 +60,18 @@ internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, va
         return descriptor
       }
 
+      val logger = Logger.getInstance(ClassPathXmlPathResolver::class.java)
+      val moduleName = path.removeSuffix(".xml")
       if (isRunningFromSources && path.startsWith("intellij.") && dataLoader.emptyDescriptorIfCannotResolve) {
-        Logger.getInstance(ClassPathXmlPathResolver::class.java)
-          .trace("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). ")
+        logger.trace("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). ")
         val descriptor = RawPluginDescriptor()
-        descriptor.`package` = "unresolved.${path.removeSuffix(".xml")}"
+        descriptor.`package` = "unresolved.$moduleName"
         return descriptor
+      }
+      if (ProductLoadingStrategy.strategy.isOptionalProductModule(moduleName)) {
+        //this check won't be needed when we are able to load optional modules directly from product-modules.xml
+        logger.debug("Skip module '$path' since its descriptor cannot be found and it's optional")
+        return RawPluginDescriptor().apply { `package` = "unresolved.$moduleName" }
       }
 
       throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader)")

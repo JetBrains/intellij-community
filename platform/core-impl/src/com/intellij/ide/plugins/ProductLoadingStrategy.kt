@@ -42,6 +42,8 @@ abstract class ProductLoadingStrategy {
                                             isUnitTestMode: Boolean,
                                             context: DescriptorListLoadingContext,
                                             zipFilePool: ZipFilePool?): List<Deferred<IdeaPluginDescriptorImpl?>>
+
+  abstract fun isOptionalProductModule(moduleName: String): Boolean
 }
 
 private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
@@ -66,5 +68,9 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
     else {
       scope.loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipFilePool)
     }
+  }
+
+  override fun isOptionalProductModule(moduleName: String): Boolean {
+    return false
   }
 }  
