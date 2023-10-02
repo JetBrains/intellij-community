@@ -1598,10 +1598,15 @@
     <!-- Presentation Assistant -->
     <applicationService serviceImplementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistant"/>
     <applicationConfigurable groupId="appearance"
+                             key="presentation.assistant.settings"
+                             bundle="messages.IdeBundle"
                              groupWeight="-15"
                              instance="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantConfigurable"/>
     <colorSettingsPage implementation="com.intellij.platform.ide.impl.presentationAssistant.ActionInfoColorSettings"/>
-    <notificationGroup displayType="BALLOON" id="Presentation Assistant"/>
+    <notificationGroup id="Presentation Assistant"
+                       displayType="BALLOON"
+                       bundle="messages.IdeBundle"
+                       key="presentation.assistant.notification"/>
 
     <!-- Minimap -->
     <registryKey key="editor.minimap.enabled" defaultValue="false" description="Enables Minimap"/>
