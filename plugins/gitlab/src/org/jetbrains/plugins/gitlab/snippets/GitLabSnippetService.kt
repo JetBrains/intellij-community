@@ -147,7 +147,11 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
               ?: return null
 
     // If token is present, we check that it is valid with a test request. Reattempt login if token is invalid.
-    if (api.graphQL.getCurrentUser() == null) {
+    try {
+      api.graphQL.getCurrentUser() ?: error("No current user")
+    } catch (e: Exception) {
+      if (e is CancellationException) throw e
+
       return reattemptLogin(apiManager, accountManager, result)
     }
 
