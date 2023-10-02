@@ -771,4 +771,6 @@ fun loadBundledSchemes(additionalTextAttributes: MutableMap<String, MutableList<
 internal class BundledEditorColorScheme(@JvmField val resourcePath: String)
   : EditorColorsSchemeImpl(/* parentScheme = */ null), ReadOnlyColorsScheme {
   override fun isVisible() = false
+
+  override fun getSchemeState() = SchemeState.UNCHANGED
 }

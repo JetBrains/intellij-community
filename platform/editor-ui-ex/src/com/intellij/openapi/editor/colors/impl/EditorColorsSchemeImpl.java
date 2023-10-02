@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.ExternalizableScheme;
+import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +23,20 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   private final Map<String, TextAttributes> myAttributesTempMap = new ConcurrentHashMap<>();
   private boolean isVisible = true;
 
+  private boolean isSaveNeeded;
+
   public EditorColorsSchemeImpl(EditorColorsScheme parentScheme) {
     super(parentScheme);
+  }
+
+  @Override
+  public void setSaveNeeded(boolean value) {
+    isSaveNeeded = value;
+  }
+
+  @Override
+  public @NotNull SchemeState getSchemeState() {
+    return isSaveNeeded ? SchemeState.POSSIBLY_CHANGED : SchemeState.UNCHANGED;
   }
 
   @Override

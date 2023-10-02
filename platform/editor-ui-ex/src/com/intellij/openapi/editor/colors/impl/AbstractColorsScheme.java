@@ -87,7 +87,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     new DelegatingFontPreferences(() -> AppEditorFontOptions.getInstance().getFontPreferences());
   private @NotNull FontPreferences consoleFontPreferences = new DelegatingFontPreferences(() -> fontPreferences);
   private String schemeName;
-  private boolean isSaveNeeded;
   private boolean canBeDeleted = true;
   // version influences an XML format and triggers migration
   private int version = CURR_VERSION;
@@ -577,7 +576,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       parentNode.addContent(attrElements);
     }
 
-    isSaveNeeded = false;
+    setSaveNeeded(false);
   }
 
   private void writeAttributes(@NotNull Element attrElements) {
@@ -874,12 +873,9 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   @Override
-  public @NotNull SchemeState getSchemeState() {
-    return isSaveNeeded ? SchemeState.POSSIBLY_CHANGED : SchemeState.UNCHANGED;
-  }
+  public abstract @NotNull SchemeState getSchemeState();
 
   public void setSaveNeeded(boolean value) {
-    isSaveNeeded = value;
   }
 
   public boolean isReadOnly() { return false; }

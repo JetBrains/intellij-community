@@ -87,7 +87,9 @@ abstract class SchemeWrapper<out T>(name: String) : ExternalizableSchemeAdapter(
   }
 }
 
-abstract class LazySchemeWrapper<T>(name: String, dataHolder: SchemeDataHolder<SchemeWrapper<T>>, protected val writer: (scheme: T) -> Element) : SchemeWrapper<T>(name) {
+abstract class LazySchemeWrapper<T>(name: String,
+                                    dataHolder: SchemeDataHolder<SchemeWrapper<T>>,
+                                    protected val writer: (scheme: T) -> Element) : SchemeWrapper<T>(name) {
   protected val dataHolder: AtomicReference<SchemeDataHolder<SchemeWrapper<T>>> = AtomicReference(dataHolder)
 
   final override fun writeScheme(): Element {
