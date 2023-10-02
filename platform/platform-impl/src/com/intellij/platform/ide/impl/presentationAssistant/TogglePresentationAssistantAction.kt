@@ -10,7 +10,7 @@ import com.intellij.openapi.project.DumbAware
 /**
  * @author nik
  */
-class ShowActionDescriptionsToggleAction : ToggleAction(IdeBundle.message("presentation.assistant.toggle.action.name")), DumbAware {
+class TogglePresentationAssistantAction : ToggleAction(name), DumbAware {
   override fun isSelected(e: AnActionEvent) = getPresentationAssistant().configuration.showActionDescriptions
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
@@ -18,4 +18,10 @@ class ShowActionDescriptionsToggleAction : ToggleAction(IdeBundle.message("prese
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  companion object {
+    @JvmStatic
+    val ID = "TogglePresentationAssistantAction"
+    val name = IdeBundle.message("presentation.assistant.toggle.action.name")
+  }
 }

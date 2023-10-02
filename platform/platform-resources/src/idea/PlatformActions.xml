@@ -629,12 +629,15 @@
             <action id="ToggleCompactMode" class="com.intellij.ide.actions.ToggleCompactModeAction" />
           </group>
 
-          <separator/>
           <action id="SwitchIdeScaleAction" class="com.intellij.ide.actions.SwitchIdeScaleAction">
             <synonym key="action.SwitchIdeScaleAction.text"/>
           </action>
 
           <group id="UIToggleActions">
+            <separator/>
+            <action id="TogglePresentationAssistantAction" class="com.intellij.platform.ide.impl.presentationAssistant.TogglePresentationAssistantAction">
+              <keyboard-shortcut first-keystroke="alt shift d" keymap="$default"/>
+            </action>
             <separator/>
             <action id="ViewMainMenu" class="com.intellij.ide.actions.ViewMainMenuAction"/>
             <action id="MainMenuAsSeparateToolbarAction" class="com.intellij.ide.actions.MainMenuAsSeparateToolbarAction"/>
@@ -649,9 +652,6 @@
             <group id="ViewStatusBarWidgetsGroup" class="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup" popup="true">
               <action id="StatusTextModeAction" class="com.intellij.openapi.wm.impl.status.StatusTextModeAction"/>
             </group>
-            <action id="presentationAssistant.ShowActionDescriptions" class="com.intellij.platform.ide.impl.presentationAssistant.ShowActionDescriptionsToggleAction">
-              <keyboard-shortcut first-keystroke="alt shift d" keymap="$default"/>
-            </action>
           </group>
         </group>
 

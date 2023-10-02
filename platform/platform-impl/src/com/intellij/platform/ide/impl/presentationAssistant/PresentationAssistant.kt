@@ -71,8 +71,7 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
     configuration.showActionDescriptions = value
     if (value && presenter == null) {
       presenter = ShortcutPresenter().apply {
-        showActionInfo(
-          ShortcutPresenter.ActionData("presentationAssistant.ShowActionDescriptions", project, "Show Descriptions of Actions"))
+        showActionInfo(ShortcutPresenter.ActionData(TogglePresentationAssistantAction.ID, project, TogglePresentationAssistantAction.name))
       }
     }
     if (!value && presenter != null) {
@@ -86,7 +85,7 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
     if (warningAboutMacKeymapWasShown || getCurrentOSKind() == KeymapKind.MAC || alternativeKeymap == null) {
       return
     }
-    if (alternativeKeymap.displayText != "for Mac" || alternativeKeymap.getKeymap() != null) {
+    if (alternativeKeymap.getKind() != KeymapKind.MAC || alternativeKeymap.getKeymap() != null) {
       return
     }
 
