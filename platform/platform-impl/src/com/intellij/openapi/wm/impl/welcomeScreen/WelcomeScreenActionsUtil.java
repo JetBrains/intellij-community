@@ -5,8 +5,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.JBLabel;
@@ -26,7 +28,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Function;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getActionsButtonBackground;
@@ -103,6 +104,8 @@ public final class WelcomeScreenActionsUtil {
   }
 
   static final class LargeIconWithTextWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
+
+    private static final Logger LOG = Logger.getInstance(LargeIconWithTextWrapper.class);
     final JButton myIconButton;
     final JBLabel myLabel;
     private final JPanel myPanel;
@@ -141,7 +144,17 @@ public final class WelcomeScreenActionsUtil {
       iconWrapper.setFocusable(false);
       iconWrapper.setBorder(JBUI.Borders.empty(0, 30));
 
-      myLabel = new JBLabel(Objects.requireNonNull(getTemplateText()), SwingConstants.CENTER);
+      String text = getTemplateText();
+      if (Strings.isEmpty(text) && action.getActionUpdateThread() != ActionUpdateThread.BGT) {
+        AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.WELCOME_SCREEN, null, DataContext.EMPTY_CONTEXT);
+        action.update(event);
+        text = event.getPresentation().getText();
+      }
+      if (Strings.isEmpty(text)) {
+        LOG.error("Action " + ActionManager.getInstance().getId(action) + " has empty text and cannot be shown properly");
+        text = "";
+      }
+      myLabel = new JBLabel(text, SwingConstants.CENTER);
       myLabel.setOpaque(false);
 
       myPanel = new NonOpaquePanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, JBUI.scale(12), false, false));
@@ -178,7 +191,7 @@ public final class WelcomeScreenActionsUtil {
       return ActionUpdateThread.EDT;
     }
 
-    public static @NotNull LargeIconWithTextWrapper wrapAsBigIconWithText(AnAction action) {
+    static @NotNull LargeIconWithTextWrapper wrapAsBigIconWithText(AnAction action) {
       return new LargeIconWithTextWrapper(action);
     }
   }
