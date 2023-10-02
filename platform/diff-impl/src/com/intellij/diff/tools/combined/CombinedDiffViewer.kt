@@ -100,6 +100,7 @@ class CombinedDiffViewer(
 
     override fun doLayout() {
       scrollPane.setBounds(0, 0, width, height)
+      separatorPanel.setBounds(0, 0, width, 1)
     }
   }.apply {
     isFocusable = false
@@ -345,12 +346,16 @@ class CombinedDiffViewer(
     val viewRect = scrollPane.viewport.viewRect
     val bounds = blocksPanel.getBlockBounds().firstOrNull { viewRect.intersects(it) } ?: return
     val block = diffBlocks[bounds.blockId]
+    separatorPanel.background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
+
     if (block == null || bounds.minY > viewRect.minY) {
-      separatorPanel.background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
       stickyHeaderPanel.setContent(null)
+      stickyHeaderPanel.isVisible = false
       stickyHeaderPanel.repaint()
       return
     }
+
+    stickyHeaderPanel.isVisible = true
 
     val stickyHeader = block.stickyHeader
 
@@ -358,16 +363,16 @@ class CombinedDiffViewer(
     val headerHeightInViewport = min(block.component.bounds.maxY.toInt() - viewRect.bounds.minY.toInt(), headerHeight)
     val stickyHeaderY = headerHeightInViewport - headerHeight
 
-    //scrollPane.verticalScrollBar.add(JBScrollBar.LEADING, stickyHeader)
-    val showBorder = headerHeightInViewport < headerHeight
-    stickyHeaderPanel.removeAll()
     stickyHeaderPanel.setContent(stickyHeader)
     stickyHeaderPanel.setBounds(JBUIScale.scale(CombinedDiffUI.LEFT_RIGHT_INSET),
-                                stickyHeaderY + 1, block.component.width,
+                                stickyHeaderY + separatorPanel.height, block.component.width,
                                 headerHeight)
-    separatorPanel.background = if (showBorder) JBColor.border() else CombinedDiffUI.MAIN_HEADER_BACKGROUND
-    separatorPanel.setBounds(0, 0, contentPanel.width, 1)
     stickyHeaderPanel.repaint()
+
+    val showBorder = headerHeightInViewport < headerHeight
+    if (showBorder) {
+      separatorPanel.background = JBColor.border()
+    }
 
     diffInfo.updateForBlock(block.id)
   }
