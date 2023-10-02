@@ -104,6 +104,17 @@ class KotlinAutoConfigurationNotificationHolder(private val project: Project) : 
         showAutoConfiguredNotification(module?.name, existingNotificationData?.changes)
     }
 
+    /**
+     * This is a variable keeping track if the manual configuration was actually started after the manual configuration dialog
+     * was invoked.
+     * The current functions do not return feedback about whether the user chose to configure the modules or pressed cancel in the dialog,
+     * so this variable is used as a workaround.
+     */
+    private var manualConfigurationStarted: Boolean = false
+    fun onManualConfigurationCompleted() {
+        manualConfigurationStarted = true
+    }
+
 
     private fun configureKotlinManuallyAction(module: Module) = NotificationAction.create(
         KotlinProjectConfigurationBundle.message("configure.kotlin.manually")
@@ -118,12 +129,15 @@ class KotlinAutoConfigurationNotificationHolder(private val project: Project) : 
         }
 
         val configurators = getAbleToRunConfigurators(module).toList()
+        manualConfigurationStarted = false
         if (configurators.size > 1) {
             KotlinSetupEnvironmentNotificationProvider.createConfiguratorsPopup(project, configurators).showInBestPositionFor(e.dataContext)
         } else if (configurators.size == 1) {
             configurators.first().configure(project, emptyList())
         }
-        notification.expire()
+        if (manualConfigurationStarted) {
+            notification.expire()
+        }
     }
 
     private fun viewAppliedChangesAction(changes: List<Change>) = NotificationAction.create(
@@ -156,7 +170,6 @@ class KotlinAutoConfigurationNotificationHolder(private val project: Project) : 
         } else {
             showUndoErrorMessage(project)
         }
-        notification.expire()
     }
 
     private fun expireShownNotification() {
