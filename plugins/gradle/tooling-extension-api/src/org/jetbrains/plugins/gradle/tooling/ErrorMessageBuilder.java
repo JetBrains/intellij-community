@@ -7,14 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Intended to be used only for reporting of custom {@link ModelBuilderService}s unhandled failures.
- * <p>
- * Use {@link MessageReporter} for errors, warnings detected by your {@link ModelBuilderService}.
+ * @deprecated implement {@link ModelBuilderService#reportErrorMessage} instead
  *
  * @author Vladislav.Soroka
- * @see MessageBuilder
- * @see MessageReporter
  */
+@Deprecated
 public final class ErrorMessageBuilder {
   @NotNull private final Project myProject;
   @Nullable private final Exception myException;

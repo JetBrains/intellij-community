@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.builder
 
-
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
@@ -26,7 +25,6 @@ import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getTaskArchiveFile
 import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getTaskArchiveFileName
-import static com.intellij.gradle.toolingExtension.impl.modelBuilder.ExtraModelBuilder.reportModelBuilderFailure
 import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.reflectiveCall
 import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.reflectiveGetProperty
 /**
@@ -104,7 +102,7 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
           })
         }
         catch (Exception e) {
-          reportModelBuilderFailure(project, this, context, e)
+          reportErrorMessage(modelName, project, context, e)
         }
 
         earModel.resources = earResources

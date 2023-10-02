@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.builder
 
-
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.FileVisitDetails
@@ -22,7 +21,6 @@ import org.jetbrains.plugins.gradle.tooling.internal.web.WebResourceImpl
 
 import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getTaskArchiveFile
 import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getTaskArchiveFileName
-import static com.intellij.gradle.toolingExtension.impl.modelBuilder.ExtraModelBuilder.reportModelBuilderFailure
 /**
  * @author Vladislav.Soroka
  */
@@ -92,7 +90,7 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
           warModel.classpath = new LinkedHashSet<>(warTask.classpath.files)
         }
         catch (Exception e) {
-          reportModelBuilderFailure(project, this, context, e)
+          reportErrorMessage(modelName, project, context, e)
         }
 
         warModel.webResources = webResources
