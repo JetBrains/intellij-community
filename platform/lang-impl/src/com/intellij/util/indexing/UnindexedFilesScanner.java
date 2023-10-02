@@ -626,7 +626,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     // Note that project may become dumb/smart immediately after the check
     // If project becomes smart, in the worst case we'll trigger additional short dumb mode
     // If project becomes dumb, not a problem at all - we'll schedule scanning task out of dumb mode either way.
-    if (DumbService.isDumb(myProject) && Registry.is("scanning.waits.for.non.dumb.mode", false)) {
+    if (DumbService.isDumb(myProject) && Registry.is("scanning.waits.for.non.dumb.mode", true)) {
       new DumbModeTask() {
         @Override
         public void performInDumbMode(@NotNull ProgressIndicator indicator) {

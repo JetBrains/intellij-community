@@ -117,7 +117,7 @@
                  description="Hide scanning progress indicator while scanning can continue in smart mode."/>
     <registryKey defaultValue="20" key="scanning.dumb.mode.threshold" restartRequired="true"
                  description="Dumb mode during scanning will be triggered as soon as IDE discovers this count of unindexed files."/>
-    <registryKey defaultValue="false" key="scanning.waits.for.non.dumb.mode" restartRequired="false"
+    <registryKey defaultValue="true" key="scanning.waits.for.non.dumb.mode" restartRequired="false"
                  description="Scanning will wait until the end of current dumb mode (if any)"/>
     <registryKey defaultValue="false" key="scanning.should.pause.dumb.queue" restartRequired="true"
                  description="Pause dumb queue (including indexing) while scanning is in progress."/>
