@@ -44,6 +44,11 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     return isVisible;
   }
 
+  @Override
+  public boolean isReadOnly() {
+    return false;
+  }
+
   public void setVisible(boolean value) {
     isVisible = value;
   }

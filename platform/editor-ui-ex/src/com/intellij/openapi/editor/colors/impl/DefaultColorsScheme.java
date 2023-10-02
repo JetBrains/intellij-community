@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnlyColorsScheme {
+public class DefaultColorsScheme extends AbstractColorsScheme {
   private String myName;
 
   public DefaultColorsScheme() {
@@ -105,6 +105,11 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
   @Override
   public boolean isVisible() {
     return false;
+  }
+
+  @Override
+  public boolean isReadOnly() {
+    return true;
   }
 
   @Override

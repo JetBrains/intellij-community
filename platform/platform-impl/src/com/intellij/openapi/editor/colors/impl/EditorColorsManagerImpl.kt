@@ -201,7 +201,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       }
     }
     for (brokenScheme in brokenSchemesList) {
-      if (brokenScheme is EditorColorsSchemeImpl && brokenScheme !is ReadOnlyColorsScheme) {
+      if (brokenScheme is EditorColorsSchemeImpl && !brokenScheme.isReadOnly) {
         brokenScheme.isVisible = false
       }
       else {
@@ -211,7 +211,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   }
 
   override fun resolveSchemeParent(scheme: EditorColorsScheme) {
-    if (scheme is AbstractColorsScheme && scheme !is ReadOnlyColorsScheme) {
+    if (scheme is AbstractColorsScheme && !scheme.isReadOnly) {
       scheme.resolveParent(schemeManager::findSchemeByName)
     }
   }
@@ -341,15 +341,10 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
 
   override fun getGlobalScheme(): EditorColorsScheme {
     val scheme = schemeManager.activeScheme
-    if (scheme is AbstractColorsScheme && scheme !is ReadOnlyColorsScheme && !scheme.isVisible) {
+    if (scheme is AbstractColorsScheme && !scheme.isReadOnly && !scheme.isVisible) {
       return getDefaultScheme()
     }
-
-    val editableCopy = scheme?.let { getEditableCopy(it) }
-    if (editableCopy != null) {
-      return editableCopy
-    }
-    return scheme ?: getDefaultScheme()
+    return scheme?.let { getEditableCopy(it) } ?: scheme ?: getDefaultScheme()
   }
 
   private fun getDefaultScheme(): EditorColorsScheme {
@@ -495,7 +490,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     }
 
     override fun getState(scheme: EditorColorsScheme): SchemeState {
-      return if (scheme is ReadOnlyColorsScheme) SchemeState.NON_PERSISTENT else SchemeState.POSSIBLY_CHANGED
+      return if (scheme.isReadOnly) SchemeState.NON_PERSISTENT else SchemeState.POSSIBLY_CHANGED
     }
 
     override fun onCurrentSchemeSwitched(oldScheme: EditorColorsScheme?,
@@ -708,7 +703,7 @@ private val BUNDLED_EP_NAME = ExtensionPointName<BundledSchemeEP>("com.intellij.
 
 @VisibleForTesting
 fun loadBundledSchemes(additionalTextAttributes: MutableMap<String, MutableList<AdditionalTextAttributesEP>>, checkId: Boolean = false)
-: Sequence<SchemeManager.LoadBundleSchemeRequest<EditorColorsScheme>> {
+  : Sequence<SchemeManager.LoadBundleSchemeRequest<EditorColorsScheme>> {
   return sequence {
     for (item in BUNDLED_EP_NAME.filterableLazySequence()) {
       val pluginDescriptor = item.pluginDescriptor
@@ -768,9 +763,10 @@ fun loadBundledSchemes(additionalTextAttributes: MutableMap<String, MutableList<
   }
 }
 
-internal class BundledEditorColorScheme(@JvmField val resourcePath: String)
-  : EditorColorsSchemeImpl(/* parentScheme = */ null), ReadOnlyColorsScheme {
+internal class BundledEditorColorScheme(@JvmField val resourcePath: String) : EditorColorsSchemeImpl(/* parentScheme = */ null) {
   override fun isVisible() = false
+
+  override fun isReadOnly() = true
 
   override fun getSchemeState() = SchemeState.UNCHANGED
 }

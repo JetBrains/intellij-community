@@ -39,7 +39,7 @@ public final class EditorColorSchemesComparator implements Comparator<EditorColo
       if (original instanceof DefaultColorsScheme) {
         return DEFAULT_SCHEME_NAME.equals(original.getName()) ? DEFAULT_SCHEME : ONE_OF_DEFAULT_SCHEMES;
       }
-      if (original instanceof ReadOnlyColorsScheme) {
+      if (original != null && original.isReadOnly()) {
         if (ExperimentalUI.isNewUI()) {
           int i = Arrays.asList("High contrast", "Dark", "Light").indexOf(original.getName());
           if (i >= 0) {

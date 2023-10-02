@@ -7,6 +7,7 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeMetaInfo;
 import com.intellij.openapi.util.NlsSafe;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,4 +148,7 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   void setConsoleLineSpacing(float lineSpacing);
 
   void readExternal(Element parentNode);
+
+  @ApiStatus.Internal
+  boolean isReadOnly();
 }

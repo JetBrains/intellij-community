@@ -5,7 +5,6 @@ import com.intellij.application.options.schemes.SerializableSchemeExporter;
 import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
-import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
 import com.intellij.openapi.options.ConfigurableSchemeExporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-public final class ColorSchemePluginExporter extends ConfigurableSchemeExporter<PluginExportData,EditorColorsScheme> {
+final class ColorSchemePluginExporter extends ConfigurableSchemeExporter<PluginExportData,EditorColorsScheme> {
   @Override
   public void exportScheme(@NotNull EditorColorsScheme scheme, @NotNull OutputStream outputStream, @Nullable PluginExportData exportData)
     throws Exception {
@@ -37,9 +36,8 @@ public final class ColorSchemePluginExporter extends ConfigurableSchemeExporter<
     return "jar";
   }
 
-  @Nullable
   @Override
-  public PluginExportData getConfiguration(@NotNull Component parent, @NotNull EditorColorsScheme scheme) {
+  public @Nullable PluginExportData getConfiguration(@NotNull Component parent, @NotNull EditorColorsScheme scheme) {
     PluginExportData exportData = getPluginExportData(scheme);
     EditorColorsScheme schemeToUpdate = getSchemeToUpdate(scheme);
     PluginInfoDialog infoDialog = new PluginInfoDialog(parent, exportData);
@@ -65,8 +63,7 @@ public final class ColorSchemePluginExporter extends ConfigurableSchemeExporter<
     writer.flush();
   }
 
-  @NotNull
-  private static EditorColorsScheme getSchemeToUpdate(@NotNull EditorColorsScheme scheme) {
+  private static @NotNull EditorColorsScheme getSchemeToUpdate(@NotNull EditorColorsScheme scheme) {
     if (scheme instanceof AbstractColorsScheme) {
       EditorColorsScheme original = ((AbstractColorsScheme)scheme).getOriginal();
       if (original != null) return original;
@@ -74,10 +71,9 @@ public final class ColorSchemePluginExporter extends ConfigurableSchemeExporter<
     return scheme;
   }
 
-  @NotNull
-  private static PluginExportData getPluginExportData(@NotNull EditorColorsScheme scheme) {
+  private static @NotNull PluginExportData getPluginExportData(@NotNull EditorColorsScheme scheme) {
     PluginExportData data = new PluginExportData(scheme.getMetaProperties());
-    if (data.isEmpty() && scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
+    if (data.isEmpty() && scheme instanceof AbstractColorsScheme && !scheme.isReadOnly()) {
       EditorColorsScheme original = ((AbstractColorsScheme)scheme).getOriginal();
       if (original != null) {
         return getPluginExportData(original);

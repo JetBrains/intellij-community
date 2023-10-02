@@ -21,7 +21,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.JBColor;
 import com.intellij.util.JdomKt;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -140,14 +139,19 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   public @NotNull String getDisplayName() {
-    if (!(this instanceof ReadOnlyColorsScheme)) {
+    if (!isReadOnly()) {
       EditorColorsScheme original = getOriginal();
-      if (original instanceof ReadOnlyColorsScheme) {
+      if (original != null && original.isReadOnly()) {
         return original.getDisplayName();
       }
     }
-    String baseName = Scheme.getBaseName(getName()); //NON-NLS
-    return ObjectUtils.chooseNotNull(getLocalizedName(), baseName);
+
+    String localizedName = getLocalizedName();
+    if (localizedName == null) {
+      //noinspection HardCodedStringLiteral
+      return Scheme.getBaseName(getName());
+    }
+    return localizedName;
   }
 
   protected @Nullable @Nls String getLocalizedName() {
@@ -520,8 +524,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       parentNode.setAttribute(PARENT_SCHEME_ATTR, parentScheme.getName());
     }
 
-    if (!"true".equals(metaInfo.getProperty(META_INFO_PARTIAL)) &&
-        !(this instanceof ReadOnlyColorsScheme) && getBaseScheme() != parentScheme) {
+    if (!"true".equals(metaInfo.getProperty(META_INFO_PARTIAL)) && !isReadOnly() && getBaseScheme() != parentScheme) {
       metaInfo.setProperty(META_INFO_PARTIAL, "true");
     }
 
@@ -878,8 +881,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public void setSaveNeeded(boolean value) {
   }
 
-  public boolean isReadOnly() { return false; }
-
   @Override
   public @NotNull Properties getMetaProperties() {
     return metaInfo;
@@ -971,7 +972,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   public void setParent(@NotNull EditorColorsScheme newParent) {
-    assert newParent instanceof ReadOnlyColorsScheme : "New parent scheme must be read-only";
+    assert newParent.isReadOnly() : "New parent scheme must be read-only";
     parentScheme = newParent;
   }
 
@@ -979,7 +980,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     if (parentScheme instanceof TemporaryParent) {
       String parentName = ((TemporaryParent)parentScheme).getParentName();
       EditorColorsScheme newParent = nameResolver.apply(parentName);
-      if (!(newParent instanceof ReadOnlyColorsScheme)) {
+      if (!newParent.isReadOnly()) {
         throw new InvalidDataException(parentName);
       }
       parentScheme = newParent;

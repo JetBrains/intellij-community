@@ -1,5 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
@@ -158,7 +157,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return
       !isReadOnly(scheme) &&
       scheme.getName().startsWith(Scheme.EDITABLE_COPY_PREFIX) &&
-      originalScheme instanceof ReadOnlyColorsScheme;
+      (originalScheme != null && originalScheme.isReadOnly());
   }
 
   @Override
@@ -1032,7 +1031,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Override
     public boolean isReadOnly() {
-      return parentScheme instanceof ReadOnlyColorsScheme;
+      return parentScheme.isReadOnly();
     }
 
     public boolean isModified() {
@@ -1061,10 +1060,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
 
     protected boolean apply() {
-      if (!(parentScheme instanceof ReadOnlyColorsScheme)) {
-        return apply(parentScheme);
-      }
-      return false;
+      return !parentScheme.isReadOnly() && apply(parentScheme);
     }
 
     private boolean apply(@NotNull EditorColorsScheme scheme) {

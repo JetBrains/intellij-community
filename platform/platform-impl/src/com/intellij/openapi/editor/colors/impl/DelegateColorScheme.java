@@ -11,18 +11,21 @@ import java.awt.*;
 import java.util.Properties;
 
 public abstract class DelegateColorScheme implements EditorColorsScheme {
-
   private EditorColorsScheme myDelegate;
 
   public DelegateColorScheme(@NotNull EditorColorsScheme delegate) {
     myDelegate = delegate;
   }
 
-  @NotNull
-  public EditorColorsScheme getDelegate() {
+  public @NotNull EditorColorsScheme getDelegate() {
     return myDelegate;
   }
-  
+
+  @Override
+  public final boolean isReadOnly() {
+    return myDelegate.isReadOnly();
+  }
+
   public void setDelegate(@NotNull EditorColorsScheme delegate) {
     myDelegate = delegate;
   }
