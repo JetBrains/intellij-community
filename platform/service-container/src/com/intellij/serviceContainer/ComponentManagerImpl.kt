@@ -30,7 +30,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.util.attachAsChildTo
+import com.intellij.platform.instanceContainer.internal.ScopeHolder
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.messages.*
@@ -38,8 +38,6 @@ import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.namedChildScope
 import com.intellij.util.runSuppressing
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -134,6 +132,11 @@ abstract class ComponentManagerImpl(
       }
     }
   }
+
+  private val pluginScopes = ScopeHolder(
+    parentScope = coroutineScope,
+    containerName = debugString(true),
+  )
 
   private val componentKeyToAdapter = ConcurrentHashMap<Any, ComponentAdapter>()
   private val componentAdapters = LinkedHashSetWrapper<MyComponentAdapter>()
@@ -1383,12 +1386,6 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  /**
-   * Key: plugin coroutine scope.
-   * Value: intersection of this container scope and plugin coroutine scope.
-   */
-  private val pluginScopes = AtomicReference<PersistentMap<CoroutineScope, CoroutineScope>>(persistentHashMapOf())
-
   fun instanceCoroutineScope(pluginClass: Class<*>): CoroutineScope {
     val pluginClassloader = pluginClass.classLoader
     val intersectionScope = pluginCoroutineScope(pluginClassloader)
@@ -1408,47 +1405,13 @@ abstract class ComponentManagerImpl(
     }
     else {
       // non-unloadable
-      getCoroutineScope()
+      pluginScopes.containerScope
     }
     return intersectionScope
   }
 
   private fun intersectionCoroutineScope(pluginScope: CoroutineScope): CoroutineScope {
-    var scopes = pluginScopes.get()
-    scopes.get(pluginScope)?.let {
-      return it
-    }
-
-    val containerScope = getCoroutineScope()
-    val intersectionName = "(${debugString(short = true)} x ${pluginScope.coroutineContext[CoroutineName]?.name})"
-    val intersectionScope = containerScope.namedChildScope(intersectionName).also {
-      it.attachAsChildTo(pluginScope)
-    }
-    while (true) {
-      val newScopes = scopes.put(pluginScope, intersectionScope)
-      val witness = pluginScopes.compareAndExchange(scopes, newScopes)
-      if (witness === scopes) {
-        intersectionScope.coroutineContext.job.invokeOnCompletion {
-          removePluginScope(pluginScope)
-        }
-        // published successfully
-        return intersectionScope
-      }
-      witness.get(pluginScope)?.let {
-        // another thread published the scope for given plugin
-        // => uses the value from another thread, and cancels the unpublished scope
-        intersectionScope.cancel()
-        return it
-      }
-      // try to publish again
-      scopes = witness
-    }
-  }
-
-  private fun removePluginScope(pluginScope: CoroutineScope) {
-    pluginScopes.updateAndGet { scopes ->
-      scopes.remove(pluginScope)
-    }
+    return pluginScopes.intersectScope(pluginScope)
   }
 }
 
