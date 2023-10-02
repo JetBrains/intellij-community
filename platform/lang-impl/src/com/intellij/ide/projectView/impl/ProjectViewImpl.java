@@ -983,13 +983,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
             myAutoScrollFromSourceHandler.addRequest(() -> {
               // ensure that it is still enabled after a while
               if (isAutoscrollFromSource(getCurrentViewId())) {
-                JComponent component = editor.getComponent();
-                for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getAllEditors()) {
-                  if (SwingUtilities.isDescendingFrom(component, fileEditor.getComponent())) {
-                    SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because the editor has gained focus");
-                    myAutoScrollFromSourceHandler.scrollFromSource(false);
-                    break;
-                  }
+                if (findFileEditor(editor) != null) {
+                  SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because the editor has gained focus");
+                  myAutoScrollFromSourceHandler.scrollFromSource(false);
                 }
               }
             });
