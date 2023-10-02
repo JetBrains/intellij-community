@@ -345,7 +345,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
    * could not be completed, [GitLabSnippetFileContents] representing the selection or file otherwise.
    */
   private fun Editor.collectContents(): GitLabSnippetFileContents? {
-    val content = selectionModel.getSelectedText(true)?.ifEmpty { null }
+    val content = selectionModel.selectedText?.ifEmpty { null }
                   ?: document.text.ifEmpty { null }
                   ?: return null
 

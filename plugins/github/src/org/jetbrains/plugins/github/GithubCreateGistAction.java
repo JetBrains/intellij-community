@@ -247,7 +247,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
   @Nullable
   private static String getContentFromEditor(@NotNull final Editor editor) {
-    String text = ReadAction.compute(() -> editor.getSelectionModel().getSelectedText(true));
+    String text = ReadAction.compute(() -> editor.getSelectionModel().getSelectedText());
     if (text == null) {
       text = editor.getDocument().getText();
     }
