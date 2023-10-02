@@ -48,7 +48,7 @@ public final class ErrorMessageBuilder {
 
   @ApiStatus.Internal
   public Message buildMessage() {
-    return new MessageBuilder()
+    return new DefaultMessageBuilder()
       .withTitle(myTitle)
       .withText(myDescription)
       // custom model builders failures often not so critical to the import results and reported as warnings to avoid useless distraction

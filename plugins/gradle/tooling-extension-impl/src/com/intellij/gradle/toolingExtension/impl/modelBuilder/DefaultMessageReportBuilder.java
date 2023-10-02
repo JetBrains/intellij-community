@@ -5,8 +5,8 @@ import org.gradle.api.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.tooling.DefaultMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.Message;
-import org.jetbrains.plugins.gradle.tooling.MessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.MessageReportBuilder;
 import org.jetbrains.plugins.gradle.tooling.MessageReporter;
 
@@ -64,7 +64,7 @@ public class DefaultMessageReportBuilder implements MessageReportBuilder {
 
   @Override
   public void reportMessage(@NotNull Project project) {
-    myMessageReporter.reportMessage(project, new MessageBuilder()
+    myMessageReporter.reportMessage(project, new DefaultMessageBuilder()
       .withTitle(myTitle)
       .withText(myText)
       .withKind(myKind)
