@@ -12,8 +12,6 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 public class NormalSwitchCompletionVariantsTest extends LightFixtureCompletionTestCase {
   private static final String[] COMMON_VARIANTS = {"case", "default"};
@@ -92,45 +90,6 @@ public class NormalSwitchCompletionVariantsTest extends LightFixtureCompletionTe
   }
 
   @NeedsIndex.Full
-  public void testCompletionRuleCaseOrdering() {
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, () -> {
-      List<String> lookup = doTestAndGetLookup();
-      Set<Integer> indexes = Set.of(
-        lookup.indexOf("case A"),
-        lookup.indexOf("case B"),
-        lookup.indexOf("default"),
-        lookup.indexOf("case null"),
-        lookup.indexOf("case null, default"));
-      assertFalse(indexes.contains(-1));
-      int last = lookup.indexOf("o");
-      for (Integer index : indexes) {
-        if (last < index) {
-          fail("broken order");
-        }
-      }
-    });
-  }
-
-  @NeedsIndex.Full
-  public void testCompletionCaseOrdering() {
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, () -> {
-      List<String> lookup = doTestAndGetLookup();
-      Set<Integer> indexes = Set.of(
-        lookup.indexOf("case A"),
-        lookup.indexOf("case B"),
-        lookup.indexOf("default"),
-        lookup.indexOf("case null"),
-        lookup.indexOf("case null, default"));
-      assertFalse(indexes.contains(-1));
-      int last = lookup.indexOf("o");
-      Optional<Integer> afterO = indexes.stream().filter(index -> last < index).findAny();
-      if (afterO.isEmpty()) {
-        fail("broken order");
-      }
-    });
-  }
-
-  @NeedsIndex.Full
   public void testCompletionSealedHierarchyStmt() {
     doTest(ArrayUtil.mergeArrays(COMMON_OBJECT_VARIANTS, "case Variant1", "case Variant2"));
   }
@@ -138,6 +97,10 @@ public class NormalSwitchCompletionVariantsTest extends LightFixtureCompletionTe
   @NeedsIndex.Full
   public void testCompletionSealedHierarchyExpr() {
     doTest(ArrayUtil.mergeArrays(COMMON_OBJECT_VARIANTS, "case Variant1", "case Variant2"));
+  }
+  @NeedsIndex.Full
+  public void testCompletionSealedHierarchyExprBeforeCase() {
+    doTest(new String[]{"case null", "case R", "case R2"});
   }
 
   private void doTest(String[] variants) {

@@ -7,9 +7,10 @@ class Main {
     final class C implements I{}
   }
   void f(I o) {
+    int casecase = 1;
     switch (o) {
       case I.C C: System.out.println();
-      <caret>
+      cas<caret>
     }
   }
 }
