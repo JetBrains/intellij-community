@@ -178,10 +178,7 @@ internal object GitLabCreateSnippetComponentFactory {
                 }
 
                 // If there are multiple accounts make the row visible
-                if (isVisible != accounts.size > 1) {
-                  visible(accounts.size > 1)
-                  pack()
-                }
+                visible(accounts.size > 1)
               }
             }
           }
