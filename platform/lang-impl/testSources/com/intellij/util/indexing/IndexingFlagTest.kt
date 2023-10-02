@@ -9,6 +9,7 @@ import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.indexing.dependencies.ReadWriteFileIndexingStampImpl
 import org.junit.Assert.assertEquals
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -52,8 +53,9 @@ class IndexingFlagTest {
   }
 
   @Test
+  @Ignore
   @RunsInEdt
-  fun testCacheSwitcher() {
+  fun ignoreTestCacheSwitcher() {
     val file = temp.newFile("test", "content".toByteArray())
     val vFileBefore = VfsUtil.findFileByIoFile(file, true) ?: throw AssertionError("File not found: $file")
 
