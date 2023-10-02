@@ -97,6 +97,32 @@ internal class UrlsTest {
   }
 
   @Test
+  fun resolveForHttp() {
+    val urlWithoutPath = Urls.newFromEncoded("http://example.com")
+    assertThat(urlWithoutPath.resolve("dir").toExternalForm()).isEqualTo("http://example.com/dir")
+    assertThat(urlWithoutPath.resolve("dir/").toExternalForm()).isEqualTo("http://example.com/dir/")
+    val urlWithSlash = Urls.newFromEncoded("http://example.com/")
+    assertThat(urlWithSlash.resolve("dir").toExternalForm()).isEqualTo("http://example.com/dir")
+    assertThat(urlWithSlash.resolve("dir/").toExternalForm()).isEqualTo("http://example.com/dir/")
+
+    val urlWithPath = Urls.newFromEncoded("http://example.com/dir")
+    assertThat(urlWithPath.resolve("subDir").toExternalForm()).isEqualTo("http://example.com/dir/subDir")
+    val urlWithPathAndSlash = Urls.newFromEncoded("http://example.com/dir/")
+    assertThat(urlWithPathAndSlash.resolve("subDir").toExternalForm()).isEqualTo("http://example.com/dir/subDir")
+  }
+  
+  @Test
+  fun resolveForFile() {
+    val urlWithoutSlash = Urls.newFromEncoded("file:///home/user")
+    assertThat(urlWithoutSlash.resolve("dir").toExternalForm()).isEqualTo("file:///home/user/dir")
+    assertThat(urlWithoutSlash.resolve("dir/").toExternalForm()).isEqualTo("file:///home/user/dir/")
+    
+    val urlWithSlash = Urls.newFromEncoded("file:///home/user/")
+    assertThat(urlWithSlash.resolve("dir").toExternalForm()).isEqualTo("file:///home/user/dir")
+    assertThat(urlWithSlash.resolve("dir/").toExternalForm()).isEqualTo("file:///home/user/dir/")
+  }
+
+  @Test
   fun parameters() {
     val url = Urls.newFromEncoded("http://example.com").addParameters(mapOf("foo" to "bar", "a" to "c"))
     assertThat(url.toDecodedForm()).isEqualTo("http://example.com?foo=bar&a=c")
