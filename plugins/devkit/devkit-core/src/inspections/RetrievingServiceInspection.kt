@@ -46,7 +46,7 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
         val serviceClass = serviceType.resolve()?.toUElement(UClass::class.java) ?: return true
         val serviceLevel = getLevelType(holder.project, serviceClass)
         if (serviceLevel == LevelType.MODULE) return true
-        if (serviceLevel == null) {
+        if (serviceLevel == LevelType.NOT_REGISTERED) {
           val className = serviceClass.qualifiedName
           if (className != null) {
             val message = DevKitBundle.message("inspection.retrieving.service.not.registered", className)

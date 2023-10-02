@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.idea.devkit.inspections.AppServiceAsStaticFinalFieldOrPropertyVisitorProvider
+import org.jetbrains.idea.devkit.inspections.LevelType
 import org.jetbrains.idea.devkit.inspections.getLevelType
 import org.jetbrains.idea.devkit.inspections.quickfix.WrapInSupplierQuickFix
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
@@ -62,7 +63,7 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
 
         val serviceClassCandidate = typeClassElement.toUElementOfType<UClass>() ?: return
         val serviceLevel = getLevelType(holder.project, serviceClassCandidate)
-        if (serviceLevel == null || !serviceLevel.isApp()) return
+        if (serviceLevel == LevelType.NOT_REGISTERED || !serviceLevel.isApp()) return
 
         val anchor = property.nameIdentifier ?: property
 
