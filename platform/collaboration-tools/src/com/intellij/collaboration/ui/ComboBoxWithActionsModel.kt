@@ -12,7 +12,7 @@ import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import kotlin.properties.Delegates
 
-class ComboBoxWithActionsModel<T : Any>
+class ComboBoxWithActionsModel<T : Any>(private val actionsFirst: Boolean = false)
   : ComboBoxModel<ComboBoxWithActionsModel.Item<T>> {
 
   private val itemsModel = MutableCollectionComboBoxModel<T>()
@@ -67,11 +67,14 @@ class ComboBoxWithActionsModel<T : Any>
   override fun getSize() = itemsModel.size + actions.size
 
   override fun getElementAt(index: Int): Item<T> {
-    if (index in 0 until itemsModel.size) {
-      return itemsModel.getElementAt(index).let { Item.Wrapper(it) }
+    val itemIndices = if (!actionsFirst) 0 until itemsModel.size else actions.size until (itemsModel.size + actions.size)
+    val actionIndices = if (!actionsFirst) itemsModel.size until (itemsModel.size + actions.size) else actions.indices
+
+    if (index in itemIndices) {
+      return itemsModel.getElementAt(index - itemIndices.first).let { Item.Wrapper(it) }
     }
-    val actionIndex = index - itemsModel.size
-    if (actionIndex in actions.indices) {
+    if (index in actionIndices) {
+      val actionIndex = index - actionIndices.first
       return actions[actionIndex].let { Item.Action(it, actionIndex == 0 && itemsModel.size != 0) }
     }
     error("Invalid index $index")

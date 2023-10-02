@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.snippets
 
-import com.intellij.collaboration.async.launchNow
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
@@ -16,8 +16,11 @@ import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
@@ -31,7 +34,7 @@ internal object GitLabCreateSnippetComponentFactory {
    * Creates the 'Create Snippet' dialog.
    */
   fun create(parentCs: CoroutineScope,
-             project: Project?,
+             project: Project,
              createSnippetVm: GitLabCreateSnippetViewModel): DialogWrapper =
     object : DialogWrapper(project, false) {
       private lateinit var titleField: JTextField
@@ -70,6 +73,7 @@ internal object GitLabCreateSnippetComponentFactory {
        */
       private fun createPanel(createSnippetVm: GitLabCreateSnippetViewModel): JComponent {
         val data = createSnippetVm.data
+        val projectsManager = project.service<GitLabProjectsManager>()
 
         fun setAccount(glAccount: GitLabAccount?) {
           if (glAccount != null) {
@@ -81,20 +85,30 @@ internal object GitLabCreateSnippetComponentFactory {
 
         return panel {
           row(message("snippet.create.project.label")) {
-            val selectProject = comboBox(listOf<GitLabProjectCoordinates?>(null),
-                                         ListCellRenderer<GitLabProjectCoordinates?> { _, value, _, _, _ ->
-                                           JBLabel(value?.projectPath?.toString() ?: message("snippet.create.project.none"))
-                                         })
-              .align(AlignX.FILL)
-              .bindItem({ data.value.onProject }, { v -> data.update { data.value.copy(onProject = v) } })
+            val model = ComboBoxWithActionsModel<GitLabProjectCoordinates>(actionsFirst = true)
+            model.bindIn(
+              cs,
+              createSnippetVm.glRepositories,
+              createSnippetVm.onProject,
+              MutableStateFlow(listOf(swingAction(message("snippet.create.project.none")) {
+                model.selectedItem = null
+              })),
+              Comparator.comparing { it.projectPath.toString() }
+            )
 
-            cs.launch {
-              createSnippetVm.glRepositories.collectLatest { glProjects ->
-                selectProject.component.removeAllItems()
-                selectProject.component.addItem(null)
-                glProjects.forEach { selectProject.component.addItem(it) }
+            comboBox(
+              model,
+              ListCellRenderer { _, value, _, _, _ ->
+                when (value) {
+                  is ComboBoxWithActionsModel.Item.Wrapper ->
+                    JBLabel(value.wrappee.projectPath.toString())
+                  is ComboBoxWithActionsModel.Item.Action,
+                  null ->
+                    JBLabel(message("snippet.create.project.none"))
+                }
               }
-            }
+            )
+              .align(AlignX.FILL)
           }
 
           row(message("snippet.create.title.label")) {

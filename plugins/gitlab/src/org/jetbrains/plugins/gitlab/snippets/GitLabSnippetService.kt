@@ -184,7 +184,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
     }
 
     val httpResult = api.graphQL.createSnippet(
-      data.onProject,
+      result.onProject,
       data.title,
       data.description,
       if (data.isPrivate) GitLabVisibilityLevel.private else GitLabVisibilityLevel.public,
@@ -257,7 +257,6 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
           true,
           false,
 
-          null,
           PathHandlingMode.RelativePaths
         )
       )
