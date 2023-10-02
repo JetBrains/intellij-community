@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestModeFlags;
@@ -536,7 +537,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     // Note that project may become dumb/smart immediately after the check
     // If project becomes smart, in the worst case we'll trigger additional short dumb mode
     // If project becomes dumb, not a problem at all - we'll schedule scanning task out of dumb mode either way.
-    if (DumbService.isDumb(project)) {
+    if (DumbService.isDumb(project) && Registry.is("scanning.waits.for.non.dumb.mode", false)) {
       new DumbModeTask() {
         @Override
         public void performInDumbMode(@NotNull ProgressIndicator indicator) {
