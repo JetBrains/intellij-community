@@ -434,18 +434,16 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
           printToPreview("Stacktrace is not available. There are two options:\n1. ", NORMAL_OUTPUT);
           printHyperlinkToPreview("Click", project -> {
             UiInspectorAction.enableStacktracesSaving();
-            // Can't access ConsoleViewImpl in this module to cast ConsoleView and get Editor from it.
-            // So, there is a little bit more hacky way.
-            Editor editor = myPreviewComponent.getPreferredFocusableComponent() instanceof EditorComponentImpl editorComponent
-                            ? editorComponent.getEditor() : null;
-            if (editor != null) {
-              HintManager.getInstance().showInformationHint(editor, "Enabled, please reopen the UI needed to inspect", HintManager.ABOVE);
-            }
+            showHintInPreview("Enabled, please reopen the UI needed to inspect");
           });
           printToPreview(" to enable stacktraces saving until IDE restart.\n2. ", NORMAL_OUTPUT);
           printHyperlinkToPreview("Click", project -> {
             Registry.get("ui.inspector.save.stacktraces").setValue(true);
             RegistryBooleanOptionDescriptor.suggestRestart(InspectorTable.this.getRootPane());
+            if (ModalityState.current() != ModalityState.nonModal()) {
+              // If there is a modal context, the restart won't happen until all dialogs are closed, so suggest it.
+              showHintInPreview("Close all active dialogs to perform restart");
+            }
           });
           printToPreview("""
                             to enable stacktraces saving by default. Requires restart.
@@ -573,6 +571,16 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
     private void printHyperlinkToPreview(@NotNull String hyperlinkText, @Nullable HyperlinkInfo info) {
       ProgressManager.checkCanceled();
       myPreviewComponent.printHyperlink(hyperlinkText, info);
+    }
+
+    private void showHintInPreview(@NotNull String text) {
+      // Can't access ConsoleViewImpl in this module to cast ConsoleView and get Editor from it.
+      // So, there is a little bit more hacky way.
+      Editor editor = myPreviewComponent.getPreferredFocusableComponent() instanceof EditorComponentImpl editorComponent
+                      ? editorComponent.getEditor() : null;
+      if (editor != null) {
+        HintManager.getInstance().showInformationHint(editor, text, HintManager.ABOVE);
+      }
     }
   }
 
