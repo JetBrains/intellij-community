@@ -65,6 +65,8 @@
                         serviceImplementation="org.jetbrains.plugins.terminal.exp.completion.IJCommandSpecManager"/>
     <!--suppress PluginXmlValidity -->
     <lang.documentation.ide.customization implementation="org.jetbrains.plugins.terminal.exp.TerminalDocumentationCustomization"/>
+    <!--suppress PluginXmlValidity -->
+    <inline.completion.provider implementation="org.jetbrains.plugins.terminal.exp.TerminalInlineCompletionProvider"/>
 
     <advancedSetting bundle="messages.TerminalBundle"  id="terminal.character.encoding" default="UTF-8" groupKey="group.advanced.settings.terminal"/>
     <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"

@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -107,6 +108,11 @@ class TerminalPromptView(
     }
     editor.settings.isBlockCursor = true
     editor.putUserData(AutoPopupController.SHOW_BOTTOM_PANEL_IN_LOOKUP_UI, false)
+
+    FileDocumentManager.getInstance().getFile(editor.document)?.let {
+      editor.setFile(it)
+    }
+    TerminalInlineCompletion.getInstance(project).install(editor)
 
     return textField
   }

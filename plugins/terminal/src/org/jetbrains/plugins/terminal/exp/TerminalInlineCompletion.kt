@@ -1,0 +1,52 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.exp
+
+import com.intellij.codeInsight.inline.completion.*
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.project.Project
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
+
+@Service(Service.Level.PROJECT)
+class TerminalInlineCompletion(private val scope: CoroutineScope) {
+  fun install(editor: EditorEx) {
+    InlineCompletion.install(editor, scope)
+  }
+
+  companion object {
+    fun getInstance(project: Project): TerminalInlineCompletion = project.service()
+  }
+}
+
+class TerminalInlineCompletionProvider : InlineCompletionProvider {
+  override suspend fun getProposals(request: InlineCompletionRequest): Flow<InlineCompletionBlock> {
+    return flow {
+      withContext(Dispatchers.EDT) {
+        val lookup = LookupManager.getActiveLookup(request.editor) ?: return@withContext null
+        val item = lookup.currentItem ?: return@withContext null
+        val itemPrefix = lookup.itemPattern(item)
+        val itemSuffix = item.lookupString.removePrefix(itemPrefix)
+        InlineCompletionGrayTextElement(itemSuffix)
+      }?.let {
+        emit(it)
+      }
+    }
+  }
+
+  override fun isEnabled(event: InlineCompletionEvent): Boolean {
+    return event.toRequest()?.editor?.isPromptEditor == true
+  }
+
+  override fun requiresInvalidation(event: InlineCompletionEvent): Boolean {
+    return event is InlineCompletionEvent.InlineLookupEvent
+  }
+}
