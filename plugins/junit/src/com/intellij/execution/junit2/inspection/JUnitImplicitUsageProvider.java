@@ -152,7 +152,7 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
   public boolean isImplicitWrite(@NotNull PsiElement element) {
     return element instanceof PsiParameter && AnnotationUtil.isAnnotated((PsiParameter)element, MOCKITO_MOCK, 0) ||
            element instanceof PsiField && AnnotationUtil.isAnnotated((PsiField)element, INJECTED_FIELD_ANNOTATIONS, 0) ||
-           element instanceof PsiField && AnnotationUtil.isMetaAnnotated((PsiField)element, JUNIT_TEMP_DIR, 0);
+           element instanceof PsiField && MetaAnnotationUtil.isMetaAnnotated((PsiField) element, Collections.singleton(JUNIT_TEMP_DIR));
   }
 
   @Override
