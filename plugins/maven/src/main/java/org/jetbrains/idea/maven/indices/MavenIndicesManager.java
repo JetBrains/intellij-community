@@ -87,8 +87,8 @@ public final class MavenIndicesManager implements Disposable {
     if (MavenUtil.isMavenUnitTestModeEnabled()) {
       if (!myMavenIndices.isDisposed()) {
         var localIndex = myMavenIndices.getIndexHolder().getLocalIndex();
-        if (localIndex != null) {
-          localIndex.closeAndClean();
+        if (localIndex instanceof MavenIndexImpl impl) {
+          impl.closeAndClean();
         }
       }
       Path dir = MavenSystemIndicesManager.getInstance().getIndicesDir();

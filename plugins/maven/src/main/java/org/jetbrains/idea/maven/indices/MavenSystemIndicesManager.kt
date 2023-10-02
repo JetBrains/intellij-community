@@ -65,7 +65,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
           setOf(repo.id),
           repo.url
         )
-        return@async MavenIndex(getIndexWrapper(), holder).also { openedIndices[dir.toString()] = it }
+        return@async MavenIndexImpl(getIndexWrapper(), holder).also { openedIndices[dir.toString()] = it }
       }
     }.await()
   }

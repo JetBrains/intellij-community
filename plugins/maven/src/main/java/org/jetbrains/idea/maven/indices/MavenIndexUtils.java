@@ -77,7 +77,7 @@ public final class MavenIndexUtils {
     return new IndexPropertyHolder(dir, kind, repositoryIds, repositoryPathOrUrl, updateTimestamp, dataDirName, failureMessage);
   }
 
-  public static void saveIndexProperty(MavenIndex index) {
+  public static void saveIndexProperty(MavenIndexImpl index) {
     Properties props = new Properties();
 
     props.setProperty(KIND_KEY, index.getKind().toString());

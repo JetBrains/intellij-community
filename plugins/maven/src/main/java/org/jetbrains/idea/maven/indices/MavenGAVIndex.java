@@ -16,6 +16,12 @@ public interface MavenGAVIndex {
 
   Set<String> getVersions(String groupId, String artifactId);
 
+  boolean hasGroupId(String groupId);
+
+  boolean hasArtifactId(String groupId, String artifactId);
+
+  boolean hasVersion(String groupId, String artifactId, String version);
+
   IndexKind getKind();
 
   @Nullable MavenRepositoryInfo getRepository();
