@@ -41,6 +41,7 @@ import kotlin.reflect.KFunction2
 class KotlinVariableInplaceIntroducer(
     addedVariable: KtProperty,
     originalExpression: KtExpression?,
+    occurrencesToReplace: Array<KtExpression>,
     suggestedNames: Collection<String>,
     private val expressionRenderedType: String?,
     private val mustSpecifyTypeExplicitly: Boolean,
@@ -50,7 +51,7 @@ class KotlinVariableInplaceIntroducer(
 ) : AbstractKotlinInplaceIntroducer<KtProperty>(
     localVariable = addedVariable.takeIf { it.isLocal },
     expression = originalExpression,
-    occurrences = emptyArray(),
+    occurrences = occurrencesToReplace,
     title = KotlinIntroduceVariableHandler.INTRODUCE_VARIABLE,
     project = project,
     editor = editor,

@@ -18,6 +18,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.util.SlowOperations
 import com.intellij.util.SmartList
 import com.intellij.util.application
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
@@ -75,13 +76,18 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
 
         var propertyRef: KtDeclaration? = null
         var reference: SmartPsiElementPointer<KtExpression>? = null
+        val references = ArrayList<SmartPsiElementPointer<KtExpression>>()
         var mustSpecifyTypeExplicitly = false
         var renderedTypeArgumentsIfMightBeNeeded: String? = renderedTypeArguments
 
         private fun findElementByOffsetAndText(offset: Int, text: String, newContainer: PsiElement): PsiElement? =
             newContainer.findElementAt(offset)?.parentsWithSelf?.firstOrNull { (it as? KtExpression)?.text == text }
 
-        private fun replaceExpression(expressionToReplace: KtExpression, lambdaArgumentName: Name?): KtExpression {
+        private fun replaceExpression(
+            expressionToReplace: KtExpression,
+            addToReferences: Boolean,
+            lambdaArgumentName: Name?
+        ): KtExpression {
             val isActualExpression = expression == expressionToReplace
 
             val replacement = psiFactory.createExpression(nameSuggestions.single().first())
@@ -96,6 +102,10 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             }
 
             result = result.removeTemplateEntryBracesIfPossible()
+
+            if (addToReferences) {
+                references.addIfNotNull(SmartPointerManager.createPointer(result))
+            }
 
             if (isActualExpression) {
                 reference = SmartPointerManager.createPointer(result)
@@ -146,7 +156,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     emptyBody.addAfter(psiFactory.createNewLine(), firstChild)
 
                     if (replaceOccurrence) {
-                        val exprAfterReplace = replaceExpression(expression, lambdaArgumentName)
+                        val exprAfterReplace = replaceExpression(expression, addToReferences = false, lambdaArgumentName)
                         exprAfterReplace.isOccurrence = true
                         if (anchor == expression) {
                             anchor = exprAfterReplace
@@ -226,7 +236,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                 }
                 if (!needBraces) {
                     if (shouldReplaceOccurrence) {
-                        replaceExpression(expression, lambdaArgumentName)
+                        replaceExpression(expression, addToReferences = true, lambdaArgumentName)
                     } else {
                         val sibling = PsiTreeUtil.skipSiblingsBackward(expression, PsiWhiteSpace::class.java)
                         if (sibling == property) {
@@ -523,6 +533,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                             KotlinVariableInplaceIntroducer(
                                 property,
                                 introduceVariableContext.reference?.element,
+                                introduceVariableContext.references.mapNotNull { it.element }.toTypedArray(),
                                 suggestedNames.single(),
                                 expressionRenderedType,
                                 introduceVariableContext.mustSpecifyTypeExplicitly,
