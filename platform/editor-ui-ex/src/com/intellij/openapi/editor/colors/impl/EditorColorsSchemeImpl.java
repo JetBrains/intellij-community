@@ -47,7 +47,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
       myAttributesTempMap.put(key.getExternalName(), attributes);
     }
     else if (attributes == INHERITED_ATTRS_MARKER || !Comparing.equal(attributes, getDirectlyDefinedAttributes(key))) {
-      myAttributesMap.put(key.getExternalName(), attributes);
+      attributesMap.put(key.getExternalName(), attributes);
       myAttributesTempMap.clear();
     }
   }
@@ -137,13 +137,13 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
 
   private boolean compareAttributes(@NotNull AbstractColorsScheme otherScheme,
                                     @NotNull Collection<Predicate<? super TextAttributesKey>> filters) {
-    for (String keyName : myAttributesMap.keySet()) {
+    for (String keyName : attributesMap.keySet()) {
       TextAttributesKey key = TextAttributesKey.find(keyName);
       if (!isTextAttributeKeyIgnored(filters, key) && !getAttributes(key).equals(otherScheme.getAttributes(key))) {
         return false;
       }
     }
-    filters.add(key -> myAttributesMap.containsKey(key.getExternalName()));
+    filters.add(key -> attributesMap.containsKey(key.getExternalName()));
     if (parentScheme instanceof EditorColorsSchemeImpl &&
         !((EditorColorsSchemeImpl)parentScheme).compareAttributes(otherScheme, filters)) {
       return false;

@@ -44,6 +44,7 @@ import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isHidden
 
@@ -107,7 +108,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
   private fun refreshVirtualDirectory() {
     // store refreshes root directory, so, we don't need to use refreshAndFindFile
-    val directory = LocalFileSystem.getInstance().findFileByPath(ioDirectory.systemIndependentPath) ?: return
+    val directory = LocalFileSystem.getInstance().findFileByPath(ioDirectory.invariantSeparatorsPathString) ?: return
     cachedVirtualDirectory = directory
     directory.children
     if (directory is NewVirtualFile) {
@@ -123,12 +124,12 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     schemeListManager.mutate { schemes, schemeToInfo, readOnlyExternalizableSchemes ->
       for (provider in providers) {
         try {
-          val fileName = provider.fileName
-          val extension = FileStorageCoreUtil.DEFAULT_EXT
-          val externalInfo = ExternalInfo(fileNameWithoutExtension = fileName.substring(0, fileName.length - extension.length),
-                                          fileExtension = extension)
-
           val schemeKey = provider.schemeKey
+
+          val fileNameWithoutExtension = schemeNameToFileName(schemeKey)
+          val externalInfo = ExternalInfo(fileNameWithoutExtension = fileNameWithoutExtension,
+                                          fileExtension = fileNameWithoutExtension + FileStorageCoreUtil.DEFAULT_EXT)
+
           externalInfo.schemeKey = schemeKey
 
           val scheme = provider.createScheme()

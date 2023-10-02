@@ -54,7 +54,6 @@ import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ComponentTreeEventDispatcher
-import com.intellij.util.PathUtilRt
 import com.intellij.util.ResourceUtil
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.xml.dom.createXmlStreamReader
@@ -719,8 +718,6 @@ fun loadBundledSchemes(additionalTextAttributes: MutableMap<String, MutableList<
       yield(object : SchemeManager.LoadBundleSchemeRequest<EditorColorsScheme> {
         override val pluginId: PluginId
           get() = pluginDescriptor.pluginId
-        override val fileName: String
-          get() = PathUtilRt.getFileName(resourcePath)
         override val schemeKey: String
           get() {
             val idFromExtension = item.id
