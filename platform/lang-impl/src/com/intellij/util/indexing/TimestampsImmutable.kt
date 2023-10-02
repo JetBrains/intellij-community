@@ -34,6 +34,10 @@ class TimestampsImmutable {
 
   companion object {
     private val IS_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode()
+
+    @JvmField
+    val EMPTY = TimestampsImmutable(0, IntLists.emptyList(), IntLists.emptyList())
+
     @JvmStatic
     @Throws(IOException::class)
     fun readTimestamps(stream: DataInputStream?): TimestampsImmutable {

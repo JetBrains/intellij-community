@@ -3,7 +3,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
@@ -13,8 +12,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -69,6 +66,8 @@ public final class IndexingStamp {
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(INDEXING_STAMP_CACHE_CAPACITY);
 
+  private static final IndexingStampStorage storage = new IndexingStampStorage();
+
   @TestOnly
   public static void dropTimestampMemoryCaches() {
     flushCaches();
@@ -85,9 +84,7 @@ public final class IndexingStamp {
   @TestOnly
   public static void dropIndexingTimeStamps(int fileId) throws IOException {
     ourTimestampsCache.remove(fileId);
-    try (DataOutputStream out = FSRecords.writeAttribute(fileId, Timestamps.PERSISTENCE)) {
-      TimestampsImmutable.readTimestamps((DataInputStream)null).writeToStream(out);
-    }
+    storage.writeTimestamps(fileId, TimestampsImmutable.EMPTY);
   }
 
   @NotNull
@@ -100,33 +97,20 @@ public final class IndexingStamp {
     assert id > 0;
     Timestamps timestamps = ourTimestampsCache.get(id);
     if (timestamps == null) {
-      if (FSRecords.supportsRawAttributesAccess()) {
-        TimestampsImmutable immutable =
-          FSRecords.readAttributeRawWithLock(id, Timestamps.PERSISTENCE, TimestampsImmutable::readTimestamps);
-        if (immutable == null) {
-          if (createIfNoneSaved) {
-            timestamps = new Timestamps();
-          }
-          else {
-            return null;
-          }
+      TimestampsImmutable immutable = storage.readTimestamps(id);
+      if (immutable == null) {
+        if (createIfNoneSaved) {
+          timestamps = new Timestamps();
         }
         else {
-          timestamps = immutable.toMutableTimestamps();
+          return null;
         }
       }
       else {
-        try (final DataInputStream stream = FSRecords.readAttributeWithLock(id, Timestamps.PERSISTENCE)) {
-          if (stream == null && !createIfNoneSaved) return null;
-          TimestampsImmutable immutable = TimestampsImmutable.readTimestamps(stream);
-          timestamps = immutable.toMutableTimestamps();
-        }
-        catch (IOException e) {
-          throw FSRecords.handleError(e);
-        }
+        timestamps = immutable.toMutableTimestamps();
       }
-      ourTimestampsCache.cacheOrGet(id, timestamps);
     }
+    ourTimestampsCache.cacheOrGet(id, timestamps);
     return timestamps;
   }
 
@@ -217,9 +201,7 @@ public final class IndexingStamp {
               //RC: now I don't see the benefits of implementing timestamps write via raw attribute bytebuffer access
               //    doFlush() is mostly outside the critical path, while implementing timestamps.writeToBuffer(buffer)
               //    is complicated with all those variable-sized numbers used.
-              try (DataOutputStream sink = FSRecords.writeAttribute(fileId, Timestamps.PERSISTENCE)) {
-                timestamp.toImmutable().writeToStream(sink);
-              }
+              storage.writeTimestamps(fileId, timestamp.toImmutable());
             }
             return null;
           }

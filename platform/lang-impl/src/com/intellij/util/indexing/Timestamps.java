@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
@@ -15,9 +14,6 @@ import java.util.Collection;
 @VisibleForTesting
 @ApiStatus.Internal
 public final class Timestamps {
-  @VisibleForTesting
-  @ApiStatus.Internal
-  public static final FileAttribute PERSISTENCE = new FileAttribute("__index_stamps__", 2, false);
 
   private final Object2LongMap<ID<?, ?>> myIndexStamps;
   private boolean myIsDirty = false;
