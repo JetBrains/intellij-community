@@ -9,6 +9,7 @@ import com.intellij.ide.impl.ProjectViewSelectInGroupTarget
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -30,7 +31,12 @@ internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecifi
         if (Registry.`is`("ide.selectIn.works.as.revealIn.when.project.view.focused")) {
           ActionManager.getInstance().getAction("RevealIn")?.actionPerformed(event)
         } else {
-          getView(event)?.selectOpenedFile()
+          if (event.place == ActionPlaces.TOOLWINDOW_TITLE) {
+            getView(event)?.selectOpenedFileUsingLastFocusedEditor()
+          }
+          else {
+            getView(event)?.selectOpenedFile()
+          }
         }
     }
   }

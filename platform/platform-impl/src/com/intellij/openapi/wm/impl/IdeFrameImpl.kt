@@ -17,6 +17,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Frame
 import java.awt.Graphics
@@ -56,6 +57,9 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   // when this client property is true, we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
   @JvmField
   internal var togglingFullScreenInProgress: Boolean = false
+
+  @Internal
+  var mouseReleaseCountSinceLastActivated = 0
 
   override fun getData(dataId: String): Any? = frameHelper?.getData(dataId)
 

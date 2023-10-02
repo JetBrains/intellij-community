@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FocusManagerImpl
+import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.ide.bootstrap.isImplicitReadOnEDTDisabled
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -683,6 +684,13 @@ class IdeEventQueue private constructor() : EventQueue() {
       val consumed = ke == null || ke.isConsumed
       if (me != null && (me.isPopupTrigger || e.id == MouseEvent.MOUSE_PRESSED) || ke != null && ke.keyCode == KeyEvent.VK_CONTEXT_MENU) {
         popupTriggerTime = System.currentTimeMillis()
+      }
+      val source = e.source
+      if (source is IdeFrameImpl) {
+        when (e.id) {
+          WindowEvent.WINDOW_ACTIVATED -> source.mouseReleaseCountSinceLastActivated = 0
+          MouseEvent.MOUSE_RELEASED -> ++source.mouseReleaseCountSinceLastActivated
+        }
       }
       super.dispatchEvent(e)
       // collect mnemonics statistics only if key event was processed above
