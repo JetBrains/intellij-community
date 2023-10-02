@@ -156,7 +156,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       getGlobalOptions().setAutoscrollFromSource(selected);
       if (selected && !myAutoScrollFromSourceHandler.isCurrentProjectViewPaneFocused()) {
         SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because Always Select Opened File has been turned on");
-        myAutoScrollFromSourceHandler.scrollFromSource(false);
+        myAutoScrollFromSourceHandler.scrollFromSource();
       }
     }
   };
@@ -588,7 +588,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
           if (currentProjectViewPane != null && isAutoscrollFromSource(currentProjectViewPane.getId())) {
             SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because the project view is shown");
-            myAutoScrollFromSourceHandler.scrollFromSource(false);
+            myAutoScrollFromSourceHandler.scrollFromSource();
           }
         }
       }
@@ -985,7 +985,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
               if (isAutoscrollFromSource(getCurrentViewId())) {
                 if (findFileEditor(editor) != null) {
                   SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because the editor has gained focus");
-                  myAutoScrollFromSourceHandler.scrollFromSource(false);
+                  myAutoScrollFromSourceHandler.scrollFromSource();
                 }
               }
             });
@@ -1086,7 +1086,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
     if (isAutoscrollFromSource(id)) {
       SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because the project view has changed panes");
-      myAutoScrollFromSourceHandler.scrollFromSource(false);
+      myAutoScrollFromSourceHandler.scrollFromSource();
     }
   }
 
@@ -1788,8 +1788,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    void scrollFromSource(boolean invokedManually) {
-      scrollFromSource(null, invokedManually);
+    void scrollFromSource() {
+      scrollFromSource(null, false);
     }
 
     private void scrollFromSource(@Nullable FileEditor fileEditor, boolean invokedManually) {
