@@ -6,5 +6,7 @@ plugins {
 }
 
 dependencies {
-    api(compose.desktop.currentOs)
+    api(compose.desktop.currentOs) {
+        exclude(group = "org.jetbrains.compose.material")
+    }
 }
