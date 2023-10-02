@@ -11,7 +11,6 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 
@@ -78,9 +77,18 @@ public class GradleTaskModelBuilder extends AbstractModelBuilderService {
   }
 
   @Override
-  public @NotNull ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(project, e, Messages.TASK_MODEL_GROUP)
+  public void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    context.getMessageReporter().createMessage()
+      .withGroup(Messages.TASK_MODEL_GROUP)
+      .withKind(Message.Kind.WARNING)
       .withTitle("Task model building failure")
-      .withDescription("Unable to warm-up Gradle task model");
+      .withText("Unable to warm-up Gradle task model")
+      .withException(exception)
+      .reportMessage(project);
   }
 }

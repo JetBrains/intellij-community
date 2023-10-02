@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.builder
 
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.model.ear.EarConfiguration
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.internal.ear.EarConfigurationImpl
 import org.jetbrains.plugins.gradle.tooling.internal.ear.EarModelImpl
@@ -27,6 +28,7 @@ import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.ge
 import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getTaskArchiveFileName
 import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.reflectiveCall
 import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.reflectiveGetProperty
+
 /**
  * @author Vladislav.Soroka
  */
@@ -140,12 +142,20 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
     new EarConfigurationImpl(earModels, deployDependencies, earlibDependencies)
   }
 
-  @NotNull
   @Override
-  ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    ErrorMessageBuilder.create(
-      project, e, "JEE project import errors"
-    ).withDescription("Ear Artifacts may not be configured properly")
+  void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    context.messageReporter.createMessage()
+      .withGroup(Messages.EAR_CONFIGURATION_MODEL_GROUP)
+      .withKind(Message.Kind.WARNING)
+      .withTitle("JEE project import failure")
+      .withText("Ear Artifacts may not be configured properly")
+      .withException(exception)
+      .reportMessage(project)
   }
 
   @CompileDynamic
@@ -159,11 +169,11 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
   }
 
   private static void addPath(String buildDirPath,
-                                 List<EarConfiguration.EarResource> earResources,
-                                 String earRelativePath,
-                                 String fileRelativePath,
-                                 File file,
-                                 Configuration... earConfigurations) {
+                              List<EarConfiguration.EarResource> earResources,
+                              String earRelativePath,
+                              String fileRelativePath,
+                              File file,
+                              Configuration... earConfigurations) {
 
     if (file.absolutePath.startsWith(buildDirPath)) return
 

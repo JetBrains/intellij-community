@@ -9,6 +9,7 @@ public final class Messages {
 
   // @formatter:off
   public final static @NotNull String PROJECT_MODEL_GROUP = "gradle.projectModel.group";
+  public final static @NotNull String SCALA_PROJECT_MODEL_GROUP = "gradle.scalaProjectModel.group";
 
   public final static @NotNull String TASK_MODEL_GROUP = "gradle.taskModel.group";
   public final static @NotNull String TASK_MODEL_COLLECTING_GROUP = "gradle.taskModel.collecting.group";
@@ -23,5 +24,21 @@ public final class Messages {
   public final static @NotNull String SOURCE_SET_CACHE_SET_GROUP = "gradle.sourceSetModel.cacheSet.group";
 
   public final static @NotNull String RESOURCE_FILTER_MODEL_GROUP = "gradle.resourceModel.group";
+
+  public final static @NotNull String EAR_CONFIGURATION_MODEL_GROUP = "gradle.earConfigurationModel.group";
+  public final static @NotNull String WAR_CONFIGURATION_MODEL_GROUP = "gradle.warConfigurationModel.group";
+
+  public final static @NotNull String DEPENDENCY_ACCESSOR_MODEL_GROUP = "gradle.dependencyAccessorModel.group";
+  public final static @NotNull String DEPENDENCY_GRAPH_MODEL_GROUP = "gradle.dependencyGraphModel.group";
+
+  public final static @NotNull String INTELLIJ_SETTINGS_MODEL_GROUP = "gradle.intellijSettingsModel.group";
+  public final static @NotNull String INTELLIJ_PROJECT_SETTINGS_MODEL_GROUP = "gradle.intellijProjectSettingsModel.group";
+
+  public final static @NotNull String TEST_MODEL_GROUP = "gradle.testModel.group";
+  public final static @NotNull String MAVEN_REPOSITORY_MODEL_GROUP = "gradle.mavenRepositoryModel.group";
+  public final static @NotNull String ANNOTATION_PROCESSOR_MODEL_GROUP = "gradle.annotationProcessorModel.group";
+  public final static @NotNull String BUILDSCRIPT_CLASSPATH_MODEL_GROUP = "gradle.buildscriptClasspathModel.group";
+  public final static @NotNull String PROJECT_EXTENSION_MODEL_GROUP = "gradle.projectExtensionModel.group";
+  public final static @NotNull String VERSION_CATALOG_MODEL_GROUP = "gradle.versionCatalogModel.group";
   // @formatter:on
 }

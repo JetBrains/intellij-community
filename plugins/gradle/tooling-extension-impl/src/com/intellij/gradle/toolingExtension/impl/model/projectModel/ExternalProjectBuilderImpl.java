@@ -20,7 +20,7 @@ import org.jetbrains.plugins.gradle.model.DefaultExternalTask;
 import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.model.ExternalProjectPreview;
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
+import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectExtensionsDataBuilderImpl;
 
@@ -134,9 +134,18 @@ public class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   }
 
   @Override
-  public @NotNull ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(project, e, Messages.PROJECT_MODEL_GROUP)
-      .withTitle("Project resolution error")
-      .withDescription("Unable to resolve additional project configuration.");
+  public void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    context.getMessageReporter().createMessage()
+      .withGroup(Messages.PROJECT_MODEL_GROUP)
+      .withKind(Message.Kind.ERROR)
+      .withTitle("Project resolution failure")
+      .withText("Unable to resolve additional project configuration")
+      .withException(exception)
+      .reportMessage(project);
   }
 }

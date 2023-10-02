@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel;
 
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 import com.intellij.openapi.externalSystem.model.project.dependencies.ComponentDependenciesImpl;
 import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode;
 import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencies;
@@ -10,9 +12,9 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
+import org.jetbrains.plugins.gradle.tooling.Message;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
-import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.isIsNewDependencyResolutionApplicable;
 
@@ -54,10 +56,18 @@ public class GradleDependencyGraphModelBuilder implements ModelBuilderService {
     return dependencies.getComponentsDependencies().isEmpty() ? null : dependencies;
   }
 
-
-  @NotNull
   @Override
-  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(project, e, "Dependency graph model errors");
+  public void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    context.getMessageReporter().createMessage()
+      .withGroup(Messages.DEPENDENCY_GRAPH_MODEL_GROUP)
+      .withKind(Message.Kind.WARNING)
+      .withTitle("Dependency graph model failure")
+      .withException(exception)
+      .reportMessage(project);
   }
 }

@@ -12,12 +12,13 @@ object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
 
   override fun getGroup() = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("build.gradle.errors", 1)
+  private val GROUP: EventLogGroup = EventLogGroup("build.gradle.errors", 2)
 
   private val ACTIVITY_ID = EventFields.Long("ide_activity_id")
   private val MESSAGE_KIND = EventFields.Enum<Message.Kind>("message_kind")
   private val MESSAGE_GROUP = EventFields.String("message_group", listOf(
     Messages.PROJECT_MODEL_GROUP,
+    Messages.SCALA_PROJECT_MODEL_GROUP,
 
     Messages.TASK_MODEL_GROUP,
     Messages.TASK_MODEL_COLLECTING_GROUP,
@@ -32,6 +33,22 @@ object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
     Messages.SOURCE_SET_CACHE_SET_GROUP,
 
     Messages.RESOURCE_FILTER_MODEL_GROUP,
+
+    Messages.EAR_CONFIGURATION_MODEL_GROUP,
+    Messages.WAR_CONFIGURATION_MODEL_GROUP,
+
+    Messages.DEPENDENCY_ACCESSOR_MODEL_GROUP,
+    Messages.DEPENDENCY_GRAPH_MODEL_GROUP,
+
+    Messages.INTELLIJ_SETTINGS_MODEL_GROUP,
+    Messages.INTELLIJ_PROJECT_SETTINGS_MODEL_GROUP,
+
+    Messages.TEST_MODEL_GROUP,
+    Messages.MAVEN_REPOSITORY_MODEL_GROUP,
+    Messages.ANNOTATION_PROCESSOR_MODEL_GROUP,
+    Messages.BUILDSCRIPT_CLASSPATH_MODEL_GROUP,
+    Messages.PROJECT_EXTENSION_MODEL_GROUP,
+    Messages.VERSION_CATALOG_MODEL_GROUP,
   ))
 
   private val MODEL_BUILDER_MESSAGE_EVENT = GROUP.registerEvent("modelBuilderMessage", ACTIVITY_ID, MESSAGE_KIND, MESSAGE_GROUP)

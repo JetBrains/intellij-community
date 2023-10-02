@@ -66,11 +66,19 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     return sourceSetModel
   }
 
-  @NotNull
   @Override
-  ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(project, e, Messages.SOURCE_SET_MODEL_GROUP)
+  void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    context.getMessageReporter().createMessage()
+      .withGroup(Messages.SOURCE_SET_MODEL_GROUP)
+      .withKind(Message.Kind.ERROR)
       .withTitle("Source set model building failure")
+      .withException(exception)
+      .reportMessage(project)
   }
 
   @NotNull

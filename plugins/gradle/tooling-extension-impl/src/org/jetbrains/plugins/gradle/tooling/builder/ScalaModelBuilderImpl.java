@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import groovy.lang.MetaProperty;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.gradle.api.Project;
@@ -13,7 +14,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.scala.ScalaModel;
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
+import org.jetbrains.plugins.gradle.tooling.Message;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaCompileOptionsImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaForkOptionsImpl;
@@ -67,11 +69,20 @@ public class ScalaModelBuilderImpl implements ModelBuilderService {
     return scalaModel;
   }
 
-  @NotNull
   @Override
-  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(project, e, "Scala import errors")
-      .withDescription("Unable to build Scala project configuration");
+  public void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    context.getMessageReporter().createMessage()
+      .withGroup(Messages.SCALA_PROJECT_MODEL_GROUP)
+      .withKind(Message.Kind.ERROR)
+      .withTitle("Scala import failure")
+      .withText("Unable to build Scala project configuration")
+      .withException(exception)
+      .reportMessage(project);
   }
 
   @Nullable

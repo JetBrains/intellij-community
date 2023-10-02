@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.UnknownConfigurationException;
@@ -15,7 +16,7 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.VersionCatalogsModel;
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
+import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.internal.VersionCatalogsModelImpl;
 
@@ -82,11 +83,19 @@ public class VersionCatalogsModelBuilder extends AbstractModelBuilderService {
     return VersionCatalogsModel.class.getName().equals(modelName) && GradleVersion.current().compareTo(GradleVersion.version("7.0")) >= 0;
   }
 
-  @NotNull
   @Override
-  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(
-      project, e, "Project version catalogs inspection errors"
-    ).withDescription("Unable to obtain version catalogs sources.");
+  public void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    context.getMessageReporter().createMessage()
+      .withGroup(Messages.VERSION_CATALOG_MODEL_GROUP)
+      .withKind(Message.Kind.WARNING)
+      .withTitle("Project version catalogs inspection failure")
+      .withText("Unable to obtain version catalogs sources")
+      .withException(exception)
+      .reportMessage(project);
   }
 }

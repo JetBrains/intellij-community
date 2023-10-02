@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.builder
 
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
@@ -11,9 +13,9 @@ import org.jetbrains.plugins.gradle.model.tests.DefaultExternalTestSourceMapping
 import org.jetbrains.plugins.gradle.model.tests.DefaultExternalTestsModel
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestSourceMapping
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestsModel
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.Message
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
-import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
 
 @CompileStatic
 class ExternalTestsModelBuilderImpl implements ModelBuilderService {
@@ -100,9 +102,18 @@ class ExternalTestsModelBuilderImpl implements ModelBuilderService {
     return paths
   }
 
-  @NotNull
   @Override
-  ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(project, e, "Tests model errors")
+  void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    context.getMessageReporter().createMessage()
+      .withGroup(Messages.TEST_MODEL_GROUP)
+      .withKind(Message.Kind.WARNING)
+      .withTitle("Test model failure")
+      .withException(exception)
+      .reportMessage(project)
   }
 }
