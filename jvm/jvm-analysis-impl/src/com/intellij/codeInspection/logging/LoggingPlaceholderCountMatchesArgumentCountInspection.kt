@@ -20,6 +20,8 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
+private const val MAX_BUILDER_LENGTH = 20
+
 class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLocalInspectionTool() {
 
   @JvmField
@@ -63,7 +65,8 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       val searcher = LOGGER_TYPE_SEARCHERS.mapFirst(node) ?: return true
 
       val arguments = node.valueArguments
-      if (arguments.isEmpty()) return true
+
+      if (arguments.isEmpty() && searcher != SLF4J_BUILDER_HOLDER) return true
 
       val log4jAsImplementationForSlf4j = when (slf4jToLog4J2Type) {
         Slf4jToLog4J2Type.AUTO -> hasBridgeFromSlf4jToLog4j2(node)
@@ -71,27 +74,37 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
         Slf4jToLog4J2Type.NO -> false
       }
       val loggerType = searcher.findType(node, LoggerContext(log4jAsImplementationForSlf4j)) ?: return true
+
       val method = node.resolveToUElement() as? UMethod ?: return true
       val parameters = method.uastParameters
-      if (parameters.isEmpty()) {
-        return true
+      var argumentCount: Int?
+      val logStringArgument: UExpression?
+      var lastArgumentIsException = false
+      var lastArgumentIsSupplier = false
+      if (parameters.isEmpty() || arguments.isEmpty()) {
+        //try to find String somewhere else
+        logStringArgument = findAdditionalString(node, searcher) ?: return true
+        argumentCount = findAdditionalArguments(node, searcher, true) ?: return true
       }
-      val index = getIndex(parameters) ?: return true
+      else {
+        val index = getIndex(parameters) ?: return true
 
-      var argumentCount = arguments.size - index
-      val lastArgumentIsException = hasThrowableType(arguments[arguments.size - 1])
-      val lastArgumentIsSupplier = couldBeThrowableSupplier(loggerType, parameters[parameters.size - 1], arguments[arguments.size - 1])
+        argumentCount = arguments.size - index
+        lastArgumentIsException = hasThrowableType(arguments[arguments.size - 1])
+        lastArgumentIsSupplier = couldBeThrowableSupplier(loggerType, parameters[parameters.size - 1], arguments[arguments.size - 1])
 
-      if (argumentCount == 1 && parameters.size > 1) {
-        val argument = arguments[index]
-        val argumentType = argument.getExpressionType()
-        if (argumentType is PsiArrayType) {
-          return true
+        if (argumentCount == 1 && parameters.size > 1) {
+          val argument = arguments[index]
+          val argumentType = argument.getExpressionType()
+          if (argumentType is PsiArrayType) {
+            return true
+          }
         }
+        val additionalArgumentCount: Int = findAdditionalArguments(node, searcher, false) ?: return true
+        argumentCount += additionalArgumentCount
+        logStringArgument = arguments[index - 1]
       }
-      val additionalArgumentCount: Int = findAdditionalArguments(node, searcher) ?: return true
-      argumentCount += additionalArgumentCount
-      val logStringArgument = arguments[index - 1]
+
       val parts = collectParts(logStringArgument) ?: return true
 
       val placeholderCountHolder = solvePlaceholderCount(loggerType, argumentCount, parts)
@@ -151,15 +164,48 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
 
     private val BUILDER_CHAIN = setOf("addKeyValue", "addMarker", "setCause")
     private val ADD_ARGUMENT = "addArgument"
+    private val SET_MESSAGE = "setMessage"
+    private fun findAdditionalString(node: UCallExpression,
+                                     loggerType: LoggerTypeSearcher): UExpression? {
+      if (loggerType != SLF4J_BUILDER_HOLDER) {
+        return null
+      }
+      var currentCall = node.receiver
+      for (ignore in 0..MAX_BUILDER_LENGTH) {
+        if (currentCall is UQualifiedReferenceExpression) {
+          currentCall = currentCall.selector
+          continue
+        }
+        if (currentCall !is UCallExpression) {
+          return null
+        }
+        val methodName = currentCall.methodName ?: return null
+        if (methodName == SET_MESSAGE && currentCall.valueArgumentCount == 1) {
+          val uExpression = currentCall.valueArguments[0]
+          if (!TypeUtils.isJavaLangString(uExpression.getExpressionType())) {
+            return null
+          }
+          return uExpression
+        }
+        if (BUILDER_CHAIN.contains(methodName)) {
+          currentCall = currentCall.receiver
+          continue
+        }
+        return null
+      }
+      return null
+    }
+
     private fun findAdditionalArguments(node: UCallExpression,
-                                        loggerType: LoggerTypeSearcher): Int? {
+                                        loggerType: LoggerTypeSearcher,
+                                        allowIntermediateMessage: Boolean): Int? {
       if (loggerType != SLF4J_BUILDER_HOLDER) {
         return 0
       }
       var additionalArgumentCount = 0
       var currentCall = node.receiver
-      for (ignore in 0..20) {
-        if(currentCall is UQualifiedReferenceExpression){
+      for (ignore in 0..MAX_BUILDER_LENGTH) {
+        if (currentCall is UQualifiedReferenceExpression) {
           currentCall = currentCall.selector
         }
         if (currentCall is UCallExpression) {
@@ -172,7 +218,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
           if (methodName.startsWith("at") && LoggingUtil.getLoggerLevel(currentCall) != null) {
             return additionalArgumentCount
           }
-          if (BUILDER_CHAIN.contains(methodName)) {
+          if (BUILDER_CHAIN.contains(methodName) || (allowIntermediateMessage && methodName == SET_MESSAGE)) {
             currentCall = currentCall.receiver
             continue
           }

@@ -366,7 +366,17 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
                   .addArgument("s")
                   .addKeyValue("1", "1")
                   .log("{} {}", 2);
-        }
+                  
+          logger.atError()
+          .setMessage(<warning descr="Fewer arguments provided (0) than placeholders specified (2)">"{} {}"</warning>)
+          .log();
+  
+          logger.atError()
+          .addArgument("")
+          .addArgument("")
+          .setMessage("{} {}")
+          .log();
+        }        
       }
       """.trimIndent())
   }

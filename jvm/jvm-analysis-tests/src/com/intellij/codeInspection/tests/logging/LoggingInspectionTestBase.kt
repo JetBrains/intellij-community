@@ -10,8 +10,10 @@ abstract class LoggingInspectionTestBase : JvmInspectionTestBase() {
       package org.slf4j.spi;
       public interface LoggingEventBuilder {
         LoggingEventBuilder addArgument(Object object);
+        LoggingEventBuilder setMessage(String message);
         LoggingEventBuilder addKeyValue(String key, Object object);
          void log(String format, Object... arguments);
+         void log();
       }
     """.trimIndent())
     myFixture.addClass("""
