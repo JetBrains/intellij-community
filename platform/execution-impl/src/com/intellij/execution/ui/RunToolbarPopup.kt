@@ -439,7 +439,8 @@ fun runCounterToString(e: AnActionEvent, stopCount: Int): String =
     stopCount.toString()
   }
 
-private class StopConfigurationInlineAction(val executor: Executor, val settings: RunnerAndConfigurationSettings) : AnAction() {
+private class StopConfigurationInlineAction(val executor: Executor, val settings: RunnerAndConfigurationSettings)
+  : AnAction(), ActionRemotePermissionRequirements.RunAccess {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

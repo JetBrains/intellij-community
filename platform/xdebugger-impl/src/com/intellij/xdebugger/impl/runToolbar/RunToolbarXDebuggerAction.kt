@@ -12,6 +12,7 @@ import com.intellij.execution.ui.RunWidgetResumeManager
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase
@@ -103,7 +104,8 @@ open class ConfigurationXDebuggerResumeAction : XDebuggerResumeAction() {
 }
 
 
-abstract class XDebuggerResumeAction : XDebuggerActionBase(false), RunWidgetExecutionActionMarker {
+abstract class XDebuggerResumeAction : XDebuggerActionBase(false), RunWidgetExecutionActionMarker,
+                                       ActionRemotePermissionRequirements.RunAccess {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
