@@ -10,11 +10,11 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.getUastParentOfType
 
-class ReplaceCallableExpressionQuickFix(@SafeFieldForPreview private val callReplacementInfo: CallReplacementInfo) : PsiUpdateModCommandQuickFix() {
-  override fun getFamilyName(): String = CommonQuickFixBundle.message("fix.replace.with.x", callReplacementInfo)
+class ReplaceCallableExpressionQuickFix(@SafeFieldForPreview private val callChainReplacementInfo: CallChainReplacementInfo) : PsiUpdateModCommandQuickFix() {
+  override fun getFamilyName(): String = CommonQuickFixBundle.message("fix.replace.with.x", callChainReplacementInfo.presentation())
 
   override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
     val uCall = element.getUastParentOfType<UCallExpression>() ?: return
-    uCall.replaceWithCallChain(callReplacementInfo)
+    uCall.replaceWithCallChain(callChainReplacementInfo)
   }
 }

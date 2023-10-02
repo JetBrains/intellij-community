@@ -32,7 +32,6 @@ val PsiElement.nonPreviewElement: JvmModifiersOwner? get() {
   return physSourcePsi.toUElement()?.javaPsi?.asSafely<JvmModifiersOwner>()
 }
 
-fun List<UExpression>.toSmartPsiElementPointers() : List<SmartPsiElementPointer<PsiElement>> = this.map {
-  val element = it.sourcePsi ?: return@toSmartPsiElementPointers emptyList()
-  SmartPointerManager.createPointer(element)
+fun UExpression.toSmartPsiElementPointer() : SmartPsiElementPointer<PsiElement>? = sourcePsi?.let {
+  SmartPointerManager.createPointer(it)
 }

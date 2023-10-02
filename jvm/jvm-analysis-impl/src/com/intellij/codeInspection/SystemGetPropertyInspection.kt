@@ -2,8 +2,8 @@
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
+import com.intellij.codeInspection.fix.CallChainReplacementInfo
 import com.intellij.codeInspection.fix.CallReplacementInfo
-import com.intellij.codeInspection.fix.MethodReplacementInfo
 import com.intellij.codeInspection.fix.ReplaceCallableExpressionQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
@@ -17,31 +17,6 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 private val SYSTEM_GET_PROPERTY = CallMatcher.staticCall("java.lang.System", "getProperty")
   .parameterTypes("java.lang.String")
 
-private val PROPERTIES_TO_OPTIMIZE = mapOf(
-  "file.separator" to CallableExpression("java.nio.file.FileSystems",
-                                         listOf(Method("getDefault",
-                                                       "java.nio.file.FileSystem"),
-                                                Method("getSeparator",
-                                                       "java.lang.String"))),
-  "path.separator" to CallableExpression("java.io.File.pathSeparator", emptyList()),
-  "line.separator" to CallableExpression("java.lang.System",
-                                         listOf(Method("lineSeparator",
-                                                       "java.lang.String"))),
-  "file.encoding" to CallableExpression("java.nio.charset.Charset",
-                                        listOf(Method("defaultCharset",
-                                                      "java.nio.charset.Charset"),
-                                               Method("displayName",
-                                                      "java.lang.String"))))
-
-private class CallableExpression(val qualifiedReference: String, val methods: List<Method>) {
-  fun toCallReplacementInfo(project: Project, scope: GlobalSearchScope): CallReplacementInfo =
-    CallReplacementInfo(qualifiedReference, methods.map {
-      MethodReplacementInfo(it.name, PsiType.getTypeByName(it.returnType, project, scope))
-    })
-}
-
-private class Method(val name: String, val returnType: String)
-
 class SystemGetPropertyInspection : AbstractBaseUastLocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
@@ -52,13 +27,32 @@ class SystemGetPropertyInspection : AbstractBaseUastLocalInspectionTool() {
     override fun visitCallExpression(node: UCallExpression): Boolean {
       if (!SYSTEM_GET_PROPERTY.uCallMatches(node)) return true
       val propertyValue = node.getArgumentForParameter(0)?.evaluate() as? String ?: return true
-      if (propertyValue !in PROPERTIES_TO_OPTIMIZE.keys) return true
       val message = JvmAnalysisBundle.message("jvm.inspections.system.get.property.problem.descriptor", propertyValue)
-      val qualifiedReference = PROPERTIES_TO_OPTIMIZE[propertyValue] ?: error("Unknown property!")
       val scope = node.sourcePsi?.resolveScope ?: return true
+      val qualifiedReference = buildReplacementInfo(propertyValue, holder.project, scope)
       holder.registerUProblem(node, message,
-                              ReplaceCallableExpressionQuickFix(qualifiedReference.toCallReplacementInfo(holder.project, scope)))
+                              ReplaceCallableExpressionQuickFix(qualifiedReference))
       return true
+    }
+
+    private fun buildReplacementInfo(keyProperty: String,
+                                     project: Project,
+                                     scope: GlobalSearchScope): CallChainReplacementInfo = when (keyProperty) {
+      "file.separator" -> CallChainReplacementInfo("java.nio.file.FileSystems",
+                                                   CallReplacementInfo("getDefault",
+                                                                       PsiType.getTypeByName("java.nio.file.FileSystem", project, scope)),
+                                                   CallReplacementInfo("getSeparator",
+                                                                       PsiType.getTypeByName("java.lang.String", project, scope)))
+      "path.separator" -> CallChainReplacementInfo("java.io.File.pathSeparator")
+      "line.separator" -> CallChainReplacementInfo("java.lang.System",
+                                                   CallReplacementInfo("lineSeparator",
+                                                                       PsiType.getTypeByName("java.lang.String", project, scope)))
+      "file.encoding" -> CallChainReplacementInfo("java.nio.charset.Charset",
+                                                  CallReplacementInfo("defaultCharset",
+                                                                      PsiType.getTypeByName("java.nio.charset.Charset", project, scope)),
+                                                  CallReplacementInfo("displayName",
+                                                                      PsiType.getTypeByName("java.lang.String", project, scope)))
+      else -> error("Unknown key")
     }
   }
 }
