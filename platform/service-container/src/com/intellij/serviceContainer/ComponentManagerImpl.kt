@@ -1383,23 +1383,14 @@ abstract class ComponentManagerImpl(
 
   fun instanceCoroutineScope(pluginClass: Class<*>): CoroutineScope {
     val pluginClassloader = pluginClass.classLoader
-    val intersectionScope = if (pluginClassloader is PluginAwareClassLoader) {
-      val pluginScope = pluginClassloader.pluginCoroutineScope
-      val parentScope = parent?.intersectionCoroutineScope(pluginScope) // for consistency
-                        ?: pluginScope
-      intersectionCoroutineScope(parentScope)
-    }
-    else {
-      // non-unloadable
-      getCoroutineScope()
-    }
+    val intersectionScope = pluginCoroutineScope(pluginClassloader)
     // The parent scope should become canceled only when the container is disposed, or the plugin is unloaded.
     // Leaking the parent scope might lead to premature cancellation.
     // Fool proofing: a fresh child scope is created per instance to avoid leaking the parent to clients.
     return intersectionScope.namedChildScope(pluginClass.name)
   }
 
-  // to run post-start-up activities - to not create scope for each class and do not keep it alive
+  @Internal // to run post-start-up activities - to not create scope for each class and do not keep it alive
   fun pluginCoroutineScope(pluginClassloader: ClassLoader): CoroutineScope {
     val intersectionScope = if (pluginClassloader is PluginAwareClassLoader) {
       val pluginScope = pluginClassloader.pluginCoroutineScope
