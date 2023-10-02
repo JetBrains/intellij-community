@@ -2,13 +2,12 @@
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
@@ -17,7 +16,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RemoveAttributeIntentionFix implements LocalQuickFix, IntentionAction {
+public class RemoveAttributeIntentionFix extends PsiElementBaseIntentionAction implements LocalQuickFix {
   private final String myLocalName;
 
   public RemoveAttributeIntentionFix(final String localName) {
@@ -39,7 +38,7 @@ public class RemoveAttributeIntentionFix implements LocalQuickFix, IntentionActi
   @NotNull
   @Override
   public String getText() {
-    return myLocalName != null? getName() : getFamilyName();
+    return myLocalName != null ? getName() : getFamilyName();
   }
 
   @Override
@@ -49,18 +48,13 @@ public class RemoveAttributeIntentionFix implements LocalQuickFix, IntentionActi
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return getAttribute(editor, file) != null;
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    return getAttribute(element, editor) != null;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    removeAttribute(getAttribute(editor, file), editor);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    removeAttribute(getAttribute(element, editor), editor);
   }
 
   @Override
@@ -86,17 +80,17 @@ public class RemoveAttributeIntentionFix implements LocalQuickFix, IntentionActi
     PsiElement nextSibling = attribute.getNextSibling();
     while (nextSibling != null) {
       if (nextSibling instanceof XmlAttribute) return nextSibling;
-      nextSibling =  nextSibling.getNextSibling();
+      nextSibling = nextSibling.getNextSibling();
     }
     return null;
   }
 
-  private static XmlAttribute getAttribute(Editor editor, PsiFile file) {
-    int offset = editor.getCaretModel().getOffset();
-    XmlAttribute attribute = PsiTreeUtil.getParentOfType(file.findElementAt(offset), XmlAttribute.class);
-    if (attribute == null) {
-      attribute = PsiTreeUtil.getParentOfType(file.findElementAt(offset - 1), XmlAttribute.class);
+  private static XmlAttribute getAttribute(PsiElement element, Editor editor) {
+    var result = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
+    if (result != null) return result;
+    if (element.getTextRange().getStartOffset() == editor.getCaretModel().getOffset()) {
+      return PsiTreeUtil.getParentOfType(PsiTreeUtil.prevLeaf(element), XmlAttribute.class);
     }
-    return attribute;
+    return null;
   }
 }
