@@ -32,7 +32,6 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.HtmlPanel
@@ -45,7 +44,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import java.awt.Component
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.event.ComponentAdapter
@@ -426,30 +424,5 @@ private class IndeterminateProgressSink(private val indicator: ProgressIndicator
       indicator.text2 = details
     }
     // ignore fraction updates
-  }
-}
-
-internal class FixedSizeScrollPanel(view: Component, private val fixedSize: Dimension) : JBScrollPane(view) {
-  init {
-    border = empty()
-    viewportBorder = empty()
-    isOpaque = false
-    horizontalScrollBar.isOpaque = false
-    verticalScrollBar.isOpaque = false
-    viewport.isOpaque = false
-  }
-
-  override fun getPreferredSize(): Dimension {
-    val size = super.getPreferredSize()
-    if (size.width > fixedSize.width) {
-      size.width = fixedSize.width
-      if (size.height < horizontalScrollBar.height * 2) {
-        size.height = horizontalScrollBar.height * 2 // better handling of a transparent scrollbar for a single text line
-      }
-    }
-    if (size.height > fixedSize.height) {
-      size.height = fixedSize.height
-    }
-    return size
   }
 }
