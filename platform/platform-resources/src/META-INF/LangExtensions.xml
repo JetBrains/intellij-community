@@ -123,6 +123,8 @@
                  description="Pause dumb queue (including indexing) while scanning is in progress."/>
     <registryKey defaultValue="false" key="scanning.trust.indexing.flag" restartRequired="true"
                  description="Use previously stored 'indexed flag' while scanning. To store 'indexing flag' please set registry option 'indexing.disable.virtual.file.system.entry.is.file.indexed=false'."/>
+    <registryKey defaultValue="false" key="scanning.stamps.over.fast.attributes" restartRequired="true"
+                 description="Store IndexingStamps is regular (false) or fast enumerated (true) attributes storage"/>
     <registryKey defaultValue="true" key="vfs.refresh.should.pause.dumb.queue" restartRequired="true"
                  description="Pause dumb queue (including indexing) while bulk VFS update is in progress."/>
     <registryKey defaultValue="true" key="retrieve.pushed.properties.from.vfs" restartRequired="true"

@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static com.intellij.util.indexing.IndexingStampStorage.PERSISTENCE;
+import static com.intellij.util.indexing.IndexingStampStorageOverRegularAttributes.PERSISTENCE;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
