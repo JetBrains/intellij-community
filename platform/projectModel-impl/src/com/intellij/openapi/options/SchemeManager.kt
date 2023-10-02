@@ -28,7 +28,11 @@ abstract class SchemeManager<T> {
 
   abstract fun loadSchemes(): Collection<T>
 
-  abstract fun reload()
+  fun reload() {
+    reload(retainFilter = null)
+  }
+
+  abstract fun reload(retainFilter: ((scheme: T) -> Boolean)?)
 
   @Deprecated("Use addScheme", ReplaceWith("addScheme(scheme, replaceExisting)"))
   @ApiStatus.ScheduledForRemoval

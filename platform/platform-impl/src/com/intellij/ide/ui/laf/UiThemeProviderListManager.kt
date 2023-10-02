@@ -116,29 +116,30 @@ class UiThemeProviderListManager {
       .mapNotNull { it.theme.get() }
   }
 
-  internal fun themeProviderAdded(provider: UIThemeProvider, pluginDescriptor: PluginDescriptor): UIThemeLookAndFeelInfo? {
+  internal fun themeProviderAdded(provider: UIThemeProvider, pluginDescriptor: PluginDescriptor): LafEntry? {
     if (findLaFByProviderId(provider) != null) {
       // provider is already registered
       return null
     }
 
-    @Suppress("DEPRECATION")
-    val parentTheme = findParentTheme(themes = themeDescriptors, parentId = provider.parentTheme)
-    val theme = provider.createTheme(
-      parentTheme = parentTheme,
-      defaultDarkParent = { themeDescriptors.single { it.id == DEFAULT_DARK_PARENT_THEME }.theme.get()?.theme },
-      defaultLightParent = { themeDescriptors.single { it.id == DEFAULT_LIGHT_PARENT_THEME }.theme.get()?.theme },
-      pluginDescriptor = pluginDescriptor,
-    ) ?: return null
-    val newLaF = UIThemeLookAndFeelInfoImpl(theme)
-    themeDescriptors = themeDescriptors + LafEntry(Supplier { newLaF }, bean = provider, pluginDescriptor = pluginDescriptor)
-    return newLaF
+    val lafEntry = LafEntry(SynchronizedClearableLazy {
+      val parentTheme = findParentTheme(themes = themeDescriptors, parentId = provider.parentTheme)
+      val theme = provider.createTheme(
+        parentTheme = parentTheme,
+        defaultDarkParent = { themeDescriptors.single { it.id == DEFAULT_DARK_PARENT_THEME }.theme.get()?.theme },
+        defaultLightParent = { themeDescriptors.single { it.id == DEFAULT_LIGHT_PARENT_THEME }.theme.get()?.theme },
+        pluginDescriptor = pluginDescriptor,
+      ) ?: return@SynchronizedClearableLazy null
+      UIThemeLookAndFeelInfoImpl(theme)
+    }, bean = provider, pluginDescriptor = pluginDescriptor)
+    themeDescriptors = themeDescriptors + lafEntry
+    return lafEntry
   }
 
-  fun themeProviderRemoved(provider: UIThemeProvider): UIThemeLookAndFeelInfo? {
+  internal fun themeProviderRemoved(provider: UIThemeProvider): UIThemeLookAndFeelInfoImpl? {
     val oldLaF = findLaFByProviderId(provider) ?: return null
     themeDescriptors = themeDescriptors - oldLaF
-    return oldLaF.theme.get() ?: return null
+    return oldLaF.theme.get()
   }
 
   private fun findLaFById(id: String) = themeDescriptors.firstOrNull { it.id == id }

@@ -10,9 +10,8 @@ import com.intellij.configurationStore.SchemeExtensionProvider
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.plugins.DynamicPluginListener
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.laf.TempUIThemeLookAndFeelInfo
@@ -97,7 +96,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       schemeManager.addScheme(defaultScheme)
     }
     if (!isUnitTestOrHeadlessMode) {
-      schemeManager.loadBundledSchemes(loadBundledSchemes(additionalTextAttributes))
+      schemeManager.loadBundledSchemes(createLoadBundledSchemeRequests(additionalTextAttributes))
     }
     schemeManager.loadSchemes()
     loadRemainAdditionalTextAttributes(additionalTextAttributes)
@@ -105,17 +104,6 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     initEditableDefaultSchemesCopies()
     initEditableBundledSchemesCopies()
     resolveLinksToBundledSchemes()
-
-    ApplicationManager.getApplication().getMessageBus()
-      .simpleConnect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
-        override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-          reloadKeepingActiveScheme()
-        }
-
-        override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-          reloadKeepingActiveScheme()
-        }
-      })
   }
 
   companion object {
@@ -253,17 +241,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     if (lookAndFeelInfo != null) {
       val schemeId = lookAndFeelInfo.editorSchemeId
       if (schemeId != null) {
-        if (schemeId.endsWith(".xml")) {
-          val path = schemeId.removeSuffix(".xml").removePrefix("/")
-          scheme = allSchemes.firstOrNull {
-            val base = if (it is AbstractColorsScheme) it.baseScheme else it
-            base is BundledEditorColorScheme && base.resourcePath.removeSuffix(".xml") == path
-          }
-        }
-        else {
-          scheme = getScheme(schemeId)
-        }
-
+        scheme = getScheme(schemeId)
         if (scheme == null) {
           LOG.error("Theme ${lookAndFeelInfo.name} refers to unknown color scheme $schemeId")
         }
@@ -359,6 +337,13 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   }
 
   override fun getScheme(schemeName: @NonNls String): EditorColorsScheme? {
+    if (schemeName.endsWith(".xml")) {
+      val path = schemeName.removeSuffix(".xml").removePrefix("/")
+      return schemeManager.allSchemes.firstOrNull {
+        val base = if (it is EditorColorsSchemeImpl && it.name.startsWith(Scheme.EDITABLE_COPY_PREFIX)) it.original else null
+        base is BundledEditorColorScheme && base.resourcePath.removeSuffix(".xml") == path
+      }
+    }
     return schemeManager.findSchemeByName(schemeName)
   }
 
@@ -528,7 +513,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
 
     override fun reloaded(schemeManager: SchemeManager<EditorColorsScheme>, schemes: Collection<EditorColorsScheme>) {
       if (!isUnitTestOrHeadlessMode) {
-        loadBundledSchemes(additionalTextAttributes)
+        schemeManager.loadBundledSchemes(createLoadBundledSchemeRequests(additionalTextAttributes))
       }
       initEditableDefaultSchemesCopies()
       initEditableBundledSchemesCopies()
@@ -702,7 +687,7 @@ fun readEditorSchemeNameFromXml(parser: XMLStreamReader): String? {
 private val BUNDLED_EP_NAME = ExtensionPointName<BundledSchemeEP>("com.intellij.bundledColorScheme")
 
 @VisibleForTesting
-fun loadBundledSchemes(additionalTextAttributes: MutableMap<String, MutableList<AdditionalTextAttributesEP>>, checkId: Boolean = false)
+fun createLoadBundledSchemeRequests(additionalTextAttributes: MutableMap<String, MutableList<AdditionalTextAttributesEP>>, checkId: Boolean = false)
   : Sequence<SchemeManager.LoadBundleSchemeRequest<EditorColorsScheme>> {
   return sequence {
     for (item in BUNDLED_EP_NAME.filterableLazySequence()) {
@@ -741,26 +726,75 @@ fun loadBundledSchemes(additionalTextAttributes: MutableMap<String, MutableList<
         }
 
         override fun createScheme(): EditorColorsScheme {
-          val scheme = BundledEditorColorScheme(resourcePath)
-          // todo be lazy
-          scheme.readExternal(JDOMUtil.load(loadBytes()))
-          // we don't need to update digest for a bundled scheme because
-          // 1) it can be computed on demand later (because a bundled scheme is not mutable)
-          // 2) in the future user copy of a bundled scheme will use a bundled scheme as parent (not as full copy)
-          if (scheme.parentScheme is AbstractColorsScheme) {
-            val attributesEPs = additionalTextAttributes.remove(scheme.parentScheme.getName())
-            if (!attributesEPs.isNullOrEmpty()) {
-              loadAdditionalTextAttributesForScheme(scheme = scheme.parentScheme as AbstractColorsScheme, attributeEps = attributesEPs)
-            }
-          }
+          return createBundledEditorColorScheme(resourcePath, additionalTextAttributes, loadBytes(), pluginId)
+        }
+      })
+    }
 
-          scheme.optimizeAttributeMap()
-          scheme.metaProperties.setProperty(AbstractColorsScheme.META_INFO_PLUGIN_ID, pluginId.idString)
-          return scheme
+    for (item in UiThemeProviderListManager.getInstance().getDescriptors()) {
+      val pluginDescriptor = item.pluginDescriptor
+      if (pluginDescriptor.pluginId == PluginManagerCore.CORE_ID) {
+        continue
+      }
+
+      val uiTheme = item.theme.get() ?: continue
+      val editorSchemeId = uiTheme.theme.originalEditorSchemeId ?: continue
+      // we must check originalEditorSchemeId to load its corresponding editor scheme on `reloadKeepingActiveScheme` call
+      if (!editorSchemeId.endsWith(".xml")) {
+        continue
+      }
+
+      val resourcePath = editorSchemeId.removePrefix("/")
+      val data = ResourceUtil.getResourceAsBytes(resourcePath, pluginDescriptor.classLoader)!!
+      val reader = createXmlStreamReader(data)
+      val colorSchemeId = try {
+        readEditorSchemeNameFromXml(reader)!!
+      }
+      finally {
+        reader.close()
+      }
+
+      // update id to make sure that other consumers of id uses a correct one
+      uiTheme.theme.editorSchemeId = colorSchemeId
+
+      yield(object : SchemeManager.LoadBundleSchemeRequest<EditorColorsScheme> {
+        override val pluginId: PluginId
+          get() = pluginDescriptor.pluginId
+        override val schemeKey: String
+          get() = colorSchemeId
+
+        override fun loadBytes(): ByteArray = data
+
+        override fun createScheme(): EditorColorsScheme {
+          return createBundledEditorColorScheme(resourcePath, additionalTextAttributes, loadBytes(), pluginId)
         }
       })
     }
   }
+}
+
+private fun createBundledEditorColorScheme(
+  resourcePath: String,
+  additionalTextAttributes: MutableMap<String, MutableList<AdditionalTextAttributesEP>>,
+  data: ByteArray,
+  pluginId: PluginId,
+): BundledEditorColorScheme {
+  val scheme = BundledEditorColorScheme(resourcePath)
+  // todo be lazy
+  scheme.readExternal(JDOMUtil.load(data))
+  // we don't need to update digest for a bundled scheme because
+  // 1) it can be computed on demand later (because a bundled scheme is not mutable)
+  // 2) in the future user copy of a bundled scheme will use a bundled scheme as parent (not as full copy)
+  if (scheme.parentScheme is AbstractColorsScheme) {
+    val attributesEPs = additionalTextAttributes.remove(scheme.parentScheme.getName())
+    if (!attributesEPs.isNullOrEmpty()) {
+      loadAdditionalTextAttributesForScheme(scheme = scheme.parentScheme as AbstractColorsScheme, attributeEps = attributesEPs)
+    }
+  }
+
+  scheme.optimizeAttributeMap()
+  scheme.metaProperties.setProperty(AbstractColorsScheme.META_INFO_PLUGIN_ID, pluginId.idString)
+  return scheme
 }
 
 internal class BundledEditorColorScheme(@JvmField val resourcePath: String) : EditorColorsSchemeImpl(/* parentScheme = */ null) {

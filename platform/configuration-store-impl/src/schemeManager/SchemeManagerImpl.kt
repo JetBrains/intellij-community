@@ -323,7 +323,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     }
   }
 
-  override fun reload() {
+  override fun reload(retainFilter: ((scheme: T) -> Boolean)?) {
     processor.beforeReloaded(this)
     // we must not remove non-persistent (e.g., predefined) schemes, because we cannot load it (obviously)
     // do not schedule scheme file removing because we just need to update our runtime state, not state on disk
@@ -332,12 +332,16 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   }
 
   // method is used to reflect already performed changes on disk, so, `isScheduleToDelete = false` is passed to `retainExternalInfo`
-  internal fun removeExternalizableSchemesFromRuntimeState() {
+  internal fun removeExternalizableSchemesFromRuntimeState(retainFilter: ((scheme: T) -> Boolean)? = null) {
+    val effectiveRetainFilter = retainFilter ?: { scheme ->
+      ((scheme as? SerializableScheme)?.schemeState ?: processor.getState(scheme)) == SchemeState.NON_PERSISTENT
+    }
+
     // todo check is bundled/read-only schemes correctly handled
     val list = schemeListManager.data
     val iterator = list.list.iterator()
     for (scheme in iterator) {
-      if (((scheme as? SerializableScheme)?.schemeState ?: processor.getState(scheme)) == SchemeState.NON_PERSISTENT) {
+      if (effectiveRetainFilter(scheme)) {
         continue
       }
 
@@ -349,6 +353,8 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
       }
 
       iterator.remove()
+
+      schemeListManager.readOnlyExternalizableSchemes.remove(processor.getSchemeKey(scheme))
 
       @Suppress("UNCHECKED_CAST")
       processor.onSchemeDeleted(scheme as MUTABLE_SCHEME)
@@ -726,14 +732,14 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   override fun toString() = fileSpec
 
   /**
-   * Call this method before invoking [com.intellij.openapi.components.impl.stores.IComponentStore.save] to ensure that schema will be saved 
-   * even if there were no changes. 
+   * Call this method before invoking [com.intellij.openapi.components.impl.stores.IComponentStore.save] to ensure that schema will be saved
+   * even if there were no changes.
    */
   @TestOnly
   fun forceSaving() {
     schemeListManager.data.schemeToInfo.values.forEach { it.digest = null }
   }
-  
+
   internal fun removeFirstScheme(isScheduleToDelete: Boolean, condition: (T) -> Boolean): T? {
     val iterator = schemes.iterator()
     for (scheme in iterator) {

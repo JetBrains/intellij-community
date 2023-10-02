@@ -13,7 +13,6 @@ import com.intellij.ide.ui.laf.UiThemeProviderListManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.JBColor
 import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.ui.svg.newSvgPatcher
@@ -149,8 +148,12 @@ class UITheme internal constructor(
     )
   }
 
-  val editorSchemeId: String?
-    get() = IdeUICustomization.getInstance().getUiThemeEditorSchemeId(/* themeId = */ id, /* editorSchemeId = */ bean.editorScheme)
+  var editorSchemeId: String? = bean.editorScheme
+    // custom set to be able to set a fixed editor scheme id (see the only setter in EditorColorsManagerImpl)
+    internal set
+
+  internal val originalEditorSchemeId: String?
+    get() = bean.editorScheme
 
   companion object {
     const val FILE_EXT_ENDING: String = ".theme.json"

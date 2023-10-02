@@ -11,8 +11,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
-import com.intellij.ide.plugins.DynamicPluginListener
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.ui.*
 import com.intellij.ide.ui.UISettings.Companion.getPreferredFractionalMetricsValue
 import com.intellij.ide.ui.laf.SystemDarkThemeDetector.Companion.createDetector
@@ -23,20 +21,15 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.RawSwingDispatcher
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.SettingsCategory
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
-import com.intellij.openapi.extensions.ExtensionPointListener
-import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -61,7 +54,6 @@ import com.intellij.util.FontUtil
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.SVGLoader.colorPatcherProvider
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
 import org.jdom.Element
@@ -126,8 +118,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   // SystemDarkThemeDetector must be created as part of LafManagerImpl initialization and not on demand because system listeners are added
   private var themeDetector: SystemDarkThemeDetector? = null
   private var isFirstSetup = true
-  private var isUpdatingPlugin = false
-  private var themeIdBeforePluginUpdate: String? = null
   private var autodetect = false
 
   // We remember the last used editor scheme for each laf in order to restore it after switching laf
@@ -211,21 +201,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   private fun addListeners() {
-    UIThemeProvider.EP_NAME.addExtensionPointListener(UiThemeEpListener())
-    val connection = ApplicationManager.getApplication().messageBus.connect(coroutineScope)
-    connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
-      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-        isUpdatingPlugin = isUpdate
-        themeIdBeforePluginUpdate = currentTheme?.id
-      }
-
-      override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-        isUpdatingPlugin = false
-        themeIdBeforePluginUpdate = null
-      }
-    })
+    UIThemeProvider.EP_NAME.addExtensionPointListener(service<LafDynamicPluginManager>().createUiThemeEpListener(manager = this))
     @Suppress("ObjectLiteralToLambda")
-    connection.subscribe(UISettingsListener.TOPIC, object : UISettingsListener {
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(UISettingsListener.TOPIC, object : UISettingsListener {
       override fun uiSettingsChanged(uiSettings: UISettings) {
         val newValues = computeValuesOfUsedUiOptions()
         if (newValues != usedValuesOfUiOptions) {
@@ -267,10 +245,19 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     preferredLightThemeId = element.getChild(ELEMENT_PREFERRED_LIGHT_LAF)?.getAttributeValue(ATTRIBUTE_THEME_NAME)
     preferredDarkThemeId = element.getChild(ELEMENT_PREFERRED_DARK_LAF)?.getAttributeValue(ATTRIBUTE_THEME_NAME)
 
-    element.getChild(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)?.let { lafToSchemeElement ->
+    val lafToPreviousScheme = HashMap<String, String>()
+    val child = element.getChild(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)
+    child?.let { lafToSchemeElement ->
       for (lafToScheme in lafToSchemeElement.getChildren(ELEMENT_LAF_TO_SCHEME)) {
         lafToPreviousScheme.put(lafToScheme.getAttributeValue(ATTRIBUTE_LAF), lafToScheme.getAttributeValue(ATTRIBUTE_SCHEME))
       }
+    }
+
+    if (lafToPreviousScheme.isEmpty()) {
+      this.lafToPreviousScheme.clear()
+    }
+    else {
+      this.lafToPreviousScheme.putAll(lafToPreviousScheme)
     }
 
     if (autodetect) {
@@ -381,7 +368,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       return result
     }
 
-  private fun updateLafComboboxModel() {
+  internal fun updateLafComboboxModel() {
     lafComboBoxModel.drop()
   }
 
@@ -730,68 +717,23 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun rememberSchemeForLaf(scheme: EditorColorsScheme) {
-    val lookAndFeelInfo: UIThemeLookAndFeelInfo? = currentTheme
-    if (rememberSchemeForLaf && lookAndFeelInfo != null) {
-      if (isSchemeDefault(lookAndFeelInfo, scheme)) {
-        lafToPreviousScheme.remove(lookAndFeelInfo.name)
-      }
-      else {
-        lafToPreviousScheme.put(lookAndFeelInfo.name, scheme.name)
-      }
+    if (!rememberSchemeForLaf) {
+      return
+    }
+
+    val theme = currentTheme ?: return
+    if (theme.editorSchemeId == Scheme.getBaseName(scheme.name)) {
+      lafToPreviousScheme.remove(theme.name)
+    }
+    else {
+      lafToPreviousScheme.put(theme.name, scheme.name)
     }
   }
 
-  private fun isSchemeDefault(lookAndFeelInfo: UIThemeLookAndFeelInfo, scheme: EditorColorsScheme): Boolean {
-    return lookAndFeelInfo.editorSchemeId == scheme.name
-  }
-
-  private inner class UiThemeEpListener : ExtensionPointListener<UIThemeProvider> {
-    // access only from EDT
-    private var scheduledLaF: UIThemeLookAndFeelInfo? = null
-
-    private fun applyScheduledLaF() {
-      val newLaF = scheduledLaF ?: return
-      scheduledLaF = null
-
-      setLookAndFeelImpl(lookAndFeelInfo = newLaF, installEditorScheme = true)
-      JBColor.setDark(newLaF.isDark)
-      updateUI()
-    }
-
-    override fun extensionAdded(extension: UIThemeProvider, pluginDescriptor: PluginDescriptor) {
-      val uiThemeProviderListManager = UiThemeProviderListManager.getInstance()
-      val newLaF = uiThemeProviderListManager.themeProviderAdded(extension, pluginDescriptor) ?: return
-      updateLafComboboxModel()
-
-      // when updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
-      if (!autodetect && (!isUpdatingPlugin || newLaF.id == themeIdBeforePluginUpdate)) {
-        scheduleLafChange(newLaF)
-      }
-    }
-
-    override fun extensionRemoved(extension: UIThemeProvider, pluginDescriptor: PluginDescriptor) {
-      val oldLaF = UiThemeProviderListManager.getInstance().themeProviderRemoved(extension) ?: return
-      oldLaF.theme.setProviderClassLoader(null)
-      val isDark = oldLaF.isDark
-      val defaultLaF = if (oldLaF === currentTheme) {
-        if (isDark) defaultDarkLaf else defaultLightLaf
-      }
-      else {
-        null
-      }
-      updateLafComboboxModel()
-      if (defaultLaF != null) {
-        scheduleLafChange(defaultLaF)
-      }
-    }
-
-    @RequiresEdt
-    private fun scheduleLafChange(defaultLaF: UIThemeLookAndFeelInfo?) {
-      scheduledLaF = defaultLaF
-      coroutineScope.launch(Dispatchers.EDT) {
-        applyScheduledLaF()
-      }
-    }
+  internal fun applyScheduledLaF(newLaF: UIThemeLookAndFeelInfo) {
+    setLookAndFeelImpl(lookAndFeelInfo = newLaF, installEditorScheme = true)
+    JBColor.setDark(newLaF.isDark)
+    updateUI()
   }
 
   private inner class LafComboBoxModel : CollectionComboBoxModel<LafReference>(allReferences) {
@@ -1348,16 +1290,16 @@ private data object DefaultClassicThemeStrategy : DefaultThemeStrategy {
   }
 }
 
-private fun getDefaultLaf(isDark: Boolean): UIThemeLookAndFeelInfo {
-  val appInfo = ApplicationInfoEx.getInstanceEx()
+internal fun getDefaultLaf(isDark: Boolean): UIThemeLookAndFeelInfo {
   val themeListManager = UiThemeProviderListManager.getInstance()
 
-  val strategy = if (ExperimentalUI.isNewUI()) DefaultNewUiThemeStrategy else DefaultClassicThemeStrategy
-  var id = strategy.getProductDefaultId(isDark, appInfo)
+  val isNewUi = ExperimentalUI.isNewUI()
+  val strategy = if (isNewUi) DefaultNewUiThemeStrategy else DefaultClassicThemeStrategy
+  var id = strategy.getProductDefaultId(isDark, ApplicationInfoEx.getInstanceEx())
   if (id != null) {
     val theme = themeListManager.findThemeById(id) ?: themeListManager.findThemeByName(id)
     if (theme == null) {
-      LOG.error("Default theme not found(id=$id, isDark=$isDark, isNewUI=${ExperimentalUI.isNewUI()})")
+      LOG.error("Default theme not found(id=$id, isDark=$isDark, isNewUI=$isNewUi)")
     }
     else {
       return theme
@@ -1365,5 +1307,5 @@ private fun getDefaultLaf(isDark: Boolean): UIThemeLookAndFeelInfo {
   }
 
   id = strategy.getPlatformDefaultId(isDark)
-  return themeListManager.findThemeById(id) ?: error("Default theme not found(id=$id, isDark=$isDark, isNewUI=${ExperimentalUI.isNewUI()})")
+  return themeListManager.findThemeById(id) ?: error("Default theme not found(id=$id, isDark=$isDark, isNewUI=$isNewUi)")
 }

@@ -56,8 +56,8 @@ public final class TempUIThemeLookAndFeelInfo extends UIThemeLookAndFeelInfoImpl
   }
 
   @Override
-  public void installEditorScheme(@Nullable EditorColorsScheme previousSchemeForLaf) {
-    String schemeId = getTheme().getEditorSchemeId();
+  public void installEditorScheme(@Nullable EditorColorsScheme previousEditorColorSchemeForLaf) {
+    String schemeId = getEditorSchemeId();
     if (schemeId == null) {
       return;
     }
