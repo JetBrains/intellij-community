@@ -54,7 +54,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
   public static final Key<Throwable> ADDED_AT_STACKTRACE = Key.create("uiInspector.addedAt");
 
   private static boolean ourStacktracesSavingInitialized = false;
-  private static boolean isInvokedAtLeastOnce = false;
+  private static boolean shouldSaveStacktraces = false;
 
   public static synchronized void initStacktracesSaving() {
     if (!ourStacktracesSavingInitialized && isSaveStacktraces()) {
@@ -63,8 +63,13 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
     }
   }
 
+  public static void enableStacktracesSaving() {
+    shouldSaveStacktraces = true;
+    initStacktracesSaving();
+  }
+
   public static boolean isSaveStacktraces() {
-    return isInvokedAtLeastOnce || Registry.is("ui.inspector.save.stacktraces", false);
+    return shouldSaveStacktraces || Registry.is("ui.inspector.save.stacktraces", false);
   }
 
   public UiInspectorAction() {
@@ -73,9 +78,6 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
 
   @Override
   protected void handleClick(@NotNull Component component, @Nullable MouseEvent event) {
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    isInvokedAtLeastOnce = true;
-    initStacktracesSaving();
     IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, component);
     Project project = frame != null ? frame.getProject() : null;
     closeAllInspectorWindows();

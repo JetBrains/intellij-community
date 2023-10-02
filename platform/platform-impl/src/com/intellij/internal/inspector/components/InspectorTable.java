@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.components;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
@@ -19,6 +20,8 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -428,14 +431,27 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
       String strValue = String.valueOf(value);
       if (property.equals("added-at")) {
         if (value == null) {
-          printToPreview("Stacktrace is not available. Added-at stacktraces are collected after first invocation of UI Inspector.\n" +
-                         "So, please reopen the UI needed to inspect. Or ", NORMAL_OUTPUT);
-          printHyperlinkToPreview("click", project -> {
+          printToPreview("Stacktrace is not available. There are two options:\n1. ", NORMAL_OUTPUT);
+          printHyperlinkToPreview("Click", project -> {
+            UiInspectorAction.enableStacktracesSaving();
+            // Can't access ConsoleViewImpl in this module to cast ConsoleView and get Editor from it.
+            // So, there is a little bit more hacky way.
+            Editor editor = myPreviewComponent.getPreferredFocusableComponent() instanceof EditorComponentImpl editorComponent
+                            ? editorComponent.getEditor() : null;
+            if (editor != null) {
+              HintManager.getInstance().showInformationHint(editor, "Enabled, please reopen the UI needed to inspect", HintManager.ABOVE);
+            }
+          });
+          printToPreview(" to enable stacktraces saving until IDE restart.\n2. ", NORMAL_OUTPUT);
+          printHyperlinkToPreview("Click", project -> {
             Registry.get("ui.inspector.save.stacktraces").setValue(true);
             RegistryBooleanOptionDescriptor.suggestRestart(InspectorTable.this.getRootPane());
           });
-          printToPreview(" to enable stacktraces saving right after startup (requires restart).\n" +
-                         "Note that saving stacktraces for each UI component can consume significant amount of memory.", NORMAL_OUTPUT);
+          printToPreview("""
+                            to enable stacktraces saving by default. Requires restart.
+                              Will enable 'ui.inspector.save.stacktraces' Registry property.
+                           """, NORMAL_OUTPUT);
+          printToPreview("Note that saving stacktraces for each UI component can consume significant amount of memory.", NORMAL_OUTPUT);
         }
         else {
           printToPreview(strValue, ERROR_OUTPUT);
