@@ -818,6 +818,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/timesAssign.before.Main.kt");
         }
 
+        @TestMetadata("typeAliasConstructorImport.test")
+        public void testTypeAliasConstructorImport() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/typeAliasConstructorImport.test");
+        }
+
         @TestMetadata("typeAliasExtensionFunction.before.Main.kt")
         public void testTypeAliasExtensionFunction() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/typeAliasExtensionFunction.before.Main.kt");

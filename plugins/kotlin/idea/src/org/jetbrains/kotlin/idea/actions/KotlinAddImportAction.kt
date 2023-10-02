@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.statistics.StatisticsManager
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.completion.KotlinStatisticsInfo
 import org.jetbrains.kotlin.idea.completion.isDeprecatedAtCallSite
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
+import org.jetbrains.kotlin.idea.imports.getConstructors
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.quickfix.ImportComparablePriority
@@ -79,8 +81,8 @@ internal fun createSingleImportActionForConstructor(
 
     val variants = fqNames.asSequence().mapNotNull { fqName ->
         val sameFqNameDescriptors = file.resolveImportReference(fqName.parent())
-            .filterIsInstance<ClassDescriptor>()
-            .flatMap { it.constructors }
+            .filterIsInstance<ClassifierDescriptor>()
+            .flatMap { it.getConstructors() }
         createVariantWithPriority(fqName, sameFqNameDescriptors, prioritizer, expressionWeigher, project)
     }
 

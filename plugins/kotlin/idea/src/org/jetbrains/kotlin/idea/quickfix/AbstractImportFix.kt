@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.actions.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -45,6 +44,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.UnresolvedRe
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
+import org.jetbrains.kotlin.idea.imports.getConstructors
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor
 import org.jetbrains.kotlin.idea.intentions.singleLambdaArgumentExpression
@@ -163,7 +163,7 @@ abstract class ImportFixBase<T : KtExpression> protected constructor(
                             append(it.asString())
                         }
                     } else {
-                        callableDescriptor.containingDeclaration.safeAs<ClassDescriptor>()?.name?.let {
+                        callableDescriptor.containingDeclaration.safeAs<ClassifierDescriptor>()?.name?.let {
                             append(it.asString())
                         }
                     }
@@ -346,13 +346,7 @@ abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, factory: F
                 ProgressManager.checkCanceled()
                 val filterByCallType = callTypeAndReceiver.toFilter()
 
-                indicesHelper.getClassesByName(expression, name).filterTo(result, filterByCallType)
-
-                indicesHelper.processTopLevelTypeAliases({ it == name }, {
-                    if (filterByCallType(it)) {
-                        result.add(it)
-                    }
-                })
+                indicesHelper.getClassifiersByName(expression, name).filterTo(result, filterByCallType)
 
                 indicesHelper.getTopLevelCallablesByName(name).filterTo(result, filterByCallType)
             }
@@ -587,10 +581,9 @@ internal class ImportConstructorReferenceFix(expression: KtSimpleNameExpression)
         val expression = element ?: return emptyList()
 
         val filterByCallType = callTypeAndReceiver.toFilter()
-        // TODO Type-aliases
-        return indicesHelper.getClassesByName(expression, name)
+        return indicesHelper.getClassifiersByName(expression, name)
             .asSequence()
-            .map { it.constructors }.flatten()
+            .flatMap { it.getConstructors() }
             .filter { it.importableFqName != null }
             .filter(filterByCallType)
             .toList()
@@ -928,6 +921,18 @@ private fun KotlinIndicesHelper.getClassesByName(expressionForPlatform: KtExpres
         )
         result
     }
+
+/**
+ * Collects classes and top-level type aliases from indices
+ */
+private fun KotlinIndicesHelper.getClassifiersByName(
+    useSiteExpression: KtExpression,
+    name: String,
+): Collection<ClassifierDescriptor> = buildList {
+    addAll(getClassesByName(useSiteExpression, name))
+
+    processTopLevelTypeAliases({ it == name }, { add(it) })
+}
 
 private fun CallTypeAndReceiver<*, *>.toFilter() = { descriptor: DeclarationDescriptor ->
     callType.descriptorKindFilter.accepts(descriptor)
