@@ -6,6 +6,7 @@
 package com.intellij.platform.ide.impl.presentationAssistant
 
 import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
@@ -22,6 +23,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
@@ -35,19 +37,19 @@ class PresentationAssistantState {
   var fontSize = 24
   var hideDelay = 4 * 1000
   var mainKeymap = getDefaultMainKeymap()
-  var alternativeKeymap = getDefaultAlternativeKeymap()
+  var alternativeKeymap: KeymapDescription? = getDefaultAlternativeKeymap()
   var horizontalAlignment = PopupHorizontalAlignment.CENTER
   var verticalAlignment = PopupVerticalAlignment.BOTTOM
   var margin = 5
 }
 
-enum class PopupHorizontalAlignment(val displayName: String) { LEFT("Left"), CENTER("Center"), RIGHT("Right") }
-enum class PopupVerticalAlignment(val displayName: String) { TOP("Top"), BOTTOM("Bottom") }
+enum class PopupHorizontalAlignment(@NlsSafe val displayName: String) { LEFT("Left"), CENTER("Center"), RIGHT("Right") }
+enum class PopupVerticalAlignment(@NlsSafe val displayName: String) { TOP("Top"), BOTTOM("Bottom") }
 
-@State(name = "PresentationAssistant", storages = [Storage(file = "presentation-assistant.xml")])
+@State(name = "PresentationAssistant", storages = [Storage("presentation-assistant.xml")])
 class PresentationAssistant : PersistentStateComponent<PresentationAssistantState>, Disposable {
   val configuration = PresentationAssistantState()
-  var warningAboutMacKeymapWasShown = false
+  private var warningAboutMacKeymapWasShown = false
   private var presenter: ShortcutPresenter? = null
 
   override fun getState() = configuration
@@ -132,8 +134,8 @@ class KeymapDescriptionPanel {
     }
     val formBuilder = FormBuilder.createFormBuilder()
       .setFormLeftIndent(20)
-      .addLabeledComponent("Keymap:", combobox)
-      .addLabeledComponent("Description:", text)
+      .addLabeledComponent(IdeBundle.message("presentation.assistant.configurable.keymap"), combobox)
+      .addLabeledComponent(IdeBundle.message("presentation.assistant.configurable.description"), text)
     mainPanel = formBuilder.panel
   }
 
@@ -151,13 +153,13 @@ class KeymapDescriptionPanel {
 
 class PresentationAssistantConfigurable : Configurable, SearchableConfigurable {
   private val configuration: PresentationAssistant = getPresentationAssistant()
-  private val showAltKeymap = JCheckBox("Alternative Keymap:")
+  private val showAltKeymap = JCheckBox(IdeBundle.message("presentation.assistant.configurable.alternative.keymap"))
   private val mainKeymapPanel = KeymapDescriptionPanel()
   private val altKeymapPanel = KeymapDescriptionPanel()
   private val fontSizeField = JTextField(5)
   private val hideDelayField = JTextField(5)
-  private val horizontalAlignmentButtons = PopupHorizontalAlignment.values().associateWith { JRadioButton(it.displayName) }
-  private val verticalAlignmentButtons = PopupVerticalAlignment.values().associateWith { JRadioButton(it.displayName) }
+  private val horizontalAlignmentButtons = PopupHorizontalAlignment.entries.associateWith { JRadioButton(it.displayName) }
+  private val verticalAlignmentButtons = PopupVerticalAlignment.entries.associateWith { JRadioButton(it.displayName) }
   private val marginField = JTextField(5)
 
   private val mainPanel: JPanel
@@ -177,13 +179,13 @@ class PresentationAssistantConfigurable : Configurable, SearchableConfigurable {
     }
 
     val formBuilder = FormBuilder.createFormBuilder()
-      .addLabeledComponent("&Font size:", fontSizeField)
-      .addLabeledComponent("&Display duration (in ms):", hideDelayField)
-      .addLabeledComponent("Horizontal alignment:", horizontalAlignmentPanel, 0)
-      .addLabeledComponent("Vertical alignment:", verticalAlignmentPanel, 0)
-      .addLabeledComponent("Margin:", marginField, 0)
+      .addLabeledComponent(IdeBundle.message("presentation.assistant.configurable.font.size"), fontSizeField)
+      .addLabeledComponent(IdeBundle.message("presentation.assistant.configurable.duration"), hideDelayField)
+      .addLabeledComponent(IdeBundle.message("presentation.assistant.configurable.horizontal.alignment"), horizontalAlignmentPanel, 0)
+      .addLabeledComponent(IdeBundle.message("presentation.assistant.configurable.vertical.alignment"), verticalAlignmentPanel, 0)
+      .addLabeledComponent(IdeBundle.message("presentation.assistant.configurable.margin"), marginField, 0)
       .addVerticalGap(10)
-      .addLabeledComponent("Main Keymap:", mainKeymapPanel.mainPanel, true)
+      .addLabeledComponent(IdeBundle.message("presentation.assistant.configurable.main.keymap"), mainKeymapPanel.mainPanel, true)
       .addLabeledComponent(showAltKeymap, altKeymapPanel.mainPanel, true)
     showAltKeymap.addActionListener {
       altKeymapPanel.setEnabled(showAltKeymap.isSelected)
@@ -198,7 +200,7 @@ class PresentationAssistantConfigurable : Configurable, SearchableConfigurable {
 
   override fun getId() = displayName
   override fun enableSearch(option: String?): Runnable? = null
-  override fun getDisplayName() = "Presentation Assistant"
+  override fun getDisplayName() = IdeBundle.message("presentation.assistant.configurable.name")
   override fun getHelpTopic(): String? = null
 
   override fun createComponent() = mainPanel

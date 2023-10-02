@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.presentationAssistant
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter
 import com.intellij.openapi.options.colors.AttributesDescriptor
@@ -19,11 +20,11 @@ val BACKGROUND_COLOR_KEY = ColorKey.createColorKey("PRESENTATION_ASSISTANT_HINT_
                                                    JBColor(Color(186, 238, 186, 120), Color(73, 117, 73)))
 
 class ActionInfoColorSettings : ColorSettingsPage, DisplayPrioritySortable {
-  override fun getDisplayName() = "Presentation Assistant"
+  override fun getDisplayName() = IdeBundle.message("presentation.assistant.color.settings.page")
   override fun getColorDescriptors(): Array<ColorDescriptor> {
     return arrayOf(
-      ColorDescriptor("Hint Foreground", FOREGROUND_COLOR_KEY, ColorDescriptor.Kind.FOREGROUND),
-      ColorDescriptor("Hint Background", BACKGROUND_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND)
+      ColorDescriptor(IdeBundle.message("presentation.assistant.color.settings.page.foreground"), FOREGROUND_COLOR_KEY, ColorDescriptor.Kind.FOREGROUND),
+      ColorDescriptor(IdeBundle.message("presentation.assistant.color.settings.page.background"), BACKGROUND_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND)
     )
   }
 

@@ -15,7 +15,7 @@ enum class KeymapKind(val displayName: String, val defaultKeymapName: String) {
 
   fun getAlternativeKind() = when (this) {
     WIN -> MAC
-    MAC -> if (PlatformUtils.isAppCode()) null else WIN
+    MAC -> WIN
   }
 }
 
@@ -39,4 +39,4 @@ class KeymapDescription(var name: String = "", var displayText: String = "") {
 
 fun getDefaultMainKeymap() = KeymapDescription(getCurrentOSKind().defaultKeymapName, "")
 fun getDefaultAlternativeKeymap() =
-  getCurrentOSKind().getAlternativeKind()?.let { KeymapDescription(it.defaultKeymapName, "for ${it.displayName}") }
+  getCurrentOSKind().getAlternativeKind().let { KeymapDescription(it.defaultKeymapName, "for ${it.displayName}") }

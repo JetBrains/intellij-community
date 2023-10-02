@@ -20,23 +20,23 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.Alarm
 import com.intellij.util.ui.Animator
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.*
 import javax.swing.*
 
 class ActionInfoPanel(project: Project, textFragments: List<Pair<String, Font?>>) : NonOpaquePanel(BorderLayout()), Disposable {
   private val hint: JBPopup
-  private val labelsPanel: JPanel
+  private val labelsPanel: JPanel = NonOpaquePanel(FlowLayout(FlowLayout.CENTER, 0, 0))
   private val hideAlarm = Alarm(this)
   private var animator: Animator
   private var phase = Phase.FADING_IN
-  private val hintAlpha = if (UIUtil.isUnderDarcula()) 0.05.toFloat() else 0.1.toFloat()
+  private val hintAlpha = if (StartupUiUtil.isDarkTheme) 0.05.toFloat() else 0.1.toFloat()
   private val pluginConfiguration = getPresentationAssistant().configuration
 
   enum class Phase { FADING_IN, SHOWN, FADING_OUT, HIDDEN }
 
   init {
-    labelsPanel = NonOpaquePanel(FlowLayout(FlowLayout.CENTER, 0, 0))
     updateLabelText(project, textFragments)
     background = EditorColorsManager.getInstance().globalScheme.getColor(BACKGROUND_COLOR_KEY)
     isOpaque = true
@@ -166,6 +166,7 @@ class ActionInfoPanel(project: Project, textFragments: List<Pair<String, Font?>>
     var fontSize = pluginConfiguration.fontSize.toFloat()
     val color = EditorColorsManager.getInstance().globalScheme.getColor(FOREGROUND_COLOR_KEY)
     val labels = textFragments.mergeFragments().map {
+      @Suppress("HardCodedStringLiteral")
       val label = JLabel("<html>${it.first}</html>", SwingConstants.CENTER)
       label.foreground = color
       if (it.second != null) label.font = it.second

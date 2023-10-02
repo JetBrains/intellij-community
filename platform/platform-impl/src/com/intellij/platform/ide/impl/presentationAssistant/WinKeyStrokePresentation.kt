@@ -30,10 +30,10 @@ fun getWinModifiersText(modifiers: Int): String =
   modifiersPresentableText.filter { (modifiers and it.first) != 0 }.joinToString("+") { it.second }
 
 private val modifiersPresentableText = listOf(
-  InputEvent.META_MASK to "Meta",
-  InputEvent.CTRL_MASK to "Ctrl",
-  InputEvent.ALT_MASK to "Alt",
-  InputEvent.SHIFT_MASK to "Shift",
-  InputEvent.ALT_GRAPH_MASK to "Alt Graph",
-  InputEvent.BUTTON1_MASK to "Button1"
+  InputEvent.META_DOWN_MASK to "Meta",
+  InputEvent.CTRL_DOWN_MASK to "Ctrl",
+  InputEvent.ALT_DOWN_MASK to "Alt",
+  InputEvent.SHIFT_DOWN_MASK to "Shift",
+  InputEvent.ALT_GRAPH_DOWN_MASK to "Alt Graph",
+  InputEvent.BUTTON1_DOWN_MASK to "Button1"
 )
