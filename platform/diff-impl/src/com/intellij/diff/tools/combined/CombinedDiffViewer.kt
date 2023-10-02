@@ -247,6 +247,7 @@ class CombinedDiffViewer(
       canGoNextBlock() -> {
         blockState.goNext()
         currentDiffIterable.goFirst()
+        requestFocusInDiffViewer(blockState.currentBlock)
       }
     }
   }
@@ -259,6 +260,7 @@ class CombinedDiffViewer(
       canGoPrevBlock() -> {
         blockState.goPrev()
         currentDiffIterable.goLast()
+        requestFocusInDiffViewer(blockState.currentBlock)
       }
     }
   }
