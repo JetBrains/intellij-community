@@ -315,8 +315,13 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
             else -> PlainTextFileType.INSTANCE
         }
 
-        private fun findActionByPattern(pattern: Pattern, availableActions: List<IntentionAction>): IntentionAction? =
-            availableActions.firstOrNull { pattern.matcher(it.text).matches() || pattern.matcher(it.familyName).matches() }
+        private fun findActionByPattern(
+            pattern: Pattern,
+            availableActions: List<IntentionAction>,
+            acceptMatchByFamilyName: Boolean,
+        ): IntentionAction? = availableActions.firstOrNull {
+            pattern.matcher(it.text).matches() || (acceptMatchByFamilyName && pattern.matcher(it.familyName).matches())
+        }
 
         fun doAction(
             mainFile: File,
@@ -337,7 +342,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                 Pattern.compile(StringUtil.escapeToRegexp(text))
 
             val availableActions = getAvailableActions()
-            val action = findActionByPattern(pattern, availableActions)
+            val action = findActionByPattern(pattern, availableActions, acceptMatchByFamilyName = !actionShouldBeAvailable)
 
             if (action == null) {
                 if (actionShouldBeAvailable) {
@@ -363,7 +368,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                 CodeInsightTestFixtureImpl.invokeIntention(action, file, editor)
 
                 if (!shouldBeAvailableAfterExecution) {
-                    val afterAction = findActionByPattern(pattern, getAvailableActions())
+                    val afterAction = findActionByPattern(pattern, getAvailableActions(), acceptMatchByFamilyName = true)
 
                     if (afterAction != null) {
                         TestCase.fail("Action '$text' is still available after its invocation in test $testFilePath")
