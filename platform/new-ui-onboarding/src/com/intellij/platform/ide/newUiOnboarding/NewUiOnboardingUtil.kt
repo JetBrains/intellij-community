@@ -8,7 +8,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -26,9 +28,13 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.util.Alarm
+import com.intellij.util.Alarm.ThreadToUse
+import com.intellij.util.SlowOperations
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Component
@@ -76,7 +82,7 @@ object NewUiOnboardingUtil {
     return component as? T
   }
 
-  fun showToolbarComboButtonPopup(button: ToolbarComboButton, action: ExpandableComboAction, disposable: CheckedDisposable): JBPopup? {
+  suspend fun showToolbarComboButtonPopup(button: ToolbarComboButton, action: ExpandableComboAction, disposable: CheckedDisposable): JBPopup? {
     return showNonClosablePopup(
       disposable,
       createPopup = {
@@ -99,8 +105,8 @@ object NewUiOnboardingUtil {
     )
   }
 
-  fun showNonClosablePopup(disposable: CheckedDisposable,
-                           createPopup: () -> JBPopup?,
+  suspend fun showNonClosablePopup(disposable: CheckedDisposable,
+                           createPopup: suspend () -> JBPopup?,
                            showPopup: (JBPopup) -> Unit): JBPopup? {
     val popup = createPopup() ?: return null
     Disposer.register(disposable) { popup.closeOk(null) }
@@ -119,9 +125,13 @@ object NewUiOnboardingUtil {
 
     popup.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
-        Alarm().addRequest(Runnable {
+        Alarm(ThreadToUse.POOLED_THREAD, disposable).addRequest(Runnable {
           if (!disposable.isDisposed) {
-            showNonClosablePopup(disposable, createPopup, showPopup)
+            runBlockingCancellable {
+              withContext(Dispatchers.EDT) {
+                showNonClosablePopup(disposable, createPopup, showPopup)
+              }
+            }
           }
         }, 500)
       }
@@ -130,14 +140,14 @@ object NewUiOnboardingUtil {
     return popup
   }
 
-  fun createPopupFromActionButton(button: ActionButton, doCreatePopup: (AnActionEvent) -> JBPopup?): JBPopup? {
+  suspend fun createPopupFromActionButton(button: ActionButton, doCreatePopup: suspend (AnActionEvent) -> JBPopup?): JBPopup? {
     val action = button.action
     val context = DataManager.getInstance().getDataContext(button)
     val event = AnActionEvent.createFromInputEvent(null, ActionPlaces.NEW_UI_ONBOARDING, button.presentation, context)
     var popup: JBPopup? = null
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
       // wrap popup creation into SlowOperations.ACTION_PERFORM, otherwise there can be a lot of exceptions
-      ActionUtil.performDumbAwareWithCallbacks(action, event) {
+      SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
         popup = doCreatePopup(event)
         if (popup != null) {
           Toggleable.setSelected(button.presentation, true)

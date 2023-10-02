@@ -18,7 +18,9 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
@@ -50,6 +52,9 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.InputEvent
@@ -330,11 +335,14 @@ abstract class TogglePopupAction : ToggleAction {
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (!state) return
     val component = e.inputEvent?.component as? JComponent ?: return
-    val popup = createPopup(e)
-    popup?.showUnderneathOf(component)
+    val project = e.project ?: return
+    project.coroutineScope.launch(Dispatchers.EDT, CoroutineStart.UNDISPATCHED) {
+      val popup = createPopup(e)
+      popup?.showUnderneathOf(component)
+    }
   }
 
-  fun createPopup(e: AnActionEvent): JBPopup? {
+  suspend fun createPopup(e: AnActionEvent): JBPopup? {
     val presentation = e.presentation
     val actionGroup = getActionGroup(e) ?: return null
     val disposeCallback = { Toggleable.setSelected(presentation, false) }
@@ -348,7 +356,7 @@ abstract class TogglePopupAction : ToggleAction {
                        disposeCallback: () -> Unit) = JBPopupFactory.getInstance().createActionGroupPopup(
     null, actionGroup, e.dataContext, false, false, false, disposeCallback, 30, null)
 
-  abstract fun getActionGroup(e: AnActionEvent): ActionGroup?
+  abstract suspend fun getActionGroup(e: AnActionEvent): ActionGroup?
 }
 
 private abstract class WindowHeaderPlaceholder : DecorativeElement(), DumbAware, CustomComponentAction {
@@ -396,7 +404,7 @@ private class InactiveStopActionPlaceholder : WindowHeaderPlaceholder() {
 private class MoreRunToolbarActions : TogglePopupAction(
   IdeBundle.message("inline.actions.more.actions.text"), null, AllIcons.Actions.More
 ), DumbAware {
-  override fun getActionGroup(e: AnActionEvent): ActionGroup? {
+  override suspend fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
     val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration
     val result = createOtherRunnersSubgroup(selectedConfiguration, project)
@@ -454,7 +462,7 @@ internal fun addAdditionalActionsToRunConfigurationOptions(project: Project,
 }
 
 @ApiStatus.Internal
-class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware {
+open class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
     if (e.inputEvent != null && e.inputEvent!!.modifiersEx and InputEvent.SHIFT_DOWN_MASK != 0) {
       ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS).actionPerformed(e)
@@ -463,7 +471,7 @@ class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomComponentA
     super.actionPerformed(e)
   }
 
-  override fun getActionGroup(e: AnActionEvent): ActionGroup? {
+  override suspend fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
     return createRunConfigurationsActionGroup(project, e)
   }
