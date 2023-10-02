@@ -285,12 +285,18 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.MismatchedLightServiceLevelAndCtorInspection"
                      key="inspection.mismatched.light.service.level.and.ctor.display.name"/>
-    <localInspection language="UAST" shortName="RetrievingService"
+    <localInspection language="UAST"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.RetrievingServiceInspection"
-                     key="inspection.retrieving.service.display.name"/>
+                     implementationClass="org.jetbrains.idea.devkit.inspections.IncorrectServiceRetrievingInspection"
+                     key="inspection.incorrect.service.retrieving.display.name"/>
+    <localInspection language="UAST"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.SimplifiableServiceRetrievingInspection"
+                     key="inspection.simplifiable.service.retrieving.display.name"/>
     <localInspection language="JVM" shortName="ExtensionClassShouldBeFinalAndNonPublic"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
