@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByCustomRule
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.project.DumbService.Companion.getInstance
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -31,7 +32,7 @@ internal class LibraryJarUsagesCollector : ProjectUsagesCollector() {
       val className = descriptor.myClass
       if (className == null) continue
 
-      val jarVirtualFiles = readAction {
+      val jarVirtualFiles = smartReadAction(project) {
         val psiClasses = getInstance(project).computeWithAlternativeResolveEnabled<Array<PsiClass>, RuntimeException> {
           JavaPsiFacade.getInstance(project).findClasses(className, ProjectScope.getLibrariesScope(project))
         }
