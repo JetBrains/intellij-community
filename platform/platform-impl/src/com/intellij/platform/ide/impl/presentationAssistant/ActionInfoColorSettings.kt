@@ -15,23 +15,24 @@ import java.awt.Color
  * @author nik
  */
 val FOREGROUND_COLOR_KEY = ColorKey.createColorKey("PRESENTATION_ASSISTANT_HINT_FOREGROUND", JBColor.black)
-val BACKGROUND_COLOR_KEY = ColorKey.createColorKey("PRESENTATION_ASSISTANT_HINT_BACKGROUND", JBColor(Color(186, 238, 186, 120), Color(73, 117, 73)))
+val BACKGROUND_COLOR_KEY = ColorKey.createColorKey("PRESENTATION_ASSISTANT_HINT_BACKGROUND",
+                                                   JBColor(Color(186, 238, 186, 120), Color(73, 117, 73)))
 
 class ActionInfoColorSettings : ColorSettingsPage, DisplayPrioritySortable {
-    override fun getDisplayName() = "Presentation Assistant"
-    override fun getColorDescriptors(): Array<ColorDescriptor> {
-        return arrayOf(
-                ColorDescriptor("Hint Foreground", FOREGROUND_COLOR_KEY, ColorDescriptor.Kind.FOREGROUND),
-                ColorDescriptor("Hint Background", BACKGROUND_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND)
-        )
-    }
+  override fun getDisplayName() = "Presentation Assistant"
+  override fun getColorDescriptors(): Array<ColorDescriptor> {
+    return arrayOf(
+      ColorDescriptor("Hint Foreground", FOREGROUND_COLOR_KEY, ColorDescriptor.Kind.FOREGROUND),
+      ColorDescriptor("Hint Background", BACKGROUND_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND)
+    )
+  }
 
-    override fun getPriority() = DisplayPriority.COMMON_SETTINGS
+  override fun getPriority() = DisplayPriority.COMMON_SETTINGS
 
-    override fun getIcon() = null
-    override fun getDemoText() = " "
-    override fun getHighlighter() = PlainSyntaxHighlighter()
-    override fun getAdditionalHighlightingTagToDescriptorMap() = null
-    override fun getAttributeDescriptors() = emptyArray<AttributesDescriptor>()
+  override fun getIcon() = null
+  override fun getDemoText() = " "
+  override fun getHighlighter() = PlainSyntaxHighlighter()
+  override fun getAdditionalHighlightingTagToDescriptorMap() = null
+  override fun getAttributeDescriptors() = emptyArray<AttributesDescriptor>()
 }
 

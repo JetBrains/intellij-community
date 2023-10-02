@@ -31,14 +31,14 @@ import java.awt.FlowLayout
 import javax.swing.*
 
 class PresentationAssistantState {
-    var showActionDescriptions = true
-    var fontSize = 24
-    var hideDelay = 4*1000
-    var mainKeymap = getDefaultMainKeymap()
-    var alternativeKeymap = getDefaultAlternativeKeymap()
-    var horizontalAlignment = PopupHorizontalAlignment.CENTER
-    var verticalAlignment = PopupVerticalAlignment.BOTTOM
-    var margin = 5
+  var showActionDescriptions = true
+  var fontSize = 24
+  var hideDelay = 4 * 1000
+  var mainKeymap = getDefaultMainKeymap()
+  var alternativeKeymap = getDefaultAlternativeKeymap()
+  var horizontalAlignment = PopupHorizontalAlignment.CENTER
+  var verticalAlignment = PopupVerticalAlignment.BOTTOM
+  var margin = 5
 }
 
 enum class PopupHorizontalAlignment(val displayName: String) { LEFT("Left"), CENTER("Center"), RIGHT("Right") }
@@ -46,197 +46,199 @@ enum class PopupVerticalAlignment(val displayName: String) { TOP("Top"), BOTTOM(
 
 @State(name = "PresentationAssistant", storages = [Storage(file = "presentation-assistant.xml")])
 class PresentationAssistant : PersistentStateComponent<PresentationAssistantState>, Disposable {
-    val configuration = PresentationAssistantState()
-    var warningAboutMacKeymapWasShown = false
-    private var presenter: ShortcutPresenter? = null
+  val configuration = PresentationAssistantState()
+  var warningAboutMacKeymapWasShown = false
+  private var presenter: ShortcutPresenter? = null
 
-    override fun getState() = configuration
-    override fun loadState(p: PresentationAssistantState) {
-        XmlSerializerUtil.copyBean(p, configuration)
+  override fun getState() = configuration
+  override fun loadState(p: PresentationAssistantState) {
+    XmlSerializerUtil.copyBean(p, configuration)
+  }
+
+  fun initialize() {
+    if (configuration.showActionDescriptions && presenter == null) {
+      presenter = ShortcutPresenter()
+    }
+  }
+
+  override fun dispose() {
+    presenter?.disable()
+  }
+
+  fun setShowActionsDescriptions(value: Boolean, project: Project?) {
+    configuration.showActionDescriptions = value
+    if (value && presenter == null) {
+      presenter = ShortcutPresenter().apply {
+        showActionInfo(
+          ShortcutPresenter.ActionData("presentationAssistant.ShowActionDescriptions", project, "Show Descriptions of Actions"))
+      }
+    }
+    if (!value && presenter != null) {
+      presenter?.disable()
+      presenter = null
+    }
+  }
+
+  fun checkIfMacKeymapIsAvailable() {
+    val alternativeKeymap = configuration.alternativeKeymap
+    if (warningAboutMacKeymapWasShown || getCurrentOSKind() == KeymapKind.MAC || alternativeKeymap == null) {
+      return
+    }
+    if (alternativeKeymap.displayText != "for Mac" || alternativeKeymap.getKeymap() != null) {
+      return
     }
 
-    fun initialize() {
-        if (configuration.showActionDescriptions && presenter == null) {
-            presenter = ShortcutPresenter()
-        }
-    }
+    val pluginId = PluginId.getId("com.intellij.plugins.macoskeymap")
+    val plugin = PluginManagerCore.getPlugin(pluginId)
+    if (plugin != null && plugin.isEnabled) return
 
-    override fun dispose() {
-        presenter?.disable()
-    }
+    warningAboutMacKeymapWasShown = true
+    showInstallMacKeymapPluginNotification(pluginId)
+  }
 
-    fun setShowActionsDescriptions(value: Boolean, project: Project?) {
-        configuration.showActionDescriptions = value
-        if (value && presenter == null) {
-            presenter = ShortcutPresenter().apply {
-                showActionInfo(ShortcutPresenter.ActionData("presentationAssistant.ShowActionDescriptions", project, "Show Descriptions of Actions"))
-            }
-        }
-        if (!value && presenter != null) {
-            presenter?.disable()
-            presenter = null
-        }
-    }
+  fun setFontSize(value: Int) {
+    configuration.fontSize = value
+  }
 
-    fun checkIfMacKeymapIsAvailable() {
-        val alternativeKeymap = configuration.alternativeKeymap
-        if (warningAboutMacKeymapWasShown || getCurrentOSKind() == KeymapKind.MAC || alternativeKeymap == null) {
-            return
-        }
-        if (alternativeKeymap.displayText != "for Mac" || alternativeKeymap.getKeymap() != null) {
-            return
-        }
-
-        val pluginId = PluginId.getId("com.intellij.plugins.macoskeymap")
-        val plugin = PluginManagerCore.getPlugin(pluginId)
-        if (plugin != null && plugin.isEnabled) return
-
-        warningAboutMacKeymapWasShown = true
-        showInstallMacKeymapPluginNotification(pluginId)
-    }
-
-    fun setFontSize(value: Int) {
-        configuration.fontSize = value
-    }
-
-    fun setHideDelay(value: Int) {
-        configuration.hideDelay = value
-    }
+  fun setHideDelay(value: Int) {
+    configuration.hideDelay = value
+  }
 }
 
 fun getPresentationAssistant(): PresentationAssistant = ApplicationManager.getApplication().getService(PresentationAssistant::class.java)
 
 class PresentationAssistantListenerRegistrar : AppLifecycleListener, DynamicPluginListener {
-    override fun appFrameCreated(commandLineArgs: MutableList<String>) {
-        getPresentationAssistant().initialize()
-    }
+  override fun appFrameCreated(commandLineArgs: MutableList<String>) {
+    getPresentationAssistant().initialize()
+  }
 
-    override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-        if (pluginDescriptor.pluginId.idString == "org.nik.presentation-assistant") {
-            getPresentationAssistant().initialize()
-        }
+  override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+    if (pluginDescriptor.pluginId.idString == "org.nik.presentation-assistant") {
+      getPresentationAssistant().initialize()
     }
+  }
 }
 
 class KeymapDescriptionPanel {
-    private val combobox = ComboBox(KeymapManagerEx.getInstanceEx().allKeymaps)
-    private val text = JTextField(10)
-    val mainPanel: JPanel
-    init
-    {
-        combobox.renderer = object: SimpleListCellRenderer<Keymap>() {
-            override fun customize(list: JList<out Keymap>, value: Keymap?, index: Int, selected: Boolean, hasFocus: Boolean) {
-                text = value?.presentableName ?: ""
-            }
-        }
-        val formBuilder = FormBuilder.createFormBuilder()
-                .setFormLeftIndent(20)
-                .addLabeledComponent("Keymap:", combobox)
-                .addLabeledComponent("Description:", text)
-        mainPanel = formBuilder.panel
-    }
+  private val combobox = ComboBox(KeymapManagerEx.getInstanceEx().allKeymaps)
+  private val text = JTextField(10)
+  val mainPanel: JPanel
 
-    fun getDescription() = KeymapDescription((combobox.selectedItem as Keymap?)?.name ?: "", text.text)
-
-    fun setEnabled(enabled: Boolean) {
-        UIUtil.setEnabled(mainPanel, enabled, true)
+  init {
+    combobox.renderer = object : SimpleListCellRenderer<Keymap>() {
+      override fun customize(list: JList<out Keymap>, value: Keymap?, index: Int, selected: Boolean, hasFocus: Boolean) {
+        text = value?.presentableName ?: ""
+      }
     }
+    val formBuilder = FormBuilder.createFormBuilder()
+      .setFormLeftIndent(20)
+      .addLabeledComponent("Keymap:", combobox)
+      .addLabeledComponent("Description:", text)
+    mainPanel = formBuilder.panel
+  }
 
-    fun reset(config: KeymapDescription) {
-        combobox.selectedItem = KeymapManager.getInstance().getKeymap(config.name)
-        text.text = config.displayText
-    }
+  fun getDescription() = KeymapDescription((combobox.selectedItem as Keymap?)?.name ?: "", text.text)
+
+  fun setEnabled(enabled: Boolean) {
+    UIUtil.setEnabled(mainPanel, enabled, true)
+  }
+
+  fun reset(config: KeymapDescription) {
+    combobox.selectedItem = KeymapManager.getInstance().getKeymap(config.name)
+    text.text = config.displayText
+  }
 }
 
 class PresentationAssistantConfigurable : Configurable, SearchableConfigurable {
-    private val configuration: PresentationAssistant = getPresentationAssistant()
-    private val showAltKeymap = JCheckBox("Alternative Keymap:")
-    private val mainKeymapPanel = KeymapDescriptionPanel()
-    private val altKeymapPanel = KeymapDescriptionPanel()
-    private val fontSizeField = JTextField(5)
-    private val hideDelayField = JTextField(5)
-    private val horizontalAlignmentButtons = PopupHorizontalAlignment.values().associateWith { JRadioButton(it.displayName) }
-    private val verticalAlignmentButtons = PopupVerticalAlignment.values().associateWith { JRadioButton(it.displayName) }
-    private val marginField = JTextField(5)
+  private val configuration: PresentationAssistant = getPresentationAssistant()
+  private val showAltKeymap = JCheckBox("Alternative Keymap:")
+  private val mainKeymapPanel = KeymapDescriptionPanel()
+  private val altKeymapPanel = KeymapDescriptionPanel()
+  private val fontSizeField = JTextField(5)
+  private val hideDelayField = JTextField(5)
+  private val horizontalAlignmentButtons = PopupHorizontalAlignment.values().associateWith { JRadioButton(it.displayName) }
+  private val verticalAlignmentButtons = PopupVerticalAlignment.values().associateWith { JRadioButton(it.displayName) }
+  private val marginField = JTextField(5)
 
-    private val mainPanel: JPanel
-    init
-    {
-        val horizontalAlignmentPanel = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            horizontalAlignmentButtons.values.forEach { add(it) }
-        }
-        val verticalAlignmentPanel = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            verticalAlignmentButtons.values.forEach { add(it) }
-        }
-        ButtonGroup().apply {
-            horizontalAlignmentButtons.values.forEach { add(it) }
-        }
-        ButtonGroup().apply {
-            verticalAlignmentButtons.values.forEach { add(it) }
-        }
+  private val mainPanel: JPanel
 
-        val formBuilder = FormBuilder.createFormBuilder()
-                           .addLabeledComponent("&Font size:", fontSizeField)
-                           .addLabeledComponent("&Display duration (in ms):", hideDelayField)
-                           .addLabeledComponent("Horizontal alignment:", horizontalAlignmentPanel, 0)
-                           .addLabeledComponent("Vertical alignment:", verticalAlignmentPanel, 0)
-                           .addLabeledComponent("Margin:", marginField, 0)
-                           .addVerticalGap(10)
-                           .addLabeledComponent("Main Keymap:", mainKeymapPanel.mainPanel, true)
-                           .addLabeledComponent(showAltKeymap, altKeymapPanel.mainPanel, true)
-        showAltKeymap.addActionListener {
-            altKeymapPanel.setEnabled(showAltKeymap.isSelected)
-        }
-        mainPanel = JPanel(BorderLayout())
-        mainPanel.add(BorderLayout.NORTH, formBuilder.panel)
+  init {
+    val horizontalAlignmentPanel = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+      horizontalAlignmentButtons.values.forEach { add(it) }
+    }
+    val verticalAlignmentPanel = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+      verticalAlignmentButtons.values.forEach { add(it) }
+    }
+    ButtonGroup().apply {
+      horizontalAlignmentButtons.values.forEach { add(it) }
+    }
+    ButtonGroup().apply {
+      verticalAlignmentButtons.values.forEach { add(it) }
     }
 
-    private fun updatePanels() {
-        altKeymapPanel.setEnabled(showAltKeymap.isSelected)
+    val formBuilder = FormBuilder.createFormBuilder()
+      .addLabeledComponent("&Font size:", fontSizeField)
+      .addLabeledComponent("&Display duration (in ms):", hideDelayField)
+      .addLabeledComponent("Horizontal alignment:", horizontalAlignmentPanel, 0)
+      .addLabeledComponent("Vertical alignment:", verticalAlignmentPanel, 0)
+      .addLabeledComponent("Margin:", marginField, 0)
+      .addVerticalGap(10)
+      .addLabeledComponent("Main Keymap:", mainKeymapPanel.mainPanel, true)
+      .addLabeledComponent(showAltKeymap, altKeymapPanel.mainPanel, true)
+    showAltKeymap.addActionListener {
+      altKeymapPanel.setEnabled(showAltKeymap.isSelected)
     }
+    mainPanel = JPanel(BorderLayout())
+    mainPanel.add(BorderLayout.NORTH, formBuilder.panel)
+  }
 
-    override fun getId() = displayName
-    override fun enableSearch(option: String?): Runnable? = null
-    override fun getDisplayName() = "Presentation Assistant"
-    override fun getHelpTopic(): String? = null
+  private fun updatePanels() {
+    altKeymapPanel.setEnabled(showAltKeymap.isSelected)
+  }
 
-    override fun createComponent() = mainPanel
-    override fun isModified() = isDigitsOnly(fontSizeField.text) && (fontSizeField.text != configuration.configuration.fontSize.toString())
-                                || isDigitsOnly(hideDelayField.text) && (hideDelayField.text != configuration.configuration.hideDelay.toString())
-                                || configuration.configuration.mainKeymap != mainKeymapPanel.getDescription()
-                                || configuration.configuration.alternativeKeymap != getAlternativeKeymap()
-                                || !horizontalAlignmentButtons[configuration.configuration.horizontalAlignment]!!.isSelected
-                                || !verticalAlignmentButtons[configuration.configuration.verticalAlignment]!!.isSelected
-                                || isDigitsOnly(marginField.text) && (marginField.text != configuration.configuration.margin.toString())
+  override fun getId() = displayName
+  override fun enableSearch(option: String?): Runnable? = null
+  override fun getDisplayName() = "Presentation Assistant"
+  override fun getHelpTopic(): String? = null
 
-    private fun getAlternativeKeymap() = if (showAltKeymap.isSelected) altKeymapPanel.getDescription() else null
+  override fun createComponent() = mainPanel
+  override fun isModified() = isDigitsOnly(fontSizeField.text) && (fontSizeField.text != configuration.configuration.fontSize.toString())
+                              || isDigitsOnly(
+    hideDelayField.text) && (hideDelayField.text != configuration.configuration.hideDelay.toString())
+                              || configuration.configuration.mainKeymap != mainKeymapPanel.getDescription()
+                              || configuration.configuration.alternativeKeymap != getAlternativeKeymap()
+                              || !horizontalAlignmentButtons[configuration.configuration.horizontalAlignment]!!.isSelected
+                              || !verticalAlignmentButtons[configuration.configuration.verticalAlignment]!!.isSelected
+                              || isDigitsOnly(marginField.text) && (marginField.text != configuration.configuration.margin.toString())
 
-    override fun apply() {
-        configuration.setFontSize(fontSizeField.text.trim().toInt())
-        configuration.setHideDelay(hideDelayField.text.trim().toInt())
-        configuration.configuration.mainKeymap = mainKeymapPanel.getDescription()
-        configuration.configuration.alternativeKeymap = getAlternativeKeymap()
-        configuration.configuration.horizontalAlignment = horizontalAlignmentButtons.entries.find { it.value.isSelected }!!.key
-        configuration.configuration.verticalAlignment = verticalAlignmentButtons.entries.find { it.value.isSelected }!!.key
-        configuration.configuration.margin = marginField.text.trim().toInt()
-    }
+  private fun getAlternativeKeymap() = if (showAltKeymap.isSelected) altKeymapPanel.getDescription() else null
 
-    override fun reset() {
-        fontSizeField.text = configuration.configuration.fontSize.toString()
-        hideDelayField.text = configuration.configuration.hideDelay.toString()
-        showAltKeymap.isSelected = configuration.configuration.alternativeKeymap != null
-        mainKeymapPanel.reset(configuration.configuration.mainKeymap)
-        altKeymapPanel.reset(configuration.configuration.alternativeKeymap ?: KeymapDescription("", ""))
-        horizontalAlignmentButtons.forEach { (value, button) -> button.isSelected = configuration.configuration.horizontalAlignment == value }
-        verticalAlignmentButtons.forEach { (value, button) -> button.isSelected = configuration.configuration.verticalAlignment == value }
-        marginField.text = configuration.configuration.margin.toString()
-        updatePanels()
-    }
+  override fun apply() {
+    configuration.setFontSize(fontSizeField.text.trim().toInt())
+    configuration.setHideDelay(hideDelayField.text.trim().toInt())
+    configuration.configuration.mainKeymap = mainKeymapPanel.getDescription()
+    configuration.configuration.alternativeKeymap = getAlternativeKeymap()
+    configuration.configuration.horizontalAlignment = horizontalAlignmentButtons.entries.find { it.value.isSelected }!!.key
+    configuration.configuration.verticalAlignment = verticalAlignmentButtons.entries.find { it.value.isSelected }!!.key
+    configuration.configuration.margin = marginField.text.trim().toInt()
+  }
 
-    override fun disposeUIResources() {
-    }
+  override fun reset() {
+    fontSizeField.text = configuration.configuration.fontSize.toString()
+    hideDelayField.text = configuration.configuration.hideDelay.toString()
+    showAltKeymap.isSelected = configuration.configuration.alternativeKeymap != null
+    mainKeymapPanel.reset(configuration.configuration.mainKeymap)
+    altKeymapPanel.reset(configuration.configuration.alternativeKeymap ?: KeymapDescription("", ""))
+    horizontalAlignmentButtons.forEach { (value, button) -> button.isSelected = configuration.configuration.horizontalAlignment == value }
+    verticalAlignmentButtons.forEach { (value, button) -> button.isSelected = configuration.configuration.verticalAlignment == value }
+    marginField.text = configuration.configuration.margin.toString()
+    updatePanels()
+  }
 
-    private fun isDigitsOnly(string: String): Boolean {
-        return string.all { c -> c.isDigit() }
-    }
+  override fun disposeUIResources() {
+  }
+
+  private fun isDigitsOnly(string: String): Boolean {
+    return string.all { c -> c.isDigit() }
+  }
 }

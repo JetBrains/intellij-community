@@ -9,9 +9,9 @@ import com.intellij.openapi.project.DumbAware
  * @author nik
  */
 class ShowActionDescriptionsToggleAction : ToggleAction("Descriptions of Actions"), DumbAware {
-    override fun isSelected(e: AnActionEvent) = getPresentationAssistant().configuration.showActionDescriptions
+  override fun isSelected(e: AnActionEvent) = getPresentationAssistant().configuration.showActionDescriptions
 
-    override fun setSelected(e: AnActionEvent, state: Boolean) {
-        getPresentationAssistant().setShowActionsDescriptions(state, e.project)
-    }
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    getPresentationAssistant().setShowActionsDescriptions(state, e.project)
+  }
 }
