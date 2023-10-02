@@ -16,14 +16,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +36,7 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
     if (field.hasModifierProperty(PsiModifier.STATIC)) return null;
     PsiClass psiClass = field.getContainingClass();
     if (psiClass == null || psiClass instanceof PsiSyntheticClass || psiClass.isRecord() || psiClass.getName() == null) return null;
-    if (psiClass.getConstructors().length <= 1 && getFieldsToFix(psiClass, field).size() > 1) {
+    if (psiClass.getConstructors().length <= 1 && getFieldsToFix(psiClass, field, List.of()).size() > 1) {
       return Presentation.of(QuickFixBundle.message("add.constructor.parameters"));
     }
     return Presentation.of(QuickFixBundle.message("add.constructor.parameter.name"));
@@ -75,11 +72,11 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
     if (!field.isValid() || ContainerUtil.exists(constructors, c -> !c.isValid())) return ModCommand.nop();
     PsiClass psiClass = field.getContainingClass();
     if (psiClass == null) return ModCommand.nop();
-    List<PsiField> allFields = getFieldsToFix(psiClass, field);
+    List<PsiField> allFields = getFieldsToFix(psiClass, field, constructors);
     if (allFields.isEmpty()) return ModCommand.nop();
     if (allFields.size() == 1) return performForConstructorsAndFields(context, allFields, constructors);
     List<PsiFieldMember> members = ContainerUtil.map(allFields, PsiFieldMember::new);
-    return new ModChooseMember(QuickFixBundle.message("choose.constructors.to.add.parameter.to"),
+    return new ModChooseMember(QuickFixBundle.message("choose.fields.to.generate.constructor.parameters.for"),
                                members,
                                members,
                                ModChooseMember.SelectionMode.MULTIPLE,
@@ -112,13 +109,15 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
   }
 
   @NotNull
-  private static List<PsiField> getFieldsToFix(@NotNull PsiClass psiClass, @NotNull PsiField startField) {
+  private static List<PsiField> getFieldsToFix(@NotNull PsiClass psiClass, @NotNull PsiField startField,
+                                               @NotNull List<PsiMethod> constructors) {
     List<PsiField> fields = new ArrayList<>();
     for (PsiField field : psiClass.getFields()) {
       if (field == startField ||
           (!field.hasModifierProperty(PsiModifier.STATIC) &&
            field.hasModifierProperty(PsiModifier.FINAL) &&
-           !HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field))) {
+           !HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field) &&
+           (constructors.isEmpty() || ContainerUtil.exists(constructors, ctr -> !isFieldAssignedInConstructor(field, ctr))))) {
         fields.add(field);
       }
     }
@@ -127,13 +126,29 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
 
   static List<PsiMethod> filterConstructorsIfFieldAlreadyAssigned(PsiMethod[] constructors, PsiField field) {
     final List<PsiMethod> result = new ArrayList<>(Arrays.asList(constructors));
-    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(constructors))) {
-      final PsiElement element = reference.getElement();
-      if (element instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)element)) {
-        result.remove(PsiTreeUtil.getParentOfType(element, PsiMethod.class));
-      }
-    }
+    result.removeIf(ctr -> isFieldAssignedInConstructor(field, ctr));
     return result;
+  }
+  
+  private static @NotNull PsiMethod getTargetConstructor(@NotNull PsiMethod constructor) {
+    Set<PsiMethod> visited = null;
+    while (true) {
+      PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+      if (constructorCall == null || JavaPsiConstructorUtil.isSuperConstructorCall(constructorCall)) return constructor;
+      PsiMethod target = constructorCall.resolveMethod();
+      if (target == null) return constructor;
+      if (visited == null) {
+        visited = new HashSet<>();
+      }
+      if (!visited.add(target)) {
+        return constructor;
+      }
+      constructor = target;
+    }
+  }
+
+  private static boolean isFieldAssignedInConstructor(@NotNull PsiField field, @NotNull PsiMethod ctr) {
+    return VariableAccessUtils.variableIsAssigned(field, getTargetConstructor(ctr));
   }
 
   @NotNull
@@ -210,7 +225,10 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
         PsiParameter parameter = findParamByName(parameterName, newParameters);
         if (parameter == null) continue;
         NullableNotNullManager.getInstance(field.getProject()).copyNullableOrNotNullAnnotation(field, parameter);
-        AssignFieldFromParameterAction.addFieldAssignmentStatement(project, field, parameter, updater);
+        PsiStatement assignment = AssignFieldFromParameterAction.addFieldAssignmentStatement(project, field, parameter, updater);
+        if (assignment != null) {
+          CodeStyleManager.getInstance(project).reformat(assignment);
+        }
       }
     }
   }
@@ -218,7 +236,12 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
   @NotNull
   private static List<PsiVariable> fillVariables(@NotNull List<PsiField> fields, @NotNull PsiParameterList parameterList) {
     final List<PsiVariable> params = new ArrayList<>(Arrays.asList(parameterList.getParameters()));
-    params.addAll(fields);
+    PsiMethod constructor = (PsiMethod)parameterList.getParent();
+    for (PsiField field : fields) {
+      if (!isFieldAssignedInConstructor(field, constructor)) {
+        params.add(field);
+      }
+    }
     params.sort(new FieldParameterComparator(parameterList));
     return params;
   }
