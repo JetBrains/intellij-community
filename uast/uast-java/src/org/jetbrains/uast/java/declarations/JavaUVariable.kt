@@ -21,21 +21,29 @@ abstract class AbstractJavaUVariable(
   givenParent: UElement?
 ) : JavaAbstractUElement(givenParent), PsiVariable, UVariableEx, JavaUElementWithComments, UAnchorOwner {
 
+  private val uastInitializerPart = UastLazyPart<UExpression?>()
+  private val uAnnotationsPart = UastLazyPart<List<UAnnotation>>()
+  private val typeReferencePart = UastLazyPart<UTypeReferenceExpression?>()
+
   abstract override val javaPsi: PsiVariable
 
   @Suppress("OverridingDeprecatedMember")
   override val psi: PsiVariable
     get() = javaPsi
 
-  override val uastInitializer: UExpression? by lazyUnsafe {
-    val initializer = javaPsi.initializer ?: return@lazyUnsafe null
-    UastFacade.findPlugin(initializer)?.convertElement(initializer, this) as? UExpression
-  }
+  override val uastInitializer: UExpression?
+    get() = uastInitializerPart.getOrBuild {
+      val initializer = javaPsi.initializer ?: return@getOrBuild null
+      UastFacade.findPlugin(initializer)?.convertElement(initializer, this) as? UExpression
+    }
 
-  override val uAnnotations: List<UAnnotation> by lazyUnsafe { javaPsi.annotations.map { JavaUAnnotation(it, this) } }
-  override val typeReference: UTypeReferenceExpression? by lazyUnsafe {
-    javaPsi.typeElement?.let { UastFacade.findPlugin(it)?.convertOpt<UTypeReferenceExpression>(javaPsi.typeElement, this) }
-  }
+  override val uAnnotations: List<UAnnotation>
+    get() = uAnnotationsPart.getOrBuild { javaPsi.annotations.map { JavaUAnnotation(it, this) } }
+
+  override val typeReference: UTypeReferenceExpression?
+    get() = typeReferencePart.getOrBuild {
+      javaPsi.typeElement?.let { UastFacade.findPlugin(it)?.convertOpt<UTypeReferenceExpression>(javaPsi.typeElement, this) }
+    }
 
   abstract override val sourcePsi: PsiVariable?
 
@@ -223,7 +231,12 @@ class JavaUEnumConstant(
   override val sourcePsi: PsiEnumConstant,
   givenParent: UElement?
 ) : AbstractJavaUVariable(givenParent), UEnumConstantEx, UCallExpression, PsiEnumConstant by sourcePsi, UMultiResolvable {
-  override val initializingClass: UClass? by lazyUnsafe { UastFacade.findPlugin(sourcePsi)?.convertOpt(sourcePsi.initializingClass, this) }
+
+  private val initializingClassPart = UastLazyPart<UClass?>()
+  private val valueArgumentsPart = UastLazyPart<List<UExpression>>()
+
+  override val initializingClass: UClass?
+    get() = initializingClassPart.getOrBuild { UastFacade.findPlugin(sourcePsi)?.convertOpt(sourcePsi.initializingClass, this) }
 
   @Suppress("OverridingDeprecatedMember")
   override val psi: PsiEnumConstant
@@ -248,11 +261,12 @@ class JavaUEnumConstant(
   override val valueArgumentCount: Int
     get() = sourcePsi.argumentList?.expressions?.size ?: 0
 
-  override val valueArguments: List<UExpression> by lazyUnsafe {
-    sourcePsi.argumentList?.expressions?.map {
-      UastFacade.findPlugin(it)?.convertElement(it, this) as? UExpression ?: UastEmptyExpression(this)
-    } ?: emptyList()
-  }
+  override val valueArguments: List<UExpression>
+    get() = valueArgumentsPart.getOrBuild {
+      sourcePsi.argumentList?.expressions?.map {
+        UastFacade.findPlugin(it)?.convertElement(it, this) as? UExpression ?: UastEmptyExpression(this)
+      } ?: emptyList()
+    }
 
   override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 

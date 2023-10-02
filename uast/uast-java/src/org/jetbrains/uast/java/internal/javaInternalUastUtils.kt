@@ -87,8 +87,6 @@ fun isJava(language: Language?): Boolean {
   return language == JavaLanguage.INSTANCE
 }
 
-internal fun <T> lazyUnsafe(initializer: () -> T): Lazy<T> = lazy(LazyThreadSafetyMode.NONE, initializer)
-
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 internal inline fun <reified T : Any> Any?.asSafely(): @kotlin.internal.NoInfer T? = this as? T
 

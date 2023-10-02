@@ -45,12 +45,12 @@ open class UIdentifier(
 }
 
 open class LazyParentUIdentifier(psi: PsiElement?, givenParent: UElement?) : UIdentifier(psi, givenParent) {
-  private var uastParentValue: Any? = givenParent ?: NonInitializedLazyParentUIdentifierParent
+  private var uastParentValue: Any? = givenParent ?: UNINITIALIZED_UAST_PART
 
   override val uastParent: UElement?
     get() {
       val currentValue = uastParentValue
-      if (currentValue != NonInitializedLazyParentUIdentifierParent) {
+      if (currentValue != UNINITIALIZED_UAST_PART) {
         return currentValue as UElement?
       }
 
@@ -62,9 +62,5 @@ open class LazyParentUIdentifier(psi: PsiElement?, givenParent: UElement?) : UId
 
   protected open fun computeParent(): UElement? {
     return sourcePsi?.parent?.toUElement()
-  }
-
-  private companion object {
-    val NonInitializedLazyParentUIdentifierParent = Any()
   }
 }
