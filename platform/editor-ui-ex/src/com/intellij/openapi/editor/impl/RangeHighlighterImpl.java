@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -166,8 +166,7 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
   }
 
   @Override
-  @NotNull
-  public HighlighterTargetArea getTargetArea() {
+  public @NotNull HighlighterTargetArea getTargetArea() {
     return isFlagSet(TARGET_AREA_IS_EXACT_MASK) ? HighlighterTargetArea.EXACT_RANGE : HighlighterTargetArea.LINES_IN_RANGE;
   }
 
@@ -303,8 +302,7 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
   }
 
   @Override
-  @NotNull
-  public MarkupEditorFilter getEditorFilter() {
+  public @NotNull MarkupEditorFilter getEditorFilter() {
     return myFilter;
   }
 
@@ -409,8 +407,7 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
     return result;
   }
 
-  @NotNull
-  private MarkupModel getMarkupModel() {
+  private @NotNull MarkupModel getMarkupModel() {
     return myModel;
   }
 
@@ -454,8 +451,7 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "RangeHighlighter: ("+getStartOffset()+","+getEndOffset()+"); layer:"+getLayer()+"; tooltip: "+getErrorStripeTooltip() + (isValid() ? "" : "(invalid)");
   }
 }

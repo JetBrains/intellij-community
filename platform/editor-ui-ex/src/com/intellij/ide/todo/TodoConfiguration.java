@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,12 +30,12 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
   private TodoFilter[] myTodoFilters;
   private IndexPattern[] myIndexPatterns;
 
-  @NonNls public static final String PROP_MULTILINE = "multiLine";
-  @NonNls public static final String PROP_TODO_PATTERNS = "todoPatterns";
-  @NonNls public static final String PROP_TODO_FILTERS = "todoFilters";
-  @NonNls private static final String ELEMENT_MULTILINE = "multiLine";
-  @NonNls private static final String ELEMENT_PATTERN = "pattern";
-  @NonNls private static final String ELEMENT_FILTER = "filter";
+  public static final @NonNls String PROP_MULTILINE = "multiLine";
+  public static final @NonNls String PROP_TODO_PATTERNS = "todoPatterns";
+  public static final @NonNls String PROP_TODO_FILTERS = "todoFilters";
+  private static final @NonNls String ELEMENT_MULTILINE = "multiLine";
+  private static final @NonNls String ELEMENT_PATTERN = "pattern";
+  private static final @NonNls String ELEMENT_FILTER = "filter";
 
   public TodoConfiguration() {
     ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {

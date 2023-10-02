@@ -21,10 +21,10 @@ import java.awt.*;
  * it should be used instead of the default one.
  */
 class ValueElementReader {
-  @NonNls private static final String VALUE = "value";
-  @NonNls private static final String MAC = "mac";
-  @NonNls private static final String LINUX = "linux";
-  @NonNls private static final String WINDOWS = "windows";
+  private static final @NonNls String VALUE = "value";
+  private static final @NonNls String MAC = "mac";
+  private static final @NonNls String LINUX = "linux";
+  private static final @NonNls String WINDOWS = "windows";
   private static final String OS = SystemInfoRt.isWindows ? WINDOWS : SystemInfoRt.isMac ? MAC : LINUX;
   private static final Logger LOG = Logger.getInstance(ValueElementReader.class);
 
@@ -48,8 +48,7 @@ class ValueElementReader {
    * @param <T>     the result type
    * @return a value or {@code null} if it cannot be read
    */
-  @Nullable
-  public <T> T read(Class<T> type, Element element) {
+  public @Nullable <T> T read(Class<T> type, Element element) {
     T value = null;
     if (element != null) {
       if (myAttribute != null) {

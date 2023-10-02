@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.search;
 
@@ -28,26 +28,22 @@ class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
   }
 
   @Override
-  @NotNull
-  public PsiFile getFile() {
+  public @NotNull PsiFile getFile() {
     return myFile;
   }
 
   @Override
-  @NotNull
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return new TextRange(myStartOffset, myEndOffset);
   }
 
-  @NotNull
   @Override
-  public List<TextRange> getAdditionalTextRanges() {
+  public @NotNull List<TextRange> getAdditionalTextRanges() {
     return myAdditionalRanges;
   }
 
   @Override
-  @NotNull
-  public IndexPattern getPattern() {
+  public @NotNull IndexPattern getPattern() {
     return myPattern;
   }
 

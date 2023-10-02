@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -33,16 +33,16 @@ import java.util.Objects;
  * only a single font family. Fallback fonts were chosen randomly when that font family was unable to display particular char then.
  */
 public class FontPreferencesImpl extends ModifiableFontPreferences {
-  @NotNull private final Object2FloatMap<String> myFontSizes = new Object2FloatOpenHashMap<>();
-  @NotNull private final List<String> myEffectiveFontFamilies = new ArrayList<>();
-  @NotNull private final List<String> myRealFontFamilies = new ArrayList<>();
-  @Nullable private String myRegularSubFamily;
-  @Nullable private String myBoldSubFamily;
+  private final @NotNull Object2FloatMap<String> myFontSizes = new Object2FloatOpenHashMap<>();
+  private final @NotNull List<String> myEffectiveFontFamilies = new ArrayList<>();
+  private final @NotNull List<String> myRealFontFamilies = new ArrayList<>();
+  private @Nullable String myRegularSubFamily;
+  private @Nullable String myBoldSubFamily;
 
   private boolean myUseLigatures;
   private float myLineSpacing = DEFAULT_LINE_SPACING;
 
-  @NotNull private final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
+  private final @NotNull EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
 
   /**
    * Font size to use by default. Default value is {@link #DEFAULT_FONT_SIZE}.
@@ -139,8 +139,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
    * @return    effective font families to use
    */
   @Override
-  @NotNull
-  public List<@NlsSafe String> getEffectiveFontFamilies() {
+  public @NotNull List<@NlsSafe String> getEffectiveFontFamilies() {
     return myEffectiveFontFamilies;
   }
 
@@ -149,8 +148,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
    * @see #getEffectiveFontFamilies()
    */
   @Override
-  @NotNull
-  public List<@NlsSafe String> getRealFontFamilies() {
+  public @NotNull List<@NlsSafe String> getRealFontFamilies() {
     return myRealFontFamilies;
   }
 
@@ -177,9 +175,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
    *         {@link #DEFAULT_FONT_NAME} otherwise
    */
   @Override
-  @NotNull
-  @NlsSafe
-  public String getFontFamily() {
+  public @NotNull @NlsSafe String getFontFamily() {
     return myEffectiveFontFamilies.isEmpty() ? DEFAULT_FONT_NAME : myEffectiveFontFamilies.get(0);
   }
 
@@ -198,7 +194,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   }
 
   @Override
-  public void copyTo(@NotNull final FontPreferences preferences) {
+  public void copyTo(final @NotNull FontPreferences preferences) {
     if (preferences instanceof ModifiableFontPreferences modifiablePreferences) {
       modifiablePreferences.setEffectiveFontFamilies(myEffectiveFontFamilies);
       modifiablePreferences.setRealFontFamilies(myRealFontFamilies);
@@ -320,8 +316,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "Effective font families: " + myEffectiveFontFamilies;
   }
 }

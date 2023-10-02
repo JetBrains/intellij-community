@@ -23,15 +23,13 @@ public final class EmptyColorScheme extends DefaultColorsScheme {
     initFonts();
   }
 
-  @NotNull
   @Override
-  protected TextAttributes getKeyDefaults(@NotNull TextAttributesKey key) {
+  protected @NotNull TextAttributes getKeyDefaults(@NotNull TextAttributesKey key) {
     return attributesMap.get(HighlighterColors.TEXT.getExternalName());
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return NAME;
   }
 

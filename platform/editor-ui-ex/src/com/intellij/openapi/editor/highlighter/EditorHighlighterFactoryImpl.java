@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.highlighter;
 
 import com.intellij.lang.Language;
@@ -19,18 +19,16 @@ import org.jetbrains.annotations.Nullable;
 public final class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
   private static final Logger LOG = Logger.getInstance(EditorHighlighterFactoryImpl.class);
 
-  @NotNull
   @Override
-  public EditorHighlighter createEditorHighlighter(SyntaxHighlighter highlighter, @NotNull final EditorColorsScheme colors) {
+  public @NotNull EditorHighlighter createEditorHighlighter(SyntaxHighlighter highlighter, final @NotNull EditorColorsScheme colors) {
     if (highlighter == null) {
       highlighter = new PlainSyntaxHighlighter();
     }
     return new LexerEditorHighlighter(highlighter, colors);
   }
 
-  @NotNull
   @Override
-  public EditorHighlighter createEditorHighlighter(@NotNull final FileType fileType, @NotNull final EditorColorsScheme settings, final Project project) {
+  public @NotNull EditorHighlighter createEditorHighlighter(final @NotNull FileType fileType, final @NotNull EditorColorsScheme settings, final Project project) {
     if (fileType instanceof LanguageFileType) {
       return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(project, fileType, null, settings);
     }
@@ -39,15 +37,13 @@ public final class EditorHighlighterFactoryImpl extends EditorHighlighterFactory
     return createEditorHighlighter(highlighter, settings);
   }
 
-  @NotNull
   @Override
-  public EditorHighlighter createEditorHighlighter(final Project project, @NotNull final FileType fileType) {
+  public @NotNull EditorHighlighter createEditorHighlighter(final Project project, final @NotNull FileType fileType) {
     return createEditorHighlighter(fileType, EditorColorsManager.getInstance().getGlobalScheme(), project);
   }
 
-  @NotNull
   @Override
-  public EditorHighlighter createEditorHighlighter(@NotNull VirtualFile vFile, @NotNull EditorColorsScheme settings, @Nullable Project project) {
+  public @NotNull EditorHighlighter createEditorHighlighter(@NotNull VirtualFile vFile, @NotNull EditorColorsScheme settings, @Nullable Project project) {
     FileType fileType = vFile.getFileType();
     if (fileType instanceof LanguageFileType) {
       Language substLang = project == null ? null : LanguageUtil.getLanguageForPsi(project, vFile, fileType);
@@ -77,21 +73,18 @@ public final class EditorHighlighterFactoryImpl extends EditorHighlighterFactory
     return createEditorHighlighter(highlighter, settings);
   }
 
-  @NotNull
   @Override
-  public EditorHighlighter createEditorHighlighter(final Project project, @NotNull final VirtualFile file) {
+  public @NotNull EditorHighlighter createEditorHighlighter(final Project project, final @NotNull VirtualFile file) {
     return createEditorHighlighter(file, EditorColorsManager.getInstance().getGlobalScheme(), project);
   }
 
-  @NotNull
   @Override
-  public EditorHighlighter createEditorHighlighter(final Project project, @NotNull final String fileName) {
+  public @NotNull EditorHighlighter createEditorHighlighter(final Project project, final @NotNull String fileName) {
     return createEditorHighlighter(EditorColorsManager.getInstance().getGlobalScheme(), fileName, project);
   }
 
-  @NotNull
   @Override
-  public EditorHighlighter createEditorHighlighter(@NotNull final EditorColorsScheme settings, @NotNull final String fileName, @Nullable final Project project) {
+  public @NotNull EditorHighlighter createEditorHighlighter(final @NotNull EditorColorsScheme settings, final @NotNull String fileName, final @Nullable Project project) {
     return createEditorHighlighter(new LightVirtualFile(fileName), settings, project);
   }
 }
