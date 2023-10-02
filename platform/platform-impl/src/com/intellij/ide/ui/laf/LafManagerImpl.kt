@@ -61,6 +61,7 @@ import com.intellij.util.FontUtil
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.SVGLoader.colorPatcherProvider
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
 import org.jdom.Element
@@ -215,12 +216,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         isUpdatingPlugin = isUpdate
-        themeIdBeforePluginUpdate = if (currentTheme is UIThemeLookAndFeelInfo) {
-          (currentTheme as UIThemeLookAndFeelInfo).id
-        }
-        else {
-          null
-        }
+        themeIdBeforePluginUpdate = currentTheme?.id
       }
 
       override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
@@ -438,17 +434,13 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
    * Sets current LAF. The method doesn't update component hierarchy.
    */
   override fun setCurrentLookAndFeel(lookAndFeelInfo: UIThemeLookAndFeelInfo, lockEditorScheme: Boolean) {
-    setLookAndFeelImpl(lookAndFeelInfo = lookAndFeelInfo,
-                       installEditorScheme = !lockEditorScheme,
-                       processChangeSynchronously = true)
+    setLookAndFeelImpl(lookAndFeelInfo = lookAndFeelInfo, installEditorScheme = !lockEditorScheme)
   }
 
   /**
    * Sets current LAF. The method doesn't update component hierarchy.
    */
-  private fun setLookAndFeelImpl(lookAndFeelInfo: UIThemeLookAndFeelInfo,
-                                 installEditorScheme: Boolean,
-                                 processChangeSynchronously: Boolean) {
+  private fun setLookAndFeelImpl(lookAndFeelInfo: UIThemeLookAndFeelInfo, installEditorScheme: Boolean) {
     val oldLaf = currentTheme
 
     rememberSchemeForLaf(EditorColorsManager.getInstance().globalScheme)
@@ -463,18 +455,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     currentTheme = lookAndFeelInfo
     selectComboboxModel()
     if (!isFirstSetup && installEditorScheme) {
-      if (processChangeSynchronously) {
-        updateEditorSchemeIfNecessary(oldLaf = oldLaf, processChangeSynchronously = true)
-        UISettings.getInstance().fireUISettingsChanged()
-        ActionToolbarImpl.updateAllToolbarsImmediately()
-      }
-      else {
-        coroutineScope.launch(Dispatchers.EDT) {
-          updateEditorSchemeIfNecessary(oldLaf = oldLaf, processChangeSynchronously = false)
-          UISettings.getInstance().fireUISettingsChanged()
-          ActionToolbarImpl.updateAllToolbarsImmediately()
-        }
-      }
+      updateEditorSchemeIfNecessary(oldLaf = oldLaf)
+      UISettings.getInstance().fireUISettingsChanged()
+      ActionToolbarImpl.updateAllToolbarsImmediately()
     }
     isFirstSetup = false
   }
@@ -535,7 +518,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     uiSettings.fireUISettingsChanged()
   }
 
-  private fun updateEditorSchemeIfNecessary(oldLaf: UIThemeLookAndFeelInfo?, processChangeSynchronously: Boolean) {
+  private fun updateEditorSchemeIfNecessary(oldLaf: UIThemeLookAndFeelInfo?) {
     val currentTheme = currentTheme
     if (oldLaf is TempUIThemeLookAndFeelInfo || currentTheme is TempUIThemeLookAndFeelInfo) {
       return
@@ -548,7 +531,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     val current = editorColorManager.globalScheme
     if (currentTheme != null) {
       getPreviousSchemeForLaf(currentTheme)?.let {
-        editorColorManager.setGlobalScheme(scheme = it, processChangeSynchronously = processChangeSynchronously)
+        editorColorManager.setGlobalScheme(scheme = it, processChangeSynchronously = true)
         return
       }
     }
@@ -568,7 +551,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
         properties.setValue(toSavedEditorThemeKey, current.name, if (dark) EditorColorsScheme.DEFAULT_SCHEME_NAME else DarculaLaf.NAME)
       }
       editorColorManager.getScheme(targetScheme)?.let {
-        editorColorManager.setGlobalScheme(it, processChangeSynchronously)
+        editorColorManager.setGlobalScheme(it, processChangeSynchronously = true)
       }
     }
   }
@@ -763,28 +746,33 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   private inner class UiThemeEpListener : ExtensionPointListener<UIThemeProvider> {
+    // access only from EDT
+    private var scheduledLaF: UIThemeLookAndFeelInfo? = null
+
+    private fun applyScheduledLaF() {
+      val newLaF = scheduledLaF ?: return
+      scheduledLaF = null
+
+      setLookAndFeelImpl(lookAndFeelInfo = newLaF, installEditorScheme = true)
+      JBColor.setDark(newLaF.isDark)
+      updateUI()
+    }
+
     override fun extensionAdded(extension: UIThemeProvider, pluginDescriptor: PluginDescriptor) {
       val uiThemeProviderListManager = UiThemeProviderListManager.getInstance()
-      val newLaF = uiThemeProviderListManager.themeProviderAdded(extension, pluginDescriptor) as UIThemeLookAndFeelInfoImpl? ?: return
+      val newLaF = uiThemeProviderListManager.themeProviderAdded(extension, pluginDescriptor) ?: return
       updateLafComboboxModel()
 
       // when updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
-      val newTheme = newLaF.theme
-      pluginDescriptor.pluginClassLoader?.let {
-        newTheme.setProviderClassLoader(it)
-      }
-      if (!autodetect && (!isUpdatingPlugin || newTheme.id == themeIdBeforePluginUpdate)) {
-        setLookAndFeelImpl(lookAndFeelInfo = newLaF, installEditorScheme = true, processChangeSynchronously = false)
-        JBColor.setDark(newTheme.isDark)
-        updateUI()
+      if (!autodetect && (!isUpdatingPlugin || newLaF.id == themeIdBeforePluginUpdate)) {
+        scheduleLafChange(newLaF)
       }
     }
 
     override fun extensionRemoved(extension: UIThemeProvider, pluginDescriptor: PluginDescriptor) {
-      val oldLaF = UiThemeProviderListManager.getInstance().themeProviderRemoved(extension) as UIThemeLookAndFeelInfoImpl? ?: return
-      val oldTheme = oldLaF.theme
-      oldTheme.setProviderClassLoader(null)
-      val isDark = oldTheme.isDark
+      val oldLaF = UiThemeProviderListManager.getInstance().themeProviderRemoved(extension) ?: return
+      oldLaF.theme.setProviderClassLoader(null)
+      val isDark = oldLaF.isDark
       val defaultLaF = if (oldLaF === currentTheme) {
         if (isDark) defaultDarkLaf else defaultLightLaf
       }
@@ -793,9 +781,15 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       }
       updateLafComboboxModel()
       if (defaultLaF != null) {
-        setLookAndFeelImpl(lookAndFeelInfo = defaultLaF, installEditorScheme = true, processChangeSynchronously = true)
-        JBColor.setDark(isDark)
-        updateUI()
+        scheduleLafChange(defaultLaF)
+      }
+    }
+
+    @RequiresEdt
+    private fun scheduleLafChange(defaultLaF: UIThemeLookAndFeelInfo?) {
+      scheduledLaF = defaultLaF
+      coroutineScope.launch(Dispatchers.EDT) {
+        applyScheduledLaF()
       }
     }
   }
@@ -1093,7 +1087,6 @@ private fun patchRowHeight(defaults: UIDefaults, key: String, prevScale: Float) 
   if (rowHeight <= 0) {
     LOG.warn("$key = $value in ${UIManager.getLookAndFeel().name}; it may lead to performance degradation")
   }
-  @Suppress("UnresolvedPluginConfigReference")
   val custom = if (LoadingState.APP_STARTED.isOccurred) Registry.intValue("ide.override.$key", -1) else -1
   defaults.put(key, if (custom >= 0) custom else if (rowHeight <= 0) 0 else scale((rowHeight / prevScale).toInt()))
 }
