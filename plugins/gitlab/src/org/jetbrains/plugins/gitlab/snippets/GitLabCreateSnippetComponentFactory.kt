@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.snippets
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
@@ -150,25 +151,22 @@ internal object GitLabCreateSnippetComponentFactory {
 
           // Account selection if >1 accounts available
           row(message("snippet.create.account.label")) {
-            val selectAccount = comboBox(listOf<GitLabAccount>(), ListCellRenderer<GitLabAccount?> { _, accountOrNull, _, _, _ ->
-              // The list shouldn't contain nulls, but if they do, don't render anything
-              val account = accountOrNull ?: return@ListCellRenderer JBLabel()
+            val selectAccount = comboBox(
+              createSnippetVm.glAccounts.value,
+              ListCellRenderer<GitLabAccount?> { _, accountOrNull, _, _, _ ->
+                // The list shouldn't contain nulls, but if they do, don't render anything
+                val account = accountOrNull ?: return@ListCellRenderer JBLabel()
 
-              JBLabel(account.name).apply {
-                toolTipText = "@ ${account.server.uri}"
-              }
-            })
+                JBLabel("${account.name} @ ${account.server.uri}")
+              })
               .align(Align.FILL)
               .bindItem({ createSnippetVm.glAccount.value }, ::setAccount)
 
-            selectAccount.component.addItemListener {
-              setAccount(selectAccount.component.selectedItem as GitLabAccount?)
-            }
             cs.launch {
               createSnippetVm.glAccounts.collectLatest { accounts ->
                 // Re-fill the list of accounts
-                selectAccount.component.removeAllItems()
                 val selected = selectAccount.component.selectedItem
+                selectAccount.component.removeAllItems()
                 accounts.forEach { selectAccount.component.addItem(it) }
                 selectAccount.component.selectedItem = selected
 

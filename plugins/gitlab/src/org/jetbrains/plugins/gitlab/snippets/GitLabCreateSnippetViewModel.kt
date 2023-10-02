@@ -50,13 +50,16 @@ internal class GitLabCreateSnippetViewModel(
 ) {
   /** Flow of GitLab accounts taken from [GitLabAccountManager]. */
   val glAccounts: StateFlow<Set<GitLabAccount>> = glAccountManager.accountsState
-    .stateIn(cs, SharingStarted.Lazily, emptySet())
 
   /**
    * Flow of the currently chosen account to use.
    * By default, this will be the first account found by [GitLabAccountManager].
    */
-  val glAccount: MutableStateFlow<GitLabAccount?> = MutableStateFlow(glAccounts.value.firstOrNull())
+  val glAccount: MutableStateFlow<GitLabAccount?> = run {
+    val server = project.service<GitLabProjectsManager>().knownRepositoriesState.value.first().repository.serverPath
+    val account = glAccounts.value.find { it.server == server } ?: glAccounts.value.firstOrNull()
+    MutableStateFlow(account)
+  }
 
   /**
    * Flow of the current account and credentials for that account. Credentials can be null for an account.
