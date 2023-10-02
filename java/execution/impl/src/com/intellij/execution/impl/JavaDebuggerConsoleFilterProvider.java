@@ -26,7 +26,7 @@ public class JavaDebuggerConsoleFilterProvider implements ConsoleFilterProvider 
     return new Filter[]{new JavaDebuggerAttachFilter()};
   }
 
-  static Matcher getConnectionMatcher(String line) {
+  public static Matcher getConnectionMatcher(String line) {
     if (line.contains("Listening for transport")) {
       Matcher matcher = PATTERN.matcher(line);
       if (matcher.find()) {
