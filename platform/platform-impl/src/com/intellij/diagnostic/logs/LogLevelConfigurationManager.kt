@@ -50,8 +50,7 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
 
   private fun applyCategories(categories: List<LogCategory>): List<LogCategory> {
     val filteredCategories = filteredCategories(categories)
-    val resultCategories = mutableListOf<LogCategory>()
-    filteredCategories.map { logCategory ->
+    return filteredCategories.map { logCategory ->
       val level = logCategory.level
       val loggerLevel = when (level) {
         DebugLogLevel.DEBUG -> Level.FINE
@@ -64,9 +63,8 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
       addLogger(logCategory.category, loggerLevel, level)
       addLogger("#$trimmed", loggerLevel, level)
       addLogger(trimmed, loggerLevel, level)
-      resultCategories.add(LogCategory(trimmed, level))
+      LogCategory(trimmed, level)
     }
-    return resultCategories
   }
 
   private fun addLogger(trimmed: String, loggerLevel: Level?, level: DebugLogLevel) {
