@@ -237,7 +237,6 @@ internal class SingleContentLayout(
 
     if (isSingleContentView) {
       val component = ui.tabComponent
-      component.bounds = component.bounds.apply { width = component.parent.width }
 
       val labelWidth = idLabel.x + idLabel.width  // label is laid out by parent
       var tabsWidth = tabAdapter?.preferredSize?.width ?: 0
