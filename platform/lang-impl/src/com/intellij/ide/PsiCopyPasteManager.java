@@ -2,6 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.ide.dnd.LinuxDragAndDropSupport;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
@@ -16,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -63,8 +65,10 @@ public final class PsiCopyPasteManager {
           Transferable t = contents[i];
           if (t instanceof MyTransferable) {
             MyData myData = ((MyTransferable)t).myDataProxy;
-            if (!myData.isValid() || myData.project == project) {
-              myCopyPasteManager.removeContent(t);
+            try (AccessToken ignore = SlowOperations.knownIssue("IDEA-322955, EA-642861")) {
+              if (!myData.isValid() || myData.project == project) {
+                myCopyPasteManager.removeContent(t);
+              }
             }
           }
         }

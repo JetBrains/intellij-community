@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.codeInsight.hints.presentation.InputHandler;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -30,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.BitUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IconUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
@@ -58,8 +60,8 @@ import java.awt.dnd.DragSource;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState<P>>
@@ -357,7 +359,9 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   public void updatePosition() {
     if (myHighlighter != null && myHighlighter.isValid()) {
       mySourcePosition = null; // reset the source position even if the line number has not changed, as the offset may be cached inside
-      setLine(myHighlighter.getDocument().getLineNumber(getOffset()), false);
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-323746, EA-674953")) {
+        setLine(myHighlighter.getDocument().getLineNumber(getOffset()), false);
+      }
     }
   }
 

@@ -74,6 +74,7 @@ import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -190,9 +191,11 @@ public final class DaemonListeners implements Disposable {
 
       ErrorStripeUpdateManager errorStripeUpdateManager = ErrorStripeUpdateManager.getInstance(myProject);
       PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-      for (Editor editor : activeEditors) {
-        PsiFile file = psiDocumentManager.getCachedPsiFile(editor.getDocument());
-        errorStripeUpdateManager.repaintErrorStripePanel(editor, file);
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-333913, EA-765304")) {
+        for (Editor editor : activeEditors) {
+          PsiFile file = psiDocumentManager.getCachedPsiFile(editor.getDocument());
+          errorStripeUpdateManager.repaintErrorStripePanel(editor, file);
+        }
       }
     });
 

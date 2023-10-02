@@ -221,7 +221,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
         runnable.run();
       }
       if (firstTime && !isFoldingsInitializedInEditor(editor)) {
-        SlowOperations.allowSlowOperations(() -> initFolding(editor));
+        initFolding(editor);
       }
     };
   }

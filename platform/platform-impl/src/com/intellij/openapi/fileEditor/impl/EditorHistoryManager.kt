@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -297,7 +298,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       // the last is the winner
       fileToElement.put(file, e)
     }
-    for (e in fileToElement.values) {
+    for (e in fileToElement.values) SlowOperations.knownIssue("IDEA-333919, EA-831462").use {
       try {
         entries.add(HistoryEntry.createHeavy(project, e))
       }

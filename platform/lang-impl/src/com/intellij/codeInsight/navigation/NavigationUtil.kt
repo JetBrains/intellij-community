@@ -49,6 +49,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.Processor
+import com.intellij.util.SlowOperations
 import com.intellij.util.TextWithIcon
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
@@ -182,7 +183,12 @@ fun shouldOpenAsNative(virtualFile: VirtualFile): Boolean {
   return type is INativeFileType || type is UnknownFileType
 }
 
-private fun activatePsiElementIfOpen(element: PsiElement, searchForOpen: Boolean, requestFocus: Boolean): Boolean {
+private fun activatePsiElementIfOpen(element: PsiElement, searchForOpen: Boolean, requestFocus: Boolean): Boolean =
+  SlowOperations.knownIssue("IDEA-333908, EA-853156; IDEA-326668, EA-856275; IDEA-326669, EA-831824").use {
+    doActivatePsiElementIfOpen(element, searchForOpen, requestFocus)
+  }
+
+private fun doActivatePsiElementIfOpen(element: PsiElement, searchForOpen: Boolean, requestFocus: Boolean): Boolean {
   @Suppress("NAME_SHADOWING")
   var element = element
   if (!element.isValid) {

@@ -2,8 +2,6 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
@@ -21,7 +19,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Window
 import java.awt.event.WindowAdapter
@@ -91,8 +89,11 @@ open class EditorTrackerImpl(@JvmField protected val project: Project) : EditorT
     override fun editorCreated(event: EditorFactoryEvent) {
       val editor = event.editor
       val project = editor.project?.takeIf { !it.isDisposed } ?: return
-      val psi = runReadAction { PsiDocumentManager.getInstance(project).getPsiFile(editor.document) }
-      if (psi != null) {
+      val proceed = SlowOperations.knownIssue("IDEA-330185, EA-897475").use {
+        val psi = runReadAction { PsiDocumentManager.getInstance(project).getPsiFile(editor.document) }
+        psi != null
+      }
+      if (proceed) {
         getInstance(project).createEditorImpl(editor = editor, project = project)
       }
     }

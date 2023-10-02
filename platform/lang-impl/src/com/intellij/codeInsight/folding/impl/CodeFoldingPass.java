@@ -5,12 +5,14 @@ package com.intellij.codeInsight.folding.impl;
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 
 final class CodeFoldingPass extends EditorBoundHighlightingPass implements PossiblyDumbAware {
@@ -40,7 +42,7 @@ final class CodeFoldingPass extends EditorBoundHighlightingPass implements Possi
   public void doApplyInformationToEditor() {
     Runnable runnable = myRunnable;
     if (runnable != null){
-      try {
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-333911, EA-840750")) {
         runnable.run();
       }
       catch (IndexNotReadyException ignored) {
