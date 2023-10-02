@@ -1638,11 +1638,11 @@
 
     <group id="ToolbarPopupActions.MainToolbarNewUI">
       <reference id="MainToolbarQuickActions"/>
+      <reference id="MainMenuAsSeparateToolbarAction"/>
       <separator/>
       <reference id="ChangeProjectColorActionGroup"/>
       <reference id="WelcomeScreen.ChangeProjectIcon"/>
       <action id="ColoredHeaderAction" class="com.intellij.ide.ui.customization.UseProjectColorsCheckboxAction"/>
-      <reference id="MainMenuAsSeparateToolbarAction"/>
     </group>
   </actions>
 </idea-plugin>

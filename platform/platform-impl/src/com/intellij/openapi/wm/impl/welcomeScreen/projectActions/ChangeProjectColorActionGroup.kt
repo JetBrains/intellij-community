@@ -4,7 +4,9 @@ package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.RecentProjectIconHelper
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
@@ -15,7 +17,7 @@ import com.intellij.ui.ColorChooserService
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBPoint
 
-class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware {
+class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware, MainMenuPresentationAware {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val projectPath = e?.project?.let { ProjectWindowCustomizerService.projectPath(it) } ?: return emptyArray()
     val projectName = e.project?.name
@@ -34,11 +36,18 @@ class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware {
                    )
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project != null
+    val project = e.project
+    e.presentation.isEnabled = project != null
+    e.presentation.icon = project?.let {
+      val projectPath = ProjectWindowCustomizerService.projectPath(project) ?: return@let null
+      RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = projectPath, isProjectValid = true, iconSize = 14, name = "")
+    }
   }
+
+  override fun alwaysShowIconInMainMenu(): Boolean = true
 }
 
 class ChangeProjectColorAction(val projectPath: String, val name: @NlsSafe String, val index: Int, val projectName: String?):

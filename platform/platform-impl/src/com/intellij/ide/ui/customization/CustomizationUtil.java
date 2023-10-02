@@ -549,7 +549,7 @@ public final class CustomizationUtil {
 
     String actionID = "customize.toolbar." + groupID;
     DefaultActionGroup customizationGroup = new DefaultActionGroup(
-      new MyDumbAction(actionID, IdeBundle.message("action.customizations.customize.action"), event -> {
+      new MyDumbAction(actionID, IdeBundle.message("action.customizations.customize.action"), AllIcons.General.GearPlain, event -> {
         Component src = popupInvoker.get();
         AnAction targetAction = src instanceof ActionButton ? ((ActionButton)src).getAction() : null;
         DialogWrapper dialogWrapper = createCustomizeGroupDialog(event.getProject(), groupID, groupName, targetAction);
@@ -794,8 +794,11 @@ public final class CustomizationUtil {
     private final @NotNull String id;
     private final @NotNull Consumer<? super AnActionEvent> myActionPerformed;
 
-    private MyDumbAction(@NotNull String id, @Nullable @NlsActions.ActionText String text, @NotNull Consumer<? super AnActionEvent> actionPerformed) {
-      super(text);
+    private MyDumbAction(@NotNull String id,
+                         @Nullable @NlsActions.ActionText String text,
+                         @Nullable Icon icon,
+                         @NotNull Consumer<? super AnActionEvent> actionPerformed) {
+      super(text, null, icon);
       this.id = id;
       myActionPerformed = actionPerformed;
     }
