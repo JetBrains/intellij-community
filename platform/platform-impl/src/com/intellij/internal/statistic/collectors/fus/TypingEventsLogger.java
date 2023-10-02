@@ -34,7 +34,7 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
   private static final StringEventField TOOL_WINDOW =
     EventFields.StringValidatedByCustomRule("toolwindow_id", ToolWindowUtilValidator.class);
-  private static final VarargEventId TYPED = GROUP.registerVarargEvent("typed", EDITOR_KIND, TOOL_WINDOW, EventFields.CurrentFile);
+  private static final VarargEventId TYPED = GROUP.registerVarargEvent("typed", EDITOR_KIND, TOOL_WINDOW, EventFields.Language);
   private static final EventId TOO_MANY_EVENTS = GROUP.registerEvent("too.many.events");
   private static final IntEventField LATENCY_MAX = EventFields.Int("latency_max_ms");
   private static final IntEventField LATENCY_90 = EventFields.Int("latency_90_ms");
@@ -74,7 +74,7 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
         if (virtualFile != null) {
           FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(virtualFile.getNameSequence());
           if (fileType instanceof LanguageFileType) {
-            pairs.add(EventFields.CurrentFile.with(((LanguageFileType)fileType).getLanguage()));
+            pairs.add(EventFields.Language.with(((LanguageFileType)fileType).getLanguage()));
           }
         }
 
