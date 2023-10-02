@@ -3,7 +3,9 @@ package com.intellij.coverage
 
 import com.intellij.coverage.xml.XMLReportEngine
 import com.intellij.coverage.xml.XMLReportRunner
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.JavaModuleTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import java.io.File
@@ -31,12 +33,39 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
   protected fun loadXMLSuite(includeFilters: Array<String>? = null, path: String = SIMPLE_XML_REPORT_PATH)
     = loadCoverageSuite(XMLReportEngine::class.java, XMLReportRunner::class.java, path, includeFilters)
 
+  protected fun closeSuite() {
+    CoverageDataManager.getInstance(myProject).chooseSuitesBundle(null)
+  }
+
+  protected fun openSuiteAndWait(bundle: CoverageSuitesBundle) {
+    var dataCollected = false
+    val disposable = object : Disposable.Default {}
+    val listener = object : CoverageSuiteListener {
+      override fun coverageDataCalculated() {
+        dataCollected = true
+      }
+    }
+    CoverageDataManager.getInstance(myProject).run {
+      addSuiteListener(listener, disposable)
+      chooseSuitesBundle(bundle)
+    }
+
+    // wait until data collected
+    while (!dataCollected) Thread.yield()
+    Disposer.dispose(disposable)
+  }
+
+  protected fun createCoverageFileProvider(coverageDataPath: String): CoverageFileProvider {
+    val coverageFile = File(getTestDataPath(), coverageDataPath)
+    val fileProvider: CoverageFileProvider = DefaultCoverageFileProvider(coverageFile)
+    return fileProvider
+  }
+
   private fun loadCoverageSuite(coverageEngineClass: Class<out CoverageEngine>, coverageRunnerClass: Class<out CoverageRunner>,
                                 coverageDataPath: String,
                                 includeFilters: Array<String>?): CoverageSuitesBundle {
-    val coverageFile = File(getTestDataPath(), coverageDataPath)
     val runner = CoverageRunner.getInstance(coverageRunnerClass)
-    val fileProvider: CoverageFileProvider = DefaultCoverageFileProvider(coverageFile)
+    val fileProvider: CoverageFileProvider = createCoverageFileProvider(coverageDataPath)
     val engine = CoverageEngine.EP_NAME.findExtensionOrFail(coverageEngineClass)
     val suite: CoverageSuite = engine.createCoverageSuite(
       runner, coverageDataPath, fileProvider, includeFilters,

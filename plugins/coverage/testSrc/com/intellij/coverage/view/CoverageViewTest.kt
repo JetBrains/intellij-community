@@ -30,27 +30,4 @@ class CoverageViewTest : CoverageIntegrationBaseTest() {
   private fun assertToolWindowExists() {
     Assert.assertNotNull(getInstance(myProject).getToolWindow(CoverageViewManager.TOOLWINDOW_ID))
   }
-
-
-  private fun closeSuite() {
-    CoverageDataManager.getInstance(myProject).chooseSuitesBundle(null)
-  }
-
-  private fun openSuiteAndWait(bundle: CoverageSuitesBundle) {
-    var dataCollected = false
-    val disposable = object : Disposable.Default {}
-    val listener = object : CoverageSuiteListener {
-      override fun coverageDataCalculated() {
-        dataCollected = true
-      }
-    }
-    CoverageDataManager.getInstance(myProject).run {
-      addSuiteListener(listener, disposable)
-      chooseSuitesBundle(bundle)
-    }
-
-    // wait until data collected
-    while (!dataCollected) Thread.yield()
-    Disposer.dispose(disposable)
-  }
 }
