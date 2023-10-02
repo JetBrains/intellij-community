@@ -214,6 +214,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     INCOMING(ChangesViewContentManager.INCOMING, 30),
     SHELF(ChangesViewContentManager.SHELF, 40),
     BRANCHES(ChangesViewContentManager.BRANCHES, 50),
+    VCS_LOG(ChangesViewContentManager.VCS_LOG, 50), // main tab
     CONSOLE(ChangesViewContentManager.CONSOLE, 60),
     OTHER(null, 100),
     LAST(null, Integer.MAX_VALUE)
@@ -300,6 +301,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     const val INCOMING: @NonNls String = "Incoming"
     const val SHELF: @NonNls String = "Shelf"
     const val BRANCHES: @NonNls String = "Branches"
+    const val VCS_LOG: @NonNls String = "Log"
   }
 }
 
