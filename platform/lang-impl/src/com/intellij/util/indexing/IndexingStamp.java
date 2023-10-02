@@ -112,14 +112,14 @@ public final class IndexingStamp {
           }
         }
         else {
-          timestamps = Timestamps.fromImmutable(immutable);
+          timestamps = immutable.toMutableTimestamps();
         }
       }
       else {
         try (final DataInputStream stream = FSRecords.readAttributeWithLock(id, Timestamps.PERSISTENCE)) {
           if (stream == null && !createIfNoneSaved) return null;
           TimestampsImmutable immutable = TimestampsImmutable.readTimestamps(stream);
-          timestamps = Timestamps.fromImmutable(immutable);
+          timestamps = immutable.toMutableTimestamps();
         }
         catch (IOException e) {
           throw FSRecords.handleError(e);

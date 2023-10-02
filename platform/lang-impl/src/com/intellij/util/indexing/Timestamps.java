@@ -22,20 +22,16 @@ public final class Timestamps {
   private final Object2LongMap<ID<?, ?>> myIndexStamps;
   private boolean myIsDirty = false;
 
-  static Timestamps fromImmutable(TimestampsImmutable immutable) {
-    return new Timestamps(immutable.copyIndexingStamps());
-  }
-
   Timestamps() {
     this(new Object2LongOpenHashMap<>(5, 0.98f));
   }
 
-  private Timestamps(Object2LongMap<ID<?, ?>> indexStamps) {
+  Timestamps(Object2LongMap<ID<?, ?>> indexStamps) {
     myIndexStamps = indexStamps;
   }
 
   TimestampsImmutable toImmutable() {
-    return new TimestampsImmutable(new Object2LongOpenHashMap<>(myIndexStamps));
+    return new TimestampsImmutable(myIndexStamps);
   }
 
   long get(ID<?, ?> id) {
