@@ -20,6 +20,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
@@ -434,6 +435,9 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
   @Override
   public Module getDefaultModule() {
+    if (ModuleManager.getInstance(getProject()).getModules().length < 2) {
+      return super.getDefaultModule();
+    }
     PsiClass mainClass = getMainClass();
     if (mainClass != null) {
       Module module = ModuleUtilCore.findModuleForPsiElement(mainClass);
