@@ -25,6 +25,7 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -2033,25 +2034,25 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    static final class AutoscrollFromSource extends Action {
+    static final class AutoscrollFromSource extends Action implements ActionRemoteBehaviorSpecification.Frontend {
       AutoscrollFromSource() {
         super(view -> view.myAutoscrollFromSource);
       }
     }
 
-    static final class AutoscrollToSource extends Action {
+    static final class AutoscrollToSource extends Action implements ActionRemoteBehaviorSpecification.Frontend {
       AutoscrollToSource() {
         super(view -> view.myAutoscrollToSource);
       }
     }
 
-    static final class OpenDirectoriesWithSingleClick extends Action {
+    static final class OpenDirectoriesWithSingleClick extends Action implements ActionRemoteBehaviorSpecification.Frontend {
       OpenDirectoriesWithSingleClick() {
         super(view -> view.myOpenDirectoriesWithSingleClick);
       }
     }
 
-    static final class OpenInPreviewTab extends Action {
+    static final class OpenInPreviewTab extends Action implements ActionRemoteBehaviorSpecification.Frontend {
       OpenInPreviewTab() {
         super(view -> view.myOpenInPreviewTab);
       }
