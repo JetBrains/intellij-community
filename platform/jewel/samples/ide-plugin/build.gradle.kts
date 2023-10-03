@@ -22,4 +22,7 @@ repositories {
 
 dependencies {
     implementation(projects.ideLafBridge)
+    implementation(compose.desktop.currentOs) {
+        exclude(group = "org.jetbrains.compose.material")
+    }
 }
