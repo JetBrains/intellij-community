@@ -17,12 +17,13 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.StampedLock;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class CachedFileType {
   private static final ConcurrentMap<FileType, CachedFileType> ourInterner = new ConcurrentHashMap<>();
-  private static final ReadWriteLock ourInternerLock = new ReentrantReadWriteLock(/*fair = */ true);
+  private static final StampedLock ourInternerLock = new StampedLock();
 
   private @Nullable FileType fileType;
 
@@ -35,18 +36,16 @@ public final class CachedFileType {
   }
 
   static CachedFileType forType(@NotNull FileType fileType) {
-    Lock readLock = ourInternerLock.readLock();
-    readLock.lock();
+    long stamp = ourInternerLock.readLock();
     try {
       return ourInterner.computeIfAbsent(fileType, CachedFileType::new);
     } finally {
-      readLock.unlock();
+      ourInternerLock.unlockRead(stamp);
     }
   }
 
   public static void clearCache() {
-    Lock writeLock = ourInternerLock.writeLock();
-    writeLock.lock();
+    long stamp = ourInternerLock.writeLock();
     try {
       ourInterner.forEach((type, cachedType) -> {
         // clear references to file types to aid plugin unloading
@@ -54,7 +53,7 @@ public final class CachedFileType {
       });
       ourInterner.clear();
     } finally {
-      writeLock.unlock();
+      ourInternerLock.unlockWrite(stamp);
     }
   }
 
