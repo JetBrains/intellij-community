@@ -377,10 +377,7 @@ public final class PersistentFSLoader {
       LOG.info("Can't delete " + recoveryInProgressMarkerFile);
     }
 
-    deleted = IOUtil.deleteAllFilesStartingWith(namesFile);
-    if (!deleted) {
-      LOG.info("Can't delete " + namesFile);
-    }
+    makeBestEffortToCleanStorage(namesStorage, namesFile);
 
     if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
       deleted = AttributesStorageOverBlobStorage.deleteStorageFiles(attributesFile);
@@ -402,20 +399,7 @@ public final class PersistentFSLoader {
       LOG.info("Can't delete " + contentsHashesFile);
     }
 
-    if (recordsStorage != null) {
-      try {
-        recordsStorage.closeAndClean();
-      }
-      catch (IOException ex) {
-        LOG.info("Can't delete fs-records: " + ex.getMessage(), ex);
-      }
-    }
-    else {
-      deleted = IOUtil.deleteAllFilesStartingWith(recordsFile);
-      if (!deleted) {
-        LOG.info("Can't delete " + recordsFile);
-      }
-    }
+    makeBestEffortToCleanStorage(recordsStorage, recordsFile);
 
     deleted = IOUtil.deleteAllFilesStartingWith(vfsPaths.getRootsBaseFile());
     if (!deleted) {
@@ -806,6 +790,31 @@ public final class PersistentFSLoader {
     attributes.setVersion(version);
     contents.setVersion(version);
     records.setConnectionStatus(PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
+  }
+
+  private static void makeBestEffortToCleanStorage(@Nullable Object storage,
+                                                   @NotNull Path storageFile) {
+    if (storage instanceof CleanableStorage) {
+      try {
+        ((CleanableStorage)storage).closeAndClean();
+      }
+      catch (Throwable t) {
+        LOG.info(storage.getClass().getSimpleName() + ".closeAndClean() fails: " +
+                 ExceptionUtil.getNonEmptyMessage(t, t.getClass().getSimpleName() + "(<no error message given>)"));
+      }
+    }
+    else {
+      LOG.info("[" + storageFile.getFileName() + "]: " + storage + " is not CleanableStorage " +
+               "-> trying to clean by explicitly removing all the files [" + storageFile.getFileName() + "*]");
+    }
+    //In theory, we should try removing files explicitly only as a last resort, if the code above fails
+    // -- i.e. if .closeAndClean() fails, or storage is null, or not CleanableStorage...
+    //In practice, though, I trust no one, not even JVM, nor my own code. Especially not my own code.
+    // So let's do that always:
+    boolean noSuchFilesRemains = IOUtil.deleteAllFilesStartingWith(storageFile);
+    if (!noSuchFilesRemains) {
+      LOG.info("Can't delete " + storageFile + "*");
+    }
   }
 
 
