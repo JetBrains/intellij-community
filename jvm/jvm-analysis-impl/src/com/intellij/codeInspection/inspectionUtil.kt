@@ -12,7 +12,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.asSafely
 import org.jetbrains.uast.UDeclaration
-import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UElement
 import org.jetbrains.uast.toUElement
 
 fun createAddAnnotationQuickfixes(target: UDeclaration, request: AnnotationRequest): Array<LocalQuickFix> {
@@ -32,6 +32,6 @@ val PsiElement.nonPreviewElement: JvmModifiersOwner? get() {
   return physSourcePsi.toUElement()?.javaPsi?.asSafely<JvmModifiersOwner>()
 }
 
-fun UExpression.toSmartPsiElementPointer() : SmartPsiElementPointer<PsiElement>? = sourcePsi?.let {
+fun UElement.toSmartPsiElementPointer() : SmartPsiElementPointer<PsiElement>? = sourcePsi?.let {
   SmartPointerManager.createPointer(it)
 }
