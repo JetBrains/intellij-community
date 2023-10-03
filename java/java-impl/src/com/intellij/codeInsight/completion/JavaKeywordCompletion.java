@@ -25,6 +25,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
@@ -559,9 +560,9 @@ public class JavaKeywordCompletion {
         if (element.getTextRange().getStartOffset() >= offset) {
           break;
         }
-        if (element instanceof PsiTypeTestPattern typeTestPattern && typeTestPattern.getCheckType() != null) {
-          PsiType type = typeTestPattern.getCheckType().getType();
-          PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
+        PsiType patternType = JavaPsiPatternUtil.getPatternType(element);
+        if (patternType != null && JavaPsiPatternUtil.isUnconditionalForType(element, patternType)) {
+          PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(patternType);
           if (psiClass == null) {
             continue;
           }
