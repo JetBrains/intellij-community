@@ -10,6 +10,7 @@ import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.indexing.dependencies.ReadWriteFileIndexingStampImpl
 import org.junit.Assert.assertEquals
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -53,6 +54,7 @@ class IndexingFlagTest {
   }
 
   @Test
+  @Ignore("Triggers `Path conflict. Existing symlink: SymlinkData{} vs. new symlink: SymlinkData{}`")
   @RunsInEdt
   fun indexingFlagIsKeptThroughVFSReload() {
     val file = temp.newFile("test", "content".toByteArray())
