@@ -11,11 +11,21 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.NativeFileArchitecture.*
 import org.jetbrains.intellij.build.io.W_CREATE_NEW
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+
+/**
+ * Set of native files that shouldn't be signed.
+ */
+private val nonSignFiles = setOf(
+  // Native file used by skiko (Compose backend) for Windows.
+  // It cannot be signed.
+  "icudtl.dat"
+)
 
 internal fun CoroutineScope.packNativePresignedFiles(nativeFiles: Map<ZipSource, List<String>>, dryRun: Boolean, context: BuildContext) {
   for ((source, paths) in nativeFiles) {
@@ -58,25 +68,19 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
         continue
       }
 
-      val osAndArch = path.indexOf('/').takeIf { it != -1 }?. let { path.substring(0, it) }
-      val arch: JvmArchitecture? = when {
-        (osAndArch != null && osAndArch.endsWith("-aarch64")) || path.contains("/aarch64/") || fileName.contains("arm64") -> JvmArchitecture.aarch64
-        path.contains("x86-64") || path.contains("x86_64") || fileName.contains("x64") -> JvmArchitecture.x64
-        // universal library
-        fileName == "icudtl.dat" || (os == OsFamily.MACOS && path.count { it == '/' } == 1) -> null
-        (osAndArch != null && !osAndArch.contains('-')) && path.count { it == '/' } == 1 -> JvmArchitecture.x64
-        else -> {
-          continue
-        }
-      }
+      val nativeFileArchitecture = determineArch(os, path, fileName) ?: continue
 
-      if (!allPlatformsRequired && arch != null &&
-          (context.options.targetArch != null && context.options.targetArch != arch) &&
+      if (!allPlatformsRequired &&
+          !nativeFileArchitecture.compatibleWithTarget(context.options.targetArch) &&
           signTool.signNativeFileMode != SignNativeFileMode.PREPARE) {
         continue
       }
 
-      var file: Path? = if (os == OsFamily.LINUX || fileName == "icudtl.dat" || signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {
+      var file: Path? = if (
+        os == OsFamily.LINUX ||
+        fileName in nonSignFiles ||
+        signTool.signNativeFileMode != SignNativeFileMode.ENABLED
+      ) {
         null
       }
       else {
@@ -101,11 +105,12 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
           }
         }
 
-        if (os != OsFamily.LINUX && fileName != "icudtl.dat") {
+        if (os != OsFamily.LINUX && fileName !in nonSignFiles) {
           unsignedFiles.computeIfAbsent(os) { mutableListOf() }.add(file)
         }
       }
 
+      val arch = nativeFileArchitecture.jvmArch
       val relativePath = "lib/$libName/" + getRelativePath(libName, arch, fileName, path)
       val distFile = DistFile(file = file, relativePath = relativePath,
                               os = os.takeUnless { allPlatformsRequired },
@@ -135,6 +140,59 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
   }
 }
 
+/**
+ * Represent CPU architecture for which native code was built.
+ */
+private enum class NativeFileArchitecture(val jvmArch: JvmArchitecture?) {
+  X_64(JvmArchitecture.x64), AARCH_64(JvmArchitecture.aarch64),
+
+  // Universal native file can be used by any platform
+  UNIVERSAL(null);
+
+  fun compatibleWithTarget(targetArch: JvmArchitecture?): Boolean {
+    return targetArch == null || this == UNIVERSAL || targetArch == jvmArch
+  }
+}
+
+private fun determineArch(os: OsFamily, path: String, fileName: String): NativeFileArchitecture? {
+  // detect architecture from subfolders e.g. "linux-aarch64/libsqliteij.so"
+  val osAndArch = path.indexOf('/').takeIf { it != -1 }?.let { path.substring(0, it) }
+  if (osAndArch != null) {
+    when {
+      osAndArch.endsWith("-aarch64") || path.contains("/aarch64/") -> {
+        return AARCH_64
+      }
+      path.contains("x86-64") || path.contains("x86_64") -> {
+        return X_64
+      }
+      os == OsFamily.MACOS && path.count { it == '/' } == 1 -> {
+        return UNIVERSAL
+      }
+      !osAndArch.contains('-') && path.count { it == '/' } == 1 -> {
+        return X_64
+      }
+    }
+  }
+
+  // if we couldn't detect using subfolder
+  // try to detect architecture from file name e.g. "libskiko-macos-arm64.dylib"
+  // otherwise return null
+  return when {
+    fileName.contains("arm64") -> {
+      return AARCH_64
+    }
+    fileName.contains("x64") -> {
+      return X_64
+    }
+    // for now only "icudtl.dat" used by skiko is known as a universal library
+    fileName == "icudtl.dat" -> {
+      return UNIVERSAL
+    }
+    // couldn't detect architecture
+    else -> null
+  }
+}
+
 private fun determineOsFamily(path: String, fileName: String): OsFamily? {
   val osFromPath = when {
     osNameStartsWith(path, "darwin") || osNameStartsWith(path, "mac") || osNameStartsWith(path, "macos") -> OsFamily.MACOS
@@ -150,7 +208,11 @@ private fun determineOsFamily(path: String, fileName: String): OsFamily? {
     return osFromPath
   }
 
+  // see skiko-runtime library as an example of a library where
+  // native files are not separated by folders like it is done in async-profiler and other libs,
+  // but files contain OS in their names e.g. "libskiko-macos-arm64.dylib"
   val osFromFileName = when {
+    // skiko brings "icudtl.dat" for windows only
     fileName == "icudtl.dat" -> OsFamily.WINDOWS
     fileName.contains("macos") -> OsFamily.MACOS
     fileName.contains("windows") -> OsFamily.WINDOWS
