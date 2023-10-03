@@ -39,7 +39,7 @@ public final class PluginModuleGroup implements RuntimeModuleGroup {
       if (included != null) {
         includedModules.add(included);
       }
-      if (!rawModule.getImportance().equals(ModuleImportance.OPTIONAL)) {
+      if (!rawModule.getImportance().equals(ModuleImportance.FUNCTIONAL)) {
         optionalModuleIds.add(rawModule.getModuleId());
       }
     }

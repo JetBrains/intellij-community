@@ -78,4 +78,46 @@ class ProductModulesLoaderTest {
     assertEquals(ModuleImportance.OPTIONAL, optional.importance)
     assertEquals(setOf("optional", "unknown-optional"), productModules.mainModuleGroup.optionalModuleIds.mapTo(HashSet()) { it.stringId })
   }
+  
+  @Test
+  fun `multiple modules in plugin module group`() {
+    val repository = createRepository(
+      tempDirectory.rootPath,
+      RawRuntimeModuleDescriptor("root", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor("plugin", listOf("plugin"), emptyList()),
+      RawRuntimeModuleDescriptor("optional", emptyList(), listOf("plugin")),
+    )
+    writePluginXml(tempDirectory.rootPath / "plugin", """
+      |<idea-plugin>
+      |  <id>plugin</id>
+      |  <content>
+      |    <module name="optional"/>
+      |    <module name="unknown"/>
+      |  </content>
+      |</idea-plugin>
+      """.trimMargin())
+
+    val xml = directoryContent { 
+      xml(FILE_NAME, """
+        <product-modules>
+          <main-root-modules>
+            <module importance="functional">root</module>
+          </main-root-modules>
+          <bundled-plugins>
+            <module>plugin</module>
+          </bundled-plugins>  
+        </product-modules>
+      """.trimIndent())
+    }.generateInTempDir().resolve(FILE_NAME)
+    val productModules = RuntimeModuleRepositorySerialization.loadProductModules(xml, repository)
+    val pluginModuleGroup = productModules.bundledPluginModuleGroups.single()
+    val pluginModules = pluginModuleGroup.includedModules
+    assertEquals(2, pluginModules.size)
+    val (plugin, optional) = pluginModules
+    assertEquals("plugin", plugin.moduleDescriptor.moduleId.stringId)
+    assertEquals(ModuleImportance.FUNCTIONAL, plugin.importance)
+    assertEquals("optional", optional.moduleDescriptor.moduleId.stringId)
+    assertEquals(ModuleImportance.OPTIONAL, optional.importance)
+    assertEquals(setOf("optional", "unknown"), pluginModuleGroup.optionalModuleIds.mapTo(HashSet()) { it.stringId })
+  }
 }
