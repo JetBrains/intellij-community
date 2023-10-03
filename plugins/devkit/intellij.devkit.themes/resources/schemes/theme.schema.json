@@ -273,11 +273,10 @@
     },
     "editorScheme": {
       "type": "string",
-      "title": "Path to the editor schema xml file starting with '/'",
+      "title": "The editor color scheme id",
       "default": "",
-      "pattern": "^/",
       "examples": [
-        "/editorScheme.xml"
+        "IntelliJ Light"
       ]
     },
     "parentTheme": {
