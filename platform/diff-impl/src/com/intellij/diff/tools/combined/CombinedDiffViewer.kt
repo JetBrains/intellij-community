@@ -145,7 +145,7 @@ class CombinedDiffViewer(
     val createDiffBlock = createDiffBlock(newContent)
     createDiffBlock.updateBlockContent(newContent)
     val newViewer = newContent.viewer
-    removeAdditionalLines(newViewer)
+    configureEditorForCombinedDiff(newViewer)
     installCombinedDiffViewer(newViewer, this)
 
     val blockId = newContent.blockId
@@ -728,10 +728,21 @@ private val DiffViewer?.isEditorBased: Boolean
           this !is ThreesideBinaryDiffViewer &&
           this !is TwosideBinaryDiffViewer
 
+private fun configureEditorForCombinedDiff(viewer: DiffViewer) {
+  removeAdditionalLines(viewer)
+  disableAdditionalPageAtBottom(viewer)
+}
+
 private fun removeAdditionalLines(viewer: DiffViewer) {
   viewer.editors.forEach { editor ->
     editor.settings.additionalLinesCount = 0
     (editor as? EditorImpl)?.resetSizes()
+  }
+}
+
+private fun disableAdditionalPageAtBottom(viewer: DiffViewer) {
+  for (editor in viewer.editors) {
+    editor.settings.isAdditionalPageAtBottom = false
   }
 }
 
