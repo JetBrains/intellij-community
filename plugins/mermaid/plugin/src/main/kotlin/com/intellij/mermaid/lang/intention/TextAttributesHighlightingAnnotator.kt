@@ -14,16 +14,18 @@ import com.intellij.psi.tree.TokenSet
 
 class TextAttributesHighlightingAnnotator : Annotator {
   private val types = setOf(
-    "int", "integer",
+    "int", "integer", "bigint", "biginteger",
     "float",
     "double",
     "bool", "boolean",
-    "string",
+    "string", "text",
     "char", "character",
     "varchar",
     "list",
     "array",
-    "BigDecimal"
+    "BigDecimal",
+    "numeric",
+    "timestamp"
   )
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
@@ -43,6 +45,11 @@ class TextAttributesHighlightingAnnotator : Annotator {
   }
 
   private fun PsiElement.isTypeAttribute(): Boolean {
-    return types.any { text.equals(it, ignoreCase = true) || text.equals("$it[]", ignoreCase = true) }
+    return types.any {
+      text.equals(it, ignoreCase = true)
+        || text.startsWith("$it[", ignoreCase = true)
+        || text.startsWith("$it(", ignoreCase = true)
+        || text.startsWith("$it{", ignoreCase = true)
+    }
   }
 }
