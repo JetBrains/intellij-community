@@ -282,7 +282,7 @@ open class CachedImageIcon internal constructor(
                            scaleContext = scaleContext?.copy())
   }
 
-  fun createStrokeIcon(): Icon {
+  internal fun createStrokeIcon(): Icon {
     val resolver = resolver ?: return EMPTY_ICON
     return iconToStrokeIcon.computeIfAbsent(this) {
       CachedImageIcon(originalPath = originalPath,

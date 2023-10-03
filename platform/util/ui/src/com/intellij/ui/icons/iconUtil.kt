@@ -243,7 +243,7 @@ fun loadImageForStartUp(requestedPath: String, scale: Float, classLoader: ClassL
         val image = loadPng(stream = ByteArrayInputStream(data))
         // compensate the image original scale
         val effectiveScale = if (descriptor.scale > 1) scale / descriptor.scale else scale
-        return doScaleImage(image, effectiveScale.toDouble()) as BufferedImage
+        return doScaleImage(image = image, scale = effectiveScale.toDouble()) as BufferedImage
       }
     }
     catch (ignore: IOException) {

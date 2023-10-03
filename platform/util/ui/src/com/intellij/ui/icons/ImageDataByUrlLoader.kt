@@ -118,7 +118,7 @@ private inline fun findUrl(path: String, urlProvider: (String) -> URL?): URL? {
   when {
     effectivePath.endsWith(".png") -> effectivePath = effectivePath.substring(0, effectivePath.length - 4) + ".svg"
     effectivePath.endsWith(".svg") -> effectivePath = effectivePath.substring(0, effectivePath.length - 4) + ".png"
-    else -> logger<ImageDataLoader>().debug("unexpected path: ", effectivePath)
+    else -> logger<ImageDataLoader>().warn("unexpected path: $effectivePath")
   }
   return urlProvider(effectivePath)
 }
