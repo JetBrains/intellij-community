@@ -14,4 +14,6 @@ class EntityRelationshipTest : MermaidParserTestCase("entityRelationship") {
   fun `test attr keys`() = doTest(true)
 
   fun `test parent-child relationship`() = doTest(true)
+
+  fun `test entity alias`() = doTest(true)
 }

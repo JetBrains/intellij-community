@@ -106,4 +106,19 @@ class EntityRelationshipTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test entity alias`() {
+    val content = """
+    erDiagram
+      p[Person] {
+        varchar(64) firstName
+        varchar(64) lastName
+      }
+      c["Customer Account"] {
+        varchar(128) email
+      }
+      p ||--o| c: has
+    """.trimIndent()
+    doTest(content)
+  }
 }

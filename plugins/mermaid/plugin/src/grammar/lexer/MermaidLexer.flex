@@ -719,6 +719,9 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
   ":" { yypushstate(relationship_description); return COLON; }
   "{" { yybegin(entity_attributes); return OPEN_CURLY; }
+
+  "[" { return OPEN_SQUARE; }
+  "]" { return CLOSE_SQUARE; }
 }
 <entity_attributes> {
   "FK" | "PK" | "UK" { return EntityRelationship.ATTR_KEY; }

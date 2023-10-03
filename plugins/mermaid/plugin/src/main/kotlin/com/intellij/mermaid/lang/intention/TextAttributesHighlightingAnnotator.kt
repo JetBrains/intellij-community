@@ -29,18 +29,31 @@ class TextAttributesHighlightingAnnotator : Annotator {
   )
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-    if (element is MermaidSpecialState) {
-      holder.newSilentAnnotation(HighlightSeverity.TEXT_ATTRIBUTES)
-        .textAttributes(MermaidTextAttributes.identifier)
-        .create()
-    } else if (element.hasType(MermaidTokens.ATTRIBUTE_WORD) && element.isTypeAttribute()) {
-      holder.newSilentAnnotation(HighlightSeverity.TEXT_ATTRIBUTES)
-        .textAttributes(MermaidTextAttributes.constant)
-        .create()
-    } else if (element.hasType(TokenSet.create(MermaidElements.IDENTIFYING_QUOTED_SANKEY_FIELD_VALUE, MermaidElements.IDENTIFYING_COMPLEX_SANKEY_TEXT))) {
-      holder.newSilentAnnotation(HighlightSeverity.TEXT_ATTRIBUTES)
-        .textAttributes(MermaidTextAttributes.identifier)
-        .create()
+    when {
+      element is MermaidSpecialState ->
+        holder.newSilentAnnotation(HighlightSeverity.TEXT_ATTRIBUTES)
+          .textAttributes(MermaidTextAttributes.identifier)
+          .create()
+
+      element.hasType(MermaidTokens.ATTRIBUTE_WORD) && element.isTypeAttribute() ->
+        holder.newSilentAnnotation(HighlightSeverity.TEXT_ATTRIBUTES)
+          .textAttributes(MermaidTextAttributes.constant)
+          .create()
+
+      element.hasType(
+        TokenSet.create(
+          MermaidElements.IDENTIFYING_QUOTED_SANKEY_FIELD_VALUE,
+          MermaidElements.IDENTIFYING_COMPLEX_SANKEY_TEXT
+        )
+      ) ->
+        holder.newSilentAnnotation(HighlightSeverity.TEXT_ATTRIBUTES)
+          .textAttributes(MermaidTextAttributes.identifier)
+          .create()
+
+      element.hasType(MermaidTokens.ID) && element.parent.hasType(MermaidElements.ER_IDENTIFIER_ALIAS) ->
+        holder.newSilentAnnotation(HighlightSeverity.TEXT_ATTRIBUTES)
+          .textAttributes(MermaidTextAttributes.string)
+          .create()
     }
   }
 

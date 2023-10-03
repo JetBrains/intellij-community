@@ -174,6 +174,7 @@ internal object MermaidSpacingBuilder {
       .between(MermaidElements.NAMESPACE_HEADER, MermaidElements.NAMESPACE_BLOCK).spaceIf(mermaid.BEFORE_OPEN_CURLY)
       .between(MermaidElements.STATE_DECLARATION_HEADER, MermaidElements.STATE_BLOCK).spaceIf(mermaid.BEFORE_OPEN_CURLY)
       .between(MermaidElements.ER_IDENTIFIER, MermaidElements.ER_ENTITY_BLOCK).spaceIf(mermaid.BEFORE_OPEN_CURLY)
+      .between(MermaidElements.ER_IDENTIFIER_ALIAS, MermaidElements.ER_ENTITY_BLOCK).spaceIf(mermaid.BEFORE_OPEN_CURLY)
       .between(MermaidElements.REQUIREMENT_HEADER, MermaidElements.REQUIREMENT_BLOCK).spaceIf(mermaid.BEFORE_OPEN_CURLY)
       .between(MermaidElements.ELEMENT_HEADER, MermaidElements.ELEMENT_BLOCK).spaceIf(mermaid.BEFORE_OPEN_CURLY)
       .between(MermaidElements.BOUNDARY_HEADER, MermaidElements.BOUNDARY_BLOCK).spaceIf(mermaid.BEFORE_OPEN_CURLY)
@@ -209,6 +210,9 @@ internal object MermaidSpacingBuilder {
       .spaceIf(mermaid.BETWEEN_NODE_ID_AND_NODE_SHAPE)
 
       .between(MermaidElements.CLASS_DIAGRAM_IDENTIFIER, MermaidElements.CLASS_LABEL)
+      .spaceIf(mermaid.BETWEEN_NODE_ID_AND_NODE_SHAPE)
+
+      .between(MermaidElements.ER_IDENTIFIER, MermaidElements.ER_IDENTIFIER_ALIAS)
       .spaceIf(mermaid.BETWEEN_NODE_ID_AND_NODE_SHAPE)
 
       // Annotation
