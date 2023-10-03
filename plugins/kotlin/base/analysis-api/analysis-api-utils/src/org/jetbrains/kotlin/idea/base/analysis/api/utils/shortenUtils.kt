@@ -3,9 +3,9 @@
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeInDependedAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
@@ -20,11 +20,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 
 /**
  * Shorten references in the given [element]. See [shortenReferencesInRange] for more details.
@@ -106,6 +104,7 @@ fun shortenReferencesInRange(
 fun ShortenCommand.invokeShortening(): List<KtElement> {
     // if the file has been invalidated, there's nothing we can shorten
     val targetFile = targetFile.element ?: return emptyList()
+    val psiFactory = KtPsiFactory(targetFile.project)
 
     for (nameToImport in importsToAdd) {
         targetFile.addImport(nameToImport)
@@ -118,14 +117,26 @@ fun ShortenCommand.invokeShortening(): List<KtElement> {
     val shorteningResults = mutableListOf<KtElement>()
     //todo
     //        PostprocessReformattingAspect.getInstance(targetFile.project).disablePostprocessFormattingInside {
-    for (typePointer in typesToShorten) {
+    for ((typePointer, shortenedRef) in listOfTypeToShortenInfo) {
         val type = typePointer.element ?: continue
-        type.deleteQualifier()
-        shorteningResults.add(type)
+        if (shortenedRef == null) {
+            type.deleteQualifier()
+            shorteningResults.add(type)
+        } else {
+            val shorteningResult = type.replace(psiFactory.createExpression(shortenedRef)) as? KtElement ?: continue
+            shorteningResults.add(shorteningResult)
+        }
     }
 
-    for (callPointer in qualifiersToShorten) {
+    for ((callPointer, shortenedRef) in listOfQualifierToShortenInfo) {
         val call = callPointer.element ?: continue
+        shortenedRef?.let {
+            val callee = when (val selector = call.selectorExpression) {
+                is KtArrayAccessExpression -> selector.arrayExpression
+                else -> selector.getCalleeExpressionIfAny()
+            }
+            callee?.replace(psiFactory.createExpression(shortenedRef))
+        }
         call.deleteQualifier()?.let { shorteningResults.add(it) }
     }
 
