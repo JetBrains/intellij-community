@@ -492,6 +492,8 @@ private suspend fun reportCrashesIfAny() {
           break
         }
 
+        IdeaFreezeReporter.checkProfilerCrash(content)
+
         val attachment = Attachment("crash.txt", content)
         attachment.isIncluded = true
 

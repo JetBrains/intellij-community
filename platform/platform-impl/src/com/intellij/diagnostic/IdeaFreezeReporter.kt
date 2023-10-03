@@ -90,6 +90,10 @@ internal class IdeaFreezeReporter : PerformanceListener {
         }
       }
     }
+
+    internal fun checkProfilerCrash(crashContent: String) {
+      EP_NAME.forEachExtensionSafe { it.checkCrash(crashContent) }
+    }
   }
 
   override fun uiFreezeStarted(reportDir: Path, coroutineScope: CoroutineScope) {
