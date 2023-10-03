@@ -168,6 +168,13 @@ private fun checkContainer(container: ComponentManagerImpl, levelDescription: St
   indicator.text2 = "Checking ${levelDescription} services..."
   ComponentManagerImpl.createAllServices(container, servicesWhichRequireEdt, servicesWhichRequireReadAction)
   indicator.text2 = "Checking ${levelDescription} extensions..."
+  checkExtensions(container, taskExecutor)
+}
+
+private fun checkExtensions(
+  container: ComponentManagerImpl,
+  taskExecutor: (task: () -> Unit) -> Unit,
+) {
   container.extensionArea.processExtensionPoints { extensionPoint ->
     if (extensionPoint.name in extensionPointsWhichRequireReadAction) {
       return@processExtensionPoints
