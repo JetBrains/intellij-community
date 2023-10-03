@@ -30,11 +30,7 @@ import com.intellij.ui.scale.ScaleContextAware
 import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.svg.paintIconWithSelection
 import com.intellij.util.IconUtil.ICON_FLAG_IGNORE_MASK
-import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.ImageUtil
-import com.intellij.util.ui.JBImageIcon
-import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
@@ -47,10 +43,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 import java.util.function.ToIntFunction
-import javax.swing.Icon
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.SwingConstants
+import javax.swing.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToLong
@@ -323,7 +316,7 @@ object IconUtil {
   /**
    * Use it only for icons under selection.
    */
-  @ApiStatus.Internal
+  @Internal
   @Contract("null -> null; !null -> !null")
   @JvmStatic
   fun wrapToSelectionAwareIcon(iconUnderSelection: Icon?): Icon? {
@@ -536,8 +529,8 @@ object IconUtil {
   }
 
   @JvmStatic
-  fun createImageIcon(img: Image): JBImageIcon {
-    return object : JBImageIcon(img) {
+  fun createImageIcon(image: Image): JBImageIcon {
+    return object : JBImageIcon(image) {
       override fun getIconWidth(): Int = ImageUtil.getUserWidth(image)
 
       override fun getIconHeight(): Int = ImageUtil.getUserHeight(image)
@@ -773,11 +766,11 @@ private fun filterIcon(g: Graphics2D?, source: Icon, filter: ColorFilter): Icon 
   val g2d = src.createGraphics()
   source.paintIcon(null, g2d, 0, 0)
   g2d.dispose()
-  val image = if (g != null) {
-    ImageUtil.createImage(g, source.iconWidth, source.iconHeight, BufferedImage.TYPE_INT_ARGB)
+  val image = if (g == null) {
+    ImageUtil.createImage(source.iconWidth, source.iconHeight, BufferedImage.TYPE_INT_ARGB)
   }
   else {
-    ImageUtil.createImage(source.iconWidth, source.iconHeight, BufferedImage.TYPE_INT_ARGB)
+    ImageUtil.createImage(g, source.iconWidth, source.iconHeight, BufferedImage.TYPE_INT_ARGB)
   }
   var rgba: Int
   for (y in 0 until src.raster.height) {
@@ -788,5 +781,13 @@ private fun filterIcon(g: Graphics2D?, source: Icon, filter: ColorFilter): Icon 
       }
     }
   }
-  return IconUtil.createImageIcon(image as Image)
+  return object : ImageIcon(image) {
+    override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+      drawImage(g = g, image = image, x = x, y = y, observer = imageObserver ?: c)
+    }
+
+    override fun getIconWidth(): Int = ImageUtil.getUserWidth(image)
+
+    override fun getIconHeight(): Int = ImageUtil.getUserHeight(image)
+  }
 }

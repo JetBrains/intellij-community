@@ -2,9 +2,9 @@
 package com.intellij.ui.icons
 
 import com.dynatrace.hash4j.hashing.HashFunnel
-import com.dynatrace.hash4j.hashing.Hashing
-import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.patchColorsInCacheImageIcon
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.hasher
 import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.ui.svg.newSvgPatcher
 import com.intellij.util.SVGLoader
@@ -34,7 +34,7 @@ private val strokeColors = pairWithDigest(listOf(
 private val strokeColorsForReplacer = pairWithDigest(listOf("white", "#ffffff"))
 
 private fun pairWithDigest(list: List<String>): Pair<List<String>, Long> {
-  return list to Hashing.komihash5_0().hashStream().putOrderedIterable(list, HashFunnel.forString()).asLong
+  return list to hasher.hashStream().putOrderedIterable(list, HashFunnel.forString()).asLong
 }
 
 fun toStrokeIcon(original: Icon, resultColor: Color): Icon {
@@ -57,7 +57,7 @@ fun toStrokeIcon(original: Icon, resultColor: Color): Icon {
         patcher = strokeReplacer
       }
     }
-    IconLoader.patchColorsInCacheImageIcon(imageIcon = icon, colorPatcher = patcher, isDark = false)
+    patchColorsInCacheImageIcon(imageIcon = icon, colorPatcher = patcher, isDark = false)
   }!!
 }
 

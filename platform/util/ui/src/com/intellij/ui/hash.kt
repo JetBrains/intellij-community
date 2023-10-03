@@ -4,5 +4,6 @@ package com.intellij.ui
 import com.dynatrace.hash4j.hashing.Hasher64
 import com.dynatrace.hash4j.hashing.Hashing
 
-internal val hasher: Hasher64 = Hashing.komihash5_0()
+internal val hasher: Hasher64
+  get() = Hashing.komihash5_0()
 internal val seededHasher: Hasher64 = Hashing.komihash5_0(4812324275)

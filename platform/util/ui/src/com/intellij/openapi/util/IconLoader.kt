@@ -12,15 +12,14 @@ import com.intellij.ui.*
 import com.intellij.ui.icons.*
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.DerivedScaleType
-import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.scale.ScaleContextSupport
-import com.intellij.ui.scale.ScaleType
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.RetinaImage
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.ui.*
+import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -66,7 +65,6 @@ object IconLoader {
     updateTransform { it.withPathPatcher(patcher) }
   }
 
-  @JvmStatic
   @Internal
   fun installPostPathPatcher(patcher: IconPathPatcher) {
     updateTransform { it.withPostPathPatcher(patcher) }
@@ -94,7 +92,6 @@ object IconLoader {
   }
 
   @TestOnly
-  @JvmStatic
   fun clearCacheInTests() {
     iconCache.invalidateAll()
     iconToDisabledIcon.clear()
@@ -266,42 +263,6 @@ object IconLoader {
     return replaceCachedImageIcons(icon) { patchColorsInCacheImageIcon(imageIcon = it, colorPatcher = colorPatcher, isDark = null) }!!
   }
 
-  @Internal
-  fun patchColorsInCacheImageIcon(imageIcon: com.intellij.ui.icons.CachedImageIcon,
-                                  colorPatcher: SvgElementColorPatcherProvider,
-                                  isDark: Boolean?): Icon {
-    var result = imageIcon
-    if (isDark != null) {
-      val variant = result.getDarkIcon(isDark)
-      if (variant is com.intellij.ui.icons.CachedImageIcon) {
-        result = variant
-      }
-    }
-
-    var digest = colorPatcher.digest()
-    if (digest == null) {
-      @Suppress("DEPRECATION")
-      val bytes = colorPatcher.wholeDigest()
-      if (bytes != null) {
-        digest = longArrayOf(hasher.hashBytesToLong(bytes), seededHasher.hashBytesToLong(bytes))
-      }
-    }
-
-    if (digest == null) {
-      return result.createWithPatcher(colorPatcher)
-    }
-
-    val topMapIndex = when(isDark) {
-      false -> 0
-      true -> 1
-      else -> 2
-    }
-
-    return colorPatchCache.computeIfAbsent(topMapIndex) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
-      .computeIfAbsent(digest) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
-      .computeIfAbsent(imageIcon) {result.createWithPatcher(colorPatcher) }
-  }
-
   /**
    * Creates a new icon with the filter applied.
    */
@@ -316,40 +277,6 @@ object IconLoader {
     else {
       FilteredIcon(baseIcon = effectiveIcon, filterSupplier = filterSupplier)
     }
-  }
-
-
-  fun getScaleToRenderIcon(icon: Icon, ancestor: Component?): Float {
-    val ctxSupport = getScaleContextSupport(icon)
-    val scale = if (ctxSupport == null) {
-      (if (JreHiDpiUtil.isJreHiDPI(null as GraphicsConfiguration?)) sysScale(ancestor) else 1.0f)
-    }
-    else {
-      if (JreHiDpiUtil.isJreHiDPI(null as GraphicsConfiguration?)) ctxSupport.getScale(ScaleType.SYS_SCALE).toFloat() else 1.0f
-    }
-    return scale
-  }
-
-  fun renderFilteredIcon(icon: Icon,
-                         scale: Double,
-                         filterSupplier: Supplier<out RGBImageFilter?>,
-                         ancestor: Component?): JBImageIcon {
-    @Suppress("UndesirableClassUsage")
-    val image = BufferedImage((scale * icon.iconWidth).toInt(), (scale * icon.iconHeight).toInt(), BufferedImage.TYPE_INT_ARGB)
-    val graphics = image.createGraphics()
-    graphics.color = Gray.TRANSPARENT
-    graphics.fillRect(0, 0, icon.iconWidth, icon.iconHeight)
-    graphics.scale(scale, scale)
-    // We want to paint here on the fake component:
-    // painting on the real component will have other coordinates at least.
-    // Also, it may be significant if the icon contains updatable icon (e.g. DeferredIcon), and it will schedule incorrect repaint
-    icon.paintIcon(fakeComponent, graphics, 0, 0)
-    graphics.dispose()
-    var img = ImageUtil.filter(image, filterSupplier.get())
-    if (StartupUiUtil.isJreHiDPI(ancestor)) {
-      img = RetinaImage.createFrom(img!!, scale, null)
-    }
-    return JBImageIcon(img!!)
   }
 
   @JvmStatic
@@ -408,9 +335,7 @@ object IconLoader {
   }
 
   @JvmStatic
-  fun createLazy(producer: Supplier<out Icon>): Icon {
-    return LazyIcon(producer)
-  }
+  fun createLazy(producer: Supplier<out Icon>): Icon = LazyIcon(producer)
 
   @Deprecated("Do not use")
   open class CachedImageIcon private constructor(
@@ -430,21 +355,37 @@ object IconLoader {
   )
 }
 
-/**
- * Returns [ScaleContextSupport] which best represents this icon taking into account its compound structure, or null when not applicable.
- */
-private fun getScaleContextSupport(icon: Icon): ScaleContextSupport? {
-  return when (icon) {
-    is ScaleContextSupport -> icon
-    is RetrievableIcon -> getScaleContextSupport(icon.retrieveIcon())
-    is CompositeIcon -> {
-      if (icon.iconCount == 0) {
-        return null
-      }
-      getScaleContextSupport(icon.getIcon(0) ?: return null)
+internal fun patchColorsInCacheImageIcon(imageIcon: CachedImageIcon, colorPatcher: SvgElementColorPatcherProvider, isDark: Boolean?): Icon {
+  var result = imageIcon
+  if (isDark != null) {
+    val variant = result.getDarkIcon(isDark)
+    if (variant is CachedImageIcon) {
+      result = variant
     }
-    else -> null
   }
+
+  var digest = colorPatcher.digest()
+  if (digest == null) {
+    @Suppress("DEPRECATION")
+    val bytes = colorPatcher.wholeDigest()
+    if (bytes != null) {
+      digest = longArrayOf(hasher.hashBytesToLong(bytes), seededHasher.hashBytesToLong(bytes))
+    }
+  }
+
+  if (digest == null) {
+    return result.createWithPatcher(colorPatcher)
+  }
+
+  val topMapIndex = when (isDark) {
+    false -> 0
+    true -> 1
+    else -> 2
+  }
+
+  return colorPatchCache.computeIfAbsent(topMapIndex) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
+    .computeIfAbsent(digest) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
+    .computeIfAbsent(imageIcon) { result.createWithPatcher(colorPatcher) }
 }
 
 private fun updateTransform(updater: (IconTransform) -> IconTransform) {

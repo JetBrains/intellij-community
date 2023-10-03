@@ -1,13 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons
 
-import com.intellij.openapi.util.IconLoader.getScaleToRenderIcon
-import com.intellij.openapi.util.IconLoader.renderFilteredIcon
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.fakeComponent
+import com.intellij.ui.Gray
+import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.RetrievableIcon
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.scale.ScaleContextSupport
+import com.intellij.ui.scale.ScaleType
+import com.intellij.util.RetinaImage
+import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.JBImageIcon
+import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.awt.Graphics
+import java.awt.GraphicsConfiguration
+import java.awt.image.BufferedImage
 import java.awt.image.RGBImageFilter
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -85,4 +95,54 @@ private class PaintNotifier(val c: Component, val x: Int, val y: Int) : IconRepl
     (icon as? ReplaceableIcon)?.replaceBy(this)
     return super.replaceIcon(icon)
   }
+}
+
+/**
+ * Returns [ScaleContextSupport] which best represents this icon taking into account its compound structure, or null when not applicable.
+ */
+private fun getScaleContextSupport(icon: Icon): ScaleContextSupport? {
+  return when (icon) {
+    is ScaleContextSupport -> icon
+    is RetrievableIcon -> getScaleContextSupport(icon.retrieveIcon())
+    is CompositeIcon -> {
+      if (icon.iconCount == 0) {
+        return null
+      }
+      getScaleContextSupport(icon.getIcon(0) ?: return null)
+    }
+    else -> null
+  }
+}
+
+private fun getScaleToRenderIcon(icon: Icon, ancestor: Component?): Float {
+  val ctxSupport = getScaleContextSupport(icon)
+  val scale = if (ctxSupport == null) {
+    (if (JreHiDpiUtil.isJreHiDPI(null as GraphicsConfiguration?)) JBUIScale.sysScale(ancestor) else 1.0f)
+  }
+  else {
+    if (JreHiDpiUtil.isJreHiDPI(null as GraphicsConfiguration?)) ctxSupport.getScale(ScaleType.SYS_SCALE).toFloat() else 1.0f
+  }
+  return scale
+}
+
+private fun renderFilteredIcon(icon: Icon,
+                               scale: Double,
+                               filterSupplier: Supplier<out RGBImageFilter?>,
+                               ancestor: Component?): JBImageIcon {
+  @Suppress("UndesirableClassUsage")
+  val image = BufferedImage((scale * icon.iconWidth).toInt(), (scale * icon.iconHeight).toInt(), BufferedImage.TYPE_INT_ARGB)
+  val graphics = image.createGraphics()
+  graphics.color = Gray.TRANSPARENT
+  graphics.fillRect(0, 0, icon.iconWidth, icon.iconHeight)
+  graphics.scale(scale, scale)
+  // We want to paint here on the fake component:
+  // painting on the real component will have other coordinates at least.
+  // Also, it may be significant if the icon contains updatable icon (e.g., DeferredIcon), and it will schedule incorrect repaint
+  icon.paintIcon(fakeComponent, graphics, 0, 0)
+  graphics.dispose()
+  var img = ImageUtil.filter(image, filterSupplier.get())
+  if (StartupUiUtil.isJreHiDPI(ancestor)) {
+    img = RetinaImage.createFrom(img!!, scale, null)
+  }
+  return JBImageIcon(img!!)
 }

@@ -9,13 +9,16 @@ import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.ui.IconManager
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.ColorIcon
-import com.intellij.util.ui.ColorizeProxyIcon
 import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.NonNls
 import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
 import javax.swing.Icon
 
 open class HighlightDisplayLevel(val severity: HighlightSeverity) {
@@ -183,9 +186,17 @@ private class HighlightDisplayLevelColorIcon(size: Int, color: Color) : ColorIco
   override fun getColor(): Color = iconColor
 }
 
-private class HighlightDisplayLevelColorizedIcon(private val key: TextAttributesKey, baseIcon: Icon) : ColorizeProxyIcon(baseIcon),
-                                                                                                       HighlightDisplayLevelColoredIcon {
+private class HighlightDisplayLevelColorizedIcon(private val key: TextAttributesKey,
+                                                 private val baseIcon: Icon) : Icon, HighlightDisplayLevelColoredIcon {
   override fun getColor(): Color = getColorFromAttributes(key) ?: JBColor.GRAY
+
+  override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
+    IconManager.getInstance().colorize(g as Graphics2D, baseIcon, getColor()).paintIcon(c, g, x, y);
+  }
+
+  override fun getIconWidth(): Int = baseIcon.iconWidth
+
+  override fun getIconHeight(): Int = baseIcon.iconHeight
 }
 
 private fun getColorFromAttributes(key: TextAttributesKey): Color? {
