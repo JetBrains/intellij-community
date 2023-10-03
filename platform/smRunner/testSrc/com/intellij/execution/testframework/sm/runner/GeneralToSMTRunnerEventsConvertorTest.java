@@ -163,6 +163,39 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     assertEquals(1, myEventsProcessor.getRunningTestsQuantity());
   }
 
+  public void testCheckMetaUpdateWithValue() {
+    checkMetainfo("suiteMetaUpdate", "testMetaUpdate");
+  }
+
+  public void testCheckMetaUpdateWithNull() {
+    checkMetainfo(null, null);
+  }
+
+  private void checkMetainfo(@Nullable String updatedSuiteMetainfo, @Nullable String updatedTestMetainfo) {
+    final String suiteName = "some_suite";
+    final String testName = "some_test";
+    final String initSuiteMeta = "suiteMeta";
+    final String initTestMeta = "testMeta";
+
+    myEventsProcessor.onSuiteTreeNodeAdded(true, suiteName, suiteName, initSuiteMeta, suiteName, TreeNodeEvent.ROOT_NODE_ID);
+    myEventsProcessor.onSuiteTreeNodeAdded(false, testName, testName, initTestMeta, testName, suiteName);
+    myEventsProcessor.onSuiteTreeEnded(testName);
+    myEventsProcessor.onSuiteTreeEnded(suiteName);
+    myEventsProcessor.onBuildTreeEnded();
+
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent(suiteName, suiteName, updatedSuiteMetainfo));
+    myEventsProcessor.onTestStarted(new TestStartedEvent(testName, testName, updatedTestMetainfo));
+
+    myResultsViewer.performUpdate();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
+
+    final SMTestProxy suiteProxy = myEventsProcessor.findChild(null, suiteName, true);
+    assertEquals(updatedSuiteMetainfo == null ? initSuiteMeta : updatedSuiteMetainfo, suiteProxy.getMetainfo());
+
+    final SMTestProxy testProxy = myEventsProcessor.findChild(suiteProxy, testName, false);
+    assertEquals(updatedTestMetainfo == null ? initTestMeta : updatedTestMetainfo, testProxy.getMetainfo());
+  }
+
   public void testOnTestStarted_WithLocation() {
     onTestStarted("some_test", "file://some/file.rb:1");
     final String fullName = myEventsProcessor.getFullTestName("some_test");

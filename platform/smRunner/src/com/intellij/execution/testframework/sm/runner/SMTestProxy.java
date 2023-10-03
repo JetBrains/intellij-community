@@ -58,7 +58,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   private final String myName;
   private boolean myIsSuite;
   private final String myLocationUrl;
-  private String myMetainfo;
+  private volatile String myMetainfo;
   private final boolean myPreservePresentableName;
 
   private List<SMTestProxy> myChildren;
@@ -501,8 +501,12 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     LOG.warn("Unsupported operation");
   }
 
-  // The meta-information can be expanded after the test result tree is created when the tests are executed explicitly
-  // (information about the exact location of the test, the random generation seed, etc.).
+  /**
+   * The meta-information can be expanded after the test result tree is created when the tests are executed explicitly
+   * (information about the exact location of the test, the random generation seed, etc.).
+   *
+   * @param metainfo new metadata value resulting from the actual test execution.
+   */
   public void setMetainfo(final @Nullable String metainfo) {
     myMetainfo = metainfo;
   }
