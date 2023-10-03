@@ -12,7 +12,9 @@
     <!--suppress PluginXmlDynamicPlugin -->
     <ideStartupWizard implementation="com.intellij.ide.startup.importSettings.IdeStartupWizardImpl"/>
 
+    <!--<applicationService serviceInterface="com.intellij.ide.startup.importSettings.data.SettingsService"-->
+    <!--                    serviceImplementation="com.intellij.ide.startup.importSettings.data.TestBaseService"/>-->
     <applicationService serviceInterface="com.intellij.ide.startup.importSettings.data.SettingsService"
-                        serviceImplementation="com.intellij.ide.startup.importSettings.data.TestBaseService"/>
+                        serviceImplementation="com.intellij.ide.startup.importSettings.data.SettingsServiceImpl"/>
   </extensions>
 </idea-plugin>
