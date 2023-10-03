@@ -29,7 +29,7 @@ class SystemGetPropertyInspection : AbstractBaseUastLocalInspectionTool() {
       val propertyValue = node.getArgumentForParameter(0)?.evaluate() as? String ?: return true
       val message = JvmAnalysisBundle.message("jvm.inspections.system.get.property.problem.descriptor", propertyValue)
       val scope = node.sourcePsi?.resolveScope ?: return true
-      val qualifiedReference = buildReplacementInfo(propertyValue, holder.project, scope)
+      val qualifiedReference = buildReplacementInfo(propertyValue, holder.project, scope) ?: return true
       holder.registerUProblem(node, message,
                               ReplaceCallableExpressionQuickFix(qualifiedReference))
       return true
@@ -37,7 +37,7 @@ class SystemGetPropertyInspection : AbstractBaseUastLocalInspectionTool() {
 
     private fun buildReplacementInfo(keyProperty: String,
                                      project: Project,
-                                     scope: GlobalSearchScope): CallChainReplacementInfo = when (keyProperty) {
+                                     scope: GlobalSearchScope): CallChainReplacementInfo? = when (keyProperty) {
       "file.separator" -> CallChainReplacementInfo("java.nio.file.FileSystems",
                                                    CallReplacementInfo("getDefault",
                                                                        PsiType.getTypeByName("java.nio.file.FileSystem", project, scope)),
@@ -52,7 +52,7 @@ class SystemGetPropertyInspection : AbstractBaseUastLocalInspectionTool() {
                                                                       PsiType.getTypeByName("java.nio.charset.Charset", project, scope)),
                                                   CallReplacementInfo("displayName",
                                                                       PsiType.getTypeByName("java.lang.String", project, scope)))
-      else -> error("Unknown key")
+      else -> null
     }
   }
 }
