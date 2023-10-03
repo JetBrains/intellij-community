@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("TestOnlyProblems", "ReplaceGetOrSet", "HardCodedStringLiteral")
+
 package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.PluginException
@@ -29,57 +30,7 @@ import kotlin.properties.Delegates.notNull
 
 private class CreateAllServicesAndExtensionsAction : AnAction("Create All Services And Extensions"), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    val errors = mutableListOf<Throwable>()
-    runModalTask("Creating All Services And Extensions", cancellable = true) { indicator ->
-      val taskExecutor: (task: () -> Unit) -> Unit = { task ->
-        try {
-          task()
-        }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          errors.add(e)
-        }
-      }
-
-      // check first
-      checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
-
-      val application = ApplicationManager.getApplication() as ComponentManagerImpl
-      checkContainer(application, "app", indicator, taskExecutor)
-
-      val project = ProjectUtil.getOpenProjects().firstOrNull() as? ComponentManagerImpl
-      if (project != null) {
-        checkContainer(project, "project", indicator, taskExecutor)
-        val module = ModuleManager.getInstance(project as Project).modules.firstOrNull() as? ComponentManagerImpl
-        if (module != null) {
-          checkContainer(module, "module", indicator, taskExecutor)
-        }
-      }
-
-      indicator.text2 = "Checking light services..."
-      for (mainDescriptor in PluginManagerCore.getPluginSet().enabledPlugins) {
-        // we don't check classloader for sub descriptors because url set is the same
-        val pluginClassLoader = mainDescriptor.pluginClassLoader as? PluginClassLoader
-                                ?: continue
-
-        scanClassLoader(pluginClassLoader).use { scanResult ->
-          for (classInfo in scanResult.getClassesWithAnnotation(Service::class.java.name)) {
-            checkLightServices(classInfo, mainDescriptor, application, project) {
-              val error = when (it) {
-                is ProcessCanceledException -> throw it
-                is PluginException -> it
-                else -> PluginException("Cannot create ${classInfo.name}", it, mainDescriptor.pluginId)
-              }
-
-              errors.add(error)
-            }
-          }
-        }
-      }
-    }
-
+    val errors = createAllServicesAndExtensions()
     if (errors.isNotEmpty()) {
       logger<ComponentManagerImpl>().error(getErrorsAsString(errors).toString())
     }
@@ -91,6 +42,60 @@ private class CreateAllServicesAndExtensionsAction : AnAction("Create All Servic
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
+}
+
+private fun createAllServicesAndExtensions(): List<Throwable> {
+  val errors = mutableListOf<Throwable>()
+  runModalTask("Creating All Services And Extensions", cancellable = true) { indicator ->
+    val taskExecutor: (task: () -> Unit) -> Unit = { task ->
+      try {
+        task()
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        errors.add(e)
+      }
+    }
+
+    // check first
+    checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
+
+    val application = ApplicationManager.getApplication() as ComponentManagerImpl
+    checkContainer(application, "app", indicator, taskExecutor)
+
+    val project = ProjectUtil.getOpenProjects().firstOrNull() as? ComponentManagerImpl
+    if (project != null) {
+      checkContainer(project, "project", indicator, taskExecutor)
+      val module = ModuleManager.getInstance(project as Project).modules.firstOrNull() as? ComponentManagerImpl
+      if (module != null) {
+        checkContainer(module, "module", indicator, taskExecutor)
+      }
+    }
+
+    indicator.text2 = "Checking light services..."
+    for (mainDescriptor in PluginManagerCore.getPluginSet().enabledPlugins) {
+      // we don't check classloader for sub descriptors because url set is the same
+      val pluginClassLoader = mainDescriptor.pluginClassLoader as? PluginClassLoader
+                              ?: continue
+
+      scanClassLoader(pluginClassLoader).use { scanResult ->
+        for (classInfo in scanResult.getClassesWithAnnotation(Service::class.java.name)) {
+          checkLightServices(classInfo, mainDescriptor, application, project) {
+            val error = when (it) {
+              is ProcessCanceledException -> throw it
+              is PluginException -> it
+              else -> PluginException("Cannot create ${classInfo.name}", it, mainDescriptor.pluginId)
+            }
+
+            errors.add(error)
+          }
+        }
+      }
+    }
+  }
+  return errors
 }
 
 private class CreateAllServicesAndExtensionsActivity : AppLifecycleListener {
