@@ -73,7 +73,7 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
         editor.getScrollingModel().addVisibleAreaListener(VisibleAreaListener {
           val session: XDebugSessionImpl = debuggerManagerImpl.currentSession ?: return@VisibleAreaListener
           scheduleInlayRunToCursor(editor, session)
-        }, debuggerManagerImpl)
+        })
       }
     }, debuggerManagerImpl)
   }
