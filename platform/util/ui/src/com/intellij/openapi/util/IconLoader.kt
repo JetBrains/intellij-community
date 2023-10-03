@@ -50,7 +50,7 @@ private val standardDisablingFilter: () -> RGBImageFilter = { UIUtil.getGrayFilt
 
 private val colorPatchCache = run {
   val map = Array<MutableMap<LongArray, MutableMap<Icon, Icon>>>(3) {
-    CollectionFactory.createConcurrentWeakKeyWeakValueMap()
+    CollectionFactory.createConcurrentWeakValueMap()
   }
   map
 }
@@ -373,13 +373,12 @@ internal fun patchColorsInCacheImageIcon(imageIcon: CachedImageIcon, colorPatche
   if (digest == null) {
     @Suppress("DEPRECATION")
     val bytes = colorPatcher.wholeDigest()
-    if (bytes != null) {
+    if (bytes == null) {
+      return result.createWithPatcher(colorPatcher)
+    }
+    else {
       digest = longArrayOf(hasher.hashBytesToLong(bytes), seededHasher.hashBytesToLong(bytes))
     }
-  }
-
-  if (digest == null) {
-    return result.createWithPatcher(colorPatcher)
   }
 
   val cacheIndex = when (isDark) {
