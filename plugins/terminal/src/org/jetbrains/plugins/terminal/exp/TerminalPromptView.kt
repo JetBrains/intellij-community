@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.editor.CaretVisualAttributes
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -106,7 +107,7 @@ class TerminalPromptView(
       editorFontSize = settings.terminalFont.size
       lineSpacing = settings.lineSpacing
     }
-    editor.settings.isBlockCursor = true
+    editor.caretModel.primaryCaret.visualAttributes = CaretVisualAttributes(null, CaretVisualAttributes.Weight.HEAVY)
     editor.putUserData(AutoPopupController.SHOW_BOTTOM_PANEL_IN_LOOKUP_UI, false)
 
     FileDocumentManager.getInstance().getFile(editor.document)?.let {
