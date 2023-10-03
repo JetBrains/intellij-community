@@ -21,8 +21,6 @@ interface SearchEverywhereConcurrentPsiElementsFetcher : SearchEverywhereConcurr
 
   override fun getPriorityThresholds() = PRIORITY_THRESHOLDS
 
-  override fun useReadAction() = true
-
   override fun prepareStandardDescriptor(descriptor: FoundItemDescriptor<Any>,
                                          knownItems: MutableList<FoundItemDescriptor<PsiItemWithSimilarity<*>>>,
                                          mutex: ReentrantLock): FoundItemDescriptor<Any> {

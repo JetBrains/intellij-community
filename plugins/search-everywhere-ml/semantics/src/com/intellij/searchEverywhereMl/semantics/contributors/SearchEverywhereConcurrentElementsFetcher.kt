@@ -3,6 +3,7 @@ package com.intellij.searchEverywhereMl.semantics.contributors
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.MergeableElement
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.searchEverywhereMl.semantics.providers.StreamSemanticItemsProvider
 import com.intellij.util.Processor
@@ -17,8 +18,6 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
   fun getDesiredResultsCount(): Int
 
   fun getPriorityThresholds(): Map<DescriptorPriority, Double>
-
-  fun useReadAction(): Boolean
 
   fun defaultFetchElements(pattern: String, progressIndicator: ProgressIndicator, consumer: Processor<in FoundItemDescriptor<E>>)
 
@@ -52,7 +51,7 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
         var foundItemsCount = 0
         val cachedDescriptors = mutableListOf<FoundItemDescriptor<I>>()
 
-        val iterate = {
+        try {
           val semanticMatches = itemsProvider.streamSearch(pattern, getPriorityThresholds()[DescriptorPriority.LOW])
           for (priority in ORDERED_PRIORITIES) {
             if (priority == DescriptorPriority.HIGH) {
@@ -72,17 +71,13 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
 
               val durationMs = TimeoutUtil.getDurationMillis(searchStart)
               prepareSemanticDescriptor(descriptor, knownItems, mutex, durationMs)?.let {
-                consumer.process(it)
+                ReadAction.run<Throwable> { consumer.process (it) }
                 foundItemsCount++
               }
               if (priority != DescriptorPriority.HIGH && foundItemsCount >= getDesiredResultsCount()) break
             }
             if (progressIndicator.isCanceled || foundItemsCount >= getDesiredResultsCount()) break
           }
-        }
-
-        try {
-          if (useReadAction()) runReadAction(iterate) else iterate()
         }
         finally {
           mutex.withLock {

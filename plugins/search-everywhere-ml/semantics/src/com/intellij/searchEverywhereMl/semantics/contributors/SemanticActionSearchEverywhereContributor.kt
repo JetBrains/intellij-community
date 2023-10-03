@@ -43,8 +43,6 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
 
   override fun getPriorityThresholds() = PRIORITY_THRESHOLDS
 
-  override fun useReadAction() = false
-
   override fun isElementSemantic(element: Any): Boolean {
     return (element is MatchedValue && element.type == GotoActionModel.MatchedValueType.SEMANTIC)
   }

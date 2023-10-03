@@ -3,6 +3,7 @@ package com.intellij.searchEverywhereMl.semantics.providers
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel
+import com.intellij.openapi.application.ReadAction
 import com.intellij.searchEverywhereMl.semantics.services.DiskSynchronizedEmbeddingsStorage
 
 interface SemanticPsiItemsProvider : StreamSemanticItemsProvider<PsiItemWithSimilarity<*>> {
@@ -31,8 +32,10 @@ interface SemanticPsiItemsProvider : StreamSemanticItemsProvider<PsiItemWithSimi
                                     similarityScore: Double,
                                     pattern: String): List<FoundItemDescriptor<PsiItemWithSimilarity<*>>> {
     val shiftedScore = convertCosineSimilarityToInteger(similarityScore)
-    return model.getElementsByName(name, false, pattern)
-      .map { FoundItemDescriptor(PsiItemWithSimilarity(it, similarityScore), shiftedScore) }
+    return ReadAction.nonBlocking<List<FoundItemDescriptor<PsiItemWithSimilarity<*>>>> {
+      model.getElementsByName(name, false, pattern)
+        .map { FoundItemDescriptor(PsiItemWithSimilarity(it, similarityScore), shiftedScore) }
+    }.executeSynchronously()
   }
 
   companion object {
