@@ -28,6 +28,7 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import org.jetbrains.jps.util.JpsPathUtil
+import org.jsoup.Jsoup
 import org.spdx.jacksonstore.MultiFormatStore
 import org.spdx.library.ModelCopyManager
 import org.spdx.library.SpdxConstants
@@ -95,7 +96,7 @@ internal class SoftwareBillOfMaterialsImpl(
     }
     Options.DistributionLicense(
       name = "JetBrains User Agreement",
-      text = eula.readText(),
+      text = Jsoup.parse(eula.readText()).text(),
       url = "https://www.jetbrains.com/legal/docs/toolbox/user/"
     )
   }
