@@ -224,6 +224,8 @@
     <notificationGroup id="Lombok plugin" displayType="BALLOON" bundle="messages.LombokBundle" key="notification.group.lombok"/>
 
     <dependencySupport coordinate="org.projectlombok:lombok" kind="java" displayName="Lombok"/>
+
+    <iconMapper mappingFile="LombokIconMappings.json"/>
   </extensions>
 
   <projectListeners>

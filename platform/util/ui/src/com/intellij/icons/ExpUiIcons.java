@@ -213,8 +213,6 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Jsp = load("expui/fileTypes/jsp.svg", -701663125, 2);
     /** 16x16 */ public static final @NotNull Icon Jspx = load("expui/fileTypes/jspx.svg", 985217374, 2);
     /** 16x16 */ public static final @NotNull Icon Less = load("expui/fileTypes/less.svg", -238843875, 2);
-    /** 16x16 */ public static final @NotNull Icon Lombok = load("expui/fileTypes/lombok.svg", -2072549731, 2);
-    /** 16x16 */ public static final @NotNull Icon LombokConfig = load("expui/fileTypes/lombokConfig.svg", -551438902, 2);
     /** 16x16 */ public static final @NotNull Icon Manifest = load("expui/fileTypes/manifest.svg", 273592604, 2);
     /** 13x13 */ public static final @NotNull Icon Modified = load("expui/fileTypes/modified.svg", 1796473277, 2);
     /** 16x16 */ public static final @NotNull Icon Patch = load("expui/fileTypes/patch.svg", -1862136134, 2);
