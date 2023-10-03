@@ -9,13 +9,10 @@ import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStreamBase;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.util.io.*;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordAlreadyDeletedException;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
-import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.RepresentableAsByteArraySequence;
-import com.intellij.util.io.UnsyncByteArrayInputStream;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +33,7 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
  * Attribute storage implemented on the top of {@link StreamlinedBlobStorage}
  */
 @ApiStatus.Internal
-public final class AttributesStorageOverBlobStorage implements AbstractAttributesStorage {
+public final class AttributesStorageOverBlobStorage implements AbstractAttributesStorage, CleanableStorage {
   public static final int MAX_SUPPORTED_ATTRIBUTE_ID = 1 << AttributeEntry.BIG_ENTRY_ATTR_ID_BITS;
 
   /**
@@ -300,8 +297,15 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
     storage.close();
   }
 
+  /** @deprecated replace with {@link #closeAndClean()} */
+  @Deprecated
   public static boolean deleteStorageFiles(final Path file) throws IOException {
     return FileUtil.delete(file.toFile());
+  }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    storage.closeAndClean();
   }
 
   /**
@@ -971,7 +975,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
     return storage.readRecord(attributesRecordId, buffer -> {
       final AttributesRecord attributesRecord = new AttributesRecord(buffer);
       assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
-                                                        " != backref fileId(" + attributesRecord.backRefFileId + "), "+attributesRecord;
+                                                        " != backref fileId(" + attributesRecord.backRefFileId + "), " + attributesRecord;
 
       if (!attributesRecord.findAttributeInDirectoryRecord(attributeId)) {
         return null;
