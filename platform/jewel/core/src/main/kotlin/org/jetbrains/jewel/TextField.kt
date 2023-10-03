@@ -41,6 +41,7 @@ fun TextField(
     outline: Outline = Outline.None,
     placeholder: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
+    leadingIcon: @Composable (() -> Unit)? = null,
     undecorated: Boolean = false,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
@@ -71,6 +72,7 @@ fun TextField(
         outline = outline,
         placeholder = placeholder,
         trailingIcon = trailingIcon,
+        leadingIcon = leadingIcon,
         undecorated = undecorated,
         visualTransformation = visualTransformation,
         keyboardOptions = keyboardOptions,
@@ -94,6 +96,7 @@ fun TextField(
     readOnly: Boolean = false,
     outline: Outline = Outline.None,
     placeholder: @Composable (() -> Unit)? = null,
+    leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     undecorated: Boolean = false,
     visualTransformation: VisualTransformation = VisualTransformation.None,
@@ -132,6 +135,7 @@ fun TextField(
             placeholderTextColor = style.colors.placeholder,
             placeholder = if (value.text.isEmpty()) placeholder else null,
             trailingIcon = trailingIcon,
+            leadingIcon = leadingIcon,
         )
     }
 }
@@ -144,10 +148,16 @@ private fun TextFieldDecorationBox(
     placeholderTextColor: Color,
     placeholder: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
+    leadingIcon: @Composable (() -> Unit)? = null,
 ) {
     Layout(
         modifier = modifier,
         content = {
+            if (leadingIcon != null) {
+                Box(modifier = Modifier.layoutId(LEADING_ID), contentAlignment = Alignment.Center) {
+                    leadingIcon()
+                }
+            }
             if (trailingIcon != null) {
                 Box(modifier = Modifier.layoutId(TRAILING_ID), contentAlignment = Alignment.Center) {
                     trailingIcon()
@@ -175,7 +185,11 @@ private fun TextFieldDecorationBox(
         // measure trailing icon
         val trailingPlaceable = measurables.find { it.layoutId == TRAILING_ID }
             ?.measure(iconConstraints)
+
+        val leadingPlaceable = measurables.find { it.layoutId == LEADING_ID }
+            ?.measure(iconConstraints)
         occupiedSpaceHorizontally += trailingPlaceable?.width ?: 0
+        occupiedSpaceHorizontally += leadingPlaceable?.width ?: 0
 
         val textFieldConstraints = incomingConstraints.offset(
             horizontal = -occupiedSpaceHorizontally,
@@ -188,12 +202,14 @@ private fun TextFieldDecorationBox(
 
         val width = calculateWidth(
             trailingPlaceable,
+            leadingPlaceable,
             textFieldPlaceable,
             placeholderPlaceable,
             incomingConstraints,
         )
         val height = calculateHeight(
             trailingPlaceable,
+            leadingPlaceable,
             textFieldPlaceable,
             placeholderPlaceable,
             incomingConstraints,
@@ -204,6 +220,7 @@ private fun TextFieldDecorationBox(
                 height,
                 width,
                 trailingPlaceable,
+                leadingPlaceable,
                 textFieldPlaceable,
                 placeholderPlaceable,
             )
@@ -213,6 +230,7 @@ private fun TextFieldDecorationBox(
 
 private fun calculateWidth(
     trailingPlaceable: Placeable?,
+    leadingPlaceable: Placeable?,
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
     constraints: Constraints,
@@ -221,12 +239,13 @@ private fun calculateWidth(
         textFieldPlaceable.width,
         placeholderPlaceable?.width ?: 0,
     )
-    val wrappedWidth = middleSection + (trailingPlaceable?.width ?: 0)
+    val wrappedWidth = middleSection + (trailingPlaceable?.width ?: 0) + (leadingPlaceable?.width ?: 0)
     return max(wrappedWidth, constraints.minWidth)
 }
 
 private fun calculateHeight(
     trailingPlaceable: Placeable?,
+    leadingPlaceable: Placeable?,
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
     constraints: Constraints,
@@ -234,6 +253,7 @@ private fun calculateHeight(
     textFieldPlaceable.height,
     placeholderPlaceable?.height ?: 0,
     trailingPlaceable?.height ?: 0,
+    leadingPlaceable?.height ?: 0,
     constraints.minHeight,
 )
 
@@ -241,6 +261,7 @@ private fun Placeable.PlacementScope.place(
     height: Int,
     width: Int,
     trailingPlaceable: Placeable?,
+    leadingPlaceable: Placeable?,
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
 ) {
@@ -249,16 +270,20 @@ private fun Placeable.PlacementScope.place(
         width - trailingPlaceable.width,
         Alignment.CenterVertically.align(trailingPlaceable.height, height),
     )
+    leadingPlaceable?.placeRelative(
+        0,
+        Alignment.CenterVertically.align(leadingPlaceable.height, height),
+    )
 
     // placed center vertically
     textFieldPlaceable.placeRelative(
-        0,
+        leadingPlaceable?.width ?: 0,
         Alignment.CenterVertically.align(textFieldPlaceable.height, height),
     )
 
     // placed similar to the input text above
     placeholderPlaceable?.placeRelative(
-        0,
+        leadingPlaceable?.width ?: 0,
         Alignment.CenterVertically.align(placeholderPlaceable.height, height),
     )
 }
@@ -266,3 +291,4 @@ private fun Placeable.PlacementScope.place(
 private const val PLACEHOLDER_ID = "Placeholder"
 private const val TEXT_FIELD_ID = "TextField"
 private const val TRAILING_ID = "Trailing"
+private const val LEADING_ID = "Leading"

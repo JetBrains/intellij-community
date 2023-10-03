@@ -2,21 +2,27 @@ package org.jetbrains.jewel.samples.standalone.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.GroupHeader
+import org.jetbrains.jewel.Icon
 import org.jetbrains.jewel.LabelledTextField
 import org.jetbrains.jewel.Outline
+import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.TextField
+import org.jetbrains.jewel.styling.ResourcePainterProvider
 
 @Composable
-fun TextFields() {
+fun TextFields(svgLoader: SvgLoader, resourceLoader: ResourceLoader) {
     GroupHeader("TextFields")
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -58,5 +64,17 @@ fun TextFields() {
             hint = { Text("Attached hint text") },
             placeholder = { Text("Labelled TextField with hint") },
         )
+    }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        var text by remember { mutableStateOf("With leading icon") }
+        TextField(text, { text = it }, enabled = true, leadingIcon = {
+            val searchIcon by remember { ResourcePainterProvider.stateless("icons/search.svg", svgLoader) }.getPainter(
+                resourceLoader,
+            )
+            Icon(searchIcon, "SearchIcon", Modifier.size(16.dp))
+        })
     }
 }

@@ -103,7 +103,7 @@ private fun ComponentShowcase(svgLoader: JewelSvgLoader, resourceLoader: Resourc
             Checkboxes()
             RadioButtons()
             Links()
-            TextFields()
+            TextFields(svgLoader, resourceLoader)
             TextAreas()
             ProgressBar(svgLoader)
             ChipsAndTree()
