@@ -383,10 +383,7 @@ public final class PersistentFSLoader {
 
     makeBestEffortToCleanStorage(attributesEnumerator, attributesFile);
 
-    deleted = AbstractStorage.deleteFiles(contentsFile);
-    if (!deleted) {
-      LOG.info("Can't delete " + contentsFile);
-    }
+    makeBestEffortToCleanStorage(contentsStorage, contentsFile);
 
     deleted = IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
     if (!deleted) {
