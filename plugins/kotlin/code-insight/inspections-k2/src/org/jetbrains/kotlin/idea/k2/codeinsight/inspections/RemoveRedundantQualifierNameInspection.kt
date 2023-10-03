@@ -33,10 +33,11 @@ internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection
             collectShortenings(file)
         }
 
-        val qualifiersToShorten = shortenings.qualifiersToShorten
-        val typesToShorten = shortenings.typesToShorten
+        val qualifiersToShorten = shortenings.listOfQualifierToShortenInfo
+        val typesToShorten = shortenings.listOfTypeToShortenInfo
 
-        return (qualifiersToShorten + typesToShorten).mapNotNull { it.element }.toList()
+        return qualifiersToShorten.mapNotNull { (elementPointer, _) -> elementPointer.element }
+            .toList() + typesToShorten.mapNotNull { (elementPointer, _) -> elementPointer.element }.toList()
     }
 
     /**

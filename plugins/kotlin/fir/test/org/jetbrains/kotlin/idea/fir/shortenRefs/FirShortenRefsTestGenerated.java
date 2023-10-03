@@ -26,6 +26,11 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
             KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
         }
 
+        @TestMetadata("arrayAccessWithImportAlias.kt")
+        public void testArrayAccessWithImportAlias() throws Exception {
+            runTest("../idea/tests/testData/shortenRefsFir/calls/arrayAccessWithImportAlias.kt");
+        }
+
         @TestMetadata("classInSameFile.kt")
         public void testClassInSameFile() throws Exception {
             runTest("../idea/tests/testData/shortenRefsFir/calls/classInSameFile.kt");
@@ -64,6 +69,21 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
         @TestMetadata("functionInSameFileAmbiguous.kt")
         public void testFunctionInSameFileAmbiguous() throws Exception {
             runTest("../idea/tests/testData/shortenRefsFir/calls/functionInSameFileAmbiguous.kt");
+        }
+
+        @TestMetadata("importAlias.kt")
+        public void testImportAlias() throws Exception {
+            runTest("../idea/tests/testData/shortenRefsFir/calls/importAlias.kt");
+        }
+
+        @TestMetadata("importAliasAndStarImport.kt")
+        public void testImportAliasAndStarImport() throws Exception {
+            runTest("../idea/tests/testData/shortenRefsFir/calls/importAliasAndStarImport.kt");
+        }
+
+        @TestMetadata("multipleImportAlias.kt")
+        public void testMultipleImportAlias() throws Exception {
+            runTest("../idea/tests/testData/shortenRefsFir/calls/multipleImportAlias.kt");
         }
 
         @TestMetadata("notImportedTopLevelFunctionAmbiguous.kt")
@@ -206,6 +226,11 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
         public void testTwoVariablesInKtUseType() throws Exception {
             runTest("../idea/tests/testData/shortenRefsFir/quailfiers/TwoVariablesInKtUseType.kt");
         }
+
+        @TestMetadata("typeQualifierImportAlias.kt")
+        public void testTypeQualifierImportAlias() throws Exception {
+            runTest("../idea/tests/testData/shortenRefsFir/quailfiers/typeQualifierImportAlias.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -226,6 +251,11 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
     public static class StarImport extends AbstractFirShortenRefsTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
+        }
+
+        @TestMetadata("starImportAlreadyExists.kt")
+        public void testStarImportAlreadyExists() throws Exception {
+            runTest("../idea/tests/testData/shortenRefsFir/starImport/starImportAlreadyExists.kt");
         }
 
         @TestMetadata("TwoVariablesInKtUseType.kt")
@@ -274,6 +304,11 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
         @TestMetadata("ParameterTypeImplicitImportBeatsStarImport.kt")
         public void testParameterTypeImplicitImportBeatsStarImport() throws Exception {
             runTest("../idea/tests/testData/shortenRefsFir/types/ParameterTypeImplicitImportBeatsStarImport.kt");
+        }
+
+        @TestMetadata("ParameterTypeImportAlias.kt")
+        public void testParameterTypeImportAlias() throws Exception {
+            runTest("../idea/tests/testData/shortenRefsFir/types/ParameterTypeImportAlias.kt");
         }
 
         @TestMetadata("ParameterTypeImportedNestedClass.kt")

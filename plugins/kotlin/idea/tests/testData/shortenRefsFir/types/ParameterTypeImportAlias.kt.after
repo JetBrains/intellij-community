@@ -1,0 +1,5 @@
+package test
+
+import dependency.T.TT as BAR
+
+fun foo(p: BAR) {}
