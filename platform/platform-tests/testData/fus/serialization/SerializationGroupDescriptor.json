@@ -18,5 +18,8 @@
   ],
   "className": "classNameTest",
   "recorder": "recorderTest",
-  "pluginId": "pluginIdTest"
+  "plugin": {
+    "id": "pluginIdTest",
+    "version": "pluginVersionTest"
+  }
 }

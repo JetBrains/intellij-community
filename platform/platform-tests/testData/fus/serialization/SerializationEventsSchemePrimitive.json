@@ -22,7 +22,10 @@
       ],
       "className": "classNameTest",
       "recorder": "recorderTest",
-      "pluginId": "pluginIdTest"
+      "plugin": {
+        "id": "pluginIdTest",
+        "version": "pluginVersionTest"
+      }
     },
     {
       "id": "testId",
@@ -44,7 +47,10 @@
       ],
       "className": "classNameTest",
       "recorder": "recorderTest",
-      "pluginId": "pluginIdTest"
+      "plugin": {
+        "id": "pluginIdTest",
+        "version": "pluginVersionTest"
+      }
     }
   ]
 }
