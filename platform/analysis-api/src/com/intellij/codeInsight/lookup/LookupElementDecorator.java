@@ -170,7 +170,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     return myDelegate.getPsiElement();
   }
 
-  private static class InsertingDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
+  private static final class InsertingDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
     private final InsertHandler<? super LookupElementDecorator<T>> myInsertHandler;
 
     InsertingDecorator(T element, InsertHandler<? super LookupElementDecorator<T>> insertHandler) {
@@ -204,7 +204,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     }
   }
 
-  private static class InsertingDelegateDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
+  private static final class InsertingDelegateDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
     private final InsertHandler<T> myInsertHandler;
 
     InsertingDelegateDecorator(T element, InsertHandler<T> insertHandler) {
@@ -238,7 +238,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     }
   }
 
-  private static class VisagisteDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
+  private static final class VisagisteDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
     private final LookupElementRenderer<? super LookupElementDecorator<T>> myVisagiste;
 
     VisagisteDecorator(T element, LookupElementRenderer<? super LookupElementDecorator<T>> visagiste) {

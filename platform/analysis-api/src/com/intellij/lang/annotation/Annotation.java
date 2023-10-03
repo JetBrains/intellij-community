@@ -52,7 +52,7 @@ public final class Annotation implements Segment {
   private List<QuickFixInfo> myBatchFixes;
   private PsiReference unresolvedReference;
 
-  public static class QuickFixInfo {
+  public static final class QuickFixInfo {
     public final @NotNull IntentionAction quickFix;
     public final @NotNull TextRange textRange;
     public final HighlightDisplayKey key;

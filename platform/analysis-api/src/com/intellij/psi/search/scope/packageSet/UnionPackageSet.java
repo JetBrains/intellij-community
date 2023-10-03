@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public class UnionPackageSet extends CompoundPackageSet {
+public final class UnionPackageSet extends CompoundPackageSet {
   public static @NotNull PackageSet create(PackageSet @NotNull ... sets) {
     if (sets.length == 0) throw new IllegalArgumentException("empty arguments");
     return sets.length == 1 ? sets[0] : new UnionPackageSet(sets);

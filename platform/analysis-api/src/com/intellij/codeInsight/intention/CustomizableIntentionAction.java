@@ -63,7 +63,7 @@ public interface CustomizableIntentionAction extends IntentionAction {
   }
 
   /** The highlighting request to be returned from {@link #getRangesToHighlight} */
-  class RangeToHighlight {
+  final class RangeToHighlight {
     private final PsiElement psi;
     private final TextRange rangeInPsi;
     private final TextAttributesKey highlightKey;

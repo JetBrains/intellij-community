@@ -40,7 +40,7 @@ public enum AutoCompletionPolicy {
     return new PolicyDecorator(element, this);
   }
 
-  private static class PolicyDecorator extends LookupElementDecorator<LookupElement> {
+  private static final class PolicyDecorator extends LookupElementDecorator<LookupElement> {
     public static final ClassConditionKey<PolicyDecorator> CLASS_CONDITION_KEY = ClassConditionKey.create(PolicyDecorator.class);
     private final AutoCompletionPolicy myPolicy;
 

@@ -26,21 +26,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HighlightDisplayLevel {
+  private static final Map<HighlightSeverity, HighlightDisplayLevel> LEVEL_MAP = new HashMap<>();
+
   public HighlightDisplayLevel(@NotNull HighlightSeverity severity, @NotNull Icon icon) {
     this(severity, new Pair<>(icon, icon));
   }
 
-  public HighlightDisplayLevel(@NotNull HighlightSeverity severity, @NotNull Pair<? extends @NotNull Icon, ? extends @NotNull Icon> iconPair) {
+  public HighlightDisplayLevel(@NotNull HighlightSeverity severity,
+                               @NotNull Pair<? extends @NotNull Icon, ? extends @NotNull Icon> iconPair) {
     this(severity);
-    myIconPair = iconPair;
-    ourMap.put(mySeverity, this);
+    this.iconPair = iconPair;
+    LEVEL_MAP.put(this.severity, this);
   }
 
   public HighlightDisplayLevel(@NotNull HighlightSeverity severity) {
-    mySeverity = severity;
+    this.severity = severity;
   }
-
-  private static final Map<HighlightSeverity, HighlightDisplayLevel> ourMap = new HashMap<>();
 
   public static final HighlightDisplayLevel GENERIC_SERVER_ERROR_OR_WARNING =
     new HighlightDisplayLevel(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
@@ -86,13 +87,13 @@ public class HighlightDisplayLevel {
     }
   };
 
-  private Pair<? extends @NotNull Icon, ? extends @NotNull Icon> myIconPair = new Pair<>(EmptyIcon.ICON_16, EmptyIcon.ICON_16);
-  private final HighlightSeverity mySeverity;
+  private Pair<? extends @NotNull Icon, ? extends @NotNull Icon> iconPair = new Pair<>(EmptyIcon.ICON_16, EmptyIcon.ICON_16);
+  private final HighlightSeverity severity;
 
   public static @Nullable HighlightDisplayLevel find(String name) {
     if ("NON_SWITCHABLE_ERROR".equals(name)) return NON_SWITCHABLE_ERROR;
     if ("NON_SWITCHABLE_WARNING".equals(name)) return NON_SWITCHABLE_WARNING;
-    for (Map.Entry<HighlightSeverity, HighlightDisplayLevel> entry : ourMap.entrySet()) {
+    for (Map.Entry<HighlightSeverity, HighlightDisplayLevel> entry : LEVEL_MAP.entrySet()) {
       HighlightSeverity severity = entry.getKey();
       HighlightDisplayLevel displayLevel = entry.getValue();
       if (Comparing.strEqual(severity.getName(), name)) {
@@ -103,27 +104,27 @@ public class HighlightDisplayLevel {
   }
 
   public static HighlightDisplayLevel find(@NotNull HighlightSeverity severity) {
-    return ourMap.get(severity);
+    return LEVEL_MAP.get(severity);
   }
 
   public @NonNls String toString() {
-    return mySeverity.toString();
+    return severity.toString();
   }
 
   public @NotNull @NonNls String getName() {
-    return mySeverity.getName();
+    return severity.getName();
   }
 
   public @NotNull Icon getIcon() {
-    return myIconPair.first;
+    return iconPair.first;
   }
 
   public @NotNull Icon getOutlineIcon() {
-    return myIconPair.second;
+    return iconPair.second;
   }
 
   public @NotNull HighlightSeverity getSeverity(){
-    return mySeverity;
+    return severity;
   }
 
   public boolean isNonSwitchable() {
@@ -132,12 +133,12 @@ public class HighlightDisplayLevel {
 
   public static void registerSeverity(@NotNull HighlightSeverity severity, @NotNull TextAttributesKey key, @Nullable Icon icon) {
     Pair<Icon, Icon> iconPair = icon != null ? new Pair<> (icon, icon) : createIconByKey(key);
-    HighlightDisplayLevel level = ourMap.get(severity);
+    HighlightDisplayLevel level = LEVEL_MAP.get(severity);
     if (level == null) {
       new HighlightDisplayLevel(severity, iconPair);
     }
     else {
-      level.myIconPair = iconPair;
+      level.iconPair = iconPair;
     }
   }
 
@@ -159,7 +160,7 @@ public class HighlightDisplayLevel {
     return new MyColorIcon(getEmptyIconDim(), renderColor);
   }
 
-  private static class MyColorIcon extends ColorIcon implements ColoredIcon {
+  private static final class MyColorIcon extends ColorIcon implements ColoredIcon {
     MyColorIcon(int size, @NotNull Color color) {
       super(size, color);
     }

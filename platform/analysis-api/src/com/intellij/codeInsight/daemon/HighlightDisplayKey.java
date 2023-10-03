@@ -3,7 +3,10 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Objects;
@@ -11,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
-public class HighlightDisplayKey {
+public final class HighlightDisplayKey {
   private static final Logger LOG = Logger.getInstance(HighlightDisplayKey.class);
 
   private static final Map<String,HighlightDisplayKey> ourNameToKeyMap = new ConcurrentHashMap<>();

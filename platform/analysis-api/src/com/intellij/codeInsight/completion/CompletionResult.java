@@ -5,7 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CompletionResult {
+public final class CompletionResult {
   private final LookupElement myLookupElement;
   private final PrefixMatcher myMatcher;
   private final CompletionSorter mySorter;

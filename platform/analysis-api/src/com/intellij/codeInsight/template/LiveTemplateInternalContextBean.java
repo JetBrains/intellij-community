@@ -8,7 +8,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 /**
  * Adds association of internal live template context to regular context. Can be used for merging or renaming of live template contexts.
  */
-public class LiveTemplateInternalContextBean {
+public final class LiveTemplateInternalContextBean {
   static final ExtensionPointName<LiveTemplateInternalContextBean> EP_NAME = new ExtensionPointName<>("com.intellij.liveTemplateInternalContext");
 
   @Attribute("internalContextId")

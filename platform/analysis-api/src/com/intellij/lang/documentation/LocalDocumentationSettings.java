@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public class LocalDocumentationSettings implements ClientDocumentationSettings {
+public final class LocalDocumentationSettings implements ClientDocumentationSettings {
 
   @Override
   public boolean isHighlightingOfQuickDocSignaturesEnabled() {
