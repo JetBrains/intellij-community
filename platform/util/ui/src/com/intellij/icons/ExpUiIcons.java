@@ -601,6 +601,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Application = load("expui/runConfigurations/application.svg", 78355938, 2);
     /** 16x16 */ public static final @NotNull Icon ApplicationRemote = load("expui/runConfigurations/applicationRemote.svg", -1635441753, 2);
     /** 16x16 */ public static final @NotNull Icon Compound = load("expui/runConfigurations/compound.svg", 865718018, 2);
+    /** 16x16 */ public static final @NotNull Icon IgnoredTest = load("expui/runConfigurations/ignoredTest.svg", -2035507634, 2);
     /** 16x16 */ public static final @NotNull Icon InvalidConfigurationLayer = load("expui/runConfigurations/invalidConfigurationLayer.svg", 388730648, 2);
     /** 16x16 */ public static final @NotNull Icon Junit = load("expui/runConfigurations/junit.svg", 1991312793, 2);
     /** 16x16 */ public static final @NotNull Icon JunitTestMark = load("expui/runConfigurations/junitTestMark.svg", 443577354, 2);

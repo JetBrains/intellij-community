@@ -705,6 +705,7 @@
       ],
       "applicationRemote.svg": "runConfigurations/remote.svg",
       "compound.svg": "runConfigurations/compound.svg",
+      "ignoredTest.svg": "runConfigurations/ignoredTest.svg",
       "invalidConfigurationLayer.svg": "runConfigurations/invalidConfigurationLayer.svg",
       "junit.svg": "runConfigurations/junit.svg",
       "junitTestMark.svg": "runConfigurations/testMark.svg",
