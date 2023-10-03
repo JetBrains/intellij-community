@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.codeHighlighting
 
 import com.intellij.icons.AllIcons
@@ -7,12 +9,8 @@ import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.util.Comparing
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.JBColor
-import com.intellij.ui.scale.JBUIScale.scale
-import com.intellij.util.ObjectUtils
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.ColorIcon
 import com.intellij.util.ui.ColorizeProxyIcon
 import com.intellij.util.ui.EmptyIcon
@@ -21,14 +19,13 @@ import java.awt.Color
 import javax.swing.Icon
 
 open class HighlightDisplayLevel(val severity: HighlightSeverity) {
-  constructor(severity: HighlightSeverity, icon: Icon) : this(severity, icon, icon)
-
-  constructor(severity: HighlightSeverity, icon: Pair<Icon, Icon>) : this(severity, icon.first, icon.second)
+  constructor(severity: HighlightSeverity, icon: Icon) : this(severity = severity, icon = icon, outlineIcon = icon)
 
   private constructor(severity: HighlightSeverity, icon: Icon, outlineIcon: Icon) : this(severity) {
     this.icon = icon
     this.outlineIcon = outlineIcon
-    LEVEL_MAP[this.severity] = this
+    @Suppress("LeakingThis")
+    LEVEL_MAP.put(this.severity, this)
   }
 
   var icon: Icon = EmptyIcon.ICON_16
@@ -37,50 +34,73 @@ open class HighlightDisplayLevel(val severity: HighlightSeverity) {
     private set
 
   companion object {
-    private val LEVEL_MAP: MutableMap<HighlightSeverity, HighlightDisplayLevel> = HashMap()
+    private val LEVEL_MAP = HashMap<HighlightSeverity, HighlightDisplayLevel>()
+
+    private fun createHighlightDisplayLevel(severity: HighlightSeverity,
+                                            key: TextAttributesKey,
+                                            icon: Icon,
+                                            outlineIcon: Icon): HighlightDisplayLevel {
+      return HighlightDisplayLevel(severity = severity,
+                                   icon = HighlightDisplayLevelColorizedIcon(key = key, baseIcon = icon),
+                                   outlineIcon = HighlightDisplayLevelColorizedIcon(key = key, baseIcon = outlineIcon))
+    }
 
     @JvmField
-    val GENERIC_SERVER_ERROR_OR_WARNING: HighlightDisplayLevel = HighlightDisplayLevel(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
-                                                                                       createIconPair(
-                                                                                         CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING,
-                                                                                         AllIcons.General.InspectionsWarning,
-                                                                                         AllIcons.General.InspectionsWarningEmpty))
+    val GENERIC_SERVER_ERROR_OR_WARNING: HighlightDisplayLevel = createHighlightDisplayLevel(
+      severity = HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
+      key = CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING,
+      icon = AllIcons.General.InspectionsWarning,
+      outlineIcon = AllIcons.General.InspectionsWarningEmpty,
+    )
 
     @JvmField
-    val ERROR: HighlightDisplayLevel = HighlightDisplayLevel(HighlightSeverity.ERROR,
-                                                             createIconPair(CodeInsightColors.ERRORS_ATTRIBUTES,
-                                                                            AllIcons.General.InspectionsError,
-                                                                            AllIcons.General.InspectionsErrorEmpty))
+    val ERROR: HighlightDisplayLevel = createHighlightDisplayLevel(
+      severity = HighlightSeverity.ERROR,
+      key = CodeInsightColors.ERRORS_ATTRIBUTES,
+      icon = AllIcons.General.InspectionsError,
+      outlineIcon = AllIcons.General.InspectionsErrorEmpty,
+    )
 
     @JvmField
-    val WARNING: HighlightDisplayLevel = HighlightDisplayLevel(HighlightSeverity.WARNING,
-                                                               createIconPair(CodeInsightColors.WARNINGS_ATTRIBUTES,
-                                                                              AllIcons.General.InspectionsWarning,
-                                                                              AllIcons.General.InspectionsWarningEmpty))
+    val WARNING: HighlightDisplayLevel = createHighlightDisplayLevel(
+      severity = HighlightSeverity.WARNING,
+      key = CodeInsightColors.WARNINGS_ATTRIBUTES,
+      icon = AllIcons.General.InspectionsWarning,
+      outlineIcon = AllIcons.General.InspectionsWarningEmpty,
+    )
 
     private val DO_NOT_SHOW_KEY = TextAttributesKey.createTextAttributesKey("DO_NOT_SHOW")
-    @JvmField
-    val DO_NOT_SHOW: HighlightDisplayLevel = HighlightDisplayLevel(HighlightSeverity.INFORMATION, EmptyIcon.ICON_0)
 
     @JvmField
-    val CONSIDERATION_ATTRIBUTES: HighlightDisplayLevel = HighlightDisplayLevel(HighlightSeverity.TEXT_ATTRIBUTES, EmptyIcon.ICON_0)
+    val DO_NOT_SHOW: HighlightDisplayLevel = HighlightDisplayLevel(severity = HighlightSeverity.INFORMATION,
+                                                                   icon = EmptyIcon.ICON_0)
+
+    @JvmField
+    val CONSIDERATION_ATTRIBUTES: HighlightDisplayLevel = HighlightDisplayLevel(severity = HighlightSeverity.TEXT_ATTRIBUTES,
+                                                                                icon = EmptyIcon.ICON_0)
 
 
+    @Suppress("DEPRECATION")
     @JvmField
     @Deprecated("use {@link #WEAK_WARNING} instead")
-    val INFO: HighlightDisplayLevel = HighlightDisplayLevel(HighlightSeverity.INFO, createIconByKey(DO_NOT_SHOW_KEY))
+    val INFO: HighlightDisplayLevel = createHighlightDisplayLevel(severity = HighlightSeverity.INFO,
+                                                                  key = DO_NOT_SHOW_KEY, icon = AllIcons.General.InspectionsWarning,
+                                                                  outlineIcon = AllIcons.General.InspectionsWarningEmpty)
 
     @JvmField
-    val WEAK_WARNING: HighlightDisplayLevel = HighlightDisplayLevel(HighlightSeverity.WEAK_WARNING,
-                                                                    createIconPair(CodeInsightColors.WEAK_WARNING_ATTRIBUTES,
-                                                                                   AllIcons.General.InspectionsWarning,
-                                                                                   AllIcons.General.InspectionsWarningEmpty))
+    val WEAK_WARNING: HighlightDisplayLevel = createHighlightDisplayLevel(
+      severity = HighlightSeverity.WEAK_WARNING,
+      key = CodeInsightColors.WEAK_WARNING_ATTRIBUTES,
+      icon = AllIcons.General.InspectionsWarning,
+      outlineIcon = AllIcons.General.InspectionsWarningEmpty,
+    )
 
     @JvmField
     val NON_SWITCHABLE_ERROR: HighlightDisplayLevel = object : HighlightDisplayLevel(HighlightSeverity.ERROR) {
       override val isNonSwitchable: Boolean
         get() = true
     }
+
     @JvmField
     val NON_SWITCHABLE_WARNING: HighlightDisplayLevel = object : HighlightDisplayLevel(HighlightSeverity.WARNING) {
       override val isNonSwitchable: Boolean
@@ -88,105 +108,93 @@ open class HighlightDisplayLevel(val severity: HighlightSeverity) {
     }
 
     @JvmStatic
-    fun find(name: String): HighlightDisplayLevel? {
-      if ("NON_SWITCHABLE_ERROR" == name) return NON_SWITCHABLE_ERROR
-      if ("NON_SWITCHABLE_WARNING" == name) return NON_SWITCHABLE_WARNING
-      for ((severity, displayLevel) in LEVEL_MAP) {
-        if (Comparing.strEqual(severity.name, name)) {
-          return displayLevel
+    fun find(name: String?): HighlightDisplayLevel? {
+      return when (name) {
+        "NON_SWITCHABLE_ERROR" -> NON_SWITCHABLE_ERROR
+        "NON_SWITCHABLE_WARNING" -> NON_SWITCHABLE_WARNING
+        else -> {
+          for ((severity, displayLevel) in LEVEL_MAP) {
+            if (severity.name == name) {
+              return displayLevel
+            }
+          }
+          null
         }
       }
-      return null
     }
 
     @JvmStatic
-    fun find(severity: HighlightSeverity): HighlightDisplayLevel? {
-      return LEVEL_MAP[severity]
-    }
+    fun find(severity: HighlightSeverity): HighlightDisplayLevel? = LEVEL_MAP.get(severity)
 
     @JvmStatic
     fun registerSeverity(severity: HighlightSeverity, key: TextAttributesKey, icon: Icon?) {
-      val iconPair = if (icon == null) createIconByKey(key) else Pair(icon, icon)
-      val level = LEVEL_MAP[severity]
-      if (level == null) {
-        HighlightDisplayLevel(severity, iconPair.first, iconPair.second)
+      val effectiveIcon: Icon
+      val outlineIcon: Icon
+
+      if (icon == null) {
+        if (key.externalName.contains("error", ignoreCase = true)) {
+          effectiveIcon = HighlightDisplayLevelColorizedIcon(key = key, baseIcon = AllIcons.General.InspectionsError)
+          outlineIcon = HighlightDisplayLevelColorizedIcon(key = key, baseIcon = AllIcons.General.InspectionsErrorEmpty)
+        }
+        else {
+          effectiveIcon = HighlightDisplayLevelColorizedIcon(key = key, baseIcon = AllIcons.General.InspectionsWarning)
+          outlineIcon = HighlightDisplayLevelColorizedIcon(key = key, baseIcon = AllIcons.General.InspectionsWarningEmpty)
+        }
       }
       else {
-        level.icon = iconPair.first
-        level.outlineIcon = iconPair.second
+        effectiveIcon = icon
+        outlineIcon = icon
+      }
+
+      val level = LEVEL_MAP.get(severity)
+      if (level == null) {
+        HighlightDisplayLevel(severity = severity, icon = effectiveIcon, outlineIcon = outlineIcon)
+      }
+      else {
+        level.icon = effectiveIcon
+        level.outlineIcon = outlineIcon
       }
     }
 
+    @JvmStatic
     val emptyIconDim: Int
-      get() = scale(14)
+      get() = JBUIScale.scale(14)
 
     @JvmStatic
     fun createIconByMask(renderColor: Color): Icon {
-      return MyColorIcon(emptyIconDim, renderColor)
+      return HighlightDisplayLevelColorIcon(size = emptyIconDim, color = renderColor)
     }
   }
 
-  override fun toString(): @NonNls String {
-    return severity.toString()
-  }
+  override fun toString(): @NonNls String = severity.toString()
 
   val name: @NonNls String
     get() = severity.name
 
   open val isNonSwitchable: Boolean
     get() = false
+}
 
-  private class MyColorIcon(size: Int, color: Color) : ColorIcon(size, color), ColoredIcon {
-    override val color: Color
-      get() = iconColor
-  }
+sealed interface HighlightDisplayLevelColoredIcon {
+  fun getColor(): Color
+}
 
-  interface ColoredIcon {
-    val color: Color
-  }
+private class HighlightDisplayLevelColorIcon(size: Int, color: Color) : ColorIcon(size, color), HighlightDisplayLevelColoredIcon {
+  override fun getColor(): Color = iconColor
+}
 
-  private class ColorizedIcon(private val myKey: TextAttributesKey, baseIcon: Icon) : ColorizeProxyIcon(baseIcon), ColoredIcon {
-    override fun getColor(): Color {
-      return ObjectUtils.notNull(getColorFromAttributes(myKey), JBColor.GRAY)
-    }
-  }
+private class HighlightDisplayLevelColorizedIcon(private val key: TextAttributesKey, baseIcon: Icon) : ColorizeProxyIcon(baseIcon),
+                                                                                                       HighlightDisplayLevelColoredIcon {
+  override fun getColor(): Color = getColorFromAttributes(key) ?: JBColor.GRAY
 }
 
 private fun getColorFromAttributes(key: TextAttributesKey): Color? {
-  val manager = EditorColorsManager.getInstance()
-  if (manager != null) {
-    val attributes = manager.getGlobalScheme().getAttributes(key)
-    val stripe = attributes?.errorStripeColor
-    if (stripe != null) return stripe
-    if (attributes != null) {
-      val effectColor = attributes.effectColor
-      if (effectColor != null) {
-        return effectColor
-      }
-      val foregroundColor = attributes.foregroundColor
-      if (foregroundColor != null) {
-        return foregroundColor
-      }
-      return attributes.backgroundColor
-    }
-    return null
+  val manager = EditorColorsManager.getInstance() ?: return (key.getDefaultAttributes() ?: TextAttributes.ERASE_MARKER).errorStripeColor
+  val attributes = manager.getGlobalScheme().getAttributes(key)
+  val stripe = attributes?.errorStripeColor
+  return when {
+    stripe != null -> stripe
+    attributes == null -> null
+    else -> attributes.effectColor ?: attributes.foregroundColor ?: attributes.backgroundColor
   }
-  var defaultAttributes = key.getDefaultAttributes()
-  if (defaultAttributes == null) {
-    defaultAttributes = TextAttributes.ERASE_MARKER
-  }
-  return defaultAttributes!!.errorStripeColor
-}
-
-private fun createIconByKey(key: TextAttributesKey): Pair<Icon, Icon> {
-  return if (StringUtil.containsIgnoreCase(key.externalName, "error")) {
-    createIconPair(key, AllIcons.General.InspectionsError, AllIcons.General.InspectionsErrorEmpty)
-  }
-  else {
-    createIconPair(key, AllIcons.General.InspectionsWarning, AllIcons.General.InspectionsWarningEmpty)
-  }
-}
-
-private fun createIconPair(key: TextAttributesKey, first: Icon, second: Icon): Pair<Icon, Icon> {
-  return Pair(HighlightDisplayLevel.ColorizedIcon(key, first), HighlightDisplayLevel.ColorizedIcon(key, second))
 }

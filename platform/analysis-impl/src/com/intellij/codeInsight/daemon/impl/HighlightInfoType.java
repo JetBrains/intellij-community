@@ -41,8 +41,6 @@ public interface HighlightInfoType {
 
   HighlightInfoType GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER = new HighlightInfoTypeImpl(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING, CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING);
 
-  HighlightInfoType DUPLICATE_FROM_SERVER = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.DUPLICATE_FROM_SERVER);
-
   HighlightInfoType UNUSED_SYMBOL = new HighlightInfoTypeSeverityByKey(
     HighlightDisplayKey.findOrRegister(UNUSED_SYMBOL_SHORT_NAME, getUnusedSymbolDisplayName(), UNUSED_SYMBOL_SHORT_NAME),
     CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
@@ -96,14 +94,14 @@ public interface HighlightInfoType {
 
   class HighlightInfoTypeImpl implements HighlightInfoType, HighlightInfoType.UpdateOnTypingSuppressible {
     private final HighlightSeverity mySeverity;
-    private final TextAttributesKey myAttributesKey;
-    private final boolean myNeedsUpdateOnTyping;
+    private final TextAttributesKey attributeKey;
+    private final boolean needUpdateOnTyping;
 
     //read external only
     HighlightInfoTypeImpl(@NotNull Element element) {
       mySeverity = new HighlightSeverity(element);
-      myAttributesKey = new TextAttributesKey(element);
-      myNeedsUpdateOnTyping = false;
+      attributeKey = new TextAttributesKey(element);
+      needUpdateOnTyping = false;
     }
 
     public HighlightInfoTypeImpl(@NotNull HighlightSeverity severity, @NotNull TextAttributesKey attributesKey) {
@@ -112,8 +110,8 @@ public interface HighlightInfoType {
 
     public HighlightInfoTypeImpl(@NotNull HighlightSeverity severity, @NotNull TextAttributesKey attributesKey, boolean needsUpdateOnTyping) {
       mySeverity = severity;
-      myAttributesKey = attributesKey;
-      myNeedsUpdateOnTyping = needsUpdateOnTyping;
+      attributeKey = attributesKey;
+      needUpdateOnTyping = needsUpdateOnTyping;
     }
 
     /** Whether the corresponding severity should be available for choosing and editing in inspection settings */
@@ -126,15 +124,14 @@ public interface HighlightInfoType {
       return mySeverity;
     }
 
-    @NotNull
     @Override
-    public TextAttributesKey getAttributesKey() {
-      return myAttributesKey;
+    public @NotNull TextAttributesKey getAttributesKey() {
+      return attributeKey;
     }
 
     @Override
     public String toString() {
-      return "HighlightInfoTypeImpl[severity=" + mySeverity + ", key=" + myAttributesKey + "]";
+      return "HighlightInfoTypeImpl[severity=" + mySeverity + ", key=" + attributeKey + "]";
     }
 
     public void writeExternal(Element element) {
@@ -144,7 +141,7 @@ public interface HighlightInfoType {
       catch (WriteExternalException e) {
         throw new RuntimeException(e);
       }
-      myAttributesKey.writeExternal(element);
+      attributeKey.writeExternal(element);
     }
 
     @Override
@@ -152,7 +149,7 @@ public interface HighlightInfoType {
       if (this == o) return true;
       if (!(o instanceof HighlightInfoTypeImpl that)) return false;
 
-      if (!Comparing.equal(myAttributesKey, that.myAttributesKey)) return false;
+      if (!Comparing.equal(attributeKey, that.attributeKey)) return false;
       if (!mySeverity.equals(that.mySeverity)) return false;
 
       return true;
@@ -161,23 +158,23 @@ public interface HighlightInfoType {
     @Override
     public int hashCode() {
       int result = mySeverity.hashCode();
-      result = 29 * result + myAttributesKey.hashCode();
+      result = 29 * result + attributeKey.hashCode();
       return result;
     }
 
     @Override
     public boolean needsUpdateOnTyping() {
-      return myNeedsUpdateOnTyping;
+      return needUpdateOnTyping;
     }
   }
 
-  class HighlightInfoTypeSeverityByKey implements HighlightInfoType {
-    private final TextAttributesKey myAttributesKey;
+  final class HighlightInfoTypeSeverityByKey implements HighlightInfoType {
+    private final TextAttributesKey attributeKey;
     private final HighlightDisplayKey myToolKey;
 
     public HighlightInfoTypeSeverityByKey(@NotNull HighlightDisplayKey severityKey, @NotNull TextAttributesKey attributesKey) {
       myToolKey = severityKey;
-      myAttributesKey = attributesKey;
+      attributeKey = attributesKey;
     }
 
     @Override
@@ -189,14 +186,13 @@ public interface HighlightInfoType {
     }
 
     @Override
-    @NotNull
-    public TextAttributesKey getAttributesKey() {
-      return myAttributesKey;
+    public @NotNull TextAttributesKey getAttributesKey() {
+      return attributeKey;
     }
 
     @Override
     public String toString() {
-      return "HighlightInfoTypeSeverityByKey[severity=" + myToolKey + ", key=" + myAttributesKey + "]";
+      return "HighlightInfoTypeSeverityByKey[severity=" + myToolKey + ", key=" + attributeKey + "]";
     }
 
     public HighlightDisplayKey getSeverityKey() {
