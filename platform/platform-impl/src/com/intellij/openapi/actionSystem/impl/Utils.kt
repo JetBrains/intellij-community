@@ -72,6 +72,7 @@ import java.awt.event.MouseEvent
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import javax.swing.*
@@ -1006,11 +1007,12 @@ private fun isCancellingExpandEvent(event: AWTEvent?, window: Window?, menuItem:
 // EDT Loop 2: Own queue loop for toolbars with fast-track
 private object AltEdtDispatcher : CoroutineDispatcher() {
   private val queue = LinkedBlockingQueue<Runnable>()
-  @Volatile private var useQueue = false
+  @Volatile
+  private var useQueueSemaphore: Semaphore? = null
   private var switchedAt = 0L
 
   fun switchToQueue() {
-    useQueue = true
+    useQueueSemaphore = Semaphore(Integer.MAX_VALUE)
     switchedAt = System.nanoTime()
   }
 
@@ -1018,8 +1020,14 @@ private object AltEdtDispatcher : CoroutineDispatcher() {
     val runnable = ContextAwareRunnable {
       block.run()
     }
-    if (useQueue) {
-      queue.offer(runnable)
+    val semaphore = useQueueSemaphore
+    if (semaphore?.tryAcquire() == true) {
+      try {
+        queue.offer(runnable)
+      }
+      finally {
+        semaphore.release()
+      }
     }
     else {
       ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any())
@@ -1044,8 +1052,10 @@ private object AltEdtDispatcher : CoroutineDispatcher() {
       }
     }
     finally {
-      useQueue = false
+      val semaphore = useQueueSemaphore!!
+      useQueueSemaphore = null
       ArrayList<Runnable>().apply {
+        semaphore.acquireUninterruptibly(Integer.MAX_VALUE)
         queue.drainTo(this)
         forEach {
           ApplicationManager.getApplication().invokeLater(it, ModalityState.any())
