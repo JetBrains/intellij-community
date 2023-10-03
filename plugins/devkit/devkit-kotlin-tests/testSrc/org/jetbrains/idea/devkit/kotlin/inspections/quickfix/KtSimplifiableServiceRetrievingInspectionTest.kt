@@ -45,4 +45,8 @@ internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServi
       """)
     doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyService", "getInstance"))
   }
+
+  fun testTooGenericGetInstanceReturnType() {
+    doTest()
+  }
 }

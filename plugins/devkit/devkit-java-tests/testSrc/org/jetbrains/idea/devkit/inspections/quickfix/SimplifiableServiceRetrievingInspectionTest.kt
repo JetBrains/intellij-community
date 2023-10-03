@@ -19,4 +19,8 @@ internal class SimplifiableServiceRetrievingInspectionTest : SimplifiableService
   fun testReplaceWithGetInstanceProjectLevel() {
     doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyService", "getInstance"))
   }
+
+  fun testTooGenericGetInstanceReturnType() {
+    doTest()
+  }
 }

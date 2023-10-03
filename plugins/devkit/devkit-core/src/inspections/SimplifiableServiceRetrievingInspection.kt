@@ -45,7 +45,7 @@ internal class SimplifiableServiceRetrievingInspection : DevKitUastInspectionBas
     return when (howServiceRetrieved) {
       Service.Level.APP -> findGetInstanceApplicationLevel(serviceClass)
       Service.Level.PROJECT -> findGetInstanceProjectLevel(serviceClass)
-    }
+    }?.takeIf { method -> method.returnType == retrievingExpression.getExpressionType()  }
   }
 
   private fun registerProblem(replacementMethod: UMethod,

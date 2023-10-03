@@ -69,5 +69,12 @@ abstract class SimplifiableServiceRetrievingInspectionTestBase : LightDevKitInsp
         public Class<T> java;
       }
       """)
+    myFixture.addClass(
+      """
+      package kotlin.jvm;
+
+      public @interface JvmStatic { }
+      """
+    )
   }
 }
