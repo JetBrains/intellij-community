@@ -4,9 +4,9 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/platform/platform-resources/src/META-INF/PlatformExtensions.xml b/platform/platform-resources/src/META-INF/PlatformExtensions.xml
---- a/platform/platform-resources/src/META-INF/PlatformExtensions.xml	(revision 89fc0bfc19af35dc228bbc7d07dd247a069a85a1)
-+++ b/platform/platform-resources/src/META-INF/PlatformExtensions.xml	(date 1693921318499)
-@@ -1376,7 +1376,7 @@
+--- a/platform/platform-resources/src/META-INF/PlatformExtensions.xml	(revision 2009584ac1359e2f11097dd44cf6165c97df5d57)
++++ b/platform/platform-resources/src/META-INF/PlatformExtensions.xml	(date 1696338648079)
+@@ -1424,7 +1424,7 @@
      <advancedSetting id="confirm.rerun.with.termination" default="true" groupKey="group.advanced.settings.run"/>
      <advancedSetting id="start.run.configurations.pinned" default="false" groupKey="group.advanced.settings.run"/>
      <advancedSetting id="max.recent.run.configurations" default="5" groupKey="group.advanced.settings.run"/>
@@ -15,9 +15,9 @@ diff --git a/platform/platform-resources/src/META-INF/PlatformExtensions.xml b/p
      <advancedSetting id="edit.source.on.enter.key.request.focus.in.editor" default="true" groupKey="group.advanced.settings.project.view"/>
      <advancedSetting id="ide.tree.collapse.recursively" default="true" groupKey="group.advanced.settings.project.view"/>
      <advancedSetting id="project.view.do.not.autoscroll.to.libraries" default="false" groupKey="group.advanced.settings.project.view"/>
-@@ -1454,7 +1454,6 @@
+@@ -1501,7 +1501,6 @@
      <registryKey key="popup.advertiser.speed.search" defaultValue="false" description="Shows speed search advertiser in popups"/>
-     <actionPromoter implementation="com.intellij.ui.SpeedSearchBase$SpeedSearchActionPromoter"/>
+     <actionPromoter implementation="com.intellij.ide.actions.speedSearch.SpeedSearchActionPromoter"/>
  
 -    <interactiveCourseFactory implementation="com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy.JBAcademyInteractiveCourse"/>
  

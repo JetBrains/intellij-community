@@ -36,7 +36,7 @@ class MPSProperties : JetBrainsProductProperties() {
 
         productLayout.productImplementationModules = listOf(
             "intellij.platform.main",
-            "intellij.idea.community.resources",
+            "intellij.idea.community.customization",
             "intellij.java.ide.resources",
             "intellij.xml.dom",
             "intellij.platform.coverage"        // layout.withModule("intellij.platform.coverage", productLayout.mainJarName)
