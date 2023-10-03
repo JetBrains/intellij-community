@@ -722,7 +722,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
     val theme = currentTheme ?: return
-    if (theme.editorSchemeId == Scheme.getBaseName(scheme.name)) {
+    val baseSchemeId = Scheme.getBaseName(scheme.name)
+    if (baseSchemeId == theme.editorSchemeId || baseSchemeId == EditorColorsScheme.DEFAULT_SCHEME_NAME) {
       lafToPreviousScheme.remove(theme.name)
     }
     else {
