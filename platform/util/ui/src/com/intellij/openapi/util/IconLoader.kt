@@ -388,7 +388,7 @@ internal fun patchColorsInCacheImageIcon(imageIcon: CachedImageIcon, colorPatche
   }
 
   return colorPatchCache[cacheIndex]
-    .computeIfAbsent(digest) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
+    .computeIfAbsent(digest) { CollectionFactory.createConcurrentWeakMap() }
     .computeIfAbsent(imageIcon) { result.createWithPatcher(colorPatcher) }
 }
 
