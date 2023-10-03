@@ -97,6 +97,7 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
         ASSERTJ_EXTRACTING_REF_MATCHER.uCallMatches(elem) -> return // not supported
         ASSERTJ_EXTRACTING_FUN_MATCHER.uCallMatches(elem) -> return // not supported
         ASSERTJ_EXTRACTING_ITER_FUN_MATCHER.uCallMatches(elem) -> return // not supported
+        elem.resolve()?.containingClass?.qualifiedName == "org.assertj.core.api.AbstractThrowableAssert" -> return // not supported
         ASSERTJ_SINGLE_ELEMENT_MATCHER.uCallMatches(elem) || ASSERTJ_FIRST_ELEMENT_MATCHER.uCallMatches(elem) -> {
           if (!InheritanceUtil.isInheritor(sourceType, CommonClassNames.JAVA_LANG_ITERABLE)) return
           sourceType.asSafely<PsiClassType>()?.parameters?.firstOrNull() ?: return
@@ -111,15 +112,24 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
     val comparedTypeText = left.presentableText
     val comparisonTypeText = right.presentableText
     if (isAssertNotEqualsMethod(methodName)) {
-      return JvmAnalysisBundle.message("jvm.inspections.assertnotequals.between.inconvertible.types.problem.descriptor", comparedTypeText,
-                                       comparisonTypeText)
+      return JvmAnalysisBundle.message(
+        "jvm.inspections.assertnotequals.between.inconvertible.types.problem.descriptor",
+        comparedTypeText,
+        comparisonTypeText
+      )
     }
     return if (isAssertNotSameMethod(methodName)) {
-      JvmAnalysisBundle.message("jvm.inspections.assertnotsame.between.inconvertible.types.problem.descriptor", comparedTypeText, comparisonTypeText)
+      JvmAnalysisBundle.message(
+        "jvm.inspections.assertnotsame.between.inconvertible.types.problem.descriptor",
+        comparedTypeText,
+        comparisonTypeText
+      )
     }
-    else JvmAnalysisBundle.message("jvm.inspections.assertequals.between.inconvertible.types.problem.descriptor",
-                                   StringUtil.escapeXmlEntities(comparedTypeText),
-                                   StringUtil.escapeXmlEntities(comparisonTypeText))
+    else JvmAnalysisBundle.message(
+      "jvm.inspections.assertequals.between.inconvertible.types.problem.descriptor",
+      StringUtil.escapeXmlEntities(comparedTypeText),
+      StringUtil.escapeXmlEntities(comparisonTypeText)
+    )
   }
 
   private fun isAssertNotEqualsMethod(methodName: String): Boolean = "assertNotEquals" == methodName || "isNotEqualTo" == methodName

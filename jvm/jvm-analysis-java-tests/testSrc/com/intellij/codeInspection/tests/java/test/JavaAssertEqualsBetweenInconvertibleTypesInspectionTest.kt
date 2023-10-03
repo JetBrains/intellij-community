@@ -318,4 +318,19 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
         }    
     """.trimIndent())
   }
+
+  fun `test Assertj cause match`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+        import org.assertj.core.api.Assertions;
+      
+        class MyTest {
+            @org.junit.jupiter.api.Test
+            void testExtractingNoHighlight() {
+                NullPointerException cause = new NullPointerException();
+                IllegalArgumentException e = new IllegalArgumentException(cause);
+                Assertions.assertThat(e).cause().isSameAs(cause);
+            }
+        }    
+    """.trimIndent())
+  }
 }
