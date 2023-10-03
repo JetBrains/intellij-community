@@ -126,9 +126,6 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         if (PyInspectionsUtil.hasAnyInterruptedControlFlowPaths(node)) {
           return;
         }
-        else if (resolved instanceof PyTypeParameter && currentScopeOwner instanceof PyFunction) {
-          return;
-        }
         if (owner instanceof PyFile) {
           if (isBuiltin) {
             return;

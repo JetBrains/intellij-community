@@ -1845,6 +1845,21 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     });
   }
 
+  // PY-61877 PY-63366
+  public void testNestedClassNotResolvedInsideMethodOfNewStyleGenericClass() {
+    assertNotResolved();
+  }
+
+  // PY-61877 PY-63367
+  public void testNestedClassResolvedInsideAnnotationOfNewStyleGenericMethod() {
+    assertResolvesTo(PyClass.class, "Nested");
+  }
+
+  // PY-61877
+  public void testNestedClassIsResolvedInSuperclassListOfAnotherNewStyleGenericNestedClass() {
+    assertResolvesTo(PyClass.class, "Nested");
+  }
+
   // [TODO] daniil.kalinin enable when resolve for collisions in type parameter names and class attribute names is implemented
   // PY-61877
   //public void testClassAttributeDeclarationWithSameAsTypeParameterNameNotResolvedToTypeParameter() {

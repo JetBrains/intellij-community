@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 
 public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasStatementStub> implements PyTypeAliasStatement {
   public PyTypeAliasStatementImpl(ASTNode astNode) {
@@ -108,5 +109,11 @@ public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasState
   public int getTextOffset() {
     @Nullable PsiElement name = getNameIdentifier();
     return name != null ? name.getTextOffset() : super.getTextOffset();
+  }
+
+  @Override
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    ControlFlowCache.clear(this);
   }
 }
