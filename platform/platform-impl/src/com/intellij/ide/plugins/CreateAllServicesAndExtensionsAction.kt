@@ -75,27 +75,34 @@ private fun createAllServicesAndExtensions(): List<Throwable> {
     }
 
     indicator.text2 = "Checking light services..."
-    for (mainDescriptor in PluginManagerCore.getPluginSet().enabledPlugins) {
-      // we don't check classloader for sub descriptors because url set is the same
-      val pluginClassLoader = mainDescriptor.pluginClassLoader as? PluginClassLoader
-                              ?: continue
+    checkLightServices(application, project, errors)
+  }
+  return errors
+}
 
-      scanClassLoader(pluginClassLoader).use { scanResult ->
-        for (classInfo in scanResult.getClassesWithAnnotation(Service::class.java.name)) {
-          checkLightServices(classInfo, mainDescriptor, application, project) {
-            val error = when (it) {
-              is ProcessCanceledException -> throw it
-              is PluginException -> it
-              else -> PluginException("Cannot create ${classInfo.name}", it, mainDescriptor.pluginId)
-            }
-
-            errors.add(error)
+private fun checkLightServices(
+  application: ComponentManagerImpl,
+  project: ComponentManagerImpl?,
+  errors: MutableList<Throwable>,
+) {
+  for (mainDescriptor in PluginManagerCore.getPluginSet().enabledPlugins) {
+    // we don't check classloader for sub descriptors because url set is the same
+    val pluginClassLoader = mainDescriptor.pluginClassLoader as? PluginClassLoader
+                            ?: continue
+    scanClassLoader(pluginClassLoader).use { scanResult ->
+      for (classInfo in scanResult.getClassesWithAnnotation(Service::class.java.name)) {
+        checkLightServices(classInfo, mainDescriptor, application, project) {
+          val error = when (it) {
+            is ProcessCanceledException -> throw it
+            is PluginException -> it
+            else -> PluginException("Cannot create ${classInfo.name}", it, mainDescriptor.pluginId)
           }
+
+          errors.add(error)
         }
       }
     }
   }
-  return errors
 }
 
 private class CreateAllServicesAndExtensionsActivity : AppLifecycleListener {
