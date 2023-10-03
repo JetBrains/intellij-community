@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
 import com.intellij.util.io.blobstorage.ByteBufferReader;

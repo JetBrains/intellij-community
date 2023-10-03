@@ -775,7 +775,7 @@ public class FileUtilRt {
     void beforeDeleting(Path path);
   }
   
-  static void deleteRecursively(@NotNull Path path, @SuppressWarnings("BoundedWildcard") @Nullable final DeleteRecursivelyCallback callback) throws IOException {
+  static void deleteRecursively(@NotNull Path path, @Nullable final DeleteRecursivelyCallback callback) throws IOException {
     if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
       return;
     }
