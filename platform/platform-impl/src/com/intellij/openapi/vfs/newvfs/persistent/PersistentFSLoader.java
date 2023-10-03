@@ -379,15 +379,9 @@ public final class PersistentFSLoader {
 
     makeBestEffortToCleanStorage(namesStorage, namesFile);
 
-    if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
-      deleted = AttributesStorageOverBlobStorage.deleteStorageFiles(attributesFile);
-    }
-    else {
-      deleted = AbstractStorage.deleteFiles(attributesFile);
-    }
-    if (!deleted) {
-      LOG.info("Can't delete " + attributesFile);
-    }
+    makeBestEffortToCleanStorage(attributesStorage, attributesFile);
+
+    makeBestEffortToCleanStorage(attributesEnumerator, attributesFile);
 
     deleted = AbstractStorage.deleteFiles(contentsFile);
     if (!deleted) {
@@ -404,11 +398,6 @@ public final class PersistentFSLoader {
     deleted = IOUtil.deleteAllFilesStartingWith(vfsPaths.getRootsBaseFile());
     if (!deleted) {
       LOG.info("Can't delete " + vfsPaths.getRootsBaseFile());
-    }
-
-    deleted = IOUtil.deleteAllFilesStartingWith(enumeratedAttributesFile);
-    if (!deleted) {
-      LOG.info("Can't delete " + enumeratedAttributesFile);
     }
 
     try {
