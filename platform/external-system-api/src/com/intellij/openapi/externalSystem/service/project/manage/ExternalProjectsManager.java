@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcher;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,6 +34,9 @@ public interface ExternalProjectsManager {
    *
    */
   void runWhenInitialized(Runnable runnable);
+
+  @ApiStatus.Experimental
+  void runWhenInitializedInBackground(@NotNull Runnable runnable);
 
   boolean isIgnored(@NotNull ProjectSystemId systemId, @NotNull String projectPath);
 
