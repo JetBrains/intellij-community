@@ -38,6 +38,7 @@ import com.intellij.terminal.TerminalTitle;
 import com.intellij.terminal.TerminalTitleListener;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TerminalWidgetKt;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
@@ -704,6 +705,13 @@ final class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UIS
   public void addNotify() {
     super.addNotify();
     updateDFState();
+    InternalDecoratorImpl.componentWithEditorBackgroundAdded(this);
+  }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+    InternalDecoratorImpl.componentWithEditorBackgroundRemoved(this);
   }
 
   private static boolean isDfmSupportEnabled() {

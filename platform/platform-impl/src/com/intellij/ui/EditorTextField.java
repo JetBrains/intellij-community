@@ -44,6 +44,7 @@ import com.intellij.openapi.wm.ex.AbstractDelegatingToRootTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.builder.VerticalComponentGap;
@@ -501,6 +502,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   public void removeNotify() {
     myInHierarchy = false;
     super.removeNotify();
+    InternalDecoratorImpl.componentWithEditorBackgroundRemoved(this);
     if (myManualDisposable == null) deInitEditor();
   }
 
@@ -891,6 +893,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       initEditor();
     }
     super.addNotify();
+    InternalDecoratorImpl.componentWithEditorBackgroundAdded(this);
   }
 
   public @Nullable EditorEx getEditor(boolean initializeIfSafe) {

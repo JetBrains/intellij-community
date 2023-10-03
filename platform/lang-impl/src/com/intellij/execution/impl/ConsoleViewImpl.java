@@ -59,6 +59,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
@@ -1438,6 +1439,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public void addChangeListener(@NotNull ChangeListener listener, @NotNull Disposable parent) {
     myListeners.add(listener);
     Disposer.register(parent, () -> myListeners.remove(listener));
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    InternalDecoratorImpl.componentWithEditorBackgroundAdded(this);
+  }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+    InternalDecoratorImpl.componentWithEditorBackgroundRemoved(this);
   }
 
   private void insertUserText(int offset, @NotNull String text) {
