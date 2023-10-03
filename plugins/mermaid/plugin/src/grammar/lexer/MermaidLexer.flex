@@ -714,7 +714,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "-." |
   "optionally to" { return EntityRelationship.NON_IDENTIFYING; }
 
-  [a-zA-Z][\w\-\.]* { return ID; }
+  [a-zA-Z_][\w\-\.]* { return ID; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
 
   ":" { yypushstate(relationship_description); return COLON; }
