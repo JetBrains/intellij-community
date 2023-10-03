@@ -144,20 +144,22 @@ private val servicesWhichRequireReadAction = setOf(
   "com.jetbrains.python.findUsages.PyFindUsagesOptions",
 )
 
+private val extensionPointsWhichRequireReadAction = setOf(
+  "com.intellij.favoritesListProvider",
+  "com.intellij.postStartupActivity",
+  "com.intellij.backgroundPostStartupActivity",
+  "org.jetbrains.kotlin.defaultErrorMessages",
+)
+
 private fun checkContainer(container: ComponentManagerImpl, levelDescription: String?, indicator: ProgressIndicator,
                            taskExecutor: (task: () -> Unit) -> Unit) {
   indicator.text2 = "Checking ${levelDescription} services..."
   ComponentManagerImpl.createAllServices(container, servicesWhichRequireEdt, servicesWhichRequireReadAction)
   indicator.text2 = "Checking ${levelDescription} extensions..."
   container.extensionArea.processExtensionPoints { extensionPoint ->
-    // requires a read action
-    if (extensionPoint.name == "com.intellij.favoritesListProvider" ||
-        extensionPoint.name == "com.intellij.postStartupActivity" ||
-        extensionPoint.name == "com.intellij.backgroundPostStartupActivity" ||
-        extensionPoint.name == "org.jetbrains.kotlin.defaultErrorMessages") {
+    if (extensionPoint.name in extensionPointsWhichRequireReadAction) {
       return@processExtensionPoints
     }
-
     checkExtensionPoint(extensionPoint, taskExecutor)
   }
 }
