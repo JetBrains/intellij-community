@@ -7,7 +7,9 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -64,8 +66,16 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
                                     @NotNull Processor<? super FoundItemDescriptor<Object>> consumer) {
     Function<PsiElement, TargetPresentation> calculator = createCalculator();
     myDelegate.fetchWeightedElements(pattern, progressIndicator, descriptor -> {
-      FoundItemDescriptor<Object> presentationDescriptor = element2presentation(descriptor, calculator);
-      return consumer.process(presentationDescriptor);
+      Computable<Boolean> routine = () -> {
+        FoundItemDescriptor<Object> presentationDescriptor = element2presentation(descriptor, calculator);
+        return consumer.process(presentationDescriptor);
+      };
+
+      if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+        return routine.get();
+      } else {
+        return ApplicationManager.getApplication().runReadAction(routine);
+      }
     });
   }
 

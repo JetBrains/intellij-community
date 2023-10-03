@@ -3,7 +3,6 @@ package com.intellij.searchEverywhereMl.semantics.contributors
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.MergeableElement
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.searchEverywhereMl.semantics.providers.StreamSemanticItemsProvider
 import com.intellij.util.Processor
@@ -71,7 +70,7 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
 
               val durationMs = TimeoutUtil.getDurationMillis(searchStart)
               prepareSemanticDescriptor(descriptor, knownItems, mutex, durationMs)?.let {
-                ReadAction.run<Throwable> { consumer.process (it) }
+                consumer.process(it)
                 foundItemsCount++
               }
               if (priority != DescriptorPriority.HIGH && foundItemsCount >= getDesiredResultsCount()) break
