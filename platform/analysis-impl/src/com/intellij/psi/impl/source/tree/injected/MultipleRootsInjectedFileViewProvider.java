@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -67,24 +67,21 @@ class MultipleRootsInjectedFileViewProvider extends MultiplePsiFilesPerDocumentF
     return isPhysicalImpl();
   }
 
-  @NotNull
   @Override
-  public Language getBaseLanguage() {
+  public @NotNull Language getBaseLanguage() {
     return myLanguage;
   }
 
-  @NotNull
   @Override
-  public Set<Language> getLanguages() {
+  public @NotNull Set<Language> getLanguages() {
     FileViewProvider original = myOriginalProvider;
     Set<Language> languages = original.getLanguages();
     Language base = original.getBaseLanguage();
     return ContainerUtil.map2Set(languages, (language) -> language == base ? myLanguage : language);
   }
 
-  @NotNull
   @Override
-  protected MultiplePsiFilesPerDocumentFileViewProvider cloneInner(@NotNull VirtualFile fileCopy) {
+  protected @NotNull MultiplePsiFilesPerDocumentFileViewProvider cloneInner(@NotNull VirtualFile fileCopy) {
     FileViewProvider originalProvider = getManager().getFileManager().createFileViewProvider(fileCopy, false);
     assert originalProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider :
       "Original provider " + originalProvider + " is not multi-root for " + fileCopy + ", cached provider: " + myOriginalProvider;
@@ -92,14 +89,12 @@ class MultipleRootsInjectedFileViewProvider extends MultiplePsiFilesPerDocumentF
   }
 
   @Override
-  @NotNull
-  public DocumentWindowImpl getDocument() {
+  public @NotNull DocumentWindowImpl getDocument() {
     return myDocumentWindow;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "Multi root injected file '"+getVirtualFile().getName()+"' " + (isValid() ? "" : " invalid") + (isPhysical() ? "" : " nonphysical");
   }
 
@@ -129,9 +124,8 @@ class MultipleRootsInjectedFileViewProvider extends MultiplePsiFilesPerDocumentF
       assert myOriginalProvider instanceof TemplateLanguageFileViewProvider;
     }
 
-    @NotNull
     @Override
-    public Language getTemplateDataLanguage() {
+    public @NotNull Language getTemplateDataLanguage() {
       return ((TemplateLanguageFileViewProvider)myOriginalProvider).getTemplateDataLanguage();
     }
 

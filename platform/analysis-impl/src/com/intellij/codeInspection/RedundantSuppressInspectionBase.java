@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -36,8 +36,7 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
   }
 
   @Override
-  @NonNls
-  public @NotNull String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
@@ -199,10 +198,9 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
     return result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public LocalInspectionTool createLocalTool(@NotNull RedundantSuppressionDetector suppressor,
-                                             @NotNull Map<String, ? extends Set<PsiElement>> toolToSuppressScopes,
-                                             @NotNull Set<String> activeTools) {
+  public @NotNull LocalInspectionTool createLocalTool(@NotNull RedundantSuppressionDetector suppressor,
+                                                      @NotNull Map<String, ? extends Set<PsiElement>> toolToSuppressScopes,
+                                                      @NotNull Set<String> activeTools) {
     return new LocalRedundantSuppressionInspection(suppressor, activeTools, toolToSuppressScopes);
   }
 
@@ -232,8 +230,7 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
     return false;
   }
 
-  @NotNull
-  protected static GlobalInspectionContextBase createContext(@NotNull PsiFile file) {
+  protected static @NotNull GlobalInspectionContextBase createContext(@NotNull PsiFile file) {
     InspectionManager inspectionManagerEx = InspectionManager.getInstance(file.getProject());
     return (GlobalInspectionContextBase)inspectionManagerEx.createNewGlobalContext();
   }
@@ -250,10 +247,9 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
     return ObjectUtils.notNull(profileManager.getProfile(currentProfileName, false), profileManager.getCurrentProfile());
   }
 
-  @NotNull
-  private static List<InspectionToolWrapper<?, ?>> findReportingTools(@NotNull List<? extends InspectionToolWrapper<?, ?>> toolWrappers,
-                                                                      @NotNull String suppressedId,
-                                                                      @NotNull Language language) {
+  private static @NotNull List<InspectionToolWrapper<?, ?>> findReportingTools(@NotNull List<? extends InspectionToolWrapper<?, ?>> toolWrappers,
+                                                                               @NotNull String suppressedId,
+                                                                               @NotNull Language language) {
     List<InspectionToolWrapper<?, ?>> wrappers = Collections.emptyList();
     List<String> mergedToolName = InspectionElementsMerger.getMergedToolNames(suppressedId);
     for (InspectionToolWrapper<?, ?> toolWrapper : toolWrappers) {
@@ -321,12 +317,9 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
   }
 
   private final class LocalRedundantSuppressionInspection extends LocalInspectionTool implements UnfairLocalInspectionTool {
-    @NotNull
-    private final RedundantSuppressionDetector mySuppressor;
-    @NotNull
-    private final Set<String> myActiveTools;
-    @NotNull
-    private final Map<String, ? extends Set<PsiElement>> myToolToSuppressScopes;
+    private final @NotNull RedundantSuppressionDetector mySuppressor;
+    private final @NotNull Set<String> myActiveTools;
+    private final @NotNull Map<String, ? extends Set<PsiElement>> myToolToSuppressScopes;
 
     private LocalRedundantSuppressionInspection(@NotNull RedundantSuppressionDetector suppressor,
                                                 @NotNull Set<String> activeTools,

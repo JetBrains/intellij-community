@@ -38,9 +38,8 @@ public class UpdateInspectionOptionFix implements ModCommandAction {
     return Presentation.of(myMessage).withPriority(PriorityAction.Priority.LOW).withIcon(AllIcons.Actions.Cancel);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return AnalysisBundle.message("set.inspection.option.fix");
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -70,15 +70,13 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
 
   public abstract boolean hasVisibleLightBulbOrPopup();
 
-  @NotNull
-  public abstract List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
-                                                    @NotNull Document document,
-                                                    @NotNull ProgressIndicator progress);
+  public abstract @NotNull List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
+                                                             @NotNull Document document,
+                                                             @NotNull ProgressIndicator progress);
 
   public abstract boolean isErrorAnalyzingFinished(@NotNull PsiFile file);
 
-  @NotNull
-  public abstract FileStatusMap getFileStatusMap();
+  public abstract @NotNull FileStatusMap getFileStatusMap();
 
   public abstract void cleanFileLevelHighlights(int group, @NotNull PsiFile psiFile);
   public abstract boolean hasFileLevelHighlights(int group, @NotNull PsiFile psiFile);

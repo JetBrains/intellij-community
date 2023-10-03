@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.ASTFactory;
@@ -308,8 +308,7 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
     return newLeaf;
   }
 
-  @NotNull
-  private TreeElement newLazyParseable(@NotNull TreeElement currentLeaf, @NotNull CharSequence text) {
+  private @NotNull TreeElement newLazyParseable(@NotNull TreeElement currentLeaf, @NotNull CharSequence text) {
     TemplateDataElementType.TemplateAwareElementType elementType =
       (TemplateDataElementType.TemplateAwareElementType)currentLeaf.getElementType();
     TreeElement newElement = elementType.createTreeElement(text);
@@ -322,8 +321,7 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
   /**
    * @return null if all elements up to the end are removed, or a leaf which is in place of startLeaf after removal
    */
-  @Nullable
-  private TreeElement removeElementsForRange(@NotNull TreeElement startLeaf,
+  private @Nullable TreeElement removeElementsForRange(@NotNull TreeElement startLeaf,
                                              int startLeafOffset,
                                              @NotNull TextRange rangeToRemove,
                                              @NotNull CharTable charTable) {
@@ -391,8 +389,7 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
     return root;
   }
 
-  @NotNull
-  private StringBuilder applyOuterAndRemoveRanges(CharSequence chars) {
+  private @NotNull StringBuilder applyOuterAndRemoveRanges(CharSequence chars) {
     StringBuilder stringBuilder = new StringBuilder(chars);
     int shift = 0;
     for (TextRange outerElementRange : myOuterAndRemoveRanges) {
@@ -416,8 +413,7 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
    * Removes "middle" part of the leaf and returns the new leaf with content of the right and left parts
    * e.g. if we process whitespace leaf " \n " and range "1, 2" the result will be new leaf with content "  "
    */
-  @NotNull
-  private TreeElement removeRange(@NotNull TreeElement leaf,
+  private @NotNull TreeElement removeRange(@NotNull TreeElement leaf,
                                   @NotNull TextRange rangeToRemove,
                                   @NotNull CharTable table) {
     CharSequence chars = leaf.getChars();
@@ -450,7 +446,7 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
   }
 
 
-  final static class RangeToRemove extends TextRange {
+  static final class RangeToRemove extends TextRange {
     /**
      * We need this text to propagate dummy strings through lazy parseables. If this text is null, dummy identifier won't be propagated.
      */

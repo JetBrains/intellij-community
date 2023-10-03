@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor;
@@ -244,8 +244,7 @@ public interface DfType {
   @NotNull
   DfType meet(@NotNull DfType other);
 
-  @NotNull
-  default DfType fromRelation(@NotNull RelationType relationType) {
+  default @NotNull DfType fromRelation(@NotNull RelationType relationType) {
     return relationType == RelationType.EQ ? this : TOP;
   }
 
@@ -282,8 +281,7 @@ public interface DfType {
    * @return a type that contains all the values of the corresponding JVM type except the values of given type;
    * may return null if the corresponding type is not supported by our type system.
    */
-  @Nullable
-  default DfType tryNegate() {
+  default @Nullable DfType tryNegate() {
     return null;
   }
 

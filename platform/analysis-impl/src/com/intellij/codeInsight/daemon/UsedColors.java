@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.util.Key;
@@ -14,8 +14,8 @@ public final class UsedColors {
   private record UsedColor(@NotNull String name, int index) {
   }
 
-  public static int getOrAddColorIndex(@NotNull final UserDataHolderEx context,
-                                       @NotNull final String name,
+  public static int getOrAddColorIndex(final @NotNull UserDataHolderEx context,
+                                       final @NotNull String name,
                                        int colorsCount) {
     int colorIndex;
     while (true) {

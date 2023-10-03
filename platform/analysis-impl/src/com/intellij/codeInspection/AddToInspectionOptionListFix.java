@@ -36,15 +36,13 @@ public class AddToInspectionOptionListFix<T extends InspectionProfileEntry> exte
     myFixName = fixName;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myFixName;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return myFixName;
   }
 

@@ -796,8 +796,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @Tag
-  @NlsContexts.DetailedDescription
-  public String getDescription() {
+  public @NlsContexts.DetailedDescription String getDescription() {
     return myDescription;
   }
 
@@ -997,8 +996,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return myTools.get(name);
   }
 
-  @NotNull
-  public Collection<ToolsImpl> getTools() {
+  public @NotNull Collection<ToolsImpl> getTools() {
     initInspectionTools();
     return myTools.values();
   }

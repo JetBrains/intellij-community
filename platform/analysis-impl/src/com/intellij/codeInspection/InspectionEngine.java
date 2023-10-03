@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -60,11 +60,10 @@ public final class InspectionEngine {
     return true;
   }
 
-  @NotNull
-  public static PsiElementVisitor createVisitor(@NotNull LocalInspectionTool tool,
-                                                @NotNull ProblemsHolder holder,
-                                                boolean isOnTheFly,
-                                                @NotNull LocalInspectionToolSession session) {
+  public static @NotNull PsiElementVisitor createVisitor(@NotNull LocalInspectionTool tool,
+                                                         @NotNull ProblemsHolder holder,
+                                                         boolean isOnTheFly,
+                                                         @NotNull LocalInspectionToolSession session) {
     PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
     //noinspection ConstantConditions
     if (visitor == null) {
@@ -120,8 +119,7 @@ public final class InspectionEngine {
   }
 
   // returns map (tool -> problem descriptors)
-  @NotNull
-  public static Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+  public static @NotNull Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                                    @NotNull PsiFile psiFile,
                                                                                    @NotNull TextRange restrictRange,
                                                                                    @NotNull TextRange priorityRange,

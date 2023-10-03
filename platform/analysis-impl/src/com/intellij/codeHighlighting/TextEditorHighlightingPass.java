@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeHighlighting;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
@@ -25,10 +25,8 @@ import java.util.List;
 
 public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public static final TextEditorHighlightingPass[] EMPTY_ARRAY = new TextEditorHighlightingPass[0];
-  @NotNull
-  protected final Document myDocument;
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Document myDocument;
+  protected final @NotNull Project myProject;
   private final boolean myRunIntentionPassAfter;
   private final long myInitialDocStamp;
   private final long myInitialPsiStamp;
@@ -57,8 +55,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     doCollectInformation(progress);
   }
 
-  @Nullable
-  public EditorColorsScheme getColorsScheme() {
+  public @Nullable EditorColorsScheme getColorsScheme() {
     return myColorsScheme;
   }
 
@@ -125,8 +122,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myId = id;
   }
 
-  @NotNull
-  public List<HighlightInfo> getInfos() {
+  public @NotNull List<HighlightInfo> getInfos() {
     return Collections.emptyList();
   }
 
@@ -138,8 +134,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myCompletionPredecessorIds = completionPredecessorIds;
   }
 
-  @NotNull
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return myDocument;
   }
 
@@ -152,8 +147,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return (getClass().isAnonymousClass() ? getClass().getSuperclass() : getClass()).getSimpleName() + "; id=" + getId();
   }
 

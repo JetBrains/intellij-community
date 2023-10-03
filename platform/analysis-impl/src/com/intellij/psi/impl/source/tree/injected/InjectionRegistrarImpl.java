@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -86,15 +86,13 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
     return resultFiles == null && resultReferences == null ? null : new InjectionResult(myHostPsiFile, resultFiles, resultReferences);
   }
 
-  @NotNull
   @Override
-  public MultiHostRegistrar startInjecting(@NotNull Language language) {
+  public @NotNull MultiHostRegistrar startInjecting(@NotNull Language language) {
     return startInjecting(language, null);
   }
 
-  @NotNull
   @Override
-  public MultiHostRegistrar startInjecting(@NotNull Language language, @Nullable String extension) {
+  public @NotNull MultiHostRegistrar startInjecting(@NotNull Language language, @Nullable String extension) {
     fileExtension = extension;
     placeInfos = new SmartList<>();
 
@@ -121,11 +119,10 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
   }
 
   @Override
-  @NotNull
-  public MultiHostRegistrar addPlace(@NonNls @Nullable String prefix,
-                                     @NonNls @Nullable String suffix,
-                                     @NotNull PsiLanguageInjectionHost host,
-                                     @NotNull TextRange rangeInsideHost) {
+  public @NotNull MultiHostRegistrar addPlace(@NonNls @Nullable String prefix,
+                                              @NonNls @Nullable String suffix,
+                                              @NotNull PsiLanguageInjectionHost host,
+                                              @NotNull TextRange rangeInsideHost) {
     checkThreading();
     if (myLanguage == null) {
       clear();
@@ -192,8 +189,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
     info.rangeInHostElement = relevantRange;
   }
 
-  @NotNull
-  private static ShredImpl createShred(@NotNull PlaceInfo info, @NotNull StringBuilder outChars, @NotNull PsiFile hostPsiFile) {
+  private static @NotNull ShredImpl createShred(@NotNull PlaceInfo info, @NotNull StringBuilder outChars, @NotNull PsiFile hostPsiFile) {
     decode(info, outChars);
 
     TextRange relevantRange = info.rangeInHostElement;
@@ -275,13 +271,12 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
     }
   }
 
-  @NotNull
-  private static PsiFile createOrMergeInjectedFile(@NotNull PsiFile hostPsiFile,
-                                                   @NotNull PsiDocumentManagerBase documentManager,
-                                                   @NotNull Place place,
-                                                   @NotNull DocumentWindowImpl documentWindow,
-                                                   @NotNull PsiFile psiFile,
-                                                   @NotNull InjectedFileViewProvider viewProvider) {
+  private static @NotNull PsiFile createOrMergeInjectedFile(@NotNull PsiFile hostPsiFile,
+                                                            @NotNull PsiDocumentManagerBase documentManager,
+                                                            @NotNull Place place,
+                                                            @NotNull DocumentWindowImpl documentWindow,
+                                                            @NotNull PsiFile psiFile,
+                                                            @NotNull InjectedFileViewProvider viewProvider) {
     cacheEverything(place, documentWindow, viewProvider, psiFile);
 
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(documentWindow);
@@ -387,13 +382,12 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
   }
 
 
-  @NonNls
-  private static String exceptionContext(@NonNls @NotNull String msg,
-                                         @NotNull Language language,
-                                         @NotNull PsiFile hostPsiFile,
-                                         @NotNull VirtualFile hostVirtualFile,
-                                         @NotNull DocumentEx hostDocument,
-                                         @NotNull List<PlaceInfo> placeInfos, @NotNull PsiDocumentManagerBase documentManager) {
+  private static @NonNls String exceptionContext(@NonNls @NotNull String msg,
+                                                 @NotNull Language language,
+                                                 @NotNull PsiFile hostPsiFile,
+                                                 @NotNull VirtualFile hostVirtualFile,
+                                                 @NotNull DocumentEx hostDocument,
+                                                 @NotNull List<PlaceInfo> placeInfos, @NotNull PsiDocumentManagerBase documentManager) {
     return msg + ".\n" +
            "OK let's see. Host file: " + hostPsiFile + " in '" + hostVirtualFile.getPresentableUrl() + "' (" + hostPsiFile.getLanguage()+") " +
            (documentManager.isUncommited(hostDocument) ? " (uncommitted)" : "") + "\n" +
@@ -461,8 +455,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
 
 
   // under InjectedLanguageManagerImpl.ourInjectionPsiLock
-  @NotNull
-  private static PsiFile registerDocument(@NotNull DocumentWindowImpl newDocumentWindow,
+  private static @NotNull PsiFile registerDocument(@NotNull DocumentWindowImpl newDocumentWindow,
                                           @NotNull PsiFile newInjectedPsi,
                                           @NotNull Place shreds,
                                           @NotNull PsiFile hostPsiFile,
@@ -780,8 +773,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
   }
 
   // returns lexer element types with corresponding ranges in encoded (injection host based) PSI
-  @NotNull
-  private static List<InjectedLanguageUtilBase.TokenInfo>
+  private static @NotNull List<InjectedLanguageUtilBase.TokenInfo>
           obtainHighlightTokensFromLexer(@NotNull CharSequence outChars,
                                          @NotNull VirtualFileWindow virtualFile,
                                          @NotNull Project project,

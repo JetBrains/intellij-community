@@ -91,8 +91,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     return en;
   }
 
-  @NotNull
-  private Set<Module> calcModules() {
+  private @NotNull Set<Module> calcModules() {
     Set<Module> modules = new HashSet<>();
     OrderEnumerator en = getOrderEnumeratorForOptions();
     en.forEach(each -> {
@@ -107,8 +106,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     return modules;
   }
 
-  @NotNull
-  public Module getModule() {
+  public @NotNull Module getModule() {
     return myModule;
   }
 
@@ -116,9 +114,8 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     return BitUtil.isSet(myOptions, option);
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return hasOption(COMPILE_ONLY) ? IndexingBundle.message("search.scope.module", myModule.getName())
                                    : IndexingBundle.message("search.scope.module.runtime", myModule.getName());
   }
@@ -194,8 +191,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     return cacheHolder.computeIfAbsent(myOptions, key -> doExtractFilIdEnumeration());
   }
 
-  @NotNull
-  private VirtualFileEnumeration doExtractFilIdEnumeration() {
+  private @NotNull VirtualFileEnumeration doExtractFilIdEnumeration() {
     IntSet result = new IntOpenHashSet();
     for (VirtualFile file : myRoots.keySet()) {
       if (file instanceof VirtualFileWithId) {

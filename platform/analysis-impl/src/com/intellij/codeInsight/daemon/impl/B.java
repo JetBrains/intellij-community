@@ -32,14 +32,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 class B implements AnnotationBuilder {
-  @NotNull
-  private final AnnotationHolderImpl myHolder;
+  private final @NotNull AnnotationHolderImpl myHolder;
   private final @Nls String message;
-  @NotNull
-  private final PsiElement myCurrentElement;
+  private final @NotNull PsiElement myCurrentElement;
   private final @NotNull Object myCurrentAnnotator;
-  @NotNull
-  private final HighlightSeverity severity;
+  private final @NotNull HighlightSeverity severity;
   private TextRange range;
   private Boolean afterEndOfLine;
   private Boolean fileLevel;
@@ -84,7 +81,7 @@ class B implements AnnotationBuilder {
   }
 
   private class FixB implements FixBuilder {
-    @NotNull final
+    final @NotNull
     IntentionAction fix;
     TextRange range;
     HighlightDisplayKey key;

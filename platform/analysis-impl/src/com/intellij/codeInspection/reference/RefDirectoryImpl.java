@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.reference;
 
@@ -43,7 +43,7 @@ public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
   }
 
   @Override
-  public void accept(@NotNull final RefVisitor visitor) {
+  public void accept(final @NotNull RefVisitor visitor) {
     ApplicationManager.getApplication().runReadAction(() -> visitor.visitDirectory(this));
   }
 
@@ -58,16 +58,14 @@ public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
     });
   }
 
-  @Nullable
   @Override
-  public RefModule getModule() {
+  public @Nullable RefModule getModule() {
     return myRefModule != null ? myRefModule : super.getModule();
   }
 
 
-  @NotNull
   @Override
-  public String getQualifiedName() {
+  public @NotNull String getQualifiedName() {
     return getName(); //todo relative name
   }
 

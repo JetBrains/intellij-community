@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,13 +20,12 @@ class RefModuleImpl extends RefEntityImpl implements RefModule {
   }
 
   @Override
-  public void accept(@NotNull final RefVisitor refVisitor) {
+  public void accept(final @NotNull RefVisitor refVisitor) {
     ApplicationManager.getApplication().runReadAction(() -> refVisitor.visitModule(this));
   }
 
   @Override
-  @NotNull
-  public Module getModule() {
+  public @NotNull Module getModule() {
     return myModule;
   }
 
@@ -40,8 +39,7 @@ class RefModuleImpl extends RefEntityImpl implements RefModule {
     return PlatformIcons.CLOSED_MODULE_GROUP_ICON;
   }
 
-  @Nullable
-  static RefEntity moduleFromName(final RefManager manager, final String name) {
+  static @Nullable RefEntity moduleFromName(final RefManager manager, final String name) {
     return manager.getRefModule(ModuleManager.getInstance(manager.getProject()).findModuleByName(name));
   }
 }

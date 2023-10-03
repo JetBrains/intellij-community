@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup;
 
@@ -85,8 +85,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
    * Returns a data object.  This object is used e.g. for rendering the node.
    */
   @Override
-  @NotNull
-  public T getObject() {
+  public @NotNull T getObject() {
     return (T)myObject;
   }
 
@@ -94,8 +93,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
    * Returns a string which will be inserted to the editor when this item is chosen.
    */
   @Override
-  @NotNull
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return myLookupString;
   }
 
@@ -153,7 +151,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
   }
 
   @Override
-  public void handleInsert(@NotNull final InsertionContext context) {
+  public void handleInsert(final @NotNull InsertionContext context) {
     final InsertHandler<? extends LookupElement> handler = getInsertHandler();
     if (handler != null) {
       //noinspection unchecked
@@ -166,8 +164,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
     }
   }
 
-  @Nullable
-  public static TailType getDefaultTailType(final char completionChar) {
+  public static @Nullable TailType getDefaultTailType(final char completionChar) {
     return switch (completionChar) {
       case '.' -> new CharTailType('.', false);
       case ',' -> CommaTailType.INSTANCE;
@@ -179,8 +176,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
     };
   }
 
-  @NotNull
-  public static TailType handleCompletionChar(@NotNull final Editor editor, @NotNull final LookupElement lookupElement, final char completionChar) {
+  public static @NotNull TailType handleCompletionChar(final @NotNull Editor editor, final @NotNull LookupElement lookupElement, final char completionChar) {
     final TailType type = getDefaultTailType(completionChar);
     if (type != null) {
       return type;
@@ -197,14 +193,12 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
   }
 
 
-  @NotNull
-  public TailType getTailType(){
+  public @NotNull TailType getTailType(){
     final TailType tailType = getAttribute(TAIL_TYPE_ATTR);
     return tailType != null ? tailType : TailType.UNKNOWN;
   }
 
-  @NotNull
-  public LookupItem<T> setTailType(@NotNull TailType type) {
+  public @NotNull LookupItem<T> setTailType(@NotNull TailType type) {
     setAttribute(TAIL_TYPE_ATTR, type);
     return this;
   }
@@ -214,7 +208,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
     return getLookupString().compareTo(o.getLookupString());
   }
 
-  public LookupItem<T> setInsertHandler(@NotNull final InsertHandler<? extends LookupElement> handler) {
+  public LookupItem<T> setInsertHandler(final @NotNull InsertHandler<? extends LookupElement> handler) {
     myInsertHandler = handler;
     return this;
   }
@@ -251,14 +245,12 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
     return myAutoCompletionPolicy;
   }
 
-  @NotNull
-  public LookupItem<T> setIcon(Icon icon) {
+  public @NotNull LookupItem<T> setIcon(Icon icon) {
     setAttribute(ICON_ATTR, icon);
     return this;
   }
 
-  @NotNull
-  public LookupItem<T> setPriority(double priority) {
+  public @NotNull LookupItem<T> setPriority(double priority) {
     myPriority = priority;
     return this;
   }
@@ -267,25 +259,22 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
     return myPriority;
   }
 
-  @NotNull
-  public LookupItem<T> setPresentableText(@NotNull final String displayText) {
+  public @NotNull LookupItem<T> setPresentableText(final @NotNull String displayText) {
     myPresentable = displayText;
     return this;
   }
 
-  @Nullable
-  public String getPresentableText() {
+  public @Nullable String getPresentableText() {
     return myPresentable;
   }
 
-  @NotNull
-  public LookupItem<T> setTailText(final String text, final boolean grayed) {
+  public @NotNull LookupItem<T> setTailText(final String text, final boolean grayed) {
     setAttribute(TAIL_TEXT_ATTR, text);
     setAttribute(TAIL_TEXT_SMALL_ATTR, Boolean.TRUE);
     return this;
   }
 
-  public LookupItem<T> addLookupStrings(@NonNls final String... additionalLookupStrings) {
+  public LookupItem<T> addLookupStrings(final @NonNls String... additionalLookupStrings) {
     ContainerUtil.addAll(myAllLookupStrings, additionalLookupStrings);
     return this;
   }

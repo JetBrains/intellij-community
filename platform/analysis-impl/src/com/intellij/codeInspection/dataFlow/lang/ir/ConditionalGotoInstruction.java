@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
@@ -39,9 +39,8 @@ public class ConditionalGotoInstruction extends Instruction {
    * @return PSI element associated with this instruction
    * @deprecated used in "Find the cause" feature only. Will be removed
    */
-  @Nullable
   @Deprecated(forRemoval = true)
-  public PsiElement getPsiAnchor() {
+  public @Nullable PsiElement getPsiAnchor() {
     return myAnchor;
   }
 

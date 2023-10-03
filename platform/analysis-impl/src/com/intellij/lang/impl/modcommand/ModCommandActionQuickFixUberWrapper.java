@@ -44,8 +44,7 @@ public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntenti
     return getFamilyName();
   }
 
-  @Nullable
-  private Presentation getPresentation() {
+  private @Nullable Presentation getPresentation() {
     if (myPresentation != null) return myPresentation;
     PsiElement element = getStartElement();
     if (element == null) return null;

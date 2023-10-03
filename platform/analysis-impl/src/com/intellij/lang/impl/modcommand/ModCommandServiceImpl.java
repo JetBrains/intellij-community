@@ -35,8 +35,7 @@ import static com.intellij.openapi.util.text.HtmlChunk.text;
 
 public class ModCommandServiceImpl implements ModCommandService {
   @Override
-  @NotNull
-  public IntentionAction wrap(@NotNull ModCommandAction action) {
+  public @NotNull IntentionAction wrap(@NotNull ModCommandAction action) {
     return new ModCommandActionWrapper(action);
   }
 

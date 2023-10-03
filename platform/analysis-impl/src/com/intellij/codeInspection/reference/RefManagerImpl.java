@@ -322,8 +322,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Override
-  @Nullable
-  public Element export(@NotNull RefEntity entity) {
+  public @Nullable Element export(@NotNull RefEntity entity) {
     Element element = export(entity, -1);
     if (element == null) return null;
 

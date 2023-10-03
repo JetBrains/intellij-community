@@ -1,24 +1,13 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,19 +73,16 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
   }
 
   @Override
-  @Nullable("returns null when the host document marker is invalid")
-  public Segment getHostRangeMarker() {
+  public @Nullable("returns null when the host document marker is invalid") Segment getHostRangeMarker() {
     return usePsiRange ? relevantRangeInHost.getPsiRange() : relevantRangeInHost.getRange();
   }
 
   @Override
-  @NotNull
-  public TextRange getRangeInsideHost() {
+  public @NotNull TextRange getRangeInsideHost() {
     return calcRangeInsideHostElement(true);
   }
 
-  @NotNull
-  private TextRange calcRangeInsideHostElement(boolean usePsiRange) {
+  private @NotNull TextRange calcRangeInsideHostElement(boolean usePsiRange) {
     PsiLanguageInjectionHost host = getHost();
     Segment psiRange = usePsiRange ? relevantRangeInHost.getPsiRange() : relevantRangeInHost.getRange();
     TextRange textRange = psiRange == null ? null : TextRange.create(psiRange);
@@ -158,26 +144,22 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
   }
 
   @Override
-  @Nullable
-  public PsiLanguageInjectionHost getHost() {
+  public @Nullable PsiLanguageInjectionHost getHost() {
     return hostElementPointer.getElement();
   }
 
-  @NotNull
   @Override
-  public TextRange getRange() {
+  public @NotNull TextRange getRange() {
     return rangeInDecodedPSI;
   }
 
-  @NotNull
   @Override
-  public String getPrefix() {
+  public @NotNull String getPrefix() {
     return prefix;
   }
 
-  @NotNull
   @Override
-  public String getSuffix() {
+  public @NotNull String getSuffix() {
     return suffix;
   }
 

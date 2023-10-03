@@ -41,8 +41,7 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
   }
 
   @Override
-  @NotNull
-  public @InspectionMessage String getDescriptionTemplate() {
+  public @NotNull @InspectionMessage String getDescriptionTemplate() {
     return myDescriptionTemplate;
   }
 

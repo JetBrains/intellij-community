@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
@@ -27,9 +27,8 @@ public class ResultOfInstruction extends EvalInstruction {
     return "RESULT_OF " + getDfaAnchor();
   }
 
-  @NotNull
   @Override
-  public DfaAnchor getDfaAnchor() {
+  public @NotNull DfaAnchor getDfaAnchor() {
     return Objects.requireNonNull(super.getDfaAnchor());
   }
 }

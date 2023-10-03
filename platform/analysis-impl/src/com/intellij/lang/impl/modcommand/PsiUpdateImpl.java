@@ -536,8 +536,7 @@ final class PsiUpdateImpl {
         .andThen(myInfoMessage == null ? nop() : ModCommand.info(myInfoMessage));
     }
 
-    @NotNull
-    private ModCommand getNavigateCommand() {
+    private @NotNull ModCommand getNavigateCommand() {
       if (!myPositionUpdated || myRenameSymbol != null) return nop();
       int length = myTracker.myTargetFile.getTextLength();
       int start = -1, end = -1, caret = -1;
@@ -552,14 +551,12 @@ final class PsiUpdateImpl {
       return new ModNavigate(myNavigationFile, start, end, caret);
     }
 
-    @NotNull
-    private ModCommand getHighlightCommand() {
+    private @NotNull ModCommand getHighlightCommand() {
       if (myHighlightInfos.isEmpty()) return nop();
       return new ModHighlight(myNavigationFile, myHighlightInfos);
     }
 
-    @NotNull
-    private ModCommand getTemplateCommand() {
+    private @NotNull ModCommand getTemplateCommand() {
       if (myTemplateFields.isEmpty()) return nop();
       return new ModStartTemplate(myNavigationFile, myTemplateFields, f -> nop());
     }

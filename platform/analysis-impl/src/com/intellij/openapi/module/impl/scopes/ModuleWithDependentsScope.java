@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.openapi.module.Module;
@@ -61,8 +61,7 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope {
     final MultiMap<Module, Module> productionOnTestUsages = new MultiMap<>();
   }
 
-  @NotNull
-  private static ModuleIndex getModuleIndex(@NotNull Project project) {
+  private static @NotNull ModuleIndex getModuleIndex(@NotNull Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       ModuleIndex index = new ModuleIndex();
       for (Module module : ModuleManager.getInstance(project).getModules()) {
@@ -111,9 +110,8 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope {
     return false;
   }
 
-  @NotNull
   @Override
-  public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+  public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     Project project = getProject();
     ModuleManager moduleManager = ModuleManager.getInstance(Objects.requireNonNull(project));
     return myRootModules
@@ -125,8 +123,7 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "Modules with dependents: (roots: [" +
            StringUtil.join(myRootModules, Module::getName, ", ") +
            "], including dependents: [" +

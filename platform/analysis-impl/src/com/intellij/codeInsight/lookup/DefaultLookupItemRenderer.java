@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.Iconable;
@@ -26,8 +26,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<
     presentation.setTypeText(getText3(item), null);
   }
 
-  @Nullable
-  public static Icon getRawIcon(final LookupElement item) {
+  public static @Nullable Icon getRawIcon(final LookupElement item) {
     Icon icon = _getRawIcon(item);
     if (icon instanceof ScalableIcon) icon = ((ScalableIcon)icon).scale(1f);
     if (icon != null && icon.getIconHeight() > IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class).getIconHeight()) {
@@ -36,8 +35,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<
     return icon;
   }
 
-  @Nullable
-  private static Icon _getRawIcon(LookupElement item) {
+  private static @Nullable Icon _getRawIcon(LookupElement item) {
     if (item instanceof LookupItem) {
       Icon icon = (Icon)((LookupItem<?>)item).getAttribute(LookupItem.ICON_ATTR);
       if (icon != null) return icon;
@@ -58,8 +56,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<
 
 
   @SuppressWarnings("deprecation")
-  @Nullable
-  private static String getText3(LookupItem<?> item) {
+  private static @Nullable String getText3(LookupItem<?> item) {
     Object o = item.getObject();
     String text;
     if (o instanceof LookupValueWithUIHint) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -122,8 +122,7 @@ public interface HighlightInfoType {
     }
 
     @Override
-    @NotNull
-    public HighlightSeverity getSeverity(@Nullable PsiElement psiElement) {
+    public @NotNull HighlightSeverity getSeverity(@Nullable PsiElement psiElement) {
       return mySeverity;
     }
 
@@ -182,8 +181,7 @@ public interface HighlightInfoType {
     }
 
     @Override
-    @NotNull
-    public HighlightSeverity getSeverity(PsiElement psiElement) {
+    public @NotNull HighlightSeverity getSeverity(PsiElement psiElement) {
       InspectionProfile profile = psiElement == null
                                   ? InspectionProfileManager.getInstance().getCurrentProfile()
                                   : InspectionProjectProfileManager.getInstance(psiElement.getProject()).getCurrentProfile();

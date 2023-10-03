@@ -25,12 +25,12 @@ import java.util.List;
 
 @State(name = "FindSettings", storages = @Storage("find.xml"))
 public class FindSettingsImpl extends FindSettings implements PersistentStateComponent<FindSettingsImpl> {
-  @NonNls private static final String FIND_DIRECTION_FORWARD = "forward";
-  @NonNls private static final String FIND_DIRECTION_BACKWARD = "backward";
-  @NonNls private static final String FIND_ORIGIN_FROM_CURSOR = "from_cursor";
-  @NonNls private static final String FIND_ORIGIN_ENTIRE_SCOPE = "entire_scope";
-  @NonNls private static final String FIND_SCOPE_GLOBAL = "global";
-  @NonNls private static final String FIND_SCOPE_SELECTED = "selected";
+  private static final @NonNls String FIND_DIRECTION_FORWARD = "forward";
+  private static final @NonNls String FIND_DIRECTION_BACKWARD = "backward";
+  private static final @NonNls String FIND_ORIGIN_FROM_CURSOR = "from_cursor";
+  private static final @NonNls String FIND_ORIGIN_ENTIRE_SCOPE = "entire_scope";
+  private static final @NonNls String FIND_SCOPE_GLOBAL = "global";
+  private static final @NonNls String FIND_SCOPE_SELECTED = "selected";
 
   public FindSettingsImpl() {
   }

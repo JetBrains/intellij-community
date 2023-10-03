@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionsReportConverter;
@@ -21,8 +21,7 @@ public final class ReportConverterUtil {
     return ContainerUtil.find(InspectionsReportConverter.EP_NAME.getExtensionList(), converter -> converter.getFormatName().equals(outputFormat));
   }
 
-  @NotNull
-  public static Path getResultsDataPath(@NotNull Disposable parentDisposable, @Nullable InspectionsReportConverter reportConverter, @NotNull String outputPath) throws IOException {
+  public static @NotNull Path getResultsDataPath(@NotNull Disposable parentDisposable, @Nullable InspectionsReportConverter reportConverter, @NotNull String outputPath) throws IOException {
     Path resultsDataPath;
     // use default xml converter(if null( or don't store default xml report in tmp dir
     if (reportConverter == null || !reportConverter.useTmpDirForRawData()) {  // and don't use STDOUT stream

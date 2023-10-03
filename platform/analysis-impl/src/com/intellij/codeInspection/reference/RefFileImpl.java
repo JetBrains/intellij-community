@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,7 +27,7 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
   }
 
   @Override
-  public void accept(@NotNull final RefVisitor visitor) {
+  public void accept(final @NotNull RefVisitor visitor) {
     ApplicationManager.getApplication().runReadAction(() -> visitor.visitFile(this));
   }
 
@@ -53,8 +53,7 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
     }
   }
 
-  @Nullable
-  static RefElement fileFromExternalName(final RefManager manager, final String fqName) {
+  static @Nullable RefElement fileFromExternalName(final RefManager manager, final String fqName) {
     final VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(PathMacroManager.getInstance(manager.getProject()).expandPath(fqName));
     if (virtualFile != null) {
       final PsiFile psiFile = PsiManager.getInstance(manager.getProject()).findFile(virtualFile);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -6,11 +6,11 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.RainbowVisitor;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.highlighting.PassRunningAssert;
 import com.intellij.codeInsight.problems.ProblemImpl;
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -71,8 +71,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     new PassRunningAssert("the expensive method should not be called inside the highlighting pass");
 
   final boolean myUpdateAll;
-  @NotNull
-  final ProperTextRange myPriorityRange;
+  final @NotNull ProperTextRange myPriorityRange;
 
   final List<HighlightInfo> myHighlights = new ArrayList<>();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -20,14 +20,12 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
   }
 
   @Override
-  @NotNull
-  public RangeMarker createRangeMarker(@NotNull VirtualFile file, int offset) {
+  public @NotNull RangeMarker createRangeMarker(@NotNull VirtualFile file, int offset) {
     return ReadAction.compute(() -> DocumentImpl.createRangeMarkerForVirtualFile(file, offset, -1, -1, -1, -1, false));
   }
 
   @Override
-  @NotNull
-  public RangeMarker createRangeMarker(@NotNull VirtualFile file, int line, int column, boolean persistent) {
+  public @NotNull RangeMarker createRangeMarker(@NotNull VirtualFile file, int line, int column, boolean persistent) {
     return ReadAction.compute(() -> {
       Document document = file.getFileType().isBinary() ? null : FileDocumentManager.getInstance().getCachedDocument(file);
       if (document != null) {

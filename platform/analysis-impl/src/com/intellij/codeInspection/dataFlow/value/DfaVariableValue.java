@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow.value;
 
@@ -39,13 +25,11 @@ public final class DfaVariableValue extends DfaValue {
       myFactory = factory;
     }
 
-    @NotNull
-    public DfaVariableValue createVariableValue(@NotNull VariableDescriptor descriptor) {
+    public @NotNull DfaVariableValue createVariableValue(@NotNull VariableDescriptor descriptor) {
       return createVariableValue(descriptor, null);
     }
 
-    @NotNull
-    public DfaVariableValue createVariableValue(@NotNull VariableDescriptor descriptor, @Nullable DfaVariableValue qualifier) {
+    public @NotNull DfaVariableValue createVariableValue(@NotNull VariableDescriptor descriptor, @Nullable DfaVariableValue qualifier) {
       return createVariableValue(descriptor, qualifier, VariableDescriptor::getDfType);
     }
 
@@ -54,8 +38,7 @@ public final class DfaVariableValue extends DfaValue {
      * @param qualifier qualifier (if present)
      * @return existing variable value with given descriptor and qualifier; null if it doesn't exist yet
      */
-    @Nullable
-    public DfaVariableValue getVariableValue(@NotNull VariableDescriptor descriptor, @Nullable DfaVariableValue qualifier) {
+    public @Nullable DfaVariableValue getVariableValue(@NotNull VariableDescriptor descriptor, @Nullable DfaVariableValue qualifier) {
       Pair<VariableDescriptor, DfaVariableValue> key = Pair.create(descriptor, qualifier);
       return myExistingVars.get(key);
     }
@@ -79,9 +62,9 @@ public final class DfaVariableValue extends DfaValue {
     }
   }
 
-  @NotNull private final VariableDescriptor myDescriptor;
-  @NotNull private final DfType myDfType;
-  @Nullable private final DfaVariableValue myQualifier;
+  private final @NotNull VariableDescriptor myDescriptor;
+  private final @NotNull DfType myDfType;
+  private final @Nullable DfaVariableValue myQualifier;
   private DfType myInherentType;
   private final List<DfaVariableValue> myDependents = new SmartList<>();
 
@@ -95,13 +78,11 @@ public final class DfaVariableValue extends DfaValue {
     myDfType = type;
   }
 
-  @Nullable
-  public PsiElement getPsiVariable() {
+  public @Nullable PsiElement getPsiVariable() {
     return myDescriptor.getPsiElement();
   }
 
-  @NotNull
-  public VariableDescriptor getDescriptor() {
+  public @NotNull VariableDescriptor getDescriptor() {
     return myDescriptor;
   }
 
@@ -111,9 +92,8 @@ public final class DfaVariableValue extends DfaValue {
                                                        (descriptor, value) -> myDfType);
   }
 
-  @NotNull
   @Override
-  public DfType getDfType() {
+  public @NotNull DfType getDfType() {
     return myDfType;
   }
 
@@ -125,8 +105,7 @@ public final class DfaVariableValue extends DfaValue {
   /**
    * @return list of all variables created within the same factory which are directly or indirectly qualified by this variable.
    */
-  @NotNull
-  public List<DfaVariableValue> getDependentVariables() {
+  public @NotNull List<DfaVariableValue> getDependentVariables() {
     return myDependents;
   }
 
@@ -140,9 +119,8 @@ public final class DfaVariableValue extends DfaValue {
     return depth;
   }
 
-  @NotNull
   @Contract(pure = true)
-  public DfaVariableValue withQualifier(DfaVariableValue newQualifier) {
+  public @NotNull DfaVariableValue withQualifier(DfaVariableValue newQualifier) {
     return newQualifier == myQualifier ? this : myFactory.getVarFactory().createVariableValue(myDescriptor, newQualifier);
   }
 
@@ -150,8 +128,7 @@ public final class DfaVariableValue extends DfaValue {
     return (myQualifier == null ? "" : myQualifier + ".") + myDescriptor;
   }
 
-  @Nullable
-  public DfaVariableValue getQualifier() {
+  public @Nullable DfaVariableValue getQualifier() {
     return myQualifier;
   }
 

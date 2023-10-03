@@ -413,8 +413,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
-    @Nullable
-    private MergePatch tryMergeDiffs(Supplier<MergePatch> singleDiff) {
+    private @Nullable MergePatch tryMergeDiffs(Supplier<MergePatch> singleDiff) {
       if (!(mySingleDiff instanceof DropOrderingMergePatch)) return null;
       MergePatch diff = singleDiff.get();
       if (diff instanceof DropOrderingMergePatch && diff.myApplyToRight != mySingleDiff.myApplyToRight) {
@@ -1285,8 +1284,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  @NotNull
-  protected DfaValue canonicalize(@NotNull DfaValue value) {
+  protected @NotNull DfaValue canonicalize(@NotNull DfaValue value) {
     if (value instanceof DfaVariableValue) {
       return canonicalize((DfaVariableValue)value);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -57,9 +57,9 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   private boolean isToShortenLongNames = true;
   private TemplateContext myTemplateContext = new TemplateContext();
 
-  @NonNls private static final String SELECTION_START = "SELECTION_START";
-  @NonNls private static final String SELECTION_END = "SELECTION_END";
-  @NonNls public static final String ARG = "ARG";
+  private static final @NonNls String SELECTION_START = "SELECTION_START";
+  private static final @NonNls String SELECTION_END = "SELECTION_END";
+  public static final @NonNls String ARG = "ARG";
 
   public static final Set<String> INTERNAL_VARS_SET = Set.of(
     END, SELECTION, SELECTION_START, SELECTION_END);
@@ -97,19 +97,17 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     setBuildingTemplateTrace(storeBuildingStacktrace ? new Throwable() : null);
   }
 
-  @NotNull
   @Override
-  public Variable addVariable(@NotNull Expression expression, boolean isAlwaysStopAt) {
+  public @NotNull Variable addVariable(@NotNull Expression expression, boolean isAlwaysStopAt) {
     return addVariable("__Variable" + myVariables.size(), expression, isAlwaysStopAt);
   }
 
-  @NotNull
   @Override
-  public Variable addVariable(@NotNull @NlsSafe String name,
-                              Expression expression,
-                              Expression defaultValueExpression,
-                              boolean isAlwaysStopAt,
-                              boolean skipOnStart) {
+  public @NotNull Variable addVariable(@NotNull @NlsSafe String name,
+                                       Expression expression,
+                                       Expression defaultValueExpression,
+                                       boolean isAlwaysStopAt,
+                                       boolean skipOnStart) {
     if (isParsed() || !isToParseSegments()) {
       addVariableSegment(name);
     }
@@ -118,9 +116,8 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     return variable;
   }
 
-  @NotNull
   @Override
-  public Variable addVariable(@NotNull @NlsSafe String name, @NlsSafe String expression, @NlsSafe String defaultValue, boolean isAlwaysStopAt) {
+  public @NotNull Variable addVariable(@NotNull @NlsSafe String name, @NlsSafe String expression, @NlsSafe String defaultValue, boolean isAlwaysStopAt) {
     Variable variable = new Variable(name, expression, defaultValue, isAlwaysStopAt);
     myVariables.add(variable);
     return variable;
@@ -151,9 +148,8 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     return myId;
   }
 
-  @NotNull
   @Override
-  public TemplateImpl copy() {
+  public @NotNull TemplateImpl copy() {
     TemplateImpl template = new TemplateImpl(myKey, string(), myGroupName);
     template.resetFrom(this);
     return template;
@@ -223,8 +219,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     return isDeactivated;
   }
 
-  @NotNull
-  public TemplateContext getTemplateContext() {
+  public @NotNull TemplateContext getTemplateContext() {
     return myTemplateContext;
   }
 
@@ -255,13 +250,11 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     return myVariables.size();
   }
 
-  @NotNull
-  public @NlsSafe String getVariableNameAt(int i) {
+  public @NotNull @NlsSafe String getVariableNameAt(int i) {
     return myVariables.get(i).getName();
   }
 
-  @NotNull
-  public @NlsSafe String getExpressionStringAt(int i) {
+  public @NotNull @NlsSafe String getExpressionStringAt(int i) {
     return myVariables.get(i).getExpressionString();
   }
 
@@ -270,8 +263,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     return myVariables.get(i).getExpression();
   }
 
-  @NotNull
-  public @NlsSafe String getDefaultValueStringAt(int i) {
+  public @NotNull @NlsSafe String getDefaultValueStringAt(int i) {
     return myVariables.get(i).getDefaultValueString();
   }
 
@@ -330,7 +322,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     return false;
   }
 
-  public void setId(@Nullable final String id) {
+  public void setId(final @Nullable String id) {
     myId = id;
   }
 

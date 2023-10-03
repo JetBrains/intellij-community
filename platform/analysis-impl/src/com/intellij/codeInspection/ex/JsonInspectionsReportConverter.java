@@ -31,41 +31,41 @@ import static com.intellij.codeInspection.DefaultInspectionToolResultExporter.IN
 import static com.intellij.codeInspection.reference.SmartRefElementPointerImpl.*;
 
 public class JsonInspectionsReportConverter implements InspectionsReportConverter {
-  @NonNls private static final String FORMAT_NAME = "json";
-  @NonNls private static final String JSON_EXTENSION = ".json";
-  @NonNls private static final String FILE = "file";
-  @NonNls private static final String LINE = "line";
-  @NonNls private static final String OFFSET = "offset";
-  @NonNls private static final String LENGTH = "length";
-  @NonNls private static final String MODULE = "module";
-  @NonNls private static final String PACKAGE = "package";
-  @NonNls protected static final String PROBLEM = "problem";
-  @NonNls protected static final String PROBLEMS = "problems";
-  @NonNls private static final String DESCRIPTION = "description";
-  @NonNls private static final String PLUGIN_ID = "pluginId";
-  @NonNls private static final String PLUGIN_VERSION = "pluginVersion";
-  @NonNls private static final String GLOBAL_TOOL = "isGlobalTool";
-  @NonNls private static final String LANGUAGE = "language";
-  @NonNls private static final String SEVERITY_ATTR = "severity";
-  @NonNls private static final String ATTRIBUTE_KEY_ATTR = "attribute_key";
-  @NonNls private static final String HINT = "hint";
-  @NonNls private static final String HINTS = "hints";
-  @NonNls private static final String DISPLAY_NAME = "displayName";
-  @NonNls private static final String DEFAULT_SEVERITY = "defaultSeverity";
-  @NonNls private static final String SHORT_NAME = "shortName";
-  @NonNls private static final String ENABLED = "enabled";
-  @NonNls private static final String NAME = "name";
-  @NonNls private static final String ID = "id";
-  @NonNls private static final String VALUE = "value";
-  @NonNls private static final String GROUP = "group";
-  @NonNls private static final String GROUPS = "groups";
-  @NonNls private static final String INSPECTION = "inspection";
-  @NonNls private static final String HIGHLIGHTED_ELEMENT = "highlighted_element";
-  @NonNls public static final String DUPLICATED_CODE = "DuplicatedCode";
-  @NonNls public static final String DUPLICATED_CODE_AGGREGATE = DUPLICATED_CODE + InspectionsResultUtil.AGGREGATE;
-  @NonNls public static final String PHP_VULNERABLE_PATHS = "PhpVulnerablePathsInspection";
-  @NonNls public static final String PHP_VULNERABLE_PATHS_AGGREGATE = PHP_VULNERABLE_PATHS + InspectionsResultUtil.AGGREGATE;
-  @NonNls private static final String FRAMEWORK = "framework";
+  private static final @NonNls String FORMAT_NAME = "json";
+  private static final @NonNls String JSON_EXTENSION = ".json";
+  private static final @NonNls String FILE = "file";
+  private static final @NonNls String LINE = "line";
+  private static final @NonNls String OFFSET = "offset";
+  private static final @NonNls String LENGTH = "length";
+  private static final @NonNls String MODULE = "module";
+  private static final @NonNls String PACKAGE = "package";
+  protected static final @NonNls String PROBLEM = "problem";
+  protected static final @NonNls String PROBLEMS = "problems";
+  private static final @NonNls String DESCRIPTION = "description";
+  private static final @NonNls String PLUGIN_ID = "pluginId";
+  private static final @NonNls String PLUGIN_VERSION = "pluginVersion";
+  private static final @NonNls String GLOBAL_TOOL = "isGlobalTool";
+  private static final @NonNls String LANGUAGE = "language";
+  private static final @NonNls String SEVERITY_ATTR = "severity";
+  private static final @NonNls String ATTRIBUTE_KEY_ATTR = "attribute_key";
+  private static final @NonNls String HINT = "hint";
+  private static final @NonNls String HINTS = "hints";
+  private static final @NonNls String DISPLAY_NAME = "displayName";
+  private static final @NonNls String DEFAULT_SEVERITY = "defaultSeverity";
+  private static final @NonNls String SHORT_NAME = "shortName";
+  private static final @NonNls String ENABLED = "enabled";
+  private static final @NonNls String NAME = "name";
+  private static final @NonNls String ID = "id";
+  private static final @NonNls String VALUE = "value";
+  private static final @NonNls String GROUP = "group";
+  private static final @NonNls String GROUPS = "groups";
+  private static final @NonNls String INSPECTION = "inspection";
+  private static final @NonNls String HIGHLIGHTED_ELEMENT = "highlighted_element";
+  public static final @NonNls String DUPLICATED_CODE = "DuplicatedCode";
+  public static final @NonNls String DUPLICATED_CODE_AGGREGATE = DUPLICATED_CODE + InspectionsResultUtil.AGGREGATE;
+  public static final @NonNls String PHP_VULNERABLE_PATHS = "PhpVulnerablePathsInspection";
+  public static final @NonNls String PHP_VULNERABLE_PATHS_AGGREGATE = PHP_VULNERABLE_PATHS + InspectionsResultUtil.AGGREGATE;
+  private static final @NonNls String FRAMEWORK = "framework";
 
   @Override
   public String getFormatName() {
@@ -299,17 +299,15 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     jsonWriter.endArray();
   }
 
-  @Nullable
-  private static String getParameterName(@NotNull Element element) {
+  private static @Nullable String getParameterName(@NotNull Element element) {
     Element parameters = element.getChild("parameters");
     Collection<? extends Element> parameterElements = parameters != null ? parameters.getChildren("parameter") : null;
     Element parameter = ContainerUtil.getFirstItem(parameterElements);
     return parameter != null ? parameter.getAttributeValue("name") : null;
   }
 
-  @NotNull
-  private static Collection<String> getVulnerabilityValues(@NotNull Element element,
-                                                           @NotNull String vulnerabilitiesTagName) {
+  private static @NotNull Collection<String> getVulnerabilityValues(@NotNull Element element,
+                                                                    @NotNull String vulnerabilitiesTagName) {
     Element vulnerabilities = element.getChild(vulnerabilitiesTagName);
     if (vulnerabilities == null) {
       return Collections.emptyList();

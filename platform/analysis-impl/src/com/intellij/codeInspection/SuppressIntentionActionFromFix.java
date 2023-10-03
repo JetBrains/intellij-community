@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -25,14 +25,12 @@ public final class SuppressIntentionActionFromFix extends SuppressIntentionActio
     return myFix.startInWriteAction();
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return myFix.getElementToMakeWritable(currentFile);
   }
 
-  @NotNull
-  public static SuppressIntentionAction convertBatchToSuppressIntentionAction(@NotNull final SuppressQuickFix fix) {
+  public static @NotNull SuppressIntentionAction convertBatchToSuppressIntentionAction(final @NotNull SuppressQuickFix fix) {
     return new SuppressIntentionActionFromFix(fix);
   }
 
@@ -69,18 +67,15 @@ public final class SuppressIntentionActionFromFix extends SuppressIntentionActio
     return myFix.isAvailable(project, element);
   }
 
-  @NotNull
-  @IntentionName
   @Override
-  public String getText() {
+  public @NotNull @IntentionName String getText() {
     return isShouldBeAppliedToInjectionHost() == ThreeState.NO
            ? AnalysisBundle.message("intention.name.in.injection", myFix.getName())
            : myFix.getName();
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return myFix.getFamilyName();
   }
 

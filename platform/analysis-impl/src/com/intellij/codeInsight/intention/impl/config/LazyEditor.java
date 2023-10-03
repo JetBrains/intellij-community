@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.editor.*;
@@ -43,8 +43,7 @@ public class LazyEditor extends UserDataHolderBase implements Editor {
   }
 
   @Override
-  @NotNull
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return getEditor().getDocument();
   }
 
@@ -54,14 +53,12 @@ public class LazyEditor extends UserDataHolderBase implements Editor {
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return getEditor().getComponent();
   }
 
   @Override
-  @NotNull
-  public JComponent getContentComponent() {
+  public @NotNull JComponent getContentComponent() {
     return getEditor().getContentComponent();
   }
 
@@ -76,62 +73,52 @@ public class LazyEditor extends UserDataHolderBase implements Editor {
   }
 
   @Override
-  @NotNull
-  public SelectionModel getSelectionModel() {
+  public @NotNull SelectionModel getSelectionModel() {
     return getEditor().getSelectionModel();
   }
 
   @Override
-  @NotNull
-  public MarkupModel getMarkupModel() {
+  public @NotNull MarkupModel getMarkupModel() {
     return getEditor().getMarkupModel();
   }
 
   @Override
-  @NotNull
-  public FoldingModel getFoldingModel() {
+  public @NotNull FoldingModel getFoldingModel() {
     return getEditor().getFoldingModel();
   }
 
   @Override
-  @NotNull
-  public ScrollingModel getScrollingModel() {
+  public @NotNull ScrollingModel getScrollingModel() {
     return getEditor().getScrollingModel();
   }
 
   @Override
-  @NotNull
-  public CaretModel getCaretModel() {
+  public @NotNull CaretModel getCaretModel() {
     return getEditor().getCaretModel();
   }
 
   @Override
-  @NotNull
-  public SoftWrapModel getSoftWrapModel() {
+  public @NotNull SoftWrapModel getSoftWrapModel() {
     return getEditor().getSoftWrapModel();
   }
 
-  @NotNull
   @Override
-  public InlayModel getInlayModel() {
+  public @NotNull InlayModel getInlayModel() {
     return getEditor().getInlayModel();
   }
 
-  @NotNull
   @Override
-  public EditorKind getEditorKind() {
+  public @NotNull EditorKind getEditorKind() {
     return getEditor().getEditorKind();
   }
 
   @Override
-  @NotNull
-  public EditorSettings getSettings() {
+  public @NotNull EditorSettings getSettings() {
     return getEditor().getSettings();
   }
 
   @Override
-  @NotNull
-  public EditorColorsScheme getColorsScheme() {
+  public @NotNull EditorColorsScheme getColorsScheme() {
     return getEditor().getColorsScheme();
   }
 
@@ -141,93 +128,82 @@ public class LazyEditor extends UserDataHolderBase implements Editor {
   }
 
   @Override
-  @NotNull
-  public Point logicalPositionToXY(@NotNull final LogicalPosition pos) {
+  public @NotNull Point logicalPositionToXY(final @NotNull LogicalPosition pos) {
     return getEditor().logicalPositionToXY(pos);
   }
 
   @Override
-  public int logicalPositionToOffset(@NotNull final LogicalPosition pos) {
+  public int logicalPositionToOffset(final @NotNull LogicalPosition pos) {
     return getEditor().logicalPositionToOffset(pos);
   }
 
   @Override
-  @NotNull
-  public VisualPosition logicalToVisualPosition(@NotNull final LogicalPosition logicalPos) {
+  public @NotNull VisualPosition logicalToVisualPosition(final @NotNull LogicalPosition logicalPos) {
     return getEditor().logicalToVisualPosition(logicalPos);
   }
 
   @Override
-  @NotNull
-  public Point visualPositionToXY(@NotNull final VisualPosition visible) {
+  public @NotNull Point visualPositionToXY(final @NotNull VisualPosition visible) {
     return getEditor().visualPositionToXY(visible);
   }
 
-  @NotNull
   @Override
-  public Point2D visualPositionToPoint2D(@NotNull VisualPosition pos) {
+  public @NotNull Point2D visualPositionToPoint2D(@NotNull VisualPosition pos) {
     return getEditor().visualPositionToPoint2D(pos);
   }
 
   @Override
-  @NotNull
-  public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition visiblePos) {
+  public @NotNull LogicalPosition visualToLogicalPosition(final @NotNull VisualPosition visiblePos) {
     return getEditor().visualToLogicalPosition(visiblePos);
   }
 
   @Override
-  @NotNull
-  public LogicalPosition offsetToLogicalPosition(final int offset) {
+  public @NotNull LogicalPosition offsetToLogicalPosition(final int offset) {
     return getEditor().offsetToLogicalPosition(offset);
   }
 
   @Override
-  @NotNull
-  public VisualPosition offsetToVisualPosition(final int offset) {
+  public @NotNull VisualPosition offsetToVisualPosition(final int offset) {
     return getEditor().offsetToVisualPosition(offset);
   }
 
   @Override
-  @NotNull
-  public VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
+  public @NotNull VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
     return getEditor().offsetToVisualPosition(offset, leanForward, beforeSoftWrap);
   }
 
   @Override
-  @NotNull
-  public LogicalPosition xyToLogicalPosition(@NotNull final Point p) {
+  public @NotNull LogicalPosition xyToLogicalPosition(final @NotNull Point p) {
     return getEditor().xyToLogicalPosition(p);
   }
 
   @Override
-  @NotNull
-  public VisualPosition xyToVisualPosition(@NotNull final Point p) {
-    return getEditor().xyToVisualPosition(p);
-  }
-
-  @NotNull
-  @Override
-  public VisualPosition xyToVisualPosition(@NotNull Point2D p) {
+  public @NotNull VisualPosition xyToVisualPosition(final @NotNull Point p) {
     return getEditor().xyToVisualPosition(p);
   }
 
   @Override
-  public void addEditorMouseListener(@NotNull final EditorMouseListener listener) {
+  public @NotNull VisualPosition xyToVisualPosition(@NotNull Point2D p) {
+    return getEditor().xyToVisualPosition(p);
+  }
+
+  @Override
+  public void addEditorMouseListener(final @NotNull EditorMouseListener listener) {
     getEditor().addEditorMouseListener(listener);
   }
 
   @Override
-  public void removeEditorMouseListener(@NotNull final EditorMouseListener listener) {
+  public void removeEditorMouseListener(final @NotNull EditorMouseListener listener) {
     getEditor().removeEditorMouseListener(listener);
   }
 
   @Override
-  public void addEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
+  public void addEditorMouseMotionListener(final @NotNull EditorMouseMotionListener listener) {
     getEditor().addEditorMouseMotionListener(listener);
   }
 
   @Override
-  public void removeEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
+  public void removeEditorMouseMotionListener(final @NotNull EditorMouseMotionListener listener) {
     getEditor().removeEditorMouseMotionListener(listener);
   }
 
@@ -237,8 +213,7 @@ public class LazyEditor extends UserDataHolderBase implements Editor {
   }
 
   @Override
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return getEditor().getProject();
   }
 
@@ -258,19 +233,17 @@ public class LazyEditor extends UserDataHolderBase implements Editor {
   }
 
   @Override
-  @NotNull
-  public EditorGutter getGutter() {
+  public @NotNull EditorGutter getGutter() {
     return getEditor().getGutter();
   }
 
   @Override
-  @Nullable
-  public EditorMouseEventArea getMouseEventArea(@NotNull final MouseEvent e) {
+  public @Nullable EditorMouseEventArea getMouseEventArea(final @NotNull MouseEvent e) {
     return getEditor().getMouseEventArea(e);
   }
 
   @Override
-  public void setHeaderComponent(@Nullable final JComponent header) {
+  public void setHeaderComponent(final @Nullable JComponent header) {
     getEditor().setHeaderComponent(header);
   }
 
@@ -280,14 +253,12 @@ public class LazyEditor extends UserDataHolderBase implements Editor {
   }
 
   @Override
-  @Nullable
-  public JComponent getHeaderComponent() {
+  public @Nullable JComponent getHeaderComponent() {
     return getEditor().getHeaderComponent();
   }
 
   @Override
-  @NotNull
-  public IndentsModel getIndentsModel() {
+  public @NotNull IndentsModel getIndentsModel() {
     return getEditor().getIndentsModel();
   }
 
