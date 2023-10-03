@@ -3,7 +3,6 @@ package com.intellij.mermaid.lang.intention.declarations
 import com.intellij.mermaid.lang.MermaidBaseTestCase
 
 class ClassDiagramAnnotatorTest : MermaidBaseTestCase("intention/declarations") {
-  fun `test member statement`() = doTest()
 
   fun `test annotation statement`() = doTest()
 

@@ -214,6 +214,9 @@ object MermaidTokens {
 
   @JvmField
   val STYLE_VAL = MermaidToken("STYLE_VAL")
+
+  @JvmField
+  val GENERIC_TYPE = MermaidToken("GENERIC_TYPE")
   //endregion
 
   object Directives {
@@ -450,9 +453,6 @@ object MermaidTokens {
 
     @JvmField
     val CLASS_ID = MermaidToken("ClassDiagram.CLASS_ID")
-
-    @JvmField
-    val GENERIC_TYPE = MermaidToken("ClassDiagram.GENERIC_TYPE")
 
     @JvmField
     val EXTENSION_START = MermaidToken("ClassDiagram.EXTENSION_START")

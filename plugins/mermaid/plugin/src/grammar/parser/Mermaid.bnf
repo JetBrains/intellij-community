@@ -324,7 +324,7 @@ classHeader ::= CLASS classDiagramIdentifier [generic] [classLabel] [STYLE_SEPAR
 classBlock ::= OPEN_CURLY EOL* classMembers? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 classLabel ::= OPEN_SQUARE maybeEmptyString CLOSE_SQUARE
 
-memberStatement ::= classDiagramIdentifier [generic] COLON memberAttribute { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierHolder" }
+memberStatement ::= classDiagramIdentifier [generic] COLON memberAttribute { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder" }
 
 relationStatement ::= leftId relation rightId [COLON complexLabel]
 leftId ::= classDiagramIdentifier [generic] { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder" }
@@ -341,7 +341,8 @@ private classMemberStatement ::= attribute | annotation | directive
 
 attribute ::= attrWord+
 private attrWord ::= ATTRIBUTE_WORD
-  | generic
+  | genericTypeId
+  | maybeEmptyString
   | OPEN_SQUARE | CLOSE_SQUARE
   | OPEN_ROUND | CLOSE_ROUND
   | OPEN_ANGLE | CLOSE_ANGLE
@@ -350,7 +351,7 @@ private attrWord ::= ATTRIBUTE_WORD
 
 memberAttribute ::= memberAttrWord+
 private memberAttrWord ::= ATTRIBUTE_WORD
-  | generic
+  | genericTypeId
   | OPEN_SQUARE | CLOSE_SQUARE
   | OPEN_CURLY | CLOSE_CURLY
   | OPEN_ROUND | CLOSE_ROUND
@@ -358,7 +359,7 @@ private memberAttrWord ::= ATTRIBUTE_WORD
   | PLUS | MINUS | POUND | TILDA | STAR | DOLLAR | COMMA | DOT
 
 generic ::= TILDA genericTypeId [generic] TILDA
-genericTypeId ::= GENERIC_TYPE {
+genericTypeId ::= GENERIC_TYPE+ {
     mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 
@@ -470,8 +471,8 @@ private erAttributes ::= erAttributesLines
 private erAttributesLines ::= erAttributeLine [erAttributesLines]
 private erAttributeLine ::= erAttribute [EOL] | EOL
 erAttribute ::= (attrTypeWithGeneric | attrType) attrName [attrKeys] [maybeEmptyString]
-attrType ::= ATTRIBUTE_WORD
-attrTypeWithGeneric ::= attrType generic
+attrType ::= ATTRIBUTE_WORD | COMMA
+attrTypeWithGeneric ::= [attrType] ( genericTypeId | TILDA | COMMA )+
 attrName ::= ATTRIBUTE_WORD
 attrKeys ::= ATTR_KEY (COMMA ATTR_KEY)*
 

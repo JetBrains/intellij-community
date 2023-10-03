@@ -118,7 +118,6 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.ClassDiagram.NOTE_FOR,
         MermaidTokens.ClassDiagram.NAMESPACE
       )
-      holder[MermaidTokens.ClassDiagram.GENERIC_TYPE] = MermaidTextAttributes.generic
 
       fillMap(
         holder,
@@ -429,6 +428,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.Frontmatter.FRONTMATTER_END,
       )
       holder[MermaidTokens.DEFAULT] = MermaidTextAttributes.constant
+      holder[MermaidTokens.GENERIC_TYPE] = MermaidTextAttributes.generic
     }
     //endregion
   }

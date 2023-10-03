@@ -4,7 +4,6 @@ import com.intellij.mermaid.MermaidBundle
 import com.intellij.mermaid.lang.MermaidBaseTestCase
 
 class CreateClassDeclarationIntentionTest : MermaidBaseTestCase("intention/declarations/create_class") {
-  fun `test member statement`() = doTest()
 
   fun `test annotation statement`() = doTest()
 

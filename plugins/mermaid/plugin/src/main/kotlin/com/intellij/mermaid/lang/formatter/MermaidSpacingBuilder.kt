@@ -160,6 +160,7 @@ internal object MermaidSpacingBuilder {
 
       .between(MermaidTokens.ATTRIBUTE_WORD, MermaidElements.GENERIC).spaceIf(mermaid.BEFORE_GENERIC)
       .between(MermaidElements.CLASS_DIAGRAM_IDENTIFIER, MermaidElements.GENERIC).spaceIf(mermaid.BEFORE_GENERIC)
+      .between(MermaidTokens.ATTRIBUTE_WORD, MermaidTokens.TILDA).spaceIf(mermaid.BEFORE_GENERIC)
 
       .around(MermaidTokens.C4.EQUALITY).spaceIf(mermaid.AROUND_EQUALITY)
       .before(MermaidTokens.COMMA).spaceIf(mermaid.BEFORE_COMMA)
@@ -278,6 +279,7 @@ internal object MermaidSpacingBuilder {
       .around(SEQUENCE_KEYWORDS_SPACE_AROUND).spaces(1)
       // Class diagram
       .between(MermaidElements.GENERIC, MermaidTokens.ATTRIBUTE_WORD).spaces(1)
+      .between(MermaidTokens.TILDA, MermaidTokens.ATTRIBUTE_WORD).spaces(1)
       .between(MermaidTokens.ATTRIBUTE_WORD, MermaidTokens.ATTRIBUTE_WORD).spaces(1)
       .between(MermaidTokens.CLOSE_ROUND, MermaidTokens.ATTRIBUTE_WORD).spaces(1)
       .between(MermaidElements.ANNOTATION, MermaidElements.CLASS_DIAGRAM_IDENTIFIER).spaces(1)
