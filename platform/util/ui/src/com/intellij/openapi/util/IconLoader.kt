@@ -48,7 +48,12 @@ private val iconCache = Caffeine.newBuilder()
 private val iconToDisabledIcon = ConcurrentHashMap<() -> RGBImageFilter, MutableMap<Icon, Icon>>()
 private val standardDisablingFilter: () -> RGBImageFilter = { UIUtil.getGrayFilter() }
 
-private val colorPatchCache = ConcurrentHashMap<Int, MutableMap<LongArray, MutableMap<Icon, Icon>>>()
+private val colorPatchCache = run {
+  val map = Array<MutableMap<LongArray, MutableMap<Icon, Icon>>>(3) {
+    CollectionFactory.createConcurrentWeakKeyWeakValueMap()
+  }
+  map
+}
 
 internal val fakeComponent: JComponent by lazy { object : JComponent() {} }
 
@@ -377,13 +382,13 @@ internal fun patchColorsInCacheImageIcon(imageIcon: CachedImageIcon, colorPatche
     return result.createWithPatcher(colorPatcher)
   }
 
-  val topMapIndex = when (isDark) {
+  val cacheIndex = when (isDark) {
     false -> 0
     true -> 1
     else -> 2
   }
 
-  return colorPatchCache.computeIfAbsent(topMapIndex) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
+  return colorPatchCache[cacheIndex]
     .computeIfAbsent(digest) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
     .computeIfAbsent(imageIcon) { result.createWithPatcher(colorPatcher) }
 }
@@ -407,7 +412,9 @@ private fun updateTransform(updater: (IconTransform) -> IconTransform) {
 
 private fun clearCacheOnUpdateTransform() {
   iconToDisabledIcon.clear()
-  colorPatchCache.clear()
+  for (map in colorPatchCache) {
+    map.clear()
+  }
   iconToStrokeIcon.clear()
 
   // clear svg cache
