@@ -29,13 +29,13 @@ public class HighlightDisplayLevel {
   private static final Map<HighlightSeverity, HighlightDisplayLevel> LEVEL_MAP = new HashMap<>();
 
   public HighlightDisplayLevel(@NotNull HighlightSeverity severity, @NotNull Icon icon) {
-    this(severity, new Pair<>(icon, icon));
+    this(severity, icon, icon);
   }
 
-  private HighlightDisplayLevel(@NotNull HighlightSeverity severity,
-                               @NotNull Pair<? extends @NotNull Icon, ? extends @NotNull Icon> iconPair) {
+  private HighlightDisplayLevel(@NotNull HighlightSeverity severity, @NotNull Icon icon, @NotNull Icon outlineIcon) {
     this(severity);
-    this.iconPair = iconPair;
+    this.icon = icon;
+    this.outlineIcon = outlineIcon;
     LEVEL_MAP.put(this.severity, this);
   }
 
@@ -87,7 +87,8 @@ public class HighlightDisplayLevel {
     }
   };
 
-  private Pair<? extends @NotNull Icon, ? extends @NotNull Icon> iconPair = new Pair<>(EmptyIcon.ICON_16, EmptyIcon.ICON_16);
+  private Icon icon = EmptyIcon.ICON_16;
+  private Icon outlineIcon = EmptyIcon.ICON_16;
   private final HighlightSeverity severity;
 
   public static @Nullable HighlightDisplayLevel find(String name) {
@@ -116,11 +117,11 @@ public class HighlightDisplayLevel {
   }
 
   public @NotNull Icon getIcon() {
-    return iconPair.first;
+    return icon;
   }
 
   public @NotNull Icon getOutlineIcon() {
-    return iconPair.second;
+    return outlineIcon;
   }
 
   public @NotNull HighlightSeverity getSeverity(){
@@ -132,13 +133,14 @@ public class HighlightDisplayLevel {
   }
 
   public static void registerSeverity(@NotNull HighlightSeverity severity, @NotNull TextAttributesKey key, @Nullable Icon icon) {
-    Pair<Icon, Icon> iconPair = icon != null ? new Pair<> (icon, icon) : createIconByKey(key);
+    Pair<Icon, Icon> iconPair = icon == null ? createIconByKey(key) : new Pair<>(icon, icon);
     HighlightDisplayLevel level = LEVEL_MAP.get(severity);
     if (level == null) {
-      new HighlightDisplayLevel(severity, iconPair);
+      new HighlightDisplayLevel(severity, iconPair.first, iconPair.second);
     }
     else {
-      level.iconPair = iconPair;
+      level.icon = iconPair.first;
+      level.outlineIcon = iconPair.second;
     }
   }
 
@@ -147,9 +149,12 @@ public class HighlightDisplayLevel {
   }
 
   private static Pair<Icon, Icon> createIconByKey(@NotNull TextAttributesKey key) {
-    return StringUtil.containsIgnoreCase(key.getExternalName(), "error") ?
-           createIconPair(key, AllIcons.General.InspectionsError, AllIcons.General.InspectionsErrorEmpty) :
-           createIconPair(key, AllIcons.General.InspectionsWarning, AllIcons.General.InspectionsWarningEmpty);
+    if (StringUtil.containsIgnoreCase(key.getExternalName(), "error")) {
+      return createIconPair(key, AllIcons.General.InspectionsError, AllIcons.General.InspectionsErrorEmpty);
+    }
+    else {
+      return createIconPair(key, AllIcons.General.InspectionsWarning, AllIcons.General.InspectionsWarningEmpty);
+    }
   }
 
   private static @NotNull Pair<Icon, Icon> createIconPair(@NotNull TextAttributesKey key, @NotNull Icon first, @NotNull Icon second) {
@@ -195,7 +200,9 @@ public class HighlightDisplayLevel {
       return null;
     }
     TextAttributes defaultAttributes = key.getDefaultAttributes();
-    if (defaultAttributes == null) defaultAttributes = TextAttributes.ERASE_MARKER;
+    if (defaultAttributes == null) {
+      defaultAttributes = TextAttributes.ERASE_MARKER;
+    }
     return defaultAttributes.getErrorStripeColor();
   }
 
