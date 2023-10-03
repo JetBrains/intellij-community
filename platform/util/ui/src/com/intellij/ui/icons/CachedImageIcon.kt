@@ -4,7 +4,6 @@
 package com.intellij.ui.icons
 
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.scale.ScaleContext
@@ -42,26 +41,26 @@ internal val pathTransformGlobalModCount: AtomicInteger = AtomicInteger()
 
 // opened for https://github.com/search?q=repo%3AJetBrains%2Fjewel%20patchIconPath&type=code
 @Internal
-fun patchIconPath(originalPath: String, classLoader: ClassLoader): Pair<String, ClassLoader>? {
+fun patchIconPath(originalPath: String, classLoader: ClassLoader): Pair<String, ClassLoader?>? {
   return pathTransform.get().patchPath(originalPath, classLoader)
 }
 
 @JvmField
 internal val pathTransform: AtomicReference<IconTransform> = AtomicReference(
-  IconTransform(/* dark = */ false, /* patchers = */ arrayOf<IconPathPatcher>(DeprecatedDuplicatesIconPathPatcher()), /* filter = */ null)
+  IconTransform(dark = false, patchers = arrayOf(DeprecatedDuplicatesIconPathPatcher()), filter = null)
 )
 
 @JvmField
-internal val iconToStrokeIcon: ConcurrentMap<CachedImageIcon, CachedImageIcon> = CollectionFactory.createConcurrentWeakKeyWeakValueMap()
+internal val iconToStrokeIcon: ConcurrentMap<CachedImageIcon, CachedImageIcon> = CollectionFactory.createConcurrentWeakMap()
 
 @TestOnly
-@ApiStatus.Internal
+@Internal
 fun createCachedIcon(file: Path, scaleContext: ScaleContext): CachedImageIcon {
   val path = file.toUri().toString()
   return CachedImageIcon(originalPath = path, resolver = ImageDataByFilePathLoader(path), scaleContext = scaleContext)
 }
 
-@ApiStatus.Internal
+@Internal
 @ApiStatus.NonExtendable
 open class CachedImageIcon internal constructor(
   val originalPath: String?,
@@ -76,7 +75,8 @@ open class CachedImageIcon internal constructor(
 ) : CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider, IconWithToolTip {
   @Suppress("CanBePrimaryConstructorProperty")
   @Volatile
-  var resolver: ImageDataLoader? = resolver
+  @JvmField
+  internal var resolver: ImageDataLoader? = resolver
 
   private val originalResolver = resolver
   private var pathTransformModCount = -1
@@ -93,8 +93,11 @@ open class CachedImageIcon internal constructor(
     pathTransformModCount = pathTransformGlobalModCount.get()
   }
 
-  constructor(originalPath: String?, resolver: ImageDataLoader, toolTip: Supplier<String?>?) :
+  internal constructor(originalPath: String?, resolver: ImageDataLoader, toolTip: Supplier<String?>?) :
     this(originalPath = originalPath, resolver = resolver, isDarkOverridden = null, colorPatcher = null, toolTip = toolTip)
+
+  @ApiStatus.Experimental
+  fun getCoords(): Pair<String, ClassLoader>? = resolver?.getCoords()
 
   override fun getToolTip(composite: Boolean): String? = toolTip?.get()
 
@@ -122,10 +125,10 @@ open class CachedImageIcon internal constructor(
 
   final override fun getScale(): Float = 1.0f
 
-  @ApiStatus.Internal
+  @Internal
   fun getRealIcon(): Icon = resolveActualIcon()
 
-  @ApiStatus.Internal
+  @Internal
   fun getRealImage(): Image? = (resolveActualIcon() as? ScaledResultIcon)?.image
 
   internal fun resolveImage(scaleContext: ScaleContext?): Image? {

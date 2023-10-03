@@ -4,7 +4,7 @@ package com.intellij.ui.laf
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.openapi.components.service
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.ui.icons.ImageDataByPathLoader
+import com.intellij.ui.icons.findIconByPath
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
@@ -12,18 +12,18 @@ import org.junit.jupiter.api.Test
  * @author Konstantin Bulenkov
  */
 @TestApplication
-class ExpUIIconsMappingTest {
+class NewUiIconMappingTest {
   @Test
   internal fun testMappings() = runBlocking {
     val mappings = service<IconMapLoader>().doLoadIconMapping()
       for ((classLoader, map) in mappings) {
         for ((expUI, oldUI) in map) {
-          listOf(expUI, oldUI).forEach {
-            if (!it.endsWith(".svg") && !it.endsWith(".png")) {
-              error("Path should end with .svg or .png '$it' (expUI=$expUI, oldUI=$oldUI")
+          for (name in listOf(expUI, oldUI)) {
+            if (!name.endsWith(".svg") && !name.endsWith(".png")) {
+              error("Path should end with .svg or .png '$name' (expUI=$expUI, oldUI=$oldUI")
             }
-            if (ImageDataByPathLoader.findIconByPath(path = it, classLoader = classLoader, cache = null)!!.iconHeight == 1) {
-              println("$it is not found")
+            if (findIconByPath(path = name, classLoader = classLoader, cache = null)!!.iconHeight == 1) {
+              println("$name is not found")
             }
           }
         }

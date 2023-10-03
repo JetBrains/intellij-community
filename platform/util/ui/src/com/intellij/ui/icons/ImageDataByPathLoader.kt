@@ -3,6 +3,7 @@ package com.intellij.ui.icons
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.ui.icons.ImageDataByPathLoader.Companion.createIcon
 import com.intellij.ui.scale.ScaleContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -13,56 +14,61 @@ import java.util.function.Supplier
 import javax.swing.Icon
 
 @Internal
-class ImageDataByPathLoader private constructor(private val path: String,
-                                                private val classLoader: ClassLoader,
-                                                private val original: ImageDataByPathLoader?) : ImageDataLoader {
-  companion object {
-    fun findIconByPath(@NonNls path: String,
-                       classLoader: ClassLoader,
-                       cache: MutableMap<Pair<String, ClassLoader?>, CachedImageIcon>?,
-                       toolTip: Supplier<String?>? = null): Icon? {
-      val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
+fun findIconByPath(@NonNls path: String,
+                   classLoader: ClassLoader,
+                   cache: MutableMap<Pair<String, ClassLoader?>, CachedImageIcon>?,
+                   toolTip: Supplier<String?>? = null): Icon? {
+  val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
 
-      val originalPath = normalizePath(path)
-      val patched = patchIconPath(originalPath, classLoader)
-      val effectivePath = patched?.first ?: originalPath
-      val effectiveClassLoader = patched?.second ?: classLoader
-      val icon: Icon? = when {
-        isReflectivePath(effectivePath) -> getReflectiveIcon(effectivePath, effectiveClassLoader)
-        cache == null -> createIcon(originalPath = originalPath,
-                                    originalClassLoader = effectiveClassLoader,
-                                    patched = patched,
-                                    path = effectivePath,
-                                    classLoader = effectiveClassLoader,
-                                    toolTip = toolTip)
-        else -> {
-           cache.computeIfAbsent(Pair(originalPath, effectiveClassLoader)) {
-            createIcon(originalPath = it.first,
-                       originalClassLoader = it.second!!,
-                       patched = patched,
-                       path = effectivePath,
-                       classLoader = effectiveClassLoader,
-                       toolTip = toolTip)
-          }
+  val icon: Icon? = if (isReflectivePath(path)) {
+    getReflectiveIcon(path, classLoader)
+  }
+  else {
+    val originalPath = normalizePath(path)
+    val patched = patchIconPath(originalPath, classLoader)
+    val effectivePath = patched?.first ?: originalPath
+    val effectiveClassLoader = patched?.second ?: classLoader
+    when {
+      isReflectivePath(effectivePath) -> getReflectiveIcon(effectivePath, effectiveClassLoader)
+      cache == null -> createIcon(originalPath = originalPath,
+                                  originalClassLoader = effectiveClassLoader,
+                                  patched = patched,
+                                  path = effectivePath,
+                                  classLoader = effectiveClassLoader,
+                                  toolTip = toolTip)
+      else -> {
+        cache.computeIfAbsent(Pair(originalPath, effectiveClassLoader)) {
+          createIcon(originalPath = it.first,
+                     originalClassLoader = it.second!!,
+                     patched = patched,
+                     path = effectivePath,
+                     classLoader = effectiveClassLoader,
+                     toolTip = toolTip)
         }
       }
-      if (startTime != -1L) {
-        IconLoadMeasurer.findIcon.end(startTime)
-      }
-      return icon
     }
+  }
 
-    private fun createIcon(originalPath: @NonNls String,
-                           originalClassLoader: ClassLoader,
-                           patched: Pair<String, ClassLoader?>?,
-                           path: String,
-                           classLoader: ClassLoader,
-                           toolTip: Supplier<String?>? = null): CachedImageIcon {
+  if (startTime != -1L) {
+    IconLoadMeasurer.findIcon.end(startTime)
+  }
+  return icon
+}
+
+internal class ImageDataByPathLoader private constructor(private val path: String,
+                                                         private val classLoader: ClassLoader,
+                                                         private val original: ImageDataByPathLoader?) : ImageDataLoader {
+  companion object {
+    internal fun createIcon(originalPath: @NonNls String,
+                            originalClassLoader: ClassLoader,
+                            patched: Pair<String, ClassLoader?>?,
+                            path: String,
+                            classLoader: ClassLoader,
+                            toolTip: Supplier<String?>? = null): CachedImageIcon {
       val loader = ImageDataByPathLoader(path = originalPath, classLoader = originalClassLoader, original = null)
       val resolver = if (patched == null) loader else ImageDataByPathLoader(path = path, classLoader = classLoader, original = loader)
       return CachedImageIcon(originalPath = null, resolver = resolver, toolTip = toolTip)
     }
-
 
     private fun doPatch(originalLoader: ImageDataByPathLoader,
                         transform: IconTransform,
@@ -87,7 +93,7 @@ class ImageDataByPathLoader private constructor(private val path: String,
                      colorPatcherProvider = parameters.colorPatcher,
                      scaleContext = scaleContext,
                      classLoader = classLoader,
-                     // CachedImageIcon instance cache the resolved image
+      // CachedImageIcon instance cache the resolved image
                      useCache = false)
   }
 
@@ -144,7 +150,7 @@ fun getReflectiveIcon(path: String, classLoader: ClassLoader): Icon? {
     do {
       dotIndex = path.lastIndexOf('.', dotIndex - 1)
       // if starts with a lower case, char - it is a package name
-      if (dotIndex == -1 || Character.isLowerCase(path[dotIndex + 1])) {
+      if (dotIndex == -1 || path[dotIndex + 1].isLowerCase()) {
         break
       }
       if (separatorIndex != -1) {

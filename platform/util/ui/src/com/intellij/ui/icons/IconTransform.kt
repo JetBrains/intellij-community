@@ -14,8 +14,7 @@ private val LOG = Logger.getInstance(IconTransform::class.java)
 /**
  * Immutable representation of a global transformation applied to all icons
  */
-@ApiStatus.Internal
-class IconTransform
+internal class IconTransform
 /**
  * Creates a new instance of IconTransform with the specified parameters.
  *

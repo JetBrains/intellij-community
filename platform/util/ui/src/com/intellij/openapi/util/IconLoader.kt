@@ -86,7 +86,7 @@ object IconLoader {
   }
 
   @JvmStatic
-  fun setFilter(filter: ImageFilter?) {
+  fun setFilter(filter: ImageFilter) {
     updateTransform { it.withFilter(filter) }
   }
 
@@ -119,7 +119,7 @@ object IconLoader {
 
   @JvmStatic
   fun getIcon(path: String, aClass: Class<*>): Icon {
-    return findIcon(originalPath = path, aClass = aClass, classLoader = aClass.classLoader, deferUrlResolve = true)
+    return findIconUsingDeprecatedImplementation(originalPath = path, classLoader = aClass.classLoader, aClass = aClass, strict = false)
            ?: throw IllegalStateException("Icon cannot be found in '$path', class='${aClass.name}'")
   }
 
@@ -148,12 +148,17 @@ object IconLoader {
    */
   @JvmStatic
   fun findIcon(path: String, aClass: Class<*>): Icon? {
-    return findIconUsingNewImplementation(path, aClass.classLoader)
+    return findIconUsingNewImplementation(path = path, classLoader = aClass.classLoader)
   }
 
   @JvmStatic
   fun findIcon(path: String, aClass: Class<*>, deferUrlResolve: Boolean, strict: Boolean): Icon? {
-    return findIcon(originalPath = path, aClass = aClass, classLoader = aClass.classLoader, strict, deferUrlResolve = deferUrlResolve)
+    if (deferUrlResolve) {
+      return findIconUsingDeprecatedImplementation(originalPath = path, classLoader = aClass.classLoader, aClass = aClass, strict = strict)
+    }
+    else {
+      return findIconUsingNewImplementation(path, aClass.classLoader)
+    }
   }
 
   @JvmStatic
@@ -421,25 +426,9 @@ private fun clearCacheOnUpdateTransform() {
   // iconCache is not cleared because it contains an original icon (instance that will delegate to)
 }
 
-private fun findIcon(originalPath: String,
-                     aClass: Class<*>?,
-                     classLoader: ClassLoader,
-                     strict: Boolean = false,
-                     deferUrlResolve: Boolean): Icon? {
-  if (deferUrlResolve) {
-    return findIconUsingDeprecatedImplementation(originalPath = originalPath,
-                                                 classLoader = classLoader,
-                                                 aClass = aClass,
-                                                 strict = strict)
-  }
-  else {
-    return findIconUsingNewImplementation(originalPath, classLoader)
-  }
-}
-
 @Internal
 fun findIconUsingNewImplementation(path: String, classLoader: ClassLoader, toolTip: Supplier<String?>? = null): Icon? {
-  return ImageDataByPathLoader.findIconByPath(path = path, classLoader = classLoader, cache = iconCache.asMap(), toolTip = toolTip)
+  return findIconByPath(path = path, classLoader = classLoader, cache = iconCache.asMap(), toolTip = toolTip)
 }
 
 @Internal
@@ -452,8 +441,8 @@ fun findIconUsingDeprecatedImplementation(originalPath: String,
   val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
   val patchedPath = patchIconPath(originalPath = originalPath, classLoader = effectiveClassLoader)
   val effectivePath = patchedPath?.first ?: originalPath
-  if (patchedPath?.second != null) {
-    effectiveClassLoader = patchedPath.second
+  patchedPath?.second?.let {
+    effectiveClassLoader = it
   }
 
   var icon: Icon?

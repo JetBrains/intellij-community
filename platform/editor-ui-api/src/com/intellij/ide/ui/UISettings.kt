@@ -685,7 +685,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     // todo remove when all old properties will be converted
     state._incrementModificationCount()
 
-    IconLoader.setFilter(ColorBlindnessSupport.get(state.colorBlindness)?.filter)
+    ColorBlindnessSupport.get(state.colorBlindness)?.filter?.let {
+      IconLoader.setFilter(it)
+    }
 
     // if this is the main UISettings instance (and not on first call to getInstance), push event to bus and to all current components
     if (this === cachedInstance) {

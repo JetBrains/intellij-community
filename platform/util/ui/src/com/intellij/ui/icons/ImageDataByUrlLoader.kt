@@ -112,7 +112,7 @@ private inline fun findUrl(path: String, urlProvider: (String) -> URL?): URL? {
   // Find either PNG or SVG icon.
   // The icon will then be wrapped into CachedImageIcon,
   // which will load a proper icon version depending on the context - UI theme, DPI.
-  // SVG version, when present, has more priority than PNG.
+  // The SVG version, when present, has more priority than PNG.
   // See for details: com.intellij.util.ImageLoader.ImageDescList#create
   var effectivePath = path
   when {
@@ -147,12 +147,12 @@ private fun createNewResolverIfNeeded(originalClassLoader: ClassLoader?,
   val patchedPath = transform.patchPath(originalPath, originalClassLoader) ?: return null
   val classLoader = if (patchedPath.second == null) originalClassLoader else patchedPath.second
   val path = patchedPath.first
-  if (path != null && path.startsWith('/')) {
+  if (path.startsWith('/')) {
     return FinalImageDataLoader(path = path.substring(1), classLoader = classLoader ?: transform.javaClass.classLoader)
   }
 
   // This uses case for temp themes only. Here we want to immediately replace the existing icon with a local one.
-  if (path != null && path.startsWith("file:/")) {
+  if (path.startsWith("file:/")) {
     try {
       return ImageDataByFilePathLoader(path)
     }

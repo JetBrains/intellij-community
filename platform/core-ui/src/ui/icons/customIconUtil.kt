@@ -36,7 +36,7 @@ fun scaleIconOrLoadCustomVersion(icon: Icon, scale: Float): Icon {
 }
 
 private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int): Icon? {
-  val coords = icon.resolver?.getCoords() ?: return null
+  val coords = icon.getCoords() ?: return null
   val path = coords.first
   if (!path.endsWith(".svg")) {
     return null
@@ -51,7 +51,8 @@ private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int
   return null
 }
 
-/** @param size the size before system scaling (without JBUIScale.scale)
+/**
+ * @param size the size before system scaling (without `JBUIScale.scale`)
  */
 @ApiStatus.Internal
 fun loadIconCustomVersionOrScale(icon: ScalableIcon, size: Int): Icon {

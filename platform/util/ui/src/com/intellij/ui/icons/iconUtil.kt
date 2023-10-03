@@ -114,7 +114,7 @@ internal fun convertImage(image: Image,
     // when the image is painted on a scaled (hidpi) screen graphics, see
     // StartupUiUtil.drawImage(Graphics, Image, Rectangle, Rectangle, BufferedImageOp, ImageObserver).
     //
-    // To avoid that, we instead directly use the provided ScaleContext, which contains, correct ScaleContext.SYS_SCALE,
+    // To avoid that, we instead directly use the provided ScaleContext, which contains correct ScaleContext.SYS_SCALE,
     // JBHiDPIScaledImage will then derive the image user space size (it is assumed the derived size is equal to
     // {originalUserSize} * DerivedScaleType.EFF_USR_SCALE, taking into account calculation accuracy).
     return JBHiDPIScaledImage(image = result, sysScale = sysScale)

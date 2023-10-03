@@ -104,11 +104,11 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
 
   override fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon {
     assert(!path.startsWith('/'))
-    return CachedImageIcon(
-      originalPath = path,
-      resolver = createRasterizedImageDataLoader(path = path, classLoader = classLoader, cacheKey = cacheKey, imageFlags = flags),
-      toolTip = IconDescriptionLoader(path),
-    )
+    return loadRasterizedIcon(path = path,
+                              classLoader = classLoader,
+                              cacheKey = cacheKey,
+                              flags = flags,
+                              toolTip = IconDescriptionLoader(path))
   }
 
   override fun createEmptyIcon(icon: Icon): Icon = EmptyIcon.create(icon)

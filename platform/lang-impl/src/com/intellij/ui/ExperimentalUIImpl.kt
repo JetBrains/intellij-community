@@ -7,6 +7,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.DistractionFreeModeController
+import com.intellij.ide.plugins.PluginManagerCore.isVendorJetBrains
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.*
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
@@ -311,6 +313,9 @@ internal class NewUiRegistryListener : RegistryValueListener {
   }
 }
 
+private const val reflectivePathPrefix = "com.intellij.icons.ExpUiIcons."
+private const val iconPathPrefix = "expui/"
+
 private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): IconPathPatcher {
   return object : IconPathPatcher() {
     private val dumpNotPatchedIcons = System.getProperty("ide.experimental.ui.dump.not.patched.icons").toBoolean()
@@ -321,7 +326,72 @@ private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): Ico
       if (patchedPath == null && dumpNotPatchedIcons) {
         NotPatchedIconRegistry.registerNotPatchedIcon(path, classLoader)
       }
+
+      if (patchedPath != null && patchedPath.startsWith(iconPathPrefix)) {
+        val useReflective = if (classLoader is PluginAwareClassLoader) {
+          val descriptor = classLoader.getPluginDescriptor()
+          descriptor.isBundled && isVendorJetBrains(descriptor.vendor ?: "")
+        }
+        else {
+          true
+        }
+
+        if (useReflective) {
+          val builder = StringBuilder(reflectivePathPrefix.length + patchedPath.length)
+          builder.append(reflectivePathPrefix)
+          builder.append(patchedPath, iconPathPrefix.length, patchedPath.length - 4)
+          return toReflectivePath(builder).toString()
+        }
+      }
+
       return patchedPath
+    }
+
+    private fun toReflectivePath(name: StringBuilder): StringBuilder {
+      var index = reflectivePathPrefix.length
+
+      if (name.length == index + 2) {
+        repeat(2) {
+          name.set(index + it, name[index + it].uppercaseChar())
+        }
+      }
+      else {
+        name.set(index, name[index].titlecaseChar())
+      }
+
+      index++
+
+      var appendIndex = index
+      while (index < name.length) {
+        val c = name[index]
+        if (if (index == reflectivePathPrefix.length) Character.isJavaIdentifierStart(c) else Character.isJavaIdentifierPart(c)) {
+          name[appendIndex++] = c
+          index++
+          continue
+        }
+
+        if (c == '-') {
+          index++
+          if (index == name.length) {
+            break
+          }
+          name[appendIndex++] = name[index].uppercaseChar()
+        }
+        else if (c == '/') {
+          name[appendIndex++] = '.'
+          index++
+          if (index == name.length) {
+            break
+          }
+          name[appendIndex++] = name[index].uppercaseChar()
+        }
+        else {
+          name[appendIndex++] = '_'
+        }
+        index++
+      }
+      name.setLength(appendIndex)
+      return name
     }
 
     override fun getContextClassLoader(path: String, originalClassLoader: ClassLoader?) = originalClassLoader
