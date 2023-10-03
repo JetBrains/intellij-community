@@ -24,19 +24,7 @@ import com.intellij.ui.picker.ColorPickerPopupCloseListener
 import java.awt.Color
 import java.awt.Component
 
-/**
- * @author Konstantin Bulenkov
- */
-open class ColorChooserServiceImpl : ColorChooserService() {
-  override fun showDialog(parent: Component,
-                          @NlsContexts.DialogTitle caption: String?,
-                          preselectedColor: Color?,
-                          enableOpacity: Boolean,
-                          listeners: List<ColorPickerListener>,
-                          opacityInPercent: Boolean): Color? {
-    return ColorPicker.showDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent)
-  }
-
+class LocalColorChooserService : ClientColorChooserService {
   override fun showDialog(project: Project?,
                           parent: Component,
                           @NlsContexts.DialogTitle caption: String?,
@@ -44,7 +32,7 @@ open class ColorChooserServiceImpl : ColorChooserService() {
                           enableOpacity: Boolean,
                           listeners: List<ColorPickerListener>,
                           opacityInPercent: Boolean): Color? {
-    return showDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent)
+    return ColorPicker.showDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent)
   }
 
   override fun showPopup(project: Project?,
@@ -54,7 +42,8 @@ open class ColorChooserServiceImpl : ColorChooserService() {
                          showAlpha: Boolean,
                          showAlphaAsPercent: Boolean,
                          popupCloseListener: ColorPickerPopupCloseListener?) {
-    ColorPicker.showColorPickerPopup(project, currentColor, editor, listener, showAlpha, showAlphaAsPercent, popupCloseListener)
+    val location = ColorPicker.bestLocationForColorPickerPopup(editor)
+    showPopup(project, currentColor, listener, location, showAlpha, showAlphaAsPercent, popupCloseListener)
   }
 
   override fun showPopup(project: Project?,
@@ -65,13 +54,5 @@ open class ColorChooserServiceImpl : ColorChooserService() {
                          showAlphaAsPercent: Boolean,
                          popupCloseListener: ColorPickerPopupCloseListener?) {
     ColorPicker.showColorPickerPopup(project, currentColor, listener, location, showAlpha, showAlphaAsPercent, popupCloseListener)
-  }
-
-  override fun showColorPickerPopup(project: Project?,
-                                    currentColor: Color?,
-                                    listener: ColorListener,
-                                    location: RelativePoint?,
-                                    showAlpha: Boolean) {
-    ColorPicker.showColorPickerPopup(project, currentColor, listener, location, showAlpha, false, null)
   }
 }

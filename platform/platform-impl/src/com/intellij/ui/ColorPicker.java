@@ -425,16 +425,6 @@ public final class ColorPicker extends JPanel implements ColorListener, Document
 
   static void showColorPickerPopup(final @Nullable Project project,
                                    @Nullable Color currentColor,
-                                   final @Nullable Editor editor,
-                                   final @NotNull ColorListener listener,
-                                   boolean showAlpha,
-                                   boolean showAlphaAsPercent,
-                                   final @Nullable ColorPickerPopupCloseListener popupCloseListener) {
-    showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), showAlpha, showAlphaAsPercent, popupCloseListener);
-  }
-
-  static void showColorPickerPopup(final @Nullable Project project,
-                                   @Nullable Color currentColor,
                                    final @NotNull ColorListener listener,
                                    @Nullable RelativePoint location,
                                    boolean showAlpha,
