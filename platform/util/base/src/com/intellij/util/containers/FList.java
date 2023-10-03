@@ -138,6 +138,10 @@ public final class FList<E> extends AbstractList<E> {
     return (FList<E>)EMPTY_LIST;
   }
 
+  public static <E> FList<E> singleton(@NotNull E elem) {
+    return FList.<E>emptyList().prepend(elem);
+  }
+  
   /**
    * Creates an FList object with the elements of the given sequence in the reversed order, i.e. the last element of {@code from} will be the result's {@link #getHead()}
    */
