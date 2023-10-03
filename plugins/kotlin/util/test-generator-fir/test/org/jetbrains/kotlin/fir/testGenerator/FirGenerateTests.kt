@@ -189,6 +189,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/toString", pattern = pattern)
             model("quickfix/specifySuperType", pattern = pattern)
             model("quickfix/convertToBlockBody", pattern = pattern)
+            model("quickfix/supertypeInitialization", pattern = pattern)
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {

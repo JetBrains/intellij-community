@@ -3710,4 +3710,172 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/convertToBlockBody/simple.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/supertypeInitialization")
+    public static class SupertypeInitialization extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("addImport.kt")
+        public void testAddImport() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/addImport.kt");
+        }
+
+        @TestMetadata("addParameters.kt")
+        public void testAddParameters() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/addParameters.kt");
+        }
+
+        @TestMetadata("addParenthesis.kt")
+        public void testAddParenthesis() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/addParenthesis.kt");
+        }
+
+        @TestMetadata("addParenthesisDefaultParameters.kt")
+        public void testAddParenthesisDefaultParameters() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/addParenthesisDefaultParameters.kt");
+        }
+
+        @TestMetadata("addParenthesisEmptyConstructor.kt")
+        public void testAddParenthesisEmptyConstructor() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/addParenthesisEmptyConstructor.kt");
+        }
+
+        @TestMetadata("addParenthesisExpectClass.kt")
+        public void testAddParenthesisExpectClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/addParenthesisExpectClass.kt");
+        }
+
+        @TestMetadata("addParenthesisForInvalidSealedClass.kt")
+        public void testAddParenthesisForInvalidSealedClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/addParenthesisForInvalidSealedClass.kt");
+        }
+
+        @TestMetadata("addParenthesisForLocalClass.kt")
+        public void testAddParenthesisForLocalClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/addParenthesisForLocalClass.kt");
+        }
+
+        @TestMetadata("addParenthesisForObjectExpression.kt")
+        public void testAddParenthesisForObjectExpression() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/addParenthesisForObjectExpression.kt");
+        }
+
+        @TestMetadata("addParenthesisForSealedClass.kt")
+        public void testAddParenthesisForSealedClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/addParenthesisForSealedClass.kt");
+        }
+
+        @TestMetadata("addParenthesisForSealedClass2.kt")
+        public void testAddParenthesisForSealedClass2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/addParenthesisForSealedClass2.kt");
+        }
+
+        @TestMetadata("annotation.kt")
+        public void testAnnotation() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/annotation.kt");
+        }
+
+        @TestMetadata("baseConstructorError.kt")
+        public void testBaseConstructorError() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/baseConstructorError.kt");
+        }
+
+        @TestMetadata("createConstructor.kt")
+        public void testCreateConstructor() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/createConstructor.kt");
+        }
+
+        @TestMetadata("data.kt")
+        public void testData() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/data.kt");
+        }
+
+        @TestMetadata("displayLongSignatures1.kt")
+        public void testDisplayLongSignatures1() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/displayLongSignatures1.kt");
+        }
+
+        @TestMetadata("displayLongSignatures2.kt")
+        public void testDisplayLongSignatures2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/displayLongSignatures2.kt");
+        }
+
+        @TestMetadata("enum.kt")
+        public void testEnum() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/enum.kt");
+        }
+
+        @TestMetadata("genericClass.kt")
+        public void testGenericClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/genericClass.kt");
+        }
+
+        @TestMetadata("incompleteConstructor.kt")
+        public void testIncompleteConstructor() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/incompleteConstructor.kt");
+        }
+
+        @TestMetadata("inline.kt")
+        public void testInline() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/inline.kt");
+        }
+
+        @TestMetadata("keywordName.kt")
+        public void testKeywordName() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/keywordName.kt");
+        }
+
+        @TestMetadata("multipleConstructors.kt")
+        public void testMultipleConstructors() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/multipleConstructors.kt");
+        }
+
+        @TestMetadata("noAccessibleConstructors.kt")
+        public void testNoAccessibleConstructors() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/noAccessibleConstructors.kt");
+        }
+
+        @TestMetadata("noParameters.kt")
+        public void testNoParameters() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/noParameters.kt");
+        }
+
+        @TestMetadata("primaryConstructorInaccessible.kt")
+        public void testPrimaryConstructorInaccessible() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/primaryConstructorInaccessible.kt");
+        }
+
+        @TestMetadata("someParametersAlreadyExist.kt")
+        public void testSomeParametersAlreadyExist() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/someParametersAlreadyExist.kt");
+        }
+
+        @TestMetadata("value.kt")
+        public void testValue() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/value.kt");
+        }
+
+        @TestMetadata("vararg1.kt")
+        public void testVararg1() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/vararg1.kt");
+        }
+
+        @TestMetadata("vararg2.kt")
+        public void testVararg2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/vararg2.kt");
+        }
+
+        @TestMetadata("vararg3.kt")
+        public void testVararg3() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/vararg3.kt");
+        }
+
+        @TestMetadata("vararg4.kt")
+        public void testVararg4() throws Exception {
+            runTest("../idea/tests/testData/quickfix/supertypeInitialization/vararg4.kt");
+        }
+    }
 }

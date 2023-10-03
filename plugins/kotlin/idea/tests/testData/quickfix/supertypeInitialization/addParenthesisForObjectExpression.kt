@@ -4,3 +4,4 @@ fun bar() {
     val foo: Foo = object : <caret>Foo {}
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SuperClassNotInitialized$AddParenthesisFix
+/* IGNORE_K2 */
