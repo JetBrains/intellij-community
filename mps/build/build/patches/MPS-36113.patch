@@ -1,0 +1,18 @@
+Index: build/dependencies/dependencies.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>ISO-8859-1
+===================================================================
+diff --git a/build/dependencies/dependencies.properties b/build/dependencies/dependencies.properties
+--- a/build/dependencies/dependencies.properties	(revision 6d7f8e62f220ad71137608d7b6880d4f7c29512c)
++++ b/build/dependencies/dependencies.properties	(date 1696325101172)
+@@ -2,7 +2,7 @@
+ bundledMavenVersion=3.9.2
+ debuggerAgent=1.2
+ gradleApiVersion=8.2-rc-2
+-jdkBuild=17.0.8b1000.22
++jdkBuild=17.0.7b1000.6
+ launcherBuild=232.7593
+ nsisBuild=1
+-runtimeBuild=17.0.8b1000.22
++runtimeBuild=17.0.7b1000.6
