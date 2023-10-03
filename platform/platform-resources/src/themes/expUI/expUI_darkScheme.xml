@@ -51,6 +51,28 @@
     <option name="VISUAL_INDENT_GUIDE" value="2b2d30" />
     <option name="WHITESPACES" value="6f737a" />
     <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="52433d" />
+
+    <option name="FILESTATUS_ADDED" value="73BD79"/>
+    <option name="FILESTATUS_COPIED" value="73BD79"/>
+    <option name="FILESTATUS_DELETED" value="6F737A"/>
+    <option name="FILESTATUS_IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM" value="6F737A"/>
+    <option name="FILESTATUS_IDEA_FILESTATUS_IGNORED" value="D69A6B"/>
+    <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_BOTH_CONFLICTS" value="DE6A66"/>
+    <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_CONFLICTS" value="DE6A66"/>
+    <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_PROPERTY_CONFLICTS" value="DE6A66"/>
+    <option name="FILESTATUS_MERGED" value="CF84CF"/>
+    <option name="FILESTATUS_MODIFIED" value="70AEFF"/>
+    <option name="FILESTATUS_RENAMED" value="70AEFF"/>
+    <option name="FILESTATUS_NOT_CHANGED_IMMEDIATE" value="70AEFF"/>
+    <option name="FILESTATUS_NOT_CHANGED_RECURSIVE" value="70AEFF"/>
+    <option name="FILESTATUS_UNKNOWN" value="E88F89"/>
+    <option name="FILESTATUS_addedOutside" value="73BD79"/>
+    <option name="FILESTATUS_changelistConflict" value="DE6A66"/>
+    <option name="FILESTATUS_modifiedOutside" value="70AEFF"/>
+    <option name="FILESTATUS_HIJACKED" value=""/>
+    <option name="FILESTATUS_OBSOLETE" value=""/>
+    <option name="FILESTATUS_SWITCHED" value=""/>
+
   </colors>
   <attributes>
     <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">

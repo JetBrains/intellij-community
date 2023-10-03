@@ -46,6 +46,25 @@
     <option name="PROMOTION_PANE" value="e7effd" />
     <option name="QUESTION_HINT" value="f5f8fe" />
     <option name="RECENT_LOCATIONS_SELECTION" value="E7EFFD" />
+
+    <option name="FILESTATUS_ADDED" value="067D17"/>
+    <option name="FILESTATUS_COPIED" value="067D17"/>
+    <option name="FILESTATUS_DELETED" value="6C707E"/>
+    <option name="FILESTATUS_IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM" value="6C707E"/>
+    <option name="FILESTATUS_IDEA_FILESTATUS_IGNORED" value="8C4F00"/>
+    <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_BOTH_CONFLICTS" value="DE1B2E"/>
+    <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_CONFLICTS" value="DE1B2E"/>
+    <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_PROPERTY_CONFLICTS" value="DE1B2E"/>
+    <option name="FILESTATUS_MERGED" value="643CB8"/>
+    <option name="FILESTATUS_MODIFIED" value="0033B3"/>
+    <option name="FILESTATUS_RENAMED" value="0033B3"/>
+    <option name="FILESTATUS_NOT_CHANGED_IMMEDIATE" value="0033B3"/>
+    <option name="FILESTATUS_NOT_CHANGED_RECURSIVE" value="0033B3"/>
+    <option name="FILESTATUS_UNKNOWN" value="B23247"/>
+    <option name="FILESTATUS_addedOutside" value="067D17"/>
+    <option name="FILESTATUS_changelistConflict" value="DE1B2E"/>
+    <option name="FILESTATUS_modifiedOutside" value="0033B3"/>
+
   </colors>
   <attributes>
     <option name="ANNOTATION_NAME_ATTRIBUTES" baseAttributes="DEFAULT_METADATA" />
