@@ -554,7 +554,7 @@ private class ClassConverter(
 
     private fun addGetter(getter: Getter, ktProperty: KtProperty, isFakeProperty: Boolean): KtPropertyAccessor {
         if (!isFakeProperty) {
-            getter.body?.replacePropertyToFieldKeywordReferences(ktProperty, replaceReadUsages = true)
+            getter.body?.replacePropertyToFieldKeywordReferences(ktProperty)
         }
 
         val ktGetter = psiFactory.createGetter(getter.body, getter.modifiersText)
@@ -581,7 +581,7 @@ private class ClassConverter(
         return ktProperty.add(ktGetter) as KtPropertyAccessor
     }
 
-    private fun KtExpression.replacePropertyToFieldKeywordReferences(property: KtProperty, replaceReadUsages: Boolean) {
+    private fun KtExpression.replacePropertyToFieldKeywordReferences(property: KtProperty) {
         val references = property.usages(searcher, scope = this).map { it.element }.ifEmpty { return }
         val fieldExpression = psiFactory.createExpression(FIELD_KEYWORD.value)
 
@@ -592,10 +592,7 @@ private class ClassConverter(
                 else -> reference
             }
 
-            val isWriteUsage = (referenceExpression.parent as? KtExpression)?.asAssignment()?.left == referenceExpression
-            if (isWriteUsage || replaceReadUsages) {
-                referenceExpression.replace(fieldExpression)
-            }
+            referenceExpression.replace(fieldExpression)
         }
     }
 
@@ -635,7 +632,7 @@ private class ClassConverter(
         }
 
         if (!isFakeProperty) {
-            setter.body?.replacePropertyToFieldKeywordReferences(ktProperty, replaceReadUsages = false)
+            setter.body?.replacePropertyToFieldKeywordReferences(ktProperty)
         }
 
         val modifiers = setter.modifiersText?.takeIf { it.isNotEmpty() }

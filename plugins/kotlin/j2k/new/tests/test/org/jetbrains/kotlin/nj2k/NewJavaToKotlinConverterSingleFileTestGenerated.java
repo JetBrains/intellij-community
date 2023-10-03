@@ -1797,6 +1797,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/detectProperties/GetterWithSideEffect6.java");
         }
 
+        @TestMetadata("GetterWithSideEffect7.java")
+        public void testGetterWithSideEffect7() throws Exception {
+            runTest("testData/newJ2k/detectProperties/GetterWithSideEffect7.java");
+        }
+
         @TestMetadata("InCompanionObject.java")
         public void testInCompanionObject() throws Exception {
             runTest("testData/newJ2k/detectProperties/InCompanionObject.java");
