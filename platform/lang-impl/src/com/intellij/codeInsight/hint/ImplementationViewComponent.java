@@ -460,9 +460,11 @@ public final class ImplementationViewComponent extends JPanel {
     DocumentUtil.writeInRunUndoTransparentAction(() -> {
       Document fragmentDoc = myEditor.getDocument();
       fragmentDoc.setReadOnly(false);
-
-      fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), newText);
-      fragmentDoc.setReadOnly(true);
+      try {
+        fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), newText);
+      } finally {
+        fragmentDoc.setReadOnly(true);
+      }
 
       PsiElement element = elt.getElementForShowUsages();
       PsiFile file = element == null ? null : element.getContainingFile();

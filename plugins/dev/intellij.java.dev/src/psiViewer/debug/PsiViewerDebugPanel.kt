@@ -181,10 +181,13 @@ class PsiViewerDebugPanel(
               DebuggerUIUtil.invokeLater {
                 expressionRange = psiRangeInFile
                 editor.document.setReadOnly(false)
-                runWriteAction {
-                  editor.document.setText(fileText)
+                try {
+                  runWriteAction {
+                    editor.document.setText(fileText)
+                  }
+                } finally {
+                  editor.document.setReadOnly(true)
                 }
-                editor.document.setReadOnly(true)
                 editor.selectAndScroll(psiRangeInFile)
               }
             }
