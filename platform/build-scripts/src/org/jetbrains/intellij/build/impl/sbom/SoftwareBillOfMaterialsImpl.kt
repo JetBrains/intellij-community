@@ -229,7 +229,7 @@ internal class SoftwareBillOfMaterialsImpl(
    */
   private suspend fun SpdxDocument.runtimePackage(os: OsFamily, arch: JvmArchitecture): SpdxPackage {
     val checksums = Checksums(context.bundledRuntime.findArchive(os = os, arch = arch))
-    val version = context.bundledRuntime.prefix + context.bundledRuntime.build
+    val version = context.bundledRuntime.build
     val supplier = "Organization: ${Suppliers.JETBRAINS}"
     val runtimeArchivePackage = spdxPackage(
       name = context.bundledRuntime.archiveName(os = os, arch = arch),
