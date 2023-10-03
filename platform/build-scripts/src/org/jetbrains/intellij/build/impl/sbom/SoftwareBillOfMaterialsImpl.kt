@@ -249,7 +249,7 @@ internal class SoftwareBillOfMaterialsImpl(
       setSupplier(supplier)
       setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
     }
-    extractedRuntimePackage.relatesTo(runtimeArchivePackage, RelationshipType.DEPENDS_ON, "repacked into")
+    extractedRuntimePackage.relatesTo(runtimeArchivePackage, RelationshipType.EXPANDED_FROM_ARCHIVE)
     addRuntimeUpstreams(runtimeArchivePackage, os, arch)
     runtimeArchivePackage.validate()
     return extractedRuntimePackage
@@ -291,7 +291,7 @@ internal class SoftwareBillOfMaterialsImpl(
       setSupplier("Organization: Oracle Corporation and/or its affiliates")
       setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
     }
-    runtimeArchivePackage.relatesTo(cefPackage, RelationshipType.DEPENDS_ON, "repacked into")
+    runtimeArchivePackage.relatesTo(cefPackage, RelationshipType.DEPENDS_ON, "repacked from")
     runtimeArchivePackage.relatesTo(openJdkUpstream, RelationshipType.VARIANT_OF)
     runtimeArchivePackage.relatesTo(jcefUpstream, RelationshipType.VARIANT_OF)
   }
@@ -366,7 +366,7 @@ internal class SoftwareBillOfMaterialsImpl(
     val libraryPackages = mavenLibraries.mapNotNull { lib ->
       val libraryPackage = document.spdxPackage(lib)
       val filePackage = filePackages[lib.entry.path] ?: return@mapNotNull null
-      filePackage.relatesTo(libraryPackage, RelationshipType.DEPENDS_ON, "repacked into")
+      filePackage.relatesTo(libraryPackage, RelationshipType.DEPENDS_ON, "repacked from")
       libraryPackage
     }
     val duplicates = libraryPackages.asSequence().filter {
