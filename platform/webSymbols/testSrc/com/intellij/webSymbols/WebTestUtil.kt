@@ -586,6 +586,15 @@ fun CodeInsightTestFixture.configureAndCopyPaste(sourceFile: String, destination
   }
 }
 
+fun CodeInsightTestFixture.performCopyPaste(destinationSignature: String) {
+  performEditorAction(IdeActions.ACTION_EDITOR_COPY)
+  moveToOffsetBySignature(destinationSignature)
+  performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
+  WriteAction.runAndWait<Throwable> {
+    FileDocumentManager.getInstance().saveAllDocuments()
+  }
+}
+
 fun doCompletionItemsTest(fixture: CodeInsightTestFixture,
                           fileName: String,
                           goldFileWithExtension: Boolean = false,
