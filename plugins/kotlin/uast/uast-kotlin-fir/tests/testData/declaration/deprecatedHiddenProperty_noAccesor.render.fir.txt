@@ -9,4 +9,12 @@ public final class Test {
     public final fun getPNew_noAccessor() : java.lang.String = UastEmptyExpression
     public final fun setPNew_noAccessor(@org.jetbrains.annotations.NotNull <set-?>: java.lang.String) : void = UastEmptyExpression
     public fun Test() = UastEmptyExpression
+    @kotlin.Deprecated(level = DeprecationLevel.HIDDEN)
+    public fun getPOld_noAccessor_deprecatedOnProperty() : java.lang.String = UastEmptyExpression
+    @kotlin.Deprecated(level = DeprecationLevel.HIDDEN)
+    public fun setPOld_noAccessor_deprecatedOnProperty(@org.jetbrains.annotations.NotNull <set-?>: java.lang.String) : void = UastEmptyExpression
+    @kotlin.Deprecated(level = DeprecationLevel.HIDDEN)
+    public fun getPOld_noAccessor_deprecatedOnGetter() : java.lang.String = UastEmptyExpression
+    @kotlin.Deprecated(level = DeprecationLevel.HIDDEN)
+    public fun setPOld_noAccessor_deprecatedOnSetter(@org.jetbrains.annotations.NotNull <set-?>: java.lang.String) : void = UastEmptyExpression
 }
