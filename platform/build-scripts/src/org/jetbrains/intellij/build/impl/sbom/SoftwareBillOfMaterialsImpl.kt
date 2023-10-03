@@ -478,16 +478,14 @@ internal class SoftwareBillOfMaterialsImpl(
     libraryLicense: LibraryLicense
   ): MavenLibrary {
     val coordinates = MavenCoordinates(mavenDescriptor.groupId, mavenDescriptor.artifactId, mavenDescriptor.version)
-    checkNotNull(mavenDescriptor.jarRepositoryId) {
-      "Missing jar repository ID for $coordinates"
+    val repositoryUrl = if (mavenDescriptor.jarRepositoryId != null) {
+      repositories
+        .firstOrNull { it.id == mavenDescriptor.jarRepositoryId }
+        ?.let { translateRepositoryUrl(it.url) }
+        ?.removeSuffix("/")
+      ?: error("Unknown jar repository ID: ${mavenDescriptor.jarRepositoryId}")
     }
-    val repositoryUrl = repositories
-      .firstOrNull { it.id == mavenDescriptor.jarRepositoryId }
-      ?.let { translateRepositoryUrl(it.url) }
-      ?.removeSuffix("/")
-    checkNotNull(repositoryUrl) {
-      "Unknown jar repository ID: ${mavenDescriptor.jarRepositoryId}"
-    }
+    else null
     val libraryName = coordinates.getFileName(packaging = mavenDescriptor.packaging, classifier = "")
     val checksums = mavenDescriptor.artifactsVerification.filter {
       Path.of(JpsPathUtil.urlToOsPath(it.url)).name == libraryName
@@ -505,8 +503,8 @@ internal class SoftwareBillOfMaterialsImpl(
     return MavenLibrary(
       coordinates = coordinates,
       repositoryUrl = repositoryUrl,
-      downloadUrl = "$repositoryUrl/${coordinates.directoryPath}/$libraryName",
-      pomXmlUrl = "$repositoryUrl/${coordinates.directoryPath}/$pomXmlName",
+      downloadUrl = repositoryUrl?.let { "$it/${coordinates.directoryPath}/$libraryName" },
+      pomXmlUrl = repositoryUrl?.let { "$it/${coordinates.directoryPath}/$pomXmlName" },
       sha256Checksum = checksums.single().sha256sum,
       license = libraryLicense,
       entry = libraryEntry,
