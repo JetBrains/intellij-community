@@ -613,7 +613,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(), dirtyFileIds, ManagingFS.getInstance().getCreationTimestamp());
         getChangedFilesCollector().clearFilesToUpdate();
 
-        IndexingStamp.flushCaches(); // TODO-ank: flushCaches does not wait for other threads that might be doing flush at the same time
+        IndexingStamp.flushCaches();
         IndexingFlag.unlockAllFiles();
 
         if (myIsUnitTestMode) {

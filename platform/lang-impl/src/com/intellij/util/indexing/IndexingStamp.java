@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * A file has three indexed states (per particular index): indexed (with particular index_stamp which monotonically increases), outdated and (trivial) unindexed.
@@ -69,6 +71,10 @@ public final class IndexingStamp {
   private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(INDEXING_STAMP_CACHE_CAPACITY);
 
   private static volatile IndexingStampStorage storage = createStorage();
+
+  // Read lock is used to flush caches. Write lock is to wait until all threads have finished flushing.
+  // This is kind of abuse of RW lock. The goal ot to allow concurrent execution of flushCache(int finishedFile) from different threads.
+  private static final ReadWriteLock flushLock = new ReentrantReadWriteLock();
 
   private static IndexingStampStorage createStorage() {
     if (Registry.is("scanning.stamps.over.fast.attributes", false) || Registry.is("scanning.trust.indexing.flag", false)) {
@@ -156,6 +162,8 @@ public final class IndexingStamp {
 
   public static void flushCaches() {
     doFlush();
+    flushLock.writeLock().lock(); // wait until all doFlush in other threads are finished. TODO-ank: cooperate, not wait
+    flushLock.writeLock().unlock();
   }
 
   public static void flushCache(int finishedFile) {
@@ -198,32 +206,38 @@ public final class IndexingStamp {
   }
 
   private static void doFlush() {
-    List<Integer> files = new ArrayList<>(ourFinishedFiles.size());
-    ourFinishedFiles.drainTo(files);
+    flushLock.readLock().lock();
+    try {
+      List<Integer> files = new ArrayList<>(ourFinishedFiles.size());
+      ourFinishedFiles.drainTo(files);
 
-    if (!files.isEmpty()) {
-      for (Integer fileId : files) {
-        RuntimeException exception = ourLock.withWriteLock(fileId, () -> {
-          try {
-            final Timestamps timestamp = ourTimestampsCache.remove(fileId);
-            if (timestamp == null) return null;
+      if (!files.isEmpty()) {
+        for (Integer fileId : files) {
+          RuntimeException exception = ourLock.withWriteLock(fileId, () -> {
+            try {
+              final Timestamps timestamp = ourTimestampsCache.remove(fileId);
+              if (timestamp == null) return null;
 
-            if (timestamp.isDirty() /*&& file.isValid()*/) {
-              //RC: now I don't see the benefits of implementing timestamps write via raw attribute bytebuffer access
-              //    doFlush() is mostly outside the critical path, while implementing timestamps.writeToBuffer(buffer)
-              //    is complicated with all those variable-sized numbers used.
-              storage.writeTimestamps(fileId, timestamp.toImmutable());
+              if (timestamp.isDirty() /*&& file.isValid()*/) {
+                //RC: now I don't see the benefits of implementing timestamps write via raw attribute bytebuffer access
+                //    doFlush() is mostly outside the critical path, while implementing timestamps.writeToBuffer(buffer)
+                //    is complicated with all those variable-sized numbers used.
+                storage.writeTimestamps(fileId, timestamp.toImmutable());
+              }
+              return null;
             }
-            return null;
+            catch (IOException e) {
+              return new RuntimeException(e);
+            }
+          });
+          if (exception != null) {
+            throw exception;
           }
-          catch (IOException e) {
-            return new RuntimeException(e);
-          }
-        });
-        if (exception != null) {
-          throw exception;
         }
       }
+    }
+    finally {
+      flushLock.readLock().unlock();
     }
   }
 
