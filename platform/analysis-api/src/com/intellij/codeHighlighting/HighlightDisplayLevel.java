@@ -32,7 +32,7 @@ public class HighlightDisplayLevel {
     this(severity, new Pair<>(icon, icon));
   }
 
-  public HighlightDisplayLevel(@NotNull HighlightSeverity severity,
+  private HighlightDisplayLevel(@NotNull HighlightSeverity severity,
                                @NotNull Pair<? extends @NotNull Icon, ? extends @NotNull Icon> iconPair) {
     this(severity);
     this.iconPair = iconPair;
