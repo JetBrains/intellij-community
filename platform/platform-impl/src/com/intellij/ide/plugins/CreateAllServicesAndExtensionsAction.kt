@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("TestOnlyProblems", "ReplaceGetOrSet")
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems", "ReplaceGetOrSet", "HardCodedStringLiteral")
 package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.PluginException
@@ -27,7 +27,6 @@ import io.github.classgraph.*
 import java.lang.reflect.Constructor
 import kotlin.properties.Delegates.notNull
 
-@Suppress("HardCodedStringLiteral")
 private class CreateAllServicesAndExtensionsAction : AnAction("Create All Services And Extensions"), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val errors = mutableListOf<Throwable>()
@@ -102,8 +101,10 @@ private class CreateAllServicesAndExtensionsActivity : AppLifecycleListener {
     }
   }
 
-  override fun appStarted() = ApplicationManager.getApplication().invokeLater {
-    performAction()
+  override fun appStarted() {
+    ApplicationManager.getApplication().invokeLater {
+      performAction()
+    }
   }
 }
 
@@ -140,10 +141,9 @@ private val servicesWhichRequireEdt = java.util.Set.of(
 private val servicesWhichRequireReadAction = setOf(
   "org.jetbrains.plugins.grails.lang.gsp.psi.gsp.impl.gtag.GspTagDescriptorService",
   "com.intellij.database.psi.DbFindUsagesOptionsProvider",
-  "com.jetbrains.python.findUsages.PyFindUsagesOptions"
+  "com.jetbrains.python.findUsages.PyFindUsagesOptions",
 )
 
-@Suppress("HardCodedStringLiteral")
 private fun checkContainer(container: ComponentManagerImpl, levelDescription: String?, indicator: ProgressIndicator,
                            taskExecutor: (task: () -> Unit) -> Unit) {
   indicator.text2 = "Checking ${levelDescription} services..."
