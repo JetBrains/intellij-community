@@ -34,3 +34,45 @@ UFile (package = test.pkg)
             UParameter (name = <set-?>)
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable)
         UMethod (name = Test)
+        UMethod (name = getPOld_getter_deprecatedOnProperty)
+            UBlockExpression
+                UReturnExpression
+                    UExpressionList (elvis)
+                        UDeclarationsExpression
+                            ULocalVariable (name = var8a4c2ed8)
+                                USimpleNameReferenceExpression (identifier = field)
+                        UIfExpression
+                            UBinaryExpression (operator = !=)
+                                USimpleNameReferenceExpression (identifier = var8a4c2ed8)
+                                ULiteralExpression (value = null)
+                            USimpleNameReferenceExpression (identifier = var8a4c2ed8)
+                            ULiteralExpression (value = "null?")
+        UMethod (name = setPOld_getter_deprecatedOnProperty)
+            UAnnotation (fqName = kotlin.Deprecated)
+                UNamedExpression (name = level)
+                    UQualifiedReferenceExpression
+                        USimpleNameReferenceExpression (identifier = DeprecationLevel)
+                        USimpleNameReferenceExpression (identifier = HIDDEN)
+            UParameter (name = <set-?>)
+                UAnnotation (fqName = org.jetbrains.annotations.Nullable)
+        UMethod (name = getPOld_getter_deprecatedOnGetter)
+            UBlockExpression
+                UReturnExpression
+                    UExpressionList (elvis)
+                        UDeclarationsExpression
+                            ULocalVariable (name = var8a4c4878)
+                                USimpleNameReferenceExpression (identifier = field)
+                        UIfExpression
+                            UBinaryExpression (operator = !=)
+                                USimpleNameReferenceExpression (identifier = var8a4c4878)
+                                ULiteralExpression (value = null)
+                            USimpleNameReferenceExpression (identifier = var8a4c4878)
+                            ULiteralExpression (value = "null?")
+        UMethod (name = setPOld_getter_deprecatedOnSetter)
+            UAnnotation (fqName = kotlin.Deprecated)
+                UNamedExpression (name = level)
+                    UQualifiedReferenceExpression
+                        USimpleNameReferenceExpression (identifier = DeprecationLevel)
+                        USimpleNameReferenceExpression (identifier = HIDDEN)
+            UParameter (name = <set-?>)
+                UAnnotation (fqName = org.jetbrains.annotations.Nullable)

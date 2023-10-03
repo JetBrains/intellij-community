@@ -31,7 +31,7 @@ class UastKotlinPsiParameter internal constructor(
 
     private val annotationsPart = UastLazyPart<Array<PsiAnnotation>>()
 
-    private val _annotations: Array<PsiAnnotation>
+    override val _annotations: Array<PsiAnnotation>
         get() = annotationsPart.getOrBuild {
             val annotations = SmartList<PsiAnnotation>()
 
@@ -53,14 +53,6 @@ class UastKotlinPsiParameter internal constructor(
 
             annotations.toTypedArray()
         }
-
-    override fun getAnnotations(): Array<PsiAnnotation> {
-        return _annotations
-    }
-
-    override fun hasAnnotation(fqn: String): Boolean {
-        return _annotations.find { it.hasQualifiedName(fqn) } != null
-    }
 
     companion object {
         fun create(
