@@ -588,6 +588,7 @@ fun CodeInsightTestFixture.configureAndCopyPaste(sourceFile: String, destination
 
 fun CodeInsightTestFixture.performCopyPaste(destinationSignature: String) {
   performEditorAction(IdeActions.ACTION_EDITOR_COPY)
+  editor.caretModel.primaryCaret.setSelection(0,0)
   moveToOffsetBySignature(destinationSignature)
   performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
   WriteAction.runAndWait<Throwable> {
