@@ -91,6 +91,8 @@ class ShortcutPresenter : Disposable {
   }
 
   fun showActionInfo(actionData: ActionData) {
+    val configuration = PresentationAssistant.INSTANCE.configuration
+
     val actionId = actionData.actionId
     val parentGroupName = parentNames[actionId]
     val actionText = (if (parentGroupName != null) "$parentGroupName ${MacKeymapUtil.RIGHT} " else "") + (actionData.actionText
@@ -101,17 +103,17 @@ class ShortcutPresenter : Disposable {
       fragments.addText("<b>$actionText</b>")
     }
 
-    val mainKeymap = getPresentationAssistant().configuration.mainKeymap
-    val shortcutTextFragments = getShortcutTexts(mainKeymap, actionId, actionText)
+    val mainKeymap = configuration.mainKeymapKind()
+    val shortcutTextFragments = getShortcutTexts(mainKeymap, configuration.mainKeymapLabel, actionId, actionText)
     if (shortcutTextFragments.isNotEmpty()) {
       if (fragments.isNotEmpty()) fragments.addText(" via&nbsp;")
       fragments.addAll(shortcutTextFragments)
     }
 
-    val alternativeKeymap = getPresentationAssistant().configuration.alternativeKeymap
+    val alternativeKeymap = configuration.alternativeKeymapKind()
     if (alternativeKeymap != null) {
-      val mainShortcut = getShortcutsText(mainKeymap.getKeymap()?.getShortcuts(actionId), mainKeymap.getKind())
-      val altShortcutTextFragments = getShortcutTexts(alternativeKeymap, actionId, mainShortcut)
+      val mainShortcut = getShortcutsText(mainKeymap.keymap?.getShortcuts(actionId), mainKeymap)
+      val altShortcutTextFragments = getShortcutTexts(alternativeKeymap, configuration.alternativeKeymapLabel, actionId, mainShortcut)
       if (altShortcutTextFragments.isNotEmpty()) {
         fragments.addText("&nbsp;(")
         fragments.addAll(altShortcutTextFragments)
@@ -128,7 +130,7 @@ class ShortcutPresenter : Disposable {
         infoPanel!!.updateText(realProject, fragments)
       }
     }
-    getPresentationAssistant().checkIfMacKeymapIsAvailable()
+    PresentationAssistant.INSTANCE.checkIfMacKeymapIsAvailable()
   }
 
   private fun getCustomShortcut(actionId: String, kind: KeymapKind): Array<KeyboardShortcut> {
@@ -156,16 +158,16 @@ class ShortcutPresenter : Disposable {
     }
   }
 
-  private fun getShortcutTexts(keymap: KeymapDescription, actionId: String, shownShortcut: String): List<Pair<String, Font?>> {
+  private fun getShortcutTexts(keymap: KeymapKind, label: String?, actionId: String, shownShortcut: String): List<Pair<String, Font?>> {
     val fragments = ArrayList<Pair<String, Font?>>()
-    val shortcuts = keymap.getKeymap()?.getShortcuts(actionId)?.let {
-      if (it.isNotEmpty()) it else getCustomShortcut(actionId, keymap.getKind())
+    val shortcuts = keymap.keymap?.getShortcuts(actionId)?.let {
+      if (it.isNotEmpty()) it else getCustomShortcut(actionId, keymap)
     }
-    val shortcutText = getShortcutsText(shortcuts, keymap.getKind())
+    val shortcutText = getShortcutsText(shortcuts, keymap)
     if (shortcutText.isEmpty() || shortcutText == shownShortcut) return fragments
 
     when {
-      keymap.getKind() == KeymapKind.WIN || SystemInfo.isMac -> {
+      keymap == KeymapKind.WIN || SystemInfo.isMac -> {
         fragments.addText(shortcutText)
       }
       macKeyStrokesFont != null && macKeyStrokesFont!!.canDisplayUpTo(shortcutText) == -1 -> {
@@ -178,7 +180,7 @@ class ShortcutPresenter : Disposable {
         }
       }
     }
-    val keymapText = keymap.displayText
+    val keymapText = label ?: keymap.defaultLabel
     if (keymapText.isNotEmpty()) {
       fragments.addText("&nbsp;$keymapText")
     }

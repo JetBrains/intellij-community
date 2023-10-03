@@ -8,47 +8,98 @@ package com.intellij.platform.ide.impl.presentationAssistant
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DynamicPluginListener
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.keymap.Keymap
-import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.keymap.ex.KeymapManagerEx
-import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.util.ui.FormBuilder
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.XmlSerializerUtil
-import java.awt.BorderLayout
-import java.awt.FlowLayout
-import javax.swing.*
+import org.jetbrains.annotations.Nls
+
+enum class PresentationAssistantPopupSize(val value: Int, @Nls val stringValue: String) {
+  SMALL(0, IdeBundle.message("presentation.assistant.configurable.size.small")),
+  MEDIUM(1, IdeBundle.message("presentation.assistant.configurable.size.medium")),
+  LARGE(2, IdeBundle.message("presentation.assistant.configurable.size.large"));
+
+  companion object {
+    fun from(value: Int): PresentationAssistantPopupSize = when (value) {
+      0 -> SMALL
+      2 -> LARGE
+      else -> MEDIUM
+    }
+  }
+}
+
+enum class PresentationAssistantPopupAlignment(val x: Int, val y: Int, @Nls val stringValue: String) {
+  TOP_LEFT(0, 0, IdeBundle.message("presentation.assistant.configurable.alignment.top.left")),
+  TOP_CENTER(1, 0, IdeBundle.message("presentation.assistant.configurable.alignment.top.center")),
+  TOP_RIGHT(2, 0, IdeBundle.message("presentation.assistant.configurable.alignment.top.right")),
+  BOTTOM_LEFT(0, 2, IdeBundle.message("presentation.assistant.configurable.alignment.bottom.left")),
+  BOTTOM_CENTER(1, 2, IdeBundle.message("presentation.assistant.configurable.alignment.bottom.center")),
+  BOTTOM_RIGHT(2, 2, IdeBundle.message("presentation.assistant.configurable.alignment.bottom.right"));
+
+  companion object {
+    fun from(x: Int, y: Int): PresentationAssistantPopupAlignment = when (y) {
+      0 -> when(x) {
+        0 -> TOP_LEFT
+        2 -> TOP_RIGHT
+        else -> TOP_CENTER
+      }
+      else -> when(x) {
+        0 -> BOTTOM_LEFT
+        2 -> BOTTOM_RIGHT
+        else -> BOTTOM_CENTER
+      }
+    }
+
+    val defaultAlignment = BOTTOM_CENTER
+  }
+}
 
 class PresentationAssistantState {
-  var showActionDescriptions = true
+  var showActionDescriptions = false
+  var size: Int = 1
+  var popupDuration = 4 * 1000
+
+  /**
+   * Holds the value for the horizontal alignment.
+   *
+   * Valid values:
+   *  - 0: Aligns the element to the left.
+   *  - 1: Aligns the element to the center.
+   *  - 2: Aligns the element to the right.
+   */
+  var horizontalAlignment = 1
+
+  /**
+   * Holds the value for the vertical alignment.
+   *
+   * Valid values:
+   *  - 0: Aligns the element to the top.
+   *  - 2: Aligns the element to the bottom.
+   */
+  var verticalAlignment = 2
+
+  var mainKeymap = defaultKeymapForOS().value
+  var mainKeymapLabel: String = defaultKeymapForOS().defaultLabel
+
+  var showAlternativeKeymap = false
+  var alternativeKeymap: String = defaultKeymapForOS().getAlternativeKind().value
+  var alternativeKeymapLabel: String = defaultKeymapForOS().getAlternativeKind().defaultLabel
+
   var fontSize = 24
-  var hideDelay = 4 * 1000
-  var mainKeymap = getDefaultMainKeymap()
-  var alternativeKeymap: KeymapDescription? = getDefaultAlternativeKeymap()
-  var horizontalAlignment = PopupHorizontalAlignment.CENTER
-  var verticalAlignment = PopupVerticalAlignment.BOTTOM
   var margin = 5
 }
 
-enum class PopupHorizontalAlignment(@NlsSafe val displayName: String) { LEFT("Left"), CENTER("Center"), RIGHT("Right") }
-enum class PopupVerticalAlignment(@NlsSafe val displayName: String) { TOP("Top"), BOTTOM("Bottom") }
+internal fun PresentationAssistantState.mainKeymapKind() = KeymapKind.from(mainKeymap)
+internal fun PresentationAssistantState.alternativeKeymapKind() = alternativeKeymap.takeIf { showAlternativeKeymap }?.let { KeymapKind.from(it) }
 
 @State(name = "PresentationAssistant", storages = [Storage("presentation-assistant.xml")])
 class PresentationAssistant : PersistentStateComponent<PresentationAssistantState>, Disposable {
-  val configuration = PresentationAssistantState()
+  internal val configuration = PresentationAssistantState()
   private var warningAboutMacKeymapWasShown = false
   private var presenter: ShortcutPresenter? = null
 
@@ -67,25 +118,27 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
     presenter?.disable()
   }
 
-  fun setShowActionsDescriptions(value: Boolean, project: Project?) {
-    configuration.showActionDescriptions = value
-    if (value && presenter == null) {
+  fun updatePresenter(project: Project? = null, showInitialAction: Boolean = false) {
+    val isEnabled = configuration.showActionDescriptions
+    if (isEnabled && presenter == null) {
       presenter = ShortcutPresenter().apply {
-        showActionInfo(ShortcutPresenter.ActionData(TogglePresentationAssistantAction.ID, project, TogglePresentationAssistantAction.name))
+        if (showInitialAction) {
+          showActionInfo(ShortcutPresenter.ActionData(TogglePresentationAssistantAction.ID, project, TogglePresentationAssistantAction.name))
+        }
       }
     }
-    if (!value && presenter != null) {
+    if (!isEnabled && presenter != null) {
       presenter?.disable()
       presenter = null
     }
   }
 
-  fun checkIfMacKeymapIsAvailable() {
-    val alternativeKeymap = configuration.alternativeKeymap
-    if (warningAboutMacKeymapWasShown || getCurrentOSKind() == KeymapKind.MAC || alternativeKeymap == null) {
+  internal fun checkIfMacKeymapIsAvailable() {
+    val alternativeKeymap = configuration.alternativeKeymapKind()
+    if (warningAboutMacKeymapWasShown || defaultKeymapForOS() == KeymapKind.MAC || alternativeKeymap == null) {
       return
     }
-    if (alternativeKeymap.getKind() != KeymapKind.MAC || alternativeKeymap.getKeymap() != null) {
+    if (alternativeKeymap != KeymapKind.MAC || alternativeKeymap.keymap != null) {
       return
     }
 
@@ -97,149 +150,13 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
     showInstallMacKeymapPluginNotification(pluginId)
   }
 
-  fun setFontSize(value: Int) {
-    configuration.fontSize = value
-  }
-
-  fun setHideDelay(value: Int) {
-    configuration.hideDelay = value
+  companion object {
+    val INSTANCE = service<PresentationAssistant>()
   }
 }
-
-fun getPresentationAssistant(): PresentationAssistant = ApplicationManager.getApplication().getService(PresentationAssistant::class.java)
 
 class PresentationAssistantListenerRegistrar : AppLifecycleListener, DynamicPluginListener {
   override fun appFrameCreated(commandLineArgs: MutableList<String>) {
-    getPresentationAssistant().initialize()
-  }
-
-  override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-    if (pluginDescriptor.pluginId.idString == "org.nik.presentation-assistant") {
-      getPresentationAssistant().initialize()
-    }
-  }
-}
-
-class KeymapDescriptionPanel {
-  private val combobox = ComboBox(KeymapManagerEx.getInstanceEx().allKeymaps)
-  private val text = JTextField(10)
-  val mainPanel: JPanel
-
-  init {
-    combobox.renderer = object : SimpleListCellRenderer<Keymap>() {
-      override fun customize(list: JList<out Keymap>, value: Keymap?, index: Int, selected: Boolean, hasFocus: Boolean) {
-        text = value?.presentableName ?: ""
-      }
-    }
-    val formBuilder = FormBuilder.createFormBuilder()
-      .setFormLeftIndent(20)
-      .addLabeledComponent(IdeBundle.message("presentation.assistant.configurable.keymap"), combobox)
-      .addLabeledComponent(IdeBundle.message("presentation.assistant.configurable.description"), text)
-    mainPanel = formBuilder.panel
-  }
-
-  fun getDescription() = KeymapDescription((combobox.selectedItem as Keymap?)?.name ?: "", text.text)
-
-  fun setEnabled(enabled: Boolean) {
-    UIUtil.setEnabled(mainPanel, enabled, true)
-  }
-
-  fun reset(config: KeymapDescription) {
-    combobox.selectedItem = KeymapManager.getInstance().getKeymap(config.name)
-    text.text = config.displayText
-  }
-}
-
-class PresentationAssistantConfigurable : Configurable, SearchableConfigurable {
-  private val configuration: PresentationAssistant = getPresentationAssistant()
-  private val showAltKeymap = JCheckBox(IdeBundle.message("presentation.assistant.configurable.alternative.keymap"))
-  private val mainKeymapPanel = KeymapDescriptionPanel()
-  private val altKeymapPanel = KeymapDescriptionPanel()
-  private val fontSizeField = JTextField(5)
-  private val hideDelayField = JTextField(5)
-  private val horizontalAlignmentButtons = PopupHorizontalAlignment.entries.associateWith { JRadioButton(it.displayName) }
-  private val verticalAlignmentButtons = PopupVerticalAlignment.entries.associateWith { JRadioButton(it.displayName) }
-  private val marginField = JTextField(5)
-
-  private val mainPanel: JPanel
-
-  init {
-    val horizontalAlignmentPanel = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-      horizontalAlignmentButtons.values.forEach { add(it) }
-    }
-    val verticalAlignmentPanel = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-      verticalAlignmentButtons.values.forEach { add(it) }
-    }
-    ButtonGroup().apply {
-      horizontalAlignmentButtons.values.forEach { add(it) }
-    }
-    ButtonGroup().apply {
-      verticalAlignmentButtons.values.forEach { add(it) }
-    }
-
-    val formBuilder = FormBuilder.createFormBuilder()
-      .addLabeledComponent(IdeBundle.message("presentation.assistant.configurable.font.size"), fontSizeField)
-      .addLabeledComponent(IdeBundle.message("presentation.assistant.configurable.duration"), hideDelayField)
-      .addLabeledComponent(IdeBundle.message("presentation.assistant.configurable.horizontal.alignment"), horizontalAlignmentPanel, 0)
-      .addLabeledComponent(IdeBundle.message("presentation.assistant.configurable.vertical.alignment"), verticalAlignmentPanel, 0)
-      .addLabeledComponent(IdeBundle.message("presentation.assistant.configurable.margin"), marginField, 0)
-      .addVerticalGap(10)
-      .addLabeledComponent(IdeBundle.message("presentation.assistant.configurable.main.keymap"), mainKeymapPanel.mainPanel, true)
-      .addLabeledComponent(showAltKeymap, altKeymapPanel.mainPanel, true)
-    showAltKeymap.addActionListener {
-      altKeymapPanel.setEnabled(showAltKeymap.isSelected)
-    }
-    mainPanel = JPanel(BorderLayout())
-    mainPanel.add(BorderLayout.NORTH, formBuilder.panel)
-  }
-
-  private fun updatePanels() {
-    altKeymapPanel.setEnabled(showAltKeymap.isSelected)
-  }
-
-  override fun getId() = displayName
-  override fun enableSearch(option: String?): Runnable? = null
-  override fun getDisplayName() = IdeBundle.message("presentation.assistant.configurable.name")
-  override fun getHelpTopic(): String? = null
-
-  override fun createComponent() = mainPanel
-  override fun isModified() = isDigitsOnly(fontSizeField.text) && (fontSizeField.text != configuration.configuration.fontSize.toString())
-                              || isDigitsOnly(
-    hideDelayField.text) && (hideDelayField.text != configuration.configuration.hideDelay.toString())
-                              || configuration.configuration.mainKeymap != mainKeymapPanel.getDescription()
-                              || configuration.configuration.alternativeKeymap != getAlternativeKeymap()
-                              || !horizontalAlignmentButtons[configuration.configuration.horizontalAlignment]!!.isSelected
-                              || !verticalAlignmentButtons[configuration.configuration.verticalAlignment]!!.isSelected
-                              || isDigitsOnly(marginField.text) && (marginField.text != configuration.configuration.margin.toString())
-
-  private fun getAlternativeKeymap() = if (showAltKeymap.isSelected) altKeymapPanel.getDescription() else null
-
-  override fun apply() {
-    configuration.setFontSize(fontSizeField.text.trim().toInt())
-    configuration.setHideDelay(hideDelayField.text.trim().toInt())
-    configuration.configuration.mainKeymap = mainKeymapPanel.getDescription()
-    configuration.configuration.alternativeKeymap = getAlternativeKeymap()
-    configuration.configuration.horizontalAlignment = horizontalAlignmentButtons.entries.find { it.value.isSelected }!!.key
-    configuration.configuration.verticalAlignment = verticalAlignmentButtons.entries.find { it.value.isSelected }!!.key
-    configuration.configuration.margin = marginField.text.trim().toInt()
-  }
-
-  override fun reset() {
-    fontSizeField.text = configuration.configuration.fontSize.toString()
-    hideDelayField.text = configuration.configuration.hideDelay.toString()
-    showAltKeymap.isSelected = configuration.configuration.alternativeKeymap != null
-    mainKeymapPanel.reset(configuration.configuration.mainKeymap)
-    altKeymapPanel.reset(configuration.configuration.alternativeKeymap ?: KeymapDescription("", ""))
-    horizontalAlignmentButtons.forEach { (value, button) -> button.isSelected = configuration.configuration.horizontalAlignment == value }
-    verticalAlignmentButtons.forEach { (value, button) -> button.isSelected = configuration.configuration.verticalAlignment == value }
-    marginField.text = configuration.configuration.margin.toString()
-    updatePanels()
-  }
-
-  override fun disposeUIResources() {
-  }
-
-  private fun isDigitsOnly(string: String): Boolean {
-    return string.all { c -> c.isDigit() }
+    PresentationAssistant.INSTANCE.initialize()
   }
 }

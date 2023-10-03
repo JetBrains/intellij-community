@@ -21,7 +21,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.Alarm
 import com.intellij.util.ui.Animator
 import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil
 import java.awt.*
 import javax.swing.*
 
@@ -32,7 +31,7 @@ class ActionInfoPanel(project: Project, textFragments: List<Pair<String, Font?>>
   private var animator: Animator
   private var phase = Phase.FADING_IN
   private val hintAlpha = if (StartupUiUtil.isDarkTheme) 0.05.toFloat() else 0.1.toFloat()
-  private val pluginConfiguration = getPresentationAssistant().configuration
+  private val pluginConfiguration = PresentationAssistant.INSTANCE.configuration
 
   enum class Phase { FADING_IN, SHOWN, FADING_OUT, HIDDEN }
 
@@ -109,7 +108,7 @@ class ActionInfoPanel(project: Project, textFragments: List<Pair<String, Font?>>
     phase = Phase.SHOWN
     setAlpha(hintAlpha)
     hideAlarm.cancelAllRequests()
-    hideAlarm.addRequest({ fadeOut() }, pluginConfiguration.hideDelay, ModalityState.any())
+    hideAlarm.addRequest({ fadeOut() }, pluginConfiguration.popupDuration, ModalityState.any())
   }
 
   fun updateText(project: Project, textFragments: List<Pair<String, Font?>>) {
@@ -129,13 +128,13 @@ class ActionInfoPanel(project: Project, textFragments: List<Pair<String, Font?>>
     val visibleRect = ideFrame.component.visibleRect
     val popupSize = preferredSize
     val x = when (pluginConfiguration.horizontalAlignment) {
-      PopupHorizontalAlignment.LEFT -> visibleRect.x + pluginConfiguration.margin
-      PopupHorizontalAlignment.CENTER -> visibleRect.x + (visibleRect.width - popupSize.width) / 2
-      PopupHorizontalAlignment.RIGHT -> visibleRect.x + visibleRect.width - popupSize.width - pluginConfiguration.margin
+      0 -> visibleRect.x + pluginConfiguration.margin
+      1 -> visibleRect.x + (visibleRect.width - popupSize.width) / 2
+      else -> visibleRect.x + visibleRect.width - popupSize.width - pluginConfiguration.margin
     }
     val y = when (pluginConfiguration.verticalAlignment) {
-      PopupVerticalAlignment.TOP -> visibleRect.y + pluginConfiguration.margin
-      PopupVerticalAlignment.BOTTOM -> visibleRect.y + visibleRect.height - popupSize.height - statusBarHeight - pluginConfiguration.margin
+      0 -> visibleRect.y + pluginConfiguration.margin
+      else -> visibleRect.y + visibleRect.height - popupSize.height - statusBarHeight - pluginConfiguration.margin
     }
     return RelativePoint(ideFrame.component, Point(x, y))
   }

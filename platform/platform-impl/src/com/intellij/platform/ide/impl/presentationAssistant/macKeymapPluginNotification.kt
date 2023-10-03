@@ -21,7 +21,7 @@ fun showInstallMacKeymapPluginNotification(pluginId: PluginId) {
   })
   notification.addAction(object : AnAction(IdeBundle.message("presentation.assistant.notification.action.hide")) {
     override fun actionPerformed(e: AnActionEvent) {
-      getPresentationAssistant().configuration.alternativeKeymap = null
+      PresentationAssistant.INSTANCE.configuration.showAlternativeKeymap = false
       notification.expire()
     }
   })
