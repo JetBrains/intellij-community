@@ -46,6 +46,4 @@ fun <T> runLoggedBlocking(actionTitle: String, action: () -> T): T {
 }
 
 val Duration.customToString: String
-  get() =
-    if (minus(1.seconds).isNegative()) "< 1s"
-    else toString(unit = DurationUnit.SECONDS, decimals = 1)
+  get() = toString(unit = DurationUnit.SECONDS, decimals = 3)
