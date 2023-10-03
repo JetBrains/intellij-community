@@ -1801,6 +1801,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 runTest("testData/evaluation/multipleBreakpoints/isInsideInlineLambda.kt");
             }
 
+            @TestMetadata("isInsideLocalFun.kt")
+            public void testIsInsideLocalFun() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/isInsideLocalFun.kt");
+            }
+
             @TestMetadata("lambdaParameters.kt")
             public void testLambdaParameters() throws Exception {
                 runTest("testData/evaluation/multipleBreakpoints/lambdaParameters.kt");

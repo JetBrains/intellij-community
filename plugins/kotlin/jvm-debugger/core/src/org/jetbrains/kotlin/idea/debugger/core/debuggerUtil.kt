@@ -123,7 +123,7 @@ fun <T : Any> DebugProcessImpl.invokeInManagerThread(f: (DebuggerContextImpl) ->
 
 private fun lambdaOrdinalByArgument(elementAt: KtFunction): Int {
     val className = ClassNameCalculator.getClassName(elementAt) ?: return 0
-    return className.substringAfterLast("$").toInt()
+    return className.substringAfterLast("$").toIntOrNull() ?: 0
 }
 
 private fun functionNameByArgument(elementAt: KtFunction): String? =

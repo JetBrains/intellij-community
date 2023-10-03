@@ -1175,6 +1175,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/breakpointOnLambdaEnd.kt");
         }
 
+        @TestMetadata("breakpointOnLambdaWithLocalFun.kt")
+        public void testBreakpointOnLambdaWithLocalFun() throws Exception {
+            runTest("testData/stepping/custom/breakpointOnLambdaWithLocalFun.kt");
+        }
+
         @TestMetadata("breakpointOnWhen.kt")
         public void testBreakpointOnWhen() throws Exception {
             runTest("testData/stepping/custom/breakpointOnWhen.kt");
