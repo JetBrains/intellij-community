@@ -34,6 +34,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"F12",                      "JumpToLastWindow","WebInspector.Browser.Selection.Toggle"},
       {"INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomCollectionControl.Add",
                                    "XDebugger.NewWatch"},
+      {"RIGHT",                    "EditorRight", "Terminal.InsertInlineCompletionItem"},
       {"SPACE",                    "Console.TableResult.ColumnVisibility", "QuickPreview", "SplitChooser.SplitCenter", "CollapsiblePanel-toggle"},
       {"SUBTRACT",                 "CollapseTreeNode", "Graph.ZoomOut"},
       {"TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
