@@ -156,9 +156,11 @@ private fun prepareRequirementsText(module: Module, sdk: Sdk, settings: PyPackag
   val installedPackages = PyPackageManager.getInstance(sdk).refreshAndGetPackages(false)
   val importedPackages = task.result.asSequence()
     .flatMap { topLevelPackage ->
-      val aliases = PyPsiPackageUtil.PACKAGES_TOPLEVEL[topLevelPackage]?.toTypedArray() ?: emptyArray()
-      sequenceOf(topLevelPackage, *aliases)
-        .mapNotNull { name -> installedPackages.find { StringUtil.equalsIgnoreCase(it.name, name) } }
+      val alias = PyPsiPackageUtil.PACKAGES_TOPLEVEL[topLevelPackage] ?: ""
+      sequence {  
+        yield(topLevelPackage)
+        if (alias.isNotEmpty()) yield(alias)
+      }.mapNotNull { name -> installedPackages.find { StringUtil.equalsIgnoreCase(it.name, name) } }
     }
     .map { it.name.toLowerCase() to it }
     .toMap(mutableMapOf())

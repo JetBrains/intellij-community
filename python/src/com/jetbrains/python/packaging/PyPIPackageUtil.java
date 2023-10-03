@@ -393,6 +393,7 @@ public class PyPIPackageUtil {
    * @see PyPIPackageCache#containsPackage(String)
    */
   public boolean isInPyPI(@NotNull String packageName) {
+    if (packageName.isEmpty()) return false;
     return PyPIPackageCache.getInstance().containsPackage(packageName);
   }
 

@@ -1379,7 +1379,7 @@ organizations django-organizations
 gtfsscheduleviewer transitfeed 
 django_js_utils django-js-utils-nextgen 
 avsubmit django-avsubmit 
-captcha django-simple-captcha django-recaptcha-mozilla
+captcha django-simple-captcha
 cas django-cas-client 
 encodingcom encodingcom-py3 
 dselector django-selector 
@@ -2416,7 +2416,7 @@ init Auto_Python_2014
 clifa_launch clifa 
 clipy clipy-dl 
 batchapps azure-batch-apps 
-zmq pyzmq pyzmq-ctypes
+zmq pyzmq
 crest Python-Crest 
 wmd django-wmd-editor 
 inetutils pyip 
@@ -4762,7 +4762,7 @@ ldap pyldap
 wx wxPython
 pubsub PyPubSub
 serial pyserial
-win32api pypiwin32 pywin32
+win32api pywin32
 MySQLdb mysqlclient
 mysql mysql-connector-python
 gi PyGObject

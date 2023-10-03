@@ -4,9 +4,6 @@ package com.jetbrains.python.statistics
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -24,11 +21,9 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("python.packages", 3)
+  private val GROUP = EventLogGroup("python.packages", 4)
 
   //full list is stored in metadata, see FUS-1218 for more details
-  private val PACKAGE_FIELD = EventFields.String("package", emptyList())
-  private val PACKAGE_VERSION_FIELD = EventFields.StringValidatedByRegexp("package_version", "version")
   private val PYTHON_PACKAGE_INSTALLED = registerPythonSpecificEvent(GROUP, "python_package_installed", PACKAGE_FIELD, PACKAGE_VERSION_FIELD)
 
   private fun getPackages(project: Project): Set<MetricEvent> {
@@ -52,9 +47,5 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
   }
 }
 
-internal class PyPackageUsagesValidationRule : CustomValidationRule() {
-  override fun getRuleId(): String = "python_packages"
-
-  override fun doValidate(data: String, context: EventContext) =
-    if (PyPIPackageCache.getInstance().containsPackage(data)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
-}
+val PACKAGE_FIELD = EventFields.StringValidatedByEnum("package", "python_packages")
+val PACKAGE_VERSION_FIELD = EventFields.StringValidatedByRegexp("package_version", "version")
