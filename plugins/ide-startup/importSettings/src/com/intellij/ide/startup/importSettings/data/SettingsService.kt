@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.openapi.components.service
+import com.jetbrains.rd.util.reactive.*
 import java.util.*
 import javax.swing.Icon
 
@@ -28,17 +29,20 @@ interface SyncService : BaseJbService {
     GENERAL
   }
 
-  val syncState: SYNC_STATE
-  fun tryToLogin(): String?
-  fun syncSettings(productId: String)
-  fun getMainProduct(): Product?
-  fun importSettings(productId: String)
+  fun isLoggedIn(): Boolean {
+    return syncState.value != SYNC_STATE.UNLOGGED
+  }
 
+  val syncState: IPropertyView<SYNC_STATE>
+  fun tryToLogin(): String?
+  fun syncSettings(): DialogImportData
+  fun importSyncSettings(): DialogImportData
+  fun getMainProduct(): Product?
   fun generalSync()
 }
 
-interface ExternalService : BaseService, ConfigurableImport
-interface JbService: BaseJbService, ConfigurableImport {
+interface ExternalService : BaseService
+interface JbService: BaseJbService {
   fun getConfig(): Config
 }
 
@@ -52,10 +56,11 @@ interface BaseService {
   fun getSettings(itemId: String): List<BaseSetting>
 
   fun getProductIcon(itemId: String, size: IconProductSize = IconProductSize.SMALL): Icon?
-}
 
-interface ConfigurableImport {
-  fun importSettings(productId: String, data: List<DataForSave>)
+  fun baseProduct(id: String): Boolean = true /* синк возможет только из того же продукта. в противном случае мне нужно показать импорт
+  диалог прогресса импорта выглядит иначе если импорт того же продукта */
+
+  fun importSettings(productId: String, data: List<DataForSave>): DialogImportData
 }
 
 enum class IconProductSize(val int: Int) {
@@ -65,18 +70,16 @@ enum class IconProductSize(val int: Int) {
 }
 
 
-interface Product : ImportItem {
-  val version: String /*опять не знаю как мы храним версию, пока написала стринг*/
-  val lastUsage: Date /* для сеттинг синга дата последнего синка, для локальных версий дата последнего использования
-                      нужны понятия типа вчера, сегодня, неделю назад, месяц наза, много мессяцев назад.
-                      Есть у нас где-то такое? */
+interface Product : SettingsContributor {
+  val version: String
+  val lastUsage: Date
 }
 
-interface Config : ImportItem {
+interface Config : SettingsContributor {
   val path: String /* /IntelliJ IDEA Ultimate 2023.2.1 */
 }
 
-interface ImportItem {
+interface SettingsContributor {
   val id: String
   val name: String
 }
@@ -112,3 +115,32 @@ interface ChildSetting {
 }
 
 data class DataForSave(val id: String, val childIds: List<String>? = null)
+
+
+interface SimpleImport : DialogImportData {
+  val message: String
+}
+
+interface ImportFromProduct: DialogImportData {
+  val from: DialogImportItem
+  val to: DialogImportItem
+}
+
+interface DialogImportData {
+  val progress : ImportProgress
+}
+
+interface ImportProgress {
+  val progressMessage: IOptPropertyView<String>
+  val progress: IOptPropertyView<Int>
+  val error : IOptPropertyView<ImportError>
+}
+
+interface ImportError {
+  val message: String
+  fun skip()
+  fun tryAgain()
+}
+
+data class DialogImportItem(val item: SettingsContributor, val icon: Icon)
+

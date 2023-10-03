@@ -1,13 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.chooser.actions
+package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.ide.startup.importSettings.data.SyncService
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.DumbAwareAction
 
-class SyncStateAction : DumbAwareAction() {
+class SyncStateAction : ChooseProductActionButton() {
   private val settingsService = SettingsService.getInstance()
   private val syncService = settingsService.getSyncService()
 
@@ -16,7 +15,7 @@ class SyncStateAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    when (syncService.syncState) {
+    when (syncService.syncState.value) {
       SyncService.SYNC_STATE.UNLOGGED -> {
         syncService.tryToLogin()
         return
@@ -31,7 +30,7 @@ class SyncStateAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.icon = AllIcons.Actions.Refresh
-    e.presentation.isVisible = when (syncService.syncState) {
+    e.presentation.isVisible = when (syncService.syncState.value) {
       SyncService.SYNC_STATE.UNLOGGED -> {
         e.presentation.text = "Log In to Setting Sync..."
         e.presentation.isEnabled = true

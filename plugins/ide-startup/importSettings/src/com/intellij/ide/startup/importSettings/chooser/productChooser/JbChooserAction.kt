@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.chooser.actions
+package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.data.*
@@ -25,7 +25,7 @@ class SyncChooserAction(callback: (Int) -> Unit) : MainChooserAction<SyncService
 
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = false
-    if(service.syncState != SyncService.SYNC_STATE.LOGGED) {
+    if(!service.isLoggedIn()) {
       return
     }
     super.update(e)

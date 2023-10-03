@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.chooser.ui
+package com.intellij.ide.startup.importSettings.chooser.settingChooser
 
 import com.intellij.ide.startup.importSettings.data.ChildSetting
 import com.intellij.ui.SeparatorComponent

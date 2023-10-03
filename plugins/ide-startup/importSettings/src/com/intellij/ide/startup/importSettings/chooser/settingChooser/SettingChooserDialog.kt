@@ -1,12 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.importer
+package com.intellij.ide.startup.importSettings.chooser.settingChooser
 
-import com.intellij.ide.startup.importSettings.chooser.ui.BaseSettingPane
-import com.intellij.ide.startup.importSettings.chooser.ui.createSettingPane
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.IconProductSize
-import com.intellij.ide.startup.importSettings.data.ImportItem
+import com.intellij.ide.startup.importSettings.data.SettingsContributor
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.dsl.builder.AlignY
@@ -22,9 +21,8 @@ import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-import javax.swing.border.LineBorder
 
-open class SettingDialog(private val provider: ActionsDataProvider<*>, val product: ImportItem) : DialogWrapper(null) {
+open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, val product: SettingsContributor) : DialogWrapper(null) {
   open val configurable = true
   protected val settingPanes = mutableListOf<BaseSettingPane>()
 
@@ -61,6 +59,7 @@ open class SettingDialog(private val provider: ActionsDataProvider<*>, val produ
     val productService = provider.productService
 
     val listPane = JPanel().apply {
+      isOpaque = false
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
       productService.getSettings(product.id).forEach {
         val st = createSettingPane(it, configurable)
@@ -75,20 +74,20 @@ open class SettingDialog(private val provider: ActionsDataProvider<*>, val produ
       panel {
         row {
           cell(JBScrollPane(listPane).apply {
+            isOpaque = false
+            viewport.isOpaque = false
+
             horizontalScrollBarPolicy = HORIZONTAL_SCROLLBAR_NEVER
             preferredSize = JBDimension(420, 374)
             border = JBUI.Borders.empty(16, 0, 12,0)
           })
         }
       }.apply {
-        isOpaque = false
-       // preferredSize = JBDimension(420, 374)
-        background = Color.RED
-        border = LineBorder(Color.BLACK)
+        isOpaque = true
+        background = JBColor.namedColor("WelcomeScreen.Details.background", JBColor(Color.white, Color(0x313335)))
+        border = JBUI.Borders.empty()
       }
     )
-  }.apply {
-    // preferredSize = JBDimension(640, 410)
   }
 
 

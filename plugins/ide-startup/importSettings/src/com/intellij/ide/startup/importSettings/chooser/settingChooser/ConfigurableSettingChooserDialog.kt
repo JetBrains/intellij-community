@@ -1,22 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.importer
+package com.intellij.ide.startup.importSettings.chooser.settingChooser
 
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.openapi.ui.DialogWrapper
 import java.awt.event.ActionEvent
 import javax.swing.Action
 
-fun createDialog(provider: ActionsDataProvider<*>, product: ImportItem): DialogWrapper {
-  return when (provider) {
-    is SyncActionsDataProvider -> return SyncSettingDialog(provider, product)
-    is JBrActionsDataProvider -> return ImportSettingDialog(provider, product)
-    is ExtActionsDataProvider -> return ImportSettingDialog(provider, product)
-    else -> SettingDialog(provider, product)
+fun createDialog(provider: ActionsDataProvider<*>, product: SettingsContributor): DialogWrapper {
+  if(provider is SyncActionsDataProvider && provider.productService.baseProduct(product.id)) {
+    return SyncSettingDialog(provider, product)
   }
+  return ConfigurableSettingChooserDialog(provider, product)
 }
 
-class ImportSettingDialog<T>(val provider: ActionsDataProvider<T>, product: ImportItem) : SettingDialog(provider,
-                                                                                                        product) where T : BaseService, T : ConfigurableImport {
+class ConfigurableSettingChooserDialog<T : BaseService>(val provider: ActionsDataProvider<T>, product: SettingsContributor) : SettingChooserDialog(provider,
+                                                                                                                                                   product) {
   override fun createActions(): Array<Action> {
     return arrayOf(okAction, cancelAction)
   }
@@ -45,7 +43,7 @@ class ImportSettingDialog<T>(val provider: ActionsDataProvider<T>, product: Impo
   }
 }
 
-class SyncSettingDialog(val provider: SyncActionsDataProvider, product: ImportItem) : SettingDialog(provider, product) {
+class SyncSettingDialog(val provider: SyncActionsDataProvider, product: SettingsContributor) : SettingChooserDialog(provider, product) {
   override val configurable = false
 
   override fun createActions(): Array<Action> {
@@ -60,14 +58,14 @@ class SyncSettingDialog(val provider: SyncActionsDataProvider, product: ImportIt
 
   override fun applyFields() {
     super.applyFields()
-    provider.productService.syncSettings(product.id)
+    provider.productService.syncSettings()
   }
 
   private fun getImportAction(): Action {
     return object : DialogWrapperAction("Import Once") {
 
       override fun doAction(e: ActionEvent?) {
-        provider.productService.importSettings(product.id)
+        provider.productService.importSyncSettings()
         close(OK_EXIT_CODE)
       }
     }

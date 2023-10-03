@@ -1,12 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.chooser.actions
+package com.intellij.ide.startup.importSettings.chooser.productChooser
 
-import com.intellij.ide.startup.importSettings.chooser.ui.JButtonAction_
-import com.intellij.ide.startup.importSettings.chooser.ui.ProductChooserRenderer
+import com.intellij.ide.startup.importSettings.chooser.settingChooser.SettingChooserItemAction
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.Product
-import com.intellij.ide.ui.laf.darcula.ui.OnboardingDialogButtons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -17,11 +15,10 @@ import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.util.preferredWidth
 import com.intellij.util.ui.JBUI
 import java.awt.Point
-import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 
-abstract class ProductChooserAction : JButtonAction_(null) {
+abstract class ProductChooserAction : ChooseProductActionButton(null) {
   private val actionGroup = object : DefaultActionGroup() {
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       return this@ProductChooserAction.getChildren(e)
@@ -78,7 +75,4 @@ abstract class ProductChooserAction : JButtonAction_(null) {
                                                           null, widget, false, 0, false)
   }
 
-  override fun createButton(): JButton {
-    return OnboardingDialogButtons.createButton(false)
-  }
 }

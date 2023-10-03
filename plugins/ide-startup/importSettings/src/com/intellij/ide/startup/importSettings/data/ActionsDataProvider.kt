@@ -34,10 +34,10 @@ interface ActionsDataProvider<T : BaseService> {
 
   val productService: T
   fun getProductIcon(productId: String, size: IconProductSize = IconProductSize.SMALL): Icon?
-  fun getText(importItem: ImportItem): String
+  fun getText(contributor: SettingsContributor): String
   val title: String
 
-  fun getComment(importItem: ImportItem): String?
+  fun getComment(contributor: SettingsContributor): String?
   val main: List<Product>?
   val other: List<Product>?
 }
@@ -59,19 +59,19 @@ class JBrActionsDataProvider private constructor(): ActionsDataProvider<JbServic
     return productService.getProductIcon(productId, size)
   }
 
-  override fun getText(importItem: ImportItem): String {
-    return importItem.name
+  override fun getText(contributor: SettingsContributor): String {
+    return contributor.name
   }
 
   override val title: @Nls String
     get() = ImportSettingsBundle.message("jetbrains.ides")
 
-  override fun getComment(importItem: ImportItem): String? {
-    if(importItem is Config) {
-      return importItem.path
+  override fun getComment(contributor: SettingsContributor): String? {
+    if(contributor is Config) {
+      return contributor.path
     }
-    if(importItem is Product) {
-      return importItem.lastUsage.toString()
+    if(contributor is Product) {
+      return contributor.lastUsage.toString()
     }
     return null
   }
@@ -93,12 +93,12 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider<SyncSe
   private var map: Map<ActionsDataProvider.popUpPlace, List<Product>?>? = null
 
   init {
-    map = ActionsDataProvider.prepareMap(productService)
+    updateSyncMap()
   }
 
   private fun updateSyncMap() {
     val service = settingsService.getSyncService()
-    if (service.syncState != SyncService.SYNC_STATE.LOGGED) {
+    if (!service.isLoggedIn()) {
       map = null
       return
     }
@@ -117,17 +117,17 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider<SyncSe
     map = ActionsDataProvider.prepareMap(service)
   }
 
-  override fun getProductIcon(itemId: String, size: IconProductSize): Icon? {
-    return productService.getProductIcon(itemId, size)
+  override fun getProductIcon(productId: String, size: IconProductSize): Icon? {
+    return productService.getProductIcon(productId, size)
   }
 
-  override fun getText(importItem: ImportItem): String {
-    return "${importItem.name} Setting Sync"
+  override fun getText(contributor: SettingsContributor): String {
+    return "${contributor.name} Setting Sync"
   }
 
-  override fun getComment(importItem: ImportItem): String? {
-    if(importItem is Product) {
-      return importItem.lastUsage.toString()
+  override fun getComment(contributor: SettingsContributor): String? {
+    if(contributor is Product) {
+      return contributor.lastUsage.toString()
     }
     return null
   }
@@ -163,11 +163,11 @@ class ExtActionsDataProvider private constructor() : ActionsDataProvider<Externa
     return productService.getProductIcon(productId, size)
   }
 
-  override fun getText(importItem: ImportItem): String {
-    return importItem.name
+  override fun getText(contributor: SettingsContributor): String {
+    return contributor.name
   }
 
-  override fun getComment(importItem: ImportItem): String? {
+  override fun getComment(contributor: SettingsContributor): String? {
     return null
   }
 

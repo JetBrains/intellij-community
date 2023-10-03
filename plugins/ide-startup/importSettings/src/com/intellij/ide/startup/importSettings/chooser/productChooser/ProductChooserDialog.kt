@@ -1,8 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.chooser
+package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.startup.importSettings.chooser.actions.*
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -14,7 +13,7 @@ import com.intellij.util.ui.JBUI
 import java.awt.*
 import javax.swing.*
 
-class ImportSettingsFromDialog : DialogWrapper(null) {
+class ProductChooserDialog : DialogWrapper(null) {
   private val accountLabel = JLabel("user.name").apply {
     icon = AllIcons.General.User
   }
