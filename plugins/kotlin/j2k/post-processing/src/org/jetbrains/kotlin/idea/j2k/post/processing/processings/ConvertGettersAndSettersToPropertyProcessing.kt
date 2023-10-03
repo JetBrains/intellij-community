@@ -287,12 +287,8 @@ private class PropertiesDataFilter(
             return true
         }
 
-        fun getterUsesDifferentProperty(): Boolean {
-            return realProperty != null
-                    && realGetter?.target != null
-                    && realGetter.target != realProperty.property
-                    && realProperty.property.hasInitializer()
-        }
+        fun getterUsesDifferentProperty(): Boolean =
+            realProperty != null && realGetter?.target != null && realGetter.target != realProperty.property
 
         fun accessorsOverrideFunctions(): Boolean =
             realGetter?.function?.hasSuperFunction() == true || realSetter?.function?.hasSuperFunction() == true

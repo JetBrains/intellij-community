@@ -1857,6 +1857,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/detectProperties/PropertyAndFieldConflicts.java");
         }
 
+        @TestMetadata("PropertyAndFieldConflicts2.java")
+        public void testPropertyAndFieldConflicts2() throws Exception {
+            runTest("testData/newJ2k/detectProperties/PropertyAndFieldConflicts2.java");
+        }
+
         @TestMetadata("PropertyType.java")
         public void testPropertyType() throws Exception {
             runTest("testData/newJ2k/detectProperties/PropertyType.java");
