@@ -2,6 +2,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.util.ArrayUtil;
@@ -67,7 +68,7 @@ public final class IndexingStamp {
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(INDEXING_STAMP_CACHE_CAPACITY);
 
-  private static final IndexingStampStorage storage = createStorage();
+  private static volatile IndexingStampStorage storage = createStorage();
 
   private static IndexingStampStorage createStorage() {
     if (Registry.is("scanning.stamps.over.fast.attributes", false) || Registry.is("scanning.trust.indexing.flag", false)) {
@@ -231,4 +232,11 @@ public final class IndexingStamp {
   }
 
   private static final StripedLock ourLock = new StripedLock();
+
+  public static void reloadAttributes() {
+    if (storage instanceof IndexingStampStorageOverFastAttributes fastStorage) {
+      Logger.getInstance(IndexingStamp.class).assertTrue(fastStorage.isClosed());
+    }
+    storage = createStorage();
+  }
 }

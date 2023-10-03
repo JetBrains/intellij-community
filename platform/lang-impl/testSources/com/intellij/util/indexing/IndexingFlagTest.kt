@@ -3,7 +3,9 @@ package com.intellij.util.indexing
 
 import com.intellij.CacheSwitcher.switchIndexAndVfs
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.impl.VfsData
+import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.RunsInEdt
@@ -76,5 +78,8 @@ class IndexingFlagTest {
     assertEquals("Should be indexed because explicitly marked as indexed earlier",
                  !VfsData.isIsIndexedFlagDisabled(), indexed)
     IndexingFlag.cleanProcessingFlag(vFileAfter)
+
+    // should not throw exceptions
+    IndexingStamp.getIndexStamp((vFileAfter as VirtualFileWithId).id, IdIndex.NAME)
   }
 }

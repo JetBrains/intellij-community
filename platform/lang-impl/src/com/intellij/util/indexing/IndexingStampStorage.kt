@@ -103,4 +103,8 @@ internal class IndexingStampStorageOverFastAttributes : IndexingStampStorage {
       throw FSRecords.handleError(e)
     }
   }
+
+  fun isClosed(): Boolean {
+    return enumerator.isClosed
+  }
 }

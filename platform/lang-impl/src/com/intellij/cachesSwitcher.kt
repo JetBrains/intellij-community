@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.indexing.FileBasedIndexTumbler
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexingFlag
+import com.intellij.util.indexing.IndexingStamp
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
@@ -38,6 +39,7 @@ object CacheSwitcher {
 
         ID.reloadEnumFile()
         IndexingFlag.reloadAttributes()
+        IndexingStamp.reloadAttributes()
       }
     }
   }
