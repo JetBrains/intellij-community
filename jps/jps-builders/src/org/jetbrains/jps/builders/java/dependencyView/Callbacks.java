@@ -2,6 +2,8 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.*;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;
@@ -27,6 +29,12 @@ public final class Callbacks {
     void associate(String classFileName, Collection<String> sources, ClassReader cr, boolean isGenerated);
     void registerImports(String className, Collection<String> classImports, Collection<String> staticImports);
     void registerConstantReferences(String className, Collection<ConstantRef> cRefs);
+    //Collection<JVMClassNode> associateWithNode(String classFileName, Collection<String> sources, ClassReader cr, boolean isGenerated);
+    Delta getOrCreateGraphDelta(Iterable<NodeSource> changedSources, Iterable<NodeSource> deletedSources);
+    void clearDelta();
+    void associate(@NotNull Node<?, ?> node, @NotNull Iterable<NodeSource> sources);
+    DifferentiateResult differentiate(DependencyGraph graph);
+    void integrate(DependencyGraph graph, DifferentiateResult differentiateResult);
   }
 
   public static ConstantRef createConstantReference(String ownerClass, String fieldName, String descriptor) {

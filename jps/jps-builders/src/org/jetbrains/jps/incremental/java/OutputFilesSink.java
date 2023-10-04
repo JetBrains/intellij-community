@@ -8,8 +8,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.JpsBuildBundle;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
+import org.jetbrains.jps.dependency.impl.FileSource;
+import org.jetbrains.jps.dependency.java.JVMClassNode;
+import org.jetbrains.jps.dependency.java.JvmClassNodeBuilder;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompiledClass;
@@ -28,6 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
 * @author Eugene Zhuravlev
@@ -94,9 +99,17 @@ final class OutputFilesSink implements OutputFileConsumer {
 
       if (!isTemp && outKind == JavaFileObject.Kind.CLASS) {
         // register in mappings any non-temp class file
+        final ClassReader reader = new FailSafeClassReader(content.getBuffer(), content.getOffset(), content.getLength());
         try {
-          final ClassReader reader = new FailSafeClassReader(content.getBuffer(), content.getOffset(), content.getLength());
-          myMappingsCallback.associate(FileUtil.toSystemIndependentName(fileObject.getFile().getPath()), sourcePaths, reader, fileObject.isGenerated());
+          if (JavaBuilderUtil.isGraphImplementationEnabled) {
+            JVMClassNode
+              jvmClassNode = (JVMClassNode)(JvmClassNodeBuilder.create(FileUtil.toSystemIndependentName(fileObject.getFile().getPath()), reader, fileObject.isGenerated()).getResult());
+            myMappingsCallback.associate(jvmClassNode,
+                                         sourcePaths.stream().map(sourcePath -> new FileSource(new File(sourcePath))).collect(Collectors.toSet()));
+          } else {
+            myMappingsCallback.associate(FileUtil.toSystemIndependentName(fileObject.getFile().getPath()), sourcePaths, reader,
+                                         fileObject.isGenerated());
+          }
         }
         catch (Throwable e) {
           // need this to make sure that unexpected errors in, for example, ASM will not ruin the compilation

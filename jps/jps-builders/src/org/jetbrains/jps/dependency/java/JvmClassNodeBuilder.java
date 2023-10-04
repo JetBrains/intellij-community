@@ -18,7 +18,7 @@ import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
-final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuilder {
+public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuilder {
 
   private static final Logger LOG = Logger.getInstance(JvmClassNodeBuilder.class);
   public static final String LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";

@@ -17,6 +17,9 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.jps.dependency.DependencyGraph;
+import org.jetbrains.jps.dependency.DifferentiateResult;
+import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -41,6 +44,8 @@ import java.io.IOException;
 import java.util.*;
 
 public final class JavaBuilderUtil {
+  public static final Boolean isGraphImplementationEnabled =
+    Boolean.valueOf(System.getProperty("org.jetbrains.jps.graph.implementation.enabled", "false"));
   /**
    * @deprecated This functionality is obsolete and is not used by dependency analysis anymore. To be removed in future releases
    */
@@ -55,6 +60,8 @@ public final class JavaBuilderUtil {
   private static final Key<Set<File>> SUCCESSFULLY_COMPILED_FILES_KEY = Key.create("_successfully_compiled_files_");
   private static final Key<List<FileFilter>> SKIP_MARKING_DIRTY_FILTERS_KEY = Key.create("_skip_marking_dirty_filters_");
   private static final Key<Pair<Mappings, Callbacks.Backend>> MAPPINGS_DELTA_KEY = Key.create("_mappings_delta_");
+  private static final Key<Pair<DependencyGraph, Callbacks.Backend>> GRAPH_DELTA_KEY = Key.create("_graph_delta_");
+
   private static final String MODULE_INFO_FILE = "module-info.java";
 
   public static void registerFileToCompile(CompileContext context, File file) {
@@ -91,35 +98,71 @@ public final class JavaBuilderUtil {
   }
 
   public static @NotNull Callbacks.Backend getDependenciesRegistrar(CompileContext context) {
-    Pair<Mappings, Callbacks.Backend> pair = MAPPINGS_DELTA_KEY.get(context);
-    if (pair == null) {
-      final Mappings delta = context.getProjectDescriptor().dataManager.getMappings().createDelta();
-      pair = Pair.create(delta, delta.getCallback());
-      MAPPINGS_DELTA_KEY.set(context, pair);
+    if (isGraphImplementationEnabled) {
+      Pair<DependencyGraph, Callbacks.Backend> pair = GRAPH_DELTA_KEY.get(context);
+      if (pair == null) {
+        DependencyGraphImpl graph = new DependencyGraphImpl();
+        pair = Pair.create(graph, graph.getCallback());
+        GRAPH_DELTA_KEY.set(context, pair);
+      }
+      return pair.second;
+    } else {
+      Pair<Mappings, Callbacks.Backend> pair = MAPPINGS_DELTA_KEY.get(context);
+      if (pair == null) {
+        final Mappings delta = context.getProjectDescriptor().dataManager.getMappings().createDelta();
+        pair = Pair.create(delta, delta.getCallback());
+        MAPPINGS_DELTA_KEY.set(context, pair);
+      }
+      return pair.second;
     }
-    return pair.second;
+  }
+
+  public static DependencyGraph getGraph(CompileContext context) {
+    if (isGraphImplementationEnabled) {
+      Pair<DependencyGraph, Callbacks.Backend> pair = GRAPH_DELTA_KEY.get(context);
+      if (pair == null) {
+        DependencyGraphImpl graph = new DependencyGraphImpl();
+        pair = Pair.create(graph, graph.getCallback());
+        GRAPH_DELTA_KEY.set(context, pair);
+      }
+      return pair.first;
+    } else {
+      return null;
+    }
   }
 
   public static boolean updateMappingsOnRoundCompletion(
     CompileContext context, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder, ModuleChunk chunk) throws IOException {
 
-    Mappings delta = null;
+    if(isGraphImplementationEnabled) {
+      DifferentiateResult differentiateResult =
+        getDependenciesRegistrar(context).differentiate(getGraph(context));
 
-    final Pair<Mappings, Callbacks.Backend> pair = MAPPINGS_DELTA_KEY.get(context);
-    if (pair != null) {
-      MAPPINGS_DELTA_KEY.set(context, null);
-      delta = pair.getFirst();
-    }
-
-    if (delta == null) {
+      // TODO: Read differentiateResult and mark files for next round. Update return accordingly
+      //differentiateResult.getAffectedSources()
+      FILES_TO_COMPILE_KEY.set(context, null);
+      SUCCESSFULLY_COMPILED_FILES_KEY.set(context, null);
+      getDependenciesRegistrar(context).integrate(getGraph(context), differentiateResult);
       return false;
+    } else {
+      Mappings delta = null;
+
+      final Pair<Mappings, Callbacks.Backend> pair = MAPPINGS_DELTA_KEY.get(context);
+      if (pair != null) {
+        MAPPINGS_DELTA_KEY.set(context, null);
+        delta = pair.getFirst();
+      }
+
+      if (delta == null) {
+        return false;
+      }
+      final Set<File> compiledFiles = getFilesContainer(context, FILES_TO_COMPILE_KEY);
+      FILES_TO_COMPILE_KEY.set(context, null);
+      final Set<File> successfullyCompiled = getFilesContainer(context, SUCCESSFULLY_COMPILED_FILES_KEY);
+      SUCCESSFULLY_COMPILED_FILES_KEY.set(context, null);
+      FileFilter filter = createOrFilter(SKIP_MARKING_DIRTY_FILTERS_KEY.get(context));
+      return updateMappings(context, delta, dirtyFilesHolder, chunk, compiledFiles, successfullyCompiled, CompilationRound.NEXT, filter);
     }
-    final Set<File> compiledFiles = getFilesContainer(context, FILES_TO_COMPILE_KEY);
-    FILES_TO_COMPILE_KEY.set(context, null);
-    final Set<File> successfullyCompiled = getFilesContainer(context, SUCCESSFULLY_COMPILED_FILES_KEY);
-    SUCCESSFULLY_COMPILED_FILES_KEY.set(context, null);
-    FileFilter filter = createOrFilter(SKIP_MARKING_DIRTY_FILTERS_KEY.get(context));
-    return updateMappings(context, delta, dirtyFilesHolder, chunk, compiledFiles, successfullyCompiled, CompilationRound.NEXT, filter);
   }
 
   public static void clearDataOnRoundCompletion(CompileContext context) {

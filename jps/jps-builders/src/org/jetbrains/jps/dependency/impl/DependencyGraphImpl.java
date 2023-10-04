@@ -3,11 +3,13 @@ package org.jetbrains.jps.dependency.impl;
 
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.java.JavaDifferentiateStrategy;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
 import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.util.*;
 import java.util.function.BiPredicate;
@@ -229,4 +231,61 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     return result;
   }
 
+  public Callbacks.Backend getCallback() {
+    return new Callbacks.Backend() {
+      Delta myDelta;
+
+      @Override
+      public void associate(String classFileName, Collection<String> sources, ClassReader cr, boolean isGenerated) {
+        throw new RuntimeException("This function is not intended for use in the implementation of a graph-based build");
+      }
+
+      @Override
+      public void registerImports(String className, Collection<String> classImports, Collection<String> staticImports) {
+        throw new RuntimeException("This function is not intended for use in the implementation of a graph-based build");
+      }
+
+      @Override
+      public void registerConstantReferences(String className, Collection<Callbacks.ConstantRef> cRefs) {
+        throw new RuntimeException("This function is not intended for use in the implementation of a graph-based build");
+      }
+
+      //@Override
+      //public Collection<JVMClassNode> associateWithNode(String classFileName,
+      //                                                  Collection<String> sources,
+      //                                                  ClassReader cr,
+      //                                                  boolean isGenerated) {
+      //  //TODO
+      //  return null;
+      //}
+
+      @Override
+      public Delta getOrCreateGraphDelta(Iterable<NodeSource> changedSources, Iterable<NodeSource> deletedSources) {
+        if (myDelta == null) {
+          myDelta = createDelta(changedSources, deletedSources);
+        }
+        return myDelta;
+      }
+
+      @Override
+      public void clearDelta() {
+        myDelta = null;
+      }
+
+      @Override
+      public void associate(@NotNull Node<?, ?> node, @NotNull Iterable<NodeSource> sources) {
+        myDelta.associate(node, sources);
+      }
+
+      @Override
+      public DifferentiateResult differentiate(DependencyGraph graph) {
+        return graph.differentiate(myDelta);
+      }
+
+      @Override
+      public void integrate(DependencyGraph graph, DifferentiateResult differentiateResult) {
+        graph.integrate(differentiateResult);
+      }
+    };
+  }
 }

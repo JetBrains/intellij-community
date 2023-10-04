@@ -15,19 +15,24 @@ public class NodeGraphPersistentTest extends BasePlatformTestCase {
   public void testPersistentNodeGraph() {
     // Create and fill out the graph
     DependencyGraphImpl graph = new DependencyGraphImpl();
-    FileSource aNode = createFileSourceNode("A");
-    FileSource bNode = createFileSourceNode("B");
-    Delta delta = graph.createDelta(Arrays.asList(aNode, bNode), null);
-    JvmClass jvmClassNode = JvmClassTestUtil.createJvmClassNode();
-    delta.associate(jvmClassNode, Arrays.asList(aNode, bNode));
+    FileSource aSrc = createFileSourceNode("A");
+    FileSource bSrc = createFileSourceNode("B");
 
+    // This should be executed before compiler run
+    Delta delta = graph.createDelta(Arrays.asList(aSrc, bSrc), null);
+    JvmClass jvmClassNode = JvmClassTestUtil.createJvmClassNode();
+
+    // Analyze after compiler
+    delta.associate(jvmClassNode, Arrays.asList(aSrc, bSrc));
+
+    // After each round, not after each builder
     DifferentiateResult differentiateResult = graph.differentiate(delta);
     graph.integrate(differentiateResult);
 
     // Check graph
     Iterator<NodeSource> nodeSourcesFromGraph = graph.getSources().iterator();
-    assertEquals(aNode, nodeSourcesFromGraph.next());
-    assertEquals(bNode, nodeSourcesFromGraph.next());
+    assertEquals(aSrc, nodeSourcesFromGraph.next());
+    assertEquals(bSrc, nodeSourcesFromGraph.next());
 
     JvmClass jvmClassFromGraph = (JvmClass)graph.getNodes(graph.getSources().iterator().next()).iterator().next();
     JvmClassTestUtil.checkJvmClassEquals(jvmClassNode, jvmClassFromGraph);
