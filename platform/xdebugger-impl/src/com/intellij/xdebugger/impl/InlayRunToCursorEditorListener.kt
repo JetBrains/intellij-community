@@ -52,12 +52,12 @@ private const val ACTION_BUTTON_GAP = 2
 
 private val inlayToolbarStrokeColor = Color.WHITE
 
-internal class InlayRunToCursorEditorListener(private val project: Project, private val coroutineScope: CoroutineScope) : EditorMouseMotionListener, EditorMouseListener {
+class InlayRunToCursorEditorListener(private val project: Project, private val coroutineScope: CoroutineScope) : EditorMouseMotionListener, EditorMouseListener {
   companion object {
     @JvmStatic
     val isInlayRunToCursorEnabled: Boolean get() =
       Registry.`is`("debugger.inlayRunToCursor") ||
-      AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor") && (PlatformUtils.isIntelliJ() || PlatformUtils.isRider())
+      AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor") && (PlatformUtils.isIntelliJ())
   }
 
   private var currentJob: Job? = null
