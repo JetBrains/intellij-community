@@ -3,11 +3,13 @@ package com.intellij.ide.startup.importSettings.sync
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.settingsSync.SettingsSyncMain
 import com.intellij.ui.JBAccountInfoService
 import com.jetbrains.rd.util.reactive.Property
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.util.*
 import javax.swing.Icon
 
 private val logger = logger<SyncServiceImpl>()
@@ -48,7 +50,24 @@ class SyncServiceImpl(private val coroutineScope: CoroutineScope) : SyncService 
   }
 
   override fun getMainProduct(): Product? {
-    TODO("Not yet implemented")
+    return logger.runAndLogException {
+      // TODO: Async
+      runBlockingCancellable {
+        val result = getRemoteProductInfo(settingSyncControls.remoteCommunicator)
+        result?.let {
+          object : Product {
+            override val version: String
+              get() = result.metaInfo.appInfo?.buildNumber?.asStringWithoutProductCodeAndSnapshot() ?: ""
+            override val lastUsage: Date
+              get() = Date.from(result.metaInfo.dateCreated)
+            override val id: String
+              get() = result.metaInfo.appInfo?.applicationId.toString()
+            override val name: String
+              get() = result.metaInfo.appInfo?.buildNumber?.productCode ?: ""
+          }
+        }
+      }
+    }
   }
 
   override fun generalSync() {

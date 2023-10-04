@@ -8,8 +8,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.rd.util.withBackgroundContext
+import com.intellij.openapi.rd.util.withSyncIOBackgroundContext
 import com.intellij.openapi.rd.util.withUiContext
+import com.intellij.settingsSync.SettingsSnapshot
 import com.intellij.settingsSync.SettingsSyncMain
+import com.intellij.settingsSync.SettingsSyncRemoteCommunicator
 import com.intellij.settingsSync.UpdateResult
 import com.intellij.util.text.nullize
 import com.jetbrains.rd.util.reactive.OptProperty
@@ -24,9 +27,23 @@ internal class SettingsSyncProgress : ImportProgress {
 
 private val logger = Logger.getInstance("com.intellij.ide.startup.importSettings.sync.SettingsSyncFlowKt")
 
+internal suspend fun getRemoteProductInfo(communicator: SettingsSyncRemoteCommunicator): SettingsSnapshot? {
+  val result = withSyncIOBackgroundContext {
+    communicator.receiveUpdates()
+  }
+  return when (result) {
+    is UpdateResult.Success -> result.settingsSnapshot
+    UpdateResult.NoFileOnServer -> null
+    UpdateResult.FileDeletedFromServer -> null
+    is UpdateResult.Error -> {
+      logger.warn("Error from server update: ${result.message}.")
+      null
+    }
+  }
+}
+
 private val durationForReceiving = 5.seconds
 private const val percentForReceiving = 90
-
 internal suspend fun performSync(
   controls: SettingsSyncMain.SettingsSyncControls,
   progress: SettingsSyncProgress
