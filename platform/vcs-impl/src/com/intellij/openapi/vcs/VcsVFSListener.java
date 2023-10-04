@@ -365,6 +365,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
       else {
         VcsVFSListener.this.processMovedFile(file, newParentPath, newName);
+        myProcessor.processMovedFile(file, newParentPath, newName);
       }
     }
 
@@ -643,7 +644,6 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected void processMovedFile(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
-    myProcessor.processMovedFile(file, newParentPath, newName);
   }
 
   /**
