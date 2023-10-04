@@ -353,6 +353,21 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
+    private void addFileToMove(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
+      if (file.isDirectory() && !file.is(VFileProperty.SYMLINK) && !isDirectoryVersioningSupported()) {
+        @SuppressWarnings("UnsafeVfsRecursion") VirtualFile[] children = file.getChildren();
+        if (children != null) {
+          for (VirtualFile child : children) {
+            ProgressManager.checkCanceled();
+            addFileToMove(child, newParentPath + "/" + newName, child.getName());
+          }
+        }
+      }
+      else {
+        VcsVFSListener.this.processMovedFile(file, newParentPath, newName);
+      }
+    }
+
     @RequiresEdt
     private void processBeforeEvents(@NotNull List<? extends VFileEvent> events) {
       for (VFileEvent event : events) {
@@ -548,10 +563,6 @@ public abstract class VcsVFSListener implements Disposable {
     }
   }
 
-  protected void processMovedFile(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
-    myProcessor.processMovedFile(file, newParentPath, newName);
-  }
-
   @FunctionalInterface
   protected interface ExecuteAddCallback {
     void executeAdd(@NotNull List<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap);
@@ -631,19 +642,8 @@ public abstract class VcsVFSListener implements Disposable {
   protected void beforeContentsChange(@NotNull List<VFileContentChangeEvent> events) {
   }
 
-  private void addFileToMove(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
-    if (file.isDirectory() && !file.is(VFileProperty.SYMLINK) && !isDirectoryVersioningSupported()) {
-      @SuppressWarnings("UnsafeVfsRecursion") VirtualFile[] children = file.getChildren();
-      if (children != null) {
-        for (VirtualFile child : children) {
-          ProgressManager.checkCanceled();
-          addFileToMove(child, newParentPath + "/" + newName, child.getName());
-        }
-      }
-    }
-    else {
-      processMovedFile(file, newParentPath, newName);
-    }
+  protected void processMovedFile(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
+    myProcessor.processMovedFile(file, newParentPath, newName);
   }
 
   /**
