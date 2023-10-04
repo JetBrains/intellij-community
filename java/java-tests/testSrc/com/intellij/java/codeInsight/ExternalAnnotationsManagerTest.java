@@ -36,11 +36,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.util.PathUtil;
 
 import javax.xml.bind.annotation.XmlElement;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
   private static final Set<String> KNOWN_EXCEPTIONS = Set.of(
@@ -168,17 +166,16 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     String methodSignature = rest.substring(0, rest.indexOf(')') + 1);
     String methodExternalName = className + " " + methodSignature;
 
-    List<PsiMethod> methods = Arrays.stream(aClass.getMethods())
-      .filter(method -> methodExternalName.equals(PsiFormatUtil.getExternalName(method, false, Integer.MAX_VALUE)))
-      .collect(Collectors.toList());
+    List<PsiMethod> methods = ContainerUtil.filter(aClass.getMethods(), method -> methodExternalName.equals(
+      PsiFormatUtil.getExternalName(method, false, Integer.MAX_VALUE)));
     if (methods.isEmpty()) {
       // Sometimes the method is overridden in later JDK versions, and inferred contract is not satisfactory,
       // thus having explicit subclass contract is desired. Thus we don't fail if the annotated method exists
       // in superclass only
-      methods = Arrays.stream(aClass.getAllMethods())
-        .filter(method -> (method.getContainingClass().getQualifiedName()+" "+methodSignature)
-          .equals(PsiFormatUtil.getExternalName(method, false, Integer.MAX_VALUE)))
-        .collect(Collectors.toList());
+      methods = ContainerUtil.filter(
+        aClass.getAllMethods(),
+        method -> (method.getContainingClass().getQualifiedName() + " " + methodSignature)
+          .equals(PsiFormatUtil.getExternalName(method, false, Integer.MAX_VALUE)));
     }
     boolean found = !methods.isEmpty();
     if (!found) {
