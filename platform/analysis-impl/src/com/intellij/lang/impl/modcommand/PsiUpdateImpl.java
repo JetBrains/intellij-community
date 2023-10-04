@@ -424,7 +424,9 @@ final class PsiUpdateImpl {
       if (range == null) {
         throw new IllegalArgumentException("Element disappeared after postponed operations: " + element);
       }
-      myRenameSymbol = new ModRenameSymbol(myNavigationFile, range, suggestedNames);
+      PsiElement nameIdentifier = element.getNameIdentifier();
+      TextRange identifierRange = nameIdentifier != null ? nameIdentifier.getTextRange() : range;
+      myRenameSymbol = new ModRenameSymbol(myNavigationFile, new ModRenameSymbol.RenameSymbolRange(range, identifierRange), suggestedNames);
     }
 
     @Override
@@ -494,8 +496,16 @@ final class PsiUpdateImpl {
       myTemplateFields.replaceAll(info -> info.withRange(updateRange(event, info.range())));
       myTrackedDeclarations.replaceAll(range -> range.withNewRange(updateRange(event, range.newRange())));
       if (myRenameSymbol != null) {
-        myRenameSymbol = myRenameSymbol.withRange(updateRange(event, myRenameSymbol.symbolRange()));
+        ModRenameSymbol.RenameSymbolRange renameSymbolRange = myRenameSymbol.symbolRange();
+
+        myRenameSymbol = myRenameSymbol.withRange(updateRange(event, renameSymbolRange));
       }
+    }
+
+    private static @NotNull ModRenameSymbol.RenameSymbolRange updateRange(@NotNull DocumentEvent event,
+                                                                          @NotNull ModRenameSymbol.RenameSymbolRange range) {
+      return new ModRenameSymbol.RenameSymbolRange(
+        updateRange(event, range.range()), updateRange(event, range.nameIdentifierRange()));
     }
 
     private static @NotNull TextRange updateRange(@NotNull DocumentEvent event, @NotNull TextRange range) {
