@@ -81,9 +81,7 @@ interface InlineCompletionEvent {
   @ApiStatus.Experimental
   data class LookupChange(override val event: LookupEvent) : InlineLookupEvent {
     override fun toRequest(): InlineCompletionRequest? {
-      val item = event.item ?: return null
-      val request = super.toRequest() ?: return null
-      return request.copy(lookupElement = item)
+      return super.toRequest()?.takeIf { it.lookupElement != null }
     }
   }
 
@@ -108,7 +106,7 @@ interface InlineCompletionEvent {
       }
       if (file == null) return null
 
-      return InlineCompletionRequest(this, file, editor, editor.document, offset, offset, null)
+      return InlineCompletionRequest(this, file, editor, editor.document, offset, offset, event.item)
     }
   }
 }
