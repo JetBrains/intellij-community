@@ -43,6 +43,7 @@ import org.jetbrains.jewel.OutlinedButton
 import org.jetbrains.jewel.RadioButtonRow
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.TextField
+import org.jetbrains.jewel.Tooltip
 import org.jetbrains.jewel.bridge.SwingBridgeService
 import org.jetbrains.jewel.bridge.SwingBridgeTheme
 import org.jetbrains.jewel.bridge.addComposeTab
@@ -148,6 +149,16 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Circular progress big: ")
                 CircularProgressIndicatorBig(svgLoader)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Tooltip(tooltip = {
+                    Text("This is a tooltip")
+                }) {
+                    Text(
+                        modifier = Modifier.border(1.dp, IntUiTheme.globalColors.borders.normal).padding(4.dp),
+                        text = "Hover Me!",
+                    )
+                }
             }
         }
     }

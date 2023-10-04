@@ -10,7 +10,6 @@ import org.jetbrains.jewel.RadioButtonState
 import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.IntUiTheme
 import org.jetbrains.jewel.styling.PainterProvider
 import org.jetbrains.jewel.styling.RadioButtonColors
 import org.jetbrains.jewel.styling.RadioButtonIcons
@@ -59,12 +58,12 @@ data class IntUiRadioButtonColors(
 
         @Composable
         fun light(
-            content: Color = IntUiTheme.defaultLightTextStyle.color,
-            contentHovered: Color = IntUiLightTheme.colors.grey(8),
-            contentDisabled: Color = content,
+            content: Color = Color.Unspecified,
+            contentHovered: Color = content,
+            contentDisabled: Color = IntUiLightTheme.colors.grey(8),
             contentSelected: Color = content,
             contentSelectedHovered: Color = content,
-            contentSelectedDisabled: Color = content,
+            contentSelectedDisabled: Color = contentDisabled,
         ) = IntUiRadioButtonColors(
             content,
             contentHovered,
@@ -76,12 +75,12 @@ data class IntUiRadioButtonColors(
 
         @Composable
         fun dark(
-            content: Color = IntUiTheme.defaultDarkTextStyle.color,
-            contentHovered: Color = IntUiDarkTheme.colors.grey(8),
-            contentDisabled: Color = content,
+            content: Color = Color.Unspecified,
+            contentHovered: Color = content,
+            contentDisabled: Color = IntUiDarkTheme.colors.grey(8),
             contentSelected: Color = content,
             contentSelectedHovered: Color = content,
-            contentSelectedDisabled: Color = content,
+            contentSelectedDisabled: Color = contentDisabled,
         ) = IntUiRadioButtonColors(
             content,
             contentHovered,

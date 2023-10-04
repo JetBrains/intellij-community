@@ -46,6 +46,7 @@ import org.jetbrains.jewel.samples.standalone.components.RadioButtons
 import org.jetbrains.jewel.samples.standalone.components.Tabs
 import org.jetbrains.jewel.samples.standalone.components.TextAreas
 import org.jetbrains.jewel.samples.standalone.components.TextFields
+import org.jetbrains.jewel.samples.standalone.components.Tooltips
 import java.io.InputStream
 
 fun main() {
@@ -103,6 +104,7 @@ private fun ComponentShowcase(svgLoader: JewelSvgLoader, resourceLoader: Resourc
             Checkboxes()
             RadioButtons()
             Links()
+            Tooltips()
             TextFields(svgLoader, resourceLoader)
             TextAreas()
             ProgressBar(svgLoader)

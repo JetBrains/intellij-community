@@ -30,14 +30,14 @@ data class IntUiTextAreaStyle(
         fun light(
             colors: IntUiTextAreaColors = IntUiTextAreaColors.light(),
             metrics: IntUiTextAreaMetrics = IntUiTextAreaMetrics(),
-            textStyle: TextStyle = IntUiTheme.defaultLightTextStyle,
+            textStyle: TextStyle = IntUiTheme.defaultTextStyle,
         ) = IntUiTextAreaStyle(colors, metrics, textStyle)
 
         @Composable
         fun dark(
             colors: IntUiTextAreaColors = IntUiTextAreaColors.dark(),
             metrics: IntUiTextAreaMetrics = IntUiTextAreaMetrics(),
-            textStyle: TextStyle = IntUiTheme.defaultDarkTextStyle,
+            textStyle: TextStyle = IntUiTheme.defaultTextStyle,
         ) = IntUiTextAreaStyle(colors, metrics, textStyle)
     }
 }

@@ -46,7 +46,7 @@ fun TextArea(
     maxLines: Int = Int.MAX_VALUE,
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: TextAreaStyle = IntelliJTheme.textAreaStyle,
-    textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
+    textStyle: TextStyle = IntelliJTheme.textStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     var textFieldValueState by remember { mutableStateOf(TextFieldValue(text = value)) }
@@ -102,7 +102,7 @@ fun TextArea(
     maxLines: Int = Int.MAX_VALUE,
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: TextAreaStyle = IntelliJTheme.textAreaStyle,
-    textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
+    textStyle: TextStyle = IntelliJTheme.textStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     val minSize = style.metrics.minSize

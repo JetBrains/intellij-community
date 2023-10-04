@@ -86,6 +86,9 @@ import org.jetbrains.jewel.intui.standalone.styling.IntUiTextAreaStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiTextFieldColors
 import org.jetbrains.jewel.intui.standalone.styling.IntUiTextFieldMetrics
 import org.jetbrains.jewel.intui.standalone.styling.IntUiTextFieldStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiTooltipColors
+import org.jetbrains.jewel.intui.standalone.styling.IntUiTooltipMetrics
+import org.jetbrains.jewel.intui.standalone.styling.IntUiTooltipStyle
 import org.jetbrains.jewel.styling.InputFieldStyle
 import org.jetbrains.skiko.DependsOnJBR
 import javax.swing.UIManager
@@ -114,6 +117,7 @@ internal fun createBridgeIntUiDefinition(textStyle: TextStyle): IntUiThemeDefini
         iconData = BridgeIconData.readFromLaF(),
         globalMetrics = BridgeGlobalMetrics.readFromLaF(),
         defaultTextStyle = textStyle,
+        contentColor = JBColor.foreground().toComposeColor(),
     )
 }
 
@@ -163,6 +167,7 @@ internal fun createSwingIntUiComponentStyling(
         scrollbarStyle = readScrollbarStyle(theme.isDark),
         textAreaStyle = readTextAreaStyle(textAreaTextStyle, textFieldStyle.metrics),
         circularProgressStyle = readCircularProgressStyle(theme.isDark),
+        tooltipStyle = readTooltipStyle(theme.isDark),
         textFieldStyle = textFieldStyle,
     )
 }
@@ -401,7 +406,6 @@ private fun readDropdownStyle(
 
 private fun readGroupHeaderStyle() = IntUiGroupHeaderStyle(
     colors = IntUiGroupHeaderColors(
-        content = retrieveColorOrUnspecified("Separator.foreground"),
         divider = retrieveColorOrUnspecified("Separator.separatorColor"),
     ),
     metrics = IntUiGroupHeaderMetrics(
@@ -894,3 +898,20 @@ private fun readCircularProgressStyle(
             .takeIf { it.isSpecified }
             ?: if (isDark) Color(0xFF6F737A) else Color(0xFFA8ADBD),
     )
+
+private fun readTooltipStyle(
+    isDark: Boolean,
+): IntUiTooltipStyle {
+    val background =
+        if (isDark) "Tooltip.background" else "ToolTip.background"
+    val content =
+        if (isDark) "Tooltip.foreground" else "ToolTip.foreground"
+    return IntUiTooltipStyle(
+        metrics = IntUiTooltipMetrics(),
+        colors = IntUiTooltipColors(
+            content = retrieveColorOrUnspecified(content),
+            background = retrieveColorOrUnspecified(background),
+            border = retrieveColorOrUnspecified("Tooltip.borderColor"),
+        ),
+    )
+}

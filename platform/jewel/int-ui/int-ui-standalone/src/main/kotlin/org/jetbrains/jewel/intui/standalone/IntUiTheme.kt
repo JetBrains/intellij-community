@@ -5,6 +5,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -47,6 +48,7 @@ import org.jetbrains.jewel.intui.standalone.styling.IntUiScrollbarStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiTabStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiTextAreaStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiTextFieldStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiTooltipStyle
 import org.jetbrains.jewel.styling.ButtonStyle
 import org.jetbrains.jewel.styling.CheckboxStyle
 import org.jetbrains.jewel.styling.ChipStyle
@@ -66,15 +68,12 @@ import org.jetbrains.jewel.themes.StandalonePaletteMapperFactory
 
 object IntUiTheme : BaseIntUiTheme {
 
-    private val intUiDefaultTextStyle = TextStyle.Default.copy(
+    val defaultTextStyle = TextStyle.Default.copy(
         fontFamily = FontFamily.Inter,
         fontSize = 13.sp,
         fontWeight = FontWeight.Normal,
         fontStyle = FontStyle.Normal,
     )
-
-    override val defaultLightTextStyle = intUiDefaultTextStyle.copy(color = IntUiLightTheme.colors.grey(1))
-    override val defaultDarkTextStyle = intUiDefaultTextStyle.copy(color = IntUiDarkTheme.colors.grey(12))
 
     @Composable
     fun lightThemeDefinition(
@@ -82,8 +81,9 @@ object IntUiTheme : BaseIntUiTheme {
         metrics: GlobalMetrics = IntUiGlobalMetrics(),
         palette: IntUiThemeColorPalette = IntUiLightTheme.colors,
         icons: IntelliJThemeIconData = IntUiLightTheme.icons,
-        defaultTextStyle: TextStyle = defaultLightTextStyle,
-    ) = IntUiThemeDefinition(isDark = false, colors, palette, icons, metrics, defaultTextStyle)
+        defaultTextStyle: TextStyle = this.defaultTextStyle,
+        contentColor: Color = IntUiLightTheme.colors.grey(1),
+    ) = IntUiThemeDefinition(isDark = false, colors, palette, icons, metrics, defaultTextStyle, contentColor)
 
     @Composable
     fun darkThemeDefinition(
@@ -91,8 +91,9 @@ object IntUiTheme : BaseIntUiTheme {
         metrics: GlobalMetrics = IntUiGlobalMetrics(),
         palette: IntUiThemeColorPalette = IntUiDarkTheme.colors,
         icons: IntelliJThemeIconData = IntUiDarkTheme.icons,
-        defaultTextStyle: TextStyle = defaultDarkTextStyle,
-    ) = IntUiThemeDefinition(isDark = true, colors, palette, icons, metrics, defaultTextStyle)
+        defaultTextStyle: TextStyle = this.defaultTextStyle,
+        contentColor: Color = IntUiDarkTheme.colors.grey(12),
+    ) = IntUiThemeDefinition(isDark = true, colors, palette, icons, metrics, defaultTextStyle, contentColor)
 
     @Composable
     fun defaultComponentStyling(theme: IntUiThemeDefinition, svgLoader: SvgLoader): IntelliJComponentStyling {
@@ -131,6 +132,7 @@ object IntUiTheme : BaseIntUiTheme {
         defaultTabStyle: TabStyle = IntUiTabStyle.Default.dark(svgLoader),
         editorTabStyle: TabStyle = IntUiTabStyle.Editor.dark(svgLoader),
         circularProgressStyle: CircularProgressStyle = IntUiCircularProgressStyle.dark(),
+        tooltipStyle: IntUiTooltipStyle = IntUiTooltipStyle.dark(),
     ) =
         IntelliJComponentStyling(
             checkboxStyle = checkboxStyle,
@@ -151,6 +153,7 @@ object IntUiTheme : BaseIntUiTheme {
             textAreaStyle = textAreaStyle,
             textFieldStyle = textFieldStyle,
             circularProgressStyle = circularProgressStyle,
+            tooltipStyle = tooltipStyle,
         )
 
     @Composable
@@ -174,6 +177,7 @@ object IntUiTheme : BaseIntUiTheme {
         defaultTabStyle: TabStyle = IntUiTabStyle.Default.light(svgLoader),
         editorTabStyle: TabStyle = IntUiTabStyle.Editor.light(svgLoader),
         circularProgressStyle: CircularProgressStyle = IntUiCircularProgressStyle.light(),
+        tooltipStyle: IntUiTooltipStyle = IntUiTooltipStyle.light(),
     ) = IntelliJComponentStyling(
         checkboxStyle = checkboxStyle,
         chipStyle = chipStyle,
@@ -193,6 +197,7 @@ object IntUiTheme : BaseIntUiTheme {
         textAreaStyle = textAreaStyle,
         textFieldStyle = textFieldStyle,
         circularProgressStyle = circularProgressStyle,
+        tooltipStyle = tooltipStyle,
     )
 }
 
@@ -215,9 +220,9 @@ fun IntUiTheme(
 /**
  * Create and remember an instance of [SvgLoader].
  *
- * Note that since [SvgLoader] may cache the loaded images, and
- * that creating it may be somewhat expensive, you should only
- * create it once at the top level, and pass it around.
+ * Note that since [SvgLoader] may cache the loaded images, and that
+ * creating it may be somewhat expensive, you should only create it once at
+ * the top level, and pass it around.
  */
 @Composable
 fun rememberSvgLoader(

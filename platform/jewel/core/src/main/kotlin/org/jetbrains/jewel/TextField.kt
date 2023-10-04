@@ -104,7 +104,7 @@ fun TextField(
     keyboardActions: KeyboardActions = KeyboardActions(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: TextFieldStyle = IntelliJTheme.textFieldStyle,
-    textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
+    textStyle: TextStyle = IntelliJTheme.textStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     InputField(

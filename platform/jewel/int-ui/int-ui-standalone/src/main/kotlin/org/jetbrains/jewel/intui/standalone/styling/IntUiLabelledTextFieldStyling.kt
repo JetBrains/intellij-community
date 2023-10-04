@@ -33,7 +33,7 @@ data class IntUiLabelledTextFieldStyle(
         fun light(
             colors: IntUiLabelledTextFieldColors = IntUiLabelledTextFieldColors.light(),
             metrics: IntUiLabelledTextFieldMetrics = IntUiLabelledTextFieldMetrics(),
-            textStyle: TextStyle = IntUiTheme.defaultLightTextStyle,
+            textStyle: TextStyle = IntUiTheme.defaultTextStyle,
             textStyles: IntUiLabelledTextFieldTextStyles = IntUiLabelledTextFieldTextStyles.light(),
         ) = IntUiLabelledTextFieldStyle(colors, metrics, textStyle, textStyles)
 
@@ -41,7 +41,7 @@ data class IntUiLabelledTextFieldStyle(
         fun dark(
             colors: IntUiLabelledTextFieldColors = IntUiLabelledTextFieldColors.dark(),
             metrics: IntUiLabelledTextFieldMetrics = IntUiLabelledTextFieldMetrics(),
-            textStyle: TextStyle = IntUiTheme.defaultDarkTextStyle,
+            textStyle: TextStyle = IntUiTheme.defaultTextStyle,
             textStyles: IntUiLabelledTextFieldTextStyles = IntUiLabelledTextFieldTextStyles.dark(),
         ) = IntUiLabelledTextFieldStyle(colors, metrics, textStyle, textStyles)
     }
@@ -99,7 +99,7 @@ data class IntUiLabelledTextFieldColors(
             caretPressed: Color = caret,
             caretHovered: Color = caret,
             placeholder: Color = IntUiLightTheme.colors.grey(8),
-            label: Color = IntUiLightTheme.colors.grey(1),
+            label: Color = Color.Unspecified,
             hint: Color = IntUiLightTheme.colors.grey(6),
         ) = IntUiLabelledTextFieldColors(
             background,
@@ -150,7 +150,7 @@ data class IntUiLabelledTextFieldColors(
             caretPressed: Color = caret,
             caretHovered: Color = caret,
             placeholder: Color = IntUiDarkTheme.colors.grey(7),
-            label: Color = IntUiDarkTheme.colors.grey(12),
+            label: Color = Color.Unspecified,
             hint: Color = IntUiDarkTheme.colors.grey(7),
         ) = IntUiLabelledTextFieldColors(
             background,
@@ -200,8 +200,8 @@ data class IntUiLabelledTextFieldTextStyles(
 
         @Composable
         fun light(
-            label: TextStyle = IntUiTheme.defaultLightTextStyle,
-            hint: TextStyle = IntUiTheme.defaultLightTextStyle.copy(
+            label: TextStyle = IntUiTheme.defaultTextStyle,
+            hint: TextStyle = IntUiTheme.defaultTextStyle.copy(
                 fontSize = 12.sp,
                 lineHeight = 16.sp,
             ),
@@ -209,8 +209,8 @@ data class IntUiLabelledTextFieldTextStyles(
 
         @Composable
         fun dark(
-            label: TextStyle = IntUiTheme.defaultDarkTextStyle,
-            hint: TextStyle = IntUiTheme.defaultDarkTextStyle.copy(
+            label: TextStyle = IntUiTheme.defaultTextStyle,
+            hint: TextStyle = IntUiTheme.defaultTextStyle.copy(
                 fontSize = 12.sp,
                 lineHeight = 16.sp,
             ),

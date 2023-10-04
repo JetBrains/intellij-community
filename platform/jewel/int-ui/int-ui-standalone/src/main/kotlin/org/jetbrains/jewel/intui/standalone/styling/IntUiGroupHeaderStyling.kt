@@ -35,7 +35,6 @@ data class IntUiGroupHeaderStyle(
 
 @Immutable
 data class IntUiGroupHeaderColors(
-    override val content: Color,
     override val divider: Color,
 ) : GroupHeaderColors {
 
@@ -43,15 +42,13 @@ data class IntUiGroupHeaderColors(
 
         @Composable
         fun light(
-            content: Color = IntUiLightTheme.colors.grey(1),
             divider: Color = IntUiLightTheme.colors.grey(12),
-        ) = IntUiGroupHeaderColors(content, divider)
+        ) = IntUiGroupHeaderColors(divider)
 
         @Composable
         fun dark(
-            content: Color = IntUiDarkTheme.colors.grey(12),
             divider: Color = IntUiDarkTheme.colors.grey(3),
-        ) = IntUiGroupHeaderColors(content, divider)
+        ) = IntUiGroupHeaderColors(divider)
     }
 }
 

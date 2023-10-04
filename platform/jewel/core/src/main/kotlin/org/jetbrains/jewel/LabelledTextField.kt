@@ -22,11 +22,11 @@ import androidx.compose.ui.unit.offset
 import org.jetbrains.jewel.styling.LabelledTextFieldStyle
 
 /**
- * @param placeholder the optional placeholder to be displayed over the component when
- * the [value] is empty.
- * @param hint the optional hint to be displayed underneath the component. By default it
- * will have a greyed out appearance and smaller text.
  * @param label the label to display above the component.
+ * @param hint the optional hint to be displayed underneath the component.
+ *     By default it will have a greyed out appearance and smaller text.
+ * @param placeholder the optional placeholder to be displayed over the
+ *     component when the [value] is empty.
  */
 @Composable
 fun LabelledTextField(
@@ -48,7 +48,7 @@ fun LabelledTextField(
     keyboardActions: KeyboardActions = KeyboardActions(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: LabelledTextFieldStyle = IntelliJTheme.labelledTextFieldStyle,
-    textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
+    textStyle: TextStyle = IntelliJTheme.textStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     var textFieldValueState by remember { mutableStateOf(TextFieldValue(text = value)) }
@@ -86,11 +86,11 @@ fun LabelledTextField(
 }
 
 /**
- * @param placeholder the optional placeholder to be displayed over the component when
- * the [value] is empty.
- * @param hint the optional hint to be displayed underneath the component. By default it
- * will have a greyed out appearance and smaller text.
  * @param label the label to display above the component.
+ * @param hint the optional hint to be displayed underneath the component.
+ *     By default it will have a greyed out appearance and smaller text.
+ * @param placeholder the optional placeholder to be displayed over the
+ *     component when the [value] is empty.
  */
 @Composable
 fun LabelledTextField(
@@ -112,18 +112,12 @@ fun LabelledTextField(
     keyboardActions: KeyboardActions = KeyboardActions(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: LabelledTextFieldStyle = IntelliJTheme.labelledTextFieldStyle,
-    textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
+    textStyle: TextStyle = IntelliJTheme.textStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     LabelledTextFieldLayout(
         modifier = modifier,
-        label = {
-            CompositionLocalProvider(
-                LocalTextStyle provides style.textStyles.label,
-                LocalContentColor provides style.colors.label,
-                content = label,
-            )
-        },
+        label = label,
         textField = {
             TextField(
                 value = value,

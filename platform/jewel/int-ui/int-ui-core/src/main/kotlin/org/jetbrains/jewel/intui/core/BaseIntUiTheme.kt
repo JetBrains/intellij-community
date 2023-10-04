@@ -44,6 +44,7 @@ import org.jetbrains.jewel.styling.LocalRadioButtonStyle
 import org.jetbrains.jewel.styling.LocalScrollbarStyle
 import org.jetbrains.jewel.styling.LocalTextAreaStyle
 import org.jetbrains.jewel.styling.LocalTextFieldStyle
+import org.jetbrains.jewel.styling.LocalTooltipStyle
 import org.jetbrains.jewel.styling.MenuStyle
 import org.jetbrains.jewel.styling.RadioButtonStyle
 import org.jetbrains.jewel.styling.ScrollbarStyle
@@ -52,9 +53,6 @@ import org.jetbrains.jewel.styling.TextAreaStyle
 import org.jetbrains.jewel.styling.TextFieldStyle
 
 interface BaseIntUiTheme : IntelliJTheme {
-
-    val defaultLightTextStyle: TextStyle
-    val defaultDarkTextStyle: TextStyle
 
     val globalColors: GlobalColors
         @Composable
@@ -66,10 +64,10 @@ interface BaseIntUiTheme : IntelliJTheme {
         @ReadOnlyComposable
         get() = IntelliJTheme.globalMetrics
 
-    val defaultTextStyle: TextStyle
+    val textStyle: TextStyle
         @Composable
         @ReadOnlyComposable
-        get() = IntelliJTheme.defaultTextStyle
+        get() = IntelliJTheme.textStyle
 
     val contentColor: Color
         @Composable
@@ -226,6 +224,7 @@ fun BaseIntUiTheme(
         LocalEditorTabStyle provides componentStyling.editorTabStyle,
         LocalIndication provides NoIndication,
         LocalCircularProgressStyle provides componentStyling.circularProgressStyle,
+        LocalTooltipStyle provides componentStyling.tooltipStyle,
     ) {
         IntelliJTheme(theme, swingCompatMode, content)
     }

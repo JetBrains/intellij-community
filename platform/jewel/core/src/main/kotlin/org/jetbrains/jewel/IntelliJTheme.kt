@@ -34,12 +34,14 @@ import org.jetbrains.jewel.styling.LocalRadioButtonStyle
 import org.jetbrains.jewel.styling.LocalScrollbarStyle
 import org.jetbrains.jewel.styling.LocalTextAreaStyle
 import org.jetbrains.jewel.styling.LocalTextFieldStyle
+import org.jetbrains.jewel.styling.LocalTooltipStyle
 import org.jetbrains.jewel.styling.MenuStyle
 import org.jetbrains.jewel.styling.RadioButtonStyle
 import org.jetbrains.jewel.styling.ScrollbarStyle
 import org.jetbrains.jewel.styling.TabStyle
 import org.jetbrains.jewel.styling.TextAreaStyle
 import org.jetbrains.jewel.styling.TextFieldStyle
+import org.jetbrains.jewel.styling.TooltipStyle
 
 interface IntelliJTheme {
 
@@ -59,7 +61,7 @@ interface IntelliJTheme {
             @ReadOnlyComposable
             get() = LocalGlobalMetrics.current
 
-        val defaultTextStyle: TextStyle
+        val textStyle: TextStyle
             @Composable
             @ReadOnlyComposable
             get() = LocalTextStyle.current
@@ -182,6 +184,11 @@ interface IntelliJTheme {
             @Composable
             @ReadOnlyComposable
             get() = LocalCircularProgressStyle.current
+
+        val tooltipStyle: TooltipStyle
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalTooltipStyle.current
     }
 }
 
@@ -198,12 +205,10 @@ fun IntelliJTheme(
 
 @Composable
 fun IntelliJTheme(theme: IntelliJThemeDefinition, content: @Composable () -> Unit) {
-    val defaultTextStyle = theme.defaultTextStyle
-
     CompositionLocalProvider(
         LocalIsDarkTheme provides theme.isDark,
-        LocalContentColor provides defaultTextStyle.color,
-        LocalTextStyle provides defaultTextStyle,
+        LocalContentColor provides theme.contentColor,
+        LocalTextStyle provides theme.defaultTextStyle,
         LocalGlobalColors provides theme.globalColors,
         LocalGlobalMetrics provides theme.globalMetrics,
         content = content,

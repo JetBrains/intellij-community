@@ -60,7 +60,7 @@ data class IntUiLazyTreeColors(
 
         @Composable
         fun light(
-            content: Color = IntUiLightTheme.colors.grey(1),
+            content: Color = Color.Unspecified,
             contentFocused: Color = content,
             contentSelected: Color = content,
             contentSelectedFocused: Color = content,
@@ -79,7 +79,7 @@ data class IntUiLazyTreeColors(
 
         @Composable
         fun dark(
-            content: Color = IntUiDarkTheme.colors.grey(12),
+            content: Color = Color.Unspecified,
             contentFocused: Color = content,
             contentSelected: Color = content,
             contentSelectedFocused: Color = content,

@@ -40,7 +40,7 @@ data class IntUiDropdownStyle(
             colors: IntUiDropdownColors = IntUiDropdownColors.light(),
             metrics: IntUiDropdownMetrics = IntUiDropdownMetrics(),
             icons: IntUiDropdownIcons = intUiDropdownIcons(svgLoader),
-            textStyle: TextStyle = IntUiTheme.defaultLightTextStyle,
+            textStyle: TextStyle = IntUiTheme.defaultTextStyle,
             menuStyle: MenuStyle = IntUiMenuStyle.light(svgLoader),
         ) = IntUiDropdownStyle(colors, metrics, icons, textStyle, menuStyle)
 
@@ -50,7 +50,7 @@ data class IntUiDropdownStyle(
             colors: IntUiDropdownColors = IntUiDropdownColors.dark(),
             metrics: IntUiDropdownMetrics = IntUiDropdownMetrics(),
             icons: IntUiDropdownIcons = intUiDropdownIcons(svgLoader),
-            textStyle: TextStyle = IntUiTheme.defaultDarkTextStyle,
+            textStyle: TextStyle = IntUiTheme.defaultTextStyle,
             menuStyle: MenuStyle = IntUiMenuStyle.dark(svgLoader),
         ) = IntUiDropdownStyle(colors, metrics, icons, textStyle, menuStyle)
     }

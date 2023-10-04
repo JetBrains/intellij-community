@@ -43,7 +43,7 @@ fun DefaultButton(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: ButtonStyle = IntelliJTheme.defaultButtonStyle,
-    textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
+    textStyle: TextStyle = IntelliJTheme.textStyle,
     content: @Composable RowScope.() -> Unit,
 ) {
     ButtonImpl(
@@ -64,7 +64,7 @@ fun OutlinedButton(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: ButtonStyle = IntelliJTheme.outlinedButtonStyle,
-    textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
+    textStyle: TextStyle = IntelliJTheme.textStyle,
     content: @Composable RowScope.() -> Unit,
 ) {
     ButtonImpl(

@@ -315,7 +315,7 @@ private fun CheckboxImpl(
             val contentColor by colors.contentFor(checkboxState)
             CompositionLocalProvider(
                 LocalTextStyle provides textStyle.copy(color = contentColor.takeOrElse { textStyle.color }),
-                LocalContentColor provides contentColor.takeOrElse { textStyle.color },
+                LocalContentColor provides contentColor.takeOrElse { LocalContentColor.current },
             ) {
                 content()
             }

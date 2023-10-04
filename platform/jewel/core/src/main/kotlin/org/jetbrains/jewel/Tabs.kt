@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isTertiary
 import androidx.compose.ui.input.pointer.onPointerEvent
@@ -77,7 +78,7 @@ internal fun TabImpl(
 
     CompositionLocalProvider(
         LocalIndication provides NoIndication,
-        LocalContentColor provides tabStyle.colors.contentFor(tabState).value,
+        LocalContentColor provides tabStyle.colors.contentFor(tabState).value.takeOrElse { LocalContentColor.current },
     ) {
         val labelAlpha by tabStyle.contentAlpha.labelFor(tabState)
         val iconAlpha by tabStyle.contentAlpha.iconFor(tabState)

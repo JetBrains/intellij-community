@@ -15,7 +15,6 @@ interface GroupHeaderStyle {
 @Immutable
 interface GroupHeaderColors {
 
-    val content: Color
     val divider: Color
 }
 

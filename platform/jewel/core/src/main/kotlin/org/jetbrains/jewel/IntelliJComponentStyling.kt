@@ -17,6 +17,7 @@ import org.jetbrains.jewel.styling.ScrollbarStyle
 import org.jetbrains.jewel.styling.TabStyle
 import org.jetbrains.jewel.styling.TextAreaStyle
 import org.jetbrains.jewel.styling.TextFieldStyle
+import org.jetbrains.jewel.styling.TooltipStyle
 
 @Stable
 class IntelliJComponentStyling(
@@ -38,6 +39,7 @@ class IntelliJComponentStyling(
     val textAreaStyle: TextAreaStyle,
     val textFieldStyle: TextFieldStyle,
     val circularProgressStyle: CircularProgressStyle,
+    val tooltipStyle: TooltipStyle,
 ) {
 
     override fun equals(other: Any?): Boolean {
@@ -64,6 +66,7 @@ class IntelliJComponentStyling(
         if (defaultTabStyle != other.defaultTabStyle) return false
         if (editorTabStyle != other.editorTabStyle) return false
         if (circularProgressStyle != other.circularProgressStyle) return false
+        if (tooltipStyle != other.tooltipStyle) return false
 
         return true
     }
@@ -87,6 +90,7 @@ class IntelliJComponentStyling(
         result = 31 * result + defaultTabStyle.hashCode()
         result = 31 * result + editorTabStyle.hashCode()
         result = 31 * result + circularProgressStyle.hashCode()
+        result = 31 * result + tooltipStyle.hashCode()
         return result
     }
 

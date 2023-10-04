@@ -75,7 +75,7 @@ private fun CircularProgressIndicatorImpl(
     LaunchedEffect(style.color) {
         val frames = frameRetriever(style.color.takeOrElse { defaultColor })
         while (true) {
-            for (i in 0 until frames.size) {
+            for (i in frames.indices) {
                 currentFrame = frames[i] to i
                 isFrameReady = true
                 delay(style.frameTime.inWholeMilliseconds)

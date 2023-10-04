@@ -152,8 +152,8 @@ data class IntUiLinkTextStyles(
 
         @Composable
         fun light(
-            normal: TextStyle = IntUiTheme.defaultLightTextStyle.copy(textDecoration = TextDecoration.Underline),
-            disabled: TextStyle = IntUiTheme.defaultLightTextStyle,
+            normal: TextStyle = IntUiTheme.defaultTextStyle.copy(textDecoration = TextDecoration.Underline),
+            disabled: TextStyle = IntUiTheme.defaultTextStyle,
             focused: TextStyle = normal,
             pressed: TextStyle = normal,
             hovered: TextStyle = normal,
@@ -162,8 +162,8 @@ data class IntUiLinkTextStyles(
 
         @Composable
         fun dark(
-            normal: TextStyle = IntUiTheme.defaultDarkTextStyle.copy(textDecoration = TextDecoration.Underline),
-            disabled: TextStyle = IntUiTheme.defaultDarkTextStyle,
+            normal: TextStyle = IntUiTheme.defaultTextStyle.copy(textDecoration = TextDecoration.Underline),
+            disabled: TextStyle = IntUiTheme.defaultTextStyle,
             focused: TextStyle = normal,
             pressed: TextStyle = normal,
             hovered: TextStyle = normal,

@@ -65,7 +65,7 @@ data class IntUiCheckboxColors(
             background: Color = IntUiLightTheme.colors.grey(14),
             backgroundDisabled: Color = IntUiLightTheme.colors.grey(13),
             backgroundSelected: Color = IntUiLightTheme.colors.blue(4),
-            content: Color = IntUiLightTheme.colors.grey(1),
+            content: Color = Color.Unspecified,
             contentDisabled: Color = IntUiLightTheme.colors.grey(8),
             contentSelected: Color = content,
         ) = IntUiCheckboxColors(
@@ -82,7 +82,7 @@ data class IntUiCheckboxColors(
             background: Color = Color.Unspecified,
             backgroundDisabled: Color = IntUiDarkTheme.colors.grey(3),
             backgroundSelected: Color = IntUiDarkTheme.colors.blue(6),
-            content: Color = IntUiDarkTheme.colors.grey(12),
+            content: Color = Color.Unspecified,
             contentDisabled: Color = IntUiDarkTheme.colors.grey(7),
             contentSelected: Color = content,
         ) = IntUiCheckboxColors(
