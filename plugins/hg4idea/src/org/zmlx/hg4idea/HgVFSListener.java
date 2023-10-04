@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
 import com.intellij.vcsUtil.VcsUtil;
@@ -111,8 +110,7 @@ public final class HgVFSListener extends VcsVFSListener {
         addedFiles.retainAll(untrackedFiles);
         // select files to add if there is something to select
         if (!addedFiles.isEmpty() || !copyFromMap.isEmpty()) {
-
-          AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> performAddingWithConfirmation(addedFiles, copyFromMap));
+          performAddingWithConfirmation(addedFiles, copyFromMap);
         }
       }
     }.queue();

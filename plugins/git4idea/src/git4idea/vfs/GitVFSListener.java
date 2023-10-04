@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value;
 import com.intellij.openapi.vcs.VcsVFSListener;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
@@ -88,7 +87,7 @@ public final class GitVFSListener extends VcsVFSListener {
         }
         addedFiles.retainAll(retainedFiles);
 
-        AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> performAddingWithConfirmation(addedFiles, copyFromMap));
+        performAddingWithConfirmation(addedFiles, copyFromMap);
       }
     });
   }

@@ -504,7 +504,15 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected void executeAdd(@NotNull List<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
-    performAddingWithConfirmation(addedFiles, copyFromMap);
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      // backward compatibility with plugins
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        performAddingWithConfirmation(addedFiles, copyFromMap);
+      });
+    }
+    else {
+      performAddingWithConfirmation(addedFiles, copyFromMap);
+    }
   }
 
   /**
@@ -513,6 +521,7 @@ public abstract class VcsVFSListener implements Disposable {
    * @param addedFiles  the added files
    * @param copyFromMap the copied files
    */
+  @RequiresBackgroundThread
   protected void performAddingWithConfirmation(@NotNull List<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
     VcsShowConfirmationOption.Value addOption = myAddOption.getValue();
     LOG.debug("executeAdd. add-option: ", addOption, ", files to add: ", addedFiles);
