@@ -13,6 +13,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.NullableEnum
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiDocumentManager
@@ -26,7 +27,7 @@ import kotlin.random.Random
 
 @ApiStatus.Experimental
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 6)
+  private val GROUP = EventLogGroup("inline.completion", 7)
 
   override fun getGroup() = GROUP
 
@@ -101,14 +102,23 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     private var hasSuggestions: Boolean? = null
     private var canceled: Boolean = false
     private var exception: Boolean = false
+    private var language: Language? = null
+    private var fileLanguage: Language? = null
 
-    fun createShowTracker() = ShowTracker(requestId, invocationTime, InlineContextFeatures.getEventPair(contextFeatures))
+    fun createShowTracker() = ShowTracker(
+      requestId,
+      invocationTime,
+      InlineContextFeatures.getEventPair(contextFeatures),
+      language,
+      fileLanguage,
+    )
 
     fun captureContext(editor: Editor, offset: Int) {
       val psiFile = PsiDocumentManager.getInstance(editor.project ?: return).getPsiFile(editor.document) ?: return
-      val language = PsiUtilCore.getLanguageAtOffset(psiFile, offset)
+      language = PsiUtilCore.getLanguageAtOffset(psiFile, offset)
+      fileLanguage = psiFile.language
       data.add(EventFields.Language.with(language))
-      data.add(EventFields.CurrentFile.with(psiFile.language))
+      data.add(EventFields.CurrentFile.with(fileLanguage))
       InlineContextFeatures.capture(editor, offset, contextFeatures)
       assert(!finished)
     }
@@ -188,9 +198,13 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
    * This tracker lives from the moment the inline completion appears on the screen until its end.
    * This tracker is not thread-safe.
    */
-  private class ShowTracker(private val requestId: Long,
-                            private val invocationTime: Long,
-                            private val triggerFeatures: EventPair<*>) {
+  private class ShowTracker(
+    private val requestId: Long,
+    private val invocationTime: Long,
+    private val triggerFeatures: EventPair<*>,
+    private val language: Language?,
+    private val fileLanguage: Language?,
+  ) {
     private val data = mutableListOf<EventPair<*>>()
     private var firstShown = false
     private var shownLogSent = false
@@ -206,6 +220,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       firstShown = true
       showStartTime = System.currentTimeMillis()
       data.add(ShownEvents.REQUEST_ID.with(requestId))
+      data.add(EventFields.Language.with(language))
+      data.add(EventFields.CurrentFile.with(fileLanguage))
       data.add(ShownEvents.TIME_TO_SHOW.with(System.currentTimeMillis() - invocationTime))
       data.add(triggerFeatures)
       nextShown(element)
@@ -269,6 +285,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   private val ShownEvent: VarargEventId = GROUP.registerVarargEvent(
     "shown",
     ShownEvents.REQUEST_ID,
+    EventFields.Language,
+    EventFields.CurrentFile,
     ShownEvents.LINES,
     ShownEvents.LENGTH,
     ShownEvents.TYPING_DURING_SHOW,
