@@ -224,15 +224,14 @@ public final class HgVFSListener extends VcsVFSListener {
   @Override
   protected void executeDelete() {
     AllDeletedFiles allFiles = myProcessor.acquireAllDeletedFiles();
-    List<FilePath> filesToDelete = allFiles.deletedWithoutConfirmFiles;
     List<FilePath> filesToConfirmDeletion = allFiles.deletedFiles;
 
     // skip files which are not under Mercurial
-    skipNotUnderHg(filesToDelete);
     skipNotUnderHg(filesToConfirmDeletion);
 
-    skipVcsIgnored(filesToDelete);
     skipVcsIgnored(filesToConfirmDeletion);
+
+    List<FilePath> filesToDelete = new ArrayList<>();
 
     // newly added files (which were added to the repo but never committed) should be removed from the VCS,
     // but without user confirmation.

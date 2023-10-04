@@ -84,11 +84,9 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected static class AllDeletedFiles {
     public final List<FilePath> deletedFiles;
-    public final List<FilePath> deletedWithoutConfirmFiles;
 
-    public AllDeletedFiles(@NotNull List<FilePath> deletedFiles, @NotNull List<FilePath> deletedWithoutConfirmFiles) {
+    public AllDeletedFiles(@NotNull List<FilePath> deletedFiles) {
       this.deletedFiles = deletedFiles;
-      this.deletedWithoutConfirmFiles = deletedWithoutConfirmFiles;
     }
   }
 
@@ -106,7 +104,6 @@ public abstract class VcsVFSListener implements Disposable {
     private final Set<VirtualFile> myAddedFiles = new SmartHashSet<>();
     private final Map<VirtualFile, VirtualFile> myCopyFromMap = new HashMap<>(); // copy -> original
     private final Set<FilePath> myDeletedFiles = new SmartHashSet<>();
-    private final Set<FilePath> myDeletedWithoutConfirmFiles = new SmartHashSet<>();
     private final Set<MovedFileInfo> myMovedFiles = new SmartHashSet<>();
 
     private final ReentrantReadWriteLock PROCESSING_LOCK = new ReentrantReadWriteLock();
@@ -124,11 +121,9 @@ public abstract class VcsVFSListener implements Disposable {
     @NotNull
     public AllDeletedFiles acquireAllDeletedFiles() {
       return withLock(PROCESSING_LOCK.writeLock(), () -> {
-        List<FilePath> deletedWithoutConfirmFiles = new ArrayList<>(myDeletedWithoutConfirmFiles);
         List<FilePath> deletedFiles = new ArrayList<>(myDeletedFiles);
-        myDeletedWithoutConfirmFiles.clear();
         myDeletedFiles.clear();
-        return new AllDeletedFiles(deletedFiles, deletedWithoutConfirmFiles);
+        return new AllDeletedFiles(deletedFiles);
       });
     }
 
@@ -161,7 +156,6 @@ public abstract class VcsVFSListener implements Disposable {
         myAddedFiles.clear();
         myCopyFromMap.clear();
         myDeletedFiles.clear();
-        myDeletedWithoutConfirmFiles.clear();
         myMovedFiles.clear();
       });
     }
@@ -200,7 +194,7 @@ public abstract class VcsVFSListener implements Disposable {
      */
     @RequiresBackgroundThread
     private void doNotDeleteAddedCopiedOrMovedFiles() {
-      if (myDeletedFiles.isEmpty() && myDeletedWithoutConfirmFiles.isEmpty()) return;
+      if (myDeletedFiles.isEmpty()) return;
 
       Set<String> copiedAddedMoved = new HashSet<>();
       for (VirtualFile file : myCopyFromMap.keySet()) {
@@ -214,13 +208,11 @@ public abstract class VcsVFSListener implements Disposable {
       }
 
       myDeletedFiles.removeIf(path -> copiedAddedMoved.contains(path.getPath()));
-      myDeletedWithoutConfirmFiles.removeIf(path -> copiedAddedMoved.contains(path.getPath()));
     }
 
     private boolean isAnythingToProcess() {
       return withLock(PROCESSING_LOCK.readLock(), () -> !myAddedFiles.isEmpty() ||
                                                         !myDeletedFiles.isEmpty() ||
-                                                        !myDeletedWithoutConfirmFiles.isEmpty() ||
                                                         !myMovedFiles.isEmpty());
     }
 
@@ -555,11 +547,11 @@ public abstract class VcsVFSListener implements Disposable {
   @RequiresBackgroundThread
   protected void executeDelete() {
     AllDeletedFiles allFiles = myProcessor.acquireAllDeletedFiles();
-    List<FilePath> filesToDelete = allFiles.deletedWithoutConfirmFiles;
     List<FilePath> filesToConfirmDeletion = allFiles.deletedFiles;
 
-    filesToDelete.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
     filesToConfirmDeletion.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
+
+    List<FilePath> filesToDelete = new ArrayList<>();
 
     VcsShowConfirmationOption.Value removeOption = myRemoveOption.getValue();
     if (removeOption == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
