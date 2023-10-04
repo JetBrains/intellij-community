@@ -248,7 +248,8 @@ object CommunityRepositoryModules {
       "intellij.markdown.frontmatter.toml",
       "intellij.markdown.images",
       "intellij.markdown.xml",
-      "intellij.markdown.model"
+      "intellij.markdown.model",
+      "intellij.markdown.spellchecker"
     )),
     plugin(listOf("intellij.settingsSync", "intellij.settingsSync.git")),
     plugin(listOf(

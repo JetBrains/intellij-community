@@ -16,6 +16,7 @@
     <module name="intellij.markdown.images"/>
     <module name="intellij.markdown.xml"/>
     <module name="intellij.markdown.model"/>
+    <module name="intellij.markdown.spellchecker"/>
   </content>
 
   <description><![CDATA[
@@ -167,9 +168,6 @@
 
     <fileEditorProvider implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
     <textEditorCustomizer implementation="org.intellij.plugins.markdown.ui.floating.AddFloatingToolbarTextEditorCustomizer"/>
-
-    <spellchecker.support language="Markdown"
-                          implementationClass="org.intellij.plugins.markdown.spellchecking.MarkdownSpellcheckingStrategy"/>
 
     <customFileDropHandler implementation="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownDocxFileDropHandler"/>
 

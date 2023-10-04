@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.spellchecking;
+package org.intellij.plugins.markdown.spellchecker;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
@@ -22,12 +22,12 @@ public class MarkdownSpellcheckingStrategy extends SpellcheckingStrategy {
   public Tokenizer getTokenizer(PsiElement element) {
     final ASTNode node = element.getNode();
     if (node == null || node.getElementType() != MarkdownTokenTypes.TEXT) {
-      return EMPTY_TOKENIZER;
+      return SpellcheckingStrategy.EMPTY_TOKENIZER;
     }
     if (TreeUtil.findParent(node, NO_SPELLCHECKING_TYPES) != null) {
-      return EMPTY_TOKENIZER;
+      return SpellcheckingStrategy.EMPTY_TOKENIZER;
     }
 
-    return TEXT_TOKENIZER;
+    return SpellcheckingStrategy.TEXT_TOKENIZER;
   }
 }

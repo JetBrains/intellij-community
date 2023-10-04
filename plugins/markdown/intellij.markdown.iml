@@ -13,5 +13,6 @@
     <orderEntry type="module" module-name="intellij.markdown.images" />
     <orderEntry type="module" module-name="intellij.markdown.xml" />
     <orderEntry type="module" module-name="intellij.markdown.model" />
+    <orderEntry type="module" module-name="intellij.markdown.spellchecker" />
   </component>
 </module>
