@@ -541,6 +541,14 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTestFirstStatement();
   }
 
+  public void testFunctionAnnotationsAndParameterDefaultsAreExcludedFromItsGraph() {
+    doTestFirstStatement();
+  }
+
+  public void testFunctionAnnotationsAndParameterDefaultsAreIncludedInEnclosingScopeGraph() {
+    doTest();
+  }
+
   private void doTestFirstStatement() {
     final String testName = getTestName(false);
     configureByFile(testName + ".py");

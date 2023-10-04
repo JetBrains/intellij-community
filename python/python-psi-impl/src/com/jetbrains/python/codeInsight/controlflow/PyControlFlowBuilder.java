@@ -93,7 +93,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     visitDecorators(node.getDecoratorList());
     final PyAnnotation annotation = node.getAnnotation();
     if (annotation != null) {
-      annotation.accept(this);
+      annotation.acceptChildren(this);
     }
 
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
@@ -123,7 +123,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         }
         final PyAnnotation annotation = param.getAnnotation();
         if (annotation != null) {
-          annotation.accept(PyControlFlowBuilder.this);
+          annotation.acceptChildren(PyControlFlowBuilder.this);
         }
       }
     });
@@ -302,13 +302,17 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyNamedParameter(final @NotNull PyNamedParameter node) {
-    final PyExpression defaultValue = node.getDefaultValue();
-    if (defaultValue != null) {
-      defaultValue.accept(this);
-    }
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
     myBuilder.addNode(instruction);
     myBuilder.checkPending(instruction);
+  }
+
+  @Override
+  public void visitPyAnnotation(@NotNull PyAnnotation node) {
+    // Return type and parameter annotations for functions are evaluated in their enclosing scope and processed in visitPyFunction
+    if (!(node.getParent() instanceof PyFunction || node.getParent() instanceof PyParameter)) {
+      super.visitPyAnnotation(node);
+    }
   }
 
   @Override
