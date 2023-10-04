@@ -90,6 +90,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected final StateProcessor myProcessor = new StateProcessor();
   private final ProjectConfigurationFilesProcessorImpl myProjectConfigurationFilesProcessor;
   protected final ExternallyAddedFilesProcessorImpl myExternalFilesProcessor;
+  private final IgnoreFilesProcessorImpl myIgnoreFilesProcessor;
   private final List<VFileEvent> myEventsToProcess = new SmartList<>();
 
   protected final class StateProcessor {
@@ -418,6 +419,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     myProjectConfigurationFilesProcessor = createProjectConfigurationFilesProcessor();
     myExternalFilesProcessor = createExternalFilesProcessor();
+    myIgnoreFilesProcessor = createIgnoreFilesProcessor();
   }
 
   /**
@@ -435,7 +437,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     myProjectConfigurationFilesProcessor.install();
     myExternalFilesProcessor.install();
-    new IgnoreFilesProcessorImpl(myProject, myVcs, this).install();
+    myIgnoreFilesProcessor.install();
   }
 
   @Override
@@ -712,6 +714,10 @@ public abstract class VcsVFSListener implements Disposable {
                                                         performAdding((Collection<VirtualFile>)files, emptyMap());
                                                         return Unit.INSTANCE;
                                                       });
+  }
+
+  private IgnoreFilesProcessorImpl createIgnoreFilesProcessor() {
+    return new IgnoreFilesProcessorImpl(myProject, myVcs, this);
   }
 
   private class MyAsyncVfsListener implements AsyncFileListener {
