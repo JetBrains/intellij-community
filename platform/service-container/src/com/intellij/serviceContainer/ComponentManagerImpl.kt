@@ -177,7 +177,7 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  private val pluginScopes = ScopeHolder(
+  val pluginScopes = ScopeHolder(
     parentScope = coroutineScope,
     containerName = debugString(true),
   )

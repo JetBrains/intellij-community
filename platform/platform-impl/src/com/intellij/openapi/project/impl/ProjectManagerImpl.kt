@@ -43,11 +43,8 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.CoreProgressManager
-import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -71,6 +68,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.useInstanceContainer
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
@@ -381,7 +379,13 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       // somebody can start progress here, do not wrap in write action
       fireProjectClosing(project)
       if (project is ProjectImpl) {
-        cancelAndJoinBlocking(project)
+        if (useInstanceContainer) {
+          // must happen before startDispose()
+          cancelAndJoinExistingContainerCoroutines(project)
+        }
+        else {
+          cancelAndJoinBlocking(project)
+        }
       }
     }
 
@@ -400,18 +404,28 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         ZipHandler.clearFileAccessorCache()
       }
       LaterInvocator.purgeExpiredItems()
+    }
 
-      val projectDisposeDurationMs = measureTimeMillis {
+    if (useInstanceContainer && project is ProjectImpl) {
+      cancelAndJoinBlocking(project)
+    }
+
+    val projectDisposeDurationMs = app.runWriteAction<Long> {
+      measureTimeMillis {
         if (dispose) {
           Disposer.dispose(project)
         }
       }
-      LifecycleUsageTriggerCollector.onProjectClosedAndDisposed(project,
-                                                                projectCloseStartedMs,
-                                                                projectSaveSettingsDurationMs,
-                                                                projectClosingDurationMs,
-                                                                projectDisposeDurationMs)
     }
+
+    LifecycleUsageTriggerCollector.onProjectClosedAndDisposed(
+      project,
+      projectCloseStartedMs,
+      projectSaveSettingsDurationMs,
+      projectClosingDurationMs,
+      projectDisposeDurationMs,
+    )
+
     return true
   }
 

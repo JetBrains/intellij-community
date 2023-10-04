@@ -41,6 +41,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.platform.ide.bootstrap.StartupUtil;
 import com.intellij.psi.util.ReadActionCache;
 import com.intellij.serviceContainer.ComponentManagerImpl;
+import com.intellij.serviceContainer.ComponentManagerImplKt;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.*;
@@ -69,6 +70,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
+import static com.intellij.ide.ShutdownKt.cancelAndJoinExistingContainerCoroutines;
+import static com.intellij.serviceContainer.ComponentManagerImplKt.useInstanceContainer;
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
 
 @ApiStatus.Internal
@@ -196,12 +199,24 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @TestOnly
   public void disposeContainer() {
-    cancelAndJoinBlocking(this);
-    runWriteAction(() -> {
-      startDispose();
-      Disposer.dispose(this);
-    });
+    if (useInstanceContainer) {
+      disposeContainer2();
+    }
+    else {
+      cancelAndJoinBlocking(this);
+      runWriteAction(() -> {
+        startDispose();
+        Disposer.dispose(this);
+      });
+    }
     Disposer.assertIsEmpty();
+  }
+
+  private void disposeContainer2() {
+    cancelAndJoinExistingContainerCoroutines(this);
+    runWriteAction(() -> startDispose());
+    cancelAndJoinBlocking(this);
+    runWriteAction(() -> Disposer.dispose(this));
   }
 
   @Override
