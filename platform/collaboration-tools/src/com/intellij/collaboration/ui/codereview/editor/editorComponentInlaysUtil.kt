@@ -119,13 +119,15 @@ fun EditorEx.insertComponent(offset: Int,
                              component: JComponent,
                              priority: Int = 0,
                              rendererFactory: (Inlay<*>) -> GutterIconRenderer? = { null }): Inlay<*>? {
-  val editor = this
-  val layout = SizeRestrictedSingleComponentLayout().apply {
-    // 52 for avatar and gaps
-    prefSize = DimensionRestrictions.ScalingConstant(width = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH + 52)
-  }
-  val wrappedComponent = JPanel(layout).apply {
+  val wrappedComponent = JPanel(null).apply {
     isOpaque = false
+    // 52 for avatar and gaps
+    val widthRestriction = DimensionRestrictions.ScalingConstant(width = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH + 52)
+    layout = SizeRestrictedSingleComponentLayout().apply {
+      prefSize = widthRestriction
+      maxSize = widthRestriction
+    }
+
     add(component)
   }
 
@@ -134,7 +136,7 @@ fun EditorEx.insertComponent(offset: Int,
   }
 
   val props = InlayProperties().priority(priority).relatesToPrecedingText(true)
-  return editor.addComponentInlay(offset, props, renderer)
+  return addComponentInlay(offset, props, renderer)
 }
 
 @ApiStatus.Experimental
