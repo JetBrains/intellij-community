@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.*;
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.FailureResult;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.FinishBuildEventImpl;
 import com.intellij.build.events.impl.StartBuildEventImpl;
@@ -20,7 +19,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,7 +34,6 @@ import com.intellij.openapi.externalSystem.service.execution.configuration.Exter
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemTaskUnderProgress;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
@@ -61,8 +58,7 @@ import java.net.*;
 import java.util.Arrays;
 import java.util.Enumeration;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getConsoleManagerFor;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 
 public class ExternalSystemRunnableState extends UserDataHolderBase implements RunProfileState {
@@ -175,7 +171,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     if (myProject.isDisposed()) return null;
 
     ProjectSystemId externalSystemId = mySettings.getExternalSystemId();
-    if (!ExternalSystemUtil.confirmLoadingUntrustedProject(myProject, externalSystemId)) {
+    if (!confirmLoadingUntrustedProject(myProject, externalSystemId)) {
       String externalSystemName = externalSystemId.getReadableName();
       throw new ExecutionException(ExternalSystemBundle.message("untrusted.project.notification.execution.error", externalSystemName));
     }
@@ -324,11 +320,16 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
         @Override
         public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
-          DataContext dataContext = BuildConsoleUtils.getDataContext(id, progressListener);
-          FailureResult failureResult = ExternalSystemUtil.createFailureResult(
-            executionName + " " + BuildBundle.message("build.status.failed"), e, id.getProjectSystemId(), myProject, dataContext);
-          eventDispatcher.onEvent(id, new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
-                                                               BuildBundle.message("build.status.failed"), failureResult));
+          if (progressListener != null) {
+            var eventTime = System.currentTimeMillis();
+            var eventMessage = BuildBundle.message("build.status.failed");
+            var title = executionName + " " + BuildBundle.message("build.status.failed");
+            var externalSystemId = id.getProjectSystemId();
+            var externalProjectPath = mySettings.getExternalProjectPath();
+            var dataContext = BuildConsoleUtils.getDataContext(id, progressListener);
+            var eventResult = createFailureResult(title, e, externalSystemId, myProject, externalProjectPath, dataContext);
+            eventDispatcher.onEvent(id, new FinishBuildEventImpl(id, null, eventTime, eventMessage, eventResult));
+          }
           processHandler.notifyProcessTerminated(1);
         }
 
