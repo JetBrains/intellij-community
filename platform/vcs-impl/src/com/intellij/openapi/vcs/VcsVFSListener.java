@@ -267,15 +267,17 @@ public abstract class VcsVFSListener implements Disposable {
       VirtualFile newFile = event.getNewParent().findChild(event.getNewChildName());
       if (newFile == null || myChangeListManager.isIgnoredFile(newFile)) return;
       VirtualFile originalFile = event.getFile();
-      withLock(PROCESSING_LOCK.writeLock(), () -> {
-        if (isFileCopyingFromTrackingSupported() && isUnderMyVcs(originalFile)) {
+      if (isFileCopyingFromTrackingSupported() && isUnderMyVcs(originalFile)) {
+        withLock(PROCESSING_LOCK.writeLock(), () -> {
           myAddedFiles.add(newFile);
           myCopyFromMap.put(newFile, originalFile);
-        }
-        else {
+        });
+      }
+      else {
+        withLock(PROCESSING_LOCK.writeLock(), () -> {
           myAddedFiles.add(newFile);
-        }
-      });
+        });
+      }
     }
 
     @RequiresEdt
