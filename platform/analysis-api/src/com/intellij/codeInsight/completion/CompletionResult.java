@@ -10,7 +10,7 @@ public final class CompletionResult {
   private final PrefixMatcher myMatcher;
   private final CompletionSorter mySorter;
 
-  protected CompletionResult(LookupElement lookupElement, PrefixMatcher matcher, CompletionSorter sorter) {
+  private CompletionResult(LookupElement lookupElement, PrefixMatcher matcher, CompletionSorter sorter) {
     myLookupElement = lookupElement;
     myMatcher = matcher;
     mySorter = sorter;
