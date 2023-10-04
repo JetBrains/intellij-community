@@ -121,18 +121,33 @@ public abstract class AbstractBasicJavaTypingTest extends BasePlatformTestCase {
 
   public void testQuestionAfterPolyadicBoolean() { doTest('?'); }
 
-  public void testStartStringTemplate() { doTest('{'); }
+  public void testStartStringTemplate() {
+    setLanguageLevel(LanguageLevel.JDK_21_PREVIEW);
+    doTest('{'); 
+  }
   
-  public void testStartStringTemplateEof() { doTest('{'); }
+  public void testStartStringTemplateEof() {
+    setLanguageLevel(LanguageLevel.JDK_21_PREVIEW);
+    doTest('{'); 
+  }
 
-  public void testStartStringTemplateNoClosingQuote() { doTest('{'); }
+  public void testStartStringTemplateNoClosingQuote() {
+    setLanguageLevel(LanguageLevel.JDK_21_PREVIEW);
+    doTest('{'); 
+  }
 
-  public void testStartStringTemplateTextBlock() { doTest('{'); }
+  public void testStartStringTemplateTextBlock() {
+    setLanguageLevel(LanguageLevel.JDK_21_PREVIEW);
+    doTest('{'); 
+  }
 
-  public void testStartStringTemplateAlreadyBrace() { doTest('{'); }
+  public void testStartStringTemplateAlreadyBrace() {
+    setLanguageLevel(LanguageLevel.JDK_21_PREVIEW);
+    doTest('{'); 
+  }
   
   public void testEndStringTemplate() {
-    setLanguageLevel(LanguageLevel.JDK_21);
+    setLanguageLevel(LanguageLevel.JDK_21_PREVIEW);
     doTest('}');
   }
 

@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -117,7 +118,7 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
       
       HighlighterIterator iterator = editor.getHighlighter().createIterator(offset-1);
       CharSequence sequence = editor.getDocument().getCharsSequence();
-      if (!iterator.atEnd() && iterator.getTokenType() == StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN &&
+      if (!iterator.atEnd() && iterator.getTokenType() == JavaTokenType.STRING_TEMPLATE_BEGIN &&
           iterator.getEnd() == offset && sequence.subSequence(iterator.getStart(), iterator.getEnd()).toString().equals("\\{")) {
         if (sequence.length() > offset && sequence.charAt(offset) == '}') {
           editor.getCaretModel().moveToOffset(offset + 1);
