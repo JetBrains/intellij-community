@@ -438,7 +438,10 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       if (line < 0) continue;
 
       var linePosition = XSourcePositionImpl.create(file, line);
-      var breakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, linePosition, null);
+      List<XLineBreakpointType> breakpointTypes;
+      try (var ignore = SlowOperations.knownIssue("IDEA-333520, EA-908835")) {
+        breakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, linePosition, null);
+      }
       XDebuggerUtilImpl.getLineBreakpointVariants(project, breakpointTypes, linePosition).onProcessed(variants -> {
         if (variants == null) {
           variants = Collections.emptyList();

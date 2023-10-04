@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -225,10 +226,12 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   }
 
   public static boolean canStopOnConditionalReturn(@NotNull PsiFile file) {
-    // We haven't implemented Dalvik bytecode parsing yet.
-    Module module = ModuleUtilCore.findModuleForFile(file);
-    return module == null ||
-           !ContainerUtil.exists(FacetManager.getInstance(module).getAllFacets(), f -> f.getName().equals("Android"));
+    try (var ignore = SlowOperations.knownIssue("IDEA-331623, EA-903915")) {
+      // We haven't implemented Dalvik bytecode parsing yet.
+      Module module = ModuleUtilCore.findModuleForFile(file);
+      return module == null ||
+             !ContainerUtil.exists(FacetManager.getInstance(module).getAllFacets(), f -> f.getName().equals("Android"));
+    }
   }
 
   public boolean matchesPosition(@NotNull LineBreakpoint<?> breakpoint, @NotNull SourcePosition position) {
