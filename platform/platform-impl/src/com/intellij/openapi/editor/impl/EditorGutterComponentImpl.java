@@ -1877,13 +1877,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       return myForcedRightFreePaintersAreaWidth;
     }
 
-    int width = FREE_PAINTERS_RIGHT_AREA_WIDTH.get();
-    if (ExperimentalUI.isNewUI() && width != 0) {
-      int changesWidth = RoundingMode.ROUND
-        .round(scale(JBUI.getInt("Gutter.VcsChanges.width", 4)) + JBUI.scale(5));
-      return Math.max(width, changesWidth);
-    }
-    return width;
+    return ExperimentalUI.isNewUI() ? 0 : FREE_PAINTERS_RIGHT_AREA_WIDTH.get();
   }
 
   @Override
