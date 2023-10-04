@@ -58,6 +58,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.types.typeUtil.isUnit
+import org.jetbrains.kotlin.types.typeUtil.makeNullable
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -147,9 +148,11 @@ private class PropertiesDataCollector(private val resolutionFacade: ResolutionFa
         val getter = propertyInfoGroup.firstIsInstanceOrNull<RealGetter>()
         val setter = propertyInfoGroup.firstIsInstanceOrNull<RealSetter>()?.takeIf { setterCandidate ->
             if (getter == null) return@takeIf true
-            val getterType = getter.function.type()
-            val setterType = setterCandidate.function.valueParameters.first().type()
-            getterType != null && setterType != null && getterType.isSubtypeOf(setterType)
+            val getterType = getter.function.type() ?: return@takeIf false
+            val setterType = setterCandidate.function.valueParameters.first().type() ?: return@takeIf false
+            // The inferred nullability of accessors may be different due to semi-random reasons,
+            // so we check types compatibility ignoring nullability. Anyway, the final property type will be nullable if necessary.
+            getterType.isSubtypeOf(setterType.makeNullable())
         }
 
         val accessor = getter ?: setter ?: return null
