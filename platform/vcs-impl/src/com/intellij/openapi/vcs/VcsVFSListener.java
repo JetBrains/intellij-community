@@ -669,20 +669,10 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   /**
-   * Determine if the listener should process files with {@link FileStatus#UNKNOWN} status.
-   *
-   * @see #filterOutByStatus(FileStatus)
-   */
-  protected boolean filterOutUnknownFiles() {
-    return true;
-  }
-
-  /**
-   * Determine if the listener should process files with the given status.
-   * By default skip {@link FileStatus#IGNORED} and {@link FileStatus#UNKNOWN}.
+   * Determine if the listener should not process files with the given status.
    */
   protected boolean filterOutByStatus(@NotNull FileStatus status) {
-    return status == FileStatus.IGNORED || (filterOutUnknownFiles() && status == FileStatus.UNKNOWN);
+    return status == FileStatus.IGNORED || status == FileStatus.UNKNOWN;
   }
 
   @NotNull
