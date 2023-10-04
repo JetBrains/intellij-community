@@ -334,7 +334,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
   override fun createActions(): Array<Action> {
     val lastActionName = PropertiesComponent.getInstance().getValue(LAST_OK_ACTION)
     val lastAction = ReportAction.findOrDefault(lastActionName)
-    val additionalActions = ReportAction.values().asSequence()
+    val additionalActions = ReportAction.entries.asSequence()
       .filter { it != lastAction }
       .map { action: ReportAction -> action.getAction(this) }
       .toList()
@@ -865,7 +865,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     companion object {
       fun findOrDefault(name: String?): ReportAction {
         if (name != null) {
-          for (value in values()) {
+          for (value in entries) {
             if (value.name == name) {
               return value
             }
