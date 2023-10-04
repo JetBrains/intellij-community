@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.ui.hasher
 import com.intellij.ui.seededHasher
 import com.intellij.util.io.*
+import com.intellij.util.io.PersistentHashMapValueStorage.CreationTimeOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
@@ -51,7 +52,7 @@ private class IconValue(
   @JvmField var data: ByteArray,
 )
 
-private fun openSvgCache(dbDir: Path): PersistentHashMap<LongArray, IconValue> {
+private fun openSvgCache(dbDir: Path): PersistentMapBase<LongArray, IconValue> {
   val markerFile = getSvgIconCacheInvalidMarkerFile(dbDir)
   if (Files.exists(markerFile)) {
     NioFiles.deleteRecursively(dbDir)
@@ -72,8 +73,8 @@ private fun openSvgCache(dbDir: Path): PersistentHashMap<LongArray, IconValue> {
   return createMap(file)
 }
 
-private fun createMap(dbFile: Path): PersistentHashMap<LongArray, IconValue> {
-  return PersistentMapBuilder.newBuilder(dbFile, object : KeyDescriptor<LongArray> {
+private fun createMap(dbFile: Path): PersistentMapBase<LongArray, IconValue> {
+  val builder = PersistentMapBuilder.newBuilder(dbFile, object : KeyDescriptor<LongArray> {
     override fun getHashCode(value: LongArray): Int {
       return when (value.size) {
         3 -> Hashing.komihash5_0().hashLongLongLongToLong(value[0], value[1], value[2]).toInt()
@@ -109,13 +110,17 @@ private fun createMap(dbFile: Path): PersistentHashMap<LongArray, IconValue> {
       return IconValue(w, h, data)
     }
   })
-    .withVersion(0)
-    .build()
+    .withVersion(1)
+
+  return PersistentMapImpl(builder, CreationTimeOptions(/* readOnly = */ false,
+                                                        /* compactChunksWithValueDeserialization = */ false,
+                                                        /* hasNoChunks = */ false,
+                                                        /* doCompression = */ false))
 }
 
 @Suppress("SqlResolve")
 @Internal
-class SvgCacheManager private constructor(private val map: PersistentHashMap<LongArray, IconValue>) {
+class SvgCacheManager private constructor(private val map: PersistentMapBase<LongArray, IconValue>) {
   companion object {
     @Volatile
     @Internal

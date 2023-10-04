@@ -56,7 +56,6 @@ public final class PersistentHashMapValueStorage {
    * Instances of the class are immutable, all mutation methods return new instances -- one could
    * safely keep any instance of this class for later use.
    */
-  //@Immutable
   public static final class CreationTimeOptions {
     public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<>();
     public static final ThreadLocal<Boolean> COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION = new ThreadLocal<>();
@@ -74,7 +73,7 @@ public final class PersistentHashMapValueStorage {
     private final boolean myHasNoChunks;
     private final boolean myUseCompression;
 
-    private CreationTimeOptions(boolean readOnly,
+    public CreationTimeOptions(boolean readOnly,
                                 boolean compactChunksWithValueDeserialization,
                                 boolean hasNoChunks,
                                 boolean doCompression) {
