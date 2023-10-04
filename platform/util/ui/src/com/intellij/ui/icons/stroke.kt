@@ -2,8 +2,10 @@
 package com.intellij.ui.icons
 
 import com.dynatrace.hash4j.hashing.HashFunnel
-import com.intellij.openapi.util.patchColorsInCacheImageIcon
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
 import com.intellij.ui.hasher
 import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.ui.svg.newSvgPatcher
@@ -11,6 +13,8 @@ import com.intellij.util.SVGLoader
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import java.awt.Color
 import javax.swing.Icon
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.toJavaDuration
 
 @Suppress("SpellCheckingInspection")
 private val backgroundColors = pairWithDigest(listOf(
@@ -37,28 +41,78 @@ private fun pairWithDigest(list: List<String>): Pair<List<String>, Long> {
   return list to hasher.hashStream().putOrderedIterable(list, HashFunnel.forString()).asLong
 }
 
-fun toStrokeIcon(original: Icon, resultColor: Color): Icon {
-  val palettePatcher = getStrokePatcher(resultColor, strokeColors, backgroundColors)
-  val strokeReplacer = getStrokePatcher(resultColor = resultColor, strokeColors = strokeColorsForReplacer, backgroundColors = null)
-  return replaceCachedImageIcons(icon = original) { cachedImageIcon ->
-    var icon = cachedImageIcon
-    var patcher = palettePatcher
-    val flags = icon.imageFlags
-    if (flags and ImageDescriptor.HAS_STROKE == ImageDescriptor.HAS_STROKE) {
-      val strokeIcon = icon.createStrokeIcon()
-      @Suppress("UseJBColor")
-      if (resultColor == Color.WHITE) {
-        // will be nothing to patch actually
-        return@replaceCachedImageIcons strokeIcon
-      }
+// hashCode for JBColor depends on isDark, so, a custom logic
+internal class IconAndColorCacheKey(@JvmField val icon: Icon, @JvmField val color: Color) {
+  private val rgb: Int = color.rgb
+  private val isDark: Boolean = color is JBColor && !JBColor.isBright()
 
-      if (strokeIcon is CachedImageIcon) {
-        icon = strokeIcon
-        patcher = strokeReplacer
-      }
+  override fun equals(other: Any?): Boolean {
+    if (this === other) {
+      return true
     }
-    patchColorsInCacheImageIcon(imageIcon = icon, colorPatcher = patcher, isDark = false)
-  }!!
+    return other is IconAndColorCacheKey && rgb == other.rgb && icon == other.icon && isDark == other.isDark
+  }
+
+  override fun hashCode(): Int {
+    var result = icon.hashCode()
+    result = 31 * result + rgb
+    result = 31 * result + isDark.hashCode()
+    return result
+  }
+}
+
+internal val strokeIconCache: LoadingCache<IconAndColorCacheKey, Icon> = Caffeine.newBuilder()
+  .maximumSize(64)
+  .expireAfterWrite(1.hours.toJavaDuration())
+  .build { computeStrokeIcon(original = it.icon, resultColor = it.color) }
+
+fun toStrokeIcon(icon: Icon, resultColor: Color): Icon {
+  return strokeIconCache.get(IconAndColorCacheKey(icon = icon, color = resultColor))
+}
+
+private fun computeStrokeIcon(original: Icon, resultColor: Color): Icon {
+  val palettePatcher = getStrokePatcher(resultColor = resultColor, strokeColors = strokeColors, backgroundColors = backgroundColors)
+  val strokeReplacer = getStrokePatcher(resultColor = resultColor, strokeColors = strokeColorsForReplacer, backgroundColors = null)
+
+  if (original is CachedImageIcon) {
+    return replaceCachedImageIcon(cachedImageIcon = original,
+                                  palettePatcher = palettePatcher,
+                                  resultColor = resultColor,
+                                  strokeReplacer = strokeReplacer)
+  }
+  else {
+    return replaceCachedImageIcons(icon = original) { cachedImageIcon ->
+      replaceCachedImageIcon(cachedImageIcon = cachedImageIcon,
+                             palettePatcher = palettePatcher,
+                             resultColor = resultColor,
+                             strokeReplacer = strokeReplacer)
+    }!!
+  }
+}
+
+private fun replaceCachedImageIcon(cachedImageIcon: CachedImageIcon,
+                                   palettePatcher: SVGLoader.SvgElementColorPatcherProvider,
+                                   resultColor: Color,
+                                   strokeReplacer: SVGLoader.SvgElementColorPatcherProvider): Icon {
+  var icon = cachedImageIcon
+  var colorPatcher = palettePatcher
+  val flags = icon.imageFlags
+  if (flags and ImageDescriptor.HAS_STROKE == ImageDescriptor.HAS_STROKE) {
+    icon = icon.createStrokeIcon()
+    @Suppress("UseJBColor")
+    if (resultColor == Color.WHITE) {
+      // will be nothing to patch actually
+      return icon
+    }
+    colorPatcher = strokeReplacer
+  }
+
+  var result = icon
+  val variant = result.getDarkIcon(false)
+  if (variant is CachedImageIcon) {
+    result = variant
+  }
+  return result.createWithPatcher(colorPatcher)
 }
 
 private fun getStrokePatcher(resultColor: Color,

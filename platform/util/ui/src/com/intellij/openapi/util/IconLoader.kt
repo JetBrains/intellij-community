@@ -16,10 +16,7 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.ImageUtil
-import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -255,7 +252,7 @@ object IconLoader {
 
   @Internal
   fun getDisabledIcon(icon: Icon, disableFilter: (() -> RGBImageFilter)?): Icon {
-    if (!isIconActivated) {
+    if (!isIconActivated || icon is EmptyIcon) {
       return icon
     }
 
@@ -270,7 +267,9 @@ object IconLoader {
    * Creates a new icon with the color patching applied.
    */
   fun colorPatchedIcon(icon: Icon, colorPatcher: SvgElementColorPatcherProvider): Icon {
-    return replaceCachedImageIcons(icon) { patchColorsInCacheImageIcon(imageIcon = it, colorPatcher = colorPatcher, isDark = null) }!!
+    return replaceCachedImageIcons(icon) {
+      patchColorsInCacheImageIcon(imageIcon = it, colorPatcher = colorPatcher)
+    }!!
   }
 
   /**
@@ -349,14 +348,12 @@ object IconLoader {
 
   @Deprecated("Do not use")
   open class CachedImageIcon private constructor(
-    originalPath: String?,
     resolver: ImageDataLoader?,
     isDarkOverridden: Boolean?,
     localFilterSupplier: (() -> RGBImageFilter)? = null,
     colorPatcher: SvgElementColorPatcherProvider? = null,
     useStroke: Boolean = false
   ) : com.intellij.ui.icons.CachedImageIcon(
-    originalPath = originalPath,
     resolver = resolver,
     isDarkOverridden = isDarkOverridden,
     localFilterSupplier = localFilterSupplier,
@@ -365,36 +362,24 @@ object IconLoader {
   )
 }
 
-internal fun patchColorsInCacheImageIcon(imageIcon: CachedImageIcon, colorPatcher: SvgElementColorPatcherProvider, isDark: Boolean?): Icon {
-  var result = imageIcon
-  if (isDark != null) {
-    val variant = result.getDarkIcon(isDark)
-    if (variant is CachedImageIcon) {
-      result = variant
-    }
-  }
-
+private fun patchColorsInCacheImageIcon(imageIcon: CachedImageIcon, colorPatcher: SvgElementColorPatcherProvider): Icon {
   var digest = colorPatcher.digest()
   if (digest == null) {
     @Suppress("DEPRECATION")
     val bytes = colorPatcher.wholeDigest()
     if (bytes == null) {
-      return result.createWithPatcher(colorPatcher)
+      return imageIcon.createWithPatcher(colorPatcher)
     }
     else {
       digest = longArrayOf(hasher.hashBytesToLong(bytes), seededHasher.hashBytesToLong(bytes))
     }
   }
 
-  val cacheIndex = when (isDark) {
-    false -> 0
-    true -> 1
-    else -> 2
-  }
+  val cacheIndex = 2
 
   return colorPatchCache[cacheIndex]
     .computeIfAbsent(digest) { CollectionFactory.createConcurrentWeakMap() }
-    .computeIfAbsent(imageIcon) { result.createWithPatcher(colorPatcher) }
+    .computeIfAbsent(imageIcon) { imageIcon.createWithPatcher(colorPatcher) }
 }
 
 private fun updateTransform(updater: (IconTransform) -> IconTransform) {
@@ -419,7 +404,7 @@ private fun clearCacheOnUpdateTransform() {
   for (map in colorPatchCache) {
     map.clear()
   }
-  iconToStrokeIcon.clear()
+  strokeIconCache.invalidateAll()
 
   // clear svg cache
   clearImageCache()
@@ -455,7 +440,7 @@ fun findIconUsingDeprecatedImplementation(originalPath: String,
     if (icon == null) {
       icon = iconCache.get(key) { k ->
         val resolver = ImageDataByPathResourceLoader(path = effectivePath, ownerClass = aClass, classLoader = k.second, strict = strict)
-        CachedImageIcon(originalPath = k.first, resolver = resolver, toolTip = toolTip)
+        CachedImageIcon(resolver = resolver, toolTip = toolTip)
       }
     }
   }
