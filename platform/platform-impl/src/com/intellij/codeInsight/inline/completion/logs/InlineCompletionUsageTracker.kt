@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion.logs
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionInsertPolicy
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
@@ -27,7 +28,7 @@ import kotlin.random.Random
 
 @ApiStatus.Experimental
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 7)
+  private val GROUP = EventLogGroup("inline.completion", 8)
 
   override fun getGroup() = GROUP
 
@@ -209,9 +210,13 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     private var firstShown = false
     private var shownLogSent = false
     private var showStartTime = 0L
-    private var suggestionLength = 0
+    private var suggestionAppendedLength = 0
+    private var suggestionSkippedLength = 0
     private var lines = 0
     private var typingDuringShow = 0
+
+    private val suggestionLength
+      get() = suggestionAppendedLength + suggestionSkippedLength
 
     fun firstShown(element: InlineCompletionBlock) {
       if (firstShown) {
@@ -236,7 +241,10 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       if (suggestionLength == 0 && element.text.isNotEmpty()) {
         lines++ // first line
       }
-      suggestionLength += element.text.length
+      when (val insertPolicy = element.insertPolicy) {
+        is InlineCompletionInsertPolicy.Append -> suggestionAppendedLength += insertPolicy.caretShift
+        is InlineCompletionInsertPolicy.Skip -> suggestionSkippedLength += insertPolicy.caretShift
+      }
       assert(!shownLogSent)
     }
 
@@ -261,6 +269,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       shownLogSent = true
       data.add(ShownEvents.LINES.with(lines))
       data.add(ShownEvents.LENGTH.with(suggestionLength))
+      data.add(ShownEvents.APPENDED_LENGTH.with(suggestionAppendedLength))
+      data.add(ShownEvents.SKIPPED_LENGTH.with(suggestionSkippedLength))
       data.add(ShownEvents.TYPING_DURING_SHOW.with(typingDuringShow))
       data.add(ShownEvents.SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
       data.add(ShownEvents.FINISH_TYPE.with(finishType))
@@ -273,6 +283,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     val LINES = Int("lines")
     val LENGTH = Int("length")
+    val APPENDED_LENGTH = Int("appended_length")
+    val SKIPPED_LENGTH = Int("skipped_length")
     val TYPING_DURING_SHOW = Int("typing_during_show")
 
     val TIME_TO_SHOW = Long("time_to_show")
@@ -289,6 +301,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     EventFields.CurrentFile,
     ShownEvents.LINES,
     ShownEvents.LENGTH,
+    ShownEvents.APPENDED_LENGTH,
+    ShownEvents.SKIPPED_LENGTH,
     ShownEvents.TYPING_DURING_SHOW,
     ShownEvents.TIME_TO_SHOW,
     ShownEvents.SHOWING_TIME,
