@@ -102,4 +102,10 @@ public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasState
     // TODO
     return null;
   }
+
+  @Override
+  public int getTextOffset() {
+    @Nullable PsiElement name = getNameIdentifier();
+    return name != null ? name.getTextOffset() : super.getTextOffset();
+  }
 }
