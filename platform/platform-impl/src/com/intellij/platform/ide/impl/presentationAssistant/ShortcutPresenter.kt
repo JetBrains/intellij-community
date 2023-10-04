@@ -13,6 +13,7 @@ import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import java.awt.Font
 import java.awt.event.KeyEvent
@@ -98,26 +99,21 @@ class ShortcutPresenter : Disposable {
     val actionText = (if (parentGroupName != null) "$parentGroupName ${MacKeymapUtil.RIGHT} " else "") + (actionData.actionText
                                                                                                           ?: "").removeSuffix("...")
 
-    val fragments = ArrayList<Pair<String, Font?>>()
+    val fragments = ArrayList<TextData>()
     if (actionText.isNotEmpty()) {
-      fragments.addText("<b>$actionText</b>")
+      fragments.add(TextData("<b>$actionText</b>"))
     }
 
     val mainKeymap = configuration.mainKeymapKind()
-    val shortcutTextFragments = getShortcutTexts(mainKeymap, configuration.mainKeymapLabel, actionId, actionText)
-    if (shortcutTextFragments.isNotEmpty()) {
-      if (fragments.isNotEmpty()) fragments.addText(" via&nbsp;")
-      fragments.addAll(shortcutTextFragments)
+    getShortcutTextData(mainKeymap, configuration.mainKeymapLabel, actionId, actionText)?.let {
+      fragments.add(it)
     }
 
     val alternativeKeymap = configuration.alternativeKeymapKind()
     if (alternativeKeymap != null) {
       val mainShortcut = getShortcutsText(mainKeymap.keymap?.getShortcuts(actionId), mainKeymap)
-      val altShortcutTextFragments = getShortcutTexts(alternativeKeymap, configuration.alternativeKeymapLabel, actionId, mainShortcut)
-      if (altShortcutTextFragments.isNotEmpty()) {
-        fragments.addText("&nbsp;(")
-        fragments.addAll(altShortcutTextFragments)
-        fragments.addText(")")
+      getShortcutTextData(alternativeKeymap, configuration.alternativeKeymapLabel, actionId, mainShortcut)?.let {
+        fragments.add(it)
       }
     }
 
@@ -158,33 +154,40 @@ class ShortcutPresenter : Disposable {
     }
   }
 
-  private fun getShortcutTexts(keymap: KeymapKind, label: String?, actionId: String, shownShortcut: String): List<Pair<String, Font?>> {
-    val fragments = ArrayList<Pair<String, Font?>>()
+  private fun getShortcutTextData(keymap: KeymapKind, label: String?, actionId: String, shownShortcut: String): TextData? {
     val shortcuts = keymap.keymap?.getShortcuts(actionId)?.let {
       if (it.isNotEmpty()) it else getCustomShortcut(actionId, keymap)
     }
     val shortcutText = getShortcutsText(shortcuts, keymap)
-    if (shortcutText.isEmpty() || shortcutText == shownShortcut) return fragments
+    if (shortcutText.isEmpty() || shortcutText == shownShortcut) return null
+
+    val title: String
+    val titleFont: Font?
+    val subtitle: String?
 
     when {
       keymap == KeymapKind.WIN || SystemInfo.isMac -> {
-        fragments.addText(shortcutText)
+        title = shortcutText
+        titleFont = null
       }
       macKeyStrokesFont != null && macKeyStrokesFont!!.canDisplayUpTo(shortcutText) == -1 -> {
-        fragments.add(Pair(shortcutText, macKeyStrokesFont))
+        title = shortcutText
+        titleFont = macKeyStrokesFont
       }
       else -> {
         val altShortcutAsWin = getShortcutsText(shortcuts, KeymapKind.WIN)
         if (altShortcutAsWin.isNotEmpty() && shownShortcut != altShortcutAsWin) {
-          fragments.addText(altShortcutAsWin)
+          title = altShortcutAsWin
+          titleFont = null
         }
+        else return null
       }
     }
     val keymapText = label ?: keymap.defaultLabel
-    if (keymapText.isNotEmpty()) {
-      fragments.addText("&nbsp;$keymapText")
-    }
-    return fragments
+    if (keymapText.isNotEmpty()) subtitle = "&nbsp;$keymapText"
+    else subtitle = null
+
+    return TextData(title, titleFont, subtitle)
   }
 
   private fun getShortcutsText(shortcuts: Array<out Shortcut>?, keymapKind: KeymapKind) =
@@ -227,3 +230,7 @@ class ShortcutPresenter : Disposable {
   override fun dispose() {
   }
 }
+
+internal data class TextData(@NlsSafe val title: String,
+                             val titleFont: Font? = null,
+                             @NlsSafe val subtitle: String? = null)

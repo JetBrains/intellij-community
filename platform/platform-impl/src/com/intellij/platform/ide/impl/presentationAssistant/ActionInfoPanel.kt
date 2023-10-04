@@ -17,32 +17,34 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsX
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
-import com.intellij.util.ui.Animator
-import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.*
 import java.awt.*
 import javax.swing.*
 
-class ActionInfoPanel(project: Project, textFragments: List<Pair<String, Font?>>) : NonOpaquePanel(BorderLayout()), Disposable {
+internal class ActionInfoPanel(project: Project, textFragments: List<TextData>) : NonOpaquePanel(BorderLayout()), Disposable {
   private val hint: JBPopup
-  private val labelsPanel: JPanel = NonOpaquePanel(FlowLayout(FlowLayout.CENTER, 0, 0))
+  private val labelsPanel: JPanel = NonOpaquePanel(GridLayout()).apply { background = null }
   private val hideAlarm = Alarm(this)
   private var animator: Animator
   private var phase = Phase.FADING_IN
   private val hintAlpha = if (StartupUiUtil.isDarkTheme) 0.05.toFloat() else 0.1.toFloat()
-  private val pluginConfiguration = PresentationAssistant.INSTANCE.configuration
+  private val configuration = PresentationAssistant.INSTANCE.configuration
 
   enum class Phase { FADING_IN, SHOWN, FADING_OUT, HIDDEN }
 
   init {
     updateLabelText(project, textFragments)
-    background = EditorColorsManager.getInstance().globalScheme.getColor(BACKGROUND_COLOR_KEY)
     isOpaque = true
+    background = null
     add(labelsPanel, BorderLayout.CENTER)
-    val emptyBorder = BorderFactory.createEmptyBorder(5, 10, 5, 10)
-    border = emptyBorder
-
 
     hint = with(JBPopupFactory.getInstance().createComponentPopupBuilder(this, this)) {
       setAlpha(1.0.toFloat())
@@ -64,6 +66,10 @@ class ActionInfoPanel(project: Project, textFragments: List<Pair<String, Font?>>
     animator.resume()
   }
 
+  override fun updateUI() {
+    super.updateUI()
+    if (parent != null) hint.pack(true, true)
+  }
 
   private fun fadeOut() {
     if (phase != Phase.SHOWN) return
@@ -108,10 +114,10 @@ class ActionInfoPanel(project: Project, textFragments: List<Pair<String, Font?>>
     phase = Phase.SHOWN
     setAlpha(hintAlpha)
     hideAlarm.cancelAllRequests()
-    hideAlarm.addRequest({ fadeOut() }, pluginConfiguration.popupDuration, ModalityState.any())
+    hideAlarm.addRequest({ fadeOut() }, configuration.popupDuration, ModalityState.any())
   }
 
-  fun updateText(project: Project, textFragments: List<Pair<String, Font?>>) {
+  fun updateText(project: Project, textFragments: List<TextData>) {
     if (getHintWindow() == null) return
     labelsPanel.removeAll()
     updateLabelText(project, textFragments)
@@ -127,23 +133,22 @@ class ActionInfoPanel(project: Project, textFragments: List<Pair<String, Font?>>
     val statusBarHeight = ideFrame.statusBar?.component?.height ?: 0
     val visibleRect = ideFrame.component.visibleRect
     val popupSize = preferredSize
-    val x = when (pluginConfiguration.horizontalAlignment) {
-      0 -> visibleRect.x + pluginConfiguration.margin
+    val x = when (configuration.horizontalAlignment) {
+      0 -> visibleRect.x + configuration.margin
       1 -> visibleRect.x + (visibleRect.width - popupSize.width) / 2
-      else -> visibleRect.x + visibleRect.width - popupSize.width - pluginConfiguration.margin
+      else -> visibleRect.x + visibleRect.width - popupSize.width - configuration.margin
     }
-    val y = when (pluginConfiguration.verticalAlignment) {
-      0 -> visibleRect.y + pluginConfiguration.margin
-      else -> visibleRect.y + visibleRect.height - popupSize.height - statusBarHeight - pluginConfiguration.margin
+    val y = when (configuration.verticalAlignment) {
+      0 -> visibleRect.y + configuration.margin
+      else -> visibleRect.y + visibleRect.height - popupSize.height - statusBarHeight - configuration.margin
     }
     return RelativePoint(ideFrame.component, Point(x, y))
   }
 
-  private fun updateLabelText(project: Project, textFragments: List<Pair<String, Font?>>) {
+  private fun updateLabelText(project: Project, textFragments: List<TextData>) {
     val ideFrame = WindowManager.getInstance().getIdeFrame(project)!!
-    for (label in createLabels(textFragments, ideFrame)) {
-      labelsPanel.add(label)
-    }
+    val blocks = createBlocks(textFragments, ideFrame)
+    labelsPanel.addComponentsWithGap(blocks, 12)
   }
 
   private fun List<Pair<String, Font?>>.mergeFragments(): List<Pair<String, Font?>> {
@@ -161,8 +166,12 @@ class ActionInfoPanel(project: Project, textFragments: List<Pair<String, Font?>>
     return result
   }
 
+  private fun createBlocks(textFragments: List<TextData>, ideFrame: IdeFrame): List<ActionInfoBlockPanel> {
+    return textFragments.map { ActionInfoBlockPanel(it) }
+  }
+
   private fun createLabels(textFragments: List<Pair<String, Font?>>, ideFrame: IdeFrame): List<JLabel> {
-    var fontSize = pluginConfiguration.fontSize.toFloat()
+    var fontSize = configuration.fontSize.toFloat()
     val color = EditorColorsManager.getInstance().globalScheme.getColor(FOREGROUND_COLOR_KEY)
     val labels = textFragments.mergeFragments().map {
       @Suppress("HardCodedStringLiteral")
@@ -210,4 +219,61 @@ class ActionInfoPanel(project: Project, textFragments: List<Pair<String, Font?>>
   }
 
   fun canBeReused(): Boolean = phase == Phase.FADING_IN || phase == Phase.SHOWN
+}
+
+internal class ActionInfoBlockPanel(val textData: TextData) : JPanel() {
+  private val titleLabel = JBLabel()
+  private val subtitleLabel = JBLabel()
+
+  init {
+    layout = GridLayout()
+    RowsGridBuilder(this)
+      .row(resizable = true).cell(component = titleLabel, verticalAlign = VerticalAlign.CENTER, resizableColumn = true)
+      .row(resizable = true).cell(component = subtitleLabel, verticalAlign = VerticalAlign.CENTER, resizableColumn = true)
+
+    titleLabel.border = JBEmptyBorder(6, 16, 0, 16)
+    subtitleLabel.border = JBEmptyBorder(0, 18, 8, 16)
+    subtitleLabel.font = JBFont.label().deriveFont(JBUIScale.scale(SUBTITLE_FONT_SIZE))
+
+    updateLabels()
+  }
+
+  override fun paintComponent(g: Graphics?) {
+    if (g !is Graphics2D) return
+    super.paintComponent(g)
+
+    g.color = BACKGROUND
+    val config = GraphicsUtil.setupAAPainting(g)
+    val scale = (g.transform.scaleX * JBUIScale.scale(1)).toInt()
+    g.fillRoundRect(0, 0, width, height, CORNER_RADIUS * scale, CORNER_RADIUS * scale)
+    config.restore()
+  }
+
+  private fun updateLabels() {
+    titleLabel.text = "<html>${textData.title}</html>"
+    titleLabel.font = (font?.let { JBFont.create(it) } ?: JBFont.label()).deriveFont(JBUIScale.scale(TITLE_FONT_SIZE))
+
+    val subtitle = textData.subtitle
+    subtitleLabel.text = subtitle?.let { "<html>${subtitle}</html>" } ?: " "
+  }
+
+  companion object {
+    private const val TITLE_FONT_SIZE = 40f
+    private const val SUBTITLE_FONT_SIZE = 14f
+    private const val CORNER_RADIUS = 8
+    private val BACKGROUND = EditorColorsManager.getInstance().globalScheme.getColor(BACKGROUND_COLOR_KEY)
+  }
+}
+
+private fun JComponent.addComponentsWithGap(components: List<JComponent>, gap: Int) {
+  val builder = RowsGridBuilder(this)
+  val row = builder.row(resizable = true)
+  for (c in components) {
+    row.cell(c)
+  }
+
+  row.columnsGaps((0 until row.columnsCount).map {
+    val rightGap = if (it == (row.columnsCount - 1)) 0 else gap
+    UnscaledGapsX(0, rightGap)
+  })
 }
