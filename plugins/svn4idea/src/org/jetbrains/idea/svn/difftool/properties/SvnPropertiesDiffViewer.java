@@ -19,6 +19,7 @@ import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -198,48 +199,50 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
 
     @Override
     public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
-      Graphics2D gg = DiffDividerDrawUtil.getDividerGraphics(g, divider, getEditor1().getComponent());
-      Rectangle clip = gg.getClipBounds();
-      if (clip == null) return;
+      ReadAction.run(() -> {
+        Graphics2D gg = DiffDividerDrawUtil.getDividerGraphics(g, divider, getEditor1().getComponent());
+        Rectangle clip = gg.getClipBounds();
+        if (clip == null) return;
 
-      gg.setColor(DiffDrawUtil.getDividerColor());
-      gg.fill(clip);
+        gg.setColor(DiffDrawUtil.getDividerColor());
+        gg.fill(clip);
 
-      EditorEx editor1 = getEditor1();
-      EditorEx editor2 = getEditor2();
+        EditorEx editor1 = getEditor1();
+        EditorEx editor2 = getEditor2();
 
-      JComponent header1 = editor1.getHeaderComponent();
-      JComponent header2 = editor2.getHeaderComponent();
-      int headerOffset1 = header1 == null ? 0 : header1.getHeight();
-      int headerOffset2 = header2 == null ? 0 : header2.getHeight();
+        JComponent header1 = editor1.getHeaderComponent();
+        JComponent header2 = editor2.getHeaderComponent();
+        int headerOffset1 = header1 == null ? 0 : header1.getHeight();
+        int headerOffset2 = header2 == null ? 0 : header2.getHeight();
 
-      // TODO: painting is ugly if shift1 != shift2 (ex: search field is opened for one of editors)
-      int shift1 = editor1.getScrollingModel().getVerticalScrollOffset() - headerOffset1;
-      int shift2 = editor2.getScrollingModel().getVerticalScrollOffset() - headerOffset2;
-      double rotate = shift1 == shift2 ? 0 : Math.atan2(shift2 - shift1, clip.width);
+        // TODO: painting is ugly if shift1 != shift2 (ex: search field is opened for one of editors)
+        int shift1 = editor1.getScrollingModel().getVerticalScrollOffset() - headerOffset1;
+        int shift2 = editor2.getScrollingModel().getVerticalScrollOffset() - headerOffset2;
+        double rotate = shift1 == shift2 ? 0 : Math.atan2(shift2 - shift1, clip.width);
 
-      DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), rotate == 0, editor1, editor2, this);
+        DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), rotate == 0, editor1, editor2, this);
 
-      for (DiffChange change : myDiffChanges) {
-        int y1 = editor1.logicalPositionToXY(new LogicalPosition(change.getStartLine(Side.LEFT), 0)).y - shift1;
-        int y2 = editor2.logicalPositionToXY(new LogicalPosition(change.getStartLine(Side.RIGHT), 0)).y - shift2;
-        int endY1 = editor1.logicalPositionToXY(new LogicalPosition(change.getEndLine(Side.LEFT), 0)).y - shift1;
-        int endY2 = editor2.logicalPositionToXY(new LogicalPosition(change.getEndLine(Side.RIGHT), 0)).y - shift2;
+        for (DiffChange change : myDiffChanges) {
+          int y1 = editor1.logicalPositionToXY(new LogicalPosition(change.getStartLine(Side.LEFT), 0)).y - shift1;
+          int y2 = editor2.logicalPositionToXY(new LogicalPosition(change.getStartLine(Side.RIGHT), 0)).y - shift2;
+          int endY1 = editor1.logicalPositionToXY(new LogicalPosition(change.getEndLine(Side.LEFT), 0)).y - shift1;
+          int endY2 = editor2.logicalPositionToXY(new LogicalPosition(change.getEndLine(Side.RIGHT), 0)).y - shift2;
 
-        AffineTransform oldTransform = gg.getTransform();
-        gg.translate(0, y1);
-        if (rotate != 0) gg.rotate(-rotate);
-        myLabel.setText(change.getRecord().getName());
-        myLabel.setForeground(getRecordTitleColor(change));
-        myLabel.setBounds(clip);
-        myLabel.paint(gg);
-        gg.setTransform(oldTransform);
+          AffineTransform oldTransform = gg.getTransform();
+          gg.translate(0, y1);
+          if (rotate != 0) gg.rotate(-rotate);
+          myLabel.setText(change.getRecord().getName());
+          myLabel.setForeground(getRecordTitleColor(change));
+          myLabel.setBounds(clip);
+          myLabel.paint(gg);
+          gg.setTransform(oldTransform);
 
-        gg.setColor(JBColor.border());
-        gg.drawLine(0, y1 - 1, clip.width, y2 - 1);
-        gg.drawLine(0, endY1 - 1, clip.width, endY2 - 1);
-      }
-      gg.dispose();
+          gg.setColor(JBColor.border());
+          gg.drawLine(0, y1 - 1, clip.width, y2 - 1);
+          gg.drawLine(0, endY1 - 1, clip.width, endY2 - 1);
+        }
+        gg.dispose();
+      });
     }
 
     @Override
