@@ -18,7 +18,10 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.notebook.editor.BackedVirtualFileProvider;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -93,8 +96,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   private static final @NotNull Key<Boolean> COMPLETE_ESSENTIAL_HIGHLIGHTING_KEY = Key.create("COMPLETE_ESSENTIAL_HIGHLIGHTING");
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
-  private final @NotNull PsiDocumentManager myPsiDocumentManager;
-  private FileEditorManager myFileEditorManager;
+  private PsiDocumentManager psiDocumentManager;
+  private FileEditorManager fileEditorManager;
   private final Map<FileEditor, DaemonProgressIndicator> myUpdateProgress = new ConcurrentHashMap<>();
 
   private final UpdateRunnable myUpdateRunnable;
@@ -126,7 +129,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
     myProject = project;
     mySettings = DaemonCodeAnalyzerSettings.getInstance();
-    myPsiDocumentManager = PsiDocumentManager.getInstance(project);
     myLastSettings = ((DaemonCodeAnalyzerSettingsImpl)mySettings).clone();
 
     myFileStatusMap = new FileStatusMap(project);
@@ -154,10 +156,19 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   private FileEditorManager getFileEditorManager() {
-    var result = myFileEditorManager;
+    FileEditorManager result = fileEditorManager;
     if (result == null) {
       result = FileEditorManager.getInstance(myProject);
-      myFileEditorManager = result;
+      fileEditorManager = result;
+    }
+    return result;
+  }
+
+  private PsiDocumentManager getPsiDocumentManager() {
+    PsiDocumentManager result = psiDocumentManager;
+    if (result == null) {
+      result = PsiDocumentManager.getInstance(myProject);
+      psiDocumentManager = result;
     }
     return result;
   }
@@ -984,21 +995,21 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     if (PassExecutorService.LOG.isDebugEnabled()) {
       PassExecutorService.log(null, null, "Update Runnable. myUpdateByTimerEnabled:",
         updateByTimerEnabled, " activeEditors:", activeEditors,
-        (dca.myPsiDocumentManager.hasEventSystemEnabledUncommittedDocuments() ? " hasEventSystemEnabledUncommittedDocuments(" + Arrays.toString(dca.myPsiDocumentManager.getUncommittedDocuments())+")" : "()")
+        (dca.getPsiDocumentManager().hasEventSystemEnabledUncommittedDocuments() ? " hasEventSystemEnabledUncommittedDocuments(" + Arrays.toString(dca.getPsiDocumentManager().getUncommittedDocuments()) + ")" : "()")
         + (ApplicationManager.getApplication().isWriteAccessAllowed() ? " inside write action" : "r"));
     }
-    if (!updateByTimerEnabled) return;
-
-    if (activeEditors.isEmpty()) return;
+    if (!updateByTimerEnabled || activeEditors.isEmpty()) {
+      return;
+    }
 
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       // makes no sense to start from within write action - will cancel anyway
       // we'll restart when the write action finish
       return;
     }
-    if (dca.myPsiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
+    if (dca.getPsiDocumentManager().hasEventSystemEnabledUncommittedDocuments()) {
       // restart when everything committed
-      dca.myPsiDocumentManager.performLaterWhenAllCommitted(updateRunnable);
+      dca.getPsiDocumentManager().performLaterWhenAllCommitted(updateRunnable);
       return;
     }
 
@@ -1111,8 +1122,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       stopProcess(true, "canceled in queuePassesCreation: "+progress.getCancellationTrace());
       return;
     }
-    if (myPsiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
-      stopProcess(true, "more documents to commit: " + ReadAction.compute(() -> Arrays.toString(myPsiDocumentManager.getUncommittedDocuments())));
+    if (getPsiDocumentManager().hasEventSystemEnabledUncommittedDocuments()) {
+      stopProcess(true, "more documents to commit: " + ReadAction.compute(() -> Arrays.toString(getPsiDocumentManager().getUncommittedDocuments())));
       return;
     }
     try {
