@@ -560,9 +560,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
-    <goodCodeRedVisitor
-      language="JAVA"
-      implementationClass="com.intellij.java.dev.JavaGoodCodeRedVisitor"/>
     <cancellationCheckProvider
       language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.JavaCancellationCheckProvider"/>
