@@ -1336,7 +1336,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     int endOffset = highlighter.getEndOffset();
 
     int startY = myEditor.visualLineToY(myEditor.offsetToVisualLine(startOffset));
-    int endY = myEditor.visualLineToYRange(myEditor.offsetToVisualLine(endOffset))[1];
+    int visualLine = myEditor.offsetToVisualLine(endOffset);
+    int blockInlaysBelowHeight = EditorUtil.getInlaysHeight(myEditor, visualLine, false);
+    int endY = myEditor.visualLineToYRange(visualLine)[1] + blockInlaysBelowHeight;
 
     LineMarkerRenderer renderer = Objects.requireNonNull(highlighter.getLineMarkerRenderer());
     LineMarkerRendererEx.Position position = getLineMarkerPosition(renderer);
