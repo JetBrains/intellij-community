@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run
 
+import com.intellij.execution.target.TargetBasedSdkAdditionalData
 import com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType
@@ -102,7 +103,7 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
     @JvmStatic
     fun findPythonTargetInterpreter(sdk: Sdk, project: Project): HelpersAwareTargetEnvironmentRequest =
       when (sdk.sdkAdditionalData) {
-        is PyTargetAwareAdditionalData, is PyRemoteSdkAdditionalDataBase ->
+        is TargetBasedSdkAdditionalData, is PyRemoteSdkAdditionalDataBase ->
           EP_NAME.extensionList.firstNotNullOfOrNull { it.getPythonTargetInterpreter(sdk, project) }
         else -> null
       } ?: HelpersAwareLocalTargetEnvironmentRequest()

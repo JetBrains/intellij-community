@@ -16,10 +16,7 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.target.FullPathOnTarget
-import com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
-import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.execution.target.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
@@ -428,7 +425,8 @@ val Sdk.targetAdditionalData get():PyTargetAwareAdditionalData? = sdkAdditionalD
 /**
  * Returns target environment if configuration is target api based
  */
-val Sdk.targetEnvConfiguration get():TargetEnvironmentConfiguration? = targetAdditionalData?.targetEnvironmentConfiguration
+val Sdk.targetEnvConfiguration
+  get():TargetEnvironmentConfiguration? = (sdkAdditionalData as? TargetBasedSdkAdditionalData)?.targetEnvironmentConfiguration
 
 /**
  * Where "remote_sources" folder for certain SDK is stored
