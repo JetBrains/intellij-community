@@ -117,7 +117,7 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
     val offset = request.endOffset
 
     val resultFlow = try {
-      request(session.provider, request).flowOn(Dispatchers.IO)
+      request(session.provider, request).flowOn(Dispatchers.Default)
     }
     catch (e: Throwable) {
       LOG.errorIfNotCancellation(e)
