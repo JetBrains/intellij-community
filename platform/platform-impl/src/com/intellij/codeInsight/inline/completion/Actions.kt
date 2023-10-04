@@ -3,7 +3,6 @@ package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -57,9 +56,7 @@ class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), 
       val curCaret = caret ?: editor.caretModel.currentCaret
 
       val listener = editor.getUserData(InlineCompletionHandler.KEY) ?: return
-      val file = dataContext?.getData(CommonDataKeys.PSI_FILE) ?: return
-
-      listener.invoke(InlineCompletionEvent.DirectCall(editor, file, curCaret, dataContext))
+      listener.invoke(InlineCompletionEvent.DirectCall(editor, curCaret, dataContext))
     }
   }
 }

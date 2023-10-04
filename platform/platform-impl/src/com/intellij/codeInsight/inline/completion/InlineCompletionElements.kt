@@ -9,9 +9,10 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
+import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 
@@ -44,12 +45,13 @@ interface InlineCompletionEvent {
   @ApiStatus.Experimental
   data class DirectCall(
     val editor: Editor,
-    val file: PsiFile,
     val caret: EditorCaret,
     val context: DataContext? = null,
   ) : InlineCompletionEvent {
-    override fun toRequest(): InlineCompletionRequest {
+    override fun toRequest(): InlineCompletionRequest? {
       val offset = runReadAction { caret.offset }
+      val project = editor.project ?: return null
+      val file = getPsiFile(caret, project) ?: return null
       return InlineCompletionRequest(this, file, editor, editor.document, offset, offset)
     }
   }
@@ -60,12 +62,11 @@ interface InlineCompletionEvent {
   @ApiStatus.Experimental
   data class DocumentChange(val event: DocumentEvent, val editor: Editor) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
-      val virtualFile = editor.virtualFile ?: return null
       val project = editor.project ?: return null
-      if (editor.caretModel.caretCount != 1) return null
+      val caretModel = editor.caretModel
+      if (caretModel.caretCount != 1) return null
 
-      val file = runReadAction { PsiManager.getInstance(project).findFile(virtualFile) } ?: return null
-
+      val file = getPsiFile(caretModel.currentCaret, project) ?: return null
       return InlineCompletionRequest(this, file, editor, event.document, event.offset, event.offset + event.newLength)
     }
   }
@@ -96,17 +97,22 @@ interface InlineCompletionEvent {
     val event: LookupEvent
     override fun toRequest(): InlineCompletionRequest? {
       val editor = runReadAction { event.lookup?.editor } ?: return null
-      if (editor.caretModel.caretCount != 1) return null
+      val caretModel = editor.caretModel
+      if (caretModel.caretCount != 1) return null
 
-      val virtualFile = editor.virtualFile ?: return null
       val project = editor.project ?: return null
 
       val (file, offset) = runReadAction {
-        PsiManager.getInstance(project).findFile(virtualFile) to editor.caretModel.offset
+        getPsiFile(caretModel.currentCaret, project) to caretModel.offset
       }
       if (file == null) return null
 
       return InlineCompletionRequest(this, file, editor, editor.document, offset, offset, event.item)
     }
   }
+}
+
+@RequiresBlockingContext
+private fun getPsiFile(caret: Caret, project: Project): PsiFile? {
+  return runReadAction { PsiUtilBase.getPsiFileInEditor(caret, project) }
 }

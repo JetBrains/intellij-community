@@ -275,11 +275,11 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
 
   @Deprecated(
     "replaced with direct event call type",
-    ReplaceWith("invoke(InlineCompletionEvent.DirectCall(editor, file, caret, context))"),
+    ReplaceWith("invoke(InlineCompletionEvent.DirectCall(editor, caret, context))"),
     DeprecationLevel.ERROR
   )
   fun invoke(editor: Editor, file: PsiFile, caret: Caret, context: DataContext?) {
-    return invoke(InlineCompletionEvent.DirectCall(editor, file, caret, context))
+    return invoke(InlineCompletionEvent.DirectCall(editor, caret, context))
   }
 
   @TestOnly
