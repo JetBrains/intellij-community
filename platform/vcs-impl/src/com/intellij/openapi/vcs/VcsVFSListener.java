@@ -110,18 +110,8 @@ public abstract class VcsVFSListener implements Disposable {
     private final Set<FilePath> myDeletedFiles = new SmartHashSet<>();
     private final Set<FilePath> myDeletedWithoutConfirmFiles = new SmartHashSet<>();
     private final Set<MovedFileInfo> myMovedFiles = new SmartHashSet<>();
-    private final List<VcsException> myExceptions = new SmartList<>();
 
     private final ReentrantReadWriteLock PROCESSING_LOCK = new ReentrantReadWriteLock();
-
-    public boolean addException(@NotNull VcsException exception) {
-      return withLock(PROCESSING_LOCK.writeLock(), () -> myExceptions.add(exception));
-    }
-
-    @NotNull
-    public List<VcsException> acquireExceptions() {
-      return acquireListUnderLock(myExceptions);
-    }
 
     @NotNull
     public List<VirtualFile> acquireAddedFiles() {
@@ -236,12 +226,6 @@ public abstract class VcsVFSListener implements Disposable {
       executeAdd();
       executeDelete();
       executeMoveRename();
-
-      List<VcsException> exceptions = acquireExceptions();
-      if (!exceptions.isEmpty()) {
-        AbstractVcsHelper.getInstance(myProject)
-          .showErrors(exceptions, VcsBundle.message("vcs.tab.title.vcs.name.operations.errors", myVcs.getDisplayName()));
-      }
     }
 
     private void processFileCreated(@NotNull VFileCreateEvent event) {
