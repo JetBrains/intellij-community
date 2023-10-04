@@ -103,7 +103,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       else {
         targets.add(target);
       }
-      myUsages.add(new ClassUsage(type.getJvmName()));
+      addUsage(new ClassUsage(type.getJvmName()));
     }
 
     private String getMethodDescr(final Object value, boolean isArray) {
@@ -202,10 +202,10 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
       if (value instanceof Type) {
         final String className = ((Type)value).getClassName().replace('.', '/');
-        myUsages.add(new ClassUsage(className));
+        addUsage(new ClassUsage(className));
       }
 
-      myUsages.add(new MethodUsage(myType.getJvmName(), methodName, methodDescr));
+      addUsage(new MethodUsage(myType.getJvmName(), methodName, methodDescr));
       //myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, myType.className));
 
       myUsedArguments.add(methodName);
@@ -231,7 +231,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
     @Override
     public void visitMainClass(String mainClass) {
-      myUsages.add(new ClassUsage(mainClass));
+      addUsage(new ClassUsage(mainClass));
     }
 
     @Override
@@ -252,15 +252,15 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
     @Override
     public void visitUse(String service) {
-      myUsages.add(new ClassUsage(service));
+      addUsage(new ClassUsage(service));
     }
 
     @Override
     public void visitProvide(String service, String... providers) {
-      myUsages.add(new ClassUsage(service));
+      addUsage(new ClassUsage(service));
       if (providers != null) {
         for (String provider : providers) {
-          myUsages.add(new ClassUsage(provider));
+          addUsage(new ClassUsage(provider));
         }
       }
     }
@@ -301,8 +301,8 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   private final SignatureVisitor mySignatureWithGenericBoundUsageCrawler = new BaseSignatureVisitor() {
     @Override
     public void visitClassType(String name) {
-      myUsages.add(new ClassUsage(name));
-      myUsages.add(new ClassAsGenericBoundUsage(name));
+      super.visitClassType(name);
+      addUsage(new ClassAsGenericBoundUsage(name));
     }
   };
 
@@ -661,7 +661,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
               if (samMethodType.getSort() == Type.METHOD) {
                 registerMethodUsage(returnType.getInternalName(), methodName, samMethodType.getDescriptor());
                 // reflect dynamic proxy instantiation with NewClassUsage
-                myUsages.add(new ClassNewUsage(returnType.getInternalName()));
+                addUsage(new ClassNewUsage(returnType.getInternalName()));
               }
             }
           }
@@ -688,23 +688,23 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
       private void registerFieldUsage(int opcode, String owner, String fName, String desc) {
         if (opcode == Opcodes.PUTFIELD || opcode == Opcodes.PUTSTATIC) {
-          myUsages.add(new FieldAssignUsage(owner, fName, desc));
+          addUsage(new FieldAssignUsage(owner, fName, desc));
         }
         if (opcode == Opcodes.GETFIELD || opcode == Opcodes.GETSTATIC) {
           Iterators.collect(TypeRepr.getType(desc).getUsages(), myUsages);
         }
-        myUsages.add(new FieldUsage(owner, fName, desc));
+        addUsage(new FieldUsage(owner, fName, desc));
       }
 
       private void registerMethodUsage(String owner, String name, @Nullable String desc) {
         //myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, methodOwner));
         if (desc != null) {
-          myUsages.add(new MethodUsage(owner, name, desc));
+          addUsage(new MethodUsage(owner, name, desc));
           Iterators.collect(TypeRepr.getType(Type.getReturnType(desc)).getUsages(), myUsages);
         }
         else {
           // todo: verify for which methods null descriptor is passed
-          myUsages.add(new MethodUsage(owner, name, ""));
+          addUsage(new MethodUsage(owner, name, ""));
         }
       }
 
@@ -832,7 +832,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
     @Override
     public void visitClassType(String name) {
-      myUsages.add(new ClassUsage(name));
+      addUsage(new ClassUsage(name));
     }
   }
 }
