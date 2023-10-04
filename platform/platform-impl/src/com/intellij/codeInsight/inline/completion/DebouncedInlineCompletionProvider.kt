@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
 import com.intellij.openapi.application.ApplicationManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -19,7 +20,7 @@ abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
    * Returns a Flow of InlineCompletionElement objects with debounced proposals for the given InlineCompletionRequest.
    * Override [delay] to control debounce delay
    */
-  abstract suspend fun getProposalsDebounced(request: InlineCompletionRequest): Flow<InlineCompletionElement>
+  abstract suspend fun getProposalsDebounced(request: InlineCompletionRequest): Flow<InlineCompletionBlock>
 
   /**
    * Forces the inline completion for the given request.
@@ -29,7 +30,7 @@ abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
    */
   abstract fun force(request: InlineCompletionRequest): Boolean
 
-  override suspend fun getProposals(request: InlineCompletionRequest): Flow<InlineCompletionElement> {
+  override suspend fun getProposals(request: InlineCompletionRequest): Flow<InlineCompletionBlock> {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return getProposalsDebounced(request)
     }
@@ -42,7 +43,7 @@ abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
     return debounce(request)
   }
 
-  suspend fun debounce(request: InlineCompletionRequest): Flow<InlineCompletionElement> {
+  suspend fun debounce(request: InlineCompletionRequest): Flow<InlineCompletionBlock> {
     jobCall?.cancel()
     jobCall = coroutineContext.job
     delay(delay)

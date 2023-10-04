@@ -5,6 +5,7 @@ package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.render.InlineBlockElementRenderer
 import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionInsertPolicy
 import com.intellij.codeInsight.inline.completion.render.InlineSuffixRenderer
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Editor
@@ -21,15 +22,21 @@ import java.awt.Graphics
 import java.awt.Rectangle
 
 @ApiStatus.Experimental
-data class InlineCompletionGrayTextElement(val text: String) : InlineCompletionBlock {
+data class InlineCompletionGrayTextElement(override val text: String) : InlineCompletionBlock {
   private var suffixInlay: Inlay<*>? = null
   private var blockInlay: Inlay<*>? = null
 
-  override val offset: Int?
+  override val startOffset: Int?
     get() = suffixInlay?.offset
+
+  override val endOffset: Int?
+    get() = startOffset
 
   override val isEmpty: Boolean
     get() = suffixInlay == null && blockInlay == null
+
+  override val insertPolicy: InlineCompletionInsertPolicy
+    get() = InlineCompletionInsertPolicy.Append(text)
 
   override fun getBounds(): Rectangle? {
     val bounds = blockInlay?.bounds?.let { Rectangle(it) }
@@ -44,6 +51,14 @@ data class InlineCompletionGrayTextElement(val text: String) : InlineCompletionB
     if (lines.size > 1) {
       renderBlock(lines.drop(1), editor, offset)
     }
+  }
+
+  override fun withSameContent(): InlineCompletionBlock {
+    return InlineCompletionGrayTextElement(text)
+  }
+
+  override fun withTruncatedPrefix(length: Int): InlineCompletionBlock? {
+    return if (text.length > length) InlineCompletionGrayTextElement(text.drop(length)) else null
   }
 
   override fun dispose() {

@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.session
 
-import com.intellij.codeInsight.inline.completion.InlineCompletionElement
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -14,8 +14,8 @@ data class InlineState internal constructor(
 
   private val elementsDisposable = Disposer.newDisposable(this)
 
-  private val _elements: MutableList<InlineCompletionElement> = LinkedList()
-  val elements: List<InlineCompletionElement>
+  private val _elements: MutableList<InlineCompletionBlock> = LinkedList()
+  val elements: List<InlineCompletionBlock>
     get() = _elements
 
   val firstElement
@@ -25,7 +25,7 @@ data class InlineState internal constructor(
     get() = elements.lastOrNull()
 
   @RequiresEdt
-  internal fun addElement(element: InlineCompletionElement) {
+  internal fun addElement(element: InlineCompletionBlock) {
     Disposer.register(elementsDisposable, element)
     _elements.add(element)
   }

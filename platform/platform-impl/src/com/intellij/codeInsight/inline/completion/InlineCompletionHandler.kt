@@ -5,6 +5,8 @@ import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCar
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionInsertPolicy
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessionManager
@@ -135,7 +137,7 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
     }
   }
 
-  suspend fun request(provider: InlineCompletionProvider, request: InlineCompletionRequest): Flow<InlineCompletionElement> {
+  suspend fun request(provider: InlineCompletionProvider, request: InlineCompletionRequest): Flow<InlineCompletionBlock> {
     withContext(Dispatchers.EDT) {
       coroutineToIndicator {
         trace(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java))
@@ -146,7 +148,7 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
 
   @RequiresEdt
   private suspend fun showInlineElement(
-    element: InlineCompletionElement,
+    element: InlineCompletionBlock,
     index: Int,
     offset: Int,
     context: InlineCompletionContext
@@ -156,7 +158,7 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
   }
 
   @RequiresEdt
-  private fun InlineCompletionContext.renderElement(element: InlineCompletionElement, startOffset: Int) {
+  private fun InlineCompletionContext.renderElement(element: InlineCompletionBlock, startOffset: Int) {
     element.render(editor, lastOffset ?: startOffset)
     state.addElement(element)
   }
@@ -165,14 +167,23 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
   @RequiresBlockingContext
   fun insert(editor: Editor) {
     val context = InlineCompletionContext.getOrNull(editor) ?: return
+    val offset = context.startOffset ?: return
     trace(InlineCompletionEventType.Insert)
 
-    val offset = context.lastOffset ?: return
-    val currentCompletion = context.lineToInsert
+    val insertions = context.state.elements.map { it.insertPolicy }
     hide(editor, false, context)
 
-    editor.document.insertString(offset, currentCompletion)
-    editor.caretModel.moveToOffset(offset + currentCompletion.length)
+    var offsetDelta = 0
+    for (insertPolicy in insertions) {
+      when (insertPolicy) {
+        is InlineCompletionInsertPolicy.Append -> {
+          editor.document.insertString(offset + offsetDelta, insertPolicy.text)
+        }
+        is InlineCompletionInsertPolicy.Skip -> Unit
+      }
+      offsetDelta += insertPolicy.caretShift
+    }
+    editor.caretModel.moveToOffset(offset + offsetDelta)
 
     LookupManager.getActiveLookup(editor)?.hideLookup(false) //TODO: remove this
   }

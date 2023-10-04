@@ -32,11 +32,11 @@ class InlineCompletionContext internal constructor(val editor: Editor) : Disposa
 
   val startOffset: Int?
     @RequiresEdt
-    get() = state.firstElement?.offset
+    get() = state.firstElement?.startOffset
 
   val lastOffset: Int?
     @RequiresEdt
-    get() = state.lastElement?.offset
+    get() = state.lastElement?.endOffset
 
   val lineToInsert: String
     @RequiresEdt

@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.session
 
-import com.intellij.codeInsight.inline.completion.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 internal abstract class InlineCompletionSessionManager {
@@ -105,7 +105,7 @@ internal abstract class InlineCompletionSessionManager {
     return UpdateSessionResult.Changed(newElements, truncateTyping, reason)
   }
 
-  private fun truncateElementsPrefix(elements: List<InlineCompletionElement>, length: Int): List<InlineCompletionElement> {
+  private fun truncateElementsPrefix(elements: List<InlineCompletionBlock>, length: Int): List<InlineCompletionBlock> {
     var currentLength = length
     val newFirstElementIndex = elements.indexOfFirst {
       currentLength -= it.text.length
@@ -113,13 +113,13 @@ internal abstract class InlineCompletionSessionManager {
     }
     check(newFirstElementIndex >= 0)
     currentLength += elements[newFirstElementIndex].text.length
-    val newFirstElement = InlineCompletionElement(elements[newFirstElementIndex].text.drop(currentLength))
-    return listOf(newFirstElement) + elements.drop(newFirstElementIndex + 1)
+    val newFirstElement = elements[newFirstElementIndex].withTruncatedPrefix(currentLength)
+    return listOfNotNull(newFirstElement) + elements.drop(newFirstElementIndex + 1).map { it.withSameContent() }
   }
 
   protected sealed interface UpdateSessionResult {
     class Changed(
-      val newElements: List<InlineCompletionElement>,
+      val newElements: List<InlineCompletionBlock>,
       val truncateTyping: Int,
       val reason: InlineCompletionRequest
     ) : UpdateSessionResult

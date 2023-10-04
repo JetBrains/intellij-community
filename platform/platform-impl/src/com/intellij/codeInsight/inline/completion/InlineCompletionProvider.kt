@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
 import com.intellij.openapi.extensions.ExtensionPointName
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.TestOnly
  */
 @ApiStatus.Experimental
 interface InlineCompletionProvider {
-  suspend fun getProposals(request: InlineCompletionRequest): Flow<InlineCompletionElement>
+  suspend fun getProposals(request: InlineCompletionRequest): Flow<InlineCompletionBlock>
 
   fun isEnabled(event: InlineCompletionEvent): Boolean
 
@@ -45,7 +46,7 @@ interface InlineCompletionProvider {
   }
 
   object DUMMY : InlineCompletionProvider {
-    override suspend fun getProposals(request: InlineCompletionRequest): Flow<InlineCompletionElement> = emptyFlow()
+    override suspend fun getProposals(request: InlineCompletionRequest): Flow<InlineCompletionBlock> = emptyFlow()
     override fun isEnabled(event: InlineCompletionEvent): Boolean = false
   }
 }

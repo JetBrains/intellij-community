@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.logs
 
-import com.intellij.codeInsight.inline.completion.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
@@ -213,7 +213,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     private var lines = 0
     private var typingDuringShow = 0
 
-    fun firstShown(element: InlineCompletionElement) {
+    fun firstShown(element: InlineCompletionBlock) {
       if (firstShown) {
         error("Already first shown")
       }
@@ -228,7 +228,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       assert(!shownLogSent)
     }
 
-    fun nextShown(element: InlineCompletionElement) {
+    fun nextShown(element: InlineCompletionBlock) {
       assert(firstShown) {
         "Call firstShown firstly"
       }

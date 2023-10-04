@@ -3,8 +3,8 @@
 
 package com.intellij.codeInsight.inline.completion
 
-import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
 import org.jetbrains.annotations.ApiStatus
 
+@Suppress("FunctionName")
 @ApiStatus.Experimental
-open class InlineCompletionElement(val text: String) : InlineCompletionBlock by InlineCompletionGrayTextElement(text)
+fun InlineCompletionElement(text: String) = InlineCompletionGrayTextElement(text)

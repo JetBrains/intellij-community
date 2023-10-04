@@ -3,7 +3,7 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
-import com.intellij.codeInsight.inline.completion.InlineCompletionElement
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -13,7 +13,7 @@ sealed class InlineCompletionEventType {
                      val request: InlineCompletionRequest,
                      val provider: Class<out InlineCompletionProvider>) : InlineCompletionEventType()
 
-  data class Show(val element: InlineCompletionElement, val i: Int) : InlineCompletionEventType()
+  data class Show(val element: InlineCompletionBlock, val i: Int) : InlineCompletionEventType()
   data class Change(val truncateTyping: Int) : InlineCompletionEventType()
   object Empty : InlineCompletionEventType()
   data class Completion(val cause: Throwable?, val isActive: Boolean) : InlineCompletionEventType()
