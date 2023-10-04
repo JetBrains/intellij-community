@@ -130,7 +130,6 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
       setLineMarkerRenderer(renderer)
     }
     awaitCancellationAndInvoke {
-      Disposer.dispose(renderer)
       highlighter.dispose()
     }
   }

@@ -124,9 +124,15 @@ fun EditorEx.insertComponent(offset: Int, renderer: ComponentInlayRenderer<JComp
 }
 
 // 52 for avatar and gaps
-open class CodeReviewComponentInlayRenderer(component: JComponent)
-  : ComponentInlayRenderer<JComponent>(wrapWithLimitedWidth(component, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH + 52),
-                                       ComponentInlayAlignment.FIT_VIEWPORT_WIDTH)
+open class CodeReviewComponentInlayRenderer(private val actualComponent: JComponent)
+  : ComponentInlayRenderer<JComponent>(wrapWithLimitedWidth(actualComponent, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH + 52),
+                                       ComponentInlayAlignment.FIT_VIEWPORT_WIDTH) {
+  var isVisible: Boolean
+    get() = actualComponent.isVisible
+    set(value) {
+      actualComponent.isVisible = value
+    }
+}
 
 private fun wrapWithLimitedWidth(component: JComponent, width: Int): JComponent {
   return JPanel(null).apply {
