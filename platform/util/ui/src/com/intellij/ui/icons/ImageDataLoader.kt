@@ -7,6 +7,8 @@ import java.awt.Image
 import java.net.URL
 
 internal sealed interface ImageDataLoader {
+  val path: String?
+
   fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image?
 
   val url: URL?
@@ -14,7 +16,7 @@ internal sealed interface ImageDataLoader {
   @Experimental
   fun getCoords(): Pair<String, ClassLoader>? = null
 
-  fun patch(originalPath: String, transform: IconTransform): ImageDataLoader?
+  fun patch(transform: IconTransform): ImageDataLoader?
 
   fun isMyClassLoader(classLoader: ClassLoader): Boolean
 

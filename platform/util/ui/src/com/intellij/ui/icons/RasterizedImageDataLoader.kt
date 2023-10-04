@@ -4,7 +4,7 @@
 package com.intellij.ui.icons
 
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.SvgCacheClassifier
@@ -18,64 +18,35 @@ import java.net.URL
 import java.util.function.Supplier
 import javax.swing.Icon
 
+// a reflective path is not supported, a result is not cached
 @ApiStatus.Internal
 fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int, toolTip: Supplier<String?>?): Icon {
   assert(!path.startsWith('/'))
-  return CachedImageIcon(
-    originalPath = path,
-    resolver = createRasterizedImageDataLoader(path = path, classLoader = classLoader, cacheKey = cacheKey, imageFlags = flags),
-    toolTip = toolTip,
-  )
+  return CachedImageIcon(resolver = RasterizedImageDataLoader(path = path,
+                                                              classLoaderRef = WeakReference(classLoader),
+                                                              cacheKey = cacheKey,
+                                                              flags = flags),
+                         toolTip = toolTip)
 }
 
-// a reflective path is not supported, a result is not cached
-private fun createRasterizedImageDataLoader(path: String, classLoader: ClassLoader, cacheKey: Int, imageFlags: Int): ImageDataLoader {
-  val classLoaderWeakRef = WeakReference(classLoader)
-  return RasterizedImageDataLoader(path = path,
-                                   classLoaderRef = classLoaderWeakRef,
-                                   originalPath = path,
-                                   originalClassLoaderRef = classLoaderWeakRef,
-                                   cacheKey = cacheKey,
-                                   flags = imageFlags)
-}
-
-private class RasterizedImageDataLoader(private val path: String,
+private class RasterizedImageDataLoader(override val path: String,
                                         private val classLoaderRef: WeakReference<ClassLoader>,
-                                        private val originalPath: String,
-                                        private val originalClassLoaderRef: WeakReference<ClassLoader>,
                                         private val cacheKey: Int,
                                         override val flags: Int) : ImageDataLoader {
   override fun getCoords(): Pair<String, ClassLoader>? = classLoaderRef.get()?.let { path to it }
 
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
     val classLoader = classLoaderRef.get() ?: return null
-    // use the cache key only if a path to image is not customized
     try {
       val start = StartUpMeasurer.getCurrentTimeIfEnabled()
-      val isSvg: Boolean
-      val image = if (originalPath === path) {
-        // use the cache key only if a path to image is not customized
-        isSvg = cacheKey != 0
-        loadRasterized(path = path,
-                       scaleContext = scaleContext,
-                       parameters = parameters,
-                       classLoader = classLoader,
-                       isSvg = isSvg,
-                       rasterizedCacheKey = cacheKey,
-                       imageFlags = flags,
-                       isPatched = false)
-      }
-      else {
-        isSvg = path.endsWith(".svg")
-        loadRasterized(path = path,
-                       scaleContext = scaleContext,
-                       parameters = parameters,
-                       classLoader = classLoader,
-                       isSvg = isSvg,
-                       rasterizedCacheKey = 0,
-                       imageFlags = flags,
-                       isPatched = true)
-      }
+      val isSvg = cacheKey != 0
+      val image = loadRasterized(path = path,
+                                 scaleContext = scaleContext,
+                                 parameters = parameters,
+                                 classLoader = classLoader,
+                                 isSvg = isSvg,
+                                 rasterizedCacheKey = cacheKey,
+                                 imageFlags = flags)
 
       if (start != -1L) {
         IconLoadMeasurer.loadFromResources.end(start)
@@ -84,7 +55,7 @@ private class RasterizedImageDataLoader(private val path: String,
       return image
     }
     catch (e: IOException) {
-      logger<RasterizedImageDataLoader>().debug(e)
+      thisLogger().debug(e)
       return null
     }
   }
@@ -92,45 +63,83 @@ private class RasterizedImageDataLoader(private val path: String,
   override val url: URL?
     get() = classLoaderRef.get()?.getResource(path)
 
-  override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? {
+  override fun patch(transform: IconTransform): ImageDataLoader? {
     val classLoader = classLoaderRef.get() ?: return null
-    val patched = transform.patchPath(path = originalPath, classLoader = classLoader)
+    val patched = transform.patchPath(path = path, classLoader = classLoader)
     if (patched == null) {
-      if (path !== this.originalPath && this.originalPath == originalPath) {
-        return RasterizedImageDataLoader(path = this.originalPath,
-                                         classLoaderRef = originalClassLoaderRef,
-                                         originalPath = this.originalPath,
-                                         originalClassLoaderRef = originalClassLoaderRef,
-                                         cacheKey = cacheKey,
-                                         flags = flags)
-      }
-      else {
-        return null
-      }
+      return null
     }
 
     if (patched.first.startsWith("file:/")) {
       return ImageDataByFilePathLoader(patched.first)
     }
     else {
+      val effectiveClassLoaderRef = patched.second?.let(::WeakReference) ?: classLoaderRef
+
       if (isReflectivePath(patched.first) && patched.second != null) {
         (getReflectiveIcon(patched.first, patched.second!!) as? CachedImageIcon)?.let {
-          return it.resolver
+          val resolver = it.resolver
+          if (resolver is RasterizedImageDataLoader) {
+            return PatchedRasterizedImageDataLoader(path = resolver.path, classLoaderRef = effectiveClassLoaderRef, flags = resolver.flags)
+          }
+          return resolver
         }
       }
-      val effectiveClassLoaderRef = patched.second?.let(::WeakReference) ?: originalClassLoaderRef
-      return RasterizedImageDataLoader(path = patched.first,
-                                       classLoaderRef = effectiveClassLoaderRef,
-                                       originalPath = this.originalPath,
-                                       originalClassLoaderRef = originalClassLoaderRef,
-                                       cacheKey = cacheKey,
-                                       flags = flags)
+      return PatchedRasterizedImageDataLoader(path = patched.first, classLoaderRef = effectiveClassLoaderRef, flags = flags)
     }
   }
 
   override fun isMyClassLoader(classLoader: ClassLoader) = classLoaderRef.get() === classLoader
 
-  override fun toString() = "RasterizedImageDataLoader(classLoader=${classLoaderRef.get()}, path=$path, originalPath=$originalPath)"
+  override fun toString() = "RasterizedImageDataLoader(classLoader=${classLoaderRef.get()}, path=$path)"
+}
+
+private class PatchedRasterizedImageDataLoader(override val path: String,
+                                               private val classLoaderRef: WeakReference<ClassLoader>,
+                                               override val flags: Int) : ImageDataLoader {
+  override fun getCoords(): Pair<String, ClassLoader>? = classLoaderRef.get()?.let { path to it }
+
+  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
+    val classLoader = classLoaderRef.get() ?: return null
+    try {
+      val start = StartUpMeasurer.getCurrentTimeIfEnabled()
+      val isSvg = path.endsWith(".svg")
+
+      val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+      val dotIndex = path.lastIndexOf('.')
+      val name = if (dotIndex < 0) path else path.substring(0, dotIndex)
+      // prefer retina images for HiDPI scale, because downscaling retina images provide a better result than up-scaling non-retina images
+      val ext = if (isSvg) "svg" else if (dotIndex < 0 || dotIndex == path.length - 1) "" else path.substring(dotIndex + 1)
+      val image = loadPatched(name = name,
+                              ext = ext,
+                              isSvg = isSvg,
+                              scale = scale,
+                              scaleContext = scaleContext,
+                              parameters = parameters,
+                              path = path,
+                              classLoader = classLoader,
+                              isEffectiveDark = parameters.isDark)
+
+      if (start != -1L) {
+        IconLoadMeasurer.loadFromResources.end(start)
+        IconLoadMeasurer.addLoading(isSvg, start)
+      }
+      return image
+    }
+    catch (e: IOException) {
+      thisLogger().debug(e)
+      return null
+    }
+  }
+
+  override val url: URL?
+    get() = classLoaderRef.get()?.getResource(path)
+
+  override fun patch(transform: IconTransform): ImageDataLoader? = null
+
+  override fun isMyClassLoader(classLoader: ClassLoader) = classLoaderRef.get() === classLoader
+
+  override fun toString() = "PatchedRasterizedImageDataLoader(classLoader=${classLoaderRef.get()}, path=$path)"
 }
 
 private fun loadRasterized(path: String,
@@ -139,26 +148,13 @@ private fun loadRasterized(path: String,
                            classLoader: ClassLoader,
                            isSvg: Boolean,
                            rasterizedCacheKey: Int,
-                           @MagicConstant(flagsFromClass = ImageDescriptor::class) imageFlags: Int,
-                           isPatched: Boolean): Image? {
+                           @MagicConstant(flagsFromClass = ImageDescriptor::class) imageFlags: Int): Image? {
   val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
   val dotIndex = path.lastIndexOf('.')
   val name = if (dotIndex < 0) path else path.substring(0, dotIndex)
   val isRetina = scale != 1f
   // prefer retina images for HiDPI scale, because downscaling retina images provide a better result than up-scaling non-retina images
   val ext = if (isSvg) "svg" else if (dotIndex < 0 || dotIndex == path.length - 1) "" else path.substring(dotIndex + 1)
-  if (isPatched) {
-    return loadPatched(name = name,
-                       ext = ext,
-                       isSvg = isSvg,
-                       scale = scale,
-                       scaleContext = scaleContext,
-                       parameters = parameters,
-                       path = path,
-                       isRetina = isRetina,
-                       classLoader = classLoader,
-                       isEffectiveDark = parameters.isDark)
-  }
 
   var isEffectiveDark = parameters.isDark
   val effectivePath: String
@@ -216,7 +212,6 @@ private fun loadPatched(name: String,
                         scaleContext: ScaleContext,
                         parameters: LoadIconParameters,
                         path: String,
-                        isRetina: Boolean,
                         classLoader: ClassLoader,
                         isEffectiveDark: Boolean): Image? {
   val stroke = PatchedIconDescriptor("${name}_stroke.$ext", if (isSvg) scale else 1f)
@@ -224,6 +219,7 @@ private fun loadPatched(name: String,
   val dark = PatchedIconDescriptor("${name}_dark.$ext", if (isSvg) scale else 1f)
   val retina = PatchedIconDescriptor("$name@2x.$ext", if (isSvg) scale else 2f)
   val plain = PatchedIconDescriptor(path, if (isSvg) scale else 1f)
+  val isRetina = scale != 1f
   val descriptors = when {
     parameters.isStroke -> listOf(stroke, plain)
     isRetina && parameters.isDark -> listOf(retinaDark, dark, retina, plain)

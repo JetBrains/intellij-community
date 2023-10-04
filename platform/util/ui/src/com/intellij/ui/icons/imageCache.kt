@@ -183,6 +183,7 @@ private fun loadByDescriptor(rawPathWithoutExt: String,
   val path = descriptor.pathTransform(rawPathWithoutExt, ext)
 
   var colorPatcher: SvgAttributePatcher? = null
+  @Suppress("DEPRECATION")
   var deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher? = null
   if (colorPatcherProvider != null) {
     colorPatcher = colorPatcherProvider.attributeForPath(path)
@@ -237,7 +238,7 @@ private fun doLoadByDescriptor(path: String,
                                resourceClass: Class<*>?,
                                classLoader: ClassLoader?,
                                colorPatcher: SvgAttributePatcher?,
-                               deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?): BufferedImage? {
+                               @Suppress("DEPRECATION") deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?): BufferedImage? {
   var image: BufferedImage?
   val start = StartUpMeasurer.getCurrentTimeIfEnabled()
   if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(path)) && !path.startsWith("file://")) {

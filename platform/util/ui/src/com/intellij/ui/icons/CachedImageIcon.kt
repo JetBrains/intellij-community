@@ -9,7 +9,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.SVGLoader
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.MultiResolutionImageProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -20,7 +19,6 @@ import java.awt.image.ImageFilter
 import java.awt.image.RGBImageFilter
 import java.net.URL
 import java.nio.file.Path
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
@@ -50,35 +48,28 @@ internal val pathTransform: AtomicReference<IconTransform> = AtomicReference(
   IconTransform(dark = false, patchers = arrayOf(DeprecatedDuplicatesIconPathPatcher()), filter = null)
 )
 
-@JvmField
-internal val iconToStrokeIcon: ConcurrentMap<CachedImageIcon, CachedImageIcon> = CollectionFactory.createConcurrentWeakMap()
-
 @TestOnly
 @Internal
 fun createCachedIcon(file: Path, scaleContext: ScaleContext): CachedImageIcon {
   val path = file.toUri().toString()
-  return CachedImageIcon(originalPath = path, resolver = ImageDataByFilePathLoader(path), scaleContext = scaleContext)
+  return CachedImageIcon(resolver = ImageDataByFilePathLoader(path), scaleContext = scaleContext)
 }
 
 @Internal
 @ApiStatus.NonExtendable
 open class CachedImageIcon internal constructor(
-  val originalPath: String?,
   // make not-null as soon as deprecated IconLoader.CachedImageIcon will be removed
-  resolver: ImageDataLoader?,
+  @Volatile
+  @JvmField
+  internal var resolver: ImageDataLoader?,
   private val isDarkOverridden: Boolean? = null,
   private val localFilterSupplier: (() -> RGBImageFilter)? = null,
   private val colorPatcher: SVGLoader.SvgElementColorPatcherProvider? = null,
   private val useStroke: Boolean = false,
   private val toolTip: Supplier<String?>? = null,
   private val scaleContext: ScaleContext? = null,
+  private val originalResolver: ImageDataLoader? = resolver,
 ) : CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider, IconWithToolTip {
-  @Suppress("CanBePrimaryConstructorProperty")
-  @Volatile
-  @JvmField
-  internal var resolver: ImageDataLoader? = resolver
-
-  private val originalResolver = resolver
   private var pathTransformModCount = -1
 
   private val scaledIconCache = ScaledIconCache()
@@ -86,15 +77,18 @@ open class CachedImageIcon internal constructor(
   @Volatile
   private var darkVariant: CachedImageIcon? = null
 
+  val originalPath: String?
+    get() = originalResolver?.path
+
   constructor(url: URL, useCacheOnLoad: Boolean, scaleContext: ScaleContext? = null) :
-    this(originalPath = null, resolver = ImageDataByUrlLoader(url = url, useCacheOnLoad = useCacheOnLoad), scaleContext = scaleContext) {
+    this(resolver = ImageDataByUrlLoader(url = url, useCacheOnLoad = useCacheOnLoad), scaleContext = scaleContext) {
 
     // if url is explicitly specified, it means that path should be not transformed
     pathTransformModCount = pathTransformGlobalModCount.get()
   }
 
-  internal constructor(originalPath: String?, resolver: ImageDataLoader, toolTip: Supplier<String?>?) :
-    this(originalPath = originalPath, resolver = resolver, isDarkOverridden = null, colorPatcher = null, toolTip = toolTip)
+  internal constructor(resolver: ImageDataLoader, toolTip: Supplier<String?>?) :
+    this(resolver = resolver, isDarkOverridden = null, colorPatcher = null, toolTip = toolTip)
 
   @ApiStatus.Experimental
   fun getCoords(): Pair<String, ClassLoader>? = resolver?.getCoords()
@@ -172,12 +166,11 @@ open class CachedImageIcon internal constructor(
       return
     }
 
-    this.resolver = originalResolver
-    val resolver = this.resolver ?: return
+    resolver = originalResolver
     pathTransformModCount = pathTransformGlobalModCount.get()
     scaledIconCache.clear()
     if (originalPath != null) {
-      resolver.patch(originalPath = originalPath, transform = pathTransform.get())?.let {
+      resolver?.patch(transform = pathTransform.get())?.let {
         this.resolver = it
       }
     }
@@ -211,6 +204,26 @@ open class CachedImageIcon internal constructor(
     return scaledIconCache.getOrScaleIcon(host = this, scaleContext = scaleContext) ?: this
   }
 
+  override fun copy(): Icon = copy(isDarkOverridden = isDarkOverridden)
+
+  private fun copy(
+    isDarkOverridden: Boolean? = this.isDarkOverridden,
+    localFilterSupplier: (() -> RGBImageFilter)? = this.localFilterSupplier,
+    colorPatcher: SVGLoader.SvgElementColorPatcherProvider? = this.colorPatcher,
+    useStroke: Boolean = this.useStroke,
+  ): CachedImageIcon {
+    val result = CachedImageIcon(resolver = resolver,
+                                 originalResolver = originalResolver,
+                                 isDarkOverridden = isDarkOverridden,
+                                 localFilterSupplier = localFilterSupplier,
+                                 colorPatcher = colorPatcher,
+                                 useStroke = useStroke,
+                                 toolTip = toolTip,
+                                 scaleContext = scaleContext?.copy())
+    result.pathTransformModCount = pathTransformModCount
+    return result
+  }
+
   override fun getDarkIcon(isDark: Boolean): Icon {
     var result = if (isDark) darkVariant else null
     if (result == null) {
@@ -220,14 +233,7 @@ open class CachedImageIcon internal constructor(
         }
 
         if (result == null) {
-          result = CachedImageIcon(originalPath = originalPath,
-                                   resolver = resolver ?: return EMPTY_ICON,
-                                   isDarkOverridden = isDark,
-                                   localFilterSupplier = localFilterSupplier,
-                                   colorPatcher = colorPatcher,
-                                   useStroke = useStroke,
-                                   toolTip = toolTip,
-                                   scaleContext = scaleContext)
+          result = copy(isDarkOverridden = isDark)
           if (isDark) {
             darkVariant = result
           }
@@ -248,51 +254,13 @@ open class CachedImageIcon internal constructor(
     return ImageIcon(img ?: return this)
   }
 
-  override fun copy(): Icon {
-    val result = CachedImageIcon(originalPath = originalPath,
-                                 resolver = resolver ?: return EMPTY_ICON,
-                                 isDarkOverridden = isDarkOverridden,
-                                 localFilterSupplier = localFilterSupplier,
-                                 colorPatcher = colorPatcher,
-                                 useStroke = useStroke,
-                                 scaleContext = scaleContext?.copy())
-    result.pathTransformModCount = pathTransformModCount
-    return result
-  }
+  internal fun createWithFilter(filterSupplier: () -> RGBImageFilter): Icon = copy(localFilterSupplier = filterSupplier)
 
-  internal fun createWithFilter(filterSupplier: () -> RGBImageFilter): Icon {
-    val resolver = resolver ?: return EMPTY_ICON
-    return CachedImageIcon(originalPath = originalPath,
-                           resolver = resolver,
-                           isDarkOverridden = isDarkOverridden,
-                           localFilterSupplier = filterSupplier,
-                           colorPatcher = colorPatcher,
-                           useStroke = useStroke,
-                           scaleContext = scaleContext?.copy())
-  }
+  fun createWithPatcher(colorPatcher: SVGLoader.SvgElementColorPatcherProvider): Icon = copy(colorPatcher = colorPatcher)
 
-  fun createWithPatcher(colorPatcher: SVGLoader.SvgElementColorPatcherProvider): Icon {
-    val resolver = resolver ?: return EMPTY_ICON
-    return CachedImageIcon(originalPath = originalPath,
-                           resolver = resolver,
-                           isDarkOverridden = isDarkOverridden,
-                           localFilterSupplier = localFilterSupplier,
-                           colorPatcher = colorPatcher,
-                           useStroke = useStroke,
-                           scaleContext = scaleContext?.copy())
-  }
 
-  internal fun createStrokeIcon(): Icon {
-    val resolver = resolver ?: return EMPTY_ICON
-    return iconToStrokeIcon.computeIfAbsent(this) {
-      CachedImageIcon(originalPath = originalPath,
-                      resolver = resolver,
-                      isDarkOverridden = isDarkOverridden,
-                      localFilterSupplier = localFilterSupplier,
-                      colorPatcher = colorPatcher,
-                      useStroke = true,
-                      scaleContext = scaleContext?.copy())
-    }
+  internal fun createStrokeIcon(): CachedImageIcon {
+    return copy(useStroke = true)
   }
 
   fun withAnotherIconModifications(useModificationsFrom: CachedImageIcon): Icon {
@@ -303,8 +271,8 @@ open class CachedImageIcon internal constructor(
       return this
     }
 
-    return CachedImageIcon(originalPath = originalPath,
-                           resolver = resolver,
+    return CachedImageIcon(resolver = resolver,
+                           originalResolver = originalResolver,
                            isDarkOverridden = useModificationsFrom.isDarkOverridden,
                            localFilterSupplier = useModificationsFrom.localFilterSupplier,
                            colorPatcher = useModificationsFrom.colorPatcher,

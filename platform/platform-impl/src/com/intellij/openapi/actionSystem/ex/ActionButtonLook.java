@@ -3,11 +3,9 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook;
-import com.intellij.openapi.actionSystem.impl.Win10ActionButtonLook;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +22,7 @@ public abstract class ActionButtonLook {
 
     @Override
     public void updateUI() {
-      delegate = StartupUiUtil.isUnderWin10LookAndFeel() ? new Win10ActionButtonLook() : new IdeaActionButtonLook();
+      delegate = new IdeaActionButtonLook();
     }
 
     @Override
@@ -140,7 +138,7 @@ public abstract class ActionButtonLook {
     paintIconImpl(g, actionButton, icon, x, y);
   }
 
-  protected void paintIconImpl(Graphics g, ActionButtonComponent actionButton, Icon icon, int x, int y) {
+  protected static void paintIconImpl(Graphics g, ActionButtonComponent actionButton, Icon icon, int x, int y) {
     icon.paintIcon(actionButton instanceof Component ? (Component)actionButton : null, g, x, y);
   }
 

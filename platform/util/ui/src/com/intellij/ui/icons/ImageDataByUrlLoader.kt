@@ -18,6 +18,9 @@ internal class ImageDataByUrlLoader internal constructor(
   private val useCacheOnLoad: Boolean,
   override val url: URL,
 ) : ImageDataLoader {
+  override val path: String
+    get() = url.toString()
+
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
     return loadImage(path = url.toString(),
                      filters = parameters.filters,
@@ -29,8 +32,8 @@ internal class ImageDataByUrlLoader internal constructor(
                      scaleContext = scaleContext)
   }
 
-  override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? {
-    return createNewResolverIfNeeded(originalClassLoader = classLoader, originalPath = originalPath, transform = transform)
+  override fun patch(transform: IconTransform): ImageDataLoader? {
+    return createNewResolverIfNeeded(originalClassLoader = classLoader, originalPath = path, transform = transform)
   }
 
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = this.classLoader === classLoader
@@ -44,7 +47,7 @@ internal class ImageDataByPathResourceLoader(
   private val ownerClass: Class<*>? = null,
   private val classLoader: ClassLoader? = null,
   private val strict: Boolean,
-  private val path: String,
+  override val path: String,
 ) : ImageDataLoader {
   @Volatile
   override var url: URL? = UNRESOLVED_URL
@@ -72,8 +75,8 @@ internal class ImageDataByPathResourceLoader(
                      scaleContext = scaleContext)
   }
 
-  override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? {
-    return createNewResolverIfNeeded(originalClassLoader = classLoader, originalPath = originalPath, transform = transform)
+  override fun patch(transform: IconTransform): ImageDataLoader? {
+    return createNewResolverIfNeeded(originalClassLoader = classLoader, originalPath = path, transform = transform)
   }
 
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = this.classLoader === classLoader
@@ -123,7 +126,7 @@ private inline fun findUrl(path: String, urlProvider: (String) -> URL?): URL? {
   return urlProvider(effectivePath)
 }
 
-internal class ImageDataByFilePathLoader(private val path: String) : PatchedImageDataLoader {
+internal class ImageDataByFilePathLoader(override val path: String) : PatchedImageDataLoader {
   override val url: URL
     get() = URL(path)
 
@@ -141,9 +144,7 @@ internal class ImageDataByFilePathLoader(private val path: String) : PatchedImag
   override fun toString(): String = "ImageDataByFilePathLoader(path=$path"
 }
 
-private fun createNewResolverIfNeeded(originalClassLoader: ClassLoader?,
-                              originalPath: String,
-                              transform: IconTransform): ImageDataLoader? {
+private fun createNewResolverIfNeeded(originalClassLoader: ClassLoader?, originalPath: String, transform: IconTransform): ImageDataLoader? {
   val patchedPath = transform.patchPath(originalPath, originalClassLoader) ?: return null
   val classLoader = if (patchedPath.second == null) originalClassLoader else patchedPath.second
   val path = patchedPath.first
@@ -162,7 +163,7 @@ private fun createNewResolverIfNeeded(originalClassLoader: ClassLoader?,
   return null
 }
 
-private class FinalImageDataLoader(private val path: String, classLoader: ClassLoader) : PatchedImageDataLoader {
+private class FinalImageDataLoader(override val path: String, classLoader: ClassLoader) : PatchedImageDataLoader {
   private val classLoaderRef = WeakReference(classLoader)
 
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
@@ -187,7 +188,7 @@ private class FinalImageDataLoader(private val path: String, classLoader: ClassL
 
 private interface PatchedImageDataLoader : ImageDataLoader {
   // this resolver is already produced as a result of a patch
-  override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? = null
+  override fun patch(transform: IconTransform): ImageDataLoader? = null
 
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = false
 }

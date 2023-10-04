@@ -336,29 +336,21 @@ private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): Ico
           true
         }
 
-        //if (useReflective) {
-        //  val builder = StringBuilder(reflectivePathPrefix.length + patchedPath.length)
-        //  builder.append(reflectivePathPrefix)
-        //  builder.append(patchedPath, iconPathPrefix.length, patchedPath.length - 4)
-        //  return toReflectivePath(builder).toString()
-        //}
+        if (useReflective) {
+          val builder = StringBuilder(reflectivePathPrefix.length + patchedPath.length)
+          builder.append(reflectivePathPrefix)
+          builder.append(patchedPath, iconPathPrefix.length, patchedPath.length - 4)
+          return toReflectivePath(builder).toString()
+        }
       }
 
-      return patchedPath
+        return patchedPath
     }
 
     private fun toReflectivePath(name: StringBuilder): StringBuilder {
       var index = reflectivePathPrefix.length
 
-      if (name.length == index + 2) {
-        repeat(2) {
-          name.set(index + it, name[index + it].uppercaseChar())
-        }
-      }
-      else {
-        name.set(index, name[index].titlecaseChar())
-      }
-
+      name.set(index, name[index].titlecaseChar())
       index++
 
       var appendIndex = index
@@ -391,6 +383,12 @@ private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): Ico
         index++
       }
       name.setLength(appendIndex)
+
+      // com.intellij.icons.ExpUiIcons.General.Up -> com.intellij.icons.ExpUiIcons.General.UP
+      if (name.get(name.length - 3) == '.') {
+        // the last two symbols should be upper-cased
+        name[name.length - 1] = name[name.length - 1].uppercaseChar()
+      }
       return name
     }
 

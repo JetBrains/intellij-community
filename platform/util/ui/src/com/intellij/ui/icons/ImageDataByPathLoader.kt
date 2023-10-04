@@ -55,7 +55,7 @@ fun findIconByPath(@NonNls path: String,
   return icon
 }
 
-internal class ImageDataByPathLoader private constructor(private val path: String,
+internal class ImageDataByPathLoader private constructor(override val path: String,
                                                          private val classLoader: ClassLoader,
                                                          private val original: ImageDataByPathLoader?) : ImageDataLoader {
   companion object {
@@ -67,7 +67,7 @@ internal class ImageDataByPathLoader private constructor(private val path: Strin
                             toolTip: Supplier<String?>? = null): CachedImageIcon {
       val loader = ImageDataByPathLoader(path = originalPath, classLoader = originalClassLoader, original = null)
       val resolver = if (patched == null) loader else ImageDataByPathLoader(path = path, classLoader = classLoader, original = loader)
-      return CachedImageIcon(originalPath = null, resolver = resolver, toolTip = toolTip)
+      return CachedImageIcon(resolver = resolver, toolTip = toolTip)
     }
 
     private fun doPatch(originalLoader: ImageDataByPathLoader,
@@ -100,7 +100,7 @@ internal class ImageDataByPathLoader private constructor(private val path: Strin
   override val url: URL?
     get() = classLoader.getResource(path)
 
-  override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? {
+  override fun patch(transform: IconTransform): ImageDataLoader? {
     val isOriginal = original == null
     return doPatch(originalLoader = (if (isOriginal) this else original)!!, transform = transform, isOriginal = isOriginal)
   }

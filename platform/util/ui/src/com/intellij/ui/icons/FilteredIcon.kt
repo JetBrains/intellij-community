@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.fakeComponent
 import com.intellij.ui.Gray
@@ -10,6 +11,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContextSupport
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.RetinaImage
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
 import com.intellij.util.ui.StartupUiUtil
@@ -29,6 +31,12 @@ class FilteredIcon(private val baseIcon: Icon, private val filterSupplier: Suppl
   // IconLoader.CachedImageIcon uses ScaledIconCache to support several scales simultaneously. Not sure, it is needed here.
   private var iconToPaint: Icon? = null
   private var currentScale = 1.0
+
+  init {
+    if (baseIcon is EmptyIcon) {
+      thisLogger().warn("Do not create FilteredIcon for EmptyIcon")
+    }
+  }
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     val scale = getScaleToRenderIcon(icon = baseIcon, ancestor = c).toDouble()

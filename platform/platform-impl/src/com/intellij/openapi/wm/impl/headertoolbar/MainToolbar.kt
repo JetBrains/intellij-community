@@ -76,7 +76,7 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
   }
 }
 
-private object DefaultMainToolbarFlavor : MainToolbarFlavor
+private data object DefaultMainToolbarFlavor : MainToolbarFlavor
 
 @ApiStatus.Internal
 class MainToolbar(
@@ -458,7 +458,7 @@ internal fun isToolbarInHeader(): Boolean {
 
 internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))
 
-fun adjustIconForHeader(icon: Icon): Icon = if (isDarkHeader()) IconLoader.getDarkIcon(icon, true) else icon
+fun adjustIconForHeader(icon: Icon): Icon = if (isDarkHeader()) IconLoader.getDarkIcon(icon = icon, dark = true) else icon
 
 private class HeaderIconUpdater {
   private val iconCache = ContainerUtil.createWeakSet<Icon>()
