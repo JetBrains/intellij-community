@@ -73,7 +73,8 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     it.line1 == range.line1 && it.line2 == range.line2
   }
 
-  fun requestNewDiscussion(location: DiffLineLocation, focus: Boolean) {
+  fun requestNewDiscussion(lineIdx: Int, focus: Boolean) {
+    val location = mapLine(localRanges.value, lineIdx) ?: return
     fileVm.requestNewDiscussion(location, focus)
   }
 
@@ -102,10 +103,10 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
 
 private fun mapLocation(ranges: List<LstRange>, location: DiffLineLocation): Int? {
   val (side, line) = location
-  return if (side == Side.RIGHT) transferLine(ranges, line).takeIf { it >= 0 } else null
+  return if (side == Side.RIGHT) transferLineToAfter(ranges, line).takeIf { it >= 0 } else null
 }
 
-private fun transferLine(ranges: List<LstRange>, line: Int): Int {
+private fun transferLineToAfter(ranges: List<LstRange>, line: Int): Int {
   if (ranges.isEmpty()) return line
   var result = line
   for (range in ranges) {
@@ -118,6 +119,28 @@ private fun transferLine(ranges: List<LstRange>, line: Int): Int {
     val length1 = range.vcsLine2 - range.vcsLine1
     val length2 = range.line2 - range.line1
     result += length2 - length1
+  }
+  return result
+}
+
+private fun mapLine(ranges: List<LstRange>, lineIdx: Int): DiffLineLocation? {
+  val oldLine = transferLineFromAfter(ranges, lineIdx)?.takeIf { it >= 0 } ?: return null
+  return Side.RIGHT to oldLine
+}
+
+private fun transferLineFromAfter(ranges: List<LstRange>, line: Int): Int? {
+  if (ranges.isEmpty()) return line
+  var result = line
+  for (range in ranges) {
+    if (line < range.line1) return result
+
+    if (line in range.line1 until range.line2) {
+      return null
+    }
+
+    val length1 = range.vcsLine2 - range.vcsLine1
+    val length2 = range.line2 - range.line1
+    result -= length2 - length1
   }
   return result
 }

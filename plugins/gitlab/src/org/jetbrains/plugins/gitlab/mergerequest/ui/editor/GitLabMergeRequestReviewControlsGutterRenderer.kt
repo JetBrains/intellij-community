@@ -2,9 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.editor.repaintGutterForLine
-import com.intellij.diff.util.Side
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
@@ -109,7 +107,7 @@ internal class GitLabMergeRequestReviewControlsGutterRenderer(cs: CoroutineScope
   override fun doAction(editor: Editor, e: MouseEvent) {
     val hoveredLineIdx = hoveredLineInRangeIdx
     if (hoveredLineIdx < 0 || !iconHovered) return
-    model.requestNewDiscussion(DiffLineLocation(Side.RIGHT, hoveredLineIdx), true)
+    model.requestNewDiscussion(hoveredLineIdx, true)
     e.consume()
   }
 
