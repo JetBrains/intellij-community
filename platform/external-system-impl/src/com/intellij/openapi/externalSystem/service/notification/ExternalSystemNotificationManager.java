@@ -57,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 /**
  * {@link ExternalSystemNotificationManager} provides creation and managements of user-friendly notifications for external system integration-specific events.
@@ -98,11 +99,43 @@ public final class ExternalSystemNotificationManager implements Disposable {
    *
    * @return {@link NotificationData} or null for not user-friendly errors.
    */
-  public @Nullable NotificationData createNotification(@NotNull @NotificationTitle String title,
-                                                       @NotNull Throwable error,
-                                                       @NotNull ProjectSystemId externalSystemId,
-                                                       @NotNull Project project,
-                                                       @NotNull DataContext dataContext) {
+  public static @Nullable NotificationData createNotification(
+    @NotNull @NotificationTitle String title,
+    @NotNull Throwable error,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull Project project,
+    @NotNull String externalProjectPath,
+    @NotNull DataContext dataContext
+  ) {
+    return doCreateNotification(title, error, externalSystemId, project, dataContext, (extension, notificationData) ->
+      extension.customize(notificationData, project, externalProjectPath, error)
+    );
+  }
+
+  /**
+   * @deprecated use {@link #createNotification(String, Throwable, ProjectSystemId, Project, String, DataContext)} instead
+   */
+  @Deprecated
+  public @Nullable NotificationData createNotification(
+    @NotNull @NotificationTitle String title,
+    @NotNull Throwable error,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull Project project,
+    @NotNull DataContext dataContext
+  ) {
+    return doCreateNotification(title, error, externalSystemId, project, dataContext, (extension, notificationData) ->
+      extension.customize(notificationData, project, error)
+    );
+  }
+
+  private static @Nullable NotificationData doCreateNotification(
+    @NotNull @NotificationTitle String title,
+    @NotNull Throwable error,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull Project project,
+    @NotNull DataContext dataContext,
+    @NotNull BiConsumer<ExternalSystemNotificationExtension, NotificationData> customise
+  ) {
     if (isInternalError(error, externalSystemId)) {
       return null;
     }
@@ -141,7 +174,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
       if (!externalSystemId.equals(targetExternalSystemId) && !targetExternalSystemId.equals(ProjectSystemId.IDE)) {
         continue;
       }
-      extension.customize(notificationData, project, error);
+      customise.accept(extension, notificationData);
     }
     return notificationData;
   }
