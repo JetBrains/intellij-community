@@ -112,7 +112,8 @@ public final class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void performAdding(final @NotNull Collection<VirtualFile> addedFiles, final @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
+  protected void performAdding(final @NotNull Collection<VirtualFile> addedFiles,
+                               final @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
     // copied files (copyFromMap) are ignored, because they are included into added files.
     performAdding(map(addedFiles, VcsUtil::getFilePath));
   }
@@ -205,13 +206,15 @@ public final class GitVFSListener extends VcsVFSListener {
           List<FilePath> dirtyPaths = new ArrayList<>();
           List<File> toRefresh = new ArrayList<>();
           //perform adding
-          for (Map.Entry<VirtualFile, List<FilePath>> toAddEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, selectedToAdd).entrySet()) {
+          for (Map.Entry<VirtualFile, List<FilePath>> toAddEntry :
+            GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, selectedToAdd).entrySet()) {
             List<FilePath> files = toAddEntry.getValue();
             executeAdding(toAddEntry.getKey(), files);
             dirtyPaths.addAll(files);
           }
           //perform deletion
-          for (Map.Entry<VirtualFile, List<FilePath>> toRemoveEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, selectedToRemove).entrySet()) {
+          for (Map.Entry<VirtualFile, List<FilePath>> toRemoveEntry :
+            GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, selectedToRemove).entrySet()) {
             List<FilePath> paths = toRemoveEntry.getValue();
             executeDeletion(toRemoveEntry.getKey(), paths);
             dirtyPaths.addAll(paths);
@@ -219,7 +222,8 @@ public final class GitVFSListener extends VcsVFSListener {
           //perform force move if needed
           Map<FilePath, MovedFileInfo> filesToForceMove = map2Map(toForceMove, info -> Pair.create(info.getNewPath(), info));
           dirtyPaths.addAll(map(toForceMove, fileInfo -> fileInfo.getOldPath()));
-          for (Map.Entry<VirtualFile, List<FilePath>> toForceMoveEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, filesToForceMove.keySet()).entrySet()) {
+          for (Map.Entry<VirtualFile, List<FilePath>> toForceMoveEntry :
+            GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, filesToForceMove.keySet()).entrySet()) {
             List<FilePath> paths = toForceMoveEntry.getValue();
             toRefresh.addAll(executeForceMove(toForceMoveEntry.getKey(), paths, filesToForceMove));
             dirtyPaths.addAll(paths);
@@ -329,5 +333,4 @@ public final class GitVFSListener extends VcsVFSListener {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myExternalFilesProcessor.waitForEventsProcessedInTestMode();
   }
-
 }

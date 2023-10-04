@@ -128,6 +128,7 @@ public final class HgVFSListener extends VcsVFSListener {
   VcsRepositoryIgnoredFilesHolder getIgnoreRepoHolder(@NotNull VirtualFile repoRoot) {
     return Objects.requireNonNull(HgUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(repoRoot)).getIgnoredFilesHolder();
   }
+
   /**
    * The version of execute add before overriding
    *
@@ -139,7 +140,8 @@ public final class HgVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void performAdding(@NotNull final Collection<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copiedFilesFrom) {
+  protected void performAdding(@NotNull final Collection<VirtualFile> addedFiles,
+                               @NotNull final Map<VirtualFile, VirtualFile> copiedFilesFrom) {
     Map<VirtualFile, VirtualFile> copyFromMap = new HashMap<>(copiedFilesFrom);
     (new Task.Backgroundable(myProject,
                              HgBundle.message("hg4idea.add.progress"),
@@ -168,7 +170,8 @@ public final class HgVFSListener extends VcsVFSListener {
           final VirtualFile copyFrom = copyFromMap.get(file);
           if (copyFrom != null) {
             copies.put(copyFrom, file);
-          } else {
+          }
+          else {
             adds.add(file);
           }
         }
@@ -284,7 +287,7 @@ public final class HgVFSListener extends VcsVFSListener {
    * Changes the given collection of files by filtering out unversioned files and
    * files which are not under Mercurial repository.
    *
-   * @param filesToFilter    files to be filtered.
+   * @param filesToFilter files to be filtered.
    */
   private void skipNotUnderHg(Collection<FilePath> filesToFilter) {
     for (Iterator<FilePath> iter = filesToFilter.iterator(); iter.hasNext(); ) {
@@ -330,8 +333,8 @@ public final class HgVFSListener extends VcsVFSListener {
       private void handleRenameError() {
         NotificationAction viewFilesAction =
           NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.VFSListener.text.view.files"), () -> {
-            DialogWrapper dialog =
-              new ProcessedFilePathsDialog(myProject, ContainerUtil.map(failedToMove, movedInfo -> VcsUtil.getFilePath(movedInfo.myOldPath)));
+            List<FilePath> filePaths = ContainerUtil.map(failedToMove, movedInfo -> VcsUtil.getFilePath(movedInfo.myOldPath));
+            DialogWrapper dialog = new ProcessedFilePathsDialog(myProject, filePaths);
             dialog.setTitle(HgBundle.message("hg4idea.rename.error.title"));
             dialog.show();
           });
