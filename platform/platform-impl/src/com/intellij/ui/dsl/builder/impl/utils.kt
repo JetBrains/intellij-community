@@ -82,7 +82,7 @@ internal fun prepareVisualPaddings(component: JComponent): UnscaledGaps {
   var customVisualPaddings: UnscaledGaps? =
     when (val value = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS)) {
       null -> null
-      is Gaps -> UnscaledGaps()
+      is Gaps -> value.toUnscaled()
       is UnscaledGaps -> value
       else -> throw UiDslException("Invalid VISUAL_PADDINGS")
     }
