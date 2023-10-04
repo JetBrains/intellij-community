@@ -77,10 +77,9 @@ public final class HgVFSListener extends VcsVFSListener {
                              (notIgnoredAddedFiles, copiedFilesMap) -> originalExecuteAdd(notIgnoredAddedFiles, copiedFilesMap));
   }
 
-  @Override
-  protected void executeAddWithoutIgnores(@NotNull List<VirtualFile> addedFiles,
-                                          @NotNull Map<VirtualFile, VirtualFile> copyFromMap,
-                                          @NotNull ExecuteAddCallback executeAddCallback) {
+  private void executeAddWithoutIgnores(@NotNull List<VirtualFile> addedFiles,
+                                        @NotNull Map<VirtualFile, VirtualFile> copyFromMap,
+                                        @NotNull ExecuteAddCallback executeAddCallback) {
     saveUnsavedVcsIgnoreFiles();
     // if a file is copied from another repository, then 'hg add' should be used instead of 'hg copy'.
     // Thus here we remove such files from the copyFromMap.

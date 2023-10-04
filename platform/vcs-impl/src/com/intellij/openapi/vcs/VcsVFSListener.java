@@ -531,12 +531,6 @@ public abstract class VcsVFSListener implements Disposable {
     }
   }
 
-  protected void executeAddWithoutIgnores(@NotNull List<VirtualFile> addedFiles,
-                                          @NotNull Map<VirtualFile, VirtualFile> copyFromMap,
-                                          @NotNull ExecuteAddCallback executeAddCallback) {
-    executeAddCallback.executeAdd(addedFiles, copyFromMap);
-  }
-
   @RequiresBackgroundThread
   private void executeMoveRename() {
     List<MovedFileInfo> movedFiles = myProcessor.acquireMovedFiles();

@@ -71,10 +71,9 @@ public final class GitVFSListener extends VcsVFSListener {
                              (notIgnoredAddedFiles, copiedFilesMap) -> originalExecuteAdd(notIgnoredAddedFiles, copiedFilesMap));
   }
 
-  @Override
-  protected void executeAddWithoutIgnores(@NotNull List<VirtualFile> addedFiles,
-                                          @NotNull Map<VirtualFile, VirtualFile> copyFromMap,
-                                          @NotNull ExecuteAddCallback executeAddCallback) {
+  private void executeAddWithoutIgnores(@NotNull List<VirtualFile> addedFiles,
+                                        @NotNull Map<VirtualFile, VirtualFile> copyFromMap,
+                                        @NotNull ExecuteAddCallback executeAddCallback) {
     saveUnsavedVcsIgnoreFiles();
     final ProgressManager progressManager = ProgressManager.getInstance();
     progressManager.run(new Task.Backgroundable(myProject, message("vfs.listener.checking.ignored"), true) {
