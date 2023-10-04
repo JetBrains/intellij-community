@@ -1057,6 +1057,12 @@ object CommunityLibraryLicenses {
                    url = "https://sphinxcontrib-napoleon.readthedocs.io/",
                    licenseUrl = "https://github.com/sphinx-contrib/napoleon/blob/master/LICENSE").simplifiedBsd(),
     androidDependency(name = "SQLite Inspector Proto", libraryName = "sqlite-inspector-proto"),
+    LibraryLicense(name = "Squareup Okio", libraryName = "squareup.okio.jvm", url = "https://github.com/square/okio")
+      .apache("https://github.com/square/okio/blob/master/LICENSE.txt")
+      .suppliedByOrganizations("Square, Inc."),
+    LibraryLicense(name = "Squareup Wire", libraryName = "squareup.wire.runtime.jvm", url = "https://github.com/square/wire")
+      .apache("https://github.com/square/wire/blob/master/LICENSE.txt")
+      .suppliedByOrganizations("Square, Inc."),
     LibraryLicense(name = "ssh-nio-fs", libraryName = "ssh-nio-fs",
                    url = "https://github.com/JetBrains/intellij-deps-ssh-nio-fs")
       .mit("https://github.com/JetBrains/intellij-deps-ssh-nio-fs/blob/master/LICENSE")
