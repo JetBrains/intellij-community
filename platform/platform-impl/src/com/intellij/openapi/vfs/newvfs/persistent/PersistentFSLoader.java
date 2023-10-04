@@ -383,12 +383,11 @@ public final class PersistentFSLoader {
 
     makeBestEffortToCleanStorage(attributesEnumerator, attributesFile);
 
+    //TODO contentStorage doesn not implement CleanableStorage!
     makeBestEffortToCleanStorage(contentsStorage, contentsFile);
 
-    deleted = IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
-    if (!deleted) {
-      LOG.info("Can't delete " + contentsHashesFile);
-    }
+    //TODO contentHashesEnumerator doesn not implement CleanableStorage!
+    makeBestEffortToCleanStorage(contentHashesEnumerator, contentsHashesFile);
 
     makeBestEffortToCleanStorage(recordsStorage, recordsFile);
 
