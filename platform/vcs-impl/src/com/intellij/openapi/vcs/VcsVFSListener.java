@@ -167,6 +167,10 @@ public abstract class VcsVFSListener implements Disposable {
       });
     }
 
+    /**
+     * Called under {@link #PROCESSING_LOCK} - avoid slow operations.
+     */
+    @RequiresBackgroundThread
     private void checkMovedAddedSourceBack() {
       if (myAddedFiles.isEmpty() || myMovedFiles.isEmpty()) return;
 
@@ -189,8 +193,13 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
-    // If a file is scheduled for deletion, and at the same time for copying or addition, don't delete it.
-    // It happens during Overwrite command or undo of overwrite.
+    /**
+     * If a file is scheduled for deletion, and at the same time for copying or addition, don't delete it.
+     * It happens during Overwrite command or undo of overwrite.
+     * <p>
+     * Called under {@link #PROCESSING_LOCK} - avoid slow operations.
+     */
+    @RequiresBackgroundThread
     private void doNotDeleteAddedCopiedOrMovedFiles() {
       if (myDeletedFiles.isEmpty() && myDeletedWithoutConfirmFiles.isEmpty()) return;
 
@@ -228,6 +237,7 @@ public abstract class VcsVFSListener implements Disposable {
       executeMoveRename();
     }
 
+    @RequiresBackgroundThread
     private void processFileCreated(@NotNull VFileCreateEvent event) {
       if (LOG.isDebugEnabled()) LOG.debug("fileCreated: ", event.getFile());
       if (isDirectoryVersioningSupported() || !event.isDirectory()) {
@@ -241,6 +251,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
+    @RequiresBackgroundThread
     private void processFileMoved(@NotNull VFileMoveEvent event) {
       VirtualFile file = event.getFile();
       VirtualFile oldParent = event.getOldParent();
@@ -251,6 +262,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
+    @RequiresBackgroundThread
     private void processFileCopied(@NotNull VFileCopyEvent event) {
       VirtualFile newFile = event.getNewParent().findChild(event.getNewChildName());
       if (newFile == null || myChangeListManager.isIgnoredFile(newFile)) return;
@@ -266,6 +278,7 @@ public abstract class VcsVFSListener implements Disposable {
       });
     }
 
+    @RequiresEdt
     private void processBeforeDeletedFile(@NotNull VFileDeleteEvent event) {
       processBeforeDeletedFile(event.getFile());
     }
@@ -299,6 +312,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
+    @RequiresEdt
     private void processMovedFile(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
       FileStatus status = myChangeListManager.getStatus(file);
       LOG.debug("Checking moved file ", file, "; status=", status);
@@ -329,6 +343,7 @@ public abstract class VcsVFSListener implements Disposable {
       });
     }
 
+    @RequiresEdt
     private void processBeforeFileMovement(@NotNull VFileMoveEvent event) {
       VirtualFile file = event.getFile();
       if (isUnderMyVcs(event.getNewParent())) {
@@ -341,6 +356,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
+    @RequiresEdt
     private void processBeforePropertyChange(@NotNull VFilePropertyChangeEvent event) {
       if (event.isRename()) {
         LOG.debug("before file rename ", event);
@@ -353,6 +369,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
+    @RequiresEdt
     private void addFileToMove(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
       if (file.isDirectory() && !file.is(VFileProperty.SYMLINK) && !isDirectoryVersioningSupported()) {
         @SuppressWarnings("UnsafeVfsRecursion") VirtualFile[] children = file.getChildren();
@@ -640,9 +657,11 @@ public abstract class VcsVFSListener implements Disposable {
    *
    * @see #processBeforeContentsChange()
    */
+  @RequiresEdt
   protected void beforeContentsChange(@NotNull List<VFileContentChangeEvent> events) {
   }
 
+  @RequiresEdt
   protected void processMovedFile(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
   }
 
